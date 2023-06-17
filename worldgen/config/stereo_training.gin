@@ -1,0 +1,26 @@
+# eliminate blurs / distortion that cause blurs or bad alignment of the depth map
+compositor_postprocessing.distort = False
+render_image.motion_blur = False
+render_image.use_dof = False
+
+# remove volume scatters, as the corrupt blender's depth map
+atmosphere_light_haze.shader_atmosphere.enable_scatter = False
+water.shader.enable_scatter = False
+
+# dont include tiny particles, they arent sufficiently visible
+compose_scene.rain_particles_chance = 0
+compose_scene.dust_particles_chance = 0
+compose_scene.snow_particles_chance = 0
+
+# eliminate lava, the emissive surface is too noisy
+# now by default lava is a separate material
+surface.registry.liquid_collection = [
+    ('water', 0.95),
+]
+surface.registry.lava = [
+    ('water', 1),
+]
+
+# reduce the baseline and pitch variance, requested by Lahav
+stereo_baseline = 0.075
+sample_camera_rotation.pitch_params = {'min': -20, 'max': 20, 'mean': 0, 'std': 15}

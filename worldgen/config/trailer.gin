@@ -1,0 +1,20 @@
+full/render_image.passes_to_save = [
+    #['diffuse_direct', 'DiffDir'],
+    #['diffuse_color', 'DiffCol'],
+    #['diffuse_indirect', 'DiffInd'],
+    #['glossy_direct', 'GlossDir'],
+    #['glossy_color', 'GlossCol'],
+    #['glossy_indirect', 'GlossInd'],
+    #['transmission_direct', 'TransDir'],
+    #['transmission_color', 'TransCol'],
+    #['transmission_indirect', 'TransInd'],
+    #['emit', 'Emit'],
+    #['environment', 'Env'],
+    ['ambient_occlusion', 'AO']
+]
+flat/render_image.passes_to_save = [
+    #['z', 'Depth'],
+    #['normal', 'Normal'],
+    #['vector', 'Vector'],
+    ['object_index', 'IndexOB']
+]

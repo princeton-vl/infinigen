@@ -1,0 +1,63 @@
+# SoilMachine Soil File
+
+#============
+#   World
+#============
+
+WORLD {
+
+#SEED 0
+
+SCALE 80
+SIZEX 256
+SIZEY 256
+
+
+}
+
+#============
+#   Rock
+#============
+
+SOIL Rock {
+
+TRANSPORTS Rock
+ERODES Rock
+ABRADES Rock
+CASCADES Rock
+
+DENSITY 0.95
+COLOR 444444
+
+Ka 0.5
+Kd 0.8
+Ks 0.2
+Kk 8.0
+
+POROSITY 0.0
+SOLUBILITY 1.0
+EQUILIBRIUM 0.1
+FRICTION 0.15
+
+EROSIONRATE 0.0
+
+MAXDIFF 0.01
+SETTLING 0.1
+
+SUSPENSION 0.0
+ABRASION 0.0
+
+}
+
+LAYER Rock {
+
+MIN 0.0
+BIAS 0.5
+SCALE 0.8
+
+OCTAVES 8.0
+LACUNARITY 2.0
+GAIN 0.5
+FREQUENCY 1.0
+
+}

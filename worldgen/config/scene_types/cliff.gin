@@ -1,0 +1,23 @@
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 0.2),
+    (@HerbivoreFactory, 1),
+    (@BirdFactory, 1),
+]
+
+# scene composition config
+LandTiles.tiles = ["Mountain", "Cliff", "Mountain"]
+LandTiles.tile_heights = [-15, -15, 10]
+LandTiles.tile_density = 1.6
+LandTiles.randomness = 1
+WarpedRocks.slope_shift=-15
+Ground.height = -15
+
+# camera selection config
+UniformMesher.dimensions = (-25, 25, -25, 25, -15, 35)
+keep_cam_pose_proposal.terrain_coverage_range = (0, 0.8)
+camera_selection_preprocessing.terrain_tags_ratio = {("altitude", 10, 1e9): (0.01, 1)}
+
+compose_scene.flying_creatures_chance=0.6
+compose_scene.flying_creature_registry = [
+    (@FlyingBirdFactory, 1),
+]

@@ -1,0 +1,28 @@
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 1),
+    (@HerbivoreFactory, 1.5),
+    (@BirdFactory, 0.7),
+]
+
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 2),
+    (@HerbivoreFactory, 0.8),
+    (@SnakeFactory, 2)
+]
+
+compose_scene.flying_creatures_chance = 0.7
+compose_scene.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+    (@FlyingBirdFactory, 0.1)
+]
+
+compose_scene.grass_select_max = 0.35
+compose_scene.tree_density = 0.02
+compose_scene.grass_chance = 1
+
+compose_scene.bug_swarm_chance=0.0
+
+# scene composition config
+scene.landtiles_chance = 0
+scene.warped_rocks_chance = 0

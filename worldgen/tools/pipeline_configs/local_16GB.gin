@@ -1,0 +1,6 @@
+include 'tools/pipeline_configs/local_256GB.gin'
+
+manage_datagen_jobs.num_concurrent=1
+LocalScheduleHandler.use_gpu=False
+
+

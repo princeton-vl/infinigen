@@ -1,0 +1,60 @@
+# SoilMachine Soil File
+
+#============
+#   World
+#============
+
+WORLD {
+
+#SEED 0
+
+SCALE 80
+SIZEX 256
+SIZEY 256
+
+NWATER 50
+NWIND 250
+
+}
+
+#==============
+#   RED SAND
+#==============
+
+SOIL Red Sand {
+
+TRANSPORTS Red Sand
+ERODES Red Sand
+ABRADES Red Sand
+CASCADES Red Sand
+
+DENSITY 0.4
+COLOR E0A26D
+
+POROSITY 0.8
+SOLUBILITY 1.0
+EQUILIBRIUM 0.1
+FRICTION 0.1
+
+EROSIONRATE 0.0
+
+MAXDIFF 0.005
+SETTLING 0.05
+
+SUSPENSION 0.01
+ABRASION 0.0
+
+}
+
+LAYER Red Sand {
+
+MIN 0.0
+BIAS 0.5
+SCALE 0.4
+
+OCTAVES 6.0
+LACUNARITY 2.0
+GAIN 0.4
+FREQUENCY 2.0
+
+}

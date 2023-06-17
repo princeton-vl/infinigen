@@ -1,0 +1,5 @@
+compose_scene.rain_particles_chance = 0.0
+compose_scene.snow_particles_chance = 0.0
+compose_scene.leaf_particles_chance = 0.0
+compose_scene.dust_particles_chance = 0.0
+compose_scene.marine_snow_particles_chance = 0.0

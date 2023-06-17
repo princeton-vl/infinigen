@@ -1,0 +1,41 @@
+
+manage_datagen_jobs.num_concurrent = 16
+
+# Job updater
+
+get_cmd.niceness = 20 # let UI processes etc take precedence, to make the smooth and UI usable
+local_submit_cmd.use_scheduler = True
+LocalScheduleHandler.jobs_per_gpu = 1
+
+# All will run locally, LocalScheduleHandler doesnt actually enforce cpu/ram constraints currently
+queue_coarse.submit_cmd = @local_submit_cmd
+queue_fine_terrain.submit_cmd = @local_submit_cmd
+queue_populate.submit_cmd = @local_submit_cmd
+queue_render.submit_cmd = @local_submit_cmd
+
+queue_combined.mem_gb = 12
+backup/queue_combined.mem_gb = 24
+queue_combined.cpus = 2
+queue_combined.hours = 48
+queue_combined.submit_cmd = @local_submit_cmd
+
+# Rendering
+queue_render.cpus = 4
+queue_render.submit_cmd = @local_submit_cmd
+queue_render.hours = 24
+queue_render.render_type = "full"
+queue_render.gpus = 1
+
+# Upload
+queue_upload.submit_cmd = @local_submit_cmd
+queue_upload.mem_gb = 6
+queue_upload.cpus = 2
+queue_upload.hours = 24
+queue_upload.method = 'smbclient'
+queue_upload.dir_prefix_len = 2
+
+# Ground Truth
+queue_mesh_save.submit_cmd = @local_submit_cmd
+queue_opengl.submit_cmd = @local_submit_cmd
+ground_truth/queue_render.render_type = "flat"
+ground_truth/queue_render.gpus = 0

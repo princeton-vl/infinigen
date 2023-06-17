@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.8.2/dist/lazyload.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+    {% for page in pages %}
+    <a href="{{page}}.html">{{page}}</a>
+    {% endfor %}
+    {% for seed in seeds %}
+    <div class="d-flex bg-secondary">
+        <h4 class="text-center flex-fill text-white">{{seed}}</h4>
+    </div>
+    <div class="row">
+        <div class="col-6 ms-a">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/Image0000_00_00.png"
+                title="Image">
+        </div>
+        <div class="col-6">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/Depth0000_00_00.png"
+                title="Depth">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/SurfaceNormal0000_00_00.png"
+                title="Surface Normals">
+        </div>
+        <div class="col-6">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/AO0000_00_00.png"
+                title="Ambient Occlusion">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/OcclusionBoundaries0000_00_00.png"
+                title="Occlusion Boundaries">
+        </div>
+        <div class="col-6">
+            <img class="img-fluid lazy"
+                data-src="{{seed}}/frames_0_0000_0_0/VolumeDir0000_00_00.png"
+                title="Volume Direct">
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    <script>
+        const lazy = new LazyLoad();
+    </script>
+</body>
+</html>

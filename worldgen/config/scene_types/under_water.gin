@@ -1,0 +1,84 @@
+multi_mountains_params.height = ("uniform", 4, 10)
+multi_mountains_params.min_freq = ("uniform", 0.01, 0.015)
+multi_mountains_params.max_freq = ("uniform", 0.03, 0.06)
+
+keep_cam_pose_proposal.terrain_coverage_range = (0.4, 1)
+camera.camera_pose_proposal.altitude = ("clip_gaussian", 3.5, 0.7, 2, 6)
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 15, 60, 110)
+
+compose_scene.trees_chance = 0.
+compose_scene.bushes_chance = 0.
+compose_scene.creatures_chance = 1.0
+compose_scene.glowing_rocks_chance = 0.05
+compose_scene.rocks_chance = 0.5
+compose_scene.ground_leaves_chance = 0.05
+compose_scene.ground_twigs_chance = 0.05
+compose_scene.chopped_trees_chance = 0.1
+compose_scene.grass_chance = 0.05
+compose_scene.kelp_chance = 0.7
+compose_scene.cactus_chance = 0.
+compose_scene.ferns_chance = 0.01
+compose_scene.camera_based_lighting_chance = 1.0
+
+compose_scene.corals_chance = 0.8
+compose_scene.seaweed_chance = 0.8
+compose_scene.seashell_chance = 0.8
+compose_scene.urchin_chance = 0.8
+compose_scene.jellyfish_chance = 0.0
+compose_scene.mushroom_chance = 0.0
+compose_scene.pinecone_chance = 0.0
+compose_scene.pine_needle_chance = 0.0
+compose_scene.boulders_chance = 0.0
+compose_scene.monocots_chance = 0.0
+
+water.geo.water_detail = ("uniform", 0.2, 0.5)
+water.geo.water_height = ("uniform", 0.05, 0.15)
+water.geo.with_ripples = 0
+water.shader.volume_density = ("uniform", 0.03, 0.05)
+water.shader.color = ("color_category", 'under_water')
+water.shader.colored = 0
+water.shader.emissive_foam = 0
+water.is_ocean = ("bool", 0.5)
+
+
+compose_scene.wind_chance = 0
+compose_scene.rain_particles_chance = 0
+compose_scene.snow_particles_chance = 0
+compose_scene.leaf_particles_chance = 0
+compose_scene.dust_particles_chance = 0
+compose_scene.marine_snow_particles_chance = 0
+compose_scene.caustics_chance = 0.8
+
+atmosphere_light_haze.shader_atmosphere.enable_scatter = False 
+compose_scene.fancy_clouds_chance=0.0
+
+surface.registry.rock_collection = [
+    ('stone', 1),
+    ('mountain', 0.5),
+]
+
+compose_scene.ground_creatures_chance = 0.4
+compose_scene.ground_creature_registry = [
+    (@CrustaceanFactory, 1),
+]
+compose_scene.flying_creatures_chance = 0.0
+compose_scene.bug_swarm_chance = 0.0
+compose_scene.fish_school_chance = 1
+
+# scene composition config
+LandTiles.tile_heights = [-20]
+Ground.height = -20
+Atmosphere.hacky_offset = 0.1
+WarpedRocks.slope_shift = -23
+scene.waterbody_chance = 1
+
+full/render_image.min_samples = 100
+render_image.adaptive_threshold = 0.01
+
+Terrain.under_water = 1
+
+compose_scene.turbulence_chance = 0.7
+turbulence_effector.strength = ("uniform", 0, 7)
+turbulence_effector.size = ("uniform", 1.5, 4.5)
+turbulence_effector.flow = 1
+turbulence_effector.noise = 10

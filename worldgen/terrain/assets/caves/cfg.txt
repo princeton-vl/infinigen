@@ -1,0 +1,34 @@
+
+# Starting Symbol
+Q (1.0) -> [ A ] Piv180 [ A ]
+
+# Turning
+T (0.5) -> TurnR45
+T (0.5) -> TurnL45
+
+TurnR90 (1.0) -> TurnR45 TurnR45
+TurnL90 (1.0) -> TurnL45 TurnL45
+Piv180 (1.0) -> l l l l l l l l l l l l
+
+TurnU75 (1.0) -> u f u f u f u f
+TurnD75 (1.0) -> d f d f d f d f
+TurnL45 (1.0) -> l f l f l f
+TurnR45 (1.0) -> r f r f r f
+
+# S-Curve
+H (0.5) -> TurnU75 TurnD75 
+H (0.5) -> TurnD75 TurnU75 
+
+# Wildcard
+A (0.45) -> S
+A (0.45) -> P
+A (0.1) -> n
+
+# Split-offs
+S (0.8) ->  [ A H A ] A
+S (0.1) ->  [ TurnL90 A ] A
+S (0.1) ->  [ TurnR90 A ] A
+
+# Non Split-offs
+P (0.5) -> T A
+P (0.5) -> f f f A

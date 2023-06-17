@@ -1,0 +1,5 @@
+iterate_scene_tasks.camera_dependent_tasks = [
+    {'name': 'short', 'func': @short/queue_render}, 
+    {'name': 'backup', 'func': @backup/queue_render, 'condition': 'prev_failed'}, 
+    {'name': 'blendergt', 'func': @ground_truth/queue_render}
+]
