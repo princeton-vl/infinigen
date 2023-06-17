@@ -82,8 +82,8 @@ Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) 
  :warning: **Known issue** :warning: : We are actively fixing an issue which causes commands not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 <p align="center">
-  <img src="images/Image0001_00_00.png" width="330" />
-  <img src="images/Depth0001_00_00.png" width="330" /> 
+  <img src="images/Image0048_00_00.png" width="330" />
+  <img src="images/Depth0048_00_00.png" width="330" /> 
 </p>
 
 This guide will show you how to generate an image and it's corresponding depth ground-truth, similar to those shown above.
