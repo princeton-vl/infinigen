@@ -1014,7 +1014,7 @@ if __name__ == "__main__":
         if 'BLENDER' in os.environ:
             BLENDER_PATH = os.environ['BLENDER']
         else:
-            BLENDER_PATH = '../blender/blender' # assuming we run from procgen/worldgen
+            BLENDER_PATH = '../blender/blender' # assuming we run from infinigen/worldgen
     else:
         BLENDER_PATH = args.blender_path
     if not os.path.exists(BLENDER_PATH):

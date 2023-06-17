@@ -2,9 +2,9 @@
 
 ## Instructions (for linux server)
 
-1. Run `git submodule update --init` in the procgen repo to ensure the dependencies are populated
+1. Run `git submodule update --init` in the infinigen repo to ensure the dependencies are populated
 
-2. Start an interactive GPU job and cd into `procgen/process_mesh`
+2. Start an interactive GPU job and cd into `infinigen/process_mesh`
 
 3. Configure CMAKE by running
     ```
@@ -28,7 +28,7 @@
     -- Found OpenGL: /usr/lib64/libOpenGL.so found components: OpenGL EGL GLX
     -- Configuring done
     -- Generating done
-    -- Build files have been written to: /n/fs/pvl-progen/lipson/procgen/process_mesh/build
+    -- Build files have been written to: infinigen/process_mesh/build
     ```
 
 4. Build the program
@@ -38,7 +38,7 @@
 
 5. Run a test
     ```
-    ./build/process_mesh --height 1080 --width 1920 -out output_images -in /n/fs/pvl-progen/lipson/examples/INTVFSGK/frames_INTVFSGK_resmpl0
+    ./build/process_mesh --height 1080 --width 1920 -out output_images -in /path/to/examples/INTVFSGK/frames_INTVFSGK_resmpl0
     ```
 
     or to just check if OpenGL/EGL is working correctly, run
