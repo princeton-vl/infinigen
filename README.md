@@ -14,7 +14,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB
 - MacOS Monterey & Ventura, Apple M1 Pro, 16GB RAM
 
-Windows users should [install WSL2](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview). More instructions coming soon.
+We are working on support for rendering with AMD GPUs. Windows users should use [WSL2](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview). More instructions coming soon.
 
 **Run these commands to get started**
 ```
@@ -89,7 +89,7 @@ Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) 
 This guide will show you how to generate an image and it's corresponding depth ground-truth, similar to those shown above.
 
 #### Generate a scene step by step
-Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate.
+Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
 
 ```
 cd worldgen
@@ -108,11 +108,11 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g
 $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
-Stdout logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
+Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 #### Generate image(s) in one command
 
-We provide `tools/manage_datagen_jobs.py`, a utility to run these or similar steps for you on many random seeds.
+We provide `tools/manage_datagen_jobs.py`, a utility which runs these or similar steps automatically.
 
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 
@@ -134,7 +134,9 @@ If you intend to use CUDA-accelerated terrain (`--pipeline_configs enable_gpu`),
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
 
-## Experimenting with Infinigen
+## Exploring the Infinigen Codebase
+
+Infinigen has evolved significantly since the version described in our CVPR paper. It now features some procedural code obtained from the internet under CC-0 licenses, which are marked with code comments where applicable - no such code was present in the system for the CVPR version.
 
 Infinigen is an ongoing research project, and has some known issues. Through experimenting with Infinigen's code and config files, you will find scenes which crash or cannot be handled on your hardware. Infinigen scenes are randomized, with a long tail of possible scene complexity and thus compute requirements. If you encounter a scene that does not fit your computing hardware, you should try other seeds, use other config files, or follow up for help.
 
@@ -147,7 +149,7 @@ We will add comprehensive tutorials and documentation for all aspects of Infinig
 
 ### Contributing
 We welcome contributions! You can contribute in many ways:
-- **Contribute code to this repository** - we welcome code contributions. More guidelines coming soon.
+- **Contribute code to this repository** - We welcome code contributions. More guidelines coming soon.
 - **Contribute procedural generators** - `worldgen/nodes/node_transpiler/dev_script.py` provides tools to convert artist-friendly [Blender Nodes](https://docs.blender.org/manual/en/2.79/render/blender_render/materials/nodes/introduction.html) into python code. Tutorials and guidelines coming soon.
 - **Contribute pre-generated data** - Anyone can contribute their computing power to create data and share it with the community. Please stay tuned for a repository of pre-generated data.
 
