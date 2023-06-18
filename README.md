@@ -19,6 +19,7 @@ We are working on support for rendering with AMD GPUs. Windows users should use 
 **Run these commands to get started**
 ```
 git clone https://github.com/princeton-vl/infinigen.git
+cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
 bash install.sh
