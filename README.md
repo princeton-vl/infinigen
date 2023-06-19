@@ -17,7 +17,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB +
     - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-Windows users should refer to *Installation on Windows using WSL* dropdown.
+Windows users should refer to **Installation on Windows using WSL** dropdown.
 
 **Run these commands to get started**
 ```
@@ -47,9 +47,9 @@ In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, re
 
 In Powershell, run `ubuntu` to enter the Linux subsystem.
 
-Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. *Currently, the OpenGL ground truth does not work on WSL, so this check can be disregarded*
+Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. **Currently, the OpenGL ground truth does not work on WSL, so this check can be disregarded**
 
-*To use GPU acceleration on terrian generation*, follow the instructions [here](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2) to install CUDA on WSL2. This step can be skipped if not using CUDA acceleration on terrain.
+To use GPU acceleration on terrian generation, follow the instructions [here](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2) to install CUDA on WSL2. This step can be skipped if not using CUDA acceleration on terrain.
 
 Install Anaconda in WSL
 ```
