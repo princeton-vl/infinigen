@@ -63,7 +63,7 @@ conda create --name infinigen python=3.10
 conda activate infinigen
 bash install.sh
 ```
-
+<details closed>
 
 <details closed>
 <summary><b>(Optional) OpenGL Ground Truth Installation</b></summary>
