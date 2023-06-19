@@ -66,8 +66,6 @@ bash install.sh
 </details>
 
 <details closed>
-
-<details closed>
 <summary><b>(Optional) OpenGL Ground Truth Installation</b></summary>
 
 The above default install instructions enable you to run the full Infinigen scene generation system
