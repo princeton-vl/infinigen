@@ -36,6 +36,36 @@ export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
 ```
 
 <details closed>
+<summary><b>Installation on Windows using WSL</b></summary>
+
+In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, refer to [this](https://learn.microsoft.com/en-us/windows/wsl/install#upgrade-version-from-wsl-1-to-wsl-2.) guide on upgrading.
+
+In Powershell, run `ubuntu` to enter the Linux subsystem.
+
+Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. *Currently, the OpenGL ground truth does not work on WSL, so this check can be disregarded*
+
+*To use GPU acceleration on terrian generation*, follow the instructions [here](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2) to install CUDA on WSL2. This step can be skipped if not using CUDA acceleration on terrain.
+
+Install Anaconda in WSL
+```
+wget https://repo.anaconda.com/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
+```
+```
+bash Anaconda3-2023.03-1-Linux-x86_64.sh
+```
+
+Then run these commands to get started
+
+```
+git clone https://github.com/princeton-vl/infinigen.git
+cd infinigen
+conda create --name infinigen python=3.10
+conda activate infinigen
+bash install.sh
+```
+
+
+<details closed>
 <summary><b>(Optional) OpenGL Ground Truth Installation</b></summary>
 
 The above default install instructions enable you to run the full Infinigen scene generation system
