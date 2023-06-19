@@ -155,6 +155,10 @@ Infinigen is an ongoing research project, and has some known issues. Through exp
 
 Infinigen will evolve rapidly over the coming months. Follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
+There are some aspects of the code used for our launch video that are still being polished and will be released are soon as possible, notably:
+- Fluid simulations for dynamic water, fire, and simulated lava
+- Some categories of plants, namely snake plants and spider plants
+
 ### Tutorials & Documentation
 We will add comprehensive tutorials and documentation for all aspects of Infinigen. This README is **preliminary**, and our docs will be expanded to cover all aspects of the project in detail. 
 
