@@ -63,6 +63,8 @@ conda create --name infinigen python=3.10
 conda activate infinigen
 bash install.sh
 ```
+</details>
+
 <details closed>
 
 <details closed>
