@@ -17,7 +17,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB +
     - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-Windows users should refer to **"Installation on Windows using WSL"** dropdown instead.
+Windows users should refer to the **"Installation on Windows using WSL"** dropdown instead.
 
 **Run these commands to get started**
 ```
@@ -41,7 +41,7 @@ export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
 <details closed>
 <summary><b>Installation on Windows using WSL</b></summary>
 
-[Install](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview) WSL 2 (with WSLg) and Ubuntu. Make sure that you are either on the latest version of Windows 10
+[Install](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview) WSL 2 (with WSLg) and Ubuntu. Make sure that you are either on the latest version of Windows 10 or Windows 11.
 
 In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, refer to [this](https://learn.microsoft.com/en-us/windows/wsl/install#upgrade-version-from-wsl-1-to-wsl-2.) guide on upgrading.
 
@@ -49,7 +49,19 @@ In Powershell, run `ubuntu` to enter the Linux subsystem.
 
 Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. **Currently, the OpenGL ground truth does not work on WSL, so this check can be disregarded**
 
-To use GPU acceleration on terrain generation, follow the instructions [here](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2) to install CUDA on WSL2. This step can be skipped if not using GPU acceleration.
+To use GPU acceleration on terrain generation, run these commands to install CUDA in WSL2. This step can be skipped if not using GPU acceleration. For troubleshooting and more information, refer to the [NVIDIA docs](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2).
+```
+sudo apt-key del 7fa2af80
+wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
+sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
+wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda-repo-wsl-ubuntu-12-1-local_12.1.1-1_amd64.deb
+sudo dpkg -i cuda-repo-wsl-ubuntu-12-1-local_12.1.1-1_amd64.deb
+sudo cp /var/cuda-repo-wsl-ubuntu-12-1-local/cuda-*-keyring.gpg /usr/share/keyrings/
+sudo apt-get update
+sudo apt-get -y install cuda
+```
+
+
 
 Install Anaconda in WSL
 ```
