@@ -17,7 +17,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB +
     - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-Windows users should refer to **Installation on Windows using WSL** dropdown.
+Windows users should refer to **"Installation on Windows using WSL"** dropdown instead.
 
 **Run these commands to get started**
 ```
@@ -108,6 +108,7 @@ source setup.sh
 To disable GPU passthrough use `bash make_docker.sh --noGPU`
 
 **Docker on Windows**
+
 Follow the [Windows installation instructions](#installation) and intall [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow the instructions as above.
 
 </details>
