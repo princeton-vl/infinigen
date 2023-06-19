@@ -47,7 +47,7 @@ In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, re
 
 In Powershell, run `ubuntu` to enter the Linux subsystem.
 
-Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. **Currently, the OpenGL ground truth does not work on WSL, so this check can be disregarded**
+Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. **Currently, the OpenGL ground truth is bugged on WSL, so this check can be disregarded**
 
 To use GPU acceleration on terrain generation, run these commands to install CUDA in WSL2. This step can be skipped if not using GPU acceleration. For troubleshooting and more information, refer to the [NVIDIA docs](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2).
 ```
@@ -121,7 +121,7 @@ To disable GPU passthrough use `bash make_docker.sh --noGPU`
 
 **Docker on Windows**
 
-Follow the [Windows installation instructions](#installation) and intall [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow the instructions as above.
+Follow the [Windows installation instructions](#installation) and install [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow the instructions as above.
 
 </details>
 
