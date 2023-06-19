@@ -1,0 +1,15 @@
+* text=auto eol=lf whitespace=tab-in-indent,blank-at-eol,tabwidth=4
+Makefile text whitespace=-tab-in-indent,blank-at-eol,tabwidth=4
+*.eot binary
+*.gif binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.svg binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.tgz binary
+*.gz binary

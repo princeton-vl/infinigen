@@ -41,7 +41,6 @@ Blender-FLIP-Fluids
 *.in
 *.out
 profiles_*.npz
-*outputs
 snippets
 resources
 times.txt

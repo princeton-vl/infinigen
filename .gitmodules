@@ -3,22 +3,22 @@
 	url = https://gitlab.com/libeigen/eigen.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/argparse"]
 	path = process_mesh/dependencies/argparse
-	url = git@github.com:p-ranav/argparse.git
+	url = https://github.com/p-ranav/argparse.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/cnpy"]
 	path = process_mesh/dependencies/cnpy
-	url = git@github.com:rogersce/cnpy.git
+	url = https://github.com/rogersce/cnpy.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/indicators"]
 	path = process_mesh/dependencies/indicators
-	url = git@github.com:p-ranav/indicators.git
+	url = https://github.com/p-ranav/indicators.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/tinycolormap"]
 	path = process_mesh/dependencies/tinycolormap
-	url = git@github.com:yuki-koyama/tinycolormap.git
+	url = https://github.com/yuki-koyama/tinycolormap.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/glm"]
 	path = process_mesh/dependencies/glm
-	url = git@github.com:g-truc/glm.git
+	url = https://github.com/g-truc/glm.git
 [submodule "worldgen/terrain/gen_occlusions/dependencies/fast_obj"]
 	path = process_mesh/dependencies/fast_obj
-	url = git@github.com:thisistherk/fast_obj.git
+	url = https://github.com/thisistherk/fast_obj.git
 [submodule "process_mesh/dependencies/json"]
 	path = process_mesh/dependencies/json
 	url = https://github.com/nlohmann/json.git

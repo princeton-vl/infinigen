@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if ! command -v wget &> /dev/null
 then
@@ -51,9 +51,6 @@ REQUIREMENTS_PATH='./requirements.txt'
 PYTHON_WGET_LINK='https://www.python.org/ftp/python/3.10.2/Python-3.10.2.tgz'
 PYTHON_WGET_FILE='Python-3.10.2.tgz'
 PYTHON_DIR='Python-3.10.2'
-
-git submodule init
-git submodule update
 
 if [ ! -d "${BLENDER_DIR}" ]; then
     # Download Blender
