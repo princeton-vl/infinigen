@@ -13,8 +13,11 @@ Installation is tested and working on the following platforms:
     - GPUs options tested: CPU only, GTX-1080, RTX-2080, RTX-3090, RTX-4090 (Driver 525, CUDA 12.0)
     - RAM: 16GB
 - MacOS Monterey & Ventura, Apple M1 Pro, 16GB RAM
+- Windows
+    - RAM: 16GB +
+    - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-Windows users should [install WSL2](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview). More instructions coming soon.
+Windows users should refer to *Installation on Windows using WSL* dropdown.
 
 **Run these commands to get started**
 ```
@@ -37,6 +40,8 @@ export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
 
 <details closed>
 <summary><b>Installation on Windows using WSL</b></summary>
+
+[Install](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview) WSL 2 (with WSLg) and Ubuntu. Make sure that you are either on the latest version of Windows 10
 
 In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, refer to [this](https://learn.microsoft.com/en-us/windows/wsl/install#upgrade-version-from-wsl-1-to-wsl-2.) guide on upgrading.
 
@@ -103,7 +108,7 @@ source setup.sh
 To disable GPU passthrough use `bash make_docker.sh --noGPU`
 
 **Docker on Windows**
-Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) and [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow instructions as above.
+Follow the [Windows installation instructions](#installation) and intall [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow the instructions as above.
 
 </details>
 
