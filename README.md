@@ -155,8 +155,8 @@ Infinigen is an ongoing research project, and has some known issues. Through exp
 
 Infinigen will evolve rapidly over the coming months. Follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
-There are some aspects of the code used for our launch video that are still being polished and will be released are soon as possible, notably:
-- Fluid simulations for dynamic water, fire, and simulated lava
+There are some aspects of the code used for our launch video that are still being polished and will be released as soon as possible, notably:
+- Fluid simulations for dynamic water and fire
 - Some categories of plants, namely snake plants and spider plants
 
 ### Tutorials & Documentation
