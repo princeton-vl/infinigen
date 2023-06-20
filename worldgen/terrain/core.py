@@ -62,7 +62,7 @@ class Terrain:
         with Timer('Create terrain'):
             if asset_folder is None:
                 if not ASSET_ENV_VAR in os.environ:
-                    raise ValueError(f'Terrain recieved {asset_folder=} yet {ASSET_ENV_VAR} was not set')
+                    raise ValueError(f'Terrain received {asset_folder=} yet {ASSET_ENV_VAR} was not set')
                 asset_folder = os.environ[ASSET_ENV_VAR]
 
             if asset_folder != "":
