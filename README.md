@@ -14,6 +14,11 @@ If you use Infinigen in your work, please cite our [academic paper](https://arxi
   year={2023}
 }
 ```
+## Requirements:
+
+- Debian/Ubuntu
+  - g++, [conda](https://docs.conda.io/en/latest/)
+
 
 ## Installation
 
