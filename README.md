@@ -16,15 +16,29 @@ If you use Infinigen in your work, please cite our [academic paper](https://arxi
 ```
 ## Requirements:
 
-- Debian/Ubuntu
-  - g++
-  - [conda](https://docs.conda.io/en/latest/)
-  - libglm-dev
-  - libxi6
-  - libgconf-2-4
-  - libxxf86vm-dev
-  - libxfixes-dev
+#### Debian/Ubuntu:
 
+- [Conda](https://docs.conda.io/en/latest/)
+
+```
+sudo apt install build-essential \
+git \
+subversion \
+cmake \
+libx11-dev \
+libxxf86vm-dev \
+libxcursor-dev \
+libxi-dev \
+libxrandr-dev \
+libxinerama-dev \
+libegl-dev \
+libwayland-dev \
+wayland-protocols \
+libxkbcommon-dev \
+libdbus-1-dev \
+linux-libc-dev
+```
+---
 
 ## Installation
 
