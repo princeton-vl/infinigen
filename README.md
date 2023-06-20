@@ -4,9 +4,16 @@ Please visit our website, [https://infinigen.org](https://infinigen.org)
 
 [![Infinigen Trailer](images/video_thumbnail.png)](https://youtu.be/6tgspeI-GHY)
 
+<p align="center">
+Alexander Raistrick*, Lahav Lipson*, Zeyu Ma* (*equal contribution, alphabetical order)
+Lingjie Mei, Mingzhe Wang, Yiming Zuo, Karhan Kayan, Hongyu Wen, Beining Han,
+Yihan Wang,Alejandro Newell, Hei Law, Ankit Goyal, Kaiyu Yang, Jia Deng
+Conference on Computer Vision and Pattern Recognition (CVPR) 2023
+</p>
+
 If you use Infinigen in your work, please cite our [academic paper](https://arxiv.org/abs/2306.09310):
 ```
-@inproceedings{raistrick2023infinite,
+@inproceedings{infinigen2023infinite,
   title={Infinite Photorealistic Worlds Using Procedural Generation},
   author={Raistrick, Alexander and Lipson, Lahav and Ma, Zeyu and Mei, Lingjie and Wang, Mingzhe and Zuo, Yiming and Kayan, Karhan and Wen, Hongyu and Han, Beining and Wang, Yihan and Newell, Alejandro and Law, Hei and Goyal, Ankit and Yang, Kaiyu and Deng, Jia},
   booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
