@@ -20,6 +20,8 @@ If you use Infinigen in your work, please cite our [academic paper](https://arxi
   - g++
   - [conda](https://docs.conda.io/en/latest/)
   - libglm-dev
+  - libxi6
+  - libgconf-2-4
 
 
 ## Installation
