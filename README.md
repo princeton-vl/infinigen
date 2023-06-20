@@ -4,14 +4,16 @@ Please visit our website, [https://infinigen.org](https://infinigen.org)
 
 [![Infinigen Trailer](images/video_thumbnail.png)](https://youtu.be/6tgspeI-GHY)
 
+If you use Infinigen in your work, please cite our [academic paper]([https://arxiv.org/abs/2306.09310](https://arxiv.org/abs/2306.09310)):
+
+#### Infinite Photorealistic Worlds using Procedural Generation
 <p align="center">
-Alexander Raistrick*, Lahav Lipson*, Zeyu Ma* <b>(*equal contribution, alphabetical order)</b> <br>
+Alexander Raistrick*, Lahav Lipson*, Zeyu Ma* (*equal contribution, alphabetical order) <br>
 Lingjie Mei, Mingzhe Wang, Yiming Zuo, Karhan Kayan, Hongyu Wen, Beining Han, <br>
-Yihan Wang,Alejandro Newell, Hei Law, Ankit Goyal, Kaiyu Yang, Jia Deng 
+Yihan Wang,Alejandro Newell, Hei Law, Ankit Goyal, Kaiyu Yang, Jia Deng <br>
 Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
-If you use Infinigen in your work, please cite our [academic paper](https://arxiv.org/abs/2306.09310):
 ```
 @inproceedings{infinigen2023infinite,
   title={Infinite Photorealistic Worlds Using Procedural Generation},
