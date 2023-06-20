@@ -19,6 +19,7 @@ If you use Infinigen in your work, please cite our [academic paper](https://arxi
 - Debian/Ubuntu
   - g++
   - [conda](https://docs.conda.io/en/latest/)
+  - libglm-dev
 
 
 ## Installation
