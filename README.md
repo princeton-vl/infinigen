@@ -5,9 +5,9 @@ Please visit our website, [https://infinigen.org](https://infinigen.org)
 [![Infinigen Trailer](images/video_thumbnail.png)](https://youtu.be/6tgspeI-GHY)
 
 <p align="center">
-Alexander Raistrick*, Lahav Lipson*, Zeyu Ma* (*equal contribution, alphabetical order)
-Lingjie Mei, Mingzhe Wang, Yiming Zuo, Karhan Kayan, Hongyu Wen, Beining Han,
-Yihan Wang,Alejandro Newell, Hei Law, Ankit Goyal, Kaiyu Yang, Jia Deng
+Alexander Raistrick*, Lahav Lipson*, Zeyu Ma* <b>(*equal contribution, alphabetical order)</b> <br>
+Lingjie Mei, Mingzhe Wang, Yiming Zuo, Karhan Kayan, Hongyu Wen, Beining Han, <br>
+Yihan Wang,Alejandro Newell, Hei Law, Ankit Goyal, Kaiyu Yang, Jia Deng 
 Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
