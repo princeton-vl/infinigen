@@ -23,6 +23,7 @@ If you use Infinigen in your work, please cite our [academic paper](https://arxi
   - libxi6
   - libgconf-2-4
   - libxxf86vm-dev
+  - libxfixes-dev
 
 
 ## Installation
