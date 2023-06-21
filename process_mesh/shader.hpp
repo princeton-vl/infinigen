@@ -1,10 +1,7 @@
 #pragma once
 
-//#include <GL/glew.h>
 #include <glad/glad.h>
-//#include <glad/glad_egl.h>
 #include <glm/glm.hpp>
-#include <EGL/egl.h>
 
 #include <string>
 #include <fstream>

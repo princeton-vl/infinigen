@@ -50,7 +50,7 @@ unsigned int CameraView::create_framebuffer(){
 const Matrix4f FLIP_Y_Z = Eigen::Vector4f({1,-1,-1,1}).asDiagonal();
 
 float CameraView::calc_resolution_scale(){
-    const auto image_shape = get_png_size(frames_directory / ("Image" + frame_string + ".png"));
+    const auto image_shape = get_png_size(frames_directory / ("Image_" + frame_string + ".png"));
     RASSERT((buffer_width % image_shape[0]) == 0);
     RASSERT((buffer_height % image_shape[1]) == 0);
     RASSERT((buffer_height / image_shape[1]) == (buffer_width / image_shape[0]));

@@ -304,7 +304,7 @@ def render_image(
 
     ## Update output names
     for file_slot in compositor_nodes:
-        file_slot.path = f"{file_slot.path}####_{camera_rig_id:02d}_{subcam_id:02d}"
+        file_slot.path = f"{file_slot.path}_####_{camera_rig_id:02d}_{subcam_id:02d}"
 
     with Timer(f"get_camera"):
         camera = cam_util.get_camera(camera_rig_id, subcam_id)
@@ -341,22 +341,22 @@ def render_image(
                 )
 
                 # Save flow visualization. Takes about 3 seconds
-                flow_dst_path = frames_folder / f"Vector{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                flow_dst_path = frames_folder / f"Vector_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
                 if flow_dst_path.exists():
                     flow_color = flow_to_colorwheel(flow_dst_path)
-                    imwrite(flow_dst_path.with_name(f"Flow{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
+                    imwrite(flow_dst_path.with_name(f"Flow_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
 
                 # Save depth visualization. Also takes about 3 seconds
-                depth_dst_path = frames_folder / f"Depth{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                depth_dst_path = frames_folder / f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
                 if depth_dst_path.exists():
                     depth_color = exr_depth_to_jet(depth_dst_path)
-                    imwrite(depth_dst_path.with_name(f"Depth{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
+                    imwrite(depth_dst_path.with_name(f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
 
                 # Save Segmentation visualization. Also takes about 3 seconds
-                seg_dst_path = frames_folder / f"IndexOB{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                seg_dst_path = frames_folder / f"IndexOB_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
                 if seg_dst_path.exists():
                     seg_color = mask_to_color(seg_dst_path)
-                    imwrite(seg_dst_path.with_name(f"Segmentation{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
+                    imwrite(seg_dst_path.with_name(f"Segmentation_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
 
     for file in tmp_dir.glob('*.png'):
         file.unlink()
