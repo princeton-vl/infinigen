@@ -4,7 +4,14 @@ Run Infinigen through a Docker container.
 
 ## Linux
 
-Install the Docker Engine by following the steps [here](https://docs.docker.com/engine/install/ubuntu/)
+Install the Docker Engine by following the steps [here](https://docs.docker.com/engine/install/ubuntu/).
+
+Install dependency
+
+```
+sudo apt-get install x11-xserver-utils
+```
+
 
 In `/infinigen/`, run
 
