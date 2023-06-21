@@ -1,4 +1,4 @@
-git clone --recursive git@github.com:princeton-vl/procgen.git
+git clone --recursive git@github.com:princeton-vl/infinigen.git
 
 conda init bash && . ~/.bashrc
 cd infinigen
