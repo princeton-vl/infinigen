@@ -23,6 +23,31 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
   year={2023}
 }
 ```
+## Requirements:
+
+#### Debian/Ubuntu:
+
+- [Conda](https://docs.conda.io/en/latest/)
+
+```
+sudo apt install build-essential \
+git \
+subversion \
+cmake \
+libx11-dev \
+libxxf86vm-dev \
+libxcursor-dev \
+libxi-dev \
+libxrandr-dev \
+libxinerama-dev \
+libegl-dev \
+libwayland-dev \
+wayland-protocols \
+libxkbcommon-dev \
+libdbus-1-dev \
+linux-libc-dev
+```
+---
 
 ## Installation
 
