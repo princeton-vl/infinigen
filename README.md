@@ -47,6 +47,15 @@ libxkbcommon-dev \
 libdbus-1-dev \
 linux-libc-dev
 ```
+
+#### MacOS:
+- [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html)
+- Install either:
+  - Xcode from the App Store, to get a full development environment.
+   - Xcode command line tools by running this in the terminal. `xcode-select --install`, This takes up less disk space.
+- Install CMake and Subversion
+  - `brew install cmake svn`
+
 ---
 
 ## Installation
