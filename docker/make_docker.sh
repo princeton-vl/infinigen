@@ -1,7 +1,5 @@
 set -e
 
-cp -av ~/.ssh/id_ed25519 .
-
 echo "Removing infinigen docker image if already exists..."
 docker rm -f infinigen 2> /dev/null
 docker rmi -f infinigen_docker_img 2> /dev/null
