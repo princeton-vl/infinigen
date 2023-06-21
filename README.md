@@ -76,6 +76,17 @@ Finally, run
 ```
 bash install.sh opengl
 ```
+
+To run OpenGL on the "hello world" example, the two addition commands are:
+1. Export the geometry from blender to disk
+```
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+```
+2. Generate dense annotations
+```
+../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
+```
+
 </details>
 
 <details closed>

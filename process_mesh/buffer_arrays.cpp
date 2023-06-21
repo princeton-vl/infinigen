@@ -1,7 +1,8 @@
 #include "buffer_arrays.hpp"
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include "utils.hpp"
 
 template <typename T>
@@ -50,9 +51,9 @@ void curve_quartet(const float *verts, const float *radii, std::vector<float> &p
 
 std::vector<unsigned int> generate_buffer(const std::vector<unsigned int> &indices){
 
-    using std::unordered_map, std::unordered_set, std::vector;
+    using std::unordered_map, std::map, std::set, std::vector;
 
-    unordered_map<uint, unordered_map<uint, unordered_set<uint>>> edge_neighbors;
+    unordered_map<uint, map<uint, set<uint>>> edge_neighbors;
     for (int i=0; i < indices.size(); i+=3){
         std::array<uint, 3> tri = {indices[i], indices[i+1], indices[i+2]};
         std::sort(tri.begin(), tri.end());
@@ -64,7 +65,7 @@ std::vector<unsigned int> generate_buffer(const std::vector<unsigned int> &indic
     vector<unsigned int> vertices;
     for (const auto &keyval : edge_neighbors){
         const uint &v1 = keyval.first;
-        const unordered_map<uint, unordered_set<uint>> &mapping = keyval.second;
+        const map<uint, set<uint>> &mapping = keyval.second;
         for (const auto &v2_v3s : mapping){
             const auto &v2 = v2_v3s.first;
             vector<uint> v3s;
