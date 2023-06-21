@@ -5,11 +5,8 @@ docker rm -f infinigen 2> /dev/null
 docker rmi -f infinigen_docker_img 2> /dev/null
 docker build --tag infinigen_docker_img .
 
-rm -fv id_ed25519
-
 # UI permisions
 if [ "$1" != "--noGPU" ]; then
-    sudo apt-get install x11-xserver-utils
     touch ~/.Xauthority
     xauth add ${HOST}:0 . $(xxd -l 16 -p /dev/urandom)
     XSOCK=/tmp/.X11-unix
