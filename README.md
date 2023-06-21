@@ -27,7 +27,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 
 #### Debian/Ubuntu:
 
-- [Conda](https://docs.conda.io/en/latest/)
+- [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html)
 
 ```
 sudo apt install build-essential \
