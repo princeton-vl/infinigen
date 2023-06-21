@@ -27,4 +27,4 @@
 	url = https://github.com/nothings/stb.git
 [submodule "process_mesh/dependencies/glfw"]
 	path = process_mesh/dependencies/glfw
-	url = git@github.com:glfw/glfw.git
+	url = https://github.com/glfw/glfw.git
