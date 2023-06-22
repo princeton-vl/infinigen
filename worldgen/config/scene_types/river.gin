@@ -6,7 +6,7 @@ surface.registry.erosion_collection = [
     ('soil', 1),
 ]
 
-compose_scene.ground_creatures_chance = 0.1
+compose_scene.ground_creatures_chance = 0.0
 compose_scene.ground_creature_registry = [
     (@CarnivoreFactory, 2),
     (@HerbivoreFactory, 0.5),
@@ -23,7 +23,7 @@ compose_scene.rain_particles_chance = 0.4
 populate_scene.slime_mold_chance = 0.3
 populate_scene.ivy_chance = 0.3
 populate_scene.lichen_chance = 0.3
-populate_scene.moss_chance = 0.3
+populate_scene.moss_chance = 0.0
 
 random_season.weights = {'autumn': 1, 'summer': 1, 'spring': 1, 'winter': 0.1}
 
