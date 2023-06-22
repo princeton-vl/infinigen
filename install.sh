@@ -52,6 +52,9 @@ PYTHON_WGET_LINK='https://www.python.org/ftp/python/3.10.2/Python-3.10.2.tgz'
 PYTHON_WGET_FILE='Python-3.10.2.tgz'
 PYTHON_DIR='Python-3.10.2'
 
+git submodule init
+git submodule update
+
 if [ ! -d "${BLENDER_DIR}" ]; then
     # Download Blender
     wget -O "${BLENDER_WGET_FILE}" "${BLENDER_WGET_LINK}"

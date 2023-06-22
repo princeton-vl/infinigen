@@ -20,35 +20,40 @@ docker-clean:
 docker-setup:
 	sudo apt-get install x11-xserver-utils \
 		&& touch ~/.Xauthority \
-		&& xauth add $(HOST):0 . $(xxd -l 16 -p /dev/urandom) \
+		&& xauth add $(HOST):0 . $(shell xxd -l 16 -p /dev/urandom) \
 		&& touch "$(XAUTH)" \
 		&& xauth nlist "$(DISPLAY)" | sed -e 's/^..../ffff/' | xauth -f "$(XAUTH)" nmerge - \
 		&& xhost +local:docker
 
 docker-run:
 	docker run -td --privileged --net=host --ipc=host \
+		--name="infinigen" \
 		--gpus=all \
 		--env NVIDIA_DISABLE_REQUIRE=1 \
 		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
 		-e "XAUTHORITY=$(XAUTH)" \
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" /bin/bash \
 	|| docker run -td --privileged --net=host --ipc=host \
+		--name="infinigen" \
 		--device /dev/dri \
 		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
 		-e "XAUTHORITY=$(XAUTH)" \
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" bash
+
 
 docker-run-no-gpu:
 	echo "Launching Docker image without GPU passthrough"
