@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     folder_data = json.loads((args.folder / "summary.json").read_text())
 
-    depth_paths = folder_data["Depth_"]['npy']["00"]["00"]
+    depth_paths = folder_data["Depth"]['npy']["00"]["00"]
     image_paths = folder_data["Image"]['png']["00"]["00"]
     Ks = folder_data["Camera Intrinsics"]['npy']["00"]["00"]
     Ts = folder_data["Camera Pose"]['npy']["00"]["00"]
@@ -67,15 +67,15 @@ if __name__ == "__main__":
     camera_pose = np.load(args.folder / Ts[frame])
     K = np.load(args.folder / Ks[frame])
 
-    tag_mask = np.load(args.folder / folder_data["TagSegmentation_"]['npy']["00"]["00"][f"{args.frame:04d}"])
+    tag_mask = np.load(args.folder / folder_data["TagSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
     tag_mask = cv2.resize(tag_mask, dsize=(W, H), interpolation=cv2.INTER_NEAREST)
 
     tag_lookup = json.loads((args.folder / folder_data["Mask Tags"][f"{args.frame:04d}"]).read_text())
     tag_lookup_rev = {v:k for k,v in tag_lookup.items()}
     tags_in_this_image = set(chain.from_iterable(tag_lookup_rev[e].split('.') for e in np.unique(tag_mask) if e > 0))
 
-    bboxes_path = args.folder / folder_data["BoundingBoxes_"]["json"]["00"]["00"][frame]
-    bounding_boxes = json.loads((args.folder / folder_data["BoundingBoxes_"]["json"]["00"]["00"][frame]).read_text())
+    bboxes_path = args.folder / folder_data["BoundingBoxes"]["json"]["00"]["00"][frame]
+    bounding_boxes = json.loads((args.folder / folder_data["BoundingBoxes"]["json"]["00"]["00"][frame]).read_text())
     unique_tag_numbers = set(np.unique(tag_mask))
 
     canvas = np.copy(image)

@@ -52,7 +52,7 @@ if __name__ == "__main__":
         boxes = []
         for (x_min, y_min), (x_max, y_max), color in zip(mins, maxs, unique_colors):
             boxes.append((x_min, x_max, y_min, y_max, color.tolist(), set()))
-        for (i, j), idx, tag in tqdm(zip(product(range(H), range(W)), indices, tag_mask.flatten())):
+        for (i, j), idx, tag in zip(product(range(H), range(W)), indices, tag_mask.flatten()):
             boxes[idx][-1].add(tag)
     else:
         colors_for_instances = unique_colors[indices].reshape((H, W, 3))

@@ -1,8 +1,8 @@
-// Copyright (c) Princeton University.
-// This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-// Authors: Lahav Lipson
-// Date Signed: June 15 2023
+# Authors: Lahav Lipson
+# Date Signed: June 15 2023
 
 import argparse
 import json
@@ -31,6 +31,9 @@ def parse_mask_tag_jsons(base_folder):
         if match := re.fullmatch("fine_([0-9])_([0-9])_([0-9]{4})_([0-9])", file_path.parent.name):
             _, _, frame_str, _ = match.groups()
             yield (frame_str, file_path)
+    for file_path in base_folder.rglob('MaskTag.json'):
+        if match := re.fullmatch("fine.*", file_path.parent.name):
+            yield (0, file_path)
 
 def summarize_folder(base_folder):
     base_folder = Path(base_folder)
@@ -40,7 +43,7 @@ def summarize_folder(base_folder):
         if not file_path.is_file:
             continue
 
-        if match := re.fullmatch("(.*)([0-9]{4})_([0-9]{2})_([0-9]{2})\.([a-z]+)", file_path.name):
+        if match := re.fullmatch("(.*)_([0-9]{4})_([0-9]{2})_([0-9]{2})\.([a-z]+)", file_path.name):
             data_type, frame_str, rig, subcam, suffix = match.groups()
             output[data_type][suffix][rig][subcam][frame_str] = str(file_path.relative_to(base_folder))
             max_frame = max(max_frame, int(frame_str))
@@ -68,7 +71,7 @@ def what_is_missing(summary):
         for subcam in all_subcams:
             gt_frame_keys = set(summary["SurfaceNormal"]["png"][rig][subcam].keys())
             image_frame_keys = set(summary["SurfaceNormal"]["png"][rig][subcam].keys())
-            for frame in range(1, max_frame+1):
+            for frame in range(1, max_frame):
                 if f"{frame:04d}" not in gt_frame_keys:
                     logs.append(f"Ground truth is missing for frame {frame}")
                 if f"{frame:04d}" not in image_frame_keys:
