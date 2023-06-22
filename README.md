@@ -86,6 +86,14 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save
 ```
 ../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
 ```
+3. (Optional) Summarize all files into a single JSON
+```
+python tools/summarize.py outputs/helloworld # creating outputs/helloworld/summary.json
+```
+4. (Optional) Select for segmentation masks of certain tags, e.g. cactus
+```
+python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
+```
 
 </details>
 
