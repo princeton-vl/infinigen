@@ -11,6 +11,5 @@ camera_selection_preprocessing.terrain_tags_ratio = {("altitude", 16, 1e9): (0.0
 
 compose_scene.ground_creatures_chance = 0.2
 compose_scene.ground_creature_registry = [
-    (@HerbivoreFactory, 0.1),
     (@SnakeFactory, 0.9)
 ]
