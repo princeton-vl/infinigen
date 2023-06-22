@@ -17,7 +17,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB +
     - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-Windows users should refer to the **"Installation on Windows using WSL"** dropdown instead.
+We are working on support for rendering with AMD GPUs. Windows users should refer to the **"Installation on Windows using WSL"** dropdown instead.
 
 **Run these commands to get started**
 ```
