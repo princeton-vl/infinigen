@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.33"
+#define VERSION "1.34"
 
 using std::cout, std::cerr, std::endl;
 
@@ -217,9 +217,9 @@ int main(int argc, char *argv[]) {
     const auto camera_dir = input_dir / frame_str / "cameras";
     assert_exists(camera_dir);
     for (const auto &entry : fs::directory_iterator(camera_dir)){
-        const auto matches = match_regex("T([0-9]+)_([0-9]+)_([0-9]+)", entry.path().stem().string());
+        const auto matches = match_regex("T_([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
         if (!matches.empty()){
-            const auto output_suffix = match_regex("T([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string())[1];
+            const auto output_suffix = matches[1];
             camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
         }
     }
@@ -304,7 +304,7 @@ int main(int argc, char *argv[]) {
         Save bounding boxes
         */
         {
-            std::ofstream o(output_dir / ("BoundingBoxes_" + cd.frame_string + ".json"));
+            std::ofstream o(output_dir / ("Objects_" + cd.frame_string + ".json"));
             o << std::setw(4) << all_bboxes << std::endl;
         }
 

@@ -75,6 +75,7 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
     json output = {
         {"model matrices", json_serializable_model_matrices},
         {"tags", std::vector<int>(unique_tags.begin(), unique_tags.end())},
+        {"name", name},
         {"object index", obj_index}
     };
 
