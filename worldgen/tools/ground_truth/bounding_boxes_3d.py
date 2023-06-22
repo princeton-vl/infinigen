@@ -111,7 +111,7 @@ if __name__ == "__main__":
                             sign = np.cross(points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0], points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0])
                             sign = sign * np.array([-1, 1, 1, -1, -1, 1])
 
-                            gen = np.random.RandomState([bbox['object index'], int(instance_id)])
+                            gen = np.random.RandomState([bbox['object index'], int(instance_id)+(2**31)])
                             color = (np.asarray(colorsys.hsv_to_rgb(gen.uniform(0, 1), gen.uniform(0.1, 1), 1)) * 255).astype(np.uint8).tolist()
                             for is_visible, indices in zip(sign < 0, faces):
                                 if is_visible:
