@@ -1,10 +1,16 @@
 // Copyright (c) Princeton University.
-// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+// This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 // Authors: Lahav Lipson
 // Date Signed: May 2 2023
 
 #include <glad/glad.h>
+#if SYSTEM_NUM == 0
+    #include <EGL/egl.h>
+    #include <EGL/eglext.h>
+#elif SYSTEM_NUM == 1
+    #include <GLFW/glfw3.h>
+#endif
 #include <Eigen/Dense>
 #include <argparse/argparse.hpp>
 #include <iostream>
@@ -17,8 +23,6 @@
 #include <regex>
 #include <math.h>
 #include <indicators/progress_bar.hpp>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include "shader.hpp"
 #include "blender_object.hpp"
@@ -28,10 +32,11 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.32"
+#define VERSION "1.33"
 
 using std::cout, std::cerr, std::endl;
 
+#if SYSTEM_NUM == 0
 static const EGLint configAttribs[] = {
     EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
     EGL_BLUE_SIZE, 8,
@@ -41,7 +46,17 @@ static const EGLint configAttribs[] = {
     EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
     EGL_NONE,
     EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
-};    
+};
+#elif SYSTEM_NUM == 1
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
+}
+#endif
 
 template <typename T>
 std::vector<T> read_buffer(GLenum color_attachment, const int width, const int height){
@@ -60,27 +75,32 @@ std::vector<T> read_buffer(GLenum color_attachment, const int width, const int h
     return pixels;
 }
 
+// From https://stackoverflow.com/a/10791845/5057543
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
+
 int main(int argc, char *argv[]) {
-    const auto source_directory = fs::canonical("/proc/self/exe").parent_path().parent_path();
+
+    const fs::path source_directory = XSTR(PROJECT_SOURCE_DIR) ;
     const auto cpp_path = source_directory / "main.cpp";
-    if (fs::exists(cpp_path)){
-        std::ifstream t(cpp_path.c_str());
-        std::stringstream buffer;
-        buffer << t.rdbuf();
-        const auto file_text = buffer.str();
-        const std::regex regex{"VERSION \\\"([0-9\\.]+)\\\""};
-        std::smatch m;
-        if ((std::regex_search(file_text, m, regex)) && (VERSION != m[1])){
-            std::cerr << "Error: The process_mesh executable is out-of-date, you need to re-compile it." << std::endl;
-            exit(1);
-        }
+    assert_exists(cpp_path);
+    std::ifstream t(cpp_path.c_str());
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    const auto file_text = buffer.str();
+    const std::regex regex{"VERSION \\\"([0-9\\.]+)\\\""};
+    std::smatch m;
+    if ((std::regex_search(file_text, m, regex)) && (VERSION != m[1])){
+        std::cerr << "Error: The process_mesh executable is out-of-date, you need to re-compile it." << std::endl;
+        exit(1);
     }
 
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", true);
 
     argparse::ArgumentParser program("main", VERSION);
-    program.add_argument("--width").required().help("Width of output").scan<'i', int>();
-    program.add_argument("--height").required().help("Height of output").scan<'i', int>();
+    program.add_argument("--width").default_value(1920).help("Width of output").scan<'i', int>();
+    program.add_argument("--height").default_value(1080).help("Height of output").scan<'i', int>();
     program.add_argument("--frame").required().help("Current frame").scan<'i', int>();
     program.add_argument("-in", "--input_dir").required().help("The input/output dir");
     program.add_argument("-out", "--output_dir").required().help("The input/output dir");
@@ -100,49 +120,89 @@ int main(int argc, char *argv[]) {
         cout << "The image size [" << buffer_width << " x " << buffer_height << "] is too large." << endl;
         return 1;
     }
-    static const EGLint pbufferAttribs[] = {
-        EGL_WIDTH, buffer_width,
-        EGL_HEIGHT, buffer_height,
-        EGL_NONE,
-    };
 
-    EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    // Linux (works headless)
+    #if SYSTEM_NUM == 0
 
-    EGLint major, minor;
+        static const EGLint pbufferAttribs[] = {
+            EGL_WIDTH, buffer_width,
+            EGL_HEIGHT, buffer_height,
+            EGL_NONE,
+        };
 
-    EGLBoolean res = eglInitialize(eglDpy, &major, &minor);
-    assert (res != EGL_FALSE);
+        EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-    // 2. Select an appropriate configuration
-    EGLint numConfigs;
-    EGLConfig eglCfg;
+        EGLint major, minor;
 
-    eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
+        EGLBoolean res = eglInitialize(eglDpy, &major, &minor);
+        assert (res != EGL_FALSE);
 
-    // 3. Create a surface
-    EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs); // eglSurf
+        // 2. Select an appropriate configuration
+        EGLint numConfigs;
+        EGLConfig eglCfg;
 
-    // 4. Bind the API
-    eglBindAPI(EGL_OPENGL_API);
+        eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
 
-    // 5. Create a context and make it current
-    const EGLint GiveMeGLES2[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_CONTEXT_CLIENT_VERSION, 4,
-        EGL_CONTEXT_CLIENT_VERSION, 4,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, 
-        EGL_NONE
-    };
+        // 3. Create a surface
+        EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs); // eglSurf
 
-    EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);//GiveMeGLES2);
+        // 4. Bind the API
+        eglBindAPI(EGL_OPENGL_API);
 
-    eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+        // 5. Create a context and make it current
+        const EGLint GiveMeGLES2[] = {
+            EGL_CONTEXT_CLIENT_VERSION, 2,
+            EGL_CONTEXT_CLIENT_VERSION, 4,
+            EGL_CONTEXT_CLIENT_VERSION, 4,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, 
+            EGL_NONE
+        };
 
-    GLADloadproc load = (GLADloadproc)eglGetProcAddress;
-    if (!gladLoadGLLoader(load)){
-        cerr << "Failed to initialize GLAD" << endl;
-        return 188;
-    }
+        EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);//GiveMeGLES2);
+
+        eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+
+        GLADloadproc load = (GLADloadproc)eglGetProcAddress;
+        if (!gladLoadGLLoader(load)){
+            cerr << "Failed to initialize GLAD" << endl;
+            return 188;
+        }
+
+    // MacOS, Windows?
+    #elif SYSTEM_NUM == 0
+
+        // glfw: initialize and configure
+        // ------------------------------
+        glfwInit();
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        #ifdef __APPLE__
+        std::cout << "Apple!" << std::endl;
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        #endif
+
+        // glfw window creation
+        // --------------------
+        GLFWwindow* window = glfwCreateWindow(buffer_width, buffer_height, "LearnOpenGL", NULL, NULL);
+        if (window == NULL)
+        {
+            std::cout << "Failed to create GLFW window" << std::endl;
+            glfwTerminate();
+            return -1;
+        }
+        glfwMakeContextCurrent(window);
+        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+        // glad: load all OpenGL function pointers
+        // ---------------------------------------
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
+            std::cout << "Failed to initialize GLAD" << std::endl;
+            return -1;
+        }
+    #endif
 
     const fs::path input_dir(program.get<std::string>("--input_dir"));
     const fs::path output_dir(program.get<std::string>("--output_dir"));

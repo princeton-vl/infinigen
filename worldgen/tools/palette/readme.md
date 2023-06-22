@@ -30,7 +30,7 @@ After manually comemnt out them, you have:
 
 ![](demo4.png)
 
-Then you move the ready palatte to location: `procgen/worldgen/config/palette`
+Then you move the ready palatte to location: `infinigen/worldgen/config/palette`
 
 ## Step 3
 

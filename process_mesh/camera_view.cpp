@@ -1,5 +1,5 @@
 // Copyright (c) Princeton University.
-// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+// This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 // Authors: Lahav Lipson
 // Date Signed: May 2 2023
@@ -50,7 +50,7 @@ unsigned int CameraView::create_framebuffer(){
 const Matrix4f FLIP_Y_Z = Eigen::Vector4f({1,-1,-1,1}).asDiagonal();
 
 float CameraView::calc_resolution_scale(){
-    const auto image_shape = get_png_size(frames_directory / ("Image" + frame_string + ".png"));
+    const auto image_shape = get_png_size(frames_directory / ("Image_" + frame_string + ".png"));
     RASSERT((buffer_width % image_shape[0]) == 0);
     RASSERT((buffer_height % image_shape[1]) == 0);
     RASSERT((buffer_height / image_shape[1]) == (buffer_width / image_shape[0]));

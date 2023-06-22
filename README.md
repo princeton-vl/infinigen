@@ -4,6 +4,25 @@ Please visit our website, [https://infinigen.org](https://infinigen.org)
 
 [![Infinigen Trailer](images/video_thumbnail.png)](https://youtu.be/6tgspeI-GHY)
 
+If you use Infinigen in your work, please cite our [academic paper]([https://arxiv.org/abs/2306.09310](https://arxiv.org/abs/2306.09310)):
+
+<h3 align="center"><a href="https://arxiv.org/pdf/2306.09310">Infinite Photorealistic Worlds using Procedural Generation</a></h3>
+<p align="center">
+<a href="http://araistrick.com/">Alexander Raistrick</a>*, <a href="https://www.lahavlipson.com/">Lahav Lipson</a>*, <a href="https://mazeyu.github.io/">Zeyu Ma</a>* (*equal contribution, alphabetical order) <br>
+<a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>, <a href="https://www.cs.princeton.edu/~mingzhew">Mingzhe Wang</a>, <a href="https://zuoym15.github.io/">Yiming Zuo</a>, <a href="https://kkayan.com/">Karhan Kayan</a>, <a href="https://hermera.github.io/">Hongyu Wen</a>, <a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, <br>
+<a href="https://pvl.cs.princeton.edu/people.html">Yihan Wang</a>, <a href="http://www-personal.umich.edu/~alnewell/index.html">Alejandro Newell</a>, <a href="https://heilaw.github.io/">Hei Law</a>, <a href="https://imankgoyal.github.io/">Ankit Goyal</a>, <a href="https://yangky11.github.io/">Kaiyu Yang</a>, <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+Conference on Computer Vision and Pattern Recognition (CVPR) 2023
+</p>
+
+```
+@inproceedings{infinigen2023infinite,
+  title={Infinite Photorealistic Worlds Using Procedural Generation},
+  author={Raistrick, Alexander and Lipson, Lahav and Ma, Zeyu and Mei, Lingjie and Wang, Mingzhe and Zuo, Yiming and Kayan, Karhan and Wen, Hongyu and Han, Beining and Wang, Yihan and Newell, Alejandro and Law, Hei and Goyal, Ankit and Yang, Kaiyu and Deng, Jia},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={12630--12641},
+  year={2023}
+}
+```
 
 ## Installation
 
@@ -22,6 +41,7 @@ We are working on support for rendering with AMD GPUs. Windows users should refe
 **Run these commands to get started**
 ```
 git clone https://github.com/princeton-vl/infinigen.git
+cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
 bash install.sh
@@ -87,7 +107,7 @@ bash install.sh
 
 The above default install instructions enable you to run the full Infinigen scene generation system
 
-This section will allow you to use our own `--pipeline_configs opengl_gt` ground truth extraction config, which avoids rendering twice in blender, and provides additional labels such occlusion boundaries, sub-object segmentation, 3D flow and easy 3D bounding boxes. If you do not need ground truth, or do not need these features,skip this section and use `--pipeline_configs blender_gt` as shown in [Generate image(s) in one command](#generate-images-in-one-command). This section is intended for computer vision researchers and power-users, and is currently *only supported on Ubuntu*. 
+This section will allow you to use our own `--pipeline_configs opengl_gt` ground truth extraction config, which avoids rendering twice in blender and provides additional labels such as occlusion boundaries, sub-object segmentation, 3D flow and easy 3D bounding boxes. If you do not need these features, skip this section and use `--pipeline_configs blender_gt` as shown in [Generate image(s) in one command](#generate-images-in-one-command). This section is intended for computer vision researchers and power-users. 
 
 ```
 git submodule init
@@ -103,6 +123,17 @@ Finally, run
 ```
 bash install.sh opengl
 ```
+
+To run OpenGL on the "hello world" example, the two addition commands are:
+1. Export the geometry from blender to disk
+```
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+```
+2. Generate dense annotations
+```
+../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
+```
+
 </details>
 
 <details closed>
@@ -130,37 +161,37 @@ Follow the [Windows installation instructions](#installation) and install [Docke
  :warning: **Known issue** :warning: : We are actively fixing an issue which causes commands not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 <p align="center">
-  <img src="images/Image0001_00_00.png" width="330" />
-  <img src="images/Depth0001_00_00.png" width="330" /> 
+  <img src="images/Image0048_00_00.png" width="330" />
+  <img src="images/Depth0048_00_00.png" width="330" /> 
 </p>
 
 This guide will show you how to generate an image and it's corresponding depth ground-truth, similar to those shown above.
 
 #### Generate a scene step by step
-Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate.
+Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
 
 ```
 cd worldgen
 mkdir outputs
 
 # Generate a scene layout
-$BLENDER --noaudio --background --python generate.py -- --seed 0 --task coarse -g desert simple --output_folder outputs/helloworld/coarse
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task coarse -g desert simple --output_folder outputs/helloworld/coarse
 
 # Populate unique assets
-$BLENDER --noaudio --background --python generate.py -- --seed 0 --task populate fine_terrain -g desert simple --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task populate fine_terrain -g desert simple --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
 
 # Render RGB images
-$BLENDER --noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
 
 # Render again for accurate ground-truth
-$BLENDER --noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
-Stdout logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
+Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 #### Generate image(s) in one command
 
-We provide `tools/manage_datagen_jobs.py`, a utility to run these or similar steps for you on many random seeds.
+We provide `tools/manage_datagen_jobs.py`, a utility which runs these or similar steps automatically.
 
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 
@@ -182,7 +213,9 @@ If you intend to use CUDA-accelerated terrain (`--pipeline_configs enable_gpu`),
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
 
-## Experimenting with Infinigen
+## Exploring the Infinigen Codebase
+
+Infinigen has evolved significantly since the version described in our CVPR paper. It now features some procedural code obtained from the internet under CC-0 licenses, which are marked with code comments where applicable - no such code was present in the system for the CVPR version.
 
 Infinigen is an ongoing research project, and has some known issues. Through experimenting with Infinigen's code and config files, you will find scenes which crash or cannot be handled on your hardware. Infinigen scenes are randomized, with a long tail of possible scene complexity and thus compute requirements. If you encounter a scene that does not fit your computing hardware, you should try other seeds, use other config files, or follow up for help.
 
@@ -190,12 +223,16 @@ Infinigen is an ongoing research project, and has some known issues. Through exp
 
 Infinigen will evolve rapidly over the coming months. Follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
+There are some aspects of the code used for our launch video that are still being polished and will be released as soon as possible, notably:
+- Fluid simulations for dynamic water and fire
+- Some categories of plants, namely snake plants and spider plants
+
 ### Tutorials & Documentation
 We will add comprehensive tutorials and documentation for all aspects of Infinigen. This README is **preliminary**, and our docs will be expanded to cover all aspects of the project in detail. 
 
 ### Contributing
 We welcome contributions! You can contribute in many ways:
-- **Contribute code to this repository** - we welcome code contributions. More guidelines coming soon.
+- **Contribute code to this repository** - We welcome code contributions. More guidelines coming soon.
 - **Contribute procedural generators** - `worldgen/nodes/node_transpiler/dev_script.py` provides tools to convert artist-friendly [Blender Nodes](https://docs.blender.org/manual/en/2.79/render/blender_render/materials/nodes/introduction.html) into python code. Tutorials and guidelines coming soon.
 - **Contribute pre-generated data** - Anyone can contribute their computing power to create data and share it with the community. Please stay tuned for a repository of pre-generated data.
 

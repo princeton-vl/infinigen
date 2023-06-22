@@ -1,5 +1,5 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: 
 # - Alex Raistrick: refactor, local rendering, video rendering
@@ -1014,7 +1014,7 @@ if __name__ == "__main__":
         if 'BLENDER' in os.environ:
             BLENDER_PATH = os.environ['BLENDER']
         else:
-            BLENDER_PATH = '../blender/blender' # assuming we run from procgen/worldgen
+            BLENDER_PATH = '../blender/blender' # assuming we run from infinigen/worldgen
     else:
         BLENDER_PATH = args.blender_path
     if not os.path.exists(BLENDER_PATH):
