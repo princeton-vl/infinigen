@@ -36,7 +36,7 @@ Installation is tested and working on the following platforms:
     - RAM: 16GB +
     - GPU options tested: CPU Only, RTX-2070 Max-Q
 
-We are working on support for rendering with AMD GPUs. Windows users should refer to the **"Installation on Windows using WSL"** dropdown instead.
+We are working on support for rendering with AMD GPUs. Windows users should refer to the **"Installation on Windows using WSL"** dropdown.
 
 **Run these commands to get started**
 ```
@@ -91,15 +91,8 @@ wget https://repo.anaconda.com/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
 bash Anaconda3-2023.03-1-Linux-x86_64.sh
 ```
 
-Then run these commands to get started
+Then run the standard setup commands above **inside WSL**.
 
-```
-git clone https://github.com/princeton-vl/infinigen.git
-cd infinigen
-conda create --name infinigen python=3.10
-conda activate infinigen
-bash install.sh
-```
 </details>
 
 <details closed>
