@@ -9,14 +9,18 @@ XAUTH=/tmp/.docker.xauth
 default:
 
 docker-build:
+	git submodule init
+	git submodule update
 	docker build \
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) .
 
 docker-build-cuda:
+	git submodule init
+	git submodule update
 	docker build \
 		--tag $(DOCKER_TAG) \
-		--progress $(DOCKER_BUILD_PROGRESS) \
+		--progress $(DOCKER_BUILD_PROGRESS) \ci
 		--build-arg APP_IMAGE=nvidia/cuda:12.0.0-devel-ubuntu22.04 .
 
 docker-clean:

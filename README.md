@@ -79,13 +79,15 @@ make docker-build
 make docker-setup
 make docker-run
 ```
-To disable GPU passthrough use `make docker-run-no-gpu`
-To disable OpenGL ground truth use `docker-run-no-opengl` 
-To disable both, use `docker-run-no-gpu-opengl` 
+To enable CUDA compilation, use `make docker-build-cuda` instead of `make docker-build`
+
+To run without GPU passthrough use `make docker-run-no-gpu`
+To run without OpenGL ground truth use `docker-run-no-opengl` 
+To run without either, use `docker-run-no-gpu-opengl` 
 
 Note: `make docker-setup` can be skipped if not using OpenGL.
 
-Use `exit` to exit the container and `docker exec -it infinigen bash` to re-enter the container as needed.
+Use `exit` to exit the container and `docker exec -it infinigen bash` to re-enter the container as needed. Remember to `conda activate infinigen` before running scenes.
 
 
 **Docker on Windows**
