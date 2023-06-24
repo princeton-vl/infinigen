@@ -73,15 +73,20 @@ bash install.sh opengl
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>
 
 **Docker on Linux**
-
+In `/infinigen/`
 ```
-cd infinigen/docker
-bash make_docker.sh
-docker exec -it infinigen bash
-source setup.sh
+make docker-build
+make docker-setup
+make docker-run
 ```
+To disable GPU passthrough use `make docker-run-no-gpu`
+To disable OpenGL ground truth use `docker-run-no-opengl` 
+To disable both, use `docker-run-no-gpu-opengl` 
 
-To disable GPU passthrough use `bash make_docker.sh --noGPU`
+Note: `make docker-setup` can be skipped if not using OpenGL.
+
+Use `exit` to exit the container and `docker exec -it infinigen bash` to re-enter the container as needed.
+
 
 **Docker on Windows**
 Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) and [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow instructions as above.

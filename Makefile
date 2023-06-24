@@ -54,10 +54,40 @@ docker-run:
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" bash
 
+	docker exec infinigen /bin/bash -c worldgen/tools/compile_opengl.sh
 
-docker-run-no-gpu:
-	echo "Launching Docker image without GPU passthrough"
-	docker run -it --rm --privileged --net=host --ipc=host \
+docker-run-no-opengl:
+	echo "Launching Docker image without OpenGL ground truth"
+	docker run -td --rm --privileged --net=host --ipc=host \
+		--name="infinigen" \
+		--gpus=all \
+		--env NVIDIA_DISABLE_REQUIRE=1 \
 		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
 		"$(DOCKER_TAG)" /bin/bash
+
+docker-run-no-gpu:
+	echo "Launching Docker image without GPU passthrough"
+	docker run -td --privileged --net=host --ipc=host \
+		--name="infinigen" \
+		-e "BLENDER=/opt/infinigen/blender/blender" \
+		-e "DISPLAY=$(DISPLAY)" \
+		-e "QT_X11_NO_MITSHM=1" \
+		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-e "XAUTHORITY=$(XAUTH)" \
+		-e ROS_IP=127.0.0.1 \
+		--cap-add=SYS_PTRACE \
+		-v /etc/group:/etc/group:ro \
+		"$(DOCKER_TAG)" /bin/bash \
+
+	docker exec infinigen /bin/bash -c worldgen/tools/compile_opengl.sh
+
+docker-run-no-gpu-opengl:
+	echo "Launching Docker image without GPU passthrough or OpenGL"
+	docker run -td --rm --privileged --net=host --ipc=host \
+		--name="infinigen" \
+		-e "BLENDER=/opt/infinigen/blender/blender" \
+		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		"$(DOCKER_TAG)" /bin/bash
+	

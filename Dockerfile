@@ -17,6 +17,6 @@ RUN apt-get update -yq \
 
 RUN mkdir /opt/infinigen
 WORKDIR /opt/infinigen
-
 COPY . .
+RUN chmod +x worldgen/tools/compile_opengl.sh
 RUN ./install.sh
