@@ -13,6 +13,12 @@ docker-build:
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) .
 
+docker-build-cuda:
+	docker build \
+		--tag $(DOCKER_TAG) \
+		--progress $(DOCKER_BUILD_PROGRESS) \
+		--build-arg APP_IMAGE=nvidia/cuda:12.0.0-devel-ubuntu22.04 .
+
 docker-clean:
 	echo "Removing infinigen docker image if already exists..."
 	-docker rmi -f $(DOCKER_TAG)
