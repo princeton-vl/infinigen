@@ -354,20 +354,20 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
     scene_specified = any(s in scene_types or s.startswith("figure") for s in args.gin_config)
 
     weights = {
-        "kelp_forest": 1,
+        "kelp_forest": 0.3,
         "coral_reef": 1,
-        "forest": 1,
-        "river": 1,
+        "forest": 2,
+        "river": 2,
         "desert": 1,
         "coast": 1,
         "cave": 1,
         "mountain": 1,
-        "canyon": 0.5,
-        "plain": 0.5,
-        "cliff": 0.5,
-        "arctic": 0.25,
-        "snowy_mountain": 0.25,
-}
+        "canyon": 1,
+        "plain": 1,
+        "cliff": 1,
+        "arctic": 1,
+        "snowy_mountain": 1,
+    }
     assert all(k in scene_types for k in weights)
 
     scene_types = [s for s in scene_types if s in weights]

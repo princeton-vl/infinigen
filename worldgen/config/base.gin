@@ -16,7 +16,7 @@ util.logging.create_text_file.log_dir = %LOG_DIR
 compose_scene.inview_distance = 70
 placement.populate_all.dist_cull = 70
 compose_scene.near_distance = 20
-compose_scene.center_distance = 20
+compose_scene.center_distance = 35
 
 compose_scene.land_domain_tags = 'landscape,-liquid_covered,-cave,-beach'
 compose_scene.nonliving_domain_tags = 'landscape,-cave'

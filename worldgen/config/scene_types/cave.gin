@@ -20,7 +20,7 @@ surface.registry.liquid_collection = [
 
 compose_scene.bug_swarm_chance=0.0
 
-compose_scene.ground_creatures_chance = 0.1
+compose_scene.ground_creatures_chance = 0.0
 compose_scene.ground_creature_registry = [
     (@CarnivoreFactory, 1),
     (@HerbivoreFactory, 0.3),

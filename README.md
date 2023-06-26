@@ -133,15 +133,22 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>
 
 **Docker on Linux**
-
+In `/infinigen/`
 ```
-cd infinigen/docker
-bash make_docker.sh
-docker exec -it infinigen bash
-source setup.sh
+make docker-build
+make docker-setup
+make docker-run
 ```
+To enable CUDA compilation, use `make docker-build-cuda` instead of `make docker-build`
 
-To disable GPU passthrough use `bash make_docker.sh --noGPU`
+To run without GPU passthrough use `make docker-run-no-gpu`
+To run without OpenGL ground truth use `docker-run-no-opengl` 
+To run without either, use `docker-run-no-gpu-opengl` 
+
+Note: `make docker-setup` can be skipped if not using OpenGL.
+
+Use `exit` to exit the container and `docker exec -it infinigen bash` to re-enter the container as needed. Remember to `conda activate infinigen` before running scenes.
+
 
 **Docker on Windows**
 
