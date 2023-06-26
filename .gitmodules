@@ -25,3 +25,6 @@
 [submodule "process_mesh/dependencies/stb"]
 	path = process_mesh/dependencies/stb
 	url = https://github.com/nothings/stb.git
+[submodule "process_mesh/dependencies/glfw"]
+	path = process_mesh/dependencies/glfw
+	url = https://github.com/glfw/glfw.git
