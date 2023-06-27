@@ -114,6 +114,7 @@ Use `exit` to exit the container and `docker exec -it infinigen bash` to re-ente
 
 
 **Docker on Windows**
+
 Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) and [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow instructions as above.
 
 </details>
