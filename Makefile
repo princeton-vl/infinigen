@@ -20,7 +20,7 @@ docker-build-cuda:
 	git submodule update
 	docker build \
 		--tag $(DOCKER_TAG) \
-		--progress $(DOCKER_BUILD_PROGRESS) \ci
+		--progress $(DOCKER_BUILD_PROGRESS) \
 		--build-arg APP_IMAGE=nvidia/cuda:12.0.0-devel-ubuntu22.04 .
 
 docker-clean:
