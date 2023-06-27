@@ -67,7 +67,7 @@ In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, re
 
 In Powershell, run `ubuntu` to enter the Linux subsystem.
 
-Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the optional OpenGL ground truth will not work. Scene and asset generation will still run normally. 
+Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the optional OpenGL ground truth will not work (refer to the "OpenGL Ground Truth Installation" dropdown for additional OpenGL install instructions).
 
 To enable GPU usage, run these commands to install CUDA in WSL2. This step can be skipped if not using GPU acceleration. For troubleshooting and more information, refer to the [NVIDIA docs](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2).
 ```
