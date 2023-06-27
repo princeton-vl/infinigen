@@ -35,7 +35,7 @@ public:
 
 Eigen::Tensor<unsigned char, 3> compute_flow_viz(const Eigen::Tensor<double, 3> &input_image);
 
-Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<double, 2> &input_image, const double &min_percentile=0, const double &max_percentile=1, const double &minval=1e-3, const clrmap &type=clrmap::Jet);
+Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<double, 2> &input_image, const double &min_percentile, const double &max_percentile, const double &minval=1e-3, const clrmap &type=clrmap::Jet);
 
 Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<int, 2> &input_image);
 

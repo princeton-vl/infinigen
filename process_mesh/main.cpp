@@ -382,17 +382,17 @@ int main(int argc, char *argv[]) {
         */
         {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT6, buffer_width, buffer_height);
-            Eigen::Tensor<int, 2> instance_seg(buffer_height, buffer_width);
+            Eigen::Tensor<size_t, 2> instance_seg(buffer_height, buffer_width);
             instance_seg.setZero();
             Eigen::Tensor<int, 2> object_seg(buffer_height, buffer_width);
             object_seg.setZero();
             for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying object & instance segmentation masks")){
-                instance_seg(o.y, o.x) = pixels[o.j];
-                object_seg(o.y, o.x) = pixels[o.j+1];
+                instance_seg(o.y, o.x) = InstanceID{pixels[o.j], pixels[o.j+1]}.as_ulong();
+                object_seg(o.y, o.x) = pixels[o.j+2];
                 o.progressbar();
             }
             save_npy(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".npy"), instance_seg);
-            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg));
+            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg.cast<int>()));
             save_npy(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".npy"), object_seg);
             imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg));
         }

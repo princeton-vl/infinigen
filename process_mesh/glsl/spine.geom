@@ -14,7 +14,7 @@ in VS_OUT {
     vec3 pos_cc_next;
     bool has_flow;
     int vertex_id;
-    int instance_id;
+    ivec2 instance_id;
     int tag;
 } gs_in[];
 

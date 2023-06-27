@@ -14,7 +14,7 @@ struct InstanceID {
     size_t as_ulong() const {
         const unsigned int n1ui = n1;
         const unsigned int n2ui = n2;
-        return (((size_t) n1ui) << 32) | ((size_t) n2ui);
+        return (((size_t) n2ui) << 32) | ((size_t) n1ui);
     }
 };
 

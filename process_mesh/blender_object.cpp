@@ -126,7 +126,7 @@ BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const Buff
         glBindBuffer(GL_ARRAY_BUFFER, VBO_instance_ids);
         glBufferData(GL_ARRAY_BUFFER, num_instances * sizeof(InstanceID), instance_ids.data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(10);
-        glVertexAttribIPointer(10, 1, GL_INT, sizeof(InstanceID), 0);
+        glVertexAttribIPointer(10, 2, GL_INT, sizeof(InstanceID), 0);
         glVertexAttribDivisor(10, 1);
 
         set_regular_buffer(VBO_tag, tag_lookup, 11, 1, 1);
