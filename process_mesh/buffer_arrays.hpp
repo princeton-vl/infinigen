@@ -7,6 +7,31 @@
 #include "utils.hpp"
 #include "io.hpp"
 
+struct InstanceID {
+    const int n1, n2;
+
+    // https://codereview.stackexchange.com/a/2608
+    size_t as_ulong() const {
+        const unsigned int n1ui = n1;
+        const unsigned int n2ui = n2;
+        return (((size_t) n1ui) << 32) | ((size_t) n2ui);
+    }
+};
+
+inline bool operator==(const InstanceID& lhs, const InstanceID& rhs)
+{
+    return lhs.as_ulong() == rhs.as_ulong();
+}
+
+template <>
+struct std::hash<InstanceID>
+{
+  std::size_t operator()(const InstanceID& k) const
+  {
+    return hash<int>()(k.as_ulong());
+  }
+};
+
 class npz {
 private:
   cnpy::npz_t lookup;
@@ -50,7 +75,7 @@ public:
     std::vector<int> tag_lookup;
     std::vector<float> lookup;
     std::vector<unsigned int> indices;
-    std::unordered_map<int, Eigen::Matrix4f> model_mats;
+    std::unordered_map<InstanceID, Eigen::Matrix4f> model_mats;
 
     BufferArrays(){}
 
@@ -69,8 +94,8 @@ public:
         return model_mats.empty();
     }
 
-    std::vector<int> get_some_instance_ids(const size_t max_size=std::numeric_limits<size_t>::max()) const {
-        std::vector<int> keys;
+    std::vector<InstanceID> get_some_instance_ids(const size_t max_size=std::numeric_limits<size_t>::max()) const {
+        std::vector<InstanceID> keys;
         for (const auto &kv : model_mats){
             if ((keys.size() * sizeof_instance()) < max_size)
                 keys.push_back(kv.first);
@@ -78,7 +103,7 @@ public:
         return keys;
     }
 
-    void remove_instances(const std::vector<int> &keys) {
+    void remove_instances(const std::vector<InstanceID> &keys) {
         for (const auto &key : keys){
             const auto keyval = model_mats.find(key);
             if (keyval != model_mats.end())
@@ -86,7 +111,7 @@ public:
         }
     }
 
-    std::vector<Eigen::Matrix4f> get_instances(const std::vector<int> &keys) const {
+    std::vector<Eigen::Matrix4f> get_instances(const std::vector<InstanceID> &keys) const {
         std::vector<Eigen::Matrix4f> matrix_worlds_subset;
         for (const auto &key : keys){
             const auto keyval = model_mats.find(key);

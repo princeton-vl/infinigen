@@ -46,7 +46,7 @@ void BaseBlenderObject::set_matrix_buffer(unsigned int &buffer, const std::vecto
         glVertexAttribDivisor(ii+attrib_idx, 1);
 }
 
-json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, const std::vector<float> &vertex_lookup, const std::vector<int> &instance_ids, const std::vector<Eigen::Matrix4f> &model_matrices, const std::vector<int> &tag_lookup, const int &attrib_stride){
+json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, const std::vector<float> &vertex_lookup, const std::vector<InstanceID> &instance_ids, const std::vector<Eigen::Matrix4f> &model_matrices, const std::vector<int> &tag_lookup, const int &attrib_stride){
     constexpr float inf = std::numeric_limits<float>::infinity();
     Eigen::Vector3f max({-inf, -inf, -inf}), min({inf, inf, inf});
     for (const auto &idx : indices){
@@ -59,7 +59,7 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
     int idx = 0;
     std::unordered_map<std::string, json> json_serializable_model_matrices;
     for (const auto &m : model_matrices){
-        const auto instance_id = std::to_string(instance_ids[idx++]);
+        const auto instance_id = std::to_string(instance_ids[idx++].as_ulong());
         json_serializable_model_matrices[instance_id] = {
             {m(0,0), m(0,1), m(0,2), m(0,3)},
             {m(1,0), m(1,1), m(1,2), m(1,3)},
@@ -90,7 +90,7 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
     return output;
 }
 
-BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride)
+BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride)
  : num_verts(current_buf.indices.size()), type(tp), name(object_info.name), num_instances(instance_ids.size()), obj_index(object_info.index) {
 
         const std::vector<Eigen::Matrix4f> &model_matrices = current_buf.get_instances(instance_ids);
@@ -121,11 +121,12 @@ BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const Buff
         set_regular_buffer(VBO, vertex_lookup, 8, 3, attrib_stride);
         set_regular_buffer(VBO_next, vertex_lookup_next, 9, 3, attrib_stride);
 
+        static_assert(sizeof(int)*2 == sizeof(InstanceID));
         glGenBuffers(1, &VBO_instance_ids);
         glBindBuffer(GL_ARRAY_BUFFER, VBO_instance_ids);
-        glBufferData(GL_ARRAY_BUFFER, num_instances * sizeof(int), instance_ids.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, num_instances * sizeof(InstanceID), instance_ids.data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(10);
-        glVertexAttribIPointer(10, 1, GL_INT, sizeof(int), 0);
+        glVertexAttribIPointer(10, 1, GL_INT, sizeof(InstanceID), 0);
         glVertexAttribDivisor(10, 1);
 
         set_regular_buffer(VBO_tag, tag_lookup, 11, 1, 1);
@@ -163,7 +164,7 @@ BaseBlenderObject::~BaseBlenderObject(){
     glDeleteBuffers(7, to_delete);
 }
 
-MeshBlenderObject::MeshBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info)
+MeshBlenderObject::MeshBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info)
  : BaseBlenderObject(current_buf, next_buf, instance_ids, object_info, Mesh, 3) {
     glBindVertexArray(0);
 }
@@ -180,7 +181,7 @@ void MeshBlenderObject::draw(Shader &shader) const {
 }
 
 
-CurvesBlenderObject::CurvesBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info)
+CurvesBlenderObject::CurvesBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info)
  : BaseBlenderObject(current_buf, next_buf, instance_ids, object_info, Hair, 4){
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glEnableVertexAttribArray(12); // Radius
