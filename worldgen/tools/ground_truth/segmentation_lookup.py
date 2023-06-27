@@ -10,10 +10,6 @@ import torch
 import torch_scatter
 from einops import asnumpy, repeat
 from imageio.v3 import imread, imwrite
-from tqdm import tqdm
-
-import os,sys
-sys.path.append(os.getcwd())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -26,22 +22,17 @@ if __name__ == "__main__":
 
     folder_data = json.loads((args.folder / "summary.json").read_text())
 
-    image = imread(args.folder / folder_data["Image"]['png']["00"]["00"][f"{args.frame:04d}"])
-    H, W, _ = image.shape
-
     tag_mask = np.load(args.folder / folder_data["TagSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    tag_mask = cv2.resize(tag_mask, dsize=(W, H), interpolation=cv2.INTER_NEAREST)
-
     instance_segmentation_mask = np.load(args.folder / folder_data["InstanceSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    instance_segmentation_mask = cv2.resize(instance_segmentation_mask, dsize=(W, H), interpolation=cv2.INTER_NEAREST)
-
     object_segmentation_mask = np.load(args.folder / folder_data["ObjectSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    object_segmentation_mask = cv2.resize(object_segmentation_mask, dsize=(W, H), interpolation=cv2.INTER_NEAREST)
-
     combined_mask = np.stack((object_segmentation_mask, instance_segmentation_mask), axis=-1).reshape((-1, 2))
+    H, W = tag_mask.shape
+
+    image = imread(args.folder / folder_data["Image"]['png']["00"]["00"][f"{args.frame:04d}"])
+    image = cv2.resize(image, dsize=(W, H), interpolation=cv2.INTER_LINEAR)
 
     uniq, indices = np.unique(combined_mask, return_inverse=True, axis=0)
-    random_states = [np.random.RandomState(e+(2**31)+6) for e in uniq]
+    random_states = [np.random.RandomState(e.astype(np.uint32)) for e in uniq]
     unique_colors = (np.asarray([colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1) for s in random_states]) * 255).astype(np.uint8)
 
     if args.boxes:

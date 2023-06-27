@@ -59,7 +59,7 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
     int idx = 0;
     std::unordered_map<std::string, json> json_serializable_model_matrices;
     for (const auto &m : model_matrices){
-        const auto instance_id = std::to_string(instance_ids[idx++].as_ulong());
+        const auto instance_id = std::to_string(instance_ids[idx++].as_long());
         json_serializable_model_matrices[instance_id] = {
             {m(0,0), m(0,1), m(0,2), m(0,3)},
             {m(1,0), m(1,1), m(1,2), m(1,3)},

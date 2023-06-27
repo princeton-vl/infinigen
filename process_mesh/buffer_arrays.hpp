@@ -11,7 +11,7 @@ struct InstanceID {
     const int n1, n2;
 
     // https://codereview.stackexchange.com/a/2608
-    size_t as_ulong() const {
+    long as_long() const {
         const unsigned int n1ui = n1;
         const unsigned int n2ui = n2;
         return (((size_t) n2ui) << 32) | ((size_t) n1ui);
@@ -20,7 +20,7 @@ struct InstanceID {
 
 inline bool operator==(const InstanceID& lhs, const InstanceID& rhs)
 {
-    return lhs.as_ulong() == rhs.as_ulong();
+    return lhs.as_long() == rhs.as_long();
 }
 
 template <>
@@ -28,7 +28,7 @@ struct std::hash<InstanceID>
 {
   std::size_t operator()(const InstanceID& k) const
   {
-    return hash<int>()(k.as_ulong());
+    return hash<int>()(k.as_long());
   }
 };
 
