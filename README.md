@@ -153,8 +153,8 @@ Output logs should indicate what the code is working on. Use `--debug` for even 
 We provide `tools/manage_datagen_jobs.py`, a utility which runs these or similar steps automatically.
 
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 
---pipeline_configs local_16GB monocular blender_gt --specific_seed 0 --configs desert simple
+python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0
+--configs desert simple --pipeline_configs local_16GB monocular blender_gt --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
 
 Ready to remove the guardrails? Try the following:
@@ -168,7 +168,7 @@ Ready to remove the guardrails? Try the following:
 
 `--pipeline_configs` determines what compute resources will be used, and what render jobs are necessary for each scene. A list of configs are available in `tools/pipeline_configs`. You must pick one config to determine compute type (ie `local_64GB` or `slurm`) and one to determine the dataset type (such as `monocular` or `monocular_video`). Run `python -m tools.manage_datagen_jobs --help` for more options related to dataset generation.
 
-If you intend to use CUDA-accelerated terrain (`--pipeline_configs enable_gpu`), you must run `install.sh` on a CUDA-enabled machine. 
+If you intend to use CUDA-accelerated terrain (`--pipeline_configs cuda_terrain`), you must run `install.sh` on a CUDA-enabled machine. 
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
 
