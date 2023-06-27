@@ -67,9 +67,9 @@ In Powershell, run `wsl -l -v` to verify that WSL is using version 2. If not, re
 
 In Powershell, run `ubuntu` to enter the Linux subsystem.
 
-Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the OpenGL ground truth will not work. Scene and asset generation will still run normally. **Currently, the OpenGL ground truth is bugged on WSL, so this check can be disregarded**
+Verify that `echo $DISPLAY` returns `:0` in WSL. If not, WSLg was not properly set up. If you had previous installations of WSL/Ubuntu, try uninstalling and doing a fresh install of both. You may proceed without WSLg, but the optional OpenGL ground truth will not work. Scene and asset generation will still run normally. 
 
-To use GPU acceleration on terrain generation, run these commands to install CUDA in WSL2. This step can be skipped if not using GPU acceleration. For troubleshooting and more information, refer to the [NVIDIA docs](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2).
+To enable GPU usage, run these commands to install CUDA in WSL2. This step can be skipped if not using GPU acceleration. For troubleshooting and more information, refer to the [NVIDIA docs](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#cuda-support-for-wsl-2).
 ```
 sudo apt-key del 7fa2af80
 wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
@@ -80,8 +80,6 @@ sudo cp /var/cuda-repo-wsl-ubuntu-12-1-local/cuda-*-keyring.gpg /usr/share/keyri
 sudo apt-get update
 sudo apt-get -y install cuda
 ```
-
-
 
 Install Anaconda in WSL
 ```
@@ -106,6 +104,15 @@ This section will allow you to use our own `--pipeline_configs opengl_gt` ground
 git submodule init
 git submodule update
 sudo apt-get install libglm-dev libglew-dev libglfw3-dev libgles2-mesa-dev zlib1g-dev
+```
+
+If compiling on WSL, additionally run 
+
+```
+sudo apt-get install doxygen
+sudo apt-get install libxinerama-dev
+sudo apt-get install libxcursor-dev
+sudo apt-get install libxi-dev
 ```
 
 If you do not have sudo access, you may attempt the following:
