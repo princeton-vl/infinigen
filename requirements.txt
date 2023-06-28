@@ -27,5 +27,3 @@ google-images-search==1.4.4
 landlab==2.4.1
 scikit-learn
 psutil
-torch
-torch_scatter
