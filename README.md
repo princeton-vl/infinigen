@@ -101,6 +101,7 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query ca
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>
 
 **Docker on Linux**
+
 In `/infinigen/`
 ```
 make docker-build
@@ -110,7 +111,9 @@ make docker-run
 To enable CUDA compilation, use `make docker-build-cuda` instead of `make docker-build`
 
 To run without GPU passthrough use `make docker-run-no-gpu`
+
 To run without OpenGL ground truth use `docker-run-no-opengl` 
+
 To run without either, use `docker-run-no-gpu-opengl` 
 
 Note: `make docker-setup` can be skipped if not using OpenGL.
@@ -119,6 +122,7 @@ Use `exit` to exit the container and `docker exec -it infinigen bash` to re-ente
 
 
 **Docker on Windows**
+
 Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) and [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow instructions as above.
 
 </details>
@@ -161,8 +165,8 @@ Output logs should indicate what the code is working on. Use `--debug` for even 
 We provide `tools/manage_datagen_jobs.py`, a utility which runs these or similar steps automatically.
 
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 
---pipeline_configs local_16GB monocular blender_gt --specific_seed 0 --configs desert simple
+python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0
+--configs desert simple --pipeline_configs local_16GB monocular blender_gt --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
 
 Ready to remove the guardrails? Try the following:
@@ -176,7 +180,7 @@ Ready to remove the guardrails? Try the following:
 
 `--pipeline_configs` determines what compute resources will be used, and what render jobs are necessary for each scene. A list of configs are available in `tools/pipeline_configs`. You must pick one config to determine compute type (ie `local_64GB` or `slurm`) and one to determine the dataset type (such as `monocular` or `monocular_video`). Run `python -m tools.manage_datagen_jobs --help` for more options related to dataset generation.
 
-If you intend to use CUDA-accelerated terrain (`--pipeline_configs enable_gpu`), you must run `install.sh` on a CUDA-enabled machine. 
+If you intend to use CUDA-accelerated terrain (`--pipeline_configs cuda_terrain`), you must run `install.sh` on a CUDA-enabled machine. 
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
 
