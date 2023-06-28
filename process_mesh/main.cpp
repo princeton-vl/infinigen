@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.33"
+#define VERSION "1.34"
 
 using std::cout, std::cerr, std::endl;
 
@@ -217,9 +217,9 @@ int main(int argc, char *argv[]) {
     const auto camera_dir = input_dir / frame_str / "cameras";
     assert_exists(camera_dir);
     for (const auto &entry : fs::directory_iterator(camera_dir)){
-        const auto matches = match_regex("T([0-9]+)_([0-9]+)_([0-9]+)", entry.path().stem().string());
+        const auto matches = match_regex("T_([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
         if (!matches.empty()){
-            const auto output_suffix = match_regex("T([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string())[1];
+            const auto output_suffix = matches[1];
             camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
         }
     }
@@ -304,7 +304,7 @@ int main(int argc, char *argv[]) {
         Save bounding boxes
         */
         {
-            std::ofstream o(output_dir / ("BoundingBoxes_" + cd.frame_string + ".json"));
+            std::ofstream o(output_dir / ("Objects_" + cd.frame_string + ".json"));
             o << std::setw(4) << all_bboxes << std::endl;
         }
 
@@ -382,17 +382,17 @@ int main(int argc, char *argv[]) {
         */
         {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT6, buffer_width, buffer_height);
-            Eigen::Tensor<int, 2> instance_seg(buffer_height, buffer_width);
+            Eigen::Tensor<long, 2> instance_seg(buffer_height, buffer_width);
             instance_seg.setZero();
             Eigen::Tensor<int, 2> object_seg(buffer_height, buffer_width);
             object_seg.setZero();
             for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying object & instance segmentation masks")){
-                instance_seg(o.y, o.x) = pixels[o.j];
-                object_seg(o.y, o.x) = pixels[o.j+1];
+                instance_seg(o.y, o.x) = InstanceID{pixels[o.j], pixels[o.j+1]}.as_long();
+                object_seg(o.y, o.x) = pixels[o.j+2];
                 o.progressbar();
             }
             save_npy(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".npy"), instance_seg);
-            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg));
+            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg.cast<int>()));
             save_npy(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".npy"), object_seg);
             imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg));
         }

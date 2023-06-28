@@ -14,7 +14,7 @@ in vec3 cc_normal;
 in float tri_area;
 in float px_area;
 flat in float has_flow;
-flat in int instance_id;
+flat in ivec2 instance_id;
 flat in ivec3 face_id;
 flat in ivec3 tag;
 
@@ -44,7 +44,7 @@ void main() {
 	else
 		next_rasterized_cc = vec4(0.0, 0.0, -1.0, 1.0);
 	tag_segmentation = ivec4(tag, 0);
-	instance_object_segmentation = ivec4(instance_id, object_index, 0, 1);
+	instance_object_segmentation = ivec4(instance_id[0], instance_id[1], object_index, 1);
 
 	geo_normal = vec4(normalize(-cc_normal), 1.0);
 	rasterized_occ_bounds = ivec4(0, 0, 0, 1);

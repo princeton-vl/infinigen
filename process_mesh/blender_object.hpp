@@ -17,7 +17,7 @@ using json = nlohmann::json;
 
 struct ObjectInfo
 {
-    int index;
+    int index, num_instances;
     std::string name, type, mesh_id, npz_filename;
 
     ObjectInfo(){}
@@ -26,6 +26,7 @@ struct ObjectInfo
     name(instance_item["object_name"].get<std::string>()),
     type(instance_item["object_type"].get<std::string>()),
     index(instance_item["object_idx"].get<int>()),
+    num_instances(instance_item["num_instances"].get<int>()),
     mesh_id(instance_item["mesh_id"].get<std::string>()),
     npz_filename(instance_item["filename"].get<std::string>()){}
 
@@ -39,7 +40,7 @@ class BaseBlenderObject
 private:
 
     void set_matrix_buffer(unsigned int &buffer, const std::vector<Eigen::Matrix4f> &model_matrices_next, int attrib_idx);
-    json compute_bbox(const std::vector<unsigned int> &indices, const std::vector<float> &vertex_lookup, const std::vector<int> &instance_ids, const std::vector<Eigen::Matrix4f> &model_matrices, const std::vector<int> &tag_lookup, const int &attrib_stride);
+    json compute_bbox(const std::vector<unsigned int> &indices, const std::vector<float> &vertex_lookup, const std::vector<InstanceID> &instance_ids, const std::vector<Eigen::Matrix4f> &model_matrices, const std::vector<int> &tag_lookup, const int &attrib_stride);
 
 protected:
 
@@ -56,7 +57,7 @@ public:
     const std::string name;
     const int obj_index;
 
-    BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride);
+    BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride);
     virtual ~BaseBlenderObject();
     virtual void draw(Shader &shader) const;
     static void print_stats();
@@ -67,7 +68,7 @@ class MeshBlenderObject : public BaseBlenderObject
 {
 public:
 
-    MeshBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info);
+    MeshBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info);
     ~MeshBlenderObject();
     void draw(Shader &shader) const;
 };
@@ -76,7 +77,7 @@ class CurvesBlenderObject : public BaseBlenderObject
 {
 public:
 
-    CurvesBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<int> &instance_ids, const ObjectInfo& object_info);
+    CurvesBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info);
     ~CurvesBlenderObject();
     void draw(Shader &shader) const;
 };
