@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Yiming Zuo
-# Date Signed: Jun 8, 2023
+# Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=X9YmJ0zGWHw by Creative Shrimp
+
 
 import numpy as np
 import bpy

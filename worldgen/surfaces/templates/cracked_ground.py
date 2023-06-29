@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Ankit Goyal, Zeyu Ma
-# Date Signed: June 15 2023
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=PIZ_wi3yFUM&list=PLsGl9GczcgBs6TtApKKK-L_0Nm6fovNPk&index=98 by Ryan King Art
 
 import bpy
 import bpy
@@ -20,7 +20,7 @@ from util.random import random_color_neighbour
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_cracked_ground"
-name = "cracked_ground"
+name = "cracked_ground" 
 
 @node_utils.to_nodegroup('nodegroup_apply_value_to_normal', singleton=False, type='GeometryNodeTree')
 def nodegroup_apply_value_to_normal(nw: NodeWrangler):

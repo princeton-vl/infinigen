@@ -5,7 +5,7 @@
 # - Lahav Lipson - LocalJob
 # - Alex Raistrick - Local queue handler
 # - David Yan - Bugfix
-# Date Signed: May 2 2023
+
 
 import re
 import time

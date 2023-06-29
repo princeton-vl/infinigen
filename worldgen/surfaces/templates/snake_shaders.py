@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Hongyu Wen
-# Date Signed: June 13, 2023
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=MP7EZCFrXek by blenderbitesize and https://www.youtube.com/watch?v=VPI9xq41nOk by Ryan King
+
 
 import bpy
 import mathutils

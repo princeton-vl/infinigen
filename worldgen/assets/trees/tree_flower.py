@@ -4,7 +4,7 @@
 # Authors:
 # - Yiming Zuo - modifications
 # - Alexander Raistrick - authored original flower.py
-# Date Signed: June 15, 2023
+
 
 # Code generated using version v2.0.1 of the node_transpiler
 import bpy

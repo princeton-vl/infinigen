@@ -4,7 +4,7 @@
 # Authors: 
 # - Alex Raistrick: primary author
 # - Lahav Lipson: Surface mixing
-# Date Signed: May 2 2023
+
 
 import string
 from collections import defaultdict

@@ -5,7 +5,7 @@
 # - Lahav Lipson: logging formats, timer format
 # - Alex Raistrick: Timer
 # - Alejandro Newell: Suppress
-# Date Signed: May 2 2023
+
 
 import os, sys
 from datetime import datetime

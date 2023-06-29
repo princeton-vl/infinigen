@@ -6,7 +6,7 @@
 # - Zeyu Ma: initial version, fixes, arithmetic utilties
 # - Lingjie Mei: NodeWrangler compare, switch, build and other utilities
 # - Karhan Kayan: geometry_node_group_empty_new()
-# Date Signed: May 30, 2023
+
 
 import re
 import sys

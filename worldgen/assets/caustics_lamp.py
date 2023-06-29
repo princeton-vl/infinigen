@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Alexander Raistrick, Lingjie Mei
-# Date Signed: May 30, 2023
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=X9YmJ0zGWHw by Polyfjord
+
 
 import bpy
 from mathutils import Vector

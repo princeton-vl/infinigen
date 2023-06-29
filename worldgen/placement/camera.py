@@ -5,7 +5,7 @@
 # - Zeyu Ma, Lahav Lipson: Stationary camera selection
 # - Alex Raistrick: Refactor into proposal/validate, camera animation
 # - Lingjie Mei: get_camera_trajectory
-# Date Signed: May 2 2023
+
 
 from random import sample
 import sys

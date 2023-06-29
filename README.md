@@ -178,4 +178,35 @@ Please post this repository's Github Issues page for help. Please run your comma
     - If using `manage_datagen_jobs`, look in `outputs/MYJOB/MYSEED/logs/` to find the right one.
     - What was the exact python error and stacktrace, if applicable?
 
+## Acknowledgements
 
+Infinigen wouldn't be possible without the fantastic work of the [Blender Foundation](https://www.blender.org/) and it's open-source contributors. Infinigen uses many open source projects, with special thanks to [Land-Lab](https://github.com/landlab/landlab), [BlenderProc](https://github.com/DLR-RM/BlenderProc) and [Blender-Differential-Growth](https://github.com/inca/blender-differential-growth).
+
+We thank [Thomas Kole](https://blenderartists.org/u/ThomasKole) for providing procedural clouds (which are more photorealistic than our original version) and [Pedro P. Lopes](https://blendswap.com/blend/30728) for the autoexposure nodegraph. 
+
+We learned tremendously from online tutorials from 
+[Andrew Price](https://www.youtube.com/channel/UCOKHwx1VCdgnxwbjyb9Iu1g),
+[Artisans of Vaul](https://www.youtube.com/@ArtisansofVaul),
+[Bad Normals](https://www.youtube.com/@BadNormals),
+[Blender Tutorial Channel](https://www.youtube.com/@BlenderTutorialChannel),
+[blenderbitesize](https://www.youtube.com/@blenderbitesize),
+[Blendini](http://www.youtube.com/watch?v=sHr8LjfX09c),
+[Bradley Animation](https://www.youtube.com/@bradleyanimation120),
+[CGCookie](https://www.youtube.com/watch?v=lPAYX8z9i8M),
+[CGRogue](https://www.youtube.com/@PixelicaCG),
+[Creative Shrimp](https://www.youtube.com/@CreativeShrimp),
+[CrowdRender](https://www.youtube.com/@Crowdrender),
+[Dr. Blender](https://www.youtube.com/@DrBlender),
+[HEY Pictures](https://www.youtube.com/channel/UCo5rv1z-PPrCh-C7OvO2VAA),
+[Ian Hubert](https://www.youtube.com/@IanHubert2),
+[Kev Binge](https://www.youtube.com/@KevBinge),
+[Lance Phan](https://www.youtube.com/@LancePhan),
+[MaxEdge](https://www.youtube.com/@MaxEdge420),
+[Mr. Cheebs](https://www.youtube.com/@MrCheebs),
+[PixelicaCG](https://www.youtube.com/@PixelicaCG),
+[Polyfjord](https://www.youtube.com/@Polyfjord),
+[Robbie Tilton](https://www.youtube.com/@RobbieTilton),
+[Ryan King Art](https://www.youtube.com/@RyanKingArt),
+[Sam Bowman](https://www.youtube.com/@snow_mamba) and
+[yogigraphics](https://www.youtube.com/@yojigraphics).
+These tutorials provided procedural generators for our early experimentation and served as inspiration for our own implementations in the official release of Infinigen. They are acknowledged in file header comments where applicable.
