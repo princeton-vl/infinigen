@@ -56,48 +56,6 @@ export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
 ```
 
 <details closed>
-<summary><b>(Optional) OpenGL Ground Truth Installation</b></summary>
-
-The above default install instructions enable you to run the full Infinigen scene generation system
-
-This section will allow you to use our own `--pipeline_configs opengl_gt` ground truth extraction config, which avoids rendering twice in blender and provides additional labels such as occlusion boundaries, sub-object segmentation, 3D flow and easy 3D bounding boxes. If you do not need these features, skip this section and use `--pipeline_configs blender_gt` as shown in [Generate image(s) in one command](#generate-images-in-one-command). This section is intended for computer vision researchers and power-users. 
-
-```
-git submodule init
-git submodule update
-sudo apt-get install libglm-dev libglew-dev libglfw3-dev libgles2-mesa-dev zlib1g-dev
-```
-
-If you do not have sudo access, you may attempt the following:
-- install them manually set your $CPATH variables appropriately. 
-- ask your administrator to install them on your behalf
-
-Finally, run
-```
-bash install.sh opengl
-```
-
-To run OpenGL on the "hello world" example, the two addition commands are:
-1. Export the geometry from blender to disk
-```
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
-```
-2. Generate dense annotations
-```
-../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
-```
-3. (Optional) Summarize all files into a single JSON
-```
-python tools/summarize.py outputs/helloworld # creating outputs/helloworld/summary.json
-```
-4. (Optional) Select for segmentation masks of certain tags, e.g. cactus
-```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
-```
-
-</details>
-
-<details closed>
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>
 
 **Docker on Linux**
@@ -158,6 +116,8 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g
 $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
+The full specification for the ground-truth is located in [GroundTruthAnnotations.md](/GroundTruthAnnotations.md), including instructions for our own OpenGL-based implementation with additional annotations.
+
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 #### Generate image(s) in one command
@@ -183,6 +143,7 @@ Ready to remove the guardrails? Try the following:
 If you intend to use CUDA-accelerated terrain (`--pipeline_configs cuda_terrain`), you must run `install.sh` on a CUDA-enabled machine. 
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
+
 
 ## Exploring the Infinigen Codebase
 
