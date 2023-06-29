@@ -18,21 +18,40 @@ This section will allow you to use our own `--pipeline_configs opengl_gt` ground
 
 ### Installation
 
+To ensure all submodule dependencies have been properly cloned, run:
 ```
 git submodule init
 git submodule update
+```
+
+On Ubuntu, run
+```
 sudo apt-get install libglm-dev libglew-dev libglfw3-dev libgles2-mesa-dev zlib1g-dev
 ```
 
+If compiling on WSL, additionally run 
+```
+sudo apt-get install doxygen
+sudo apt-get install libxinerama-dev
+sudo apt-get install libxcursor-dev
+sudo apt-get install libxi-dev
+```
+
+On MacOS, run
+```
+brew install glfw3
+brew install glew
+```
+
 If you do not have sudo access, you may attempt the following:
-- install them manually set your $CPATH variables appropriately. 
-- ask your administrator to install them on your behalf
+- Install dependencies manually and set your $CPATH variables appropriately. 
+- Ask your administrator to install them on your behalf (YMMV).
 
 Finally, run
 ```
 bash install.sh opengl
 ```
-Or, if you have already run `install.sh` earlier, you can run just
+Or, if you have already run `install.sh` earlier, you can just run
 ```
 bash worldgen/tools/compile_opengl.sh
 ```
