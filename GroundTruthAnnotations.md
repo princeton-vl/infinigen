@@ -97,8 +97,9 @@ Depth is stored as a 2160 x 3840 32-bit floating point numpy array.
 *visualization:* `d["Depth"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/Depth_0001_00_00.png`
 
 The depth and camera parameters can be used to warp one image to another frame by running the following:
-
-<img src="images/gt_annotations/Depth_0001_00_00.png" width="330" />
+<p align="center">
+<img src="images/gt_annotations/Depth_0001_00_00.png" width="400" />
+</p>
 
 ```
 python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
@@ -112,15 +113,18 @@ Surface Normals are stored as a 1080 x 1920 x 3 32-bit floating point numpy arra
 
 *visualization:* `d["SurfaceNormal"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/SurfaceNormal_0001_00_00.png`
 
-<img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="330" />
-
+<p align="center">
+<img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
+</p>
 **Occlusion Boundaries**
 
 Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boundary and 0 otherwise.
 
 *path/visualization:* `d["OcclusionBoundaries"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/OcclusionBoundaries_0001_00_00.png`
 
-<img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="330" />
+<p align="center">
+<img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
+</p>
 
 **Optical Flow / Scene Flow**
 
@@ -200,10 +204,9 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query bl
 python tools/ground_truth/bounding_boxes_3d.py outputs/helloworld 1 --query blender_rock
 ```
 which will output
-
-<img src="images/gt_annotations/blender_rock_2d.png" width="330" />
-<img src="images/gt_annotations/blender_rock_3d.png" width="330" />
-
+<p align="center">
+<img src="images/gt_annotations/blender_rock_2d.png" width="400" /> <img src="images/gt_annotations/blender_rock_3d.png" width="400" />
+</p>
 By ommitting the --query flag, a list of available tags will be printed.
 
 You can produce a mask for only *flower petals*:
@@ -211,14 +214,15 @@ You can produce a mask for only *flower petals*:
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query petal
 ```
-<img src="images/gt_annotations/petal.png" width="330" />
-
+<p align="center">
+<img src="images/gt_annotations/petal.png" width="400" />
+</p>
 The benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
 
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cave
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query warped_rocks
 ```
-
-<img src="images/gt_annotations/caves.png" width="330" />
-<img src="images/gt_annotations/warped_rocks.png" width="330" />
+<p align="center">
+<img src="images/gt_annotations/caves.png" width="400" /> <img src="images/gt_annotations/warped_rocks.png" width="400" />
+</p>
