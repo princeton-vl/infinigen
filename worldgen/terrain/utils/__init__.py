@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
-# Date Signed: June 5 2023
+
 
 from .mesh import Mesh, write_attributes, Vars, move_modifier
 from .ctype_util import ASINT, ASDOUBLE, ASFLOAT, register_func, load_cdll

@@ -4,7 +4,7 @@
 # Authors: 
 # - Alexander Raistrick: regular bird, hair params
 # - Beining Han: adapt to create flying bird
-# Date Signed: May 30, 2023
+
 
 import pdb
 import bpy

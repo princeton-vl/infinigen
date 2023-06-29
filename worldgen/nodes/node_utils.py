@@ -4,7 +4,7 @@
 # Authors: 
 # - Alexander Raistrick: primary author 
 # - Lahav Lipson: resample nodegroup
-# Date Signed: May 30, 2023
+
 
 from numpy.random import uniform, normal
 import numpy as np

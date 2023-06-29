@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma, Alex Raistrick
-# Date Signed: June 5 2023
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=X3LlsdddMLo by Kev Binge
+
 
 import os
 

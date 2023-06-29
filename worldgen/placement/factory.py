@@ -4,7 +4,7 @@
 # Authors: 
 # - Alexander Raistrick: AssetFactory, make_asset_collection
 # - Lahav Lipson: quickly_resample
-# Date Signed: May 30, 2023
+
 
 import typing
 

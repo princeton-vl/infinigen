@@ -1,3 +1,5 @@
+// Taken from https://github.com/JoeyDeVries/LearnOpenGL license: CC BY-NC 4.0
+
 #include "shader.hpp"
 
 // Base class

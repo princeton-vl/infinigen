@@ -4,7 +4,7 @@
 # Authors:
 # - Hei Law: initial system, particle settings
 # - Alexander Raistrick: refactor, boids
-# Date Signed: May 30, 2023
+
 
 from typing import Union
 import math

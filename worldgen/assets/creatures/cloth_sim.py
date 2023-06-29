@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Alexander Raistrick
-# Date Signed: May 30, 2023
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=YDrbyITWMGU by Mr. Cheebs
+
 
 import pdb
 import logging

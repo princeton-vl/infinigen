@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Ankit Goyal, Mingzhe Wang, Zeyu Ma
-# Date Signed: June 5 2023
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=YKRK82JeBo8 by Ryan King Art
+
 
 import os
 

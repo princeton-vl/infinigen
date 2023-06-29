@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Alexander Raistrick
-# Date Signed: May 30, 2023
+
 
 '''
 1. Create a blender file at worldgen/dev_scene.blend
@@ -11,7 +11,7 @@
 4. Set the 'mode' to one of the following options:
    - mode='print' will print the result script to your terminal
    - mode='make_script' will create a new script in your blender UI, which you can open
-        and run to apply the node code to an object of your choice
+    and run to apply the node code to an object of your choice
    - mode='write_file' will write the script to a new file called 'worldgen/generated_surface_script.py.
         Make sure not to rename / move the script before committing it to git.     
 5. Select an object which has some materials and/or geometry nodes on it

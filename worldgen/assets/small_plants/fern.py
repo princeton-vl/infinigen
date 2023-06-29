@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
-# Date Signed: June 15, 2023
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=MGxNuS_-bpo by Bad Normals
+
 
 import bpy
 import mathutils

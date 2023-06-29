@@ -4,7 +4,7 @@
 # Authors: 
 # - Alexander Raistrick: base version
 # - Beining Han: flying variant
-# Date Signed: May 30, 2023
+
 
 import bpy
 

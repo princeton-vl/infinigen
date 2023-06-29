@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Hei Law
-# Date Signed: Jun 14, 2023
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=lPAYX8z9i8M by CGCookie
 
 from nodes.node_wrangler import Nodes
 import numpy as np

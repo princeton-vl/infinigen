@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Mingzhe Wang
-# Date Signed: June 14 2023 
+# Acknowledgement: This file draws inspiration from https://blender.stackexchange.com/questions/111219/slime-effect-material
 
 import os, sys
 import numpy as np

@@ -1,8 +1,8 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Alexander Raistrick
-# Date Signed: May 30, 2023
+# Authors: Alexander Raistrick, Alejandro Newell
+
 
 # Code generated using version v2.0.1 of the node_transpiler
 import bpy

@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
-# Date Signed: June 15, 2023
+
 
 from assets.tropic_plants.tropic_plant_utils import *
 from assets.utils.tag import tag_object, tag_nodegroup

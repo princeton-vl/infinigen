@@ -5,7 +5,7 @@
 # - Alex Raistrick: refactor, local rendering, video rendering
 # - Lahav Lipson: stereo version, local rendering
 # - Hei Law: initial version
-# Date Signed: May 2 2023
+
 
 import argparse
 import logging

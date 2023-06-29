@@ -5,7 +5,7 @@
 # - Lahav Lipson - Render, flat shading, etc
 # - Alex Raistrick - Compositing
 # - Hei Law - Initial version
-# Date Signed: May 2 2023
+
 
 import os
 import time

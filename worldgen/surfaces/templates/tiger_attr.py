@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Mingzhe Wang
-# Date Signed: June 15 2023 
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=b9lukB7cWag by Sam Bowman
+
 
 import os, sys
 import numpy as np

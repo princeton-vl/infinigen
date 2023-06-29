@@ -4,7 +4,7 @@
 # Authors: 
 # - Hongyu Wen: primary author
 # - Alexander Raistrick: snake curve following animation
-# Date Signed: May 30, 2023
+
 
 import pdb
 import gin
