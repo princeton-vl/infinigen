@@ -113,11 +113,6 @@ KERNELDATATYPE_NPTYPE = {
     KernelDataType.int: np.int32,
 }
 
-class SurfaceTypes:
-    BlenderDisplacement = "BlenderDisplacement"
-    Displacement = "Displacement"
-    SDFPerturb = "SDFPerturb"
-
 SOCKETTYPE_KERNEL = {
     SocketType.Value: KernelDataType.float,
     SocketType.Vector: KernelDataType.float3,

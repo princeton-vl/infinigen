@@ -111,3 +111,7 @@ class ElementTag:
         ElementNames.VoronoiGrains, ElementNames.Volcanos, ElementNames.FloatingIce, ElementNames.UpsidedownMountains,
     ]
 
+class SurfaceTypes:
+    BlenderDisplacement = "BlenderDisplacement"
+    Displacement = "Displacement"
+    SDFPerturb = "SDFPerturb"

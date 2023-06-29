@@ -17,7 +17,7 @@ import os
 import cv2
 import numpy as np
 import logging
-
+from infinigen_gpl.extras.enable_gpu import enable_gpu
 from imageio import imwrite, imread
 from pathlib import Path
 from placement import camera as cam_util
@@ -90,34 +90,6 @@ def make_clay():
 			else:
 				for mat_slot in obj.material_slots:
 					mat_slot.material = clay_material
-
-def enable_gpu(engine_name = 'CYCLES'):
-    # from: https://github.com/DLR-RM/BlenderProc/blob/main/blenderproc/python/utility/Initializer.py
-    compute_device_type = None
-    prefs = bpy.context.preferences.addons['cycles'].preferences
-    # Use cycles
-    bpy.context.scene.render.engine = engine_name
-    bpy.context.scene.cycles.device = 'GPU'
-
-    preferences = bpy.context.preferences.addons['cycles'].preferences
-    for device_type in preferences.get_device_types(bpy.context):
-        preferences.get_devices_for_type(device_type[0])
-
-    for gpu_type in ['OPTIX', 'CUDA']:#, 'METAL']:
-        found = False
-        for device in preferences.devices:
-            if device.type == gpu_type and (compute_device_type is None or compute_device_type == gpu_type):
-                bpy.context.preferences.addons['cycles'].preferences.compute_device_type = gpu_type
-                logger.info('Device {} of type {} found and used.'.format(device.name, device.type))
-                found = True
-                break
-        if found:
-            break
-
-    # make sure that all visible GPUs are used
-    for device in prefs.devices:
-        device.use = True
-    return prefs.devices
 
 @gin.configurable
 def compositor_postprocessing(nw, source, show=True, autoexpose=False, autoexpose_level=-2, color_correct=True, distort=0, glare=False):

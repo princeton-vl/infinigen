@@ -9,7 +9,7 @@ from numpy.random import uniform
 
 from assets.corals.base import BaseCoralFactory
 from assets.corals.tentacles import make_upward_points_fn, make_radius_points_fn
-from assets.utils.diff_growth import build_diff_growth
+from infinigen_gpl.extras.diff_growth import build_diff_growth
 from assets.utils.object import mesh2obj, data2mesh
 from assets.utils.decorate import geo_extension, read_co
 from assets.utils.mesh import polygon_angles

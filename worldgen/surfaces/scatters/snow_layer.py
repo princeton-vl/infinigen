@@ -14,7 +14,7 @@ from surfaces import surface
 from util import blender as butil
 from nodes import node_utils
 
-from surfaces.templates import snow
+from infinigen_gpl.surfaces import snow
 from assets.utils.tag import tag_object, tag_nodegroup
 
 class Snowlayer:

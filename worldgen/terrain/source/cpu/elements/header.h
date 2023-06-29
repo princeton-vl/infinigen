@@ -11,14 +11,11 @@ using namespace std;
 #define DEVICE_FUNC
 #define CONSTANT_ARRAY const
 #include "../../common/utils/vectors.h"
-#include "../../common/utils/nodes_util.h"
-#include "../../common/utils/blender_noise.h"
+#include "../../../../infinigen_gpl/bnodes/utils/nodes_util.h"
+#include "../../../../infinigen_gpl/bnodes/utils/blender_noise.h"
 #include "../../common/utils/elements_util.h"
 #include "../../common/utils/FastNoiseLite.h"
 #include "../../common/utils/smooth_bool_ops.h"
-#include "../../common/nodes/node_shader_tex_noise.h"
-#include "../../common/nodes/node_shader_tex_voronoi.h"
-#include "../../common/nodes/node_shader_mix_rgb.h"
 #include "../../common/elements/caves.h"
 #include "../../common/elements/landtiles.h"
 #include "../../common/elements/ground.h"

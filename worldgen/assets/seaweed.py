@@ -16,7 +16,7 @@ from assets.utils.decorate import assign_material, read_co, subsurface2face_size
 from assets.utils.draw import make_circular_interp
 import util.blender as butil
 from placement.factory import AssetFactory
-from assets.utils.diff_growth import build_diff_growth
+from infinigen_gpl.extras.diff_growth import build_diff_growth
 from assets.utils.object import mesh2obj, data2mesh
 from assets.utils.mesh import polygon_angles
 from nodes.node_wrangler import NodeWrangler, Nodes

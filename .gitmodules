@@ -1,22 +1,25 @@
-[submodule "worldgen/terrain/gen_occlusions/dependencies/eigen"]
+[submodule "worldgen/infinigen_gpl"]
+	path = worldgen/infinigen_gpl
+	url = https://github.com/princeton-vl/infinigen_gpl.git
+[submodule "process_mesh/dependencies/eigen"]
 	path = process_mesh/dependencies/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/argparse"]
+[submodule "process_mesh/dependencies/argparse"]
 	path = process_mesh/dependencies/argparse
 	url = https://github.com/p-ranav/argparse.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/cnpy"]
+[submodule "process_mesh/dependencies/cnpy"]
 	path = process_mesh/dependencies/cnpy
 	url = https://github.com/rogersce/cnpy.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/indicators"]
+[submodule "process_mesh/dependencies/indicators"]
 	path = process_mesh/dependencies/indicators
 	url = https://github.com/p-ranav/indicators.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/tinycolormap"]
+[submodule "process_mesh/dependencies/tinycolormap"]
 	path = process_mesh/dependencies/tinycolormap
 	url = https://github.com/yuki-koyama/tinycolormap.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/glm"]
+[submodule "process_mesh/dependencies/glm"]
 	path = process_mesh/dependencies/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "worldgen/terrain/gen_occlusions/dependencies/fast_obj"]
+[submodule "process_mesh/dependencies/fast_obj"]
 	path = process_mesh/dependencies/fast_obj
 	url = https://github.com/thisistherk/fast_obj.git
 [submodule "process_mesh/dependencies/json"]

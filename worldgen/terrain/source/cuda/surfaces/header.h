@@ -13,19 +13,19 @@ using namespace std;
 #define CONSTANT_ARRAY __device__ __constant__
 #define POINTER_OR_REFERENCE_ARG
 #include "../../common/utils/vectors.h"
-#include "../../common/utils/nodes_util.h"
-#include "../../common/utils/blender_noise.h"
-#include "../../common/nodes/node_shader_tex_noise.h"
-#include "../../common/nodes/node_shader_tex_voronoi.h"
-#include "../../common/nodes/node_shader_mix_rgb.h"
-#include "../../common/nodes/node_float_curve.h"
-#include "../../common/nodes/node_shader_map_range.h"
-#include "../../common/nodes/node_shader_sepcomb_xyz.h"
-#include "../../common/nodes/node_shader_tex_wave.h"
-#include "../../common/nodes/node_shader_vector_math.h"
-#include "../../common/nodes/node_texture_math.h"
-#include "../../common/nodes/node_texture_valToRgb.h"
-#include "../../common/nodes/node_shader_tex_musgrave.h"
+#include "../../../../infinigen_gpl/bnodes/utils/nodes_util.h"
+#include "../../../../infinigen_gpl/bnodes/utils/blender_noise.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_tex_noise.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_tex_voronoi.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_mix_rgb.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_float_curve.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_map_range.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_sepcomb_xyz.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_tex_wave.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_vector_math.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_texture_math.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_texture_valToRgb.h"
+#include "../../../../infinigen_gpl/bnodes/nodes/node_shader_tex_musgrave.h"
 
 
 #define FLOAT3_VAR(X, size) float3_nonbuiltin *X;  cudaMalloc((void **)&X, size * sizeof(float3_nonbuiltin));

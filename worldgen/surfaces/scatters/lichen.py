@@ -17,7 +17,7 @@ from placement.factory import AssetFactory, make_asset_collection
 from placement.instance_scatter import scatter_instances
 from surfaces import surface
 from placement.factory import AssetFactory
-from assets.utils.diff_growth import build_diff_growth
+from infinigen_gpl.extras.diff_growth import build_diff_growth
 from assets.utils.object import data2mesh
 from assets.utils.mesh import polygon_angles
 from util import blender as butil
