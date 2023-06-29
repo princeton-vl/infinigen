@@ -459,11 +459,11 @@ def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use
         # Saving camera parameters
         K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
         np.save(
-            output_folder / f"K{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
+            output_folder / f"K_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
             np.asarray(K, dtype=np.float64),
         )
         np.save(
-            output_folder / f"T{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
+            output_folder / f"T_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
             np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
     )
 

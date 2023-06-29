@@ -59,7 +59,8 @@ export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
 ```
 
 <details closed>
-<summary><b>Installation on Windows using WSL</b></summary>
+
+ <summary><b>Installation on Windows using WSL</b></summary>
 
 [Install](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview) WSL 2 (with WSLg) and Ubuntu. Make sure that you are either on the latest version of Windows 10 or Windows 11.
 
@@ -137,6 +138,7 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save
 </details>
 
 <details closed>
+
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>
 
 **Docker on Linux**
@@ -198,6 +200,8 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g
 $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
+The full specification for the ground-truth is located in [GroundTruthAnnotations.md](/GroundTruthAnnotations.md), including instructions for our own OpenGL-based implementation with additional annotations.
+
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 #### Generate image(s) in one command
@@ -205,8 +209,8 @@ Output logs should indicate what the code is working on. Use `--debug` for even 
 We provide `tools/manage_datagen_jobs.py`, a utility which runs these or similar steps automatically.
 
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 
---pipeline_configs local_16GB monocular blender_gt --specific_seed 0 --configs desert simple
+python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0
+--configs desert simple --pipeline_configs local_16GB monocular blender_gt --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
 
 Ready to remove the guardrails? Try the following:
@@ -220,9 +224,10 @@ Ready to remove the guardrails? Try the following:
 
 `--pipeline_configs` determines what compute resources will be used, and what render jobs are necessary for each scene. A list of configs are available in `tools/pipeline_configs`. You must pick one config to determine compute type (ie `local_64GB` or `slurm`) and one to determine the dataset type (such as `monocular` or `monocular_video`). Run `python -m tools.manage_datagen_jobs --help` for more options related to dataset generation.
 
-If you intend to use CUDA-accelerated terrain (`--pipeline_configs enable_gpu`), you must run `install.sh` on a CUDA-enabled machine. 
+If you intend to use CUDA-accelerated terrain (`--pipeline_configs cuda_terrain`), you must run `install.sh` on a CUDA-enabled machine. 
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
+
 
 ## Exploring the Infinigen Codebase
 

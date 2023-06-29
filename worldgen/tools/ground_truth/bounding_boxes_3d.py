@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     folder_data = json.loads((args.folder / "summary.json").read_text())
 
-    depth_paths = folder_data["Depth_"]['npy']["00"]["00"]
+    depth_paths = folder_data["Depth"]['npy']["00"]["00"]
     image_paths = folder_data["Image"]['png']["00"]["00"]
     Ks = folder_data["Camera Intrinsics"]['npy']["00"]["00"]
     Ts = folder_data["Camera Pose"]['npy']["00"]["00"]
@@ -67,15 +67,17 @@ if __name__ == "__main__":
     camera_pose = np.load(args.folder / Ts[frame])
     K = np.load(args.folder / Ks[frame])
 
-    tag_mask = np.load(args.folder / folder_data["TagSegmentation_"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    tag_mask = cv2.resize(tag_mask, dsize=(W, H), interpolation=cv2.INTER_NEAREST)
+    tag_mask = np.load(args.folder / folder_data["TagSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
+    instance_segmentation_mask = np.load(args.folder / folder_data["InstanceSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
+    object_segmentation_mask = np.load(args.folder / folder_data["ObjectSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
+    combined_mask = np.stack((object_segmentation_mask, instance_segmentation_mask), axis=-1).reshape((-1, 2))
+    uniq = np.unique(combined_mask, axis=0)
 
     tag_lookup = json.loads((args.folder / folder_data["Mask Tags"][f"{args.frame:04d}"]).read_text())
     tag_lookup_rev = {v:k for k,v in tag_lookup.items()}
     tags_in_this_image = set(chain.from_iterable(tag_lookup_rev[e].split('.') for e in np.unique(tag_mask) if e > 0))
 
-    bboxes_path = args.folder / folder_data["BoundingBoxes_"]["json"]["00"]["00"][frame]
-    bounding_boxes = json.loads((args.folder / folder_data["BoundingBoxes_"]["json"]["00"]["00"][frame]).read_text())
+    bounding_boxes = json.loads((args.folder / folder_data["Objects"]["json"]["00"]["00"][frame]).read_text())
     unique_tag_numbers = set(np.unique(tag_mask))
 
     canvas = np.copy(image)
@@ -101,6 +103,9 @@ if __name__ == "__main__":
                     if (v in tags) and (v in unique_tag_numbers):
                         bbox_points, faces = calc_bbox_pts(min_pt, max_pt)
                         for instance_id, model_mat in bbox['model matrices'].items():
+                            ident = np.asarray((bbox['object index'], int(instance_id)), dtype=np.int64)
+                            if not np.any(np.all(ident == uniq, axis=-1)):
+                                continue
                             bbox_points_wc = transform(np.asarray(model_mat), bbox_points)
                             bbox_points_cc = transform(inv(camera_pose), bbox_points_wc)
                             bbox_points_h = (K @ bbox_points_cc.T).T
@@ -111,7 +116,7 @@ if __name__ == "__main__":
                             sign = np.cross(points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0], points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0])
                             sign = sign * np.array([-1, 1, 1, -1, -1, 1])
 
-                            gen = np.random.RandomState([bbox['object index'], int(instance_id)])
+                            gen = np.random.RandomState(ident.astype(np.uint32))
                             color = (np.asarray(colorsys.hsv_to_rgb(gen.uniform(0, 1), gen.uniform(0.1, 1), 1)) * 255).astype(np.uint8).tolist()
                             for is_visible, indices in zip(sign < 0, faces):
                                 if is_visible:
