@@ -90,9 +90,9 @@ The resulting `<output-folder>/summary.json` will contains all file paths in the
 
 Depth is stored as a 2160 x 3840 32-bit floating point numpy array.
 
-*path:* `summary_json["Depth"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/Depth_0001_00_00.npy`
+*path:* `summary_json["Depth"]["npy"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.npy`
 
-*visualization:* `summary_json["Depth"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/Depth_0001_00_00.png`
+*visualization:* `summary_json["Depth"]["png"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.png`
 
 The depth and camera parameters can be used to warp one image to another frame by running the following:
 <p align="center">
@@ -107,9 +107,9 @@ python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
 
 Surface Normals are stored as a 1080 x 1920 x 3 32-bit floating point numpy array.
 
-*path:* `summary_json["SurfaceNormal"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/SurfaceNormal_0001_00_00.npy`
+*path:* `summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.npy`
 
-*visualization:* `summary_json["SurfaceNormal"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/SurfaceNormal_0001_00_00.png`
+*visualization:* `summary_json["SurfaceNormal"]["png"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.png`
 
 <p align="center">
 <img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
@@ -118,7 +118,7 @@ Surface Normals are stored as a 1080 x 1920 x 3 32-bit floating point numpy arra
 
 Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boundary and 0 otherwise.
 
-*path/visualization:* `summary_json["OcclusionBoundaries"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/OcclusionBoundaries_0001_00_00.png`
+*path/visualization:* `summary_json["OcclusionBoundaries"]["png"]["00"]["00"]["0001"]` -> `frames/OcclusionBoundaries_0001_00_00.png`
 
 <p align="center">
 <img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
@@ -140,9 +140,9 @@ To see an example of how optical flow can be used to warp one frame to the next,
 python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
 ```
 
-*path:* `summary_json["Flow3D"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/Flow3D_0001_00_00.npy`
+*path:* `summary_json["Flow3D"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.npy`
 
-*visualization:* `summary_json["Flow3D"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/ObjectSegmentation_0001_00_00.png`
+*visualization:* `summary_json["Flow3D"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
 
 **Optical Flow Occlusion**
 
@@ -150,13 +150,13 @@ The mask of occluded pixels for the aforementioned optical flow is stored as a 2
 
 *Note: This mask is computed by comparing the face-ids of the triangle meshes at either end of each flow vector. Infinigen meshes are so high-poly that this can result in a large number of false-positives (positive=occluded). Generally these false-positives are distributed uniformly, and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
-*path/visualization:* `summary_json["Flow3DMask"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/Flow3DMask_0001_00_00.png`
+*path/visualization:* `summary_json["Flow3DMask"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3DMask_0001_00_00.png`
 
 **Camera Intrinsics**
 
 Infinigen renders images using a pinhole-camera model. The resulting camera intrinsics for each frame are stored as a 3 x 3 numpy matrix.
 
-*path*: `summary_json["Camera Intrinsics"]["npy"][<rig>][<sub-cam>][<frame>]` -> `saved_mesh/frame_0002/cameras/K_0002_00_00.npy`
+*path*: `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/K_0001_00_00.npy`
 
 **Camera Extrinsics**
 
@@ -164,7 +164,7 @@ The camera pose is stored as a 4 x 4 numpy matrix mapping from object coordinate
 
 As is standard in computer vision, the world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with a flippped Y and Z axes.
 
-*path*: `summary_json["Camera Pose"]["npy"][<rig>][<sub-cam>][<frame>]` -> `saved_mesh/frame_0002/cameras/T_0002_00_00.npy`
+*path*: `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/T_0001_00_00.npy`
 
 **Panoptic Segmentation and 3D Bounding Boxes**
 
@@ -178,23 +178,23 @@ Infinigen saves 3 types of semantic segmentation masks: 1) Object Segmentation 2
 
 *paths:*
 
-`summary_json["ObjectSegmentation"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/ObjectSegmentation_0001_00_00.npy`
+`summary_json["ObjectSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.npy`
 
-`summary_json["TagSegmentation"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/TagSegmentation_0001_00_00.npy`
+`summary_json["TagSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/TagSegmentation_0001_00_00.npy`
 
-`summary_json["InstanceSegmentation"]["npy"][<rig>][<sub-cam>][<frame>]` -> `frames/InstanceSegmentation_0001_00_00.npy`
+`summary_json["InstanceSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.npy`
 
-`summary_json["Objects"]["json"][<rig>][<sub-cam>][<frame>]` -> `frames/Objects_0001_00_00.json`
+`summary_json["Objects"]["json"]["00"]["00"]["0001"]` -> `frames/Objects_0001_00_00.json`
 
 `summary_json["Mask Tags"][<frame>]` -> `fine/MaskTag.json`
 
 *visualization:*
 
-`summary_json["ObjectSegmentation"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/ObjectSegmentation_0001_00_00.png`
+`summary_json["ObjectSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
 
-`summary_json["TagSegmentation"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/TagSegmentation_0001_00_00.png`
+`summary_json["TagSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/TagSegmentation_0001_00_00.png`
 
-`summary_json["InstanceSegmentation"]["png"][<rig>][<sub-cam>][<frame>]` -> `frames/InstanceSegmentation_0001_00_00.png`
+`summary_json["InstanceSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.png`
 
 As an example, to visualize the 2D and 3D bounding boxes for objects with the *blender_rock* semantic tag in the hello world scene, run 
 ```
