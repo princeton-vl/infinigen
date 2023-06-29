@@ -39,7 +39,7 @@ bash worldgen/tools/compile_opengl.sh
 
 ### Extended Hello-World
 
-Here, we will continue the [Hello-World](/README.md#generate-a-scene-step-by-step) example, but produce the full set of annotations that Infinigen supports. Following step 3:
+Continuing the [Hello-World](/README.md#generate-a-scene-step-by-step) example, we can produce the full set of annotations that Infinigen supports. Following step 3:
 
 4. Export the geometry from blender to disk
 ```
@@ -53,7 +53,7 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save
 ```
 python tools/summarize.py outputs/helloworld # creating outputs/helloworld/summary.json
 ```
-7. (Optional) Select for segmentation masks of certain semantic tags, e.g. cactus
+7. (Optional) Select for a segmentation mask of certain semantic tags, e.g. cactus
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
 ```
@@ -62,7 +62,7 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query ca
 
 **File structure:**
 
-We provide a python script `summarize.py` which will aggregate all relevant output file paths into a JSON. Usage:
+We provide a python script `summarize.py` which will aggregate all relevant output file paths into a JSON:
 ```
 python tools/summarize.py <output-folder>
 ```
@@ -71,18 +71,18 @@ The resulting `<output-folder>/summary.json` will contains all file paths in the
 {
     <type>: {
         <file-ext>: {
-                <rig>: {
-                    <sub-cam>: {
-                        <frame>: <file-path> 
-                    }
+            <rig>: {
+                <sub-cam>: {
+                    <frame>: <file-path> 
                 }
+            }
         }
     }
 }
 ```
 
 `<rig>` and `<sub-cam>` are typically both "00" in the monocular setting; `<file-ext>` is typically "npy" or "png" for the the actual data and the visualization, respectively; `<frame>` is a 0-padded 4-digit number, e.g. "0013". `<type>` can be "SurfaceNormal", "Depth", etc. For example
-`loaded_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `'frames/SurfaceNormal_0001_00_00.npy'`
+`summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `'frames/SurfaceNormal_0001_00_00.npy'`
 
 *Note: Currently our ground-truth has only been tested for the aspect-ratio 16-9.*
 
@@ -90,15 +90,15 @@ The resulting `<output-folder>/summary.json` will contains all file paths in the
 
 Depth is stored as a 2160 x 3840 32-bit floating point numpy array.
 
-*path:* `summary_json["Depth"]["npy"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.npy`
+*Path:* `summary_json["Depth"]["npy"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.npy`
 
-*visualization:* `summary_json["Depth"]["png"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.png`
+*Visualization:* `summary_json["Depth"]["png"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.png`
 
-The depth and camera parameters can be used to warp one image to another frame by running the following:
 <p align="center">
 <img src="images/gt_annotations/Depth_0001_00_00.png" width="400" />
 </p>
 
+The depth and camera parameters can be used to warp one image to another frame by running:
 ```
 python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
 ```
@@ -107,18 +107,19 @@ python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
 
 Surface Normals are stored as a 1080 x 1920 x 3 32-bit floating point numpy array.
 
-*path:* `summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.npy`
+*Path:* `summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.npy`
 
-*visualization:* `summary_json["SurfaceNormal"]["png"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.png`
+*Visualization:* `summary_json["SurfaceNormal"]["png"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.png`
 
 <p align="center">
 <img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
 </p>
+
 **Occlusion Boundaries**
 
 Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boundary and 0 otherwise.
 
-*path/visualization:* `summary_json["OcclusionBoundaries"]["png"]["00"]["00"]["0001"]` -> `frames/OcclusionBoundaries_0001_00_00.png`
+*Path/Visualization:* `summary_json["OcclusionBoundaries"]["png"]["00"]["00"]["0001"]` -> `frames/OcclusionBoundaries_0001_00_00.png`
 
 <p align="center">
 <img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
@@ -128,9 +129,9 @@ Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boun
 
 Optical Flow / Scene Flow is stored as a 2160 x 3840 x 3 32-bit floating point numpy array.
 
-*Note:* The values won't be meaningful if this is the final frame in a series, or in the single-view setting.
+*Note: The values won't be meaningful if this is the final frame in a series, or in the single-view setting.*
 
-Channels 1 & 2 are standard optical flow. Note that the units of optical flow are in pixels measured in the resolution of the *original image*. So if the rendered image is 1080 x 1920, you would want to average-pool this ground-truth by 2x.
+Channels 1 & 2 are standard optical flow. Note that the units of optical flow are in pixels measured in the resolution of the *original image*. So if the rendered image is 1080 x 1920, you would want to average-pool this array by 2x.
 
 Channel 3 is the depth change between this frame and the next.
 
@@ -140,23 +141,23 @@ To see an example of how optical flow can be used to warp one frame to the next,
 python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
 ```
 
-*path:* `summary_json["Flow3D"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.npy`
+*Path:* `summary_json["Flow3D"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.npy`
 
-*visualization:* `summary_json["Flow3D"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
+*Visualization:* `summary_json["Flow3D"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
 
 **Optical Flow Occlusion**
 
-The mask of occluded pixels for the aforementioned optical flow is stored as a 2160 x 3840 png, with 255 indicating a non-visible pixel and 0 otherwise.
+The mask of occluded pixels for the aforementioned optical flow is stored as a 2160 x 3840 png, with 255 indicating a co-visible pixel and 0 otherwise.
 
-*Note: This mask is computed by comparing the face-ids of the triangle meshes at either end of each flow vector. Infinigen meshes are so high-poly that this can result in a large number of false-positives (positive=occluded). Generally these false-positives are distributed uniformly, and can be reduced by max-pooling the occlusion mask down to the image resolution.*
+*Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
-*path/visualization:* `summary_json["Flow3DMask"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3DMask_0001_00_00.png`
+*Path/Visualization:* `summary_json["Flow3DMask"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3DMask_0001_00_00.png`
 
 **Camera Intrinsics**
 
-Infinigen renders images using a pinhole-camera model. The resulting camera intrinsics for each frame are stored as a 3 x 3 numpy matrix.
+Infinigen renders images using a pinhole camera model. The resulting camera intrinsics for each frame are stored as a 3 x 3 numpy matrix.
 
-*path*: `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/K_0001_00_00.npy`
+*Path:* `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/K_0001_00_00.npy`
 
 **Camera Extrinsics**
 
@@ -164,7 +165,7 @@ The camera pose is stored as a 4 x 4 numpy matrix mapping from object coordinate
 
 As is standard in computer vision, the world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with a flippped Y and Z axes.
 
-*path*: `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/T_0001_00_00.npy`
+*Path:* `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/T_0001_00_00.npy`
 
 **Panoptic Segmentation and 3D Bounding Boxes**
 
@@ -188,7 +189,7 @@ Infinigen saves 3 types of semantic segmentation masks: 1) Object Segmentation 2
 
 `summary_json["Mask Tags"][<frame>]` -> `fine/MaskTag.json`
 
-*visualization:*
+*Visualization:*
 
 `summary_json["ObjectSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
 
