@@ -161,23 +161,23 @@ Infinigen renders images using a pinhole camera model. The resulting camera intr
 
 **Camera Extrinsics**
 
-The camera pose is stored as a 4 x 4 numpy matrix mapping from object coordinates to world coordinates.
+The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinates to world coordinates.
 
-As is standard in computer vision, the world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with a flippped Y and Z axes.
+As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
 
 *Path:* `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/T_0001_00_00.npy`
 
 **Panoptic Segmentation and 3D Bounding Boxes**
 
-Infinigen saves 3 types of semantic segmentation masks: 1) Object Segmentation 2) Tag Segmentation 3) Instance Segmentation
+Infinigen saves three types of semantic segmentation masks: 1) Object Segmentation 2) Tag Segmentation 3) Instance Segmentation
 
-*Object Segmentation* distinguishes individual blender objects, and is stored as a 2160 x 3840 32-bit integer numpy array. The association between each integer in the mask and the associated object is stored in Objects_XXXX_XX_XX.json. The definition of "object" is imposed by Blender; generally large or complex objects such as the terrain, trees, animals are considered one object, while a large number of smaller objects (e.g. grass, coral) may be grouped together if they are using instanced-geometry under the hood.
+*Object Segmentation* distinguishes individual blender objects, and is stored as a 2160 x 3840 32-bit integer numpy array. The association between each integer in the mask and the related object is stored in Objects_XXXX_XX_XX.json. The definition of "object" is imposed by Blender; generally large or complex assets such as the terrain, trees, or animals are considered one singular object, while a large number of smaller assets (e.g. grass, coral) may be grouped together if they are using instanced-geometry for their implementation.
 
-*Tag Segmentation* distringuishes objects based on their semantic tags, and is stored as a 2160 x 3840 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Missing features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
+*Tag Segmentation* distinguishes vertices based on their semantic tags, and is stored as a 2160 x 3840 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Missing features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
 
-*Instance Segmentation* distinguishes individual instances of a single object from one another (e.g. separate blades of grass, separate ferns, etc.), and is stored as a 2160 x 3840 32-bit integer numpy array. Each integer in this mask is the *instance-id* for a particular instance, which is unique for that object as defined in the Object Segmentation mask. The list of **3D bounding boxes** for each instance are defined in the `Objects_XXXX_XX_XX.json`.
+*Instance Segmentation* distinguishes individual instances of a single object from one another (e.g. separate blades of grass, separate ferns, etc.), and is stored as a 2160 x 3840 32-bit integer numpy array. Each integer in this mask is the *instance-id* for a particular instance, which is unique for that object as defined in the Object Segmentation mask and Objects_XXXX_XX_XX.json. The list of **3D bounding boxes** for each instance are also defined in the `Objects_XXXX_XX_XX.json`.
 
-*paths:*
+*Paths:*
 
 `summary_json["ObjectSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.npy`
 
@@ -189,7 +189,7 @@ Infinigen saves 3 types of semantic segmentation masks: 1) Object Segmentation 2
 
 `summary_json["Mask Tags"][<frame>]` -> `fine/MaskTag.json`
 
-*Visualization:*
+*Visualizations:*
 
 `summary_json["ObjectSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
 
@@ -197,18 +197,20 @@ Infinigen saves 3 types of semantic segmentation masks: 1) Object Segmentation 2
 
 `summary_json["InstanceSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.png`
 
-As an example, to visualize the 2D and 3D bounding boxes for objects with the *blender_rock* semantic tag in the hello world scene, run 
+Generally, most useful panoptic segmentation masks can be constructed by combining the aforementioned three arrays in some way. As an example, to visualize the 2D and 3D bounding boxes for objects with the *blender_rock* semantic tag in the hello world scene, run 
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query blender_rock --boxes
 python tools/ground_truth/bounding_boxes_3d.py outputs/helloworld 1 --query blender_rock
 ```
 which will output
+
 <p align="center">
 <img src="images/gt_annotations/blender_rock_2d.png" width="400" /> <img src="images/gt_annotations/blender_rock_3d.png" width="400" />
 </p>
+
 By ommitting the --query flag, a list of available tags will be printed.
 
-You can produce a mask for only *flower petals*:
+One could also produce a mask for only *flower petals*:
 
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query petal
@@ -216,7 +218,8 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query pe
 <p align="center">
 <img src="images/gt_annotations/petal.png" width="400" />
 </p>
-The benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
+
+A benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
 
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cave
