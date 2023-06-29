@@ -47,7 +47,8 @@ from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_tw
     slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
 from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
-    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
+    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud
+from infinigen_gpl.surfaces import snow
 
 from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
 from assets import particles as particle_assets

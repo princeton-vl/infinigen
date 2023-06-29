@@ -20,7 +20,8 @@ from util import blender as butil
 from util.random import random_general
 from assets.utils.tag import tag_object, tag_nodegroup
 
-from surfaces.templates import dirt, snow
+from surfaces.templates import dirt
+from infinigen_gpl.surfaces import snow
 
 def shader_raindrop(nw):
     glass_bsdf = nw.new_node(

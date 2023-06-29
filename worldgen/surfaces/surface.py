@@ -365,7 +365,7 @@ class Registry:
         if name == '':
             return NoApply
         
-        prefixes = ['surfaces.templates', 'surfaces.scatters']
+        prefixes = ['infinigen_gpl.surfaces', 'surfaces.templates', 'surfaces.scatters']
         for prefix in prefixes:
             try:
                 return importlib.import_module(prefix + '.' + name)

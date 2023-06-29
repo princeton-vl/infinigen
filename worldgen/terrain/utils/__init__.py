@@ -16,7 +16,7 @@ from .random import perlin_noise, chance, drive_param, random_int, random_int_la
 from .kernelizer_util import (
     ATTRTYPE_DIMS, ATTRTYPE_FIELDS, ATTRTYPE_NP, NODE_ATTRS_AVAILABLE,
     AttributeType, FieldsType, Nodes, SocketType, KernelDataType,
-    SurfaceTypes, usable_name, SOCKETTYPE_KERNEL, sanitize, special_sanitize,
+    usable_name, SOCKETTYPE_KERNEL, sanitize, special_sanitize,
     special_sanitize_float_curve, NODE_FUNCTIONS, concat_string, var_list,
     value_string, collecting_vars, get_imp_var_name, special_sanitize_constant,
     KERNELDATATYPE_NPTYPE, KERNELDATATYPE_DIMS

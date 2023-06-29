@@ -15,12 +15,12 @@ from mathutils.bvhtree import BVHTree
 from terrain.mesher import OpaqueSphericalMesher, TransparentSphericalMesher, UniformMesher
 from terrain.scene import scene, transfer_scene_info
 from terrain.surface_kernel.core import SurfaceKernel
-from terrain.utils import Mesh, SurfaceTypes, move_modifier, Vars, AttributeType, FieldsType
+from terrain.utils import Mesh, move_modifier, Vars, AttributeType, FieldsType
 from terrain.assets.ocean import ocean_asset
 from util.blender import SelectObjects, delete
 from util.logging import Timer
 from util.math import FixedSeed, int_hash
-from util.organization import Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
+from util.organization import SurfaceTypes, Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
 from assets.utils.tag import tag_object, tag_system
 from numpy import ascontiguousarray as AC
 
