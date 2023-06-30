@@ -9,9 +9,11 @@ from assets.utils.decorate import assign_material, fix_tree
 from assets.utils.nodegroup import geo_base_selection, geo_radius
 from assets.utils.shortest_path import geo_shortest_path
 from nodes.node_info import Nodes
+from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from surfaces.surface import shaderfunc_to_material
+from surfaces.templates.simple_brownish import shader_simple_brown
 from util import blender as butil
 
 
@@ -61,11 +63,17 @@ class LeafFactoryIvy(LeafFactoryMaple):
         return obj
 
 
+class Ivy:
 
+    def __init__(self):
         self.factory = LeafFactoryIvy(np.random.randint(0, 1e5), random_season())
+        self.col = make_asset_collection(self.factory, 5)
+
+    def apply(self, obj, selection=None):
 
         scatter_obj = butil.spawn_vert('scatter:' + 'ivy')
         surface.add_geomod(scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection, .05])
+
         end_index = lambda nw: nw.compare('EQUAL', nw.new_node(Nodes.Index),
                                           np.random.randint(len(scatter_obj.data.vertices)))
         weight = lambda nw: nw.scalar_multiply(nw.uniform(.8, 1), nw.scalar_sub(2, nw.math('ABSOLUTE', nw.dot(
@@ -75,3 +83,7 @@ class LeafFactoryIvy(LeafFactoryMaple):
                            input_args=[end_index, weight, uniform(.1, .15), uniform(.1, .15)])
         fix_tree(scatter_obj)
         surface.add_geomod(scatter_obj, geo_radius, apply=True, input_args=[.005, 12])
+        assign_material(scatter_obj, shaderfunc_to_material(shader_simple_brown))
+        surface.add_geomod(scatter_obj, geo_leaf, apply=True, input_args=[self.col])
+
+        return scatter_obj
