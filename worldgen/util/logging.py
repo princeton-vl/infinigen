@@ -33,6 +33,7 @@ class Timer:
         self.start = datetime.now()
         timer_results.info(f'{self.name}')
 
+    def __exit__(self, exc_type, exc_val, traceback):
         if self.disable_timer:
             return
         self.end = datetime.now()
@@ -63,3 +64,6 @@ def save_polycounts(file):
         file.write(stat)
 
 @gin.configurable
+def create_text_file(log_dir, filename, text=None):
+    if text is not None:
+        (log_dir / filename).write_text(text)
