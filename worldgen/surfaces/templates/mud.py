@@ -3,6 +3,7 @@ import mathutils
 from numpy.random import uniform as U, normal as N, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes.color import color_category
+from surfaces import surface
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
 import gin
@@ -10,6 +11,7 @@ import gin
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_mud"
 name = "mud"
+
 def shader_mud(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -69,10 +71,12 @@ def shader_mud(nw: NodeWrangler):
     
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf_2}, attrs={'is_active_output': True})
     return principled_bsdf_2
+
 @gin.configurable
 def geo_mud(nw: NodeWrangler, random_seed=0, selection=None):
     # Code generated using version 2.6.4 of the node_transpiler
     with FixedSeed(random_seed):
+
         group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
         
         position_5 = nw.new_node(Nodes.InputPosition)
@@ -95,6 +99,7 @@ def geo_mud(nw: NodeWrangler, random_seed=0, selection=None):
         float_curve_1 = nw.new_node(Nodes.FloatCurve, 
         input_kwargs={
             'Value': colorramp_1.outputs["Color"]})
+
         node_utils.assign_curve(
             float_curve_1.mapping.curves[0], 
             [(0.0000, 0.0000), (0.3386, 0.0844), (0.8114, 0.6312), (1.0000, 0.7656)]
@@ -130,5 +135,7 @@ def geo_mud(nw: NodeWrangler, random_seed=0, selection=None):
             input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': offset})
         
         group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position}, attrs={'is_active_output': True})
+
+def apply(obj, selection=None, **kwargs):
     surface.add_geomod(obj, geo_mud, selection=selection)
     surface.add_material(obj, shader_mud, selection=selection)
