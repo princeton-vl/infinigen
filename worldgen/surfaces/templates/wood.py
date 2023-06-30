@@ -1,9 +1,11 @@
 import os, sys
 import numpy as np
 import math as ma
+from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
@@ -21,12 +23,14 @@ def shader_wood(nw: NodeWrangler, rand=False, **input_kwargs):
     
     musgrave_texture_2 = nw.new_node(Nodes.MusgraveTexture,
         input_kwargs={'Vector': mapping_1, 'Scale': 2.0},
+        attrs={'musgrave_dimensions': '4D'})
     if rand:
         musgrave_texture_2.inputs['W'].default_value = sample_range(0, 5)
         musgrave_texture_2.inputs['Scale'].default_value = sample_ratio(2.0, 3/4, 4/3)
     
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': musgrave_texture_2, 'W': 0.7, 'Scale': 10.0},
+        attrs={'noise_dimensions': '4D'})
     if rand:
         noise_texture_1.inputs['W'].default_value = sample_range(0, 5)
         noise_texture_1.inputs['Scale'].default_value = sample_ratio(5, 0.5, 2)
@@ -57,9 +61,11 @@ def shader_wood(nw: NodeWrangler, rand=False, **input_kwargs):
     principled_bsdf_1 = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': colorramp_2.outputs["Color"], 'Roughness': colorramp_4.outputs["Color"]},
         attrs={'subsurface_method': 'BURLEY'})
+    
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf_1})
 
+def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
     surface.add_material(obj, shader_wood, reuse=False, input_kwargs=shader_kwargs)
 
 
