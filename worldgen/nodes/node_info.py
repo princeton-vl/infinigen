@@ -147,6 +147,7 @@ class Nodes:
     DistributePointsOnFaces = "GeometryNodeDistributePointsOnFaces"
     PointsToVertices = "GeometryNodePointsToVertices"
     PointsToVolume = 'GeometryNodePointsToVolume'
+    SetPointRadius = 'GeometryNodeSetPointRadius'
 
     # Vector
     SeparateXYZ = "ShaderNodeSeparateXYZ"
@@ -175,9 +176,12 @@ class Nodes:
     VoronoiTexture = "ShaderNodeTexVoronoi"
     WaveTexture = "ShaderNodeTexWave"
     WhiteNoiseTexture = 'ShaderNodeTexWhiteNoise'
+    ImageTexture = "GeometryNodeImageTexture"
     GradientTexture = 'ShaderNodeTexGradient'
+
     # Shaders
     MixShader = "ShaderNodeMixShader"
+    DiffuseBSDF = "ShaderNodeBsdfDiffuse"
     PrincipledBSDF = "ShaderNodeBsdfPrincipled"
     TranslucentBSDF = "ShaderNodeBsdfTranslucent"
     PrincipledVolume = "ShaderNodeVolumePrincipled"
@@ -185,6 +189,8 @@ class Nodes:
     Emission = 'ShaderNodeEmission'
     Fresnel = 'ShaderNodeFresnel'
     NewGeometry = 'ShaderNodeNewGeometry'
+    RefractionBSDF = "ShaderNodeBsdfRefraction"
+    GlassBSDF = "ShaderNodeBsdfGlass"
 
     # Layout
     Reroute = "NodeReroute"
