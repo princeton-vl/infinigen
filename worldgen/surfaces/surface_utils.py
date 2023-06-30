@@ -154,9 +154,14 @@ def geo_voronoi_noise(nw, rand=False, **input_kwargs):
             voronoi_texture.inputs["Scale"].default_value, sample_min, sample_max)
         voronoi_texture.inputs['W'].default_value = sample_range(-5, 5)
 
+    subtract = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture.outputs["Distance"]},
+        attrs={'operation': 'SUBTRACT'})
+
     normal = nw.new_node(Nodes.InputNormal)
 
     vector_math_1 = nw.new_node(Nodes.VectorMath,
+                                input_kwargs={0: subtract, 1: normal},
                                 attrs={'operation': 'MULTIPLY'})
 
     offsetscale = nw.new_node(Nodes.Value)
