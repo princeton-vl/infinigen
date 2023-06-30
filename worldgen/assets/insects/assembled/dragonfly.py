@@ -1,6 +1,9 @@
 import bpy
 import mathutils
+import gin
 import numpy as np
+from numpy.random import uniform as U, normal as N, randint
+
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category, hsv2rgba
@@ -12,6 +15,8 @@ from assets.insects.parts.body.dragonfly_body import nodegroup_dragonfly_body
 from assets.insects.parts.tail.dragonfly_tail import nodegroup_dragonfly_tail 
 from assets.insects.parts.leg.dragonfly_leg import nodegroup_leg_control, nodegroup_dragonfly_leg
 from assets.insects.parts.wing.dragonfly_wing import nodegroup_dragonfly_wing
+
+from placement import animation_policy
 
 from util.math import FixedSeed
 from placement.factory import AssetFactory
@@ -154,10 +159,18 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     
     dragonflywing = nw.new_node(nodegroup_dragonfly_wing().name)
 
+    scene_time = nw.new_node('GeometryNodeInputSceneTime')
+    multiply_2 = nw.new_node(Nodes.Math,
+        input_kwargs={0: scene_time.outputs["Seconds"], 1: 2 * np.pi * kwargs["Flap Freq"]},
+        attrs={'operation': 'MULTIPLY'})
+    sine = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2}, attrs={'operation': 'SINE'})
+    wing_roll = nw.new_node(Nodes.Math, input_kwargs={0: sine, 1: kwargs["Flap Mag"]}, attrs={'operation': 'MULTIPLY'})
+    
     value_wing_yaw = nw.new_node(Nodes.Value)
     value_wing_yaw.outputs[0].default_value = kwargs["Wing Yaw"]
         
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ,
+        input_kwargs={'Y': wing_roll, 'Z': value_wing_yaw})
 
     value_wing_scale = nw.new_node(Nodes.Value)
     value_wing_scale.outputs[0].default_value = kwargs["Wing Scale"]
@@ -177,6 +190,7 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     dragonflywing_1 = nw.new_node(nodegroup_dragonfly_wing().name)
     
     add = nw.new_node(Nodes.Math,
+        input_kwargs={0: wing_roll, 1: 0.0524})
     
     subtract = nw.new_node(Nodes.Math,
         input_kwargs={1: value_wing_yaw},
@@ -206,26 +220,78 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         input_kwargs={'Geometry': realize_instances})
 
 
+@gin.configurable
+class DragonflyFactory(AssetFactory):
 
+
+    def __init__(self, factory_seed, coarse=False, bvh=None, **_):
+        super(DragonflyFactory, self).__init__(factory_seed, coarse=coarse)
+        self.bvh = bvh
         with FixedSeed(factory_seed):
             self.genome = self.sample_geo_genome()
+            y = U(20, 60)
+            self.scale = 0.015 * N(1, 0.1)
+            self.policy = animation_policy.AnimPolicyRandomForwardWalk(
+                forward_vec=(1, 0, 0), speed=U(7, 10), 
+                step_range=(0.2, 7), yaw_dist=("uniform", -y, y), rot_vars=[0,0,0])
 
     @staticmethod
     def sample_geo_genome():
+        base_color = np.array((U(0.1, 0.6), 0.9, 0.8))
+        base_color[1] += N(0.0, 0.05)
+        base_color[2] += N(0.0, 0.05)
         base_color_rgba = hsv2rgba(base_color)
 
         eye_color = np.copy(base_color)
+        eye_color[0] += N(0.0, 0.1)
+        eye_color[1] += N(0.0, 0.05)
+        eye_color[2] += N(0.0, 0.05)
         eye_color_rgba = hsv2rgba(eye_color)
 
         body_color = np.copy(base_color)
+        body_color[0] += N(0.0, 0.1)
+        body_color[1] += N(0.0, 0.05)
+        body_color[2] += N(0.0, 0.05)
         body_color_rgba = hsv2rgba(body_color)
 
         return {
+                'Tail Length': U(2.5, 3.5),
+                'Tail Tip Z': U(-0.4, 0.3),
+                'Tail Seed': U(-100, 100),
+                'Tail Radius': U(0.7, 0.9),
+                'Body Length': U(8.0, 10.0),
+                'Body Seed': U(-100, 100),
+                'Flap Freq': U(20, 50),
+                'Flap Mag': U(0.15, 0.25),
+                'Wing Yaw': U(0.43, 0.7),
+                'Wing Scale': U(0.9, 1.1),
+                'Leg Scale': U(0.9, 1.1),
+                'Leg Openness 1': U(0.0, 1.0),
+                'Leg Openness 2': U(0.0, 1.0),
+                'Leg Openness 3': U(0.0, 1.0),
+                'Head Scale': U(1.6, 1.8),
+                'Head Roll': U(-0.2, 0.2),
+                'Head Pitch': U(-0.6, 0.6),
                 'Base Color': base_color_rgba,
                 'Body Color': body_color_rgba,
                 'Eye Color': eye_color_rgba,
+                'V': U(0.0, 0.5),
+                'Ring Length': U(0.0, 0.3),
             }
 
+    def create_placeholder(self, i, loc, rot):
+        
+        p = butil.spawn_cube(size=1)
+        p.location = loc
+        p.rotation_euler = rot
+
+        if self.bvh is not None:
+            p.location.z += U(0.5, 2)
+            animation_policy.animate_trajectory(p, self.bvh, self.policy)
+
+        return p
+
+    def create_asset(self, placeholder, **params):
 
         bpy.ops.mesh.primitive_plane_add(
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
@@ -236,5 +302,10 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         surface.add_geomod(obj, geometry_dragonfly, apply=False, input_kwargs=phenome)
 
         obj = bpy.context.object
+        obj.scale *= N(1, 0.1) * self.scale
+
+        obj.parent = placeholder
+        obj.location.x += 0.6
+        obj.rotation_euler.z = -np.pi / 2 # TODO: dragonfly should have been defined facing +X
 
         return obj
