@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Lahav Lipson, Zeyu Ma
+# Date Signed: May 2 2023, June 5 2023
+
 from pathlib import Path
 import bpy
 import gin
