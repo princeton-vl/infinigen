@@ -4,6 +4,9 @@ import bpy
 import mathutils
 
 import numpy as np
+import colorsys
+import gin
+
 from util.math import int_hash
 
 @dataclass
@@ -124,4 +127,11 @@ def hsv2rgba(hsv):
     c.hsv = list(hsv)
     rgba = list(c) + [1]
     return np.array(rgba)
+
+@gin.configurable
+def random_color_mapping(color_tuple, scene_seed, hue_stddev):
+    r,g,b,a = color_tuple
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
     color_hash = int_hash((int(h*1e3), scene_seed))
+    h = np.random.RandomState(color_hash).normal(h, hue_stddev) % 1.0
+    return colorsys.hsv_to_rgb(h, s, v) + (a,)
