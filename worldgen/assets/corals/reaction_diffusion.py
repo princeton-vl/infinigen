@@ -15,6 +15,7 @@ from assets.utils.reaction_diffusion import feed2kill, make_periodic_weight_fn, 
 import util.blender as butil
 from util.math import FixedSeed
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class ReactionDiffusionBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.
@@ -46,6 +47,7 @@ class ReactionDiffusionBaseCoralFactory(BaseCoralFactory):
         surface.add_geomod(obj, geo_extension, apply=True)
         butil.modify_mesh(obj, 'DISPLACE', vertex_group='B', strength=.4, mid_level=0.)
         butil.delete(wrapped)
+        tag_object(obj, 'reactiondiffusion_coral')
         return obj
 
     @staticmethod
