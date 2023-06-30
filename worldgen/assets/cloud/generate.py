@@ -5,8 +5,12 @@ import numpy as np
 from assets.utils.object import new_cube
 from placement.factory import AssetFactory
 
+from assets.cloud.cloud import Cumulus, Cumulonimbus, Stratocumulus, Altocumulus
+from assets.cloud.cloud import create_3d_grid
 
 from surfaces import surface
+from util import blender as butil
+from util.math import FixedSeed
 
 from nodes.node_wrangler import Nodes
 
@@ -18,9 +22,13 @@ class CloudFactory(AssetFactory):
         factory_seed,
         coarse=False,
         terrain_mesh=None,
+        max_distance=300,
         steps=128,
+        cloudy=("bool", 0.01),
     ):
         super(CloudFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.max_distance = max_distance
 
         self.ref_cloud = bpy.data.meshes.new('ref_cloud')
         self.ref_cloud.from_pydata(create_3d_grid(steps=steps), [], [])
@@ -31,6 +39,9 @@ class CloudFactory(AssetFactory):
         self.cloud_types = [Cumulonimbus, ] if self.cloudy else [Cumulus, Stratocumulus, Altocumulus, ]
 
         self.resolutions = {
+            Cumulonimbus: [16, 128],
+            Cumulus: [16, 128],
+            Stratocumulus: [32, 256],
             Altocumulus: [16, 64], }
         scale_resolution = 4
         self.resolutions = {k: (scale_resolution * u, scale_resolution * v) for k, (u, v) in
@@ -54,6 +65,7 @@ class CloudFactory(AssetFactory):
         butil.delete(obj)
         return locations
 
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return butil.spawn_empty('placeholder', disp_type='CUBE', s=self.max_scale)
 
     def create_asset(self, distance, **kwargs):
