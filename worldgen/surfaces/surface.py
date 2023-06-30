@@ -319,6 +319,7 @@ def add_geomod(objs, geo_func,
         else:
             mod.node_group = ng
 
+        outputs = mod.node_group.outputs
         identifiers = [outputs[i].identifier for i in range(len(outputs)) if outputs[i].type != 'GEOMETRY']
         if len(identifiers) != len(attributes):
             raise Exception(
