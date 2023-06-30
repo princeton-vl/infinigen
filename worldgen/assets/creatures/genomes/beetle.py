@@ -120,6 +120,7 @@ class BeetleFactory(AssetFactory):
     def create_asset(self, i, hair=False, **kwargs):
         genome = beetle_genome()
         root, parts = creature.genome_to_creature(genome, name=f'beetle({self.factory_seed}, {i})')
+        tag_object(root, 'beetle')
         offset_center(root)
         joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
             rigging=(self.animation_mode is not None),
