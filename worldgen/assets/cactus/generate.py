@@ -24,6 +24,7 @@ from placement.detail import remesh_with_attrs
 from surfaces import surface
 from placement.factory import AssetFactory
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class CactusFactory(AssetFactory):
     
@@ -53,6 +54,8 @@ class CactusFactory(AssetFactory):
         if face_size <= .05 and self.factory.density > 0:
             t = spike.apply(obj, self.factory.points_fn, self.factory.base_radius, realize)
             obj = join_objects([obj, t])
+
+        tag_object(obj, 'cactus')
         return obj
 
     @staticmethod
