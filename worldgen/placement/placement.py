@@ -1,10 +1,13 @@
+from itertools import groupby
 import re
 import logging
 from collections import defaultdict
+
 import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform as U
+from tqdm import tqdm
 import gin
 
 from .factory import AssetFactory
@@ -15,20 +18,29 @@ import util
 from util import blender as butil, camera as camera_util
 
 from surfaces import surface
+from .factory import AssetFactory
+
 from placement import detail
 
 logger = logging.getLogger('placement')
 
 
 def objects_to_grid(objects, spacing):
+    rowsize = np.round(np.sqrt(len(objects)))
     for i, o in enumerate(objects):
         o.location += spacing * mathutils.Vector((i % rowsize, i // rowsize, 0))
+
 
 def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None):
     temp_vert = butil.spawn_vert('compute_placeholder_locations')
     geo = temp_vert.modifiers.new(name="GEOMETRY", type='NODES')
 
     base_geo = nw.new_node(Nodes.ObjectInfo, [terrain]).outputs['Geometry']
+
+    points = nw.new_node(Nodes.DistributePointsOnFaces, attrs={'distribute_method': 'POISSON'},
+                         input_kwargs={'Mesh': base_geo, 'Selection': surface.eval_argument(nw, selection),
+                                       'Seed': np.random.randint(1e5), 'Density Max': overall_density,
+                                       'Distance Min': distance_min})
     verts = nw.new_node(Nodes.PointsToVertices, input_kwargs={'Points': points})
     verts = nw.new_node(Nodes.SetPosition, input_kwargs={'Geometry': verts, 'Offset': (0, 0, altitude)})
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': verts})
@@ -60,6 +72,7 @@ def points_near_camera(cam, terrain_bvh, n, alt, dist_range):
         points.append(pos)
 
     return np.array(points)
+
 def scatter_placeholders_mesh(
     base_mesh, factory: AssetFactory, 
     overall_density, selection=None, 
@@ -97,6 +110,7 @@ def get_placeholder_points(obj):
         return butil.apply_matrix_world(obj, verts)
     else:
         return np.array([obj.matrix_world.translation]).reshape(1, 3)
+
 def parse_asset_name(name):
     match = re.fullmatch('(.*)\((\d+)\)\.spawn_(.*)\((\d+)\)', name)
     if not match:
@@ -149,6 +163,7 @@ def populate_collection(
         
         if p is not obj:
             p.hide_render = True
+
         for o in butil.iter_object_tree(obj):
             butil.put_in_collection(o, asset_col_target)
 
@@ -198,6 +213,8 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
 
 def placeholder_kd(include=None, exclude=None):
     objs = []
+            classname = c.name.split('(')
+
     return butil.joined_kd(objs, include_origins=True)
 def make_placeholders_float(placeholder_col, terrain_bvh, water):
 
