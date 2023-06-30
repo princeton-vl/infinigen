@@ -109,6 +109,7 @@ class AssetFactory:
         gc_targets = [bpy.data.meshes, bpy.data.textures, bpy.data.node_groups, bpy.data.materials]
 
         with FixedSeed(int_hash((self.factory_seed, i))), butil.GarbageCollect(gc_targets, verbose=False):
+            params = self.asset_parameters(distance, vis_distance)
             params.update(kwargs)
             obj = self.create_asset(i=i, placeholder=placeholder, **params)
 
