@@ -1,16 +1,20 @@
 import os, sys
 import numpy as np
 import math as ma
+from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
 from numpy.random import uniform, normal
+from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
 
+def shader_two_color_spots(nw, rand=True, **input_kwargs):
     attribute = nw.new_node(Nodes.Attribute,
         attrs={'attribute_name': 'offset'})
     
     mix_2 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': attribute.outputs["Fac"], 'Color1': (1.0, 0.2397, 0.0028, 1.0), 'Color2': (0.4915, 0.4636, 0.3855, 1.0)})
+    if rand:
         sample_color(mix_2.inputs["Color1"].default_value)
         sample_color(mix_2.inputs["Color2"].default_value)
 
@@ -21,6 +25,7 @@ from surfaces import surface
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})
 
+def geo_two_color_spots(nw, rand=True, **input_kwargs):
 
     group_input = nw.new_node(Nodes.GroupInput)
 
@@ -38,11 +43,13 @@ from surfaces import surface
     
     mix = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Color1': noise_texture.outputs["Color"], 'Color2': vector_math.outputs["Vector"]})
+    if rand:
         mix.inputs["Fac"].default_value = sample_range(0.5, 0.9)
 
     voronoi_texture = nw.new_node(Nodes.VoronoiTexture,
         input_kwargs={'Vector': mix},
         attrs={'voronoi_dimensions': '4D'})
+    if rand:
         voronoi_texture.inputs["W"].default_value = sample_range(-5, 5)
         voronoi_texture.inputs['Scale'].default_value = sample_range(5, 20)
     
@@ -59,6 +66,7 @@ from surfaces import surface
     colorramp.color_ramp.elements[1].color = (0.4793, 0.4793, 0.4793, 1.0)
     colorramp.color_ramp.elements[2].position = 0.514
     colorramp.color_ramp.elements[2].color = (1.0, 1.0, 1.0, 1.0)
+    if rand:
         color = sample_range(0.45, 0.7)
         for i in range(3):
             colorramp.color_ramp.elements[1].color[i] = color
@@ -66,6 +74,7 @@ from surfaces import surface
     voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture,
         input_kwargs={'Vector': mix, 'Scale': 5}, 
         attrs={'voronoi_dimensions': '4D'})
+    if rand:
         voronoi_texture_1.inputs["W"].default_value = sample_range(-5, 5)
         voronoi_texture_1.inputs['Scale'].default_value = sample_range(5, 20)
     
@@ -95,6 +104,7 @@ from surfaces import surface
         attrs={'operation': 'MULTIPLY'})
     
     set_position = nw.new_node(Nodes.SetPosition,
+        input_kwargs={'Geometry': group_input, 'Offset': vector_math_3.outputs["Vector"]})
     
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
         attrs={'data_type': 'FLOAT_VECTOR'})
@@ -102,4 +112,6 @@ from surfaces import surface
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'Attribute': capture_attribute.outputs["Attribute"]})
 
+def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+    surface.add_geomod(obj, geo_two_color_spots, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
     surface.add_material(obj, shader_two_color_spots, reuse=False, input_kwargs=shader_kwargs)
