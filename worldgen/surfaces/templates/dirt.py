@@ -1,19 +1,33 @@
+import os
+
 import bpy
 import gin
 from nodes.node_wrangler import Nodes
 from numpy.random import uniform
+from surfaces import surface
 from surfaces.surface_utils import sample_color, sample_ratio
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
+
 from .mountain import geo_MOUNTAIN_general
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_dirt"
 name = "dirt"
+
+
 def shader_dirt(nw):
     nw.force_input_consistency()
     dirt_base_color, dirt_roughness = geo_dirt(nw, selection=None, geometry=False)
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
             "Base Color": dirt_base_color,
             "Roughness": dirt_roughness,
+        },
+    )
+
+
 @gin.configurable
 def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
     nw.force_input_consistency()
@@ -246,6 +260,14 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
     else:
         return dirt_base_color, dirt_roughness
+
+
+
+    surface.add_geomod(
+        obj,
+        geo_dirt,
+        selection=selection,
+    )
 
 
 if __name__ == "__main__":
