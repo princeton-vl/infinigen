@@ -9,6 +9,7 @@ from numpy.random import uniform
 
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
+from placement.instance_scatter import bucketed_instance, camera_cull_points
 from surfaces import surface
 
 
