@@ -174,21 +174,32 @@ def shaderfunc_to_material(shader_func, *args, name=None, **kwargs):
     return material
 
 
+def seed_generator(size=8, chars=string.ascii_uppercase):
+    return ''.join(np.random.choice(list(chars)) for _ in range(size))
+
 
 def add_material(objs, shader_func, selection=None, input_args=None, input_kwargs=None, name=None, reuse=False):
     if input_args is None:
         input_args = []
     if input_kwargs is None:
         input_kwargs = {}
+    if not isinstance(objs, list):
         objs = [objs]
 
+    if selection is None:
+        if name is None:
             name = shader_func.__name__
+        if (not reuse) and (name in bpy.data.materials):
+            name += f"_{seed_generator(8)}"
         material = shaderfunc_to_material(shader_func, *input_args, **input_kwargs)
+    elif isinstance(selection, str):
 
         name = "MixedSurface"
         if name in objs[0].data.materials:
             material = objs[0].data.materials[name]
         else:
+            material = bpy.data.materials.new(name=name)
+            material.use_nodes = True
             material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (1, 0, 1, 1)  # Set Magenta
             objs[0].active_material = material
 
@@ -199,22 +210,32 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
             else:
                 socket_index_old = 0
         # grab a reference to whatever is currently linked to output
+        links_to_output = [link for link in nw.links if (link.to_node.bl_idname == Nodes.MaterialOutput)]
+        assert len(links_to_output) == 1, links_to_output
+        penultimate_node = links_to_output.pop().from_node
         if new_attribute_sum_node.type == "ATTRIBUTE":
             socket_index_new = 2
         else:
             socket_index_new = 0
 
         # spawn in the node tree to mix with it
+        new_node_tree = shader_func(nw, **input_kwargs)
         if new_node_tree is None:
             raise ValueError(
                 f'{shader_func} returned None while attempting add_material(selection=...). Shaderfunc must return its output to be mixable')
+        if isinstance(new_node_tree, tuple) and isnode(new_node_tree[1]):
+            new_node_tree, volume = new_node_tree
+            nw.new_node(Nodes.MaterialOutput, input_kwargs={'Volume': volume})
 
         # mix the two together
+        nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
+
     for obj in objs:
         obj.active_material = material
     return material
+
 def add_geomod(objs, geo_func,
                name=None, apply=False, reuse=False, input_args=None,
                input_kwargs=None, attributes=None, show_viewport=True, selection=None,
@@ -236,6 +257,9 @@ def add_geomod(objs, geo_func,
         objs = [objs]
     elif len(objs) == 0:
         return None
+
+    if selection is not None:
+        input_kwargs['selection'] = selection
 
     ng = None
     for obj in objs:
@@ -260,6 +284,7 @@ def add_geomod(objs, geo_func,
             mod.node_group = ng
 
         identifiers = [outputs[i].identifier for i in range(len(outputs)) if outputs[i].type != 'GEOMETRY']
+        if len(identifiers) != len(attributes):
             raise Exception(
                 f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, {identifiers=} and {attributes=}")
         for id, att_name in zip(identifiers, attributes):
