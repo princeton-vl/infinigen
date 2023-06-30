@@ -9,8 +9,16 @@ C = bpy.context
 D = bpy.data
 
 
+def init_mesh(name, verts=[], edges=[], faces=[], coll=None):  
   mesh = D.meshes.new(name)
   obj = D.objects.new(mesh.name, mesh)
+
+  if coll is None:
+    coll = bpy.context.scene.collection
+  else:
+    coll = D.collections[coll]
+  
+  coll.objects.link(obj)
   helper.set_active_obj(obj)
 
   mesh.from_pydata(verts, edges, faces)
