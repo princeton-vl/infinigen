@@ -1,13 +1,16 @@
 import os, sys
 import numpy as np
 import math as ma
+from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
 from numpy.random import uniform, normal
+from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
 import random
 
 
+def shader_bark(nw, rand=False, **input_kwargs):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
     
@@ -16,6 +19,7 @@ import random
     
     noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': mapping, 'Detail': 16.0, 'Roughness': 0.62})
+    if rand:
         sample_max = input_kwargs['noise_scale_max'] if 'noise_scale_max' in input_kwargs else 3
         sample_min = input_kwargs['noise_scale_min'] if 'noise_scale_min' in input_kwargs else 1/sample_max
         noise_texture.inputs["Scale"].default_value = sample_ratio(noise_texture.inputs["Scale"].default_value, sample_min, sample_max)
@@ -46,6 +50,7 @@ import random
 
     mix_1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_1.outputs["Color"], 'Color1': colorramp.outputs["Color"], 'Color2': (0.0897, 0.052, 0.0149, 1.0)})
+    if rand:
         for i in range(3):
             mix_1.inputs["Color2"].default_value[i] = (colorramp.color_ramp.elements[0].color[i] + colorramp.color_ramp.elements[1].color[i]) / 2
 
@@ -120,4 +125,6 @@ def geo_bark(nw: NodeWrangler):
         input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'Attribute': capture_attribute.outputs["Attribute"]},
         attrs={'is_active_output': True})
 
+def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+    surface.add_geomod(obj, geo_bark, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
     surface.add_material(obj, shader_bark, reuse=False, input_kwargs=shader_kwargs)
