@@ -20,6 +20,7 @@ from nodes.node_wrangler import NodeWrangler
 from placement.detail import remesh_with_attrs
 from surfaces.surface import shaderfunc_to_material
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class PineconeFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -63,6 +64,7 @@ class PineconeFactory(MonocotGrowthFactory):
         texture.noise_scale = log_uniform(.002, .005)
         butil.modify_mesh(obj, 'DISPLACE', True, strength=.001, mid_level=0, texture=texture)
 
+        tag_object(obj, 'pinecone')
         return obj
 
     @staticmethod
