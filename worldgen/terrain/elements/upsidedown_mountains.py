@@ -44,6 +44,7 @@ class UpsidedownMountains(Element):
         self.float_params = AC(np.concatenate((np.array([L, floating_height, randomness, frequency, perturb_octaves, perturb_freq, perturb_scale]), float_data)).astype(np.float32))
         
         Element.__init__(self, "upsidedown_mountains", material, transparency)
+        self.tag = ElementTag.UpsidedownMountains
 
     @gin.configurable
     def load_assets(
