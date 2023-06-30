@@ -1,3 +1,5 @@
+
+# Starting Symbol
 Q (1.0) -> [ A ] Piv180 [ A ]
 
 # Turning
