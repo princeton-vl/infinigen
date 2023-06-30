@@ -1,3 +1,9 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Zeyu Ma
+// Date Signed: June 4 2023
+
 DEVICE_FUNC float lerp(float s, float e, float t) { return s + (e - s) * t; }
 
 DEVICE_FUNC float lerp_ed(float s, float e, float sd, float ed, float t) {
