@@ -81,6 +81,7 @@ class Nodes:
     # Input
     GroupInput = "NodeGroupInput"
     RGB = "ShaderNodeRGB"
+    Boolean = "FunctionNodeInputBool"
     Value = "ShaderNodeValue"
     RandomValue = "FunctionNodeRandomValue"
     CollectionInfo = "GeometryNodeCollectionInfo"
@@ -98,6 +99,7 @@ class Nodes:
     Index = 'GeometryNodeInputIndex'
     AmbientOcclusion = 'ShaderNodeAmbientOcclusion'
     Integer = 'FunctionNodeInputInt'
+    LightPath = 'ShaderNodeLightPath'
     ShortestEdgePath = 'GeometryNodeInputShortestEdgePaths'
     NamedAttribute = 'GeometryNodeInputNamedAttribute'
 
@@ -182,12 +184,14 @@ class Nodes:
     WhiteNoiseTexture = 'ShaderNodeTexWhiteNoise'
     ImageTexture = "GeometryNodeImageTexture"
     GradientTexture = 'ShaderNodeTexGradient'
+    ShaderImageTexture = "ShaderNodeTexImage"
 
     # Shaders
     MixShader = "ShaderNodeMixShader"
     DiffuseBSDF = "ShaderNodeBsdfDiffuse"
     PrincipledBSDF = "ShaderNodeBsdfPrincipled"
     TranslucentBSDF = "ShaderNodeBsdfTranslucent"
+    TransparentBSDF = "ShaderNodeBsdfTransparent"
     PrincipledVolume = "ShaderNodeVolumePrincipled"
     PrincipledHairBSDF = 'ShaderNodeBsdfHairPrincipled'
     Emission = 'ShaderNodeEmission'
