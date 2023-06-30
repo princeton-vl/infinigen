@@ -3,6 +3,7 @@ import bpy
 import numpy as np
 
 
+class Nodes:
     """
     An enum for all node types.
     Pass these as the first argument to nw.new_node(...)
@@ -16,6 +17,7 @@ import numpy as np
     CaptureAttribute = "GeometryNodeCaptureAttribute"
     AttributeStatistic = 'GeometryNodeAttributeStatistic'
     TransferAttribute = "GeometryNodeAttributeTransfer"
+    DomainSize = 'GeometryNodeAttributeDomainSize'
     StoreNamedAttribute = "GeometryNodeStoreNamedAttribute"
 
     # Color Menu
@@ -30,19 +32,28 @@ import numpy as np
 
     # Curve
     CurveToMesh = "GeometryNodeCurveToMesh"
+    CurveToPoints = "GeometryNodeCurveToPoints"
     MeshToCurve = "GeometryNodeMeshToCurve"
     SampleCurve = 'GeometryNodeSampleCurve'
     SetCurveRadius = 'GeometryNodeSetCurveRadius'
+    SetCurveTilt = 'GeometryNodeSetCurveTilt'
     CurveLength = 'GeometryNodeCurveLength'
+    SetHandlePositions = 'GeometryNodeSetCurveHandlePositions'
+    SetHandleType = 'GeometryNodeCurveSetHandles'
+    CurveTangent = 'GeometryNodeInputTangent'
     SplineParameter = 'GeometryNodeSplineParameter'
+    SplineType = 'GeometryNodeCurveSplineType'
     SubdivideCurve = 'GeometryNodeSubdivideCurve'
     ResampleCurve = 'GeometryNodeResampleCurve'
     TrimCurve = 'GeometryNodeTrimCurve'
+    ReverseCurve = 'GeometryNodeReverseCurve'
     SplineLength = 'GeometryNodeSplineLength'
 
     # Curve Primitves
     QuadraticBezier = 'GeometryNodeCurveQuadraticBezier'
     CurveCircle = 'GeometryNodeCurvePrimitiveCircle'
+    CurveLine = 'GeometryNodeCurvePrimitiveLine'
+    CurveBezierSegment = "GeometryNodeCurvePrimitiveBezierSegment"
     BezierSegment = "GeometryNodeCurvePrimitiveBezierSegment"
 
     # Geometry
@@ -52,6 +63,8 @@ import numpy as np
     SeparateGeometry = "GeometryNodeSeparateGeometry"
     BoundingBox = "GeometryNodeBoundBox"
     Transform = "GeometryNodeTransform"
+    Proximity = "GeometryNodeProximity"
+    ConvexHull = "GeometryNodeConvexHull"
     Raycast = 'GeometryNodeRaycast'
     DuplicateElements = 'GeometryNodeDuplicateElements'
 
@@ -64,12 +77,17 @@ import numpy as np
     ObjectInfo = "GeometryNodeObjectInfo"
     ObjectInfo_Shader = 'ShaderNodeObjectInfo'
     Vector = "FunctionNodeInputVector"
+    InputID = "GeometryNodeInputID"
     InputPosition = "GeometryNodeInputPosition"
     InputNormal = "GeometryNodeInputNormal"
+    InputEdgeVertices = "GeometryNodeInputMeshEdgeVertices"
+    InputEdgeAngle = "GeometryNodeInputMeshEdgeAngle"
     InputColor = "FunctionNodeInputColor"
+    InputMeshFaceArea = 'GeometryNodeInputMeshFaceArea'
     TextureCoord = "ShaderNodeTexCoord"
     Index = 'GeometryNodeInputIndex'
     AmbientOcclusion = 'ShaderNodeAmbientOcclusion'
+    ShortestEdgePath = 'GeometryNodeInputShortestEdgePaths'
     NamedAttribute = 'GeometryNodeInputNamedAttribute'
 
     # Instances
@@ -81,20 +99,29 @@ import numpy as np
 
     # Material
     SetMaterial = "GeometryNodeSetMaterial"
+    SetMaterialIndex = "GeometryNodeSetMaterialIndex"
+    MaterialIndex = "GeometryNodeInputMaterialIndex"
 
     # Mesh
     SubdivideMesh = "GeometryNodeSubdivideMesh"
     SubdivisionSurface = "GeometryNodeSubdivisionSurface"
     MeshToPoints = 'GeometryNodeMeshToPoints'
+    MeshBoolean = "GeometryNodeMeshBoolean"
     SetShadeSmooth = 'GeometryNodeSetShadeSmooth'
+    DualMesh = 'GeometryNodeDualMesh'
+    ScaleElements = 'GeometryNodeScaleElements'
     ExtrudeMesh = 'GeometryNodeExtrudeMesh'
     FlipFaces = 'GeometryNodeFlipFaces'
+    FaceNeighbors = 'GeometryNodeInputMeshFaceNeighbors'
+    EdgePathToCurve = 'GeometryNodeEdgePathsToCurves'
+    SplitEdges = 'GeometryNodeSplitEdges'
 
     # Mesh Primitives
     MeshCircle = "GeometryNodeMeshCircle"
     MeshGrid = 'GeometryNodeMeshGrid'
     MeshLine = 'GeometryNodeMeshLine'
     MeshUVSphere = 'GeometryNodeMeshUVSphere'
+    MeshIcoSphere = 'GeometryNodeMeshIcoSphere'
     MeshCube = 'GeometryNodeMeshCube'
 
     # Output Menu
@@ -127,6 +154,9 @@ import numpy as np
     MapRange = 'ShaderNodeMapRange'
     BooleanMath = "FunctionNodeBooleanMath"
     Compare = "FunctionNodeCompare"
+    FloatToInt = "FunctionNodeFloatToInt"
+    FieldAtIndex = "GeometryNodeFieldAtIndex"
+    AccumulateField = "GeometryNodeAccumulateField"
     Clamp = "ShaderNodeClamp"
 
     # Texture
@@ -140,6 +170,9 @@ import numpy as np
     PrincipledBSDF = "ShaderNodeBsdfPrincipled"
     PrincipledVolume = "ShaderNodeVolumePrincipled"
     PrincipledHairBSDF = 'ShaderNodeBsdfHairPrincipled'
+    Emission = 'ShaderNodeEmission'
+    Fresnel = 'ShaderNodeFresnel'
+    NewGeometry = 'ShaderNodeNewGeometry'
 
     # Layout
     Reroute = "NodeReroute"
@@ -177,6 +210,7 @@ import numpy as np
     SetSplineResolution = 'GeometryNodeSetSplineResolution'
     OffsetPointinCurve = 'GeometryNodeOffsetPointInCurve'
     SplineResolution = 'GeometryNodeInputSplineResolution'
+
 '''
 Blender doesnt have an automatic way of discovering what properties
 exist on a node that might need to be set but are NOT in .inputs. This dict
@@ -186,28 +220,42 @@ Used in transpiler's create_attrs_dict
 '''
 NODE_ATTRS_AVAILABLE = {
 
+    Nodes.Math: ['operation', 'use_clamp'],
     Nodes.VectorMath: ['operation'],
     Nodes.BooleanMath: ['operation'],
     Nodes.Compare: ['mode', 'data_type', 'operation'],
+
+    Nodes.NoiseTexture: ['noise_dimensions'],
+    Nodes.MusgraveTexture: ['musgrave_dimensions', 'musgrave_type'],
     Nodes.VoronoiTexture: ['voronoi_dimensions', 'feature', 'distance'],
 
+    Nodes.RGB: ['color'],
     Nodes.Attribute: ['attribute_name', 'attribute_type'],
+    Nodes.AttributeStatistic: ['domain', 'data_type'],
     Nodes.CaptureAttribute: ['domain', 'data_type'],
     Nodes.TextureCoord: ['from_instancer'],
+
     Nodes.PrincipledBSDF: ['distribution', 'subsurface_method'],
 
     Nodes.Mapping: ['vector_type'],
     Nodes.MapRange: ['data_type', 'interpolation_type', 'clamp'],
+    Nodes.ColorRamp: [],  # Color ramp properties are set in special_case_colorramp, since they are nested
     Nodes.MixRGB: ['blend_type'],
 
+    Nodes.DistributePointsOnFaces: ['distribute_method'],
+    Nodes.CollectionInfo: ['transform_space'],
 
     Nodes.RandomValue: ['data_type'],
 
+    Nodes.Switch: ['input_type'],
+    Nodes.TransferAttribute: ['data_type', 'mapping'],
     Nodes.SeparateGeometry: ['domain'],
     Nodes.MergeByDistance: ['mode'],
 
     Nodes.MeshBoolean: ['operation'],
     Nodes.MeshCircle: ['fill_type'],
+    Nodes.SetHandlePositions: ['mode'],
+    Nodes.SetHandleType: ['handle_type', 'mode'],
     Nodes.NamedAttribute: ['data_type'],
     Nodes.StoreNamedAttribute: ['data_type', 'domain'],
     Nodes.ResampleCurve: ['mode'],
@@ -230,14 +278,24 @@ NODE_ATTRS_AVAILABLE = {
 }
 
 # Certain nodes should only be created once. This list defines which ones.
+SINGLETON_NODES = [Nodes.GroupInput, Nodes.GroupOutput, Nodes.MaterialOutput, Nodes.WorldOutput, Nodes.Viewer,
+    Nodes.Composite, Nodes.RenderLayers, Nodes.LightOutput]
 
 # Map the type of a socket (ie, .outputs[0].type), to the corresponding value to put into a 
 # data_type attr, ie CaptureAttributes data_type. Frustratingly these are not directly related. 
 NODETYPE_TO_DATATYPE = {
+    'VALUE': 'FLOAT',
+    'INT': 'INT',
+    'VECTOR': 'FLOAT_VECTOR',
     'FLOAT_COLOR': 'RGBA',
+    'BOOLEAN': 'BOOLEAN'}
 
 NODECLASS_TO_DATATYPE = {
+    'NodeSocketFloat': 'FLOAT',
+    'NodeSocketInt': 'INT',
     'NodeSocketVector': 'FLOAT_VECTOR',
+    'NodeSocketColor': 'RGBA',
+    'NodeSocketBool': 'BOOLEAN'}
 
 DATATYPE_TO_NODECLASS = {v: k for k, v in NODECLASS_TO_DATATYPE.items()}
 NODECLASSES = [k for k in dir(bpy.types) if 'NodeSocket' in k]
@@ -253,14 +311,19 @@ PYTYPE_TO_DATATYPE = {
 
 # Each thing containing nodes has a different output node id
 OUTPUT_NODE_IDS = {
+    bpy.types.Material: Nodes.MaterialOutput,
     bpy.types.Scene: Nodes.Composite,
     bpy.types.World: Nodes.WorldOutput,
     bpy.types.NodesModifier: Nodes.GroupOutput,
+    bpy.types.GeometryNodeGroup: Nodes.GroupOutput,
     bpy.types.ShaderNodeGroup: Nodes.GroupOutput,
     bpy.types.CompositorNodeGroup: Nodes.GroupOutput,
 }
 
+DATATYPE_DIMS = {'FLOAT': 1, 'INT': 1, 'FLOAT_VECTOR': 3, 'FLOAT_COLOR': 4, 'BOOLEAN': 1, }
 DATATYPE_FIELDS = {
     'FLOAT': 'value',
     'INT': 'value',
     'FLOAT_VECTOR': 'vector',
+    'FLOAT_COLOR': 'color',
+    'BOOLEAN': 'boolean', }
