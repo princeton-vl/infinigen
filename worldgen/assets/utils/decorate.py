@@ -105,6 +105,9 @@ def subsurface2face_size(obj, face_size):
     if area < 1e-6:
         logging.warning(f'subsurface2face_size found {area=}, quitting to avoid NaN')
         return
+    try:
+        levels = int(np.ceil(np.log2(area / face_size)))
+    except ValueError:
         return  # catch nans
     if levels > 0:
         butil.modify_mesh(obj, 'SUBSURF', levels=levels, render_levels=levels)
@@ -172,6 +175,9 @@ def write_attribute(obj, fn, name, domain="POINT"):
 
 
 def treeify(obj):
+    if len(obj.data.vertices) == 0:
+        return obj
+
     obj = separate_loose(obj)
     with butil.ViewportMode(obj, 'EDIT'):
         bm = bmesh.from_edit_mesh(obj.data)
