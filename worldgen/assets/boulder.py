@@ -52,6 +52,7 @@ class BoulderFactory(AssetFactory):
         self.weights = [.8, .2]
         self.configs = ['boulder', 'slab']
         with FixedSeed(factory_seed):
+            self.rock_surface = surface.registry('rock_collection')
             method = np.random.choice(self.configs, p=self.weights)
             self.has_horizontal_cut, self.is_slab = self.config_mappings[method]
 
@@ -98,6 +99,7 @@ class BoulderFactory(AssetFactory):
 
     def finalize_placeholders(self, placeholders):
         with FixedSeed(self.factory_seed):
+            self.rock_surface.apply(placeholders, is_rock=True)
 
     @staticmethod
     def geo_extrusion(nw: NodeWrangler, extrude_scale=1):
