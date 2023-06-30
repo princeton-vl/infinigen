@@ -228,10 +228,16 @@ class JellyfishFactory(AssetFactory):
 
     @staticmethod
     def shader_jellyfish(nw: NodeWrangler, base_hue, saturation, transparency):
+        layerweight = nw.build_float_curve(nw.new_node(Nodes.LayerWeight, input_kwargs={'Blend': 0.3}),
                                        [(0, 0), (.4, 0), (uniform(.6, .9), 1), (1, 1)])
         emission_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .6), 1), 1
         transparent_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.1, .1)) % 1, saturation, 1), 1
         emission = nw.new_node(Nodes.Emission, [emission_color])
+        glossy = nw.new_node(Nodes.GlossyBSDF, 
+            input_kwargs={'Color': transparent_color, 'Roughness': uniform(0.8, 1)})
+        transparent = nw.new_node(Nodes.TransparentBSDF, [transparent_color])
+        mix_shader = nw.new_node(Nodes.MixShader, [0.5, glossy, transparent])
+        mix_shader = nw.new_node(Nodes.MixShader, [layerweight, emission, mix_shader])
         transparent = nw.new_node(Nodes.TransparentBSDF, [transparent_color])
         transparency = surface.eval_argument(nw, transparency)
         mix_shader = nw.new_node(Nodes.MixShader, [transparency, mix_shader, transparent])
