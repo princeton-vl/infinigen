@@ -1,3 +1,7 @@
+import re
+import sys
+import warnings
+import traceback
 import logging
 
 from collections.abc import Iterable
@@ -12,13 +16,25 @@ from nodes import node_info
 
 logger = logging.getLogger(__name__)
 
+class NodeMisuseWarning(UserWarning):
+    pass
 
 
 
+
+def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+    traceback_str = ' '.join(traceback.format_stack())
+    traceback_files = re.findall("/([^/]*\.py)\", line ([0-9]+)", traceback_str)
     traceback_files = [f"{f}:{l}" for f, l in traceback_files if
         all(s not in f for s in {"warnings.py", "node_wrangler.py"})]
         message.args = f"{message.args[0]}. The issue is probably coming from {traceback_files.pop()}",
     log = file if hasattr(file, 'write') else sys.stderr
+    log.write(warnings.formatwarning(message, category, filename, lineno, line))
+
+
+warnings.showwarning = warn_with_traceback
+
+warnings.simplefilter('always', NodeMisuseWarning)
 
 
 def isnode(x):
@@ -82,6 +98,7 @@ def infer_input_socket(node, input_socket_name):
 
 class NodeWrangler():
 
+    def __init__(self, node_group):
         if issubclass(type(node_group), bpy.types.NodeTree):
             self.modifier = None
             self.node_group = node_group
@@ -120,6 +137,7 @@ class NodeWrangler():
 
         if label is not None:
             node.label = label
+            node.name = label
 
         if attrs is not None:
             for key, val in attrs.items():
@@ -131,6 +149,7 @@ class NodeWrangler():
                     setattr(node, key, val)
                 except AttributeError:
                     exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
+
         if node_type in [Nodes.VoronoiTexture, Nodes.NoiseTexture, Nodes.WaveTexture, Nodes.WhiteNoiseTexture,
             Nodes.MusgraveTexture]:
             if not (input_args != [] or "Vector" in input_kwargs):
@@ -289,6 +308,7 @@ class NodeWrangler():
                 bpy.data.node_groups[node_type].bl_idname]
 
             node = self.nodes.new(nodegroup_type)
+        else:
             node = self.nodes.new(node_type)
 
         return node
