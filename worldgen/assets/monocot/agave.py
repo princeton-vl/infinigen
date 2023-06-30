@@ -17,6 +17,7 @@ from assets.utils.draw import cut_plane, leaf
 from assets.utils.misc import log_uniform
 from surfaces.surface import shaderfunc_to_material
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class AgaveMonocotFactory(MonocotGrowthFactory):
     use_distance = True
@@ -64,4 +65,5 @@ class AgaveMonocotFactory(MonocotGrowthFactory):
                 bpy.ops.mesh.remove_doubles(threshold=1e-2)
 
         self.decorate_leaf(obj)
+        tag_object(obj, 'agave')
         return obj
