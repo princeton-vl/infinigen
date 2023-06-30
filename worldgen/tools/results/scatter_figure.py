@@ -6,6 +6,8 @@ import numpy as np
 import os
 import argparse
 
+from surfaces.scatters import seashells
+
 sys.path.append(os.getcwd())
     
 import gin
@@ -20,6 +22,7 @@ registry.initialize_from_gin()
 import numpy as np
 from numpy.random import uniform as U
 
+from surfaces.scatters import grass, chopped_trees, pine_needle, flowerplant, fern, pine_needle, pinecone, urchin, seaweed
 from surfaces.templates import dirt, sand, mud
 from placement import density
 import math
@@ -84,6 +87,7 @@ def apply_scatters(obj, mode, index):
    
     if mode == 'grass':
         mud.apply(obj)
+        selection = density.placement_mask(normal_dir=(0, 0, 1), scale=3, 
                 return_scalar=True, select_thresh=U(0, 0.2))
         go, _ = grass.apply(obj, selection=selection, density=15)
         all_objects.append(go)
@@ -98,14 +102,20 @@ def apply_scatters(obj, mode, index):
     elif mode == 'seafloor':
         mud.apply(obj)
         dirt.apply(obj)
+        uo, _ = urchin.apply(obj, selection=density.placement_mask(scale=U(1, 3), select_thresh=U(0.8, 1.2)), density=U(0.8, 1.2), n=int(U(3, 10)))
+        mo, _ = seashells.apply(obj, selection=density.placement_mask(scale=U(1, 3), select_thresh=U(0.8, 1.2)), density=U(1.5, 2.5), n=int(U(5, 15)))
+        so, _ = seaweed.apply(obj, selection=density.placement_mask(scale=U(1, 3), select_thresh=U(0.8, 1.2), normal_thresh=0.4), density=U(1, 2), n=int(U(3, 10)))
         all_objects.append(uo)
         all_objects.append(mo)
         all_objects.append(so)
     elif mode == 'fallen_trees':
         po, _ = pine_needle.apply(obj,
+                selection=density.placement_mask(scale=U(0.2, 1), select_thresh=U(0.4, 0.6), return_scalar=True),
                 density=U(1000, 3000))
         pio, _ = pinecone.apply(obj,
+            selection=density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6)),
             density=U(0.4, 0.6))
+        co, _ = chopped_trees.apply(obj, selection=density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6), density=U(0.4, 0.6))
         all_objects.append(po)
         all_objects.append(pio)
         all_objects.append(co)
