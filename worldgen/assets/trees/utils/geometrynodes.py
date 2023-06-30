@@ -334,6 +334,8 @@ def set_tree_radius(nw):
         input_kwargs={'Curve': mesh_to_curve},
         attrs={'spline_type': 'BEZIER'})
     
+    set_handle_type = nw.new_node(Nodes.SetHandleType,
+                                  input_kwargs={'Curve': set_spline_type})
     
     position = nw.new_node(Nodes.InputPosition)
     
@@ -344,6 +346,8 @@ def set_tree_radius(nw):
         input_kwargs={0: noise_texture.outputs["Color"], 'Scale': 0.02},
         attrs={'operation': 'SCALE'})
     
+    set_handle_positions = nw.new_node(Nodes.SetHandlePositions,
+                                       input_kwargs={'Curve': set_handle_type, 'Offset': scale.outputs["Vector"]})
     
     switch = nw.new_node(Nodes.Switch,
         input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions})
