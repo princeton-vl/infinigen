@@ -9,6 +9,7 @@ from surfaces.templates import succulent
 from placement.factory import AssetFactory
 import numpy as np
 
+from util import blender as butil
 
 @node_utils.to_nodegroup('nodegroup_pedal_cross_contour_top', singleton=False, type='GeometryNodeTree')
 def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
@@ -389,12 +390,16 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
                                input_kwargs={'Geometry': set_shade_smooth_1,
                                              'Material': surface.shaderfunc_to_material(material)})
 
+    realized = nw.new_node(Nodes.RealizeInstances, [set_material])
+
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Geometry': realized})
 
 
 class SucculentFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(SucculentFactory, self).__init__(factory_seed, coarse=coarse)
+        self.mode = np.random.choice(["thin_pedal", "thick_pedal"], p=[0.65, 0.35])
 
     def get_params(self, mode):
         if mode == 'thin_pedal':
@@ -495,6 +500,14 @@ class SucculentFactory(AssetFactory):
         bpy.ops.mesh.primitive_plane_add(
             size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
+
+        params = self.get_params(self.mode)
+
+        surface.add_geomod(obj, geometry_succulent_nodes, apply=True, attributes=[], input_kwargs=params)
+
+        obj.scale = (0.2, 0.2, 0.2)
+        obj.location.z += 0.01
+        butil.apply_transform(obj, loc=True, scale=True)     
 
 
         return obj
