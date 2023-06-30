@@ -210,8 +210,11 @@ class NodeWrangler():
             input_socket = infer_input_socket(node, input_socket_name)
             self.connect_input(input_socket, input_item)
 
+        if expose_input is not None:
+            for inp in expose_input:
                 nodeclass, name, val = inp
                 self.expose_input(name, val=val, dtype=nodeclass)
+
         return node
 
     def expose_input(self, name, val=None, attribute=None, dtype=None, use_namednode=False):
@@ -329,6 +332,7 @@ class NodeWrangler():
                 node = next(n for n in self.nodes if n.bl_idname == node_type)
             except StopIteration:
                 node = self.nodes.new(node_type)
+        elif node_type in bpy.data.node_groups:
             assert node_type not in [getattr(Nodes, k) for k in dir(Nodes) if not k.startswith(
                 '__')], f'Someone has made a node_group named {node_type}, which is also the name of a ' \
                         f'regular node'
@@ -341,6 +345,7 @@ class NodeWrangler():
                 bpy.data.node_groups[node_type].bl_idname]
 
             node = self.nodes.new(nodegroup_type)
+            node.node_tree = bpy.data.node_groups[node_type]
         else:
             node = self.nodes.new(node_type)
 
