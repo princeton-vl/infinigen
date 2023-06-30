@@ -6,8 +6,10 @@ import numpy as np
 from mathutils import Vector
 from nodes.node_wrangler import Nodes
 from numpy.random import normal, uniform
+from surfaces import surface
 from terrain.assets.ocean import ocean_asset, spatial_size
 from terrain.utils import SurfaceTypes, drive_param
+from util.math import FixedSeed
 from util.random import random_general as rg
 from util.organization import Attributes
 
@@ -16,8 +18,27 @@ mod_name = "geo_water"
 name = "water"
 info = {}
 
+@gin.configurable('geo')
+def geo_water(
+    nw,
+    asset_paths,
+    coastal,
+    tile_size=40,
+    with_waves=True,
+    with_ripples=("bool", 0.3),
     waves_animation_speed=("uniform", 0.005, 0.025),
+    animate_ripples=True,
+    water_scale=("uniform", 4, 6),
+    water_detail=("uniform", 5, 10),
+    water_height=("uniform", 0.002, 0.02),
+    water_dimension=("uniform", 1.0, 1.4),
+    water_lacunarity=("uniform", 1.8, 2.0),
+    height_modulation_scale=("uniform", 1, 5),
+    ripples_lattice=2,
+    selection=None
+):
     nw.force_input_consistency()
+    group_input = nw.new_node(Nodes.GroupInput)
     position0 = nw.new_node("GeometryNodeInputPosition")
 
     if asset_paths == []:
@@ -123,17 +144,27 @@ info = {}
 
     if selection is not None:
         offset = nw.multiply(offset, surface.eval_argument(nw, selection))
+
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input,
             "Offset": offset,
+        },
+    )
     input_kwargs = {'Geometry': set_position}
     if asset_paths != []:
         input_kwargs["foam"] = (group_input, "Attribute")
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs=input_kwargs)
+
+@gin.configurable
 def shader(
     nw,
     asset_paths,
     coastal,
     color=("color_category", 'water'),
     enable_scatter=True,
+    colored=False,
     emissive_foam=False,
     volume_density=("uniform", 0.07, 0.09),
     anisotropy=("clip_gaussian", 0.75, 0.2, 0.5, 1),
@@ -180,9 +211,14 @@ def shader(
                 weight = 1
             foam = nw.scalar_multiply(foam, weight)
             surface_shader = nw.new_node(Nodes.MixShader, input_kwargs={'Fac': foam, 1: surface_shader, 2: foam_bsdf})
+    
         rgb = nw.new_node(Nodes.RGB)
         rgb.outputs[0].default_value = color
         principled_volume = nw.new_node(Nodes.PrincipledVolume, input_kwargs={
+            'Color': rgb, 
+            'Absorption Color': rgb,
+            'Density': rg(volume_density) if enable_scatter else 0,
+            'Anisotropy': rg(anisotropy),
         })
         material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': surface_shader, 'Volume': principled_volume})
 
