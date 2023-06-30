@@ -59,3 +59,4 @@ class Ground(Element):
 
         self.meta_params = [caves is not None]
         Element.__init__(self, "ground", material, transparency)
+        self.tag = ElementTag.Terrain
