@@ -18,6 +18,7 @@ def report_memory():
 @gin.configurable("TerrainTimer")
 class Timer(oTimer):
     def __init__(self, desc, verbose):
+        super().__init__(desc)
         self.verbose = verbose
 
     def __enter__(self):
