@@ -18,12 +18,34 @@ class FixedSeed:
     def __enter__(self):
         self.py_state = random.getstate()
         self.np_state = np.random.get_state()
+
         random.seed(self.seed)
         np.random.seed(self.seed)
 
     def __exit__(self, *_):
         random.setstate(self.py_state)
         np.random.set_state(self.np_state)
+
+
+@gin.configurable
+class AddedSeed:
+
+    def __init__(self, added_seed):
+        self.added_seed = added_seed
+        self.py_state = None
+        self.np_state = None
+
+    def __enter__(self):
+        self.py_state = random.getstate()
+        self.np_state = np.random.get_state()
+
+        random.randbytes(self.added_seed)
+        np.random.rand(self.added_seed)
+
+    def __exit__(self, *_):
+        random.setstate(self.py_state)
+        np.random.set_state(self.np_state)
+
 
 class BBox:
 
@@ -101,12 +123,16 @@ class BBox:
         if not isinstance(margin, np.ndarray):
             margin = np.array([margin] * len(self))
         return BBox(
+            mins=self.mins + margin,
+            maxs=self.maxs - margin
         )
 
     def inflated(self, margin):
         if not isinstance(margin, np.ndarray):
             margin = np.array([margin] * len(self))
         return BBox(
+            mins=self.mins - margin,
+            maxs=self.maxs + margin
         )
 
     @classmethod
@@ -119,14 +145,18 @@ class BBox:
     @classmethod
     def from_bpy_box(cls, bpy_obj):
         if not (
+                hasattr(bpy_obj, 'empty_display_type') and
+                bpy_obj.empty_display_type == 'CUBE'
         ):
             raise ValueError(f'BBox.from_bpy_box expected a CUBE type blender empty')
 
         center = bpy_obj.location
+        dims = bpy_obj.scale * bpy_obj.empty_display_size / 2  # default has a RADIUS of 1
 
         return cls.from_center_dims(center, dims)
 
     def spawn_empty(self, name='BBoxEmpty'):
+        obj = spawn_empty(name, disp_type='CUBE', s=0.5)  # rad 0.5, diameter 1
         obj.location = self.center()
         obj.scale = self.dims()
         return obj
@@ -137,6 +167,7 @@ class BBox:
 
     def to_limits(self):
         return np.stack([self.mins, self.maxs], axis=-1).T
+
 
 def md5_hash(x):
     if isinstance(x, (tuple, list)):
@@ -151,26 +182,31 @@ def md5_hash(x):
     else:
         raise ValueError(f'util.md5_hash doesnt currently support type({type(x)}')
 
+
     md5 = int(md5_hash(x).hexdigest(), 16)
     return h
 
 def round_to_nearest(x, step):
     return step * np.round(x / step)
 
+
 def lerp_sample(vec, ts: np.array):
     vec = np.array(vec, dtype=np.float32)
     ts = np.array(ts, dtype=np.float32)
     assert ts.min() >= 0 and ts.max() <= len(vec)
+
     # compute integer and fractional indexes
     idx_int = np.floor(ts).astype(np.int32)
     idx_int = np.clip(idx_int, 0, len(vec) - 1)
     idx_rem = ts - idx_int
+
     # do fractional indexing only where not already at last elt
     res = vec[idx_int]
     m = idx_int < (len(vec) - 1)
     res[m] = (1 - idx_rem[m, None]) * res[m] + idx_rem[m, None] * vec[idx_int[m] + 1]
 
     return res
+
 
 def inverse_interpolate(vals, ds):
     '''
@@ -192,6 +228,7 @@ def inverse_interpolate(vals, ds):
     return ts
 
 
+def cross_matrix(v):
     o = np.zeros(v.shape[0])
 
     cross_mat = np.stack([
@@ -202,8 +239,10 @@ def inverse_interpolate(vals, ds):
 
     return cross_mat
 
+
 def rodrigues(angle, axi):
     axi = axi / np.linalg.norm(axi, axis=-1, keepdims=True)
+
     id = np.zeros((axi.shape[0], 3, 3))
     id[:, [0, 1, 2], [0, 1, 2]] = 1
     th = angle[:, None, None]
@@ -212,22 +251,30 @@ def rodrigues(angle, axi):
     return id + np.sin(th) * K + (1 - np.cos(th)) * (K @ K)
 
 
+def rotate_match_directions(a, b):
     assert a.shape == b.shape
     norm = np.linalg.norm
 
+    axes = np.cross(a, b, axis=-1)
     m = np.linalg.norm(axes, axis=-1) > 1e-4
+    rots = np.empty((len(a), 3, 3))
     rots[~m] = np.eye(3)[None]
+
     dots = (a[m] * b[m]).sum(axis=-1)
     dots /= norm(a[m], axis=-1) * norm(b[m], axis=-1)
     rots[m] = rodrigues(np.arccos(dots), axes[m])
+
     return rots
 
+
+def lerp(a, b, x):
     "linear interpolation"
     return (1 - x) * a + x * b
 
 def dict_lerp(a, b, t):
     assert list(a.keys()) == list(b.keys())
     return {k: lerp(va, b[k], t) for k, va in a.items()}
+
 def dict_convex_comb(dicts, weights):
     assert all(d.keys == dicts[0].keys() for d in dicts[1:])
     weights = np.array(weights)
@@ -236,6 +283,7 @@ def dict_convex_comb(dicts, weights):
 
 def randomspacing(min, max, n, margin):
     assert 0 <= margin and margin <= 0.5
+
     pos = np.linspace(min, max, n, endpoint=False)
     bucket_size = (max - min) / n
 
@@ -244,14 +292,18 @@ def randomspacing(min, max, n, margin):
 
     return pos
 
+
 def linvec(n, low, high):
     return np.full(n, low) + np.linspace(0, 1, n) * (high - low)
+
 
 def homogenize(points):
     ones = np.ones(points.shape[:-1])[..., None]
     return np.concatenate([points, ones], axis=-1)
 
+
 def dehomogenize(points):
+    return points[..., :-1] / points[..., [-1]]
 
 def clip_gaussian(mean, std, min, max, max_tries=20):
     assert min <= max
