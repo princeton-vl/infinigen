@@ -65,5 +65,8 @@ def save_polycounts(file):
 
 @gin.configurable
 def create_text_file(log_dir, filename, text=None):
+    log_dir = Path(log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / filename).touch()
     if text is not None:
         (log_dir / filename).write_text(text)
