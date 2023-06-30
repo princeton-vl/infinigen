@@ -19,6 +19,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class ShellBaseFactory(BaseMolluskFactory):
 
@@ -67,6 +68,7 @@ class ShellBaseFactory(BaseMolluskFactory):
         shape_by_angles(obj, np.array(angles) * np.pi, scales)
         self.add_radial_groove(obj)
         obj = self.add_hinge(obj)
+        tag_object(obj, 'scallop')
         return obj
 
     def clam_make(self):
@@ -77,6 +79,7 @@ class ShellBaseFactory(BaseMolluskFactory):
         angles = [-uniform(.4, .5), -uniform(.3, .35), uniform(-.25, .25), uniform(.3, .35), uniform(.4, .5)]
         scales = [0, s, 1, s, 0]
         shape_by_angles(obj, np.array(angles) * np.pi, scales)
+        tag_object(obj, 'clam')
         return obj
 
     def mussel_make(self):
@@ -87,6 +90,7 @@ class ShellBaseFactory(BaseMolluskFactory):
         angles = [-.5, -uniform(.1, .15), uniform(0., .25), .5]
         scales = [0, s, 1, uniform(.6, .8)]
         shape_by_angles(obj, np.array(angles) * np.pi, scales)
+        tag_object(obj, 'mussel')
         return obj
 
     @staticmethod
