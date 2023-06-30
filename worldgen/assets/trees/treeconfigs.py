@@ -368,6 +368,7 @@ def shrub(init_pos=np.array([[0, 0, 0]]), shrub_shape=0):
     # branch_config = {'n': 5, 'spawn_kargs': lambda idx: {'rng': [.5,.8]},
     #   'path_kargs': lambda idx: {'n_pts': 5, 'sz': .4, 'std': 1.4, 'momentum': .4},
     #   'children': []}
+    # twig_config = {'n': 4,
     #   'path_kargs': lambda idx: ({'n_pts': 15, 'sz': .8, 'std': 1, 'momentum': .7}
     #                              if idx > 0 else
     #                              {'n_pts': 15, 'sz': 1, 'std': .1, 'momentum': .7}),
@@ -378,6 +379,7 @@ def shrub(init_pos=np.array([[0, 0, 0]]), shrub_shape=0):
     #               'radii_kargs': {'Max radius': .1},
     #               'leaf_kargs': {'Density': 1, 'Min scale': .4, 'Max scale': .6, 'Multi inst': 2}
     #               }
+    # tree_kargs = {'config': twig_config, 'init_pos': init_pos,
     #               'radii_kargs': {'Min radius': .04, 'Exponent': 2},
     #               'leaf_kargs': {'Density': 1, 'Min scale': .35, 'Max scale': .45},
     #               'space_kargs': {'atts': init_att_fn, 'D': .3, 's': .4, 'd': 10,
