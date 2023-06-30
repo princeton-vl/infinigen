@@ -19,6 +19,7 @@ from placement.factory import AssetFactory
 from surfaces import surface
 from util import blender as butil
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MushroomStemFactory(AssetFactory):
 
@@ -43,6 +44,7 @@ class MushroomStemFactory(AssetFactory):
         anchors = x_anchors, 0, z_anchors
         obj = spin(anchors)
         surface.add_geomod(obj, self.geo_inverse_band, apply=True, input_args=[-uniform(.008, .01)])
+        tag_object(obj, 'web')
         return obj
 
     @staticmethod
@@ -66,6 +68,7 @@ class MushroomStemFactory(AssetFactory):
         butil.modify_mesh(obj, 'SUBSURF', True, render_levels=levels, levels=levels)
         surface.add_geomod(obj, self.geo_voronoi, apply=True)
         butil.modify_mesh(obj, 'SMOOTH', iterations=2)
+        tag_object(obj, 'web')
         return obj
 
     def create_asset(self, face_size, **params) -> bpy.types.Object:
@@ -93,6 +96,7 @@ class MushroomStemFactory(AssetFactory):
 
         butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='BEND', angle=-uniform(0, np.pi / 2),
                           deform_axis='Y')
+        tag_object(obj, 'stem')
         return obj
 
     @staticmethod
