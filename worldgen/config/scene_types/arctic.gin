@@ -1,0 +1,28 @@
+surface.registry.mountain_collection = [
+    ('ice', 1),
+]
+
+surface.registry.rock_collection = [
+    ('ice', 1),
+]
+
+]
+
+Terrain.main_terrain = "CollectiveTransparentTerrain"
+# scene composition config
+LandTiles.transparency = "CollectiveTransparent"
+VoronoiRocks.transparency = "CollectiveTransparent"
+
+LandTiles.randomness = 1
+LandTiles.land_process = "ice_erosion"
+LandTiles.tiles = ["Mesa"]
+LandTiles.tile_heights = [-2.75]
+LandTiles.tile_density = 0.4
+LandTiles.height_modification_start = -1.5
+LandTiles.height_modification_end = -2.5
+scene.ground_chance = 0
+scene.warped_rocks_chance = 0
+scene.ground_ice_chance = 1
+
+water.geo.water_height = ("uniform", 0.002, 0.004)
+water.geo.with_ripples = 0
