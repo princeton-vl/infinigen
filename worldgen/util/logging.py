@@ -1,3 +1,12 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Lahav Lipson: logging formats, timer format
+# - Alex Raistrick: Timer
+# - Alejandro Newell: Suppress
+# Date Signed: May 2 2023
+
 import os, sys
 from datetime import datetime
 from pathlib import Path
