@@ -16,6 +16,7 @@ from util import blender as butil
 
 C = bpy.context
 D = bpy.data
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class LeafFactory(AssetFactory):
     
@@ -82,6 +83,7 @@ class LeafFactory(AssetFactory):
         obj.location = (0, 0, 0)
         obj.scale *= self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf')
         return obj
 
 
