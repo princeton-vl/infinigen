@@ -5,6 +5,7 @@ from collections.abc import Iterable
 import bpy
 import numpy as np
 
+from util.random import random_vector3
 from nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
 from nodes import node_info
 
@@ -98,6 +99,16 @@ class NodeWrangler():
         self.input_attribute_data = {}
         self.position_translation_seed = {}
 
+        self.input_consistency_forced = 0
+
+    def force_input_consistency(self):
+        self.input_consistency_forced = 1
+
+    def new_value(self, v, label=None):
+        node = self.new_node(Nodes.Value, label=label)
+        node.outputs[0].default_value = v
+        return node
+
     def new_node(self, node_type, input_args=None, attrs=None, input_kwargs=None, label=None,
                  expose_input=None):
         if input_args is None:
@@ -122,8 +133,17 @@ class NodeWrangler():
                     exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
         if node_type in [Nodes.VoronoiTexture, Nodes.NoiseTexture, Nodes.WaveTexture, Nodes.WhiteNoiseTexture,
             Nodes.MusgraveTexture]:
+            if not (input_args != [] or "Vector" in input_kwargs):
+                w = f"{self.node_group=}, no vector input for noise texture in specified"
+                if self.input_consistency_forced:
                     logger.debug(f"{w}, it is fixed automatically by using position for consistency")
+                    if self.node_group.type == "SHADER":
+                        input_kwargs["Vector"] = self.new_node('ShaderNodeNewGeometry')
+                    else:
+                        input_kwargs["Vector"] = self.new_node(Nodes.InputPosition)
+                else:
                     pass #print(f"{w}, please fix it if you found it causes inconsistency")
+
         input_keyval_list = list(enumerate(input_args)) + list(input_kwargs.items())
         for input_socket_name, input_item in input_keyval_list:
             if input_item is None:
@@ -141,6 +161,7 @@ class NodeWrangler():
                     assert input_socket_name in node.inputs and node.inputs[input_socket_name].enabled
 
             input_socket = infer_input_socket(node, input_socket_name)
+            self.connect_input(input_socket, input_item)
 
                 nodeclass, name, val = inp
                 self.expose_input(name, val=val, dtype=nodeclass)
@@ -247,6 +268,7 @@ class NodeWrangler():
             for inp in input_item:
                 self._update_socket(input_socket, inp)
         else:
+            self._update_socket(input_socket, input_item)
 
     def _make_node(self, node_type):
         if node_type in node_info.SINGLETON_NODES:
@@ -297,6 +319,9 @@ class NodeWrangler():
     def scalar_add2(self, *nodes):
         return self.new_node(Nodes.Math, list(nodes))
 
+    def scalar_max2(self, *nodes):
+        return self.new_node(Nodes.Math, list(nodes), {"operation": "MAXIMUM"})
+
     def scalar_multiply2(self, *nodes):
         return self.new_node(Nodes.Math, list(nodes), {"operation": "MULTIPLY"})
 
@@ -335,6 +360,13 @@ class NodeWrangler():
         if len(nodes) == 2:
             return self.scalar_add2(*nodes)
         return self.scalar_add2(nodes[0], self.scalar_add(*nodes[1:]))
+
+    def scalar_max(self, *nodes):
+        if len(nodes) == 1:
+            return nodes[0]
+        if len(nodes) == 2:
+            return self.scalar_max2(*nodes)
+        return self.scalar_max2(nodes[0], self.scalar_max(*nodes[1:]))
 
     def scalar_multiply(self, *nodes):
         if len(nodes) == 1:
