@@ -20,6 +20,7 @@ from util import blender as butil
 from surfaces import surface
 from surfaces.templates import simple_greenery
 
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def random_pinnae_level2_curvature():
     z_max_curvature = uniform(0.3, 0.45, (1,))[0]
@@ -749,6 +750,7 @@ class FernFactory(AssetFactory):
 
         bpy.ops.object.convert(target='MESH')
         butil.delete([leaf])
+        tag_object(obj, 'fern')
         return obj
 
 
