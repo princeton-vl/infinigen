@@ -12,6 +12,7 @@ import sys
 
 import numpy as np
 import gin
+import cv2
 
 @gin.configurable
 class FixedSeed:
@@ -189,7 +190,9 @@ def md5_hash(x):
         raise ValueError(f'util.md5_hash doesnt currently support type({type(x)}')
 
 
+def int_hash(x, max=(2**32 - 1)):
     md5 = int(md5_hash(x).hexdigest(), 16)
+    h = abs(md5) % max
     return h
 
 def round_to_nearest(x, step):
@@ -367,3 +370,6 @@ def affine_from_new_domain(old_domain, new_domain):
     a = (s[1] - s[0]) / (t[1] - t[0])
     b = s[0] - a * t[0]
     return (a, b)
+
+def resize(arr, shape):
+    return cv2.resize(arr, shape) #, interpolation=cv2.INTER_LANCZOS4)
