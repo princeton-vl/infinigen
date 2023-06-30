@@ -3,6 +3,7 @@ import os
 import bpy
 import gin
 from nodes.node_wrangler import Nodes
+from numpy.random import uniform, normal as N
 from surfaces import surface
 from surfaces.surface_utils import sample_color, sample_ratio
 from terrain.utils import SurfaceTypes
@@ -48,6 +49,7 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         # scale cracks
         scal_crack = uniform(5, 10)/2
         # width of the crack
+        widt_crack = uniform(0.08, 0.12)
         scale = 0.5
 
         musgrave_texture = nw.new_node(
@@ -127,9 +129,13 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
             attrs={"noise_dimensions": "4D"},
         )
 
+        wave_texture = nw.new_node(
+            Nodes.WaveTexture,
+            input_kwargs={"Vector": noise_texture_1.outputs["Color"], "Scale": nw.new_value(N(2, 0.5), "wave_texture_scale"), "Distortion": nw.new_value(N(6, 2), "wave_texture_distortion"), "Detail": nw.new_value(N(15, 5), "wave_texture_detail")},
         )
 
         colorramp_1 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Fac"]}, label="colorramp_1_VAR"
         )
         colorramp_1.color_ramp.elements[0].position = 0.0
         colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -277,5 +283,11 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
     else:
         return stone_base_color, stone_roughness
 
+
+
     surface.add_geomod(
+        obj,
+        geo_stone,
+        selection=selection,
     )
+
