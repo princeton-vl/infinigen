@@ -22,6 +22,7 @@ from . import tree_flower
 
 from util import blender as butil
 from util.math import FixedSeed
+from util.blender import deep_clone_obj
 from util import camera as camera_util
 
 from placement.factory import AssetFactory, make_asset_collection
@@ -234,6 +235,7 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
     elif leaf_type == 'grass':
         return grass.GrassTuftFactory(seed), surface.registry('greenery')
     elif leaf_type == 'rocks':
+        return rocks.BlenderRockFactory(seed, detail=1), surface.registry('rock_collection')
     else:
         raise ValueError(f'Unrecognized {leaf_type=}')   
 
