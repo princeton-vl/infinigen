@@ -1,3 +1,17 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#pragma once
+#include <iostream>
+#include <fstream>
+#include <memory>
+#include <glad/glad.h>
+#include <Eigen/Dense>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include <tinycolormap.hpp>
 typedef tinycolormap::ColormapType clrmap;
 #include <indicators/progress_bar.hpp>
 #include "cnpy/cnpy.h"
