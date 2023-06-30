@@ -1,3 +1,20 @@
+import colorsys
+
+import numpy as np
+from numpy.random import uniform, normal
+
+import bpy
+
+from surfaces import surface
+from nodes import node_utils
+from nodes.node_wrangler import Nodes
+
+from util.math import FixedSeed
+from placement.factory import AssetFactory
+from util import blender as butil
+from nodes.color import color_category
+
+
 import bpy
 import mathutils
 from numpy.random import uniform, normal
@@ -5,9 +22,11 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
+
 @node_utils.to_nodegroup('shader_nodegroup_sub_vein', singleton=False, type='ShaderNodeTree')
 def shader_nodegroup_sub_vein(nw):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloat', 'X Modulated', 0.5),
             ('NodeSocketFloat', 'Y', 0.0)])
@@ -52,6 +71,7 @@ def shader_nodegroup_midrib(nw, midrib_curve_control_points=[(0.0, 0.5), (0.2809
             ('NodeSocketFloat', 'Stem Length', 0.8)
             ])
     
+    map_range_6 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': group_input.outputs["Y"], 1: -0.6, 2: 0.6})
     
     stem_shape = nw.new_node(Nodes.FloatCurve,
@@ -59,6 +79,7 @@ def shader_nodegroup_midrib(nw, midrib_curve_control_points=[(0.0, 0.5), (0.2809
         label='Stem shape')
     node_utils.assign_curve(stem_shape.mapping.curves[0], midrib_curve_control_points)
     
+    map_range_7 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': stem_shape, 3: -1.0})
     
     subtract = nw.new_node(Nodes.Math,
@@ -80,6 +101,7 @@ def shader_nodegroup_midrib(nw, midrib_curve_control_points=[(0.0, 0.5), (0.2809
         input_kwargs={0: group_input.outputs["Y"]},
         attrs={'operation': 'ABSOLUTE'})
     
+    map_range_9 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': absolute_1, 2: group_input.outputs["Stem Length"], 3: 1.0, 4: 0.0})
     
     smooth_min = nw.new_node(Nodes.Math,
@@ -90,6 +112,7 @@ def shader_nodegroup_midrib(nw, midrib_curve_control_points=[(0.0, 0.5), (0.2809
         input_kwargs={0: map_range_8.outputs["Result"], 1: smooth_min},
         attrs={'operation': 'DIVIDE', 'use_clamp': True})
     
+    map_range_11 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': divide, 1: 0.001, 2: 0.03, 3: 1.0, 4: 0.0})
     
     group_output = nw.new_node(Nodes.GroupOutput,
@@ -145,9 +168,11 @@ def shader_nodegroup_vein_coord(nw, vein_curve_control_points=[(0.0, 0.0), (0.36
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Vein Coord': add})
+
 @node_utils.to_nodegroup('shader_nodegroup_shape', singleton=False, type='ShaderNodeTree')
 def shader_nodegroup_shape(nw, shape_curve_control_points=[(0.0, 0.0), (0.3454, 0.2336), (1.0, 0.0)]):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloat', 'X Modulated', 0.0),
             ('NodeSocketFloat', 'Y', 0.0)])
@@ -155,6 +180,7 @@ def shader_nodegroup_shape(nw, shape_curve_control_points=[(0.0, 0.0), (0.3454, 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["X Modulated"], 'Y': group_input.outputs["Y"]})
     
+    clamp = nw.new_node('ShaderNodeClamp',
         input_kwargs={'Value': group_input.outputs["Y"], 'Min': -0.6, 'Max': 0.6})
     
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
@@ -168,6 +194,7 @@ def shader_nodegroup_shape(nw, shape_curve_control_points=[(0.0, 0.0), (0.3454, 
         input_kwargs={0: subtract.outputs["Vector"]},
         attrs={'operation': 'LENGTH'})
     
+    map_range_1 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': group_input.outputs["Y"], 1: -0.6, 2: 0.6})
     
     leaf_shape = nw.new_node(Nodes.FloatCurve,
@@ -192,6 +219,7 @@ def shader_nodegroup_apply_vein_midrib(nw):
             ('NodeSocketFloat', 'Leaf Shape', 1.0),
             ('NodeSocketFloat', 'Vein Density', 6.0)])
     
+    map_range_5 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': group_input.outputs["Leaf Shape"], 1: -0.3, 2: 0.0, 3: 0.015, 4: 0.0})
     
     vein = nw.new_node(Nodes.VoronoiTexture,
@@ -199,12 +227,14 @@ def shader_nodegroup_apply_vein_midrib(nw):
         label='Vein',
         attrs={'voronoi_dimensions': '1D'})
     
+    map_range_3 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': vein.outputs["Distance"], 1: 0.001, 2: 0.05, 3: 1.0, 4: 0.0})
     
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: map_range_5.outputs["Result"], 1: map_range_3.outputs["Result"]},
         attrs={'operation': 'MULTIPLY'})
     
+    map_range_10 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': multiply, 1: 0.001, 2: 0.03, 3: 1.0, 4: 0.0})
     
     multiply_1 = nw.new_node(Nodes.Math,
@@ -235,6 +265,7 @@ def shader_nodegroup_leaf_gen(nw, midrib_curve_control_points, vein_curve_contro
 
     coordinate = nw.new_node(Nodes.Attribute,
         attrs={'attribute_name': 'coordinate'})
+
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
         input_kwargs={'Vector': coordinate.outputs["Vector"]})
     
@@ -242,18 +273,24 @@ def shader_nodegroup_leaf_gen(nw, midrib_curve_control_points, vein_curve_contro
         input_kwargs={'X': separate_xyz.outputs["X"], 'Y': separate_xyz.outputs["Y"],
         'Midrib Length': input.outputs["Midrib Length"], 'Midrib Width': input.outputs["Midrib Width"], 'Stem Length': input.outputs["Stem Length"]
         })
+
     veincoord = nw.new_node(shader_nodegroup_vein_coord(vein_curve_control_points=vein_curve_control_points).name,
         input_kwargs={'X Modulated': midrib.outputs["X Modulated"], 'Y': separate_xyz.outputs["Y"], 
         'Vein Asymmetry': input.outputs["Vein Asymmetry"], 'Vein Angle': input.outputs["Vein Angle"]})
+
     shape = nw.new_node(shader_nodegroup_shape(shape_curve_control_points=shape_curve_control_points).name,
         input_kwargs={'X Modulated': midrib.outputs["X Modulated"], 'Y': separate_xyz.outputs["Y"]})
+
     applyveinmidrib = nw.new_node(shader_nodegroup_apply_vein_midrib().name,
         input_kwargs={'Vein Coord': veincoord, 'Midrib Value': midrib.outputs["Midrib Value"], 
         'Leaf Shape': shape, 'Vein Density': input.outputs["Vein Density"]})
+
     subvein = nw.new_node(shader_nodegroup_sub_vein().name,
         input_kwargs={'X Modulated': midrib.outputs["X Modulated"], 'Y': veincoord})
+
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Vein Value': applyveinmidrib, 'Sub Vein Value': subvein})
+
     
 @node_utils.to_nodegroup('nodegroup_shape_with_jigsaw', singleton=False, type='GeometryNodeTree')
 def nodegroup_shape_with_jigsaw(nw):
@@ -266,6 +303,7 @@ def nodegroup_shape_with_jigsaw(nw):
             ('NodeSocketFloat', 'Jigsaw Scale', 18.0),
             ('NodeSocketFloat', 'Jigsaw Depth', 0.5)])
     
+    map_range_12 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': group_input.outputs["Midrib Value"], 3: 1.0, 4: 0.0})
     
     jigsaw = nw.new_node(Nodes.VoronoiTexture,
@@ -281,6 +319,7 @@ def nodegroup_shape_with_jigsaw(nw):
         input_kwargs={0: jigsaw.outputs["Distance"], 1: multiply, 2: group_input.outputs["Leaf Shape"]},
         attrs={'operation': 'MULTIPLY_ADD', 'use_clamp': True})
     
+    map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': multiply_add, 1: 0.001, 2: 0.002, 3: 1.0, 4: 0.0})
     
     maximum = nw.new_node(Nodes.Math,
@@ -289,9 +328,11 @@ def nodegroup_shape_with_jigsaw(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Value': maximum})
+
 @node_utils.to_nodegroup('nodegroup_shape', singleton=False, type='GeometryNodeTree')
 def nodegroup_shape(nw, shape_curve_control_points=[(0.0, 0.0), (0.3454, 0.2336), (1.0, 0.0)]):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloat', 'X Modulated', 0.0),
             ('NodeSocketFloat', 'Y', 0.0)])
@@ -529,8 +570,10 @@ def nodegroup_leaf_gen(nw, midrib_curve_control_points, vein_curve_control_point
         input_kwargs={0: shapewithjigsaw, 1: 0.5},
         attrs={'operation': 'LESS_THAN'})
     
+    delete_geometry = nw.new_node('GeometryNodeDeleteGeometry',
         input_kwargs={'Geometry': set_position, 'Selection': less_than})
     
+    capture_attribute = nw.new_node(Nodes.CaptureAttribute,
         input_kwargs={'Geometry': delete_geometry, 2: applyveinmidrib})
         
     group_output = nw.new_node(Nodes.GroupOutput,
@@ -600,9 +643,12 @@ def nodegroup_add_noise(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_position})
+
+
 @node_utils.to_nodegroup('nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')
 def nodegroup_apply_wave(nw, y_wave_control_points, x_wave_control_points):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
             ('NodeSocketFloat', 'Wave Scale Y', 1.0),
@@ -625,6 +671,7 @@ def nodegroup_apply_wave(nw, y_wave_control_points, x_wave_control_points):
     
     map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': separate_xyz.outputs["Y"], 1: attribute_statistic.outputs["Min"], 2: attribute_statistic.outputs["Max"]})
+
     float_curves = nw.new_node(Nodes.FloatCurve,
         input_kwargs={'Value': map_range.outputs["Result"]})
     node_utils.assign_curve(float_curves.mapping.curves[0], y_wave_control_points)
@@ -642,6 +689,7 @@ def nodegroup_apply_wave(nw, y_wave_control_points, x_wave_control_points):
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': combine_xyz})
     
+    attribute_statistic_1 = nw.new_node(Nodes.AttributeStatistic,
         input_kwargs={'Geometry': group_input.outputs["Geometry"], 2: group_input.outputs['X Modulated']})
     
     map_range_7 = nw.new_node(Nodes.MapRange,
@@ -660,6 +708,7 @@ def nodegroup_apply_wave(nw, y_wave_control_points, x_wave_control_points):
         input_kwargs={0: map_range_4.outputs["Result"], 1: group_input.outputs["Wave Scale X"]},
         attrs={'operation': 'MULTIPLY'})
     
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'Z': multiply_1})
     
     set_position_1 = nw.new_node(Nodes.SetPosition,
@@ -667,15 +716,20 @@ def nodegroup_apply_wave(nw, y_wave_control_points, x_wave_control_points):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_position_1})
+
 @node_utils.to_nodegroup('nodegroup_move_to_origin', singleton=False, type='GeometryNodeTree')
 def nodegroup_move_to_origin(nw):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None)])
     
+    position = nw.new_node(Nodes.InputPosition)
     
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ,
         input_kwargs={'Vector': position})
     
+    attribute_statistic = nw.new_node(Nodes.AttributeStatistic,
         input_kwargs={'Geometry': group_input.outputs["Geometry"], 2: separate_xyz.outputs["Y"]})
     
     subtract = nw.new_node(Nodes.Math,
@@ -714,9 +768,11 @@ def nodegroup_blight(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Color': mix_4})
+
 @node_utils.to_nodegroup('nodegroup_dotted_blight', singleton=False, type='ShaderNodeTree')
 def nodegroup_dotted_blight(nw):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVector', 'Coord', (0.0, 0.0, 0.0)),
             ('NodeSocketColor', 'Leaf Color', (0.5, 0.5, 0.5, 1.0)),
@@ -796,7 +852,11 @@ def shader_leaf_new(nw, **kwargs):
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': mix_shader})
     
+
+
+def geo_leaf_v2(nw, **kwargs):
     # Code generated using version 2.3.2 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None)])
     
@@ -848,6 +908,17 @@ def shader_leaf_new(nw, **kwargs):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': movetoorigin, 'Attribute': leafgen.outputs["Attribute"], 'Coordinate': capture_attribute.outputs["Attribute"]})
+
+class LeafFactoryV2(AssetFactory):
+    
+    scale = 0.5
+
+    def __init__(self, factory_seed, coarse=False):
+        super(LeafFactoryV2, self).__init__(factory_seed, coarse=coarse)
+
+        with FixedSeed(factory_seed):
+            self.genome = self.sample_geo_genome()
+
             t = uniform(0.0, 1.0)
 
             if t < 0.8:
@@ -859,12 +930,37 @@ def shader_leaf_new(nw, **kwargs):
 
             self.blight_color = color_category('yellowish')
             self.vein_color_mix_factor = uniform(0.2, 0.6)
+            
+    @staticmethod
+    def sample_geo_genome():
+        return {
             'midrib_length': uniform(0.0, 0.8),
             'midrib_width': uniform(0.5, 1.0),
             'stem_length': uniform(0.7, 0.9),
+            'vein_asymmetry': uniform(0.0, 1.0),
+            'vein_angle': uniform(0.2, 2.0),
+            'vein_density': uniform(5.0, 20.0),
+            'subvein_scale': uniform(10.0, 20.0),
+            'jigsaw_scale': uniform(5.0, 20.0),
+            'jigsaw_depth': uniform(0.0, 2.0),
             'midrib_shape_control_points': [(0.0, 0.5), (0.25, uniform(0.48, 0.52)), (0.75, uniform(0.48, 0.52)), (1.0, 0.5)],
             'leaf_shape_control_points': [(0.0, 0.0), (uniform(0.2, 0.4), uniform(0.1, 0.4)), (uniform(0.6, 0.8), uniform(0.1, 0.4)), (1.0, 0.0)],
+            'vein_shape_control_points': [(0.0, 0.0), (0.25, uniform(0.1, 0.4)), (0.75, uniform(0.6, 0.9)), (1.0, 1.0)],
+        }
+
+    def create_asset(self, **params):
+
+        bpy.ops.mesh.primitive_plane_add(
+            size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        obj = bpy.context.active_object
+
+        # add noise to the genotype output
+        #hue_noise = np.random.randn() * 0
+        #hsv_blade = self.hsv_blade + hue_noise
+        #hsv_vein = self.hsv_vein + hue_noise
+
         phenome = self.genome.copy()
+
         phenome['y_wave_control_points'] = [(0.0, 0.5), (np.random.uniform(0.25, 0.75), np.random.uniform(0.50, 0.60)), (1.0, 0.5)]
         x_wave_val = np.random.uniform(0.50, 0.58)
         phenome['x_wave_control_points'] = [(0.0, 0.5), (0.4, x_wave_val), (0.5, 0.5), (0.6, x_wave_val), (1.0, 0.5)]
@@ -876,6 +972,7 @@ def shader_leaf_new(nw, **kwargs):
         material_kwargs['blade_color'][2] += np.random.normal(0.0, 0.03)
 
         material_kwargs['blight_color'] = self.blight_color
+
         material_kwargs['vein_color_mix_factor'] = self.vein_color_mix_factor
         material_kwargs['blight_weight'] = np.random.binomial(1, 0.1)
         material_kwargs['dotted_blight_weight'] = np.random.binomial(1, 0.1)
@@ -884,6 +981,15 @@ def shader_leaf_new(nw, **kwargs):
 
         # TODO: add more phenome attributes
         
+        surface.add_geomod(obj, geo_leaf_v2, apply=False,
                        attributes=['offset', 'coordinate'], input_kwargs=phenome)
         surface.add_material(obj, shader_leaf_new,
+                            reuse=False, input_kwargs=material_kwargs)
 
+        bpy.ops.object.convert(target='MESH')
+
+        obj = bpy.context.object
+        obj.scale *= normal(1, 0.05) * self.scale
+        butil.apply_transform(obj)
+
+        return obj
