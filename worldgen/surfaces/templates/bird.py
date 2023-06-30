@@ -132,6 +132,7 @@ def nodegroup_head_neck(nw: NodeWrangler, rand=True, kind='duck'):
         input_kwargs={'Fac': colorramp_1.outputs["Color"], 'Color1': group_input.outputs["Color1"], 'Color2': colorramp.outputs["Color"]})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Color': mix_1})
 
 def shader_bird_body(nw: NodeWrangler, rand=True, kind='duck', **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
@@ -305,6 +306,7 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind='duck', **input_kwargs):
 
 def shader_bird_feather(nw: NodeWrangler, rand=True, kind='duck', tail=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
+    
     noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'W': 1.6},
         attrs={'noise_dimensions': '4D'})
@@ -450,6 +452,7 @@ def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
 
 def apply(objs, shader_kwargs={}, **kwargs):
     x = random.random()
+    if x < 0.4:
         kind = 'eagle'
     else:
         kind = 'duck'
@@ -460,11 +463,13 @@ def apply(objs, shader_kwargs={}, **kwargs):
             surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
         else:
             shader_kwargs['tail'] = False
+        if "Body" in obj.name:
             surface.add_material(obj, shader_bird_body, input_kwargs=shader_kwargs)
         if "Feather" in obj.name and "Tail" not in obj.name:
             surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
         if "Claw" in obj.name:
             surface.add_material(obj, shader_bird_claw, input_kwargs=shader_kwargs)
+        if "Eyeball" in obj.name:
             surface.add_material(obj, shader_bird_eyeball, input_kwargs=shader_kwargs)
         if "Beak" in obj.name:
             surface.add_material(obj, shader_bird_beak, input_kwargs=shader_kwargs)
