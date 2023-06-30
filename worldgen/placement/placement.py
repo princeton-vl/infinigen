@@ -235,6 +235,7 @@ def placeholder_kd(include=None, exclude=None):
                 objs += [o for o in butil.iter_object_tree(obj) if o.type == 'MESH']
 
     return butil.joined_kd(objs, include_origins=True)
+
 def make_placeholders_float(placeholder_col, terrain_bvh, water):
 
     deps = bpy.context.evaluated_depsgraph_get()
