@@ -32,6 +32,7 @@ class CactusFactory(AssetFactory):
         super(CactusFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.factory_methods = [GlobularBaseCactusFactory, ColumnarBaseCactusFactory,
+                PrickyPearBaseCactusFactory]
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             if factory_method is None:
@@ -51,6 +52,7 @@ class CactusFactory(AssetFactory):
             texture.noise_scale = log_uniform(.1, .15)
             butil.modify_mesh(obj, 'DISPLACE', True, strength=self.factory.noise_strength, mid_level=0,
                               texture=texture)
+        assign_material(obj, self.material)
         if face_size <= .05 and self.factory.density > 0:
             t = spike.apply(obj, self.factory.points_fn, self.factory.base_radius, realize)
             obj = join_objects([obj, t])
