@@ -12,6 +12,13 @@ compose_scene.dust_particles_chance = 0
 compose_scene.snow_particles_chance = 0
 
 # eliminate lava, the emissive surface is too noisy
+# now by default lava is a separate material
+surface.registry.liquid_collection = [
+    ('water', 0.95),
+]
+surface.registry.lava = [
+    ('water', 1),
+]
 
 # reduce the baseline and pitch variance, requested by Lahav
 stereo_baseline = 0.075
