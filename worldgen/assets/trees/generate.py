@@ -16,6 +16,8 @@ import bpy
 from assets.trees import tree, treeconfigs
 from assets.leaves import leaf, leaf_v2, leaf_pine, leaf_ginko, leaf_broadleaf, leaf_maple
 from assets.fruits import apple, blackberry, coconutgreen, durian, starfruit, strawberry, compositional_fruit
+from nodes.node_info import Nodes
+from nodes.node_wrangler import NodeWrangler
 from . import tree_flower
 
 from util import blender as butil
@@ -30,6 +32,7 @@ from surfaces import surface
 from surfaces.scatters import rocks, grass
 
 from assets.cloud.generate import CloudFactory
+from ..utils.decorate import write_attribute
 
 logger = logging.getLogger('trees')
 
@@ -93,6 +96,7 @@ class GenericTreeFactory(AssetFactory):
             butil.modify_mesh(coarse_mesh, 'DECIMATE', decimate_type='UNSUBDIV', iterations=self.decimate_placeholder_levels)
 
         return coarse_mesh
+
     def finalize_placeholders(self, placeholders):
         if not self.coarse_mesh_placeholder:
             return
