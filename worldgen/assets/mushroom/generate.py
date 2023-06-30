@@ -17,6 +17,7 @@ from assets.utils.mesh import polygon_angles
 from placement.factory import AssetFactory
 from util import blender as butil
 from ..utils.misc import log_uniform
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MushroomFactory(AssetFactory):
     max_cluster = 10
@@ -41,6 +42,7 @@ class MushroomFactory(AssetFactory):
         obj = join_objects(mushrooms)
         butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='BEND', angle=uniform(- np.pi / 8, np.pi / 8),
                           deform_axis=np.random.choice(['X', 'Y']))
+        tag_object(obj, 'mushroom')
         return obj
 
     def build_mushrooms(self, i, face_size=.01):
