@@ -1,18 +1,28 @@
+import argparse
 import random
+import sys
 import cProfile
+from pathlib import Path
 import logging
 from functools import partial
 import pprint
+from collections import defaultdict
+
+# See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
 
-
+import bpy
 import mathutils
 from mathutils import Vector
+import gin
+import numpy as np
 from numpy.random import uniform, normal, randint
 from tqdm import tqdm
+from frozendict import frozendict
 
 from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
+from lighting import lighting, kole_clouds
 
 from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
 from assets import boulder
@@ -33,9 +43,22 @@ from surfaces.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, sn
 
 from placement.factory import make_asset_collection
 from util import blender as butil
+from util import exporting
+from util.logging import Timer, save_polycounts, create_text_file
 from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry
+def sanitize_gin_override(overrides: list):
+    if len(overrides) > 0:
+        print("Overriden parameters:", overrides)
+    output = list(overrides)
+        if ('=' in o) and not any((c in o) for c in "\"'[]"):
+            try:
+                ast.literal_eval(v)
+            except:
+                if "@" not in v:
+                    output[i] = f'{k}="{v}"'
+    return output
    
 @gin.configurable
 def populate_scene(
@@ -123,16 +146,39 @@ def get_scene_tag(name):
         return o.name.split('=')[-1].strip('\'\"')
     except StopIteration:
         return None
+@gin.configurable
 def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None):
     if resample_idx is not None and resample_idx != 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
+    with Timer('Render Frames'):
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
+
+@gin.configurable
 def save_meshes(scene_seed, output_folder, frame_range, camera_id, resample_idx=False):
     
     if resample_idx is not None and resample_idx > 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
+
+    for obj in bpy.data.objects:
+        obj.hide_viewport = obj.hide_render
+
+    for col in bpy.data.collections:
+        col.hide_viewport = col.hide_render
+
+    camera_rig_id, subcam_id = camera_id
+    previous_frame_mesh_id_mapping = frozendict()
+    current_frame_mesh_id_mapping = defaultdict(dict)
+    for frame_idx in range(int(frame_range[0]), int(frame_range[1]+2)):
+        bpy.context.scene.frame_set(frame_idx)
+        bpy.context.view_layer.update()
         frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
+        frame_info_folder.mkdir(parents=True, exist_ok=True)
         logging.info(f"Working on frame {frame_idx}")
+        exporting.save_obj_and_instances(str(frame_info_folder /  "mesh"), previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping)
+        cam_util.save_camera_parameters(camera_rig_id, [subcam_id], str(frame_info_folder / "cameras"), frame_idx)
+        previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+        current_frame_mesh_id_mapping.clear()
+
 def validate_version(scene_version):
     if scene_version is None or scene_version.split('.')[:-1] != VERSION.split('.')[:-1]:
         raise ValueError(
@@ -206,8 +252,12 @@ def execute_tasks(
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
 
+    if Task.Render in task or Task.GroundTruth in task:
         render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)
+
+    if Task.MeshSave in task:
         save_meshes(scene_seed, output_folder=output_folder, frame_range=frame_range, camera_id=camera_id)
+
 
 def determine_scene_seed(args):
     if args.seed is None:
@@ -235,6 +285,7 @@ def apply_scene_seed(args):
     return scene_seed
 
 def apply_gin_configs(args, scene_seed, skip_unknown=False):
+
     scene_types = [p.stem for p in Path('config/scene_types').iterdir()]
     weights = {
         "kelp_forest": 0.3,
@@ -257,6 +308,7 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
     weights = np.array([weights[k] for k in scene_types], dtype=float)
     weights /= weights.sum()
 
+    if not scene_specified:
         scene_type = np.random.RandomState(scene_seed).choice(scene_types, p=weights)
         logging.warning(f'Randomly selected {scene_type=}. IF THIS IS NOT INTENDED THEN YOU ARE MISSING SCENE CONFIGS')
     def find_config(g):
