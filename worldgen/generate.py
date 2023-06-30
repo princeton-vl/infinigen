@@ -40,6 +40,7 @@ from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
 from assets.cactus import CactusFactory
 from assets.creatures import boid_swarm
+
 import surfaces.scatters
 from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_twigs, \
     chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
@@ -50,6 +51,7 @@ from surfaces.templates import mountain, sand, water, atmosphere_light_haze, san
 
 from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
 from assets import particles as particle_assets
+
 from surfaces.scatters import pine_needle, seaweed, coral_reef, jellyfish, urchin
 from assets import boulder, cactus, caustics_lamp
 from assets.monocot import kelp
