@@ -5,6 +5,7 @@
 # Date Signed: June 5 2023
 
 import gin
+from mathutils import Vector
 
 from nodes.node_wrangler import Nodes
 from surfaces import surface
@@ -122,9 +123,11 @@ def geo_SAND(nw,
             Vector([0.01] * 3)
         ))
     offset = nw.add(*offsets)
+    groupinput = nw.new_node(Nodes.GroupInput)
     if selection is not None:
         offset = nw.multiply(offset, surface.eval_argument(nw, selection))
     set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
+    groupoutput = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
 
 
 
