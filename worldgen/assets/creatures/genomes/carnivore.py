@@ -26,6 +26,8 @@ from assets.creatures import creature, generate as creature_gen
 from assets.creatures import hair as creature_hair, cloth_sim
 from assets.creatures.animation import idle, run_cycle
 
+from assets.utils.tag import tag_object, tag_nodegroup
+
 from util import blender as butil
 
 
@@ -189,6 +191,7 @@ class CarnivoreFactory(AssetFactory):
         
         genome = tiger_genome()
         root, parts = creature.genome_to_creature(genome, name=f'carnivore({self.factory_seed}, {i})')
+        tag_object(root, 'carnivore')
         offset_center(root)
         
         dynamic = self.animation_mode is not None
