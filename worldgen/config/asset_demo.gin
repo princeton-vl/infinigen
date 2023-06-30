@@ -1,0 +1,9 @@
+compose_scene.inview_distance = 30
+
+full/render_image.min_samples = 50
+full/render_image.num_samples = 300
+
+render_image.motion_blur = False
+render_image.use_dof = True
+
+full/render_image.passes_to_save = []
