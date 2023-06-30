@@ -36,6 +36,7 @@ from util import blender as butil
 from util.camera import get_3x4_P_matrix_from_blender
 from util.logging import Suppress
 
+from assets.utils.tag import tag_object, tag_nodegroup, tag_system
 
 import generate  # to load most/all AssetFactory subclasses
 
@@ -156,6 +157,7 @@ def build_scene(path, idx, factory_name, args):
     if args.save_blend:
         (path / 'scenes').mkdir(exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=f"{path}/scenes/scene_{idx:03d}.blend", filter_backup=True)
+        tag_system.save_tag(f"{path}/MaskTag.json")
     if args.render:
         with Suppress():
             bpy.ops.render.render(write_still=True)
