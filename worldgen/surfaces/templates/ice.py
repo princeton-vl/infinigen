@@ -7,9 +7,11 @@ import gin
 from numpy.random import uniform
 
 from nodes.node_wrangler import Nodes
+from surfaces import surface
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
 from util.random import random_color_neighbour
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_ice"
 name = "ice"
@@ -50,6 +52,7 @@ def shader_ice(nw: NodeWrangler):
         },
     )
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
+
 @gin.configurable
 def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -103,5 +106,7 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
         
         group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position_1}, attrs={'is_active_output': True})
 
+
 def apply(obj, selection=None, **kwargs):
     surface.add_geomod(obj, geo_ice, selection=selection)
+
