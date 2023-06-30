@@ -35,6 +35,7 @@ def nodegroup_polar_to_cart_old(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Vector': multiply_add.outputs["Vector"]})
+
 @node_utils.to_nodegroup('nodegroup_follow_curve', singleton=True)
 def nodegroup_follow_curve(nw):
     group_input = nw.new_node(Nodes.GroupInput,
@@ -102,8 +103,11 @@ def nodegroup_norm_index(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'T': divide})
+
 @node_utils.to_nodegroup('nodegroup_flower_petal', singleton=True)
 def nodegroup_flower_petal(nw):
+    group_input = nw.new_node(Nodes.GroupInput,
+        expose_input=[('NodeSocketGeometry', 'Geometry', None),
         ('NodeSocketFloat', 'Length', 0.2),
         ('NodeSocketFloat', 'Point', 1.0),
         ('NodeSocketFloat', 'Point height', 0.5),
@@ -116,76 +120,104 @@ def nodegroup_flower_petal(nw):
         ('NodeSocketFloat', 'Curl', 0.0)])
     
     multiply_add = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["Resolution H"], 1: 2.0, 2: 1.0},
+        attrs={'operation': 'MULTIPLY_ADD'})
     
     grid = nw.new_node(Nodes.MeshGrid,
         input_kwargs={'Vertices X': group_input.outputs["Resolution V"], 'Vertices Y': multiply_add})
     
+    position = nw.new_node(Nodes.InputPosition)
     
+    capture_attribute = nw.new_node(Nodes.CaptureAttribute,
+        input_kwargs={'Geometry': grid, 1: position},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
+        input_kwargs={'Vector': capture_attribute.outputs["Attribute"]})
     
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["X"], 1: 0.05},
+        attrs={'operation': 'MULTIPLY'})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': multiply, 'Y': separate_xyz.outputs["Y"]})
     
+    noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': combine_xyz, 'Scale': 7.9, 'Detail': 0.0, 'Distortion': 0.2},
+        attrs={'noise_dimensions': '2D'})
     
     add = nw.new_node(Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: -0.5})
     
     multiply_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: add, 1: group_input.outputs["Wrinkle"]},
+        attrs={'operation': 'MULTIPLY'})
     
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ,
+        input_kwargs={'Vector': capture_attribute.outputs["Attribute"]})
     
     add_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz_1.outputs["X"]})
     
     absolute = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz_1.outputs["Y"]},
+        attrs={'operation': 'ABSOLUTE'})
     
     multiply_2 = nw.new_node(Nodes.Math,
         input_kwargs={0: absolute, 1: 2.0},
+        attrs={'operation': 'MULTIPLY'})
     
     power = nw.new_node(Nodes.Math,
         input_kwargs={0: multiply_2, 1: group_input.outputs["Bevel"]},
+        attrs={'operation': 'POWER'})
     
     multiply_add_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: power, 1: -1.0, 2: 1.0},
+        attrs={'operation': 'MULTIPLY_ADD'})
     
     multiply_3 = nw.new_node(Nodes.Math,
         input_kwargs={0: add_1, 1: multiply_add_1},
+        attrs={'operation': 'MULTIPLY'})
     
     multiply_add_2 = nw.new_node(Nodes.Math,
         input_kwargs={0: multiply_3, 1: group_input.outputs["Upper width"], 2: group_input.outputs["Base width"]},
+        attrs={'operation': 'MULTIPLY_ADD'})
     
     multiply_4 = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz_1.outputs["Y"], 1: multiply_add_2},
+        attrs={'operation': 'MULTIPLY'})
     
     power_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: absolute, 1: group_input.outputs["Point"]},
+        attrs={'operation': 'POWER'})
     
     multiply_add_3 = nw.new_node(Nodes.Math,
         input_kwargs={0: power_1, 1: -1.0, 2: 1.0},
+        attrs={'operation': 'MULTIPLY_ADD'})
     
     multiply_5 = nw.new_node(Nodes.Math,
         input_kwargs={0: multiply_add_3, 1: group_input.outputs["Point height"]},
+        attrs={'operation': 'MULTIPLY'})
     
     multiply_add_4 = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["Point height"], 1: -1.0, 2: 1.0},
+        attrs={'operation': 'MULTIPLY_ADD'})
     
     add_2 = nw.new_node(Nodes.Math,
         input_kwargs={0: multiply_5, 1: multiply_add_4})
     
     multiply_6 = nw.new_node(Nodes.Math,
         input_kwargs={0: add_2, 1: multiply_add_1},
+        attrs={'operation': 'MULTIPLY'})
     
     multiply_7 = nw.new_node(Nodes.Math,
         input_kwargs={0: add_1, 1: multiply_6},
+        attrs={'operation': 'MULTIPLY'})
     
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': multiply_1, 'Y': multiply_4, 'Z': multiply_7})
     
+    set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'Position': combine_xyz_1})
     
     multiply_8 = nw.new_node(Nodes.Math,
@@ -208,6 +240,7 @@ def nodegroup_flower_petal(nw):
         input_kwargs={'Geometry': set_position, 'Curve': quadratic_bezier, 'Curve Min': 0.0})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+
 @node_utils.to_nodegroup('nodegroup_phyllo_points', singleton=True)
 def nodegroup_phyllo_points(nw):
     group_input = nw.new_node(Nodes.GroupInput,
@@ -232,11 +265,13 @@ def nodegroup_phyllo_points(nw):
     
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
         input_kwargs={'Geometry': mesh_to_points, 1: position},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     index = nw.new_node(Nodes.Index)
     
     cosine = nw.new_node(Nodes.Math,
         input_kwargs={0: index},
+        attrs={'operation': 'COSINE'})
     
     sine = nw.new_node(Nodes.Math,
         input_kwargs={0: index},
@@ -251,12 +286,14 @@ def nodegroup_phyllo_points(nw):
     
     power = nw.new_node(Nodes.Math,
         input_kwargs={0: divide, 1: group_input.outputs["Radius exp"]},
+        attrs={'operation': 'POWER'})
     
     map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': power, 3: group_input.outputs["Min Radius"], 4: group_input.outputs["Max Radius"]})
     
     multiply = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: combine_xyz, 1: map_range.outputs["Result"]},
+        attrs={'operation': 'MULTIPLY'})
     
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
         input_kwargs={'Vector': multiply.outputs["Vector"]})
@@ -284,6 +321,7 @@ def nodegroup_phyllo_points(nw):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Points': set_position, 'Rotation': combine_xyz_2})
+
 @node_utils.to_nodegroup('nodegroup_plant_seed', singleton=True)
 def nodegroup_plant_seed(nw):
     group_input = nw.new_node(Nodes.GroupInput,
@@ -438,6 +476,7 @@ def geo_flower(nw, petal_material, center_material):
     
     multiply_3 = nw.new_node(Nodes.Math,
         input_kwargs={0: divide, 1: 1.2},
+        attrs={'operation': 'MULTIPLY'})
     
     reroute_3 = nw.new_node(Nodes.Reroute,
         input_kwargs={'Input': group_input.outputs["Center Rad"]})
@@ -499,9 +538,12 @@ def geo_flower(nw, petal_material, center_material):
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_shade_smooth})
+
 class FlowerFactory(AssetFactory):
+
     def __init__(self, factory_seed, rad=0.15, diversity_fac=0.25):
         super(FlowerFactory, self).__init__(factory_seed=factory_seed)
+
         self.rad = rad
         self.diversity_fac = diversity_fac
 
@@ -515,7 +557,9 @@ class FlowerFactory(AssetFactory):
         pct_inner = uniform(0.05, 0.4) 
         base_width = 2 * np.pi * overall_rad * pct_inner / normal(20, 5)
         top_width = overall_rad * np.clip(normal(0.7, 0.3), base_width * 1.2, 100)
+
         min_angle, max_angle = np.deg2rad(np.sort(uniform(-20, 100, 2)))
+
         return {
             'Center Rad': overall_rad * pct_inner,
             'Petal Dims': np.array([overall_rad * (1 - pct_inner), base_width, top_width], dtype=np.float32),
@@ -525,11 +569,13 @@ class FlowerFactory(AssetFactory):
             'Wrinkle': uniform(0.003, 0.02),
             'Curl': np.deg2rad(normal(30, 50))
         }
+
     def create_asset(self, **kwargs) -> bpy.types.Object:
         
         vert = butil.spawn_vert('flower')
         mod = surface.add_geomod(vert, geo_flower, 
             input_kwargs={'petal_material': self.petal_material, 'center_material': self.center_material})
+
         inst_params = self.get_flower_params(self.rad * normal(1, 0.05))
         params = dict_lerp(self.species_params, inst_params, 0.25)
         surface.set_geomod_inputs(mod, params)
