@@ -1,3 +1,12 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Zeyu Ma, Lahav Lipson: Stationary camera selection
+# - Alex Raistrick: Refactor into proposal/validate, camera animation
+# - Lingjie Mei: get_camera_trajectory
+# Date Signed: May 2 2023
+
 from random import sample
 import sys
 import warnings
