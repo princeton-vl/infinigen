@@ -22,6 +22,7 @@ from surfaces import surface
 from surfaces.surface import shaderfunc_to_material
 from surfaces.templates.simple_brownish import shader_simple_brown
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 def geo_leaf(nw: NodeWrangler, leaves):
@@ -67,6 +68,7 @@ class LeafFactoryIvy(LeafFactoryMaple):
         obj.scale = [.2] * 3
         butil.apply_transform(obj)
         butil.modify_mesh(obj, 'WELD', merge_threshold=face_size / 2, mode='CONNECTED')
+        tag_object(obj, 'leaf_ivy')
         return obj
 
 
