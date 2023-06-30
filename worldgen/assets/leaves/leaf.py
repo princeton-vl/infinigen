@@ -9,6 +9,7 @@ from assets.trees.utils import helper, mesh, materials
 
 from placement.factory import AssetFactory
 from util import blender as butil
+
 C = bpy.context
 D = bpy.data
 
@@ -16,6 +17,7 @@ class LeafFactory(AssetFactory):
     
     scale = 0.3
 
+    def __init__(self, factory_seed, genome: dict=None, coarse=False):
         super(LeafFactory, self).__init__(factory_seed, coarse=coarse)
         self.genome = dict(
             leaf_width=0.5,
@@ -26,6 +28,10 @@ class LeafFactory(AssetFactory):
             z_scaling=0,
             width_rand=0.33
         )
+        if genome:
+            for k, g in genome.items():
+                assert k in self.genome
+                self.genome[k] = g
 
     def create_asset(self, **params) -> bpy.types.Object:
 
@@ -74,6 +80,7 @@ class LeafFactory(AssetFactory):
         butil.apply_transform(obj)
 
         return obj
+
 class BerryFactory(AssetFactory):
 
     def __init__(self, factory_seed, genome, coarse=False):
