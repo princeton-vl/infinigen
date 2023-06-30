@@ -22,3 +22,4 @@ surface.registry.lava = [
 
 # reduce the baseline and pitch variance, requested by Lahav
 stereo_baseline = 0.075
+sample_camera_rotation.pitch_params = {'min': -20, 'max': 20, 'mean': 0, 'std': 15}
