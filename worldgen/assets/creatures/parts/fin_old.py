@@ -19,6 +19,7 @@ from assets.creatures.nodegroups.attach import nodegroup_attach_part
 
 from assets.creatures.creature import PartFactory
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_fish_fin', singleton=False, type='GeometryNodeTree')
 def nodegroup_fish_fin(nw: NodeWrangler):
@@ -56,6 +57,7 @@ class FishFin(PartFactory):
             0: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])), # shoulder
             0.6: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])) # elbow
         } 
+        tag_object(part.obj, 'fish_fin')
         return part
 
 @node_utils.to_nodegroup('nodegroup_fish_tail', singleton=False, type='GeometryNodeTree')
@@ -108,4 +110,5 @@ class FishTail(PartFactory):
             for t in np.linspace(0, 0.7, 4)
         } 
         part.iks = {1.0: IKParams('tail', rotation_weight=0, chain_parts=1)}
+        tag_object(part.obj, 'fish_tail')
         return part
