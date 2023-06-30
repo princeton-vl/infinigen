@@ -9,6 +9,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.trees.tree import build_radius_tree
 import util.blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def build_tentacles(**kwargs):
     n_branch = 5
@@ -20,6 +21,7 @@ def build_tentacles(**kwargs):
 
     obj = build_radius_tree(None, branch_config, uniform(.002, .004))
     surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius'])
+    tag_object(obj, 'tentacle')
     return obj
 
 
@@ -71,6 +73,12 @@ def geo_tentacles(nw: NodeWrangler, tentacles, points_fn=None, density=500, real
         'Pick Instance': True,
         'Rotation': rotation,
         'Scale': nw.uniform([.6] * 3, [1.] * 3, data_type='FLOAT_VECTOR')})
+    if realize:
+        realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': tentacles})
+    else:
+        realize_instances = tentacles
+    
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': realize_instances})
 
 
 def shader_tentacles(nw: NodeWrangler, base_hue=.3):
@@ -93,6 +101,7 @@ def apply(obj, points_fn, density, realize=True, base_hue=.3):
     instances = make_asset_collection(build_tentacles, 5, 'spikes', verbose=False)
     surface.add_geomod(tentacles, geo_tentacles, apply=realize,
                        input_args=[instances, points_fn, density, realize])
+
     butil.delete_collection(instances)
     assign_material(tentacles, surface.shaderfunc_to_material(shader_tentacles, base_hue))
     return tentacles
