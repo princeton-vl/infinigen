@@ -21,6 +21,7 @@ class NormalMode:
 def object_to_vertex_attributes(obj, specified=None):
     vertex_attributes = {}
     for attr in obj.data.attributes.keys():
+        if ((specified is None) or (specified is not None and attr in specified)) and obj.data.attributes[attr].domain == "POINT":
             type_key = obj.data.attributes[attr].data_type
             tmp = np.zeros(len(obj.data.vertices) * ATTRTYPE_DIMS[type_key], dtype=np.float32)
             obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
@@ -54,6 +55,7 @@ class Mesh:
         path=None,
         heightmap=None, L=None, downsample=1,
         vertices=None, faces=None, vertex_attributes=None,
+        obj=None, mesh_only=False, **kwargs
     ):
         self.normal_mode = normal_mode
         if path is not None:
@@ -92,6 +94,9 @@ class Mesh:
             faces_bpy.foreach_get("vertices", faces)
             faces = faces.reshape((-1, 3))
             _trimesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+            if not mesh_only:
+                vertex_attributes = object_to_vertex_attributes(obj)
+                _trimesh.vertex_attributes.update(vertex_attributes)
             for key in kwargs:
                 setattr(self, key, kwargs[key])
         else:
@@ -172,6 +177,15 @@ class Mesh:
         facewise_mean.restype = None
         result = AC(np.zeros(len(self.faces), dtype=np.float64))
         facewise_mean(ASDOUBLE(AC(attr.astype(np.float64))), ASINT(AC(self.faces.astype(np.int32))), len(self.faces), ASDOUBLE(result))
+        return result
+    
+    def facewise_intmax(self, attr):
+        dll = load_cdll(f"terrain/lib/cpu/meshing/utils.so")
+        facewise_intmax = dll.facewise_intmax
+        facewise_intmax.argtypes = [POINTER(c_int32), POINTER(c_int32), c_int32, POINTER(c_int32)]
+        facewise_intmax.restype = None
+        result = AC(np.zeros(len(self.faces), dtype=np.int32))
+        facewise_intmax(ASINT(AC(attr.astype(np.int32))), ASINT(AC(self.faces.astype(np.int32))), len(self.faces), ASINT(result))
         return result
 
     def get_adjacency(self):
@@ -275,6 +289,7 @@ def write_attributes(elements, mesh=None, meshes=[]):
         attributes = {}
         for i in range(n_elements):
             if hasattr(elements[i], "tag"):
+                returns[i][Attributes.ElementTag] = np.zeros(N, dtype=np.int32) + elements[i].tag
             for output in returns[i]:
                 if output == Vars.SDF or output == Vars.Offset: continue
                 if returns[i][output].ndim == 1:
@@ -298,5 +313,6 @@ def write_attributes(elements, mesh=None, meshes=[]):
                 if output == Vars.SDF or output == Vars.Offset: continue
                 attributes[output] = returns[output]
             if hasattr(elements[i], "tag"):
+                attributes[Attributes.ElementTag] = np.zeros(N, dtype=np.int32) + elements[i].tag
             meshes[i].vertex_attributes = attributes
 
