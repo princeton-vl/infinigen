@@ -16,6 +16,7 @@ from surfaces import surface
 from util.math import FixedSeed
 from placement.factory import AssetFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 ######## code for creating pine needles ########
 
@@ -365,6 +366,7 @@ class LeafFactoryPine(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.05) * self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf_pine')
 
         return obj
 
