@@ -1,3 +1,14 @@
+import gin
+from numpy.random import uniform
+
+from nodes.node_wrangler import Nodes
+from terrain.utils import SurfaceTypes
+from util.math import FixedSeed
+from util.random import random_color_neighbour
+type = SurfaceTypes.SDFPerturb
+mod_name = "geo_ice"
+name = "ice"
+
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
@@ -5,6 +16,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
+
 def shader_ice(nw: NodeWrangler):
     geometry = nw.new_node(Nodes.NewGeometry)
     
@@ -22,14 +34,21 @@ def shader_ice(nw: NodeWrangler):
     color_ramp.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
     
     col_ice = random_color_neighbour((0.6469, 0.6947, 0.9522, 1.0000), 0.05, 0.1, 0.1)
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
             'Subsurface': 1.0000, 
             'Subsurface Radius': (0.1000, 0.1000, 0.2000), 
             'Subsurface Color': tuple(col_ice),
             'Roughness': color_ramp.outputs["Color"], 
             'IOR': 1.3100
+        },
+    )
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
+@gin.configurable
 def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
     # Code generated using version 2.6.4 of the node_transpiler
+    with FixedSeed(random_seed):
         group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
         
         normal_1 = nw.new_node(Nodes.InputNormal)
@@ -71,8 +90,13 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
             attrs={'operation': 'MULTIPLY_ADD'})
         
         offset = multiply_add.outputs["Vector"]
+        if selection is not None:
+            offset = nw.multiply(offset, surface.eval_argument(nw, selection))
         
         set_position_1 = nw.new_node(Nodes.SetPosition,
             input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': offset})
         
         group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position_1}, attrs={'is_active_output': True})
+
+def apply(obj, selection=None, **kwargs):
+    surface.add_geomod(obj, geo_ice, selection=selection)
