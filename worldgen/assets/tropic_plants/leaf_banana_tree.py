@@ -15,6 +15,7 @@ import numpy as np
 from nodes.color import hsv2rgba
 from assets.tropic_plants.tropic_plant_utils import *
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')
@@ -628,11 +629,13 @@ class LeafBananaTreeFactory(AssetFactory):
         obj = bpy.context.active_object
 
         params = self.update_params(**params)
+        surface.add_geomod(obj, geometry_leaf_nodes, apply=True,
                            attributes=['Attribute', 'Coordinate',
                                        'subvein offset', 'vein'], input_kwargs=params)
         surface.add_material(obj, lambda x: shader_leaf_material(x, stem_color_hsv=params['stem_color_hsv']),
                              selection=None)
 
+        tag_object(obj, 'leaf_banana_tree')
         return obj
 
 
@@ -659,11 +662,13 @@ class PlantBananaTreeFactory(AssetFactory):
         obj = bpy.context.active_object
 
         params = self.update_params(**params)
+        surface.add_geomod(obj, geometry_plant_nodes, apply=True,
                            attributes=['Attribute', 'Coordinate',
                                        'subvein offset', 'vein'], input_kwargs=params)
         surface.add_material(obj, lambda x: shader_leaf_material(x, stem_color_hsv=params['stem_color_hsv']),
                              selection=None)
 
+        tag_object(obj, 'leaf_banana_tree')
         return obj
 
 
