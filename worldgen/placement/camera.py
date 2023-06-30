@@ -1,16 +1,24 @@
 from random import sample
+import sys
+import warnings
 from copy import deepcopy
 from functools import partial
 import logging
+from pathlib import Path
 
 from numpy.random import uniform as U
 
 import bpy
+import bpy_extras
 import gin
+import imageio
 import numpy as np
 from mathutils import Matrix, Vector, Euler
+from mathutils.bvhtree import BVHTree
+from rendering.post_render import depth_to_jet
 from tqdm import tqdm, trange
 from placement import placement
+
 from nodes import node_utils
 from nodes.node_wrangler import NodeWrangler, Nodes
 
@@ -27,14 +35,55 @@ logger = logging.getLogger(__name__)
 @gin.configurable
 def get_sensor_coords(cam, H, W, sparse=False):
 
+    camd = cam.data
+    f_in_m = camd.lens / 1000
+    scene = bpy.context.scene
     resolution_x_in_px = W
     resolution_y_in_px = H
 
+    scale = scene.render.resolution_percentage / 100
+    sensor_width_in_m = camd.sensor_width / 1000
+    sensor_height_in_m = camd.sensor_height / 1000
+    assert abs(sensor_width_in_m/sensor_height_in_m - W/H) < 1e-4, (sensor_width_in_m, sensor_height_in_m, W, H)
 
+    pixel_aspect_ratio = scene.render.pixel_aspect_x / scene.render.pixel_aspect_y
+    if (camd.sensor_fit == 'VERTICAL'):
 
+        # the sensor height is fixed (sensor fit is horizontal), 
+        # the sensor width is effectively changed with the pixel aspect ratio
+        s_u = resolution_x_in_px * scale / sensor_width_in_m / pixel_aspect_ratio  # pixels per milimeter
+        s_v = resolution_y_in_px * scale / sensor_height_in_m
         
+    else: # 'HORIZONTAL' and 'AUTO'
 
+        # the sensor width is fixed (sensor fit is horizontal), 
+        # the sensor height is effectively changed with the pixel aspect ratio
+        pixel_aspect_ratio = scene.render.pixel_aspect_x / scene.render.pixel_aspect_y
+        s_u = resolution_x_in_px * scale / sensor_width_in_m
+        s_v = resolution_y_in_px * scale * pixel_aspect_ratio / sensor_height_in_m
 
+    u_0 = resolution_x_in_px * scale / 2 # cx (in pixels) Usually is just W/2
+    v_0 = resolution_y_in_px * scale / 2 # cx (in pixels) Usually is just H/2
+    xx, yy = np.meshgrid(np.arange(W).astype(float), np.arange(H).astype(float))
+    coords_x = (xx - u_0) / s_u # relative, in mm
+    coords_y = (yy - v_0 + 1) / s_v # relative, in mm
+
+    coords_z = np.full(coords_x.shape, -f_in_m)
+    relative_cam_coords = np.stack((coords_x, coords_y, coords_z), axis=-1)
+
+    cam_coords_vectors = np.empty((H,W), dtype=Vector)
+    pixel_locs = np.stack((np.meshgrid(np.arange(W), np.arange(H))), axis=-1).reshape((W*H, 2))#np.array(list(product(range(H), range(W))))
+    if sparse:
+        ii = np.random.choice(H*W, size=1000)
+        pixel_locs = pixel_locs[ii]
+
+    for x,y in tqdm(pixel_locs, desc="Building Camera Vectors", disable=True):
+        pixelVector = Vector(relative_cam_coords[y,x])
+        cam_coords_vectors[y,x] = cam.matrix_world @ pixelVector
+
+    return cam_coords_vectors, pixel_locs
+
+def adjust_camera_sensor(cam):
     scene = bpy.context.scene
     W = scene.render.resolution_x
     H = scene.render.resolution_y
@@ -42,7 +91,12 @@ def get_sensor_coords(cam, H, W, sparse=False):
     assert sensor_width.is_integer(), (18, W, H)
     cam.data.sensor_height = 18
     cam.data.sensor_width = int(sensor_width)
+
+def spawn_camera():
+    bpy.ops.object.camera_add()
+    cam = bpy.context.active_object
     cam.data.clip_end = 1e4
+    adjust_camera_sensor(cam)
     return cam
 
 def camera_name(rig_id, cam_id):
@@ -85,7 +139,15 @@ def set_active_camera(rig_id, subcam_id):
     ng = nodegroup_active_cam_info() # does not create a new node group, retrieves singleton
     ng.nodes['Object Info'].inputs['Object'].default_value = camera
     return bpy.context.scene.camera
+def positive_gaussian(mean, std):
+    while True:
+        val = np.random.normal(mean, std)
+        if val > 0:
+            return val
+
     camera.location = location
+    if focus_dist is not None:
+        camera.data.dof.focus_distance = focus_dist # this should come before view_layer.update()
     if focus_dist is not None:
         camera.data.dof.keyframe_insert(data_path="focus_distance", frame=frame)
 
@@ -110,6 +172,8 @@ def terrain_camera_query(cam, terrain_bvh, terrain_tags_queries, vertexwise_min_
     n_pix = pix_it.shape[0]
 
     return dists, terrain_tags_queries_counts, n_pix
+
+@gin.configurable
 def camera_pose_proposal(terrain_bvh, terrain_bbox, altitude=2, pitch=90, roll=0, headspace_retries=30):
 
     loc = np.random.uniform(*terrain_bbox)
@@ -185,6 +249,7 @@ def keep_cam_pose_proposal(
     coverage = len(dists)/n_pix
     if coverage < terrain_coverage_range[0] or coverage > terrain_coverage_range[1]:
         return None
+
     if rparams := terrain_tags_ratio:
         for q in rparams:
             if type(q) is tuple and q[0] == "closeup":
@@ -224,6 +289,7 @@ class AnimPolicyGoToProposals:
             break
         else:
             raise animation_policy.PolicyError(f'{__name__} found no keyframe after {self.retries=}')
+
         time = np.linalg.norm(pos - camera_rig.location) / random_general(self.speed)
         return Vector(pos), Vector(rot), time, 'BEZIER'
    
@@ -236,6 +302,7 @@ def compute_base_views(
     min_candidates_ratio=20,
     max_tries=10000,
 ):
+    potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
     with tqdm(total=n_min_candidates, desc='Searching for camera viewpoints') as pbar:
         for it in range(1, max_tries):
@@ -309,6 +376,7 @@ def configure_cameras(
             for cam in cam_rig.children:
                 if not cam.type =='CAMERA': continue
                 cam.data.dof.focus_distance = focus_dist
+
     butil.delete(dummy_camera)
 
 @gin.configurable
@@ -340,6 +408,27 @@ def animate_cameras(
             policy_func=policy,
             validate_pose_func=anim_valid_pose_func, verbose=True, 
             fatal=True)
+
+@gin.configurable
+def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use_dof=False):
+    output_folder = Path(output_folder)
+    output_folder.mkdir(exist_ok=True, parents=True)
+    if frame is not None:
+        bpy.context.scene.frame_set(frame)
+    for camera_id in camera_ids:
+        camera_obj = get_camera(camera_pair_id, camera_id)
+        if use_dof is not None:
+            camera_obj.data.dof.use_dof = use_dof
+        # Saving camera parameters
+        K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
+        np.save(
+            output_folder / f"K_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
+            np.asarray(K, dtype=np.float64),
+        )
+        np.save(
+            output_folder / f"T_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
+            np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
+    )
 
     return obj
 
