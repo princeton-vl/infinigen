@@ -29,6 +29,10 @@ def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
 @gin.configurable
 class GlowingRocksFactory(AssetFactory):
 
+    def quickly_resample(obj):
+        assert obj.type == "EMPTY", obj.type
+        obj.rotation_euler[:] = np.random.uniform(-np.pi, np.pi, size=(3,))
+
     def __init__(self, factory_seed, coarse=False, transparent_for_bounce=True, watt_power_range=(500, 1200), **kwargs):
         super().__init__(factory_seed, coarse=coarse)
         if coarse:
