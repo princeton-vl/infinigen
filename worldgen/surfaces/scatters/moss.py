@@ -19,6 +19,7 @@ from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 from placement.instance_scatter import scatter_instances
 
 class MossFactory(AssetFactory):
@@ -70,6 +71,7 @@ class MossFactory(AssetFactory):
         surface.add_geomod(obj, self.geo_moss_instance, apply=True, input_args=[face_size])
         assign_material(obj, surface.shaderfunc_to_material(MossFactory.shader_moss,
                                                             (self.base_hue + U(-.02, .02) % 1)))
+        tag_object(obj, 'moss')
         return obj
 
     @staticmethod
