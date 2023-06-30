@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
 import argparse
 import ast
 import os
@@ -63,6 +66,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
+VERSION = '1.0.0'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
