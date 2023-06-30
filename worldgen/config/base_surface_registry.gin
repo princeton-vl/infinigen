@@ -35,6 +35,8 @@ surface.registry.rock_collection = [
     ('stone', 1),
     ('mountain', 5),
     # ('ice', 1),
+]
+
 surface.registry.liquid_collection = [
     ('water', 0.95),
     # ('lava', 0.05),
@@ -62,3 +64,4 @@ surface.registry.greenery = [
     ('simple_greenery', 1),
 ]
 
+surface.registry.smooth_categories = 0
