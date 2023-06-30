@@ -18,6 +18,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util.blender import deep_clone_obj
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class StarBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 1.
@@ -123,4 +124,5 @@ class StarBaseCoralFactory(BaseCoralFactory):
 
         obj = join_objects([obj, *flowers])
         surface.add_geomod(obj, geo_extension, apply=True)
+        tag_object(obj, 'star_coral')
         return obj
