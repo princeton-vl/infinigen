@@ -6,17 +6,30 @@ from mathutils import Vector
 
 import numpy as np
 
+from assets.utils.misc import CountInstance
 from surfaces import surface
 from nodes.node_wrangler import Nodes, NodeWrangler
 from util import blender as butil
 from placement.camera import nodegroup_active_cam_info
 
 logger = logging.getLogger(__name__)
+
+def _less(a, b, nw):
     return nw.new_node(Nodes.Compare, [a, b], attrs={"data_type": "FLOAT", "operation": "LESS_THAN"})
 
+
+def _greater(a, b, nw):
     return nw.new_node(Nodes.Compare, [a, b], attrs={"data_type": "FLOAT", "operation": "GREATER_THAN"})
 
+
+def _band(a, b, nw):
     return nw.new_node(Nodes.BooleanMath, [a, b], attrs={"operation": "AND"})
+
+
+def _in_bucket(val, lower, upper, nw):
+    lt = _less(val, upper, nw)
+    gt = _greater(val, lower, nw)
+    return _band(gt, lt, nw)
 
 
 def _valnode(label, val, nw):
@@ -24,8 +37,10 @@ def _valnode(label, val, nw):
     node.outputs[0].default_value = val
     return node
 
+
 def _vecnode(val, nw):
     return nw.new_node(Nodes.Vector, attrs={"vector": Vector(val)})
+
 
 def camera_cull_points(nw, fov=25, camera=None, near_dist_margin=5):
     instance_position = nw.new_node(Nodes.InputPosition)
@@ -36,6 +51,9 @@ def camera_cull_points(nw, fov=25, camera=None, near_dist_margin=5):
     distance = nw.new_node(Nodes.VectorMath, [instance_position, camera_info], attrs={"operation": "DISTANCE"})
     pt_to_cam = nw.new_node(Nodes.VectorMath, [instance_position, camera_info], attrs={"operation": "SUBTRACT"})
     pt_to_cam_normalized = nw.new_node(Nodes.VectorMath, [pt_to_cam], attrs={"operation": "NORMALIZE"})
+    cam_dir = nw.new_node(Nodes.VectorRotate, attrs={"rotation_type": 'EULER_XYZ'},
+                          input_kwargs={"Vector": _vecnode((0., 0., -1.), nw),
+                                        "Rotation": (camera_info, "Rotation")})
     dot_prod = nw.new_node(Nodes.VectorMath, [pt_to_cam_normalized, cam_dir], {"operation": "DOT_PRODUCT"})
     angle_rad = nw.new_node(Nodes.Math, [dot_prod], {"operation": "ARCCOSINE"})
     angle_deg = nw.new_node(Nodes.Math, [angle_rad], {"operation": "DEGREES"})
@@ -44,6 +62,9 @@ def camera_cull_points(nw, fov=25, camera=None, near_dist_margin=5):
 
     return visible, distance
 
+def bucketed_instance(nw, points, collection, distance, buckets, selection, scaling, rotation, instance_index=None):
+    instance_index = {'Instance Index': surface.eval_argument(nw, instance_index, n=len(
+        collection.objects))} if instance_index is not None else {}
     collection_info = nw.new_node(Nodes.CollectionInfo, [collection, True, True])
 
     instance_groups = []
@@ -51,9 +72,17 @@ def camera_cull_points(nw, fov=25, camera=None, near_dist_margin=5):
     for idx, (cutoff, merge_dist) in enumerate(buckets):
         if idx != 0:
             prev_upper_val = nw.expose_input(f"Cutoff_{idx}", val=buckets[idx - 1][0])
+        upper_val = nw.expose_input(f"Cutoff_{idx + 1}", val=cutoff)
 
         distance_thresh = _in_bucket(distance, prev_upper_val, upper_val, nw)
+        lower_res_collection = nw.new_node(Nodes.MergeByDistance, [collection_info], input_kwargs={
+            "Distance": nw.expose_input(f"Merge_By_Dist_{idx + 1}", merge_dist)})
+        separate_points = nw.new_node(Nodes.SeparateGeometry, [points, distance_thresh],
+                                      attrs={"domain": "POINT"})
+        instance_on_points = nw.new_node(Nodes.InstanceOnPoints, [separate_points],
                                          input_kwargs={"Instance": collection_info, "Pick Instance": True,
+                                                       **instance_index, "Scale": scaling, "Selection": selection,
+                                                       "Rotation": rotation})
         instance_groups.append(instance_on_points)
 
     return nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': instance_groups})
@@ -66,7 +95,10 @@ def geo_instance_scatter(
     ground_offset=0, instance_index=None,
     transform_space='RELATIVE', reset_children=True
 ):
+    base_geo = nw.new_node(Nodes.ObjectInfo, [base_obj], attrs={'transform_space':transform_space}).outputs['Geometry']
+
             overall_density = nw.new_node(Nodes.Math, [density_scalar, overall_density], attrs={'operation': 'MULTIPLY'})
+
     points = nw.new_node(Nodes.DistributePointsOnFaces, 
         [base_geo], input_kwargs={"Density": overall_density, "Selection": selection_val})
     distribute_points = points
@@ -113,6 +145,7 @@ def geo_instance_scatter(
         for k, v in point_fields.items():
             point_fields[k] = v[0]
     
+    collection_info = nw.new_node(Nodes.CollectionInfo, [collection, True, reset_children])
 
     instances = nw.new_node(Nodes.InstanceOnPoints, [points], input_kwargs={
         "Instance": collection_info, "Pick Instance": True,
@@ -165,5 +198,7 @@ def scatter_instances(
 
     scatter_obj = butil.spawn_vert(name)
     kwargs.update(dict(collection=collection, density=density))
+    with CountInstance(name):
+        surface.add_geomod(scatter_obj, geo_instance_scatter, apply=False, input_kwargs=kwargs)
     butil.put_in_collection(scatter_obj, butil.get_collection('scatters'))
     return scatter_obj
