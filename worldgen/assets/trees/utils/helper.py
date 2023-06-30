@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alejandro Newell
+# Date Signed: Jun 16, 2023
+
 import bpy
 import numpy as np
 
