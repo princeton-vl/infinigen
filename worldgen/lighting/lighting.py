@@ -9,6 +9,7 @@ import math
 import numpy as np
 import gin
 from util.random import random_general as rg
+from numpy.random import uniform
 
 from nodes.node_wrangler import Nodes, NodeWrangler
 from util.math import clip_gaussian
