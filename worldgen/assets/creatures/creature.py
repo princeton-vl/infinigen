@@ -36,6 +36,7 @@ def infer_skeleton_from_mesh(obj):
         warnings.warn(f'infer_skeleton_from_mesh({obj=}) failed, returning null skeleton')
         return np.array([[0, 0, 0], [0.1, 0, 0]])
 
+
 @dataclass
 class Part:
     skeleton: np.array
@@ -47,6 +48,7 @@ class Part:
 
     settings: dict = field(default_factory=dict)
     _bvh: BVHTree = None
+    side: int = 1
 
     def __post_init__(self):
         if self.joints is None:
@@ -64,11 +66,15 @@ class Part:
         return self._bvh
 
     def __repr__(self):
+        return f'{self.__class__.__name__}(obj.name={repr(self.obj.name)}, skeleton.shape=' \
+               f'{self.skeleton.shape if self.skeleton is not None else None})'
 
     def skeleton_global(self):
         return homogenize(self.skeleton) @ np.array(self.obj.matrix_world)[:-1].T
 
+
 ALL_TAGS = ['body', 'neck', 'head', 'jaw', 'head_detail', 'limb', 'foot', 'rigid']
+
 
 class PartFactory:
 
@@ -99,18 +105,27 @@ class PartFactory:
 
         if part is None:
             raise ValueError(f'{self}.make_part() returned None, did you forget a return?')
+
         return part
 
+    @staticmethod
+    def animate_bones(arma, bones, params):
+        return
 
+
+def quat_align_vecs(a, b):
     assert a is not None
     assert b is not None
+
     if not isinstance(a, mathutils.Vector):
         a = mathutils.Vector(a)
+    if not isinstance(b, mathutils.Vector):
         b = mathutils.Vector(b)
 
     return mathutils.Quaternion(a.cross(b), a.angle(b))
 
 
+def raycast_surface(part: Part, idx_pct, dir_rot: mathutils.Quaternion, r=1, debug=False):
     # figure out axis of rotation
     idx = np.array([idx_pct]) * (len(part.skeleton) - 1)
     tangents = lofting.skeleton_to_tangents(part.skeleton)
@@ -124,6 +139,7 @@ class PartFactory:
     location, normal, index, dist = part.bvh().ray_cast(origin, direction)
 
     if location is None:
+        logger.warning(f'Raycast did not intersect {part} with {dist=} {dir_rot=} {idx_pct=}')
         location = origin
         dist = 0
         normal = (1, 0, 0)
@@ -145,12 +161,15 @@ class PartFactory:
     return location, normal, forward.reshape(3)
 
 
+def write_local_attributes(part, idx, tags):
     # local attributes must come before posing / attachment of parts
     assert part.obj.location == mathutils.Vector((0, 0, 0)), part.obj.location
+
     n = len(part.obj.data.vertices)
 
     # local position
     surface.write_attribute(part.obj, lambda nw: nw.new_node(Nodes.InputPosition), name='local_pos', apply=True)
+
     # float repr of integer part idx, useful after join/remesh
     part_idx_attr = part.obj.data.attributes.new('part_idx', 'FLOAT', 'POINT')
     part_idx_attr.data.foreach_set('value', np.full(n, idx))
@@ -158,6 +177,7 @@ class PartFactory:
     for t in tags:
         attr = part.obj.data.attributes.new(f'tag_{t}', 'FLOAT', 'POINT')
         attr.data.foreach_set('value', np.ones(n))
+
 
 def write_global_attributes(part):
     skeleton = part.skeleton_global()
@@ -182,6 +202,7 @@ def write_global_attributes(part):
     parent_skeleton_loc_attr.data.foreach_set('vector', parent_loc.reshape(-1))
 
 
+def sanitize_for_boolean(o):
     '''
     Attempt to clean up `o` to make boolean operations more likely to succeed
     '''
@@ -195,8 +216,11 @@ def write_global_attributes(part):
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def apply_attach_transform(part, target, att):
     u, v, rad = att.coord
 
+    loc, normal, tangent = raycast_surface(target, idx_pct=u, dir_rot=euler(180 * v, 0, 0) @ euler(0, 90, 0),
+                                           r=rad, debug=False)
 
     if att.rotation_basis == 'global':
         basis_rot = mathutils.Quaternion()
@@ -207,6 +231,8 @@ def write_global_attributes(part):
     else:
         raise ValueError(f'Unrecognized {att.rotation_basis=}')
     rot = basis_rot @ euler(*att.joint.rest)
+    att.joint.rest = np.rad2deg(
+        np.array(rot.to_euler()))  # write back so subsequent steps can use updated global pose
 
     part.obj.parent = target.obj
     part.obj.location = loc
@@ -217,28 +243,46 @@ def write_global_attributes(part):
     for obj in [part.obj, part.attach_basemesh]:
         if obj is None:
             continue
+        part.side = target.side * att.side
+        obj.matrix_world = mathutils.Matrix.Scale(att.side, 4, (
+            0, 1, 0)) @ obj.matrix_world  # # butil.apply_transform(obj, loc=False, rot=False, scale=True)
 
 
+def attach(part: Part, target: Part, att: genome.Attachment):
     if target.obj.type != 'MESH':
+        raise ValueError(
+            f'attach() recieved {target.obj=} with {target.obj.type=} which is not valid for raycast '
+            f'attachment, please convert to type=MESH')
 
     apply_attach_transform(part, target, att)
 
     # Create a joining part if necessary
+    # if att.smoothing_width > 0:
+    #    bevel_obj = join_smoothing.create_bevel_connection(part.obj, target.obj, part.bvh(), target.bvh(),
+    #    att.smoothing_width)
     #    bevel_obj.parent = part.obj
 
     # Cut any cutters from the parent
+    cutter_extras = [o for o in butil.iter_object_tree(part.obj) if 'Cutter' in o.name]
     for o in cutter_extras:
         sanitize_for_boolean(o)
         butil.modify_mesh(target.obj, 'BOOLEAN', object=o, operation='DIFFERENCE', apply=True, solver='FAST')
         butil.delete(o)
 
+
 def genome_to_creature(genome: genome.CreatureGenome, name: str):
     parts = tree.map(genome.parts, lambda g: g.part_factory())
 
     for i, (part, cnode) in enumerate(zip(parts, genome.parts)):
+        factory_class = cnode.part_factory.__class__.__name__
+        part.obj.name = f'{name}.parts({i}, factory={factory_class})'
+        part.obj['factory_class'] = factory_class
+        part.obj['index'] = i
         for extra in part.obj.children:
             extra.name = f'{name}.parts({i}).extra({extra.name}, {i})'
             extra.parent = part.obj
+            extra['factory_class'] = factory_class
+            extra['index'] = i
 
     # write attribute values that must come before posing/arrangement
     logger.debug(f'Writing local attributes')
@@ -246,9 +290,13 @@ def genome_to_creature(genome: genome.CreatureGenome, name: str):
         tags = genode.part_factory.tags
         write_local_attributes(part, i, tags)
 
+    for genome, (parent, part) in zip(tree.iter_items(genome.parts, postorder=True),
+                                      tree.iter_parent_child(parts, postorder=True)):
         if parent is None:
+            continue  # root object doesnt need attaching
         logger.debug(f'Attaching {part} to {parent}')
         attach(part, parent, genome.att)
+
     # write any attributes that must come after posign/arrangement
     logger.debug(f'Writing global attributes')
     for part in parts:
