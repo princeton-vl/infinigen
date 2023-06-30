@@ -10,6 +10,7 @@ import surfaces.templates.fishbody
 from surfaces.templates import fishfin, eyeball
 from surfaces import surface
 from surfaces.surface_utils import sample_range
+
 from placement.factory import AssetFactory, make_asset_collection
 
 from assets.creatures import genome
@@ -23,7 +24,10 @@ from util import blender as butil
 from util.math import clip_gaussian, FixedSeed
 from assets.creatures.animation.driver_wiggle import animate_wiggle_bones
 from assets.creatures.creature_util import offset_center
+
 from assets.utils.tag import tag_object, tag_nodegroup
+
+from surfaces.templates import fish_eye_shader
 
 def fin_params(scale=(1, 1, 1), dorsal=False):
     # scale = np.array((0.2, 1, 0.4)) * np.array((l / l_mean, 1, rad/r_mean)) * np.array(scale)
@@ -72,6 +76,8 @@ def fish_postprocessing(body_parts, extras, params):
     body_parts[0].active_material.name.lower() or U() < 0.1
     fishfin.apply(get_extras('Fin'), shader_kwargs={'goldfish': gold })
 
+    fish_eye_shader.apply(get_extras('Eyeball'))
+    #eyeball.apply(get_extras('Eyeball'), shader_kwargs={"coord": "X"})
 
 def fish_fin_cloth_sim_params():
 
@@ -107,30 +113,44 @@ def fish_genome():
     ))
 
     if U() < 0.9:
+        n_dorsal = 1 #if U() < 0.6 else randint(1, 4)
         coord = (U(0.3, 0.45), 1, 0.7)
         for i in range(n_dorsal):
             dorsal_fin = parts.ridged_fin.FishFin(fin_params((U(0.4, 0.6), 0.5, 0.2), dorsal=True), rig=False)
+            genome.attach(genome.part(dorsal_fin), body, coord=coord, joint=Joint(rest=(0, -100, 0)))
 
     rot = lambda r: np.array((20, r, -205)) + N(0, 7, 3)
+    
     if U() < 0.8:
+        pectoral_fin = parts.ridged_fin.FishFin(fin_params((0.1, 0.5, 0.3)))
         coord = (U(0.65, 0.8), U(55, 65) / 180, .9)
         for side in [-1, 1]:
+            genome.attach(genome.part(pectoral_fin), body, coord=coord, 
                 joint=Joint(rest=rot(-13)), side=side)
 
     if U() < 0.8:
+        pelvic_fin = parts.ridged_fin.FishFin(fin_params((0.08, 0.5, 0.25)))
         coord = (U(0.5, 0.65), U(8, 15)/180, .8)
         for side in [-1, 1]:
+            genome.attach(genome.part(pelvic_fin), body, coord=coord, joint=Joint(rest=rot(28)), side=side)
 
     if U() < 0.8:
+        hind_fin = parts.ridged_fin.FishFin(fin_params((0.1, 0.5, 0.3)))
         coord = (U(0.2, 0.3), N(36, 5)/180, .9)
         for side in [-1, 1]:
+            genome.attach(genome.part(hind_fin), body, coord=coord, joint=Joint(rest=rot(28)), side=side)
 
+    angle = U(140, 170)
     tail_fin = parts.ridged_fin.FishFin(fin_params((0.12, 0.5, 0.35)), rig=False)
     for vdir in [-1, 1]:
         genome.attach(genome.part(tail_fin), body, coord=(0.05, 0, 0), joint=Joint((0, -angle * vdir, 0)))
+    
+    eye_fac = parts.eye.MammalEye({'Eyelids': False, 'Radius': N(0.036, 0.01)})
     coord = (0.9, 0.6, 0.9)
+    for side in [-1, 1]:
         genome.attach(genome.part(eye_fac), body, coord=coord, 
             joint=Joint(rest=(0,0,0)), side=side, rotation_basis='normal')
+
     if U() < 0:
         jaw = genome.part(parts.head.CarnivoreJaw({'length_rad1_rad2': (0.2, 0.1, 0.06)}))
         genome.attach(jaw, body, coord=(0.8, 0, 0.7), joint=Joint(rest=(0, U(-30, -80), 0)), rotation_basis="normal")
@@ -235,6 +255,8 @@ class FishFactory(AssetFactory):
 
         tag_object(root, 'fish')
             
+        return root
+    
 
 class FishSchoolFactory(BoidSwarmFactory):
 
@@ -287,3 +309,12 @@ class FishSchoolFactory(BoidSwarmFactory):
             volume=("uniform", 3, 10), 
             coarse=coarse
         )
+
+if __name__ == "__main__":
+    import os
+    for i in range(3):
+        factory = FishFactory(i)
+        root = factory.create_asset(i)
+        root.location[0] = i * 3
+
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(os.path.abspath(os.curdir), "dev_fish5.blend"))
