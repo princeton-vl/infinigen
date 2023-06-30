@@ -1,20 +1,36 @@
+import os
+
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+import gin
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
+from surfaces.surface_utils import sample_color, sample_range, sample_ratio
+from terrain.utils import SurfaceTypes
+from util.math import FixedSeed
+from .mountain import geo_MOUNTAIN_general
 
+
+type = SurfaceTypes.SDFPerturb
+mod_name = "geo_rocks"
+name = "chunkyrock"
 
 def shader_rocks(nw, rand=True, **input_kwargs):
+    nw.force_input_consistency()
+    position = nw.new_node('ShaderNodeNewGeometry')
+    depth = geo_rocks(nw, geometry=False)
     
     colorramp_3 = nw.new_node(Nodes.ColorRamp,
+        input_kwargs={'Fac': depth})
     colorramp_3.color_ramp.elements[0].position = 0.0285
     colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_3.color_ramp.elements[1].position = 0.1347
     colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
     
     mapping = nw.new_node(Nodes.Mapping,
+        input_kwargs={'Vector': position, 'Scale': (0.2, 0.2, 0.2)})
     
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': mapping, 'Detail': 15.0})
@@ -40,8 +56,28 @@ def shader_rocks(nw, rand=True, **input_kwargs):
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_1})
 
+@gin.configurable
 def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geometry=True, **input_kwargs):
+    nw.force_input_consistency()
+    if nw.node_group.type == "SHADER":
+        position = nw.new_node('ShaderNodeNewGeometry')
+        normal = (nw.new_node('ShaderNodeNewGeometry'), 1)
+    else:
+        position = nw.new_node(Nodes.InputPosition)
+        normal = nw.new_node(Nodes.InputNormal)
     
+    with FixedSeed(random_seed):
+        # Code generated using version 2.4.3 of the node_transpiler
+        
+        noise_texture = nw.new_node(Nodes.NoiseTexture,
+            input_kwargs={'Vector': position})
+        
+        mix = nw.new_node(Nodes.MixRGB,
+            input_kwargs={'Fac': 0.8, 'Color1': noise_texture.outputs["Color"], 'Color2': position})
+        
+        if rand:
+            sample_max = 2
+            sample_min = 1/2
             voronoi_texture_scale = nw.new_value(sample_ratio(1, sample_min, sample_max), "voronoi_texture_scale")
             voronoi_texture_w = nw.new_value(sample_range(0, 5), "voronoi_texture_w")
         else:
@@ -51,13 +87,44 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
             input_kwargs={'Vector': mix, 'Scale': voronoi_texture_scale, 'W': voronoi_texture_w},
             attrs={'feature': 'DISTANCE_TO_EDGE', 'voronoi_dimensions': '4D'})
 
+        colorramp = nw.new_node(Nodes.ColorRamp,
             input_kwargs={'Fac': voronoi_texture.outputs["Distance"]},
             label="colorramp_VAR",
         )
+        colorramp.color_ramp.elements[0].position = 0.0432
+        colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        colorramp.color_ramp.elements[1].position = 0.3
+        colorramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+        if rand:
+            colorramp.color_ramp.elements[0].position = sample_ratio(colorramp.color_ramp.elements[0].position, 0.5, 2)
+            colorramp.color_ramp.elements[1].position = sample_ratio(colorramp.color_ramp.elements[1].position, 0.5, 2)
 
+        depth = colorramp
+        
+        multiply = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: colorramp.outputs["Color"], 1: normal},
+            attrs={'operation': 'MULTIPLY'})
+        
+        value = nw.new_node(Nodes.Value)
+        
+        offset = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: multiply.outputs["Vector"], 1: value},
+            attrs={'operation': 'MULTIPLY'})
+        
     
+    if geometry:
+        groupinput = nw.new_node(Nodes.GroupInput)
+        noise_params = {"scale": ("uniform", 10, 20), "detail": 9, "roughness": 0.6, "zscale": ("log_uniform", 0.08, 0.12)}
+        offset = nw.add(offset, geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}))
+        if selection is not None:
+            offset = nw.multiply(offset, surface.eval_argument(nw, selection))
+        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
+        nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
+    else:
+        return depth
 
 
+    surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
     surface.add_material(obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs)
 
 if __name__ == "__main__":
