@@ -24,6 +24,7 @@ from assets.creatures.nodegroups.geometry import nodegroup_symmetric_clone
 
 from assets.creatures.creature import PartFactory
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_feather', singleton=False, type='GeometryNodeTree')
 def nodegroup_feather(nw: NodeWrangler):
@@ -93,6 +94,7 @@ def nodegroup_feather(nw: NodeWrangler):
     #    input_kwargs={'Geometry': [curve_to_mesh, curve_to_mesh_1]})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'feather')})
 
 @node_utils.to_nodegroup('nodegroup_bird_tail', singleton=False, type='GeometryNodeTree')
 def nodegroup_bird_tail(nw: NodeWrangler):
@@ -304,6 +306,7 @@ class BirdWing(PartFactory):
             0.65: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])) # elbow
         } 
         part.iks = {1.0: IKParams(name='wingtip', chain_parts=1)}
+        tag_object(part.obj, 'bird_wing')
         part.settings['parent_extras_rigid'] = True
         return part
 
