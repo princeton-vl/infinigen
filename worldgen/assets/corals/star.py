@@ -17,6 +17,7 @@ from assets.utils.object import new_empty, new_icosphere
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from util.blender import deep_clone_obj
 
 class StarBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 1.
@@ -85,6 +86,9 @@ class StarBaseCoralFactory(BaseCoralFactory):
         butil.select_none()
         with butil.ViewportMode(rings, 'EDIT'):
             bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.region_to_loop()
+            bpy.ops.mesh.select_all(action='INVERT')
+            bpy.ops.mesh.delete(type='VERT')
 
         flowers = []
         resolution = 16
