@@ -10,6 +10,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class SnailBaseFactory(BaseMolluskFactory):
     freq = 256
@@ -55,6 +56,7 @@ class SnailBaseFactory(BaseMolluskFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.bridge_edge_loops()
+
         return obj
 
     @staticmethod
@@ -83,24 +85,36 @@ class SnailBaseFactory(BaseMolluskFactory):
         lateral = self.solve_lateral(uniform(.3, .4), self.freq, scale)
         longitude = self.solve_longitude(uniform(.7, .8), self.freq, scale)
         loop = np.random.randint(8, 10)
+        obj = self.snail_make(lateral, longitude, self.freq, scale, loop, affine=uniform(.8, .9), spike=.1)
+        tag_object(obj, 'conch')
+        return obj
 
     def auger_make(self):
         scale = self.solve_scale(uniform(.7, .8), self.freq)
         lateral = self.solve_lateral(uniform(.1, .15), self.freq, scale)
         longitude = self.solve_longitude(uniform(.9, 1.), self.freq, scale)
         loop = np.random.randint(8, 12)
+        obj = self.snail_make(lateral, longitude, self.freq, scale, loop, affine=uniform(.5, .6))
+        tag_object(obj, 'auger')
+        return obj
 
     def volute_make(self):
         scale = self.solve_scale(uniform(.5, .6), self.freq)
         lateral = self.solve_lateral(uniform(.4, .5), self.freq, scale)
         longitude = self.solve_longitude(uniform(.6, .7), self.freq, scale)
         loop = np.random.randint(4, 5)
+        obj = self.snail_make(lateral, longitude, self.freq, scale, loop)
+        tag_object(obj, 'volute')
+        return obj
 
     def nautilus_make(self):
         scale = self.solve_scale(uniform(.4, .5), self.freq)
         lateral = self.solve_lateral(uniform(1.2, 1.4), self.freq, scale)
         longitude = self.solve_longitude(uniform(.2, .3), self.freq, scale)
         loop = np.random.randint(4, 5)
+        obj = self.snail_make(lateral, longitude, self.freq, scale, loop)
+        tag_object(obj, 'nautilus')
+        return obj
 
     @staticmethod
     def geo_affine(nw: NodeWrangler):
@@ -120,6 +134,7 @@ class SnailBaseFactory(BaseMolluskFactory):
         obj.location = -center(obj)
         butil.apply_transform(obj, loc=True)
         surface.add_geomod(obj, self.geo_affine, apply=True)
+        tag_object(obj, 'snail')
         return obj
 
 
