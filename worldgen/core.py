@@ -61,6 +61,8 @@ from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry
 
+from assets.utils.tag import tag_system
+
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -235,6 +237,7 @@ def execute_tasks(
     if Task.Coarse not in task:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
+            tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
         scene_version = get_scene_tag('VERSION')
         butil.approve_all_drivers()
     
@@ -291,6 +294,7 @@ def execute_tasks(
         bpy.context.preferences.edit.undo_steps = 100
         with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
             bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+            tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
         with (output_folder/ "version.txt").open('w') as f:
             scene_version = get_scene_tag('VERSION')
