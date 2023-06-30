@@ -19,6 +19,7 @@ from assets.utils.shortest_path import geo_shortest_path
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class FanBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.
@@ -55,6 +56,7 @@ class FanBaseCoralFactory(BaseCoralFactory):
         butil.modify_mesh(obj, 'WELD', merge_threshold=.001)
         subsurface2face_size(obj, face_size)
         origin2lowest(obj)
+        tag_object(obj, 'fan_coral')
         return obj
 
     @staticmethod
