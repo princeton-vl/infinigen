@@ -21,6 +21,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class ElkhornBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.
@@ -73,6 +74,7 @@ class ElkhornBaseCoralFactory(BaseCoralFactory):
         butil.modify_mesh(obj, 'DISPLACE', True, strength=uniform(.1, .2), texture=texture, mid_level=0,
                           direction='Z')
         origin2lowest(obj)
+        tag_object(obj, 'elkhorn_coral')
         return obj
 
     @staticmethod
