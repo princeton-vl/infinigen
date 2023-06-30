@@ -18,6 +18,7 @@ from placement.factory import AssetFactory
 from util.math import FixedSeed
 from ..utils.decorate import join_objects
 from ..utils.mesh import polygon_angles
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MonocotFactory(AssetFactory):
     max_cluster = 10
@@ -30,8 +31,12 @@ class MonocotFactory(AssetFactory):
             monocots = [self.factory.create_asset(**params, i=j + i * self.max_cluster) for j in range(n)]
             for m, a, r in zip(monocots, angles, radius):
                 m.location = r * np.cos(a), r * np.sin(a), 0
+            obj = join_objects(monocots)
+            tag_object(obj, 'monocot')
+            return obj
         else:
             m = self.factory.create_asset(**params)
+            tag_object(m, 'monocot')
             return m
 
     def __init__(self, factory_seed, coarse=False, factory_method=None, grass=None):
