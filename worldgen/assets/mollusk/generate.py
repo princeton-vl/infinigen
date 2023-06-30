@@ -20,6 +20,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from placement.factory import AssetFactory
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MolluskFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None):
@@ -52,6 +53,7 @@ class MolluskFactory(AssetFactory):
         texture.noise_scale = log_uniform(.1, .2)
         butil.modify_mesh(obj, 'DISPLACE', strength=self.factory.noise_strength, mid_level=0, texture=texture)
         assign_material(obj, self.material)
+        tag_object(obj, 'mollusk')
         return obj
 
     @staticmethod
