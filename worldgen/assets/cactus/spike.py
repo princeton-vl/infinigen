@@ -10,6 +10,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.trees.tree import build_radius_tree
 import util.blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def build_spikes(base_radius=.002, **kwargs):
     n_branch = 4
@@ -24,6 +25,7 @@ def build_spikes(base_radius=.002, **kwargs):
             np.arange(size * resolution) / (size * resolution))
     obj = build_radius_tree(radius_fn, branch_config, base_radius)
     surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius', None, .001])
+    tag_object(obj, 'spike')
     return obj
 
 
@@ -71,6 +73,12 @@ def geo_spikes(nw: NodeWrangler, spikes, points_fn=None, realize=True):
         'Rotation': rotation,
         'Scale': nw.uniform([.5] * 3, [1.] * 3)
     })
+    if realize:
+        realize_instances = nw.new_node(Nodes.RealizeInstances, [spikes])
+    else:
+        realize_instances = spikes
+    
+    nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': realize_instances})
 
 
 def shader_spikes(nw: NodeWrangler):
