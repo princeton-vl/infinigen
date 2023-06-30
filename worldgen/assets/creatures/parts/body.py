@@ -171,10 +171,22 @@ class FishBody(PartFactory):
 
 @node_utils.to_nodegroup('nodegroup_bird_body', singleton=False, type='GeometryNodeTree')
 def nodegroup_bird_body(nw: NodeWrangler):
+    # Code generated using version 2.5.1 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
+                              expose_input=[('NodeSocketVector', 'length_rad1_rad2', (1.0000, 0.5000, 0.3000)),
+                                            ('NodeSocketFloat', 'aspect', 1.0000),
+                                            ('NodeSocketFloat', 'fullness', 2.0000)])
+
     simple_tube_v2 = nw.new_node(nodegroup_simple_tube_v2().name,
+                                 input_kwargs={'length_rad1_rad2': group_input.outputs["length_rad1_rad2"],
+                                               'proportions': (0.1000, 0.1000, 0.1000),
+                                               'aspect': group_input.outputs["aspect"],
+                                               'fullness': group_input.outputs["fullness"]})
+
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Geometry': simple_tube_v2.outputs["Geometry"],
+                                             'Skeleton Curve': simple_tube_v2.outputs["Skeleton Curve"]})
 
 class BirdBody(PartFactory):
 
@@ -182,6 +194,8 @@ class BirdBody(PartFactory):
 
     def sample_params(self):
         return {
+            'length_rad1_rad2': np.array((0.95, 0.15, 0.2)) * N(1.0, 0.05, size=(3,)),
+            'aspect': N(1.2, 0.02),
             'fullness': N(2, 0.1)
         }
 
