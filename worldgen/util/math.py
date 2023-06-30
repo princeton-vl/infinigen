@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick, Zeyu Ma, Lingjie Mei, Jia Deng
+# Date Signed: May 30, 2023
+
 import hashlib
 import math
 import random
