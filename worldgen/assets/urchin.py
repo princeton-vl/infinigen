@@ -19,6 +19,7 @@ from placement.detail import adapt_mesh_resolution
 from placement.factory import AssetFactory
 from surfaces import surface
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class UrchinFactory(AssetFactory):
@@ -51,6 +52,7 @@ class UrchinFactory(AssetFactory):
         surface.add_geomod(obj, self.geo_material_index, apply=True, input_attributes=[None, 'spike', 'girdle'])
         assign_material(obj, self.materials)
         self.animate_stretch(obj)
+        tag_object(obj, 'urchin')
         return obj
 
     def animate_stretch(self, obj):
