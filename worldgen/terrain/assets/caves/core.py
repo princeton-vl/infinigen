@@ -12,42 +12,146 @@ from util.organization import AssetFile
 from .geometry_utils import increment_step, pitch_up, yaw_clockwise
 from .pcfg import generate_string
 
+
+def get_all_verts():
+    if bpy.ops.mesh.select_all.poll():
         bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
+    return bpy.context.active_object.data.vertices
 
+
+def select_vert(idx: int):
+    assert idx >= 0
+    obj = bpy.context.active_object
     bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
     # assert False, [len(bpy.context.active_object.data.vertices), len(get_all_verts())]
     assert idx < len(
         obj.data.vertices), f"There are only {len(obj.data.vertices)} {len(get_all_verts())} verts, cannot select {idx}"
+    obj.data.vertices[idx].select = True
     bpy.ops.object.mode_set(mode='EDIT')
 
+
+def move_forward(current_dir):
+    assert type(current_dir) == np.ndarray and current_dir.size == 3
     bpy.ops.mesh.extrude_region_move(
         TRANSFORM_OT_translate={"value": current_dir})
 
+
 def trace_string(symbols, num_verts=1, current_idx=-1, current_dir=(0.5, 0., 0.)):
     bpy.ops.object.mode_set(mode='EDIT')
+    current_dir = np.array(current_dir).flatten()
+    angle_magnitude = 15
+    while len(symbols) > 0:
+        symbol = symbols.pop(0)
+        if symbol == 'f':
+            move_forward(current_dir)
+            num_verts += 1
+            current_idx = num_verts - 1
+        elif symbol == 'r':
+            current_dir = yaw_clockwise(current_dir, angle_magnitude)
+        elif symbol == 'l':
+            current_dir = yaw_clockwise(current_dir, -angle_magnitude)
+        elif symbol == 'u':
+            current_dir = pitch_up(current_dir, angle_magnitude)
+        elif symbol == 'd':
+            current_dir = pitch_up(current_dir, -angle_magnitude)
+        elif symbol == 'o':
+            angle_magnitude += 15
+        elif symbol == 'a':
+            angle_magnitude -= 15
+        elif symbol == 'b':
+            current_dir = increment_step(current_dir, 1)
+        elif symbol == 's':
+            current_dir = increment_step(current_dir, -1)
         elif symbol == 'n':  # do nothing
+            pass
+        elif symbol == '[':
             num_verts = trace_string(
                 symbols, num_verts, current_idx, current_dir)
+            select_vert(current_idx)
+        elif symbol == ']':
+            return num_verts
+        else:
+            raise Exception(f"Symbol not defined: {symbol}")
+
+        if symbol in list('rlud'):
+            angle_magnitude = 15
+
+
+class Cave:
+
     def scale_verts(self, random_scaling_factor=0.0):  # 0.8 is a good number
+        assert random_scaling_factor >= 0.0
+        vertices = get_all_verts()
         bpy.ops.object.mode_set(mode='OBJECT')
+        obj = bpy.context.active_object
+        radii = 2*np.ones((len(vertices), 2))
+        urn = np.random.rand(*radii.shape)*2 - 1
+        radii *= np.exp(urn * random_scaling_factor)
+        assert radii.min() > 0.05
+        obj.data.skin_vertices[0].data.foreach_set('radius', radii.flatten())
+
+    def add_subdivision(self, name: str, levels: int):
+        assert name not in self.modifier_stack
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.modifier_add(type='SUBSURF')
+        bpy.context.object.modifiers["Subdivision"].name = name
+        bpy.context.object.modifiers[name].levels = levels
+        self.modifier_stack.append(name)
+
+    def remesh(self, name: str, voxel_size: float):
+        assert name not in self.modifier_stack
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.modifier_add(type='REMESH')
+        bpy.context.object.modifiers["Remesh"].name = name
+        bpy.context.object.modifiers[name].voxel_size = voxel_size
+        self.modifier_stack.append(name)
+
+    def add_skin(self):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.object.modifier_add(type='SKIN')
+        self.modifier_stack.append("Skin")
 
+    def apply_modifiers(self):
+        while len(self.modifier_stack) > 0:
+            bpy.ops.object.modifier_apply(modifier=self.modifier_stack.pop(0))
+
+    def add_to_collection(self, name):
+        if bpy.data.collections.get(name) is None:
+            bpy.data.collections.new(name=name)
             bpy.context.scene.collection.children.link(
                 bpy.data.collections[name])
+        obj = bpy.context.active_object
+        bpy.ops.collection.objects_remove_all()
+        bpy.data.collections[name].objects.link(obj)
 
+    def add_lights(self, num_lights, power=100):
+
+        np.random.shuffle(self.path_verts)
+        for single_vert in self.path_verts[:num_lights]:
             # print("LIGHT AT", single_vert)
             bpy.ops.object.light_add(
                 type='POINT', align='WORLD', location=single_vert, scale=(1, 1, 1))
+            bpy.context.object.data.energy = power
+            self.add_to_collection("AllPointLights")
 
+            # bpy.ops.outliner.collection_drop()
+
+    def make_active(self):
+        bpy.context.view_layer.objects.active = bpy.data.objects[self.name]
 
     def __init__(self, name="Cave") -> None:
+        self.modifier_stack = []
+        bpy.ops.mesh.primitive_vert_add()
+        bpy.context.active_object.name = name
         generated_string = generate_string(max_len=5000)
+        # print(f"Using String", ''.join(generated_string))
+        trace_string(['f']*2 + generated_string)
+
 
 def add_cave(
     rescale,
