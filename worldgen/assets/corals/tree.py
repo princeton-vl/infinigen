@@ -19,6 +19,7 @@ from placement.detail import remesh_with_attrs
 from util.math import FixedSeed
 from surfaces import surface
 from assets.trees.tree import build_radius_tree, recursive_path, FineTreeVertices
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class TreeBaseCoralFactory(BaseCoralFactory):
     default_scale = [1] * 3
@@ -142,6 +143,7 @@ class TreeBaseCoralFactory(BaseCoralFactory):
         obj.scale = 2 * np.array(self.default_scale) / max(obj.dimensions[:2])
         butil.apply_transform(obj)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius', 32])
+        tag_object(obj, 'tree_coral')
         return obj
 
 
