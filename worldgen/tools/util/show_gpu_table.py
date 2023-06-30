@@ -7,8 +7,10 @@
 import re
 import time
 import subprocess
+from datetime import datetime
 from collections import defaultdict
 from itertools import chain
+from shutil import which
 
 gres_regex = re.compile(".*gpu:([^:]+):([0-9]+).*").fullmatch
 cpu_regex = re.compile(".+/([0-9]+)[^/]+").fullmatch
@@ -45,6 +47,8 @@ def get_gpu_nodes():
 
 # e.g. nodes_with_gpus('gtx_1080', 'k80')
 def nodes_with_gpus(*gpu_names):
+    if not which('sinfo'):
+        return []
     if len(gpu_names) == 0:
         return []
     _, node_type_lookup, _ = get_gpu_nodes()
