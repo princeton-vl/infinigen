@@ -108,20 +108,25 @@ def camera_name(rig_id, cam_id):
 def spawn_camera_rigs(
     camera_rig_config,
     n_camera_rigs,
+):
 
     def spawn_rig(i):
         rig_parent = butil.spawn_empty(f'CameraRigs/{i}')
         for j, config in enumerate(camera_rig_config):
+            cam = spawn_camera()
             cam.name = camera_name(i, j)
             cam.parent = rig_parent
+
             cam.location = config['loc']
             cam.rotation_euler = config['rot_euler']
+
         return rig_parent
 
     camera_rigs = [spawn_rig(i) for i in range(n_camera_rigs)]
     butil.group_in_collection(camera_rigs, 'CameraRigs')
         
     return camera_rigs
+
 def get_camera(rig_id, subcam_id, checkonly=False):
     col = bpy.data.collections['CameraRigs']
     name = camera_name(rig_id, subcam_id)
@@ -139,19 +144,34 @@ def nodegroup_active_cam_info(nw: NodeWrangler):
 
 def set_active_camera(rig_id, subcam_id):
     camera = get_camera(rig_id, subcam_id)
+    bpy.context.scene.camera = camera
 
     ng = nodegroup_active_cam_info() # does not create a new node group, retrieves singleton
     ng.nodes['Object Info'].inputs['Object'].default_value = camera
+
     return bpy.context.scene.camera
+
 def positive_gaussian(mean, std):
     while True:
         val = np.random.normal(mean, std)
         if val > 0:
             return val
 
+def set_camera(
+    camera,
+    location,
+    rotation,
+    focus_dist,
+    frame,
+):
     camera.location = location
+    camera.rotation_euler = rotation
     if focus_dist is not None:
         camera.data.dof.focus_distance = focus_dist # this should come before view_layer.update()
+    bpy.context.view_layer.update()
+
+    camera.keyframe_insert(data_path="location", frame=frame)
+    camera.keyframe_insert(data_path="rotation_euler", frame=frame)
     if focus_dist is not None:
         camera.data.dof.keyframe_insert(data_path="focus_distance", frame=frame)
 
