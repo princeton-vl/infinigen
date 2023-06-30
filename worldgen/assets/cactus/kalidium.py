@@ -15,6 +15,8 @@ from assets.utils.decorate import displace_vertices, geo_extension, read_co, rem
     subsurface2face_size
 from assets.utils.shortest_path import geo_shortest_path
 from nodes.node_info import Nodes
+
+from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from assets.cactus.base import BaseCactusFactory
