@@ -1,3 +1,20 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#include <random>
+#include <iostream>
+#include <functional> //without .h
+#include <indicators/progress_bar.hpp>
+#include <regex>
+#include <unordered_map>
+#include <unordered_set>
+#include "string_tools.hpp"
+#include "load_blender_mesh.hpp"
+#include "buffer_arrays.hpp"
+
 using json = nlohmann::json;
 using namespace indicators;
 using namespace indicators::option;
