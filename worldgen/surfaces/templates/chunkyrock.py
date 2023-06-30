@@ -4,6 +4,7 @@ import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
 import gin
+from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
@@ -38,6 +39,7 @@ def shader_rocks(nw, rand=True, **input_kwargs):
     rock_color1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': noise_texture_1.outputs["Fac"], 'Color1': (0.0, 0.0, 0.0, 1.0), 'Color2': (0.01, 0.024, 0.0283, 1.0)})
 
+    if rand:
         sample_color(rock_color1.inputs["Color1"].default_value)
         sample_color(rock_color1.inputs["Color2"].default_value)
 
@@ -47,6 +49,7 @@ def shader_rocks(nw, rand=True, **input_kwargs):
     rock_color2 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': noise_texture_2.outputs["Fac"], 'Color1': (0.0, 0.0, 0.0, 1.0), 'Color2': (0.0694, 0.1221, 0.0693, 1.0)})
 
+    if rand:
         sample_color(rock_color2.inputs["Color1"].default_value)
         sample_color(rock_color2.inputs["Color2"].default_value)
 
@@ -55,6 +58,8 @@ def shader_rocks(nw, rand=True, **input_kwargs):
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_1})
+
+    return principled_bsdf
 
 @gin.configurable
 def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geometry=True, **input_kwargs):
@@ -106,6 +111,7 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
             attrs={'operation': 'MULTIPLY'})
         
         value = nw.new_node(Nodes.Value)
+        value.outputs[0].default_value = 0.4
         
         offset = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: multiply.outputs["Vector"], 1: value},
@@ -124,6 +130,7 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
         return depth
 
 
+def apply(obj, selection=None, geo_kwargs=None, shader_kwargs=None, **kwargs):
     surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
     surface.add_material(obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs)
 
