@@ -31,6 +31,7 @@ from assets.creatures import hair as creature_hair, cloth_sim
 from assets.creatures.animation import idle, run_cycle
 
 from surfaces.templates import bone, tongue, eyeball, nose, horn
+from assets.utils.tag import tag_object, tag_nodegroup
 
 from util import blender as butil
 
@@ -203,6 +204,7 @@ class HerbivoreFactory(AssetFactory):
     def create_asset(self, i, placeholder, hair=True, simulate=False, **kwargs):
         genome = herbivore_genome()
         root, parts = creature.genome_to_creature(genome, name=f'herbivore({self.factory_seed}, {i})')
+        tag_object(root, 'herbivore')
         offset_center(root)
         
         dynamic = self.animation_mode is not None
