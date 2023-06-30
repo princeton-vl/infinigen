@@ -1,16 +1,24 @@
 import pdb
 from dataclasses import dataclass
 import warnings
+
 import bpy
 import numpy as np
 from scipy.interpolate import interp1d
+
 from .utils import helper, mesh
+from .utils import geometrynodes as gn
 from assets.leaves import leaf
+
 from nodes.node_wrangler import Nodes
 from util import blender as butil
 from ..utils.object import data2mesh, mesh2obj
 
+C = bpy.context
+D = bpy.data
 
+
+class TreeVertices():
     def __init__(self, vtxs=None, parent=None, level=None):
         """Define vertices and edges to outline tree geometry."""
         if vtxs is None:
@@ -19,17 +27,22 @@ from ..utils.object import data2mesh, mesh2obj
             vtxs = np.array(vtxs)
         parent = [-1] * len(vtxs) if parent is None else parent
         level = [0] * len(vtxs) if level is None else level
+
         self.vtxs = vtxs
         self.parent = parent
         self.level = level
+
     def get_idxs(self):
         return list(np.arange(len(self.vtxs)))
+
     def get_edges(self):
         edges = np.stack([np.arange(len(self.vtxs)), np.array(self.parent)], 1)
         return edges[edges[:, 1] != -1]
+
     def append(self, v, p, l=None):
         self.vtxs = np.append(self.vtxs, v, axis=0)
         self.parent += p
+
         if l is None:
             l = [0] * len(v)
         elif isinstance(l, int):
@@ -39,6 +52,8 @@ from ..utils.object import data2mesh, mesh2obj
     def __len__(self):
         return len(self.vtxs)
 
+
+def dfs(idx, edges, parents, depth, rev_depth, n_leaves, child_idx):
     children = [v for v in edges[idx] if v != parents[idx]]
     if len(children) == 0:
         # At leaf, move backwards to update rev_depth
@@ -59,6 +74,7 @@ from ..utils.object import data2mesh, mesh2obj
             parents[c] = idx
             depth[c] = depth[idx] + 1
             dfs(c, edges, parents, depth, rev_depth, n_leaves, child_idx)
+
 
 def parse_tree_attributes(vtx):
     # Strong assumption, root is vertex 0
@@ -168,6 +184,7 @@ def parse_tree_attributes(vtx):
 def rand_path(n_pts, sz=1, std=.3, momentum=.5, init_vec=[0, 0, 1], init_pt=[0, 0, 0], pull_dir=None,
               pull_init=1, pull_factor=0, sz_decay=1, decay_mom=True):
     init_vec = np.array(init_vec, dtype=float)
+    if pull_dir is not None:
         pull_dir = np.array(pull_dir, dtype=float)
         init_vec += pull_init * pull_dir
     init_vec = init_vec / np.linalg.norm(init_vec)
@@ -185,6 +202,7 @@ def rand_path(n_pts, sz=1, std=.3, momentum=.5, init_vec=[0, 0, 1], init_pt=[0, 
         if pull_dir is not None:
             new_delta += pull_factor * pull_dir
         new_delta = (new_delta / np.linalg.norm(new_delta)) * prev_sz
+
         if decay_mom:
             tmp_momentum = 1 - (1 - momentum) * (i + 1) / n_pts
         else:
@@ -192,14 +210,19 @@ def rand_path(n_pts, sz=1, std=.3, momentum=.5, init_vec=[0, 0, 1], init_pt=[0, 
         delta = prev_delta * tmp_momentum + new_delta * (1 - tmp_momentum)
         delta = (delta / np.linalg.norm(delta)) * sz * (sz_decay ** i)
         path[i] = path[i - 1] + delta
+
     return path
+
+
 def get_spawn_pt(path, rng=[.5, 1], ang_min=np.pi / 6, ang_max=.9 * np.pi / 2, rnd_idx=None, ang_sign=None,
                  axis2=None, init_vec=None, z_bias=0):
     n = len(path)
     if n == 1:
         return 0, path[0], init_vec
+
     if rnd_idx is None:
         rnd_idx = np.random.randint(n * rng[0], n * rng[1])
+
     if init_vec is None:
         curr_vec = path[rnd_idx] - path[rnd_idx - 1]
         axis1 = np.array([curr_vec[1], -curr_vec[0], 0])
@@ -212,11 +235,16 @@ def get_spawn_pt(path, rng=[.5, 1], ang_min=np.pi / 6, ang_max=.9 * np.pi / 2, r
             ang_sign = np.sign(np.random.randn())
         rnd_ang *= ang_sign
         init_vec = helper.rodrigues_rot(curr_vec, axis2, rnd_ang)
+
     return rnd_idx, path[rnd_idx], init_vec
+
+
 def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, n=1, symmetry=False,
                    children=None):
     if path_kargs is None:
         return
+
+    if symmetry:
         n = 2 * n
 
     for branch_idx in range(n):
@@ -225,34 +253,43 @@ def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, 
         curr_spawn = spawn_kargs(curr_idx)
         if symmetry:
             curr_spawn['ang_sign'] = 2 * (branch_idx % 2) - 1
+
         parent_idx, init_pt, init_vec = get_spawn_pt(tree.vtxs[parent_idxs], **curr_spawn)
         parent_idx = parent_idxs[parent_idx]
+
         path = rand_path(**curr_path, init_pt=init_pt, init_vec=init_vec)
         new_vtxs = path[1:]
         new_idxs = list(np.arange(len(new_vtxs)) + len(tree))
         node_idxs = [parent_idx] + new_idxs
         tree.append(new_vtxs, node_idxs[:-1], level)
+
         if children is not None:
             for c in children:
                 recursive_path(tree, node_idxs, level + 1, **c)
+
+
 def remove_matched_atts(atts, vtxs, dist_thr, curr_min, curr_match, idx_offset=0, prev_deltas=None):
     dists, deltas = helper.compute_dists(atts, vtxs)
     if prev_deltas is not None:
         deltas = np.append(prev_deltas, deltas, axis=1)
+
     min_dist = dists.min(1)
     closest = dists.argmin(1)
     to_keep = min_dist > dist_thr
+
     atts = atts[to_keep]
     min_dist = min_dist[to_keep]
     closest = closest[to_keep]
     deltas = deltas[to_keep]
     curr_min = curr_min[to_keep]
     curr_match = curr_match[to_keep]
+
     to_update = min_dist < curr_min
     curr_min[to_update] = min_dist[to_update]
     curr_match[to_update] = closest[to_update] + idx_offset
 
     return atts, deltas, curr_min, curr_match
+
 
 def space_colonization(tree, atts, D=.1, d=10.0, s=.1, pull_dir=None, dir_rand=.1, mag_rand=.15, n_steps=200,
                        level=0):
@@ -304,6 +341,7 @@ def space_colonization(tree, atts, D=.1, d=10.0, s=.1, pull_dir=None, dir_rand=.
 
         if atts.shape[0] == 0:
             break
+
 
 @dataclass
 class TreeParams:
