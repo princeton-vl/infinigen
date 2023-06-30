@@ -1,8 +1,12 @@
+OVERALL_SEED = 0
 LOG_DIR = '.'
 Terrain.asset_version = 'May27'
 util.math.FixedSeed.seed = %OVERALL_SEED
 execute_tasks.frame_range = [1, 1] # Between start/end frames should this job consider? Increase end frame to tackle video
 execute_tasks.camera_id = [0, 0] # Which camera rig
+
+save_obj_and_instances.output_folder="saved_mesh.obj"
+util.logging.create_text_file.log_dir = %LOG_DIR
 
 compose_scene.inview_distance = 70
 placement.populate_all.dist_cull = 70
@@ -80,9 +84,39 @@ populate_scene.snow_layer_chance=0.0
 
 target_face_size.global_multiplier = 2
 scatter_res_distance.dist = 4
+random_color_mapping.hue_stddev = 0.05 # Note: 1.0 is the whole color spectrum
+
+render.render_image_func = @full/render_image
+render_image.time_limit = 0
 full/render_image.min_samples = 100
 full/render_image.num_samples = 8192
 render_image.adaptive_threshold = 0.005
+full/render_image.flat_shading = False
+
+flat/render_image.min_samples = 10
+flat/render_image.num_samples = 10
+flat/render_image.flat_shading = True
+full/render_image.passes_to_save = [
+    ['diffuse_direct', 'DiffDir'],
+    ['diffuse_color', 'DiffCol'],
+    ['diffuse_indirect', 'DiffInd'],
+    ['glossy_direct', 'GlossDir'],
+    ['glossy_color', 'GlossCol'],
+    ['glossy_indirect', 'GlossInd'],
+    ['transmission_direct', 'TransDir'],
+    ['transmission_color', 'TransCol'],
+    ['transmission_indirect', 'TransInd'],
+    ['volume_direct', 'VolumeDir'],
+    ['emit', 'Emit'],
+    ['environment', 'Env'],
+    ['ambient_occlusion', 'AO']
+]
+flat/render_image.passes_to_save = [
+    ['z', 'Depth'],
+    ['normal', 'Normal'],
+    ['vector', 'Vector'],
+    ['object_index', 'IndexOB']
+]
 
 render_image.exposure = 1
 
