@@ -16,6 +16,7 @@ from assets.small_plants.leaf_general import LeafFactory
 from assets.small_plants.leaf_heart import LeafHeartFactory
 from surfaces.templates import simple_greenery
 import numpy as np
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_leafon_stem', singleton=False, type='GeometryNodeTree')
 def nodegroup_leaf_on_stem(nw: NodeWrangler, z_rotation=(0, 0, 0,), leaf_scale=1.0, leaf=None):
@@ -79,6 +80,7 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
                                               'Fill Caps': True})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'stem')})
 
 
     # Code generated using version 2.4.3 of the node_transpiler
@@ -175,11 +177,13 @@ class NumLeafGrassFactory(AssetFactory):
         params["leaf_num"] = leaf_num
         params["stem_rotation"] = 0.15
 
+        surface.add_geomod(obj, geo_face_colors, apply=True, attributes=[], input_kwargs=params)
         butil.delete([leaf])
         with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()
             bpy.ops.object.shade_flat()
 
+        tag_object(obj, 'num_leaf_grass')
         return obj
 
 
