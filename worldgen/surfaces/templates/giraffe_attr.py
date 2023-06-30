@@ -4,11 +4,15 @@ import math as ma
 from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
+from numpy.random import uniform as U, normal as N, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
+from nodes.color import color_category, hsv2rgba
 from surfaces import surface
 
+from assets.creatures.nodegroups.shader import nodegroup_color_mask
 
+def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     attribute = nw.new_node(Nodes.Attribute,
@@ -29,15 +33,19 @@ from surfaces import surface
         value.outputs[0].default_value = sample_ratio(value.outputs[0].default_value, 0.5, 2)
     
     voronoi_texture = nw.new_node(Nodes.VoronoiTexture,
+        input_kwargs={'Vector': mapping, 'Scale': value},
         attrs={'voronoi_dimensions': '2D'})
     
     voronoi_texture_4 = nw.new_node(Nodes.VoronoiTexture,
+        input_kwargs={'Vector': mapping, 'Scale': value},
         attrs={'voronoi_dimensions': '2D', 'feature': 'SMOOTH_F1'})
     
     subtract = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture_4.outputs["Distance"]},
         attrs={'operation': 'SUBTRACT'})
     
     less_than = nw.new_node(Nodes.Math,
+        input_kwargs={0: subtract, 1: sample_range(0.04, 0.08) if rand else 0.07},
         attrs={'operation': 'LESS_THAN'})
     
     colorramp_1 = nw.new_node(Nodes.ColorRamp,
@@ -56,8 +64,15 @@ from surfaces import surface
     colorramp.color_ramp.elements[1].position = 1.0
     colorramp.color_ramp.elements[1].color = (0.9755, 1.0, 0.9096, 1.0)
     if rand:
+        colorramp.color_ramp.elements[0].color = hsv2rgba((U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7)))
+        colorramp.color_ramp.elements[1].color = hsv2rgba((U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7)))
 
     mix_1 = nw.new_node(Nodes.MixRGB,
+        input_kwargs={
+            'Fac': colorramp_1.outputs["Color"], 
+            'Color1': colorramp.outputs["Color"], 
+            'Color2': hsv2rgba((U(0.02, 0.06), U(0.4, 0.9), U(0.04, 0.1)))
+        })
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_1},
