@@ -53,9 +53,18 @@ def symmetrize(s: Skin, fac):
         res.surface_params = lerp(s.surface_params, (s.surface_params + s.surface_params[:, ::-1]) / 2, fac)
     return res
 
+def outerprod_skin(ts, rads, profile, profile_as_points=False, add_cap=True):
 
+    if profile_as_points:
+        profiles = rads.reshape(-1,1,1) * profile.reshape(1,-1,3)
+    else:
+        profiles = rads.reshape(-1, 1) * profile.reshape(1, -1)
 
     s = Skin(ts=ts, profiles=profiles)
+    s.profile_as_points = profile_as_points
+    if add_cap:
+        s = extend_cap(s, r=0.5)
+        s = extend_cap(s, r=0)
     return s
 
 def random_skin(rad, n, m, n_params=1):
@@ -92,3 +101,17 @@ def random_skin(rad, n, m, n_params=1):
 
     s = symmetrize(s, fac=sym)
 
+    return s
+
+def profile_from_thickened_curve(curve_skeleton: np.array, # Nx3, with x axis as forward 
+        widths: np.array, # N floats 
+):
+    tgs = lofting.skeleton_to_tangents(curve_skeleton)
+    left_dir = np.stack([np.zeros_like(tgs[:,0]), -tgs[:,2], tgs[:,1]], axis=-1)
+    left_offset = widths[:,None] * left_dir / np.linalg.norm(left_dir)
+
+    left_points = curve_skeleton + left_offset
+    right_points = curve_skeleton - left_offset
+
+    profile = np.concatenate([left_points, right_points[::-1]]) 
+    return profile 
