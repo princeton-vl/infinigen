@@ -1,4 +1,5 @@
 from logging import root
+from .utils import mesh, helper
 from .tree import TreeParams
                      'path_kargs': lambda idx: {'n_pts': 3, 'std': 1, 'momentum': 1, 'sz': .4},
                      'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2, 'rnd_idx': 2*idx+2,
@@ -11,13 +12,17 @@ twig_config = {'n': 1, 'decay': .8, 'valid_leaves': [-2, -1],
                'path_kargs': lambda idx: {'n_pts': 7, 'sz': .5, 'std': .5, 'momentum': .7},
                'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                'children': [subtwig_config]}
+
+def random_pine_rot():
     theta = np.random.uniform(2*np.pi)
     return [np.sin(theta), 0.0, np.cos(theta)]
 
 
+subsubtwig_config = {'n': 20, 'symmetry': False,
                      'path_kargs': lambda idx: {'n_pts': 2, 'std': 1, 'momentum': 1, 'sz': .2},
                      'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2,
                                                  'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': random_pine_rot}}
+subtwig_config = {'n': 7, 'symmetry': False,
                   'path_kargs': lambda idx: {'n_pts': 10, 'std': .3, 'momentum': 1, 'sz': .2 - .01 * idx},
                   'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .1,
                                               'ang_min': np.pi/8, 'ang_max': np.pi/8 + np.pi/16, 'axis2': random_pine_rot},
@@ -26,13 +31,18 @@ pinetwig_config = {'n': 1,
                    'path_kargs': lambda idx: {'n_pts': 7, 'sz': .5, 'std': .2, 'momentum': .7},
                    'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                    'children': [subtwig_config]}
+
+
+subsubsubtwig_config = {'n': 1, 'symmetry': True,
                         'path_kargs': lambda idx: {'n_pts': 2, 'std': 1, 'momentum': 1, 'sz': .4},
                         'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2, 'rnd_idx': idx+1,
                                                     'ang_min': np.pi/8, 'ang_max': np.pi/8 + np.pi/32, 'axis2': [0, 0, 1]}}
+subsubtwig_config = {'n': 3, 'symmetry': False,
                      'path_kargs': lambda idx: {'n_pts': 3, 'std': 1, 'momentum': 1, 'sz': .6 - .1 * idx},
                      'spawn_kargs': lambda idx: {'rng': [0.1, 1.0], 'z_bias': .1,
                                                  'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': [0, 0, 1]},
                      'children': [subsubsubtwig_config]}
+subtwig_config = {'n': 8, 'symmetry': False,
                   'path_kargs': lambda idx: {'n_pts': 7, 'std': 1, 'momentum': 1, 'sz': .6 - .1 * idx},
                   'spawn_kargs': lambda idx: {'rng': [0.2, 1.0], 'z_bias': .1,
                                               'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': [0, 0, 1]},
@@ -41,6 +51,8 @@ bambootwig_config = {'n': 1, 'decay': .8, 'valid_leaves': [-2, -1],
                      'path_kargs': lambda idx: {'n_pts': 15, 'sz': 1.0, 'std': .05, 'momentum': .7, 'pull_dir': [0, 0, -0.3], 'pull_factor': 0.5, 'pull_init': 0.0},
                      'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                      'children': [subtwig_config]}
+
+subtwig_config = {'n': 37, 'symmetry': True,
                   'path_kargs': lambda idx: {'n_pts': 2, 'std': 1, 'momentum': 1, 'sz': .4},
                   'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2, 'rnd_idx': idx+2,
                                               'ang_min': 0.3*np.pi, 'ang_max': 0.3*np.pi + np.pi/16, 'axis2': [0, 0, 1]}}
@@ -48,13 +60,18 @@ palmtwig_config = {'n': 1, 'decay': .8, 'valid_leaves': [-2, -1],
                    'path_kargs': lambda idx: {'n_pts': 40, 'sz': .5, 'std': .05, 'momentum': .7, 'pull_dir': [0, 0, -0.3], 'pull_factor': 0.5, 'pull_init': 0.0},
                    'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                    'children': [subtwig_config]}
+
+
+subtwig_config = {'n': 3, 'symmetry': True,
                   'path_kargs': lambda idx: {'n_pts': 3, 'std': 1, 'momentum': 1, 'sz': .6 - .1 * idx},
                   'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .1, 'rnd_idx': 2*idx+1,
                                               'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': [0, 0, 1]},
                   'children': []}
+shrubtwig_config = {'n': 1,
                     'path_kargs': lambda idx: {'n_pts': 6, 'sz': .5, 'std': .5, 'momentum': .7},
                     'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                     'children': [subtwig_config]}
+
     n_twig_pts = np.random.randint(10) + 5
     twig_len = np.random.uniform(3, 4)
     twig_sz = twig_len / n_twig_pts
@@ -434,6 +451,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
     max_sz = .8
     start_ht = int(tree_ht * np.random.uniform(0.1, 0.3))
     n = tree_ht - start_ht
+
     branch_config = {'n': n * per_layer,
                      'path_kargs': lambda idx: {'n_pts': np.random.randint(np.floor(((n - idx // per_layer) / n) * 6),
                                                                            np.ceil(((n - idx // per_layer) / n) * 8)) + 3,
@@ -458,6 +476,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
 
     tree_kargs = TreeParams(
         skeleton=pinetree_config,
+        skinning={'Min radius': 0.02, 'Exponent': 1.5, 'Max radius': 0.2},
         trunk_spacecol={'atts': tmp_att_fn, 'D': .3, 's': .4, 'd': 10,
                                   'pull_dir': [0, 0, .5], 'n_steps': 20},
         roots_spacecol=None,#{'atts': None, 'D': .2, 's': .3, 'd': 2,
@@ -505,6 +524,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
     y = (y - rng[0]) / (rng[1] - rng[0])
     y = y * (max_ht - min_ht) + min_ht
     return y
+def generate_tree_config(tree_genome=None, season='autumn'):
     """
     Main latent params that we might want to control:
     - overall size/"age"
@@ -523,6 +543,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
         tree_genome = np.random.rand(32)
 
     cfg = parse_genome(tree_genome)
+    sz = calc_height(cfg['size'], min_ht=12)
     n_tree_pts = int(sz)
     n_trunks = int(10 ** (cfg['n_trunks']**1.6))
     ex = np.exp((6 - (5 if n_trunks > 1 else 0)) * (cfg['trunk_warp']-.1))
@@ -531,6 +552,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
                     np.random.randn() * .2))
     radial_out = False  # False # np.random.rand() < .3
     avail_idxs = np.arange(n_tree_pts)
+    start_idx = 1 + int(n_tree_pts * np.random.uniform(.1, .7))
     sample_density = np.random.choice(
         np.arange(np.ceil(np.sqrt(n_tree_pts)), dtype=int) + 1)
     avail_idxs = avail_idxs[start_idx::sample_density]
@@ -588,19 +610,46 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
     max_radius = 0.2
     merge_size = 2.5 - cfg['branch_thickness']
 
+    if season == "winter":
+        twig_density = 0.0 if cfg['twig_density'] < 0.5 else 0.5 * cfg['twig_density']
+        twig_inst = 1 + 0 * np.random.randint(3, 5)
+    else:
+        twig_density = 0.5 + 0.5 * cfg['twig_density']
+        twig_inst = np.random.randint(3, 5)
+
     return TreeParams(
         skeleton=tree_config,
+        skinning={'Max radius': max_radius, 'Min radius': .02, 'Exponent': merge_size},
         trunk_spacecol={'atts': tmp_att_fn, 'D': tmp_D, 's': tmp_s, 'd': 10,
                             'pull_dir': [0, 0, np.random.randn() * .3], 'n_steps': n_updates},
         roots_spacecol=None, #{'atts': None, 'D': .05, 's': .1, 'd': 2, 'dir_rand': .05, 'mag_rand': .05, 'pull_dir': None, 'n_steps': 30},
+        child_placement={'depth_range': (0, 5.0), 'Density': twig_density, 'Multi inst': twig_inst,
+                            'Pitch variance': 1.0, 'Yaw variance': 10.0, 'Min scale': 1.1, 'Max scale': 1.3}                    
     )
+def random_tree(tree_genome=None, season='autumn'):
     leaf_kargs = {'leaf_width': np.random.rand() * .5 + .1,
                   'alpha': np.random.rand() * .3}
+
+    if season == "winter":
+        leaf_density = np.random.uniform(.0, 0.1)
+        leaf_inst = 1
+    elif season == "spring": # flowers should be less dense
+        leaf_density = np.random.uniform(.3, 0.7)
+        leaf_inst = 2
+    else:
+        leaf_density = np.random.uniform(.4, 1.0)
+        leaf_inst = 3
+
+
     twig_kargs = TreeParams(
         skeleton=generate_twig_config(),
+        skinning={'Max radius': 0.01, 'Min radius': 0.005},
         trunk_spacecol=None,
         roots_spacecol=None,
+        child_placement={'Density': leaf_density, 'Multi inst': leaf_inst,
+                                 'Min scale': .3, 'Max scale': .4}
     )
+    tree_kargs = generate_tree_config(tree_genome, season=season)
     return tree_kargs, twig_kargs, leaf_kargs
     """
     Main latent params that we might want to control:
