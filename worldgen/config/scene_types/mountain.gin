@@ -1,0 +1,8 @@
+compose_scene.flying_creatures_chance=0.7
+compose_scene.max_flying_creatures = 3
+
+animate_cameras.follow_poi_chance=0.0
+
+compose_scene.trees_chance = 0.5
+compose_scene.tree_density = 0.06
+
