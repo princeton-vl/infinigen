@@ -151,6 +151,7 @@ def geo_MOUNTAIN_general(
 
 @gin.configurable("geo")
 def geo_MOUNTAIN(
+    nw: NodeWrangler,
     n_noise=3,
     noise_params={"scale": ("uniform", 1, 5), "detail": 8, "roughness": 0.7, "zscale": ("power_uniform", -1, -0.5)},
     n_crack=8,
@@ -195,6 +196,8 @@ def shader_MOUNTAIN(
             arranged_layers = False
 
 
+        shader_roughness = rg(shader_roughness)
+        layered_mountain = rg(layered_mountain)
 
         if layered_mountain:
             tex_coor = nw.new_node('ShaderNodeNewGeometry', [])
