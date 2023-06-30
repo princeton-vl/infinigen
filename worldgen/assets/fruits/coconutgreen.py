@@ -22,6 +22,8 @@ from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
+        self.name = 'coconut_green'
+        
     def sample_cross_section_params(self, surface_resolution=256):
         rad_small = uniform(0.65, 0.75)
 
