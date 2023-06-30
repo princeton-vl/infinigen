@@ -1,3 +1,12 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Lahav Lipson - LocalJob
+# - Alex Raistrick - Local queue handler
+# - David Yan - Bugfix
+# Date Signed: May 2 2023
+
 import re
 import time
 import sys
