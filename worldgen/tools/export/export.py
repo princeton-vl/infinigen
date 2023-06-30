@@ -1,3 +1,10 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+# Portions of bakeTexture heavily modified from https://blender.stackexchange.com/a/191841
+
+# Authors: David Yan
+# Date Signed: June 7 2023 
+
 import bpy
 import os
 import sys
