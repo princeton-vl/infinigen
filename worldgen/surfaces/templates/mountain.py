@@ -1,5 +1,7 @@
+import gin
 import numpy as np
 
+from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
@@ -39,6 +41,7 @@ def geo_MOUNTAIN_general(
         position_shift.vector = nw.get_position_translation_seed(f"content{i}")
 
         content = nw.scalar_multiply(
+            nw.scalar_sub(
                 nw.new_node(
                     Nodes.NoiseTexture,
                     input_kwargs={
@@ -147,6 +150,8 @@ def geo_MOUNTAIN(
     n_crack=8,
     crack_params={"scale": ("uniform", 1, 5), "zscale_scale": 0.02, "slope_scale": 5, "slope_base": 3, "mask_rampmin": 0.0, "mask_rampmax": 0.3},
     crack_modulation_params={"scale": 1, "detail": 5, "roughness": 0.5},
+    selection=None
+):
     nw.force_input_consistency()
     groupinput = nw.new_node(Nodes.GroupInput)
     offset = geo_MOUNTAIN_general(nw, n_noise, noise_params, n_crack, crack_params, crack_modulation_params)
@@ -154,6 +159,8 @@ def geo_MOUNTAIN(
     set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
 
+@gin.configurable("shader")
+def shader_MOUNTAIN(
         obj,
         is_rock=False,
         spherical=False,
@@ -166,10 +173,12 @@ def geo_MOUNTAIN(
         snowy=False,
     nw.force_input_consistency()
     with FixedSeed(random_seed):
+
         if np.random.uniform() > prob_arranged_layers:
             arranged_layers = True
         else:
             arranged_layers = False
+
 
         if layered_mountain:
             tex_coor = nw.new_node('ShaderNodeNewGeometry', [])
@@ -276,5 +285,12 @@ def geo_MOUNTAIN(
         bsdf_mountain = nw.new_node("ShaderNodeBsdfPrincipled",
                                     [color_, None, None, None, None, None, None,
                                         None, None, shader_roughness])
+
     return bsdf_mountain
+
+def apply(objs, selection=None, **kwargs):
+    if isinstance(objs, list) and len(objs) == 0:
+        return
+    surface.add_geomod(objs, geo_MOUNTAIN, selection=selection)
+    surface.add_material(objs, shader_MOUNTAIN, selection=selection, 
         input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs, **kwargs})
