@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Hei Law
+# Date Signed: Jun 14, 2023
+
 from nodes.node_wrangler import Nodes
 import numpy as np
 
