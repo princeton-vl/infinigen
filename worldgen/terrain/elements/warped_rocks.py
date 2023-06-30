@@ -47,3 +47,4 @@ class WarpedRocks(Element):
 
         self.meta_params = [caves is not None]
         Element.__init__(self, "warped_rocks", material, transparency)
+        self.tag = ElementTag.WarpedRocks
