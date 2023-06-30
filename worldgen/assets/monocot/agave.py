@@ -16,6 +16,7 @@ from assets.utils.decorate import add_distance_to_boundary, join_objects, displa
 from assets.utils.draw import cut_plane, leaf
 from assets.utils.misc import log_uniform
 from surfaces.surface import shaderfunc_to_material
+from util.blender import deep_clone_obj
 from util.math import FixedSeed
 from assets.utils.tag import tag_object, tag_nodegroup
 
