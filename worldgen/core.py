@@ -1,4 +1,5 @@
 import argparse
+import ast
 import os
 import random
 import sys
@@ -10,6 +11,7 @@ from functools import partial
 import pprint
 from collections import defaultdict
 
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
 sys.path.append(os.path.split(os.path.abspath(__file__))[0])
@@ -38,13 +40,17 @@ from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, Fi
     CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
+from assets.cactus import CactusFactory
 from assets.creatures import boid_swarm
 from placement import placement, camera as cam_util
+from assets.utils.misc import log_uniform
 from rendering.resample import resample_scene
+from assets.monocot import kelp
 from surfaces import surface
 
 import surfaces.scatters
 from surfaces.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
+from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
 
 
 from placement.factory import make_asset_collection
@@ -55,11 +61,14 @@ from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry
 
+
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
         print("Overriden parameters:", overrides)
     output = list(overrides)
+    for i, o in enumerate(overrides):
         if ('=' in o) and not any((c in o) for c in "\"'[]"):
+            k, v = o.split('=')
             try:
                 ast.literal_eval(v)
             except:
@@ -95,6 +104,8 @@ def populate_scene(
         fn=lambda: placement.populate_all(GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
     
     grime_selection_funcs = {
+        'trees': scatter_lower,
+        'boulders': scatter_upward,
     }
     grime_types = {
         'slime_mold': slime_mold.SlimeMold,
@@ -153,6 +164,7 @@ def get_scene_tag(name):
         return o.name.split('=')[-1].strip('\'\"')
     except StopIteration:
         return None
+
 @gin.configurable
 def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None):
     if resample_idx is not None and resample_idx != 0:
@@ -192,6 +204,7 @@ def validate_version(scene_version):
             f'generate.py {VERSION=} attempted to load a scene created by version {scene_version=}')
     if scene_version != VERSION:
         logging.warning(f'Worldgen {VERSION=} has minor version mismatch with {scene_version=}')
+
 @gin.configurable
 def group_collections(config):
     for config in config: # Group collections before fine runs
@@ -276,6 +289,8 @@ def execute_tasks(
     if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
         bpy.context.preferences.system.scrollback = 100 
         bpy.context.preferences.edit.undo_steps = 100
+        with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
+            bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
 
         with (output_folder/ "version.txt").open('w') as f:
             scene_version = get_scene_tag('VERSION')
@@ -295,6 +310,7 @@ def execute_tasks(
 
 
 def determine_scene_seed(args):
+
     if args.seed is None:
         if Task.Coarse not in args.task:
             raise ValueError(
@@ -304,7 +320,9 @@ def determine_scene_seed(args):
 
     # WARNING: Do not add support for decimal numbers here, it will cause ambiguity, as some hex numbers are valid decimals
 
+    try:
         return int(args.seed, 16), 'parsed as hexadecimal'
+    except ValueError:
         pass
 
     return int_hash(args.seed), 'hashed string to integer'
@@ -323,6 +341,7 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
 
     scene_types = [p.stem for p in Path('config/scene_types').iterdir()]
     scene_specified = any(s in scene_types or s.startswith("figure") for s in args.gin_config)
+
     weights = {
         "kelp_forest": 0.3,
         "coral_reef": 1,
@@ -351,6 +370,7 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
             args.gin_config = [scene_type] + args.gin_config[1:]
         else:
             args.gin_config = [scene_type] + args.gin_config
+
     def find_config(g):
         as_figure_type = f'config/figure_types/{g}.gin'
         if os.path.exists(as_figure_type):
@@ -362,9 +382,11 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
         if os.path.exists(as_base):
             return as_base
         raise ValueError(f'Couldn not locate {g} in either config/ or config/scene_types')
+
     bindings = sanitize_gin_override(args.gin_param)
     confs = [find_config(g) for g in ['base'] + args.gin_config]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
+
 def main(
     input_folder, 
     output_folder,
