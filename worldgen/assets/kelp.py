@@ -22,6 +22,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from placement.detail import remesh_with_attrs
 from placement.factory import AssetFactory
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class KelpFactory(AssetFactory):
@@ -43,6 +44,7 @@ class KelpFactory(AssetFactory):
         obj = join_objects([stem, leaves])
         butil.delete(axis)
         assign_material(obj, self.material)
+        tag_object(obj, 'kelp')
         return obj
 
     def build_axis(self):
@@ -79,6 +81,7 @@ class KelpFactory(AssetFactory):
         with butil.SelectObjects(obj):
             bpy.ops.object.shade_flat()
         remesh_with_attrs(obj, face_size)
+        tag_object(obj, 'stem')
         return obj
 
     @staticmethod
@@ -105,6 +108,7 @@ class KelpFactory(AssetFactory):
         obj.location = - locations[np.argmin(locations[:, 0])]
         obj.location[-1] -= .02
         butil.apply_transform(obj, loc=True)
+        tag_object(obj, 'leaf')
         return obj
 
     @staticmethod
