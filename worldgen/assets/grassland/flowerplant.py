@@ -14,6 +14,7 @@ from nodes.color import color_category
 import numpy as np
 from surfaces import surface
 from surfaces.templates import simple_greenery
+from assets.small_plants import leaf_general as Leaf
 from assets import flower as Flower
 from placement.factory import AssetFactory
 from util import blender as butil
