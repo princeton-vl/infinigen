@@ -41,6 +41,7 @@ class FruitFactoryCompositional(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):
         super(FruitFactoryCompositional, self).__init__(factory_seed, scale=scale, coarse=coarse)
 
+        self.name = 'compositional'
         self.factories = {}
 
         for name, factory in fruit_names.items():
