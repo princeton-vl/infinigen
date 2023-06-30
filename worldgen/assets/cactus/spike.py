@@ -12,6 +12,7 @@ from util import blender as butil
 from assets.utils.misc import sample_direction
 from assets.utils.decorate import assign_material
 from assets.utils.nodegroup import geo_radius
+from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.trees.tree import build_radius_tree
@@ -72,6 +73,7 @@ def geo_spikes(nw: NodeWrangler, spikes, points_fn=None, realize=True):
     rotation = nw.new_node(Nodes.AlignEulerToVector, [rotation, nw.uniform(.2, .5)], attrs={'axis': 'Z'})
     rotation = nw.add(rotation, nw.uniform([-.05] * 3, [.05] * 3))
 
+    points = surface.eval_argument(nw, points_fn, selected=selected, geometry=capture.outputs['Geometry'])
     spikes = nw.new_node(Nodes.InstanceOnPoints, input_kwargs={
         'Points': points,
         'Instance': spikes,
@@ -106,6 +108,9 @@ def shader_spikes(nw: NodeWrangler):
 def apply(obj, points_fn, base_radius=.002, realize=True):
     spikes = deep_clone_obj(obj)
     instances = make_asset_collection(build_spikes, 5, 'spikes', verbose=False, base_radius=base_radius)
+    mat = surface.shaderfunc_to_material(shader_spikes)
+    for o in instances.objects:
+        assign_material(o, mat) 
     surface.add_geomod(spikes, geo_spikes, apply=realize, input_args=[instances, points_fn, realize],
                        input_attributes=[None, 'selection'])
     butil.delete_collection(instances)
