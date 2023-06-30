@@ -9,6 +9,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
+from surfaces.surface_utils import nodegroup_norm_value, nodegroup_norm_vec
 
 from assets.creatures.nodegroups.curve import nodegroup_simple_tube, nodegroup_warped_circle_curve, nodegroup_smooth_taper, nodegroup_profile_part
 from assets.creatures.nodegroups.math import nodegroup_aspect_to_dim
@@ -134,8 +135,13 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
     
     eyeball = nw.new_node(Nodes.SubdivisionSurface,
         input_kwargs={'Mesh': transform_1, 'Level': 2})
+    
+    position_2 = nw.new_node(Nodes.InputPosition)
+
+    normvec = nw.new_node(nodegroup_norm_vec().name, input_kwargs={'Geometry': eyeball, 'Name': 'EyeballPosition', 'Vector': position_2})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': None, 'BodyExtra_Lid': switch.outputs[6], 'Eyeballl': normvec, 'ParentCutter': transform_2})
 
 class MammalEye(PartFactory):
 
