@@ -6,7 +6,9 @@
 
 class Task:
     Coarse = "coarse"
+    Populate = "populate"
     Fine = "fine"
+    FineTerrain = "fine_terrain"
     Render = "render"
 
 
