@@ -1,11 +1,23 @@
+import numpy as np
+from numpy.random import uniform, normal
+from mathutils import Vector
+
+from util import blender as butil
 from placement.instance_scatter import scatter_instances
+from nodes.node_wrangler import Nodes, NodeWrangler
+from surfaces import surface
+from nodes import node_utils
 from placement.factory import AssetFactory, make_asset_collection
 from assets.grassland.flowerplant import FlowerPlantFactory
+from surfaces.templates import simple_greenery
+
 from surfaces.scatters.utils.wind import wind
 
 def apply(obj, selection=None, density=1.0):
+
     flowerplant_col = make_asset_collection(FlowerPlantFactory(np.random.randint(1e5)), n=12, verbose=True)
     
+    avg_vol = np.mean([np.prod(list(o.dimensions)) for o in flowerplant_col.objects])
     density = np.clip(density / avg_vol, 0, 200)
     scatter_obj = scatter_instances(
         base_obj=obj, collection=flowerplant_col,
@@ -15,3 +27,5 @@ def apply(obj, selection=None, density=1.0):
         rotation_offset=wind(strength=20),
         selection=selection, taper_scale=True
     )
+
+    return scatter_obj, flowerplant_col
