@@ -33,6 +33,7 @@ def shader_dirt(nw):
         },
     )
 
+    return principled_bsdf
 
 @gin.configurable
 def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
