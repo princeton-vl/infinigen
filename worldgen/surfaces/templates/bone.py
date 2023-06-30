@@ -1,3 +1,14 @@
+import bpy
+import mathutils
+from numpy.random import uniform, normal, randint
+from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
+from nodes.color import color_category
+from surfaces import surface
+
+def shader_bone(nw: NodeWrangler):
+    # Code generated using version 2.4.3 of the node_transpiler
+
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
     
     mapping = nw.new_node(Nodes.Mapping,
@@ -52,9 +63,18 @@
     mix = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': multiply.outputs["Vector"], 'Color1': (0.19120000000000001, 0.045199999999999997, 0.0103, 1.0), 'Color2': colorramp_1.outputs["Color"]})
     
+    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix, 'Roughness': 0.44090000000000001})
     
     glass_bsdf = nw.new_node('ShaderNodeBsdfGlass')
     
     mix_shader = nw.new_node(Nodes.MixShader,
+        input_kwargs={'Fac': 0.2, 1: principled_bsdf, 2: glass_bsdf})
+    
+    material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': mix_shader})
+
+
+
+def apply(obj, selection=None, **kwargs):
+    surface.add_material(obj, shader_bone, selection=selection)
