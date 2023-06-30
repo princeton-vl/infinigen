@@ -28,6 +28,7 @@ def get_mesh_data(obj):
     vert_lookup = np.full((len(verts)*3,), np.nan, dtype=np.float32)
     verts.foreach_get("co", vert_lookup)
     vert_lookup = vert_lookup.reshape((-1, 3))
+    masktag = np.full(len(verts, ), 0, dtype=np.int32)
     if 'MaskTag' in obj.data.attributes:
         obj.data.attributes['MaskTag'].data.foreach_get("value", masktag)
     assert (loop_totals.size == 0) or (loop_totals.min() >= 0)
