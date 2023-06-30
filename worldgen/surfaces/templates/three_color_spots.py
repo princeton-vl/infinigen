@@ -55,6 +55,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         voronoi_texture_2.inputs['W'].default_value = sample_range(-5, 5)
 
     math_4 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture_2.outputs["Distance"], 1: voronoi_texture_2.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     colorramp_1 = nw.new_node(Nodes.ColorRamp,
@@ -70,6 +71,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         colorramp_1.color_ramp.elements[1].position = sample_range(0.18, 0.23)
 
     math_2 = nw.new_node(Nodes.Math,
+        input_kwargs={0: spot2_size, 1: 10.0},
         attrs={'operation': 'MULTIPLY'})
     
     voronoi_texture_3 = nw.new_node(Nodes.VoronoiTexture,
@@ -79,6 +81,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         voronoi_texture_3.inputs['W'].default_value = sample_range(-5, 5)
 
     math_3 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture_3.outputs["Distance"], 1: voronoi_texture_3.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     mix_4 = nw.new_node(Nodes.MixRGB,
@@ -110,6 +113,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         voronoi_texture.inputs['W'].default_value = sample_range(-5, 5)
 
     math_5 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     colorramp_2 = nw.new_node(Nodes.ColorRamp,
@@ -134,6 +138,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         voronoi_texture_1.inputs['W'].default_value = sample_range(-5, 5)
 
     math_6 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     mix_1 = nw.new_node(Nodes.MixRGB,
@@ -141,6 +146,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
         attrs={'blend_type': 'BURN'})
     
     math = nw.new_node(Nodes.Math,
+        input_kwargs={0: mix_4, 1: mix_1},
         attrs={'operation': 'LESS_THAN'})
     
     rgb = nw.new_node(Nodes.RGB)
