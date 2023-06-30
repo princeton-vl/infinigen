@@ -12,6 +12,8 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category, hsv2rgba
 from surfaces import surface
+from assets.leaves.leaf_v2 import nodegroup_move_to_origin, nodegroup_apply_wave
+from assets.leaves.leaf_maple import nodegroup_leaf_shader
 
 from util.math import FixedSeed
 from placement.factory import AssetFactory
@@ -391,6 +393,7 @@ def shader_material(nw: NodeWrangler, **kwargs):
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': group})
 
+def geo_leaf_ginko(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -511,6 +514,7 @@ class LeafFactoryGinko(AssetFactory):
 
         material_kwargs['color_vein'] = hsv2rgba(np.copy(self.blade_color))
 
+        surface.add_geomod(obj, geo_leaf_ginko, apply=False, attributes=['vein', 'shape'], input_kwargs=phenome)
         surface.add_material(obj, shader_material, reuse=False, input_kwargs=material_kwargs)
 
         bpy.ops.object.convert(target='MESH')
