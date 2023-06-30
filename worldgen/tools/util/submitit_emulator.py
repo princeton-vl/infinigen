@@ -17,6 +17,7 @@ import submitit
 import gin
 
 import numpy as np
+from shutil import which
 
 CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
 
@@ -140,8 +141,18 @@ class LocalScheduleHandler:
         resources = {}
 
         if self.use_gpu:
+            if which('/bin/nvidia-smi') is not None:
+                result = subprocess.check_output('/bin/nvidia-smi -L'.split()).decode()                                            
+                gpus_uuids = set(i for i in range(len(result.splitlines())))
 
+                if CUDA_VARNAME in os.environ:
+                    visible = [int(s.strip()) for s in os.environ[CUDA_VARNAME].split(',')]
+                    gpus_uuids = gpus_uuids.intersection(visible)
+                    print(f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting")
 
+                resources['gpus'] = set(itertools.product(range(len(gpus_uuids)), range(self.jobs_per_gpu)))
+            else:
+                resources['gpus'] = {'0'}
             
         return resources
 
@@ -186,6 +197,7 @@ class LocalScheduleHandler:
         
         n_gpus = job_rec['params'].get('gpus', 0) or 0
         
+        if n_gpus == 0 or not self.use_gpu:
             return self.dispatch(job_rec, resources={})
         
         if n_gpus <= len(available['gpus']):
@@ -251,3 +263,4 @@ if __name__ == "__main__":
         if cmd.startswith('blender'):
             print(pid, cmd)
     print(newjob)
+    newjob.kill()
