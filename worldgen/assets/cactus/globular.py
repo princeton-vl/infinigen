@@ -17,6 +17,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class GlobularBaseCactusFactory(BaseCactusFactory):
@@ -51,4 +52,5 @@ class GlobularBaseCactusFactory(BaseCactusFactory):
         obj.scale = uniform(.8, 1.5, 3)
         obj.rotation_euler[-1] = uniform(0, np.pi * 2)
         butil.apply_transform(obj)
+        tag_object(obj, 'globular_cactus')
         return obj
