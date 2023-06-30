@@ -1,3 +1,39 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#include <glad/glad.h>
+#if SYSTEM_NUM == 0
+    #include <EGL/egl.h>
+    #include <EGL/eglext.h>
+#elif SYSTEM_NUM == 1
+    #include <GLFW/glfw3.h>
+#endif
+#include <Eigen/Dense>
+#include <argparse/argparse.hpp>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <stack>
+#include <chrono>
+#include <regex>
+#include <math.h>
+#include <indicators/progress_bar.hpp>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include "shader.hpp"
+#include "blender_object.hpp"
+#include "camera_view.hpp"
+#include "string_tools.hpp"
+#include "load_blender_mesh.hpp"
+#include "utils.hpp"
+#include "io.hpp"
+
+#define VERSION "1.34"
+
 using std::cout, std::cerr, std::endl;
 
 #if SYSTEM_NUM == 0
