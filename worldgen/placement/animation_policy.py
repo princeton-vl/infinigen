@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+# Date Signed: May 30, 2023
+
 from copy import deepcopy, copy
 import logging
 import math
