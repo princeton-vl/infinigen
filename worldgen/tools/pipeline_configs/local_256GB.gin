@@ -32,4 +32,9 @@ queue_upload.cpus = 2
 queue_upload.hours = 24
 queue_upload.method = 'smbclient'
 queue_upload.dir_prefix_len = 2
+
+# Ground Truth
+queue_mesh_save.submit_cmd = @local_submit_cmd
+queue_opengl.submit_cmd = @local_submit_cmd
+ground_truth/queue_render.render_type = "flat"
 ground_truth/queue_render.gpus = 0
