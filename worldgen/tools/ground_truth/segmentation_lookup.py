@@ -42,6 +42,7 @@ def compute_boxes(indices, binary_tag_mask):
                 y_max[idx] = max(y_max[idx], y)
     return np.stack((x_min, y_min, x_max, y_max), axis=-1)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('folder', type=Path)
