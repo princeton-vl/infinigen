@@ -1,4 +1,10 @@
+import re
+import time
+import sys
+from pathlib import Path
+from dataclasses import dataclass
 import os
+from functools import partial
 import itertools
 import copy
 import random
@@ -9,24 +15,44 @@ from multiprocessing import Process
 import threading
 import submitit
 import gin
+
+import numpy as np
+
 CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
 
+@dataclass
 class LocalJob:
+
+    job_id: int
     process: Process
     finalized: bool = False
+
+    def status(self):
+
         if self.finalized:
             return "COMPLETED"
 
         if self.process is None:
             return "PENDING"
 
+        exit_code = self.process.exitcode
+        if exit_code is None:
+            return "RUNNING"
+
         # process has returned but the object is still there, we can clean it up
         assert not self.finalized
         self.finalized = True
         self.process = None
 
+        if exit_code == 0:
+            return "COMPLETED"
+        return "FAILED"
+
+    def kill(self):
         if self.process is None:
             return
+        self.process.kill()
+
 def get_fake_job_id():
     # Lahav assures me these will never conflict
     return np.random.randint(int(1e10), int(1e11))
@@ -60,19 +86,25 @@ def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None
     )
     proc = Process(target=job_wrapper, kwargs=kwargs, name=name)
     proc.start()
+
     return proc
 
 class ImmediateLocalExecutor:
+
+    def __init__(self, folder: str):
+        self.log_folder = Path(folder).resolve()
         self.parameters = {}
 
     def update_parameters(self, **parameters):
         self.parameters.update(parameters)
+    
     def submit(self, func, *args, **kwargs):
         job_id = get_fake_job_id()
         name = self.parameters.get('name', None)
         proc = launch_local(func, args, kwargs, job_id, 
             log_folder=self.log_folder, name=name)
         return LocalJob(job_id=job_id, process=proc)
+
 @gin.configurable
 class LocalScheduleHandler:
 
@@ -179,7 +211,18 @@ class ScheduledLocalExecutor:
     def submit(self, func, *args, **kwargs):
         return LocalScheduleHandler.instance().enqueue(
             func, args, kwargs, params=self.parameters, log_folder=self.log_folder)
+
+"""
+key: pid
+value: command
+"""
+def get_all_processes():
+    psef_regex = re.compile(" *([0-9]+) +(.*)").fullmatch
     psef_out = subprocess.check_output("ps -e -o pid,cmd --no-headers".split()).decode()
+    groups = (psef_regex(l).groups() for l in psef_out.splitlines())
+    return {int(pid):cmd for pid, cmd in groups}
+
+if __name__ == "__main__":
 
     test = 'upload'
 
@@ -203,3 +246,8 @@ class ScheduledLocalExecutor:
         time.sleep(3)
         print(newjob.status())
         
+    processes = get_all_processes()
+    for pid, cmd in processes.items():
+        if cmd.startswith('blender'):
+            print(pid, cmd)
+    print(newjob)
