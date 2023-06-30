@@ -12,6 +12,7 @@ from numpy.random import uniform as U, normal as N
 from util.math import FixedSeed
 from util import blender as butil
 from placement.factory import AssetFactory
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class BlenderRockFactory(AssetFactory):
 
@@ -48,5 +49,6 @@ class BlenderRockFactory(AssetFactory):
                 pass
         obj = bpy.context.active_object
         bpy.ops.object.shade_flat()
+        tag_object(obj, 'blender_rock')
 
         return obj
