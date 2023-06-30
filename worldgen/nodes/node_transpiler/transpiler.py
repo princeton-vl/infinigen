@@ -177,6 +177,8 @@ def special_case_colorramp(node, varname):
     # add code to add new elements if need be
     if len(cramp.elements) > 2:
         n_elements_needed =len(cramp.elements) - 2 # starts with 2 by default
+        for _ in range(n_elements_needed):
+           code += f'{varname}.color_ramp.elements.new(0)\n'
 
     for i, ele in enumerate(cramp.elements):
         code += f'{varname}.color_ramp.elements[{i}].position = {ele.position:.4f}\n'
@@ -220,6 +222,7 @@ def represent_label_value_expression(expression):
 
         if arg.strip("\'\"").isalpha():
             return arg.strip("\'\"")
+
         try:
             return float(arg)
         except:
@@ -230,6 +233,7 @@ def represent_label_value_expression(expression):
             return [parse_arg(v) for v in vals]
         else:
             raise ValueError(f'represent_label_value_expression had invalid argument {arg}')
+
     matched_chars = {
         '\'': '\'',
         '\"': '\"',
@@ -264,6 +268,7 @@ def represent_label_value_expression(expression):
         if not len(args) == 2:
             raise ValueError(f'In {expression=}, expected 2 arguments, got {len(args)} instead')
         funcname = {
+            'N': 'normal', 'normal': 'normal',
             'U': 'uniform', 'uniform': 'uniform',
             'R': 'randint', 'randint': 'randint'
         }[op]
@@ -300,6 +305,7 @@ def special_case_value(node, varname):
         value_expr = represent_default_value(val, simple=True)
 
     # set value
+    if node.bl_idname in [Nodes.Value, Nodes.RGB]:
         code += f'{varname}.outputs[0].default_value = {value_expr}\n'
     elif node.bl_idname == Nodes.Vector:
         code += f'{varname}.vector = {value_expr}\n'
@@ -328,6 +334,7 @@ def create_attrs_dict(node_tree, node):
 
     attr_names = node_attrs_available(node)
     print(node.name, attr_names)
+
     for a in COMMON_ATTR_NAMES:
         if hasattr(node, a) and not a in attr_names:
             raise ValueError(f'{node.bl_idname=} has attr {repr(a)} but it is not listed in node_info.NODE_ATTRS_AVAILABLE, please add it to avoid incorrect behavior')
@@ -345,6 +352,7 @@ def create_attrs_dict(node_tree, node):
     return {repr(k): represent_default_value(getattr(node, k), simple=True) for k in attr_names}
 
 def create_inputs_dict(node_tree, node, memo):
+
     '''
     Produce some `code` that instantiates all node INPUTS to `node`,
     as well as a python dict `inputs_dict` containing all the variable
@@ -477,6 +485,7 @@ def get_nodetype_expression(node):
     '''
 
     id = node.bl_idname
+
     lookup = {getattr(Nodes, k): k for k in dir(Nodes) if not k.startswith('__')}
 
     if id in lookup:
@@ -513,6 +522,7 @@ def create_node(node_tree, node, memo):
 
     if node.bl_idname.endswith('NodeGroup'):
         # node group will be transpiled to a function, then the funcname will be mapped to the nodegroup name by a decorator
+        funcname = get_func_name(node)
         new_transpile_targets[funcname] = node
         nodetype_expr = f'{funcname}().name'
     else:
@@ -537,6 +547,7 @@ def create_node(node_tree, node, memo):
             new_transpile_targets.update(targets)
             all_inps.append(f'({repr(inp.bl_socket_idname)}, {repr(inp.name)}, {repr_val})')
 
+        args = represent_list(all_inps, spacing='\n'+2*indent_string)
         new_node_args.append(f"expose_input={args}")
 
     # Add code to set the correct 'attrs', ie set the math operations
@@ -560,6 +571,7 @@ def create_node(node_tree, node, memo):
         code += special_case_curve(node, varname)
     elif node.bl_idname in VALUE_NODES:
         code += special_case_value(node, varname)
+
     code += '\n'
 
     memo[node.name] = varname
@@ -647,7 +659,9 @@ def transpile(orig_targets, module_dependencies=[]):
     print(f'{available_dependencies.keys()=}')
 
     while any(not v[1] for v in targets.values()):
+
         funcname, (target, _) = next((k, v) for k, v in targets.items() if not v[1])
+
         if funcname in orig_names:
             print(f'Transpiling initial target {orig_targets.index(target)} {repr(target)} as {funcname}()')
         else:
@@ -676,6 +690,7 @@ def transpile(orig_targets, module_dependencies=[]):
                 targets[k] = (v, False) # mark as needing to be transpiled
 
     return code, orig_names, available_dependencies
+
 def transpile_object(obj, module_dependencies=[]):
 
     targets = []
@@ -693,6 +708,7 @@ def transpile_object(obj, module_dependencies=[]):
     return code
 
 def transpile_world(module_dependencies=[], compositing=True, worldshader=True):
+
     
 
     targets = []
