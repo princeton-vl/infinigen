@@ -10,6 +10,7 @@ from placement.factory import AssetFactory
 import numpy as np
 
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_pedal_cross_contour_top', singleton=False, type='GeometryNodeTree')
 def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
@@ -302,11 +303,15 @@ def nodegroup_pedal_on_base(nw: NodeWrangler, R=1.0):
                                                      'Rotation': align_euler_to_vector_1,
                                                      'Scale': random_value_3.outputs[1]})
 
+    realize_instances_1 = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': instance_on_points_1})
+
     pedal_rotation_on_base_circle = nw.new_node(nodegroup_pedal_rotation_on_base_circle().name,
                                                 input_kwargs={0: group_input.outputs["x_R"],
                                                               1: group_input.outputs["z_R"]})
 
     rotate_instances_1 = nw.new_node(Nodes.RotateInstances,
+                                     input_kwargs={'Instances': realize_instances_1,
                                                    'Rotation': pedal_rotation_on_base_circle})
 
     scale_instances = nw.new_node(Nodes.ScaleInstances,
@@ -509,6 +514,7 @@ class SucculentFactory(AssetFactory):
         obj.location.z += 0.01
         butil.apply_transform(obj, loc=True, scale=True)     
 
+        tag_object(obj, 'succulent')
 
         return obj
 
