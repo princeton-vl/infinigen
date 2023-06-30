@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
 import argparse
 import ast
 import os
@@ -193,6 +196,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
         camera_rigs, scene_bvhtrees, pois=pois), use_chance=False)
 
     with Timer('Compute coarse terrain frustrums'):
+        terrain_inview, *_ = split_inview(terrain_mesh, verbose=True, outofview=False, print_areas=True,
             cam=cam, vis_margin=2, dist_max=params['inview_distance'], hide_render=True, suffix='inview')
         terrain_near, *_ = split_inview(terrain_mesh, verbose=True, outofview=False, print_areas=True,
             cam=cam, vis_margin=2, dist_max=params['near_distance'], hide_render=True, suffix='near')
