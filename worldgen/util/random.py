@@ -14,6 +14,15 @@ def log_uniform(low, high, size=1):
     return np.exp(uniform(np.log(low), np.log(high), size))
 
 def random_general(var):
+    if not (isinstance(var, tuple) or isinstance(var, list)):
+        return var
+
+    func, *args = var
+    if func == "weighted_choice":
+        weights, recargs = zip(*args)
+        p = np.array(weights)/sum(weights)
+        i = np.random.choice(np.arange(len(recargs)), p=p)
+        return random_general(recargs[i])
     elif func == "spherical_sample":
         min_elevation, max_elevation = args
         while True:
@@ -23,7 +32,53 @@ def random_general(var):
             if (min_elevation is None or x > np.radians(min_elevation)) and (max_elevation is None or x < np.radians(max_elevation)):
                 break
         return np.degrees(x)
+    elif func == "uniform":
+        return np.random.uniform(*args)
+    elif func == "normal":
+        return np.random.normal(*args)
+    elif func == "clip_gaussian":
+        return clip_gaussian(*args)
+    elif func == "power_uniform":
+        return 10 ** np.random.uniform(*args)
+    elif func == "log_uniform":
+        return log_uniform(*args)[0]
+    elif func == "discrete_uniform":
+        return np.random.randint(args[0], args[1] + 1)
+    elif func == "bool":
+        return np.random.uniform() < args[0]
+    elif func == "choice":
+        return np.random.choice(args[0], 1, p=args[1])[0]
+    elif func == "palette":
+        if len(args) == 1:
+            num_sample = 1
         else:
+            num_sample = args[1]
+        color_template = json5.load(open(f"config/palette/{args[0]}.json", "r"))
+        colors = color_template["color"]
+        means = np.array(color_template["hsv"])
+        stds = np.array(color_template["std"])
+        probs = np.array(color_template["prob"])
+        selected = np.zeros(len(means), dtype=bool)
+        for c in colors:
+            selected[int(c)] = 1
+        means = means[selected]
+        stds = stds[selected]
+        probs = probs[selected]
+        i = np.random.choice(range(len(colors)), 1, p=probs / np.sum(probs))[0]
+        color_samples = []
+        for j in range(num_sample):
+            color = np.array(means[i]) + np.matmul(np.array(stds[i]).reshape((3, 3)), np.clip(np.random.randn(3), a_min=-1, a_max=1))
+            color[2] = max(min(color[2], 0.9), 0.1)
+            color = colorsys.hsv_to_rgb(*color)
+            color = np.clip(color, a_min=0, a_max=1)
+            color = np.where(color >= 0.04045,((color+0.055)/1.055) ** 2.4, color / 12.92)
+            color = np.concatenate((color, np.ones(1)))
+            color_samples.append(color)
+        if len(args) == 1:
+            return color
+        return color_samples
+    elif func == "color_category":
+        return color_category(*args)
     else:
         return var
 
@@ -132,3 +187,7 @@ def clip_hsv(rgb, max_h=None, max_s=None, max_v=None):
 def random_color(brightness_lim=1):
     return (np.random.randint(256) / 256. * brightness_lim, np.random.randint(256) / 256. * brightness_lim, np.random.randint(256) / 256. * brightness_lim, 1)
 
+def sample_registry(reg):
+    classes, weights = zip(*reg)
+    weights = np.array(weights)
+    return np.random.choice(classes, p=weights/weights.sum())
