@@ -11,6 +11,7 @@ from numpy.random import uniform
 from assets.utils.misc import sample_direction
 from assets.utils.decorate import assign_material
 from assets.utils.nodegroup import geo_radius
+from placement.factory import make_asset_collection
 from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.trees.tree import build_radius_tree
