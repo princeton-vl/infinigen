@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Mingzhe Wang
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=pEXHCsrTsco
+
 import os
 
 import bpy
