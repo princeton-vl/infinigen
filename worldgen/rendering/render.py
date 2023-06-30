@@ -6,13 +6,21 @@ import json
 import os
 import cv2
 import numpy as np
+import logging
 from pathlib import Path
+from nodes.node_wrangler import NodeWrangler, Nodes
 from rendering.post_render import exr_depth_to_jet, flow_to_colorwheel, mask_to_color
+
+from .auto_exposure import nodegroup_auto_exposure
+
 from util.camera import get_calibration_matrix_K_from_blender
+from util.logging import Timer
 from surfaces import surface
 from util import blender as butil, exporting as exputil
 
 TRANSPARENT_SHADERS = {Nodes.TranslucentBSDF, Nodes.TransparentBSDF}
+
+logger = logging.getLogger(__name__)
 
 def remove_translucency():
     # The asserts were added since these edge cases haven't appeared yet -Lahav
@@ -72,11 +80,37 @@ def make_clay():
 
 def enable_gpu(engine_name = 'CYCLES'):
     bpy.context.scene.render.engine = engine_name
+
+
     for gpu_type in ['OPTIX', 'CUDA']:#, 'METAL']:
+                logger.info('Device {} of type {} found and used.'.format(device.name, device.type))
             break
-    if show:
+
+
 @gin.configurable
+
+    if autoexpose:
+        source = nw.new_node(nodegroup_auto_exposure().name, input_kwargs={'Image': source, 'EV Comp': autoexpose_level})
+
+    if distort > 0:
+        source = nw.new_node(Nodes.LensDistortion,
+            input_kwargs={'Image': source, 'Dispersion': distort})
+    
+    if color_correct:
+        source = nw.new_node(Nodes.BrightContrast,
+            input_kwargs={'Image': source, 'Bright': 1.0, 'Contrast': 4.0})
+    
+    if show:
+        nw.new_node(Nodes.Composite, input_kwargs={'Image': source})
+
+    return source.outputs[0]
+
+@gin.configurable
+def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, passes_to_save, saving_ground_truth, use_denoised=False):
+    file_output_node = nw.new_node(Nodes.OutputFile, attrs={
         "format.file_format": 'OPEN_EXR' if saving_ground_truth else 'PNG',
+        "format.color_mode": 'RGB'
+    })
     file_slot_list = []
     viewlayer = bpy.context.scene.view_layers["ViewLayer"]
     render_layers = nw.new_node(Nodes.RenderLayers)
@@ -91,6 +125,8 @@ def enable_gpu(engine_name = 'CYCLES'):
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
     slot_input = file_output_node.file_slots['Image']
+    image = image_denoised if use_denoised else image_noisy
+    nw.links.new(image, file_output_node.inputs['Image'])
     if saving_ground_truth:
         slot_input.path = 'Unique_Instances'
     else:
@@ -100,28 +136,63 @@ def enable_gpu(engine_name = 'CYCLES'):
             "format.color_mode": 'RGB'
         })
         rgb_exr_slot_input = file_output_node.file_slots['Image']
+        nw.links.new(image, image_exr_output_node.inputs['Image'])
         file_slot_list.append(image_exr_output_node.file_slots[rgb_exr_slot_input.path])
     file_slot_list.append(file_output_node.file_slots[slot_input.path])
 
     return file_slot_list
+
 def shader_random(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
+
     white_noise_texture = nw.new_node(Nodes.WhiteNoiseTexture,
         input_kwargs={'Vector': object_info.outputs["Random"]})
 
     nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': white_noise_texture.outputs["Color"]})
+
 def apply_random(obj, selection=None, **kwargs):
     surface.add_material(obj, shader_random, selection=selection)
 
+def global_flat_shading():
+
+    for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
+        if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
+            bpy.data.objects.remove(obj)
+        elif obj.active_material is not None:
+            nw = obj.active_material.node_tree
+            for node in nw.nodes:
+                if node.bl_idname == Nodes.MaterialOutput:
+                    vol_socket = node.inputs['Volume']
+                    if len(vol_socket.links) > 0:
+                        nw.links.remove(vol_socket.links[0])
+
+    for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
+        if obj.type != 'MESH':
+            continue
+        obj.hide_viewport = False
+        if not hasattr(obj, 'material_slots'):
+            print(obj.name, 'NONE')
+            continue
+        with butil.SelectObjects(obj):
+            while len(obj.material_slots):
+                bpy.ops.object.material_slot_remove()
+
+    for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
+        apply_random(obj)
+
 @gin.configurable
     frames_folder,
+    exposure,
     passes_to_save,
     flat_shading,
+    dof_aperture_fstop=2.8,
+    motion_blur_shutter=0.5,
     tic = time.time()
 
+    camera_rig_id, subcam_id = camera_id
 
     with Timer(f"Enable GPU"):
         devices = enable_gpu()
@@ -132,6 +203,12 @@ def apply_random(obj, selection=None, **kwargs):
         bpy.context.scene.cycles.adaptive_min_samples = min_samples
         bpy.context.scene.cycles.adaptive_threshold = adaptive_threshold # i.e. noise threshold
         bpy.context.scene.cycles.time_limit = time_limit
+    
+        bpy.context.scene.cycles.film_exposure = exposure
+        bpy.context.scene.render.use_motion_blur = motion_blur
+        bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
+
+        bpy.context.scene.cycles.use_denoising = True
         try:
             bpy.context.scene.cycles.denoiser = 'OPTIX'
         except:
@@ -146,6 +223,7 @@ def apply_random(obj, selection=None, **kwargs):
             save_and_set_pass_indices(frames_folder)
 
         with Timer("Flat Shading"):
+            global_flat_shading()
 
 
     with Timer(f"Compositing Setup"):
@@ -172,22 +250,32 @@ def apply_random(obj, selection=None, **kwargs):
         file_slot.path = f"{file_slot.path}_####_{camera_rig_id:02d}_{subcam_id:02d}"
 
     with Timer(f"get_camera"):
+        camera = cam_util.get_camera(camera_rig_id, subcam_id)
+        if use_dof == 'IF_TARGET_SET':
+            use_dof = camera.data.dof.focus_object is not None
         if use_dof is not None:
             camera.data.dof.use_dof = use_dof
+            camera.data.dof.aperture_fstop = dof_aperture_fstop
+    if render_resolution_override is not None:
+        bpy.context.scene.render.resolution_x = render_resolution_override[0]
+        bpy.context.scene.render.resolution_y = render_resolution_override[1]
     with Timer(f"Actual rendering"):
         bpy.ops.render.render(animation=True)
 
     if flat_shading:
         with Timer(f"Post Processing"):
+            for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
                 bpy.context.scene.frame_set(frame)
 
                 K = get_calibration_matrix_K_from_blender(camera.data)
                 cameras_folder = frames_folder / "cameras"
                 cameras_folder.mkdir(exist_ok=True, parents=True)
                 np.save(
+                    frames_folder / f"K{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.npy",
                     np.asarray(K, dtype=np.float64),
                 )
                 np.save(
+                    frames_folder / f"T{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.npy",
                     np.asarray(camera.matrix_world, dtype=np.float64),
                 )
 
@@ -206,3 +294,4 @@ def apply_random(obj, selection=None, **kwargs):
     for file in tmp_dir.glob('*.png'):
         file.unlink()
 
+    logger.info(f"rendering time: {time.time() - tic}")
