@@ -20,6 +20,7 @@ REGEX_PATTERN = f'(\[.*\]) *([^ ]+) -> ([^ ]+) \| ([0-9\.]+)h:([0-9\.]+)m:([0-9\
 if __name__ == "__main__":
     *_, pvl_users = subprocess.check_output("/usr/bin/getent group pvl".split()).decode().rstrip('\n').split(":")
     parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--stage', required=True, choices=['coarse', 'fine', 'fine_terrain'], type=str)
     parser.add_argument('-o', '--output_folder', type=Path, required=True, help="Output directory of experiments.")
     parser.add_argument('--user', type=str, default=os.environ['USER'], choices=pvl_users.split(','), help="User who ran the jobs.")
     parser.add_argument('-d', '--days_since', type=int, default=14, help="At least how long ago were the jobs run? Smaller values are faster.")
