@@ -11,14 +11,17 @@ from numpy.random import uniform, normal, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
+from surfaces import surface
 from terrain.utils import SurfaceTypes
 
 import gin
 from util.math import FixedSeed
 from util.random import random_color_neighbour
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_cracked_ground"
 name = "cracked_ground"
+
 @node_utils.to_nodegroup('nodegroup_apply_value_to_normal', singleton=False, type='GeometryNodeTree')
 def nodegroup_apply_value_to_normal(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -99,6 +102,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
 
         # width of the crack
         wid_crac = nw.new_value(uniform(0.01, 0.04), "wid_crac")
+
         # scale of the grains, smaller means larger grains
         sca_gra = nw.new_value(uniform(20, 100), "sca_gra")
 
@@ -185,6 +189,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
         input_kwargs={'Geometry': store_named_attribute_2, 'Offset': offset})
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position}, attrs={'is_active_output': True})
+
     # seed = randint(10000000)
     surface.add_geomod(obj, geo_cracked_ground, selection=selection) #, input_kwargs={'random_seed': seed})
     surface.add_material(obj, shader_cracked_ground, selection=selection) #, input_kwargs={'random_seed': seed})
