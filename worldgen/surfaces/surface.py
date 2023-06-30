@@ -51,6 +51,7 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
         })
 
     mod = add_geomod(objs, attr_writer, name=f'write_attribute({name})', apply=apply, attributes=[name])
+    return name 
 
 def read_attr_data(obj, attr, domain='POINT') -> np.array:
     if isinstance(attr, str):
@@ -83,6 +84,13 @@ def write_attr_data(obj, attr, data: np.array, type='FLOAT', domain='POINT'):
     field = node_info.DATATYPE_FIELDS[attr.data_type]
     attr.data.foreach_set(field, data.reshape(-1))
 
+def new_attr_data(obj, attr, type, domain, data: np.array):
+    assert(isinstance(attr, str))
+    assert(attr not in obj.data.attributes)
+
+    obj.data.attributes.new(name=attr, type=type, domain=domain)
+    attr = obj.data.attributes[attr]
+    field = node_info.DATATYPE_FIELDS[attr.data_type]
     attr.data.foreach_set(field, data.reshape(-1))
 
 
