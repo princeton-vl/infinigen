@@ -20,6 +20,7 @@ from assets.creatures.util import part_util
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_noise', singleton=False, type='GeometryNodeTree')
 def nodegroup_noise(nw: NodeWrangler):
@@ -216,6 +217,7 @@ class Horn(PartFactory):
         # swap the horn to be an extra so it doesnt get remeshed etc
         part.obj = butil.spawn_vert('horn_parent')        
         horn.parent = part.obj
+        tag_object(part.obj, 'horn')
 
         return part
 
