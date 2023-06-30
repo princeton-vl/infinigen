@@ -11,6 +11,7 @@ from assets.utils.object import mesh2obj
 from assets.utils.decorate import geo_extension
 import util.blender as butil
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class CauliflowerBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.4
@@ -26,4 +27,5 @@ class CauliflowerBaseCoralFactory(BaseCoralFactory):
         surface.add_geomod(obj, geo_extension, apply=True)
         levels = 1
         butil.modify_mesh(obj, 'SUBSURF', levels=levels, render_levels=levels)
+        tag_object(obj, 'cauliflower_coral')
         return obj
