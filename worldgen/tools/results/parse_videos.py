@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+# Date Signed: May 30, 2023
+
 import argparse
 import subprocess
 from pathlib import Path
@@ -8,6 +14,7 @@ parser.add_argument('--output_folder', type=Path, default=None)
 parser.add_argument('--image_type', default='Image')
 parser.add_argument('--overlay', type=int, default=1)
 parser.add_argument('--join', type=int, default=1)
+parser.add_argument('--fps', type=int, default=24)
 args = parser.parse_args()
 
 for input_folder in args.input_folder:
@@ -30,6 +37,7 @@ for input_folder in args.input_folder:
         filters = " "
         if args.overlay:
             filters += f"-vf drawtext='text={seed_folder.absolute()}' "
+        cmd = f'ffmpeg -y -r {args.fps} -pattern_type glob -i {seed_folder.absolute()}/frames*/{args.image_type}*.png {filters} -pix_fmt yuv420p  {output_folder}/{seed_folder.name}_{args.image_type}.mp4'
         print(cmd.split())
         subprocess.run(cmd.split())
 
