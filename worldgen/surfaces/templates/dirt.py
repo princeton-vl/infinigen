@@ -269,11 +269,13 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
 
 
 
+def apply(obj, selection=None, **kwargs):
     surface.add_geomod(
         obj,
         geo_dirt,
         selection=selection,
     )
+    surface.add_material(obj, shader_dirt, selection=selection)
 
 
 if __name__ == "__main__":
