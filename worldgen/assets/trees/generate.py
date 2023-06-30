@@ -4,10 +4,14 @@ import logging
 import gin
 import numpy as np
 from numpy.random import uniform, normal
+
 import bpy
+
 from assets.trees import tree, treeconfigs
 from assets.leaves import leaf, leaf_v2, leaf_pine, leaf_ginko, leaf_broadleaf, leaf_maple
+from assets.fruits import apple, blackberry, coconutgreen, durian, starfruit, strawberry, compositional_fruit
 from . import tree_flower
+
 from util import blender as butil
 from util.math import FixedSeed
 from util import camera as camera_util
@@ -63,6 +67,7 @@ class GenericTreeFactory(AssetFactory):
 
         logger.debug(f'generating tree skeleton')
         skeleton_obj = tree.tree_skeleton(
+            self.genome.skeleton, self.genome.trunk_spacecol, self.genome.roots_spacecol, init_pos=(0, 0, 0), scale=self.scale)
         
         if self.coarse_mesh_placeholder:
             pholder =  self._create_coarse_mesh(skeleton_obj)
@@ -146,6 +151,7 @@ class GenericTreeFactory(AssetFactory):
 
         return skin_obj
         
+
 @gin.configurable
 def random_season(weights=None):
     options = ['autumn', 'summer', 'spring', 'winter']
@@ -159,28 +165,58 @@ def random_season(weights=None):
 @gin.configurable
 def random_species(season='summer', pine_chance=0.):
     tree_species_code = np.random.rand(32)
+
     if season is None:
         season = random_season()
 
     if tree_species_code[-1] < pine_chance:
+        return treeconfigs.pine_tree(), 'leaf_pine'
     # elif tree_species_code < 0.2:
     #     tree_args = treeconfigs.palm_tree()
     # elif tree_species_code < 0.3:
     #     tree_args = treeconfigs.baobab_tree()
+    else:
+        return treeconfigs.random_tree(tree_species_code, season), None
 
+def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
 
     if season is None:
         season = random_season()
+
+    fruit_scale = 0.2
 
     if leaf_type is None:
         return None, None
     elif leaf_type == 'leaf':
         return leaf.LeafFactory(seed, leaf_params, **kwargs), surface.registry('greenery')
+    elif leaf_type == 'leaf_pine':
+        return leaf_pine.LeafFactoryPine(seed, season, **kwargs), None
+    elif leaf_type == 'leaf_ginko':
+        return leaf_ginko.LeafFactoryGinko(seed, season, **kwargs), None
+    elif leaf_type == 'leaf_maple':
+        return leaf_maple.LeafFactoryMaple(seed, season, **kwargs), None
+    elif leaf_type == 'leaf_broadleaf':
+        return leaf_broadleaf.LeafFactoryBroadleaf(seed, season, **kwargs), None
     elif leaf_type == 'leaf_v2':
         return leaf_v2.LeafFactoryV2(seed, **kwargs), None
     elif leaf_type == 'berry':
         return leaf.BerryFactory(seed, leaf_params, **kwargs), None
+    elif leaf_type == 'apple':
+        return apple.FruitFactoryApple(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'blackberry':
+        return blackberry.FruitFactoryBlackberry(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'coconutgreen':
+        return coconutgreen.FruitFactoryCoconutgreen(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'durian':
+        return durian.FruitFactoryDurian(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'starfruit':
+        return starfruit.FruitFactoryStarfruit(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'strawberry':
+        return strawberry.FruitFactoryStrawberry(seed, scale=fruit_scale, **kwargs), None
+    elif leaf_type == 'compositional_fruit':
+        return compositional_fruit.FruitFactoryCompositional(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == 'flower':
+        return tree_flower.TreeFlowerFactory(seed, rad=uniform(0.15, 0.25), **kwargs), None
     elif leaf_type == 'cloud':
         return CloudFactory(seed), None
     elif leaf_type == 'grass':
@@ -189,19 +225,43 @@ def random_species(season='summer', pine_chance=0.):
     else:
         raise ValueError(f'Unrecognized {leaf_type=}')   
 
+def make_leaf_collection(seed, 
         leaf_params, n_leaf, leaf_types, 
         fruit_types=None, 
+        season=None, relative_fruit_density=0.05):
 
     logger.debug(f'Starting make_leaf_collection({seed=}, {n_leaf=}, {fruit_types=}...)')
 
     if season is None:
         season = random_season()
 
+    weights = []
+
     if not isinstance(leaf_types, list):
         leaf_types = [leaf_types]
 
+    if not isinstance(fruit_types, list):
+        fruit_types = [fruit_types]
+
+    child_factories = []
+    for leaf_type in leaf_types:
+        if leaf_type is not None:
+            leaf_factory, _ = random_tree_child_factory(seed, leaf_params, leaf_type=leaf_type, season=season)
+            child_factories.append(leaf_factory)
+            weights.append(1.0-relative_fruit_density)
+
+    for fruit_type in fruit_types:
+        if fruit_type is not None:
+            fruit_factory, _ = random_tree_child_factory(seed, leaf_params, leaf_type=fruit_type, season=season)
+            child_factories.append(fruit_factory)
+            weights.append(relative_fruit_density)
+
+    weights = np.array(weights)
+    weights /= np.sum(weights) # normalize to 1       
 
     col = make_asset_collection(child_factories, n_leaf, verbose=True, weights=weights)
+    # if leaf_surface is not None:
+    #     leaf_surface.apply(list(col.objects))
     for obj in col.objects:
         butil.modify_mesh(obj, 'DECIMATE', ratio=0.07, apply=True)
         butil.apply_transform(obj, rot=True, scale=True)
@@ -242,9 +302,34 @@ def make_twig_collection(
 
 @gin.configurable
 class TreeFactory(GenericTreeFactory):
+
     n_leaf = 10
+    n_twig = 2
 
     @staticmethod
+    def get_leaf_type(season):
+        # return np.random.choice(['leaf', 'leaf_v2', 'flower', 'berry', 'leaf_ginko'], p=[0, 0.70, 0.15, 0, 0.15])
+        # return 
+        # return 'leaf_maple'
+        leaf_type = np.random.choice(['leaf', 'leaf_v2', 'leaf_broadleaf', 'leaf_ginko', 'leaf_maple'], p=[0, 0.0, 0.70, 0.15, 0.15])
+        flower_type = np.random.choice(['flower', 'berry', None], p=[1.0, 0.0, 0.0])
+        if season == "spring":
+            return [flower_type]
+        else:
+            return [leaf_type]
+        # return [leaf_type, flower_type]
+        # return ['leaf_broadleaf', 'leaf_maple', 'leaf_ginko', 'flower']
+
+    @staticmethod
+    def get_fruit_type():
+        # return np.random.choice(['leaf', 'leaf_v2', 'flower', 'berry', 'leaf_ginko'], p=[0, 0.70, 0.15, 0, 0.15])
+        # return 
+        # return 'leaf_maple'
+        fruit_type = np.random.choice(['apple', 'blackberry', 'coconutgreen', 
+            'durian', 'starfruit', 'strawberry', 'compositional_fruit'], 
+            p=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4])
+
+        return [fruit_type]
 
     def __init__(self, seed, season=None, coarse=False, fruit_chance=0.2, **kwargs):
 
@@ -253,8 +338,14 @@ class TreeFactory(GenericTreeFactory):
                 season = np.random.choice(['summer', 'winter', 'autumn', 'spring'])
 
         with FixedSeed(seed):
+            (tree_params, twig_params, leaf_params), leaf_type = random_species(season)
+
+            leaf_type = leaf_type or self.get_leaf_type(season)
+            if not isinstance(leaf_type, list):
+                leaf_type = [leaf_type]
 
             trunk_surface = surface.registry('bark')
+
             if uniform() < fruit_chance:
                 fruit_type = self.get_fruit_type()
             else:
@@ -277,9 +368,11 @@ class TreeFactory(GenericTreeFactory):
 
 @gin.configurable
 class BushFactory(GenericTreeFactory):
+
     n_leaf = 3
     n_twig = 3
     max_distance = 50
+
     def __init__(self, seed, coarse=False, **kwargs):
 
         with FixedSeed(seed):
