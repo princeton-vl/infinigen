@@ -14,6 +14,7 @@ from assets.utils.object import new_icosphere
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class TubeBaseCoralFactory(BaseCoralFactory):
     default_scale = [.7] * 3
@@ -31,6 +32,7 @@ class TubeBaseCoralFactory(BaseCoralFactory):
         butil.modify_mesh(obj, 'SUBSURF', True, levels=2, render_levels=2)
         butil.modify_mesh(obj, 'DISPLACE', True, strength=0.1,
                           texture=bpy.data.textures.new(name='tube_coral', type='STUCCI'), mid_level=0)
+        tag_object(obj, 'tube_coral')
         return obj
 
     @staticmethod
