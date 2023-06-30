@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Zeyu Ma
+# Date Signed: June 5 2023
+
 import sys
 from ctypes import CDLL, POINTER, c_double, c_float, c_int32, RTLD_LOCAL
 from pathlib import Path
