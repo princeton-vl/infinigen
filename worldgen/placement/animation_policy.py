@@ -26,6 +26,7 @@ def get_altitude(loc, terrain_bvh, dir=Vector((0.,0.,-1.))):
     *_, straight_down_dist = terrain_bvh.ray_cast(loc, dir)
     return straight_down_dist
 
+@gin.configurable
 def walk_same_altitude(start_loc, sampler, bvh, filter_func=None, fall_ratio=1.5, retries=30, step_up_height=2):
 
     '''
@@ -37,6 +38,7 @@ def walk_same_altitude(start_loc, sampler, bvh, filter_func=None, fall_ratio=1.5
 
         pos = start_loc + Vector(sampler())
 
+        pos.z += 1 # move it up a ways, so that it can raycast back down onto something
         curr_alt = get_altitude(start_loc, bvh)
         new_alt = get_altitude(pos, bvh)
         if curr_alt is None or new_alt is None:
@@ -147,6 +149,8 @@ class AnimPolicyRandomWalkLookaround:
         self, 
         speed=('uniform', 1, 2.5), 
         yaw_range=(-20, 20), 
+        step_range=(10, 15),
+        rot_vars=(5, 0, 5),
         motion_dir_zoff=('clip_gaussian', 0, 90, 0, 180)
     ):
         
@@ -154,6 +158,7 @@ class AnimPolicyRandomWalkLookaround:
 
         self.yaw_range = yaw_range
         self.step_range = step_range
+        self.rot_vars = rot_vars
 
         self.motion_dir_euler = None
         self.motion_dir_zoff = motion_dir_zoff
@@ -177,6 +182,7 @@ class AnimPolicyRandomWalkLookaround:
         pos = walk_same_altitude(obj.location, sampler, bvh)
 
         time = np.linalg.norm(pos - obj.location) / self.speed
+        rot = np.array(obj.rotation_euler) + np.deg2rad(N(0, self.rot_vars, 3))
 
         return Vector(pos), Vector(rot), time, 'BEZIER'
     
@@ -277,6 +283,7 @@ def validate_keyframe_range(
     last_pos = deepcopy(obj.location)
 
     def freespace_ray_check(a, b):
+        location, *_ = bvhtree.ray_cast(a, b - a, (a - b).length)
         return location is None
 
     if check_straight_line:
@@ -365,6 +372,8 @@ def animate_trajectory(
     default_interpolation='BEZIER',
     retry_rotation=False,
     verbose=True,
+    fatal=False,
+    reverse_time=False,
 ):
     duration_frames = (bpy.context.scene.frame_end - bpy.context.scene.frame_start)
     duration_sec = duration_frames / bpy.context.scene.render.fps
@@ -408,6 +417,29 @@ def animate_trajectory(
 
         keyframe(obj.location, obj.rotation_euler, 0, interp='LINEAR')
         if try_animate_trajectory(obj, bvh, policy_func, keyframe, duration_frames, validate_pose_func, max_step_tries, verbose):
+            if reverse_time:
+                kf_locs = []
+                kf_rots = []
+                kf_ts = []
+                for j in range(len(obj.animation_data.action.fcurves[0].keyframe_points)):
+                    kf_ts.append(obj.animation_data.action.fcurves[0].keyframe_points[j].co.x)
+                    kf_locs.append((
+                        obj.animation_data.action.fcurves[0].keyframe_points[j].co.y,
+                        obj.animation_data.action.fcurves[1].keyframe_points[j].co.y,
+                        obj.animation_data.action.fcurves[2].keyframe_points[j].co.y,
+                    ))
+                    kf_rots.append((
+                        obj.animation_data.action.fcurves[3].keyframe_points[j].co.y,
+                        obj.animation_data.action.fcurves[4].keyframe_points[j].co.y,
+                        obj.animation_data.action.fcurves[5].keyframe_points[j].co.y,
+                    ))
+                obj.animation_data_clear()
+                for i, t in enumerate(kf_ts):
+                    keyframe(kf_locs[i], kf_rots[i], bpy.context.scene.frame_end + bpy.context.scene.frame_start - t, interp='LINEAR')
+                # bpy.context.scene.frame_set(bpy.context.scene.frame_end)
+                # obj.keyframe_insert(data_path="location", frame=bpy.context.scene.frame_end)
+                # obj.keyframe_insert(data_path="rotation_euler", frame=bpy.context.scene.frame_end)
+                # assert(0)
             break
         logger.info(f'Failed {attempt=} out of {max_full_retries=} for {obj.name=}')
     else:
