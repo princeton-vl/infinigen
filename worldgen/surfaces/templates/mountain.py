@@ -159,8 +159,10 @@ def geo_MOUNTAIN(
     set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
 
+
 @gin.configurable("shader")
 def shader_MOUNTAIN(
+        nw,
         obj,
         is_rock=False,
         spherical=False,
@@ -170,7 +172,14 @@ def shader_MOUNTAIN(
         num_layers=16,
         random_seed=0,
         layered_mountain=True,
+        prob_arranged_layers=0.1,
+        hue_diff=0.1,
+        max_sat=0.4,
+        max_val=0.4,
         snowy=False,
+        *args,
+        **kwargs
+    ):
     nw.force_input_consistency()
     with FixedSeed(random_seed):
 
@@ -180,11 +189,13 @@ def shader_MOUNTAIN(
             arranged_layers = False
 
 
+
         if layered_mountain:
             tex_coor = nw.new_node('ShaderNodeNewGeometry', [])
             if spherical:
                 z = nw.new_node(Nodes.VectorMath, [(tex_coor, 0)], attrs={"operation": "LENGTH"})
                 z = nw.new_node('ShaderNodeMapRange', [z])
+            else:
                 z = nw.new_node('ShaderNodeSeparateXYZ', [(tex_coor, 0)])
                 z = nw.new_node('ShaderNodeMapRange', [(z, 2)])
             z_noise_mag = np.random.uniform(0.1, 0.4)
