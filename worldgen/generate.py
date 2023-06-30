@@ -1,3 +1,4 @@
+import os
 import random
 import cProfile
 import logging
@@ -10,6 +11,9 @@ from numpy.random import uniform, normal, randint
 from tqdm import tqdm
 
 sys.path.append(os.getcwd())
+
+from terrain import Terrain
+from util.organization import Task, Attributes, Tags, ElementNames
 
 from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
@@ -28,6 +32,7 @@ from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_tw
     slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
 from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
 
 from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
 from assets import particles as particle_assets
@@ -42,7 +47,10 @@ from util.logging import Timer
 from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry, random_general
+
 import core as infinigen
+
+@gin.configurable
 def compose_scene(output_folder, terrain, scene_seed, **params):
 
     p = RandomStageExecutor(scene_seed, output_folder, params)
@@ -52,6 +60,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     logging.info(f'{season=}')
 
     terrain_mesh = p.run_stage('terrain', terrain.coarse_terrain, use_chance=False)
+    density.set_tag_dict(terrain.tag_dict)
     terrain_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
 
     land_domain = params.get('land_domain_tags')
@@ -101,9 +110,11 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
             fac = boulder.BoulderFactory(int_hash((scene_seed, i)), coarse=True)
             placement.scatter_placeholders_mesh(terrain_mesh, fac, 
                 overall_density=params.get("boulder_density", uniform(.02, .05)) / n_boulder_species,
+                selection=selection, altitude=-0.25)
     p.run_stage('boulders', add_boulders, terrain_mesh)
 
     def add_glowing_rocks(terrain_mesh):
+        selection = density.placement_mask(uniform(0.03, 0.3), normal_thresh=-1.1, select_thresh=0, tag=Tags.Cave)
         fac = GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
         placement.scatter_placeholders_mesh(terrain_mesh, fac,
             overall_density=params.get("glow_rock_density", 0.025), selection=selection)
@@ -125,6 +136,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
                 overall_density=params.get('cactus_density', uniform(.02, .1) / n_cactus_species),
                 selection=selection, distance_min=1)
     p.run_stage('cactus', add_cactus, terrain_mesh)
+
     def camera_preprocess():
         camera_rigs = cam_util.spawn_camera_rigs()
         scene_bvhtrees = cam_util.camera_selection_preprocessing(terrain)   
@@ -134,9 +146,11 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
         camera_rigs, scene_bvhtrees, terrain), use_chance=False)
     cam = cam_util.get_camera(0, 0)
     
+    p.run_stage('lighting', lighting.add_lighting, cam, use_chance=False)
     # determine a small area of the terrain for the creatures to run around on
     # must happen before camera is animated, as camera may want to follow them around
     terrain_center, *_ = split_inview(terrain_mesh, cam=cam, 
+            start=0, end=0, outofview=False, vis_margin=5, dist_max=params["center_distance"],
             hide_render=True, suffix='center')
     deps = bpy.context.evaluated_depsgraph_get()
     terrain_center_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_center, deps)
@@ -146,6 +160,9 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     def add_ground_creatures(target):
         fac_class = sample_registry(params['ground_creature_registry'])
         fac = fac_class(int_hash((scene_seed, 0)), bvh=terrain_bvh, animation_mode='idle')
+        n = params.get('max_ground_creatures', randint(1, 4))
+        selection = density.placement_mask(select_thresh=0, tag='beach', altitude_range=(-0.5, 0.5)) if fac_class is CrabFactory else 1
+        col = placement.scatter_placeholders_mesh(target, fac, num_placeholders=n, overall_density=1, selection=selection, altitude=0.2)
         return list(col.objects)
     pois += p.run_stage('ground_creatures', add_ground_creatures, target=terrain_center, default=[])
 
@@ -153,6 +170,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
         fac_class = sample_registry(params['flying_creature_registry'])
         fac = fac_class(randint(1e7), bvh=terrain_bvh, animation_mode='idle')
         n = params.get('max_flying_creatures', randint(2, 7))
+        col = placement.scatter_placeholders_mesh(terrain_center, fac, num_placeholders=n, overall_density=1, altitude=0.2)
         return list(col.objects)
     pois += p.run_stage('flying_creatures', flying_creatures, default=[])
 
@@ -247,6 +265,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
             select_thresh=0.6, return_scalar=True, tag=land_domain)
         surfaces.scatters.flowerplant.apply(target, selection=selection)
     p.run_stage('flowers', add_flowers, terrain_inview)
+
     def add_corals(target):
         vertical_faces = density.placement_mask(scale=0.15, select_thresh=uniform(.44, .48))
         coral_reef.apply(target, selection=vertical_faces, tag=underwater_domain,
@@ -279,6 +298,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     p.run_stage('wind', particle_assets.wind_effector)
     p.run_stage('turbulence', particle_assets.turbulence_effector)
     emitter_off = Vector((0, 0, 5)) # to allow space to fall into frame from off screen
+
     def add_leaf_particles():
         return particles.particle_system(
             subject=random_leaf_collection(n=5, season=season),
@@ -313,16 +333,24 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
 
     p.save_results(output_folder/'pipeline_coarse.csv')
 
+    return terrain
 def main():
     
+    parser = argparse.ArgumentParser()
     parser.add_argument('--output_folder', type=Path)
     parser.add_argument('--input_folder', type=Path, default=None)
     parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
     parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
                         choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save'])
+    parser.add_argument('-g', '--gin_config', nargs='+', default=['base'],
+                        help='Set of config files for gin (separated by spaces) '
+    parser.add_argument('-p', '--gin_param', nargs='+', default=[],
+                        help='Parameter settings that override config defaults '
     parser.add_argument('--task_uniqname', type=str, default=None)
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
+
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
     logging.basicConfig(
