@@ -18,6 +18,7 @@ from assets.leaves.leaf_maple import nodegroup_leaf_shader
 from util.math import FixedSeed
 from placement.factory import AssetFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def deg2rad(deg):
     return deg / 180.0 * np.pi
@@ -522,5 +523,6 @@ class LeafFactoryGinko(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.2) * self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf_ginko')
 
         return obj
