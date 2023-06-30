@@ -17,6 +17,9 @@ def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, of
     end_index = surface.eval_argument(nw, end_index)
     geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
 
+    if subdiv > 0:
+        geometry = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={'Mesh': geometry, 'Level': subdiv})
+
     geometry = nw.new_node(Nodes.StoreNamedAttribute,
                            [geometry, 'custom_normal', nw.new_node(Nodes.InputNormal)],
                            attrs={'data_type': 'FLOAT_VECTOR'})
