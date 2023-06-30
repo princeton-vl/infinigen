@@ -4,10 +4,13 @@ import math as ma
 from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
+from numpy.random import uniform as U, normal as N, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
+from nodes.color import color_category, hsv2rgba
 from surfaces import surface
 
+from assets.creatures.nodegroups.shader import nodegroup_color_mask
 
 def shader_spots_sparse_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
@@ -27,16 +30,27 @@ def shader_spots_sparse_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     
     group = nw.new_node(nodegroup_color_mask().name)
     
+    getcolor = lambda: hsv2rgba((U(0.02, 0.06), U(0.05, 0.9), np.abs(N(0.05, 0.1))))
+
     colorramp_3 = nw.new_node(Nodes.ColorRamp,
         input_kwargs={'Fac': group})
     colorramp_3.color_ramp.elements[0].position = 0.0
+    colorramp_3.color_ramp.elements[0].color = getcolor()
     colorramp_3.color_ramp.elements[1].position = 1.0
+    colorramp_3.color_ramp.elements[1].color = hsv2rgba((U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7)))
     if rand:
         colorramp_3.color_ramp.elements[0].position = sample_range(0, 0.5)
+        colorramp_3.color_ramp.elements[0].color = getcolor()
         #sample_color(colorramp_3.color_ramp.elements[1].color)
 
     mix = nw.new_node(Nodes.MixRGB,
+        input_kwargs={
+            'Fac': colorramp.outputs["Color"] if U() < 0.6 else 1, 
+            'Color1': (0.024, 0.0499, 0.0168, 1.0), 
+            'Color2': colorramp_3.outputs["Color"]
+        })
     if rand:
+        mix.inputs['Color1'].default_value = getcolor()
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix, 'Specular': 0.0, 'Roughness': colorramp.outputs["Color"]})
@@ -53,8 +67,10 @@ def geometry_spots_sparse(nw: NodeWrangler, rand=True, **input_kwargs):
     position = nw.new_node(Nodes.InputPosition)
     
     value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = U(0.1, 1)
     
     add = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: position, 1: value}, attrs={'operation': 'MULTIPLY'})
     
     noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': add.outputs["Vector"]})
@@ -92,6 +108,7 @@ def geometry_spots_sparse(nw: NodeWrangler, rand=True, **input_kwargs):
         attrs={'operation': 'MULTIPLY'})
     
     value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = 0
     
     multiply_1 = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: multiply.outputs["Vector"], 1: value_1},
