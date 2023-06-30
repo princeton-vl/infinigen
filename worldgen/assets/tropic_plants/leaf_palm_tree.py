@@ -620,6 +620,7 @@ class LeafPalmTreeFactory(AssetFactory):
         obj = bpy.context.active_object
 
         params = self.update_params(**params)
+        surface.add_geomod(obj, geometry_palm_tree_leaf_nodes, apply=True,
                            attributes=['Attribute', 'Coordinate',
                                        'subvein offset', 'vein'], input_kwargs=params)
         surface.add_material(obj, shader_leaf_material, selection=None)
