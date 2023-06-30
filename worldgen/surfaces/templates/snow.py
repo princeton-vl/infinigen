@@ -1,3 +1,7 @@
+# COPYRIGHT
+# adapted from Blender Real Snow add-on https://docs.blender.org/manual/en/latest/addons/object/real_snow.html
+# License: GPL
+
 from nodes.node_wrangler import Nodes
 from surfaces import surface
 from terrain.utils import SurfaceTypes
