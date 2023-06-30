@@ -1,4 +1,12 @@
+import bpy
+import mathutils
+from numpy.random import uniform, normal, randint
+from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
+from nodes.color import color_category
+from surfaces import surface
 from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color
+
 def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
@@ -35,6 +43,7 @@ def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
         sample_color(colorramp.color_ramp.elements[1].color)
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Metallic': 0.0, 'Roughness': 0.03})
     
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF,
         input_kwargs={'Color': (0.757, 0.757, 0.757, 1.0)})
@@ -52,5 +61,29 @@ def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
         input_kwargs={'Surface': mix_shader})
 
 def shader_eyeball_old(nw: NodeWrangler):
+    # Code generated using version 2.4.3 of the node_transpiler
+
+    texture_coordinate = nw.new_node(Nodes.TextureCoord)
+    
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ,
+        input_kwargs={'Vector': texture_coordinate.outputs["Generated"]})
+    
+    colorramp = nw.new_node(Nodes.ColorRamp,
+        input_kwargs={'Fac': separate_xyz.outputs["X"]})
+    colorramp.color_ramp.interpolation = "CONSTANT"
+    colorramp.color_ramp.elements.new(0)
+    colorramp.color_ramp.elements[0].position = 0.8982
+    colorramp.color_ramp.elements[0].color = color_category('eye_schlera')
+    colorramp.color_ramp.elements[1].position = 0.9473
+    colorramp.color_ramp.elements[1].color = color_category('eye_pupil')
+    colorramp.color_ramp.elements[2].position = 0.9636
+    colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
+    
+    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Roughness': 0.0})
+    
+    material_output = nw.new_node(Nodes.MaterialOutput,
+        input_kwargs={'Surface': principled_bsdf})
+
 def apply(obj, shader_kwargs={}, **kwargs):
     surface.add_material(obj, shader_eyeball, input_kwargs=shader_kwargs)
