@@ -1,4 +1,5 @@
 from collections import defaultdict
+import pdb
 from math import prod
 from contextlib import nullcontext
 import logging
@@ -8,9 +9,14 @@ import gin
 
 import bpy
 import mathutils
+import os
+import re
+import json
+from uuid import uuid4
 import bmesh
 import numpy as np
 import trimesh
+from itertools import chain, product
 from tqdm import tqdm
 
 from .math import lerp  # for other people to import from this file
@@ -662,6 +668,7 @@ def object_to_trimesh(obj):
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
     vertex_attributes = object_to_vertex_attributes(obj)
     mesh.vertex_attributes.update(vertex_attributes)
+    return mesh
 
 def merge_by_distance(obj, face_size):
     with SelectObjects(obj), ViewportMode(obj, mode='EDIT'), Suppress():
