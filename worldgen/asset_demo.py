@@ -19,6 +19,8 @@ from assets.small_plants.fern import FernFactory
 from assets.creatures.animation.run_cycle import follow_path
 from lighting import lighting, kole_clouds
 from surfaces.scatters import grass, rocks, pine_needle, pinecone
+from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow, clouds
 
 from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
@@ -79,6 +81,7 @@ def compose_scene(
     terrain: Terrain, 
     scene_seed: int, 
 
+    asset_factory=None, # provided via gin
     grid_rad=1.2, 
     grid_dim=3, #NxN grid
     background='grass',
@@ -94,12 +97,25 @@ def compose_scene(
 ):
 
     lighting.add_lighting()
+
+    if params.get("fancy_clouds", 0):
+        kole_clouds.add_kole_clouds()
+    
     camera_rigs = cam_util.spawn_camera_rigs()
     cam = cam_util.get_camera(0, 0)
 
     # find a flat spot on the terrain to do the demo
     terrain_mesh = terrain.coarse_terrain()
     terrain_bvh = bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
+    if asset_factory is not None:
+        center = find_flat_location(
+            terrain_mesh, 
+            terrain_bvh, 
+            rad=camera_circle_radius * 1.5, 
+            alt=camera_altitude * 1.5
+        )
+    else:
+        center = (0, 0, 0)
     # move camera in a circle around that location
     center_obj = butil.spawn_empty('center')
     center_obj.location = center
@@ -123,10 +139,20 @@ def compose_scene(
             raise ValueError('Found a hole in the terain')
         locs[i] = np.array(floorloc + Vector(asset_offset))
 
+    if asset_factory is not None:
+        # spawn assets on each location in the grid
+        fac = asset_factory(scene_seed)
+        col = placement.scatter_placeholders(locs, fac)
+        objs, updated_pholders = placement.populate_collection(fac, col)
 
+        for _, o in updated_pholders:
+            o.scale = asset_scale
 
     # apply a procedural backdrop on all visible parts of the terrain
     terrain_inview, *_ = split_inview(terrain_mesh, cam=cam, dist_max=params['inview_distance'], vis_margin=2)
+    if background is None:
+        pass
+    elif background == 'grass':
         grass.apply(terrain_inview)
         rocks.apply(terrain_inview)
     elif background == 'pine_forest':
