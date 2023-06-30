@@ -82,6 +82,7 @@ class PineNeedleFactory(AssetFactory):
         obj = butil.spawn_vert('pine_needle')
         butil.modify_mesh(obj, 'NODES', apply=True, node_group=nodegroup_pine_needle(), 
                           ng_inputs=self.sample_params())
+        tag_object(obj, 'pine_needle')
         return obj
 
     def finalize_assets(self, objs):
