@@ -116,6 +116,7 @@ def geo_slimy(nw, rand=False, **input_kwargs):
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
         input_kwargs={
             'Geometry': set_position, 
+            1: math},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     group_output = nw.new_node(Nodes.GroupOutput,
