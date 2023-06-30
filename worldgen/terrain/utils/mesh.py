@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 import trimesh
 from numpy import ascontiguousarray as AC
+from util import blender as butil
 from util.logging import Timer
 from util.organization import Attributes
 
@@ -165,6 +166,7 @@ class Mesh:
             new_object.data.attributes[attr_name_ls].data.foreach_set(ATTRTYPE_FIELDS[type_key], AC(self.vertex_attributes[attr_name].reshape(-1)))
         if material is not None:
             new_object.data.materials.append(material)
+        butil.put_in_collection(bpy.data.objects[name], butil.get_collection('terrain'))
         return new_object
     
     @property
