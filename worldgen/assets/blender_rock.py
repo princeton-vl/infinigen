@@ -9,6 +9,7 @@ from mathutils import Vector
 import numpy as np
 from numpy.random import uniform as U, normal as N
 
+from util.blender import deep_clone_obj
 from util.math import FixedSeed
 from util import blender as butil
 from placement.factory import AssetFactory
