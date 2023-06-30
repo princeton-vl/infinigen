@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import re
@@ -20,7 +21,9 @@ from pathlib import Path
 from shutil import which, rmtree, copyfile
 
 from tqdm import tqdm
+
 import numpy as np
+import submitit
 import wandb
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -30,6 +33,7 @@ from tools.util.submitit_emulator import ScheduledLocalExecutor, ImmediateLocalE
 
 from tools.util import upload_util
 from tools.util.upload_util import upload_job_folder # for pickle not to freak out
+
 class JobState:
     NotQueued = "notqueued"
     Queued = "queued"
@@ -87,12 +91,16 @@ def get_scene_state(scene_dict, taskname, scene_folder):
         return JobState.Failed
     
     return JobState.Succeeded
+
 def seed_generator():
     seed_int = np.random.randint(np.iinfo(np.int32).max)
     return hex(seed_int).removeprefix('0x')
+
 @gin.configurable
 def get_cmd(seed, task, configs, taskname, output_folder, driver_script='generate.py', input_folder=None, niceness=None):
     
+    if isinstance(task, list):
+        task = " ".join(task)
 
     cmd = ''
     if niceness is not None:
@@ -108,6 +116,7 @@ def get_cmd(seed, task, configs, taskname, output_folder, driver_script='generat
     cmd += '-p'
     
     return cmd.split()
+
 @gin.configurable
 def get_slurm_banned_nodes(config_path=None):
     if config_path is None:
@@ -160,6 +169,7 @@ def slurm_submit_cmd(cmd, folder, name, mem_gb=None, cpus=None, gpus=0, hours=1,
             current_time_str = datetime.now().strftime("%m/%d %I:%M%p")
             print(f"[{current_time_str}] Job submission failed with error:\n{e}")
             time.sleep(60)
+
 @gin.configurable
 def local_submit_cmd(cmd, folder, name, use_scheduler=False, **kwargs):
     
@@ -172,6 +182,7 @@ def local_submit_cmd(cmd, folder, name, use_scheduler=False, **kwargs):
     else:
         func = submitit.helpers.CommandFunction(cmd)
         return executor.submit(func)
+
 @gin.configurable
 def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method='rclone', seed=None, **kwargs):
     func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
@@ -191,6 +202,10 @@ def queue_coarse(
     input_indices=None, output_indices=None,
     **kwargs
 ):
+    """
+    Generating the coarse scene
+    """
+
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
@@ -210,13 +225,23 @@ def queue_coarse(
         **kwargs
     )
     return res, output_folder
+
 @gin.configurable
 def queue_populate(
     submit_cmd,
+    folder,
+    name,
+    seed,
     configs,
     taskname=None,
+    overrides=[],
     input_indices=None, output_indices=None,
     **kwargs,
+):
+    """
+    Generating the fine scene
+    """
+
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
@@ -238,12 +263,18 @@ def queue_populate(
     return res, output_folder
 
 @gin.configurable
+def queue_fine_terrain(
     submit_cmd,
+    folder,
+    name,
+    seed,
     configs,
     taskname=None,
     exclude_gpus=[],
+    overrides=[],
     input_indices=None, output_indices=None,
     **kwargs
+):
     """
     Generating the fine scene
     """
@@ -258,6 +289,7 @@ def queue_populate(
                   output_folder=output_folder) + f'''
         LOG_DIR='{folder / "logs"}'
         {enable_gpu_in_terrain}
+
     with (folder / "run_pipeline.sh").open('a') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
@@ -268,6 +300,7 @@ def queue_populate(
         **kwargs
     )
     return res, output_folder
+
 @gin.configurable
 def queue_combined(
     submit_cmd,
@@ -315,13 +348,20 @@ def queue_combined(
     return res, output_folder
 
 @gin.configurable
+def queue_render(
     submit_cmd,
+    folder,
+    name,
+    seed,
     render_type,
     configs,
     taskname=None,
+    overrides=[],
     exclude_gpus=[],
     input_indices=None, output_indices=None,
     **submit_kwargs
+):
+
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
@@ -482,19 +522,35 @@ def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
                 print(f'Added scene {seed}')
                 scenes.append(scene)
     return scenes
+
 def update_symlink(scene_folder, scenes):
     for new_name, scene in scenes:
         std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
         to = scene_folder / "logs" / f"{new_name}.out"
         os.symlink(std_out.resolve(), to)
         os.symlink(std_out.with_suffix('.err').resolve(), scene_folder / "logs" / f"{new_name}.err")
+
 def get_disk_usage(folder):
     out = subprocess.check_output(f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()).decode()
     return int(re.compile("[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
-def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
-    seeds = [scene['seed'] for scene in scenes]
-        **kwargs,
 
+def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
+    env = Environment(
+        loader=FileSystemLoader("tools"),
+        autoescape=select_autoescape(),
+    )
+
+    template = env.get_template("template.html")
+    seeds = [scene['seed'] for scene in scenes]
+    html  = template.render(
+        seeds=seeds,
+        **kwargs,
+        frame=frame,
+        camera_pair_id=camera_pair_id,
+    )
+
+    with output_path.open('a') as f:
+        f.write(html)
 
 def run_task(queue_func, scene_folder, scene_dict, taskname):
 
@@ -771,6 +827,7 @@ def write_html_summary(all_scenes, output_folder, max_size=5000):
             make_html_page(html_path, all_scenes[idx:idx+max_size], frame=100,
             camera_pair_id=0, samples=[f"resmpl{i}" for i in range(5)], pages=names,
         )
+
 def stats_summary(stats):
     stats = {k: v for k, v in stats.items() if not k.startswith(JobState.NotQueued)}
     lemmatized = set(l.split('_')[0] for l in stats.keys())
@@ -842,6 +899,7 @@ def stats_summary(stats):
 
 @gin.configurable
 def main(args, shuffle=True, wandb_project='render_beta'):
+
     os.umask(0o007)
 
     all_scenes = init_db(args)
@@ -849,7 +907,13 @@ def main(args, shuffle=True, wandb_project='render_beta'):
 
     write_html_summary(all_scenes, args.output_folder) if args.cleanup != 'all' else None
     wandb.init(name=scene_name, config=vars(args), project=wandb_project, mode=args.wandb_mode)
+
+    logging.basicConfig(
+        filename=str(args.output_folder / "jobs.log"),
         level=args.loglevel,
+        format='[%(asctime)s]: %(message)s',
+    )
+
     start_time = datetime.now()
 
     scenes = [j for j in all_scenes if j['all_done'] == SceneState.NotDone]
@@ -860,6 +924,7 @@ def main(args, shuffle=True, wandb_project='render_beta'):
     while any(j['all_done'] == SceneState.NotDone for j in all_scenes):
         now = datetime.now()
         print(f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}')
+        logging.info('=' * 80)
         manage_datagen_jobs(scenes, elapsed=(now-start_time).seconds)
         logging.info("-" * 80)
         time.sleep(4)
@@ -869,9 +934,11 @@ def test_upload(args):
     from_folder = args.output_folder/f'test_upload_{args.output_folder.name}'
     from_folder.mkdir(parents=True, exist_ok=True)
     (from_folder/'test_file.txt').touch()
+
     upload_util.upload_folder(from_folder, Path('infinigen/test_upload/'))
     rmtree(from_folder)
     
+if __name__ == "__main__":
     assert Path('.').resolve().parts[-1] == 'worldgen'
 
     slurm_available = (which("sbatch") is not None)
