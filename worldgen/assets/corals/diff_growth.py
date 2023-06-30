@@ -16,6 +16,7 @@ from assets.utils.mesh import polygon_angles
 import util.blender as butil
 from surfaces import surface
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class DiffGrowthBaseCoralFactory(BaseCoralFactory):
     default_scale = [1] * 3
@@ -98,6 +99,7 @@ class DiffGrowthBaseCoralFactory(BaseCoralFactory):
 
         obj.location = 0, 0, -np.amin(read_co(obj).T[:, -1]) * 0.8
         butil.apply_transform(obj, loc=True)
+        tag_object(obj, 'diffgrowth_coral')
         return obj
 
 
