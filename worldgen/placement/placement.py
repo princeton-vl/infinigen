@@ -23,6 +23,7 @@ from mathutils.bvhtree import BVHTree
 import util
 from util import blender as butil, camera as camera_util
 
+from nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
 from surfaces import surface
 from .factory import AssetFactory
 
@@ -40,6 +41,9 @@ def objects_to_grid(objects, spacing):
 def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None):
     temp_vert = butil.spawn_vert('compute_placeholder_locations')
     geo = temp_vert.modifiers.new(name="GEOMETRY", type='NODES')
+    if geo.node_group == None:
+        group = geometry_node_group_empty_new()
+        geo.node_group = group
     nw = NodeWrangler(geo)
 
     base_geo = nw.new_node(Nodes.ObjectInfo, [terrain]).outputs['Geometry']
