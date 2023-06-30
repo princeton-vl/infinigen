@@ -12,6 +12,7 @@ import bmesh
 import numpy as np
 from tqdm import tqdm
 
+from .math import lerp  # for other people to import from this file
 from . import math as mutil
 from .logging import Suppress
 
@@ -23,6 +24,7 @@ def get_all_bpy_data_targets():
         D.objects, D.collections, D.movieclips, D.particles,
         D.meshes, D.curves, D.armatures, D.node_groups
     ]
+
 class ViewportMode:
 
     def __init__(self, obj, mode):
@@ -34,10 +36,12 @@ class ViewportMode:
         bpy.context.view_layer.objects.active = self.obj
         self.orig_mode = bpy.context.object.mode
         bpy.ops.object.mode_set(mode=self.mode)
+
     def __exit__(self, *args):
         bpy.context.view_layer.objects.active = self.obj
         bpy.ops.object.mode_set(mode=self.orig_mode)
         bpy.context.view_layer.objects.active = self.orig_active
+
 
 class CursorLocation:
 
@@ -51,6 +55,7 @@ class CursorLocation:
 
     def __exit__(self, *_):
         bpy.context.scene.cursor.location = self.saved
+
 
 class SelectObjects:
 
@@ -90,6 +95,7 @@ class SelectObjects:
         if self.saved_active is not None:
             bpy.context.view_layer.objects.active = enforce_not_deleted(self.saved_active)
 
+
 class DisableModifiers:
 
     def __init__(self, objs, keep=[]):
@@ -109,6 +115,7 @@ class DisableModifiers:
         for m in self.modifiers_disabled:
             m.show_viewport = True
 
+
 class TemporaryObject:
 
     def __init__(self, obj):
@@ -119,8 +126,10 @@ class TemporaryObject:
 
     def __exit__(self, *_):
         if self.obj.name in bpy.data.objects:
+            delete(self.obj)
 
 
+def garbage_collect(targets, keep_in_use=True, keep_names=None, verbose=False):
     if keep_names is None:
         keep_names = [[]] * len(targets)
 
@@ -136,16 +145,21 @@ class TemporaryObject:
                 print(f'Garbage collecting {o} from {t}')
             t.remove(o)
 
+
 class GarbageCollect:
 
     def __init__(self, targets=None, keep_in_use=True, keep_orig=True, verbose=False):
         self.targets = targets or get_all_bpy_data_targets()
+        self.keep_in_use = keep_in_use
         self.keep_orig = keep_orig
+        self.verbose = verbose
 
     def __enter__(self):
         self.names = [set(o.name for o in t) for t in self.targets]
 
     def __exit__(self, *_):
+        garbage_collect(self.targets, keep_in_use=self.keep_in_use, keep_names=self.names, verbose=self.verbose)
+
 
 def select_none():
     if bpy.context.active_object is not None:
@@ -153,12 +167,14 @@ def select_none():
     for obj in bpy.context.selected_objects:
         obj.select_set(False)
 
+
 def select(objs):
     select_none()
     if not isinstance(objs, list):
         objs = [objs]
     for o in objs:
         o.select_set(True)
+
 
 def delete(objs):
     if not isinstance(objs, list):
@@ -168,15 +184,28 @@ def delete(objs):
     with Suppress():
         bpy.ops.object.delete()
 
+
+def delete_collection(collection):
+    if collection.name in bpy.data.collections:
+        objects = collection.objects
+        bpy.data.collections.remove(collection)
+        for o in objects:
+            delete_collection(o)
+    else:
+        delete(collection)
+
+
 def traverse_children(obj, fn):
     fn(obj)
     for obj in obj.children:
         fn(obj)
 
+
 def iter_object_tree(obj):
     yield obj
     for c in obj.children:
         yield from iter_object_tree(c)
+
 
 def get_collection(name, reuse=True):
     if reuse and name in bpy.data.collections:
@@ -186,6 +215,7 @@ def get_collection(name, reuse=True):
         bpy.context.scene.collection.children.link(col)
         return col
 
+
 def unlink(obj):
     if not isinstance(obj, list):
         obj = [obj]
@@ -193,6 +223,8 @@ def unlink(obj):
         for c in list(bpy.data.collections) + [bpy.context.scene.collection]:
             if o.name in c.objects:
                 c.objects.unlink(o)
+
+
 def put_in_collection(obj, collection, exclusive=True):
     if exclusive:
         unlink(obj)
@@ -241,6 +273,7 @@ def spawn_empty(name, disp_type='PLAIN_AXES', s=0.1):
     return empty
 
 
+def spawn_point_cloud(name, pts, edges=None):
     if edges is None:
         edges = []
 
@@ -250,8 +283,10 @@ def spawn_empty(name, disp_type='PLAIN_AXES', s=0.1):
     bpy.context.scene.collection.objects.link(obj)
     return obj
 
+
 def spawn_vert(name='vert'):
     return spawn_point_cloud(name, np.zeros((1, 3)))
+
 
 def spawn_line(name, pts):
     idxs = np.arange(len(pts))
@@ -282,6 +317,7 @@ def spawn_cube(**kwargs):
         obj.name = name
     return obj
 
+def clear_scene(keep=[], targets=None, materials=True):
     D = bpy.data
     if targets is None:
         targets = get_all_bpy_data_targets()
@@ -301,11 +337,13 @@ def spawn_cube(**kwargs):
         bpy.ops.ptcache.free_bake_all()
 
 
+def spawn_capsule(rad, height, us=32, vs=16):
     mesh = bpy.data.meshes.new('Capsule')
     obj = bpy.data.objects.new('Capsule', mesh)
     bpy.context.collection.objects.link(obj)
 
     bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=us, v_segments=vs, diameter=2 * rad)
 
     for v in bm.verts:
         if v.co.z > 0:
@@ -313,6 +351,7 @@ def spawn_cube(**kwargs):
 
     bm.to_mesh(mesh)
     bm.free()
+
     select_none()
     obj.select_set(True)
     bpy.ops.object.shade_smooth()
@@ -320,6 +359,7 @@ def spawn_cube(**kwargs):
     return obj
 
 
+def to_mesh(object, context=bpy.context):
     deg = context.evaluated_depsgraph_get()
     me = bpy.data.meshes.new_from_object(object.evaluated_get(deg), depsgraph=deg)
 
@@ -335,9 +375,13 @@ def spawn_cube(**kwargs):
 
     return new_obj
 
+
 def get_camera_res():
+    d = np.array([bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y],
+                 dtype=np.float32)
     d *= bpy.context.scene.render.resolution_percentage / 100.0
     return d
+
 
 def set_geomod_inputs(mod, inputs: dict):
     assert mod.type == 'NODES'
@@ -352,7 +396,9 @@ def set_geomod_inputs(mod, inputs: dict):
             print(f'Error incurred while assigning {v} with {type(v)=} to {soc.identifier=} of {mod.name=}')
             raise e
 
+
 def modify_mesh(obj, type, apply=True, name=None, return_mod=False, ng_inputs=None, show_viewport=None,
+                **kwargs) -> bpy.types.Object:
     if name is None:
         name = f'modify_mesh({type}, **{kwargs})'
     if show_viewport is None:
@@ -378,16 +424,19 @@ def modify_mesh(obj, type, apply=True, name=None, return_mod=False, ng_inputs=No
         return obj, mod if not apply else None
     else:
         return obj
+
 def constrain_object(obj, type, **kwargs):
     c = obj.constraints.new(type=type)
     for k, v in kwargs.items():
         setattr(c, k, v)
     return c
+
 def apply_transform(obj, loc=False, rot=True, scale=True):
     with SelectObjects(obj):
         bpy.ops.object.transform_apply(location=loc, rotation=rot, scale=scale)
 
 
+def import_mesh(path, **kwargs):
     path = Path(path)
 
     ext = path.parts[-1].split('.')[-1]
@@ -397,30 +446,42 @@ def apply_transform(obj, loc=False, rot=True, scale=True):
         'obj': bpy.ops.import_scene.obj,
         'fbx': bpy.ops.import_scene.fbx,
         'stl': bpy.ops.import_mesh.stl,
+        'ply': bpy.ops.import_mesh.ply}
 
     if ext not in funcs:
+        raise ValueError(
+            f'butil.import_mesh does not yet support extension {ext}, please contact the developer')
 
     select_none()
     with Suppress():
         funcs[ext](filepath=str(path), **kwargs)
 
     if len(bpy.context.selected_objects) > 1:
+        print(
+            f"Warning: {ext.upper()} Import produced {len(bpy.context.selected_objects)} objects, "
+            f"but only the first is returned by import_obj")
     return bpy.context.selected_objects[0]
+
 
 def boolean(objs, mode='UNION', verbose=False):
     keep, *rest = list(objs)
 
     if verbose:
         rest = tqdm(rest, desc=f'butil.boolean({keep.name}..., {mode=})')
+
     with SelectObjects(keep):
         for target in rest:
             if len(target.modifiers) != 0:
+                raise ValueError(
+                    f'Attempted to boolean() with {target=} which still has {len(target.modifiers)=}')
 
             mod = keep.modifiers.new(type='BOOLEAN', name='butil.boolean()')
             mod.operation = mode
+            mod.object = target
             bpy.ops.object.modifier_apply(modifier=mod.name)
 
     return keep
+
 
 def split_object(obj, mode='LOOSE'):
     select_none()
@@ -428,10 +489,13 @@ def split_object(obj, mode='LOOSE'):
     bpy.ops.mesh.separate(type=mode)
     return list(bpy.context.selected_objects)
 
+
 def move_modifier(obj, mod, i):
     with SelectObjects(obj):
+        bpy.ops.object.modifier_move_to_index(modifier=mod.name, index=i)
 
 
+def join_objects(objs, check_attributes=False):
     if check_attributes:
         # make sure objs[0] has slots to recieve all the attributes of objs[1:]
         join_target = objs[0]
@@ -442,10 +506,14 @@ def move_modifier(obj, mod, i):
                     assert att.data_type == target_att.data_type
                     assert att.domain == target_att.domain
                 else:
+                    join_target.data.attributes.new(att.name, att.data_type, att.domain)
+
     select(objs)
     bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.object.join()
     return bpy.context.active_object
+
+
 def apply_modifiers(obj, mod=None, quiet=True):
     if mod is None:
         mod = list(obj.modifiers)
@@ -459,14 +527,17 @@ def apply_modifiers(obj, mod=None, quiet=True):
         for m in mod:
             bpy.ops.object.modifier_apply(modifier=m.name)
 
+
 def recalc_normals(obj, inside=False):
     with ViewportMode(obj, mode='EDIT'):
         bpy.ops.mesh.select_all()
         bpy.ops.mesh.normals_make_consistent(inside=inside)
 
 
+def save_blend(path, autopack=False, verbose=False):
     if verbose:
         print(f"Saving .blend to {path} ({'with' if autopack else 'without'} textures)")
+
     with Suppress():
         if autopack:
             bpy.ops.file.autopack_toggle()
@@ -475,6 +546,7 @@ def recalc_normals(obj, inside=False):
             bpy.ops.file.autopack_toggle()
 
 
+def joined_kd(objs, include_origins=False):
     if not isinstance(objs, list):
         objs = objs
     objs = [o for o in objs if o.type == 'MESH']
@@ -488,6 +560,7 @@ def recalc_normals(obj, inside=False):
     for o in objs:
         for v in o.data.vertices:
             assert i < size
+            kd.insert(o.matrix_world @ v.co, i)
             i += 1
         if include_origins:
             kd.insert(o.location, i)
@@ -496,6 +569,17 @@ def recalc_normals(obj, inside=False):
     kd.balance()
 
     return kd
+
+
+
+        attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
+        new_object.data.attributes[attr_name_ls].data.foreach_set(DATATYPE_FIELDS[type_key],
+                                                                  mesh.vertex_attributes[attr_name].reshape(
+                                                                      -1).astype(np.float32))
+
+
+    verts = np.zeros((len(verts_bpy) * 3), dtype=np.float)
+    faces = np.zeros((len(faces_bpy) * 3), dtype=np.int32)
 
 def merge_by_distance(obj, face_size):
     with SelectObjects(obj), ViewportMode(obj, mode='EDIT'), Suppress():
