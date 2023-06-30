@@ -1,0 +1,10 @@
+Terrain.asset_folder = None
+
+landtiles.load_assets.on_the_fly_instances = 0
+landtiles.load_assets.reused_instances = 5
+
+upsidedown_mountains.load_assets.on_the_fly_instances = 0
+upsidedown_mountains.load_assets.reused_instances = 5
+
+caves.load_assets.on_the_fly_instances = 0
+caves.load_assets.reused_instances = 5
