@@ -5,6 +5,7 @@
 # Date Signed: May 30, 2023
 
 import bpy
+import math
 import numpy as np
 import gin
 from util.random import random_general as rg
@@ -26,6 +27,7 @@ def nishita_lighting(
     camera_based_rotation=None,
 ):
     sky_texture = nw.new_node(Nodes.SkyTexture)
+    sky_texture.sky_type = "NISHITA"
     sky_texture.sun_size = np.deg2rad(clip_gaussian(0.5, 0.3, 0.25, 5))
     sky_texture.sun_intensity = rg(sun_intensity)
     sky_texture.sun_elevation = np.radians(rg(sun_elevation))
