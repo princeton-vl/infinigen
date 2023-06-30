@@ -172,6 +172,7 @@ class Nodes:
     FieldAtIndex = "GeometryNodeFieldAtIndex"
     AccumulateField = "GeometryNodeAccumulateField"
     Clamp = "ShaderNodeClamp"
+    Invert = "ShaderNodeInvert"
 
     # Texture
     NoiseTexture = "ShaderNodeTexNoise"
@@ -194,6 +195,8 @@ class Nodes:
     NewGeometry = 'ShaderNodeNewGeometry'
     RefractionBSDF = "ShaderNodeBsdfRefraction"
     GlassBSDF = "ShaderNodeBsdfGlass"
+    GlossyBSDF = "ShaderNodeBsdfGlossy"
+    LayerWeight = "ShaderNodeLayerWeight"
 
     # Layout
     Reroute = "NodeReroute"
@@ -264,6 +267,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.ColorRamp: [],  # Color ramp properties are set in special_case_colorramp, since they are nested
     Nodes.MixRGB: ['blend_type'],
     Nodes.AccumulateField: ['data_type'],
+    Nodes.CombineRGB: ['mode'],
     Nodes.SeparateColor: ['mode'],
 
     Nodes.DistributePointsOnFaces: ['distribute_method'],
