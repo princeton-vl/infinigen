@@ -8,6 +8,7 @@ import colorsys
 
 from numpy.random import uniform
 
+from assets.trees import TreeFactory
 from assets.trees.generate import GenericTreeFactory, random_species
 from assets.utils.misc import log_uniform
 from nodes.node_info import Nodes
