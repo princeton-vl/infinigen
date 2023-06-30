@@ -1,0 +1,28 @@
+    ('sand', 2),
+    ('cracked_ground', 2),
+    ('dirt', 1),
+    ('stone', 3),
+    ('soil', 1),
+]
+
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 2),
+    (@HerbivoreFactory, 0.5),
+    (@SnakeFactory, 0.5)
+]
+
+compose_scene.flying_creatures_chance = 0.7
+compose_scene.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+    (@FlyingBirdFactory, 0.2)
+]
+
+compose_scene.rain_particles_chance = 0.4
+populate_scene.slime_mold_chance = 0.3
+populate_scene.ivy_chance = 0.3
+populate_scene.lichen_chance = 0.3
+populate_scene.moss_chance = 0.0
+
+random_season.weights = {'autumn': 1, 'summer': 1, 'spring': 1, 'winter': 0.1}
+
