@@ -21,6 +21,7 @@ Then in the blender gui:
 '''
 
 import bpy
+import mathutils
 from numpy.random import uniform, normal
 from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
