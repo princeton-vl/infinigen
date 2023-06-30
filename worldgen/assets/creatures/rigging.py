@@ -2,6 +2,7 @@ import pdb
 from collections import defaultdict
 import re
 import math
+from numbers import Number
 
 import bpy
 import mathutils
@@ -15,11 +16,14 @@ from assets.creatures.genome import Joint, IKParams
 
 IK_TARGET_PREFIX = 'ik_target'
 
+
 def bone(editbones, head, tail, parent):
+    bone = editbones.new('bone')  # name overriden later
     bone.head = head
     bone.tail = tail
     bone.parent = parent
     return bone
+
 
 def get_bone_idxs(part):
     idxs = set([0.0, 1.0])
@@ -28,9 +32,11 @@ def get_bone_idxs(part):
     return sorted(list(idxs))
 
 
+def create_part_bones(part: Part, editbones, parent):
     bones = {}
 
     skeleton = part.skeleton_global()
+
     idxs = get_bone_idxs(part)
 
     if part.settings.get('rig_reverse_skeleton', False):
@@ -55,13 +61,17 @@ def get_bone_idxs(part):
 
     return bones
 
+
+def create_bones(parts, atts, arma):
     with butil.ViewportMode(arma, mode='EDIT'):
         editbones = arma.data.edit_bones
 
         def make_bones(node, parent_bones):
             part, att = node
+
             bones = {}
 
+            if parent_bones is None:  # we are dealing with the root node
                 parent_bone = None
             else:
                 u, v, rad = att.coord
@@ -70,6 +80,7 @@ def get_bone_idxs(part):
                 parent_bone_t = max((i for i in bonekeys if i <= u), default=min(bonekeys))
                 parent_bone = parent_bones[parent_bone_t]
 
+                if rad > 0.5:
                     try:
                         next_t = next(i for i in sorted(bonekeys) if i >= u)
                     except StopIteration:
@@ -81,6 +92,7 @@ def get_bone_idxs(part):
                         pct = (u - parent_bone_t) / (next_t - parent_bone_t)
                         assert 0 <= pct and pct <= 1, (pct, next_t, parent_bone_t)
                         head = mutil.lerp(parent_bone.head, parent_bone.tail, pct)
+
                     tail = part.skeleton_global()[0]
                     parent_bone = bone(editbones, head, tail, parent_bone)
                     bones[-1] = parent_bone
@@ -89,6 +101,7 @@ def get_bone_idxs(part):
             bones.update(part_bones)
 
             return bones
+
         part_bones = tree.map_parent_child(tree.tzip(parts, atts), make_bones)
 
         # the edit bones wont continue to exist once we leave edit mode, store their names instead
@@ -97,11 +110,19 @@ def get_bone_idxs(part):
                 partname = part.obj.name.split('.')[-1]
 
                 if isinstance(j, (int, float)):
+                    b.name = f'{partname}.side({part.side}).bone({j:.2f})'
                 elif isinstance(j, str):
+                    b.name = f'{partname}.side({part.side}).extra_bone({j})'
                 else:
                     raise ValueError(f'Unrecognized {j=}')
+                b['side'] = part.side
+                b['factory_class'] = part.obj['factory_class']
+                b['index'] = part.obj['index']
+                b['length'] = j
                 bones[j] = b.name
+
     return part_bones
+
 
 def compute_chain_length(parts, bones, part, ik: IKParams):
 
@@ -126,6 +147,7 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
     return chain_length
 
 
+def create_ik_targets(arma, parts, bones):
     targets = []
 
     def make_targets(node):
@@ -135,6 +157,10 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
 
         for t, ik in part.iks.items():
             joint_ts = get_bone_idxs(part)
+            bone_idx = t if t != joint_ts[-1] else joint_ts[
+                -2]  # the last idx doesnt have its own bone, it is just the endpoint
+            base_keys =[k for k in part_bones.keys() if isinstance(k,Number)]
+            bone_idx = max((i for i in base_keys if i <= bone_idx), default=min(base_keys))
             name = part_bones[bone_idx]
 
             pbone = arma.pose.bones[name]
@@ -164,6 +190,7 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
 
     with butil.ViewportMode(arma, mode='POSE'):
         tree.map(tree.tzip(parts, bones), make_targets)
+
     col = butil.get_collection('ik_targets')
     for t in targets:
         butil.put_in_collection(t, col)
@@ -171,10 +198,13 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
     return targets
 
 
+def apply_joint_constraint(joint: Joint, pose_bone, eps=1e-2):
     pb = pose_bone
 
     if joint.bounds is not None:
         bounds = np.deg2rad(joint.bounds)
+
+        if not bounds.shape == (2, 3):
             raise ValueError(f'Encountered invalid {joint.bounds=}, {joint.bounds.shape=}')
 
         ranges = bounds[1] - bounds[0]
@@ -201,6 +231,8 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
         pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = s
 
 
+def constrain_bones(arma, parts, bones, atts, shoulder_auto_stiffness=0.85):
+    with butil.ViewportMode(arma, mode='POSE'):
         for part, part_bones, att in tree.tzip(parts, bones, atts):
             for skeleton_idx, bname in part_bones.items():
 
@@ -218,6 +250,7 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
                     joint = part.joints[skeleton_idx]
                     apply_joint_constraint(joint, pb)
 
+                if skeleton_idx < 0 and shoulder_auto_stiffness > 0:
                     # shoulder bones have index < 1, and were added automatically
                     # make them stiff to minimally affect final outcome
                     pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = (shoulder_auto_stiffness,) * 3
@@ -226,6 +259,7 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
                     pb.lock_ik_z = True
 
 
+def pose_bones(arma, parts, bones, atts):
     with butil.ViewportMode(arma, mode='POSE'):
         for part, part_bones, att in tree.tzip(parts, bones, atts):
             if part.joints is None:
@@ -237,13 +271,17 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
                     j = part.joints.get(skeleton_idx)
                 if j is None or j.pose is None:
                     continue
+                off = np.deg2rad(j.pose - j.rest)  # TODO, handle att.rotation_basis
                 arma.pose.bones[bname].rotation_euler = tuple(off)
+
 
 def parent_to_bones(objs, arma):
     for obj in objs:
         save_pos = obj.location
         with butil.SelectObjects([obj, arma], active=arma):
             bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+        obj.location = save_pos
+
 
 def parent_bones_by_part(creature, arma, part_bones):
     assert creature.parts[0] is creature.root
@@ -251,18 +289,22 @@ def parent_bones_by_part(creature, arma, part_bones):
         with butil.SelectObjects([part.obj, arma]), butil.ViewportMode(arma, mode='POSE'):
             for bone in arma.pose.bones:
                 select = (bone.name in part_bones[i].values())
+                arma.data.bones[bone.name].select = select
                 bone.bone.select = select
             bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 
     with butil.ViewportMode(arma, mode='POSE'):
         for bone in arma.pose.bones:
             bone.bone.select = False
+
+
 def creature_rig(root, genome, parts, constraints=True):
     data = bpy.data.armatures.new(name=f'{root.name}.armature_data')
     arma = bpy.data.objects.new(f'{root.name}_armature', data)
     bpy.context.scene.collection.objects.link(arma)
 
     attachments_tree = tree.map(genome.parts, lambda n: n.att)
+    bones = create_bones(parts, attachments_tree, arma)
 
     # force recalculate roll to eliminate bad guesses made by blender
     with butil.ViewportMode(arma, mode='EDIT'):
@@ -280,6 +322,7 @@ def creature_rig(root, genome, parts, constraints=True):
 
     return arma, targets
 
+
 def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_radius=0.07):
     def include_bone(b):
         if '-1' in b.name:
@@ -291,6 +334,7 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
     def create_bone_collider(pbone):
         col_head = mutil.lerp(pbone.head, pbone.tail, col_joint_margin)
         col_tail = mutil.lerp(pbone.head, pbone.tail, 1 - col_joint_margin)
+
         col = butil.spawn_line(pbone.name + '.col', np.array([col_head, col_tail]))
         with butil.SelectObjects(col), butil.CursorLocation(col_head):
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
@@ -298,6 +342,7 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
         skin_mod = butil.modify_mesh(col, 'SKIN', apply=False)
         for svert in col.data.skin_vertices[0].data:
             svert.radius = (col_radius, col_radius)
+        butil.apply_modifiers(col, mod=skin_mod)
 
         con = pbone.constraints.new('CHILD_OF')
         con.target = col
@@ -347,6 +392,7 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
     with butil.ViewportMode(arma, mode='POSE'):
         # remove any ik constraints
         for b in arma.pose.bones:
+            for c in b.constraints:
                 b.constraints.remove(c)
 
         col_bones = [b for b in arma.pose.bones if include_bone(b)]
@@ -356,6 +402,7 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
         for o in col_objs.values():
             o.parent = root
             o.hide_render = True
+
         # create hinge constraints
         for b in col_bones:
             try:
@@ -365,7 +412,11 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
             joint_obj = configure_rigidbody_joint(b, col_objs[b.name], col_objs[hinge_target.name])
             joint_obj.parent = root
 
+        col_bone_names = [b.name for b in
+            col_bones]  # store names so we can reference outside of pose mode in the next step
 
+    # animation will be applied wrong if children inherit physics transformations from parents - unparent all
+    # bones
     with butil.ViewportMode(arma, mode='EDIT'):
         for b in arma.data.edit_bones:
             b.select = b.name in col_bone_names
