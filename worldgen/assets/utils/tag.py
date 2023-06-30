@@ -35,7 +35,9 @@ class AutoTag():
             objs += self.get_all_objs(obj_child)
         return objs
 
+    def add_attribute(self, obj_name, attr_name, type='FLOAT', domain='POINT', value=1.0, recursive=True):
         root_obj = bpy.data.objects[obj_name]
+        # print(domain, attr_name, obj_name, type)
         if recursive == False:
             obj = root_obj
             if obj.type != 'MESH':
@@ -78,6 +80,7 @@ class AutoTag():
         for obj in objs:
             if obj.type != 'MESH':
                 continue
+            
             attr_dict = {}
             n = 0
             tag = None
@@ -141,5 +144,6 @@ def tag_nodegroup(nw, input_node, name):
     name = 'TAG_' + name
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': input_node, 'Name': name, 5: True},
+        attrs={'domain': 'POINT', 'data_type': 'BOOLEAN'})
     return store_named_attribute
     
