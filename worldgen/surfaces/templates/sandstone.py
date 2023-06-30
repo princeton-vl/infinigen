@@ -307,6 +307,8 @@ def shader(nw, color=None):
     per_dark_2 = uniform(-0.1, 0.1)
     per_dark_3 = uniform(-0.1, 0.1)
     if color is None:
+        col_1 = random_color_neighbour((0.262, 0.057, 0.035, 1.0), 0.1, 0.1, 0.1)
+        col_2 = random_color_neighbour((0.8, 0.225, 0.135, 1.0), 0.1, 0.1, 0.1)
     else:
         col_1 = rg(color)
         col_2 = rg(color)
@@ -365,6 +367,7 @@ def shader(nw, color=None):
     colorramp.color_ramp.elements[0].position = 0.28 + per_dark_1
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.42 + per_dark_2
+    colorramp.color_ramp.elements[1].color = (0.296, 0.296, 0.296, 1.0)
     colorramp.color_ramp.elements[2].position = 0.58 + per_dark_3
     colorramp.color_ramp.elements[2].color = (1.0, 1.0, 1.0, 1.0)
 
