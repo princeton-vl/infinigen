@@ -1,18 +1,33 @@
+import os
+
 import bpy
+import gin
 from nodes.node_wrangler import Nodes
+from surfaces import surface
 from surfaces.surface_utils import sample_color, sample_ratio
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
+
 from .mountain import geo_MOUNTAIN_general
 
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_stone"
 name = "stone"
+
+def shader_stone(nw):
     nw.force_input_consistency()
     stone_base_color, stone_roughness = geo_stone(nw, geometry=False)
+
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
             "Base Color": stone_base_color,
             "Roughness": stone_roughness,
+        },
+    )
+
+
 @gin.configurable
 def geo_stone(nw, selection=None, random_seed=0, geometry=True):
     nw.force_input_consistency()
@@ -261,3 +276,6 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
     else:
         return stone_base_color, stone_roughness
+
+    surface.add_geomod(
+    )
