@@ -1,3 +1,12 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Lahav Lipson - Render, flat shading, etc
+# - Alex Raistrick - Compositing
+# - Hei Law - Initial version
+# Date Signed: May 2 2023
+
 import os
 import time
 import warnings
@@ -319,14 +328,20 @@ def render_image(
 
                 # Save flow visualization. Takes about 3 seconds
                 flow_dst_path = frames_folder / f"Vector_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                if flow_dst_path.exists():
+                    flow_color = flow_to_colorwheel(flow_dst_path)
                     imwrite(flow_dst_path.with_name(f"Flow_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
 
                 # Save depth visualization. Also takes about 3 seconds
                 depth_dst_path = frames_folder / f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                if depth_dst_path.exists():
+                    depth_color = exr_depth_to_jet(depth_dst_path)
                     imwrite(depth_dst_path.with_name(f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
 
                 # Save Segmentation visualization. Also takes about 3 seconds
                 seg_dst_path = frames_folder / f"IndexOB_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                if seg_dst_path.exists():
+                    seg_color = mask_to_color(seg_dst_path)
                     imwrite(seg_dst_path.with_name(f"Segmentation_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
 
     for file in tmp_dir.glob('*.png'):
