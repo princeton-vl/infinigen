@@ -260,6 +260,9 @@ def rotate_match_directions(a, b):
     rots = np.empty((len(a), 3, 3))
     rots[~m] = np.eye(3)[None]
 
+    if np.all(~m): # needed to prevent exceptions if continued
+        return rots
+
     dots = (a[m] * b[m]).sum(axis=-1)
     dots /= norm(a[m], axis=-1) * norm(b[m], axis=-1)
     rots[m] = rodrigues(np.arccos(dots), axes[m])
@@ -312,8 +315,49 @@ def clip_gaussian(mean, std, min, max, max_tries=20):
         val = np.random.normal(mean, std)
         if min <= val and val <= max:
             return val
+
         if i == max_tries:
             warnings.warn(f'clip_gaussian({mean=}, {std=}, {min=}, {max=}) reached {max_tries=}')
             return np.clip(val, min, max)
 
         i += 1
+
+def normalize(v, disallow_zero_norm=False, in_place=True):
+    n = np.linalg.norm(v, axis=-1)
+    if disallow_zero_norm and np.any(n == 0):
+        raise ValueError("zero norm")
+    res = v if in_place else np.copy(v)
+    res[n > 0] /= n[n > 0, None]
+    return res
+
+
+def project_to_unit_vector(k, v):
+    return (k * v).sum(axis=-1)[..., None] * v
+
+
+def wrap_around_cyclic_coord(u, u_start, u_end):
+    _, r = np.divmod(u - u_start, u_end - u_start)
+    return r + u_start
+
+def new_domain_from_affine(old_domain, a=1.0, b=0.0):
+    """
+    old domain: domain of u(t)
+    new domain: domain of u(f(t)), f(t) = a * t + b
+    """
+    if a == 0:
+        raise ValueError("a cannot be zero")
+    new_domain = (np.array(old_domain) - b) / a
+    if a < 0:
+        new_domain = new_domain[::-1]
+    return tuple(new_domain)
+
+
+def affine_from_new_domain(old_domain, new_domain):
+    """
+    Get affine parameters a, b such that u(f(at+b)) has new_domain
+    """
+    s = old_domain
+    t = new_domain
+    a = (s[1] - s[0]) / (t[1] - t[0])
+    b = s[0] - a * t[0]
+    return (a, b)
