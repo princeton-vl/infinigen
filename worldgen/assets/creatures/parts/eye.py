@@ -23,6 +23,7 @@ from assets.creatures.nodegroups.math import nodegroup_aspect_to_dim
 
 from assets.creatures.creature import PartFactory
 from assets.creatures.util import part_util
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_eyelid', singleton=True, type='GeometryNodeTree')
 def nodegroup_eyelid(nw: NodeWrangler):
@@ -84,6 +85,7 @@ def nodegroup_eyelid(nw: NodeWrangler):
         input_kwargs={'Skeleton Curve': set_curve_tilt, 'Profile Curve': warped_circle_curve, 'Radius Func': smoothtaper})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': tag_nodegroup(nw, profilepart, 'eyelid')})
 
 @node_utils.to_nodegroup('nodegroup_mammal_eye', singleton=True, type='GeometryNodeTree')
 def nodegroup_mammal_eye(nw: NodeWrangler):
@@ -162,4 +164,5 @@ class MammalEye(PartFactory):
 
     def make_part(self, params):
         part = part_util.nodegroup_to_part(nodegroup_mammal_eye, params)
+        tag_object(part.obj, 'mammal_eye')
         return part
