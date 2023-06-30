@@ -15,6 +15,8 @@ import imageio
 import numpy as np
 from mathutils import Matrix, Vector, Euler
 from mathutils.bvhtree import BVHTree
+
+from assets.utils.decorate import toggle_hide
 from rendering.post_render import depth_to_jet
 from tqdm import tqdm, trange
 from placement import placement
@@ -127,6 +129,7 @@ def get_camera(rig_id, subcam_id, checkonly=False):
         return col.objects[name]
     if checkonly: return None
     raise ValueError(f'Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}')
+
 @node_utils.to_nodegroup('nodegroup_camera_info', singleton=True, type='GeometryNodeTree')
 def nodegroup_active_cam_info(nw: NodeWrangler):
     info = nw.new_node(Nodes.ObjectInfo, [bpy.context.scene.camera])
@@ -136,6 +139,7 @@ def nodegroup_active_cam_info(nw: NodeWrangler):
 
 def set_active_camera(rig_id, subcam_id):
     camera = get_camera(rig_id, subcam_id)
+
     ng = nodegroup_active_cam_info() # does not create a new node group, retrieves singleton
     ng.nodes['Object Info'].inputs['Object'].default_value = camera
     return bpy.context.scene.camera
@@ -310,8 +314,10 @@ def compute_base_views(
             props = camera_pose_proposal(terrain_bvh=terrain_bvh, terrain_bbox=terrain_bbox)
             if props is None: continue
             loc, rot = props
+
             cam.location = loc
             cam.rotation_euler = rot
+
             criterion = keep_cam_pose_proposal(
                 cam, terrain, terrain_bvh, placeholders_kd,
                 terrain_tags_answers=terrain_tags_answers,
@@ -325,9 +331,11 @@ def compute_base_views(
             destination = cam.matrix_world @ Vector((0.,0.,-1.))
             forward_dir = (destination - cam.location).normalized()
             *_, straight_ahead_dist = terrain_bvh.ray_cast(cam.location, forward_dir)
+
             potential_views.append((criterion, deepcopy(cam.location), deepcopy(cam.rotation_euler), straight_ahead_dist))
             pbar.update(1)
 
+            if len(potential_views) >= n_min_candidates:
                 break
     assert potential_views != [], "no camera view found"
     return sorted(potential_views, reverse=True)[:n_views]
@@ -430,6 +438,36 @@ def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use
             np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
     )
 
+@node_utils.to_nodegroup('ng_dist2camera', singleton=True, type='GeometryNodeTree')
+def ng_dist2camera(nw: NodeWrangler):
+    traj = get_camera_trajectory()
+    trajectory = nw.new_node(Nodes.ObjectInfo, [traj]).outputs['Geometry']
+    distance = nw.new_node(Nodes.Proximity, [trajectory], attrs={'target_element': 'POINTS'}).outputs['Distance']
+    nw.new_node(Nodes.GroupOutput, input_kwargs={"Distance": distance})
+
+
+def get_camera_trajectory():
+    current_frame = bpy.context.scene.frame_current
+    if 'Cameras' in bpy.data.collections:
+        locations = []
+        for camera_pair in bpy.data.collections['Cameras'].children:
+            for camera in camera_pair.objects:
+                for f in camera.animation_data.action.fcurves:
+                    for k in f.keyframe_points:
+                        fr = int(k.co[0])
+                        bpy.context.scene.frame_set(fr)
+                        locations.append(camera.location)
+        bpy.context.scene.frame_set(current_frame)
+    else:
+        locations = [[100] * 3]
+    mesh = bpy.data.meshes.new('temp')
+    mesh.from_pydata(np.vstack(locations), [], [])
+    mesh.update()
+    obj = bpy.data.objects.new('temp', mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    butil.modify_mesh(obj, 'WELD', merge_threshold=.1)
+    toggle_hide(obj)
     return obj
 
 if __name__ == "__main__":
