@@ -4,10 +4,13 @@ import logging
 from copy import copy
 
 import numpy as np
+from numpy.random import uniform as U, normal as N, uniform
 import bpy
 
 import util
 from util import blender as butil
+from util.random import log_uniform
+
 
 def bake(emitter, system):
 
@@ -169,10 +172,25 @@ def floating_dust_settings():
         effect_gravity=U(0.3, 0.7), # partially buoyant
     )
 
+def marine_snow_setting():
+    return dict(
+        mass=0.0001,
         count=int(10000*U(0.5, 2)),
+        lifetime=1000,
+        warmup_frames=100,
         particle_size=0.005,
         size_random=uniform(.7, 1.),
+        emit_from='VOLUME',
+        brownian_factor=log_uniform(.0002, .0005),
+        damping=log_uniform(.95, .98),
+        drag_factor=uniform(.85, .95),
+        factor_random=uniform(.1, .2),
+        use_rotations=True,
+        phase_factor_random=uniform(.2,.5),
+        use_dynamic_rotation=True,
         effect_gravity=U(0, 0.5)
+    )
+
 def rain_settings():
 
     drops_per_sec_m2 = U(0.05, 1)
