@@ -1,3 +1,13 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#include <string>
+#include <iostream>
+#include "string_tools.hpp"
+
 std::vector<std::string> match_regex(const std::string &pattern, const std::string &input){
         const std::regex regex{pattern.c_str()};
         std::smatch m;
