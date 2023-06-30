@@ -31,6 +31,7 @@ import mathutils
 sys.path.append(os.getcwd())
 
 from nodes.node_transpiler import transpiler
+from nodes import node_wrangler, node_info
 
 mode = 'write_file'
 target = 'object'
