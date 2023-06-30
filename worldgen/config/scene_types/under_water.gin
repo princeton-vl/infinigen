@@ -35,9 +35,11 @@ water.geo.water_detail = ("uniform", 0.2, 0.5)
 water.geo.water_height = ("uniform", 0.05, 0.15)
 water.geo.with_ripples = 0
 water.shader.volume_density = ("uniform", 0.03, 0.05)
+water.shader.color = ("color_category", 'under_water')
 water.shader.colored = 0
 water.shader.emissive_foam = 0
 water.is_ocean = ("bool", 0.5)
+
 
 compose_scene.wind_chance = 0
 compose_scene.rain_particles_chance = 0
@@ -51,14 +53,18 @@ atmosphere_light_haze.shader_atmosphere.enable_scatter = False
 compose_scene.fancy_clouds_chance=0.0
 
 surface.registry.rock_collection = [
+    ('stone', 1),
+    ('mountain', 0.5),
 ]
 
 compose_scene.ground_creatures_chance = 0.4
 compose_scene.ground_creature_registry = [
+    (@CrustaceanFactory, 1),
 ]
 compose_scene.flying_creatures_chance = 0.0
 compose_scene.bug_swarm_chance = 0.0
 compose_scene.fish_school_chance = 0.3
+
 # scene composition config
 LandTiles.tile_heights = [-20]
 Ground.height = -20
@@ -68,6 +74,8 @@ scene.waterbody_chance = 1
 
 full/render_image.min_samples = 100
 render_image.adaptive_threshold = 0.01
+
+Terrain.under_water = 1
 
 compose_scene.turbulence_chance = 0.7
 turbulence_effector.strength = ("uniform", 0, 7)
