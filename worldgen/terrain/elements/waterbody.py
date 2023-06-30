@@ -41,3 +41,4 @@ class Waterbody(Element):
             self.aux_names = [None]
 
         Element.__init__(self, "waterbody", material, transparency)
+        self.tag = ElementTag.Liquid
