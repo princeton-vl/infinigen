@@ -18,6 +18,8 @@ from scipy.interpolate import interp1d
 from assets.creatures.geometry import nurbs as nurbs_util
 from surfaces import surface
 
+logger = logging.getLogger(__name__)
+
 def square(x):
     return x * x
 def sigmoid(x):
@@ -915,6 +917,7 @@ class ReptileBody(PartFactory):
         return handles
 
     def make_part(self, params):
+        logger.debug(params)
         handles = nurbs_ReptileTail(**params).get_ctrls()
         handles = self.rescale(handles)
         
@@ -966,6 +969,7 @@ class ReptileUpperHead(PartFactory):
         return handles
 
     def make_part(self, params):
+        logger.debug(params)
         handles = nurbs_ReptileUpperHead(**params).get_ctrls()
         handles = self.rescale(handles)
         
