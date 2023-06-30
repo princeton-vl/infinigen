@@ -7,6 +7,7 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+from assets.flower import FlowerFactory
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
