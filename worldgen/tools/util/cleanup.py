@@ -16,6 +16,7 @@ def cleanup(folder, verbose=False):
         print(f"Cleaning up {folder}")
     for file_name_to_del in FILES_TO_DELETE:
         for file_path in sorted(folder.rglob(file_name_to_del)):
+            if file_path.is_file() or file_path.is_symlink():
                 if verbose:
                     print(f"Removing {file_path}")
                 file_path.unlink()
