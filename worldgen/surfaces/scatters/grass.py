@@ -10,6 +10,7 @@ import bpy
 
 import numpy as np
 from numpy.random import uniform as U
+from mathutils import Vector
 
 from util import blender as butil
 
@@ -26,6 +27,8 @@ from assets.grassland.grass_tuft import GrassTuftFactory
 
 from surfaces.scatters.utils.wind import wind
 
+def scale_grass(nw: NodeWrangler):
+    random_scaling = nw.new_node(Nodes.RandomValue, input_kwargs={0: Vector((1.,1.,1.)), 1: Vector((1.2,1.2,2.))}, attrs={"data_type":'FLOAT_VECTOR'})
     return nw.multiply(random_scaling, Vector((2.5,2.5,2.5)))
 
 def apply(obj, selection=None, **kwargs):
