@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import colorsys
 from pathlib import Path
 
+
+def make_palette(keyword, num_images, num_colors, overwrite=False):
     # define search params
     # option for commonly used search param are shown below for easy reference.
     # For param marked with '##':
@@ -21,6 +23,7 @@ from pathlib import Path
 
     # this will search and download:
     folder = f'{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}'
+    if os.path.exists(folder) and not overwrite:
         print("folder existing, skip")
     else:
         # set your environment variables: GCS_DEVELOPER_KEY, GCS_CX
@@ -41,6 +44,11 @@ from pathlib import Path
 
     model = GaussianMixture(num_colors, random_state=0).fit(colors)
 
+    weights = model.weights_.copy()
+    index = np.argsort(weights)[::-1]
+    weights = weights[index]
+    colors_hsv = model.means_.copy()[index]
+    cov = model.covariances_.copy()[index]
     colors_rgb = colors_hsv.copy()
     for i in range(num_colors):
         colors_rgb[i] = colorsys.hsv_to_rgb(*colors_rgb[i])
@@ -59,6 +67,7 @@ from pathlib import Path
         for j in range(S):
             for k in range(S):
                 diagrams[1, j, i, k] = colorsys.hsv_to_rgb(*diagrams[1, j, i, k])
+
     diagrams = np.clip(diagrams * 256, a_min=0, a_max=255).astype(np.int32)
     diagrams = diagrams.reshape((2 * S, num_colors * S, 3))
 
@@ -87,6 +96,7 @@ from pathlib import Path
         f.write("    ],\n")
         f.write('    "prob": [\n')
         for i in range(num_colors):
+            f.write(f'        {weights[i]},\n')
         f.write("    ]\n")
         f.write("}\n")
 
@@ -96,4 +106,6 @@ if __name__ == "__main__":
     parser.add_argument('-k', '--keyword', type=str)
     parser.add_argument('-i', '--num_images', default=10)
     parser.add_argument('-c', '--num_colors', default=10)
+    parser.add_argument('-o', '--overwrite', action='store_true')
     args = parser.parse_args()
+    make_palette(args.keyword, args.num_images, args.num_colors, args.overwrite)
