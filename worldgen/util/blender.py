@@ -10,14 +10,28 @@ import bpy
 import mathutils
 import bmesh
 import numpy as np
+import trimesh
 from tqdm import tqdm
 
 from .math import lerp  # for other people to import from this file
 from . import math as mutil
 from .logging import Suppress
+from nodes.node_info import DATATYPE_FIELDS, DATATYPE_DIMS
 
 logger = logging.getLogger(__name__)
 
+def deep_clone_obj(obj, keep_modifiers=False, keep_materials=False):
+    new_obj = obj.copy()
+    new_obj.data = obj.data.copy()
+    if not keep_modifiers:
+        for mod in new_obj.modifiers:
+            new_obj.modifiers.remove(mod)
+    if not keep_materials:
+        while len(new_obj.data.materials) > 0:
+            new_obj.data.materials.pop()
+    bpy.context.collection.objects.link(new_obj)
+    return new_obj
+    
 def get_all_bpy_data_targets():
     D = bpy.data
     return [
@@ -572,14 +586,72 @@ def joined_kd(objs, include_origins=False):
 
 
 
+# faces are required to be triangles now
+def objectdata_from_VF(vertices, faces):
+    new_mesh = bpy.data.meshes.new("")
+    new_mesh.vertices.add(len(vertices))
+    new_mesh.vertices.foreach_set("co", vertices.reshape(-1).astype(np.float32))
+    new_mesh.polygons.add(len(faces))
+    new_mesh.loops.add(len(faces) * 3)
+    new_mesh.polygons.foreach_set("loop_total", np.ones(len(faces), np.int32) * 3)
+    new_mesh.polygons.foreach_set("loop_start", np.arange(len(faces), dtype=np.int32) * 3)
+    new_mesh.polygons.foreach_set("vertices", faces.reshape(-1).astype(np.int32))
+    new_mesh.update(calc_edges=True)
+    return new_mesh
+
+
+def object_from_VF(vertices, faces, name):
+    new_mesh = objectdata_from_VF(vertices, faces)
+    new_object = bpy.data.objects.new(name, new_mesh)
+    new_object.rotation_euler = (0, 0, 0)
+    return new_object
+
+
+def object_from_trimesh(mesh, name, material=None):
+    if name in bpy.data.objects.keys():
+        print("replacing original object")
+        delete(bpy.data.objects[name])
+    new_object = object_from_VF(mesh.vertices, mesh.faces, name)
+    for attr_name in mesh.vertex_attributes:
         attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
+        if mesh.vertex_attributes[attr_name].ndim == 1 or mesh.vertex_attributes[attr_name].shape[1] == 1:
+            type_key = "FLOAT"
+        elif mesh.vertex_attributes[attr_name].shape[1] == 3:
+            type_key = "FLOAT_VECTOR"
+        elif mesh.vertex_attributes[attr_name].shape[1] == 4:
+            type_key = "FLOAT_COLOR"
+        else:
+            raise Exception(f"attribute of shape {mesh.vertex_attributes[attr_name].shape} not supported")
+        new_object.data.attributes.new(name=attr_name_ls, type=type_key, domain='POINT')
         new_object.data.attributes[attr_name_ls].data.foreach_set(DATATYPE_FIELDS[type_key],
                                                                   mesh.vertex_attributes[attr_name].reshape(
                                                                       -1).astype(np.float32))
+    if material is not None:
+        new_object.data.materials.append(material)
+    return new_object
 
 
+def object_to_vertex_attributes(obj):
+    vertex_attributes = {}
+    for attr in obj.data.attributes.keys():
+        type_key = obj.data.attributes[attr].data_type
+        tmp = np.zeros(len(obj.data.vertices) * DATATYPE_DIMS[type_key], dtype=np.float32)
+        obj.data.attributes[attr].data.foreach_get(DATATYPE_FIELDS[type_key], tmp)
+        vertex_attributes[attr] = tmp.reshape((len(obj.data.vertices), -1))
+    return vertex_attributes
+
+
+def object_to_trimesh(obj):
+    verts_bpy = obj.data.vertices
+    faces_bpy = obj.data.polygons
     verts = np.zeros((len(verts_bpy) * 3), dtype=np.float)
+    verts_bpy.foreach_get("co", verts)
     faces = np.zeros((len(faces_bpy) * 3), dtype=np.int32)
+    faces_bpy.foreach_get("vertices", faces)
+    faces = faces.reshape((-1, 3))
+    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    vertex_attributes = object_to_vertex_attributes(obj)
+    mesh.vertex_attributes.update(vertex_attributes)
 
 def merge_by_distance(obj, face_size):
     with SelectObjects(obj), ViewportMode(obj, mode='EDIT'), Suppress():
@@ -590,6 +662,12 @@ def origin_set(objs, mode, **kwargs):
     with SelectObjects(objs):
         bpy.ops.object.origin_set(type=mode, **kwargs)
         
+def apply_geo(obj):
+    with SelectObjects(obj):
+        for m in obj.modifiers:
+            m.show_viewport = False
+        for m in obj.modifiers:
+            if m.type == 'NODES':
                 bpy.ops.object.modifier_apply(modifier=m.name)
 
 def avg_approx_vol(objects):
