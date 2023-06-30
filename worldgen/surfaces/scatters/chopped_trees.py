@@ -68,6 +68,7 @@ def chop_object(
         cut.name = f'cutter({t:.2f})'
 
         butil.modify_mesh(cut, 'SOLIDIFY', thickness=thickness)
+        butil.recalc_normals(cut, inside=False)
 
         if uniform() < 0.95:
             cut.rotation_euler = np.deg2rad(uniform(-max_tilt, max_tilt, 3))
@@ -82,8 +83,14 @@ def chop_object(
     chopped = butil.boolean([obj] + cutters, mode='DIFFERENCE', verbose=True)
     butil.delete(cutters)
 
+    chopped_list = butil.split_object(chopped, mode='LOOSE')
+    for obj in chopped_list:
+        bpy.context.view_layer.objects.active = obj
         bpy.context.object.active_material_index = len(obj.material_slots) - 1
+        bpy.ops.object.material_slot_remove() # remove the default white mat
             
+    return chopped_list
+
 def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
 
     objs = []
