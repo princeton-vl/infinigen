@@ -37,4 +37,5 @@ class TussockMonocotFactory(MonocotGrowthFactory):
         y_anchors = np.array([0, .01, 0])
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
         self.decorate_leaf(obj)
+        tag_object(obj, 'tussock')
         return obj
