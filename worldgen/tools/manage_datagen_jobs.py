@@ -212,6 +212,8 @@ def queue_coarse(
     output_folder = Path(f'{folder}/coarse{output_suffix}')
 
     cmd = get_cmd(seed, 'coarse', configs, taskname, output_folder=output_folder) + f'''
+        LOG_DIR='{folder / "logs"}'
+    '''.split("\n") + overrides
 
     with (folder / "run_pipeline.sh").open('w') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
@@ -251,6 +253,8 @@ def queue_populate(
     cmd = get_cmd(seed, 'populate', configs, taskname, 
                   input_folder=input_folder, 
                   output_folder=output_folder) + f'''
+        LOG_DIR='{folder / "logs"}'
+    '''.split("\n") + overrides
 
     with (folder / "run_pipeline.sh").open('a') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
@@ -258,6 +262,8 @@ def queue_populate(
     res = submit_cmd(cmd,
         folder=folder,
         name=name,
+        gpus=0,
+        slurm_exclude=get_slurm_banned_nodes(),
         **kwargs
     )
     return res, output_folder
@@ -269,6 +275,7 @@ def queue_fine_terrain(
     name,
     seed,
     configs,
+    gpus=0,
     taskname=None,
     exclude_gpus=[],
     overrides=[],
@@ -284,11 +291,13 @@ def queue_fine_terrain(
 
     output_folder = Path(f'{folder}/fine{output_suffix}')
 
+    enable_gpu_in_terrain = "Terrain.device='cuda'" if gpus > 0 else ""
     cmd = get_cmd(seed, 'fine_terrain', configs, taskname,
                   input_folder=f'{folder}/coarse{input_suffix}',
                   output_folder=output_folder) + f'''
         LOG_DIR='{folder / "logs"}'
         {enable_gpu_in_terrain}
+    '''.split("\n") + overrides
 
     with (folder / "run_pipeline.sh").open('a') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
@@ -296,6 +305,7 @@ def queue_fine_terrain(
     res = submit_cmd(cmd,
         folder=folder,
         name=name,
+        gpus=gpus,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         **kwargs
     )
@@ -310,7 +320,9 @@ def queue_combined(
     configs,
     taskname=None,
     mem_gb=None,
+    exclude_gpus=[],
     cpus=None,
+    gpus=0,
     hours=None,
     slurm_account=None,
     overrides=[],
@@ -328,10 +340,12 @@ def queue_combined(
 
     output_folder = Path(f'{folder}/fine{output_suffix}')
 
+    enable_gpu_in_terrain = "Terrain.device='cuda'" if gpus > 0 else ""
     cmd = get_cmd(seed, tasks, configs, taskname, 
                   input_folder=f'{folder}/coarse{input_suffix}' if not include_coarse else None,
                   output_folder=output_folder) + f'''
         LOG_DIR='{folder / "logs"}'
+        {enable_gpu_in_terrain}
     '''.split("\n") + overrides
 
     with (folder / "run_pipeline.sh").open('a') as f:
@@ -342,7 +356,9 @@ def queue_combined(
         folder=folder,
         name=name,
         cpus=cpus,
+        gpus=gpus,
         hours=hours,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         slurm_account=slurm_account,
     )
     return res, output_folder
@@ -371,6 +387,8 @@ def queue_render(
                   input_folder=f'{folder}/fine{input_suffix}',
                   output_folder=f'{output_folder}') + f'''
         render.render_image_func=@{render_type}/render_image
+        LOG_DIR='{folder / "logs"}'
+    '''.split("\n") + overrides
 
     with (folder / "run_pipeline.sh").open('a') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
@@ -486,6 +504,7 @@ def queue_opengl(
 def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
 
     n_scenes = args.num_scenes
+
     scenes = []
 
     if args.use_existing:
@@ -503,6 +522,7 @@ def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
 
             finish_key = 'FINISH_'
             for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
+                taskname = os.path.basename(finish_file_name)[len(finish_key):]
                 print(f'Marking {seed_folder.name=} {taskname=} as completed')
                 scene_dict[f'{taskname}_submitted'] = True
                 scene_dict[f'{taskname}_job_obj'] = 'MARK_AS_SUCCEEDED'
@@ -510,6 +530,7 @@ def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
             scenes.append(scene_dict)
     elif args.specific_seed is not None and len(args.specific_seed):
         return [{"seed": s, "all_done": SceneState.NotDone} for s in args.specific_seed]
+    
     if n_scenes > 0:
         for scenetype in enumerate_scenetypes:
             for i in range(n_scenes//len(enumerate_scenetypes)):
@@ -527,6 +548,9 @@ def update_symlink(scene_folder, scenes):
     for new_name, scene in scenes:
         std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
         to = scene_folder / "logs" / f"{new_name}.out"
+        if os.path.islink(to):
+            os.unlink(to)
+            os.unlink(scene_folder / "logs" / f"{new_name}.err")
         os.symlink(std_out.resolve(), to)
         os.symlink(std_out.with_suffix('.err').resolve(), scene_folder / "logs" / f"{new_name}.err")
 
@@ -651,6 +675,8 @@ def iterate_scene_tasks(
         raise ValueError(f'{cam_id_ranges=} is invalid, both num. rigs and num subcams must be >= 1 or no work is done')
     assert view_block_size >= 1
     assert cam_block_size >= 1
+    if cam_block_size > view_block_size:
+        cam_block_size = view_block_size
     seed = scene_dict['seed']
 
     scene_folder = args.output_folder/seed
@@ -702,6 +728,7 @@ def iterate_scene_tasks(
 
         running_blocks = 0
         for subcam, resample_idx in itertools.product(subcams, resamples):
+            for cam_frame in range(view_frame_range[0], view_frame_range[1] + 1, cam_block_size):
                 cam_frame_range = [cam_frame, min(view_frame_range[1], cam_frame + cam_block_size - 1)] # blender frame_end is INCLUSIVE
                 cam_overrides = [
                     f'execute_tasks.frame_range=[{cam_frame_range[0]},{cam_frame_range[1]}]',
@@ -716,6 +743,7 @@ def iterate_scene_tasks(
                 camera_dep_iter = iterate_sequential_tasks(
                     camera_dependent_tasks, get_task_state,
                     overrides=args.override+cam_overrides, configs=global_configs,
+                    input_indices=view_idxs if len(view_dependent_tasks) else None,
                     output_indices=camdep_indices)
                 for state, *rest in camera_dep_iter:
                     yield state, *rest
@@ -837,6 +865,7 @@ def stats_summary(stats):
     return stats
 
 @gin.configurable
+def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, sleep_threshold=0.95):
 
     if LocalScheduleHandler._inst is not None:
         LocalScheduleHandler.instance().poll()
@@ -875,6 +904,7 @@ def stats_summary(stats):
     print("-" * 60)
 
     # Dont launch new scenes if disk is getting full
+    if stats['disk_usage'] > sleep_threshold:
         print(f"{args.output_folder} is too full ({get_disk_usage(args.output_folder)}%). Sleeping.")
         wandb.alert(title='Disk full', text=f'Sleeping due to full disk at {args.output_folder=}', wait_duration=3*60*60)
         time.sleep(60)
@@ -960,6 +990,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--wandb_mode', type=str, default='disabled', choices=['online', 'offline', 'disabled'])
     parser.add_argument('--pipeline_configs', type=str, nargs='+', default=["allcs" if slurm_available else "local"])
+    parser.add_argument('--pipeline_overrides', nargs='+', type=str, default=[], help="pipeline gin-config settings to override")
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
     args = parser.parse_args()
@@ -989,10 +1020,13 @@ if __name__ == "__main__":
 
     if args.meta_seed is not None:
         random.seed(args.meta_seed)
+        np.random.seed(args.meta_seed)
 
     find_gin = lambda n: os.path.join("tools", "pipeline_configs", f"{n}.gin")
     configs = [find_gin(n) for n in args.pipeline_configs]
     for c in configs:
         assert os.path.exists(c), c
+    bindings = args.pipeline_overrides
+    gin.parse_config_files_and_bindings(configs, bindings=bindings)
 
     main(args)
