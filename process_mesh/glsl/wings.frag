@@ -1,3 +1,7 @@
+// FRAGMENT SHADER
+
+#version 440 core
+
 uniform vec3 cameraPos;
 
 uniform int object_index;
