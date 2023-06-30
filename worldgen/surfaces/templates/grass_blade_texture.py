@@ -160,7 +160,12 @@ def shader_grass_texture_original(nw: NodeWrangler):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
     
+    coord = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: texture_coordinate.outputs["UV"], 'Scale': uniform(0.02, 0.2)},
+        attrs={'operation': 'SCALE'})
+
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
+        input_kwargs={'Vector': coord})
     
     edge_height = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["X"], 1: 6.0, 2: -10.0},
@@ -179,16 +184,30 @@ def shader_grass_texture_original(nw: NodeWrangler):
     mix_1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': 0.2, 'Color1': wave_texture.outputs["Color"], 'Color2': musgrave_texture})
     
+    
+    object_info = nw.new_node(Nodes.ObjectInfo_Shader)
+    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1})
+    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': map_range_1.outputs["Result"]})
+    
     pallete = np.random.choice([pallete1, pallete2, pallete3, pallete4, pallete5])
+    np.random.shuffle(pallete)
+    pallete = pallete[:np.random.randint(4, len(pallete))]
     for _ in range(len(pallete)-2):
         colorramp.color_ramp.elements.new(0)
     assert len(pallete) == len(colorramp.color_ramp.elements)
     for el, (rgba, pos) in zip(colorramp.color_ramp.elements, pallete):
         el.position = pos
         el.color = tuple(rgba)
+
+    rough1, rough2 = uniform(0.2, 0.6, 2)
+    roughness = nw.new_node(Nodes.MapRange, [mix_1, 0, 1, rough1, rough2])
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Roughness': roughness})
+    translucent = nw.new_node(Nodes.TranslucentBSDF, [colorramp.outputs["Color"]])
+    shader = nw.new_node(Nodes.MixShader, [0.7, principled_bsdf, translucent])
     
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': shader})
 
 
 
