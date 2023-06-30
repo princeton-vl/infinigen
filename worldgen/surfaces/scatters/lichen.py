@@ -3,9 +3,11 @@ from functools import reduce
 import bpy
 import colorsys
 import numpy as np
+from numpy.random import uniform, normal as N
 
 from assets.utils.decorate import assign_material
 from nodes.node_wrangler import Nodes, NodeWrangler
+from placement.factory import AssetFactory, make_asset_collection
 from placement.instance_scatter import scatter_instances
 from surfaces import surface
 from placement.factory import AssetFactory
@@ -24,6 +26,7 @@ class LichenFactory(AssetFactory):
     @staticmethod
     def build_lichen_circle_mesh(n):
         angles = polygon_angles(n)
+        z_jitter = N(0., .02, n)
         r_jitter = np.exp(uniform(-.2, 0., n))
         vertices = np.concatenate(
             [np.stack([np.cos(angles) * r_jitter, np.sin(angles) * r_jitter, z_jitter]).T, np.zeros((1, 3))], 0)
@@ -85,6 +88,22 @@ class LichenFactory(AssetFactory):
         butil.apply_transform(obj)
         assign_material(obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen,
                                                             (self.base_hue + uniform(-.04, .04)) % 1))
+        
         return obj
 
 
+class Lichen:
+
+    def __init__(self):
+        self.fac = LichenFactory(np.random.randint(1e5))
+        self.col = make_asset_collection(self.fac, name='lichen', n=5)
+
+    def apply(self, obj, selection=None):
+
+        scatter_obj = scatter_instances(
+            base_obj=obj, collection=self.col, 
+            density=5e3,  min_spacing=.08, 
+            scale=1, scale_rand=N(0.5, 0.07),
+            selection=selection
+        )
+        return scatter_obj
