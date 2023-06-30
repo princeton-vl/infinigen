@@ -19,6 +19,7 @@ from util import blender as butil
 from util.math import FixedSeed
 
 from nodes.node_wrangler import Nodes
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 @gin.configurable
@@ -82,6 +83,7 @@ class CloudFactory(AssetFactory):
         resolution = int(resolution)
         new_cloud = cloud_type("Cloud", self.ref_cloud)
         new_cloud = new_cloud.make_cloud(marching_cubes=False, resolution=resolution, )
+        tag_object(new_cloud, 'cloud')
         return new_cloud
 
     @staticmethod
