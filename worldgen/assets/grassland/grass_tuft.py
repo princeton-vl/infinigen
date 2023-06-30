@@ -10,6 +10,7 @@ import numpy as np
 from numpy.random import uniform, normal
 
 from assets.creatures.geometry.curve import Curve
+from util.blender import deep_clone_obj
 
 from surfaces.templates import grass_blade_texture
 
