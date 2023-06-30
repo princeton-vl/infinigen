@@ -16,6 +16,7 @@ extern "C" {
         float *auxs
     ) {
         using namespace data;
+        int n_auxiliaries = 3;
         if (auxs == NULL) n_auxiliaries = 0;
         #pragma omp parallel for
         for (size_t idx = 0; idx < size; idx++) {
