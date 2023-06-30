@@ -51,7 +51,19 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             attrs={"noise_dimensions": "4D"},
         )
 
+        colorramp_2 = nw.new_node(Nodes.MapRange,
+            input_kwargs={"Value": noise_texture_2.outputs["Fac"], 1: nw.new_value(0.445 + (2 * dens_crack) - 0.1, "colorramp_2_a"), 2: nw.new_value(0.505 + (2 * dens_crack) - 0.1, "colorramp_2_b"), 3: 0.0, 4: 1.0},
+            attrs={'clamp': True}
         )
+
+        #nw.new_node(
+        #    Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]},
+        #    label = "color_ramp_2_VAR"
+        #)
+        #colorramp_2.color_ramp.elements[0].position = 0.445 + (2 * dens_crack) - 0.1
+        #colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        #colorramp_2.color_ramp.elements[1].position = 0.505 + (2 * dens_crack) - 0.1
+        #colorramp_2.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
         noise_texture_1 = nw.new_node(
             Nodes.NoiseTexture,
@@ -70,9 +82,47 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             attrs={"feature": "DISTANCE_TO_EDGE"},
         )
 
+        colorramp_1 = nw.new_node(Nodes.MapRange,
+            input_kwargs={"Value":voronoi_texture.outputs["Distance"], 1: 0.0, 2: nw.new_value(widt_crack, "colorramp_1"), 3: 0.0, 4: 1.0},
+            # label = "color_ramp_1_VAR",
+            attrs={'clamp': True}
+        )
+        
+        #nw.new_node(
+        #    Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]},
+        #    label="color_ramp_1_VAR"
+        #)
+        #colorramp_1.color_ramp.elements[0].position = 0.0
+        #colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        #colorramp_1.color_ramp.elements[1].position = widt_crack
+        #colorramp_1.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+
+        mix_sub = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: (1.0, 1.0, 1.0), 1: colorramp_2.outputs["Result"]},
+            attrs={"operation": "SUBTRACT"},
         )
 
+        mix_mul1 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: mix_sub.outputs["Vector"], 1: colorramp_1.outputs["Result"]},
+            attrs={"operation": "MULTIPLY"},
         )
+
+        mix_mul2 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: colorramp_2.outputs["Result"], 1: (0.5, 0.5, 0.5)},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        mix = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: mix_mul1.outputs["Vector"], 1: mix_mul2.outputs["Vector"]},
+        )
+
+        #nw.new_node(
+        #    Nodes.MixRGB,
+        #    input_kwargs={
+        #        "Fac": colorramp_2.outputs["Color"],
+        #        "Color1": colorramp_1.outputs["Color"],
+        #    },
+        #)
 
         vector_math_2 = nw.new_node(
             Nodes.VectorMath,
@@ -94,6 +144,7 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
 
         vector_math_8 = nw.new_node(
             Nodes.VectorMath,
+            input_kwargs={0: vector_math_5.outputs["Vector"], 1: value_3},
             attrs={"operation": "MULTIPLY"},
         )
         
@@ -154,7 +205,10 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp.color_ramp.elements.new(1)
         colorramp.color_ramp.elements[0].position = 0.223
         colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        colorramp.color_ramp.elements[1].position = 0.71
+        colorramp.color_ramp.elements[1].color = (0.18, 0.075, 0.05, 1.0)
         colorramp.color_ramp.elements[2].position = 1.0
+        colorramp.color_ramp.elements[2].color = (0.19, 0.03, 0.02, 1.0)
         sample_color(colorramp.color_ramp.elements[1].color, offset=0.05)
         sample_color(colorramp.color_ramp.elements[2].color, offset=0.05)
         
@@ -170,6 +224,7 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp_3 = nw.new_node(
             Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
         )
+        colorramp_3.color_ramp.elements[0].position = 0.08
         colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
         colorramp_3.color_ramp.elements[1].position = 0.768
         colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
@@ -191,3 +246,17 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
     else:
         return dirt_base_color, dirt_roughness
+
+
+if __name__ == "__main__":
+    mat = 'dirt'
+    if not os.path.isdir(os.path.join('outputs', mat)):
+        os.mkdir(os.path.join('outputs', mat))
+    for i in range(10):
+        bpy.ops.wm.open_mainfile(filepath='landscape_surface_dev.blend')
+        apply(bpy.data.objects['Plane.002'])
+        bpy.context.scene.render.filepath = os.path.join('outputs', mat, '%s_%d.jpg'%(mat, i))
+        bpy.context.scene.render.image_settings.file_format='JPEG'
+        bpy.ops.render.render(write_still=True)
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join('outputs', mat, 'landscape_surface_dev_dirt.blend'))
+        
