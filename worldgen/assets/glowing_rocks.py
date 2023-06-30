@@ -14,6 +14,7 @@ from placement.factory import AssetFactory, make_asset_collection
 from surfaces.scatters.rocks import BlenderRockFactory
 from surfaces import surface
 from nodes.color import color_category
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
@@ -70,4 +71,5 @@ class GlowingRocksFactory(AssetFactory):
         point_light = bpy.context.selected_objects[0]
         point_light.data.energy = round(np.random.uniform(*self.watt_power_range))
         point_light.parent = new_obj
+        tag_object(new_obj, 'glowing_rocks')
         return new_obj
