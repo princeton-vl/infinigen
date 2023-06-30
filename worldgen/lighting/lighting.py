@@ -5,12 +5,15 @@ from util.random import random_general as rg
 
 from nodes.node_wrangler import Nodes, NodeWrangler
 from util.math import clip_gaussian
+
 @gin.configurable
 def nishita_lighting(
     nw,
     cam,
     dust_density=("clip_gaussian", 1, 1, 0.1, 2),
     air_density=("clip_gaussian", 1, 0.2, 0.7, 1.3),
+    strength=("uniform", 0.18, 0.22),
+    sun_intensity=("uniform", 0.8, 1),
     sun_elevation=("spherical_sample", 10, None),
     dynamic=False,
     rising_angle=90,
@@ -40,6 +43,8 @@ def nishita_lighting(
     sky_texture.air_density =rg(air_density)
     sky_texture.dust_density = rg(dust_density)
     sky_texture.ozone_density = clip_gaussian(1, 1, 0.1, 10)
+    strength = rg(strength)
+    return nw.new_node(Nodes.Background, input_kwargs={'Color': sky_texture, 'Strength': strength})
 
 def add_lighting(cam=None):
     nw = NodeWrangler(bpy.context.scene.world.node_tree)
@@ -56,6 +61,12 @@ def add_lighting(cam=None):
         'Surface': surface,
         'Volume': volume
     })
+
 @gin.configurable
+def add_camera_based_lighting(energy=("log_uniform", 200, 500), spot_size=("uniform", np.pi / 6, np.pi / 4)):
+    camera = bpy.context.scene.camera
+    bpy.ops.object.light_add(type='SPOT', location=camera.location, rotation=camera.rotation_euler)
+    spot = bpy.context.active_object
     spot.data.energy = rg(energy)
     spot.data.spot_size = rg(spot_size)
+    spot.data.spot_blend = uniform(.6, .8)
