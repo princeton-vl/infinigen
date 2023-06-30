@@ -328,11 +328,56 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind='duck', tail=False, **
                 sample_color(colorramp.color_ramp.elements[1].color, offset=0.005)
                 colorramp.color_ramp.elements[0].position = sample_range(0.56, 0.62)
 
+    texture_coordinate = nw.new_node(Nodes.TextureCoord)
+
+    mapping = nw.new_node(Nodes.Mapping,
+                          input_kwargs={'Vector': texture_coordinate.outputs["Object"]})
+
+    wave_texture = nw.new_node(Nodes.WaveTexture,
+                               input_kwargs={'Vector': mapping, 'Scale': 5.00, 'Distortion': 10.0000, 'Detail': 10.0000,
+                                             'Detail Roughness': 2.0000})
+
+    colorramp2 = nw.new_node(Nodes.ColorRamp,
+                            input_kwargs={'Fac': wave_texture.outputs["Color"]})
+    colorramp2.color_ramp.elements[0].position = 0.0955
+    colorramp2.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
+    colorramp2.color_ramp.elements[1].position = 0.6364
+    colorramp2.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
+
+    mix = nw.new_node(Nodes.MixRGB,
+        input_kwargs={'Fac': 0.5 if tail else 1.0, 'Color1': colorramp2.outputs["Color"], 'Color2': colorramp.outputs["Color"]})
+
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+        input_kwargs={'Base Color': mix.outputs["Color"], 'Specular': 0.0, 'Roughness': 1.0},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})
+
+def shader_wave_feather(nw: NodeWrangler, **input_kwargs):
+    # Code generated using version 2.5.1 of the node_transpiler
+
+    texture_coordinate = nw.new_node(Nodes.TextureCoord)
+
+    mapping = nw.new_node(Nodes.Mapping,
+                          input_kwargs={'Vector': texture_coordinate.outputs["Object"]})
+
+    wave_texture = nw.new_node(Nodes.WaveTexture,
+                               input_kwargs={'Vector': mapping, 'Scale': 5.00, 'Distortion': 10.0000, 'Detail': 10.0000,
+                                             'Detail Roughness': 2.0000})
+
+    colorramp = nw.new_node(Nodes.ColorRamp,
+                            input_kwargs={'Fac': wave_texture.outputs["Color"]})
+    colorramp.color_ramp.elements[0].position = 0.0955
+    colorramp.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
+    colorramp.color_ramp.elements[1].position = 0.6364
+    colorramp.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
+
+    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+                                  input_kwargs={'Base Color': colorramp.outputs["Color"]})
+
+    material_output = nw.new_node(Nodes.MaterialOutput,
+                                  input_kwargs={'Surface': principled_bsdf})
 
 def shader_bird_beak(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
