@@ -10,6 +10,7 @@ from surfaces.templates import simple_brownish
 from placement.factory import AssetFactory
 import numpy as np
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_pedal_stem_head_geometry', singleton=False, type='GeometryNodeTree')
@@ -139,6 +140,7 @@ def nodegroup_pedal_stem_branch_shape(nw: NodeWrangler):
                                                    'Rotation': align_euler_to_vector})
 
     random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.2000, 3: 0.2000, 'Seed': 2})
+
     random_value_2 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.2000, 3: 0.2000, 'Seed': 1})
 
     random_value = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.2000, 3: 0.2000})
@@ -356,6 +358,7 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
                                              'Material': surface.shaderfunc_to_material(simple_greenery.shader_simple_greenery)})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Mesh': tag_nodegroup(nw, set_material, 'stem')})
 
 
 @node_utils.to_nodegroup('nodegroup_pedal_stem', singleton=False, type='GeometryNodeTree')
@@ -466,13 +469,18 @@ def nodegroup_flower_geometry(nw: NodeWrangler, params):
                                                      'Instance': group_input.outputs["Instance"],
                                                      'Rotation': align_euler_to_vector_1, 'Scale': multiply})
 
+    realize_instances_1 = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': instance_on_points_1})   
+
     set_material = nw.new_node(Nodes.SetMaterial,
                                input_kwargs={'Geometry': transform,
                                              'Material': surface.shaderfunc_to_material(simple_whitish.shader_simple_white)})
 
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry,
+                                  input_kwargs={'Geometry': [realize_instances_1, set_material]})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Geometry': tag_nodegroup(nw, join_geometry_1, 'flower')})
 
 
 @node_utils.to_nodegroup('nodegroup_flower_on_stem', singleton=False, type='GeometryNodeTree')
@@ -498,7 +506,12 @@ def nodegroup_flower_on_stem(nw: NodeWrangler):
                                                      'Instance': group_input.outputs["Instance"],
                                                      'Rotation': align_euler_to_vector_2})
 
+    realize_instances_2 = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': instance_on_points_2})
+    
+
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Instances': realize_instances_2})
 
 
 def geometry_dandelion_nodes(nw: NodeWrangler, **kwargs):
@@ -617,6 +630,8 @@ class DandelionFactory(AssetFactory):
         mode = np.random.choice(self.flower_mode, p=self.flower_mode_pb)
         params = self.get_mode_params(mode)
 
+        surface.add_geomod(obj, geometry_dandelion_nodes, apply=True, attributes=[], input_kwargs=params)
+        tag_object(obj, 'dandelion')
         return obj
 
 
@@ -629,6 +644,8 @@ class DandelionSeedFactory(AssetFactory):
             size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        surface.add_geomod(obj, geometry_dandelion_seed_nodes, apply=True, attributes=[], input_kwargs=params)
+        tag_object(obj, 'seed')
         return obj
 
 
