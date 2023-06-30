@@ -127,6 +127,8 @@ def duck_genome(mode):
         wing = genome.part(wing_fac)
         genome.attach(wing, body, coord=wing_coord, joint=Joint(rest=wing_rot), side=side)
 
+    head_fac = parts.head.BirdHead()
+    head = genome.part(head_fac)
 
     beak = genome.part(parts.beak.BirdBeak())
     genome.attach(beak, head, coord=(0.75, 0, 0.5), joint=Joint(rest=(0, 0, 0)))
