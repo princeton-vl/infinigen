@@ -12,6 +12,7 @@ import numpy as np
 from assets.creatures.creature import Part, Joint, infer_skeleton_from_mesh
 from util import blender as butil
 
+from nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
 
 def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
 
@@ -21,6 +22,9 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
     vert = butil.spawn_vert('extract_nodegroup_geo.temp')
 
     butil.modify_mesh(vert, type='NODES', apply=False)
+    if vert.modifiers[0].node_group == None:
+        group = geometry_node_group_empty_new()
+        vert.modifiers[0].node_group = group
     ng = vert.modifiers[0].node_group
     nw = NodeWrangler(ng)
     obj_inp = nw.new_node(Nodes.ObjectInfo, [target_obj])
