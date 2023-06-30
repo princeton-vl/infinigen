@@ -1,3 +1,4 @@
+import ast
 import os
 import random
 import cProfile
@@ -25,6 +26,7 @@ from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, Fi
     CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
+from assets.cactus import CactusFactory
 from assets.creatures import boid_swarm
 import surfaces.scatters
 from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_twigs, \
@@ -37,6 +39,8 @@ from surfaces.templates import mountain, sand, water, atmosphere_light_haze, san
 from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
 from assets import particles as particle_assets
 from surfaces.scatters import pine_needle, seaweed, coral_reef, jellyfish, urchin
+from assets import boulder, cactus, caustics_lamp
+from assets.monocot import kelp
 from surfaces import surface
 
 import surfaces.scatters
@@ -54,6 +58,7 @@ import core as infinigen
 def compose_scene(output_folder, terrain, scene_seed, **params):
 
     p = RandomStageExecutor(scene_seed, output_folder, params)
+
     p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
 
     season = p.run_stage('season', random_season, use_chance=False)
@@ -121,6 +126,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     p.run_stage('glowing_rocks', add_glowing_rocks, terrain_mesh)
 
     def add_kelp(terrain_mesh):
+        fac = kelp.KelpMonocotFactory(int_hash((scene_seed, 0)), coarse=True)
         selection = density.placement_mask(scale=0.05, tag=underwater_domain)
         placement.scatter_placeholders_mesh(terrain_mesh, fac, altitude=-0.05,
             overall_density=params.get('kelp_density', uniform(.2, 1)),
@@ -250,6 +256,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, tag=land_domain)
         selection = density.placement_mask(
+            normal_dir=(0, 0, 1), scale=0.2, select_thresh=0.55,
             tag=params.get("grass_habitats", None))
         surfaces.scatters.monocot.apply(target, grass=False, selection=selection)
     p.run_stage('monocots', add_monocots, terrain_inview)
@@ -301,6 +308,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
 
     def add_leaf_particles():
         return particles.particle_system(
+            emitter=butil.spawn_plane(location=emitter_off, size=60),
             subject=random_leaf_collection(n=5, season=season),
             settings=particles.falling_leaf_settings())
     def add_rain_particles():
@@ -313,6 +321,11 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
             emitter=butil.spawn_cube(location=Vector(), size=30),
             subject=make_asset_collection(particle_assets.DustMoteFactory(scene_seed), 5),
             settings=particles.floating_dust_settings())
+    def add_marine_snow_particles():
+        return particles.particle_system(
+            emitter=butil.spawn_cube(location=Vector(), size=30),
+            subject=make_asset_collection(particle_assets.DustMoteFactory(scene_seed), 5),
+            settings=particles.marine_snow_setting())
     def add_snow_particles():
         return particles.particle_system(
             emitter=butil.spawn_plane(location=emitter_off, size=60),
@@ -323,8 +336,10 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
         p.run_stage('leaf_particles', add_leaf_particles, prereq='trees'),
         p.run_stage('rain_particles', add_rain_particles),
         p.run_stage('dust_particles', add_dust_particles),
+        p.run_stage('marine_snow_particles', add_marine_snow_particles),
         p.run_stage('snow_particles', add_snow_particles),
     ]
+
     for emitter, system in filter(lambda s: s is not None, particle_systems):
         with Timer(f"Baking particle system"):
             butil.constrain_object(emitter, "COPY_LOCATION", use_offset=True, target=cam.parent)
@@ -344,8 +359,10 @@ def main():
                         choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save'])
     parser.add_argument('-g', '--gin_config', nargs='+', default=['base'],
                         help='Set of config files for gin (separated by spaces) '
+                             'e.g. --gin_config file1 file2 (exclude .gin from path)')
     parser.add_argument('-p', '--gin_param', nargs='+', default=[],
                         help='Parameter settings that override config defaults '
+                             'e.g. --gin_param module_1.a=2 module_2.b=3')
     parser.add_argument('--task_uniqname', type=str, default=None)
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
