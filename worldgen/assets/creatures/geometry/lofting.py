@@ -41,11 +41,14 @@ class Skin:
     and what shape should the mesh extend beyond the structure of the skeleton
 
     N = number of defined profiles along the skeleton
+    M = number of points per profile
     '''
 
     ts: np.array # shape (N) float
+    profiles: np.array # shape (N x M) float as polar distances; or NxMx3 as points with x as forward axis
     
     profile_as_points: bool = False # whether to interpret profiles as points
+
     angles: np.array = None # shape (M) float
     surface_params: np.array = None # shape (N x M x K) float, K is num params per vert
 
@@ -69,10 +72,13 @@ def skeleton_to_tangents(skeleton):
 def default_profile_angles(m):
     return np.linspace(-np.pi/2, 1.5 * np.pi, m, endpoint=False)
 
+def compute_profile_verts(skeleton, ts, profiles, angles=None, profile_as_points=False):
 
+    n, m = profiles.shape[0:2]
     k = len(skeleton)
 
     # default angles point index 0 to -z by convention
+    if angles is None and not profile_as_points:
         angles = default_profile_angles(m)
 
     # decide the axes of rotation for each integer distance along the skeleton
@@ -84,6 +90,12 @@ def default_profile_angles(m):
     pos = lerp_sample(skeleton, ts * (k - 1))
     
     # compute profile shapes
+    if profile_as_points:
+        assert(profiles.shape[2]==3)
+        profile_verts = profiles; 
+    else:
+        unit_circle = np.stack([np.zeros_like(angles), np.cos(angles), np.sin(angles)], axis=-1)
+        profile_verts = profiles[..., None] * unit_circle[None]
 
     # pose profiles to get vert locations
     forward = np.zeros_like(axes)
@@ -95,9 +107,12 @@ def default_profile_angles(m):
 
 def loft(skeleton, skin, method='blender', face_size=0.01, debug=False, **kwargs):
     
+    ctrlpts = compute_profile_verts(skeleton, skin.ts, skin.profiles, skin.angles, profile_as_points=skin.profile_as_points)
     obj = nurbs(ctrlpts, method, face_size, debug, **kwargs)
 
     if debug:
         skeleton_debug = butil.spawn_point_cloud('skeleton_debug', skeleton)
         skeleton_debug.parent = obj
+
+    return obj
 
