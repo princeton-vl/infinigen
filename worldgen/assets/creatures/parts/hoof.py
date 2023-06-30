@@ -1,5 +1,6 @@
 import bpy 
 import bmesh
+import mathutils
 
 import numpy as np
 from math import sin, cos, pi, exp
@@ -93,6 +94,19 @@ class Hoof():
 
         method = 'blender' if False else 'geomdl'
 
+        obj = nurbs_util.nurbs(ctrls, method, face_size=0.01)
+        obj = self.make_face(obj)
+        
+        top_pos = mathutils.Vector(ctrls[-1].mean(axis=0))
+        with butil.CursorLocation(top_pos), butil.SelectObjects(obj):
+            bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        obj.location = (0,0,0)
+
+        obj.rotation_euler.y -= np.pi / 2
+        butil.apply_transform(obj, rot=True)
+
+        return obj
+
 class HoofClaw(PartFactory):
 
     param_templates = {}
@@ -102,6 +116,9 @@ class HoofClaw(PartFactory):
         params = {
             'n': 20,
             'm': 20, 
+            'sx': 0.1 * N(1, 0.05),
+            'sy': 0.1 * N(1, 0.05),
+            'sz': 0.08 * N(1, 0.05),
             'r': 0.5 + N(0, 1)
         }
         return params
@@ -113,6 +130,8 @@ class HoofClaw(PartFactory):
         hoof.parent = obj
         hoof.name = 'HoofClaw'
 
+        part = Part(skeleton=np.zeros((1, 3)), obj=obj, joints={}, iks={})
+        return part
 
 @node_utils.to_nodegroup('nodegroup_hoof', singleton=False, type='GeometryNodeTree')
 def nodegroup_hoof(nw: NodeWrangler):
@@ -174,4 +193,6 @@ class HoofAnkle(PartFactory):
         ankle.scale = self.ankle_scale
         butil.apply_transform(ankle, scale=True)
         
+        part.iks = {1.0: IKParams('foot', rotation_weight=0.1, chain_parts=2, chain_length=-1)}
+
         return part
