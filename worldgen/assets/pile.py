@@ -16,6 +16,7 @@ from placement.factory import AssetFactory
 import util.blender as butil
 from assets.utils.decorate import join_objects, multi_res, toggle_hide
 from assets.utils.draw import surface_from_func
+from util.blender import deep_clone_obj
 from assets.utils.tag import tag_object, tag_nodegroup
 
 
