@@ -175,6 +175,7 @@ class CrustaceanFactory(AssetFactory):
     max_expected_radius = 1
     max_distance = 40
 
+    def __init__(self, factory_seed, coarse=False, **_):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.species_params = {
@@ -289,14 +290,20 @@ class CrustaceanFactory(AssetFactory):
         }
 
 
+@gin.configurable
 class CrabFactory(CrustaceanFactory):
+    def __init__(self, factory_seed, coarse=False, **_):
         super().__init__(factory_seed, coarse)
         self.species = 'crab'
 
+@gin.configurable
 class LobsterFactory(CrustaceanFactory):
+    def __init__(self, factory_seed, coarse=False, **_):
         super().__init__(factory_seed, coarse)
         self.species = 'lobster'
 
+@gin.configurable
 class SpinyLobsterFactory(CrustaceanFactory):
+    def __init__(self, factory_seed, coarse=False, **_):
         super().__init__(factory_seed, coarse)
         self.species = 'spiny_lobster'
