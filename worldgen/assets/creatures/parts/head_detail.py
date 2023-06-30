@@ -4,6 +4,8 @@
 # Authors: Alexander Raistrick
 # Date Signed: May 30, 2023
 
+import bpy 
+
 from platform import node
 import numpy as np
 from numpy.random import normal as N, uniform as U
