@@ -1,0 +1,4 @@
+queue_fine_terrain.gpus = 1
+queue_combined.gpus = 1
+queue_fine_terrain.exclude_gpus = ['gtx_1080', 'k80', 'rtx_2080']
+queue_combined.exclude_gpus = ['gtx_1080', 'k80', 'rtx_2080']
