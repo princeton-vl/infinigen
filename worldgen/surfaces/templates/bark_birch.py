@@ -151,6 +151,7 @@ def nodegroup_birch_geo(nw):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Factor': multiply_4})
 
+def shader_birch_mat(nw, selection=None):
     attribute = nw.new_node(Nodes.Attribute,
         attrs={'attribute_name': 'initial_position'})
     
@@ -166,9 +167,13 @@ def nodegroup_birch_geo(nw):
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})
 
+def geo_bark_birch(nw, selection=None):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),])
 
+    parent_loc = nw.new_node(Nodes.NamedAttribute, ['parent_skeleton_loc'], attrs={'data_type': 'FLOAT_VECTOR'})
+    skeleton_loc = nw.new_node(Nodes.NamedAttribute, ['skeleton_loc'], attrs={'data_type': 'FLOAT_VECTOR'})
+        
     position = nw.new_node(Nodes.InputPosition)
     
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
@@ -176,11 +181,18 @@ def nodegroup_birch_geo(nw):
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     canonicalcoord = nw.new_node(nodegroup_canonical_coord().name,
+        input_kwargs={'Self Location': skeleton_loc, 'Parent Location': parent_loc})
     
     birchgeo = nw.new_node(nodegroup_birch_geo().name,
         input_kwargs={'Position': canonicalcoord})
     
     group = nw.new_node(nodegroup_apply_geo_matv2().name,
+        input_kwargs={
+            'Geometry': capture_attribute.outputs["Geometry"], 
+            'Displacement Amount': nw.multiply(birchgeo, surface.eval_argument(nw, selection)), 
+            'Displacement Scale': 0.05, 
+            'Material': surface.shaderfunc_to_material(shader_birch_mat)
+        })
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': group, 'initial_position': capture_attribute.outputs["Attribute"]})
@@ -188,3 +200,5 @@ def nodegroup_birch_geo(nw):
 
 
 def apply(obj, selection=None, **kwargs):
+    surface.add_geomod(obj, geo_bark_birch, selection=selection, attributes=['initial_position'])
+    surface.add_material(obj, shader_birch_mat)
