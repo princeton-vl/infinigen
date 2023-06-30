@@ -176,11 +176,13 @@ DEVICE_FUNC void landtiles(
             for (int a = 0; a < intrinsic_auxiliaries; a++)
                 auxs[a] = 0;
         }
+        auxs[intrinsic_auxiliaries] = 0;
     }
     if (auxs != 0 && attribute_modification) {
         float middle1 = attribute_modification_start_height * 0.9 + attribute_modification_end_height * 0.1;
         float middle2 = attribute_modification_start_height * 0.1 + attribute_modification_end_height * 0.9;
         float distort = Perlin(position.x, position.y, position.z, myhash(seed, n_lattice), 4, attribute_modification_distort_freq) * attribute_modification_distort_mag;
+        auxs[intrinsic_auxiliaries] = fmaxf(auxs[intrinsic_auxiliaries], ramp(position.z + distort, attribute_modification_start_height, middle1) - ramp(position.z + distort, middle2, attribute_modification_end_height));
         for (int a = 0; a < intrinsic_auxiliaries; a++) {
             auxs[a] *= (1 - auxs[intrinsic_auxiliaries]);
         }
@@ -189,5 +191,7 @@ DEVICE_FUNC void landtiles(
     if (is_caved) {
         float prior_sdf = *sdf;
         caves(position, sdf, caves_i_params, caves_f_params, prior_sdf);
+        if (auxs != NULL) auxs[intrinsic_auxiliaries + 1] = prior_sdf < *sdf;
     }
+    else if (auxs != NULL) auxs[intrinsic_auxiliaries + 1] = 0;
 }
