@@ -1,3 +1,4 @@
+import os
 import time
 import warnings
 import bpy
@@ -7,7 +8,10 @@ import os
 import cv2
 import numpy as np
 import logging
+
+from imageio import imwrite, imread
 from pathlib import Path
+from placement import camera as cam_util
 from nodes.node_wrangler import NodeWrangler, Nodes
 from rendering.post_render import exr_depth_to_jet, flow_to_colorwheel, mask_to_color
 
@@ -79,13 +83,32 @@ def make_clay():
 					mat_slot.material = clay_material
 
 def enable_gpu(engine_name = 'CYCLES'):
+    # from: https://github.com/DLR-RM/BlenderProc/blob/main/blenderproc/python/utility/Initializer.py
+    compute_device_type = None
+    prefs = bpy.context.preferences.addons['cycles'].preferences
+    # Use cycles
     bpy.context.scene.render.engine = engine_name
+    bpy.context.scene.cycles.device = 'GPU'
 
+    preferences = bpy.context.preferences.addons['cycles'].preferences
+    for device_type in preferences.get_device_types(bpy.context):
+        preferences.get_devices_for_type(device_type[0])
 
     for gpu_type in ['OPTIX', 'CUDA']:#, 'METAL']:
+        found = False
+        for device in preferences.devices:
+            if device.type == gpu_type and (compute_device_type is None or compute_device_type == gpu_type):
+                bpy.context.preferences.addons['cycles'].preferences.compute_device_type = gpu_type
                 logger.info('Device {} of type {} found and used.'.format(device.name, device.type))
+                found = True
+                break
+        if found:
             break
 
+    # make sure that all visible GPUs are used
+    for device in prefs.devices:
+        device.use = True
+    return prefs.devices
 
 @gin.configurable
 
@@ -108,6 +131,7 @@ def enable_gpu(engine_name = 'CYCLES'):
 @gin.configurable
 def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, passes_to_save, saving_ground_truth, use_denoised=False):
     file_output_node = nw.new_node(Nodes.OutputFile, attrs={
+        "base_path": str(frames_folder),
         "format.file_format": 'OPEN_EXR' if saving_ground_truth else 'PNG',
         "format.color_mode": 'RGB'
     })
@@ -156,6 +180,7 @@ def shader_random(nw: NodeWrangler):
 def apply_random(obj, selection=None, **kwargs):
     surface.add_material(obj, shader_random, selection=selection)
 
+
 def global_flat_shading():
 
     for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
@@ -184,12 +209,21 @@ def global_flat_shading():
         apply_random(obj)
 
 @gin.configurable
+def render_image(
+    camera_id,
+    min_samples,
+    num_samples,
+    time_limit,
     frames_folder,
+    adaptive_threshold,
     exposure,
     passes_to_save,
     flat_shading,
+    use_dof=False,
     dof_aperture_fstop=2.8,
+    motion_blur=False,
     motion_blur_shutter=0.5,
+):
     tic = time.time()
 
     camera_rig_id, subcam_id = camera_id
@@ -256,9 +290,13 @@ def global_flat_shading():
         if use_dof is not None:
             camera.data.dof.use_dof = use_dof
             camera.data.dof.aperture_fstop = dof_aperture_fstop
+
     if render_resolution_override is not None:
         bpy.context.scene.render.resolution_x = render_resolution_override[0]
         bpy.context.scene.render.resolution_y = render_resolution_override[1]
+
+    # Render the scene
+    bpy.context.scene.camera = camera
     with Timer(f"Actual rendering"):
         bpy.ops.render.render(animation=True)
 
