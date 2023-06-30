@@ -5,6 +5,7 @@
 # Date Signed: June 15, 2023
 
 from assets.tropic_plants.tropic_plant_utils import *
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')
 def nodegroup_nodegroup_apply_wave(nw: NodeWrangler):
@@ -623,6 +624,7 @@ class LeafPalmTreeFactory(AssetFactory):
                                        'subvein offset', 'vein'], input_kwargs=params)
         surface.add_material(obj, shader_leaf_material, selection=None)
 
+        tag_object(obj, 'leaf_palm_tree')
         return obj
 
 
