@@ -6,8 +6,11 @@
 
 import bpy
 import mathutils
+
+import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
+
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category, hsv2rgba
@@ -19,6 +22,7 @@ from placement.factory import AssetFactory
 
 from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
+@gin.register
 class FruitFactoryDurian(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
