@@ -47,8 +47,10 @@ class BoulderPileFactory(AssetFactory):
 
     def create_placeholder(self, **kwargs):
         n = np.random.randint(3, 5)
+        empty = butil.spawn_empty('placeholder', disp_type='CUBE', s=8)
         objects = []
         for i in range(n):
+            empty_ = butil.spawn_empty('placeholder', disp_type='CUBE', s=8)
             scale = [1, log_uniform(.4, .6), log_uniform(.2, .4), log_uniform(.2, .4), log_uniform(.2, .4),
                 log_uniform(.1, .2)]
             p = self.factory.create_placeholder()
