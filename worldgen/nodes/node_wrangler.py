@@ -1,3 +1,13 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors:
+# - Alexander Raistrick: NodeWrangler class, node linking, expose_input, nodegroup support
+# - Zeyu Ma: initial version, fixes, arithmetic utilties
+# - Lingjie Mei: NodeWrangler compare, switch, build and other utilities
+# - Karhan Kayan: geometry_node_group_empty_new()
+# Date Signed: May 30, 2023
+
 import re
 import sys
 import warnings
