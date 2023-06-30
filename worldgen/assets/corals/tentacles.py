@@ -16,6 +16,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.trees.tree import build_radius_tree
 import util.blender as butil
+from util.blender import deep_clone_obj
 from assets.utils.tag import tag_object, tag_nodegroup
 
 def build_tentacles(**kwargs):
