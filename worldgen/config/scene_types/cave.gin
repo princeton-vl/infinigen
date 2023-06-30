@@ -1,0 +1,35 @@
+compose_scene.land_domain_tags = 'landscape,-liquid_covered'
+compose_scene.nonliving_domain_tags = 'landscape'
+compose_scene.underwater_domain_tags = 'landscape,liquid_covered'
+
+compose_scene.trees_chance = 0.4
+compose_scene.rocks_chance = 0.8
+compose_scene.glowing_rocks_chance = 1.0
+compose_scene.grass_chance = 0.4
+compose_scene.ferns_chance = 0.6
+compose_scene.mushroom_chance = 0.8
+
+compose_scene.snow_particles_chance=0.0
+compose_scene.leaves_chance=0.0
+compose_scene.rain_particles_chance=0.0
+    ('water', 0.7),
+    ('lava', 0.3)
+]
+
+compose_scene.bug_swarm_chance=0.0
+
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 1),
+    (@HerbivoreFactory, 0.3),
+    (@BirdFactory, 0.5),
+    (@BeetleFactory, 1)
+]
+compose_scene.flying_creatures_chance=0.2
+compose_scene.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+]
+
+atmosphere_light_haze.shader_atmosphere.enable_scatter = False
+full/render_image.min_samples = 500
+
