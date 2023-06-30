@@ -17,6 +17,7 @@ from assets.cactus.base import BaseCactusFactory
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class PrickyPearBaseCactusFactory(BaseCactusFactory):
     spike_distance = .08
@@ -65,4 +66,5 @@ class PrickyPearBaseCactusFactory(BaseCactusFactory):
     def create_asset(self, face_size=.01, **params) -> bpy.types.Object:
         obj = self.build_leaves(2)
         write_attr_data(obj, 'selection', np.ones(len(obj.data.vertices)))
+        tag_object(obj, 'prickypear_cactus')
         return obj
