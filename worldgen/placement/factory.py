@@ -18,6 +18,7 @@ from util.math import FixedSeed, int_hash
 from . import detail
 
 logger = logging.getLogger(__name__)
+
 class AssetFactory:
 
     def __init__(self, factory_seed=None, coarse=False):
@@ -33,6 +34,7 @@ class AssetFactory:
     def __repr__(self):
         return f'{self.__class__.__name__}({self.factory_seed})'
 
+    @staticmethod
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         # Optionally, override this function to decide what will be used as a placeholder for your asset
         return butil.spawn_cube(size=2)
@@ -44,6 +46,8 @@ class AssetFactory:
 
     def asset_parameters(self, distance: float, vis_distance: float) -> dict:
         # Optionally, override to determine the **params input of create_asset w.r.t. camera distance
+        return {'face_size': detail.target_face_size(distance), 'distance': distance,
+                'vis_distance': vis_distance}
 
     def create_asset(self, **params) -> bpy.types.Object:
         # Override this function to produce a high detail asset
@@ -78,6 +82,7 @@ class AssetFactory:
         return obj
 
     def spawn_asset(self, i, placeholder=None, distance=None, vis_distance=0, loc=(0, 0, 0), rot=(0, 0, 0),
+                    **kwargs):
         # Not intended to be overridden - override create_asset instead
 
         logger.debug(f'{self}.spawn_asset({i}...)')
@@ -96,6 +101,7 @@ class AssetFactory:
             keep_placeholder = True
             assert loc == (0, 0, 0) and rot == (0, 0, 0)
 
+        gc_targets = [bpy.data.meshes, bpy.data.textures, bpy.data.node_groups, bpy.data.materials]
 
         with FixedSeed(int_hash((self.factory_seed, i))), butil.GarbageCollect(gc_targets, verbose=False):
             params.update(kwargs)
@@ -117,6 +123,7 @@ class AssetFactory:
             butil.delete(placeholder)
         return obj
 
+    __call__ = spawn_asset  # for convinience
     
 
 def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, verbose=True, **kwargs):
