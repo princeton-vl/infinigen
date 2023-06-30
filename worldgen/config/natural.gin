@@ -1,0 +1,2 @@
+surfaces.templates.mountain.shader.color = ("palette", "mountain soil")
+surfaces.templates.sandstone.shader.color = ("palette", "sandstone")
