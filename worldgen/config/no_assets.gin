@@ -43,3 +43,4 @@ populate_scene.moss_chance = 0.0
 populate_scene.lichen_chance = 0.0
 populate_scene.slime_mold_chance = 0.0
 populate_scene.ivy_chance = 0.0
+populate_scene.snow_layer_chance = 0.0
