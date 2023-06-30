@@ -4,6 +4,8 @@ import numpy as np
 from . import helper, mesh
 from .materials import new_link
 
+from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
 C = bpy.context
 D = bpy.data
 
@@ -21,6 +23,8 @@ def setup_inps(ng, inp, nodes):
     ng.inputs[k_idx].name = k
 
 
+@node_utils.to_nodegroup('CollectionDistribute', singleton=False)
+def coll_distribute(nw, merge_dist=None):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
                       ('NodeSocketBool', 'Selection', True),
@@ -33,6 +37,7 @@ def setup_inps(ng, inp, nodes):
                       ('NodeSocketFloat', 'Pitch offset', 0.0),
                       ('NodeSocketFloat', 'Pitch variance', 0.4),
                       ('NodeSocketFloat', 'Yaw variance', 0.4),
+                      ('NodeSocketBool', 'Realize Instance', False)])
 
     mesh_to_curve = nw.new_node('GeometryNodeMeshToCurve',
         input_kwargs={'Mesh': group_input.outputs["Geometry"], 'Selection': group_input.outputs["Selection"]})
@@ -57,6 +62,7 @@ def setup_inps(ng, inp, nodes):
     math = nw.new_node(Nodes.Math,
         input_kwargs={0: random_value.outputs[1], 1: group_input.outputs["Density"]},
         attrs={'operation': 'LESS_THAN'})
+    
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
         input_kwargs={'Vector': curve_to_points.outputs["Rotation"]})
 
@@ -96,7 +102,14 @@ def setup_inps(ng, inp, nodes):
     random_value_3 = nw.new_node(Nodes.RandomValue,
         input_kwargs={2: group_input.outputs["Min scale"], 3: group_input.outputs["Max scale"]})
 
+    geo = nw.new_node(Nodes.CollectionInfo,
+        input_kwargs={'Collection': group_input.outputs["Collection"], 'Separate Children': True, 'Reset Children': True})
+
+    if merge_dist is not None:
+       geo = nw.new_node(Nodes.MergeByDistance, [geo, None, merge_dist])
+
     instance_on_points = nw.new_node(Nodes.InstanceOnPoints,
+        input_kwargs={'Points': set_position, 'Selection': math, 'Instance': geo, 'Pick Instance': True, 'Rotation': vector_math.outputs["Vector"], 'Scale': random_value_3.outputs[1]})
 
     realize_instances = nw.new_node(Nodes.RealizeInstances,
         input_kwargs={'Geometry': instance_on_points})
@@ -108,6 +121,7 @@ def setup_inps(ng, inp, nodes):
         input_kwargs={'Geometry': switch.outputs[6]})
 
 
+@node_utils.to_nodegroup('PhylloDist', singleton=False)
 def phyllotaxis_distribute(nw):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
@@ -246,6 +260,7 @@ def phyllotaxis_distribute(nw):
         input_kwargs={'Instances': instance_on_points})
 
 
+@node_utils.to_nodegroup('FollowCurve', singleton=False)
 def follow_curve(nw):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
@@ -291,6 +306,7 @@ def follow_curve(nw):
 def set_tree_radius(nw):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
+            ('NodeSocketInt', 'Profile res', 20),
         input_kwargs={'Mesh': group_input.outputs["Geometry"], 'Selection': group_input.outputs["Selection"]})
         input_kwargs={0: group_input.outputs["Reverse depth"], 1: group_input.outputs["Scaling"]},
         attrs={'operation': 'MULTIPLY'})
@@ -308,12 +324,265 @@ def set_tree_radius(nw):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': merge_by_distance})
 
+@node_utils.to_material('BarkMat2', singleton=False)
+def bark_shader_2(nw):
+  attribute = nw.new_node(Nodes.Attribute,
+      attrs={'attribute_name': 'offset_barkgeo2'})
+  
+  reroute = nw.new_node(Nodes.Reroute,
+      input_kwargs={'Input': attribute.outputs["Color"]})
+  
+  math = nw.new_node(Nodes.Math,
+      input_kwargs={0: reroute, 1: 0.0})
+  
+  colorramp_1 = nw.new_node(Nodes.ColorRamp,
+      input_kwargs={'Fac': math})
+  for i in range(2):
+    colorramp_1.color_ramp.elements.new(0)
+  colorramp_1.color_ramp.elements[0].position = 0.0
+  # colorramp_1.color_ramp.elements[0].color = (0.0025, 0.0019, 0.0017, 1.0)
+  colorramp_1.color_ramp.elements[0].color = (0.1004, 0.049, 0.0344, 1.0)
+  colorramp_1.color_ramp.elements[1].position = 0.163
+  colorramp_1.color_ramp.elements[1].color = (0.1004, 0.049, 0.0344, 1.0)
+  colorramp_1.color_ramp.elements[2].position = 0.4529
+  colorramp_1.color_ramp.elements[2].color = (0.1094, 0.0656, 0.054, 1.0)
+  colorramp_1.color_ramp.elements[3].position = 0.6268
+  colorramp_1.color_ramp.elements[3].color = (0.0712, 0.0477, 0.0477, 1.0)
+  
+  math_1 = nw.new_node(Nodes.Math,
+      input_kwargs={0: 1.0, 1: reroute},
+      attrs={'operation': 'SUBTRACT'})
+  
+  principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+      input_kwargs={'Base Color': colorramp_1.outputs["Color"], 'Roughness': math_1},
+      attrs={'subsurface_method': 'BURLEY'})
+  
+  material_output = nw.new_node(Nodes.MaterialOutput,
+      input_kwargs={'Surface': principled_bsdf})
+
+
+@node_utils.to_material('BarkMat1', singleton=False)
+def bark_shader_1(nw):
+  
+  texture_coordinate = nw.new_node(Nodes.TextureCoord)
+  
+  mapping = nw.new_node(Nodes.Mapping,
+      input_kwargs={'Vector': texture_coordinate.outputs["Object"]})
+  
+  noise_texture = nw.new_node(Nodes.NoiseTexture,
+      input_kwargs={'Vector': mapping, 'Detail': 16.0, 'Roughness': 0.62})
+  
+  attribute = nw.new_node(Nodes.Attribute,
+      attrs={'attribute_name': 'offset_barkgeo1'})
+  
+  mix = nw.new_node(Nodes.MixRGB,
+      input_kwargs={'Color1': noise_texture.outputs["Fac"], 'Color2': attribute.outputs["Color"]},
+      attrs={'blend_type': 'MULTIPLY'})
+  
+  colorramp = nw.new_node(Nodes.ColorRamp,
+      input_kwargs={'Fac': mix})
+  colorramp.color_ramp.elements.new(1)
+  colorramp.color_ramp.elements[0].position = 0.0
+  colorramp.color_ramp.elements[0].color = (0.0171, 0.005, 0.0, 1.0)
+  colorramp.color_ramp.elements[1].position = 0.4636
+  colorramp.color_ramp.elements[1].color = (0.1132, 0.0653, 0.0471, 1.0)
+  colorramp.color_ramp.elements[2].position = 1.0
+  colorramp.color_ramp.elements[2].color = (0.2243, 0.1341, 0.1001, 1.0)
+  
+  colorramp_2 = nw.new_node(Nodes.ColorRamp,
+      input_kwargs={'Fac': noise_texture.outputs["Fac"]})
+  colorramp_2.color_ramp.elements[0].position = 0.0
+  colorramp_2.color_ramp.elements[0].color = (0.5173, 0.5173, 0.5173, 1.0)
+  colorramp_2.color_ramp.elements[1].position = 1.0
+  colorramp_2.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+  
+  principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+      input_kwargs={'Base Color': colorramp.outputs["Color"], 'Roughness': colorramp_2.outputs["Color"]},
+      attrs={'subsurface_method': 'BURLEY'})
+  
+  material_output = nw.new_node(Nodes.MaterialOutput,
+      input_kwargs={'Surface': principled_bsdf})
+
+
+@node_utils.to_nodegroup('BarkGeo2', singleton=False)
+def bark_geo_2(nw):
+    
+    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
+    
+    position = nw.new_node(Nodes.InputPosition)
+    
+    vector = nw.new_node(Nodes.Vector)
+    vector.vector = (0.1, 0.1, 0.1)
+    
+    vector_math_1 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: position, 1: vector},
+        attrs={'operation': 'MULTIPLY'})
+    
+    value_2 = nw.new_node(Nodes.Value)
+    value_2.outputs[0].default_value = 0.38
+    
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 5.0
+    
+    value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = 2.0
+    
+    noise_texture = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={'Vector': vector_math_1.outputs["Vector"], 'Scale': value, 'Detail': value_1})
+    
+    mix = nw.new_node(Nodes.MixRGB,
+        input_kwargs={'Fac': value_2, 'Color1': noise_texture.outputs["Color"], 'Color2': (0.0, 0.0, 0.0, 1.0)})
+    
+    vector_math_2 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: vector_math_1.outputs["Vector"], 1: mix})
+    
+    value_4 = nw.new_node(Nodes.Value)
+    value_4.outputs[0].default_value = 0.0
+    
+    value_3 = nw.new_node(Nodes.Value)
+    value_3.outputs[0].default_value = 20.0
+    
+    voronoi_texture = nw.new_node(Nodes.VoronoiTexture,
+        input_kwargs={'Vector': vector_math_2.outputs["Vector"], 'W': value_4, 'Scale': value_3},
+        attrs={'voronoi_dimensions': '4D', 'feature': 'F2'})
+    
+    math_3 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture.outputs["Distance"]},
+        attrs={'operation': 'MULTIPLY'})
+    
+    voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture,
+        input_kwargs={'Vector': vector_math_2.outputs["Vector"], 'W': value_4, 'Scale': value_3},
+        attrs={'voronoi_dimensions': '4D'})
+    
+    math_4 = nw.new_node(Nodes.Math,
+        input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"]},
+        attrs={'operation': 'MULTIPLY'})
+    
+    math_5 = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_3, 1: math_4},
+        attrs={'operation': 'SUBTRACT'})
+    
+    value_5 = nw.new_node(Nodes.Value)
+    value_5.outputs[0].default_value = 0.6
+    
+    math_7 = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_5, 1: value_5},
+        attrs={'operation': 'MINIMUM'})
+    
+    math_6 = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_5, 1: value_5},
+        attrs={'operation': 'MAXIMUM'})
+    
+    value_6 = nw.new_node(Nodes.Value)
+    value_6.outputs[0].default_value = 0.1
+    
+    math_8 = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_6, 1: value_6},
+        attrs={'operation': 'MULTIPLY'})
+    
+    math_9 = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_7, 1: math_8},
+        attrs={'operation': 'SUBTRACT'})
+    
+    normal = nw.new_node(Nodes.InputNormal)
+    
+    vector_math_3 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: math_9, 1: normal},
+        attrs={'operation': 'MULTIPLY'})
+    
+    face_area = nw.new_node('GeometryNodeInputMeshFaceArea')
+    
+    math_1 = nw.new_node(Nodes.Math,
+        input_kwargs={0: face_area},
+        attrs={'operation': 'SQRT'})
+    
+    value_7 = nw.new_node(Nodes.Value)
+    value_7.outputs[0].default_value = 2.0
+    
+    math = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_1, 1: value_7},
+        attrs={'operation': 'MULTIPLY'})
+    
+    vector_math_4 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: vector_math_3.outputs["Vector"], 1: math},
+        attrs={'operation': 'MULTIPLY'})
+    
+    set_position = nw.new_node(Nodes.SetPosition,
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': vector_math_4.outputs["Vector"]})
+    
+    capture_attribute = nw.new_node(Nodes.CaptureAttribute,
+        input_kwargs={'Geometry': set_position, 1: math_7},
+        attrs={'data_type': 'FLOAT_VECTOR'})
+    
+    group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'offset_barkgeo2': capture_attribute.outputs["Attribute"]})
+
+
+@node_utils.to_nodegroup('BarkGeo1', singleton=False)
+def bark_geo_1(nw):
+    
+    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
+    
+    position = nw.new_node(Nodes.InputPosition)
+    
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 0.2
+    
+    vector_math = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: position, 1: value},
+        attrs={'operation': 'MULTIPLY'})
+    
+    value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = 10.0
+    
+    value_2 = nw.new_node(Nodes.Value)
+    value_2.outputs[0].default_value = 15.0
+    
+    wave_texture = nw.new_node(Nodes.WaveTexture,
+        input_kwargs={'Vector': vector_math.outputs["Vector"], 'Scale': value_1, 'Distortion': value_2})
+    
+    normal = nw.new_node(Nodes.InputNormal)
+    
+    vector_math_1 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: wave_texture.outputs["Color"], 1: normal},
+        attrs={'operation': 'MULTIPLY'})
+    
+    face_area = nw.new_node('GeometryNodeInputMeshFaceArea')
+    
+    math_1 = nw.new_node(Nodes.Math,
+        input_kwargs={0: face_area},
+        attrs={'operation': 'SQRT'})
+    
+    value_3 = nw.new_node(Nodes.Value)
+    value_3.outputs[0].default_value = 1.0
+    
+    math = nw.new_node(Nodes.Math,
+        input_kwargs={0: math_1, 1: value_3},
+        attrs={'operation': 'MULTIPLY'})
+    
+    vector_math_2 = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: vector_math_1.outputs["Vector"], 1: math},
+        attrs={'operation': 'MULTIPLY'})
+    
+    set_position = nw.new_node(Nodes.SetPosition,
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': vector_math_2.outputs["Vector"]})
+    
+    capture_attribute = nw.new_node(Nodes.CaptureAttribute,
+        input_kwargs={'Geometry': set_position, 1: wave_texture.outputs["Color"]},
+        attrs={'data_type': 'FLOAT_VECTOR'})
+    
+    group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'offset_barkgeo1': capture_attribute.outputs["Attribute"]})
+
+
+'''
 def create_berry(sphere):
   # Create a sphere
   phyllotaxis_distribute('berry', sphere,
                          min_radius_pct=0, max_radius=1,
                          sin_max=2.5, sin_clamp_max=.8,
                          z_max=.8, z_clamp=.7)
+'''
 
 
 def sample_points_and_normals(obj, max_density=3,
