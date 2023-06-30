@@ -26,6 +26,7 @@ compose_scene.ferns_chance = 0.0
 
 compose_scene.fish_school_chance = 0.0
 compose_scene.marine_snow_particles_chance = 0.0
+
 compose_scene.corals_chance = 0.0
 compose_scene.seaweed_chance = 0.0
 compose_scene.urchin_chance = 0.0
