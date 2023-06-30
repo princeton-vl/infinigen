@@ -16,6 +16,7 @@ import gin
 
 from util import blender as butil
 from nodes.nodegroups import transfer_attributes
+from util.blender import deep_clone_obj
 
 
 logger = logging.getLogger('detail')
