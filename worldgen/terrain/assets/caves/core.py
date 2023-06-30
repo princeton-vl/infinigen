@@ -5,6 +5,7 @@
 # Date Signed: May 2 2023, June 5 2023
 
 from pathlib import Path
+
 import bpy
 import gin
 import mesh_to_sdf
