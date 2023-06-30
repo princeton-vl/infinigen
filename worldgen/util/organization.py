@@ -10,6 +10,8 @@ class Task:
     Fine = "fine"
     FineTerrain = "fine_terrain"
     Render = "render"
+    GroundTruth = "ground_truth"
+    MeshSave = "mesh_save"
 
 
 class Materials:
