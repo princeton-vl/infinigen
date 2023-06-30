@@ -12,6 +12,7 @@ from numpy.random import uniform as U
 from mathutils import Vector
 
 from util import blender as butil
+from util.blender import deep_clone_obj
 
 from nodes import node_utils
 from placement.instance_scatter import scatter_instances
