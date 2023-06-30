@@ -41,6 +41,11 @@ class MossFactory(AssetFactory):
         roughness = 1.
         mix_ratio = .2
 
+        cr = build_color_ramp(nw, 
+            nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': 5.}).outputs["Fac"], 
+            [0, .5, 1],
+            [map_perturb(base_hue, .8, .1), map_perturb(base_hue - 0.05, .8, .1), (0., 0., 0., 1.)]
+        )
 
         background = map_perturb(base_hue, .8, .02)
         mix_rgb = nw.new_node(Nodes.MixRGB,
