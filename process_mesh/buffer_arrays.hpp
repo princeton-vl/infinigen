@@ -1,3 +1,12 @@
+#pragma once
+#include <vector>
+#include <unordered_map>
+#include <Eigen/Dense>
+#include <iostream>
+#include "cnpy/cnpy.h"
+#include "utils.hpp"
+#include "io.hpp"
+
 struct InstanceID {
     const int n1, n2;
 
