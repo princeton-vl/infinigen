@@ -106,6 +106,7 @@ def nodegroup_roughness(nw):
     )
 
 
+@node_utils.to_nodegroup("nodegroup_cracked_with_mask", singleton=False, type="GeometryNodeTree")
 def nodegroup_cracked_with_mask(nw):
     nw.force_input_consistency()
     group_input = nw.new_node(
@@ -597,6 +598,11 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
 
 
 def apply(obj, selection=None, **kwargs):
+    if not isinstance(obj, list):
+        obj = [obj]
+    if not len(obj):
+        return
+    geomod_args = {"is_rock": max(obj[0].dimensions) < 5}
     geomod_args.update(kwargs)
     surface.add_geomod(
         obj,
