@@ -127,6 +127,9 @@ def geo_SAND(nw,
     set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
 
 
+
+
+def apply(objs, selection=None, **kwargs):
     surface.add_geomod(objs, geo_SAND, selection=selection)
     surface.add_material(objs, shader_SAND, selection=selection, 
         input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs})
