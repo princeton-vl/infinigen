@@ -173,6 +173,7 @@ def nodegroup_pedal_stem_branch_contour(nw: NodeWrangler):
 
     pedal_stem_branch_rsample = nw.new_node(Nodes.Value,
                                             label='pedal_stem_branch_rsample')
+    pedal_stem_branch_rsample.outputs[0].default_value = 10.0
 
     resample_curve = nw.new_node(Nodes.ResampleCurve,
                                  input_kwargs={'Curve': realize_instances, 'Count': pedal_stem_branch_rsample})
@@ -225,6 +226,7 @@ def nodegroup_pedal_stem_branch_geometry(nw: NodeWrangler):
                                      input_kwargs={'Curve': group_input.outputs["Curve"], 'Radius': 1.0})
 
     curve_circle_2 = nw.new_node(Nodes.CurveCircle,
+                                 input_kwargs={'Radius': uniform(0.001, 0.0025), 'Resolution': 4})
 
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
                                   input_kwargs={'Curve': set_curve_radius_1,
@@ -255,6 +257,7 @@ def nodegroup_pedal_stem_geometry(nw: NodeWrangler):
                                    input_kwargs={'Curve': quadratic_bezier, 'Radius': group_input.outputs["Radius"]})
 
     curve_circle = nw.new_node(Nodes.CurveCircle,
+                               input_kwargs={'Radius': 0.2, 'Resolution': 8})
 
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
                                 input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"],
@@ -335,8 +338,10 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = uniform(0.2, 0.4)
 
     map_range = nw.new_node(Nodes.MapRange,
+                            input_kwargs={'Value': spline_parameter.outputs["Factor"], 3: 0.4, 4: value})
 
     set_curve_radius_2 = nw.new_node(Nodes.SetCurveRadius,
                                      input_kwargs={'Curve': group_input.outputs["Curve"],
@@ -430,6 +435,7 @@ def nodegroup_flower_geometry(nw: NodeWrangler, params):
 
     uv_sphere_2 = nw.new_node(Nodes.MeshUVSphere,
                               input_kwargs={'Segments': num_core_segments, 'Rings': num_core_rings,
+                                            'Radius': uniform(0.02, 0.05)})
 
     flower_core_shape = nw.new_node(Nodes.Vector,
                                     label='flower_core_shape')
@@ -551,7 +557,11 @@ def geometry_dandelion_nodes(nw: NodeWrangler, **kwargs):
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [flower_on_stem, stem_geometry]})
 
+    realize_instances = nw.new_node(Nodes.RealizeInstances,
+                                    input_kwargs={'Geometry': join_geometry_2})
+
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Geometry': realize_instances})
 
 
 def geometry_dandelion_seed_nodes(nw: NodeWrangler, **kwargs):
@@ -651,3 +661,4 @@ class DandelionSeedFactory(AssetFactory):
 
 if __name__ == '__main__':
     f = DandelionSeedFactory(0)
+    obj = f.create_asset()
