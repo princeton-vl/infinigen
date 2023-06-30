@@ -5,6 +5,7 @@ import bpy
 import mathutils
 import numpy as np
 
+from nodes.node_wrangler import NodeWrangler, Nodes
 from nodes import node_utils as nu
 from surfaces.surface import eval_argument
 
@@ -23,6 +24,10 @@ def placement_mask(scale=0.05, select_thresh=0.55, normal_thresh=0.5, normal_thr
         mask.outputs["Value"].default_value = 1
 
         if select_thresh is not None:
+            mininum_val = nw.new_node(Nodes.Value)
+            mininum_val.outputs[0].default_value = np.random.normal(select_thresh, 0.025)
+            noise_node = nu.noise(nw, scale)
+            noise_mask = nw.new_node(Nodes.Math, input_args=[noise_node, mininum_val],
                                      attrs={'operation': 'GREATER_THAN'})
             mask = nw.scalar_multiply(mask, noise_mask)
 
@@ -58,8 +63,11 @@ def placement_mask(scale=0.05, select_thresh=0.55, normal_thresh=0.5, normal_thr
                 nw.new_node(Nodes.Compare, attrs={'operation': "GREATER_THAN", "data_type": "FLOAT"}, input_args=[z, start]),
                 nw.new_node(Nodes.Compare, attrs={'operation': "LESS_THAN", "data_type": "FLOAT"}, input_args=[z, end]),
             )
+        if (select_thresh is not None) and return_scalar:
             map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': noise_node, 1: mininum_val, 2: 0.75},
                                     attrs={'interpolation_type': 'SMOOTHSTEP'})
+            return mask, map_range
+
         return mask
 
     return selection
