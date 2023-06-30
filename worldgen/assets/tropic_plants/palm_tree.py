@@ -1,5 +1,6 @@
 import bpy
 import mathutils
+import gin
 from numpy.random import uniform, normal, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
@@ -704,6 +705,7 @@ def nodegroup_tree_trunk_geometry(nw: NodeWrangler, radius):
                                               'Profile Curve': curve_circle.outputs["Curve"], 'Fill Caps': True})
 
     subdivide_mesh = nw.new_node(Nodes.SubdivideMesh,
+                                 input_kwargs={'Mesh': curve_to_mesh, 'Level': 2})
 
     set_position_1 = nw.new_node(Nodes.SetPosition,
                                  input_kwargs={'Geometry': subdivide_mesh, 'Offset': treecracks.outputs["Vector"]})
@@ -861,10 +863,13 @@ def shader_trunk(nw: NodeWrangler):
                                     'Color2': colorramp_1.outputs["Color"]})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+                                  input_kwargs={'Base Color': mix, 'Roughness': voronoi_texture.outputs["Distance"], 'Specular': 0})
 
     material_output = nw.new_node(Nodes.MaterialOutput,
                                   input_kwargs={'Surface': principled_bsdf})
 
+@gin.configurable
+def geometry_palm_tree_nodes(nw: NodeWrangler, truncatedstem_chance=0.4, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     leaf = kwargs["leaf"][0]
@@ -941,6 +946,7 @@ def shader_trunk(nw: NodeWrangler):
                                                       2: treetrunkgeometry.outputs["Integer"]})
 
     geos = [instance_on_points, set_material]
+    if uniform(0.0, 1.0) < truncatedstem_chance:
         geos.append(truncatedstemgeometry)
     join_geometry = nw.new_node(Nodes.JoinGeometry,
                                 input_kwargs={'Geometry': geos})
@@ -977,4 +983,5 @@ class PalmTreeFactory(AssetFactory):
         with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()
             bpy.ops.object.shade_flat()
+        obj.scale = (2, 2, 2)
         return obj
