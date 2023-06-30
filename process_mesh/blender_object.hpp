@@ -1,3 +1,18 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#pragma once
+#include <vector>
+#include "glm/gtx/string_cast.hpp"
+#include <Eigen/Dense>
+#include <chrono>
+#include "shader.hpp"
+#include <nlohmann/json.hpp>
+#include "buffer_arrays.hpp"
+
 using json = nlohmann::json;
 
 struct ObjectInfo
