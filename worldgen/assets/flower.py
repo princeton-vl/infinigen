@@ -17,6 +17,7 @@ from surfaces import surface
 from placement.factory import AssetFactory
 from util import blender as butil
 from util.math import FixedSeed, dict_lerp
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_polar_to_cart_old', singleton=True)
 def nodegroup_polar_to_cart_old(nw):
@@ -247,6 +248,7 @@ def nodegroup_flower_petal(nw):
         input_kwargs={'Geometry': set_position, 'Curve': quadratic_bezier, 'Curve Min': 0.0})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': tag_nodegroup(nw, group, 'petal')})
 
 @node_utils.to_nodegroup('nodegroup_phyllo_points', singleton=True)
 def nodegroup_phyllo_points(nw):
@@ -369,6 +371,7 @@ def nodegroup_plant_seed(nw):
         input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"], 'Fill Caps': True})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'seed')})
 
 def shader_flower_center(nw):
     ambient_occlusion = nw.new_node(Nodes.AmbientOcclusion)
@@ -590,4 +593,5 @@ class FlowerFactory(AssetFactory):
         butil.apply_modifiers(vert, mod=mod)
 
         vert.rotation_euler.z = uniform(0, 360)
+        tag_object(vert, 'flower')
         return vert
