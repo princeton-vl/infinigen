@@ -265,6 +265,13 @@ extern "C" {
             results[v * 3 + iv] = u;
         }
     }
+    void facewise_intmax(int *attrs, int *faces, int M, int *result) {
+        #pragma omp parallel for
+        for (int i = 0; i < M; i++)
+            for (int j = 0; j < 3; j++) {
+                result[i] = max(result[i], attrs[faces[i * 3 + j]]);
+            }
+    }
 
     void compute_face_normals(double *vertices, int *faces, int M, double *face_normals) {
         #pragma omp parallel for
