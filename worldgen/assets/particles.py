@@ -18,6 +18,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from util import blender as butil
 from util.random import random_general
+from assets.utils.tag import tag_object, tag_nodegroup
 
 from surfaces.templates import dirt, snow
 
@@ -97,6 +98,7 @@ class RaindropFactory(AssetFactory):
         sphere = bpy.context.object
 
         surface.add_geomod(sphere, geo_raindrop, apply=True)
+        tag_object(sphere, 'raindrop')
         return sphere
     
     def finalize_assets(self, assets):
@@ -114,6 +116,7 @@ class DustMoteFactory(AssetFactory):
             location=(0, 0, 0),
             scale=(1, 1, 1),
         )
+        tag_object(bpy.context.object, 'dustmote')
         return bpy.context.object
     
     def finalize_assets(self, assets):
@@ -126,6 +129,7 @@ class SnowflakeFactory(AssetFactory):
             vertices=6,
             fill_type='TRIFAN',
         )
+        tag_object(bpy.context.object, 'snowflake')
         return bpy.context.object
     
     def finalize_assets(self, assets):
