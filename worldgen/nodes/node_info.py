@@ -36,6 +36,7 @@ class Nodes:
     SeparateRGB = 'ShaderNodeSeparateRGB'
     SeparateColor = 'ShaderNodeSeparateColor'
     CombineRGB = 'ShaderNodeCombineRGB'
+    CombineColor = 'ShaderNodeCombineColor'
 
     # Curve
     CurveToMesh = "GeometryNodeCurveToMesh"
@@ -272,6 +273,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.MixRGB: ['blend_type'],
     Nodes.AccumulateField: ['data_type'],
     Nodes.CombineRGB: ['mode'],
+    Nodes.CombineColor: ['mode'],
     Nodes.SeparateColor: ['mode'],
 
     Nodes.DistributePointsOnFaces: ['distribute_method'],
