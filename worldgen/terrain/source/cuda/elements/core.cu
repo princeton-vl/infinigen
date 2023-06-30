@@ -1,3 +1,9 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Zeyu Ma
+// Date Signed: June 5 2023
+
 namespace data {
     int meta_param, second_meta_param;
     int *d_i_params=NULL, *second_d_i_params=NULL, *third_d_i_params=NULL;
