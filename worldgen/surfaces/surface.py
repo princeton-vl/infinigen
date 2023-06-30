@@ -1,3 +1,11 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Alex Raistrick: primary author
+# - Lahav Lipson: Surface mixing
+# Date Signed: May 2 2023
+
 import string
 from collections import defaultdict
 import importlib
