@@ -45,11 +45,16 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
     butil.apply_modifiers(vert)
     return vert
 
+def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False):
 
     if base_obj is None:
         base_obj = butil.spawn_vert('temp')
 
     with butil.TemporaryObject(base_obj) as base_obj:
+        if kwargs is not None:
+            ng = nodegroup_func(**kwargs)
+        else:
+            ng = nodegroup_func()
         geo_outputs = [o for o in ng.outputs if o.bl_socket_idname == 'NodeSocketGeometry']
         objs = {o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params) for o in geo_outputs}
 
@@ -88,10 +93,12 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
         joints=None, iks=None
     )
 
+def nurbs_to_part(handles, face_size=0.07):
 
     assert handles.shape[-1] == 3
 
     skeleton = handles.mean(axis=1)
+    obj = nurbs.nurbs(handles, method='geomdl', face_size=face_size)
 
     # first and last ring are used to close the part, need not be included in skeleton
     skeleton = skeleton[1:-1] 
@@ -115,6 +122,19 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
 
     return Part(skeleton=skeleton, obj=obj)
 
+def linear_combination(corners, weights):
+    assert len(corners) == len(weights)
+    first = corners[0]
+    
+    if not isinstance(first, dict):
+        ret = sum(corners[i] * weights[i] for i in range(len(corners)))
+        return ret
+
+    results = dict()
+    for k in first.keys():
+        new_corners = [corner[k] for corner in corners]
+        results[k] = linear_combination(new_corners, weights)
+    return results
 
 def rdict_comb(corners, weights):
 
@@ -126,8 +146,31 @@ def rdict_comb(corners, weights):
     for k in weights:
         weights[k] /= norm
 
+    corners_list = []
+    weights_list = []
     for k in weights:
+        corners_list.append(corners[k])
+        weights_list.append(weights[k])
 
+    return linear_combination(corners_list, weights_list)
+
+# def rdict_comb(corners, weights):
+
+#     '''
+#     Take a linear combination of the dicts in `corners`, according to correspondng `weights`
+#     '''
+
+#     res = {}
+#     first = corners[next(iter(corners))]
+#     for k in first.keys():
+#         if isinstance(first[k], dict):
+#             res[k] = rdict_comb({ke: corners[ke][k] for ke in weights}, weights)
+#         else:
+#             res[k] = sum(w * corners[ke][k] for ke, w in weights.items())
+
+#             if isinstance(first[k], int):
+#                 res[k] = int(res[k])
+#     return res
 
 def random_convex_coord(names, select=None, temp=1):
 
