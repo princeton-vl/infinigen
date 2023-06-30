@@ -1,15 +1,23 @@
+import argparse
 import ast
 import os
 import random
+import sys
 import cProfile
+from pathlib import Path
 import logging
 from functools import partial
 import pprint
+from collections import defaultdict
 
+import bpy
 import mathutils
 from mathutils import Vector
+import gin
+import numpy as np
 from numpy.random import uniform, normal, randint
 from tqdm import tqdm
+from frozendict import frozendict
 
 sys.path.append(os.getcwd())
 
@@ -18,6 +26,7 @@ from util.organization import Task, Attributes, Tags, ElementNames
 
 from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
+from lighting import lighting, kole_clouds
 
 from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
 from assets.glowing_rocks import GlowingRocksFactory
@@ -255,6 +264,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     def add_monocots(target):
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, tag=land_domain)
+        surfaces.scatters.monocot.apply(terrain_inview, grass=True, selection=selection)
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, select_thresh=0.55,
             tag=params.get("grass_habitats", None))
@@ -349,6 +359,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     p.save_results(output_folder/'pipeline_coarse.csv')
 
     return terrain
+
 def main():
     
     parser = argparse.ArgumentParser()
