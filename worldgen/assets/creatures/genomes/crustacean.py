@@ -143,6 +143,7 @@ def shader_crustacean(nw: NodeWrangler, params):
 
 
 def shader_eye(nw: NodeWrangler):
+    return nw.new_node(Nodes.PrincipledBSDF, input_kwargs={'Base Color': (0.1, 0.1, 0.1, 1), 'Specular': 0})
 
 
 def crustacean_postprocessing(body_parts, extras, params):
@@ -194,6 +195,9 @@ class CrustaceanFactory(AssetFactory):
     def create_asset(self, i, animate=True, rigging=True, cloth=False, **kwargs):
         genome = crustacean_genome(self.species_params[self.species]())
         root, parts = genome_to_creature(genome, name=f'crustacean({self.factory_seed}, {i})')
+        for p in parts:
+            if p.obj.name.split("=")[-1] == "CrustaceanEyeFactor":
+                assign_material(p.obj, shaderfunc_to_material(shader_eye))
         joined, extras, arma, ik_targets = join_and_rig_parts(root, parts, genome,
                                                               postprocess_func=crustacean_postprocessing,
                                                               rigging=rigging, min_remesh_size=.005,
