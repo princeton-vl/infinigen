@@ -20,6 +20,7 @@ from surfaces import surface
 from surfaces.surface import read_attr_data, shaderfunc_to_material
 from util import blender as butil
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class GrassesMonocotFactory(MonocotGrowthFactory):
 
@@ -53,6 +54,7 @@ class GrassesMonocotFactory(MonocotGrowthFactory):
             angle = uniform(-np.pi / 3, np.pi / 3)
             remove_vertices(obj, lambda x, y, z: (x - x_cutoff) * np.cos(angle) + y * np.sin(angle) > 0)
         self.decorate_leaf(obj)
+        tag_object(obj, 'grasses')
         return obj
 
     @property
@@ -89,6 +91,7 @@ class WheatEarMonocotFactory(MonocotGrowthFactory):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.convex_hull()
         remesh_with_attrs(obj, face_size / 2)
+        tag_object(obj, 'wheat_ear')
         return obj
 
 
@@ -113,6 +116,7 @@ class WheatMonocotFactory(GrassesMonocotFactory):
         ear.location[-1] = self.stem_offset - .02
         obj = join_objects([obj, ear])
         self.decorate_monocot(obj)
+        tag_object(obj, 'wheat')
         return obj
 
 
@@ -131,6 +135,7 @@ class MaizeMonocotFactory(GrassesMonocotFactory):
         y_anchors = np.array([0, uniform(.03, .06), uniform(.03, .06), 0])
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
         self.decorate_leaf(obj)
+        tag_object(obj, 'maize_leaf')
         return obj
 
     def build_husk(self):
@@ -143,6 +148,7 @@ class MaizeMonocotFactory(GrassesMonocotFactory):
         butil.modify_mesh(husk, 'DISPLACE', strength=.02, texture=texture)
         husk.location[-1] = self.stem_offset - .02
         husk.rotation_euler[0] = uniform(0, np.pi * .2)
+        tag_object(husk, 'maize_husk')
         return husk
 
     def create_asset(self, **params):
@@ -150,6 +156,7 @@ class MaizeMonocotFactory(GrassesMonocotFactory):
         husk = self.build_husk()
         obj = join_objects([obj, husk])
         self.decorate_monocot(obj)
+        tag_object(obj, 'maize')
         return obj
 
 
@@ -173,6 +180,7 @@ class ReedEarMonocotFactory(MonocotGrowthFactory):
     def create_asset(self, **params):
         obj = super(ReedEarMonocotFactory, self).create_asset(**params)
         write_attribute(obj, 1, 'ear', 'FACE')
+        tag_object(obj, 'reed_ear')
         return obj
 
 
@@ -219,6 +227,7 @@ class ReedMonocotFactory(GrassesMonocotFactory):
 
         assign_material(obj, [self.material, self.branch_material])
         write_material_index(obj, surface.read_attr_data(obj, 'ear', 'FACE').astype(int)[:, 0])
+        tag_object(obj, 'reed')
         return obj
 
     @staticmethod
