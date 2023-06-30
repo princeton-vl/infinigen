@@ -559,6 +559,7 @@ class TreeFlowerFactory(AssetFactory):
         self.rad = rad
         self.diversity_fac = diversity_fac
 
+        self.petal_color = np.random.choice(['pink', 'white', 'red', 'yellowish'], p=[0.4, 0.2, 0.2, 0.2])
 
         with FixedSeed(factory_seed):
             self.petal_material = surface.shaderfunc_to_material(shader_petal, self.petal_color)
@@ -593,6 +594,7 @@ class TreeFlowerFactory(AssetFactory):
         params = dict_lerp(self.species_params, inst_params, 0.25)
         surface.set_geomod_inputs(mod, params)
 
+        butil.apply_modifiers(vert, mod)
 
         vert.rotation_euler.z = uniform(0, 360)
         tag_object(vert, 'flower')
