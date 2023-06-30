@@ -1,3 +1,4 @@
+import imp
 import bpy
 import numpy as np
 
@@ -6,6 +7,7 @@ from .materials import new_link
 
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
+
 C = bpy.context
 D = bpy.data
 
@@ -303,26 +305,81 @@ def follow_curve(nw):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_position})
 
+
+@node_utils.to_nodegroup('SetTreeRadius', singleton=False, type='GeometryNodeTree')
 def set_tree_radius(nw):
+    # Code generated using version 2.3.1 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
+            ('NodeSocketBool', 'Selection', True),
+            ('NodeSocketFloat', 'Reverse depth', 0.5),
+            ('NodeSocketFloat', 'Scaling', 0.2),
+            ('NodeSocketFloat', 'Exponent', 1.5),
+            ('NodeSocketFloat', 'Min radius', 0.02),
+            ('NodeSocketFloat', 'Max radius', 5.0),
             ('NodeSocketInt', 'Profile res', 20),
+            ('NodeSocketFloatDistance', 'Merge dist', 0.001)])
+    
+    mesh_to_curve = nw.new_node(Nodes.MeshToCurve,
         input_kwargs={'Mesh': group_input.outputs["Geometry"], 'Selection': group_input.outputs["Selection"]})
+    
+    set_spline_type = nw.new_node(Nodes.CurveSplineType,
+        input_kwargs={'Curve': mesh_to_curve},
+        attrs={'spline_type': 'BEZIER'})
+    
+    
+    position = nw.new_node(Nodes.InputPosition)
+    
+    noise_texture = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={'Vector': position, 'Scale': 1.0})
+    
+    scale = nw.new_node(Nodes.VectorMath,
+        input_kwargs={0: noise_texture.outputs["Color"], 'Scale': 0.02},
+        attrs={'operation': 'SCALE'})
+    
+    
+    switch = nw.new_node(Nodes.Switch,
+        input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions})
+    
+    multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["Reverse depth"], 1: group_input.outputs["Scaling"]},
         attrs={'operation': 'MULTIPLY'})
+    
+    multiply_1 = nw.new_node(Nodes.Math,
+        input_kwargs={0: multiply, 1: 0.1},
         attrs={'operation': 'MULTIPLY'})
+    
+    power = nw.new_node(Nodes.Math,
+        input_kwargs={0: multiply_1, 1: group_input.outputs["Exponent"]},
         attrs={'operation': 'POWER'})
+    
+    maximum = nw.new_node(Nodes.Math,
+        input_kwargs={0: power, 1: group_input.outputs["Min radius"]},
         attrs={'operation': 'MAXIMUM'})
+    
+    minimum = nw.new_node(Nodes.Math,
+        input_kwargs={0: maximum, 1: group_input.outputs["Max radius"]},
         attrs={'operation': 'MINIMUM'})
+    
+    set_curve_radius = nw.new_node(Nodes.SetCurveRadius,
+        input_kwargs={'Curve': switch.outputs[6], 'Radius': minimum})
+    
     curve_circle = nw.new_node(Nodes.CurveCircle,
         input_kwargs={'Resolution': group_input.outputs["Profile res"]})
+    
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"], 'Fill Caps': True})
+    
+    set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth,
         input_kwargs={'Geometry': curve_to_mesh, 'Shade Smooth': False})
+    
     merge_by_distance = nw.new_node(Nodes.MergeByDistance,
         input_kwargs={'Geometry': set_shade_smooth, 'Distance': group_input.outputs["Merge dist"]})
+    
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': merge_by_distance})
+    
 
 @node_utils.to_material('BarkMat2', singleton=False)
 def bark_shader_2(nw):
