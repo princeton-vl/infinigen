@@ -42,6 +42,7 @@ class VoronoiRocks(Element):
         attribute_modification_start_height = attachment.attribute_modification_start_height if height_modification else None
         attribute_modification_end_height = attachment.attribute_modification_end_height if height_modification else None
         if height_modification and variable_material:
+            self.aux_names = [Materials.Beach]
         else:
             self.aux_names = [None]
         if caves is None:
@@ -68,6 +69,7 @@ class VoronoiRocks(Element):
         
         self.meta_params = [not isinstance(attachment, LandTiles), caves is not None]
         Element.__init__(self, "voronoi_rocks", material, transparency)
+        self.tag = ElementTag.VoronoiRocks
 
 class VoronoiGrains(VoronoiRocks):
     name = ElementNames.VoronoiGrains
@@ -79,3 +81,4 @@ class VoronoiGrains(VoronoiRocks):
         min_freq=30, max_freq=300,
     ):
         VoronoiRocks.__init__(self, device, attachment, caves, min_freq=min_freq, max_freq=max_freq, mask_shift=9, warp_prob=0, variable_material=1)
+        self.tag = ElementTag.VoronoiGrains
