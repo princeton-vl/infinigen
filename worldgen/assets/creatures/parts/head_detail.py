@@ -13,6 +13,7 @@ from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
 from assets.creatures.nodegroups.geometry import nodegroup_solidify, nodegroup_symmetric_clone, nodegroup_taper
 from util.math import clip_gaussian
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_cat_ear', singleton=False, type='GeometryNodeTree')
 def nodegroup_cat_ear(nw: NodeWrangler):
@@ -97,6 +98,9 @@ class CatEar(PartFactory):
         }
     
     def make_part(self, params):
+        part = nodegroup_to_part(nodegroup_cat_ear, params)
+        tag_object(part.obj, 'cat_ear')
+        return part
 
 @node_utils.to_nodegroup('nodegroup_cat_nose', singleton=False, type='GeometryNodeTree')
 def nodegroup_cat_nose(nw: NodeWrangler):
@@ -153,6 +157,7 @@ class CatNose(PartFactory):
         nose.name = 'Nose'
         part.obj = butil.spawn_vert('nose_parent')
         nose.parent = part.obj
+        tag_object(part.obj, 'cat_nose')
         return part
 
 @node_utils.to_nodegroup('nodegroup_mandible', singleton=False, type='GeometryNodeTree')
@@ -186,4 +191,5 @@ class InsectMandible(PartFactory):
         part.joints = {
             0.4: Joint(rest=(0,0,0), bounds=np.zeros((2, 3)))
         }
+        tag_object(part.obj, 'insect_mandible')
         return part
