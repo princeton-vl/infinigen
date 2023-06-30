@@ -1,12 +1,28 @@
+import bpy
+from mathutils import Vector
+
 from numpy.random import uniform as U, normal as N, randint, uniform
+import numpy as np
+
 from assets.utils.misc import log_uniform
+from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
 from placement import placement
+from placement.placement import placeholder_locs
+from util.math import FixedSeed
+from placement.factory import AssetFactory
+
+
+@node_utils.to_nodegroup('nodegroup_caustics', singleton=False, type='ShaderNodeTree')
+def nodegroup_caustics(nw: NodeWrangler):
+    # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketVector', 'Vector', (0.0, 0.0, 0.0)),
         ('NodeSocketFloat', 'Prewarp', 0.15), ('NodeSocketFloat', 'Scale', 0.0),
         ('NodeSocketFloat', 'Smoothness', 0.0), ('NodeSocketFloat', 'AnimSpeed', .02)])
 
     w = nw.new_node(Nodes.Value, label='W')
+    w.outputs[0].default_value = 0.0
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={1: group_input.outputs["AnimSpeed"]},
                            attrs={'operation': 'MULTIPLY'})
@@ -25,6 +41,7 @@ from placement import placement
                         input_kwargs={0: noise_texture.outputs["Color"], 'Scale': group_input.outputs["Prewarp"]
                         }, attrs={'operation': 'SCALE'})
 
+    add = nw.new_node(Nodes.VectorMath,
                       input_kwargs={0: group_input.outputs["Vector"], 1: scale.outputs["Vector"]})
 
     voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture, input_kwargs={
@@ -49,12 +66,53 @@ from placement import placement
     noise = nw.math('ABSOLUTE',
                     nw.scalar_sub(nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': uniform(2, 5)}), .5))
     noise = nw.new_node(Nodes.MapRange, [noise, 0, 1, .6, 1.])
+    ramp = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': nw.scalar_multiply(difference, noise)})
+    node_utils.assign_curve(ramp.mapping.curves[0], 
+        [(0.0, 0.0), (0.19, 0.08), (0.34, 1.0), (1.0, 1.0)], 
+        handles=['AUTO', 'AUTO', 'VECTOR', 'VECTOR'])
+    
+
+    nw.new_node(Nodes.GroupOutput, input_kwargs={'Color': ramp})
+
 
 def shader_caustic_lamp(nw: NodeWrangler, params: dict):
+    coord = nw.new_node(Nodes.TextureCoord)
     caustics = nw.new_node(nodegroup_caustics().name,
                            input_kwargs={'Vector': coord.outputs['Normal'], **params})
+    emission = nw.new_node(Nodes.Emission, input_kwargs={'Strength': caustics})
     nw.new_node(Nodes.LightOutput, [emission])
 
+
+class CausticsLampFactory(AssetFactory):
+
+    def __init__(self, factory_seed):
+        super(CausticsLampFactory, self).__init__(factory_seed)
+        with FixedSeed(factory_seed):
+            self.params = {
+                'Prewarp': U(0.1, 0.5), 
+                'Scale': U(30, 100), 
+                'Smoothness': 0.2 * N(1, 0.1), 
+                'AnimSpeed': 0.1 * N(1, 0.1)
+            }
+
+    def create_asset(self, **params) -> bpy.types.Object:
+        bpy.ops.object.light_add(type='SPOT')
+        lamp = bpy.context.active_object
+        lamp.data.shadow_soft_size = 0
+        lamp.data.spot_blend = 1
         lamp.data.spot_size = np.pi * .4
         lamp.rotation_euler = 0, 0, uniform(0, np.pi * 2)
+        lamp.data.use_nodes = True
 
+        nw = NodeWrangler(lamp.data.node_tree)
+        shader_caustic_lamp(nw, params=self.params)
+        return lamp
+
+
+def add_caustics(obj, zoff=200):
+
+    fac = CausticsLampFactory(randint(1e7))
+    loc = Vector(np.array(obj.bound_box).mean(axis=0)) + Vector((0, 0, zoff))
+    lamp = fac.spawn_asset(0, loc=loc)
+    lamp.scale = (50, 50, 50) # only affects UI
+    lamp.data.energy = U(120e6, 250e6)
