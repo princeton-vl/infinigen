@@ -75,6 +75,10 @@ class LandTiles(Element):
         else:
             self.aux_names.append(None)
         self.land_process = land_process
+        if attribute_modification_start_height is not None:
+            self.aux_names.append(Materials.Beach)
+        else:
+            self.aux_names.append(None)
         if caves is None:
             self.aux_names.append(None)
         else:
@@ -100,6 +104,7 @@ class LandTiles(Element):
     
         self.meta_params = [caves is not None]
         Element.__init__(self, "landtiles", material, transparency)
+        self.tag = ElementTag.Terrain
 
     @gin.configurable
     def load_assets(
@@ -166,6 +171,7 @@ class Volcanos(LandTiles):
             attribute_modification_end_height=None,
             randomness=1,
         )
+        self.tag = ElementTag.Volcanos
 
 class FloatingIce(LandTiles):
     name = ElementNames.FloatingIce
