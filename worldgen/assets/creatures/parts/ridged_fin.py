@@ -22,6 +22,7 @@ from assets.creatures.nodegroups.attach import nodegroup_attach_part
 from assets.creatures.creature import PartFactory, Part
 from assets.creatures.util.part_util import nodegroup_to_part
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_mix2_values', singleton=True, type='GeometryNodeTree')
 def nodegroup_mix2_values(nw: NodeWrangler):
@@ -465,6 +466,7 @@ class FishFin(PartFactory):
         butil.apply_modifiers(fin, mod)
 
         part.settings['rig_extras'] = self.rig
+        tag_object(part.obj, 'fish_fin')
         return part
 
 if __name__ == "__main__":
