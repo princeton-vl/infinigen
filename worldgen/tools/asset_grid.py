@@ -18,12 +18,91 @@ from PIL import Image
 from lighting import lighting
 from surfaces import surface
 from placement import density
+from placement.factory import AssetFactory
+
+from rendering.render import enable_gpu
 from assets.utils.decorate import assign_material, read_base_co
+import tools.results.strip_alpha_background as strip_alpha_background
+
+from util.math import FixedSeed
+from util import blender as butil
+from util.camera import get_3x4_P_matrix_from_blender
+from util.logging import Suppress
+
 
 import generate  # to load most/all AssetFactory subclasses
 
-def build_scene_surface(factory_name, idx):
 
+def build_scene_asset(factory_name, idx):
+    factory = None
+    for subdir in os.listdir('assets'):
+        with gin.unlock_config():
+            module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
+        if hasattr(module, factory_name):
+            factory = getattr(module, factory_name)
+            break
+    if factory is None:
+        raise ModuleNotFoundError(f'{factory_name} not Found.')
+    with FixedSeed(idx):
+        factory = factory(idx)
+        try:
+            asset = factory.spawn_asset(idx)
+        except Exception as e:
+            traceback.print_exc()
+            print(f'{factory}.spawn_asset({idx=}) FAILED!! {e}')
+            raise e
+        factory.finalize_assets(asset)
+        bpy.context.view_layer.objects.active = asset
+        if asset.type == 'EMPTY':
+            meshes = [o for o in asset.children_recursive if o.type == 'MESH']
+            sizes = []
+            for m in meshes:
+                co = read_base_co(m)
+                sizes.append((np.amax(co, 0) - np.amin(co, 0)).sum())
+            i = np.argmax(np.array(sizes))
+            asset = meshes[i]
+        bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
+        plane = bpy.context.active_object
+        plane.location[-1] = np.amin(read_base_co(asset), 0)[-1]
+        plane.is_shadow_catcher = True
+
+        material = bpy.data.materials.new('plane')
+        material.use_nodes = True
+        material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
+        assign_material(plane, material)
+
+    return asset
+
+
+def build_scene_surface(factory_name, idx):
+    try:
+        with gin.unlock_config():
+            scatter = importlib.import_module(f'surfaces.scatters.{factory_name}')
+
+            if not hasattr(scatter, 'apply'):
+                raise ValueError(f'{scatter} has no apply()')
+
+            bpy.ops.mesh.primitive_grid_add(size=10, x_subdivisions=400, y_subdivisions=400)
+            plane = bpy.context.active_object
+
+            material = bpy.data.materials.new('plane')
+            material.use_nodes = True
+            material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
+            assign_material(plane, material)
+
+            scatter.apply(plane, selection=density.placement_mask(.15, .45))
+            asset = plane
+    except ModuleNotFoundError:
+        try:
+            with gin.unlock_config():
+                template = importlib.import_module(f'surfaces.templates.{factory_name}')
+                bpy.ops.mesh.primitive_ico_sphere_add(radius=.8, subdivisions=9)
+                asset = bpy.context.active_object
+                template.apply(asset)
+        except ModuleNotFoundError:
+            raise Exception(f'{factory_name} not Found.')
+
+    return asset
 
 
 def build_scene(path, idx, factory_name, args):
@@ -48,14 +127,18 @@ def build_scene(path, idx, factory_name, args):
         sky_texture.sun_rotation = np.pi * .75
 
     if 'Factory' in factory_name:
+        asset = build_scene_asset(factory_name, idx)
     else:
+        asset = build_scene_surface(factory_name, idx)
 
+    if args.scale_reference:
         bpy.ops.mesh.primitive_cylinder_add(radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2))
 
     if args.cam_center > 0 and asset:
         co = read_base_co(asset)
         center.location = (np.amin(co, 0) + np.amax(co, 0)) / 2
         center.location[-1] += args.cam_zoff
+
     if args.cam_dist <= 0 and asset:
         adjust_cam_distance(asset, camera, args.margin)
 
@@ -63,8 +146,12 @@ def build_scene(path, idx, factory_name, args):
     if cam_info_ng is not None:
         cam_info_ng.nodes['Object Info'].inputs['Object'].default_value = camera
 
+    if args.save_blend:
         (path / 'scenes').mkdir(exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=f"{path}/scenes/scene_{idx:03d}.blend", filter_backup=True)
     if args.render:
+        with Suppress():
+            bpy.ops.render.render(write_still=True)
 
 
 def adjust_cam_distance(asset, camera, margin):
@@ -80,6 +167,10 @@ def adjust_cam_distance(asset, camera, margin):
         x, y, z = proj @ np.concatenate([bbox, np.ones((len(bbox), 1))], -1).T
         inview = (np.all(z > 0) and np.all(x >= 0) and np.all(z > 0) and np.all(
             x / z < render.resolution_x) and np.all(y / z < render.resolution_y))
+        if inview:
+            camera.location[1] *= 1 + margin
+            bpy.context.view_layer.update()
+            break
     else:
         camera.location[1] = -6
 
@@ -156,14 +247,39 @@ def import_surface_registry():
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces['Geometry Nodes']
     import_surface_registry()
+    name = '_'.join(args.factories)
     path = Path(os.getcwd()) / 'outputs' / name
     path.mkdir(exist_ok=True)
 
     if args.gpu:
         enable_gpu()
 
+    factories = list(args.factories)
+    if 'ALL_ASSETS' in factories:
+        factories += [f.__name__ for f in AssetFactory.__subclasses__()]
+        factories.remove('ALL_ASSETS')
+    if 'ALL_SCATTERS' in factories:
+        factories += [f.stem for f in Path('surfaces/scatters').iterdir()]
+        factories.remove('ALL_SCATTERS')
+    if 'ALL_MATERIALS' in factories:
+        factories += [f.stem for f in Path('surfaces/templates').iterdir()]
+        factories.remove('ALL_MATERIALS')
 
+    for factory in factories:
         fac_path = path / factory
+        if fac_path.exists() and args.skip_existing:
+            continue
+        fac_path.mkdir(exist_ok=True)
+        for idx in range(args.n_images):
+            try:
+                build_scene(fac_path, idx, factory, args)
+            except Exception as e:
+                print(e)
+                continue
+        if args.render:
+            make_grid(args, fac_path, idx + 1)
+            if args.film_transparent:
+                strip_alpha_background.main(60, [fac_path / 'images', ])
 
 
 def make_args():
@@ -195,6 +311,7 @@ def make_args():
     parser.add_argument('-t', '--film_transparent', default=1, type=int)
     parser.add_argument('--scale_reference', action='store_true', help="Add the scale reference")
     parser.add_argument('--skip_existing', action='store_true', help="Skip existing scenes and renders")
+
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
     return args
 
@@ -202,3 +319,4 @@ def make_args():
 if __name__ == '__main__':
     args = make_args()
     with FixedSeed(1):
+        main(args)
