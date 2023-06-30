@@ -584,6 +584,16 @@ def joined_kd(objs, include_origins=False):
 
     return kd
 
+def make_instances_real():
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in bpy.data.objects:
+        if len(obj.particle_systems) == 0:
+            continue
+
+        obj.select_set(True)
+        bpy.ops.object.duplicates_make_real()
+        obj.select_set(False)
+    bpy.ops.object.select_all(action='DESELECT')
 
 
 # faces are required to be triangles now
