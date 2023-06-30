@@ -15,6 +15,7 @@ from assets.utils.decorate import assign_material, geo_extension, separate_loose
 from assets.utils.misc import log_uniform
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
+from placement.detail import adapt_mesh_resolution
 from placement.factory import AssetFactory
 from surfaces import surface
 from util.math import FixedSeed
@@ -43,6 +44,7 @@ class UrchinFactory(AssetFactory):
         obj.scale = [2 / max(obj.dimensions)] * 3
         obj.scale[-1] *= log_uniform(.6, 1.2)
         butil.apply_transform(obj)
+        adapt_mesh_resolution(obj, face_size, method='subdiv_by_area')
         obj = separate_loose(obj)
         butil.modify_mesh(obj, 'DISPLACE', texture=bpy.data.textures.new(name='urchin', type='STUCCI'),
                           strength=.005, mid_level=0)
