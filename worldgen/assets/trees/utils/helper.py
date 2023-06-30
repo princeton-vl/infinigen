@@ -7,6 +7,8 @@
 import bpy
 import numpy as np
 
+from util.logging import Suppress
+
 C = bpy.context
 D = bpy.data
 
@@ -78,6 +80,9 @@ def create_collection(name, objs):
   bpy.ops.object.select_all(action='DESELECT')
   for o in objs:
     o.select_set(True)
+
+  with Suppress():
+    bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=name_)
 
   return name_
 
