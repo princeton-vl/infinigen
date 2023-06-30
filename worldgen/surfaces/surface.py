@@ -205,10 +205,19 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
 
         nw = NodeWrangler(material.node_tree)
 
+        new_attribute_node = nw.new_node(Nodes.Attribute, [], {"attribute_name": selection})
+        if "Attribute Sum" in material.node_tree.nodes:
+            old_attribute_sum_node = material.node_tree.nodes["Attribute Sum"]
             if old_attribute_sum_node.type == "ATTRIBUTE":
                 socket_index_old = 2
             else:
                 socket_index_old = 0
+            new_attribute_sum_node = nw.scalar_add((old_attribute_sum_node, socket_index_old), (new_attribute_node, 2))
+            old_attribute_sum_node.name = "Attribute Sum Old"
+            new_attribute_sum_node.name = "Attribute Sum"
+        else:
+            new_attribute_node.name = "Attribute Sum"
+            new_attribute_sum_node = new_attribute_node
         # grab a reference to whatever is currently linked to output
         links_to_output = [link for link in nw.links if (link.to_node.bl_idname == Nodes.MaterialOutput)]
         assert len(links_to_output) == 1, links_to_output
@@ -217,6 +226,10 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
             socket_index_new = 2
         else:
             socket_index_new = 0
+        selection_weight = nw.divide2(
+            (new_attribute_node, 2),
+            (new_attribute_sum_node, socket_index_new)
+        )
 
         # spawn in the node tree to mix with it
         new_node_tree = shader_func(nw, **input_kwargs)
@@ -228,6 +241,7 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
             nw.new_node(Nodes.MaterialOutput, input_kwargs={'Volume': volume})
 
         # mix the two together
+        mix_shader = nw.new_node(Nodes.MixShader, [selection_weight, penultimate_node, new_node_tree])
         nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
@@ -251,6 +265,7 @@ def add_geomod(objs, geo_func,
         domains = ['POINT'] * len(attributes)
     if input_attributes is None:
         input_attributes = [None] * 128
+
     if name is None:
         name = geo_func.__name__
     if not isinstance(objs, list):
@@ -276,6 +291,7 @@ def add_geomod(objs, geo_func,
             if reuse and name in bpy.data.node_groups:
                 mod.node_group = bpy.data.node_groups[name]
             else:
+                # print("input_kwargs", input_kwargs, geo_func.__name__)
                 nw = NodeWrangler(mod)
                 geo_func(nw, *input_args, **input_kwargs)
             ng = mod.node_group
