@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 
 FILES_TO_DELETE = ["*.mtl", "*.attr", "*.normal", "*.water_dist", "*.obj", "*.glb",
+                    "*.altitude", "*.pkl", "*.blend", "*.blend1", "*.npz", "assets/"]
 
 def cleanup(folder, verbose=False):
     if not verbose:
@@ -30,3 +31,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     folder = args.folder.resolve()
     assert folder.exists() and folder.is_dir()
+    cleanup(folder, verbose=args.verbose)
