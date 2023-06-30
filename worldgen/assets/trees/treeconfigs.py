@@ -1,9 +1,15 @@
 from logging import root
+import numpy as np
+
+import bpy
 from .utils import mesh, helper
 from .tree import TreeParams
+
+subsubtwig_config = {'n': 2, 'symmetry': True,
                      'path_kargs': lambda idx: {'n_pts': 3, 'std': 1, 'momentum': 1, 'sz': .4},
                      'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2, 'rnd_idx': 2*idx+2,
                                                  'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': [0, 0, 1]}}
+subtwig_config = {'n': 3, 'symmetry': True,
                   'path_kargs': lambda idx: {'n_pts': 6, 'std': 1, 'momentum': 1, 'sz': .6 - .1 * idx},
                   'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .1, 'rnd_idx': 2*idx+1,
                                               'ang_min': np.pi/4, 'ang_max': np.pi/4 + np.pi/16, 'axis2': [0, 0, 1]},
@@ -12,6 +18,7 @@ twig_config = {'n': 1, 'decay': .8, 'valid_leaves': [-2, -1],
                'path_kargs': lambda idx: {'n_pts': 7, 'sz': .5, 'std': .5, 'momentum': .7},
                'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                'children': [subtwig_config]}
+
 
 def random_pine_rot():
     theta = np.random.uniform(2*np.pi)
@@ -52,6 +59,7 @@ bambootwig_config = {'n': 1, 'decay': .8, 'valid_leaves': [-2, -1],
                      'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                      'children': [subtwig_config]}
 
+
 subtwig_config = {'n': 37, 'symmetry': True,
                   'path_kargs': lambda idx: {'n_pts': 2, 'std': 1, 'momentum': 1, 'sz': .4},
                   'spawn_kargs': lambda idx: {'rng': [.2, .9], 'z_bias': .2, 'rnd_idx': idx+2,
@@ -72,6 +80,8 @@ shrubtwig_config = {'n': 1,
                     'spawn_kargs': lambda idx: {'init_vec': [0, 1, 0]},
                     'children': [subtwig_config]}
 
+
+def generate_twig_config():
     n_twig_pts = np.random.randint(10) + 5
     twig_len = np.random.uniform(3, 4)
     twig_sz = twig_len / n_twig_pts
@@ -392,6 +402,9 @@ def basic_stem(init_pos=np.array([[0, 0, 0]])):
                   }
 
     return tree_kargs, None, {}
+
+
+def space_tree_wrap(cds, n_init=5):
     def tmp_att_fn(nodes):
         return cds
 
@@ -487,6 +500,7 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
 
     return tree_kargs, twig_kargs, leaf_kargs
 
+def coral():
     def tmp_att_fn(nodes):
         branch_pts = mesh.get_pts_from_shape(bpy.ops.mesh.primitive_cube_add, n=500,
                                              scaling=[7, 7, 7], pt_offset=[0, 0, 11])
@@ -511,6 +525,9 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
                   'leaf_kargs': {'max_density': 5, 'scale': .3}}
 
     return tree_kargs, twig_kargs
+
+
+def parse_genome(tree_genome):
     genome_keys = ['size', 'trunk_warp', 'n_trunks',
                    'branch_start', 'branch_angle', 'multi_branch',
                    'branch density', 'branch_len',
@@ -518,12 +535,17 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
                    'pull_dir_hz', 'outgrowth', 'branch_thickness',
                    'twig_density', 'twig_scale']
     return {k: tree_genome[k_idx] for k_idx, k in enumerate(genome_keys)}
+
+
+def calc_height(x, min_ht=5, max_ht=30, bias=-.05, uniform=.5):
     def map_fn(val): return np.tan((val-.5+bias)*np.pi*(1.1-uniform))
     rng = map_fn(0), map_fn(1)
     y = map_fn(x)
     y = (y - rng[0]) / (rng[1] - rng[0])
     y = y * (max_ht - min_ht) + min_ht
     return y
+
+
 def generate_tree_config(tree_genome=None, season='autumn'):
     """
     Main latent params that we might want to control:
@@ -626,6 +648,8 @@ def generate_tree_config(tree_genome=None, season='autumn'):
         child_placement={'depth_range': (0, 5.0), 'Density': twig_density, 'Multi inst': twig_inst,
                             'Pitch variance': 1.0, 'Yaw variance': 10.0, 'Min scale': 1.1, 'Max scale': 1.3}                    
     )
+
+
 def random_tree(tree_genome=None, season='autumn'):
     leaf_kargs = {'leaf_width': np.random.rand() * .5 + .1,
                   'alpha': np.random.rand() * .3}
@@ -651,6 +675,9 @@ def random_tree(tree_genome=None, season='autumn'):
     )
     tree_kargs = generate_tree_config(tree_genome, season=season)
     return tree_kargs, twig_kargs, leaf_kargs
+
+
+def generate_coral_config(tree_genome=None):
     """
     Main latent params that we might want to control:
     - overall size/"age"
@@ -684,7 +711,9 @@ def random_tree(tree_genome=None, season='autumn'):
     avail_idxs = avail_idxs[start_idx::sample_density]
     multi_branch = int(5 ** (cfg['multi_branch']**1.6))
     avail_idxs = np.repeat(avail_idxs, multi_branch).flatten()
+
     n = 0  # len(avail_idxs)
+
     start_ht = sz * (start_idx / sz) + 1
     box_ht = (sz - start_ht) * .6
 
@@ -692,6 +721,7 @@ def random_tree(tree_genome=None, season='autumn'):
         branch_pts = mesh.get_pts_from_shape(bpy.ops.mesh.primitive_cube_add, n=500,
                                              scaling=[sz/2, sz/2, box_ht], pt_offset=[0, 0, start_ht + sz * .4])
         return branch_pts
+
     max_sz = 1
 
     branch_config = {'n': n,
