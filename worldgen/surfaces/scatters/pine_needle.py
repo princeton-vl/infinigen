@@ -1,16 +1,24 @@
+import colorsys
+
+import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform as U, normal as N, randint
 
 from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
 from nodes.color import color_category
 
+from surfaces import surface
 from placement.factory import AssetFactory, make_asset_collection
 from placement.instance_scatter import scatter_instances
+
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
+
 def shader_material(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler
+
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
     
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': object_info.outputs["Random"]})
@@ -53,7 +61,9 @@ def nodegroup_pine_needle(nw: NodeWrangler):
         input_kwargs={'Curve': quadratic_bezier, 'Profile Curve': curve_circle.outputs["Curve"]})
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': curve_to_mesh}, attrs={'is_active_output': True})
+
 class PineNeedleFactory(AssetFactory):
+
     def sample_params(self):
         s = N(1, 0.2)
         return {
@@ -61,22 +71,30 @@ class PineNeedleFactory(AssetFactory):
             'Bend': 0.03 * s * N(1, 0.2),
             'Radius': 0.001 * s * N(1, 0.2)
         }
+
     def create_asset(self, **_):
         obj = butil.spawn_vert('pine_needle')
         butil.modify_mesh(obj, 'NODES', apply=True, node_group=nodegroup_pine_needle(), 
                           ng_inputs=self.sample_params())
         return obj
+
     def finalize_assets(self, objs):
         surface.add_material(objs, shader_material)
 
 def apply(obj, scale=1, density=2e3, n=3, selection=None):
+    n_species = np.random.randint(2, 3)
+    factories = [PineNeedleFactory(np.random.randint(1e5)) for i in range(n_species)]
     pine_needle = make_asset_collection(factories,
                                                    weights=U(0.5, 1, len(factories)), n=n,
+                                                   verbose=True)
     
     d = np.deg2rad(U(5, 15))
     scatter_obj = scatter_instances(
+        base_obj=obj, collection=pine_needle,
         vol_density=U(0.01, 0.03),        rotation_offset=lambda nw: nw.uniform((-d,)*3, (d,)*3),
         ground_offset=lambda nw: nw.uniform(0, 0.015),
         scale=U(2, 3), scale_rand=U(0.4, 0.8), scale_rand_axi=U(0.3, 0.7),
         selection=selection, taper_density=True
     )
+
+    return scatter_obj, pine_needle
