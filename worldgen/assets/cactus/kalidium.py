@@ -21,6 +21,7 @@ from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from assets.cactus.base import BaseCactusFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class KalidiumBaseCactusFactory(BaseCactusFactory):
@@ -74,6 +75,7 @@ class KalidiumBaseCactusFactory(BaseCactusFactory):
         butil.apply_transform(obj)
         subsurface2face_size(obj, face_size)
         origin2lowest(obj)
+        tag_object(obj, 'kalidium_cactus')
         return obj
 
     @staticmethod
