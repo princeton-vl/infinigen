@@ -3,23 +3,30 @@ import math
 import colorsys
 
 import numpy as np
+from numpy.random import uniform as U
 
 from placement.instance_scatter import scatter_instances
 from assets.utils.object import new_cube
 from assets.utils.misc import build_color_ramp
 from assets.utils.decorate import assign_material
+from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from surfaces import surface
+from placement.instance_scatter import scatter_instances
 
 class MossFactory(AssetFactory):
 
     def __init__(self, factory_seed):
         super(MossFactory, self).__init__(factory_seed)
         self.max_polygon = 1e4
+        self.base_hue = U(.2, .24)
 
     @staticmethod
     def shader_moss(nw: NodeWrangler, base_hue=.3):
+        h_perturb = U(-0.02, .02)
+        s_perturb = U(-.1, -.0)
+        v_perturb = U(1., 1.5)
 
         def map_perturb(h, s, v):
             return *colorsys.hsv_to_rgb(h + h_perturb, s + s_perturb, v / v_perturb), 1.
@@ -51,6 +58,7 @@ class MossFactory(AssetFactory):
         obj = new_cube()
         surface.add_geomod(obj, self.geo_moss_instance, apply=True, input_args=[face_size])
         assign_material(obj, surface.shaderfunc_to_material(MossFactory.shader_moss,
+                                                            (self.base_hue + U(-.02, .02) % 1)))
         return obj
 
     @staticmethod
@@ -58,6 +66,8 @@ class MossFactory(AssetFactory):
         radius = .008
         start = (0.0, 0.0, 0.0)
         start_handle = (-.03, 0.0, .02)
+        end = (-0.04, 0.0, U(.04, .05))
+        end_handle = (end[0] + U(-.03, -.02), 0., end[2] + U(-.01, .0))
         bezier = nw.new_node(Nodes.CurveBezierSegment, input_kwargs={
             'Resolution': 10 * math.ceil(.01 / face_size),
             'Start': start,
@@ -71,10 +81,26 @@ class MossFactory(AssetFactory):
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': mesh})
 
 
+class MossCover:
+
+    def __init__(self):
+        self.col = make_asset_collection(MossFactory(np.random.randint(1e5)), name='moss', n=3)
+        base_hue = U(.24, .28)
+        for o in self.col.objects:
             assign_material(o, surface.shaderfunc_to_material(MossFactory.shader_moss,
+                                                              (base_hue + U(-.02, .02)) % 1))
+
+    def apply(self, obj, selection=None):
 
         def instance_index(nw: NodeWrangler, n):
             return nw.math('MODULO',
                            nw.new_node(Nodes.FloatToInt, [nw.scalar_multiply(nw.musgrave(10), 2 * n)]), n)
 
+        scatter_obj = scatter_instances(
+            base_obj=obj, collection=self.col, 
+            density=2e4, min_spacing=.005, 
+            scale=1, scale_rand=U(0.3, 0.7),
+            selection=selection, 
+            instance_index=instance_index)
 
+        return scatter_obj
