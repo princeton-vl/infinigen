@@ -284,6 +284,7 @@ def shader_green(nw: NodeWrangler, rand=True):
 def shader_shining_golden(nw: NodeWrangler, rand=True):
     # Code generated using version 2.4.3 of the node_transpiler
 
+    base_color = [0.8, 0.2227, 0.0326, 1.0]
     if rand:
         base_color = sample_color(base_color, keep_sum=True)
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
@@ -295,6 +296,7 @@ def shader_shining_golden(nw: NodeWrangler, rand=True):
 
 class shaders:
     def choose():
+        choices = [shader_black_white_snake, shader_shining_golden, shader_golden, shader_green]
         # choices = [shader_green]
         return random.choice(choices)
 
