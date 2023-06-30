@@ -6,6 +6,7 @@
 
 from numpy.random import uniform as U, normal as N
 from nodes.node_wrangler import Nodes, NodeWrangler
+from surfaces import surface
 from util.random import random_color_neighbour
 from terrain.utils import SurfaceTypes
 from util.math import FixedSeed
@@ -148,6 +149,7 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
 
 
         group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position_1})
+
 
     surface.add_geomod(obj,geo_cobblestone, selection=selection)
     surface.add_material(obj, shader_cobblestone, selection=selection, reuse=False)
