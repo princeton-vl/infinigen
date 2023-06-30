@@ -23,6 +23,7 @@ from assets.creatures.geometry import lofting, nurbs
 
 from util import blender as butil
 from util.logging import Suppress
+from assets.utils.tag import tag_object, tag_nodegroup
 
 NURBS_BASE_PATH = Path('assets/creatures/genomes/nurbs/')
 load_nurbs = lambda p: np.load(p)[..., :3] # strip W coordinate if present
@@ -148,6 +149,7 @@ class NurbsBody(NurbsPart):
             for i, t in enumerate(self.shoulder_ik_ts)
         }
         part.settings['rig_reverse_skeleton'] = self.rig_reverse_skeleton
+        tag_object(part.obj, 'body')
         return part
 
 class NurbsHead(NurbsPart):
@@ -158,4 +160,5 @@ class NurbsHead(NurbsPart):
             1.0: IKParams(name='head', rotation_weight=0.1, target_size=0.4, chain_length=1)
         }
         part.settings['rig_extras'] = True
+        tag_object(part.obj, 'head')
         return part
