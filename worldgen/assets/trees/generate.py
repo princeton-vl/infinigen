@@ -34,6 +34,7 @@ from surfaces.scatters import rocks, grass
 from assets.cloud.generate import CloudFactory
 from ..utils.decorate import write_attribute
 
+from assets.utils.tag import tag_object, tag_nodegroup
 logger = logging.getLogger('trees')
 
 @gin.configurable
@@ -159,6 +160,7 @@ class GenericTreeFactory(AssetFactory):
         else:
             butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
 
+        tag_object(skin_obj, 'tree')
         return skin_obj
         
 
@@ -406,3 +408,4 @@ class BushFactory(GenericTreeFactory):
                 self.child_col.name = colname
                 assert self.child_col.name == colname, f'Blender truncated {colname} to {self.child_col.name}'
             else:
+                self.child_col = bpy.data.collections[colname]
