@@ -25,6 +25,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 
 from assets.creatures.geometry import nurbs as nurbs_util
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def square(x):
     return x * x
@@ -110,6 +111,7 @@ class Hoof():
 
         obj.rotation_euler.y -= np.pi / 2
         butil.apply_transform(obj, rot=True)
+        tag_object(obj, 'hoof')
 
         return obj
 
@@ -137,6 +139,7 @@ class HoofClaw(PartFactory):
         hoof.name = 'HoofClaw'
 
         part = Part(skeleton=np.zeros((1, 3)), obj=obj, joints={}, iks={})
+        tag_object(part.obj, 'hoof_claw')
         return part
 
 @node_utils.to_nodegroup('nodegroup_hoof', singleton=False, type='GeometryNodeTree')
@@ -198,6 +201,7 @@ class HoofAnkle(PartFactory):
 
         ankle.scale = self.ankle_scale
         butil.apply_transform(ankle, scale=True)
+        tag_object(part.obj, 'hoof_ankle')
         
         part.iks = {1.0: IKParams('foot', rotation_weight=0.1, chain_parts=2, chain_length=-1)}
 
