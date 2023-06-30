@@ -9,7 +9,9 @@ from surfaces.scatters.rocks import BlenderRockFactory
 from surfaces import surface
 from nodes.color import color_category
 
+def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
+    white_noise = nw.new_node(Nodes.WhiteNoiseTexture, attrs={"noise_dimensions": "4D"},
                                 input_kwargs={"Vector": (object_info, "Random")})
     mix_rgb = nw.new_node(Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(color_category("gem"))])
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, [mix_rgb])
@@ -26,6 +28,8 @@ class GlowingRocksFactory(AssetFactory):
         if coarse:
             return
         self.watt_power_range = watt_power_range
+        self.rock_collection = make_asset_collection(BlenderRockFactory(np.random.randint(1e5), detail=1),
+                                                     name="glow_rock_base", n=5)
         
         for o in self.rock_collection.objects:
             butil.modify_mesh(o, 'SUBSURF', levels=2)
@@ -47,9 +51,12 @@ class GlowingRocksFactory(AssetFactory):
         new_obj.rotation_euler = np.random.uniform(-np.pi, np.pi, 3)
         new_obj.scale = np.random.uniform(0.7, 1.5, 3) * 0.5
         new_obj.active_material = self.material
+        bbox = np.asarray(new_obj.bound_box[:])  # 8 3
         min_side_length = (bbox.max(axis=0) - bbox.min(axis=0)).min()
 
         # Diameter is set to half the shortest edge of the bbox
+        bpy.ops.object.light_add(type='POINT', radius=min_side_length * 1.0, align='WORLD', location=(0, 0, 0),
+                                 rotation=(0, 0, 0), scale=(1, 1, 1))
         point_light = bpy.context.selected_objects[0]
         point_light.data.energy = round(np.random.uniform(*self.watt_power_range))
         point_light.parent = new_obj
