@@ -13,6 +13,7 @@ from nodes.color import color_category
 import numpy as np
 from surfaces import surface
 from surfaces.templates import simple_greenery
+from assets import flower as Flower
 from placement.factory import AssetFactory
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
@@ -590,6 +591,7 @@ class FlowerPlantFactory(AssetFactory):
         for _ in range(self.flowers_version_num):
             fw_seed = randint(0, 1000, size=(1,))[0]
             rad = uniform(0.4, 0.7, size=(1,))[0]
+            flower_model = Flower.FlowerFactory(rad=rad, factory_seed=fw_seed)
             flower = flower_model.create_asset()
             flowers.append(flower)
 
