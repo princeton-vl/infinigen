@@ -1,3 +1,4 @@
+import os, sys, random
 import numpy as np
 import math as ma
 from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
@@ -1005,12 +1006,20 @@ def shader_stripe_fish(nw: NodeWrangler, rand=True, **input_kwargs):
 
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+
     attributes = [
         'Color variations',
         'offset2'
     ]
+
+    x = random.random()
+    if x < 0.2:
         shader = shader_fish_body_gold
+    elif x < 0.5:
+        shader = shader_stripe_fish
     else:
+        shader = shader_fish_body_regular
+
     surface.add_geomod(obj, geometry_fish_body, input_kwargs=geo_kwargs, attributes=attributes)
     surface.add_material(obj, shader, input_kwargs=shader_kwargs)
 
