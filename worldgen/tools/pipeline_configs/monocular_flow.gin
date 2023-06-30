@@ -1,0 +1,4 @@
+include 'tools/pipeline_configs/monocular.gin'
+iterate_scene_tasks.frame_range=(1, 2)
+
+
