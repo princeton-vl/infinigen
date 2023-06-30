@@ -23,6 +23,7 @@ from placement.factory import AssetFactory
 from surfaces import surface
 from util import blender as butil
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MushroomCapFactory(AssetFactory):
 
@@ -241,6 +242,7 @@ class MushroomCapFactory(AssetFactory):
                           deform_axis='X')
         r1, r2, r3, r4 = uniform(-.25, .25, 4)
         displace_vertices(obj, lambda x, y, z: (np.where(x > 0, r1, r2) * x, np.where(y > 0, r3, r4) * y, 0))
+        tag_object(obj, 'cap')
         return obj
 
     @staticmethod
