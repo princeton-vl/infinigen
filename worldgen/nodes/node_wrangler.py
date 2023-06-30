@@ -256,9 +256,14 @@ class NodeWrangler():
             inp.default_value = prepare_cast(type(inp.default_value), val)
 
         if self.modifier is not None:
+            id = inp.identifier
             if val is not None:
+                curr_mod_inp_val = self.modifier[id]
                 if hasattr(curr_mod_inp_val, 'real'):
+                    self.modifier[id] = prepare_cast(type(curr_mod_inp_val.real), val)
             if attribute is not None:
+                self.modifier[f'{id}_attribute_name'] = attribute
+                self.modifier[f'{id}_use_attribute'] = 1
 
         assert len([o for o in group_input.outputs if o.name == name]) == 1
         return group_input.outputs[name]
