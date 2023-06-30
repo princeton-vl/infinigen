@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import logging
 
 import bpy
 import gin
@@ -17,6 +18,7 @@ from util.organization import Attributes, Task, TerrainNames, ElementNames, Tran
 from assets.utils.tag import tag_object, tag_system
 from numpy import ascontiguousarray as AC
 
+logger = logging.getLogger('terrain')
 
 fine_suffix = "_fine"
 hidden_in_viewport = [ElementNames.Atmosphere]
@@ -63,7 +65,9 @@ class Terrain:
                 asset_path = Path(asset_folder)/asset_version
                 if not asset_path.exists():
                     raise ValueError(f'{asset_folder=} did not contain {asset_version=}, please download it')
+                logging.info(f'Terrain using pre-generated {asset_path=} and on the fly {on_the_fly_asset_folder=}')
             else:
+                logging.info(f'Terrain using only on the fly {on_the_fly_asset_folder=}')
                 asset_path = Path("")
 
             self.on_the_fly_asset_folder = Path(on_the_fly_asset_folder)
@@ -71,6 +75,7 @@ class Terrain:
 
             self.elements, scene_infos = scene(seed, Path(on_the_fly_asset_folder), asset_path, device)
             self.elements_list = list(self.elements.values())
+            logging.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
             transfer_scene_info(self, scene_infos)
 
     def __del__(self):
@@ -174,6 +179,9 @@ class Terrain:
             for element in self.elements_list:
                 for attribute in element.attributes:
                     if attribute not in self.surfaces:
+                        surf = self.surface_registry(attribute)
+                        self.surfaces[attribute] = surf
+                        logger.info(f"{attribute=} will use material {surf.__name__}")
 
     def apply_surface_templates(self, attributes_dict):
         for mesh_name in attributes_dict:
@@ -259,6 +267,7 @@ class Terrain:
             object_to_copy_from.hide_viewport = True
             if mesh_name in hidden_in_viewport:
                 object_to_copy_to.hide_viewport = True
+            else:
                 self.tag_terrain(object_to_copy_to)
 
     def compute_camera_space_sdf(self, XYZ):
