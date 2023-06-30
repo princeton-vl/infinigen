@@ -190,6 +190,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position}, attrs={'is_active_output': True})
 
+def apply(obj, selection=None, **kwargs):
     # seed = randint(10000000)
     surface.add_geomod(obj, geo_cracked_ground, selection=selection) #, input_kwargs={'random_seed': seed})
     surface.add_material(obj, shader_cracked_ground, selection=selection) #, input_kwargs={'random_seed': seed})
