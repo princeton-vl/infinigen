@@ -83,6 +83,7 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
                                input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'stem')})
 
 
+def geo_face_colors(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     rotation_scale = kwargs["stem_rotation"]
