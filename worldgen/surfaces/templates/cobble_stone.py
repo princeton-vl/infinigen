@@ -8,7 +8,7 @@ from numpy.random import uniform as U, normal as N
 from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
 from util.random import random_color_neighbour
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.math import FixedSeed
 import gin
 

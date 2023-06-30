@@ -11,7 +11,7 @@ from nodes import node_utils
 from nodes.node_wrangler import Nodes
 from numpy.random import uniform
 from surfaces import surface
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.random import random_color_neighbour
 from util.random import random_general as rg
 from .mountain import geo_MOUNTAIN_general

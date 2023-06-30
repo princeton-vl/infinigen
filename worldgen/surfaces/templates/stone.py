@@ -12,7 +12,7 @@ from nodes.node_wrangler import Nodes
 from numpy.random import uniform, normal as N
 from surfaces import surface
 from surfaces.surface_utils import sample_color, sample_ratio
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.math import FixedSeed
 
 from .mountain import geo_MOUNTAIN_general

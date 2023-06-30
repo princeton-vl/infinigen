@@ -9,7 +9,7 @@ from nodes import node_utils
 from nodes.node_wrangler import Nodes
 from numpy.random import uniform
 from surfaces import surface
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.math import FixedSeed
 from util.random import random_color_neighbour
 

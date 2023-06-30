@@ -4,7 +4,7 @@
 
 from nodes.node_wrangler import Nodes
 from surfaces import surface
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_snowtexture"
