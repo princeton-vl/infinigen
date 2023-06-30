@@ -16,6 +16,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class FallenTreeFactory(BaseDeformedTreeFactory):
 
@@ -79,4 +80,5 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
         remove_vertices(upper, lambda x, y, z: z < -.5)
         upper = separate_loose(upper)
         obj = join_objects([upper, lower])
+        tag_object(obj, 'fallen_tree')
         return obj
