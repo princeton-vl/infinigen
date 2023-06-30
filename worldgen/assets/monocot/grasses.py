@@ -10,6 +10,15 @@ from assets.utils.decorate import assign_material, join_objects, remove_vertices
 from assets.utils.draw import bezier_curve, leaf, spin
 from assets.utils.mesh import polygon_angles
 from assets.utils.misc import log_uniform
+
+from nodes.node_info import Nodes
+from nodes.node_wrangler import NodeWrangler
+
+from placement.factory import AssetFactory, make_asset_collection
+from placement.detail import remesh_with_attrs
+from surfaces import surface
+from surfaces.surface import read_attr_data, shaderfunc_to_material
+from util import blender as butil
 from util.math import FixedSeed
 
 class GrassesMonocotFactory(MonocotGrowthFactory):
