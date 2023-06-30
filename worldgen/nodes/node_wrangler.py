@@ -55,6 +55,7 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
     traceback_files = re.findall("/([^/]*\.py)\", line ([0-9]+)", traceback_str)
     traceback_files = [f"{f}:{l}" for f, l in traceback_files if
         all(s not in f for s in {"warnings.py", "node_wrangler.py"})]
+    if len(traceback_files):
         message.args = f"{message.args[0]}. The issue is probably coming from {traceback_files.pop()}",
     log = file if hasattr(file, 'write') else sys.stderr
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
