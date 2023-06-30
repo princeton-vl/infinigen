@@ -7,6 +7,7 @@ compose_scene.grass_chance = 0.1
 compose_scene.ferns_chance = 0.0
 compose_scene.pine_needle_chance = 0.05
 compose_scene.fancy_clouds_chance = 0.0
+
 compose_scene.tree_density = 0.02
 
 compose_scene.rain_particles_chance = 0.01
