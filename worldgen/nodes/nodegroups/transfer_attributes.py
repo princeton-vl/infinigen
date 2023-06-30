@@ -1,5 +1,10 @@
+import bpy
+import mathutils
 import numpy as np
+from numpy.random import uniform, normal
+from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils, node_info
+from surfaces import surface
 from util import blender as butil
 
 
@@ -33,6 +38,9 @@ def attribute_to_uvs(obj, attr_name):
         u, v, _ = data[loop.vertex_index]
         obj.data.uv_layers.active.data[loop.index].uv = (u, v)
 
+# list of supported data type:
+# https://docs.blender.org/api/current/bpy.types.GeometryNodeCaptureAttribute.html
+
 def transfer_all(source, target, attributes=None, uvs=False):
     assert source.type == 'MESH'
     assert target.type == 'MESH'
@@ -55,13 +63,20 @@ def transfer_all(source, target, attributes=None, uvs=False):
                                      'target': target,
                                      'attribute_to_transfer_list': list(zip(attributes, dtypes))},
                        attributes=attributes, apply=True, domains=domains)
+
     surface.add_geomod(target, copy_geom_info,
                        input_kwargs={'source': source, 'target': target},
                        apply=True)
+
     if uvs:
         attribute_to_uvs(target, uv_att_name)
 
+
 def copy_geom_info(nw, source, target):
+    # simply copy the geom back to the target from source
+    object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={'Object': source})
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': object_info.outputs["Geometry"], })
+
 
 def transfer_att_node(nw, source, target, attribute_to_transfer_list=[]):
     # create a geom node in the non-remeshed version of the mesh (i.e., source)
