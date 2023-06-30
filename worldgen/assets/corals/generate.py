@@ -30,6 +30,7 @@ from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFacto
 from .tube import TubeBaseCoralFactory
 from .star import StarBaseCoralFactory
 from . import tentacles
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class CoralFactory(AssetFactory):
@@ -65,6 +66,9 @@ class CoralFactory(AssetFactory):
         if uniform(0, 1) < self.factory.tentacle_prob and not has_bump:
             t = tentacles.apply(obj, self.factory.points_fn, self.factory.density, realize, self.base_hue)
             obj = join_objects([obj, t])
+
+        tag_object(obj, 'coral')
+
         return obj
 
     def apply_noise_texture(self, obj):
