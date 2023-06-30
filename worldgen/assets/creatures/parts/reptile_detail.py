@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Hongyu Wen
+# Date Signed: June 13, 2023
+
 import logging
 import bpy 
 import numpy as np
