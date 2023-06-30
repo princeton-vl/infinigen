@@ -34,6 +34,7 @@ def objects_to_grid(objects, spacing):
 def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None):
     temp_vert = butil.spawn_vert('compute_placeholder_locations')
     geo = temp_vert.modifiers.new(name="GEOMETRY", type='NODES')
+    nw = NodeWrangler(geo)
 
     base_geo = nw.new_node(Nodes.ObjectInfo, [terrain]).outputs['Geometry']
 
@@ -213,7 +214,15 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
 
 def placeholder_kd(include=None, exclude=None):
     objs = []
+    if 'placeholders' in bpy.data.collections:
+        for c in bpy.data.collections['placeholders'].children:
             classname = c.name.split('(')
+            if include is not None and classname not in include:
+                continue
+            if exclude is not None and classname in exclude:
+                continue
+            for obj in c.objects:
+                objs += [o for o in butil.iter_object_tree(obj) if o.type == 'MESH']
 
     return butil.joined_kd(objs, include_origins=True)
 def make_placeholders_float(placeholder_col, terrain_bvh, water):
