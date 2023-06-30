@@ -35,21 +35,38 @@ HSV_RANGES = {
         U(0.5, 1)),
     'greenery': (
         U(0.25, 0.33), 
+        N(0.65, 0.03), 
         U(0.1, 0.45)
     ),
+    'yellowish': (
+        N(0.15, 0.005, wrap=True), 
         N(0.95, 0.02), 
         N(0.9, 0.02)
+    ),
+    'red': (
         N(0.0, 0.05, wrap=True), 
         N(0.9, 0.03), 
+        N(0.6, 0.05)
+    ),
+    'pink': (
         N(0.88, 0.06, wrap=True), 
+        N(0.6, 0.05), 
+        N(0.8, 0.05)
+    ),
+    'white': (
         N(0.0, 0.06, wrap=True), 
         U(0.0, 0.2, clip=[0, 1]), 
+        N(0.95, 0.02)
+    ),
     'fog': (
         U(0, 1),
         U(0, 0.2),
         U(0.8, 1)
     ),
     'water': (
+        U(0.2, 0.6),
+        N(0.5, 0.1),
+        U(0.7, 1)
         U(0.7, 0.95),
     ),
     'eye_schlera': (
@@ -98,7 +115,13 @@ def color_category(name):
         raise ValueError(f'color_category did not recognize {name=}, options are {HSV_RANGES.keys()=}')
     schemes = HSV_RANGES[name]
     assert len(schemes) == 3
+    hsv = [s.sample() for s in schemes]
+    return hsv2rgba(hsv)
+
+def hsv2rgba(hsv):
+    # hsv is a len-3 tuple or array
     c = mathutils.Color()
+    c.hsv = list(hsv)
     rgba = list(c) + [1]
     return np.array(rgba)
     color_hash = int_hash((int(h*1e3), scene_seed))
