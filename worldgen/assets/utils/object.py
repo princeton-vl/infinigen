@@ -19,6 +19,8 @@ def center(obj):
 
 def origin2lowest(obj, vertical=False):
     co = read_co(obj)
+    if not len(co):
+        return
     i = np.argmin(co[:, -1])
     if vertical:
         obj.location[-1] = -co[i, -1]
