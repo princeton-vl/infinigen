@@ -17,6 +17,7 @@ from assets.cloud.cloud import create_3d_grid
 from surfaces import surface
 from util import blender as butil
 from util.math import FixedSeed
+from util.random import random_general as rg
 
 from nodes.node_wrangler import Nodes
 from assets.utils.tag import tag_object, tag_nodegroup
@@ -42,6 +43,7 @@ class CloudFactory(AssetFactory):
         self.ref_cloud.update()
 
         with FixedSeed(factory_seed):
+            self.cloudy = rg(cloudy)
 
         self.cloud_types = [Cumulonimbus, ] if self.cloudy else [Cumulus, Stratocumulus, Altocumulus, ]
 
