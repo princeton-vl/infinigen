@@ -26,12 +26,15 @@ from placement.factory import AssetFactory
 from surfaces import surface
 from surfaces.surface import read_attr_data, shaderfunc_to_material, write_attr_data
 
+from util.blender import deep_clone_obj
+from util.math import FixedSeed
 
 class JellyfishFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
+            self.base_hue = np.random.normal(0.57, 0.15)
             self.outside_material = self.make_transparent() if uniform(0, 1) < .8 else self.make_dotted()
             self.inside_material = self.make_transparent() if uniform(0, 1) < .8 else self.make_opaque()
             self.short_material = self.make_transparent()
@@ -75,6 +78,8 @@ class JellyfishFactory(AssetFactory):
         tail_z = -np.amin(read_co(obj)[:, -1])
         self.animate_expansion(obj, head_z, tail_z)
         self.animate_movement(obj)
+
+
         return obj
 
     def animate_movement(self, obj):
@@ -218,6 +223,7 @@ class JellyfishFactory(AssetFactory):
         i = np.argmax(co[:, 1])
         obj.location[1] = -min(co[i, 1], 0)
         butil.apply_transform(obj, loc=True)
+        tag_object(obj, 'arm')
         return obj
 
     @staticmethod
