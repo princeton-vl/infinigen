@@ -527,6 +527,8 @@ class FishHead(PartFactory):
         part.settings['rig_extras'] = True
         return part
 
+@node_utils.to_nodegroup('nodegroup_flying_bird_head', singleton=True, type='GeometryNodeTree')
+def nodegroup_flying_bird_head(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -536,6 +538,7 @@ class FishHead(PartFactory):
             ('NodeSocketFloatDistance', 'Radius', 0.040000000000000001)])
     
     simple_tube_v2 = nw.new_node(nodegroup_simple_tube_v2().name,
+        input_kwargs={'length_rad1_rad2': group_input.outputs["length_rad1_rad2"], 'angles_deg': group_input.outputs["angles_deg"], 'aspect': N(0.9, 0.05), 'fullness': 0.9, 'Origin': (-0.13, 0.0, 0.1)})
     
     simple_tube_v2_1 = nw.new_node(nodegroup_simple_tube_v2().name,
         input_kwargs={'length_rad1_rad2': group_input.outputs["length_rad1_rad2"], 'angles_deg': group_input.outputs["angles_deg"], 'aspect': 1.1899999999999999, 'fullness': 2.25, 'Origin': (-0.13, 0.0, 0.1-0.040000000000000001)})
@@ -545,6 +548,7 @@ class FishHead(PartFactory):
         attrs={'operation': 'UNION'})
     
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': simple_tube_v2.outputs["Geometry"], 'Skeleton Curve': simple_tube_v2.outputs["Skeleton Curve"]})
 
 @node_utils.to_nodegroup('nodegroup_bird_head', singleton=True, type='GeometryNodeTree')
 def nodegroup_bird_head(nw: NodeWrangler):
@@ -585,12 +589,22 @@ class BirdHead(PartFactory):
         part = part_util.nodegroup_to_part(nodegroup_bird_head, params)
         part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_parts=2)}
         part.settings['rig_extras'] = True
+        return part
+
+class FlyingBirdHead(PartFactory):
+
+    tags = ['head']
+
     def sample_params(self):
         return {
+            'length_rad1_rad2': np.array((0.3, 0.04, 0.12)) * N(1, 0.05, size=(3,)),
+            'angles_deg': N(0, 0.1, 3),
             'eye_coord': np.array((0.65, -0.32, 0.95)) * N(1, (0.1, 0.2, 0), 3),
+            'Radius': 0.03 * N(1, 0.05)
         }
 
     def make_part(self, params):
+        part = part_util.nodegroup_to_part(nodegroup_flying_bird_head, params)
         part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_parts=2)}
         part.settings['rig_extras'] = True
         tag_object(part.obj, 'bird_head')
