@@ -1,3 +1,18 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#include <iostream>
+#include <fstream>
+#include <math.h>
+#include <limits>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include "utils.hpp"
+#include "cnpy/cnpy.h"
+#include "colorcode.h"
+
 void release_assert(const char *file, int line, bool condition, const std::string &msg){
     if (!condition)
         throw std::runtime_error(std::string("Assertion failed: ") + file + " (" + std::to_string(line) + ")\n" + msg + "\n");
