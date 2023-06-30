@@ -13,6 +13,7 @@ import sys
 import argparse
 from pathlib import Path
 
+sys.path.append(os.getcwd())
 
 import bpy
 from terrain.assets.caves import caves_asset
