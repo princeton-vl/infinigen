@@ -12,6 +12,8 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category, hsv2rgba
 from surfaces import surface
+from assets.leaves.leaf_v2 import nodegroup_apply_wave, nodegroup_move_to_origin
+from assets.leaves.leaf_maple import nodegroup_leaf_shader
 
 from util.math import FixedSeed
 from placement.factory import AssetFactory
@@ -594,6 +596,7 @@ def shader_material(nw: NodeWrangler, **kwargs):
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': leaf_shader})
 
+def geo_leaf_broadleaf(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -747,6 +750,7 @@ class LeafFactoryBroadleaf(AssetFactory):
         material_kwargs['color_vein'][2] += np.random.normal(0.0, self.color_randomness)
         material_kwargs['color_vein'] = hsv2rgba(material_kwargs['color_vein'])
 
+        surface.add_geomod(obj, geo_leaf_broadleaf, apply=False, attributes=['offset', 'coordinate', 'subvein offset', 'vein value'], input_kwargs=phenome)
         surface.add_material(obj, shader_material, reuse=False, input_kwargs=material_kwargs)
 
         bpy.ops.object.convert(target='MESH')
