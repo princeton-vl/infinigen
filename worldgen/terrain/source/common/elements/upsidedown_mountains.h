@@ -1,6 +1,7 @@
 DEVICE_FUNC void upsidedown_mountains(
     float3_nonbuiltin position,
     float *sdf,
+    float *auxs,
     int *i_params,
     float *f_params
 ) {
@@ -56,8 +57,14 @@ DEVICE_FUNC void upsidedown_mountains(
     downside0 += Perlin(position.x, position.y, position.z, myhash(seed, 1), perturb_octaves, perturb_freq) * perturb_scale;
     upside0 += Perlin(position.x, position.y, position.z, myhash(seed, 2), perturb_octaves, perturb_freq) * perturb_scale;
 
+    float v1 = position.z - floating_height - peak0 - (upside0 - peak0) * min(downside0 * 3, 1.f);
+    float v2 = peak0 - downside0 - position.z + floating_height;
+    float t = max(v1, v2);
     if (downside0 < 0) {
         *sdf = 1e9;
     }
     else *sdf = t;
+    if (auxs != 0) {
+        auxs[0] = v1 < v2;
+    }
 }
