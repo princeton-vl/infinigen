@@ -5,6 +5,7 @@
 # Date Signed: April 13 2023 
 
 import colorsys
+
 from functools import reduce
 
 import bpy
@@ -19,6 +20,7 @@ from surfaces.surface import shaderfunc_to_material
 from util import blender as butil
 from assets.utils.object import data2mesh, mesh2obj, new_cube, origin2leftmost
 from nodes.node_info import Nodes
+from placement.factory import AssetFactory, make_asset_collection
 from nodes.node_wrangler import NodeWrangler
 from placement.factory import AssetFactory
 from surfaces import surface
