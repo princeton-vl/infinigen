@@ -1,7 +1,9 @@
 import argparse
+import os
 import random
 import sys
 import cProfile
+import shutil
 from pathlib import Path
 import logging
 from functools import partial
@@ -10,6 +12,7 @@ from collections import defaultdict
 
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
+sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 
 import bpy
 import mathutils
@@ -19,6 +22,9 @@ import numpy as np
 from numpy.random import uniform, normal, randint
 from tqdm import tqdm
 from frozendict import frozendict
+
+from terrain import Terrain
+from util.organization import Task, Attributes, TerrainNames
 
 from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
@@ -48,6 +54,7 @@ from util.logging import Timer, save_polycounts, create_text_file
 from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry
+
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
         print("Overriden parameters:", overrides)
@@ -199,11 +206,25 @@ def execute_tasks(
     frame_range, camera_id,
     resample_idx=None,
     output_blend_name="scene.blend",
+    generate_resolution=(1920,1080),
+    reset_assets=True,
+    focal_length=None,
 ):
+    if input_folder != output_folder:
+        if reset_assets:
+            if os.path.islink(output_folder/"assets"):
+                os.unlink(output_folder/"assets")
+            elif (output_folder/"assets").exists():
+                shutil.rmtree(output_folder/"assets")
+        if (not os.path.islink(output_folder/"assets")) and (not (output_folder/"assets").exists()) and input_folder is not None and (input_folder/"assets").exists():
+            os.symlink(input_folder/"assets", output_folder/"assets")
+            # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
+    if Task.Coarse not in task:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
         scene_version = get_scene_tag('VERSION')
         butil.approve_all_drivers()
+    
     if frame_range[1] < frame_range[0]:
         raise ValueError(f'{frame_range=} is invalid, frame range must be nonempty. Blender end frame is INCLUSIVE')
 
@@ -215,6 +236,7 @@ def execute_tasks(
 
     surface.registry.initialize_from_gin()
     bpy.ops.preferences.addon_enable(module='ant_landscape')
+    bpy.ops.preferences.addon_enable(module='real_snow')
     bpy.context.preferences.system.scrollback = 0 
     bpy.context.preferences.edit.undo_steps = 0
     bpy.context.scene.render.resolution_x = generate_resolution[0]
@@ -227,28 +249,41 @@ def execute_tasks(
     bpy.context.scene.cycles.volume_max_steps = 32
 
     if Task.Coarse in task or Task.FineTerrain in task or Task.Fine in task or Task.Populate in task:
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
+
+    if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
         butil.spawn_empty(f'{VERSION=}')
         compose_scene_func(output_folder, terrain, scene_seed)
+
+    camera = cam_util.set_active_camera(*camera_id)
+    if focal_length is not None:
+        camera.data.lens = focal_length
 
     group_collections()
 
     if Task.Populate in task:
         populate_scene(output_folder, terrain, scene_seed)
+
     if Task.Fine in task:
         raise RuntimeError(f'{task=} contains deprecated {Task.Fine=}')
 
+    if Task.FineTerrain in task:
+        terrain.fine_terrain(output_folder)
     
     group_collections()
+
     if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
         bpy.context.preferences.system.scrollback = 100 
         bpy.context.preferences.edit.undo_steps = 100
+
         with (output_folder/ "version.txt").open('w') as f:
             scene_version = get_scene_tag('VERSION')
             f.write(f"{scene_version}\n")
 
         with (output_folder/'polycounts.txt').open('w') as f:
             save_polycounts(f)
+
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
 
@@ -287,6 +322,7 @@ def apply_scene_seed(args):
 def apply_gin_configs(args, scene_seed, skip_unknown=False):
 
     scene_types = [p.stem for p in Path('config/scene_types').iterdir()]
+    scene_specified = any(s in scene_types or s.startswith("figure") for s in args.gin_config)
     weights = {
         "kelp_forest": 0.3,
         "coral_reef": 1,
@@ -311,7 +347,14 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
     if not scene_specified:
         scene_type = np.random.RandomState(scene_seed).choice(scene_types, p=weights)
         logging.warning(f'Randomly selected {scene_type=}. IF THIS IS NOT INTENDED THEN YOU ARE MISSING SCENE CONFIGS')
+        if len(args.gin_config) > 0 and args.gin_config[0] == 'base':
+            args.gin_config = [scene_type] + args.gin_config[1:]
+        else:
+            args.gin_config = [scene_type] + args.gin_config
     def find_config(g):
+        as_figure_type = f'config/figure_types/{g}.gin'
+        if os.path.exists(as_figure_type):
+            return as_figure_type
         as_scene_type = f'config/scene_types/{g}.gin'
         if os.path.exists(as_scene_type):
             return as_scene_type
@@ -319,6 +362,7 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
         if os.path.exists(as_base):
             return as_base
         raise ValueError(f'Couldn not locate {g} in either config/ or config/scene_types')
+    bindings = sanitize_gin_override(args.gin_param)
     confs = [find_config(g) for g in ['base'] + args.gin_config]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 def main(
