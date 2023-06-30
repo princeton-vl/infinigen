@@ -26,6 +26,7 @@ from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class KelpFactory(AssetFactory):
+    
     thickness = .02
 
     def __init__(self, factory_seed, coarse=False):
