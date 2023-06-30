@@ -392,6 +392,7 @@ def shader_leaf_material(nw: NodeWrangler):
     map_range_2 = nw.new_node(Nodes.MapRange,
                               input_kwargs={'Value': attribute_1.outputs["Color"], 2: -0.94})
 
+    main_leaf_hsv = (uniform(0.3, 0.36), uniform(0.6, 0.7), uniform(0.2, 0.3))
     hue_saturation_value = nw.new_node('ShaderNodeHueSaturation',
                                        input_kwargs={'Value': 2.0, 'Color': hsv2rgba(main_leaf_hsv)})
 
