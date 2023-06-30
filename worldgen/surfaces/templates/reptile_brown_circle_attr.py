@@ -16,6 +16,7 @@ from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
 
+from assets.creatures.nodegroups.shader import nodegroup_color_mask
 
 def shader_brown_circle(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
