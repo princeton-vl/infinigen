@@ -24,6 +24,7 @@ class MonocotFactory(AssetFactory):
     max_cluster = 10
 
     def create_asset(self, i, **params) -> bpy.types.Object:
+        params['decorate'] = True
         if self.factory.is_grass:
             n = np.random.randint(1, 6)
             angles = polygon_angles(n, np.pi / 4, np.pi * 2)
