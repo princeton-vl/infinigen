@@ -24,8 +24,18 @@ def shader_mold(nw: NodeWrangler, base_hue):
     return bsdf
 
 
+class SlimeMold:
+
+    def __init__(self):
+        pass
+
+    def apply(self, obj, selection=None):
         scatter_obj = butil.spawn_vert('scatter:' + 'slime_mold')
         surface.add_geomod(scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection])
+        if len(scatter_obj.data.vertices) < 5:
+            butil.delete(scatter_obj)
+            return
+
         end_index = lambda nw: nw.build_index_case(np.random.randint(0, len(scatter_obj.data.vertices), 40))
         weight = lambda nw: nw.build_float_curve(nw.new_node(Nodes.InputEdgeAngle).outputs['Signed Angle'],
                                                  [(0, .25), (.2, .4)])
@@ -37,3 +47,5 @@ def shader_mold(nw: NodeWrangler, base_hue):
                                             [(0, .008), (1, .015)]), 6])
         base_hue = uniform(.02, .16)
         assign_material(scatter_obj, shaderfunc_to_material(shader_mold, base_hue))
+
+        return scatter_obj
