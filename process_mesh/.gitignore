@@ -1,0 +1,9 @@
+.vscode
+CMakeFiles
+*.cmake
+*.jpg
+*.jpeg
+model-test
+CMakeCache.txt
+DartConfiguration.tcl
+build
