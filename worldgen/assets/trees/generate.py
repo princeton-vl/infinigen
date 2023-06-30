@@ -36,6 +36,7 @@ from assets.cloud.generate import CloudFactory
 from ..utils.decorate import write_attribute
 
 from assets.utils.tag import tag_object, tag_nodegroup
+
 logger = logging.getLogger('trees')
 
 @gin.configurable
