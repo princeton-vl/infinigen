@@ -206,12 +206,33 @@ def lava_shader(nw):
         "ShaderNodeBlackbody", input_kwargs={"Temperature": add_1}
     )
 
+    noise_emission = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={"W": uniform(0, 10), "Scale": 0.5}
+    )
+    
+    strength_emission = nw.new_node(Nodes.Math, input_kwargs={0: noise_emission.outputs["Fac"], 1: lava_emi})
+
     emission_1 = nw.new_node(
         "ShaderNodeEmission", input_kwargs={"Color": blackbody_1, "Strength":
+                                            strength_emission}
     )
+
+    noise_bsdf = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={"W": uniform(0, 10), "Scale": 0.5,
+        "Detail": 10.0},
+        attrs={"noise_dimensions": "4D"},
+    )
+
+    color_bsdf = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_bsdf.outputs["Fac"]})
+
+    color_bsdf.color_ramp.elements[0].position = 0.0
+    color_bsdf.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+    color_bsdf.color_ramp.elements[1].position = 1.0
+    color_bsdf.color_ramp.elements[1].color = rock_col
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": color_bsdf, "Roughness": rock_rou},
     )
 
     mix_shader = nw.new_node(
