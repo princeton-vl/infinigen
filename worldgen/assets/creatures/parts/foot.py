@@ -19,6 +19,7 @@ from assets.creatures.nodegroups.math import nodegroup_deg2_rad
 
 from assets.creatures.creature import Part, PartFactory
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_tiger_toe', singleton=False, type='GeometryNodeTree')
 def nodegroup_tiger_toe(nw: NodeWrangler):
@@ -289,4 +290,5 @@ class Foot(PartFactory):
         part = nodegroup_to_part(nodegroup_foot, params, split_extras=True)
         part.iks = {1.0: IKParams('foot', rotation_weight=0.1, chain_parts=2, chain_length=-1)}
         part.settings['rig_extras'] = True
+        tag_object(part.obj, 'foot')
         return part
