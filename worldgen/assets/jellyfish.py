@@ -28,6 +28,7 @@ from surfaces.surface import read_attr_data, shaderfunc_to_material, write_attr_
 
 from util.blender import deep_clone_obj
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class JellyfishFactory(AssetFactory):
 
@@ -79,6 +80,7 @@ class JellyfishFactory(AssetFactory):
         self.animate_expansion(obj, head_z, tail_z)
         self.animate_movement(obj)
 
+        tag_object(obj, 'jellyfish')
 
         return obj
 
@@ -196,6 +198,7 @@ class JellyfishFactory(AssetFactory):
         butil.apply_transform(obj)
         subsurface2face_size(obj, face_size)
         obj.vertex_groups.new(name='pin')
+        tag_object(obj, 'cap')
         return obj, radius
 
     @staticmethod
