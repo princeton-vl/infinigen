@@ -44,6 +44,7 @@ class FanBaseCoralFactory(BaseCoralFactory):
         butil.apply_transform(obj)
 
         end_indices = np.nonzero(read_co(obj)[:, -1] < 1e-2)[0]
+        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, np.random.randint(1, 4)))
         texture = bpy.data.textures.new(name='fan', type='STUCCI')
         texture.noise_scale = uniform(.5, 1)
         butil.modify_mesh(obj, 'DISPLACE', texture=texture, strength=uniform(.5, 1.), direction='Y')
