@@ -28,6 +28,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('shader_nodegroup_sub_vein', singleton=False, type='ShaderNodeTree')
 def shader_nodegroup_sub_vein(nw):
@@ -997,5 +998,6 @@ class LeafFactoryV2(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.05) * self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf')
 
         return obj
