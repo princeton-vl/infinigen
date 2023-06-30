@@ -1,0 +1,17 @@
+compositor_postprocessing.distort = False
+render_image.motion_blur = False
+render_image.use_dof = False
+
+# remove volume scatters, as the corrupt blender's depth map
+atmosphere_light_haze.shader_atmosphere.enable_scatter = False
+water.shader.enable_scatter = False
+
+# dont include tiny particles, they arent sufficiently visible
+compose_scene.rain_particles_chance = 0
+compose_scene.dust_particles_chance = 0
+compose_scene.snow_particles_chance = 0
+
+# eliminate lava, the emissive surface is too noisy
+
+# reduce the baseline and pitch variance, requested by Lahav
+stereo_baseline = 0.075
