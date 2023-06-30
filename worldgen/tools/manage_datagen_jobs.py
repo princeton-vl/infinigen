@@ -1,16 +1,29 @@
 import logging
+import os
+import re
+import random
+import gin
+import subprocess
+import time
 import sys
 import time
 import math
 import itertools
+from uuid import uuid4
 from enum import Enum
 from copy import copy
 
 from functools import partial, cache
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from shutil import which, rmtree, copyfile
 
+from tqdm import tqdm
 import numpy as np
 import wandb
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 from tools.util.show_gpu_table import nodes_with_gpus
 from tools.util.cleanup import cleanup
 from tools.util.submitit_emulator import ScheduledLocalExecutor, ImmediateLocalExecutor, LocalScheduleHandler, LocalJob
@@ -32,9 +45,21 @@ class SceneState:
 CONCLUDED_STATES = {JobState.Succeeded, JobState.Failed}
 
 # Will throw exception if the scene was not found. Sometimes this happens if the scene was queued very very recently
+# Keys: JobID ArrayJobID User Group State Clustername Ncpus Nnodes Ntasks Reqmem PerNode Cput Walltime Mem ExitStatus
+@gin.configurable
+def seff(job_obj, retry_on_error=True):
     scene_id = job_obj.job_id
     assert scene_id.isdigit()
+    while True:
+        try:
             seff_out = subprocess.check_output(f"/usr/bin/seff -d {scene_id}".split()).decode()
+            lines = seff_out.splitlines()
+            return dict(zip(lines[0].split(' ')[2:], lines[1].split(' ')[2:]))["State"]
+        except:
+            if not retry_on_error:
+                raise
+            time.sleep(1)
+
 def get_scene_state(scene_dict, taskname, scene_folder):
 
     if not scene_dict.get(f'{taskname}_submitted', False):
@@ -46,6 +71,7 @@ def get_scene_state(scene_dict, taskname, scene_folder):
     
     # for when both local and slurm scenes are being mixed
     if isinstance(job_obj, str):
+        assert job_obj == 'MARK_AS_SUCCEEDED'
         return JobState.Succeeded
     elif isinstance(job_obj, LocalJob):
         res = job_obj.status()
@@ -82,6 +108,7 @@ def get_cmd(seed, task, configs, taskname, output_folder, driver_script='generat
     cmd += '-p'
     
     return cmd.split()
+@gin.configurable
 def get_slurm_banned_nodes(config_path=None):
     if config_path is None:
         return []
@@ -106,24 +133,60 @@ def get_suffix(indices):
 @gin.configurable
 def slurm_submit_cmd(cmd, folder, name, mem_gb=None, cpus=None, gpus=0, hours=1, slurm_account=None, slurm_exclude: list = None, **_):
 
+    executor = submitit.AutoExecutor(folder=(folder / "logs"))
+    executor.update_parameters(
+        mem_gb=mem_gb,
+        name=name,
+        cpus_per_task=cpus,
+        timeout_min=60*hours,
+    )
     
+    if slurm_exclude is not None:
         executor.update_parameters(slurm_exclude=','.join(slurm_exclude))
     
+    if gpus > 0:
+        executor.update_parameters(gpus_per_node=gpus)
+    if slurm_account is not None:
+        executor.update_parameters(slurm_account=slurm_account)
 
+    while True:
+        try:
+            if callable(cmd[0]):
+                func, *arg = cmd
+                return executor.submit(func, *arg)
+            render_fn = submitit.helpers.CommandFunction(cmd)
+            return executor.submit(render_fn)
+        except submitit.core.utils.FailedJobError as e:
+            current_time_str = datetime.now().strftime("%m/%d %I:%M%p")
+            print(f"[{current_time_str}] Job submission failed with error:\n{e}")
+            time.sleep(60)
+@gin.configurable
 def local_submit_cmd(cmd, folder, name, use_scheduler=False, **kwargs):
     
     ExecutorClass = ScheduledLocalExecutor if use_scheduler else ImmediateLocalExecutor
     executor = ExecutorClass(folder=(folder / "logs"))
     executor.update_parameters(name=name, **kwargs)
+    if callable(cmd[0]):
+        func, *arg = cmd
         return executor.submit(func, *arg)
     else:
         func = submitit.helpers.CommandFunction(cmd)
         return executor.submit(func)
+@gin.configurable
 def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method='rclone', seed=None, **kwargs):
     func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
     res = submit_cmd((func, folder, taskname), folder, name, **kwargs)
     return res, None
+
+@gin.configurable
+def queue_coarse(
+    folder,
+    submit_cmd,
+    name,
+    seed,
+    configs,
     taskname=None,
+    exclude_gpus=[],
     overrides=[],
     input_indices=None, output_indices=None,
     **kwargs
@@ -134,11 +197,23 @@ def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method='r
     output_folder = Path(f'{folder}/coarse{output_suffix}')
 
     cmd = get_cmd(seed, 'coarse', configs, taskname, output_folder=output_folder) + f'''
+
+    with (folder / "run_pipeline.sh").open('w') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+    (folder / "run_pipeline.sh").chmod(0o774)
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
+        gpus=0,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         **kwargs
+    )
     return res, output_folder
+@gin.configurable
 def queue_populate(
+    submit_cmd,
+    configs,
     taskname=None,
     input_indices=None, output_indices=None,
     **kwargs,
@@ -151,12 +226,28 @@ def queue_populate(
     cmd = get_cmd(seed, 'populate', configs, taskname, 
                   input_folder=input_folder, 
                   output_folder=output_folder) + f'''
+
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
         **kwargs
+    )
     return res, output_folder
+
+@gin.configurable
+    submit_cmd,
+    configs,
     taskname=None,
+    exclude_gpus=[],
     input_indices=None, output_indices=None,
     **kwargs
+    """
+    Generating the fine scene
+    """
+
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
@@ -167,9 +258,15 @@ def queue_populate(
                   output_folder=output_folder) + f'''
         LOG_DIR='{folder / "logs"}'
         {enable_gpu_in_terrain}
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         **kwargs
+    )
     return res, output_folder
 @gin.configurable
 def queue_combined(
@@ -217,7 +314,12 @@ def queue_combined(
     )
     return res, output_folder
 
+@gin.configurable
+    submit_cmd,
+    render_type,
+    configs,
     taskname=None,
+    exclude_gpus=[],
     input_indices=None, output_indices=None,
     **submit_kwargs
     input_suffix = get_suffix(input_indices)
@@ -228,12 +330,37 @@ def queue_combined(
     cmd = get_cmd(seed, "render", configs, taskname,
                   input_folder=f'{folder}/fine{input_suffix}',
                   output_folder=f'{output_folder}') + f'''
+        render.render_image_func=@{render_type}/render_image
+
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         **submit_kwargs,
+    )
     return res, output_folder
+
+@gin.configurable
+def queue_mesh_save(
+    submit_cmd,
+    folder,
+    name,
+    seed,
+    configs,
     taskname=None,
+    overrides=[],
+    exclude_gpus=[],
     input_indices=None, output_indices=None,
+    reuse_subcams=True,
+    **submit_kwargs
+):
+
+    if (output_indices['subcam'] > 0) and reuse_subcams:
+        return "MARK_AS_SUCCEEDED", None
+
     input_suffix = get_suffix(input_indices)
 
     output_suffix = get_suffix(output_indices)
@@ -245,23 +372,76 @@ def queue_combined(
     cmd = get_cmd(seed, "mesh_save", configs, taskname,
                   input_folder=f'{folder}/fine{input_suffix}',
                   output_folder=f'{folder}/savemesh{output_suffix}') + f'''
+        LOG_DIR='{folder / "logs"}'
+    '''.split("\n") + overrides
+
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        **submit_kwargs,
+    )
     return res, output_folder
+
+@gin.configurable
+def queue_opengl(
+    submit_cmd,
+    folder,
+    name,
+    seed,
+    configs,
     taskname=None,
+    overrides=[],
+    exclude_gpus=[],
     input_indices=None, output_indices=None,
+    reuse_subcams=True,
+    **submit_kwargs
+):
+
+    if (output_indices['subcam'] > 0) and reuse_subcams:
+        return "MARK_AS_SUCCEEDED", None
+
     output_suffix = get_suffix(output_indices)
 
+    tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
+    tmp_script.parent.mkdir(exist_ok=True)
+    print(f"Creating {tmp_script}")
+
+    process_mesh_path = Path("../process_mesh/build/process_mesh").resolve()
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
+    output_folder = Path(folder) / f"frames{output_suffix}"
+    output_folder.mkdir(exist_ok=True)
     assert input_folder.exists(), input_folder
+    assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
 
     start_frame, end_frame = output_indices['frame'], output_indices['last_cam_frame']
+    with tmp_script.open('w') as f:
+        f.write("set -e\n") # Necessary to detect if the script fails
         for frame_idx in range(start_frame, end_frame + 1):
             line = (
+                f"{process_mesh_path} --width 1920 --height 1080 -in {input_folder} "
+                f"--frame {frame_idx} -out {output_folder}\n"
             )
+            line = re.sub("( \([A-Za-z0-9]+\))", "", line)
+            f.write(line)
         f.write(f"touch {folder}/logs/FINISH_{taskname}")
+
+    cmd = f"bash {tmp_script}".split()
+
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
     res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
         **submit_kwargs,
+    )
     return res, output_folder
+
 @gin.configurable
 def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
 
@@ -308,13 +488,16 @@ def update_symlink(scene_folder, scenes):
         to = scene_folder / "logs" / f"{new_name}.out"
         os.symlink(std_out.resolve(), to)
         os.symlink(std_out.with_suffix('.err').resolve(), scene_folder / "logs" / f"{new_name}.err")
+def get_disk_usage(folder):
     out = subprocess.check_output(f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()).decode()
     return int(re.compile("[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
     seeds = [scene['seed'] for scene in scenes]
+        **kwargs,
 
 
 def run_task(queue_func, scene_folder, scene_dict, taskname):
+
     assert scene_folder.parent.exists(), scene_folder
     scene_folder.mkdir(exist_ok=True)
     stage_scene_name = f"{scene_folder.parent.stem}_{scene_folder.stem}_{taskname}"
@@ -333,6 +516,7 @@ def run_task(queue_func, scene_folder, scene_dict, taskname):
     scene_dict[f'{taskname}_output_folder'] = output_folder
     scene_dict[f'{taskname}_submitted'] = 1  # marked as submitted
     update_symlink(scene_folder, [(taskname, job_obj)])
+
 def check_and_perform_cleanup(args, seed, crashed):
     scene_folder = args.output_folder/seed
     if args.cleanup == 'all' or (args.cleanup == 'except_crashed' and not crashed):
@@ -379,6 +563,7 @@ def iterate_sequential_tasks(task_list, get_task_state, overrides, configs, inpu
 
         prev_state = state
 
+@gin.configurable
 def iterate_scene_tasks(
     scene_dict, args,
     monitor_all, # if True, enumerate scenes that we might have launched earlier, even if we wouldnt launch them now (due to crashes etc)
@@ -410,6 +595,7 @@ def iterate_scene_tasks(
         raise ValueError(f'{cam_id_ranges=} is invalid, both num. rigs and num subcams must be >= 1 or no work is done')
     assert view_block_size >= 1
     assert cam_block_size >= 1
+    seed = scene_dict['seed']
 
     scene_folder = args.output_folder/seed
     get_task_state = partial(get_scene_state, scene_dict=scene_dict, scene_folder=scene_folder)
@@ -503,17 +689,23 @@ def iterate_scene_tasks(
                 if path is not None and path.exists():
                     cleanup(path)
             scene_dict[key] = True
+
     if running_views > 0:
         return
 
+    # Upload
     if args.upload:
         state = get_task_state(taskname='upload')
         yield state, 'upload', queue_upload, True
         if state != JobState.Succeeded:
+            return
         
     if scene_dict['all_done'] != SceneState.NotDone:
         return
 
+    # Cleanup
+    with (args.output_folder / "finished_seeds.txt").open('a') as f:
+        f.write(f"{seed}\n")
     scene_dict['all_done'] = SceneState.Done
     check_and_perform_cleanup(args, seed, crashed=False)
 
@@ -540,8 +732,14 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
 
     if not stdout_file.exists():
         return f'{stdout_file} not found'
+    if not stderr_file.exists():
+        return f'{stderr_file} not found'
+
+    output_text = f"{stdout_file.read_text()}\n{stderr_file.read_text()}\n"
+    matches = re.findall("(Error:[^\n]+)\n", output_text)
 
     if len(matches):
+        return ','.join([m.strip() for m in matches if ('Error: Not freed memory blocks' not in m)])
     else:
         return "unknown cause" 
 
@@ -581,6 +779,7 @@ def stats_summary(stats):
         stats[f'{p}/total'] = sum(v for k, v in stats.items() if k.startswith(p))
     return stats
 
+@gin.configurable
 
     if LocalScheduleHandler._inst is not None:
         LocalScheduleHandler.instance().poll()
@@ -643,6 +842,7 @@ def stats_summary(stats):
 
 @gin.configurable
 def main(args, shuffle=True, wandb_project='render_beta'):
+    os.umask(0o007)
 
     all_scenes = init_db(args)
     scene_name = args.output_folder.parts[-1]
@@ -672,21 +872,31 @@ def test_upload(args):
     upload_util.upload_folder(from_folder, Path('infinigen/test_upload/'))
     rmtree(from_folder)
     
+    assert Path('.').resolve().parts[-1] == 'worldgen'
+
+    slurm_available = (which("sbatch") is not None)
     parser = argparse.ArgumentParser() # to guarantee that the render scenes finish, try render_image.time_limit=2000
+    parser.add_argument('--blender_path', type=str, default=None)
+    parser.add_argument('-o', '--output_folder', type=Path, required=True)
     parser.add_argument('--num_scenes', type=int, default=1)
+    parser.add_argument('--meta_seed', type=int, default=None)
     parser.add_argument('--specific_seed', default=None, nargs='+', help="It will cast to an int if it's a number, otherwise str")
     parser.add_argument('--use_existing', action='store_true')
 
     parser.add_argument('--warmup_sec', type=float, default=0)
     parser.add_argument('--cleanup', type=str, choices=['all', 'big_files', 'none', 'except_crashed'], default='none')
+    parser.add_argument('--remove_write', action='store_true')
     parser.add_argument('--upload', action='store_true')
     
+    parser.add_argument('--configs', nargs='*', default=[])
     parser.add_argument('-p', '--override', nargs='+', type=str, default=[], help="gin-config settings to override. FYI all scenes will use the same overrides.")
 
     parser.add_argument('--wandb_mode', type=str, default='disabled', choices=['online', 'offline', 'disabled'])
     parser.add_argument('--pipeline_configs', type=str, nargs='+', default=["allcs" if slurm_available else "local"])
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
+    args = parser.parse_args()
+
     envvar = 'INFINIGEN_ASSET_FOLDER'
 
     if not args.upload and args.cleanup == 'all':
@@ -717,3 +927,5 @@ def test_upload(args):
     configs = [find_gin(n) for n in args.pipeline_configs]
     for c in configs:
         assert os.path.exists(c), c
+
+    main(args)
