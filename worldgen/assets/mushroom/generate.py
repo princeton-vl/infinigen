@@ -10,6 +10,7 @@ import numpy as np
 from mathutils import Euler, kdtree
 from numpy.random import uniform
 
+from util.blender import deep_clone_obj
 from util.math import FixedSeed
 from .growth import MushroomGrowthFactory
 from assets.utils.decorate import join_objects
