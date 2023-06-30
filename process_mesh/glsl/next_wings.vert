@@ -1,3 +1,7 @@
+// VERTEX SHADER
+
+#version 440 core
+
 layout (location = 0) in mat4 instanceMatrix;
 layout (location = 4) in mat4 instanceMatrixNext;
 layout (location = 8) in vec3 aPos;
