@@ -36,6 +36,7 @@ from assets.creatures.creature_util import offset_center
 from assets.creatures import creature, hair as creature_hair, generate as creature_gen
 from assets.creatures.animation.driver_wiggle import animate_wiggle_bones
 from assets.creatures.animation import idle, run_cycle
+from assets.utils.tag import tag_object, tag_nodegroup
 
 from placement import animation_policy
 
@@ -248,6 +249,7 @@ class BirdFactory(AssetFactory):
 
         genome = duck_genome(mode=self.animation_mode)
         root, parts = creature.genome_to_creature(genome, name=f'bird({self.factory_seed}, {i})')
+        tag_object(root, 'bird')
         offset_center(root)
         joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
             rigging=dynamic,
