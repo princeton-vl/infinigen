@@ -58,3 +58,4 @@ class Mountains(Element):
         ], dtype=np.float32))
 
         Element.__init__(self, "mountains", material, transparency)
+        self.tag = ElementTag.Terrain
