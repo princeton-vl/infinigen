@@ -1,0 +1,4 @@
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.flying_creatures_chance = 0.0
+compose_scene.fish_school_chance = 0.0
+compose_scene.bug_swarm_chance = 0.0
