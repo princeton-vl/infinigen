@@ -263,6 +263,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.MapRange: ['data_type', 'interpolation_type', 'clamp'],
     Nodes.ColorRamp: [],  # Color ramp properties are set in special_case_colorramp, since they are nested
     Nodes.MixRGB: ['blend_type'],
+    Nodes.AccumulateField: ['data_type'],
     Nodes.SeparateColor: ['mode'],
 
     Nodes.DistributePointsOnFaces: ['distribute_method'],
@@ -305,8 +306,11 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.VectorRotate: ['invert', 'rotation_type'],
     Nodes.RotateEuler: ['space', 'type'],
     Nodes.DuplicateElements: ['domain'],
+    Nodes.SeparateRGB: ['mode'],
     Nodes.SeparateColor: ['mode'],
+
     Nodes.DomainSize: ['component']
+
 }
 
 # Certain nodes should only be created once. This list defines which ones.
