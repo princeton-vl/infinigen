@@ -9,12 +9,16 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from surfaces import surface
 
+from assets.cloud.node import geometry_func, shader_material
+from assets.cloud.node import scatter_func
 
 from lighting import lighting
 
 from scipy.ndimage import distance_transform_edt
 from skimage import measure
 
+import util
+from util import blender as butil
 
 
 def set_curves(curve, points):
@@ -113,6 +117,7 @@ class Cumulus(object):
 
         return [[first_pt_x, first_pt_y], [second_pt_x, second_pt_y], [third_pt_x, third_pt_y],
             [forth_pt_x, forth_pt_y], ]
+
     def make_cloud(self, marching_cubes=False, resolution=128, selection=None, ):
         cloud = bpy.data.objects.new(self.name, self.ref_cloud.copy())
         link_object(cloud)
@@ -215,7 +220,9 @@ class Cumulonimbus(Cumulus):
             selection=selection, )
 
     def get_scale(self):
+        scale_x = np.random.uniform(512.0, 1024.0)
         scale_y = np.random.uniform(0.5, 2.0) * scale_x
+        scale_z = np.random.uniform(256.0, 512.0)
         scales = [scale_x, scale_y, scale_z]
         return scales
 
@@ -376,6 +383,7 @@ def points_to_voxel(points, voxel_k):
 
 
 def link_object(obj):
+    bpy.context.scene.collection.objects.link(obj)
 
 
 class LinkObject(object):
@@ -384,8 +392,10 @@ class LinkObject(object):
         self.obj = obj
 
     def __enter__(self):
+        bpy.context.scene.collection.objects.link(self.obj)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        bpy.context.scene.collection.objects.unlink(self.obj)
 
 
 def clean():
@@ -489,6 +499,7 @@ def initialize(collection):
 
 def create_collection(name):
     clouds_collection = bpy.data.collections.new(name)
+    bpy.context.scene.collection.children.link(clouds_collection)
 
 
 def main():
