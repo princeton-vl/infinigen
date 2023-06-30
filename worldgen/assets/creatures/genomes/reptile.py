@@ -1,6 +1,8 @@
 import pdb
 import gin
+import logging
 
+import bpy
 
 import numpy as np
 from numpy.random import normal as N, uniform as U
@@ -25,7 +27,19 @@ from util import blender as butil
 from surfaces.templates import bone, tongue, eyeball, nose, horn
 from surfaces import surface
 
+from placement.factory import AssetFactory
 
+from assets.creatures import creature, generate as creature_gen
+from assets.creatures import cloth_sim
+
+from util.math import clip_gaussian, FixedSeed
+from util import blender as butil
+from util.random import random_general
+
+from assets.creatures.animation import curve_slither
+from placement import animation_policy
+
+from assets.creatures.animation.run_cycle import follow_path
 
 
 def dinosaur():
@@ -200,6 +214,8 @@ def snake_genome():
 
     jaw_fac = parts.reptile_detail.ReptileLowerHead(head_size, mod=(1, w_mod, h_mod))
     jaw = genome.part(jaw_fac)
+    mouth_open_deg = 0
+    genome.attach(jaw, body, coord=(0.01, 0, 0.15), joint=Joint(rest=(180, 180 - mouth_open_deg, 0)), rotation_basis='global', bridge_rad=0.1, smooth_rad=0.1)
 
     return genome.CreatureGenome(
         parts=body,   
@@ -227,6 +243,10 @@ def chameleon_genome():
         ) 
     )
 
+def frog_genome():
+    #body_fac = parts.reptile_detail.ReptileHeadBody(params={'open_mouth': False}, type='frog')
+    #body = genome.part(body_fac)
+    #shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
     # open_mouth = U() > 0
     # body_fac = parts.body_tube.ReptileBody(type='frog_body')
     # body = genome.part(body_fac)
@@ -369,20 +389,124 @@ def chameleon_postprocessing(body_parts, extras, params):
     chameleon_eye.apply(get_extras('Eye'))
 
 @gin.configurable
+class LizardFactory(AssetFactory):
 
     max_distance = 40
 
+    def __init__(self, factory_seed, bvh=None, coarse=False):
         super().__init__(factory_seed, coarse)
+        self.bvh = bvh
 
     def create_asset(self, i, animate=False, rigging=False, cloth=False, **kwargs):    
+        genome = lizard_genome()
+        root, parts = creature.genome_to_creature(genome, name=f'lizard({self.factory_seed}, {i})')
         
         joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+            postprocess_func=reptile_postprocessing, adapt_mode='remesh', rigging=rigging, **kwargs)
         if animate and arma is not None:
-            
+            pass 
+        if simulate:
+            pass
         else:
             joined = butil.join_objects([joined] + extras)
             
         return root
+    
+@gin.configurable
+class FrogFactory(AssetFactory):
+
+    max_distance = 40
+
+    def __init__(self, factory_seed, bvh=None, coarse=False):
+        super().__init__(factory_seed, coarse)
+        self.bvh = bvh
+
+    def create_asset(self, i, animate=False, rigging=False, simulate=False, **kwargs):
+        
+        genome = frog_genome()
+        root, parts = creature.genome_to_creature(genome, name=f'frog({self.factory_seed}, {i})')
+        
+        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+            postprocess_func=reptile_postprocessing, adapt_mode='remesh', rigging=rigging, **kwargs)
+        if animate and arma is not None:
+            pass 
+        if simulate:
+            pass
+        else:
+            joined = butil.join_objects([joined] + extras)
+            
+        return root
+    
+@gin.configurable
+class SnakeFactory(AssetFactory):
+
+    max_distance = 40
+
+    def __init__(self, factory_seed, bvh=None, coarse=False, snake_length=('uniform', 0.5, 3), **kwargs):
+        super().__init__(factory_seed, coarse)
+        self.bvh = bvh
+        with FixedSeed(factory_seed):
+            self.snake_length = random_general(snake_length)
+            self.policy = animation_policy.AnimPolicyRandomForwardWalk(
+                forward_vec=(1, 0, 0), speed=min(self.snake_length, 2)*U(0.5, 1), 
+                step_range=(0.2, 0.2), yaw_dist=("uniform", -7, 7)) # take very small steps, to avoid clipping into convex surfaces
+
+    def create_placeholder(self, i, loc, rot, **kwargs):
+        p = butil.spawn_cube(size=self.snake_length)
+        p.location = loc
+        p.rotation_euler = rot
+
+        if self.bvh is None:
+            return p
+        
+        curve = animation_policy.policy_create_bezier_path(p, self.bvh, self.policy, eval_offset=(0, 0, 0.5), retry_rotation=True)
+        curve.name = f'animhelper:{self}.create_placeholder({i}).path'
+
+        slither_curve = butil.deep_clone_obj(curve)
+        curve_slither.add_curve_slithers(slither_curve, snake_length=self.snake_length)
+
+        if slither_curve.type != 'CURVE':
+            logging.warning(f'{self.__class__.__name__} created invalid path {curve.name} with {curve.type=}')
+            return p
+
+        curve_slither.snap_curve_to_floor(slither_curve, self.bvh)
+        butil.parent_to(curve, slither_curve, keep_transform=True)
+
+        # animate the placeholder to the APPROX location of the snake, so the camera can follow it
+        follow_path(p, curve, use_curve_follow=True, offset=0,
+                    duration=bpy.context.scene.frame_end-bpy.context.scene.frame_start)
+        curve.data.driver_add('eval_time').driver.expression = 'frame'
+
+        return p
+
+    def create_asset(self, i, placeholder, **kwargs):
+
+        genome = snake_genome()
+        root, parts = creature.genome_to_creature(genome, name=f'snake({self.factory_seed}, {i})')
+
+        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+            postprocess_func=reptile_postprocessing, adaptive_resolution=False, rigging=False, **kwargs)
+
+        joined = butil.join_objects([joined] + extras)
+
+        s = self.snake_length / 20 # convert to real units. existing code averages 20m length
+        joined.scale = (s, s, s)
+        butil.apply_transform(joined, scale=True)
+
+        if len(placeholder.constraints) and placeholder.constraints[0].type == 'FOLLOW_PATH':
+            curve = placeholder.constraints[0].target.parent
+            assert curve.type == 'CURVE', curve.type
+            if len(curve.data.splines[0].points) > 3:
+                
+                orig_len = curve.data.splines[0].calc_length()
+                
+                joined.parent = None
+                curve_slither.slither_along_path(joined, curve, speed=self.policy.speed, orig_len=orig_len)
+
+                root.parent = butil.spawn_empty('snake_parent_temp') # so AssetFactory.spawn_asset doesnt attempt to parent
+                butil.parent_to(joined, root, keep_transform=True)
+
+        return joined
 
 @gin.configurable
 class ChameleonFactory(AssetFactory):
@@ -405,6 +529,8 @@ class ChameleonFactory(AssetFactory):
         root, parts = creature.genome_to_creature(genome, name=f'snake({self.factory_seed}, {i})')
 
         joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+            postprocess_func=reptile_postprocessing, adaptive_resolution=False, rigging=False, **kwargs)
 
+        joined = butil.join_objects([joined] + extras)
 
         return root
