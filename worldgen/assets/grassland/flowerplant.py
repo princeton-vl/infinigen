@@ -9,6 +9,7 @@ from surfaces import surface
 from surfaces.templates import simple_greenery
 from placement.factory import AssetFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_stem_branch_leaf_s_r', singleton=False, type='GeometryNodeTree')
@@ -93,7 +94,11 @@ def nodegroup_stem_branch_leaves(nw: NodeWrangler, leaves):
                                      input_kwargs={'Instances': instance_on_points_4,
                                                    'Rotation': random_value_3.outputs["Value"]})
 
+    realize_instances = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': rotate_instances_2})
+
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Instances': realize_instances})
 
 
 @node_utils.to_nodegroup('nodegroup_stem_branch_geometry', singleton=False, type='GeometryNodeTree')
@@ -265,7 +270,11 @@ def nodegroup_stem_branch(nw: NodeWrangler, flowers, leaves):
                                  input_kwargs={'Geometry': join_geometry_1,
                                                'Material': surface.shaderfunc_to_material(simple_greenery.shader_simple_greenery)})
 
+    realize_instances = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': scale_instances})
+    
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry,
+                                  input_kwargs={'Geometry': [realize_instances, join_geometry_1]})
 
     group_output = nw.new_node(Nodes.GroupOutput,
                                input_kwargs={'Geometry': join_geometry_2})
@@ -332,8 +341,12 @@ def nodegroup_stem_leaves(nw: NodeWrangler, leaves):
     rotate_instances = nw.new_node(Nodes.RotateInstances,
                                    input_kwargs={'Instances': instance_on_points_1,
                                                  'Rotation': random_value_2.outputs["Value"]})
+    
+    realize_instances = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': rotate_instances})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Instances': realize_instances})
 
 
 @node_utils.to_nodegroup('nodegroup_main_flower_setting', singleton=False, type='GeometryNodeTree')
@@ -468,6 +481,7 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
                                               'Fill Caps': True})
 
     group_output = nw.new_node(Nodes.GroupOutput,
+                               input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'stem')})
 
 
 def geo_flowerplant(nw: NodeWrangler, **kwargs):
@@ -529,9 +543,15 @@ def geo_flowerplant(nw: NodeWrangler, **kwargs):
         rotate_instances_1 = nw.new_node(Nodes.RotateInstances,
                                          input_kwargs={'Instances': instance_on_points_2,
                                                        'Rotation': random_value_4.outputs["Value"]})
+        realize_instances_1 = nw.new_node(Nodes.RealizeInstances,
+            input_kwargs={'Geometry': rotate_instances_1})
+        branches.append(realize_instances_1)
 
+    realize_instances = nw.new_node(Nodes.RealizeInstances,
+        input_kwargs={'Geometry': instance_on_points})
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={
+                                      'Geometry': [join_geometry, realize_instances] + branches})
 
     z_rotate = uniform(0, 6.28, size=(1,))[0]
     transform = nw.new_node(Nodes.Transform,
@@ -570,9 +590,12 @@ class FlowerPlantFactory(AssetFactory):
         params["leaves"] = leaves
         params["flowers"] = flowers
 
+        mod = surface.add_geomod(obj, geo_flowerplant, apply=False, attributes=[], input_kwargs=params)
         butil.delete(leaves + flowers)
         with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()
             bpy.ops.object.shade_flat()
+            bpy.ops.object.modifier_apply(modifier=mod.name)
 
+        tag_object(obj, 'flowerplant')
         return obj
