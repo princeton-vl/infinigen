@@ -97,7 +97,19 @@ def geo_instance_scatter(
 ):
     base_geo = nw.new_node(Nodes.ObjectInfo, [base_obj], attrs={'transform_space':transform_space}).outputs['Geometry']
 
+    overall_density = nw.expose_input("Overall Density", val=density)
+    selection_val = surface.eval_argument(nw, selection)
+    if isinstance(selection_val, tuple):
+        selection_val, density_scalar = selection_val
+    else:
+        density_scalar = None
+    scaling = surface.eval_argument(nw, scaling)
+
+    if density_scalar is not None:
+        if taper_density:
             overall_density = nw.new_node(Nodes.Math, [density_scalar, overall_density], attrs={'operation': 'MULTIPLY'})
+        if taper_scale:
+            scaling = nw.new_node(Nodes.VectorMath, input_kwargs={0: scaling, 'Scale': density_scalar}, attrs={'operation': 'SCALE'})
 
     points = nw.new_node(Nodes.DistributePointsOnFaces, 
         [base_geo], input_kwargs={"Density": overall_density, "Selection": selection_val})
