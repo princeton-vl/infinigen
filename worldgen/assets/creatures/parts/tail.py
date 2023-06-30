@@ -16,6 +16,7 @@ from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
 
 from assets.creatures.creature import PartFactory
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_tail', singleton=False, type='GeometryNodeTree')
 def nodegroup_tail(nw: NodeWrangler):
@@ -50,4 +51,5 @@ class Tail(PartFactory):
             for i in np.linspace(0, 1, 6)
         }
         part.iks = {1.0: IKParams(name='tail', chain_parts=1)}
+        tag_object(part.obj, 'tail')
         return part
