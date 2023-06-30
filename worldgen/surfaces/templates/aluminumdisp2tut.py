@@ -5,6 +5,7 @@ from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_colo
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
@@ -46,6 +47,7 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
         input_kwargs={'Vector': mapping, 'W': 0.7, 'Scale': 2.0, 'Detail': 10.0, 'Dimension': 1.0},
         attrs={'musgrave_dimensions': '4D'})
+    if rand:
         musgrave_texture.inputs['W'].default_value = sample_range(0, 5)
         musgrave_texture.inputs['Scale'].default_value = sample_ratio(2, 0.5, 2)
 
@@ -66,6 +68,7 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     colorramp_1.color_ramp.elements[2].position = 0.71
     colorramp_1.color_ramp.elements[2].color = (0.92, 0.97, 0.95, 1.0)
     
+    if rand:
         for e in colorramp_1.color_ramp.elements:
             sample_color(e.color, offset=0.02)
 
@@ -117,6 +120,7 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': multiply.outputs["Vector"], 'Scale': 4.0},
         attrs={'noise_dimensions': '4D'})
+    if rand:
         noise_texture.inputs['W'].default_value = sample_range(0, 5)
         noise_texture.inputs['Scale'].default_value = sample_ratio(6.0, 0.75, 1.5)
 
@@ -175,6 +179,8 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'Attribute': capture_attribute.outputs["Attribute"]})
 
+def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+    surface.add_geomod(obj, geo_aluminumdisp2tut, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
     surface.add_material(obj, shader_aluminumdisp2tut, reuse=False, input_kwargs=shader_kwargs)
 
 
