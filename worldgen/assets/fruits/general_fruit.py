@@ -29,6 +29,7 @@ from assets.fruits.surfaces.blackberry_surface import nodegroup_blackberry_surfa
 from assets.fruits.surfaces.coconuthairy_surface import nodegroup_coconuthairy_surface
 from assets.fruits.surfaces.coconutgreen_surface import nodegroup_coconutgreen_surface
 from assets.fruits.surfaces.durian_surface import nodegroup_durian_surface
+from assets.utils.tag import tag_object, tag_nodegroup
 
 crosssectionlib = {
     'circle_cross_section': nodegroup_circle_cross_section,
@@ -168,6 +169,7 @@ class FruitFactoryGeneralFruit(AssetFactory):
         obj.scale *= normal(1, 0.1) * self.scale * scale_multiplier
         butil.apply_transform(obj)
 
+        tag_object(obj, 'fruit_'+self.name)
         return obj
 
 
