@@ -72,6 +72,7 @@ class Nodes:
     SeparateGeometry = "GeometryNodeSeparateGeometry"
     BoundingBox = "GeometryNodeBoundBox"
     Transform = "GeometryNodeTransform"
+    DeleteGeometry = 'GeometryNodeDeleteGeometry'
     Proximity = "GeometryNodeProximity"
     ConvexHull = "GeometryNodeConvexHull"
     Raycast = 'GeometryNodeRaycast'
@@ -96,6 +97,7 @@ class Nodes:
     TextureCoord = "ShaderNodeTexCoord"
     Index = 'GeometryNodeInputIndex'
     AmbientOcclusion = 'ShaderNodeAmbientOcclusion'
+    Integer = 'FunctionNodeInputInt'
     ShortestEdgePath = 'GeometryNodeInputShortestEdgePaths'
     NamedAttribute = 'GeometryNodeInputNamedAttribute'
 
@@ -119,6 +121,7 @@ class Nodes:
     SetShadeSmooth = 'GeometryNodeSetShadeSmooth'
     DualMesh = 'GeometryNodeDualMesh'
     ScaleElements = 'GeometryNodeScaleElements'
+    IcoSphere = 'GeometryNodeMeshIcoSphere'
     ExtrudeMesh = 'GeometryNodeExtrudeMesh'
     FlipFaces = 'GeometryNodeFlipFaces'
     FaceNeighbors = 'GeometryNodeInputMeshFaceNeighbors'
@@ -272,6 +275,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.SeparateGeometry: ['domain'],
     Nodes.MergeByDistance: ['mode'],
 
+    Nodes.Integer: ['integer'],
     Nodes.MeshBoolean: ['operation'],
     Nodes.MeshCircle: ['fill_type'],
     Nodes.CurveSplineType: ['spline_type'],
@@ -281,6 +285,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.StoreNamedAttribute: ['data_type', 'domain'],
     Nodes.CurveToPoints: ['mode'],
     Nodes.FillCurve: ['mode'],
+
     Nodes.ResampleCurve: ['mode'],
     Nodes.TrimCurve: ['mode'],
     Nodes.MeshLine: ['mode'],
