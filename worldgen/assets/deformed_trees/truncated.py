@@ -13,6 +13,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class TruncatedTreeFactory(FallenTreeFactory):
 
@@ -38,4 +39,5 @@ class TruncatedTreeFactory(FallenTreeFactory):
         noise_strength = uniform(.6, 1.)
         noise_scale = uniform(10, 15)
         self.build_half(obj, cut_center, cut_normal, noise_strength, noise_scale, radius, False)
+        tag_object(obj, 'truncated_tree')
         return obj
