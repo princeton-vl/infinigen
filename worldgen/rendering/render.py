@@ -120,6 +120,7 @@ def enable_gpu(engine_name = 'CYCLES'):
     return prefs.devices
 
 @gin.configurable
+def compositor_postprocessing(nw, source, show=True, autoexpose=False, autoexpose_level=-2, color_correct=True, distort=0, glare=False):
 
     if autoexpose:
         source = nw.new_node(nodegroup_auto_exposure().name, input_kwargs={'Image': source, 'EV Comp': autoexpose_level})
@@ -132,6 +133,13 @@ def enable_gpu(engine_name = 'CYCLES'):
         source = nw.new_node(Nodes.BrightContrast,
             input_kwargs={'Image': source, 'Bright': 1.0, 'Contrast': 4.0})
     
+    if glare:
+        source = nw.new_node(
+            Nodes.Glare,
+            input_kwargs={'Image': source},
+            attrs={"glare_type": "GHOSTS", "threshold": 0.5, "mix": -0.99},
+        )
+
     if show:
         nw.new_node(Nodes.Composite, input_kwargs={'Image': source})
 
@@ -232,15 +240,21 @@ def render_image(
     dof_aperture_fstop=2.8,
     motion_blur=False,
     motion_blur_shutter=0.5,
+    render_resolution_override=None,
+    excludes=[],
 ):
     tic = time.time()
 
     camera_rig_id, subcam_id = camera_id
 
+    for exclude in excludes:
+        bpy.data.objects[exclude].hide_render = True
+
     with Timer(f"Enable GPU"):
         devices = enable_gpu()
 
     with Timer(f"Render/Cycles settings"):
+        if motion_blur: bpy.context.scene.cycles.motion_blur_position = 'START'
 
         bpy.context.scene.cycles.samples = num_samples # i.e. infinity
         bpy.context.scene.cycles.adaptive_min_samples = min_samples
