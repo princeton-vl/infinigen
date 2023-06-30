@@ -12,6 +12,7 @@ from util import blender as butil
 
 C = bpy.context
 D = bpy.data
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class LeafHeartFactory(AssetFactory):
     scale = 0.2
@@ -68,6 +69,7 @@ class LeafHeartFactory(AssetFactory):
         obj.location = (0, 0, 0)
         obj.scale *= self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf_heart')
 
         return obj
 
