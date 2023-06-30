@@ -5,8 +5,14 @@ from numpy.random import uniform, normal, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
+from terrain.utils import SurfaceTypes
 
 import gin
+from util.math import FixedSeed
+from util.random import random_color_neighbour
+type = SurfaceTypes.SDFPerturb
+mod_name = "geo_cracked_ground"
+name = "cracked_ground"
 @node_utils.to_nodegroup('nodegroup_apply_value_to_normal', singleton=False, type='GeometryNodeTree')
 def nodegroup_apply_value_to_normal(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -29,6 +35,11 @@ def nodegroup_apply_value_to_normal(nw: NodeWrangler):
 
 def shader_cracked_ground(nw: NodeWrangler, random_seed=0):
     # Code generated using version 2.6.4 of the node_transpiler
+    with FixedSeed(random_seed):
+        col_crac = random_color_neighbour((0.2016, 0.107, 0.0685, 1.0), 0.1, 0.1, 0.1)
+        col_1 = random_color_neighbour((0.3005, 0.1119, 0.0284, 1.0), 0.1, 0.1, 0.1)
+        col_2 = random_color_neighbour((0.6038, 0.4397, 0.2159, 1.0), 0.1, 0.1, 0.1)
+
     attribute_2 = nw.new_node(Nodes.Attribute, attrs={'attribute_name': 'bump'})
     
     attribute = nw.new_node(Nodes.Attribute, attrs={'attribute_name': 'crack'})
@@ -59,20 +70,27 @@ def shader_cracked_ground(nw: NodeWrangler, random_seed=0):
     
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
     return principled_bsdf
+
 @gin.configurable
 def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
     # Code generated using version 2.6.4 of the node_transpiler
+
     with FixedSeed(random_seed):
         # control the coordinate that noise textures evaluated on
         noise_rnd_seed = uniform(-10000, 10000)
+
         # scale of cracks; smaller means larger cracks
         sca_crac = nw.new_value(uniform(1, 3), "sca_crac")
+
         # scale of masks; mask=0 means no crack in that area
         sca_mask = nw.new_value(uniform(1, 3), "sca_mask")
+
         # scale of bumpy surface noise
         sca_noise = nw.new_value(uniform(2, 4), "sca_mask")
+
         # percentage of area with crac, 0.5 means in half of area
         crack_density =  nw.new_value(uniform(0.4, 0.55), "crack_density")
+
         # width of the crack
         wid_crac = nw.new_value(uniform(0.01, 0.04), "wid_crac")
         # scale of the grains, smaller means larger grains
