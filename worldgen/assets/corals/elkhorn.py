@@ -20,6 +20,7 @@ from assets.utils.object import new_circle, origin2lowest
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from util.blender import deep_clone_obj
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
 
