@@ -67,6 +67,7 @@ if __name__ == "__main__":
         print(f"Wrote {output_path}")
 
     if args.depth_path is not None:
+        depth_color = exr_depth_to_jet(args.depth_path)
         output_path = args.depth_path.with_suffix('.png')
         imwrite(output_path, depth_color)
         print(f"Wrote {output_path}")
