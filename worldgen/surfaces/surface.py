@@ -19,6 +19,7 @@ from tqdm import trange
 
 from util import blender as butil
 from util.blender import set_geomod_inputs # got moved, left here for import compatibility
+from nodes.node_wrangler import NodeWrangler, Nodes, isnode, infer_output_socket, geometry_node_group_empty_new
 from nodes import node_info
 
 def remove_materials(obj):
@@ -308,6 +309,9 @@ def add_geomod(objs, geo_func,
                 mod.node_group = bpy.data.node_groups[name]
             else:
                 # print("input_kwargs", input_kwargs, geo_func.__name__)
+                if mod.node_group == None:
+                    group = geometry_node_group_empty_new()
+                    mod.node_group = group
                 nw = NodeWrangler(mod)
                 geo_func(nw, *input_args, **input_kwargs)
             ng = mod.node_group
