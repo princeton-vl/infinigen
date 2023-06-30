@@ -1,9 +1,19 @@
+import colorsys
+
+import bpy
+import numpy as np
+from numpy.random import uniform
+
 import util.blender as butil
 from assets.utils.misc import build_color_ramp, log_uniform
 from .fan import FanBaseCoralFactory
 from ..utils.decorate import assign_material, join_objects
 from util.math import FixedSeed
+from nodes.node_info import Nodes
+from nodes.node_wrangler import NodeWrangler
 from placement.detail import remesh_with_attrs
+from placement.factory import AssetFactory
+from surfaces import surface
 from .base import BaseCoralFactory
 from .diff_growth import DiffGrowthBaseCoralFactory, LeatherBaseCoralFactory, TableBaseCoralFactory
 from .laplacian import CauliflowerBaseCoralFactory
@@ -14,7 +24,12 @@ from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFacto
 from .tube import TubeBaseCoralFactory
 from .star import StarBaseCoralFactory
 from . import tentacles
+
+
+class CoralFactory(AssetFactory):
+
     def __init__(self, factory_seed, coarse=False, factory_method=None):
+        super(CoralFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.factory_methods = [DiffGrowthBaseCoralFactory, ReactionDiffusionBaseCoralFactory,
                 TubeBaseCoralFactory, TreeBaseCoralFactory, CauliflowerBaseCoralFactory,
@@ -26,6 +41,7 @@ from . import tentacles
             self.factory: BaseCoralFactory = factory_method(factory_seed, coarse)
             self.base_hue = self.build_base_hue()
             self.material = surface.shaderfunc_to_material(self.shader_coral, self.base_hue)
+
     def create_asset(self, face_size=0.01, realize=True, **params):
         obj = self.factory.create_asset(**params)
         obj.scale = 2 * np.array(self.factory.default_scale) / max(obj.dimensions[:2]) * uniform(.8, 1.2, 3)
@@ -43,6 +59,8 @@ from . import tentacles
         if uniform(0, 1) < self.factory.tentacle_prob and not has_bump:
             t = tentacles.apply(obj, self.factory.points_fn, self.factory.density, realize, self.base_hue)
             obj = join_objects([obj, t])
+        return obj
+
     def apply_noise_texture(self, obj):
         t = np.random.choice(['STUCCI', 'MARBLE'])
         texture = bpy.data.textures.new(name='coral', type=t)
