@@ -23,6 +23,7 @@ timer_results = logging.getLogger('times')
 class Timer:
 
     def __init__(self, desc, disable_timer=False):
+        self.disable_timer = disable_timer
         if self.disable_timer:    
             return
         self.name = f'[{desc}]'
