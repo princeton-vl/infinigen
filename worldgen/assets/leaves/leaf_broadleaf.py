@@ -18,6 +18,7 @@ from assets.leaves.leaf_maple import nodegroup_leaf_shader
 from util.math import FixedSeed
 from placement.factory import AssetFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_random_mask_vein', singleton=False, type='GeometryNodeTree')
@@ -758,5 +759,6 @@ class LeafFactoryBroadleaf(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.1) * self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf_broadleaf')
 
         return obj
