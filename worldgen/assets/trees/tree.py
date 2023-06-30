@@ -3,13 +3,19 @@ from dataclasses import dataclass
 import warnings
 import bpy
 import numpy as np
+from scipy.interpolate import interp1d
 from .utils import helper, mesh
 from assets.leaves import leaf
 from nodes.node_wrangler import Nodes
 from util import blender as butil
+from ..utils.object import data2mesh, mesh2obj
 
 
+    def __init__(self, vtxs=None, parent=None, level=None):
         """Define vertices and edges to outline tree geometry."""
+        if vtxs is None:
+            vtxs = np.array([[0, 0, 0]])
+        elif isinstance(vtxs, list):
             vtxs = np.array(vtxs)
         parent = [-1] * len(vtxs) if parent is None else parent
         level = [0] * len(vtxs) if level is None else level
@@ -19,6 +25,7 @@ from util import blender as butil
     def get_idxs(self):
         return list(np.arange(len(self.vtxs)))
     def get_edges(self):
+        edges = np.stack([np.arange(len(self.vtxs)), np.array(self.parent)], 1)
         return edges[edges[:, 1] != -1]
     def append(self, v, p, l=None):
         self.vtxs = np.append(self.vtxs, v, axis=0)
@@ -28,8 +35,10 @@ from util import blender as butil
         elif isinstance(l, int):
             l = [l] * len(v)
         self.level += l
+
     def __len__(self):
         return len(self.vtxs)
+
     children = [v for v in edges[idx] if v != parents[idx]]
     if len(children) == 0:
         # At leaf, move backwards to update rev_depth
@@ -51,6 +60,7 @@ from util import blender as butil
             depth[c] = depth[idx] + 1
             dfs(c, edges, parents, depth, rev_depth, n_leaves, child_idx)
 
+def parse_tree_attributes(vtx):
     # Strong assumption, root is vertex 0
     parents = np.zeros(n, dtype=int)
     depth = np.zeros(n, dtype=int)
@@ -66,6 +76,10 @@ from util import blender as butil
     # Upon hitting leaf, walk back up parents saving max reverse depth
     dfs(0, edge_ref, parents, depth, rev_depth, n_leaves, child_idx)
 
+    new_p_id = n  # p for parent. start from the last of the array
+            deepest_child_idx = children[child_depths.argmax()]  # we keep this untouched
+                new_p_pos = vtx_pos[idx]  # len-3
+                edge_ref[new_p_id] = [child_idx_to_deal, ]
     curr_idxs = np.arange(n)
     curr_stem_id = 1
 
@@ -82,12 +96,18 @@ from util import blender as butil
         curr_idxs = np.setdiff1d(curr_idxs, to_remove)
         curr_stem_id += 1
 
+    parent_loc[0] = np.array([0, 0, -1],
+                             dtype=float)  # create a fake parent location for the root, to avoid zero-length
+    # vector
     return {
         'parent_idx': parents,
         'depth': depth,
         'parent_skeleton_loc': parent_loc,
+        'skeleton_loc': self_loc}
 
 
+def rand_path(n_pts, sz=1, std=.3, momentum=.5, init_vec=[0, 0, 1], init_pt=[0, 0, 0], pull_dir=None,
+              pull_init=1, pull_factor=0, sz_decay=1, decay_mom=True):
     init_vec = np.array(init_vec, dtype=float)
         pull_dir = np.array(pull_dir, dtype=float)
         init_vec += pull_init * pull_dir
@@ -99,6 +119,7 @@ from util import blender as butil
         if i == 1:
             prev_delta = init_vec * sz
         else:
+            prev_delta = path[i - 1] - path[i - 2]
 
         prev_sz = np.linalg.norm(prev_delta)
         new_delta = prev_delta + np.random.randn(3) * std
@@ -106,11 +127,15 @@ from util import blender as butil
             new_delta += pull_factor * pull_dir
         new_delta = (new_delta / np.linalg.norm(new_delta)) * prev_sz
         if decay_mom:
+            tmp_momentum = 1 - (1 - momentum) * (i + 1) / n_pts
         else:
             tmp_momentum = momentum
         delta = prev_delta * tmp_momentum + new_delta * (1 - tmp_momentum)
         delta = (delta / np.linalg.norm(delta)) * sz * (sz_decay ** i)
+        path[i] = path[i - 1] + delta
     return path
+def get_spawn_pt(path, rng=[.5, 1], ang_min=np.pi / 6, ang_max=.9 * np.pi / 2, rnd_idx=None, ang_sign=None,
+                 axis2=None, init_vec=None, z_bias=0):
     n = len(path)
     if n == 1:
         return 0, path[0], init_vec
@@ -120,6 +145,7 @@ from util import blender as butil
         curr_vec = path[rnd_idx] - path[rnd_idx - 1]
         axis1 = np.array([curr_vec[1], -curr_vec[0], 0])
         if axis2 is None:
+            axis2 = helper.rodrigues_rot(curr_vec, axis1, np.pi / 2)
         if callable(axis2):  # evaluate it. could be a random generator
             axis2 = axis2()
         rnd_ang = np.random.rand() * (ang_max - ang_min) + ang_min
@@ -128,6 +154,8 @@ from util import blender as butil
         rnd_ang *= ang_sign
         init_vec = helper.rodrigues_rot(curr_vec, axis2, rnd_ang)
     return rnd_idx, path[rnd_idx], init_vec
+def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, n=1, symmetry=False,
+                   children=None):
     if path_kargs is None:
         return
         n = 2 * n
@@ -138,6 +166,7 @@ from util import blender as butil
         curr_spawn = spawn_kargs(curr_idx)
         if symmetry:
             curr_spawn['ang_sign'] = 2 * (branch_idx % 2) - 1
+        parent_idx, init_pt, init_vec = get_spawn_pt(tree.vtxs[parent_idxs], **curr_spawn)
         parent_idx = parent_idxs[parent_idx]
         path = rand_path(**curr_path, init_pt=init_pt, init_vec=init_vec)
         new_vtxs = path[1:]
@@ -147,6 +176,7 @@ from util import blender as butil
         if children is not None:
             for c in children:
                 recursive_path(tree, node_idxs, level + 1, **c)
+def remove_matched_atts(atts, vtxs, dist_thr, curr_min, curr_match, idx_offset=0, prev_deltas=None):
     dists, deltas = helper.compute_dists(atts, vtxs)
     if prev_deltas is not None:
         deltas = np.append(prev_deltas, deltas, axis=1)
@@ -164,8 +194,13 @@ from util import blender as butil
     curr_match[to_update] = closest[to_update] + idx_offset
 
     return atts, deltas, curr_min, curr_match
+
+def space_colonization(tree, atts, D=.1, d=10.0, s=.1, pull_dir=None, dir_rand=.1, mag_rand=.15, n_steps=200,
+                       level=0):
     # D: length of each growing step
     # d: init value for distance between attractors and points. safe to set to a very large value (e.g., 10)
+    # s: if distance between an attractor and any point is less than s, we remove the attractor. should be
+    # larger than D (e.g., 1.5*D)
     # pull_dir: useful if you want a bias in the growing direction (e.g., trunks growing upward)
     # dir_rand/mag_rand randomness in growing direction/length
     # n_steps: if set large enough, the tree will grow until all attractors are reached.
@@ -175,6 +210,7 @@ from util import blender as butil
 
     curr_min = np.zeros(len(atts)) + d
     curr_match = -np.ones(len(atts)).astype(int)
+    atts, deltas, curr_min, curr_match = remove_matched_atts(atts, tree.vtxs, s, curr_min, curr_match)
 
     if np.all(curr_match == -1):
         warnings.warn('Space colonization attractor matching failed, all curr_match == -1')
@@ -204,17 +240,22 @@ from util import blender as butil
         new_vtxs = np.stack(new_vtxs, 0)
         tree.append(new_vtxs, new_parents, level)
 
+        atts, deltas, curr_min, curr_match = remove_matched_atts(atts, new_vtxs, s, curr_min, curr_match,
+                                                                 idx_offset, deltas)
 
         if atts.shape[0] == 0:
             break
+
 @dataclass
 class TreeParams:
     skeleton: dict
+    trunk_spacecol: dict
     roots_spacecol: dict
     child_placement: dict
     skinning: dict
 
 
+def tree_skeleton(skeleton_params: dict, trunk_spacecol: dict, roots_spacecol: dict, init_pos, scale):
     vtx = TreeVertices(np.array(init_pos).reshape(-1, 3))
     recursive_path(vtx, vtx.get_idxs(), level=0, **skeleton_params)
 
@@ -227,15 +268,20 @@ class TreeParams:
     obj = mesh.init_mesh('Tree', vtx.vtxs, vtx.get_edges())
 
     for att_name, att_val in attributes.items():
+            obj.data.attributes[att_name].data.foreach_set('vector', att_val.reshape(
+                -1) * scale)  # vector value should be scaled together with the obj
 
     return obj
 
 
+def skin_tree(nw, params, source_obj=None):
     base_geo = nw.new_node(Nodes.GroupInput).outputs['Geometry']
     skin = nw.new_node(gn.set_tree_radius().name, input_kwargs={
         'Geometry': base_geo,
+        'Reverse depth': nw.expose_input('Reverse depth', attribute='rev_depth'), **params})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': skin})
+
 
 def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
     base_geo = nw.new_node(Nodes.GroupInput).outputs['Geometry']
@@ -252,6 +298,7 @@ def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
         selection = None
 
     children = nw.new_node(gn.coll_distribute(merge_dist=merge_dist).name, input_kwargs={
+        'Geometry': base_geo,
         'Collection': child_col,
         'Selection': selection, **params})
 
@@ -259,3 +306,46 @@ def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
         children = nw.new_node(Nodes.RealizeInstances, [children])
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': children})
+
+
+class FineTreeVertices(TreeVertices):
+    def __init__(self, vtxs=None, parent=None, level=None, radius_fn=None, resolution=1):
+        super(FineTreeVertices, self).__init__(vtxs, parent, level)
+        self.resolution = resolution
+        if radius_fn is None:
+            radius_fn = (lambda base_radius, size, resolution: [1] * size)
+        self.radius_fn = radius_fn
+        self.detailed_locations = [[0, 0, 0]]
+        self.radius = [1]
+        self.detailed_parents = [-1]
+
+    def append(self, v, p, l=None):
+        super(FineTreeVertices, self).append(v, p, l)
+        f = interp1d(np.arange(len(v) + 1), np.concatenate([self.vtxs[p[0]:p[0] + 1], v]), axis=0,
+                     kind='quadratic')
+        self.detailed_locations.extend(f(np.linspace(0, len(v), len(v) * self.resolution + 1))[1:])
+        base_radius = self.radius[p[0] * self.resolution]
+        self.radius.extend(self.radius_fn(base_radius, len(v), self.resolution))
+        self.detailed_parents.append(p[0] * self.resolution)
+        self.detailed_parents.extend(
+            np.arange(0, len(v) * self.resolution - 1) + len(self.detailed_parents) - 1)
+
+    @property
+    def edges(self):
+        edges = np.stack([np.arange(len(self.detailed_locations)), np.array(self.detailed_parents)], 1)
+        return edges[edges[:, 1] != -1]
+
+    def fix_first(self):
+        self.radius[0] = self.radius[1]
+
+
+def build_radius_tree(radius_fn, branch_config, base_radius=.002, resolution=1, fix_first=False):
+    vtx = FineTreeVertices(np.zeros((1, 3)), radius_fn=radius_fn, resolution=resolution)
+    recursive_path(vtx, vtx.get_idxs(), level=0, **branch_config)
+    if fix_first:
+        vtx.radius[0] = vtx.radius[1]
+    obj = mesh2obj(data2mesh(vtx.detailed_locations, vtx.edges, [], 'tree'))
+    vg_a = obj.vertex_groups.new(name='radius')
+    for i, r in enumerate(vtx.radius):
+        vg_a.add([i], base_radius * r, 'REPLACE')
+    return obj
