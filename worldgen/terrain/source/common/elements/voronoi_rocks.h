@@ -1,3 +1,12 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Zeyu Ma
+// Date Signed: June 5 2023
+
+#define VROCK_ON_TILED_LANDSCAPE 0
+#define VROCK_ON_GROUND 1
+
 DEVICE_FUNC void single_group_voronoi_rocks(
     float3_nonbuiltin position,
     float3_nonbuiltin *cell_center,
