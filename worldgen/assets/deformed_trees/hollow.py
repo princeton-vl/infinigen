@@ -14,6 +14,7 @@ from assets.utils.nodegroup import geo_selection
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
+from util.blender import deep_clone_obj
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
 
