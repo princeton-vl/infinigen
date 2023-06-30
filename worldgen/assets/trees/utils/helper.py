@@ -146,6 +146,7 @@ def run_cleanup():
       d.remove(d_)
 
 
+def reset_scene(add_camera=False, clear_materials=False, obj_to_keep_list=[]):
   """Clear and reset scene."""
   set_active_obj(D.objects[0])
 
@@ -154,6 +155,10 @@ def run_cleanup():
 
   # Delete everything
   clear_collections()
+  # bpy.ops.object.select_all(action='SELECT')
+  for obj in bpy.context.scene.objects:
+    if obj.name not in obj_to_keep_list:
+      obj.select_set(True)
   bpy.ops.object.delete(confirm=False)
   run_cleanup()
 
@@ -165,6 +170,10 @@ def run_cleanup():
     camera_pitch = np.pi * .45 # + np.random.randn() * np.pi * .1
     camera_pitch = min(max(camera_pitch, np.pi * .4), np.pi * .5)
     camera_pitch = np.pi * .65  # (1-v) * np.pi * .6 + np.pi * .2
+
+    camera_pitch = np.pi * 0.5
+    camera_height = 3
+    
     bpy.ops.object.camera_add(location=(0, -6, camera_height), rotation=(camera_pitch, 0, 0))
     cam = D.objects[0]
     C.scene.camera = cam
