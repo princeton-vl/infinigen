@@ -1,3 +1,13 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Zeyu Ma
+// Date Signed: June 5 2023
+
+#include <assert.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <algorithm>
 using namespace std;
 #define DEVICE_FUNC __device__
 #define CONSTANT_ARRAY __device__ __constant__
