@@ -32,7 +32,9 @@ def bake(emitter, system):
             'point_cache': system.point_cache,
         }
         with util.logging.Suppress():
+            bpy.context.scene.frame_end += 1
             bpy.ops.ptcache.bake(override, bake=True)
+            bpy.context.scene.frame_end -= 1
 
 def configure_boids(system_config, settings):
     boids = system_config.boids
@@ -219,6 +221,7 @@ def rain_settings():
 
 def snow_settings():
 
+    density = U(2, 26)
 
     return dict(
         mass=0.001,
