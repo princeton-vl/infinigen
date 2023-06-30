@@ -21,6 +21,7 @@ from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
 
 from assets.creatures.creature import PartFactory
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_quadruped_back_leg', singleton=False, type='GeometryNodeTree')
 def nodegroup_quadruped_back_leg(nw: NodeWrangler):
@@ -82,6 +83,7 @@ class QuadrupedBackLeg(PartFactory):
             0: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])), # shoulder
             0.5: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])), # elbow
         } 
+        tag_object(part.obj, 'quadruped_back_leg')
         return part
 
 @node_utils.to_nodegroup('nodegroup_quadruped_front_leg', singleton=False, type='GeometryNodeTree')
@@ -147,6 +149,7 @@ class QuadrupedFrontLeg(PartFactory):
             0: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])), # shoulder
             0.6: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])) # elbow
         } 
+        tag_object(part.obj, 'quadruped_front_leg')
         return part
 
 @node_utils.to_nodegroup('nodegroup_bird_leg', singleton=False, type='GeometryNodeTree')
@@ -197,6 +200,7 @@ class BirdLeg(PartFactory):
             0.5: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])), # elbow
         } 
         part.iks = {}
+        tag_object(part.obj, 'bird_leg')
         return part
 
 @node_utils.to_nodegroup('nodegroup_insect_leg', singleton=False, type='GeometryNodeTree')
@@ -266,4 +270,5 @@ class InsectLeg(PartFactory):
             0.7: Joint(rest=(0,0,0), bounds=np.array([[-35, 0, -70], [35, 0, 70]]))
         } 
         part.iks = {1.0: IKParams('foot', rotation_weight=0.1, chain_parts=1)}
+        tag_object(part.obj, 'insect_leg')
         return part
