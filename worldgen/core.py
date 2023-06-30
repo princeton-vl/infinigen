@@ -45,8 +45,11 @@ from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
 from assets.cactus import CactusFactory
 from assets.creatures import boid_swarm
+
 from placement import placement, camera as cam_util
 from assets.utils.misc import log_uniform
+
+from rendering.render import render_image
 from rendering.resample import resample_scene
 from assets.monocot import kelp
 from surfaces import surface
