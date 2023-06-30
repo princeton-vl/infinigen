@@ -19,6 +19,7 @@ from assets.creatures.nodegroups.math import nodegroup_deg2_rad
 from assets.creatures.creature import PartFactory
 from assets.creatures.util import part_util
 from assets.creatures.parts.eye import nodegroup_mammal_eye
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_carnivore_jaw', singleton=True, type='GeometryNodeTree')
 def nodegroup_carnivore_jaw(nw: NodeWrangler):
@@ -421,6 +422,7 @@ class Neck(PartFactory):
             i: Joint(rest=(0,0,0), bounds=np.array([[-30, 0, -30], [30, 0, 30]]))
             for i in np.linspace(0, 1, 4, endpoint=True)
         }
+        tag_object(part.obj, 'neck')
         return part
 
 class CarnivoreHead(PartFactory):
@@ -462,6 +464,7 @@ class CarnivoreHead(PartFactory):
         part = part_util.nodegroup_to_part(nodegroup_carnivore_head, params)
         part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_length=1)}
         part.settings['rig_extras'] = True
+        tag_object(part.obj, 'carnivore_head')
         return part
 
 class CarnivoreJaw(PartFactory):
@@ -481,6 +484,7 @@ class CarnivoreJaw(PartFactory):
 
     def make_part(self, params):
         part = part_util.nodegroup_to_part(nodegroup_carnivore_jaw, params)
+        tag_object(part.obj, 'carnivore_jaw')
         return part
 
 @node_utils.to_nodegroup('nodegroup_fish_head', singleton=True, type='GeometryNodeTree')
@@ -525,6 +529,7 @@ class FishHead(PartFactory):
         part = part_util.nodegroup_to_part(nodegroup_fish_head, params)
         part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_parts=2)}
         part.settings['rig_extras'] = True
+        tag_object(part.obj, 'fish_head')
         return part
 
 @node_utils.to_nodegroup('nodegroup_flying_bird_head', singleton=True, type='GeometryNodeTree')
@@ -589,6 +594,7 @@ class BirdHead(PartFactory):
         part = part_util.nodegroup_to_part(nodegroup_bird_head, params)
         part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_parts=2)}
         part.settings['rig_extras'] = True
+        tag_object(part.obj, 'bird_head')
         return part
 
 class FlyingBirdHead(PartFactory):
