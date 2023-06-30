@@ -23,3 +23,21 @@ compose_scene.ground_creatures_chance = 1.0
 compose_scene.ground_creature_registry = [
     (@SnakeFactory, 1)
 ]
+
+surface.registry.ground_collection = [
+    ('sand', 1),
+]
+
+surface.registry.mountain_collection = [
+    ("sandstone", 1),
+]
+
+# scene composition config
+LandTiles.tiles = ["Mountain"]
+LandTiles.randomness = 1
+LandTiles.tile_heights = [-2]
+LandTiles.tile_density = 0.25
+WarpedRocks.slope_shift = -3
+Ground.with_sand_dunes = 1
+
+scene.waterbody_chance = 0
