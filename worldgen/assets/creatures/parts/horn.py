@@ -1,4 +1,6 @@
+from re import M
 import bpy 
+import math
 
 from platform import node
 import numpy as np
@@ -7,6 +9,7 @@ from numpy.random import normal as N, uniform as U
 from assets.creatures.creature import PartFactory
 from assets.creatures.genome import Joint, IKParams
 from assets.creatures.util.part_util import nodegroup_to_part
+from assets.creatures.util import part_util
 
 from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
@@ -109,17 +112,29 @@ def nodegroup_horn(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
+        expose_input=[
+            ('NodeSocketFloat', 'length', 0.0),
+            ('NodeSocketFloat', 'rad1', 0.0),
+            ('NodeSocketFloat', 'rad2', 0.0),
             ('NodeSocketFloat', 'thickness', 4.0),
             ('NodeSocketFloat', 'density_of_ridge', 0.0),
             ('NodeSocketFloat', 'depth_of_ridge', 0.2),
+            ('NodeSocketFloatDistance', 'height', 2.5),
+            ('NodeSocketFloat', 'rotation_x', 0)])
     
     multiply = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["length"], 1: group_input.outputs["density_of_ridge"]},
         attrs={'operation': 'MULTIPLY'})
     
     add = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["rad1"], 1: group_input.outputs["rad2"]})
     
+    # divide = nw.new_node(Nodes.Math,
+    #     input_kwargs={0: add, 1: 2.0},
+    #     attrs={'operation': 'DIVIDE'})
     
     divide_1 = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["length"], 1: add},
         attrs={'operation': 'DIVIDE'})
     
     divide_2 = nw.new_node(Nodes.Math,
@@ -127,6 +142,7 @@ def nodegroup_horn(nw: NodeWrangler):
         attrs={'operation': 'DIVIDE'})
     
     spiral = nw.new_node('GeometryNodeCurveSpiral',
+        input_kwargs={'Resolution': 150, 'Rotations': divide_2, 'Start Radius': group_input.outputs["rad1"], 'End Radius': group_input.outputs["rad2"], 'Height': group_input.outputs["height"]})
     
     ridge = nw.new_node(nodegroup_ridge().name,
         input_kwargs={'thickness': group_input.outputs["thickness"], 'depth_of_ridge': group_input.outputs["depth_of_ridge"], 'number_of_ridge': multiply, 'geometry': spiral})
@@ -142,6 +158,7 @@ def nodegroup_horn(nw: NodeWrangler):
         input_kwargs={'Curve': ridge, 'Profile Curve': noise})
     
     multiply_1 = nw.new_node(Nodes.Math,
+        input_kwargs={0: group_input.outputs["rad1"], 1: -1.0},
         attrs={'operation': 'MULTIPLY'})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
@@ -150,14 +167,35 @@ def nodegroup_horn(nw: NodeWrangler):
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': curve_to_mesh, 'Offset': combine_xyz})
     
+    transform_1 = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': set_position, 'Rotation': (-0.8, 0.0, 2.6)})
 
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ,
+        input_kwargs={'X': group_input.outputs["rotation_x"]})
+    
+    transform_2 = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': transform_1, 'Rotation': combine_xyz_2})
+
     group_output = nw.new_node(Nodes.GroupOutput,
+        input_kwargs={'Geometry': transform_2})  
 
 
 class Horn(PartFactory):
+    param_templates = {}
     tags = ['head_detail', 'rigid']
 
+    def sample_params(self, select=None, var=1):
+        N = lambda m, v: np.random.normal(m, v * var)
+        U = lambda l, r: np.random.uniform(l, r)
+        weights = part_util.random_convex_coord(self.param_templates.keys(), select=select)
+        params = part_util.rdict_comb(self.param_templates, weights)
+
+        for key in params['horn']:
+            if key in params['range']:
+                l, r = params['range'][key]
+                noise = N(0, 0.02 * (r - l))
+                params['horn'][key] += noise
+        return params['horn']
 
     def make_part(self, params):
         part = nodegroup_to_part(nodegroup_horn, params)
@@ -173,3 +211,55 @@ class Horn(PartFactory):
         part.obj = butil.spawn_vert('horn_parent')        
         horn.parent = part.obj
 
+        return part
+
+goat_horn = {
+    'length': 0.5,
+    'rad1': 0.18,
+    'rad2': 0.3,
+    'thickness': 0.15,
+    'density_of_ridge': 250,
+    'depth_of_ridge': 0.02,
+    'height': 0.1,
+    'rotation_x': 0,
+}
+
+gazelle_horn = {
+    'length': 0.4,
+    'rad1': 0.7,
+    'rad2': 0.5,
+    'thickness': 0.1,
+    'density_of_ridge': 150,
+    'depth_of_ridge': 0.1,
+    'height': 0.1,
+    'rotation_x': 0,
+}
+
+bull_horn = {
+    'length': 0.1,
+    'rad1': 0.5,
+    'rad2': 0.1,
+    'thickness': 0.1,
+    'density_of_ridge': 150,
+    'depth_of_ridge': 0.01,
+    'height': -0.1,
+    'rotation_x': -1
+}
+
+scales = {
+    'length': [0.1, 0.6],
+    'rad1': [0.1, 1],
+    'rad2': [0.1, 1],
+    'thickness': [0.05, 0.3],
+    'density_of_ridge': [100, 300],
+    'depth_of_ridge': [0.01, 0.1],
+    'height': [-0.3, 0.3],
+    'rotation_x': [-1, 1]
+}
+
+for k, v in scales.items():
+    scales[k] = np.array(v)
+
+Horn.param_templates['bull'] = {'horn': bull_horn, 'range': scales}
+Horn.param_templates['gazelle'] = {'horn': gazelle_horn, 'range': scales}
+Horn.param_templates['goat'] = {'horn': goat_horn, 'range': scales}
