@@ -34,6 +34,7 @@ def shader_stone(nw):
         },
     )
 
+    return principled_bsdf
 
 @gin.configurable
 def geo_stone(nw, selection=None, random_seed=0, geometry=True):
