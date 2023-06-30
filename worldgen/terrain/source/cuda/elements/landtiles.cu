@@ -18,6 +18,7 @@ __global__ void landtiles_kernel(
 ) {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
+        int n_auxiliaries = 3;
         if (auxs == NULL) n_auxiliaries = 0;
         landtiles(
             position[idx], sdfs + idx, auxs + idx * n_auxiliaries, is_caved, i_params, f_params, caves_i_params, caves_f_params
@@ -37,6 +38,7 @@ extern "C" {
         float *auxs
     ) {
         using namespace data;
+        const int n_auxiliaries = 3;
         float3_nonbuiltin *d_positions;
         cudaMalloc((void **)&d_positions, size * sizeof(float3_nonbuiltin));
         cudaMemcpy(d_positions, positions, size * sizeof(float3_nonbuiltin), cudaMemcpyHostToDevice);
