@@ -16,6 +16,7 @@ from surfaces import surface
 from surfaces.surface import shaderfunc_to_material
 from util.math import FixedSeed
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class VeratrumMonocotFactory(MonocotGrowthFactory):
 
@@ -80,6 +81,7 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
         self.decorate_monocot(obj)
         assign_material(obj, [self.material, self.branch_material])
         write_material_index(obj, surface.read_attr_data(obj, 'ear', 'FACE').astype(int)[:, 0])
+        tag_object(obj, 'veratrum')
         return obj
 
 
@@ -103,6 +105,9 @@ class VeratrumBranchMonocotFactory(AssetFactory):
             if i > 0:
                 branch.location[-1] = self.primary_stem_offset * uniform(0, .6)
                 branch.rotation_euler = uniform(np.pi * .25, np.pi * .4), 0, uniform(0, np.pi * 2)
+        obj = join_objects(branches)
+        tag_object(obj, 'veratrum_branch')
+        return obj
 
 
 class VeratrumEarMonocotFactory(MonocotGrowthFactory):
@@ -125,4 +130,5 @@ class VeratrumEarMonocotFactory(MonocotGrowthFactory):
                    axis=(1, 0, 0))
         butil.modify_mesh(obj, 'WELD', merge_threshold=face_size / 2)
         write_attribute(obj, 1, 'ear', 'FACE')
+        tag_object(obj, 'veratrum_ear')
         return obj
