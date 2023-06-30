@@ -14,6 +14,7 @@ from placement.instance_scatter import scatter_instances
 from placement.factory import AssetFactory, make_asset_collection
 
 from surfaces import surface
+from util import blender as butil
 from assets.blender_rock import BlenderRockFactory
 
 bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
