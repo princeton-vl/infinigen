@@ -1,8 +1,36 @@
+import gin
+import bpy
+import numpy as np
+
 from assets.utils.object import new_cube
+from placement.factory import AssetFactory
+
+
 from surfaces import surface
+
 from nodes.node_wrangler import Nodes
 
+
+@gin.configurable
+class CloudFactory(AssetFactory):
+    def __init__(
+        self,
+        factory_seed,
+        coarse=False,
+        terrain_mesh=None,
+        steps=128,
+    ):
+        super(CloudFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.ref_cloud = bpy.data.meshes.new('ref_cloud')
+        self.ref_cloud.from_pydata(create_3d_grid(steps=steps), [], [])
+        self.ref_cloud.update()
+
+        with FixedSeed(factory_seed):
+
         self.cloud_types = [Cumulonimbus, ] if self.cloudy else [Cumulus, Stratocumulus, Altocumulus, ]
+
+        self.resolutions = {
             Altocumulus: [16, 64], }
         scale_resolution = 4
         self.resolutions = {k: (scale_resolution * u, scale_resolution * v) for k, (u, v) in
@@ -21,11 +49,23 @@ from nodes.node_wrangler import Nodes
         surface.add_geomod(obj, self.geo_dome, apply=True,
                            input_args=[self.dome_radius, self.dome_threshold, self.density_range,
                                self.min_distance])
+
+        locations = np.array([obj.matrix_world @ v.co for v in obj.data.vertices])
         butil.delete(obj)
+        return locations
+
+        return butil.spawn_empty('placeholder', disp_type='CUBE', s=self.max_scale)
+
     def create_asset(self, distance, **kwargs):
+        cloud_type = np.random.choice(self.cloud_types)
+        resolution_min, resolution_max = self.resolutions[cloud_type]
         resolution = max(1 - distance / self.max_distance, 0)
+        resolution = resolution * (resolution_max - resolution_min) + resolution_min
+        resolution = int(resolution)
         new_cloud = cloud_type("Cloud", self.ref_cloud)
         new_cloud = new_cloud.make_cloud(marching_cubes=False, resolution=resolution, )
+        return new_cloud
+
     @staticmethod
     def geo_dome(nw, dome_radius, dome_threshold, density_range, min_distance, ):
         ico_sphere = nw.new_node('GeometryNodeMeshIcoSphere',
@@ -33,6 +73,7 @@ from nodes.node_wrangler import Nodes
 
         transform = nw.new_node(Nodes.Transform,
                                 input_kwargs={'Geometry': ico_sphere, 'Scale': (1.2, 1.4, 1.0), }, )
+
         position = nw.new_node(Nodes.InputPosition)
         separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position, }, )
 
@@ -43,12 +84,16 @@ from nodes.node_wrangler import Nodes
                                       input_kwargs={'Geometry': transform, 'Selection': less_than, }, )
 
         distribute_points_on_faces = nw.new_node(Nodes.DistributePointsOnFaces, input_kwargs={
+            'Mesh': delete_geometry,
+            'Distance Min': min_distance,
+            'Density Max': np.random.uniform(*density_range),
             'Seed': np.random.randint(1e5), }, attrs={'distribute_method': 'POISSON', }, )
 
         combine_xyz = nw.new_node(Nodes.CombineXYZ,
                                   input_kwargs={'Z': nw.uniform(32, np.random.randint(64, 1e5)), }, )
 
         set_position = nw.new_node(Nodes.SetPosition, input_kwargs={
+            'Geometry': distribute_points_on_faces.outputs["Points"],
             'Offset': combine_xyz, }, )
 
         verts = nw.new_node(Nodes.PointsToVertices, input_kwargs={'Points': set_position, }, )
