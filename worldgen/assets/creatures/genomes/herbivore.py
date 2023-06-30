@@ -84,6 +84,10 @@ def herbivore_genome():
     shoulder_t = clip_gaussian(0.1, 0.05, 0.05, 0.2)
     params = {'length_rad1_rad2': np.array((1.8, 0.1, 0.05)) * N(1, (0.1, 0.05, 0.05), 3)}
 
+    leg_rest = (0, 90, 0) #(0, 90, 0)
+    foot_rest = (0, -90, 0)
+    foot_fac = parts.hoof.HoofAnkle()
+    claw_fac = parts.hoof.HoofClaw()
     backleg_fac = parts.leg.QuadrupedBackLeg(params=params)
     frontleg_fac = parts.leg.QuadrupedFrontLeg(params=params)
 
@@ -93,14 +97,18 @@ def herbivore_genome():
         frontleg_fac.params['length_rad1_rad2'][0] *= lenscale
 
     for side in [-1, 1]:
+        # foot = genome.part(claw_fac)
         foot = genome.attach(genome.part(claw_fac), genome.part(foot_fac), coord=(0.7, -1, 0), joint=Joint(rest=(0, 90, 0)), rotation_basis='global')
         back_leg = genome.attach(foot, genome.part(backleg_fac), coord=(0.95, 1, 0.2), joint=Joint(rest=foot_rest), rotation_basis='global')
         genome.attach(back_leg, body, coord=(shoulder_t, splay, 1), 
+            joint=Joint(rest=leg_rest, bounds=shoulder_bounds), rotation_basis='global', side=side)
 
     for side in [-1, 1]:
+        # foot = genome.part(claw_fac)
         foot = genome.attach(genome.part(claw_fac), genome.part(foot_fac), coord=(0.7, 1, 0), joint=Joint(rest=(0, 90, 0)), rotation_basis='normal')
         front_leg = genome.attach(foot, genome.part(frontleg_fac), coord=(0.95, 0, 0.5), joint=Joint(rest=(0, -70, 0)))
         genome.attach(front_leg, body, coord=(neck_t - shoulder_t, splay + 0/180, 0.9), 
+            joint=Joint(rest=leg_rest), rotation_basis='global', side=side)
 
     temp_dict = defaultdict(lambda: 0.2, {'body_herbivore_giraffe': 0.02})
     head_fac = parts.generic_nurbs.NurbsHead(prefix='head_herbivore', tags=['head'], var=0.5, temperature=temp_dict)
