@@ -10,6 +10,7 @@ import typing
 
 import bpy
 import mathutils
+import numpy as np
 import logging
 from tqdm import trange
 
@@ -35,6 +36,10 @@ class AssetFactory:
         return f'{self.__class__.__name__}({self.factory_seed})'
 
     @staticmethod
+    def quickly_resample(obj):
+        assert obj.type == "EMPTY", obj.type
+        obj.rotation_euler[2] = np.random.uniform(-np.pi, np.pi)
+
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         # Optionally, override this function to decide what will be used as a placeholder for your asset
         return butil.spawn_cube(size=2)
