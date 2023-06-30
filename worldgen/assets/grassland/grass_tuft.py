@@ -16,6 +16,7 @@ from surfaces.templates import grass_blade_texture
 from placement.factory import AssetFactory
 
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class GrassTuftFactory(AssetFactory):
 
@@ -87,6 +88,8 @@ class GrassTuftFactory(AssetFactory):
             bpy.ops.object.join()
             bpy.ops.object.shade_flat()
             parent = objs[0]
+
+        tag_object(parent, 'grass_tuft')
         
         return parent
 
