@@ -1,3 +1,10 @@
+#include "buffer_arrays.hpp"
+#include <string>
+#include <unordered_map>
+#include <map>
+#include <set>
+#include "utils.hpp"
+
 template <typename T>
 std::vector<T> triangulate_face(std::vector<T> &polygon){
     std::vector<T> output;
