@@ -51,7 +51,9 @@ def shader_ice(nw: NodeWrangler):
             'IOR': 1.3100
         },
     )
+    
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
+    return principled_bsdf
 
 @gin.configurable
 def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
@@ -109,4 +111,5 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
 
 def apply(obj, selection=None, **kwargs):
     surface.add_geomod(obj, geo_ice, selection=selection)
+    surface.add_material(obj, shader_ice, selection=selection)
 
