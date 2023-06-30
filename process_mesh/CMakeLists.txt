@@ -7,6 +7,7 @@ endif()
 
 add_definitions(-D GLM_ENABLE_EXPERIMENTAL)
 add_definitions(-D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR})
+include_directories(/usr/include/) # on linux
 include_directories(dependencies) # for cnpy
 include_directories(dependencies/indicators/include)
 include_directories(dependencies/argparse/include)
