@@ -21,6 +21,7 @@ from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
 
 from assets.creatures.util import part_util
 from assets.creatures.geometry import lofting, nurbs
+from assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_quadruped_body', singleton=False, type='GeometryNodeTree')
 def nodegroup_quadruped_body(nw: NodeWrangler):
@@ -138,6 +139,7 @@ class QuadrupedBody(PartFactory):
             0.0: IKParams(name='hip', mode='pin', target_size=0.3),
             1.0: IKParams(name='shoulder', rotation_weight=0.1, target_size=0.4)
         }
+        tag_object(part.obj, 'quadruped_body')
         return part
 
 @node_utils.to_nodegroup('nodegroup_fish_body', singleton=False, type='GeometryNodeTree')
@@ -173,6 +175,7 @@ class FishBody(PartFactory):
             0.0: IKParams(name='hip', mode='pin', target_size=0.3),
             1.0: IKParams(name='shoulder', rotation_weight=0.1, target_size=0.4)
         }
+        tag_object(part.obj, 'fish_body')
         return part
 
 @node_utils.to_nodegroup('nodegroup_bird_body', singleton=False, type='GeometryNodeTree')
@@ -215,5 +218,6 @@ class BirdBody(PartFactory):
             0.0: IKParams(name='hip', mode='pin', target_size=0.3),
             1.0: IKParams(name='shoulder', rotation_weight=0.1, target_size=0.4)
         }
+        tag_object(part.obj, 'bird_body')
         return part
         
