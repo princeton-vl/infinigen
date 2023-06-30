@@ -28,6 +28,7 @@ import surfaces.templates.bird
 
 from surfaces.templates import bone, tongue, eyeball, beak
 from util.math import clip_gaussian, FixedSeed
+from util.random import random_general as rg
 from util import blender as butil
 
 from placement.factory import AssetFactory
@@ -277,8 +278,10 @@ class FlyingBirdFactory(AssetFactory):
     max_expected_radius = 1
     max_distance = 40
 
+    def __init__(self, factory_seed=None, coarse=False, bvh=None, animation_mode=None, altitude=("uniform", 15, 30)):
         super().__init__(factory_seed, coarse)
         self.animation_mode = animation_mode
+        self.altitude = altitude
         self.bvh = bvh
         with FixedSeed(factory_seed):
             self.policy = animation_policy.AnimPolicyRandomForwardWalk(
@@ -295,6 +298,7 @@ class FlyingBirdFactory(AssetFactory):
         if self.bvh is None:
             return p
 
+        altitude = rg(self.altitude)
         p.location.z += altitude
         curve = animation_policy.policy_create_bezier_path(p, self.bvh, self.policy, retry_rotation=True, max_full_retries=30, fatal=True)
         curve.name = f'animhelper:{self}.create_placeholder({i}).path'
