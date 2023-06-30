@@ -40,10 +40,12 @@ def target_face_size(obj, camera=None, global_multiplier=1, global_clip_min=0.00
         bbox = np.array([obj.matrix_world @ mathutils.Vector(v) for v in obj.bound_box])
         dists = np.linalg.norm(bbox - np.array(camera.location), axis=-1)
         eval_point = bbox[dists.argmin()]
+        dist = np.linalg.norm(eval_point - camera.location)
     elif hasattr(obj, '__len__') and len(obj) == 3:
         if IS_COARSE:
             logger.warn(f'target_face_size({obj.name=}) is using the cameras location which is unsafe for {IS_COARSE=}')
         eval_point = mathutils.Vector(obj)
+        dist = np.linalg.norm(eval_point - camera.location)
     elif isinstance(obj, (float, int)):
         dist = obj
     else:
