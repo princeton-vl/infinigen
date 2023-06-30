@@ -113,6 +113,7 @@ def geo_two_color_spots(nw, rand=True, **input_kwargs):
         input_kwargs={'Geometry': group_input, 'Offset': vector_math_3.outputs["Vector"]})
     
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
+        input_kwargs={'Geometry': set_position, 1: mix_1},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     group_output = nw.new_node(Nodes.GroupOutput,
