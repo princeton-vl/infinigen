@@ -11,6 +11,15 @@ import bpy
 import mathutils
 from geomdl import NURBS
 
+from util.math import rotate_match_directions, normalize, project_to_unit_vector
+from util.math import wrap_around_cyclic_coord, new_domain_from_affine, affine_from_new_domain
+from util.math import FixedSeed
+from util import blender as butil
+
+from assets.creatures.geometry.nurbs import blender_mesh_from_pydata, compute_cylinder_topology
+from assets.creatures.geometry import nurbs
+from assets.creatures.geometry import nurbs, lofting, skin_ops
+
 from shapely.geometry import Polygon, Point, LineString
 import shapely
 import rtree
