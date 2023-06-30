@@ -21,6 +21,7 @@ from assets.utils.diff_growth import build_diff_growth
 from assets.utils.object import data2mesh
 from assets.utils.mesh import polygon_angles
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class LichenFactory(AssetFactory):
 
@@ -95,6 +96,7 @@ class LichenFactory(AssetFactory):
         assign_material(obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen,
                                                             (self.base_hue + uniform(-.04, .04)) % 1))
         
+        tag_object(obj, 'lichen')
         return obj
 
 
