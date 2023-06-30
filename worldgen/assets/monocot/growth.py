@@ -24,6 +24,7 @@ from placement.factory import AssetFactory
 from surfaces import surface
 from util.blender import deep_clone_obj
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class MonocotGrowthFactory(AssetFactory):
     use_distance = False
@@ -158,6 +159,7 @@ class MonocotGrowthFactory(AssetFactory):
     def create_asset(self, **params):
         obj = self.create_raw(**params)
         self.decorate_monocot(obj)
+        tag_object(obj, 'monocot_growth')
         return obj
 
     def create_raw(self, face_size=.01, apply=True, **params):
@@ -173,6 +175,7 @@ class MonocotGrowthFactory(AssetFactory):
         surface.add_geomod(obj, self.make_geo_flower(), apply=apply, input_args=[leaves])
         if apply:
             butil.delete_collection(leaves)
+        tag_object(obj, 'flower')
         return obj
 
     def decorate_monocot(self, obj):
