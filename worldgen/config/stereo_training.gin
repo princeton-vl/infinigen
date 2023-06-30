@@ -1,3 +1,4 @@
+# eliminate blurs / distortion that cause blurs or bad alignment of the depth map
 compositor_postprocessing.distort = False
 render_image.motion_blur = False
 render_image.use_dof = False
