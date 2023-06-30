@@ -1,3 +1,11 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+# Authors:
+# - Alexander Raistrick: FishSchoolFactory, basic version of FishFactory, anim & simulation
+# - Mingzhe Wang: Fin placement
+# Date Signed: May 30, 2023
+
 from collections import defaultdict
 
 import bpy
