@@ -2,7 +2,7 @@
 
 # Copyright: 2009-2022 the scikit-image team
 # License: BSD-3-Clause
-# adapted by Zeyu Ma on date June 5, 2023 to avoid precision loss for large grids to achieve local determinism,
+# adapted by Zeyu Ma to avoid precision loss for large grids to achieve local determinism,
 # therefore to make seamless stiched mesh
 
 from skimage._build import cython

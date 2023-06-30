@@ -287,13 +287,6 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
 
         separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
-        # group_3 = nw.new_node(
-        #     nodegroup_normalize_0_1().name,
-        #     input_kwargs={
-        #         "Attribute": separate_xyz.outputs["X"],
-        #         "Geometry": group_input.outputs["Geometry"],
-        #     },
-        # )
         group_3 =  nw.scalar_divide(
             nw.scalar_add(
                 separate_xyz.outputs["X"],
@@ -301,13 +294,7 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             ),
             400
         )
-        # group_4 = nw.new_node(
-        #     nodegroup_normalize_0_1().name,
-        #     input_kwargs={
-        #         "Attribute": separate_xyz.outputs["Y"],
-        #         "Geometry": group_input.outputs["Geometry"],
-        #     },
-        # )
+
         group_4 =  nw.scalar_divide(
             nw.scalar_add(
                 separate_xyz.outputs["Y"],
@@ -315,13 +302,7 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             ),
             400
         )
-        # group = nw.new_node(
-        #     nodegroup_normalize_0_1().name,
-        #     input_kwargs={
-        #         "Attribute": separate_xyz.outputs["Z"],
-        #         "Geometry": group_input.outputs["Geometry"],
-        #     },
-        # )
+
         group =  nw.scalar_divide(
             nw.scalar_add(
                 separate_xyz.outputs["Z"],
@@ -351,13 +332,6 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             attrs={"operation": "MULTIPLY_ADD"},
         )
 
-        # group_1 = nw.new_node(
-        #     nodegroup_normalize_0_1().name,
-        #     input_kwargs={
-        #         "Attribute": multiply_add,
-        #         "Geometry": group_input.outputs["Geometry"],
-        #     },
-        # )
         group_1 =  nw.scalar_divide(
             nw.scalar_add(
                 multiply_add,

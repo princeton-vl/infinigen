@@ -46,7 +46,7 @@
 //
 // VERSION: 1.0.1
 // https://github.com/Auburn/FastNoise
-// adapted by Zeyu Ma on date June 4, 2023 to compile terrain elements
+// adapted by Zeyu Ma to compile terrain elements
 
 #ifndef FASTNOISELITE_H
 #define FASTNOISELITE_H

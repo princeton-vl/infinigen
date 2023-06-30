@@ -35,9 +35,16 @@ Installation is tested and working on the following platforms:
 
 We are working on support for rendering with AMD GPUs. Windows users should use [WSL2](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview). More instructions coming soon.
 
+<details closed>
+<summary><b>:warning: Errors with git pull / merge conflicts when migrating from v1.0.0 to v1.0.1</b></summary>
+To properly display open-source line by line git credits for our team, we have switched to a new version of the repo which does not share commit history with the the version available from 6/17/2023 to 6/29/2023 date. We hope this will help open source contributors identify the current "code owner" or person best equipped to support you with issues you encounter with any particular lines of the codebase.
+
+You will not be able to pull or merge infinigen v1.0.1 into a v1.0.0 repo without significant git expertise. If you have no ongoing changes, we recommend you clone a new copy of the repo. We apologize for any inconvenience, please make an issue if you have problems updating or need help migrating ongoing changes. We understand this change is disruptive, but it is one-time-only and will not occur in future versions. Now it is complete, we intend to iterate rapidly in the coming weeks, please see our [roadmap](https://infinigen.org/roadmap) and [twitter](https://twitter.com/PrincetonVL) for updates.
+</details closed>
+
 **Run these commands to get started**
 ```
-git clone https://github.com/princeton-vl/infinigen.git
+git clone --recursive https://github.com/princeton-vl/infinigen.git
 cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
@@ -87,7 +94,7 @@ Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) 
 
 ### "Hello World": Generate your first Infinigen scene
 
- :warning: **Known issue** :warning: : We are actively fixing an issue which causes commands not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
+ :warning: **Known issue** : We are actively fixing an issue which causes commands not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 <p align="center">
   <img src="images/Image0048_00_00.png" width="330" />
@@ -116,8 +123,6 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g
 $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
-The full specification for the ground-truth is located in [GroundTruthAnnotations.md](/GroundTruthAnnotations.md), including instructions for our own OpenGL-based implementation with additional annotations.
-
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 #### Generate image(s) in one command
@@ -144,6 +149,26 @@ If you intend to use CUDA-accelerated terrain (`--pipeline_configs cuda_terrain`
 
 Infinigen uses [Google's "Gin Config"](https://github.com/google/gin-config) heavily, and we encourage you to consult their documentation to familiarize yourself with its capabilities.
 
+<details closed>
+<summary><b>:bulb: Generating high quality videos / Avoiding terrain aliasing</b></summary>
+
+To render high quality videos as shown in the intro video, we ran commands similar to the following, on our SLURM cluster.
+
+```
+python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+    --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
+    --cleanup big_files --warmup_sec 60000 --config trailer high_quality_terrain
+```
+
+Our terrain system resolves its signed distance function (SDF) to view-specific meshes, which must be updated as the camera moves. For video rendering, we strongly recommend using the `high_quality_terrain` config to avoid perceptible flickering and temporal aliasing. This config meshes the SDF at very high detail, to create seamless video. However, it has high compute costs, so we recommend also using `--pipeline_config cuda_terrain` on a machine with an NVIDIA GPU. For applications with fast moving cameras, you may need to update the terrain mesh more frequently by decreasing `iterate_scene_tasks.view_block_size = 16` in `worldgen/tools/pipeline_configs/monocular_video.gin`
+
+As always, you may attempt to switch the compute platform (e.g from `slurm` to `local_256GB`) or the data format (e.g. from `monocular_video` to `stereo_video`).
+
+</details>
+
+#### Generating and using ground-truth
+
+:exclamation: Infinigen provides a ground-truth system for generating diverse automatic annotations for computer vision. [See the docs here](/GroundTruthAnnotations.md).
 
 ## Exploring the Infinigen Codebase
 
@@ -152,15 +177,7 @@ Infinigen has evolved significantly since the version described in our CVPR pape
 Infinigen is an ongoing research project, and has some known issues. Through experimenting with Infinigen's code and config files, you will find scenes which crash or cannot be handled on your hardware. Infinigen scenes are randomized, with a long tail of possible scene complexity and thus compute requirements. If you encounter a scene that does not fit your computing hardware, you should try other seeds, use other config files, or follow up for help.
 
 ## Coming Soon
-
-Infinigen will evolve rapidly over the coming months. Follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
-
-There are some aspects of the code used for our launch video that are still being polished and will be released as soon as possible, notably:
-- Fluid simulations for dynamic water and fire
-- Some categories of plants, namely snake plants and spider plants
-
-### Tutorials & Documentation
-We will add comprehensive tutorials and documentation for all aspects of Infinigen. This README is **preliminary**, and our docs will be expanded to cover all aspects of the project in detail. 
+Please see our project roadmap and follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
 ### Contributing
 We welcome contributions! You can contribute in many ways:
@@ -184,7 +201,7 @@ Infinigen wouldn't be possible without the fantastic work of the [Blender Founda
 
 We thank [Thomas Kole](https://blenderartists.org/u/ThomasKole) for providing procedural clouds (which are more photorealistic than our original version) and [Pedro P. Lopes](https://blendswap.com/blend/30728) for the autoexposure nodegraph. 
 
-We learned tremendously from online tutorials from 
+We learned tremendously from online tutorials of 
 [Andrew Price](https://www.youtube.com/channel/UCOKHwx1VCdgnxwbjyb9Iu1g),
 [Artisans of Vaul](https://www.youtube.com/@ArtisansofVaul),
 [Bad Normals](https://www.youtube.com/@BadNormals),
