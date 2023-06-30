@@ -133,6 +133,7 @@ class SnowflakeFactory(AssetFactory):
         return bpy.context.object
     
     def finalize_assets(self, assets):
+        snow.apply(assets, subsurface=0)
     
 @gin.configurable
 def wind_effector(strength):
