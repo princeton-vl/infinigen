@@ -28,6 +28,7 @@ class Nodes:
     Exposure = 'CompositorNodeExposure'
     CombineHSV = 'ShaderNodeCombineHSV'
     SeparateRGB = 'ShaderNodeSeparateRGB'
+    SeparateColor = 'ShaderNodeSeparateColor'
     CombineRGB = 'ShaderNodeCombineRGB'
 
     # Curve
@@ -38,6 +39,7 @@ class Nodes:
     SetCurveRadius = 'GeometryNodeSetCurveRadius'
     SetCurveTilt = 'GeometryNodeSetCurveTilt'
     CurveLength = 'GeometryNodeCurveLength'
+    CurveSplineType = 'GeometryNodeCurveSplineType'
     SetHandlePositions = 'GeometryNodeSetCurveHandlePositions'
     SetHandleType = 'GeometryNodeCurveSetHandles'
     CurveTangent = 'GeometryNodeInputTangent'
@@ -48,6 +50,7 @@ class Nodes:
     TrimCurve = 'GeometryNodeTrimCurve'
     ReverseCurve = 'GeometryNodeReverseCurve'
     SplineLength = 'GeometryNodeSplineLength'
+    FillCurve = 'GeometryNodeFillCurve'
 
     # Curve Primitves
     QuadraticBezier = 'GeometryNodeCurveQuadraticBezier'
@@ -114,6 +117,7 @@ class Nodes:
     FlipFaces = 'GeometryNodeFlipFaces'
     FaceNeighbors = 'GeometryNodeInputMeshFaceNeighbors'
     EdgePathToCurve = 'GeometryNodeEdgePathsToCurves'
+    DeleteGeom = 'GeometryNodeDeleteGeometry'
     SplitEdges = 'GeometryNodeSplitEdges'
 
     # Mesh Primitives
@@ -165,9 +169,11 @@ class Nodes:
     VoronoiTexture = "ShaderNodeTexVoronoi"
     WaveTexture = "ShaderNodeTexWave"
     WhiteNoiseTexture = 'ShaderNodeTexWhiteNoise'
+    GradientTexture = 'ShaderNodeTexGradient'
     # Shaders
     MixShader = "ShaderNodeMixShader"
     PrincipledBSDF = "ShaderNodeBsdfPrincipled"
+    TranslucentBSDF = "ShaderNodeBsdfTranslucent"
     PrincipledVolume = "ShaderNodeVolumePrincipled"
     PrincipledHairBSDF = 'ShaderNodeBsdfHairPrincipled'
     Emission = 'ShaderNodeEmission'
@@ -228,6 +234,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.NoiseTexture: ['noise_dimensions'],
     Nodes.MusgraveTexture: ['musgrave_dimensions', 'musgrave_type'],
     Nodes.VoronoiTexture: ['voronoi_dimensions', 'feature', 'distance'],
+    Nodes.GradientTexture: ['gradient_type'],
 
     Nodes.RGB: ['color'],
     Nodes.Attribute: ['attribute_name', 'attribute_type'],
@@ -241,6 +248,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.MapRange: ['data_type', 'interpolation_type', 'clamp'],
     Nodes.ColorRamp: [],  # Color ramp properties are set in special_case_colorramp, since they are nested
     Nodes.MixRGB: ['blend_type'],
+    Nodes.SeparateColor: ['mode'],
 
     Nodes.DistributePointsOnFaces: ['distribute_method'],
     Nodes.CollectionInfo: ['transform_space'],
@@ -254,14 +262,20 @@ NODE_ATTRS_AVAILABLE = {
 
     Nodes.MeshBoolean: ['operation'],
     Nodes.MeshCircle: ['fill_type'],
+    Nodes.CurveSplineType: ['spline_type'],
     Nodes.SetHandlePositions: ['mode'],
     Nodes.SetHandleType: ['handle_type', 'mode'],
     Nodes.NamedAttribute: ['data_type'],
     Nodes.StoreNamedAttribute: ['data_type', 'domain'],
+    Nodes.CurveToPoints: ['mode'],
+    Nodes.FillCurve: ['mode'],
     Nodes.ResampleCurve: ['mode'],
     Nodes.TrimCurve: ['mode'],
     Nodes.MeshLine: ['mode'],
     Nodes.MeshToPoints: ['mode'],
+
+    Nodes.DeleteGeom: ['mode'],
+    Nodes.Proximity: ['target_element'],
 
     Nodes.CurveCircle: ['mode'],
     Nodes.SampleCurve: ['mode'],
@@ -275,6 +289,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.RotateEuler: ['space', 'type'],
     Nodes.DuplicateElements: ['domain'],
     Nodes.SeparateColor: ['mode'],
+    Nodes.DomainSize: ['component']
 }
 
 # Certain nodes should only be created once. This list defines which ones.
