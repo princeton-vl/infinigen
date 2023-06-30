@@ -15,6 +15,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class HollowTreeFactory(BaseDeformedTreeFactory):
 
@@ -71,4 +72,5 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
         material_indices[
             np.any(material_indices[:, np.newaxis] == null_indices[np.newaxis, :], -1)] = ring_material_index
         write_material_index(obj, material_indices)
+        tag_object(obj, 'hollow_tree')
         return obj
