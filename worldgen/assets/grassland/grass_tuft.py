@@ -32,6 +32,7 @@ class GrassTuftFactory(AssetFactory):
         self.curl_std = self.curl_mean * np.clip(normal(0.3, 0.1), 0.01, 0.6)
         self.curl_power = normal(1.2, 0.3)
 
+        self.blade_width_pct_mean = uniform(0.01, 0.03)
         self.blade_width_var = uniform(0, 0.05)
 
         self.taper_var = uniform(0, 0.1)
