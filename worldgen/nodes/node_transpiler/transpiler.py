@@ -109,6 +109,7 @@ def represent_default_value(val, simple=True):
         else:
             logging.warn(f'Encountered material {val} but it has use_nodes=False')
             code = repr(val)
+    elif val is None:
         logging.warn('Transpiler introduced a None into result script, this may not have been intended by the user')
         code = 'None'
     else:
@@ -141,6 +142,7 @@ def has_default_value_changed(node_tree, node, value):
 
     temp_default_node = node_tree.nodes.new(node.bl_idname)
     if node.bl_idname.endswith('NodeGroup'):
+        temp_default_node.node_tree = node.node_tree
 
     if isinstance(value, bpy.types.NodeSocket):
 
@@ -148,6 +150,8 @@ def has_default_value_changed(node_tree, node, value):
         assert hasattr(value, 'default_value')
 
         observed_val = value.default_value
+        default_socket = [i for i in temp_default_node.inputs if i.identifier == value.identifier][0]
+        default_val = default_socket.default_value
         has_changed = not compare(observed_val, default_val)
     elif isinstance(value, str):
         assert hasattr(node, value)
@@ -350,9 +354,21 @@ def create_inputs_dict(node_tree, node, memo):
     inputs_dict = {}
     code = ""
 
+    def update_inputs(i, k, v):
+        is_input_name_unique = ([socket.name for socket in node.inputs].count(k) == 1)
+        k = repr(k) if is_input_name_unique else i
+        if not k in inputs_dict:
+            inputs_dict[k] = v
+        else:
+            if not isinstance(inputs_dict[k], list):
+                inputs_dict[k] = [inputs_dict[k]]
+            inputs_dict[k].append(v)
+
     new_transpile_targets = {}
     for i, (input_name, input_socket) in enumerate(node.inputs.items()):
+        links = get_connected_link(node_tree, input_socket)
 
+        if links is None:
             if hasattr(input_socket, 'default_value'):
                 if not has_default_value_changed(node_tree, node, input_socket):
                     continue
@@ -374,16 +390,20 @@ def create_inputs_dict(node_tree, node, memo):
                 node_tree, link.from_node, memo)
             code += input_code
             new_transpile_targets.update(targets)
+
             if len(link.from_node.outputs) == 1:
                 input_expression = input_varname
             else:
                 socket_name = link.from_socket.name
                 input_expression = f"{input_varname}.outputs[\"{socket_name}\"]"
+
                 # Catch shared socket output names
                 if link.from_node.outputs[socket_name].identifier != link.from_socket.identifier:
                     from_idx = [i for i, o in enumerate(link.from_node.outputs) if o.identifier == link.from_socket.identifier][0]
                     input_expression = f"{input_varname}.outputs[{from_idx}]"
+
             update_inputs(i, input_name, input_expression)
+
     return inputs_dict, code, new_transpile_targets
 
 def repr_iter_val(v):
@@ -397,6 +417,7 @@ def repr_iter_val(v):
 def represent_list(inputs, spacing=' '):
     inputs = [repr_iter_val(x) for x in inputs]
     return '[' + f",{spacing}".join(inputs) + ']'
+
 def represent_tuple(inputs, spacing=' '):
     inputs = [repr_iter_val(x) for x in inputs]
     for x in inputs:
@@ -405,6 +426,7 @@ def represent_tuple(inputs, spacing=' '):
 
 def represent_dict(inputs_dict, spacing=' '):
     vals = f',{spacing}'.join(f"{k}: {repr_iter_val(v)}"
+                     for k, v in inputs_dict.items())
     return '{' + vals + '}'
 
 def get_varname(node, taken):
@@ -460,6 +482,7 @@ def get_nodetype_expression(node):
     if id in lookup:
         return f'Nodes.{lookup[id]}'
     elif id.endswith('NodeGroup'):
+        return repr(node.node_tree.name)
     else:
         node_name = node.name.split('.')[0].replace(' ', '')
         logging.warn(
@@ -506,11 +529,16 @@ def create_node(node_tree, node, memo):
     if node.label:
         new_node_args.append(f'label={repr(node.label)}')
 
+    # Special case: input node
+    if node.bl_idname == Nodes.GroupInput:
+        all_inps = []
+        for inp in node_tree.inputs:
             repr_val, targets = represent_default_value(inp.default_value, simple=False) if hasattr(inp, 'default_value') else (None, {})
             new_transpile_targets.update(targets)
             all_inps.append(f'({repr(inp.bl_socket_idname)}, {repr(inp.name)}, {repr_val})')
 
         new_node_args.append(f"expose_input={args}")
+
     # Add code to set the correct 'attrs', ie set the math operations
     attrs_dict = create_attrs_dict(node_tree, node)
     if len(attrs_dict) > 0:
