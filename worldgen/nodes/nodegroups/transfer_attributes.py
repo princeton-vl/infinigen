@@ -2,6 +2,7 @@ import numpy as np
 from nodes import node_utils, node_info
 from util import blender as butil
 
+
 def uvs_to_attribute(obj, name='uv_map'):
     assert obj.type == 'MESH'
     
@@ -47,20 +48,43 @@ def transfer_all(source, target, attributes=None, uvs=False):
         attributes.append(uv_att_name)
 
     dtypes = [source.data.attributes[n].data_type for n in attributes]
+    domains = [source.data.attributes[n].domain for n in attributes]
+
+    surface.add_geomod(source, transfer_att_node,
+                       input_kwargs={'source': source,
+                                     'target': target,
+                                     'attribute_to_transfer_list': list(zip(attributes, dtypes))},
+                       attributes=attributes, apply=True, domains=domains)
+    surface.add_geomod(target, copy_geom_info,
+                       input_kwargs={'source': source, 'target': target},
+                       apply=True)
     if uvs:
         attribute_to_uvs(target, uv_att_name)
 
+def copy_geom_info(nw, source, target):
+
+def transfer_att_node(nw, source, target, attribute_to_transfer_list=[]):
     # create a geom node in the non-remeshed version of the mesh (i.e., source)
     object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={'Object': target})
     group_input = nw.new_node(Nodes.GroupInput,
+                              expose_input=[('NodeSocketGeometry', 'Geometry', None), ])
 
     for att_name, att_type in attribute_to_transfer_list:
         nw.expose_input(att_name, attribute=att_name)
+
     position = nw.new_node(Nodes.InputPosition)
 
     group_output_sockets = {'Geometry': object_info.outputs["Geometry"]}
 
     for att_name, att_type in attribute_to_transfer_list:
         transfer_attribute = nw.new_node(Nodes.TransferAttribute,
+                                         attrs={'data_type': att_type},
+                                         input_kwargs={
+                                             'Source': group_input.outputs["Geometry"],
+                                             'Attribute': group_input.outputs[att_name],
+                                             'Source Position': position
+                                         })
 
         group_output_sockets[att_name] = (transfer_attribute, 'Attribute')
+
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs=group_output_sockets)
