@@ -13,7 +13,9 @@ from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
 
+from util.math import FixedSeed
 from placement.factory import AssetFactory
+from util import blender as butil
 
 ######## code for creating pine needles ########
 
