@@ -1,12 +1,16 @@
 import os, sys
 import numpy as np
 import math as ma
+from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
 from numpy.random import normal as normal_func
+from nodes.node_wrangler import Nodes, NodeWrangler
+from nodes import node_utils
 from surfaces import surface
 import random
 
+def shader_scale(nw, rand=True, **input_kwargs):
     math_4 = nw.new_node(Nodes.Math,
         input_kwargs={0: 1.0},
         attrs={'operation': 'SUBTRACT'})
@@ -65,9 +69,11 @@ import random
         input_kwargs={0: vector_math.outputs["Vector"], 1: colorramp_7.outputs["Color"]})
     
     attribute_4 = nw.new_node(Nodes.Attribute,
+        attrs={'attribute_name': 'Color variations'})
     
     uv_map_1 = nw.new_node('ShaderNodeUVMap')
     uv_map_1.uv_map = 'UVMap'
+
     noise_texture_5 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': uv_map_1, 'Scale': 50.0},
         attrs={'noise_dimensions': '4D'})
@@ -133,6 +139,7 @@ def nodegroup_node_grid(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'floor1': trunc, 'floor2': add_1})
 
+def geo_scale(nw, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
  
     group_input = nw.new_node(Nodes.GroupInput,
@@ -319,10 +326,12 @@ def nodegroup_node_grid(nw: NodeWrangler):
             },
         attrs={'is_active_output': True})
 
+def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
     attributes = [
         'Color variations',
         'offset2'
     ]
+    surface.add_geomod(obj, geo_scale, apply=False, input_kwargs=geo_kwargs, attributes=attributes)
     surface.add_material(obj, shader_scale, reuse=False, input_kwargs=shader_kwargs)
 
 if __name__ == "__main__":
