@@ -1,12 +1,19 @@
 import bpy
 import mathutils
+
+import gin
+import numpy as np
 from numpy.random import uniform, normal, randint
 from nodes.node_wrangler import Nodes, NodeWrangler
+
 from assets.small_plants import leaf_general as Leaf
+
+from nodes import node_utils
 from placement.factory import AssetFactory
 from util import blender as butil
 from surfaces import surface
 from surfaces.templates import simple_greenery
+
 
 def random_pinnae_level2_curvature():
     z_max_curvature = uniform(0.3, 0.45, (1,))[0]
@@ -114,9 +121,11 @@ def nodegroup_pinnae_level1_stein(nw: NodeWrangler):
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': mesh_to_curve, 'Radius': multiply})
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 15.0},
                              attrs={'operation': 'MULTIPLY'})
+    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': multiply_1, 'Resolution': 10})
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
                                 input_kwargs={'Curve': set_curve_radius,
                                               'Profile Curve': curve_circle.outputs["Curve"]})
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Mesh': curve_to_mesh})
 
 
 @node_utils.to_nodegroup('nodegroup_pinnae_level1_scale', singleton=False, type='GeometryNodeTree')
@@ -329,6 +338,7 @@ def nodegroup_pinnae_level2_instance_on_points(nw: NodeWrangler, leaf, pinna_con
                            attrs={'operation': 'MULTIPLY'})
     instance_on_points_2 = nw.new_node(Nodes.InstanceOnPoints,
                                        input_kwargs={'Points': group_input.outputs["Points"], 'Selection': index,
+                                                     'Instance': join_geometry, 'Rotation': combine_xyz_3,
                                                      'Scale': multiply.outputs["Vector"]})
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Instances': instance_on_points_2})
 
@@ -348,9 +358,11 @@ def nodegroup_pinnae_level2_stein(nw: NodeWrangler):
     set_curve_radius_1 = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': mesh_to_curve_1, 'Radius': multiply})
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.5},
                              attrs={'operation': 'MULTIPLY'})
+    curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': multiply_1, 'Resolution': 10})
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
                                   input_kwargs={'Curve': set_curve_radius_1,
                                                 'Profile Curve': curve_circle_1.outputs["Curve"]})
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Mesh': curve_to_mesh_1})
 
 
 @node_utils.to_nodegroup('nodegroup_pinnae', singleton=False, type='GeometryNodeTree')
@@ -565,6 +577,7 @@ def check_vicinity(rotation, pinnae_rs):
     return False
 
 
+def geo_fern(nw: NodeWrangler, **kwargs):
     pinnaes = []
     # Two modes: Random Like and Flatten Like
     fern_mode = kwargs["fern_mode"]
@@ -670,6 +683,7 @@ def check_vicinity(rotation, pinnae_rs):
     geometry = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': join_geometry, 'Scale': (scale, scale, scale)})
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
+@gin.register
 class FernFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
@@ -704,7 +718,12 @@ class FernFactory(AssetFactory):
 
         surface.add_geomod(obj, geo_fern, apply=True, attributes=[], input_kwargs=params)
         butil.delete([leaf])
+        with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()
+            bpy.ops.object.shade_flat()
+
+        simple_greenery.apply(obj)
+            
         return obj
 
     def debug_asset(self, **params):
