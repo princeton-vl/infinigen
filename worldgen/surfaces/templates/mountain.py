@@ -9,7 +9,7 @@ import numpy as np
 
 from nodes.node_wrangler import Nodes, NodeWrangler
 from surfaces import surface
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.math import FixedSeed
 from util.random import clip_hsv, random_color, random_color_neighbour
 from util.random import random_general as rg

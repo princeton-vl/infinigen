@@ -12,7 +12,7 @@ from nodes.node_wrangler import Nodes, NodeWrangler
 from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 
 import gin
 from util.math import FixedSeed

@@ -15,7 +15,7 @@ from nodes import node_utils
 from nodes.color import color_category
 from surfaces import surface
 from surfaces.surface_utils import sample_color, sample_range, sample_ratio
-from terrain.utils import SurfaceTypes
+from util.organization import SurfaceTypes
 from util.math import FixedSeed
 from .mountain import geo_MOUNTAIN_general
 
