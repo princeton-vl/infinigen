@@ -7,6 +7,7 @@ import bpy
 from surfaces import surface
 from nodes.node_wrangler import Nodes, NodeWrangler
 from util.blender import group_in_collection
+from nodes.color import random_color_mapping
 
 def to_material(name, singleton):
     """Wrapper for initializing and registering materials."""
@@ -52,3 +53,25 @@ def assign_curve(c, points, handles=None):
 
 
 def noise(nw, scale, **kwargs):
+def resample_node_group(nw: NodeWrangler, scene_seed: int):
+    for node in nw.nodes:
+        # Randomize 'W' in noise nodes
+        if node.bl_idname in {Nodes.NoiseTexture, Nodes.WhiteNoiseTexture}:
+            node.noise_dimensions = '4D'
+            node.inputs['W'].default_value = np.random.uniform(1000)
+
+        if node.bl_idname == Nodes.ColorRamp:
+            for element in node.color_ramp.elements:
+                element.color = random_color_mapping(element.color, scene_seed)
+
+        if node.bl_idname == Nodes.RGB:
+            node.outputs['Color'].default_value = random_color_mapping(node.outputs['Color'].default_value, scene_seed)
+
+        # Randomized fixed color input
+        for input_socket in node.inputs:
+            if input_socket.type == 'RGBA':
+                # print(f"Mapping", input_socket)
+                input_socket.default_value = random_color_mapping(input_socket.default_value, scene_seed)
+
+            if input_socket.name == "Seed":
+                input_socket.default_value = np.random.randint(1000)
