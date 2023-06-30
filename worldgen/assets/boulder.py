@@ -23,6 +23,7 @@ from assets.utils.decorate import geo_extension, write_attribute
 from assets.utils.misc import log_uniform
 from placement.factory import AssetFactory
 from placement.detail import remesh_with_attrs
+from assets.utils.tag import tag_object, tag_nodegroup
 
 from util.blender import deep_clone_obj
 from placement.split_in_view import split_inview
