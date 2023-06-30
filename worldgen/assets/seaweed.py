@@ -23,6 +23,7 @@ from nodes.node_wrangler import NodeWrangler, Nodes
 from surfaces import surface
 from assets.utils.misc import build_color_ramp, log_uniform
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 
 class SeaweedFactory(AssetFactory):
@@ -57,6 +58,7 @@ class SeaweedFactory(AssetFactory):
         butil.modify_mesh(obj, 'DISPLACE', True, strength=.02, texture=texture)
         assign_material(obj, self.material)
         self.animate_bend(obj)
+        tag_object(obj, 'seaweed')
         return obj
 
     def animate_bend(self, obj):
