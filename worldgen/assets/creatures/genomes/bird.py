@@ -30,7 +30,9 @@ from assets.creatures.animation import idle, run_cycle
 
 from placement import animation_policy
 
+def bird_hair_params(flying=True):
 
+    length = U(0.01, 0.025) if flying else U(0.03, 0.06)
     puff = U(0.03, 0.2)
 
     return {
@@ -57,6 +59,7 @@ from placement import animation_policy
             'IOR': 1.55
         }
     }
+
 
 def bird_postprocessing(body_parts, extras, params):
     
@@ -85,6 +88,7 @@ def duck_genome(mode):
         'Toe Length Rad1 Rad2': np.array((l * N(0.4, 0.07), 0.03, 0.02)) * N(1, 0.1) * N(1, 0.1, 3),
         'Toe Splay': 35 * N(1, 0.2),
         'Toebean Radius': 0.03 * N(1, 0.1),
+        'Toe Rotate': (0., -1.57, 0.),
         'Claw Curl Deg': 12 * N(1, 0.2),
         'Claw Pct Length Rad1 Rad2': np.array((0.13, 0.64, 0.05)) * N(1, 0.1) * N(1, 0.1, 3),
         'Thumb Pct': np.array((0.61, 1.17, 1.5)) * N(1, 0.1) * N(1, 0.1, 3),
@@ -132,8 +136,88 @@ def duck_genome(mode):
         parts=body,
         postprocess_params=dict(
             animation=dict(), 
-    foot_fac = parts.foot.Foot({
+            hair=bird_hair_params(flying=False),
             surface_registry=[
+                (surfaces.templates.spot_sparse_attr, 4),
+                (surfaces.templates.reptile_brown_circle_attr, 0.5),
+                (surfaces.templates.reptile_two_color_attr, 0.5),
+                (surfaces.templates.bird, 5)
+            ]
+        ) 
+    )
+
+def flying_bird_genome(mode):
+
+    body_lrr = np.array((0.95, 0.13, 0.18)) * N(1.0, 0.05, size=(3,))
+    body = genome.part(parts.body.BirdBody({'length_rad1_rad2': body_lrr}))
+    l = body_lrr[:1]
+
+    tail = genome.part(parts.wings.FlyingBirdTail())
+    genome.attach(tail, body, coord=(U(0.08, 0.15), 1, 0.5), joint=Joint(rest=(0, 180 * N(1, 0.1), 0)))
+
+    shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
+    foot_fac = parts.foot.Foot({
+        'length_rad1_rad2': np.array((l * 0.2, 0.01, 0.02)) *  N(1, 0.1, 3),
+        'Toe Length Rad1 Rad2': np.array((l * N(0.4, 0.02), 0.02, 0.01)) * N(1, 0.1) * N(1, 0.1, 3),
+        'Toe Splay': 8 * N(1, 0.2),
+        'Toe Rotate': (0., -N(0.55, 0.1), 0.),
+        'Toebean Radius': 0.01 * N(1, 0.1),
+        'Claw Curl Deg': 12 * N(1, 0.2),
+        'Claw Pct Length Rad1 Rad2': np.array((0.13, 0.64, 0.05)) * N(0.5, 0.05) * N(1, 0.1, 3),
+        'Thumb Pct': np.array((0.4, 0.5, 0.75)) * N(1, 0.1) * N(1, 0.1, 3),
+        'Toe Curl Scalar': 0.34 * N(1, 0.2)
+    }, bald=True)
+
+    leg_fac = parts.leg.BirdLeg({'length_rad1_rad2': (l * 0.5 * N(1, 0.05), 0.04 * N(1, 0.1), 0.02 * N(1, 0.1)),
+                'Thigh Rad1 Rad2 Fullness': np.array((0.12, 0.04, 1.26)) * N(1, 0.1, 3),
+            'Shin Rad1 Rad2 Fullness': np.array((0.1, 0.04, 5.0)) * N(1, 0.1, 3)})
+    leg_coord = (N(0.5, 0.05), N(0.2, 0.04), N(0.8, 0.05))
+    for side in [-1, 1]:
+        leg = genome.attach(genome.part(foot_fac), genome.part(leg_fac), coord=(0.9, 0, 0), joint=Joint(rest=(0, 0, 0)))
+        genome.attach(leg, body, coord=leg_coord, joint=Joint(rest=(0, U(135, 175), 0), bounds=shoulder_bounds), side=side)
+
+    extension = U(0.8, 1)
+    wing_len = l * clip_gaussian(1.0, 0.2, 0.6, 1.5) * 0.8
+    wing_fac = parts.wings.FlyingBirdWing({
+        'length_rad1_rad2': np.array((wing_len, U(0.08, 0.15), 0.02 * N(1, 0.2))),
+        'Extension': extension,
+        'feather_density': U(25, 40)
+    })
+
+    wing_coord = (N(0.68, 0.02), 150 / 180 * N(1, 0.1), 0.8)
+    if wing_fac.params['Extension'] > 0.5:
+        wing_rot = (90, 0, 90)
+    else:
+        wing_rot = (90, 40, 90)
+    for side in [-1, 1]:
+        wing = genome.part(wing_fac)
+        genome.attach(wing, body, coord=wing_coord, joint=Joint(rest=wing_rot), side=side)
+
+    head_fac = parts.head.FlyingBirdHead()
+    head = genome.part(head_fac)
+
+    beak = genome.part(parts.beak.FlyingBirdBeak())
+    genome.attach(beak, head, coord=(0.85, 0, 0.5), joint=Joint(rest=(0, 0, 0)))
+
+    eye_fac = parts.eye.MammalEye({'Radius': N(0.02, 0.005)})
+    t, splay = U(0.7, 0.85), U(80, 110) / 180
+    r = 0.85
+    rot = np.array([0, 0, 90]) * N(1, 0.1, 3)
+    for side in [-1, 1]:
+        eye = genome.part(eye_fac)
+        genome.attach(eye, head, coord=(t, splay, r), joint=Joint(rest=(0, 0, 0)), rotation_basis='normal', side=side)
+
+    genome.attach(head, body, coord=(U(0.84, 0.85), 0, U(1.05, 1.15)), joint=Joint(rest=(0, N(18, 5), 0)))
+
+    return genome.CreatureGenome(
+        parts=body,
+        postprocess_params=dict(
+            animation=dict(), 
+            hair=bird_hair_params(flying=True),
+            surface_registry=[
+                #(surfaces.templates.spot_sparse_attr, 4),
+                #(surfaces.templates.reptile_brown_circle_attr, 0.5),
+                #(surfaces.templates.reptile_two_color_attr, 0.5),
                 (surfaces.templates.bird, 5)
             ]
         ) 
@@ -177,13 +261,22 @@ class BirdFactory(AssetFactory):
                 animate_wiggle_bones(arma=arma, bones=tail, mag_deg=U(0, 30), freq=U(0.5, 2))
             else:
                 raise ValueError(f'Unrecognized mode {self.animation_mode=}')
+        return root
    
+@gin.configurable
+class FlyingBirdFactory(AssetFactory):
+
+    max_expected_radius = 1
+    max_distance = 40
+
+        super().__init__(factory_seed, coarse)
         self.animation_mode = animation_mode
         self.bvh = bvh
         with FixedSeed(factory_seed):
             self.policy = animation_policy.AnimPolicyRandomForwardWalk(
                     forward_vec=(1, 0, 0), speed=U(7, 15), 
                     step_range=(5, 40), yaw_dist=("normal", 0, 15))
+
     def create_placeholder(self, i, loc, rot):
         
         p = butil.spawn_cube(size=3)
@@ -208,8 +301,15 @@ class BirdFactory(AssetFactory):
         return p
 
     def create_asset(self, i,  placeholder, hair=True, animate=False,**kwargs):
+
         genome = flying_bird_genome(self.animation_mode)
+        root, parts = creature.genome_to_creature(genome, name=f'flying_bird({self.factory_seed}, {i})')
+        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
             rigging=self.animation_mode is not None, postprocess_func=bird_postprocessing, **kwargs)
+        
+        joined_extras = butil.join_objects(extras)
+        joined_extras.parent = joined
+
         if hair:
             creature_hair.configure_hair(joined, root, genome.postprocess_params['hair'])
         if self.animation_mode is not None:
