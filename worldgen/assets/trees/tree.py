@@ -62,13 +62,19 @@ from ..utils.object import data2mesh, mesh2obj
 
 def parse_tree_attributes(vtx):
     # Strong assumption, root is vertex 0
+    n = len(vtx.vtxs)
     parents = np.zeros(n, dtype=int)
     depth = np.zeros(n, dtype=int)
     rev_depth = np.zeros(n, dtype=int)
     n_leaves = np.zeros(n, dtype=int)
     child_idx = np.zeros(n, dtype=int)
 
+    vtx_pos = vtx.vtxs
+    levels = vtx.level
+
     edge_ref = {i: [] for i in range(n)}
+    for e in vtx.get_edges():
+        v0, v1 = e
         edge_ref[v0] += [v1]
         edge_ref[v1] += [v0]
 
@@ -76,10 +82,53 @@ def parse_tree_attributes(vtx):
     # Upon hitting leaf, walk back up parents saving max reverse depth
     dfs(0, edge_ref, parents, depth, rev_depth, n_leaves, child_idx)
 
+    # if there is already a longer path connected to this parent, we create a dummy
+    # copy of the parent node, and connect the current child to the dummy parent.
+    # This makes sure each point will have no more than one child. 
     new_p_id = n  # p for parent. start from the last of the array
+
+    for idx in range(n):
+        children = np.array([v for v in edge_ref[idx] if v != parents[idx]])
+        if len(children) >= 2:
+            child_depths = rev_depth[children]
             deepest_child_idx = children[child_depths.argmax()]  # we keep this untouched
+
+            children_idxs_to_deal = np.setdiff1d(children, np.array([deepest_child_idx]))
+            for child_idx_to_deal in children_idxs_to_deal:
                 new_p_pos = vtx_pos[idx]  # len-3
+                new_p_parent = parents[idx]
+                new_p_depth = 0
+                new_p_rev_depth = rev_depth[child_idx_to_deal] + 1
+                new_p_n_leaves = 1
+                new_p_child_idx = child_idx_to_deal
+                new_p_level = levels[idx]
+
+                # apply modifications
+                parents = np.append(parents, new_p_parent)
+                depth = np.append(depth, new_p_depth)
+                rev_depth = np.append(rev_depth, new_p_rev_depth)
+                n_leaves = np.append(n_leaves, new_p_n_leaves)
+                child_idx = np.append(child_idx, new_p_child_idx)
+                vtx_pos = np.append(vtx_pos, new_p_pos.reshape(1, 3), axis=0)
+
+                # new connection
+                # note we don't connect the new node with its parent
                 edge_ref[new_p_id] = [child_idx_to_deal, ]
+
+                # remove old connections
+                edge_ref[child_idx_to_deal].remove(idx)
+                edge_ref[idx].remove(child_idx_to_deal)
+
+                # # modify the vertex class
+                vtx.append(new_p_pos.reshape(1, 3), [-1], [new_p_level])
+                vtx.parent[child_idx_to_deal] = new_p_id
+
+                new_p_id += 1
+
+    n = len(parents)
+
+    # Assign stem ids in order from longest to shortest paths
+    stem_id = -np.ones(n, dtype=int)
     curr_idxs = np.arange(n)
     curr_stem_id = 1
 
@@ -96,12 +145,22 @@ def parse_tree_attributes(vtx):
         curr_idxs = np.setdiff1d(curr_idxs, to_remove)
         curr_stem_id += 1
 
+    parent_loc = np.zeros((n, 3), dtype=float)
+    self_loc = np.zeros((n, 3), dtype=float)
+
+    for vertex_idx, parent_idx in enumerate(parents):
+        parent_loc[vertex_idx] = vtx_pos[parent_idx]
+        self_loc[vertex_idx] = vtx_pos[vertex_idx]
+
     parent_loc[0] = np.array([0, 0, -1],
                              dtype=float)  # create a fake parent location for the root, to avoid zero-length
     # vector
+
     return {
         'parent_idx': parents,
         'depth': depth,
+        'rev_depth': rev_depth,
+        'stem_id': stem_id,
         'parent_skeleton_loc': parent_loc,
         'skeleton_loc': self_loc}
 
@@ -265,11 +324,22 @@ def tree_skeleton(skeleton_params: dict, trunk_spacecol: dict, roots_spacecol: d
     if roots_spacecol is not None:
         space_colonization(vtx, **roots_spacecol, level=-1)
 
+    attributes = parse_tree_attributes(vtx)
     obj = mesh.init_mesh('Tree', vtx.vtxs, vtx.get_edges())
+    attributes['level'] = np.array(vtx.level)
 
     for att_name, att_val in attributes.items():
+        if att_val.ndim == 2:
+            obj.data.attributes.new(name=att_name, type='FLOAT_VECTOR', domain='POINT')
             obj.data.attributes[att_name].data.foreach_set('vector', att_val.reshape(
                 -1) * scale)  # vector value should be scaled together with the obj
+        else:
+            obj.data.attributes.new(name=att_name, type='INT', domain='POINT')
+            obj.data.attributes[att_name].data.foreach_set('value', att_val)
+
+    obj.scale *= scale
+    with butil.SelectObjects(obj):
+        bpy.ops.object.transform_apply(scale=True)
 
     return obj
 
