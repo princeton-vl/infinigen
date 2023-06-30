@@ -163,6 +163,7 @@ def geo_water(
         input_kwargs["foam"] = (group_input, "Attribute")
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs=input_kwargs)
 
+
 @gin.configurable
 def shader(
     nw,
@@ -226,6 +227,7 @@ def shader(
             'Density': rg(volume_density) if enable_scatter else 0,
             'Anisotropy': rg(anisotropy),
         })
+
         material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': surface_shader, 'Volume': principled_volume})
 
 @gin.configurable("water")
