@@ -17,6 +17,7 @@ from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class RottenTreeFactory(BaseDeformedTreeFactory):
     @staticmethod
@@ -84,4 +85,5 @@ class RottenTreeFactory(BaseDeformedTreeFactory):
                            input_args=[noise_strength, noise_scale, metric_fn])
         surface.add_geomod(obj, self.geo_xyz, apply=True)
         butil.delete(cutter)
+        tag_object(outer, 'rotten_tree')
         return outer
