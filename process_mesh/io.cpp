@@ -1,3 +1,23 @@
+// Copyright (c) Princeton University.
+// This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+
+// Authors: Lahav Lipson
+// Date Signed: May 2 2023
+
+#include <iostream>
+#include <fstream>
+#include <math.h>
+#include <limits>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include <arpa/inet.h> // or <winsock.h>
+#include "io.hpp"
+#include "utils.hpp"
+#include "cnpy/cnpy.h"
+#include "colorcode.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
+
+
 void imwrite(const fs::path filepath, const Eigen::Array<unsigned char, -1, -1> &image){
     const int H = image.rows();
     const int W = image.cols();
