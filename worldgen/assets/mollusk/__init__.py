@@ -4,3 +4,7 @@
 # Authors: Lingjie Mei
 # Date Signed: April 13 2023 
 
+from .generate import MolluskFactory, NautilusFactory, ConchFactory, AugerFactory, VoluteFactory, \
+    ScallopFactory, ClamFactory, MusselFactory
+from .snail import SnailBaseFactory, NautilusBaseFactory, ConchBaseFactory, AugerBaseFactory, VoluteBaseFactory
+from .shell import ShellBaseFactory, ScallopBaseFactory, ClamBaseFactory, MusselBaseFactory
