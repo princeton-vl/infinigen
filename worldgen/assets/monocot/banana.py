@@ -17,6 +17,7 @@ from assets.monocot.growth import MonocotGrowthFactory
 from assets.utils.misc import log_uniform
 from util import blender as butil
 from util.math import FixedSeed
+from assets.utils.tag import tag_object, tag_nodegroup
 
 class BananaMonocotFactory(MonocotGrowthFactory):
 
@@ -82,6 +83,7 @@ class BananaMonocotFactory(MonocotGrowthFactory):
         self.cut_leaf(obj)
         self.displace_veins(obj)
         self.decorate_leaf(obj)
+        tag_object(obj, 'banana')
         return obj
 
     def displace_veins(self, obj):
@@ -133,6 +135,7 @@ class TaroMonocotFactory(BananaMonocotFactory):
         bezier = self.build_branch()
         obj = join_objects([obj, bezier])
         origin2lowest(obj)
+        tag_object(obj, 'taro')
         return obj
 
     def build_branch(self):
