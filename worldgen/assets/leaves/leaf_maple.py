@@ -17,6 +17,7 @@ from assets.leaves.leaf_v2 import nodegroup_apply_wave
 from util.math import FixedSeed
 from placement.factory import AssetFactory
 from util import blender as butil
+from assets.utils.tag import tag_object, tag_nodegroup
 
 def deg2rad(deg):
     return deg / 180.0 * np.pi
@@ -791,5 +792,6 @@ class LeafFactoryMaple(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.1) * self.scale
         butil.apply_transform(obj)
+        tag_object(obj, 'leaf_maple')
 
         return obj
