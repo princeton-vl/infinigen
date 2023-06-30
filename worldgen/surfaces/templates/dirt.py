@@ -1,0 +1,193 @@
+import bpy
+import gin
+from nodes.node_wrangler import Nodes
+from numpy.random import uniform
+from surfaces.surface_utils import sample_color, sample_ratio
+from terrain.utils import SurfaceTypes
+from util.math import FixedSeed
+from .mountain import geo_MOUNTAIN_general
+type = SurfaceTypes.SDFPerturb
+mod_name = "geo_dirt"
+name = "dirt"
+def shader_dirt(nw):
+    nw.force_input_consistency()
+    dirt_base_color, dirt_roughness = geo_dirt(nw, selection=None, geometry=False)
+            "Base Color": dirt_base_color,
+            "Roughness": dirt_roughness,
+@gin.configurable
+def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
+    nw.force_input_consistency()
+    if nw.node_group.type == "SHADER":
+        position = nw.new_node('ShaderNodeNewGeometry')
+        normal = (nw.new_node('ShaderNodeNewGeometry'), 1)
+    else:
+        position = nw.new_node(Nodes.InputPosition)
+        normal = nw.new_node(Nodes.InputNormal)
+
+    with FixedSeed(random_seed):
+        # density of cracks, lower means cracks are present in smaller area
+        dens_crack = uniform(0, 0.1)
+        # scale cracks
+        scal_crack = uniform(5, 15)
+        # width of the crack
+        widt_crack = uniform(0.01, 0.05)
+
+        scale = 0.5
+
+        noise_texture = nw.new_node(
+            Nodes.NoiseTexture,
+            input_kwargs={
+                "Vector": position,
+                "Scale": 8.0 * scale,
+                "Detail": 16.0,
+                "W": nw.new_value(uniform(0, 10), "noise_texture_w"),
+            },
+            attrs={"noise_dimensions": "4D"},
+        )
+
+        noise_texture_2 = nw.new_node(
+            Nodes.NoiseTexture,
+            input_kwargs={"Vector": position, "Scale": 5.0 * scale, "W": nw.new_value(uniform(0, 10), "noise_texture_2_w")},
+            attrs={"noise_dimensions": "4D"},
+        )
+
+        )
+
+        noise_texture_1 = nw.new_node(
+            Nodes.NoiseTexture,
+            input_kwargs={
+                "Vector": position,
+                "Scale": 1.0 * scale,
+                "Detail": 16.0,
+                "W": nw.new_value(uniform(0, 10), "noise_texture_1_w"),
+            },
+            attrs={"noise_dimensions": "4D"},
+        )
+
+        voronoi_texture = nw.new_node(
+            Nodes.VoronoiTexture,
+            input_kwargs={"Vector": noise_texture_1.outputs["Color"], "Scale": nw.new_value(scal_crack * scale, "scal_crack")},
+            attrs={"feature": "DISTANCE_TO_EDGE"},
+        )
+
+        )
+
+        )
+
+        vector_math_2 = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: mix, 1: normal},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        value_2 = nw.new_node(Nodes.Value)
+        value_2.outputs["Value"].default_value = 0.5
+
+        vector_math_5 = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: vector_math_2.outputs["Vector"], 1: value_2},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        value_3 = nw.new_node(Nodes.Value)
+        value_3.outputs["Value"].default_value = 0.08
+
+        vector_math_8 = nw.new_node(
+            Nodes.VectorMath,
+            attrs={"operation": "MULTIPLY"},
+        )
+        
+        noise_texture_3 = nw.new_node(Nodes.NoiseTexture,
+            input_kwargs={'Vector': position, "W": nw.new_value(uniform(0, 10), "noise_texture_3_w"), 'Scale': sample_ratio(5, 3/4, 4/3)},
+            attrs={"noise_dimensions": "4D"})
+        
+        subtract = nw.new_node(Nodes.Math,
+            input_kwargs={0: noise_texture_3.outputs["Fac"]},
+            attrs={'operation': 'SUBTRACT'})
+        
+        multiply_8 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: subtract, 1: normal},
+            attrs={'operation': 'MULTIPLY'})
+        
+        value_5 = nw.new_node(Nodes.Value)
+        value_5.outputs[0].default_value = 0.05
+        
+        multiply_9 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: multiply_8.outputs["Vector"], 1: value_5},
+            attrs={'operation': 'MULTIPLY'})
+        
+        noise_texture_4 = nw.new_node(Nodes.NoiseTexture,
+            input_kwargs={'Vector': position, 'Scale': sample_ratio(20, 3/4, 4/3), "W": nw.new_value(uniform(0, 10), "noise_texture_4_w")},
+            attrs={'noise_dimensions': '4D'})
+        
+        colorramp_5 = nw.new_node(Nodes.ColorRamp,
+            input_kwargs={'Fac': noise_texture_4.outputs["Fac"]})
+        colorramp_5.color_ramp.elements.new(0)
+        colorramp_5.color_ramp.elements.new(0)
+        colorramp_5.color_ramp.elements[0].position = 0.0
+        colorramp_5.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        colorramp_5.color_ramp.elements[1].position = 0.3
+        colorramp_5.color_ramp.elements[1].color = (0.5, 0.5, 0.5, 1.0)
+        colorramp_5.color_ramp.elements[2].position = 0.7
+        colorramp_5.color_ramp.elements[2].color = (0.5, 0.5, 0.5, 1.0)
+        colorramp_5.color_ramp.elements[3].position = 1.0
+        colorramp_5.color_ramp.elements[3].color = (1.0, 1.0, 1.0, 1.0)
+        
+        subtract_1 = nw.new_node(Nodes.Math,
+            input_kwargs={0: colorramp_5.outputs["Color"]},
+            attrs={'operation': 'SUBTRACT'})
+        
+        multiply_10 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: subtract_1, 1: normal},
+            attrs={'operation': 'MULTIPLY'})
+        
+        value_6 = nw.new_node(Nodes.Value)
+        value_6.outputs[0].default_value = 0.1
+        
+        multiply_11 = nw.new_node(Nodes.VectorMath,
+            input_kwargs={0: multiply_10.outputs["Vector"], 1: value_6},
+            attrs={'operation': 'MULTIPLY'})
+        
+        colorramp = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+        )
+        colorramp.color_ramp.elements.new(1)
+        colorramp.color_ramp.elements[0].position = 0.223
+        colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        colorramp.color_ramp.elements[2].position = 1.0
+        sample_color(colorramp.color_ramp.elements[1].color, offset=0.05)
+        sample_color(colorramp.color_ramp.elements[2].color, offset=0.05)
+        
+        dirt_base_color = nw.new_node(
+            Nodes.MixRGB,
+            input_kwargs={
+                "Fac": mix,
+                "Color1": (0.0, 0.0, 0.0, 1.0),
+                "Color2": colorramp.outputs["Color"],
+            },
+        )
+
+        colorramp_3 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+        )
+        colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+        colorramp_3.color_ramp.elements[1].position = 0.768
+        colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+        
+        dirt_roughness = colorramp_3
+
+        offset = nw.add(multiply_11, multiply_9, vector_math_8)
+
+    if geometry:  
+        noise_params = {"scale": ("uniform", 1, 5), "detail": 7, "roughness": 0.7, "zscale": ("power_uniform", -1, -0.5)}
+        offset = nw.add(
+            geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}),
+            offset
+        )
+        groupinput = nw.new_node(Nodes.GroupInput)
+        if selection is not None:
+            offset = nw.multiply(offset, surface.eval_argument(nw, selection))
+        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
+        nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
+    else:
+        return dirt_base_color, dirt_roughness
