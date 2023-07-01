@@ -1,4 +1,4 @@
-// Taken from https://github.com/JoeyDeVries/LearnOpenGL license: CC BY-NC 4.0
+// Adapted from https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/7.in_practice/3.2d_game/0.full_source/shader.h license: CC BY 4.0
 
 #pragma once
 
