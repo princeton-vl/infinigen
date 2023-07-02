@@ -213,6 +213,10 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             obj = bpy.data.objects[object_name]
             json_val = {"filename": filename.name, "mesh_id": mesh_id, "object_name": object_name, "num_verts": current_obj_num_verts, "children": [],
             "object_type": obj.type, "semantic": semantic, "group": group_name, "num_instances": matrices.shape[0], "object_idx": object_names_mapping[object_name]}
+            if obj.type == "MESH":
+                json_val['polycount'] = len(obj.data.polygons)
+                json_val['materials'] = obj.material_slots.keys()
+                json_val['unapplied_modifiers'] = obj.modifiers.keys()
             if not is_instance:
                 non_aa_bbox = np.asarray([(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box], dtype=np.float32)
                 json_val["instance_bbox"] = calc_aa_bbox(non_aa_bbox).tolist()

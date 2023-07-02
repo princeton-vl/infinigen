@@ -22,9 +22,9 @@ from infinigen_gpl.extras.enable_gpu import enable_gpu
 from nodes.node_wrangler import Nodes, NodeWrangler
 from placement import camera as cam_util
 from rendering.post_render import (colorize_depth, colorize_flow,
-                                   colorize_normals, colorize_seg_mask,
+                                   colorize_normals, colorize_int_array,
                                    load_depth, load_flow, load_normals,
-                                   load_seg_mask)
+                                   load_seg_mask, load_uniq_inst)
 from surfaces import surface
 from util import blender as butil
 from util import exporting as exputil
@@ -66,8 +66,6 @@ def set_pass_indices(parent_collection, index, tree_output):
         child_obj.pass_index = index
         object_dict = {
             "type": child_obj.type, "pass_index": index,
-            "bbox": np.asarray(child_obj.bound_box[:]).tolist(),
-            "matrix_world": np.asarray(child_obj.matrix_world[:]).tolist(),
         }
         if child_obj.type == "MESH":
             object_dict['polycount'] = len(child_obj.data.polygons)
@@ -142,7 +140,7 @@ def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, 
     image = image_denoised if use_denoised else image_noisy
     nw.links.new(image, file_output_node.inputs['Image'])
     if saving_ground_truth:
-        slot_input.path = 'Unique_Instances'
+        slot_input.path = 'UniqueInstances'
     else:
         image_exr_output_node = nw.new_node(Nodes.OutputFile, attrs={
             "base_path": str(frames_folder),
@@ -166,10 +164,6 @@ def shader_random(nw: NodeWrangler):
 
     nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': white_noise_texture.outputs["Color"]})
-
-def apply_random(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_random, selection=selection)
-
 
 def global_flat_shading():
 
@@ -196,7 +190,14 @@ def global_flat_shading():
                 bpy.ops.object.material_slot_remove()
 
     for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
-        apply_random(obj)
+        surface.add_material(obj, shader_random)
+    for mat in bpy.data.materials:
+        nw = NodeWrangler(mat.node_tree)
+        shader_random(nw)
+
+    nw = NodeWrangler(bpy.data.worlds["World"].node_tree)
+    for link in nw.links:
+        nw.links.remove(link)
 
 @gin.configurable
 def render_image(
@@ -328,8 +329,15 @@ def render_image(
                 seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
                 seg_mask_array = load_seg_mask(seg_dst_path)
                 np.save(flow_dst_path.with_name(f"Segmentation_{output_stem}.npy"), seg_mask_array)
-                imwrite(seg_dst_path.with_name(f"Segmentation_{output_stem}.png"), colorize_seg_mask(seg_mask_array))
+                imwrite(seg_dst_path.with_name(f"Segmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
                 seg_dst_path.unlink()
+
+                # Save unique instances visualization
+                uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
+                uniq_inst_array = load_uniq_inst(uniq_inst_path)
+                np.save(flow_dst_path.with_name(f"UniqueInstances_{output_stem}.npy"), uniq_inst_array)
+                imwrite(uniq_inst_path.with_name(f"UniqueInstances_{output_stem}.png"), colorize_int_array(uniq_inst_array))
+                uniq_inst_path.unlink()
             else:
                 cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frames_folder, frame)
 
