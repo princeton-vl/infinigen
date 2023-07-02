@@ -296,39 +296,43 @@ def render_image(
     with Timer(f"Actual rendering"):
         bpy.ops.render.render(animation=True)
 
-    if flat_shading:
-        with Timer(f"Post Processing"):
-            for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
+    with Timer(f"Post Processing"):
+        for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
+            if flat_shading:
                 bpy.context.scene.frame_set(frame)
 
                 output_stem = f"{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}"
-                cameras_folder = frames_folder / "cameras"
-                cameras_folder.mkdir(exist_ok=True, parents=True)
-                cam_util.save_camera_parameters(camera_rig_id, [subcam_id], str(cameras_folder), frame)
 
                 # Save flow visualization
                 flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
                 flow_array = load_flow(flow_dst_path)
                 np.save(flow_dst_path.with_name(f"Flow_{output_stem}.npy"), flow_array)
                 imwrite(flow_dst_path.with_name(f"Flow_{output_stem}.png"), colorize_flow(flow_array))
+                flow_dst_path.unlink()
 
                 # Save surface normal visualization
                 normal_dst_path = frames_folder / f"Normal_{output_stem}.exr"
                 normal_array = load_normals(normal_dst_path)
                 np.save(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.npy"), normal_array)
                 imwrite(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.png"), colorize_normals(normal_array))
+                normal_dst_path.unlink()
 
                 # Save depth visualization
                 depth_dst_path = frames_folder / f"Depth_{output_stem}.exr"
                 depth_array = load_depth(depth_dst_path)
                 np.save(flow_dst_path.with_name(f"Depth_{output_stem}.npy"), depth_array)
                 imwrite(depth_dst_path.with_name(f"Depth_{output_stem}.png"), colorize_depth(depth_array))
+                depth_dst_path.unlink()
 
                 # Save segmentation visualization
                 seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
                 seg_mask_array = load_seg_mask(seg_dst_path)
                 np.save(flow_dst_path.with_name(f"Segmentation_{output_stem}.npy"), seg_mask_array)
                 imwrite(seg_dst_path.with_name(f"Segmentation_{output_stem}.png"), colorize_seg_mask(seg_mask_array))
+                seg_dst_path.unlink()
+            else:
+                cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frames_folder, frame)
+
 
     for file in tmp_dir.glob('*.png'):
         file.unlink()

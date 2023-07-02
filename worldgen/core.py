@@ -202,8 +202,8 @@ def save_meshes(scene_seed, output_folder, frame_range, camera_id, resample_idx=
         frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
         frame_info_folder.mkdir(parents=True, exist_ok=True)
         logging.info(f"Working on frame {frame_idx}")
-        exporting.save_obj_and_instances(str(frame_info_folder /  "mesh"), previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping)
-        cam_util.save_camera_parameters(camera_rig_id, [subcam_id], str(frame_info_folder / "cameras"), frame_idx)
+        exporting.save_obj_and_instances(frame_info_folder / "mesh", previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping)
+        cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frame_info_folder / "cameras", frame_idx)
         previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
