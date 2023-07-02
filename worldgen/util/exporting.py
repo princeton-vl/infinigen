@@ -171,9 +171,6 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             if object_name not in object_names_mapping:
                 object_names_mapping[object_name] = len(object_names_mapping) + 1
 
-            group_name = parse_group_from_name(object_name)
-            semantic = parse_semantic_from_name(object_name)
-
             # Flush the .npz to avoid OOM
             if (len(npz_data) > 0) and ((running_total_verts + current_obj_num_verts) >= MAX_NUM_VERTS):
                 np.savez(filename, **npz_data)
@@ -212,7 +209,7 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             npz_data[f"{mesh_id}_instance_ids"] = instance_ids_array
             obj = bpy.data.objects[object_name]
             json_val = {"filename": filename.name, "mesh_id": mesh_id, "object_name": object_name, "num_verts": current_obj_num_verts, "children": [],
-            "object_type": obj.type, "semantic": semantic, "group": group_name, "num_instances": matrices.shape[0], "object_idx": object_names_mapping[object_name]}
+            "object_type": obj.type, "num_instances": matrices.shape[0], "object_idx": object_names_mapping[object_name]}
             if obj.type == "MESH":
                 json_val['polycount'] = len(obj.data.polygons)
                 json_val['materials'] = obj.material_slots.keys()
@@ -237,13 +234,11 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
     for obj in bpy.data.objects:
         if obj.type not in {"MESH", "CURVES", "CAMERA"}:
             object_name = obj.name
-            group_name = parse_group_from_name(object_name)
-            semantic = parse_semantic_from_name(object_name)
             if object_name not in object_names_mapping:
                 object_names_mapping[object_name] = len(object_names_mapping) + 1
             non_aa_bbox = np.asarray([(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box])
-            json_val = {"object_name": object_name, "object_type": obj.type, "semantic": semantic, "children": [],
-            "group": group_name, "bbox": calc_aa_bbox(non_aa_bbox).tolist(), "object_idx": object_names_mapping[object_name]}
+            json_val = {"object_name": object_name, "object_type": obj.type, "children": [],
+            "bbox": calc_aa_bbox(non_aa_bbox).tolist(), "object_idx": object_names_mapping[object_name]}
             if obj.parent is not None:
                 json_val["parent"] = obj.parent.name
             json_data.append(json_val)

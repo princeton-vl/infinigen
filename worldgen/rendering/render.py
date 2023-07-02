@@ -55,28 +55,30 @@ def remove_translucency():
                     assert not fac_soc.is_linked
                     fac_soc.default_value = 0.0
 
-def save_and_set_pass_indices(output_folder):
-    file_tree = {}
-    set_pass_indices(bpy.context.scene.collection, 1, file_tree)
-    json_object = json.dumps(file_tree)
-    (output_folder / "object_tree.json").write_text(json_object)
-
-def set_pass_indices(parent_collection, index, tree_output):
-    for child_obj in parent_collection.objects:
-        child_obj.pass_index = index
+def set_pass_indices():
+    tree_output = {}
+    index = 1
+    for obj in bpy.data.objects:
+        if obj.hide_render:
+            continue
+        if obj.pass_index == 0:
+            obj.pass_index = index
+            index += 1
         object_dict = {
-            "type": child_obj.type, "pass_index": index,
+            "type": obj.type, "pass_index": obj.pass_index, "children": []
         }
-        if child_obj.type == "MESH":
-            object_dict['polycount'] = len(child_obj.data.polygons)
-            object_dict['materials'] = child_obj.material_slots.keys()
-            object_dict['unapplied_modifiers'] = child_obj.modifiers.keys()
-        tree_output[child_obj.name] = object_dict
+        if obj.type == "MESH":
+            object_dict['polycount'] = len(obj.data.polygons)
+            object_dict['materials'] = obj.material_slots.keys()
+            object_dict['unapplied_modifiers'] = obj.modifiers.keys()
+        tree_output[obj.name] = object_dict
+        for child_obj in obj.children:
+            if child_obj.pass_index == 0:
+                child_obj.pass_index = index
+                index += 1
+            object_dict["children"].append(child_obj.pass_index)
         index += 1
-    for col in parent_collection.children:
-        tree_output[col.name] = {"type": "Collection", "hide_viewport": col.hide_viewport, "children": {}}
-        index = set_pass_indices(col, index, tree_output=tree_output[col.name]["children"])
-    return index
+    return tree_output
 
 # Can be pasted directly into the blender console
 def make_clay():
@@ -251,7 +253,10 @@ def render_image(
 
     if flat_shading:
         with Timer("Set object indices"):
-            save_and_set_pass_indices(frames_folder)
+            object_data = set_pass_indices()
+            json_object = json.dumps(object_data)
+            first_frame = bpy.context.scene.frame_start
+            (frames_folder / f"Objects_{first_frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.json").write_text(json_object)
 
         with Timer("Flat Shading"):
             global_flat_shading()
