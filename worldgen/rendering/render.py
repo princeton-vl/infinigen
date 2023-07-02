@@ -28,7 +28,6 @@ from rendering.post_render import (colorize_depth, colorize_flow,
 from surfaces import surface
 from util import blender as butil
 from util import exporting as exputil
-from util.camera import get_calibration_matrix_K_from_blender
 from util.logging import Timer
 
 from .auto_exposure import nodegroup_auto_exposure
@@ -303,17 +302,9 @@ def render_image(
                 bpy.context.scene.frame_set(frame)
 
                 output_stem = f"{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}"
-                K = get_calibration_matrix_K_from_blender(camera.data)
                 cameras_folder = frames_folder / "cameras"
                 cameras_folder.mkdir(exist_ok=True, parents=True)
-                np.save(
-                    frames_folder / f"K_{output_stem}.npy",
-                    np.asarray(K, dtype=np.float64),
-                )
-                np.save(
-                    frames_folder / f"T_{output_stem}.npy",
-                    np.asarray(camera.matrix_world, dtype=np.float64),
-                )
+                cam_util.save_camera_parameters(camera_rig_id, [subcam_id], str(cameras_folder), frame)
 
                 # Save flow visualization
                 flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
