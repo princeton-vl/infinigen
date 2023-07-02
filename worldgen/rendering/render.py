@@ -7,29 +7,31 @@
 # - Hei Law - Initial version
 
 
+import json
+import logging
 import os
 import time
 import warnings
+
 import bpy
 import gin
-import json
-import os
-import cv2
 import numpy as np
-import logging
+from imageio import imread, imwrite
+
 from infinigen_gpl.extras.enable_gpu import enable_gpu
-from imageio import imwrite, imread
-from pathlib import Path
+from nodes.node_wrangler import Nodes, NodeWrangler
 from placement import camera as cam_util
-from nodes.node_wrangler import NodeWrangler, Nodes
-from rendering.post_render import exr_depth_to_jet, flow_to_colorwheel, mask_to_color
-
-from .auto_exposure import nodegroup_auto_exposure
-
+from rendering.post_render import (colorize_depth, colorize_flow,
+                                   colorize_normals, colorize_seg_mask,
+                                   load_depth, load_flow, load_normals,
+                                   load_seg_mask)
+from surfaces import surface
+from util import blender as butil
+from util import exporting as exputil
 from util.camera import get_calibration_matrix_K_from_blender
 from util.logging import Timer
-from surfaces import surface
-from util import blender as butil, exporting as exputil
+
+from .auto_exposure import nodegroup_auto_exposure
 
 TRANSPARENT_SHADERS = {Nodes.TranslucentBSDF, Nodes.TransparentBSDF}
 
@@ -312,23 +314,29 @@ def render_image(
                     np.asarray(camera.matrix_world, dtype=np.float64),
                 )
 
-                # Save flow visualization. Takes about 3 seconds
+                # Save flow visualization
                 flow_dst_path = frames_folder / f"Vector_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if flow_dst_path.exists():
-                    flow_color = flow_to_colorwheel(flow_dst_path)
-                    imwrite(flow_dst_path.with_name(f"Flow_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
+                flow_array = load_flow(flow_dst_path)
+                flow_color = colorize_flow(flow_array)
+                imwrite(flow_dst_path.with_name(f"Flow_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
 
-                # Save depth visualization. Also takes about 3 seconds
+                # Save surface normal visualization
+                normal_dst_path = frames_folder / f"Normal_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
+                flow_array = load_normals(normal_dst_path)
+                normals_color = colorize_normals(flow_array)
+                imwrite(flow_dst_path.with_name(f"Normal_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), normals_color)
+
+                # Save depth visualization
                 depth_dst_path = frames_folder / f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if depth_dst_path.exists():
-                    depth_color = exr_depth_to_jet(depth_dst_path)
-                    imwrite(depth_dst_path.with_name(f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
+                depth_array = load_depth(depth_dst_path)
+                depth_color = colorize_depth(depth_array)
+                imwrite(depth_dst_path.with_name(f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
 
-                # Save Segmentation visualization. Also takes about 3 seconds
+                # Save segmentation visualization
                 seg_dst_path = frames_folder / f"IndexOB_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if seg_dst_path.exists():
-                    seg_color = mask_to_color(seg_dst_path)
-                    imwrite(seg_dst_path.with_name(f"Segmentation_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
+                seg_mask_array = load_seg_mask(seg_dst_path)
+                seg_color = colorize_seg_mask(seg_mask_array)
+                imwrite(seg_dst_path.with_name(f"Segmentation_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
 
     for file in tmp_dir.glob('*.png'):
         file.unlink()
