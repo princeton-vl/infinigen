@@ -49,6 +49,7 @@ def compute_boxes(indices, binary_tag_mask):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
     parser.add_argument('folder', type=Path)
     parser.add_argument('frame', type=int)
