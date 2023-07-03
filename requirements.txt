@@ -15,8 +15,7 @@ trimesh
 einops
 mesh_to_sdf
 geomdl
-numpy>=1.22
-numba
+numpy==1.21.5
 wandb
 zarr
 jinja2
