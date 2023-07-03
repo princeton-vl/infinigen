@@ -7,29 +7,30 @@
 # - Hei Law - Initial version
 
 
+import json
+import logging
 import os
 import time
 import warnings
+
 import bpy
 import gin
-import json
-import os
-import cv2
 import numpy as np
-import logging
+from imageio import imread, imwrite
+
 from infinigen_gpl.extras.enable_gpu import enable_gpu
-from imageio import imwrite, imread
-from pathlib import Path
+from nodes.node_wrangler import Nodes, NodeWrangler
 from placement import camera as cam_util
-from nodes.node_wrangler import NodeWrangler, Nodes
-from rendering.post_render import exr_depth_to_jet, flow_to_colorwheel, mask_to_color
+from rendering.post_render import (colorize_depth, colorize_flow,
+                                   colorize_normals, colorize_int_array,
+                                   load_depth, load_flow, load_normals,
+                                   load_seg_mask, load_uniq_inst)
+from surfaces import surface
+from util import blender as butil
+from util import exporting as exputil
+from util.logging import Timer
 
 from .auto_exposure import nodegroup_auto_exposure
-
-from util.camera import get_calibration_matrix_K_from_blender
-from util.logging import Timer
-from surfaces import surface
-from util import blender as butil, exporting as exputil
 
 TRANSPARENT_SHADERS = {Nodes.TranslucentBSDF, Nodes.TransparentBSDF}
 
@@ -54,30 +55,31 @@ def remove_translucency():
                     assert not fac_soc.is_linked
                     fac_soc.default_value = 0.0
 
-def save_and_set_pass_indices(output_folder):
-    file_tree = {}
-    set_pass_indices(bpy.context.scene.collection, 1, file_tree)
-    json_object = json.dumps(file_tree)
-    (output_folder / "object_tree.json").write_text(json_object)
-
-def set_pass_indices(parent_collection, index, tree_output):
-    for child_obj in parent_collection.objects:
-        child_obj.pass_index = index
+def set_pass_indices():
+    tree_output = {}
+    index = 1
+    for obj in bpy.data.objects:
+        if obj.hide_render:
+            continue
+        if obj.pass_index == 0:
+            obj.pass_index = index
+            index += 1
         object_dict = {
-            "type": child_obj.type, "pass_index": index,
-            "bbox": np.asarray(child_obj.bound_box[:]).tolist(),
-            "matrix_world": np.asarray(child_obj.matrix_world[:]).tolist(),
+            "type": obj.type, "object_index": obj.pass_index, "children": []
         }
-        if child_obj.type == "MESH":
-            object_dict['polycount'] = len(child_obj.data.polygons)
-            object_dict['materials'] = child_obj.material_slots.keys()
-            object_dict['unapplied_modifiers'] = child_obj.modifiers.keys()
-        tree_output[child_obj.name] = object_dict
+        if obj.type == "MESH":
+            object_dict['num_verts'] = len(obj.data.vertices)
+            object_dict['num_faces'] = len(obj.data.polygons)
+            object_dict['materials'] = obj.material_slots.keys()
+            object_dict['unapplied_modifiers'] = obj.modifiers.keys()
+        tree_output[obj.name] = object_dict
+        for child_obj in obj.children:
+            if child_obj.pass_index == 0:
+                child_obj.pass_index = index
+                index += 1
+            object_dict["children"].append(child_obj.pass_index)
         index += 1
-    for col in parent_collection.children:
-        tree_output[col.name] = {"type": "Collection", "hide_viewport": col.hide_viewport, "children": {}}
-        index = set_pass_indices(col, index, tree_output=tree_output[col.name]["children"])
-    return index
+    return tree_output
 
 # Can be pasted directly into the blender console
 def make_clay():
@@ -141,7 +143,7 @@ def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, 
     image = image_denoised if use_denoised else image_noisy
     nw.links.new(image, file_output_node.inputs['Image'])
     if saving_ground_truth:
-        slot_input.path = 'Unique_Instances'
+        slot_input.path = 'UniqueInstances'
     else:
         image_exr_output_node = nw.new_node(Nodes.OutputFile, attrs={
             "base_path": str(frames_folder),
@@ -165,10 +167,6 @@ def shader_random(nw: NodeWrangler):
 
     nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': white_noise_texture.outputs["Color"]})
-
-def apply_random(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_random, selection=selection)
-
 
 def global_flat_shading():
 
@@ -195,7 +193,14 @@ def global_flat_shading():
                 bpy.ops.object.material_slot_remove()
 
     for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
-        apply_random(obj)
+        surface.add_material(obj, shader_random)
+    for mat in bpy.data.materials:
+        nw = NodeWrangler(mat.node_tree)
+        shader_random(nw)
+
+    nw = NodeWrangler(bpy.data.worlds["World"].node_tree)
+    for link in nw.links:
+        nw.links.remove(link)
 
 @gin.configurable
 def render_image(
@@ -249,7 +254,10 @@ def render_image(
 
     if flat_shading:
         with Timer("Set object indices"):
-            save_and_set_pass_indices(frames_folder)
+            object_data = set_pass_indices()
+            json_object = json.dumps(object_data, indent=4)
+            first_frame = bpy.context.scene.frame_start
+            (frames_folder / f"Objects_{first_frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.json").write_text(json_object)
 
         with Timer("Flat Shading"):
             global_flat_shading()
@@ -295,40 +303,50 @@ def render_image(
     with Timer(f"Actual rendering"):
         bpy.ops.render.render(animation=True)
 
-    if flat_shading:
-        with Timer(f"Post Processing"):
-            for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
+    with Timer(f"Post Processing"):
+        for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
+            if flat_shading:
                 bpy.context.scene.frame_set(frame)
 
-                K = get_calibration_matrix_K_from_blender(camera.data)
-                cameras_folder = frames_folder / "cameras"
-                cameras_folder.mkdir(exist_ok=True, parents=True)
-                np.save(
-                    frames_folder / f"K{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.npy",
-                    np.asarray(K, dtype=np.float64),
-                )
-                np.save(
-                    frames_folder / f"T{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.npy",
-                    np.asarray(camera.matrix_world, dtype=np.float64),
-                )
+                output_stem = f"{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}"
 
-                # Save flow visualization. Takes about 3 seconds
-                flow_dst_path = frames_folder / f"Vector_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if flow_dst_path.exists():
-                    flow_color = flow_to_colorwheel(flow_dst_path)
-                    imwrite(flow_dst_path.with_name(f"Flow_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), flow_color)
+                # Save flow visualization
+                flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
+                flow_array = load_flow(flow_dst_path)
+                np.save(flow_dst_path.with_name(f"Flow_{output_stem}.npy"), flow_array)
+                imwrite(flow_dst_path.with_name(f"Flow_{output_stem}.png"), colorize_flow(flow_array))
+                flow_dst_path.unlink()
 
-                # Save depth visualization. Also takes about 3 seconds
-                depth_dst_path = frames_folder / f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if depth_dst_path.exists():
-                    depth_color = exr_depth_to_jet(depth_dst_path)
-                    imwrite(depth_dst_path.with_name(f"Depth_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), depth_color)
+                # Save surface normal visualization
+                normal_dst_path = frames_folder / f"Normal_{output_stem}.exr"
+                normal_array = load_normals(normal_dst_path)
+                np.save(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.npy"), normal_array)
+                imwrite(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.png"), colorize_normals(normal_array))
+                normal_dst_path.unlink()
 
-                # Save Segmentation visualization. Also takes about 3 seconds
-                seg_dst_path = frames_folder / f"IndexOB_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.exr"
-                if seg_dst_path.exists():
-                    seg_color = mask_to_color(seg_dst_path)
-                    imwrite(seg_dst_path.with_name(f"Segmentation_{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.png"), seg_color)
+                # Save depth visualization
+                depth_dst_path = frames_folder / f"Depth_{output_stem}.exr"
+                depth_array = load_depth(depth_dst_path)
+                np.save(flow_dst_path.with_name(f"Depth_{output_stem}.npy"), depth_array)
+                imwrite(depth_dst_path.with_name(f"Depth_{output_stem}.png"), colorize_depth(depth_array))
+                depth_dst_path.unlink()
+
+                # Save segmentation visualization
+                seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
+                seg_mask_array = load_seg_mask(seg_dst_path)
+                np.save(flow_dst_path.with_name(f"ObjectSegmentation_{output_stem}.npy"), seg_mask_array)
+                imwrite(seg_dst_path.with_name(f"ObjectSegmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
+                seg_dst_path.unlink()
+
+                # Save unique instances visualization
+                uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
+                uniq_inst_array = load_uniq_inst(uniq_inst_path)
+                np.save(flow_dst_path.with_name(f"InstanceSegmentation_{output_stem}.npy"), uniq_inst_array)
+                imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
+                uniq_inst_path.unlink()
+            else:
+                cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frames_folder, frame)
+
 
     for file in tmp_dir.glob('*.png'):
         file.unlink()

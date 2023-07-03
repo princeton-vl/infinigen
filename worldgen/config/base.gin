@@ -103,8 +103,8 @@ full/render_image.num_samples = 8192
 render_image.adaptive_threshold = 0.005
 full/render_image.flat_shading = False
 
-flat/render_image.min_samples = 10
-flat/render_image.num_samples = 10
+flat/render_image.min_samples = 1
+flat/render_image.num_samples = 1
 flat/render_image.flat_shading = True
 full/render_image.passes_to_save = [
     ['diffuse_direct', 'DiffDir'],

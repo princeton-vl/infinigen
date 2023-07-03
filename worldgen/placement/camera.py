@@ -26,7 +26,7 @@ from mathutils import Matrix, Vector, Euler
 from mathutils.bvhtree import BVHTree
 
 from assets.utils.decorate import toggle_hide
-from rendering.post_render import depth_to_jet
+from rendering.post_render import colorize_depth
 from tqdm import tqdm, trange
 from placement import placement
 
@@ -532,5 +532,5 @@ if __name__ == "__main__":
             assert dist > dist_diff
             depth_output[H-y-1,x] = dist - dist_diff
 
-    color_depth = depth_to_jet(depth_output)
+    color_depth = colorize_depth(depth_output)
     imageio.imwrite(f"color_depth.png", color_depth)

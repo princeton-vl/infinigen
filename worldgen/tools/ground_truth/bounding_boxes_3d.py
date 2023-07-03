@@ -48,9 +48,6 @@ def calc_bbox_pts(min_pt, max_pt):
 
 if __name__ == "__main__":
 
-    import os,sys
-    sys.path.append(os.getcwd())
-
     parser = argparse.ArgumentParser()
     parser.add_argument('folder', type=Path)
     parser.add_argument('frame', type=int)
