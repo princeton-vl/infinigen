@@ -97,11 +97,13 @@ Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) 
  :warning: **Known issue** : We are actively fixing an issue which causes commands not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 <p align="center">
-  <img src="images/Image0048_00_00.png" width="330" />
-  <img src="images/Depth0048_00_00.png" width="330" /> 
+  <img src="images/Image0048_00_00.png" width="350" />
+  <img src="images/Depth0048_00_00.png" width="350" />
+  <img src="images/SurfaceNormal_0001_00_00.png" width="350" />
+  <img src="images/InstanceSegmentation_0001_00_00.png" width="350" />
 </p>
 
-This guide will show you how to generate an image and it's corresponding depth ground-truth, similar to those shown above.
+This guide will show you how to generate an image and it's corresponding ground-truth, similar to those shown above.
 
 #### Generate a scene step by step
 Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
@@ -124,6 +126,10 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g
 ```
 
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
+
+#### [Extended ground-truth & docmentation](./GroundTruthAnnotations.md)
+
+We also provide a (optional) separate pipeline for extracting the full set of annotations from each image or scene. Refer to [GroundTruthAnnotations.md](./GroundTruthAnnotations.md) for compilation instructions, data format specifications and an extended "Hello World".
 
 #### Generate image(s) in one command
 
