@@ -2,7 +2,7 @@
 
 ### Changelog
 
-- 07/03/23: Add specification for Blender's built-in annotations. Save built-in annotations as numpy arrays. Add more information to Objects_XXXX_XX_XX.json. Fix bug with built-in segmentation masks. Improve visualizations for built-in annotations.
+- 07/03/23: Add specification for Blender's built-in annotations. Save built-in annotations as numpy arrays. Add more information to Objects_XXXX_XX_XX.json. Significant changes to built-in segmentation masks (fixes & filenames). Improve visualizations for built-in annotations. Update docs.
 
 ### Agenda
 
