@@ -1,5 +1,17 @@
 # Ground-Truth Annotations
 
+### Changelog
+
+- 07/03/23: Add specification for Blender's built-in annotations. Save built-in annotations as numpy arrays. Add more information to Objects_XXXX_XX_XX.json. Fix bug with built-in segmentation masks. Improve visualizations for built-in annotations.
+
+### Agenda
+
+- Save forward and backward flow for both built-in and advanced annotations.
+- Compute flow occlusion using forward-backward consistency.
+- Export scene geometry in .ply format.
+
+**Want annotations that we don't currently support? [Fill out a request!](https://github.com/princeton-vl/infinigen/issues/new?assignees=&labels=&projects=&template=request.md&title=%5BREQUEST%5D)**
+
 ## Default Annotations from Blender
 
 Infinigen can produce some dense annotations using Blender's built-in render passes. Users may prefer to use these annotations over our extended annotation system's since it requires only the bare-minimum installation. It is also able to run without a GPU.
@@ -276,7 +288,7 @@ obj["unapplied_modifiers"] # names of unapplied blender modifiers
 obj["materials"] # materials used
 ```
 
-:large_blue_diamond:
+More fields :large_blue_diamond:
 ```
 obj["tags"] # list of tags which appear on at least one vertex 
 obj["min"] # min-corner of bounding box, in object coordinates
@@ -284,4 +296,4 @@ obj["max"] # max-corner of bounding box, in object coordinates
 obj["model_matrices"] # mapping from instance-ids to 4x4 obj->world transformation matrices
 ```
 
-The **3D bounding box** for each instance can be computed using `obj["min"]`, `obj["max"]`, `obj["model_matrices"]`. For an example, refer to [the bounding_boxes_3d.py example above](#tag-segmentation).
+The **3D bounding box** for each instance can be computed using `obj["min"]`, `obj["max"]`, `obj["model_matrices"]`. For an example, refer to [the bounding_boxes_3d.py example above](#tag-segmentation-large_blue_diamond).
