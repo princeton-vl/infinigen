@@ -17,18 +17,25 @@ using json = nlohmann::json;
 
 struct ObjectInfo
 {
-    int index, num_instances;
+    int index, num_instances, num_faces, num_verts;
     std::string name, type, mesh_id, npz_filename;
+    std::vector<int> children;
+    std::vector<std::string> materials, unapplied_modifiers;
 
     ObjectInfo(){}
 
-    ObjectInfo(nlohmann::json_abi_v3_11_2::json instance_item) :
-    name(instance_item["object_name"].get<std::string>()),
-    type(instance_item["object_type"].get<std::string>()),
-    index(instance_item["object_idx"].get<int>()),
-    num_instances(instance_item["num_instances"].get<int>()),
-    mesh_id(instance_item["mesh_id"].get<std::string>()),
-    npz_filename(instance_item["filename"].get<std::string>()){}
+    ObjectInfo(const json instance_item) :
+    name(instance_item["object_name"]),
+    type(instance_item["object_type"]),
+    index(instance_item["object_idx"]),
+    num_instances(instance_item["num_instances"]),
+    num_faces(instance_item["num_faces"]),
+    num_verts(instance_item["num_verts"]),
+    children(instance_item["children"]),
+    materials(instance_item["materials"]),
+    unapplied_modifiers(instance_item["unapplied_modifiers"]),
+    mesh_id(instance_item["mesh_id"]),
+    npz_filename(instance_item["filename"]){}
 
 };
 
@@ -54,8 +61,7 @@ public:
 
     json bounding_box;
     const ObjectType type;
-    const std::string name;
-    const int obj_index;
+    const ObjectInfo info;
 
     BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride);
     virtual ~BaseBlenderObject();

@@ -73,10 +73,15 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
     const std::set<int> unique_tags(tag_lookup.begin(), tag_lookup.end());
 
     json output = {
-        {"model matrices", json_serializable_model_matrices},
+        {"model_matrices", json_serializable_model_matrices},
         {"tags", std::vector<int>(unique_tags.begin(), unique_tags.end())},
-        {"name", name},
-        {"object index", obj_index}
+        {"name", info.name},
+        {"num_verts", info.num_verts},
+        {"num_faces", info.num_faces},
+        {"children", info.children},
+        {"materials", info.materials},
+        {"unapplied_modifiers", info.unapplied_modifiers},
+        {"object_index", info.index}
     };
 
     if ((num_verts > 0) && ((max - min).norm() > 1e-4)){
@@ -91,7 +96,7 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
 }
 
 BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const BufferArrays &next_buf, const std::vector<InstanceID> &instance_ids, const ObjectInfo& object_info, const ObjectType tp, int attrib_stride)
- : num_verts(current_buf.indices.size()), type(tp), name(object_info.name), num_instances(instance_ids.size()), obj_index(object_info.index) {
+ : num_verts(current_buf.indices.size()), type(tp), info(object_info), num_instances(instance_ids.size()) {
 
         const std::vector<Eigen::Matrix4f> &model_matrices = current_buf.get_instances(instance_ids);
         const std::vector<Eigen::Matrix4f> &model_matrices_next = next_buf.get_instances(instance_ids);
@@ -172,7 +177,7 @@ MeshBlenderObject::~MeshBlenderObject(){}
 
 void MeshBlenderObject::draw(Shader &shader) const {
     const auto t1 = std::chrono::high_resolution_clock::now();
-    shader.setInt("object_index", obj_index);
+    shader.setInt("object_index", info.index);
     glBindVertexArray(VAO);
     glDrawElementsInstanced(GL_LINES_ADJACENCY, num_verts, GL_UNSIGNED_INT, 0, num_instances);
     glCheckError();

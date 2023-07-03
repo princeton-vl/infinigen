@@ -68,7 +68,8 @@ def set_pass_indices():
             "type": obj.type, "pass_index": obj.pass_index, "children": []
         }
         if obj.type == "MESH":
-            object_dict['polycount'] = len(obj.data.polygons)
+            object_dict['num_verts'] = len(obj.data.vertices)
+            object_dict['num_faces'] = len(obj.data.polygons)
             object_dict['materials'] = obj.material_slots.keys()
             object_dict['unapplied_modifiers'] = obj.modifiers.keys()
         tree_output[obj.name] = object_dict
@@ -254,7 +255,7 @@ def render_image(
     if flat_shading:
         with Timer("Set object indices"):
             object_data = set_pass_indices()
-            json_object = json.dumps(object_data)
+            json_object = json.dumps(object_data, indent=4)
             first_frame = bpy.context.scene.frame_start
             (frames_folder / f"Objects_{first_frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.json").write_text(json_object)
 
