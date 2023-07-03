@@ -6,11 +6,11 @@ Infinigen can produce some dense annotations using Blender's built-in render pas
 
 These annotations are produced when using the `--pipeline_configs blender_gt` ground truth extraction config in [manage_datagen_jobs.py](/README.md#generate-images-in-one-command), or can be done manually as shown in the final step of the [Hello-World](/README.md#generate-a-scene-step-by-step) example.
 
-## OpenGL-Based Annotation Pipeline
+## Advanced Annotation Pipeline :large_blue_diamond:
 
-We also provide a separate pipeline for extracting the full set of annotations from each image or scene.
+We also provide a separate pipeline for extracting the full set of annotations from each image or scene. Features only supported using this annotation method will be denoted with :large_blue_diamond:.
 
-This section will allow you to use our own `--pipeline_configs opengl_gt` ground truth extraction config, which provides additional labels such as occlusion boundaries, sub-object segmentation, 3D flow and easy 3D bounding boxes. If you do not need these features, we recommend using the [default annotations](#default-annotations-from-blender). This section is intended for computer vision researchers and power-users. 
+This will allow you to use our own `--pipeline_configs opengl_gt` ground truth extraction config, which provides additional labels such as occlusion boundaries, sub-object segmentation, 3D flow and easy 3D bounding boxes. If you do not need these features, we recommend using the [default annotations](#default-annotations-from-blender). This section is intended for computer vision researchers and power-users. 
 
 ### Installation
 
@@ -99,7 +99,7 @@ The resulting `<output-folder>/summary.json` will contains all file paths in the
 `<rig>` and `<sub-cam>` are typically both "00" in the monocular setting; `<file-ext>` is typically "npy" or "png" for the the actual data and the visualization, respectively; `<frame>` is a 0-padded 4-digit number, e.g. "0013". `<type>` can be "SurfaceNormal", "Depth", etc. For example
 `summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `'frames/SurfaceNormal_0001_00_00.npy'`
 
-*Note: Currently our ground-truth has only been tested for the aspect-ratio 16-9.*
+*Note: Currently our advanced ground-truth has only been tested for the aspect-ratio 16-9.*
 
 **Depth**
 
@@ -132,7 +132,7 @@ The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backw
 <img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
 </p>
 
-### Occlusion Boundaries (Advanced feature)
+### Occlusion Boundaries :large_blue_diamond:
 
 Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boundary and 0 otherwise.
 
@@ -142,7 +142,7 @@ Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boun
 <img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
 </p>
 
-### Optical Flow / Scene Flow
+### Optical Flow
 
 Optical Flow / Scene Flow is stored as a 2160 x 3840 x 3 32-bit floating point numpy array.
 
@@ -150,7 +150,7 @@ Optical Flow / Scene Flow is stored as a 2160 x 3840 x 3 32-bit floating point n
 
 Channels 1 & 2 are standard optical flow. Note that the units of optical flow are in pixels measured in the resolution of the *original image*. So if the rendered image is 1080 x 1920, you would want to average-pool this array by 2x.
 
-**Advanced version**
+**3D Motion Vectors** :large_blue_diamond:
 
 Channel 3 is the depth change between this frame and the next.
 
@@ -164,27 +164,15 @@ python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
 
 *Visualization:* `summary_json["Flow3D"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.png`
 
-**Build-in version**
+For the built-in versions, replace `Flow3D` with `Flow`.
 
-Blender doesn't support 3D scene flow, only the *u* and *v* channels (i.e. 2D optical flow). The third channel is the occlusion mask.
-
-*Path:* `summary_json["Flow"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow_0001_00_00.npy`
-
-*Visualization:* `summary_json["Flow"]["png"]["00"]["00"]["0001"]` -> `frames/Flow_0001_00_00.png`
-
-### Optical Flow Occlusion
-
-**Advanced version**
+### Optical Flow Occlusion :large_blue_diamond:
 
 The mask of occluded pixels for the aforementioned optical flow is stored as a 2160 x 3840 png, with 255 indicating a co-visible pixel and 0 otherwise.
 
 *Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
 *Path/Visualization:* `summary_json["Flow3DMask"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3DMask_0001_00_00.png`
-
-**Build-in version**
-
-The occlusion mask for blender's built-in optical flow is stored the third channel.
 
 ### Camera Intrinsics
 
@@ -223,7 +211,7 @@ Infinigen saves three types of semantic segmentation masks: 1) Object Segmentati
 
 `summary_json["InstanceSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.png`
 
-**Advanced version**
+#### **Tag Segmentation** :large_blue_diamond:
 
 *Tag Segmentation* distinguishes vertices based on their semantic tags, and is stored as a 2160 x 3840 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Missing features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
 
@@ -286,9 +274,14 @@ obj["num_faces"] # number of faces (n-gons, not triangles)
 obj["name"] # obvious
 obj["unapplied_modifiers"] # names of unapplied blender modifiers
 obj["materials"] # materials used
-obj["tags"] # list of tags which appear on at least one vertex
-obj["min"] # min-corner of bounding box
-obj["max"] # max-corner of bounding box
 ```
 
-The list of **3D bounding boxes** for each instance are also defined in the `Objects_XXXX_XX_XX.json`.
+:large_blue_diamond:
+```
+obj["tags"] # list of tags which appear on at least one vertex 
+obj["min"] # min-corner of bounding box, in object coordinates
+obj["max"] # max-corner of bounding box, in object coordinates
+obj["model_matrices"] # mapping from instance-ids to 4x4 obj->world transformation matrices
+```
+
+The **3D bounding box** for each instance can be computed using `obj["min"]`, `obj["max"]`, `obj["model_matrices"]`. For an example, refer to [the bounding_boxes_3d.py example above](#tag-segmentation).
