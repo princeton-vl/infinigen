@@ -39,7 +39,7 @@ def summarize_folder(base_folder):
     output = defaultdict(make_defaultdict(make_defaultdict(make_defaultdict(dict))))
     max_frame = -1
     for file_path in base_folder.rglob('*'):
-        if not file_path.is_file:
+        if (not file_path.is_file) or ("saved_mesh" in file_path.parts):
             continue
 
         if match := re.fullmatch("(.*)_([0-9]{4})_([0-9]{2})_([0-9]{2})\.([a-z]+)", file_path.name):

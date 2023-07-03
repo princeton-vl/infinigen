@@ -65,7 +65,7 @@ def set_pass_indices():
             obj.pass_index = index
             index += 1
         object_dict = {
-            "type": obj.type, "pass_index": obj.pass_index, "children": []
+            "type": obj.type, "object_index": obj.pass_index, "children": []
         }
         if obj.type == "MESH":
             object_dict['num_verts'] = len(obj.data.vertices)
