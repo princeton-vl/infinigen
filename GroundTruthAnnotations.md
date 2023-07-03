@@ -190,7 +190,7 @@ The mask of occluded pixels for the aforementioned optical flow is stored as a 2
 
 Infinigen renders images using a pinhole camera model. The resulting camera intrinsics for each frame are stored as a 3 x 3 numpy matrix.
 
-*Path:* `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/K_0001_00_00.npy`
+*Path:* `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `frames/K_0001_00_00.npy`
 
 ### Camera Extrinsics
 
@@ -198,7 +198,7 @@ The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinate
 
 As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
 
-*Path:* `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `saved_mesh/frame_0001/cameras/T_0001_00_00.npy`
+*Path:* `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `frames/T_0001_00_00.npy`
 
 ### Panoptic Segmentation
 
