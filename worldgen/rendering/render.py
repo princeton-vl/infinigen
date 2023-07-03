@@ -334,15 +334,15 @@ def render_image(
                 # Save segmentation visualization
                 seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
                 seg_mask_array = load_seg_mask(seg_dst_path)
-                np.save(flow_dst_path.with_name(f"Segmentation_{output_stem}.npy"), seg_mask_array)
-                imwrite(seg_dst_path.with_name(f"Segmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
+                np.save(flow_dst_path.with_name(f"ObjectSegmentation_{output_stem}.npy"), seg_mask_array)
+                imwrite(seg_dst_path.with_name(f"ObjectSegmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
                 seg_dst_path.unlink()
 
                 # Save unique instances visualization
                 uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
                 uniq_inst_array = load_uniq_inst(uniq_inst_path)
-                np.save(flow_dst_path.with_name(f"UniqueInstances_{output_stem}.npy"), uniq_inst_array)
-                imwrite(uniq_inst_path.with_name(f"UniqueInstances_{output_stem}.png"), colorize_int_array(uniq_inst_array))
+                np.save(flow_dst_path.with_name(f"InstanceSegmentation_{output_stem}.npy"), uniq_inst_array)
+                imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
                 uniq_inst_path.unlink()
             else:
                 cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frames_folder, frame)
