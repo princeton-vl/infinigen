@@ -241,10 +241,12 @@ def execute_tasks(
         if (not os.path.islink(output_folder/"assets")) and (not (output_folder/"assets").exists()) and input_folder is not None and (input_folder/"assets").exists():
             os.symlink(input_folder/"assets", output_folder/"assets")
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
+
+    if input_folder is not None:
+        tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
     if Task.Coarse not in task:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
-            tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
         scene_version = get_scene_tag('VERSION')
         butil.approve_all_drivers()
     
@@ -296,12 +298,13 @@ def execute_tasks(
     
     group_collections()
 
+    if output_folder is not None:
+        tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
     if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
         bpy.context.preferences.system.scrollback = 100 
         bpy.context.preferences.edit.undo_steps = 100
         with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
             bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
-            tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
         with (output_folder/ "version.txt").open('w') as f:
             scene_version = get_scene_tag('VERSION')
