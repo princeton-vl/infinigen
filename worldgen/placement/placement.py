@@ -163,7 +163,7 @@ def populate_collection(
                 continue
             if vis_cull is not None and vis_dist > vis_cull:
                 logger.debug(f'{p.name=} culled due to {vis_dist=:.2f} > {vis_cull=}')
-                p.hide_render = False
+                p.hide_render = True
                 continue
         else:
             dist = detail.scatter_res_distance()
