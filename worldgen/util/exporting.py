@@ -62,11 +62,13 @@ def get_id(i: DepsgraphObjectInstance):
         return (0, parent_hash)
     a, b, *c = t
     assert c == [2**31-1]*6, t
-    assert (a in {2**31-1,0}) or (b in {2**31-1,0}), t
+    assert (a == b) or ((a in {2**31-1,1,0}) or (b in {2**31-1,1,0})), t
     assert valid_int32(a) and valid_int32(b), t
-    if a in {2**31-1,0}:
+    if a == b:
+        return a
+    if a in {2**31-1,1,0}:
         if b == 2**31-1:
-            return (0, parent_hash)
+            return (a, parent_hash)
         return (b, parent_hash)
     return (a, parent_hash)
 

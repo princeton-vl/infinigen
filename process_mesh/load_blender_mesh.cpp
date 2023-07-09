@@ -84,10 +84,11 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
             if (npz_lookup.count(next_npz_path.string()) == 0)
                 npz_lookup[next_npz_path.string()] = next_npz_path;
             const npz &next_npz = npz_lookup.at(next_npz_path.string());
-            next_buf = BufferArrays(next_npz, current_mesh_id, next_obj.type);
+            next_buf = BufferArrays(next_npz, current_mesh_id, next_obj.type, true);
         } else {
             next_buf = current_buf;
         }
+
         it++;
     }
 

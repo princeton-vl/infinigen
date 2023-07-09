@@ -79,7 +79,7 @@ public:
 
     BufferArrays(){}
 
-    BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type);
+    BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type, bool skip_indices=false);
 
     size_t sizeof_instance() const {
         return indices.size();
