@@ -834,7 +834,7 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
     if len(matches):
         return ','.join([m.strip() for m in matches if ('Error: Not freed memory blocks' not in m)])
     else:
-        return "unknown cause" 
+        return f"Could not summarize cause, check {stderr_file}" 
 
 def record_crashed_seed(crashed_seed, crash_stage, f, fatal=True):
     time_str = datetime.now().strftime("%m/%d %I:%M%p")
@@ -893,14 +893,14 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, sleep_threshold=0.9
             if state == JobState.Failed:
                 if not scene.get(f'{taskname}_crash_recorded', False):
                     scene[f'{taskname}_crash_recorded'] = True
-                    with (args.output_folder / "crashed.txt").open('a') as f:
+                    with (args.output_folder / "crash_summaries.txt").open('a') as f:
                         record_crashed_seed(scene['seed'], taskname, f, fatal=fatal)
                 if fatal:
                     any_fatal = True
 
         if scene['num_running'] == 0 and any_fatal and scene['all_done'] == SceneState.NotDone:
             scene['all_done'] = SceneState.Crashed    
-            with (args.output_folder / "crashed.txt").open('a') as f:
+            with (args.output_folder / "crash_summaries.txt").open('a') as f:
                 check_and_perform_cleanup(args, scene['seed'], crashed=True)
 
     # Report stats, with sums by prefix, and extra info
