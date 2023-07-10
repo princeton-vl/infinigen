@@ -156,6 +156,9 @@ def join_and_rig_parts(
 
     if adaptive_resolution:
 
+        if adapt_mode == 'remesh':
+            butil.modify_mesh(joined, 'SUBSURF', levels=1)
+
         logger.debug(f'Adapting {joined.name=}')
         detail.adapt_mesh_resolution(joined, 
             face_size=max(face_size, min_remesh_size), 

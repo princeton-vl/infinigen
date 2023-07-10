@@ -211,6 +211,8 @@ class CarnivoreFactory(AssetFactory):
             elif self.animation_mode == 'idle':
                 idle.snap_iks_to_floor(ik_targets, self.bvh)
                 idle.idle_body_noise_drivers(ik_targets)
+            elif self.animation_mode == 'tpose':
+                pass
             else:
                 raise ValueError(f'Unrecognized mode {self.animation_mode=}')
         if simulate:

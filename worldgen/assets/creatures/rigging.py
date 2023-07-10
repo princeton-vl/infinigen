@@ -3,12 +3,11 @@
 
 # Authors: Alexander Raistrick
 
-
-import pdb
-from collections import defaultdict
 import re
 import math
 from numbers import Number
+from functools import partial
+import logging
 
 import bpy
 import mathutils
@@ -19,6 +18,8 @@ from util import blender as butil, math as mutil
 from assets.creatures.util import tree
 from assets.creatures.creature import Part, infer_skeleton_from_mesh
 from assets.creatures.genome import Joint, IKParams
+
+logger = logging.getLogger()
 
 IK_TARGET_PREFIX = 'ik_target'
 
@@ -31,19 +32,34 @@ def bone(editbones, head, tail, parent):
     return bone
 
 
-def get_bone_idxs(part):
-    idxs = set([0.0, 1.0])
+def get_bone_idxs(part_node: tree.Tree):
+
+    part, att = part_node.item
+    child_ts = [c.item[1].coord[0] for c in part_node.children]
+
+    for t in child_ts:
+        assert t >= 0 and t <= 1
+
+    bounds = [0.0, 1.0]
+
+    tr = part.settings.get('trim_bounds_child_margin', 0.15)
+    if tr > 0 and len(child_ts):
+        if min(child_ts) < tr:
+            bounds[0] = min(child_ts)
+        if max(child_ts) > 1 - tr:
+            bounds[1] = max(child_ts)
+
+    idxs = set(bounds)
     if part.joints is not None:
         idxs = idxs.union(part.joints.keys())
     return sorted(list(idxs))
 
-
-def create_part_bones(part: Part, editbones, parent):
+def create_part_bones(part_node: tree.Tree, editbones, parent):
+    
     bones = {}
-
+    part, att = part_node.item
     skeleton = part.skeleton_global()
-
-    idxs = get_bone_idxs(part)
+    idxs = get_bone_idxs(part_node)
 
     if part.settings.get('rig_reverse_skeleton', False):
         idxs = list(reversed(idxs))
@@ -67,77 +83,85 @@ def create_part_bones(part: Part, editbones, parent):
 
     return bones
 
+def create_bones(parts_atts, arma):
 
-def create_bones(parts, atts, arma):
+    def make_parent_connector_bone(part, att, parent_bones, parent_bone_t):
+        
+        u, v, r = att.coord
+
+        parent_bone = parent_bones[parent_bone_t]
+        bonekeys = [k for k in parent_bones.keys() if not isinstance(k, str)]
+
+        try:
+            next_t = next(i for i in sorted(bonekeys) if i >= u)
+        except StopIteration:
+            next_t = parent_bone_t
+
+        if next_t == parent_bone_t:
+            head = parent_bone.head
+        else:
+            pct = (u - parent_bone_t) / (next_t - parent_bone_t)
+            assert 0 <= pct and pct <= 1, (pct, next_t, parent_bone_t)
+            head = mutil.lerp(parent_bone.head, parent_bone.tail, pct)
+
+        tail = part.skeleton_global()[0]
+        parent_bone = bone(editbones, head, tail, parent_bone)
+
+        return parent_bone
+
+    def make_bones(node: tree.Tree, parent_bones: dict, editbones):
+        part, att = node.item
+
+        bones = {}
+        parent_bone = None
+            
+        if parent_bones is not None:
+            bonekeys = [k for k in parent_bones.keys() if not isinstance(k, str)]
+            parent_bone_t = max((i for i in bonekeys if i <= att.coord[0]), default=min(bonekeys))
+            parent_bone = parent_bones[parent_bone_t]
+            
+            if att.coord[-1] > part.settings.get('connector_collapse_margin_radpct', 0.5):
+                bones[-1] = parent_bone = make_parent_connector_bone(part, att, parent_bones, parent_bone_t)
+
+        part_bones = create_part_bones(node, editbones, parent=parent_bone)
+        bones.update(part_bones)
+
+        return bones
+
+    def finalize_bonedict_to_leave_editmode(bones):
+        # the edit bones wont continue to exist once we leave edit mode, store their names instead
+        for j, b in bones.items():
+            partname = part.obj.name.split('.')[-1]
+
+            if isinstance(j, (int, float)):
+                b.name = f'{partname}.side({part.side}).bone({j:.2f})'
+            elif isinstance(j, str):
+                b.name = f'{partname}.side({part.side}).extra_bone({j})'
+            else:
+                raise ValueError(f'Unrecognized {j=}')
+            b['side'] = part.side
+            b['factory_class'] = part.obj['factory_class']
+            b['index'] = part.obj['index']
+            b['length'] = j
+            bones[j] = b.name
+
     with butil.ViewportMode(arma, mode='EDIT'):
         editbones = arma.data.edit_bones
-
-        def make_bones(node, parent_bones):
-            part, att = node
-
-            bones = {}
-
-            if parent_bones is None:  # we are dealing with the root node
-                parent_bone = None
-            else:
-                u, v, rad = att.coord
-
-                bonekeys = [k for k in parent_bones.keys() if not isinstance(k, str)]
-                parent_bone_t = max((i for i in bonekeys if i <= u), default=min(bonekeys))
-                parent_bone = parent_bones[parent_bone_t]
-
-                if rad > 0.5:
-                    try:
-                        next_t = next(i for i in sorted(bonekeys) if i >= u)
-                    except StopIteration:
-                        next_t = parent_bone_t
-
-                    if next_t == parent_bone_t:
-                        head = parent_bone.head
-                    else:
-                        pct = (u - parent_bone_t) / (next_t - parent_bone_t)
-                        assert 0 <= pct and pct <= 1, (pct, next_t, parent_bone_t)
-                        head = mutil.lerp(parent_bone.head, parent_bone.tail, pct)
-
-                    tail = part.skeleton_global()[0]
-                    parent_bone = bone(editbones, head, tail, parent_bone)
-                    bones[-1] = parent_bone
-
-            part_bones = create_part_bones(part, editbones, parent=parent_bone)
-            bones.update(part_bones)
-
-            return bones
-
-        part_bones = tree.map_parent_child(tree.tzip(parts, atts), make_bones)
-
-        # the edit bones wont continue to exist once we leave edit mode, store their names instead
-        for part, bones in tree.tzip(parts, part_bones):
-            for j, b in bones.items():
-                partname = part.obj.name.split('.')[-1]
-
-                if isinstance(j, (int, float)):
-                    b.name = f'{partname}.side({part.side}).bone({j:.2f})'
-                elif isinstance(j, str):
-                    b.name = f'{partname}.side({part.side}).extra_bone({j})'
-                else:
-                    raise ValueError(f'Unrecognized {j=}')
-                b['side'] = part.side
-                b['factory_class'] = part.obj['factory_class']
-                b['index'] = part.obj['index']
-                b['length'] = j
-                bones[j] = b.name
+        part_bones = tree.map_parent_child(parts_atts, partial(make_bones, editbones=editbones))
+        for (part, _), bones in tree.tzip(parts_atts, part_bones):
+            finalize_bonedict_to_leave_editmode(bones)
 
     return part_bones
 
 
-def compute_chain_length(parts, bones, part, ik: IKParams):
+def compute_chain_length(parts_atts: tree.Tree, bones, part, ik: IKParams):
 
     if ik.chain_parts is None:
         assert ik.chain_length is not None
         return ik.chain_length
 
-    nodes, parents = tree.to_node_parent(tree.tzip(parts, bones))
-    curr_idx = next(i for i, (p, b) in enumerate(nodes) if p is part)
+    nodes, parents = tree.to_node_parent(tree.tzip(parts_atts, bones))
+    curr_idx = next(i for i, ((p, _), _) in enumerate(nodes) if p is part)
     chain_length = 0
     for i in range(math.ceil(ik.chain_parts)):
         p = 1 if i < int(ik.chain_parts) else (ik.chain_parts - int(ik.chain_parts))
@@ -150,52 +174,61 @@ def compute_chain_length(parts, bones, part, ik: IKParams):
     if ik.chain_length is not None:
         chain_length += ik.chain_length
 
+    logger.debug(f'Com')
+
     return chain_length
 
 
-def create_ik_targets(arma, parts, bones):
-    targets = []
+def create_ik_targets(arma, parts_atts: tree.Tree, bones):
 
-    def make_targets(node):
-        part, part_bones = node
+    def make_target(part_node, part_bones, ik: IKParams):
 
-        assert part.iks is not None, part
+        part, att = part_node.item
 
-        for t, ik in part.iks.items():
-            joint_ts = get_bone_idxs(part)
-            bone_idx = t if t != joint_ts[-1] else joint_ts[
-                -2]  # the last idx doesnt have its own bone, it is just the endpoint
-            base_keys =[k for k in part_bones.keys() if isinstance(k,Number)]
-            bone_idx = max((i for i in base_keys if i <= bone_idx), default=min(base_keys))
-            name = part_bones[bone_idx]
+        joint_ts = get_bone_idxs(part_node)
+        bone_idx = t if t != joint_ts[-1] else joint_ts[
+            -2]  # the last idx doesnt have its own bone, it is just the endpoint
+        base_keys =[k for k in part_bones.keys() if isinstance(k,Number)]
+        bone_idx = max((i for i in base_keys if i <= bone_idx), default=min(base_keys))
+        name = part_bones[bone_idx]
 
-            pbone = arma.pose.bones[name]
+        pbone = arma.pose.bones[name]
 
+        if ik.mode == 'iksolve':
+            con = pbone.constraints.new('IK')
+            con.chain_count = compute_chain_length(parts_atts, bones, part, ik)
+        elif ik.mode == 'pin':
+            con = pbone.constraints.new('COPY_LOCATION')
+        else:
+            raise ValueError(f'Unrecognized {ik.mode=}')
+
+        con.target = butil.spawn_empty(f'{IK_TARGET_PREFIX}({ik.name})', disp_type='CUBE', s=ik.target_size)
+        con.target.location = pbone.tail if t != 0 else pbone.head
+
+        if ik.rotation_weight > 0:
             if ik.mode == 'iksolve':
-                con = pbone.constraints.new('IK')
-                con.chain_count = compute_chain_length(parts, bones, part, ik)
-            elif ik.mode == 'pin':
-                con = pbone.constraints.new('COPY_LOCATION')
+                con.use_rotation = True
+                con.orient_weight = ik.rotation_weight
+                con.target.rotation_euler = (pbone.matrix).to_euler()
             else:
-                raise ValueError(f'Unrecognized {ik.mode=}')
+                rot_con = pbone.constraints.new('COPY_ROTATION')
+                rot_con.target = con.target
+                rot_con.influence = ik.rotation_weight
 
-            con.target = butil.spawn_empty(f'{IK_TARGET_PREFIX}({ik.name})', disp_type='CUBE', s=ik.target_size)
-            con.target.location = pbone.tail if t != 0 else pbone.head
+        return con.target
 
-            if ik.rotation_weight > 0:
-                if ik.mode == 'iksolve':
-                    con.use_rotation = True
-                    con.orient_weight = ik.rotation_weight
-                    con.target.rotation_euler = pbone.matrix.to_euler()
-                else:
-                    rot_con = pbone.constraints.new('COPY_ROTATION')
-                    rot_con.target = con.target
-                    rot_con.influence = ik.rotation_weight
-
-            targets.append(con.target)
-
+    targets = []
     with butil.ViewportMode(arma, mode='POSE'):
-        tree.map(tree.tzip(parts, bones), make_targets)
+        # TODO: risky zip, silent fail on non-matching topology
+        data_iter = zip(
+            tree.iter_nodes(parts_atts), 
+            tree.iter_nodes(bones)
+        )
+        for part_node, bones_node in data_iter: 
+            part, att = part_node.item
+            assert part.iks is not None, part
+            for t, ik in part.iks.items():
+                targets.append(make_target(part_node, bones_node.item, ik))
 
     col = butil.get_collection('ik_targets')
     for t in targets:
@@ -237,37 +270,38 @@ def apply_joint_constraint(joint: Joint, pose_bone, eps=1e-2):
         pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = s
 
 
-def constrain_bones(arma, parts, bones, atts, shoulder_auto_stiffness=0.85):
-    with butil.ViewportMode(arma, mode='POSE'):
-        for part, part_bones, att in tree.tzip(parts, bones, atts):
-            for skeleton_idx, bname in part_bones.items():
+def constrain_bones(arma, parts_atts, bones, shoulder_auto_stiffness=0.85):
+    
+    def constrain_bone(part, att, skeleton_idx, bname):
+        pb = arma.pose.bones[bname]
 
+        if skeleton_idx == 0:
+            # the orientation of bone 0 really controls the attachment angle
+            # of the whole part, and should be constrained by att.joint
+            if att is not None:
+                apply_joint_constraint(att.joint, pb)
+        elif part.joints is not None and skeleton_idx in part.joints:
+            joint = part.joints[skeleton_idx]
+            apply_joint_constraint(joint, pb)
+
+        if skeleton_idx < 0 and shoulder_auto_stiffness > 0:
+            # shoulder bones have index < 1, and were added automatically
+            # make them stiff to minimally affect final outcome
+            pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = (shoulder_auto_stiffness,) * 3
+            pb.lock_ik_x = True
+            pb.lock_ik_y = True
+            pb.lock_ik_z = True
+    
+    with butil.ViewportMode(arma, mode='POSE'):
+        for (part, att), part_bones in tree.tzip(parts_atts, bones):
+            for skeleton_idx, bname in part_bones.items():
                 if not isinstance(skeleton_idx, int):
                     continue
+                constrain_bone(part, att, skeleton_idx, bname)
 
-                pb = arma.pose.bones[bname]
-
-                if skeleton_idx == 0:
-                    # the orientation of bone 0 really controls the attachment angle
-                    # of the whole part, and should be constrained by att.joint
-                    if att is not None:
-                        apply_joint_constraint(att.joint, pb)
-                elif part.joints is not None and skeleton_idx in part.joints:
-                    joint = part.joints[skeleton_idx]
-                    apply_joint_constraint(joint, pb)
-
-                if skeleton_idx < 0 and shoulder_auto_stiffness > 0:
-                    # shoulder bones have index < 1, and were added automatically
-                    # make them stiff to minimally affect final outcome
-                    pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = (shoulder_auto_stiffness,) * 3
-                    pb.lock_ik_x = True
-                    pb.lock_ik_y = True
-                    pb.lock_ik_z = True
-
-
-def pose_bones(arma, parts, bones, atts):
+def pose_bones(arma, parts_atts, bones):
     with butil.ViewportMode(arma, mode='POSE'):
-        for part, part_bones, att in tree.tzip(parts, bones, atts):
+        for (part, att), part_bones in tree.tzip(parts_atts, bones):
             if part.joints is None:
                 continue
             for skeleton_idx, bname in part_bones.items():
@@ -309,22 +343,22 @@ def creature_rig(root, genome, parts, constraints=True):
     arma = bpy.data.objects.new(f'{root.name}_armature', data)
     bpy.context.scene.collection.objects.link(arma)
 
-    attachments_tree = tree.map(genome.parts, lambda n: n.att)
-    bones = create_bones(parts, attachments_tree, arma)
+    parts_atts = tree.tzip(parts, tree.map(genome.parts, lambda n: n.att))
+    bones = create_bones(parts_atts, arma)
 
     # force recalculate roll to eliminate bad guesses made by blender
     with butil.ViewportMode(arma, mode='EDIT'):
         bpy.ops.armature.select_all(action='SELECT')
         bpy.ops.armature.calculate_roll(type='GLOBAL_POS_Y')
 
-    targets = create_ik_targets(arma, parts, bones)
+    targets = create_ik_targets(arma, parts_atts, bones)
     for t in targets:
         t.parent = root
 
     if constraints:
-        constrain_bones(arma, parts, bones, attachments_tree)
+        constrain_bones(arma, parts_atts, bones)
 
-    pose_bones(arma, parts, bones, attachments_tree)
+    pose_bones(arma, parts_atts, bones)
 
     return arma, targets
 
