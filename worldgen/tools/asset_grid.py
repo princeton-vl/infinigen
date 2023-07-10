@@ -258,7 +258,7 @@ def main(args):
     import_surface_registry()
     name = '_'.join(args.factories)
     path = Path(os.getcwd()) / 'outputs' / name
-    path.mkdir(exist_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
 
     if args.gpu:
         enable_gpu()
