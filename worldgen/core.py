@@ -296,22 +296,35 @@ def execute_tasks(
     
     group_collections()
 
-    if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
-        bpy.context.preferences.system.scrollback = 100 
-        bpy.context.preferences.edit.undo_steps = 100
-        with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
-            bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
-            tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
+    if task == [Task.FineTerrain]:
+        os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
+        os.symlink(input_folder / "MaskTag.json", output_folder / "MaskTag.json")
+        os.symlink(input_folder / "version.txt", output_folder / "version.txt")
+        os.symlink(input_folder / 'polycounts.txt', output_folder / 'polycounts.txt')
+    else:
+        if input_folder is not None:
+            for mesh in os.listdir(input_folder):
+                if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
+                    os.symlink(input_folder / mesh, output_folder / mesh)
+        if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
+            bpy.context.preferences.system.scrollback = 100 
+            bpy.context.preferences.edit.undo_steps = 100
+            with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
+                bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+                tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
-        with (output_folder/ "version.txt").open('w') as f:
-            scene_version = get_scene_tag('VERSION')
-            f.write(f"{scene_version}\n")
+            with (output_folder/ "version.txt").open('w') as f:
+                scene_version = get_scene_tag('VERSION')
+                f.write(f"{scene_version}\n")
 
-        with (output_folder/'polycounts.txt').open('w') as f:
-            save_polycounts(f)
+            with (output_folder/'polycounts.txt').open('w') as f:
+                save_polycounts(f)
 
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
+
+    if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
+        terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
         render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)

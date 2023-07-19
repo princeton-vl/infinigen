@@ -251,30 +251,39 @@ class Terrain:
                 self.tag_terrain(self.terrain_objs[name])
         return main_obj
 
-    def fine_terrain(self, fine_folder):
+    def fine_terrain(self, output_folder):
         # redo sampling to achieve attribute -> surface correspondance
         self.sample_surface_templates()
         if (self.on_the_fly_asset_folder / Assets.Ocean).exists():
             with FixedSeed(int_hash(["Ocean", self.seed])):
-                ocean_asset(fine_folder / Assets.Ocean, bpy.context.scene.frame_start, bpy.context.scene.frame_end, link_folder=self.on_the_fly_asset_folder / Assets.Ocean)
+                ocean_asset(output_folder / Assets.Ocean, bpy.context.scene.frame_start, bpy.context.scene.frame_end, link_folder=self.on_the_fly_asset_folder / Assets.Ocean)
         self.surfaces_into_sdf()
         fine_meshes, _ = self.export(spherical=True, cameras=[bpy.context.scene.camera])
         for mesh_name in fine_meshes:
-            object_to_copy_to = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
+            obj = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
+            if mesh_name not in hidden_in_viewport: self.tag_terrain(obj)
+            Mesh(obj=obj).save(output_folder / f"{mesh_name}.glb")
+            np.save(output_folder / f"{mesh_name}.b_displacement", fine_meshes[mesh_name].blender_displacements)
+            delete(obj)
+    
+    def load_glb(self, output_folder):
+        for mesh_name in os.listdir(output_folder):
+            if not mesh_name.endswith(".glb"): continue
+            mesh_name = mesh_name[:-4]
+            object_to_copy_to = Mesh(path=output_folder/f"{mesh_name}.glb").export_blender(mesh_name + "_fine")
+
             object_to_copy_from = bpy.data.objects[mesh_name]
             mat = object_to_copy_from.data.materials[0]
             object_to_copy_to.data.materials.append(mat)
             mesh_name_unapplied = mesh_name
             if mesh_name + "_unapplied" in bpy.data.objects.keys():
                 mesh_name_unapplied = mesh_name + "_unapplied"
-            for mod_name in fine_meshes[mesh_name].blender_displacements:
+            for mod_name in np.load(output_folder / f"{mesh_name}.b_displacement.npy"):
                 move_modifier(object_to_copy_to, bpy.data.objects[mesh_name_unapplied].modifiers[mod_name])
             object_to_copy_from.hide_render = True
             object_to_copy_from.hide_viewport = True
             if mesh_name in hidden_in_viewport:
                 object_to_copy_to.hide_viewport = True
-            else:
-                self.tag_terrain(object_to_copy_to)
 
     def compute_camera_space_sdf(self, XYZ):
         sdf = np.ones(len(XYZ), dtype=np.float32) * 1e9
