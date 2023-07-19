@@ -11,9 +11,8 @@ submitit
 frozendict
 flow_vis
 vnoise
-trimesh
+trimesh==3.22.1
 einops
-mesh_to_sdf
 geomdl
 numpy==1.21.5
 wandb
@@ -27,3 +26,4 @@ google-images-search==1.4.4
 landlab==2.4.1
 scikit-learn
 psutil
+pyrender
