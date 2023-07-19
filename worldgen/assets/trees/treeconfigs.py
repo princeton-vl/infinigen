@@ -645,7 +645,7 @@ def generate_tree_config(tree_genome=None, season='autumn'):
         twig_inst = 1 + 0 * np.random.randint(3, 5)
     else:
         twig_density = 0.5 + 0.5 * cfg['twig_density']
-        twig_inst = np.random.randint(3, 5)
+        twig_inst = np.random.randint(1, 3)
 
     return TreeParams(
         skeleton=tree_config,

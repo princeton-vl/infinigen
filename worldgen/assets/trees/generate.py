@@ -13,7 +13,7 @@ from numpy.random import uniform, normal
 
 import bpy
 
-from assets.trees import tree, treeconfigs
+from assets.trees import tree, treeconfigs, branch
 from assets.leaves import leaf, leaf_v2, leaf_pine, leaf_ginko, leaf_broadleaf, leaf_maple
 from assets.fruits import apple, blackberry, coconutgreen, durian, starfruit, strawberry, compositional_fruit
 from nodes.node_info import Nodes
@@ -241,11 +241,10 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
         raise ValueError(f'Unrecognized {leaf_type=}')   
 
 def make_leaf_collection(seed, 
-        leaf_params, n_leaf, leaf_types, 
-        fruit_types=None, 
-        season=None, relative_fruit_density=0.05):
+        leaf_params, n_leaf, leaf_types, decimate_rate=0.0,
+        season=None):
 
-    logger.debug(f'Starting make_leaf_collection({seed=}, {n_leaf=}, {fruit_types=}...)')
+    logger.debug(f'Starting make_leaf_collection({seed=}, {n_leaf=} ...)')
 
     if season is None:
         season = random_season()
@@ -255,21 +254,12 @@ def make_leaf_collection(seed,
     if not isinstance(leaf_types, list):
         leaf_types = [leaf_types]
 
-    if not isinstance(fruit_types, list):
-        fruit_types = [fruit_types]
-
     child_factories = []
     for leaf_type in leaf_types:
         if leaf_type is not None:
             leaf_factory, _ = random_tree_child_factory(seed, leaf_params, leaf_type=leaf_type, season=season)
             child_factories.append(leaf_factory)
-            weights.append(1.0-relative_fruit_density)
-
-    for fruit_type in fruit_types:
-        if fruit_type is not None:
-            fruit_factory, _ = random_tree_child_factory(seed, leaf_params, leaf_type=fruit_type, season=season)
-            child_factories.append(fruit_factory)
-            weights.append(relative_fruit_density)
+            weights.append(1.0)
 
     weights = np.array(weights)
     weights /= np.sum(weights) # normalize to 1       
@@ -278,21 +268,22 @@ def make_leaf_collection(seed,
     # if leaf_surface is not None:
     #     leaf_surface.apply(list(col.objects))
     for obj in col.objects:
-        butil.modify_mesh(obj, 'DECIMATE', ratio=0.07, apply=True)
+        if decimate_rate > 0:
+            butil.modify_mesh(obj, 'DECIMATE', ratio=1.0-decimate_rate, apply=True)
         butil.apply_transform(obj, rot=True, scale=True)
         butil.apply_modifiers(obj)
     return col
 
 def random_leaf_collection(season, n=5):
     (_, _, leaf_params), leaf_type = random_species(season=season)
-    return make_leaf_collection(np.random.randint(1e5), leaf_params, n_leaf=n, leaf_types=leaf_type or 'leaf_v2')
+    return make_leaf_collection(np.random.randint(1e5), leaf_params, n_leaf=n, leaf_types=leaf_type or 'leaf_v2', decimate_rate=0.97)
 
 def make_twig_collection(
     seed, 
     twig_params, leaf_params, 
     trunk_surface, 
     n_leaf, n_twig, 
-    leaf_types, fruit_type=None, 
+    leaf_types,
     season=None, 
     twig_valid_dist=6
 ):
@@ -302,8 +293,8 @@ def make_twig_collection(
     if season is None:
         season = random_season()
 
-    if leaf_types is not None or fruit_type is not None:
-        child_col = make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, fruit_type, season=season)
+    if leaf_types is not None:
+        child_col = make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, season=season, decimate_rate=0.97)
     else:
         child_col = None
 
@@ -315,10 +306,19 @@ def make_twig_collection(
         butil.delete(list(child_col.objects))
     return col
 
+def make_branch_collection(seed, twig_col, fruit_col, n_branch, coarse=False):
+
+    logger.debug(f'Starting make_branch_collection({seed=}, ...)')
+
+    branch_factory = branch.BranchFactory(seed, twig_col=twig_col, fruit_col=fruit_col, coarse=coarse)
+    col = make_asset_collection(branch_factory, n_branch, verbose=False)
+
+    return col
+
 @gin.configurable
 class TreeFactory(GenericTreeFactory):
 
-    n_leaf = 10
+    n_leaf = 5
     n_twig = 2
 
     @staticmethod
@@ -342,11 +342,11 @@ class TreeFactory(GenericTreeFactory):
         # return 'leaf_maple'
         fruit_type = np.random.choice(['apple', 'blackberry', 'coconutgreen', 
             'durian', 'starfruit', 'strawberry', 'compositional_fruit'], 
-            p=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4])
+             p=[0.2, 0.0, 0.2, 0.2, 0.2, 0.0, 0.2])
 
-        return [fruit_type]
+        return fruit_type
 
-    def __init__(self, seed, season=None, coarse=False, fruit_chance=0.2, **kwargs):
+    def __init__(self, seed, season=None, coarse=False, fruit_chance=1.0, **kwargs):
 
         with FixedSeed(seed):
             if season is None:
@@ -375,8 +375,15 @@ class TreeFactory(GenericTreeFactory):
                 logger.warning(f'In {self}, encountered {use_cached=} yet {coarse=}, unexpected since twigs are typically generated only in coarse')
 
             if colname not in bpy.data.collections:
-                self.child_col = make_twig_collection(seed, twig_params, leaf_params, trunk_surface, self.n_leaf, self.n_twig, leaf_type, fruit_type, season=season) 
+                twig_col = make_twig_collection(seed, twig_params, leaf_params, trunk_surface, self.n_leaf, self.n_twig, leaf_type, season=season) 
+                if fruit_type is not None:
+                    fruit_col = make_leaf_collection(seed, leaf_params, self.n_leaf, fruit_type, season=season, decimate_rate=0.0)
+                else:
+                    fruit_col = butil.get_collection('Empty', reuse=True)
+
+                self.child_col = make_branch_collection(seed, twig_col, fruit_col, n_branch=self.n_twig) 
                 self.child_col.name = colname
+
                 assert self.child_col.name == colname, f'Blender truncated {colname} to {self.child_col.name}'
             else:
                 self.child_col = bpy.data.collections[colname]
