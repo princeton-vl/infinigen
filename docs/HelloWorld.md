@@ -9,7 +9,7 @@
 
 This guide will show you how to generate an image and it's corresponding ground-truth, similar to those shown above.
 
-:warning: **Known issue** : We are actively fixing an issue which causes Infinigen not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements, including those shown in "Hello World" and our [ConfiguringInfinigen.md](docs/ConfiguringInfinigen.md)
+:warning: **Known issue** : We are actively fixing an issue which causes Infinigen not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 ## Generate a scene step by step
 Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
@@ -46,6 +46,6 @@ python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_sc
 
 This command will repeatedly print summaries of the status of each stage of the pipeline. Please look in `outputs/hello_world/1/logs` for full output logs of the underlying tasks.
 
-We encourage you to visit [Configuring Infinigen](docs/ConfiguringInfinigen.md) for a breakdown of this command and more advanced usage instructions / example commands.
+We encourage you to visit [Configuring Infinigen](ConfiguringInfinigen.md) for a breakdown of this command and more advanced usage instructions / example commands.
 
-See [Extended ground-truth](docs/GroundTruthAnnotations.md) for a guide on using our custom ground-truth extraction system.
+See [Extended ground-truth](GroundTruthAnnotations.md) for a guide on using our custom ground-truth extraction system.

@@ -69,7 +69,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -271,8 +271,7 @@ def execute_tasks(
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
 
-    if Task.Coarse in task or Task.FineTerrain in task or Task.Fine in task or Task.Populate in task:
-        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
+    terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
 
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
