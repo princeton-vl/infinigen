@@ -1,0 +1,16 @@
+compose_scene.generate_resolution = (960, 540)
+
+full/render_image.min_samples = 32
+full/render_image.num_samples = 512
+
+OpaqueSphericalMesher.pixels_per_cube = 4
+TransparentSphericalMesher.pixels_per_cube = 4
+target_face_size.global_multiplier = 2
+
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.flying_creatures_chance = 0.0
+
+compose_scene.inview_distance = 35
+placement.populate_all.dist_cull = 35
+compose_scene.near_distance = 10
+compose_scene.center_distance = 20

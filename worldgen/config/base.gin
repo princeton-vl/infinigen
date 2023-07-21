@@ -13,8 +13,8 @@ save_obj_and_instances.output_folder="saved_mesh.obj"
 
 util.logging.create_text_file.log_dir = %LOG_DIR
 
-compose_scene.inview_distance = 70
 placement.populate_all.dist_cull = 70
+compose_scene.inview_distance = 70
 compose_scene.near_distance = 20
 compose_scene.center_distance = 35
 
@@ -157,12 +157,11 @@ camera.camera_pose_proposal.altitude = ("weighted_choice",
 
 camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 30, 20, 160)
 
-camera.spawn_camera_rigs.n_camera_rigs = 1
-
 # WARNING: Large camera rig translations or rotations require special handling. 
 #    if your cameras are not all approximately forward facing within a few centimeters, you must either:
 #    -  configure the pipeline to generate assets / terrain for each camera separately, rather than sharing it between the whole rig
 #    -  or, treat your camera rig as multiple camera rigs each with one camera, and implement code to positon them correctly
+camera.spawn_camera_rigs.n_camera_rigs = 1
 camera.spawn_camera_rigs.camera_rig_config = [
     {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
     {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}

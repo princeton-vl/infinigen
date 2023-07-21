@@ -1,0 +1,47 @@
+compose_scene.fancy_clouds_chance = 0.0
+
+compose_scene.trees_chance = 0.0
+compose_scene.bushes_chance = 0.0
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.flying_creatures_chance = 0.0
+compose_scene.clouds_chance = 0.0
+compose_scene.boulders_chance = 0.0
+compose_scene.glowing_rocks_chance = 0.0
+compose_scene.rocks_chance = 0.0
+compose_scene.ground_leaves_chance = 0.0
+compose_scene.ground_twigs_chance = 0.0
+compose_scene.chopped_trees_chance = 0.0
+compose_scene.grass_chance = 0.0
+compose_scene.flowers_chance = 0.0
+compose_scene.kelp_chance = 0.0
+compose_scene.cactus_chance = 0.0
+compose_scene.rain_particles_chance = 0.0
+compose_scene.snow_particles_chance = 0.0
+compose_scene.leaf_particles_chance = 0.0
+compose_scene.dust_particles_chance = 0.0
+compose_scene.camera_based_lighting_chance = 0.0
+compose_scene.wind_chance = 0.0
+compose_scene.turbulence_chance = 0.0
+compose_scene.ferns_chance = 0.0
+
+compose_scene.fish_school_chance = 0.0
+compose_scene.marine_snow_particles_chance = 0.0
+
+compose_scene.corals_chance = 0.0
+compose_scene.seaweed_chance = 0.0
+compose_scene.urchin_chance = 0.0
+compose_scene.seashells_chance = 0.0
+compose_scene.jellyfish_chance = 0.0
+compose_scene.mushroom_chance = 0.0
+compose_scene.pinecone_chance = 0.0
+compose_scene.monocots_chance = 0.0 
+compose_scene.pine_needle_chance = 0.0
+compose_scene.caustics_chance = 0.0
+
+compose_scene.decorative_plants_chance = 0.0
+
+populate_scene.moss_chance = 0.0
+populate_scene.lichen_chance = 0.0
+populate_scene.slime_mold_chance = 0.0
+populate_scene.ivy_chance = 0.0
+populate_scene.snow_layer_chance = 0.0

@@ -96,10 +96,10 @@ def populate_scene(
 
     populated = {}
     populated['trees'] = p.run_stage('populate_trees', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4, dist_cull=70))#,
+        fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8)) 
     populated['boulders'] = p.run_stage('populate_boulders', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3, dist_cull=70))#,
+        fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
     p.run_stage('populate_bushes', use_chance=False,
         fn=lambda: placement.populate_all(BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
@@ -396,19 +396,15 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
             args.gin_config = [scene_type] + args.gin_config
 
     def find_config(g):
-        as_figure_type = f'config/figure_types/{g}.gin'
-        if os.path.exists(as_figure_type):
-            return as_figure_type
-        as_scene_type = f'config/scene_types/{g}.gin'
-        if os.path.exists(as_scene_type):
-            return as_scene_type
-        as_base = f'config/{g}.gin'
-        if os.path.exists(as_base):
-            return as_base
-        raise ValueError(f'Couldn not locate {g} in either config/ or config/scene_types')
+        for p in Path('config').glob('**/*.gin'):
+            if p.parts[-1] == g:
+                return p
+            if p.parts[-1] == f'{g}.gin':
+                return p
+        raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere config/**')
 
     bindings = sanitize_gin_override(args.gin_param)
-    confs = [find_config(g) for g in ['base'] + args.gin_config]
+    confs = [find_config(g) for g in ['base.gin'] + args.gin_config]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 
 def main(
