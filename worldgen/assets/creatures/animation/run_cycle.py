@@ -67,10 +67,11 @@ def body_path(length, height, upturn, down_stroke, curve_resolution=8):
 
     return obj
 
-def follow_path(target, path, duration: int, offset: float = 0, **kwargs):
+def follow_path(target, path, duration: int, offset: float = 0, reset_rot=True, **kwargs):
     
     target.location = (0, 0, 0)
-    target.rotation_euler = (0, 0, 0)
+    if reset_rot:
+        target.rotation_euler = (0, 0, 0)
     c = butil.constrain_object(target, 'FOLLOW_PATH', 
                                target=path, offset=offset, **kwargs)
     
@@ -87,7 +88,7 @@ def follow_gait_path(targets, path_dims, period, offset, spread):
         path = foot_path(*path_dims)
         path.location = target.location
         target.parent = None
-        follow_path(target, path, duration=period, offset=offset)
+        follow_path(target, path, duration=period, offset=offset, reset_rot=False)
         paths.append(path)
 
     return paths
@@ -107,7 +108,7 @@ def follow_body_path(targets, path_dims, period, offset, spread):
 
     return paths
 
-def animate_run(root, arma, targets, steps_per_sec=0.7, body=True, motion=True, squash_gait_pct=0.1):
+def animate_run(root, arma, targets, steps_per_sec=1, body=True, motion=True, squash_gait_pct=0.1):
 
     '''
     Animate creature by moving its IK targets
@@ -115,9 +116,9 @@ def animate_run(root, arma, targets, steps_per_sec=0.7, body=True, motion=True, 
     
     assert arma.type == 'ARMATURE'
 
-    stride_length = 0.5 * clip_gaussian(0.4, 0.2, 0.3, 0.6) * arma.dimensions.x
+    stride_length = 0.7 * clip_gaussian(0.4, 0.3, 0.3, 0.6) * arma.dimensions.x
     spread = clip_gaussian(0.15, 0.1, 0, 0.5)
-    stride_height = U(0.15, 0.3)
+    stride_height = U(0.15, 0.4)
     body_height = stride_height * clip_gaussian(0.6, 0.4, 0.3, 1.2)
     
     base_offset = U(0, 1)
@@ -136,7 +137,6 @@ def animate_run(root, arma, targets, steps_per_sec=0.7, body=True, motion=True, 
         path_dims=(stride_length, stride_height, 0.0, 0.0), offset=base_offset+offset, spread=spread)
 
     for p in foot_paths:
-        p.location.z = -0.2
         p.parent = root
 
     feet_targets = get_targets('knee')
@@ -152,13 +152,13 @@ def animate_run(root, arma, targets, steps_per_sec=0.7, body=True, motion=True, 
     body_paths = []
     if body:
         body_paths += follow_gait_path(targets=get_targets('body_0'), period=frame_period,
-            path_dims=(0, body_height, 0.0, 0.0), offset=base_offset+offset/2, spread=0)
-        body_paths += follow_gait_path(targets=get_targets('body_1'), period=frame_period,
             path_dims=(0, body_height, 0.0, 0.0), offset=base_offset+1-offset/2, spread=0)
+        body_paths += follow_gait_path(targets=get_targets('body_1'), period=frame_period,
+            path_dims=(0, body_height, 0.0, 0.0), offset=base_offset+offset/2, spread=0)
         #body_paths += animate_feet(targets=get_targets('tail'), period=frame_period,
         #    path_dims=(0.1, 0.4, 0.0, 0.0), offset=0, spread=0)
         body_paths += follow_gait_path(targets=get_targets('head'), period=frame_period, 
-            path_dims=(0, body_height, 0.0, 0.0), offset=0, spread=0)
+            path_dims=(0, body_height*0.5*N(1, 0.05), 0.0, 0.0), offset=0, spread=0)
 
     flap_height = U(0.3, 1)
     flap_speed_mult = 1 #uniform(0.7, 2)

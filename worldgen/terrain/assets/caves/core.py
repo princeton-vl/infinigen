@@ -8,7 +8,7 @@ from pathlib import Path
 
 import bpy
 import gin
-import mesh_to_sdf
+import terrain.mesh_to_sdf as mesh_to_sdf
 import numpy as np
 from numpy import ascontiguousarray as AC
 from terrain.utils import Mesh

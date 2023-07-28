@@ -89,9 +89,11 @@ struct WindParticle : public Particle {
     if(height > sheight)    //Flying Movement
       speed.y -= gravity;   //Gravity
     else                    //Contact Movement
-      speed = mix(speed, cross(cross(speed,n),n), windfriction);
+      // speed = mix(speed, cross(cross(speed,n),n), windfriction);
+      speed = speed * float(1 - windfriction) + cross(cross(speed,n),n) * float(windfriction);
 
-    speed = mix(speed, pspeed, winddominance);
+    // speed = mix(speed, pspeed, winddominance);
+    speed = speed * float(1 - winddominance) + pspeed * float(winddominance);
     pos += vec2(speed.x, speed.z);
     height += speed.y;
 

@@ -96,7 +96,8 @@ struct WaterParticle : public Particle {
       return false;
 
     //Motion Low
-    speed = mix(vec2(n.x, n.z), speed, param.friction);
+    // speed = mix(vec2(n.x, n.z), speed, param.friction);
+    speed = vec2(n.x, n.z) * float(1 - param.friction) + speed * float(param.friction);
     speed = sqrt(2.0f)*normalize(speed);
     pos   += speed;
 

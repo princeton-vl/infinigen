@@ -1,4 +1,4 @@
-include 'config/no_assets.gin'
+include 'config/disable_assets/no_assets.gin'
 
 surface.registry.rock_collection = [
     ('mountain', 1),
@@ -6,7 +6,7 @@ surface.registry.rock_collection = [
 surface.registry.mountain_collection = [
     ('mountain', 1),
 ]
-
+    
 compose_scene.snow_particles_chance = 0.5
 
 shader_atmosphere.density = 0

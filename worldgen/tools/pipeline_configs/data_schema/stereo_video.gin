@@ -1,0 +1,2 @@
+include 'tools/pipeline_configs/data_schema/monocular_video.gin'
+iterate_scene_tasks.cam_id_ranges = [1, 2]

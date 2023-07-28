@@ -44,9 +44,10 @@ def fold(t: Tree, func):
 def map(t: Tree, func) -> Tree:
     return Tree(item=func(t.item), children=[map(c, func) for c in t.children])
 
-def map_parent_child(t, func, parent_res=None) -> Tree:
-    res = func(t.item, parent_res)
-    return Tree(res, children=[map_parent_child(c, func, parent_res=res) for c in t.children])
+def map_parent_child(t, func, parent_node=None, parent_res=None, **opts) -> Tree:
+    arg = (t, parent_node) if opts.get('include_parent_node', False) else t
+    res = func(arg, parent_res)
+    return Tree(res, children=[map_parent_child(c, func, parent_node=t, parent_res=res, **opts) for c in t.children])
 
 def tzip(*trees):
     return Tree(tuple(t.item for t in trees), 

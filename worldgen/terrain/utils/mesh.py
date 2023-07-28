@@ -56,6 +56,13 @@ def object_from_VF(name, vertices, faces):
     new_object.rotation_euler = (0, 0, 0)
     return new_object
 
+def convert_face_array(face_array):
+    l = face_array.shape[0]
+    min_indices = np.argmin(face_array, axis=1)
+    u = face_array[list(np.arange(l)), min_indices]
+    v = face_array[list(np.arange(l)), (min_indices + 1) % 3]
+    w = face_array[list(np.arange(l)), (min_indices + 2) % 3]
+    return np.stack([u, v, w], -1)
 
 class Mesh:
     def __init__(self, normal_mode=NormalMode.Mean,
@@ -151,6 +158,7 @@ class Mesh:
         self.faces = np.argsort(sorted_indices)[self.faces]
         for attr_name in self.vertex_attributes:
             self.vertex_attributes[attr_name] = self.vertex_attributes[attr_name][sorted_indices]
+        self.faces = convert_face_array(self.faces)
         transposed_array = self.faces.T
         sorted_indices = np.lexsort(transposed_array)
         self.faces = self.faces[sorted_indices]

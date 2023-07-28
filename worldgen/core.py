@@ -69,7 +69,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -96,10 +96,10 @@ def populate_scene(
 
     populated = {}
     populated['trees'] = p.run_stage('populate_trees', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4, dist_cull=70))#,
+        fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8)) 
     populated['boulders'] = p.run_stage('populate_boulders', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3, dist_cull=70))#,
+        fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
     p.run_stage('populate_bushes', use_chance=False,
         fn=lambda: placement.populate_all(BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
@@ -271,8 +271,7 @@ def execute_tasks(
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
 
-    if Task.Coarse in task or Task.FineTerrain in task or Task.Fine in task or Task.Populate in task:
-        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
+    terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
 
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
@@ -296,22 +295,35 @@ def execute_tasks(
     
     group_collections()
 
-    if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
-        bpy.context.preferences.system.scrollback = 100 
-        bpy.context.preferences.edit.undo_steps = 100
-        with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
-            bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
-            tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
+    if task == [Task.FineTerrain]:
+        os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
+        os.symlink(input_folder / "MaskTag.json", output_folder / "MaskTag.json")
+        os.symlink(input_folder / "version.txt", output_folder / "version.txt")
+        os.symlink(input_folder / 'polycounts.txt', output_folder / 'polycounts.txt')
+    else:
+        if input_folder is not None:
+            for mesh in os.listdir(input_folder):
+                if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
+                    os.symlink(input_folder / mesh, output_folder / mesh)
+        if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
+            bpy.context.preferences.system.scrollback = 100 
+            bpy.context.preferences.edit.undo_steps = 100
+            with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
+                bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+                tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
-        with (output_folder/ "version.txt").open('w') as f:
-            scene_version = get_scene_tag('VERSION')
-            f.write(f"{scene_version}\n")
+            with (output_folder/ "version.txt").open('w') as f:
+                scene_version = get_scene_tag('VERSION')
+                f.write(f"{scene_version}\n")
 
-        with (output_folder/'polycounts.txt').open('w') as f:
-            save_polycounts(f)
+            with (output_folder/'polycounts.txt').open('w') as f:
+                save_polycounts(f)
 
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
+
+    if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
+        terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
         render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)
@@ -383,19 +395,15 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
             args.gin_config = [scene_type] + args.gin_config
 
     def find_config(g):
-        as_figure_type = f'config/figure_types/{g}.gin'
-        if os.path.exists(as_figure_type):
-            return as_figure_type
-        as_scene_type = f'config/scene_types/{g}.gin'
-        if os.path.exists(as_scene_type):
-            return as_scene_type
-        as_base = f'config/{g}.gin'
-        if os.path.exists(as_base):
-            return as_base
-        raise ValueError(f'Couldn not locate {g} in either config/ or config/scene_types')
+        for p in Path('config').glob('**/*.gin'):
+            if p.parts[-1] == g:
+                return p
+            if p.parts[-1] == f'{g}.gin':
+                return p
+        raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere config/**')
 
     bindings = sanitize_gin_override(args.gin_param)
-    confs = [find_config(g) for g in ['base'] + args.gin_config]
+    confs = [find_config(g) for g in ['base.gin'] + args.gin_config]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 
 def main(

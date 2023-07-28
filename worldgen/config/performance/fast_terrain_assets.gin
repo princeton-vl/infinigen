@@ -1,0 +1,4 @@
+landtiles.load_assets.on_the_fly_instances = 1
+upsidedown_mountains.load_assets.on_the_fly_instances = 1
+caves.load_assets.on_the_fly_instances = 1
+run_erosion.n_iters = [10000, 50000]

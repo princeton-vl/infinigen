@@ -555,8 +555,16 @@ def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
 
 def update_symlink(scene_folder, scenes):
     for new_name, scene in scenes:
-        std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
+
+        if scene == 'MARK_AS_SUCCEEDED':
+            continue
+        elif isinstance(scene, str):
+            raise ValueError(f'Failed due to {scene=}')
+
         to = scene_folder / "logs" / f"{new_name}.out"
+
+        std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
+
         if os.path.islink(to):
             os.unlink(to)
             os.unlink(scene_folder / "logs" / f"{new_name}.err")
@@ -834,7 +842,7 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
     if len(matches):
         return ','.join([m.strip() for m in matches if ('Error: Not freed memory blocks' not in m)])
     else:
-        return "unknown cause" 
+        return f"Could not summarize cause, check {stderr_file}" 
 
 def record_crashed_seed(crashed_seed, crash_stage, f, fatal=True):
     time_str = datetime.now().strftime("%m/%d %I:%M%p")
@@ -893,14 +901,14 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, sleep_threshold=0.9
             if state == JobState.Failed:
                 if not scene.get(f'{taskname}_crash_recorded', False):
                     scene[f'{taskname}_crash_recorded'] = True
-                    with (args.output_folder / "crashed.txt").open('a') as f:
+                    with (args.output_folder / "crash_summaries.txt").open('a') as f:
                         record_crashed_seed(scene['seed'], taskname, f, fatal=fatal)
                 if fatal:
                     any_fatal = True
 
         if scene['num_running'] == 0 and any_fatal and scene['all_done'] == SceneState.NotDone:
             scene['all_done'] = SceneState.Crashed    
-            with (args.output_folder / "crashed.txt").open('a') as f:
+            with (args.output_folder / "crash_summaries.txt").open('a') as f:
                 check_and_perform_cleanup(args, scene['seed'], crashed=True)
 
     # Report stats, with sums by prefix, and extra info
@@ -982,24 +990,98 @@ if __name__ == "__main__":
 
     slurm_available = (which("sbatch") is not None)
     parser = argparse.ArgumentParser() # to guarantee that the render scenes finish, try render_image.time_limit=2000
-    parser.add_argument('--blender_path', type=str, default=None)
-    parser.add_argument('-o', '--output_folder', type=Path, required=True)
-    parser.add_argument('--num_scenes', type=int, default=1)
-    parser.add_argument('--meta_seed', type=int, default=None)
-    parser.add_argument('--specific_seed', default=None, nargs='+', help="It will cast to an int if it's a number, otherwise str")
-    parser.add_argument('--use_existing', action='store_true')
-
-    parser.add_argument('--warmup_sec', type=float, default=0)
-    parser.add_argument('--cleanup', type=str, choices=['all', 'big_files', 'none', 'except_crashed'], default='none')
-    parser.add_argument('--remove_write', action='store_true')
-    parser.add_argument('--upload', action='store_true')
-    
-    parser.add_argument('--configs', nargs='*', default=[])
-    parser.add_argument('-p', '--override', nargs='+', type=str, default=[], help="gin-config settings to override. FYI all scenes will use the same overrides.")
-
-    parser.add_argument('--wandb_mode', type=str, default='disabled', choices=['online', 'offline', 'disabled'])
-    parser.add_argument('--pipeline_configs', type=str, nargs='+', default=["allcs" if slurm_available else "local"])
-    parser.add_argument('--pipeline_overrides', nargs='+', type=str, default=[], help="pipeline gin-config settings to override")
+    parser.add_argument(
+        '-o', 
+        '--output_folder', 
+        type=Path, 
+        required=True
+    )
+    parser.add_argument(
+        '--blender_path', 
+        type=str, 
+        default=None,
+        help="Full path to a `blender` executable with all dependencies installed. If set to None, the system will use the $BLENDER environment variable"
+    )
+    parser.add_argument(
+        '--num_scenes', 
+        type=int, 
+        default=1,
+        help="Number of scenes to attempt before terminating"
+    )
+    parser.add_argument(
+        '--meta_seed', 
+        type=int, 
+        default=None,
+        help="What seed should be used to determine the random seeds of each scene? Leave as None unless deliberately replicat"
+    )
+    parser.add_argument(
+        '--specific_seed', 
+        default=None, 
+        nargs='+', 
+        help="The default, None, will choose a random seed per scene. Otherwise, all scenes will have the specified seed. Interpreted as an integer if possible."
+    )
+    parser.add_argument(
+        '--use_existing', 
+        action='store_true',
+        help="If set, then assume output_folder is an existing folder from a terminated run, and make a best-possible-effort to resume from where it left off"
+    )
+    parser.add_argument(
+        '--warmup_sec', 
+        type=float, 
+        default=0,
+        help="Perform a staggered start over the specified period, so that jobs dont sync up or all write to disk at similar times."
+    )
+    parser.add_argument(
+        '--cleanup', 
+        type=str, 
+        choices=['all', 'big_files', 'none', 'except_crashed'], 
+        default='none',
+        help="What files should be cleaned up by the manager as it runs?"
+    )
+    parser.add_argument(
+        '--remove_write', 
+        action='store_true',
+        help="If set, remove Unix write permissions from the generated files, to prevent a user accidentally deleting data."
+    )
+    parser.add_argument(
+        '--upload', 
+        action='store_true',
+        help="If set, attempt to upload scenes as tarballs to GDrive of SMB depending on configs. See `upload_util.py` for more details before using."
+    )
+    parser.add_argument(
+        '--configs', 
+        nargs='*', 
+        default=[],
+        help="List of gin config names to pass through to all underlying scene generation jobs."
+    )
+    parser.add_argument(
+        '-p', 
+        '--override', 
+        nargs='+', 
+        type=str, 
+        default=[], 
+        help="List of gin overrides to pass through to all underlying scene generation jobs"
+    )
+    parser.add_argument(
+        '--wandb_mode', 
+        type=str, 
+        default='disabled', 
+        choices=['online', 'offline', 'disabled'],
+        help="Mode kwarg for wandb.init(). Set up wandb before use."
+    )
+    parser.add_argument(
+        '--pipeline_configs', 
+        type=str, 
+        nargs='+',
+        help="List of gin config names from tools/pipeline_configs to configure this execution"
+    )
+    parser.add_argument(
+        '--pipeline_overrides', 
+        nargs='+', 
+        type=str, 
+        default=[], 
+        help="List of gin overrides to configure this execution",
+    )
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
     args = parser.parse_args()
@@ -1007,7 +1089,7 @@ if __name__ == "__main__":
     envvar = 'INFINIGEN_ASSET_FOLDER'
 
     if not args.upload and args.cleanup == 'all':
-        raise ValueError(f'Pipeline is configured {args.upload=} {args.cleanup=} --- no output would be preserved')
+        raise ValueError(f'Pipeline is configured with {args.cleanup=} yet {args.upload=} --- no output would be preserved')
 
     global BLENDER_PATH
     if args.blender_path is None:
@@ -1031,8 +1113,14 @@ if __name__ == "__main__":
         random.seed(args.meta_seed)
         np.random.seed(args.meta_seed)
 
-    find_gin = lambda n: os.path.join("tools", "pipeline_configs", f"{n}.gin")
-    configs = [find_gin(n) for n in args.pipeline_configs]
+    def find_config(g):
+        for p in Path('tools/pipeline_configs').glob('**/*.gin'):
+            if p.parts[-1] == g:
+                return p
+            if p.parts[-1] == f'{g}.gin':
+                return p
+        raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere pipeline_configs/**')
+    configs = [find_config(n) for n in args.pipeline_configs]
     for c in configs:
         assert os.path.exists(c), c
     bindings = args.pipeline_overrides

@@ -1,0 +1,5 @@
+OpaqueSphericalMesher.pixels_per_cube = 0.92
+TransparentSphericalMesher.pixels_per_cube = 1.38
+
+get_surface_type.degrade_sdf_to_displacement = 0
+voronoi_grains_chance = 0.5
