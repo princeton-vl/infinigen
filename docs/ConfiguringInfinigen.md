@@ -49,7 +49,7 @@ Now that you understand the two major python programs and how to configure them,
 # Original hello world command
 python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \
 --configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin blender_gt.gin \ 
---pipeline_overrides LocalScheduleHandler.use_gpu=False
+--pipeline_overrides LocalScheduleHandler.gpu_type=None
 ```
 
 Here is a breakdown of what every commandline argument does, and ideas for how you could change them / swap them out:
@@ -64,7 +64,7 @@ Here is a breakdown of what every commandline argument does, and ideas for how y
       - `local_16GB.gin` specifies to run only a single scene at a time, and to run each task as a local python process. See [here](#configuring-available-computing-resources) for more options
       - `monocular.gin` specifies that we want a single image per scene, not stereo or video. See [here](#rendering-video-stereo-and-other-data-formats) for more options.
       - `blender_gt.gin` specifies to extract ground truth labels (depth, surface normals, etc) using Blender's in-built render. If you do not need these, remove this config to save on runtime.
-   - `--pipeline_overrides LocalScheduleHandler.use_gpu=False` tells the system not to look for available GPUs, and to _not_ make them available to any jobs. This is intended only to make the Hello World easier to run, and work on non-NVIDIA systems. Please [click here](#using-gpu-acceleration) for full instructions on using a GPU.
+   - `--pipeline_overrides LocalScheduleHandler.gpu_type=None` tells the system not to look for available GPUs, and to _not_ make them available to any jobs. This is intended only to make the Hello World easier to run, and work on non-NVIDIA systems. Please [click here](#using-gpu-acceleration) for full instructions on using a GPU.
             
 ## Commandline Options in Detail
 
@@ -90,7 +90,7 @@ Infinigen currently only supports NVIDIA GPUs. Infinigen can use a GPU in accele
    1. In the `opengl_gt` step (if enabled) our custom ground truth code uses OpenGL and thus requires access to a GPU. 
 
 To enable these GPU accelerated steps:
-   - First, if you are using a `local_*.gin` pipeline config, you must first remove `--pipeline_overrides LocalScheduleHandler.use_gpu=False` from our Hello World command, or otherwise ensure this value is set to true via configs/overrides. This will make the GPU _visible_ to each child process, and will cause _rendering_ to automatically detect and use the GPU. `slurm.gin` assumes GPUs will be available by default, set it's GPU request amounts to 0 if this is not the case for your cluster.
+   - First, if you are using a `local_*.gin` pipeline config, you must first remove `--pipeline_overrides LocalScheduleHandler.gpu_type=None` from our Hello World command, or otherwise ensure this value is set to true via configs/overrides. This will make the GPU _visible_ to each child process, and will cause _rendering_ to automatically detect and use the GPU. `slurm.gin` assumes GPUs will be available by default, set it's GPU request amounts to 0 if this is not the case for your cluster.
    - To enable GPU-acceleration for `fine_terrain`, you must ensure that `install.sh` was run on a machine with CUDA, then add `cuda_terrain.gin` to your `--pipeline_configs`.
    - OpenGL GT can be enabled described in [Extended ground-truth](GroundTruthAnnotations.md)
 
