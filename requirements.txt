@@ -27,3 +27,4 @@ landlab==2.4.1
 scikit-learn
 psutil
 pyrender
+pyadl

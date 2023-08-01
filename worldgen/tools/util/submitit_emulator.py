@@ -24,11 +24,53 @@ from multiprocessing import Process
 import threading
 import submitit
 import gin
+from pyadl import ADLManager
 
 import numpy as np
 from shutil import which
 
-CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
+GPU_VISIBIITY_ENVVAR_NAMES = {
+    'NVIDIA': 'CUDA_VISIBLE_DEVICES',
+    'AMD': 'HIP_VISIBLE_DEVICES'
+}
+
+NVIDIA_SMI_PATH = '/bin/nvidia-smi'
+
+def get_hardware_gpus(gpu_type):
+        if gpu_type is None:
+            return {'0'}
+        elif gpu_type == 'NVIDIA':
+            if which(NVIDIA_SMI_PATH) is None:
+                raise ValueError(f'Attempted to use {gpu_type=} but could not find {NVIDIA_SMI_PATH}')
+            result = subprocess.check_output(f'{NVIDIA_SMI_PATH} -L'.split()).decode()                                            
+            return set(i for i in range(len(result.splitlines())))
+        elif gpu_type == 'AMD':
+            return set(i for i, _ in enumerate(ADLManager.getInstance().getDevices()))
+        else:
+            raise ValueError(f'Unrecognized {gpu_type=}')
+
+def get_visibile_gpus(gpu_type):
+
+    gpus_uuids = get_hardware_gpus()
+
+    envvar = GPU_VISIBIITY_ENVVAR_NAMES[gpu_type]
+    if envvar in os.environ:
+        visible = [int(s.strip()) for s in os.environ[envvar].split(',')]
+        gpus_uuids = gpus_uuids.intersection(visible)
+        logging.warning(f"Restricting to {gpus_uuids=} due to toplevel {envvar} setting")
+
+    return gpus_uuids
+
+def set_gpu_visibility(gpu_type, devices=None):
+    
+    if devices is None:
+        varstr = ''
+    else:
+        varstr = ','.join([str(i) for i in devices])
+
+    envvar = GPU_VISIBIITY_ENVVAR_NAMES.get(gpu_type)
+    if envvar is not None:
+        os.environ[envvar] = varstr
 
 @dataclass
 class LocalJob:
@@ -67,19 +109,15 @@ def get_fake_job_id():
     # Lahav assures me these will never conflict
     return np.random.randint(int(1e10), int(1e11))
 
-def job_wrapper(func, inner_args, inner_kwargs, stdout_file: Path, stderr_file: Path, cuda_devices=None):
-
+def job_wrapper(func, inner_args, inner_kwargs, stdout_file: Path, stderr_file: Path, gpu_devices=None, gpu_type=None):
 
     with stdout_file.open('w') as stdout, stderr_file.open('w') as stderr:
         sys.stdout = stdout
         sys.stderr = stderr
-        if cuda_devices is not None:
-            os.environ[CUDA_VARNAME] = ','.join([str(i) for i in cuda_devices])
-        else:
-            os.environ[CUDA_VARNAME] = ''
+        set_gpu_visibility(gpu_type, gpu_devices)
         return func(*inner_args, **inner_kwargs)
 
-def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None):
+def launch_local(func, args, kwargs, job_id, log_folder, name, gpu_devices=None, gpu_type=None):
     
     stderr_file = log_folder / f"{job_id}_0_log.err"
     stdout_file = log_folder / f"{job_id}_0_log.out"
@@ -92,7 +130,8 @@ def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None
         inner_kwargs=kwargs,
         stdout_file=stdout_file, 
         stderr_file=stderr_file, 
-        cuda_devices=cuda_devices
+        gpu_devices=gpu_devices,
+        gpu_type=gpu_type
     )
     proc = Process(target=job_wrapper, kwargs=kwargs, name=name)
     proc.start()
@@ -126,10 +165,10 @@ class LocalScheduleHandler:
             cls._inst = cls()
         return cls._inst
 
-    def __init__(self, jobs_per_gpu=1, use_gpu=True):
+    def __init__(self, jobs_per_gpu=1, gpu_type='NVIDIA'):
         self.queue = []
         self.jobs_per_gpu = jobs_per_gpu
-        self.use_gpu = use_gpu
+        self.gpu_type = gpu_type
 
     def enqueue(self, func, args, kwargs, params, log_folder):
 
@@ -149,19 +188,11 @@ class LocalScheduleHandler:
 
         resources = {}
 
-        if self.use_gpu:
-            if which('/bin/nvidia-smi') is not None:
-                result = subprocess.check_output('/bin/nvidia-smi -L'.split()).decode()                                            
-                gpus_uuids = set(i for i in range(len(result.splitlines())))
-
-                if CUDA_VARNAME in os.environ:
-                    visible = [int(s.strip()) for s in os.environ[CUDA_VARNAME].split(',')]
-                    gpus_uuids = gpus_uuids.intersection(visible)
-                    print(f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting")
-
-                resources['gpus'] = set(itertools.product(range(len(gpus_uuids)), range(self.jobs_per_gpu)))
-            else:
-                resources['gpus'] = {'0'}
+        if self.gpu_type is not None:
+            gpu_uuids = get_visibile_gpus(self.gpu_type)
+            if len(gpu_uuids) == 0:
+                gpu_uuids = {'0'}
+            resources['gpus'] = set(itertools.product(range(len(gpu_uuids)), range(self.jobs_per_gpu)))
             
         return resources
 
@@ -195,10 +226,14 @@ class LocalScheduleHandler:
             gpu_idxs = [g[0] for g in gpu_assignment]
 
         job_rec['job'].process = launch_local(
-            func=job_rec["func"],  args=job_rec["args"], kwargs=job_rec["kwargs"], 
-            job_id=job_rec["job"].job_id, log_folder=job_rec["log_folder"], 
+            func=job_rec["func"],  
+            args=job_rec["args"], 
+            kwargs=job_rec["kwargs"], 
+            job_id=job_rec["job"].job_id, 
+            log_folder=job_rec["log_folder"], 
             name=job_rec["params"].get("name", None), 
-            cuda_devices=gpu_idxs
+            gpu_devices=gpu_idxs, 
+            gpu_type=self.gpu_type
         )
         job_rec['gpu_assignment'] = gpu_assignment
    
@@ -206,7 +241,7 @@ class LocalScheduleHandler:
         
         n_gpus = job_rec['params'].get('gpus', 0) or 0
         
-        if n_gpus == 0 or not self.use_gpu:
+        if n_gpus == 0 or self.gpu_type is None:
             return self.dispatch(job_rec, resources={})
         
         if n_gpus <= len(available['gpus']):
