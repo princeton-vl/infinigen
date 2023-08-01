@@ -1,8 +1,9 @@
 
-PARTITION = None
+PARTITION = 'ENVVAR_INFINIGEN_SLURMPARTITION' # change to partitionname string, or None
 
-manage_datagen_jobs.num_concurrent = 800
-get_slurm_banned_nodes.config_path = None # add a white-space separated txt file path here
+manage_datagen_jobs.num_concurrent = 200
+slurm_submit_cmd.slurm_niceness=10000 
+get_slurm_banned_nodes.config_path = 'ENVVAR_INFINIGEN_SLURM_EXCLUDENODES_LIST'
 
 # Combined (only used when `stereo_combined.gin` or similar is included)
 queue_combined.mem_gb = 12
@@ -40,7 +41,6 @@ queue_populate.exclude_gpus = ['a6000', 'rtx_3090']
 queue_render.submit_cmd = @slurm_submit_cmd
 queue_render.hours = 48
 
-rendershort/queue_render.exclude_gpus = []
 # no point requesting less than 48GB RAM, 8CPUs, due to ratios of RAM:GPUs on pvl
 rendershort/queue_render.mem_gb = 48 
 rendershort/queue_render.cpus = 8
@@ -48,13 +48,13 @@ rendershort/queue_render.slurm_account = %PARTITION
 rendershort/queue_render.gpus = 1
 rendershort/queue_render.render_type = "full"
 
-queue_render.exclude_gpus = ['gtx_1080', 'k80']
+rendershort/queue_render.exclude_gpus = ['gtx_1080', 'k80']
 renderbackup/queue_render.exclude_gpus = ['gtx_1080', 'k80', 'rtx_2080']
 
-renderbackup/queue_render.mem_gb = 64
-renderbackup/queue_render.cpus = 12
+renderbackup/queue_render.mem_gb = 96
+renderbackup/queue_render.cpus = 16
 renderbackup/queue_render.slurm_account = %PARTITION
-renderbackup/queue_render.gpus = 1
+renderbackup/queue_render.gpus = 2
 renderbackup/queue_render.render_type = "full"
 
 # Upload
@@ -68,15 +68,15 @@ queue_upload.dir_prefix_len = 2
 
 # Ground Truth
 queue_mesh_save.submit_cmd = @slurm_submit_cmd
-queue_mesh_save.mem_gb = 24
-queue_mesh_save.cpus = 4
+queue_mesh_save.mem_gb = 48
+queue_mesh_save.cpus = 8
 queue_mesh_save.hours = 24
 queue_mesh_save.slurm_account = %PARTITION
 queue_mesh_save.gpus = 0
 
 queue_opengl.submit_cmd = @slurm_submit_cmd
-queue_opengl.mem_gb = 24
-queue_opengl.cpus = 4
+queue_opengl.mem_gb = 48
+queue_opengl.cpus = 8
 queue_opengl.hours = 24
 queue_opengl.slurm_account = %PARTITION
 queue_opengl.gpus = 1

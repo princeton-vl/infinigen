@@ -39,7 +39,7 @@ If you find a useful and related combination of these commandline overrides, you
 
 Our `generate.py` driver always loads [`worldgen/configs/base.gin`][../worldgen/configs/base.gin], and you can inspect / modify this file to see many common and useful gin override options.
 
-`generate.py` also expects that one file from (configs/scene_types/)[worldgen/config/scene_types] will be loaded, and if one is not specified on the commandline it will choose one randomly according to the keys and weights in `worldgen/core.py`. These scene_type configs contain gin overrides designed to encode the semantic constraints of real natural habitats (e.g. `worldgen/scene_types/desert.gin` causes sand to appear and cacti to be more likely).
+`generate.py` also expects that one file from (configs/scene_types/)[worldgen/config/scene_types] will be loaded. These scene_type configs contain gin overrides designed to encode the semantic constraints of real natural habitats (e.g. `worldgen/scene_types/desert.gin` causes sand to appear and cacti to be more likely).
 
 ### Moving beyond "Hello World"
 
@@ -58,7 +58,7 @@ Here is a breakdown of what every commandline argument does, and ideas for how y
    - `--num_scenes` decides how many unique scenes the program will attempt to generate before terminating. Once you have removed `--specific_seed`, you can increase this to generate many scenes in sequence or in paralell. 
    - `--configs desert.gin simple.gin` forces the command to generate a desert scene, and to do so with relatively low mesh detail, low render resolution, low render samples, and some asset types disabled.
       - Do `--configs snowy_mountain.gin simple.gin` to try out a different scene type (`snowy_mountain.gin` can instead be any scene_type option from `worldgen/configs/scene_types/`)
-      - Remove the `desert.gin` and just specify `--configs simple.gin` to use random scene types according to the weighted list in `worldgen/core.py`.
+      - Remove the `desert.gin` and just specify `--configs simple.gin` to use random scene types according to the weighted list in `worldgen/tools/pipeline.py`.
       - You have the option of removing `simple.gin` and specify neither of the original configs. This turns off the many detail-reduction options included in `simple.gin`, and will create scenes closer to those in our intro video, albeit at significant compute costs. Removing `simple.gin` will likely cause crashes unless using a workstation/server with large amounts of RAM and VRAM. You can find more details on optimizing scene content for performance [here](#config-overrides-for-mesh-detail-and-performance).
    - `--pipeline_configs local_16GB.gin monocular.gin blender_gt.gin`
       - `local_16GB.gin` specifies to run only a single scene at a time, and to run each task as a local python process. See [here](#configuring-available-computing-resources) for more options
@@ -126,7 +126,6 @@ You will also encounter configs using what we term a "registry pattern", e.g. `w
    - For example, in `base_surface_registry.gin`, `surface.registry.beach` specifies `("sand", 10)` to indicate that sand has high weight to be chosen to be assigned for the beach category. 
    - Weights are normalized by their overall sum to obtain a probability distribution. 
    - Name strings undergo lookup in the relevant source code folders, e.g. the name "sand" in a surface registry maps to `worldgen/surfaces/templates/sand.py`.
-   - The random choice among scene_type configs is itself a registry, although it is hardcoded in `core.py` currently, since the choice of what configs are loaded cannot depend on a config file. This will be improved soon.
 
 ### Config Overrides for mesh detail and performance
 
@@ -153,7 +152,7 @@ If you find yourself bottlenecked by GPU time, you should consider the following
    - Reduce `base.gin`'s `full/render_image.num_samples = 8192` or `compose_scene.generate_resolution = (1920, 1080)`. This proportionally reduces rendering FLOPS, with some diminishing returns due to BVH setup time.
    - If your GPU(s) are _underutilized_, try the reverse of these tips.
 
-Some scene type configs are also generally more expensive than others. `forest.gin` and `coral.gin` are very expensive due to dense detailed fauna, wheras `artic` and `snowy_mountain` are very cheap. Low-resource compute settings (<64GB) of RAM may only be able to handle a subset of our `worldgen/config/scene_type/` options, and you may wish to tune the ratios of scene_types by editing `worldgen/core.py`. 
+Some scene type configs are also generally more expensive than others. `forest.gin` and `coral.gin` are very expensive due to dense detailed fauna, wheras `artic` and `snowy_mountain` are very cheap. Low-resource compute settings (<64GB) of RAM may only be able to handle a subset of our `worldgen/config/scene_type/` options, and you may wish to tune the ratios of scene_types by editing `worldgen/tools/pipeline_configs/base.gin` or otherwise overriding `sample_scene_spec.config_distribution`. 
 
 ### Other `manage_datagen_jobs.py` commandline options
 
@@ -174,7 +173,7 @@ Most videos in the "Introducing Infinigen" launch video were made using commands
 ````
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config trailer high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config video high_quality_terrain
 ````
 
 #### Creating large-scale stereo datasets
@@ -182,7 +181,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 ````
 python -m tools.manage_datagen_jobs --output_folder outputs/stereo_data --num_scenes 10000 \
     --pipeline_config slurm stereo cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config trailer high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
 ````
 
 #### Creating a few low-resolution images to your test changes
@@ -220,7 +219,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config trailer high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
 ```
 
@@ -230,8 +229,8 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config trailer high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
 ```
 
-:bulb: This command uses `--pipeline_overrides` rather than `--overrides` since it is providing a gin override to the `manage_datagen_jobs.py` process, not some part main `generate.py` driver.
+:bulb: This command uses `--pipeline_overrides` rather than `--overrides` since it is providing a gin override to the `manage_datagen_jobs.py` process, not some part of the main `generate.py` driver.

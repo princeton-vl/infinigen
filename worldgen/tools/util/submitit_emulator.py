@@ -69,7 +69,6 @@ def get_fake_job_id():
 
 def job_wrapper(func, inner_args, inner_kwargs, stdout_file: Path, stderr_file: Path, cuda_devices=None):
 
-
     with stdout_file.open('w') as stdout, stderr_file.open('w') as stderr:
         sys.stdout = stdout
         sys.stderr = stderr
@@ -103,6 +102,7 @@ class ImmediateLocalExecutor:
 
     def __init__(self, folder: str):
         self.log_folder = Path(folder).resolve()
+        self.log_folder.mkdir(exist_ok=True)
         self.parameters = {}
 
     def update_parameters(self, **parameters):

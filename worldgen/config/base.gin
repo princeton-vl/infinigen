@@ -130,9 +130,9 @@ flat/render_image.passes_to_save = [
 
 render_image.exposure = 1
 
-render_image.use_dof = 'IF_TARGET_SET'
+render_image.use_dof = False
 render_image.dof_aperture_fstop = 3
-render_image.motion_blur = True
+render_image.motion_blur = False
 render_image.motion_blur_shutter = 0.15
 
 compositor_postprocessing.distort = False
@@ -141,7 +141,6 @@ compositor_postprocessing.color_correct=True
 compose_scene.generate_resolution = (1920, 1080)
 get_sensor_coords.H = 720
 get_sensor_coords.W = 1280
-
 
 min_terrain_distance = 2
 keep_cam_pose_proposal.min_terrain_distance = %min_terrain_distance

@@ -231,6 +231,7 @@ def execute_tasks(
     generate_resolution=(1920,1080),
     reset_assets=True,
     focal_length=None,
+    dryrun=False,
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -241,6 +242,10 @@ def execute_tasks(
         if (not os.path.islink(output_folder/"assets")) and (not (output_folder/"assets").exists()) and input_folder is not None and (input_folder/"assets").exists():
             os.symlink(input_folder/"assets", output_folder/"assets")
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
+
+    if dryrun:
+        return
+
     if Task.Coarse not in task:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
@@ -287,9 +292,6 @@ def execute_tasks(
     if Task.Populate in task:
         populate_scene(output_folder, terrain, scene_seed)
 
-    if Task.Fine in task:
-        raise RuntimeError(f'{task=} contains deprecated {Task.Fine=}')
-
     if Task.FineTerrain in task:
         terrain.fine_terrain(output_folder)
     
@@ -305,17 +307,15 @@ def execute_tasks(
             for mesh in os.listdir(input_folder):
                 if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
                     os.symlink(input_folder / mesh, output_folder / mesh)
-        if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
-            bpy.context.preferences.system.scrollback = 100 
-            bpy.context.preferences.edit.undo_steps = 100
+        if Task.Coarse in task or Task.Populate in task:
+
             with Timer(f'Writing output blendfile'):
                 logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
                 bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
                 tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
             with (output_folder/ "version.txt").open('w') as f:
-                scene_version = get_scene_tag('VERSION')
-                f.write(f"{scene_version}\n")
+                f.write(f"{VERSION}\n")
 
             with (output_folder/'polycounts.txt').open('w') as f:
                 save_polycounts(f)
@@ -361,39 +361,25 @@ def apply_scene_seed(args):
     np.random.seed(scene_seed)
     return scene_seed
 
-def apply_gin_configs(args, scene_seed, skip_unknown=False):
+@gin.configurable
+def apply_gin_configs(
+    args, 
+    scene_seed, 
+    skip_unknown=False, 
+    mandatory_config_dir=Path('config/scene_types'),
+):
 
-    scene_types = [p.stem for p in Path('config/scene_types').iterdir()]
-    scene_specified = any(s in scene_types or s.startswith("figure") for s in args.gin_config)
-
-    weights = {
-        "kelp_forest": 0.3,
-        "coral_reef": 1,
-        "forest": 2,
-        "river": 2,
-        "desert": 1,
-        "coast": 1,
-        "cave": 1,
-        "mountain": 1,
-        "canyon": 1,
-        "plain": 1,
-        "cliff": 1,
-        "arctic": 1,
-        "snowy_mountain": 1,
-    }
-    assert all(k in scene_types for k in weights)
-
-    scene_types = [s for s in scene_types if s in weights]
-    weights = np.array([weights[k] for k in scene_types], dtype=float)
-    weights /= weights.sum()
-
-    if not scene_specified:
-        scene_type = np.random.RandomState(scene_seed).choice(scene_types, p=weights)
-        logging.warning(f'Randomly selected {scene_type=}. IF THIS IS NOT INTENDED THEN YOU ARE MISSING SCENE CONFIGS')
-        if len(args.gin_config) > 0 and args.gin_config[0] == 'base':
-            args.gin_config = [scene_type] + args.gin_config[1:]
-        else:
-            args.gin_config = [scene_type] + args.gin_config
+    if mandatory_config_dir is not None:
+        assert mandatory_config_dir.exists()
+        scene_types = [p.stem for p in mandatory_config_dir.iterdir()]
+        scenetype_specified = any(s in scene_types or s.split('.')[0] in scene_types for s in args.configs)
+    
+        if not scenetype_specified:
+            print(scene_types)
+            raise ValueError(
+                f"Please load one or more config from {mandatory_config_dir} using --configs to avoid unexpected behavior. "
+                "If you are sure you want to proceed without, override `apply_gin_configs.mandatory_config_dir=None`"
+            )
 
     def find_config(g):
         for p in Path('config').glob('**/*.gin'):
@@ -403,8 +389,8 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
                 return p
         raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere config/**')
 
-    bindings = sanitize_gin_override(args.gin_param)
-    confs = [find_config(g) for g in ['base.gin'] + args.gin_config]
+    bindings = sanitize_gin_override(args.overrides)
+    confs = [find_config(g) for g in ['base.gin'] + args.configs]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 
 def main(

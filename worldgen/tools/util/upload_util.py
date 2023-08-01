@@ -17,7 +17,7 @@ from tqdm import tqdm
 import subprocess
 from shutil import which, copyfile
 
-from . import smb_client
+from . import smb_client, cleanup
 
 GDRIVE_NAME = None
 
@@ -31,38 +31,16 @@ def rclone_upload_file(src_file, dst_folder):
     subprocess.check_output(cmd.split())
     print(f"Uploaded {src_file}")
 
+def get_commit_hash():
+    git = which('git')
+    if git is None:
+        return None
+    cmd = f"{git} rev-parse HEAD"
+    return subprocess.check_output(cmd.split()).decode().strip()
+
 # DO NOT make gin.configurable
 # this function gets submitted via pickle in some settings, and gin args are not preserved
-def upload_folder(folder, upload_dest_folder, method, metadata=None, **kwargs):
-
-    upload_info_path = folder / f"{folder.name}.json"
-    upload_info = {
-        'user': os.environ['USER'],
-        'node': platform.node().split('.')[0],
-        'timestamp': time.time(),
-        'datetime': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-        **(metadata if metadata is not None  else {})
-    }
-    with upload_info_path.open('w') as f:
-        json.dump(upload_info, f, indent=4)
-
-    with tarfile.open(folder.with_suffix('.tar.gz'), "w:gz") as tar:
-        tar.add(folder, os.path.sep)
-    assert folder.with_suffix('.tar.gz').exists()
-
-    if method == 'rclone':
-        upload_func = rclone_upload_file
-    elif method == 'smbclient':
-        upload_func = smb_client.upload
-    else:
-        raise ValueError(f'Unrecognized {method=}')
-
-    upload_func(folder.with_suffix('.tar.gz'), upload_dest_folder, **kwargs)  
-    upload_func(upload_info_path, upload_dest_folder, **kwargs)
-
-def upload_job_folder(parent_folder, task_uniqname, dir_prefix_len=3, method='smbclient', **kwargs):
-
-    parent_folder = Path(parent_folder)
+def reorganize_before_upload(parent_folder):
 
     seed = parent_folder.name
     tmpdir = (parent_folder / "tmp" / seed)
@@ -71,6 +49,7 @@ def upload_job_folder(parent_folder, task_uniqname, dir_prefix_len=3, method='sm
 
     frames_folders = list(sorted(parent_folder.glob("frames*")))
     for idx, frames_folder in enumerate(frames_folders):
+
         subfolder_name = f"resample_{idx}" if (idx > 0) else "original"
         subfolder = tmpdir / subfolder_name
         info_dir = subfolder / "info"
@@ -95,26 +74,67 @@ def upload_job_folder(parent_folder, task_uniqname, dir_prefix_len=3, method='sm
     
     copyfile(parent_folder / "run_pipeline.sh", log_dir / "run_pipeline.sh")  
 
-    version = (parent_folder / "fine" / "version.txt").read_text().splitlines()[0]
-    upload_dest_folder = Path('infinigen')/'renders'/version
+# DO NOT make gin.configurable
+# this function gets submitted via pickle in some settings, and gin args are not preserved
+def upload_job_folder(
+    parent_folder, 
+    task_uniqname, 
+    dir_prefix_len=3, 
+    method='smbclient', 
+):
+
+    parent_folder = Path(parent_folder)
+
+    if method == 'rclone':
+        upload_func = rclone_upload_file
+    elif method == 'smbclient':
+        upload_func = smb_client.upload
+    else:
+        raise ValueError(f'Unrecognized {method=}')  
+
+    jobname = parent_folder.parent.name
+    seed = parent_folder.name
+    
+    upload_dest_folder = Path('infinigen')/'renders'/jobname
     if dir_prefix_len != 0:
-        upload_dest_folder = upload_dest_folder/seed[:dir_prefix_len]
+        upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
+
+    print(f'{method=} {upload_dest_folder=}')
+
+    all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
+    if len(all_images) > 0:
+        thumb_path = parent_folder/f'{seed}_thumbnail.png'
+        copyfile(all_images, thumb_path)
+        upload_func(thumb_path, upload_dest_folder)
+
+    try:
+        version = (parent_folder / "coarse" / "version.txt").read_text().splitlines()[0]
+    except FileNotFoundError:
+        version = None
 
     metadata = {
-        'n_frames_folders': len(frames_folders),
-        'original_directory': str(parent_folder.resolve())
+        'original_directory': str(parent_folder.resolve()),
+        'user': os.environ['USER'],
+        'node': platform.node().split('.')[0],
+        'timestamp': time.time(),
+        'datetime': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+        'version': version,
+        'commit': get_commit_hash(),
+        'n_frames': len(all_images)
     }
+    metadata_path = parent_folder/f'{seed}_metadata.json'
+    with metadata_path.open('w') as f:
+        json.dump(metadata, f, indent=4)
+    print(metadata_path, metadata)
+    upload_func(metadata_path, upload_dest_folder)
 
-    upload_folder(tmpdir, upload_dest_folder, method=method, metadata=metadata, **kwargs)
-
+    tar_path = parent_folder.with_suffix('.tar.gz')
+    print(f"Performing cleanup and tar to {tar_path}")
+    cleanup.cleanup(parent_folder)
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(parent_folder, os.path.sep)
+    assert tar_path.exists()
+    
+    print(f"Uploading tarfile")
+    upload_func(tar_path, upload_dest_folder)
     (parent_folder / "logs" / f"FINISH_{task_uniqname}").touch()
-
-def test():
-    import manage_datagen_jobs
-    find_gin = lambda n: os.path.join("tools", "pipeline_configs", f"{n}.gin")
-    configs = [find_gin(n) for n in ['andromeda', 'smb_login']]
-    gin.parse_config_files_and_bindings(configs, bindings=[])
-    upload_folder(Path('outputs/23_01_25_allcs/a4b66f1'), 'upload', dir_prefix_len=3, method='smbclient')
-
-if __name__ == "__main__":
-    test()

@@ -375,10 +375,10 @@ def main():
     parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
     parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
                         choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save'])
-    parser.add_argument('-g', '--gin_config', nargs='+', default=['base'],
+    parser.add_argument('-g', '--configs', nargs='+', default=['base'],
                         help='Set of config files for gin (separated by spaces) '
                              'e.g. --gin_config file1 file2 (exclude .gin from path)')
-    parser.add_argument('-p', '--gin_param', nargs='+', default=[],
+    parser.add_argument('-p', '--overrides', nargs='+', default=[],
                         help='Parameter settings that override config defaults '
                              'e.g. --gin_param module_1.a=2 module_2.b=3')
     parser.add_argument('--task_uniqname', type=str, default=None)
