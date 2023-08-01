@@ -16,7 +16,8 @@ from contextlib import nullcontext
 
 from util.math import FixedSeed, int_hash
 from util.logging import Timer
-from util.blender import GarbageCollect
+from util.blender import GarbageCollect, count_instance, count_objects
+
 
 class RandomStageExecutor:
 
@@ -56,9 +57,10 @@ class RandomStageExecutor:
         mem_usage = psutil.Process(os.getpid()).memory_info().rss
             
         will_run = self._should_run_stage(name, use_chance, prereq)
-        self.results.append({'name': name, 'ran': will_run, 'mem_at_finish': mem_usage})
         
         if not will_run:
+            self.results.append({'name': name, 'ran': will_run, 'mem_at_finish': mem_usage, 'obj_count': count_objects(),\
+                'instance_count': count_instance()})
             return default
 
         gc_context = GarbageCollect() if gc else nullcontext()
@@ -70,4 +72,8 @@ class RandomStageExecutor:
         
         with FixedSeed(seed):
             with Timer(name), gc_context:
-                return fn(*args, **kwargs)
+                ret = fn(*args, **kwargs)
+                mem_usage = psutil.Process(os.getpid()).memory_info().rss
+                self.results.append({'name': name, 'ran': will_run, 'mem_at_finish': mem_usage, 'obj_count': count_objects(),\
+                'instance_count': count_instance()})
+                return ret

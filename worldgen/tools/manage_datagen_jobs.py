@@ -27,7 +27,7 @@ from functools import partial, cache
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from shutil import which, rmtree, copyfile
+from shutil import which, rmtree, copyfile, copytree
 
 from tqdm import tqdm
 
@@ -465,6 +465,7 @@ def queue_opengl(
     exclude_gpus=[],
     input_indices=None, output_indices=None,
     reuse_subcams=True,
+    gt_testing=False,
     **submit_kwargs
 ):
 
@@ -479,8 +480,14 @@ def queue_opengl(
 
     process_mesh_path = Path("../process_mesh/build/process_mesh").resolve()
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
-    output_folder = Path(folder) / f"frames{output_suffix}"
-    output_folder.mkdir(exist_ok=True)
+    if (gt_testing):
+        copy_folder = Path(folder) / f"frames{output_suffix}"
+        output_folder  = Path(folder) / f"opengl_frames{output_suffix}"
+        copytree(copy_folder, output_folder, dirs_exist_ok=True)
+    else: 
+        output_folder = Path(folder) / f"frames{output_suffix}"
+        output_folder.mkdir(exist_ok=True)
+
     assert input_folder.exists(), input_folder
     assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
 

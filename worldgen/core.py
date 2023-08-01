@@ -308,7 +308,8 @@ def execute_tasks(
         if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
             bpy.context.preferences.system.scrollback = 100 
             bpy.context.preferences.edit.undo_steps = 100
-            with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
+            with Timer(f'Writing output blendfile'):
+                logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
                 bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
                 tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
