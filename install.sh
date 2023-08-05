@@ -116,5 +116,5 @@ rm -rf build
 cd -
 
 if [ "$1" = "opengl" ]; then
-    bash ./worldgen/tools/compile_opengl.sh
+    
 fi
