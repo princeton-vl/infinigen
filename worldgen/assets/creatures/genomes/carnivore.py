@@ -223,3 +223,5 @@ class CarnivoreFactory(AssetFactory):
 
         return root
 
+class CachedCreatureFactory(CarnivoreFactory):
+    pass
