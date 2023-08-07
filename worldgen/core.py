@@ -35,7 +35,7 @@ from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
 from lighting import lighting, kole_clouds
 
-from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
+from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection, CachedBushFactory, CachedTreeFactory
 from assets import boulder
 from assets.glowing_rocks import GlowingRocksFactory
 from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
@@ -43,7 +43,7 @@ from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, Fi
     CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
-from assets.cactus import CactusFactory
+from assets.cactus import CactusFactory, CachedCactusFactory
 from assets.creatures import boid_swarm
 
 from placement import placement, camera as cam_util
@@ -53,6 +53,11 @@ from rendering.render import render_image
 from rendering.resample import resample_scene
 from assets.monocot import kelp
 from surfaces import surface
+
+from fluid.fluid import set_fire_to_assets, is_fire_in_scene
+from fluid.flip_fluid import create_flip_fluid_domain, set_flip_fluid_domain, create_flip_fluid_inflow, set_flip_fluid_obstacle, get_objs_inside_domain, make_beach, make_river, make_tilted_river
+from fluid.asset_cache import FireCachingSystem
+
 
 import surfaces.scatters
 from surfaces.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
@@ -93,19 +98,29 @@ def populate_scene(
 
     season = p.run_stage('choose_season', random_season, use_chance=False, default=[])
 
+    fire_cache_system = FireCachingSystem() if params.get('cached_fire') else None
+
     populated = {}
     populated['trees'] = p.run_stage('populate_trees', use_chance=False, default=[],
         fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8)) 
+    populated['cached_fire_trees'] = p.run_stage('populate_cached_fire_trees', use_chance=False, default=[],
+        fn=lambda: placement.populate_all(CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
     populated['boulders'] = p.run_stage('populate_boulders', use_chance=False, default=[],
         fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
-    p.run_stage('populate_bushes', use_chance=False,
+    populated['cached_fire_boulders'] = p.run_stage('populate_cached_fire_boulders', use_chance=False, default=[],
+        fn=lambda: placement.populate_all(boulder.CachedBoulderFactory, camera, vis_cull=3, dist_cull=70, cache_system=fire_cache_system))
+    populated['bushes'] = p.run_stage('populate_bushes', use_chance=False,
         fn=lambda: placement.populate_all(BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
+    populated['cached_fire_bushes'] = p.run_stage('populate_cached_fire_bushes', use_chance=False,
+        fn=lambda: placement.populate_all(CachedBushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide', cache_system=fire_cache_system))
     p.run_stage('populate_kelp', use_chance=False,
         fn=lambda: placement.populate_all(kelp.KelpMonocotFactory, camera, vis_cull=5))
-    p.run_stage('populate_cactus', use_chance=False,
+    populated['cactus'] = p.run_stage('populate_cactus', use_chance=False,
         fn=lambda: placement.populate_all(CactusFactory, camera, vis_cull=6))
+    populated['cached_fire_cactus'] = p.run_stage('populate_cached_fire_cactus', use_chance=False,
+        fn=lambda: placement.populate_all(CachedCactusFactory, camera, vis_cull=6, cache_system=fire_cache_system))
     p.run_stage('populate_clouds', use_chance=False,
         fn=lambda: placement.populate_all(CloudFactory, camera, dist_cull=None, vis_cull=None))
     p.run_stage('populate_glowing_rocks', use_chance=False,
@@ -163,6 +178,20 @@ def populate_scene(
     for k, fac in creature_facs.items():
         p.run_stage(f'populate_{k}', use_chance=False,
             fn=lambda: placement.populate_all(fac, camera=None))
+        
+    logging.info(f'Setting assets on fire')
+    fire_warmup = params.get('fire_warmup', 50)
+    simulation_duration = bpy.context.scene.frame_end - bpy.context.scene.frame_start + fire_warmup
+
+
+    if uniform() < params.get('trees_fire_chance_on_the_fly') and 'trees' in populated:   
+        set_fire_to_assets(populated['trees'], bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
+    if uniform() < params.get('bushes_fire_chance_on_the_fly') and 'bushes' in populated:   
+        set_fire_to_assets(populated['bushes'], bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
+    if uniform() < params.get('boulders_fire_chance_on_the_fly') and 'boulders' in populated:   
+        set_fire_to_assets(populated['boulders'], bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
+    if uniform() < params.get('cactus_fire_chance_on_the_fly') and 'cactus' in populated:   
+        set_fire_to_assets(populated['cactus'], bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
 
     p.save_results(output_folder/'pipeline_fine.csv')
 
@@ -174,7 +203,11 @@ def get_scene_tag(name):
         return None
 
 @gin.configurable
-def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None):
+def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None, hide_water = False):
+    if hide_water and "water_fine" in bpy.data.objects:
+        logging.info("Hiding water fine")
+        bpy.data.objects["water_fine"].hide_render = True
+        bpy.data.objects['water_fine'].hide_viewport = True
     if resample_idx is not None and resample_idx != 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
     with Timer('Render Frames'):
@@ -230,7 +263,12 @@ def execute_tasks(
     generate_resolution=(1920,1080),
     reset_assets=True,
     focal_length=None,
+<<<<<<< HEAD
     dryrun=False,
+=======
+    specified_scenes = [], 
+    flip_caustics = False,
+>>>>>>> 214932414 (Add fluid code-release changes in worldgen/core.py)
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -264,6 +302,7 @@ def execute_tasks(
     surface.registry.initialize_from_gin()
     bpy.ops.preferences.addon_enable(module='ant_landscape')
     bpy.ops.preferences.addon_enable(module='real_snow')
+    bpy.ops.preferences.addon_enable(module='flip_fluids_addon')
     bpy.context.preferences.system.scrollback = 0 
     bpy.context.preferences.edit.undo_steps = 0
     bpy.context.scene.render.resolution_x = generate_resolution[0]
@@ -286,12 +325,23 @@ def execute_tasks(
 
     group_collections()
 
+    if Task.Coarse in task:
+        #if 'simulated_river' in specified_scenes:
+        #    make_river(terrain_mesh, list(bpy.data.collections['placeholders'].all_objects), output_folder = output_folder)
+        #elif 'tilted_river' in specified_scenes:
+        #    make_tilted_river(terrain_mesh, list(bpy.data.collections['placeholders'].all_objects), output_folder = output_folder)
+
     if Task.Populate in task:
         populate_scene(output_folder, scene_seed)
 
     if Task.FineTerrain in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
         terrain.fine_terrain(output_folder)
+        if  (("tilted_river" in specified_scenes) or ('simulated_river' in specified_scenes)) and flip_caustics:
+            bpy.data.objects['OpaqueTerrain_fine'].cycles.is_caustics_receiver = True
+            bpy.ops.flip_fluid_operators.helper_select_surface()
+            fluid_surface = bpy.context.object
+            fluid_surface.cycles.is_caustics_caster = True
     
     group_collections()
 
