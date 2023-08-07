@@ -263,12 +263,9 @@ def execute_tasks(
     generate_resolution=(1920,1080),
     reset_assets=True,
     focal_length=None,
-<<<<<<< HEAD
     dryrun=False,
-=======
     specified_scenes = [], 
     flip_caustics = False,
->>>>>>> 214932414 (Add fluid code-release changes in worldgen/core.py)
 ):
     if input_folder != output_folder:
         if reset_assets:

@@ -217,7 +217,10 @@ def camera_pose_proposal(
     altitude=2, 
     pitch=90, 
     roll=0, 
-    headspace_retries=10
+    headspace_retries=10,
+    loc_specified = None, 
+    rot_specified = None, 
+    simulated_scene = None
 ):
 
     loc = np.random.uniform(*terrain_bbox)
@@ -246,6 +249,15 @@ def camera_pose_proposal(
 
     yaw = np.random.uniform(-180, 180)
     rot =  np.deg2rad([random_general(pitch), random_general(roll), yaw])
+
+    if simulated_scene:
+        loc = np.array(loc_specified) 
+        if simulated_scene == "tilted_river":
+            rot = np.deg2rad((rot_specified[0]+np.random.normal(0, 5),rot_specified[1],rot_specified[2]))
+        else:
+            rot = np.deg2rad(rot_specified)
+
+
 
     return loc, rot
 
@@ -462,6 +474,7 @@ def animate_cameras(
     pois=None,
     follow_poi_chance=0.0,
     strict_selection=False,
+    policy_registry = None,
 ):
     anim_valid_pose_func = partial(
         keep_cam_pose_proposal,
@@ -473,17 +486,19 @@ def animate_cameras(
         terrain_tags_ratio=scene_preprocessed['terrain_tags_ratio'] if strict_selection else {},
     )
 
-    for cam_rig in cam_rigs:       
-        
-        if U() < follow_poi_chance and pois is not None and len(pois):
-            policy = animation_policy.AnimPolicyFollowObject(
-                target_obj=cam_rig, 
-                pois=pois, 
-                bvh=scene_preprocessed['terrain_bvh']
-            )
-        else:
-            policy = animation_policy.AnimPolicyRandomWalkLookaround()
 
+    for cam_rig in cam_rigs:
+        if policy_registry == None:  
+            if U() < follow_poi_chance and pois is not None and len(pois):
+                policy = animation_policy.AnimPolicyFollowObject(
+                    target_obj=cam_rig, 
+                    pois=pois, 
+                    bvh=scene_preprocessed['terrain_bvh']
+                )
+            else:
+                policy = animation_policy.AnimPolicyRandomWalkLookaround()
+        else:
+            policy = policy_registry()
         logger.info(f'Animating {cam_rig=} using {policy=}')
         animation_policy.animate_trajectory(
             cam_rig, 
