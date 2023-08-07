@@ -98,3 +98,7 @@ class KalidiumCactusFactory(CactusFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(KalidiumCactusFactory, self).__init__(factory_seed, coarse, KalidiumBaseCactusFactory)
+
+
+class CachedCactusFactory(CactusFactory):
+    pass
