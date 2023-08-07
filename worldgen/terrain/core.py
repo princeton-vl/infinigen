@@ -83,6 +83,8 @@ class Terrain:
 
             self.on_the_fly_asset_folder = Path(on_the_fly_asset_folder)
             self.reused_asset_folder = asset_path
+            os.environ["ASSET_PATH"] = str(asset_path)
+
 
             self.elements, scene_infos = scene(seed, Path(on_the_fly_asset_folder), asset_path, device)
             self.elements_list = list(self.elements.values())
