@@ -24,6 +24,7 @@ import numpy as np
 import trimesh
 from itertools import chain, product
 from tqdm import tqdm
+import cv2
 
 from .math import lerp  # for other people to import from this file
 from . import math as mutil
