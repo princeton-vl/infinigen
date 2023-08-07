@@ -18,6 +18,8 @@ if [ "${OS}" = "Linux" ]; then
     BLENDER_PYTHON="${BLENDER_DIR}/3.3/python/bin/python3.10"
     BLENDER_INCLUDE="${BLENDER_DIR}/3.3/python/include/python3.10"
     BLENDER_PACKAGES="${BLENDER_DIR}/3.3/python/lib/python3.10/site-packages"
+    BLENDER_ADDONS="${BLENDER_DIR}/3.3/scripts/addons"
+    BLENDER_EXE="${BLENDER_DIR}/blender"
 
     NURBS_SCRIPT="setup_linux.py"
 elif [ "${OS}" = "Darwin" ]; then
@@ -40,6 +42,8 @@ elif [ "${OS}" = "Darwin" ]; then
     BLENDER_PYTHON="${BLENDER_DIR}/Contents/Resources/3.3/python/bin/python3.10"
     BLENDER_INCLUDE="${BLENDER_DIR}/Contents/Resources/3.3/python/include/python3.10"
     BLENDER_PACKAGES="${BLENDER_DIR}/Contents/Resources/3.3/python/lib/python3.10/site-packages"
+    BLENDER_ADDONS="${BLENDER_DIR}/Contents/Resources/3.3/scripts/addons"
+    BLENDER_EXE="${BLENDER_DIR}/Contents/MacOS/Blender"
 
     export CC="${HOMEBREW_PREFIX}/opt/llvm/bin/clang"
     export CPATH="${HOMEBREW_PREFIX}/include:${CPATH}"
@@ -117,4 +121,19 @@ cd -
 
 if [ "$1" = "opengl" ]; then
     bash ./worldgen/tools/compile_opengl.sh
+fi
+
+
+# Build Flip Fluids addon
+FLIP_FLUIDS="https://github.com/rlguy/Blender-FLIP-Fluids"
+FLIP_FLUIDS_FOLDER="Blender-FLIP-Fluids"
+FLIP_FLUIDS_ADDON_FOLDER="${FLIP_FLUIDS_FOLDER}/build/bl_flip_fluids/flip_fluids_addon"
+
+if [ ! -d "${FLIP_FLUIDS_ADDON_FOLDER}" ]; then
+    git clone "${FLIP_FLUIDS}"
+    cd "${FLIP_FLUIDS_FOLDER}"
+    python build.py
+    cd -
+    cp -r "${FLIP_FLUIDS_ADDON_FOLDER}" "${BLENDER_ADDONS}"
+    "${BLENDER_EXE}" --background -noaudio -P ./worldgen/fluid/flip_init.py
 fi
