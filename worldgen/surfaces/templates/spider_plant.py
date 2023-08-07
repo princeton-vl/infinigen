@@ -1,8 +1,7 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
-# Date Signed: June 16, 2023
 
 from numpy.random import uniform, normal , randint
 from nodes.node_wrangler import Nodes, NodeWrangler
