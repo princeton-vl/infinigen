@@ -419,3 +419,10 @@ class BushFactory(GenericTreeFactory):
                 assert self.child_col.name == colname, f'Blender truncated {colname} to {self.child_col.name}'
             else:
                 self.child_col = bpy.data.collections[colname]
+
+
+class CachedBushFactory(BushFactory):
+    pass
+
+class CachedTreeFactory(TreeFactory):
+    pass
