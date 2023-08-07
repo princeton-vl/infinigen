@@ -5,7 +5,7 @@
 # Date: April 13 2023
 
 from .generate import CactusFactory, ColumnarCactusFactory, GlobularCactusFactory, PrickyPearCactusFactory, \
-    KalidiumCactusFactory
+    KalidiumCactusFactory, CachedCactusFactory
 from .columnar import ColumnarBaseCactusFactory
 from .globular import GlobularBaseCactusFactory
 from .pricky_pear import PrickyPearBaseCactusFactory
