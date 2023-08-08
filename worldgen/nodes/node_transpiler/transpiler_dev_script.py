@@ -33,16 +33,12 @@ sys.path.append(os.getcwd())
 from nodes.node_transpiler import transpiler
 from nodes import node_wrangler, node_info
 
-mode = 'write_file'
+mode = 'make_script'
 target = 'object'
 
 dependencies = [
-    'assets.creatures.nodegroups.attach',
-    'assets.creatures.nodegroups.curve',
-    'assets.creatures.nodegroups.geometry',
-    'assets.creatures.nodegroups.hair',
-    'assets.creatures.nodegroups.math',
-    'assets.creatures.nodegroups.shader',
+    # if your transpile target is using nodegroups taken from some python file,
+    # add those filepaths here so the transpiler imports from them rather than creating a duplicate definition.
 ]
 
 if target == 'object':

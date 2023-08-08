@@ -4,7 +4,6 @@
 # Authors: Alexander Raistrick
 
 
-from itertools import groupby
 import re
 import logging
 from collections import defaultdict
@@ -221,20 +220,6 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
         results.append((fac_seed, pholders, new_assets))
 
     return results
-
-def placeholder_kd(include=None, exclude=None):
-    objs = []
-    if 'placeholders' in bpy.data.collections:
-        for c in bpy.data.collections['placeholders'].children:
-            classname = c.name.split('(')
-            if include is not None and classname not in include:
-                continue
-            if exclude is not None and classname in exclude:
-                continue
-            for obj in c.objects:
-                objs += [o for o in butil.iter_object_tree(obj) if o.type == 'MESH']
-
-    return butil.joined_kd(objs, include_origins=True)
 
 def make_placeholders_float(placeholder_col, terrain_bvh, water):
 

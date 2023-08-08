@@ -44,6 +44,7 @@ Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image &
 - [Configuring Infinigen](docs/ConfiguringInfinigen.md)
 - [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
+- [Implementing new materials & assets](docs/ImplementingAssets.md)
 
 ### Coming Soon
 Please see our [project roadmap](https://infinigen.org/roadmap) and follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 

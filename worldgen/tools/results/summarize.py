@@ -47,11 +47,9 @@ def summarize_folder(base_folder):
             output[data_type][suffix][rig][subcam][frame_str] = str(file_path.relative_to(base_folder))
             max_frame = max(max_frame, int(frame_str))
 
-    print(output.keys())
-
     # Rename keys
-    #output["Camera Pose"] = output.pop("T")
-    #output["Camera Intrinsics"] = output.pop("K")
+    output["Camera Pose"] = output.pop("T")
+    output["Camera Intrinsics"] = output.pop("K")
 
     mask_tag_jsons = sorted(parse_mask_tag_jsons(base_folder))
     for frame in range(1, max_frame+1):

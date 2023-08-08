@@ -58,7 +58,7 @@ Here is a breakdown of what every commandline argument does, and ideas for how y
    - `--num_scenes` decides how many unique scenes the program will attempt to generate before terminating. Once you have removed `--specific_seed`, you can increase this to generate many scenes in sequence or in paralell. 
    - `--configs desert.gin simple.gin` forces the command to generate a desert scene, and to do so with relatively low mesh detail, low render resolution, low render samples, and some asset types disabled.
       - Do `--configs snowy_mountain.gin simple.gin` to try out a different scene type (`snowy_mountain.gin` can instead be any scene_type option from `worldgen/configs/scene_types/`)
-      - Remove the `desert.gin` and just specify `--configs simple.gin` to use random scene types according to the weighted list in `worldgen/tools/pipeline.py`.
+      - Remove the `desert.gin` and just specify `--configs simple.gin` to use random scene types according to the weighted list in `worldgen/tools/pipeline_configs/base.gin`.
       - You have the option of removing `simple.gin` and specify neither of the original configs. This turns off the many detail-reduction options included in `simple.gin`, and will create scenes closer to those in our intro video, albeit at significant compute costs. Removing `simple.gin` will likely cause crashes unless using a workstation/server with large amounts of RAM and VRAM. You can find more details on optimizing scene content for performance [here](#config-overrides-for-mesh-detail-and-performance).
    - `--pipeline_configs local_16GB.gin monocular.gin blender_gt.gin`
       - `local_16GB.gin` specifies to run only a single scene at a time, and to run each task as a local python process. See [here](#configuring-available-computing-resources) for more options
@@ -173,7 +173,7 @@ Most videos in the "Introducing Infinigen" launch video were made using commands
 ````
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config video high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
 ````
 
 #### Creating large-scale stereo datasets
@@ -219,7 +219,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
 ```
 
@@ -229,7 +229,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 ```
 python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
 ```
 

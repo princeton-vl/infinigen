@@ -70,22 +70,31 @@ from util.random import sample_registry, random_general
 import core as infinigen
 
 @gin.configurable
-def compose_scene(output_folder, terrain, scene_seed, **params):
+def compose_scene(output_folder, scene_seed, **params):
 
     p = RandomStageExecutor(scene_seed, output_folder, params)
 
-    p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
+    def add_coarse_terrain():
+        terrain = Terrain(scene_seed, surface.registry, task='coarse', on_the_fly_asset_folder=output_folder/"assets")
+        terrain_mesh = terrain.coarse_terrain()
+        density.set_tag_dict(terrain.tag_dict)
+        return terrain, terrain_mesh
+    terrain, terrain_mesh = p.run_stage('terrain', add_coarse_terrain, use_chance=False, default=(None, None))
+    
+    if terrain_mesh is None:
+        terrain_mesh = butil.create_noise_plane()
+        density.set_tag_dict({})
 
-    season = p.run_stage('season', random_season, use_chance=False)
-    logging.info(f'{season=}')
-
-    terrain_mesh = p.run_stage('terrain', terrain.coarse_terrain, use_chance=False)
-    density.set_tag_dict(terrain.tag_dict)
     terrain_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
 
     land_domain = params.get('land_domain_tags')
     underwater_domain = params.get('underwater_domain_tags')
     nonliving_domain = params.get('nonliving_domain_tags')
+
+    p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
+
+    season = p.run_stage('season', random_season, use_chance=False)
+    logging.info(f'{season=}')
 
     def choose_forest_params():
         # params to be shared between unique and instanced trees
@@ -160,14 +169,20 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
 
     def camera_preprocess():
         camera_rigs = cam_util.spawn_camera_rigs()
-        scene_bvhtrees = cam_util.camera_selection_preprocessing(terrain)   
-        return camera_rigs, scene_bvhtrees 
-    camera_rigs, scene_bvhtrees = p.run_stage('camera_preprocess', camera_preprocess, use_chance=False)
-    p.run_stage('pose_cameras', lambda: cam_util.configure_cameras(
-        camera_rigs, scene_bvhtrees, terrain), use_chance=False)
+        scene_preprocessed = cam_util.camera_selection_preprocessing(terrain, terrain_mesh)   
+        return camera_rigs, scene_preprocessed 
+    camera_rigs, scene_preprocessed = p.run_stage('camera_preprocess', camera_preprocess, use_chance=False)
+
+    bbox = terrain.get_bounding_box() if terrain is not None else butil.bounds(terrain_mesh)
+    p.run_stage(
+        'pose_cameras', 
+        lambda: cam_util.configure_cameras(camera_rigs, bbox, scene_preprocessed), 
+        use_chance=False
+    )
     cam = cam_util.get_camera(0, 0)
-    
+
     p.run_stage('lighting', lighting.add_lighting, cam, use_chance=False)
+    
     # determine a small area of the terrain for the creatures to run around on
     # must happen before camera is animated, as camera may want to follow them around
     terrain_center, *_ = split_inview(terrain_mesh, cam=cam, 
@@ -196,7 +211,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     pois += p.run_stage('flying_creatures', flying_creatures, default=[])
 
     p.run_stage('animate_cameras', lambda: cam_util.animate_cameras(
-        camera_rigs, scene_bvhtrees, pois=pois), use_chance=False)
+        camera_rigs, scene_preprocessed, pois=pois), use_chance=False)
 
     with Timer('Compute coarse terrain frustrums'):
         terrain_inview, *_ = split_inview(terrain_mesh, verbose=True, outofview=False, print_areas=True,

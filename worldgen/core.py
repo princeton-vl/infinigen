@@ -58,7 +58,6 @@ import surfaces.scatters
 from surfaces.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
 
-
 from placement.factory import make_asset_collection
 from util import blender as butil
 from util import exporting
@@ -87,7 +86,7 @@ def sanitize_gin_override(overrides: list):
    
 @gin.configurable
 def populate_scene(
-    output_folder, terrain, scene_seed, **params
+    output_folder, scene_seed, **params
 ):
     p = RandomStageExecutor(scene_seed, output_folder, params)
     camera = bpy.context.scene.camera
@@ -276,12 +275,10 @@ def execute_tasks(
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
 
-    terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
         butil.spawn_empty(f'{VERSION=}')
-        compose_scene_func(output_folder, terrain, scene_seed)
+        compose_scene_func(output_folder, scene_seed)
 
     camera = cam_util.set_active_camera(*camera_id)
     if focal_length is not None:
@@ -290,9 +287,10 @@ def execute_tasks(
     group_collections()
 
     if Task.Populate in task:
-        populate_scene(output_folder, terrain, scene_seed)
+        populate_scene(output_folder, scene_seed)
 
     if Task.FineTerrain in task:
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
         terrain.fine_terrain(output_folder)
     
     group_collections()
@@ -324,6 +322,7 @@ def execute_tasks(
         col.hide_viewport = False
 
     if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
         terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:

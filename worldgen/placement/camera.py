@@ -10,8 +10,9 @@
 from random import sample
 import sys
 import warnings
-from copy import deepcopy
+from copy import deepcopy, copy
 from functools import partial
+from itertools import chain
 import logging
 from pathlib import Path
 
@@ -196,7 +197,10 @@ def terrain_camera_query(cam, terrain_bvh, terrain_tags_queries, vertexwise_min_
         if dist is None:
             continue
         dists.append(dist)
-        if dist < min_dist or dist < vertexwise_min_dist[index]:
+        if (
+            dist < min_dist or 
+            (vertexwise_min_dist is not None and dist < vertexwise_min_dist[index])
+        ):
             dists = None # means dist < min
             break
         for q in terrain_tags_queries:
@@ -207,7 +211,14 @@ def terrain_camera_query(cam, terrain_bvh, terrain_tags_queries, vertexwise_min_
     return dists, terrain_tags_queries_counts, n_pix
 
 @gin.configurable
-def camera_pose_proposal(terrain_bvh, terrain_bbox, altitude=2, pitch=90, roll=0, headspace_retries=30):
+def camera_pose_proposal(
+    terrain_bvh, 
+    terrain_bbox, 
+    altitude=2, 
+    pitch=90, 
+    roll=0, 
+    headspace_retries=10
+):
 
     loc = np.random.uniform(*terrain_bbox)
 
@@ -227,7 +238,7 @@ def camera_pose_proposal(terrain_bvh, terrain_bbox, altitude=2, pitch=90, roll=0
             break
         logger.debug(f'camera_pose_proposal failed {headspace_retry=} due to {headspace=} {desired_alt=} {alt=}')
     else: # for-else triggers if no break, IE no acceptable voffset was found
-        logger.warning(f'camera_pose_proposal found no acceptable zoff after {headspace_retries=}')
+        logger.warning(f'camera_pose_proposal found no zoff for {loc=} after {headspace_retries=}')
         return None
 
     loc[2] = loc[2] + zoff
@@ -251,18 +262,14 @@ def keep_cam_pose_proposal(
     min_terrain_distance=0,
     terrain_coverage_range=(0.5, 1),
 ):
-    # Reject cameras inside of terrain volumes
-    terrain_sdf = terrain.compute_camera_space_sdf(np.array(cam.location).reshape((1, 3)))
 
+    if terrain is not None: # TODO refactor
+        terrain_sdf = terrain.compute_camera_space_sdf(np.array(cam.location).reshape((1, 3)))
+        
     if not cam.type == 'CAMERA':
         cam = cam.children[0]
     if not cam.type == 'CAMERA':
         raise ValueError(f'{cam.name=} had {cam.type=}')
-
-
-    if terrain_sdf <= 0:
-        logger.debug(f'keep_cam_pose_proposal rejects {terrain_sdf=}')
-        return None
 
     bpy.context.view_layer.update()
     
@@ -281,6 +288,13 @@ def keep_cam_pose_proposal(
     
     coverage = len(dists)/n_pix
     if coverage < terrain_coverage_range[0] or coverage > terrain_coverage_range[1]:
+        return None
+
+    if terrain is None:
+        return 0
+
+    if terrain_sdf <= 0:
+        logger.debug(f'keep_cam_pose_proposal rejects {terrain_sdf=}')
         return None
 
     if rparams := terrain_tags_ratio:
@@ -329,9 +343,13 @@ class AnimPolicyGoToProposals:
 @gin.configurable
 def compute_base_views(
     cam, n_views,
-    terrain, terrain_bvh, terrain_bbox, terrain_tags_answers, vertexwise_min_dist,
-    terrain_tags_ratio,
-    placeholders_kd,
+    terrain, 
+    terrain_bvh, 
+    terrain_bbox, 
+    placeholders_kd=None,
+    terrain_tags_answers={}, 
+    vertexwise_min_dist=None,
+    terrain_tags_ratio=None,
     min_candidates_ratio=20,
     max_tries=10000,
 ):
@@ -366,23 +384,42 @@ def compute_base_views(
 
             if len(potential_views) >= n_min_candidates:
                 break
-    assert potential_views != [], "no camera view found"
+
+    if len(potential_views) < n_views:
+        raise ValueError(f'Could not find {n_views} camera views')
+    
     return sorted(potential_views, reverse=True)[:n_views]
 
 @gin.configurable
 def camera_selection_preprocessing(
-    terrain, terrain_tags_ratio={},
+    terrain, 
+    terrain_mesh, 
+    terrain_tags_ratio={},
 ):
+    
+    with Timer(f'Building placeholders KDTree'):
+        
+        placeholders = list(chain.from_iterable(
+            c.all_objects for c in bpy.data.collections if c.name.startswith('placeholders:')
+        ))
+        placeholders = [p for p in placeholders if p.type == 'MESH']
+        logging.info(f'Building placeholder kd for {len(placeholders)} objects')
+        placeholders_kd =  butil.joined_kd(placeholders, include_origins=True)
+
+    if terrain is None:
+        bvh = BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
+        return dict(
+            terrain=None,
+            terrain_bvh=bvh,
+            placeholders_kd=placeholders_kd
+        )
 
     with Timer(f'Building terrain BVHTree'):
         terrain_bvh, terrain_tags_answers, vertexwise_min_dist = terrain.build_terrain_bvh_and_attrs(terrain_tags_ratio.keys())
 
-    with Timer(f'Building placeholders KDTree'):
-        placeholders_kd = placement.placeholder_kd()
-
     return dict(
-        terrain_bvh=terrain_bvh,
         terrain=terrain,
+        terrain_bvh=terrain_bvh,
         terrain_tags_answers=terrain_tags_answers,
         vertexwise_min_dist=vertexwise_min_dist,
         placeholders_kd=placeholders_kd,
@@ -392,16 +429,18 @@ def camera_selection_preprocessing(
 @gin.configurable
 def configure_cameras(
     cam_rigs,
+    bounding_box,
     scene_preprocessed,
-    terrain,
 ):
     bpy.context.view_layer.update()
     dummy_camera = spawn_camera()
 
-    terrain_bbox = terrain.get_bounding_box()
-
-    base_views = compute_base_views(dummy_camera, n_views=len(cam_rigs), 
-        terrain_bbox=terrain_bbox, **scene_preprocessed)
+    base_views = compute_base_views(
+        dummy_camera, 
+        n_views=len(cam_rigs), 
+        terrain_bbox=bounding_box, 
+        **scene_preprocessed
+    )
 
     for view, cam_rig in zip(base_views, cam_rigs):
         
@@ -418,33 +457,42 @@ def configure_cameras(
 
 @gin.configurable
 def animate_cameras(
-    cam_rigs, scene_preprocessed, pois=None,
+    cam_rigs, 
+    scene_preprocessed, 
+    pois=None,
     follow_poi_chance=0.0,
     strict_selection=False,
 ):
-    
     anim_valid_pose_func = partial(
         keep_cam_pose_proposal,
+        placeholders_kd=scene_preprocessed['placeholders_kd'],
         terrain_bvh=scene_preprocessed['terrain_bvh'],
         terrain=scene_preprocessed['terrain'],
-        placeholders_kd=scene_preprocessed['placeholders_kd'],
-        terrain_tags_answers=scene_preprocessed['terrain_tags_answers'] if strict_selection else {},
         vertexwise_min_dist=scene_preprocessed['vertexwise_min_dist'],
+        terrain_tags_answers=scene_preprocessed['terrain_tags_answers'] if strict_selection else {},
         terrain_tags_ratio=scene_preprocessed['terrain_tags_ratio'] if strict_selection else {},
     )
 
-
     for cam_rig in cam_rigs:       
+        
         if U() < follow_poi_chance and pois is not None and len(pois):
             policy = animation_policy.AnimPolicyFollowObject(
-                target_obj=cam_rig, pois=pois, bvh=scene_preprocessed['terrain_bvh'])
+                target_obj=cam_rig, 
+                pois=pois, 
+                bvh=scene_preprocessed['terrain_bvh']
+            )
         else:
             policy = animation_policy.AnimPolicyRandomWalkLookaround()
+
         logger.info(f'Animating {cam_rig=} using {policy=}')
-        animation_policy.animate_trajectory(cam_rig, scene_preprocessed['terrain_bvh'],
+        animation_policy.animate_trajectory(
+            cam_rig, 
+            scene_preprocessed['terrain_bvh'],
             policy_func=policy,
-            validate_pose_func=anim_valid_pose_func, verbose=True, 
-            fatal=True)
+            validate_pose_func=anim_valid_pose_func, 
+            verbose=True, 
+            fatal=True
+        )
 
 @gin.configurable
 def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use_dof=False):

@@ -754,3 +754,15 @@ def count_instance():
     return len([inst for inst in depsgraph.object_instances if inst.is_instance])
     
     
+def bounds(obj):
+    bbox = np.array(obj.bound_box)
+    return bbox.min(axis=0), bbox.max(axis=0)
+
+def create_noise_plane(size=50, cuts=10, std=3, levels=3):
+    bpy.ops.mesh.primitive_grid_add(size=size, x_subdivisions=cuts, y_subdivisions=cuts)
+    obj = bpy.context.active_object
+
+    for v in obj.data.vertices:
+        v.co[2] = v.co[2] + np.random.normal(0, std)
+
+    return modify_mesh(obj, 'SUBSURF', levels=levels)
