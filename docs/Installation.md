@@ -26,8 +26,9 @@ conda activate infinigen
 bash install.sh
 ```
 `install.sh` may take significant time to download Blender and compile all source files.
-
 Ignore non-fatal warnings. See [Getting Help](#getting-help) for guidelines on posting github issues
+
+:bulb: If you anticipate you will want to enable our custom ground-truth system, or generate fluid simulatios, consider running `bash install.sh opengl` or `bash install.sh flip_fluids` to enable these optional extras as specified in [GroundTruthAnnotations.md](./GroundTruthAnnotations.md) and [GeneratingFluidSimulations](./GeneratingFluidSimulations.md).
 
 Run the following or add it to your `~/.bashrc` (Linux/WSL) or `~/.bash_profile` (Mac)
 ```

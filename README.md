@@ -45,6 +45,7 @@ Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image &
 - [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
+- [Generating fluid simulations](docs/GeneratingFluidSimulations.md)
 
 ### Coming Soon
 Please see our [project roadmap](https://infinigen.org/roadmap) and follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
@@ -67,7 +68,7 @@ Please post this repository's Github Issues page for help. Please run your comma
 
 ### Acknowledgements
 
-Infinigen wouldn't be possible without the fantastic work of the [Blender Foundation](https://www.blender.org/) and it's open-source contributors. Infinigen uses many open source projects, with special thanks to [Land-Lab](https://github.com/landlab/landlab), [BlenderProc](https://github.com/DLR-RM/BlenderProc) and [Blender-Differential-Growth](https://github.com/inca/blender-differential-growth).
+Infinigen wouldn't be possible without the fantastic work of the [Blender Foundation](https://www.blender.org/) and it's open-source contributors. Infinigen uses many open source projects, with special thanks to [Land-Lab](https://github.com/landlab/landlab), [BlenderProc](https://github.com/DLR-RM/BlenderProc) [Blender-FLIP-Fluids](https://github.com/rlguy/Blender-FLIP-Fluids) and [Blender-Differential-Growth](https://github.com/inca/blender-differential-growth).
 
 We thank [Thomas Kole](https://blenderartists.org/u/ThomasKole) for providing procedural clouds (which are more photorealistic than our original version) and [Pedro P. Lopes](https://blendswap.com/blend/30728) for the autoexposure nodegraph. 
 

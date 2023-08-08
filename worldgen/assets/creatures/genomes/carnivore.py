@@ -222,6 +222,3 @@ class CarnivoreFactory(AssetFactory):
                 attributes=dict(vertex_group_mass=rigidity))
 
         return root
-
-class CachedCreatureFactory(CarnivoreFactory):
-    pass

@@ -215,15 +215,17 @@ def camera_pose_proposal(
     terrain_bvh, 
     terrain_bbox, 
     altitude=2, 
-    pitch=90, 
     roll=0, 
-    headspace_retries=10,
-    loc_specified = None, 
-    rot_specified = None, 
-    simulated_scene = None
+    yaw=('uniform', -180, 180),
+    pitch=90, 
+    headspace_retries=30, 
+    override_loc=None,
 ):
 
-    loc = np.random.uniform(*terrain_bbox)
+    if override_loc is None:
+        loc = np.random.uniform(*terrain_bbox)
+    else:
+        loc = Vector(random_general(override_loc))
 
     alt = animation_policy.get_altitude(loc, terrain_bvh)
     if alt is None: return None
@@ -245,19 +247,10 @@ def camera_pose_proposal(
         return None
 
     loc[2] = loc[2] + zoff
-    if loc[2] > terrain_bbox[1][2] or loc[2] < terrain_bbox[0][2]: return None
+    if loc[2] > terrain_bbox[1][2] or loc[2] < terrain_bbox[0][2]: 
+        return None
 
-    yaw = np.random.uniform(-180, 180)
-    rot =  np.deg2rad([random_general(pitch), random_general(roll), yaw])
-
-    if simulated_scene:
-        loc = np.array(loc_specified) 
-        if simulated_scene == "tilted_river":
-            rot = np.deg2rad((rot_specified[0]+np.random.normal(0, 5),rot_specified[1],rot_specified[2]))
-        else:
-            rot = np.deg2rad(rot_specified)
-
-
+    rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
 
     return loc, rot
 

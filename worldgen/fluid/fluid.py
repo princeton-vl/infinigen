@@ -5,6 +5,7 @@
 
 import os
 import sys
+from itertools import chain
 from pathlib import Path
 from numpy.random import uniform, normal, randint
 from mathutils import Vector
@@ -31,7 +32,6 @@ from util.logging import Timer
 import gin
 
 from util import blender as butil
-
 
 # find next available number for fluid cache folder
 def find_available_cache(cache_folder):
@@ -525,6 +525,7 @@ def set_obj_on_fire(
 
     butil.select_none()
     fire_dfs(obj, fluid_type)
+    
     # disabled for now
     # with Timer('Decimating and Realizing Instance'):
     #     instanced_obj = get_instanced_part(obj)
@@ -724,6 +725,7 @@ def find_root(node):
 
 @gin.configurable
 def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1):
+    
     if len(assets) == 0:
         return
 
@@ -737,39 +739,33 @@ def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=N
 
     obj_dist.sort(key=lambda x: x[0])
     obj_vis_dist.sort(key=lambda x: x[0])
-    print("sorted obj dist", obj_dist)
 
     if len(obj_dist) == 0:
         return
 
-    with Timer("Processing Fire Assets"):
-        for i in range(max_fire_assets):
-            closest = obj_dist[i]
-            obj = closest[1]
-            print("setting fire on obj", obj)
-            # obj = find_root(obj)
+    for i in range(max_fire_assets):
 
-            # if obj.name not in bpy.data.collections[col[0]].objects:
-            #     bpy.data.collections[col[0]].objects.link(obj)
-            set_obj_on_fire(
-                obj,
-                start_frame,
-                simulation_duration=simulation_duration,
-                noise_scale=2,
-                add_turbulence=True,
-                adaptive_domain=True,
-                output_folder=output_folder,
-                estimate_domain=False,
-                dom_scale=1.1,
-            )
+        closest = obj_dist[i]
+        obj = closest[1]
+        logging.info(f"Setting fire to {i=} {obj.name=}")
 
+        set_obj_on_fire(
+            obj,
+            start_frame,
+            simulation_duration=simulation_duration,
+            noise_scale=2,
+            add_turbulence=True,
+            adaptive_domain=True,
+            output_folder=output_folder,
+            estimate_domain=False,
+            dom_scale=1.1,
+        )
 
 def duplicate_fluid_obj(obj):
     bpy.ops.mesh.primitive_plane_add()
     new_obj = bpy.context.object
     duplication_geomod.apply(new_obj=new_obj, old_obj=obj)
     return new_obj
-
 
 @gin.configurable
 def estimate_smoke_domain(obj, start_frame, simulation_duration):

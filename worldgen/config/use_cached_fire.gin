@@ -1,8 +1,8 @@
-populate_scene.trees_fire_chance_on_the_fly = 0
-populate_scene.bushes_fire_chance_on_the_fly = 0
-populate_scene.creatures_fire_chance_on_the_fly = 0
-populate_scene.boulders_fire_chance_on_the_fly = 0
-populate_scene.cactus_fire_chance_on_the_fly = 0
+populate_scene.trees_fire_on_the_fly_chance = 0
+populate_scene.bushes_fire_on_the_fly_chance = 0
+populate_scene.creatures_fire_on_the_fly_chance = 0
+populate_scene.boulders_fire_on_the_fly_chance = 0
+populate_scene.cactus_fire_on_the_fly_chance = 0
 
 compose_scene.cached_fire_trees_chance= 0.5
 compose_scene.cached_fire_bushes_chance = 1

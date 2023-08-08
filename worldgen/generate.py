@@ -2,16 +2,11 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 import argparse
-import ast
 import os
-import random
 import sys
-import cProfile
 from pathlib import Path
 import logging
-from functools import partial
-import pprint
-from collections import defaultdict
+import itertools
 
 import bpy
 import mathutils
@@ -19,41 +14,47 @@ from mathutils import Vector
 import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
-from tqdm import tqdm
-from frozendict import frozendict
 
 sys.path.append(os.getcwd())
 
 from terrain import Terrain
 from util.organization import Task, Attributes, Tags, ElementNames
 
-from placement import placement, density, camera as cam_util
-from placement.split_in_view import split_inview
 from lighting import lighting, kole_clouds
 
-from fluid.asset_cache import FireCachingSystem
-from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection, CachedBushFactory, CachedTreeFactory
+from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
 from assets.glowing_rocks import GlowingRocksFactory
-from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
+from assets.creatures import (
+    CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
     BeetleFactory, AntSwarmFactory, BirdFactory, SnakeFactory, \
-    CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory, CachedCreatureFactory
+    CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
+)
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
-from assets.cactus import CactusFactory,CachedCactusFactory
-from assets.creatures import boid_swarm
+from assets.cactus import CactusFactory
+
+from fluid.flip_fluid import make_river, make_tilted_river
+from fluid.fluid_scenecomp_additions import fire_scenecomp_options
 
 import surfaces.scatters
-from fluid.fluid import is_fire_in_scene
-from fluid.flip_fluid import create_flip_fluid_domain, set_flip_fluid_domain, create_flip_fluid_inflow, set_flip_fluid_obstacle, get_objs_inside_domain, make_beach, make_river, make_tilted_river
-from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_twigs, \
+from surfaces.scatters import (
+    rocks, grass, snow_layer, ground_leaves, ground_twigs, \
     chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
     slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells
+)
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
-from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+from surfaces.templates import (
+    mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
     soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud
+)
 from infinigen_gpl.surfaces import snow
 
-from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
+from placement import (
+    particles, placement, density, 
+    camera as cam_util, 
+    animation_policy, instance_scatter, detail
+)
+from placement.split_in_view import split_inview
 from assets import particles as particle_assets
 
 from surfaces.scatters import pine_needle, seaweed, coral_reef, jellyfish, urchin
@@ -90,9 +91,6 @@ def compose_scene(output_folder, scene_seed, **params):
 
     terrain_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
 
-    if params.get('cached_fire'):
-        fire_cache_system = FireCachingSystem()
-
     land_domain = params.get('land_domain_tags')
     underwater_domain = params.get('underwater_domain_tags')
     nonliving_domain = params.get('nonliving_domain_tags')
@@ -121,17 +119,6 @@ def compose_scene(output_folder, scene_seed, **params):
                 overall_density=params['density'], distance_min=params['distance_min'])
     p.run_stage('trees', add_trees, terrain_mesh)
 
-    def add_cached_fire_trees(terrain_mesh):
-        params = tree_species_params[0]
-        species = fire_cache_system.get_cached_species(CachedTreeFactory)
-        ind = np.random.choice(len(species))
-        s = species[ind]
-        fac = CachedTreeFactory(s, coarse=True)
-        selection = density.placement_mask(params['select_scale'], tag=land_domain)
-        placement.scatter_placeholders_mesh(terrain_mesh, fac, selection=selection, altitude=-0.1,
-                overall_density=params['density'], distance_min=params['distance_min'])
-    p.run_stage('cached_fire_trees', add_cached_fire_trees, terrain_mesh)
-
     def add_bushes(terrain_mesh):
         n_bush_species = randint(1, params.get("max_bush_species", 2) + 1)
         for i in range(n_bush_species):
@@ -143,20 +130,6 @@ def compose_scene(output_folder, scene_seed, **params):
                 overall_density=spec_density, distance_min=uniform(0.05, 0.3),
                 selection=selection)
     p.run_stage('bushes', add_bushes, terrain_mesh)
-
-    def add_cached_fire_bushes(terrain_mesh):
-        n_bush_species = randint(1, params.get("max_bush_species", 2) + 1)
-        spec_density = params.get("bush_density", uniform(0.03, 0.12)) / n_bush_species
-        species = fire_cache_system.get_cached_species(CachedBushFactory)
-        ind = np.random.choice(len(species))
-        s = species[ind]
-        fac = CachedBushFactory(s, coarse=True)
-        selection = density.placement_mask(uniform(0.015, 0.2), normal_thresh=0.3, 
-                select_thresh=uniform(0.5, 0.6), tag=land_domain)
-        placement.scatter_placeholders_mesh(terrain_mesh, fac, altitude=-0.05,
-                overall_density=spec_density, distance_min=uniform(0.05, 0.3),
-                selection=selection)
-    p.run_stage('cached_fire_bushes', add_cached_fire_bushes, terrain_mesh)
 
     def add_clouds(terrain_mesh):
         cloud_factory = CloudFactory(int_hash((scene_seed, 0)), coarse=True, terrain_mesh=terrain_mesh)
@@ -173,17 +146,7 @@ def compose_scene(output_folder, scene_seed, **params):
                 selection=selection, altitude=-0.25)
     p.run_stage('boulders', add_boulders, terrain_mesh)
 
-    def add_cached_fire_boulders(terrain_mesh):
-        n_boulder_species = randint(1, params.get("max_boulder_species", 5))
-        species = fire_cache_system.get_cached_species(boulder.CachedBoulderFactory)
-        ind = np.random.choice(len(species))
-        s = species[ind]
-        fac = boulder.CachedBoulderFactory(s, coarse=True)
-        selection = density.placement_mask(0.05, tag=nonliving_domain, select_thresh=uniform(0.55, 0.6))
-        placement.scatter_placeholders_mesh(terrain_mesh, fac, 
-                overall_density=params.get("boulder_density", uniform(.02, .05)) / n_boulder_species,
-                selection=selection, altitude=-0.25)
-    p.run_stage('cached_fire_boulders', add_cached_fire_boulders, terrain_mesh)
+    fire_scenecomp_options(p, terrain_mesh, params, tree_species_params)
 
     def add_glowing_rocks(terrain_mesh):
         selection = density.placement_mask(uniform(0.03, 0.3), normal_thresh=-1.1, select_thresh=0, tag=Tags.Cave)
@@ -209,18 +172,6 @@ def compose_scene(output_folder, scene_seed, **params):
                 overall_density=params.get('cactus_density', uniform(.02, .1) / n_cactus_species),
                 selection=selection, distance_min=1)
     p.run_stage('cactus', add_cactus, terrain_mesh)
-
-    def add_cached_fire_cactus(terrain_mesh):
-        n_cactus_species = randint(2, params.get("max_cactus_species", 4))
-        species = fire_cache_system.get_cached_species(CachedCactusFactory)
-        ind = np.random.choice(len(species))
-        s = species[ind]
-        fac = CachedCactusFactory(s, coarse=True)
-        selection = density.placement_mask(scale=.05, tag=land_domain, select_thresh=0.57)
-        placement.scatter_placeholders_mesh(terrain_mesh, fac, altitude=-0.05,
-                overall_density=params.get('cactus_density', uniform(.02, .1) / n_cactus_species),
-                selection=selection, distance_min=1)
-    p.run_stage('cached_fire_cactus', add_cached_fire_cactus, terrain_mesh)
 
     def camera_preprocess():
         camera_rigs = cam_util.spawn_camera_rigs()
@@ -418,7 +369,7 @@ def compose_scene(output_folder, scene_seed, **params):
             emitter=butil.spawn_plane(location=emitter_off, size=60),
             subject=make_asset_collection(particle_assets.SnowflakeFactory(scene_seed), 5),
             settings=particles.snow_settings())
-
+    
     particle_systems = [
         p.run_stage('leaf_particles', add_leaf_particles, prereq='trees'),
         p.run_stage('rain_particles', add_rain_particles),
@@ -433,8 +384,18 @@ def compose_scene(output_folder, scene_seed, **params):
             particles.bake(emitter, system)
         butil.put_in_collection(emitter, butil.get_collection('particles'))
 
-    p.save_results(output_folder/'pipeline_coarse.csv')
 
+    placeholders = list(itertools.chain.from_iterable(
+        c.all_objects for c in bpy.data.collections if c.name.startswith('placeholders:')
+    ))
+
+    add_simulated_river = lambda: make_river(terrain_mesh, placeholders, output_folder=output_folder)
+    p.run_stage('simulated_river', add_simulated_river, use_chance=False)
+
+    add_tilted_river = lambda: make_tilted_river(terrain_mesh, placeholders, output_folder=output_folder)
+    p.run_stage('tilted_river', add_tilted_river, use_chance=False)   
+
+    p.save_results(output_folder/'pipeline_coarse.csv')
     return terrain, terrain_mesh
 
 def main():

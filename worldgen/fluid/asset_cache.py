@@ -44,7 +44,6 @@ ASSET_ENV_VAR = "ASSET_PATH"
 SPECIES_MAX = 20
 I_MAX = 20
 
-
 @gin.configurable
 class FireCachingSystem:
     def __init__(self, asset_folder = None, create=False, max_fire_assets = 3, max_per_kind = 1) -> None:

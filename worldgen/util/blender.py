@@ -142,6 +142,23 @@ class DisableModifiers:
         for m in self.modifiers_disabled:
             m.show_viewport = True
 
+class EnableParentCollections:
+
+    def __init__(self, objs, target_key='hide_viewport', target_value=False):
+        self.objs = objs
+        self.target_key = target_key
+        self.target_value = target_value
+
+    def __enter__(self):
+        self.enable_cols = set(chain.from_iterable([o.users_collection for o in self.objs]))
+        self.enable_cols_startstate = [getattr(c, self.target_key) for c in self.enable_cols]
+
+        for c in self.enable_cols:
+            setattr(c, self.target_key, self.target_value)
+
+    def __exit__(self, *_, **__):
+        for c, s in zip(self.enable_cols, self.enable_cols_startstate):
+            setattr(c, self.target_key, s)
 
 class TemporaryObject:
 

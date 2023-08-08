@@ -199,7 +199,7 @@ def populate_collection(
 
     asset_col_target.hide_viewport = False
     factory.finalize_assets([r for i, r in all_objs])
-    asset_col_target.hide_viewport = False
+    asset_col_target.hide_viewport = True
 
     return all_objs, updated_pholders
 

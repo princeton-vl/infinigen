@@ -146,6 +146,3 @@ class BoulderFactory(AssetFactory):
 
         tag_object(skin_obj, 'boulder')
         return skin_obj
-
-class CachedBoulderFactory(BoulderFactory):
-    pass

@@ -27,6 +27,9 @@ compose_scene.lighting_enabled = True
 compose_scene.coarse_terrain_enabled = True
 compose_scene.terrain_surface_enabled = True
 
+compose_scene.simulated_river_enabled=False
+compose_scene.tilted_river_enabled=False
+
 compose_scene.fancy_clouds_chance = 0.6
 
 compose_scene.trees_chance = 0.85
@@ -100,13 +103,12 @@ populate_scene.snow_layer_chance = 0
 
 populate_scene.snow_layer_chance=0.0
 
-
 populate_scene.fire_warmup = 50
-populate_scene.trees_fire_chance_on_the_fly = 0
-populate_scene.bushes_fire_chance_on_the_fly = 0
-populate_scene.creatures_fire_chance_on_the_fly = 0
-populate_scene.boulders_fire_chance_on_the_fly = 0
-populate_scene.cactus_fire_chance_on_the_fly = 0
+populate_scene.trees_fire_on_the_fly_chance = 0
+populate_scene.bushes_fire_on_the_fly_chance = 0    
+populate_scene.creatures_fire_on_the_fly_chance = 0
+populate_scene.boulders_fire_on_the_fly_chance = 0
+populate_scene.cactus_fire_on_the_fly_chance = 0
 
 target_face_size.global_multiplier = 2
 scatter_res_distance.dist = 4

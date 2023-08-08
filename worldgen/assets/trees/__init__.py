@@ -1,1 +1,1 @@
-from .generate import BushFactory, TreeFactory, CachedTreeFactory, CachedBushFactory
+from .generate import BushFactory, TreeFactory

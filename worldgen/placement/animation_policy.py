@@ -33,7 +33,16 @@ def get_altitude(loc, terrain_bvh, dir=Vector((0.,0.,-1.))):
     return straight_down_dist
 
 @gin.configurable
-def walk_same_altitude(start_loc, sampler, bvh, filter_func=None, fall_ratio=1.5, retries=30, step_up_height=2, simulated = False):
+def walk_same_altitude(
+    start_loc, 
+    sampler, 
+    bvh, 
+    filter_func=None, 
+    fall_ratio=1.5, 
+    retries=30, 
+    step_up_height=2, 
+    ignore_missed_rays=False
+):
 
     '''
     fall_ratio: what is the slope at which the camera is willing to go down / glide
@@ -48,7 +57,7 @@ def walk_same_altitude(start_loc, sampler, bvh, filter_func=None, fall_ratio=1.5
         curr_alt = get_altitude(start_loc, bvh)
         new_alt = get_altitude(pos, bvh)
 
-        if simulated:
+        if ignore_missed_rays:
             if curr_alt is None:
                 curr_alt = start_loc.z
             if new_alt is None:
