@@ -27,7 +27,7 @@ parser.add_argument('-a', '--assets', nargs='+', default=[
     'CachedBushFactory',
     'CachedTreeFactory',
     'CachedCactusFactory',
-    # 'CachedCreatureFactory',
+    'CachedCreatureFactory',
     'CachedBoulderFactory'
 ])
 parser.add_argument('-n', '--number', type=int, default=1)

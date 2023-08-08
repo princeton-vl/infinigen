@@ -2,6 +2,7 @@
 # This source code is licensed under the BSD 3-clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Karhan Kayan
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=zyIJQHlFQs0 by PolyFjord
 
 import bpy
 import mathutils

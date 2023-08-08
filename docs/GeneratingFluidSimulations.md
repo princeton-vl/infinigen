@@ -1,12 +1,25 @@
 # Generating Fluid Simulations
 
-This documentation details how to generate fire and water simulations like those shown in the Infinigen launch video. It assumes you have already completed [Installation.md] and [HelloWorld.md]. Fluid simulations require *significant* computational resources.
+This documentation details how to generate fire and water simulations like those shown in the Infinigen launch video. It assumes you have already completed [Installation.md], [HelloWorld.md]. Fluid simulations require *significant* computational resources.
 
 ## Setup
 
 To generate fluids, you run install.sh with the optional FLIP-Fluids setup step (`bash install.sh flip_fluids`), or, please run `bash worldgen/tools/install/compile_flip_fluids.sh` to install flip fluids now.
 
 ## Example Commands
+
+#### Generate a video of a single scene with simulated fire generated on the fly
+```
+python -m tools.manage_datagen_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --wandb_mode online --cleanup none --config plain.gin fast_terrain_assets.gin use_on_the_fly_fire.gin
+```
+Because fluid simulation takes a long time, the fire resolution can be reduced in use_on_the_fly_fire.gin, by setting `set_obj_on_fire.resolution = {resolution}`. This will reduce the fire quality but speed up the simulation.
+
+#### Generate a video of a single valley scene with simulated river
+```
+python -m tools.manage_datagen_jobs --specific_seed 61fc881a --output_folder outputs/river --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin --pipeline_overrides iterate_scene_tasks.frame_range=[100,244] --config river.gin simulated_river.gin no_assets.gin no_creatures.gin fast_terrain_assets.gin --wandb_mode online --cleanup none 
+```
+Similar to fire, the simulation can be sped up by reducing the resolution. In simulated_river.gin, the resolution can be modified by setting `make_river.resolution = {resolution}`.
+Also, note that this command will produce a scene without assets to speed up the process. However, the liquids generally interact with the objects by splashing on them, and a scene like this can be produced by removing the `no_assets.gin` option in the above command. 
 
 #### Generate videos of random scene types, with simulated fire generated on the fly when needed
 ```
@@ -25,3 +38,25 @@ python -m tools.manage_datagen_jobs --output_folder /n/fs/pvl-renders/kkayan/riv
     --wandb_mode online --cleanup none --warmup_sec 12000
 ```
 
+
+
+## Using Pre-Generated Fire
+
+High-resolution fluid simulations take a long time, so assets on fire can pre-generated and imported in the scene instead of being baked on-the-fly. This allows for fire to be simulated once, instead of every time a scene is generated. To pre-generate fire assets of all types (bush, tree, creature, cactus, boulder), run:
+```
+python tools/submit_asset_cache.py -b $BLENDER -f {fire_asset_folder} -n 1 -s -40 -d 184
+```
+where `fire_asset_folder` is where you want to save the fire. The number of assets per type, start frame and duration can be adjusted.  
+
+If you only want to pre-generate one type of asset once, run:
+```
+$BLENDER --background -noaudio --python fluid/run_asset_cache.py -- -f {fire_asset_folder} -a {asset} -s {start_frame} -d {simulation_duration}
+```
+where `fire_asset_folder` is where you want to save the fire. `asset` can be one of `CachedBushFactory`, `CachedTreeFactory`, `CachedCactusFactory`, `CachedCreatureFactory`, `CachedBoulderFactory`. 
+
+### Import pre-generated fire when generating a scene
+After fire is pre-generated with one of the previous commands, edit config/use_cached_fire.gin and set the `FireCachingSystem.asset_folder` variable to `fire_asset_folder` you used when pre-generating fire. After this `use_cached_fire.gin` can be used instead of `use_on_the_fly_fire.gin` when generating a scene. This will import the fire from the folder it is saved instead of simulating it on-the-fly. 
+#### Example Command
+```
+python -m tools.manage_datagen_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --wandb_mode online --cleanup none --config plain.gin fast_terrain_assets.gin use_cached_fire.gin
+```

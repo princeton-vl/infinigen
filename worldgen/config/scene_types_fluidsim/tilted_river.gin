@@ -15,9 +15,7 @@ compose_scene.hero_boulders_chance = 1.0
 terrain.elements.landtiles.LandTiles.y_tilt = 0.7
 terrain.elements.landtiles.LandTiles.y_tilt_clip = 11
 camera_pose_proposal.override_loc = (0.678843,-30.5532, 11.7858)
-camera_pose_proposal.roll = ('normal', -110, 5)
-camera_pose_proposal.pitch = 180
-camera_pose_proposal.yaw = ('normal', -180, 3)
+camera_pose_proposal.override_rot = (-110, 180, -178)
 
 compose_scene.tilted_river_enabled = True
 

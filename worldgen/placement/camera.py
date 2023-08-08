@@ -220,37 +220,40 @@ def camera_pose_proposal(
     pitch=90, 
     headspace_retries=30, 
     override_loc=None,
+    override_rot=None
 ):
 
     if override_loc is None:
         loc = np.random.uniform(*terrain_bbox)
+
+        alt = animation_policy.get_altitude(loc, terrain_bvh)
+        if alt is None: return None
+
+        headspace = animation_policy.get_altitude(loc, terrain_bvh, dir=Vector((0, 0, 1)))
+        for headspace_retry in range(headspace_retries):
+            desired_alt = random_general(altitude)
+            if desired_alt is None:
+                zoff = 0
+                break
+            zoff = desired_alt - alt
+            if headspace is None:
+                break
+            if desired_alt < headspace:
+                break
+            logger.debug(f'camera_pose_proposal failed {headspace_retry=} due to {headspace=} {desired_alt=} {alt=}')
+        else: # for-else triggers if no break, IE no acceptable voffset was found
+            logger.warning(f'camera_pose_proposal found no zoff for {loc=} after {headspace_retries=}')
+            return None
+
+        loc[2] = loc[2] + zoff
+        if loc[2] > terrain_bbox[1][2] or loc[2] < terrain_bbox[0][2]: 
+            return None
     else:
         loc = Vector(random_general(override_loc))
-
-    alt = animation_policy.get_altitude(loc, terrain_bvh)
-    if alt is None: return None
-
-    headspace = animation_policy.get_altitude(loc, terrain_bvh, dir=Vector((0, 0, 1)))
-    for headspace_retry in range(headspace_retries):
-        desired_alt = random_general(altitude)
-        if desired_alt is None:
-            zoff = 0
-            break
-        zoff = desired_alt - alt
-        if headspace is None:
-            break
-        if desired_alt < headspace:
-            break
-        logger.debug(f'camera_pose_proposal failed {headspace_retry=} due to {headspace=} {desired_alt=} {alt=}')
-    else: # for-else triggers if no break, IE no acceptable voffset was found
-        logger.warning(f'camera_pose_proposal found no zoff for {loc=} after {headspace_retries=}')
-        return None
-
-    loc[2] = loc[2] + zoff
-    if loc[2] > terrain_bbox[1][2] or loc[2] < terrain_bbox[0][2]: 
-        return None
-
-    rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
+    if override_rot:
+        rot = np.deg2rad(override_rot)
+    else:
+        rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
 
     return loc, rot
 
