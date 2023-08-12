@@ -21,11 +21,11 @@ def nodegroup_rotate2_d_002(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.6.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketFloat', 'Value', 0.5000),
+        expose_input=[('NodeSocketFloat', 'Value1', 0.5000),
             ('NodeSocketFloat', 'Value2', 0.5000),
-            ('NodeSocketFloat', 'Value', 0.5000)])
+            ('NodeSocketFloat', 'Value3', 0.5000)])
     
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.0175}, attrs={'operation': 'MULTIPLY'})
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value3"], 1: 0.0175}, attrs={'operation': 'MULTIPLY'}) # pretty sure Value3 is the right one here
     
     sine = nw.new_node(Nodes.Math, input_kwargs={0: multiply}, attrs={'operation': 'SINE'})
     
@@ -96,7 +96,7 @@ def shader_eyeball_fish(nw: NodeWrangler):
     voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={'Vector': mix_2, 'Scale': 20.0000})
     
     multiply_4 = nw.new_node(Nodes.Math,
-        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture.outputs["Distance"], 2: 0.0000},
+        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     mapping_2 = nw.new_node(Nodes.Mapping,
@@ -114,7 +114,7 @@ def shader_eyeball_fish(nw: NodeWrangler):
         attrs={'voronoi_dimensions': '4D'})
     
     multiply_5 = nw.new_node(Nodes.Math,
-        input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"], 2: 0.0000},
+        input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"]},
         attrs={'operation': 'MULTIPLY'})
     
     mix_5 = nw.new_node(Nodes.MixRGB,

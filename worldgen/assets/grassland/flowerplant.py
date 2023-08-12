@@ -96,7 +96,7 @@ def nodegroup_stem_branch_leaves(nw: NodeWrangler, leaves):
                                                      'Scale': stembranchleafsr.outputs["Value"]})
 
     random_value_3 = nw.new_node(Nodes.RandomValue,
-                                 input_kwargs={1: (0.6, 0.6, 6.28), 3: 30.0},
+                                 input_kwargs={'Max': (0.6, 0.6, 6.28), 'Seed': 30},
                                  attrs={'data_type': 'FLOAT_VECTOR'})
 
     rotate_instances_2 = nw.new_node(Nodes.RotateInstances,
@@ -309,7 +309,7 @@ def nodegroup_stem_branch_selection(nw: NodeWrangler):
     seed = randint(0, 10000, size=(1,))[0]
     threshold = uniform(0.05, 0.1, size=(1,))[0]
     random_value = nw.new_node(Nodes.RandomValue,
-                               input_kwargs={2: 0.0, 3: 1.0, 4: seed})
+                               input_kwargs={'Min': 0.0, 'Max': 1.0, 'Seed': seed})
     less_equal = nw.new_node(Nodes.Compare,
                              input_kwargs={0: random_value, 1: threshold},
                              attrs={'operation': 'LESS_EQUAL'})
@@ -344,7 +344,7 @@ def nodegroup_stem_leaves(nw: NodeWrangler, leaves):
                                                      'Scale': stemleafsr.outputs["Value"]})
 
     random_value_2 = nw.new_node(Nodes.RandomValue,
-                                 input_kwargs={1: (0.5, 0.5, 6.28), 3: 30.0},
+                                 input_kwargs={'Max': (0.5, 0.5, 6.28), 'Seed': 30},
                                  attrs={'data_type': 'FLOAT_VECTOR'})
 
     rotate_instances = nw.new_node(Nodes.RotateInstances,
@@ -541,17 +541,18 @@ def geo_flowerplant(nw: NodeWrangler, **kwargs):
         resample_curve_2 = nw.new_node(Nodes.ResampleCurve, input_kwargs={'Curve': set_position, 'Count': resample_num})
         stembranchselection = nw.new_node(nodegroup_stem_branch_selection().name)
         stembranch = nw.new_node(nodegroup_stem_branch(flowers=flowers, leaves=leaves).name)
-        random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={0: (0.4, 0.4, 0.4), 2: 0.5, 3: 0.75})
+        random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={'Min': (0.4, 0.4, 0.4)}, 
+        attrs={'data_type': 'FLOAT_VECTOR'})
         instance_on_points_2 = nw.new_node(Nodes.InstanceOnPoints,
                                            input_kwargs={'Points': resample_curve_2, 'Selection': stembranchselection,
-                                                         'Instance': stembranch, 'Scale': random_value_1.outputs[1]})
+                                                         'Instance': stembranch, 'Scale': (random_value_1, "Value")})
         random_value_4 = nw.new_node(Nodes.RandomValue,
-                                     input_kwargs={0: (0.15, 0.15, 0.0), 1: (0.45, 0.45, 6.28), 3: 30.0},
+                                     input_kwargs={'Min': (0.15, 0.15, 0.0), 'Max': (0.45, 0.45, 6.28), 'Seed': 30},
                                      attrs={'data_type': 'FLOAT_VECTOR'})
 
         rotate_instances_1 = nw.new_node(Nodes.RotateInstances,
                                          input_kwargs={'Instances': instance_on_points_2,
-                                                       'Rotation': random_value_4.outputs["Value"]})
+                                                       'Rotation': (random_value_4, "Value")})
         realize_instances_1 = nw.new_node(Nodes.RealizeInstances,
             input_kwargs={'Geometry': rotate_instances_1})
         branches.append(realize_instances_1)

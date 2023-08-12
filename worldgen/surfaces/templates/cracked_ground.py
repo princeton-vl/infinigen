@@ -124,7 +124,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
         attrs={'noise_dimensions': '4D'})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'noise', 3: noise_texture.outputs["Fac"]})
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'noise', 'Value': noise_texture.outputs["Fac"]})
     
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': position, 'W': seed, 'Scale': sca_crac, 'Detail': 15.0000},
@@ -154,7 +154,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
         attrs={'operation': 'MULTIPLY'})
     
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': store_named_attribute, 'Name': 'crack', 3: multiply})
+        input_kwargs={'Geometry': store_named_attribute, 'Name': 'crack', 'Value': multiply})
     
     voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture,
         input_kwargs={'Vector': position, 'W': seed, 'Scale': sca_gra},
@@ -163,7 +163,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
     map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': voronoi_texture_1.outputs["Distance"], 1: 0.9000})
     
     store_named_attribute_2 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': store_named_attribute_1, 'Name': 'bump', 3: map_range_2.outputs["Result"]})
+        input_kwargs={'Geometry': store_named_attribute_1, 'Name': 'bump', 'Value': map_range_2.outputs["Result"]})
     
     applyvaluetonormal = nw.new_node(nodegroup_apply_value_to_normal().name,
         input_kwargs={'value': noise_texture.outputs["Fac"], 'displacement': 0.3000})

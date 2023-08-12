@@ -48,10 +48,10 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         input_kwargs={'Body Length': kwargs["Body Length"], 'Random Seed': kwargs["Body Seed"]})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': dragonflybody.outputs["Geometry"], 'Name': 'spline parameter', 3: dragonflybody.outputs["spline parameter"]})
+        input_kwargs={'Geometry': dragonflybody.outputs["Geometry"], 'Name': 'spline parameter', 'Value': dragonflybody.outputs["spline parameter"]})
     
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': store_named_attribute, 'Name': 'body seed', 3: kwargs["Body Seed"]})
+        input_kwargs={'Geometry': store_named_attribute, 'Name': 'body seed', 'Value': kwargs["Body Seed"]})
     
     transform = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': store_named_attribute_1, 'Rotation': (1.5708, 0.0, 0.0)})

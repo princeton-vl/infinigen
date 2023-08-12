@@ -52,7 +52,7 @@ def nodegroup_chameleon_toe(nw: NodeWrangler):
         input_kwargs={'Curve': capture_attribute.outputs["Geometry"], 'Profile Curve': curve_circle.outputs["Curve"]})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': curve_to_mesh, 'Name': 'Ridge', 3: capture_attribute.outputs[2]},
+        input_kwargs={'Geometry': curve_to_mesh, 'Name': 'Ridge', 'Value': capture_attribute.outputs[2]},
         attrs={'data_type': 'FLOAT', 'domain': 'POINT'})
     
     sample_curve = nw.new_node(Nodes.SampleCurve, input_kwargs={'Curve': set_curve_radius}, attrs={'mode': 'FACTOR'})
@@ -233,21 +233,21 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
         label='FloorFloor',
         attrs={'operation': 'MULTIPLY_ADD'})
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': floor_floor},
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
+    transfer_attribute = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': group_input, 'Value': group_input.outputs["Attribute"], 'Index': floor_floor},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     ceil_floor = nw.new_node(Nodes.Math,
         input_kwargs={0: uvparamtovertidxs_1.outputs["Ceil"], 1: group_input.outputs["SizeV"], 2: uvparamtovertidxs.outputs["Floor"]},
         label='CeilFloor',
         attrs={'operation': 'MULTIPLY_ADD'})
     
-    transfer_attribute_1 = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': ceil_floor},
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
+    transfer_attribute_1 = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': group_input, 'Value': group_input.outputs["Attribute"], 'Index': ceil_floor},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     map_range = nw.new_node(Nodes.MapRange,
-        input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: transfer_attribute.outputs["Attribute"], 10: transfer_attribute_1.outputs["Attribute"]},
+        input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: (transfer_attribute, 'Value'), 10: (transfer_attribute_1, 'Value')},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     floor_ceil = nw.new_node(Nodes.Math,
@@ -255,21 +255,21 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
         label='FloorCeil',
         attrs={'operation': 'MULTIPLY_ADD'})
     
-    transfer_attribute_2 = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': floor_ceil},
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
+    transfer_attribute_2 = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': group_input, 'Value': group_input.outputs["Attribute"], 'Index': floor_ceil},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     ceil_ceil = nw.new_node(Nodes.Math,
         input_kwargs={0: uvparamtovertidxs_1.outputs["Ceil"], 1: group_input.outputs["SizeV"], 2: uvparamtovertidxs.outputs["Ceil"]},
         label='CeilCeil',
         attrs={'operation': 'MULTIPLY_ADD'})
     
-    transfer_attribute_3 = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': ceil_ceil},
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
+    transfer_attribute_3 = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': group_input, 'Value': group_input.outputs["Attribute"], 'Index': ceil_ceil},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     map_range_1 = nw.new_node(Nodes.MapRange,
-        input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: transfer_attribute_2.outputs["Attribute"], 10: transfer_attribute_3.outputs["Attribute"]},
+        input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: (transfer_attribute_2, 'Value'), 10: (transfer_attribute_3, 'Value')},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     map_range_2 = nw.new_node(Nodes.MapRange,
@@ -519,7 +519,7 @@ def nodegroup_chameleon_leg_raw_shape(nw: NodeWrangler):
         input_kwargs={'Geometry': simpletube_1.outputs["Curve"], 'Rotation': scale_1.outputs["Vector"], 'Scale': (1.0000, 0.6500, 1.0000)})
     
     sample_curve = nw.new_node(Nodes.SampleCurve,
-        input_kwargs={'Curve': transform_geometry_2, 'Factor': 0.8500, 'Length': 1.0000},
+        input_kwargs={'Curve': transform_geometry_2, 'Factor': 0.8500},
         attrs={'mode': 'FACTOR'})
     
     set_position = nw.new_node(Nodes.SetPosition,
@@ -736,12 +736,12 @@ def nodegroup_curve_parameter_curve(nw: NodeWrangler):
     bilinearinterpindextransfer = nw.new_node(nodegroup_bilinear_interp_index_transfer().name,
         input_kwargs={'Source': group_input.outputs["Surface"], 'U': separate_xyz.outputs["X"], 'V': separate_xyz.outputs["Y"], 'Attribute': position_1, 'SizeU': group_input.outputs["CtrlptsU"], 'SizeV': group_input.outputs["CtrlptsW"], 'CyclicV': True})
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input.outputs["Surface"], 1: normal, 'Source Position': bilinearinterpindextransfer},
+    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': group_input.outputs["Surface"], 'Value': normal, 'Sample Position': bilinearinterpindextransfer},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     multiply_add = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: transfer_attribute.outputs["Attribute"], 1: separate_xyz.outputs["Z"], 2: bilinearinterpindextransfer},
+        input_kwargs={0: (transfer_attribute, 'Value'), 1: separate_xyz.outputs["Z"], 2: bilinearinterpindextransfer},
         attrs={'operation': 'MULTIPLY_ADD'})
     
     set_position = nw.new_node(Nodes.SetPosition,
@@ -896,11 +896,11 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
     
     index = nw.new_node(Nodes.Index)
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': curve_to_mesh_1, 1: position, 'Index': index},
+    transfer_attribute = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': curve_to_mesh_1, 'Value': position, 'Index': index},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': transfer_attribute.outputs["Attribute"]})
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': (transfer_attribute, 'Value')})
     
     add = nw.new_node(Nodes.Math, input_kwargs={0: group_input_1.outputs["Base Radius"], 1: separate_xyz.outputs["X"]})
     
@@ -932,7 +932,7 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
         attrs={'use_clamp': True, 'operation': 'MAXIMUM'})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': set_position, 'Name': group_input_1.outputs["Name"], 3: maximum},
+        input_kwargs={'Geometry': set_position, 'Name': group_input_1.outputs["Name"], 'Value': maximum},
         attrs={'data_type': 'FLOAT', 'domain': 'POINT'})
     
     switch_3 = nw.new_node(Nodes.Switch,

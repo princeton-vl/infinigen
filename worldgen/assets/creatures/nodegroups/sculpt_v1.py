@@ -67,7 +67,7 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
     
     transfer_attribute_1 = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': floor_floor},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
     
     ceil_floor = nw.new_node(Nodes.Math,
         input_kwargs={0: uvparamtovertidxs_1.outputs["Ceil"], 1: group_input.outputs["SizeV"], 2: uvparamtovertidxs.outputs["Floor"]},
@@ -76,7 +76,7 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
     
     transfer_attribute_2 = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': ceil_floor},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
     
     map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: transfer_attribute_1.outputs["Attribute"], 10: transfer_attribute_2.outputs["Attribute"]},
@@ -89,7 +89,7 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
     
     transfer_attribute_3 = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': floor_ceil},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
     
     ceil_ceil = nw.new_node(Nodes.Math,
         input_kwargs={0: uvparamtovertidxs_1.outputs["Ceil"], 1: group_input.outputs["SizeV"], 2: uvparamtovertidxs.outputs["Ceil"]},
@@ -98,7 +98,7 @@ def nodegroup_bilinear_interp_index_transfer(nw: NodeWrangler):
     
     transfer_attribute_4 = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': group_input, 1: group_input.outputs["Attribute"], 'Index': ceil_ceil},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
     
     map_range_1 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Vector': uvparamtovertidxs_1.outputs["Remainder"], 9: transfer_attribute_3.outputs["Attribute"], 10: transfer_attribute_4.outputs["Attribute"]},
@@ -136,7 +136,7 @@ def nodegroup_curve_parameter_curve(nw: NodeWrangler):
     
     transfer_attribute = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': group_input.outputs["Surface"], 1: normal, 'Source Position': bilinearinterpindextransfer},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'NEAREST_FACE_INTERPOLATED'})
     
     multiply_add = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: transfer_attribute.outputs["Attribute"], 1: separate_xyz.outputs["Z"], 2: bilinearinterpindextransfer},
@@ -188,7 +188,7 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
     
     transfer_attribute = nw.new_node(Nodes.TransferAttribute,
         input_kwargs={'Source': curve_to_mesh_1, 1: position, 'Index': index},
-        attrs={'data_type': 'FLOAT_VECTOR'})
+        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
     
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': transfer_attribute.outputs["Attribute"]})
     

@@ -143,7 +143,7 @@ def tag_object(obj, name=""):
 def tag_nodegroup(nw, input_node, name):
     name = 'TAG_' + name
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': input_node, 'Name': name, 5: True},
+        input_kwargs={'Geometry': input_node, 'Name': name, 'Value': True},
         attrs={'domain': 'POINT', 'data_type': 'BOOLEAN'})
     return store_named_attribute
     

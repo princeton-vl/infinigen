@@ -77,7 +77,8 @@ def nodegroup_follow_curve(nw):
         attrs={'operation': 'MULTIPLY'})
     
     sample_curve = nw.new_node(Nodes.SampleCurve,
-        input_kwargs={'Curve': group_input.outputs["Curve"], 'Length': multiply})
+        input_kwargs={'Curve': group_input.outputs["Curve"], 'Length': multiply},
+        attrs={'mode': 'LENGTH'})
     
     cross_product = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: sample_curve.outputs["Tangent"], 1: sample_curve.outputs["Normal"]},
@@ -553,7 +554,7 @@ def geo_flower(nw, petal_material, center_material):
 
 class TreeFlowerFactory(AssetFactory):
 
-    def __init__(self, factory_seed, rad, diversity_fac=0.25):
+    def __init__(self, factory_seed, rad=uniform(0.15, 0.25), diversity_fac=0.25):
         super(TreeFlowerFactory, self).__init__(factory_seed=factory_seed)
 
         self.rad = rad

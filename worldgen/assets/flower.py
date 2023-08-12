@@ -75,7 +75,7 @@ def nodegroup_follow_curve(nw):
         attrs={'operation': 'MULTIPLY'})
     
     sample_curve = nw.new_node(Nodes.SampleCurve,
-        input_kwargs={'Curves': group_input.outputs["Curve"], 'Length': multiply})
+        input_kwargs={'Curves': group_input.outputs["Curve"], 'Length': multiply}, attrs={'mode': 'LENGTH'})
     
     cross_product = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: sample_curve.outputs["Tangent"], 1: sample_curve.outputs["Normal"]},

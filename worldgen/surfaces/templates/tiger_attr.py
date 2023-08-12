@@ -41,7 +41,7 @@ def nodegroup_tiger_fac(nw: NodeWrangler):
     
     mix_3 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': 0.8500, 'Color1': noise_texture.outputs["Color"], 'Color2': group_input.outputs["Vector"]})
-    mix_3.inputs["Fac"].default_value = uniform(0.8, 0.9)
+    mix_3.inputs["Factor"].default_value = uniform(0.8, 0.9)
     
     musgrave_texture_1 = nw.new_node(Nodes.MusgraveTexture,
         input_kwargs={'Vector': mix_3, 'W': 1.0000, 'Scale': 1.0000},

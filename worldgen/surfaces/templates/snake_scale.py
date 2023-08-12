@@ -76,12 +76,12 @@ def nodegroup_scale_shape(nw: NodeWrangler):
     
     position_1 = nw.new_node(Nodes.InputPosition)
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': convex_hull, 1: position_1},
+    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': convex_hull, 'Value': position_1},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ,
-        input_kwargs={'Vector': transfer_attribute.outputs["Attribute"]})
+        input_kwargs={'Vector': (transfer_attribute, "Value")})
     
     divide = nw.new_node(Nodes.Math,
         input_kwargs={0: separate_xyz_2.outputs["X"], 1: group_input.outputs["length"]},
@@ -210,12 +210,12 @@ def geometry_snake_scale(nw: NodeWrangler):
     
     normal = nw.new_node(Nodes.InputNormal)
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': separate_geometry.outputs["Selection"], 1: normal},
+    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': separate_geometry.outputs["Selection"], 'Value': normal},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     align_euler_to_vector = nw.new_node(Nodes.AlignEulerToVector,
-        input_kwargs={'Vector': transfer_attribute.outputs["Attribute"]},
+        input_kwargs={'Vector': (transfer_attribute, "Value")},
         attrs={'axis': 'Z'})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
@@ -240,12 +240,12 @@ def geometry_snake_scale(nw: NodeWrangler):
     
     normal_1 = nw.new_node(Nodes.InputNormal)
     
-    transfer_attribute_1 = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': separate_geometry.outputs["Inverted"], 1: normal_1},
+    transfer_attribute_1 = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': separate_geometry.outputs["Inverted"], 'Value': normal_1},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     align_euler_to_vector_1 = nw.new_node(Nodes.AlignEulerToVector,
-        input_kwargs={'Vector': transfer_attribute_1.outputs["Attribute"]},
+        input_kwargs={'Vector': (transfer_attribute_1, "Value")},
         attrs={'axis': 'Z'})
     
     instance_on_points_1 = nw.new_node(Nodes.InstanceOnPoints,

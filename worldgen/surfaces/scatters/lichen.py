@@ -115,3 +115,15 @@ class Lichen:
             selection=selection
         )
         return scatter_obj
+
+
+def apply(obj, selection=None):
+    fac = LichenFactory(np.random.randint(1e5))
+    col = make_asset_collection(fac, name='lichen', n=5)
+    scatter_obj = scatter_instances(
+        base_obj=obj, collection=col, 
+        density=5e3,  min_spacing=.08, 
+        scale=1, scale_rand=N(0.5, 0.07),
+        selection=selection
+    )
+    return scatter_obj

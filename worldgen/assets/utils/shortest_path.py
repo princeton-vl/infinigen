@@ -21,15 +21,15 @@ def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, of
         geometry = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={'Mesh': geometry, 'Level': subdiv})
 
     geometry = nw.new_node(Nodes.StoreNamedAttribute,
-                           [geometry, 'custom_normal', nw.new_node(Nodes.InputNormal)],
+                           input_kwargs={'Geometry': geometry, 'Name': 'custom_normal', 'Value': nw.new_node(Nodes.InputNormal)},
                            attrs={'data_type': 'FLOAT_VECTOR'})
     curve = nw.new_node(Nodes.EdgePathToCurve,
                         [geometry, None, nw.new_node(Nodes.ShortestEdgePath, [end_index, weight]).outputs[0]])
     curve = nw.new_node(Nodes.SplineType, [curve], attrs={'spline_type': 'NURBS'})
-    curve = nw.new_node(Nodes.TrimCurve, [curve, trim_threshold])
+    curve = nw.new_node(Nodes.TrimCurve, input_kwargs={'Curve': curve, 'Start': trim_threshold})
     curve = nw.new_node(Nodes.ResampleCurve, [curve], input_kwargs={'Length': .001}, attrs={'mode': 'LENGTH'})
     curve = nw.new_node(Nodes.StoreNamedAttribute,
-                        [curve, 'spline_parameter', None, nw.new_node(Nodes.SplineParameter)])
+                        input_kwargs={'Geometry': curve, 'Name': 'spline_parameter', 'Value': nw.new_node(Nodes.SplineParameter)})
     geometry = nw.new_node(Nodes.MergeByDistance, [nw.curve2mesh(curve), None, merge_threshold])
 
     distance = nw.vector_math('DISTANCE', *nw.new_node(Nodes.InputEdgeVertices).outputs[2:])

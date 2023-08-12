@@ -333,8 +333,8 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
 
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Curve', None),
-                                            ('NodeSocketFloat', 'To Min', 0.2),
-                                            ('NodeSocketFloat', 'To Min', -0.2)])
+                                            ('NodeSocketFloat', 'To Min1', 0.2),
+                                            ('NodeSocketFloat', 'To Min2', -0.2)])
 
     resample_curve = nw.new_node(Nodes.ResampleCurve,
                                  input_kwargs={'Curve': group_input.outputs["Curve"], 'Count': 100})
@@ -345,7 +345,7 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
 
     map_range_1 = nw.new_node(Nodes.MapRange,
                               input_kwargs={'Value': spline_parameter_1.outputs["Factor"],
-                                            3: group_input.outputs["To Min"], 4: 0.0})
+                                            3: group_input.outputs["To Min1"], 4: 0.0})
 
     vector_rotate = nw.new_node(Nodes.VectorRotate,
                                 input_kwargs={'Vector': position_2, 'Center': (0.0, 0.0, 2.0),

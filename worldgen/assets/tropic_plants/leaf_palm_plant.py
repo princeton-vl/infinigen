@@ -227,8 +227,8 @@ def nodegroup_palmleafsector(nw: NodeWrangler, leaf_h_wave_control_points):
                                             ('NodeSocketFloat', 'Wave Scale Y', 0.3),
                                             ('NodeSocketFloat', 'Wave Scale X', 0.5),
                                             ('NodeSocketFloat', 'Leaf Width Scale', 0.0),
-                                            ('NodeSocketInt', 'Resolution', 26),
-                                            ('NodeSocketFloat', 'Resolution', 0.0)])
+                                            ('NodeSocketInt', 'Resolution1', 26),
+                                            ('NodeSocketFloat', 'Resolution2', 0.0)])
 
     round_tropical_leaf = nw.new_node(nodegroup_leaf_palm_instance(leaf_h_wave_control_points).name,
                                       input_kwargs={'To Max': group_input.outputs["To Max"],
@@ -238,7 +238,7 @@ def nodegroup_palmleafsector(nw: NodeWrangler, leaf_h_wave_control_points):
                                                     'Leaf Width Scale': group_input.outputs["Leaf Width Scale"]})
 
     curve_circle = nw.new_node(Nodes.CurveCircle,
-                               input_kwargs={'Resolution': group_input.outputs["Resolution"], 'Radius': 0.01})
+                               input_kwargs={'Resolution': group_input.outputs["Resolution1"], 'Radius': 0.01})
 
     palm_leaf_assemble = nw.new_node(nodegroup_palm_leaf_assemble().name,
                                      input_kwargs={'Points': curve_circle.outputs["Curve"],
@@ -538,7 +538,7 @@ class LeafPalmPlantFactory(AssetFactory):
             params['plant_scale'] = (s, s, s)
         return params
 
-    def create_asset(self, params):
+    def create_asset(self, params={}, **kwargs):
         bpy.ops.mesh.primitive_plane_add(
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
@@ -550,3 +550,4 @@ class LeafPalmPlantFactory(AssetFactory):
         surface.add_material(obj, shader_leaf_material, selection=None)
 
         return obj
+

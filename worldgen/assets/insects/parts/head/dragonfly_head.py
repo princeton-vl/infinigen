@@ -174,7 +174,7 @@ def nodegroup_dragon_fly_head(nw: NodeWrangler,
     position = nw.new_node(Nodes.InputPosition)
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': join_geometry_1, 'Name': 'pos', 2: position},
+        input_kwargs={'Geometry': join_geometry_1, 'Name': 'pos', "Value": position},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     join_geometry = nw.new_node(Nodes.JoinGeometry,

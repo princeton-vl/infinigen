@@ -96,7 +96,7 @@ def nodegroup_dragonfly_wing(nw: NodeWrangler):
         attrs={'target_element': 'EDGES'})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': subdivide_mesh, 'Name': 'distance to edge', 3: geometry_proximity.outputs["Distance"]})
+        input_kwargs={'Geometry': subdivide_mesh, 'Name': 'distance to edge', 'Value': geometry_proximity.outputs["Distance"]})
     
     spline_parameter = nw.new_node(Nodes.SplineParameter)
     
@@ -125,12 +125,12 @@ def nodegroup_dragonfly_wing(nw: NodeWrangler):
         attrs={'target_element': 'EDGES'})
     
     store_named_attribute_2 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': store_named_attribute, 'Name': 'stripes coordinate', 3: geometry_proximity_1.outputs["Distance"]})
+        input_kwargs={'Geometry': store_named_attribute, 'Name': 'stripes coordinate', 'Value': geometry_proximity_1.outputs["Distance"]})
     
     position = nw.new_node(Nodes.InputPosition)
     
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': store_named_attribute_2, 'Name': 'pos', 2: position},
+        input_kwargs={'Geometry': store_named_attribute_2, 'Name': 'pos', 'Value': position},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     set_material = nw.new_node(Nodes.SetMaterial,

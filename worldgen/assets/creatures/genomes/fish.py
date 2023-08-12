@@ -306,7 +306,7 @@ class FishSchoolFactory(BoidSwarmFactory):
             boids_settings=boids_settings
         )
 
-    def __init__(self, factory_seed, bvh, coarse=False):
+    def __init__(self, factory_seed, bvh=None, coarse=False):
         with FixedSeed(factory_seed):
             settings = self.fish_school_params()
             col = make_asset_collection(FishFactory(factory_seed=randint(1e7), animation_mode='idle'), n=3)

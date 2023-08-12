@@ -180,17 +180,17 @@ def nodegroup_pedal_rotation_on_base_circle(nw: NodeWrangler):
                                  input_kwargs={2: -0.1, 3: 0.1})
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', -1.3),
-                                            ('NodeSocketFloat', 'Value', -1.57)])
+                              expose_input=[('NodeSocketFloat', 'Value1', -1.3),
+                                            ('NodeSocketFloat', 'Value2', -1.57)])
 
     add = nw.new_node(Nodes.Math,
-                      input_kwargs={0: random_value_1.outputs[1], 1: group_input.outputs["Value"]})
+                      input_kwargs={0: random_value_1.outputs[1], 1: group_input.outputs["Value1"]})
 
     random_value_2 = nw.new_node(Nodes.RandomValue,
                                  input_kwargs={2: -0.3, 3: 0.3})
 
     add_1 = nw.new_node(Nodes.Math,
-                        input_kwargs={0: random_value_2.outputs[1], 1: group_input.outputs[1]})
+                        input_kwargs={0: random_value_2.outputs[1], 1: group_input.outputs["Value2"]})
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ,
                                 input_kwargs={'X': add, 'Z': add_1})

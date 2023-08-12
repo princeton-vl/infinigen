@@ -356,7 +356,7 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind='duck', tail=False, **
         input_kwargs={'Fac': 0.5 if tail else 1.0, 'Color1': colorramp2.outputs["Color"], 'Color2': colorramp.outputs["Color"]})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': mix.outputs["Color"], 'Specular': 0.0, 'Roughness': 1.0},
+    input_kwargs={'Base Color': (mix, "Result"), 'Specular': 0.0, 'Roughness': 1.0},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,

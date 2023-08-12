@@ -198,10 +198,12 @@ def nodegroup_bird_wing(nw: NodeWrangler):
     map_range_1 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': index, 1: attribute_statistic.outputs["Min"], 2: attribute_statistic.outputs["Max"]})
     
-    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
-        input_kwargs={'Source': curve_to_mesh, 2: map_range_1.outputs["Result"]},
-        attrs={'mapping': 'NEAREST'})
-    
+    transfer_attribute_index = nw.new_node(Nodes.SampleNearest,
+        input_kwargs={'Geometry': curve_to_mesh, 'Sample Position': map_range_1.outputs["Result"]})
+
+    transfer_attribute = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': curve_to_mesh, 'Index': transfer_attribute_index})
+
     float_curve = nw.new_node(Nodes.FloatCurve,
         input_kwargs={'Factor': group_input.outputs["Wing Shape Sculpting"], 'Value': (transfer_attribute, 'Value')})
     node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.5164, 0.245), (0.7564, 0.625), (1.0, 1.0)])
@@ -223,7 +225,7 @@ def nodegroup_bird_wing(nw: NodeWrangler):
         input_kwargs={'Deg': add.outputs["Vector"]})
     
     vector_curves = nw.new_node(Nodes.VectorCurve,
-        input_kwargs={'Fac': group_input.outputs["Wing Shape Sculpting"], 'Vector': transfer_attribute.outputs[1]})
+        input_kwargs={'Fac': group_input.outputs["Wing Shape Sculpting"], 'Vector': transfer_attribute})
     node_utils.assign_curve(vector_curves.mapping.curves[0], [(-1.0, -0.0), (0.0036, 0.0), (0.0473, 0.6), (0.3527, 0.54), (0.6, 0.9), (0.8836, 0.92), (1.0, 0.58)], handles=['AUTO', 'VECTOR', 'AUTO', 'AUTO', 'VECTOR', 'AUTO', 'AUTO'])
     node_utils.assign_curve(vector_curves.mapping.curves[1], [(-1.0, 1.0), (1.0, 1.0)])
     node_utils.assign_curve(vector_curves.mapping.curves[2], [(-1.0, 1.0), (1.0, 1.0)])
@@ -548,9 +550,12 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
     map_range_1 = nw.new_node(Nodes.MapRange,
                               input_kwargs={'Value': index, 1: attribute_statistic.outputs["Min"],
                                             2: attribute_statistic.outputs["Max"]})
+      
+    transfer_attribute_index = nw.new_node(Nodes.SampleNearest,
+        input_kwargs={'Geometry': curve_to_mesh, 'Sample Position': map_range_1.outputs["Result"]})
 
-    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
-                                     input_kwargs={'Source': curve_to_mesh, 'Value': map_range_1.outputs["Result"]})
+    transfer_attribute = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': curve_to_mesh, 'Index': transfer_attribute_index})
 
     map_range_2 = nw.new_node(Nodes.MapRange,
                               input_kwargs={'Value': group_input.outputs["Extension"], 3: 115.6500, 4: 0.0000})
@@ -563,7 +568,7 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
     for i in range(3):
         float_curve = nw.new_node(Nodes.FloatCurve,
                                   input_kwargs={'Factor': group_input.outputs["Wing Shape Sculpting"],
-                                                'Value': transfer_attribute.outputs[1]})
+                                                'Value': (transfer_attribute, 'Value')})
         node_utils.assign_curve(float_curve.mapping.curves[0],
                                 [(0.0000, 0.0000), (0.25, 0.2), (0.50, 0.4),
                                  (0.75, 0.6), (1.0000, 0.8 - i * 0.02 + N(0., 0.02))])

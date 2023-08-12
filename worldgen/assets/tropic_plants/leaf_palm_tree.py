@@ -594,7 +594,7 @@ class LeafPalmTreeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(LeafPalmTreeFactory, self).__init__(factory_seed, coarse=coarse)
 
-    def update_params(self, params={}):
+    def update_params(self, params):
         if params.get('leaf_x_curvature', None) is None:
             params['leaf_x_curvature'] = uniform(0.0, 0.8)
         if params.get('leaf_instance_curvature_ratio', None) is None:
@@ -619,7 +619,7 @@ class LeafPalmTreeFactory(AssetFactory):
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
-        params = self.update_params(**params)
+        params = self.update_params(params)
         surface.add_geomod(obj, geometry_palm_tree_leaf_nodes, apply=True,
                            attributes=['Attribute', 'Coordinate',
                                        'subvein offset', 'vein'], input_kwargs=params)

@@ -190,7 +190,7 @@ def nodegroup_hair_grooming(nw: NodeWrangler):
         input_kwargs={'Value': spline_parameter.outputs["Factor"], 3: group_input.outputs["Root Radius"], 4: 0.0})
     
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius,
-        input_kwargs={'Curves': snaprootstosurface, 'Radius': map_range.outputs["Result"]})
+        input_kwargs={'Curve': snaprootstosurface, 'Radius': map_range.outputs["Result"]})
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_curve_radius})

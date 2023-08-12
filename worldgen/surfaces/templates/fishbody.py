@@ -30,7 +30,7 @@ def nodegroup_node_grid(nw: NodeWrangler):
         attrs={'operation': 'MULTIPLY'})
     
     floor = nw.new_node(Nodes.Math,
-        input_kwargs={0: multiply, 1: 2.0},
+        input_kwargs={0: multiply},
         attrs={'operation': 'FLOOR'})
     
     multiply_1 = nw.new_node(Nodes.Math,

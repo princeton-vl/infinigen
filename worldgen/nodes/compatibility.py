@@ -35,19 +35,20 @@ def make_virtual_transfer_attribute(nw, orig_type, input_args, attrs, input_kwar
     if attrs is None:
         raise ValueError(f'{attrs=} in make_virtual_transfer_attribute, cannot infer correct node type mapping')
 
-    if attrs['mode'] == 'NEAREST_FACE_INTERPOLATED':
+    if attrs['mapping'] == 'NEAREST_FACE_INTERPOLATED':
         mapped_type = Nodes.SampleNearestSurface
-    elif attrs['mode'] == 'NEAREST':
-        mapped_type = Nodes.SampleNearest
-    elif attrs['mode'] == 'INDEX':
+        map_dict_keys(input_kwargs, {'Source': 'Mesh', 'Attribute': 'Value', 'Source Position': 'Sample Position'})
+    elif attrs['mapping'] == 'NEAREST':
+        raise ValueError(f"Compatibility mapping for mode='NEAREST' is not supported, please modify the code to resolve this outdated instance of TransferAttribute")
+    elif attrs['mapping'] == 'INDEX':
         mapped_type = Nodes.SampleIndex
+        map_dict_keys(input_kwargs, {'Source': 'Geometry', 'Attribute': 'Value'})
     else:
         assert False
 
     logger.warning(f'Converting request for Nodes.TransferAttribute to {mapped_type}'
                     f'to ensure compatibility with bl3.3 code, but this is unsafe. Please update to avoid {Nodes.TransferAttribute}')
-
-    map_dict_keys(input_kwargs, {'Source': 'Geometry', 'Mesh': 'Geometry'})
+   
     return nw.new_node(node_type=mapped_type, input_args=input_args, 
                        attrs=attrs, input_kwargs=input_kwargs, compat_mode=False)    
 

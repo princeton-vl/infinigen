@@ -18,6 +18,8 @@ class Nodes:
     If the different node contexts disagree, then we tiebreak by using geonodes' placement, not shader nodes
     """
 
+    Mix = "ShaderNodeMix"
+
     # Attribute
     Attribute = "ShaderNodeAttribute"
     CaptureAttribute = "GeometryNodeCaptureAttribute"
@@ -294,6 +296,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.MapRange: ['data_type', 'interpolation_type', 'clamp'],
     Nodes.ColorRamp: [],  # Color ramp properties are set in special_case_colorramp, since they are nested
     Nodes.MixRGB: ['blend_type'],
+    Nodes.Mix: ['data_type', 'blend_type', 'clamp_result', 'clamp_factor'],
     Nodes.AccumulateField: ['data_type'],
     Nodes.CombineRGB: ['mode'],
     Nodes.CombineColor: ['mode'],

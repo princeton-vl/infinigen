@@ -4,6 +4,7 @@ REQUIREMENTS_PATH='./requirements.txt'
 PYTHON_WGET_LINK='https://www.python.org/ftp/python/3.10.9/Python-3.10.9.tgz'
 PYTHON_WGET_FILE='Python-3.10.9.tgz'
 PYTHON_DIR='Python-3.10.9'
+NURBS_SCRIPT="setup_linux.py"
 
 git submodule init
 git submodule update
@@ -23,7 +24,12 @@ if [ "${OS}" = "Darwin" ]; then
     arch -arm64 brew install llvm open-mpi libomp glm glew
 fi
 
-bash worldgen/tools/install/install_bnurbs.sh
+#bash worldgen/tools/install/install_bnurbs.sh
+cd ./worldgen/assets/creatures/geometry/cpp_utils
+rm -f *.so
+rm -rf build
+python "${NURBS_SCRIPT}" build_ext --inplace
+cd -
 
 # Build terrain
 rm -rf *.egg-info
@@ -36,6 +42,7 @@ python setup.py build_ext --inplace --force
 cd -
 
 # Compile process_mesh (i.e. OpenGL-based ground truth)
+<<<<<<< HEAD
 cd ./process_mesh
 /usr/bin/cmake -S . -Bbuild -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_BUILD_TYPE=Release
 /usr/bin/cmake --build build --target all
@@ -59,10 +66,7 @@ if [ "$1" = "opengl" ]; then
     bash ./worldgen/tools/install/compile_opengl.sh
 fi
 
-
 # Build Flip Fluids addon
 if [ "$1" = "flip_fluids" ] || [ "$2" = "flip_fluids" ]; then
     bash ./worldgen/tools/install/compile_flip_fluids.sh
 fi
-=======
->>>>>>> 84118268d (Initial buggy 3.5 fixes)

@@ -170,7 +170,7 @@ def nodegroup_dragonfly_tail(nw: NodeWrangler,
         attrs={'operation': 'MULTIPLY'})
     
     store_named_attribute_2 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': transform, 'Name': 'cross section parameter', 3: multiply_1})
+        input_kwargs={'Geometry': transform, 'Name': 'cross section parameter', 'Value': multiply_1})
     
     reroute = nw.new_node(Nodes.Reroute,
         input_kwargs={'Input': store_named_attribute_2})
@@ -179,7 +179,7 @@ def nodegroup_dragonfly_tail(nw: NodeWrangler,
         input_kwargs={'Profile Curve': reroute, 'noise amount tilt': 0.0, 'Resolution': integer, 'Start': (0.0, 0.0, -1.5), 'End': (0.0, 0.0, 0.68)})
     
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': shapequadratic_001.outputs["Mesh"], 'Name': 'spline parameter', 3: shapequadratic_001.outputs["spline parameter"]})
+        input_kwargs={'Geometry': shapequadratic_001.outputs["Mesh"], 'Name': 'spline parameter', 'Value': shapequadratic_001.outputs["spline parameter"]})
     
     value_1 = nw.new_node(Nodes.Value)
     value_1.outputs[0].default_value = 0.02
@@ -200,7 +200,7 @@ def nodegroup_dragonfly_tail(nw: NodeWrangler,
         input_kwargs={'Geometry': shapequadratic_003.outputs["Mesh"], 'Translation': (0.0, 0.28, 0.0), 'Rotation': (0.0, 0.0, -1.5708)})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': transform_1, 'Name': 'spline parameter', 3: shapequadratic_003.outputs["spline parameter"]})
+        input_kwargs={'Geometry': transform_1, 'Name': 'spline parameter', 'Value': shapequadratic_003.outputs["spline parameter"]})
     
     surfacebump_1 = nw.new_node(nodegroup_surface_bump().name,
         input_kwargs={'Geometry': store_named_attribute, 'Displacement': value_1, 'Scale': 20.0})
@@ -291,7 +291,7 @@ def nodegroup_add_vertical_stripes(nw: NodeWrangler):
         input_kwargs={'Input': voronoi_texture.outputs["Distance"]})
     
     store_named_attribute_3 = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'tail vertical strips', 3: reroute_1})
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'tail vertical strips', 'Value': reroute_1})
     
     normal = nw.new_node(Nodes.InputNormal)
         

@@ -747,8 +747,8 @@ def nodegroup_truncated_stem_geometry(nw: NodeWrangler):
 
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Points', None),
-                                            ('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 0.5)])
+                                            ('NodeSocketFloat', 'Value1', 0.5),
+                                            ('NodeSocketFloat', 'Value2', 0.5)])
 
     truncated_leaf_stem = nw.new_node(nodegroup_truncated_leaf_stem().name)
 
@@ -795,7 +795,7 @@ def nodegroup_truncated_stem_geometry(nw: NodeWrangler):
                                                   'Scale': (0.0, 0.0, 0.0)})
 
     truncated_leaf_selection = nw.new_node(nodegroup_truncated_leaf_selection().name,
-                                           input_kwargs={'Value': group_input.outputs["Value"]})
+                                           input_kwargs={'Value': group_input.outputs["Value1"]})
 
     scale_instances_5 = nw.new_node(Nodes.ScaleInstances,
                                     input_kwargs={'Instances': scale_instances_3, 'Selection': truncated_leaf_selection,
@@ -1160,7 +1160,7 @@ def geometry_coconut_tree_nodes(nw: NodeWrangler, **kwargs):
                                                  'End': combine_xyz_2})
 
     resample_curve = nw.new_node(Nodes.ResampleCurve,
-                                 input_kwargs={'Curve': quadratic_bezier, 'Count': 20000, 'Length': 0.02},
+                                 input_kwargs={'Curve': quadratic_bezier, 'Length': 0.02}, #'Count': 20000
                                  attrs={'mode': 'LENGTH'})
 
     set_position = nw.new_node(Nodes.SetPosition,

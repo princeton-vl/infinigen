@@ -23,6 +23,7 @@ NODE_ATTRS_AVAILABLE = o_NODE_ATTRS_AVAILABLE.copy()
 NODE_ATTRS_AVAILABLE.update({
     Nodes.ColorRamp: ["color_ramp.elements", "color_ramp.color_mode", "color_ramp.interpolation", "color_ramp.hue_interpolation"],    
     Nodes.MixRGB: ['use_clamp', 'blend_type'],
+    Nodes.Mix: ['data_type', 'blend_type', 'clamp_result', 'clamp_factor', 'factor_mode'],
     Nodes.FloatCurve: ["mapping"],
     Nodes.Value: [],
     Nodes.Vector: [],
@@ -136,6 +137,7 @@ NODE_FUNCTIONS = {
     Nodes.SeparateXYZ: "node_shader_sep_xyz",
     Nodes.CombineXYZ: "node_shader_comb_xyz",
     Nodes.FloatCurve: "node_float_curve",
+    Nodes.Mix: "node_shader_mix",
 }
 
 
@@ -206,6 +208,16 @@ def sanitize(x, node, param):
         return int(x)
     elif node_type == Nodes.MixRGB and param == NODE_ATTRS_AVAILABLE[node_type][1]:
         return "MA_RAMP_" + x
+    elif node_type == Nodes.Mix and param == NODE_ATTRS_AVAILABLE[node_type][0]:
+        return x + "_TYPE"
+    elif node_type == Nodes.Mix and param == NODE_ATTRS_AVAILABLE[node_type][1]:
+        return "MA_RAMP_" + x
+    elif node_type == Nodes.Mix and param == NODE_ATTRS_AVAILABLE[node_type][2]:
+        return int(x)
+    elif node_type == Nodes.Mix and param == NODE_ATTRS_AVAILABLE[node_type][3]:
+        return int(x)
+    elif node_type == Nodes.Mix and param == NODE_ATTRS_AVAILABLE[node_type][4]:
+        return int(x == "UNIFORM")
     elif node_type == Nodes.ColorRamp and param == NODE_ATTRS_AVAILABLE[node_type][0]:
         return f"{len(x)}, {usable_name(node.name)}_positions, {usable_name(node.name)}_colors"
     elif node_type == Nodes.ColorRamp and param == NODE_ATTRS_AVAILABLE[node_type][1]:

@@ -64,7 +64,7 @@ def nodegroup_comb_direction(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={
             'Combing Direction': normalize_1.outputs["Vector"], 
-            'Surface Normal': surface_normal.outputs["Attribute"], 
+            'Surface Normal': (surface_normal, "Value"), 
             'Skeleton Tangent': skeleton_tangent
         })
 
