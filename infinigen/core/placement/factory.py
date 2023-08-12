@@ -14,8 +14,8 @@ import numpy as np
 import logging
 from tqdm import trange
 
-from util import blender as butil
-from util.math import FixedSeed, int_hash
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed, int_hash
 from . import detail
 
 logger = logging.getLogger(__name__)

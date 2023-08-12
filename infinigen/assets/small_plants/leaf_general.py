@@ -9,14 +9,14 @@ import numpy as np
 
 import bpy
 
-from assets.trees.utils import helper, mesh, materials
+from infinigen.assets.trees.utils import helper, mesh, materials
 
-from placement.factory import AssetFactory
-from util import blender as butil
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 
 C = bpy.context
 D = bpy.data
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class LeafFactory(AssetFactory):
     

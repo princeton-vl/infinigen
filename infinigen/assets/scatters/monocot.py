@@ -7,12 +7,11 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.monocot.generate import MonocotFactory
-from nodes.node_wrangler import NodeWrangler
-from placement.camera import ng_dist2camera
-from placement.instance_scatter import scatter_instances
-from placement.factory import AssetFactory, make_asset_collection
-from surfaces.scatters.utils.wind import wind
+from infinigen.assets.monocot.generate import MonocotFactory
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.assets.scatters.utils.wind import wind
 
 def apply(obj, n=4, grass=None, selection=None, **kwargs):
  

@@ -8,17 +8,17 @@
 import os, sys
 import numpy as np
 import math as ma
-from surfaces.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
+from infinigen.assets.materials.utils.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy
 import mathutils
 from numpy.random import uniform as U, normal as N, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.creatures.creature import PartFactory
-from assets.creatures.util import part_util
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util import part_util
 
 @node_utils.to_nodegroup('nodegroup_circle', singleton=False, type='GeometryNodeTree')
 def nodegroup_circle(nw: NodeWrangler):

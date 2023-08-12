@@ -26,21 +26,20 @@ import numpy as np
 from mathutils import Matrix, Vector, Euler
 from mathutils.bvhtree import BVHTree
 
-from assets.utils.decorate import toggle_hide
-from rendering.post_render import colorize_depth
+from infinigen.core.rendering.post_render import colorize_depth
 from tqdm import tqdm, trange
-from placement import placement
+from infinigen.core.placement import placement
 
-from nodes import node_utils
-from nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 
 from . import animation_policy
 
-from util import blender as butil
-from util.logging import Timer
-from util.math import clip_gaussian, lerp
-from util import camera
-from util.random import random_general
+from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.math import clip_gaussian, lerp
+from infinigen.core.util import camera
+from infinigen.core.util.random import random_general
 
 logger = logging.getLogger(__name__)
 
@@ -538,38 +537,6 @@ def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
         ))
         T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.))
         np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
-
-@node_utils.to_nodegroup('ng_dist2camera', singleton=True, type='GeometryNodeTree')
-def ng_dist2camera(nw: NodeWrangler):
-    traj = get_camera_trajectory()
-    trajectory = nw.new_node(Nodes.ObjectInfo, [traj]).outputs['Geometry']
-    distance = nw.new_node(Nodes.Proximity, [trajectory], attrs={'target_element': 'POINTS'}).outputs['Distance']
-    nw.new_node(Nodes.GroupOutput, input_kwargs={"Distance": distance})
-
-
-def get_camera_trajectory():
-    current_frame = bpy.context.scene.frame_current
-    if 'Cameras' in bpy.data.collections:
-        locations = []
-        for camera_pair in bpy.data.collections['Cameras'].children:
-            for camera in camera_pair.objects:
-                for f in camera.animation_data.action.fcurves:
-                    for k in f.keyframe_points:
-                        fr = int(k.co[0])
-                        bpy.context.scene.frame_set(fr)
-                        locations.append(camera.location)
-        bpy.context.scene.frame_set(current_frame)
-    else:
-        locations = [[100] * 3]
-    mesh = bpy.data.meshes.new('temp')
-    mesh.from_pydata(np.vstack(locations), [], [])
-    mesh.update()
-    obj = bpy.data.objects.new('temp', mesh)
-    bpy.context.scene.collection.objects.link(obj)
-    bpy.context.view_layer.objects.active = obj
-    butil.modify_mesh(obj, 'WELD', merge_threshold=.1)
-    toggle_hide(obj)
-    return obj
 
 if __name__ == "__main__":
     """

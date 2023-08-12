@@ -13,15 +13,15 @@ from platform import node
 import numpy as np
 from numpy.random import normal as N, uniform as U
 
-from assets.creatures.creature import PartFactory
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.util.part_util import nodegroup_to_part
-from assets.creatures.util import part_util
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util.part_util import nodegroup_to_part
+from infinigen.assets.creatures.util import part_util
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_noise', singleton=False, type='GeometryNodeTree')
 def nodegroup_noise(nw: NodeWrangler):

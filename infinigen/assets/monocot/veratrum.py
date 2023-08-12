@@ -10,19 +10,19 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.decorate import add_distance_to_boundary, assign_material, join_objects, write_attribute, \
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.decorate import add_distance_to_boundary, assign_material, join_objects, write_attribute, \
     write_material_index
-from assets.utils.draw import leaf, spin
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
-from surfaces import surface
-from surfaces.surface import shaderfunc_to_material
-from util.math import FixedSeed
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.draw import leaf, spin
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class VeratrumMonocotFactory(MonocotGrowthFactory):
 

@@ -8,19 +8,19 @@ import gin
 import bpy
 import numpy as np
 
-from assets.utils.object import new_cube
-from placement.factory import AssetFactory
+from infinigen.assets.utils.object import new_cube
+from infinigen.core.placement.factory import AssetFactory
 
-from assets.cloud.cloud import Cumulus, Cumulonimbus, Stratocumulus, Altocumulus
-from assets.cloud.cloud import create_3d_grid
+from infinigen.assets.weather.cloud.cloud import Cumulus, Cumulonimbus, Stratocumulus, Altocumulus
+from infinigen.assets.weather.cloud.cloud import create_3d_grid
 
-from surfaces import surface
-from util import blender as butil
-from util.math import FixedSeed
-from util.random import random_general as rg
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import random_general as rg
 
-from nodes.node_wrangler import Nodes
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_wrangler import Nodes
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 @gin.configurable

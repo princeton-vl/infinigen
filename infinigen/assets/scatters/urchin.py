@@ -7,11 +7,10 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.urchin import UrchinFactory
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory, make_asset_collection
-from placement.camera import ng_dist2camera
-from placement.instance_scatter import scatter_instances
+from infinigen.assets.underwater.urchin import UrchinFactory
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
 
 
 def apply(obj, n=5, selection=None):

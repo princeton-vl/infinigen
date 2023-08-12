@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 
-from nodes.node_info import Nodes
+from .node_info import Nodes
 
 logger = logging.getLogger('node_wrangler')
 

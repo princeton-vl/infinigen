@@ -12,9 +12,9 @@ import bmesh
 from geomdl import NURBS, knotvector
 import numpy as np
 
-from util import blender as butil
-from util.math import randomspacing
-from .cpp_utils import bnurbs
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import randomspacing
+import bnurbs
 
 def compute_cylinder_topology(n: int, m: int, uvs=False, cyclic=True, h_neighbors=None):
 

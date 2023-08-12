@@ -11,11 +11,11 @@ import numpy as np
 import bpy
 from mathutils import Vector, Matrix
 
-from assets.trees.utils import helper, mesh, materials
+from infinigen.assets.trees.utils import helper, mesh, materials
 
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 C = bpy.context
 D = bpy.data

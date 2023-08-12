@@ -11,17 +11,17 @@ import mathutils
 import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
-from assets.small_plants import leaf_general as Leaf
+from infinigen.assets.small_plants import leaf_general as Leaf
 
-from nodes import node_utils
-from placement.factory import AssetFactory
-from util import blender as butil
-from surfaces import surface
-from surfaces.templates import simple_greenery
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core import surface
+from infinigen.assets.materials import simple_greenery
 
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 def random_pinnae_level2_curvature():
     z_max_curvature = uniform(0.3, 0.45, (1,))[0]

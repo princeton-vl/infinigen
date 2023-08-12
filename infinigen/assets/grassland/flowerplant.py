@@ -8,17 +8,17 @@ import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
 from infinigen.assets.grassland.flower import FlowerFactory
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
 import numpy as np
-from surfaces import surface
-from surfaces.templates import simple_greenery
-from assets.small_plants import leaf_general as Leaf
+from infinigen.core import surface
+from infinigen.assets.materials import simple_greenery
+from infinigen.assets.small_plants import leaf_general as Leaf
 from infinigen.assets.grassland import flower as Flower
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_stem_branch_leaf_s_r', singleton=False, type='GeometryNodeTree')

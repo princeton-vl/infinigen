@@ -13,12 +13,12 @@ from landlab import RasterModelGrid
 from landlab.components import FlowDirectorSteepest, TransportLengthHillslopeDiffuser
 from numpy import ascontiguousarray as AC
 from skimage.measure import label
-from terrain.elements.core import Element
-from terrain.elements.mountains import Mountains
-from terrain.utils import read
+from infinigen.terrain.elements.core import Element
+from infinigen.terrain.elements.mountains import Mountains
+from infinigen.terrain.utils import read
 from tqdm import tqdm
-from util.organization import AssetFile
-from util.random import random_general as rg
+from infinigen.core.util.organization import AssetFile
+from infinigen.core.util.random import random_general as rg
 
 
 @gin.configurable

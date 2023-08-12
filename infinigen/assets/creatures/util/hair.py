@@ -15,12 +15,12 @@ import mathutils
 import numpy as np
 from scipy.spatial import KDTree
 
-from util import blender as butil
-from surfaces import surface
-from nodes.node_wrangler import NodeWrangler, Nodes
-from nodes import node_utils
+from infinigen.core.util import blender as butil
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.nodes import node_utils
 
-from assets.creatures.nodegroups.hair import nodegroup_comb_direction, nodegroup_duplicate_to_clumps, \
+from infinigen.assets.creatures.util.nodegroups.hair import nodegroup_comb_direction, nodegroup_duplicate_to_clumps, \
     nodegroup_hair_position, nodegroup_comb_hairs, nodegroup_strand_noise, nodegroup_hair_length_rescale, \
     nodegroup_snap_roots_to_surface
 

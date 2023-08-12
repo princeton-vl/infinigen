@@ -9,10 +9,11 @@ from pathlib import Path
 import bpy
 import cv2
 import numpy as np
-from terrain.land_process.erosion import run_erosion
-from terrain.land_process.snowfall import run_snowfall
-from terrain.utils import smooth, random_int
-from util.organization import AssetFile, LandTile
+
+from infinigen.terrain.land_process.erosion import run_erosion
+from infinigen.terrain.land_process.snowfall import run_snowfall
+from infinigen.terrain.utils import smooth, random_int
+from infinigen.core.util.organization import AssetFile, LandTile
 
 
 def create(

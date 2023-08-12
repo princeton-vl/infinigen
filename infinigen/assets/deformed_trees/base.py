@@ -8,15 +8,15 @@ import colorsys
 
 from numpy.random import uniform
 
-from assets.trees import TreeFactory
-from assets.trees.generate import GenericTreeFactory, random_species
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
-from surfaces import surface
-from surfaces.surface import NoApply
-from util.math import FixedSeed
+from infinigen.assets.trees import TreeFactory
+from infinigen.assets.trees.generate import GenericTreeFactory, random_species
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.surface import NoApply
+from infinigen.core.util.math import FixedSeed
 
 
 class BaseDeformedTreeFactory(AssetFactory):

@@ -7,8 +7,8 @@
 import bpy
 import mathutils
 from numpy.random import uniform
-from assets.tropic_plants.tropic_plant_utils import *
-from util import blender as butil
+from infinigen.assets.tropic_plants.tropic_plant_utils import *
+from infinigen.core.util import blender as butil
 
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')

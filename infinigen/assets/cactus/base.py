@@ -6,11 +6,11 @@
 
 import bpy
 
-from assets.cactus.spike import make_default_selections
-from assets.utils.decorate import write_attribute
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
+from infinigen.assets.cactus.spike import make_default_selections
+from infinigen.assets.utils.decorate import write_attribute
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
 
 class BaseCactusFactory(AssetFactory):
     spike_distance = .025

@@ -14,10 +14,10 @@ import mathutils
 import numpy as np
 from tqdm import tqdm
 
-from util import blender as butil, math as mutil
-from assets.creatures.util import tree
-from assets.creatures.creature import Part, infer_skeleton_from_mesh
-from assets.creatures.genome import Joint, IKParams
+from infinigen.core.util import blender as butil, math as mutil
+from infinigen.assets.creatures.util import tree
+from infinigen.assets.creatures.util.creature import Part, infer_skeleton_from_mesh
+from infinigen.assets.creatures.util.genome import Joint, IKParams
 
 logger = logging.getLogger()
 

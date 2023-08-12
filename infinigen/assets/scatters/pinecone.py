@@ -7,12 +7,12 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.monocot.pinecone import PineconeFactory
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
+from infinigen.assets.monocot.pinecone import PineconeFactory
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
 
-from surfaces.scatters.chopped_trees import approx_settle_transform
+from infinigen.assets.scatters.chopped_trees import approx_settle_transform
 
 def apply(obj, n=5, selection=None):
     n_species = np.random.randint(2, 3)

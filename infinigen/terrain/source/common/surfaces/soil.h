@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/soil.py which has the copyright and
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/soil.py which has the copyright and
 // authors
 DEVICE_FUNC void nodegroup_pebble(
     float Input_0, float Input_1,

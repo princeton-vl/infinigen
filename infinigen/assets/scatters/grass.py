@@ -12,20 +12,20 @@ import numpy as np
 from numpy.random import uniform as U
 from mathutils import Vector
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
 
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
 
 
-from surfaces.templates import simple_greenery, grass_blade_texture
+from infinigen.assets.materials import simple_greenery, grass_blade_texture
 
-from assets.grassland.grass_tuft import GrassTuftFactory
+from infinigen.assets.grassland.grass_tuft import GrassTuftFactory
 
-from surfaces.scatters.utils.wind import wind
+from infinigen.assets.scatters.utils.wind import wind
 
 def scale_grass(nw: NodeWrangler):
     random_scaling = nw.new_node(Nodes.RandomValue, input_kwargs={0: Vector((1.,1.,1.)), 1: Vector((1.2,1.2,2.))}, attrs={"data_type":'FLOAT_VECTOR'})

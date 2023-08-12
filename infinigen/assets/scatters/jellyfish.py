@@ -7,10 +7,10 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.jellyfish import JellyfishFactory
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
+from infinigen.assets.creatures.jellyfish import JellyfishFactory
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
 
 
 def apply(obj, scale=1, density=1., n=10, selection=None):

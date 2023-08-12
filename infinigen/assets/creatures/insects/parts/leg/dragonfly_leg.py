@@ -7,14 +7,14 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.shader_utils import shader_black_w_noise_shader
-from assets.insects.utils.geom_utils import nodegroup_shape_quadratic, nodegroup_surface_bump
-from assets.insects.parts.hair.principled_hair import nodegroup_principled_hair
+from infinigen.assets.creatures.insects.utils.shader_utils import shader_black_w_noise_shader
+from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_shape_quadratic, nodegroup_surface_bump
+from infinigen.assets.creatures.insects.parts.hair.principled_hair import nodegroup_principled_hair
 
 @node_utils.to_nodegroup('nodegroup_leg_control', singleton=False, type='GeometryNodeTree')
 def nodegroup_leg_control(nw: NodeWrangler):

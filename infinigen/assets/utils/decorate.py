@@ -12,12 +12,12 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
 
-from util import blender as butil
-from util.blender import select_none
+from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import select_none
 
 
 def multi_res(obj):

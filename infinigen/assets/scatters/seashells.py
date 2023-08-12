@@ -7,12 +7,12 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.mollusk import MolluskFactory
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
-from surfaces.scatters.chopped_trees import approx_settle_transform
+from infinigen.assets.mollusk import MolluskFactory
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.assets.scatters.chopped_trees import approx_settle_transform
 
-from util.random import random_general as rg
+from infinigen.core.util.random import random_general as rg
 
 def apply(obj, density=('uniform', 0.2, 1.7), n=10, selection=None):
     n_species = np.random.randint(4, 6)

@@ -12,16 +12,16 @@ import bpy
 import gin
 import numpy as np
 from mathutils.bvhtree import BVHTree
-from terrain.mesher import OpaqueSphericalMesher, TransparentSphericalMesher, UniformMesher
-from terrain.scene import scene, transfer_scene_info
-from terrain.surface_kernel.core import SurfaceKernel
-from terrain.utils import Mesh, move_modifier, Vars, AttributeType, FieldsType
-from terrain.assets.ocean import ocean_asset
-from util.blender import SelectObjects, delete
-from util.logging import Timer
-from util.math import FixedSeed, int_hash
-from util.organization import SurfaceTypes, Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
-from assets.utils.tag import tag_object, tag_system
+from infinigen.terrain.mesher import OpaqueSphericalMesher, TransparentSphericalMesher, UniformMesher
+from infinigen.terrain.scene import scene, transfer_scene_info
+from infinigen.terrain.surface_kernel.core import SurfaceKernel
+from infinigen.terrain.utils import Mesh, move_modifier, Vars, AttributeType, FieldsType
+from infinigen.terrain.assets.ocean import ocean_asset
+from infinigen.core.util.blender import SelectObjects, delete
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.organization import SurfaceTypes, Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
+from infinigen.assets.utils.tag import tag_object, tag_system
 from numpy import ascontiguousarray as AC
 
 logger = logging.getLogger('terrain')

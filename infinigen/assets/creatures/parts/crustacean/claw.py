@@ -8,20 +8,20 @@ import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-from assets.creatures.animation.driver_repeated import bend_bones_lerp
-from assets.creatures.creature import Part
-from assets.creatures.genome import Joint
-from assets.creatures.parts.crustacean.leg import CrabLegFactory
-from assets.creatures.parts.utils.draw import decorate_segment
-from assets.utils.decorate import displace_vertices, join_objects, read_co, remove_vertices
-from assets.utils.draw import spin
-from assets.utils.misc import log_uniform
-from assets.utils.nodegroup import geo_base_selection
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from surfaces.surface import write_attr_data
-from util import blender as butil
+from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones_lerp
+from infinigen.assets.creatures.util.creature import Part
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory
+from infinigen.assets.creatures.parts.utils.draw import decorate_segment
+from infinigen.assets.utils.decorate import displace_vertices, join_objects, read_co, remove_vertices
+from infinigen.assets.utils.draw import spin
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.nodegroup import geo_base_selection
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.surface import write_attr_data
+from infinigen.core.util import blender as butil
 
 
 class CrabClawFactory(CrabLegFactory):

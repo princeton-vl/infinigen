@@ -8,15 +8,15 @@ from random import randint
 import bpy
 import mathutils
 from numpy.random import uniform, normal
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from util.math import FixedSeed
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 ######## code for creating pine needles ########
 

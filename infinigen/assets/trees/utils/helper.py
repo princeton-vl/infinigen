@@ -7,7 +7,7 @@
 import bpy
 import numpy as np
 
-from util.logging import Suppress
+from infinigen.core.util.logging import Suppress
 
 C = bpy.context
 D = bpy.data

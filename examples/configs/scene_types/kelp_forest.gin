@@ -1,4 +1,4 @@
-include 'config/scene_types/under_water.gin'
+include 'examples/configs/scene_types/under_water.gin'
 
 multi_mountains_params.height = ("uniform", 1, 4)
 multi_mountains_params.min_freq = ("uniform", 0.01, 0.015)

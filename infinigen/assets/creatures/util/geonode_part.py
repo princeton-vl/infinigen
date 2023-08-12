@@ -9,10 +9,10 @@ import bpy
 
 import numpy as np
 
-from assets.creatures.creature import Part, Joint, infer_skeleton_from_mesh
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import Part, Joint, infer_skeleton_from_mesh
+from infinigen.core.util import blender as butil
 
-from nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
 
 def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
 

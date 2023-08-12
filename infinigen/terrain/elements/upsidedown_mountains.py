@@ -9,10 +9,10 @@ import os
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.assets.upsidedown_mountains import assets_to_data, upsidedown_mountains_asset
-from terrain.utils import random_int, random_int_large
-from util.math import FixedSeed, int_hash
-from util.organization import Materials, Transparency, ElementNames, ElementTag, Tags, AssetFile
+from infinigen.terrain.assets.upsidedown_mountains import assets_to_data, upsidedown_mountains_asset
+from infinigen.terrain.utils import random_int, random_int_large
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.organization import Materials, Transparency, ElementNames, ElementTag, Tags, AssetFile
 
 from .core import Element
 

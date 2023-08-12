@@ -6,11 +6,11 @@
 
 import numpy as np
 
-from assets.deformed_trees import FallenTreeFactory, HollowTreeFactory, RottenTreeFactory
-from assets.deformed_trees.truncated import TruncatedTreeFactory
-from placement.factory import AssetFactory
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.deformed_trees import FallenTreeFactory, HollowTreeFactory, RottenTreeFactory
+from infinigen.assets.deformed_trees.truncated import TruncatedTreeFactory
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class DeformedTreeFactory(AssetFactory):
 

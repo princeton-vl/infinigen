@@ -4,10 +4,10 @@
 # Authors: Zeyu Ma, Alexander Raistrick
 
 
-from nodes.color import color_category
+from infinigen.core.nodes.color import color_category
 import gin
 import numpy as np
-from util.math import md5_hash, clip_gaussian
+from infinigen.core.util.math import md5_hash, clip_gaussian
 import random
 import json
 import json5
@@ -60,7 +60,7 @@ def random_general(var):
             num_sample = 1
         else:
             num_sample = args[1]
-        color_template = json5.load(open(f"config/palette/{args[0]}.json", "r"))
+        color_template = json5.load(open(f"examples/configs/palette/{args[0]}.json", "r"))
         colors = color_template["color"]
         means = np.array(color_template["hsv"])
         stds = np.array(color_template["std"])

@@ -6,12 +6,12 @@
 
 import numpy as np
 
-from assets.utils.decorate import displace_vertices
-from assets.utils.draw import spin
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util import blender as butil
+from infinigen.assets.utils.decorate import displace_vertices
+from infinigen.assets.utils.draw import spin
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
 
 
 def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):

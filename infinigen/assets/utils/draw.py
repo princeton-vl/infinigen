@@ -12,13 +12,13 @@ import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-from assets.utils.decorate import read_co, remove_vertices, separate_loose, write_attribute, write_co
-from assets.utils.mesh import polygon_angles
-from assets.utils.object import data2mesh, mesh2obj
-from nodes.node_info import Nodes
-from placement.detail import sharp_remesh_with_attrs
-from surfaces.surface import read_attr_data
-from util import blender as butil
+from infinigen.assets.utils.decorate import read_co, remove_vertices, separate_loose, write_attribute, write_co
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.assets.utils.object import data2mesh, mesh2obj
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.placement.detail import sharp_remesh_with_attrs
+from infinigen.core.surface import read_attr_data
+from infinigen.core.util import blender as butil
 
 
 def shape_by_angles(obj, angles, scales=None, displacements=None, method='quadratic'):

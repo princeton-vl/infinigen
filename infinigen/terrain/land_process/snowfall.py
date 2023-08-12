@@ -9,10 +9,11 @@ import gin
 import numpy as np
 from landlab import RasterModelGrid
 from landlab.components import FlowDirectorSteepest, TransportLengthHillslopeDiffuser
-from terrain.utils import get_normal, read, smooth
+
+from infinigen.terrain.utils import get_normal, read, smooth
 from tqdm import tqdm
-from util.organization import AssetFile, Process
-from util.random import random_general as rg
+from infinigen.core.util.organization import AssetFile, Process
+from infinigen.core.util.random import random_general as rg
 
 snowfall_params_ = {}
 @gin.configurable

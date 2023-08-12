@@ -10,9 +10,9 @@ from pathlib import Path
 from numpy.random import uniform, normal, randint
 from mathutils import Vector
 import logging
-from util.math import clip_gaussian
+from infinigen.core.util.math import clip_gaussian
 
-from nodes.node_wrangler import (
+from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
     infer_input_socket,
@@ -22,16 +22,16 @@ import bpy
 import numpy as np
 
 
-from surfaces.templates import water, lava
+from infinigen.assets.materials import water, lava
 
-from fluid import duplication_geomod
-from surfaces.templates import blackbody_shader, waterfall_material, smoke_material
-from util.blender import deep_clone_obj
-from util.logging import Timer
+from infinigen.assets.fluid import duplication_geomod
+from infinigen.assets.materials import blackbody_shader, waterfall_material, smoke_material
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.logging import Timer
 
 import gin
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
 # find next available number for fluid cache folder
 def find_available_cache(cache_folder):

@@ -8,7 +8,7 @@ import importlib
 from pathlib import Path
 sys.path.append(os.getcwd())
 
-from fluid.asset_cache import FireCachingSystem
+from infinigen.assets.fluid.asset_cache import FireCachingSystem
 try:
     from tools.asset_grid import import_surface_registry
 

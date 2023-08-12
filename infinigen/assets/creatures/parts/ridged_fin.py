@@ -10,19 +10,19 @@ import numpy as np
 from numpy.random import uniform, normal
 import random
 
-from assets.creatures.genome import Joint, IKParams
+from infinigen.assets.creatures.util.genome import Joint, IKParams
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces.surface import set_geomod_inputs
-from surfaces.surface_utils import clip, sample_range, sample_ratio
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.surface import set_geomod_inputs
+from infinigen.assets.materials.utils.surface_utils import clip, sample_range, sample_ratio
 
-from assets.creatures.nodegroups.curve import nodegroup_simple_tube_v2
-from assets.creatures.nodegroups.attach import nodegroup_attach_part
-from assets.creatures.creature import PartFactory, Part
-from assets.creatures.util.part_util import nodegroup_to_part
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_attach_part
+from infinigen.assets.creatures.util.creature import PartFactory, Part
+from infinigen.assets.creatures.util.part_util import nodegroup_to_part
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_mix2_values', singleton=True, type='GeometryNodeTree')
 def nodegroup_mix2_values(nw: NodeWrangler):

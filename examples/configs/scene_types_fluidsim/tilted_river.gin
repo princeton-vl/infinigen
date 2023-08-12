@@ -1,4 +1,4 @@
-include 'config/scene_types/river.gin'
+include 'examples/configs/scene_types/river.gin'
 
 UniformMesher.enclosed=1
 animate_cameras.policy_registry = @cam/AnimPolicyRandomForwardWalk

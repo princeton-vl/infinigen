@@ -29,7 +29,7 @@ import cv2
 from .math import lerp  # for other people to import from this file
 from . import math as mutil
 from .logging import Suppress
-from nodes.node_info import DATATYPE_FIELDS, DATATYPE_DIMS
+from infinigen.core.nodes.node_info import DATATYPE_FIELDS, DATATYPE_DIMS
 
 logger = logging.getLogger(__name__)
 

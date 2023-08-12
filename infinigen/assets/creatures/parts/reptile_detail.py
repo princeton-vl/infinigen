@@ -9,14 +9,14 @@ import bpy
 import numpy as np
 from math import sin, cos, pi, exp, sqrt
 
-from assets.creatures.creature import PartFactory, Part
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.util import part_util
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import PartFactory, Part
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util import part_util
+from infinigen.core.util import blender as butil
 from scipy.interpolate import interp1d
 
-from assets.creatures.geometry import nurbs as nurbs_util
-from surfaces import surface
+from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
+from infinigen.core import surface
 
 logger = logging.getLogger(__name__)
 

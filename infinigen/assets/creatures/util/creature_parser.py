@@ -9,14 +9,14 @@ import pdb
 
 import numpy as np
 
-from util import blender as butil
-from nodes.node_transpiler.transpiler import transpile, indent
-from assets.creatures.geometry import lofting
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes.node_transpiler.transpiler import transpile, indent
+from infinigen.assets.creatures.util.geometry import lofting
 
 def prefix():
     return (
         "import numpy as np\n"
-        "from assets.creatures.creature import CreatureGenome, PartGenome, Attachment, Joint\n"
+        "from infinigen.assets.creatures.util.creature import CreatureGenome, PartGenome, Attachment, Joint\n"
     )
 
 def repr_np_array(v):
@@ -130,12 +130,12 @@ def parse_creature(nurbs_root, mesh_root, profiles_folder):
         if mesh_part.parent is not None:
             atts[name] = parse_attachment(mesh_part, mesh_part.parent, nurbs_part.parent)
 
-    creature_genome_args = {
+    joiningome_args = {
         'parts': repr_function_call('dict', {name: f'{name}()' for name in names}),
         'attachments': repr_function_call('dict', atts)
     }
 
-    body = f"return {repr_function_call('CreatureGenome', creature_genome_args)}"
+    body = f"return {repr_function_call('CreatureGenome', joiningome_args)}"
     code += f"def creature():\n {indent(body)}"
 
     return code

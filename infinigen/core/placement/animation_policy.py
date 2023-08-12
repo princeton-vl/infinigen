@@ -17,11 +17,11 @@ from numpy.random import uniform as U, normal as N
 from mathutils import Matrix, Vector, Euler
 from tqdm import trange, tqdm
 
-from assets.creatures.geometry.curve import Curve
+from infinigen.assets.creatures.util.geometry.curve import Curve
 
-from util.math import clip_gaussian, lerp
-from util.random import random_general
-from util import blender as butil
+from infinigen.core.util.math import clip_gaussian, lerp
+from infinigen.core.util.random import random_general
+from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
 

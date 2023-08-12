@@ -16,18 +16,18 @@ from mathutils.bvhtree import BVHTree
 
 import numpy as np
 
-from assets.creatures.geometry import lofting, skin_ops
-from assets.creatures.creature_util import interp_dict, euler
-from assets.creatures import genome
-from assets.creatures.util import tree, join_smoothing
+from infinigen.assets.creatures.util.geometry import lofting, skin_ops
+from infinigen.assets.creatures.util.creature_util import interp_dict, euler
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util import tree, join_smoothing
 
-from assets.creatures import genome
+from infinigen.assets.creatures.util import genome
 
-from surfaces import surface
-from placement import detail
-from util import blender as butil, logging as logging_util
-from util.math import homogenize, lerp_sample, lerp
-from nodes.node_wrangler import Nodes
+from infinigen.core import surface
+from infinigen.core.placement import detail
+from infinigen.core.util import blender as butil, logging as logging_util
+from infinigen.core.util.math import homogenize, lerp_sample, lerp
+from infinigen.core.nodes.node_wrangler import Nodes
 
 logger = logging.getLogger('creatures')
 

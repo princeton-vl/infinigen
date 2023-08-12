@@ -16,22 +16,22 @@ import gin
 import numpy as np
 from tqdm import tqdm, trange
 
-sys.path.append(os.getcwd())
 
-from terrain import Terrain
+from infinigen.terrain import Terrain
+from infinigen.assets.small_plants.fern import FernFactory
+from infinigen.assets.creatures.util.animation.run_cycle import follow_path
+from infinigen.assets.lighting import sky_lighting
+from infinigen.assets.weather import kole_clouds
+from infinigen.assets.scatters import grass, pebbles, pine_needle, pinecone
+from infinigen.assets.materials import (
+    mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
+)
+from infinigen.core.placement import placement, density, camera as cam_util
+from infinigen.core.placement.split_in_view import split_inview
+from infinigen.core.util import blender as butil
 
-from assets.small_plants.fern import FernFactory
-from assets.creatures.animation.run_cycle import follow_path
-from lighting import lighting, kole_clouds
-from surfaces.scatters import grass, rocks, pine_needle, pinecone
-from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
-    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow, clouds
-
-from placement import placement, density, camera as cam_util
-from placement.split_in_view import split_inview
-from util import blender as butil
-
-import core as infinigen
+from infinigen.core import execute_tasks
 
 def find_flat_location(
    mesh, 
@@ -101,7 +101,7 @@ def compose_scene(
     **params
 ):
 
-    lighting.add_lighting()
+    sky_lighting.add_lighting()
 
     if params.get("fancy_clouds", 0):
         kole_clouds.add_kole_clouds()
@@ -159,11 +159,11 @@ def compose_scene(
         pass
     elif background == 'grass':
         grass.apply(terrain_inview)
-        rocks.apply(terrain_inview)
+        pebbles.apply(terrain_inview)
     elif background == 'pine_forest':
         pine_needle.apply(terrain_inview)
         pinecone.apply(terrain_inview)
-        rocks.apply(terrain_inview)
+        pebbles.apply(terrain_inview)
     elif background == 'TODO ADD MORE OPTIONS HERE':
         pass
     else:
@@ -196,10 +196,15 @@ def main():
         datefmt='%H:%M:%S'
     )
 
-    scene_seed = infinigen.apply_scene_seed(args)
-    infinigen.apply_gin_configs(args, scene_seed, skip_unknown=True)
+    scene_seed = execute_tasks.apply_scene_seed(args)
+    execute_tasks.apply_gin_configs(
+        args, 
+        Path(__file__).parent/'configs', 
+        mandatory_config_dir=Path(__file__).parent/'configs/scene_types', 
+        skip_unknown=True
+    )
     
-    infinigen.main(
+    execute_tasks.main(
         compose_scene_func=compose_scene,
         input_folder=args.input_folder, 
         output_folder=args.output_folder, 

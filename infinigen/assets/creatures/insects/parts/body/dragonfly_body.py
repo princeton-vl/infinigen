@@ -7,14 +7,14 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.geom_utils import nodegroup_circle_cross_section, nodegroup_surface_bump, nodegroup_random_rotation_scale, nodegroup_instance_on_points
-from assets.insects.parts.hair.principled_hair import nodegroup_principled_hair
-from assets.insects.utils.shader_utils import shader_black_w_noise_shader, nodegroup_add_noise, nodegroup_color_noise
+from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_circle_cross_section, nodegroup_surface_bump, nodegroup_random_rotation_scale, nodegroup_instance_on_points
+from infinigen.assets.creatures.insects.parts.hair.principled_hair import nodegroup_principled_hair
+from infinigen.assets.creatures.insects.utils.shader_utils import shader_black_w_noise_shader, nodegroup_add_noise, nodegroup_color_noise
 
 def shader_dragonfly_body_shader(nw: NodeWrangler, base_color, v):
     # Code generated using version 2.4.3 of the node_transpiler

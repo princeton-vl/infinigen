@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U, uniform
 
-from util.math import FixedSeed, int_hash
+from infinigen.core.util.math import FixedSeed, int_hash
 
 
 def repeated_driver(start, end, freq, off=None, seed=None):

@@ -8,11 +8,11 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from assets.utils.object import new_cube
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util import blender as butil
+from infinigen.assets.utils.object import new_cube
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
 
 
 def build_prism_mesh(n=6, r_min=1., r_max=1.5, height=.3, tilt=.3):

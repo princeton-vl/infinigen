@@ -10,7 +10,7 @@ import bmesh
 
 import numpy as np
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
 class MBallStructure:
     

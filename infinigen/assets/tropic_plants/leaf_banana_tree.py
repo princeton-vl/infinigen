@@ -7,15 +7,15 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
-from placement.factory import AssetFactory
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
 import numpy as np
-from nodes.color import hsv2rgba
-from assets.tropic_plants.tropic_plant_utils import *
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.nodes.color import hsv2rgba
+from infinigen.assets.tropic_plants.tropic_plant_utils import *
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')

@@ -15,7 +15,7 @@ from uuid import uuid4
 import numpy as np
 from itertools import chain, product
 from tqdm import tqdm
-from util.math import int_hash
+from infinigen.core.util.math import int_hash
 from bpy.types import DepsgraphObjectInstance
 
 def get_mesh_data(obj):

@@ -13,8 +13,8 @@ from mathutils import Vector, Euler, Quaternion
 
 import numpy as np
 
-from util.math import lerp
-from util import blender as butil
+from infinigen.core.util.math import lerp
+from infinigen.core.util import blender as butil
 
 def euler(r, p, y):
     return mathutils.Euler(np.deg2rad([r, p, y])).to_quaternion()

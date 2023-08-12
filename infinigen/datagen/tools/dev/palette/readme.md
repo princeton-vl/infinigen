@@ -5,7 +5,7 @@ This palette generating tool is enabled using `GoogleImagesSearch` (currently us
 ## Step 1
 
 ```
-cd worldgen/tools/palette/
+cd infinigen/tools/terrain/palette/
 # you can change "mountain rock" to other key words
 python palette.py -k "mountain rock"
 ```
@@ -30,7 +30,7 @@ After manually comemnt out them, you have:
 
 ![](demo4.png)
 
-Then you move the ready palatte to location: `infinigen/worldgen/config/palette`
+Then you move the ready palatte to location: `infinigen/examples/configs/palette`
 
 ## Step 3
 

@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/stone.py which has the copyright and
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/stone.py which has the copyright and
 // authors
 DEVICE_FUNC void
 geo_stone(float3_nonbuiltin position, float3_nonbuiltin normal,

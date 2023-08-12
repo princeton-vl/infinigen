@@ -8,14 +8,14 @@ import numpy as np
 from numpy.random import uniform as U
 
 
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
-from placement import detail
-from nodes import node_utils
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.placement import detail
+from infinigen.core.nodes import node_utils
 
-from assets.small_plants import succulent
+from infinigen.assets.small_plants import succulent
 
-from surfaces.scatters.utils.wind import wind
+from infinigen.assets.scatters.utils.wind import wind
 
 def apply(obj, n=4, selection=None, **kwargs):
  

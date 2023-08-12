@@ -5,14 +5,14 @@
 
 
 '''
-1. Create a blender file at worldgen/dev_scene.blend
+1. Create a blender file
 2. Click the "Scripting" tab
 3. Copy this script into a new script
 4. Set the 'mode' to one of the following options:
    - mode='print' will print the result script to your terminal
    - mode='make_script' will create a new script in your blender UI, which you can open
     and run to apply the node code to an object of your choice
-   - mode='write_file' will write the script to a new file called 'worldgen/generated_surface_script.py.
+   - mode='write_file' will write the script to a new file called 'generated_surface_script.py.
         Make sure not to rename / move the script before committing it to git.     
 5. Select an object which has some materials and/or geometry nodes on it
 6. Click the play button at the top of this script to run it!
@@ -28,10 +28,8 @@ import pdb
 import bpy
 import mathutils
 
-sys.path.append(os.getcwd())
-
-from nodes.node_transpiler import transpiler
-from nodes import node_wrangler, node_info
+from infinigen.core.nodes.node_transpiler import transpiler
+from infinigen.core.nodes import node_wrangler, node_info
 
 mode = 'make_script'
 target = 'object'

@@ -7,8 +7,8 @@
 import numpy as np
 import gin
 
-from util.logging import Timer
-from terrain.utils import Mesh, get_caminfo, write_attributes, Vars
+from infinigen.core.util.logging import Timer
+from infinigen.terrain.utils import Mesh, get_caminfo, write_attributes, Vars
 from .cube_spherical_mesher import CubeSphericalMesher
 from .frontview_spherical_mesher import FrontviewSphericalMesher
 

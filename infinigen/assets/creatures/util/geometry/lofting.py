@@ -12,10 +12,9 @@ import bmesh
 
 import numpy as np
 
-from util import blender as butil
-from util.math import rotate_match_directions, lerp_sample, inverse_interpolate
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import rotate_match_directions, lerp_sample, inverse_interpolate
 from .nurbs import nurbs
-from assets.creatures.geometry.cpp_utils import bnurbs
 
 def factorize_nurbs_handles(handles):
     

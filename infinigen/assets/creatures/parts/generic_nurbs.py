@@ -9,23 +9,20 @@ import pdb
 import bpy
 from pathlib import Path
 import numpy as np
+from infinigen.assets.creatures.util.creature import Part, PartFactory
 
-from assets.creatures import creature_util as cutil
-from assets.creatures.creature import Part, PartFactory
-from assets.creatures.geometry import nurbs
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
-from nodes import node_utils
-from nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util import part_util
+from infinigen.assets.creatures.util.geometry import lofting
 
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.util import part_util
-from assets.creatures.geometry import lofting, nurbs
+from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Suppress
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-from util import blender as butil
-from util.logging import Suppress
-from assets.utils.tag import tag_object, tag_nodegroup
-
-NURBS_BASE_PATH = Path('assets/creatures/genomes/nurbs/')
+NURBS_BASE_PATH = Path('infinigen/assets/creatures/parts/nurbs_data/')
 load_nurbs = lambda p: np.load(p)[..., :3] # strip W coordinate if present
 ALL_NURBS = {p.stem: load_nurbs(p) for p in NURBS_BASE_PATH.iterdir()}
 

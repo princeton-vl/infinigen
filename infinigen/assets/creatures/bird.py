@@ -14,31 +14,31 @@ import numpy as np
 from numpy.random import normal as N, uniform as U
 import gin
 
-from assets.creatures import genome
-from assets.creatures.genome import Joint
-from assets.creatures import parts
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures import parts
 
-from assets.creatures.creature_util import euler
+from infinigen.assets.creatures.util.creature_util import euler
 
-import surfaces.templates.basic_bsdf
-import surfaces.templates.spot_sparse_attr
-import surfaces.templates.reptile_brown_circle_attr
-import surfaces.templates.reptile_two_color_attr
-import surfaces.templates.bird
+import infinigen.assets.materials.basic_bsdf
+import infinigen.assets.materials.spot_sparse_attr
+import infinigen.assets.materials.reptile_brown_circle_attr
+import infinigen.assets.materials.reptile_two_color_attr
+import infinigen.assets.materials.bird
 
-from surfaces.templates import bone, tongue, eyeball, beak
-from util.math import clip_gaussian, FixedSeed
-from util.random import random_general as rg
-from util import blender as butil
+from infinigen.assets.materials import bone, tongue, eyeball, beak
+from infinigen.core.util.math import clip_gaussian, FixedSeed
+from infinigen.core.util.random import random_general as rg
+from infinigen.core.util import blender as butil
 
-from placement.factory import AssetFactory
-from assets.creatures.creature_util import offset_center
-from assets.creatures import creature, hair as creature_hair, generate as creature_gen
-from assets.creatures.animation.driver_wiggle import animate_wiggle_bones
-from assets.creatures.animation import idle, run_cycle
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.creatures.util.creature_util import offset_center
+from infinigen.assets.creatures.util import creature, hair as creature_hair, joining
+from infinigen.assets.creatures.util.animation.driver_wiggle import animate_wiggle_bones
+from infinigen.assets.creatures.util.animation import idle, run_cycle
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-from placement import animation_policy
+from infinigen.core.placement import animation_policy
 
 def bird_hair_params(flying=True):
 
@@ -75,7 +75,7 @@ def bird_postprocessing(body_parts, extras, params):
     
     get_extras = lambda k: [o for o in extras if k in o.name]
 
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     main_template.apply(body_parts + get_extras('BodyExtra') + get_extras('Feather'))
 
     tongue.apply(get_extras('Tongue'))
@@ -150,10 +150,10 @@ def duck_genome(mode):
             animation=dict(), 
             hair=bird_hair_params(flying=False),
             surface_registry=[
-                (surfaces.templates.spot_sparse_attr, 4),
-                (surfaces.templates.reptile_brown_circle_attr, 0.5),
-                (surfaces.templates.reptile_two_color_attr, 0.5),
-                (surfaces.templates.bird, 5)
+                (assets.materials.spot_sparse_attr, 4),
+                (assets.materials.reptile_brown_circle_attr, 0.5),
+                (assets.materials.reptile_two_color_attr, 0.5),
+                (assets.materials.bird, 5)
             ]
         ) 
     )
@@ -227,10 +227,10 @@ def flying_bird_genome(mode):
             animation=dict(), 
             hair=bird_hair_params(flying=True),
             surface_registry=[
-                #(surfaces.templates.spot_sparse_attr, 4),
-                #(surfaces.templates.reptile_brown_circle_attr, 0.5),
-                #(surfaces.templates.reptile_two_color_attr, 0.5),
-                (surfaces.templates.bird, 5)
+                #(assets.materials.spot_sparse_attr, 4),
+                #(assets.materials.reptile_brown_circle_attr, 0.5),
+                #(assets.materials.reptile_two_color_attr, 0.5),
+                (assets.materials.bird, 5)
             ]
         ) 
     )
@@ -251,7 +251,7 @@ class BirdFactory(AssetFactory):
         root, parts = creature.genome_to_creature(genome, name=f'bird({self.factory_seed}, {i})')
         tag_object(root, 'bird')
         offset_center(root)
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             rigging=dynamic,
             postprocess_func=bird_postprocessing, **kwargs)
         
@@ -320,7 +320,7 @@ class FlyingBirdFactory(AssetFactory):
 
         genome = flying_bird_genome(self.animation_mode)
         root, parts = creature.genome_to_creature(genome, name=f'flying_bird({self.factory_seed}, {i})')
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             rigging=self.animation_mode is not None, postprocess_func=bird_postprocessing, **kwargs)
         
         joined_extras = butil.join_objects(extras)

@@ -12,24 +12,24 @@ from numpy.random import uniform, normal
 
 import bpy
 
-from surfaces import surface
-from nodes import node_utils
-from nodes.node_wrangler import Nodes
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes
 
-from util.math import FixedSeed
-from placement.factory import AssetFactory
-from util import blender as butil
-from nodes.color import color_category
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes.color import color_category
 
 
 import bpy
 import mathutils
 from numpy.random import uniform, normal
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('shader_nodegroup_sub_vein', singleton=False, type='ShaderNodeTree')
 def shader_nodegroup_sub_vein(nw):

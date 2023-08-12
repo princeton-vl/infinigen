@@ -7,12 +7,12 @@
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.animation.driver_repeated import bend_bones_lerp
-from assets.creatures.creature import Part
-from assets.creatures.genome import Joint
-from assets.creatures.parts.crustacean.leg import CrabLegFactory
-from assets.utils.decorate import displace_vertices, join_objects
-from assets.utils.misc import log_uniform
+from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones_lerp
+from infinigen.assets.creatures.util.creature import Part
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory
+from infinigen.assets.utils.decorate import displace_vertices, join_objects
+from infinigen.assets.utils.misc import log_uniform
 
 
 class LobsterAntennaFactory(CrabLegFactory):

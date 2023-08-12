@@ -7,11 +7,10 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from assets.seaweed import SeaweedFactory
-from nodes.node_wrangler import NodeWrangler
-from placement.camera import ng_dist2camera
-from placement.instance_scatter import scatter_instances
-from placement.factory import AssetFactory, make_asset_collection
+from infinigen.assets.underwater.seaweed import SeaweedFactory
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 
 
 def apply(obj, scale=1, density=1., n=5, selection=None, **kwargs):

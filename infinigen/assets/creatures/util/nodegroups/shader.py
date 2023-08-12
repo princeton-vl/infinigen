@@ -7,10 +7,10 @@
 import bpy
 import mathutils
 from numpy.random import uniform as U, normal as N, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
 @node_utils.to_nodegroup('nodegroup_norm_local_pos', singleton=True, type='ShaderNodeTree')
 def nodegroup_norm_local_pos(nw: NodeWrangler):

@@ -8,15 +8,15 @@ import colorsys
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.decorate import assign_material, treeify
-from assets.utils.nodegroup import geo_base_selection, geo_radius
-from assets.utils.shortest_path import geo_shortest_path
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from assets.utils.misc import build_color_ramp
-from surfaces.surface import shaderfunc_to_material
-from util import blender as butil
+from infinigen.assets.utils.decorate import assign_material, treeify
+from infinigen.assets.utils.nodegroup import geo_base_selection, geo_radius
+from infinigen.assets.utils.shortest_path import geo_shortest_path
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.assets.utils.misc import build_color_ramp
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.util import blender as butil
 
 
 def shader_mold(nw: NodeWrangler, base_hue):

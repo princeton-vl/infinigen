@@ -8,24 +8,24 @@ import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category, hsv2rgba
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core import surface
 
-from util.math import FixedSeed
-from util import blender as butil
-from placement.factory import AssetFactory
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.factory import AssetFactory
 
-from assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from assets.fruits.apple import FruitFactoryApple
-from assets.fruits.pineapple import FruitFactoryPineapple
-from assets.fruits.starfruit import FruitFactoryStarfruit
-from assets.fruits.strawberry import FruitFactoryStrawberry
-from assets.fruits.blackberry import FruitFactoryBlackberry
-from assets.fruits.coconuthairy import FruitFactoryCoconuthairy
-from assets.fruits.coconutgreen import FruitFactoryCoconutgreen
-from assets.fruits.durian import FruitFactoryDurian
+from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
+from infinigen.assets.fruits.apple import FruitFactoryApple
+from infinigen.assets.fruits.pineapple import FruitFactoryPineapple
+from infinigen.assets.fruits.starfruit import FruitFactoryStarfruit
+from infinigen.assets.fruits.strawberry import FruitFactoryStrawberry
+from infinigen.assets.fruits.blackberry import FruitFactoryBlackberry
+from infinigen.assets.fruits.coconuthairy import FruitFactoryCoconuthairy
+from infinigen.assets.fruits.coconutgreen import FruitFactoryCoconutgreen
+from infinigen.assets.fruits.durian import FruitFactoryDurian
 
 fruit_names = {'Apple': FruitFactoryApple, 
                'Pineapple': FruitFactoryPineapple,

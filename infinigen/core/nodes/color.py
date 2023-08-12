@@ -13,7 +13,7 @@ import numpy as np
 import colorsys
 import gin
 
-from util.math import int_hash
+from infinigen.core.util.math import int_hash
 
 @dataclass
 class ChannelScheme:

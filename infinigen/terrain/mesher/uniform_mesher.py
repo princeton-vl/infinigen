@@ -9,9 +9,9 @@ from ctypes import POINTER, c_double, c_int32
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.utils import ASDOUBLE, ASINT, Mesh
-from terrain.utils import Timer as tTimer
-from terrain.utils import Vars, load_cdll, register_func, write_attributes
+from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh
+from infinigen.terrain.utils import Timer as tTimer
+from infinigen.terrain.utils import Vars, load_cdll, register_func, write_attributes
 
 from ._marching_cubes_lewiner import marching_cubes
 

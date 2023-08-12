@@ -7,13 +7,13 @@
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.animation.driver_repeated import bend_bones_lerp
-from assets.creatures.creature import Part, PartFactory
-from assets.creatures.genome import  Joint
-from assets.creatures.parts.utils.draw import make_segments
-from assets.utils.decorate import join_objects, read_co
-from assets.utils.misc import log_uniform
-from surfaces.surface import write_attr_data
+from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones_lerp
+from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.util.genome import  Joint
+from infinigen.assets.creatures.parts.utils.draw import make_segments
+from infinigen.assets.utils.decorate import join_objects, read_co
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.surface import write_attr_data
 
 
 class CrabLegFactory(PartFactory):

@@ -337,7 +337,7 @@ def queue_opengl(
     tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
     tmp_script.parent.mkdir(exist_ok=True)
 
-    process_mesh_path = Path("../process_mesh/build/process_mesh").resolve()
+    process_mesh_path = Path("infinigen/datagen/customgt/build/customgt").resolve()
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
     if (gt_testing):
         copy_folder = Path(folder) / f"frames{output_suffix}"

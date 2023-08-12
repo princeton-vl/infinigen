@@ -11,13 +11,13 @@ from mathutils import Vector
 from numpy.random import uniform as U, normal as N, randint, uniform
 import numpy as np
 
-from assets.utils.misc import log_uniform
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from placement import placement
-from placement.placement import placeholder_locs
-from util.math import FixedSeed
-from placement.factory import AssetFactory
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement import placement
+from infinigen.core.placement.placement import placeholder_locs
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
 
 
 @node_utils.to_nodegroup('nodegroup_caustics', singleton=False, type='ShaderNodeTree')

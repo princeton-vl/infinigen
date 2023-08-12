@@ -44,7 +44,7 @@ docker-run:
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		-e "XAUTHORITY=$(XAUTH)" \
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
@@ -57,14 +57,14 @@ docker-run:
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		-e "XAUTHORITY=$(XAUTH)" \
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" bash
 
-	docker exec infinigen /bin/bash -c worldgen/tools/install/compile_opengl.sh
+	docker exec infinigen /bin/bash -c infinigen/tools/install/compile_opengl.sh
 
 docker-run-no-opengl:
 	echo "Launching Docker image without OpenGL ground truth"
@@ -73,7 +73,7 @@ docker-run-no-opengl:
 		--gpus=all \
 		--env NVIDIA_DISABLE_REQUIRE=1 \
 		-e "BLENDER=/opt/infinigen/blender/blender" \
-		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		"$(DOCKER_TAG)" /bin/bash
 
 docker-run-no-gpu:
@@ -84,20 +84,20 @@ docker-run-no-gpu:
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		-e "XAUTHORITY=$(XAUTH)" \
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" /bin/bash \
 
-	docker exec infinigen /bin/bash -c worldgen/tools/install/compile_opengl.sh
+	docker exec infinigen /bin/bash -c infinigen/tools/install/compile_opengl.sh
 
 docker-run-no-gpu-opengl:
 	echo "Launching Docker image without GPU passthrough or OpenGL"
 	docker run -td --rm --privileged --net=host --ipc=host \
 		--name="infinigen" \
 		-e "BLENDER=/opt/infinigen/blender/blender" \
-		-v $(PWD)/worldgen/outputs:/opt/infinigen/worldgen/outputs \
+		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		"$(DOCKER_TAG)" /bin/bash
 	

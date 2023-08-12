@@ -7,12 +7,12 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.shader_utils import nodegroup_color_noise
+from infinigen.assets.creatures.insects.utils.shader_utils import nodegroup_color_noise
 
 def shader_dragonfly_eye_shader(nw: NodeWrangler, base_color, v):
     # Code generated using version 2.4.3 of the node_transpiler

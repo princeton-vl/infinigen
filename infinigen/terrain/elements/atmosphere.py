@@ -7,7 +7,7 @@
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from util.organization import Materials, Transparency, ElementNames
+from infinigen.core.util.organization import Materials, Transparency, ElementNames
 
 from .core import Element
 

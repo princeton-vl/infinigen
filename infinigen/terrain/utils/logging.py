@@ -7,7 +7,7 @@
 import psutil
 import os
 import gin
-from util.logging import Timer as oTimer
+from infinigen.core.util.logging import Timer as oTimer
 
 
 def report_memory():

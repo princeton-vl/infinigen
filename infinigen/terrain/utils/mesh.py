@@ -11,9 +11,9 @@ import cv2
 import numpy as np
 import trimesh
 from numpy import ascontiguousarray as AC
-from util import blender as butil
-from util.logging import Timer
-from util.organization import Attributes
+from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.organization import Attributes
 
 from .camera import getK
 from .ctype_util import ASDOUBLE, ASINT, load_cdll, register_func

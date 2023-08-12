@@ -11,15 +11,15 @@ import numpy as np
 from numpy.random import uniform as U
 from mathutils import Vector
 
-from util import blender as butil
-from util.blender import deep_clone_obj
+from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import deep_clone_obj
 
-from nodes import node_utils
-from placement.instance_scatter import scatter_instances
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
 
-from assets.trees.generate import make_twig_collection, random_species
+from infinigen.assets.trees.generate import make_twig_collection, random_species
 from .chopped_trees import approx_settle_transform
 
 def apply(obj, selection=None, n_leaf=0, n_twig=10, **kwargs):

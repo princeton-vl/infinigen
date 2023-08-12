@@ -10,9 +10,9 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 from ._marching_cubes_lewiner import marching_cubes
-from terrain.utils import ASDOUBLE, ASINT, Mesh, write_attributes, register_func, load_cdll
-from terrain.utils import Timer as tTimer
-from util.organization import Tags
+from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh, write_attributes, register_func, load_cdll
+from infinigen.terrain.utils import Timer as tTimer
+from infinigen.core.util.organization import Tags
 from tqdm import tqdm
 
 @gin.configurable("CubeSphericalMesherTimer")

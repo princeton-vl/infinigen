@@ -10,15 +10,15 @@ import numpy as np
 from mathutils import Euler, kdtree
 from numpy.random import uniform
 
-from util.blender import deep_clone_obj
-from util.math import FixedSeed
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
 from .growth import MushroomGrowthFactory
-from assets.utils.decorate import join_objects
-from assets.utils.mesh import polygon_angles
-from placement.factory import AssetFactory
-from util import blender as butil
+from infinigen.assets.utils.decorate import join_objects
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 from ..utils.misc import log_uniform
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class MushroomFactory(AssetFactory):
     max_cluster = 10

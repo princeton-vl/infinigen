@@ -11,7 +11,6 @@ Limitations (to be addressed soon):
 Shown are three examples of using our `generate_individual_assets.py` script to create images and .blend files.
 
 ```bash
-cd worldgen
 mkdir outputs
 python tools/generate_individual_assets.py -- -f CoralFactory -n 8 --save_blend
 python tools/generate_individual_assets.py -- -f seashells -n 1 --save_blend
@@ -30,9 +29,9 @@ Please run `python tools/generate_individual_assets.py -- --help` for a full lis
 
 The most commonly used arguments are:
 - `-f` to specify the name(s) of assets or materials to generate. `-f NAME` can specify to generate three different types of objects:
-   - If `NAME` is the name of a class defined in `worldgen/assets`, then it will be treated as an AssetFactory and used to generate objects from scratch. For example, you can say `-f CactusFactory` or `-f CarnivoreFactory`, or use the name of any similar Factory class in the codebase.
-   - If `NAME` is the name of a file in `worldgen/surfaces/templates`, that material will be applied onto a sphere
-   - If `NAME` is the name of a file in `worldgen/surfaces/scatters`, that scatter generator will be applied nto a plane
+   - If `NAME` is the name of a class defined in `infinigen/assets`, then it will be treated as an AssetFactory and used to generate objects from scratch. For example, you can say `-f CactusFactory` or `-f CarnivoreFactory`, or use the name of any similar Factory class in the codebase.
+   - If `NAME` is the name of a file in `infinigen/assets/materials`, that material will be applied onto a sphere
+   - If `NAME` is the name of a file in `infinigen/assets/scatters`, that scatter generator will be applied nto a plane
 - `-n` adjusts the number of images / blend files to be generated.
 
 

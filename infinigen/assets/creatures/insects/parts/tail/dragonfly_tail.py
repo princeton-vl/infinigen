@@ -7,13 +7,13 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.shader_utils import nodegroup_color_noise, nodegroup_add_noise
-from assets.insects.utils.geom_utils import nodegroup_random_rotation_scale, nodegroup_circle_cross_section, nodegroup_shape_quadratic, nodegroup_surface_bump, nodegroup_instance_on_points
+from infinigen.assets.creatures.insects.utils.shader_utils import nodegroup_color_noise, nodegroup_add_noise
+from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_random_rotation_scale, nodegroup_circle_cross_section, nodegroup_shape_quadratic, nodegroup_surface_bump, nodegroup_instance_on_points
 
 def shader_dragonfly_tail_shader(nw: NodeWrangler, base_color, v, ring_length):
     # Code generated using version 2.4.3 of the node_transpiler

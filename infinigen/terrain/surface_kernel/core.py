@@ -9,7 +9,7 @@ from ctypes import POINTER, c_float, c_int32, c_size_t
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from terrain.utils import KernelDataType, Vars, load_cdll, register_func, ASFLOAT, ASINT, KERNELDATATYPE_DIMS, KERNELDATATYPE_NPTYPE, Mesh
+from infinigen.terrain.utils import KernelDataType, Vars, load_cdll, register_func, ASFLOAT, ASINT, KERNELDATATYPE_DIMS, KERNELDATATYPE_NPTYPE, Mesh
 
 from .kernelizer import Kernelizer
 

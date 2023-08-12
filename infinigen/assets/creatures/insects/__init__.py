@@ -1,1 +1,1 @@
-from .assembled.dragonfly import DragonflyFactory
+from .dragonfly import DragonflyFactory

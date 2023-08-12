@@ -15,9 +15,9 @@ import numpy as np
 from numpy.random import uniform as U, normal as N, uniform
 import bpy
 
-import util
-from util import blender as butil
-from util.random import log_uniform
+from infinigen.core.util.logging import Suppress
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import log_uniform
 
 
 def bake(emitter, system):
@@ -31,7 +31,7 @@ def bake(emitter, system):
             'active_object': emitter,
             'point_cache': system.point_cache,
         }
-        with util.logging.Suppress():
+        with Suppress():
             bpy.context.scene.frame_end += 1
             bpy.ops.ptcache.bake(override, bake=True)
             bpy.context.scene.frame_end -= 1

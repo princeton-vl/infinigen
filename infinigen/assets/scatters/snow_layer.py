@@ -9,13 +9,12 @@ import mathutils
 
 from numpy.random import uniform, normal
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
-from util import blender as butil
-from nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes import node_utils
 
-from infinigen_gpl.surfaces import snow
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class Snowlayer:
     def __init__(self):

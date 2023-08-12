@@ -9,11 +9,11 @@ import os
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.assets.caves import assets_to_data, caves_asset
-from terrain.utils import random_int, random_int_large
-from util.math import FixedSeed, int_hash
-from util.random import random_general as rg
-from util.organization import AssetFile
+from infinigen.terrain.assets.caves import assets_to_data, caves_asset
+from infinigen.terrain.utils import random_int, random_int_large
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.random import random_general as rg
+from infinigen.core.util.organization import AssetFile
 from .core import Element
 
 

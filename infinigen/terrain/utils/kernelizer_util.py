@@ -5,9 +5,9 @@
 
 
 import numpy as np
-from nodes.node_info import Nodes as oNodes
-from nodes.node_info import NODE_ATTRS_AVAILABLE as o_NODE_ATTRS_AVAILABLE
-from surfaces.surface import Registry
+from infinigen.core.nodes.node_info import Nodes as oNodes
+from infinigen.core.nodes.node_info import NODE_ATTRS_AVAILABLE as o_NODE_ATTRS_AVAILABLE
+from infinigen.core.surface import Registry
 
 class Vars:
     Position = "position"

@@ -12,18 +12,18 @@ import numpy as np
 from numpy.random import uniform as U, normal as N, randint
 import gin
 
-from assets.creatures import genome
-from assets.creatures.genome import Joint
-from assets.creatures import parts
-from assets.creatures.creature_util import offset_center
-from assets.creatures import creature, hair as creature_hair, generate as creature_gen
-from assets.creatures.animation import run_cycle as creature_animation
-from assets.creatures.boid_swarm import BoidSwarmFactory
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures import parts
+from infinigen.assets.creatures.util.creature_util import offset_center
+from infinigen.assets.creatures.util import creature, hair as creature_hair, joining
+from infinigen.assets.creatures.util.animation import run_cycle as creature_animation
+from infinigen.assets.creatures.util.boid_swarm import BoidSwarmFactory
 
-from placement.factory import AssetFactory, make_asset_collection
-from util.math import lerp, clip_gaussian, FixedSeed
-import surfaces.templates.chitin
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.util.math import lerp, clip_gaussian, FixedSeed
+import infinigen.assets.materials.chitin
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 logger = logging.getLogger('beetle')
@@ -62,7 +62,7 @@ def insect_hair_params():
 
 def beetle_postprocessing(body_parts, extras, params):
     
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     main_template.apply(body_parts)
 
 def beetle_genome():
@@ -103,7 +103,7 @@ def beetle_genome():
         parts=body,
         postprocess_params=dict(
             surface_registry=[
-                (surfaces.templates.chitin, 1)
+                (assets.materials.chitin, 1)
             ],
             hair=insect_hair_params()
         )
@@ -122,7 +122,7 @@ class BeetleFactory(AssetFactory):
         root, parts = creature.genome_to_creature(genome, name=f'beetle({self.factory_seed}, {i})')
         tag_object(root, 'beetle')
         offset_center(root)
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             rigging=(self.animation_mode is not None),
             postprocess_func=beetle_postprocessing, **kwargs)
         if self.animation_mode == 'walk_cycle':

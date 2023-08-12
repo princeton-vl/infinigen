@@ -10,17 +10,17 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-import util.blender as butil
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.object import new_circle
-from assets.utils.draw import shape_by_angles, shape_by_xs
-from assets.utils.misc import build_color_ramp, log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.detail import remesh_with_attrs
-from surfaces.surface import shaderfunc_to_material
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+import infinigen.core.util.blender as butil
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.object import new_circle
+from infinigen.assets.utils.draw import shape_by_angles, shape_by_xs
+from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class PineconeFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):

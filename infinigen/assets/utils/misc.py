@@ -8,8 +8,8 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 
 
 class CountInstance:

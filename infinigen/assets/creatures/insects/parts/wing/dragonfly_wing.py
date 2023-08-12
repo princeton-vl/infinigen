@@ -7,12 +7,12 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.shader_utils import nodegroup_add_noise
+from infinigen.assets.creatures.insects.utils.shader_utils import nodegroup_add_noise
 
 @node_utils.to_nodegroup('nodegroup_dragonfly_wing', singleton=False, type='GeometryNodeTree')
 def nodegroup_dragonfly_wing(nw: NodeWrangler):

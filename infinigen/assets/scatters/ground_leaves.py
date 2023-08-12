@@ -7,10 +7,10 @@
 from numpy.random import uniform as U
 from mathutils import Vector
 
-from placement.instance_scatter import scatter_instances
-from nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
-from assets.trees.generate import random_leaf_collection
+from infinigen.assets.trees.generate import random_leaf_collection
 
 def apply(obj, selection=None, density=70, season=None, **kwargs):
     leaf_col=random_leaf_collection(season=season)

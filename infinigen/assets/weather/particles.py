@@ -11,17 +11,17 @@ import mathutils
 
 import gin
 
-from placement.factory import AssetFactory
-from surfaces import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from util import blender as butil
-from util.random import random_general
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import random_general
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-from surfaces.templates import dirt
-from infinigen_gpl.surfaces import snow
+from infinigen.assets.materials import dirt
+from infinigen.infinigen_gpl.surfaces import snow
 
 def shader_raindrop(nw):
     glass_bsdf = nw.new_node(

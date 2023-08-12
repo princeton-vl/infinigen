@@ -8,8 +8,8 @@ from ctypes import POINTER, c_float, c_int32, c_size_t
 
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.utils import ASFLOAT, ASINT, Vars, load_cdll, register_func
-from util.organization import Materials
+from infinigen.terrain.utils import ASFLOAT, ASINT, Vars, load_cdll, register_func
+from infinigen.core.util.organization import Materials
 
 
 class Element:

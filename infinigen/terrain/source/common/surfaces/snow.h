@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/snow.py which has the copyright and
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/snow.py which has the copyright and
 // authors
 DEVICE_FUNC void
 geo_snowtexture(float3_nonbuiltin position, float3_nonbuiltin normal,

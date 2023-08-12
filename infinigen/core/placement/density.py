@@ -11,9 +11,9 @@ import bpy
 import mathutils
 import numpy as np
 
-from nodes.node_wrangler import NodeWrangler, Nodes
-from nodes import node_utils as nu
-from surfaces.surface import eval_argument
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.nodes import node_utils as nu
+from infinigen.core.surface import eval_argument
 
 logger = logging.getLogger(__name__)
 

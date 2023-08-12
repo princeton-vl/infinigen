@@ -11,17 +11,17 @@ import colorsys
 import numpy as np
 from numpy.random import uniform, normal as N
 
-from assets.utils.decorate import assign_material
-from nodes.node_wrangler import Nodes, NodeWrangler
-from placement.factory import AssetFactory, make_asset_collection
-from placement.instance_scatter import scatter_instances
-from surfaces import surface
-from placement.factory import AssetFactory
-from infinigen_gpl.extras.diff_growth import build_diff_growth
-from assets.utils.object import data2mesh
-from assets.utils.mesh import polygon_angles
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.decorate import assign_material
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+from infinigen.assets.utils.object import data2mesh
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 from infinigen.assets.debris import LichenFactory
 

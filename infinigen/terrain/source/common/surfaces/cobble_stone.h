@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/cobble_stone.py which has the copyright
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/cobble_stone.py which has the copyright
 // and authors
 DEVICE_FUNC void geo_cobblestone(
     float3_nonbuiltin position, float3_nonbuiltin normal,

@@ -10,20 +10,20 @@ import mathutils
 import numpy as np
 from numpy.random import uniform, normal as N, randint
 
-from util.math import clip_gaussian
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
-from surfaces.surface_utils import nodegroup_norm_value, nodegroup_norm_vec
+from infinigen.core.util.math import clip_gaussian
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
+from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_value, nodegroup_norm_vec
 
-from assets.creatures.nodegroups.curve import nodegroup_simple_tube, nodegroup_warped_circle_curve, nodegroup_smooth_taper, nodegroup_profile_part
-from assets.creatures.nodegroups.math import nodegroup_aspect_to_dim
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube, nodegroup_warped_circle_curve, nodegroup_smooth_taper, nodegroup_profile_part
+from infinigen.assets.creatures.util.nodegroups.math import nodegroup_aspect_to_dim
 
 
-from assets.creatures.creature import PartFactory
-from assets.creatures.util import part_util
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util import part_util
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_eyelid', singleton=True, type='GeometryNodeTree')
 def nodegroup_eyelid(nw: NodeWrangler):

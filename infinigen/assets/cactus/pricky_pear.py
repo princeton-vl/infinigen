@@ -8,16 +8,16 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.object import new_cube
-from assets.utils.decorate import geo_extension, join_objects
-from assets.utils.misc import log_uniform
-from surfaces.surface import write_attr_data
-from util import blender as butil
-from assets.cactus.base import BaseCactusFactory
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.object import new_cube
+from infinigen.assets.utils.decorate import geo_extension, join_objects
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.surface import write_attr_data
+from infinigen.core.util import blender as butil
+from infinigen.assets.cactus.base import BaseCactusFactory
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class PrickyPearBaseCactusFactory(BaseCactusFactory):
     spike_distance = .08

@@ -10,9 +10,9 @@ import numpy as np
 from numpy.random import uniform
 from skimage.measure import find_contours, marching_cubes
 from scipy.ndimage import convolve
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
-from assets.utils.object import data2mesh
+from infinigen.assets.utils.object import data2mesh
 
 
 def mesh_grid(n, sizes):

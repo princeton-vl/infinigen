@@ -19,14 +19,13 @@ from .factory import AssetFactory
 
 from mathutils.bvhtree import BVHTree
 
-import util
-from util import blender as butil, camera as camera_util
+from infinigen.core.util import blender as butil, camera as camera_util
 
-from nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
+from infinigen.core import surface
 from .factory import AssetFactory
 
-from placement import detail
+from infinigen.core.placement import detail
 
 logger = logging.getLogger('placement')
 

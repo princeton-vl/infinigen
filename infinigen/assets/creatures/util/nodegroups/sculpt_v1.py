@@ -7,13 +7,13 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.creatures.nodegroups.math import nodegroup_floor_ceil, nodegroup_clamp_or_wrap
-from assets.creatures.nodegroups.geometry import nodegroup_symmetric_clone
+from infinigen.assets.creatures.util.nodegroups.math import nodegroup_floor_ceil, nodegroup_clamp_or_wrap
+from infinigen.assets.creatures.util.nodegroups.geometry import nodegroup_symmetric_clone
 
 @node_utils.to_nodegroup('nodegroup_u_v_param_to_vert_idxs', singleton=False, type='GeometryNodeTree')
 def nodegroup_u_v_param_to_vert_idxs(nw: NodeWrangler):

@@ -9,8 +9,8 @@ import json
 import cv2
 import gin
 import numpy as np
-from terrain.utils import boundary_smooth, read, smooth
-from util.organization import AssetFile, LandTile, Process
+from infinigen.terrain.utils import boundary_smooth, read, smooth
+from infinigen.core.util.organization import AssetFile, LandTile, Process
 
 from .ant_landscape import ant_landscape_asset
 from .custom import coast_asset, multi_mountains_asset, coast_params, multi_mountains_params

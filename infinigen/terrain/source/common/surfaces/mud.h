@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/mud.py which has the copyright and
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/mud.py which has the copyright and
 // authors
 DEVICE_FUNC void geo_mud(float3_nonbuiltin position, float3_nonbuiltin normal,
                          POINTER_OR_REFERENCE_ARG float *float_vars,

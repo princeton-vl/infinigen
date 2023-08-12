@@ -7,10 +7,10 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 from .math import nodegroup_polar_to_cart, nodegroup_aspect_to_dim, nodegroup_vector_sum, nodegroup_switch4
 
 @node_utils.to_nodegroup('nodegroup_simple_tube', singleton=True, type='GeometryNodeTree')

@@ -12,10 +12,10 @@ import numpy as np
 from mathutils import Matrix
 from numpy.random import uniform
 
-from assets.mushroom import MushroomFactory
-from util import blender as butil
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
+from infinigen.assets.mushroom import MushroomFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
 
 
 def geo_skeleton(nw: NodeWrangler, base_obj, selection, threshold=.05):

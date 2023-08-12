@@ -7,14 +7,14 @@
 import colorsys
 
 from numpy.random import uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util.math import FixedSeed
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util.math import FixedSeed
 from .cap import MushroomCapFactory
 from .stem import MushroomStemFactory
-from assets.utils.object import origin2lowest
-from placement.factory import AssetFactory
+from infinigen.assets.utils.object import origin2lowest
+from infinigen.core.placement.factory import AssetFactory
 from ..utils.decorate import join_objects
 from ..utils.misc import build_color_ramp, log_uniform
 

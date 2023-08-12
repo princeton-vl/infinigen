@@ -13,29 +13,29 @@ import gin
 import numpy as np
 from numpy.random import uniform as U, normal as N, randint
 
-import surfaces.templates.scale
-import surfaces.templates.fishbody
-from surfaces.templates import fishfin, eyeball
-from surfaces import surface
-from surfaces.surface_utils import sample_range
+import infinigen.assets.materials.scale
+import infinigen.assets.materials.fishbody
+from infinigen.assets.materials import fishfin, eyeball
+from infinigen.core import surface
+from infinigen.assets.materials.utils.surface_utils import sample_range
 
-from placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 
-from assets.creatures import genome
-from assets.creatures.genome import Joint
-from assets.creatures import parts
-from assets.creatures import creature, generate as creature_gen
-from assets.creatures import cloth_sim
-from assets.creatures.boid_swarm import BoidSwarmFactory
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures import parts
+from infinigen.assets.creatures.util import creature, joining
+from infinigen.assets.creatures.util import cloth_sim
+from infinigen.assets.creatures.util.boid_swarm import BoidSwarmFactory
 
-from util import blender as butil
-from util.math import clip_gaussian, FixedSeed
-from assets.creatures.animation.driver_wiggle import animate_wiggle_bones
-from assets.creatures.creature_util import offset_center
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import clip_gaussian, FixedSeed
+from infinigen.assets.creatures.util.animation.driver_wiggle import animate_wiggle_bones
+from infinigen.assets.creatures.util.creature_util import offset_center
 
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-from surfaces.templates import fish_eye_shader
+from infinigen.assets.materials import fish_eye_shader
 
 def fin_params(scale=(1, 1, 1), dorsal=False):
     # scale = np.array((0.2, 1, 0.4)) * np.array((l / l_mean, 1, rad/r_mean)) * np.array(scale)
@@ -76,7 +76,7 @@ def fin_params(scale=(1, 1, 1), dorsal=False):
 def fish_postprocessing(body_parts, extras, params):
     
     get_extras = lambda k: [o for o in extras if k in o.name]
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     main_template.apply(body_parts + get_extras('BodyExtra'))
 
     mat = body_parts[0].active_material
@@ -169,8 +169,8 @@ def fish_genome():
             cloth=fish_fin_cloth_sim_params(),
             anim=fish_swim_params(),
             surface_registry=[
-                (surfaces.templates.fishbody, 3),
-                #(surfaces.templates.scale, 1),
+                (assets.materials.fishbody, 3),
+                #(assets.materials.scale, 1),
             ]
         ) 
     )
@@ -246,7 +246,7 @@ class FishFactory(AssetFactory):
             with FixedSeed(self.factory_seed):
                 fish_postprocessing(*args, **kwargs)
 
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root, parts, instance_genome, rigging=(self.animation_mode is not None), rig_before_subdiv=True,
             postprocess_func=seeded_fish_postprocess, adapt_mode='subdivide', **kwargs)
         if self.animation_mode is not None and arma is not None:

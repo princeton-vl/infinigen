@@ -187,19 +187,19 @@ camera.spawn_camera_rigs.camera_rig_config = [
 ]
 
 # TERRAIN SEED #
-surfaces.templates.ice.geo_ice.random_seed = %OVERALL_SEED
-surfaces.templates.lava.lava_geo.random_seed = %OVERALL_SEED
-surfaces.templates.mud.geo_mud.random_seed = %OVERALL_SEED
-surfaces.templates.cobble_stone.geo_cobblestone.random_seed = %OVERALL_SEED
-surfaces.templates.dirt.geo_dirt.random_seed = %OVERALL_SEED
-surfaces.templates.stone.geo_stone.random_seed = %OVERALL_SEED
-surfaces.templates.cracked_ground.geo_cracked_ground.random_seed = %OVERALL_SEED
-surfaces.templates.soil.geometry_soil.random_seed = %OVERALL_SEED
-surfaces.templates.chunkyrock.geo_rocks.random_seed = %OVERALL_SEED
+assets.materials.ice.geo_ice.random_seed = %OVERALL_SEED
+assets.materials.lava.lava_geo.random_seed = %OVERALL_SEED
+assets.materials.mud.geo_mud.random_seed = %OVERALL_SEED
+assets.materials.cobble_stone.geo_cobblestone.random_seed = %OVERALL_SEED
+assets.materials.dirt.geo_dirt.random_seed = %OVERALL_SEED
+assets.materials.stone.geo_stone.random_seed = %OVERALL_SEED
+assets.materials.cracked_ground.geo_cracked_ground.random_seed = %OVERALL_SEED
+assets.materials.soil.geometry_soil.random_seed = %OVERALL_SEED
+assets.materials.chunkyrock.geo_rocks.random_seed = %OVERALL_SEED
 
-surfaces.templates.mountain.shader.random_seed = %OVERALL_SEED
-surfaces.templates.sand.shader.random_seed = %OVERALL_SEED
-surfaces.templates.water.shader.random_seed = %OVERALL_SEED
+assets.materials.mountain.shader.random_seed = %OVERALL_SEED
+assets.materials.sand.shader.random_seed = %OVERALL_SEED
+assets.materials.water.shader.random_seed = %OVERALL_SEED
 
 compose_scene.ground_creatures_chance = 0.0
 compose_scene.ground_creature_registry = [
@@ -225,6 +225,6 @@ group_collections.config = [
     {'name': 'animhelper',     'hide_viewport': False, 'hide_render': True}, # curves and iks
 ]
 
-include 'config/base_surface_registry.gin'
-include 'config/natural.gin'
+include 'examples/configs/base_surface_registry.gin'
+include 'examples/configs/natural.gin'
 

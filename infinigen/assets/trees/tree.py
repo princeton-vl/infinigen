@@ -14,10 +14,10 @@ from scipy.interpolate import interp1d
 
 from .utils import helper, mesh
 from .utils import geometrynodes as gn
-from assets.leaves import leaf
+from infinigen.assets.leaves import leaf
 
-from nodes.node_wrangler import Nodes
-from util import blender as butil
+from infinigen.core.nodes.node_wrangler import Nodes
+from infinigen.core.util import blender as butil
 from ..utils.object import data2mesh, mesh2obj
 
 C = bpy.context

@@ -13,22 +13,22 @@ import bpy
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-import util.blender as butil
-from assets.creatures.animation.driver_repeated import repeated_driver
-from assets.utils.nodegroup import geo_base_selection
-from assets.utils.object import data2mesh, mesh2obj, new_circle, new_empty, new_icosphere, origin2highest
-from assets.utils.decorate import assign_material, geo_extension, join_objects, read_co, remove_vertices, \
+import infinigen.core.util.blender as butil
+from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
+from infinigen.assets.utils.nodegroup import geo_base_selection
+from infinigen.assets.utils.object import data2mesh, mesh2obj, new_circle, new_empty, new_icosphere, origin2highest
+from infinigen.assets.utils.decorate import assign_material, geo_extension, join_objects, read_co, remove_vertices, \
     subsurface2face_size, write_attribute
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
-from surfaces import surface
-from surfaces.surface import read_attr_data, shaderfunc_to_material, write_attr_data
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.surface import read_attr_data, shaderfunc_to_material, write_attr_data
 
-from util.blender import deep_clone_obj
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class JellyfishFactory(AssetFactory):
 

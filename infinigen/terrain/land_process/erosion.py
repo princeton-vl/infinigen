@@ -10,8 +10,8 @@ import cv2
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.utils import ASFLOAT, load_cdll, read, smooth
-from util.organization import AssetFile, Process
+from infinigen.terrain.utils import ASFLOAT, load_cdll, read, smooth
+from infinigen.core.util.organization import AssetFile, Process
 
 
 @gin.configurable
@@ -47,7 +47,7 @@ def run_erosion(
         watertrack = np.zeros_like(heightmap)
         func(
             ASFLOAT(heightmap),  ASFLOAT(result_heightmap),  ASFLOAT(watertrack),
-            N, N, 0, n_iter, 0, spatial * tile_size, "terrain/source/cpu/soil_machine/soil/sand.soil".encode('utf-8'),
+            N, N, 0, n_iter, 0, spatial * tile_size, "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil".encode('utf-8'),
         )
         heightmap = result_heightmap + ground_level
         watertrack = watertrack.reshape((N, N))

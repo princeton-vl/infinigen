@@ -10,13 +10,13 @@ from pathlib import Path
 import cv2
 import gin
 import numpy as np
-from terrain.elements.core import Element
-from terrain.elements.mountains import Mountains
-from terrain.land_process.erosion import run_erosion
-from terrain.land_process.snowfall import run_snowfall
-from terrain.utils import grid_distance, perlin_noise, random_int
-from util.organization import AssetFile
-from util.random import random_general as rg
+from infinigen.terrain.elements.core import Element
+from infinigen.terrain.elements.mountains import Mountains
+from infinigen.terrain.land_process.erosion import run_erosion
+from infinigen.terrain.land_process.snowfall import run_snowfall
+from infinigen.terrain.utils import grid_distance, perlin_noise, random_int
+from infinigen.core.util.organization import AssetFile
+from infinigen.core.util.random import random_general as rg
 
 
 coast_params_ = {}

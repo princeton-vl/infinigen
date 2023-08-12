@@ -5,13 +5,13 @@
 
 
 import numpy as np
-from placement.instance_scatter import scatter_instances
-from placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 
-from assets.small_plants.fern import FernFactory
+from infinigen.assets.small_plants.fern import FernFactory
 
-from util.random import random_general as rg
-from surfaces.scatters.utils.wind import wind
+from infinigen.core.util.random import random_general as rg
+from infinigen.assets.scatters.utils.wind import wind
 
 def apply(obj, selection=None, density=('uniform', 1, 6), **kwargs):
 

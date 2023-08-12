@@ -9,8 +9,8 @@ import numpy as np
 import trimesh
 from mathutils import Vector
 
-import util.blender as butil
-from assets.utils.decorate import read_co
+import infinigen.core.util.blender as butil
+from infinigen.assets.utils.decorate import read_co
 
 
 def center(obj):

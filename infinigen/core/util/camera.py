@@ -12,8 +12,8 @@ import bpy
 import bpy_extras
 from tqdm import trange
 
-from util.math import homogenize, dehomogenize
-from util import blender as butil
+from infinigen.core.util.math import homogenize, dehomogenize
+from infinigen.core.util import blender as butil
 
 #---------------------------------------------------------------
 # 3x4 P matrix from Blender camera

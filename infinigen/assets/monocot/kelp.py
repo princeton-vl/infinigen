@@ -8,16 +8,16 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-import util.blender as butil
-from assets.creatures.animation.driver_repeated import repeated_driver
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.draw import bezier_curve, leaf
-from assets.utils.decorate import assign_material, join_objects
-from assets.utils.misc import log_uniform
-from assets.utils.object import origin2leftmost
-from nodes.node_wrangler import NodeWrangler
-from placement.detail import remesh_with_attrs
-from util.math import FixedSeed
+import infinigen.core.util.blender as butil
+from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.draw import bezier_curve, leaf
+from infinigen.assets.utils.decorate import assign_material, join_objects
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.object import origin2leftmost
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core.util.math import FixedSeed
 
 
 class KelpMonocotFactory(MonocotGrowthFactory):

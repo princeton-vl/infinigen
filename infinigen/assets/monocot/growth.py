@@ -12,21 +12,21 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.decorate import assign_material, displace_vertices, geo_extension, join_objects
-from assets.utils.misc import build_color_ramp, log_uniform
-from assets.utils.nodegroup import geo_radius
-from placement.detail import adapt_mesh_resolution
-from surfaces.surface import shaderfunc_to_material
-from util import blender as butil
-from assets.utils.object import data2mesh, mesh2obj, new_cube, origin2leftmost
-from nodes.node_info import Nodes
-from placement.factory import AssetFactory, make_asset_collection
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
-from surfaces import surface
-from util.blender import deep_clone_obj
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.decorate import assign_material, displace_vertices, geo_extension, join_objects
+from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.assets.utils.nodegroup import geo_radius
+from infinigen.core.placement.detail import adapt_mesh_resolution
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.object import data2mesh, mesh2obj, new_cube, origin2leftmost
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class MonocotGrowthFactory(AssetFactory):
     use_distance = False

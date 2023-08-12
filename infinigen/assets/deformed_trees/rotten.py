@@ -8,17 +8,17 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.deformed_trees.base import BaseDeformedTreeFactory
-from assets.utils.decorate import assign_material, join_objects, read_material_index, remove_vertices, \
+from infinigen.assets.deformed_trees.base import BaseDeformedTreeFactory
+from infinigen.assets.utils.decorate import assign_material, join_objects, read_material_index, remove_vertices, \
     separate_loose, write_material_index
-from assets.utils.misc import log_uniform
-from assets.utils.object import new_icosphere
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util.blender import deep_clone_obj
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.object import new_icosphere
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class RottenTreeFactory(BaseDeformedTreeFactory):
     @staticmethod

@@ -23,5 +23,5 @@ if [ ! -d "${FLIP_FLUIDS_ADDON_FOLDER}" ]; then
     python build.py
     cd -
     cp -r "${FLIP_FLUIDS_ADDON_FOLDER}" "${BLENDER_ADDONS}"
-    "${BLENDER_EXE}" --background -noaudio -P ./worldgen/fluid/flip_init.py
+    "${BLENDER_EXE}" --background -noaudio -P ./infinigen/assets/fluid/flip_init.py
 fi

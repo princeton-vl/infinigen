@@ -12,24 +12,24 @@ import gin
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.creature import genome_to_creature
-from assets.creatures.generate import join_and_rig_parts
-from assets.creatures.genome import CreatureGenome, Joint, attach, part
-from assets.creatures.parts.crustacean.antenna import LobsterAntennaFactory, SpinyLobsterAntennaFactory
-from assets.creatures.parts.crustacean.claw import CrabClawFactory, LobsterClawFactory
-from assets.creatures.parts.crustacean.eye import CrustaceanEyeFactory
-from assets.creatures.parts.crustacean.fin import CrustaceanFinFactory
-from assets.creatures.parts.crustacean.leg import CrabLegFactory, LobsterLegFactory
-from assets.creatures.parts.crustacean.body import CrabBodyFactory, LobsterBodyFactory
-from assets.creatures.parts.crustacean.tail import CrustaceanTailFactory
-from assets.utils.decorate import assign_material, read_material_index, write_material_index
-from assets.utils.misc import build_color_ramp, log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.factory import AssetFactory
-from surfaces.surface import read_attr_data, shaderfunc_to_material
-from util import blender as butil
-from util.math import FixedSeed
+from infinigen.assets.creatures.util.creature import genome_to_creature
+from infinigen.assets.creatures.util.joining import join_and_rig_parts
+from infinigen.assets.creatures.util.genome import CreatureGenome, Joint, attach, part
+from infinigen.assets.creatures.parts.crustacean.antenna import LobsterAntennaFactory, SpinyLobsterAntennaFactory
+from infinigen.assets.creatures.parts.crustacean.claw import CrabClawFactory, LobsterClawFactory
+from infinigen.assets.creatures.parts.crustacean.eye import CrustaceanEyeFactory
+from infinigen.assets.creatures.parts.crustacean.fin import CrustaceanFinFactory
+from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory, LobsterLegFactory
+from infinigen.assets.creatures.parts.crustacean.body import CrabBodyFactory, LobsterBodyFactory
+from infinigen.assets.creatures.parts.crustacean.tail import CrustaceanTailFactory
+from infinigen.assets.utils.decorate import assign_material, read_material_index, write_material_index
+from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.surface import read_attr_data, shaderfunc_to_material
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
 
 n_legs = 4
 n_limbs = 5

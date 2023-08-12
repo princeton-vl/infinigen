@@ -17,26 +17,15 @@ import gin
 import numpy as np
 import json
 
-try:
-    # from tools.asset_grid import import_surface_registry
-    from fluid.fluid import (
-        find_available_cache,
-        set_obj_on_fire,
-        fire_smoke_ground_truth,
-    )
-except ImportError:
-    sys.path.append(str(Path(os.path.split(os.path.abspath(__file__))[0])))
-    # from tools.asset_grid import import_surface_registry
-    from fluid.fluid import (
-        find_available_cache,
-        set_obj_on_fire,
-        fire_smoke_ground_truth,
-    )
-
+from infinigen.assets.fluid.fluid import (
+    find_available_cache,
+    set_obj_on_fire,
+    fire_smoke_ground_truth,
+)
 
 import time
-from util import blender as butil
-from util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
 import logging
 
 RAND_SEED_MAX = 1e5

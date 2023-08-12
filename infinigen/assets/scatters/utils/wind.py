@@ -11,7 +11,7 @@ import numpy as np
 from numpy.random import uniform as U, normal as N, randint
 from mathutils import Vector
 
-from nodes.node_wrangler import Nodes
+from infinigen.core.nodes.node_wrangler import Nodes
 
 def wind_rotation(nw, speed=1.0, direction=None, scale=1.0, strength=30):
 

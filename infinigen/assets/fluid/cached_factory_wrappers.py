@@ -1,8 +1,8 @@
 
-from assets.trees import TreeFactory, BushFactory
-from assets.creatures import CarnivoreFactory
-from assets.cactus import CactusFactory
-from assets.boulder import BoulderFactory
+from infinigen.assets.trees import TreeFactory, BushFactory
+from infinigen.assets.creatures import CarnivoreFactory
+from infinigen.assets.cactus import CactusFactory
+from infinigen.assets.rocks.boulder import BoulderFactory
 
 class CachedBoulderFactory(BoulderFactory):
     pass

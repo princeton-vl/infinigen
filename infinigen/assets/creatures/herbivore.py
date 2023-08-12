@@ -11,29 +11,29 @@ import gin
 import numpy as np
 from numpy.random import uniform as U, normal as N
 
-from assets.creatures import genome
-from assets.creatures.genome import Joint
-from assets.creatures import parts
-from util.math import clip_gaussian
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures import parts
+from infinigen.core.util.math import clip_gaussian
 
-from surfaces import surface
+from infinigen.core import surface
 
-import surfaces.templates.tiger_attr
-import surfaces.templates.giraffe_attr
-import surfaces.templates.spot_sparse_attr
-import surfaces.templates.reptile_brown_circle_attr
-import surfaces.templates.reptile_gray_attr
+import infinigen.assets.materials.tiger_attr
+import infinigen.assets.materials.giraffe_attr
+import infinigen.assets.materials.spot_sparse_attr
+import infinigen.assets.materials.reptile_brown_circle_attr
+import infinigen.assets.materials.reptile_gray_attr
 
-from placement.factory import AssetFactory
-from assets.creatures.creature_util import offset_center
-from assets.creatures import creature, generate as creature_gen
-from assets.creatures import hair as creature_hair, cloth_sim
-from assets.creatures.animation import idle, run_cycle
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.creatures.util.creature_util import offset_center
+from infinigen.assets.creatures.util import creature, joining
+from infinigen.assets.creatures.util import hair as creature_hair, cloth_sim
+from infinigen.assets.creatures.util.animation import idle, run_cycle
 
-from surfaces.templates import bone, tongue, eyeball, nose, horn
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.materials import bone, tongue, eyeball, nose, horn
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
 def herbivore_hair():
 
@@ -71,7 +71,7 @@ def herbivore_postprocessing(body_parts, extras, params):
 
     get_extras = lambda k: [o for o in extras if k in o.name]
 
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     main_template.apply(body_parts + get_extras('BodyExtra'))
 
     tongue.apply(get_extras('Tongue'))
@@ -166,14 +166,14 @@ def herbivore_genome():
     if U() < 1:
         hair = herbivore_hair()
         registry = [
-            (surfaces.templates.giraffe_attr, 1),
-            (surfaces.templates.spot_sparse_attr, 3)
+            (assets.materials.giraffe_attr, 1),
+            (assets.materials.spot_sparse_attr, 3)
         ]
     else:
         hair = None
         registry = [
-            (surfaces.templates.reptile_brown_circle_attr, 1),
-            (surfaces.templates.reptile_gray_attr, 1)
+            (assets.materials.reptile_brown_circle_attr, 1),
+            (assets.materials.reptile_gray_attr, 1)
         ]
 
     return genome.CreatureGenome(
@@ -209,7 +209,7 @@ class HerbivoreFactory(AssetFactory):
         
         dynamic = self.animation_mode is not None
 
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root, parts, genome, rigging=dynamic,
             postprocess_func=herbivore_postprocessing, **kwargs)
         

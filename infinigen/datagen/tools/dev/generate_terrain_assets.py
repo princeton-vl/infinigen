@@ -20,8 +20,8 @@ from terrain.assets.caves import caves_asset
 from terrain.assets.landtiles import landtile_asset
 from terrain.assets.upsidedown_mountains import upsidedown_mountains_asset
 from util import blender as butil
-from util.math import int_hash, FixedSeed
-from util.organization import Assets, LandTile, AssetFile
+from infinigen.core.util.math import int_hash, FixedSeed
+from infinigen.core.util.organization import Assets, LandTile, AssetFile
 
 
 def asset_generation(

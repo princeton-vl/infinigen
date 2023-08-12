@@ -9,7 +9,7 @@ import re
 from collections import OrderedDict
 
 import numpy as np
-from terrain.utils import SocketType, Vars, KernelDataType, usable_name, Nodes, NODE_ATTRS_AVAILABLE, SOCKETTYPE_KERNEL, \
+from infinigen.terrain.utils import SocketType, Vars, KernelDataType, usable_name, Nodes, NODE_ATTRS_AVAILABLE, SOCKETTYPE_KERNEL, \
     sanitize, special_sanitize, special_sanitize_float_curve, concat_string, value_string, var_list, NODE_FUNCTIONS, \
     collecting_vars, get_imp_var_name, special_sanitize_constant
 

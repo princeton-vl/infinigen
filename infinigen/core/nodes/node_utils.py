@@ -12,10 +12,10 @@ from tqdm import trange
 
 import bpy
 
-from surfaces import surface
-from nodes.node_wrangler import Nodes, NodeWrangler
-from util.blender import group_in_collection
-from nodes.color import random_color_mapping
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.blender import group_in_collection
+from infinigen.core.nodes.color import random_color_mapping
 
 
 def to_material(name, singleton):

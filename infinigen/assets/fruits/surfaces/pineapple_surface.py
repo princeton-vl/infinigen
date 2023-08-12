@@ -7,14 +7,14 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.fruit_utils import nodegroup_point_on_mesh, nodegroup_random_rotation_scale, nodegroup_surface_bump, nodegroup_instance_on_points
-from assets.fruits.cross_section_lib import nodegroup_circle_cross_section
-from assets.fruits.stem_lib import nodegroup_pineapple_leaf
+from infinigen.assets.fruits.fruit_utils import nodegroup_point_on_mesh, nodegroup_random_rotation_scale, nodegroup_surface_bump, nodegroup_instance_on_points
+from infinigen.assets.fruits.cross_section_lib import nodegroup_circle_cross_section
+from infinigen.assets.fruits.stem_lib import nodegroup_pineapple_leaf
 
 @node_utils.to_nodegroup('nodegroup_pineapple_surface', singleton=False, type='GeometryNodeTree')
 def nodegroup_pineapple_surface(nw: NodeWrangler, 

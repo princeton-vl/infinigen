@@ -10,19 +10,19 @@ from collections.abc import Iterable
 import numpy as np
 from numpy.random import uniform
 
-from assets.leaves.leaf_maple import LeafFactoryMaple
-from assets.trees.generate import random_season
-from assets.utils.decorate import assign_material, fix_tree
-from assets.utils.nodegroup import geo_base_selection, geo_radius
-from assets.utils.shortest_path import geo_shortest_path
-from nodes.node_info import Nodes
-from placement.factory import AssetFactory, make_asset_collection
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from surfaces.surface import shaderfunc_to_material
-from surfaces.templates.simple_brownish import shader_simple_brown
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.leaves.leaf_maple import LeafFactoryMaple
+from infinigen.assets.trees.generate import random_season
+from infinigen.assets.utils.decorate import assign_material, fix_tree
+from infinigen.assets.utils.nodegroup import geo_base_selection, geo_radius
+from infinigen.assets.utils.shortest_path import geo_shortest_path
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.assets.materials.simple_brownish import shader_simple_brown
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 def geo_leaf(nw: NodeWrangler, leaves):

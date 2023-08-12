@@ -8,16 +8,16 @@ import numpy as np
 from numpy.random import uniform, normal
 from mathutils import Vector
 
-from util import blender as butil
-from placement.instance_scatter import scatter_instances
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
-from nodes import node_utils
-from placement.factory import AssetFactory, make_asset_collection
-from assets.grassland.flowerplant import FlowerPlantFactory
-from surfaces.templates import simple_greenery
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.assets.grassland.flowerplant import FlowerPlantFactory
+from infinigen.assets.materials import simple_greenery
 
-from surfaces.scatters.utils.wind import wind
+from infinigen.assets.scatters.utils.wind import wind
 
 def apply(obj, selection=None, density=1.0):
 

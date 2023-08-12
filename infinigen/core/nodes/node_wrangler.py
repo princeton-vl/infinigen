@@ -19,10 +19,10 @@ from collections.abc import Iterable
 import bpy
 import numpy as np
 
-from util.random import random_vector3
-from nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
-from nodes import node_info
-from nodes.compatibility import COMPATIBILITY_MAPPINGS
+from infinigen.core.util.random import random_vector3
+from infinigen.core.nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
+from infinigen.core.nodes import node_info
+from infinigen.core.nodes.compatibility import COMPATIBILITY_MAPPINGS
 
 
 logger = logging.getLogger(__name__)

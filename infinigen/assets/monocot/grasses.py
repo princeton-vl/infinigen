@@ -10,23 +10,23 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.decorate import assign_material, join_objects, remove_vertices, write_attribute, \
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.decorate import assign_material, join_objects, remove_vertices, write_attribute, \
     write_material_index
-from assets.utils.draw import bezier_curve, leaf, spin
-from assets.utils.mesh import polygon_angles
-from assets.utils.misc import log_uniform
+from infinigen.assets.utils.draw import bezier_curve, leaf, spin
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.assets.utils.misc import log_uniform
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 
-from placement.factory import AssetFactory, make_asset_collection
-from placement.detail import remesh_with_attrs
-from surfaces import surface
-from surfaces.surface import read_attr_data, shaderfunc_to_material
-from util import blender as butil
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core import surface
+from infinigen.core.surface import read_attr_data, shaderfunc_to_material
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class GrassesMonocotFactory(MonocotGrowthFactory):
 

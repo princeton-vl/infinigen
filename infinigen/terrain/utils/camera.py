@@ -7,7 +7,7 @@
 import bpy
 import gin
 import numpy as np
-from placement.camera import get_camera
+from infinigen.core.placement.camera import get_camera
 from scipy.spatial.transform import Rotation as R
 
 

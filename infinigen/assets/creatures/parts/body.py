@@ -7,21 +7,21 @@
 import numpy as np
 from numpy.random import normal as N, uniform
 
-from assets.creatures import creature_util as cutil
-from assets.creatures.creature import Part, PartFactory
-from assets.creatures.geometry import nurbs
+from infinigen.assets.creatures.util import creature_util as cutil
+from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.util.geometry import nurbs
 
-from nodes import node_utils
-from nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.nodegroups.curve import nodegroup_polar_bezier, nodegroup_simple_tube_v2
-from assets.creatures.nodegroups.geometry import nodegroup_symmetric_clone
-from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_polar_bezier, nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.nodegroups.geometry import nodegroup_symmetric_clone
+from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
 
-from assets.creatures.util import part_util
-from assets.creatures.geometry import lofting, nurbs
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util import part_util
+from infinigen.assets.creatures.util.geometry import lofting, nurbs
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_quadruped_body', singleton=False, type='GeometryNodeTree')
 def nodegroup_quadruped_body(nw: NodeWrangler):

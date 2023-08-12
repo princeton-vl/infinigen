@@ -10,15 +10,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-import util.blender as butil
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.decorate import add_distance_to_boundary, join_objects, displace_vertices
-from assets.utils.draw import cut_plane, leaf
-from assets.utils.misc import log_uniform
-from surfaces.surface import shaderfunc_to_material
-from util.blender import deep_clone_obj
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+import infinigen.core.util.blender as butil
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.decorate import add_distance_to_boundary, join_objects, displace_vertices
+from infinigen.assets.utils.draw import cut_plane, leaf
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class AgaveMonocotFactory(MonocotGrowthFactory):
     use_distance = True

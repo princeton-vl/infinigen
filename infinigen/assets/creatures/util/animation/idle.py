@@ -15,9 +15,9 @@ from numpy.random import uniform as U, normal as N
 
 import pdb
 
-from assets.creatures import creature, creature_util as cutil
-from util.math import clip_gaussian, randomspacing, lerp
-from util import blender as butil
+from infinigen.assets.creatures.util import creature, creature_util as cutil
+from infinigen.core.util.math import clip_gaussian, randomspacing, lerp
+from infinigen.core.util import blender as butil
 
 def compute_ik_length_height(targets):
     bounds = []

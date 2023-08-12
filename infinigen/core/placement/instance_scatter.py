@@ -12,11 +12,11 @@ from mathutils import Vector
 
 import numpy as np
 
-from assets.utils.misc import CountInstance
-from surfaces import surface
-from nodes.node_wrangler import Nodes, NodeWrangler
-from util import blender as butil
-from placement.camera import nodegroup_active_cam_info
+from infinigen.assets.utils.misc import CountInstance
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.camera import nodegroup_active_cam_info
 
 logger = logging.getLogger(__name__)
 

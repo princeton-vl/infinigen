@@ -7,16 +7,16 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.small_plants.leaf_general import LeafFactory
-from assets.small_plants.leaf_heart import LeafHeartFactory
-from surfaces.templates import simple_greenery
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.small_plants.leaf_general import LeafFactory
+from infinigen.assets.small_plants.leaf_heart import LeafHeartFactory
+from infinigen.assets.materials import simple_greenery
 import numpy as np
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_leafon_stem', singleton=False, type='GeometryNodeTree')
 def nodegroup_leaf_on_stem(nw: NodeWrangler, z_rotation=(0, 0, 0,), leaf_scale=1.0, leaf=None):

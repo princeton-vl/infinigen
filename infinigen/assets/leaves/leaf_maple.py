@@ -9,16 +9,16 @@ import numpy as np
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category, hsv2rgba
-from surfaces import surface
-from assets.leaves.leaf_v2 import nodegroup_apply_wave
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core import surface
+from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave
 
-from util.math import FixedSeed
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 def deg2rad(deg):
     return deg / 180.0 * np.pi

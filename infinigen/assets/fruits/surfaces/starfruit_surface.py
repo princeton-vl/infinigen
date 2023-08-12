@@ -7,12 +7,12 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.fruit_utils import nodegroup_surface_bump, nodegroup_add_dent
+from infinigen.assets.fruits.fruit_utils import nodegroup_surface_bump, nodegroup_add_dent
 
 def shader_starfruit_shader(nw: NodeWrangler, base_color, ridge_color):
     # Code generated using version 2.4.3 of the node_transpiler

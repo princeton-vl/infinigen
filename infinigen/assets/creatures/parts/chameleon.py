@@ -8,20 +8,20 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.creatures.creature import PartFactory, Part
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.util import part_util
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import PartFactory, Part
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util import part_util
+from infinigen.core.util import blender as butil
 from scipy.interpolate import interp1d
-from assets.creatures.util.part_util import nodegroup_to_part
+from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 
-from assets.creatures.geometry import nurbs as nurbs_util
-from surfaces import surface
+from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
+from infinigen.core import surface
 import logging
 import numpy as np
 

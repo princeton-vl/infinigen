@@ -8,17 +8,17 @@ import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-from assets.creatures.creature import Part, PartFactory
-from assets.creatures.parts.utils.draw import geo_symmetric_texture
-from assets.utils.decorate import add_distance_to_boundary, displace_vertices, join_objects, read_co
-from assets.utils.draw import leaf, spin
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.placement import placeholder_locs
-from surfaces import surface
-from surfaces.surface import write_attr_data
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.parts.utils.draw import geo_symmetric_texture
+from infinigen.assets.utils.decorate import add_distance_to_boundary, displace_vertices, join_objects, read_co
+from infinigen.assets.utils.draw import leaf, spin
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.placement import placeholder_locs
+from infinigen.core import surface
+from infinigen.core.surface import write_attr_data
+from infinigen.core.util import blender as butil
 
 
 class CrabBodyFactory(PartFactory):

@@ -6,9 +6,9 @@
 
 
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
 
 
 def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, offset=0., merge_threshold=.005,

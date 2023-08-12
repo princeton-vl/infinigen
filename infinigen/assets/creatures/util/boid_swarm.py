@@ -12,12 +12,12 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U, normal as N
 
-from placement.factory import AssetFactory
-from placement import particles, animation_policy
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement import particles, animation_policy
 
-from util import blender as butil
-from util.math import FixedSeed
-from util.random import random_general
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import random_general
 
 logger = logging.getLogger('boids')
 

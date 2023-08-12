@@ -6,11 +6,11 @@
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.draw import leaf
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.misc import log_uniform
-from util.math import FixedSeed
-from assets.utils.tag import tag_object
+from infinigen.assets.utils.draw import leaf
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object
 
 
 class TussockMonocotFactory(MonocotGrowthFactory):

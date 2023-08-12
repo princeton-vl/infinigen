@@ -29,7 +29,7 @@ scene.warped_rocks_chance = 0
 scene.ground_ice_chance = 1
 scene.waterbody_chance = 1
 
-include 'config/disable_assets/no_assets.gin'
+include 'examples/configs/disable_assets/no_assets.gin'
 
 compose_scene.wind_chance = 0.5
 compose_scene.turbulence_chance = 0.5

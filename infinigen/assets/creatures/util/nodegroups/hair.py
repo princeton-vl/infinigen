@@ -7,12 +7,12 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.creatures.nodegroups.math import nodegroup_vector_bezier
+from infinigen.assets.creatures.util.nodegroups.math import nodegroup_vector_bezier
 
 @node_utils.to_nodegroup('nodegroup_comb_direction', singleton=True, type='GeometryNodeTree')
 def nodegroup_comb_direction(nw: NodeWrangler):

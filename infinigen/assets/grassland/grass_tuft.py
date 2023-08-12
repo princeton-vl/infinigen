@@ -9,15 +9,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform, normal
 
-from assets.creatures.geometry.curve import Curve
-from util.blender import deep_clone_obj
+from infinigen.assets.creatures.util.geometry.curve import Curve
+from infinigen.core.util.blender import deep_clone_obj
 
-from surfaces.templates import grass_blade_texture
+from infinigen.assets.materials import grass_blade_texture
 
-from placement.factory import AssetFactory
+from infinigen.core.placement.factory import AssetFactory
 
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class GrassTuftFactory(AssetFactory):
 

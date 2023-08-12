@@ -9,11 +9,11 @@ from mathutils import Vector
 import numpy as np
 from numpy.random import uniform as U, normal as N
 
-from util.blender import deep_clone_obj
-from util.math import FixedSeed
-from util import blender as butil
-from placement.factory import AssetFactory
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 

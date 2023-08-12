@@ -11,20 +11,18 @@ import mathutils
 
 from tqdm import trange, tqdm
 from numpy.random import uniform, normal
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
 
-from assets.cloud.node import geometry_func, shader_material
-from assets.cloud.node import scatter_func
-
-from lighting import lighting
+from infinigen.assets.weather.cloud.node import geometry_func, shader_material
+from infinigen.assets.weather.cloud.node import scatter_func
 
 from scipy.ndimage import distance_transform_edt
 from skimage import measure
 
-import util
-from util import blender as butil
+from infinigen.core.util.logging import Suppress
+from infinigen.core.util import blender as butil
 
 
 def set_curves(curve, points):
@@ -176,7 +174,7 @@ class Cumulus(object):
 
         link_object(cloud)
 
-        with util.logging.Suppress():
+        with Suppress():
             # Set origin
             butil.select(cloud)
             bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
@@ -499,7 +497,7 @@ def initialize(collection):
         dimensions = dimensions * scale
         cloud.dimensions = dimensions
 
-    lighting.add_lighting()
+    sky_lighting.add_lighting()
     return clouds
 
 
@@ -555,7 +553,7 @@ def single():
 
         cloud.location = [xs[i], ys[i], 0]
 
-    lighting.add_lighting()
+    sky_lighting.add_lighting()
     return clouds
 
 

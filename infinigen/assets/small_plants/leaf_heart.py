@@ -6,13 +6,13 @@
 
 import numpy as np
 import bpy
-from assets.trees.utils import mesh
-from placement.factory import AssetFactory
-from util import blender as butil
+from infinigen.assets.trees.utils import mesh
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 
 C = bpy.context
 D = bpy.data
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class LeafHeartFactory(AssetFactory):
     scale = 0.2

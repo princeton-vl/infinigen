@@ -7,13 +7,13 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.fruit_utils import nodegroup_surface_bump, nodegroup_add_noise_scalar, nodegroup_attach_to_nearest, nodegroup_scale_mesh
-from assets.fruits.cross_section_lib import nodegroup_cylax_cross_section
+from infinigen.assets.fruits.fruit_utils import nodegroup_surface_bump, nodegroup_add_noise_scalar, nodegroup_attach_to_nearest, nodegroup_scale_mesh
+from infinigen.assets.fruits.cross_section_lib import nodegroup_cylax_cross_section
 
 @node_utils.to_nodegroup('nodegroup_empty_stem', singleton=False, type='GeometryNodeTree')
 def nodegroup_empty_stem(nw: NodeWrangler):

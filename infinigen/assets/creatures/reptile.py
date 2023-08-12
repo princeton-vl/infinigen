@@ -15,39 +15,36 @@ import bpy
 import numpy as np
 from numpy.random import normal as N, uniform as U
 
-from assets.creatures import genome
-from assets.creatures.genome import Joint
-from assets.creatures import parts
+from infinigen.assets.creatures.util import genome
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures import parts
 
-from assets.creatures.creature_util import euler
+from infinigen.assets.creatures.util.creature_util import euler
 
-import surfaces.templates.basic_bsdf
-import surfaces.templates.spot_sparse_attr
-import surfaces.templates.snake_scale
-import surfaces.templates.snake_shaders
-import surfaces.templates.bird
-import surfaces.templates.scale
+import infinigen.assets.materials.spot_sparse_attr
+import infinigen.assets.materials.snake_scale
+import infinigen.assets.materials.snake_shaders
+import infinigen.assets.materials.bird
+import infinigen.assets.materials.scale
 
-from assets.creatures import creature, generate as creature_gen, animation as creature_animation
-from assets.creatures import cloth_sim
-from util import blender as butil
+from infinigen.assets.creatures.util import creature, joining, animation as creature_animation
+from infinigen.core.util import blender as butil
 
-from surfaces.templates import bone, tongue, eyeball, nose, horn
-from surfaces import surface
+from infinigen.assets.materials import bone, tongue, eyeball, nose, horn
+from infinigen.core import surface
 
-from placement.factory import AssetFactory
+from infinigen.core.placement.factory import AssetFactory
 
-from assets.creatures import creature, generate as creature_gen
-from assets.creatures import cloth_sim
+from infinigen.assets.creatures.util import creature, joining
 
-from util.math import clip_gaussian, FixedSeed
-from util import blender as butil
-from util.random import random_general
+from infinigen.core.util.math import clip_gaussian, FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import random_general
 
-from assets.creatures.animation import curve_slither
-from placement import animation_policy
+from infinigen.assets.creatures.util.animation import curve_slither
+from infinigen.core.placement import animation_policy
 
-from assets.creatures.animation.run_cycle import follow_path
+from infinigen.assets.creatures.util.animation.run_cycle import follow_path
 
 
 def dinosaur():
@@ -118,7 +115,7 @@ def dinosaur():
         postprocess_params=dict(
             animation=dict(), 
             surface_registry=[
-                (surfaces.templates.snake_scale, 1),
+                (assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -181,7 +178,7 @@ def lizard_genome():
         postprocess_params=dict(
             anim=lizard_run_params(),
             surface_registry=[
-                (surfaces.templates.snake_scale, 1),
+                (assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -230,7 +227,7 @@ def snake_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (surfaces.templates.snake_scale, 1),
+                (assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -246,7 +243,7 @@ def chameleon_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (surfaces.templates.snake_scale, 1),
+                (assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -307,7 +304,7 @@ def frog_genome():
                 speed_m_s=0.5
             ), 
             surface_registry=[
-                (surfaces.templates.snake_scale, 1),
+                (assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -379,7 +376,7 @@ def animate_lizard_run(root, arma, params, ik_targets):
 
 def reptile_postprocessing(body_parts, extras, params):
     get_extras = lambda k: [o for o in extras if k in o.name]
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     body = body_parts + get_extras('BodyExtra')
     main_template.apply(body)
 
@@ -390,7 +387,7 @@ def reptile_postprocessing(body_parts, extras, params):
 
 def chameleon_postprocessing(body_parts, extras, params):
     get_extras = lambda k: [o for o in extras if k in o.name]
-    main_template = surfaces.surface.registry.sample_registry(params['surface_registry'])
+    main_template = surface.registry.sample_registry(params['surface_registry'])
     body = body_parts + get_extras('BodyExtra')
     main_template.apply(body)
 
@@ -409,7 +406,7 @@ class LizardFactory(AssetFactory):
         genome = lizard_genome()
         root, parts = creature.genome_to_creature(genome, name=f'lizard({self.factory_seed}, {i})')
         
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             postprocess_func=reptile_postprocessing, adapt_mode='remesh', rigging=rigging, **kwargs)
         if animate and arma is not None:
             pass 
@@ -434,7 +431,7 @@ class FrogFactory(AssetFactory):
         genome = frog_genome()
         root, parts = creature.genome_to_creature(genome, name=f'frog({self.factory_seed}, {i})')
         
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             postprocess_func=reptile_postprocessing, adapt_mode='remesh', rigging=rigging, **kwargs)
         if animate and arma is not None:
             pass 
@@ -492,7 +489,7 @@ class SnakeFactory(AssetFactory):
         genome = snake_genome()
         root, parts = creature.genome_to_creature(genome, name=f'snake({self.factory_seed}, {i})')
 
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             postprocess_func=reptile_postprocessing, adaptive_resolution=False, rigging=False, **kwargs)
 
         joined = butil.join_objects([joined] + extras)
@@ -536,7 +533,7 @@ class ChameleonFactory(AssetFactory):
         genome = chameleon_genome()
         root, parts = creature.genome_to_creature(genome, name=f'snake({self.factory_seed}, {i})')
 
-        joined, extras, arma, ik_targets = creature_gen.join_and_rig_parts(root, parts, genome,
+        joined, extras, arma, ik_targets = joining.join_and_rig_parts(root, parts, genome,
             postprocess_func=reptile_postprocessing, adaptive_resolution=False, rigging=False, **kwargs)
 
         joined = butil.join_objects([joined] + extras)

@@ -8,14 +8,14 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.decorate import geo_extension
-from assets.utils.nodegroup import align_tilt
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from assets.cactus.base import BaseCactusFactory
-from assets.trees.tree import build_radius_tree
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.decorate import geo_extension
+from infinigen.assets.utils.nodegroup import align_tilt
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.assets.cactus.base import BaseCactusFactory
+from infinigen.assets.trees.tree import build_radius_tree
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 class ColumnarBaseCactusFactory(BaseCactusFactory):

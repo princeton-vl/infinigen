@@ -8,17 +8,17 @@ import numpy as np
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category, hsv2rgba
-from surfaces import surface
-from assets.leaves.leaf_v2 import nodegroup_apply_wave, nodegroup_move_to_origin
-from assets.leaves.leaf_maple import nodegroup_leaf_shader
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core import surface
+from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave, nodegroup_move_to_origin
+from infinigen.assets.leaves.leaf_maple import nodegroup_leaf_shader
 
-from util.math import FixedSeed
-from placement.factory import AssetFactory
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_random_mask_vein', singleton=False, type='GeometryNodeTree')

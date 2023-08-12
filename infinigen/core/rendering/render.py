@@ -18,17 +18,17 @@ import gin
 import numpy as np
 from imageio import imread, imwrite
 
-from infinigen_gpl.extras.enable_gpu import enable_gpu
-from nodes.node_wrangler import Nodes, NodeWrangler
-from placement import camera as cam_util
-from rendering.post_render import (colorize_depth, colorize_flow,
+from infinigen.infinigen_gpl.extras.enable_gpu import enable_gpu
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement import camera as cam_util
+from infinigen.core.rendering.post_render import (colorize_depth, colorize_flow,
                                    colorize_normals, colorize_int_array,
                                    load_depth, load_flow, load_normals,
                                    load_seg_mask, load_uniq_inst)
-from surfaces import surface
-from util import blender as butil
-from util import exporting as exputil
-from util.logging import Timer
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.core.util import exporting as exputil
+from infinigen.core.util.logging import Timer
 
 from .auto_exposure import nodegroup_auto_exposure
 

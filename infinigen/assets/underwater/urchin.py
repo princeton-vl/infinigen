@@ -8,18 +8,18 @@ import colorsys
 import bpy
 from numpy.random import uniform
 
-import util.blender as butil
-from assets.creatures.animation.driver_repeated import repeated_driver
-from assets.utils.object import new_icosphere
-from assets.utils.decorate import assign_material, geo_extension, separate_loose
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.detail import adapt_mesh_resolution
-from placement.factory import AssetFactory
-from surfaces import surface
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+import infinigen.core.util.blender as butil
+from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
+from infinigen.assets.utils.object import new_icosphere
+from infinigen.assets.utils.decorate import assign_material, geo_extension, separate_loose
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.detail import adapt_mesh_resolution
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 class UrchinFactory(AssetFactory):

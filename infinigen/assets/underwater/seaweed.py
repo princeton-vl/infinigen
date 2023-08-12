@@ -11,19 +11,19 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.animation.driver_repeated import repeated_driver
-from assets.utils.decorate import assign_material, read_co, subsurface2face_size, write_co
-from assets.utils.draw import make_circular_interp
-import util.blender as butil
-from placement.factory import AssetFactory
-from infinigen_gpl.extras.diff_growth import build_diff_growth
-from assets.utils.object import mesh2obj, data2mesh
-from assets.utils.mesh import polygon_angles
-from nodes.node_wrangler import NodeWrangler, Nodes
-from surfaces import surface
-from assets.utils.misc import build_color_ramp, log_uniform
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
+from infinigen.assets.utils.decorate import assign_material, read_co, subsurface2face_size, write_co
+from infinigen.assets.utils.draw import make_circular_interp
+import infinigen.core.util.blender as butil
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+from infinigen.assets.utils.object import mesh2obj, data2mesh
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core import surface
+from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 class SeaweedFactory(AssetFactory):

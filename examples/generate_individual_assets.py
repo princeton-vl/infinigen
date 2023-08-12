@@ -21,29 +21,24 @@ from pathlib import Path
 import bpy
 import gin
 import numpy as np
-
-sys.path.insert(0, os.getcwd())
 from PIL import Image
-from lighting import lighting
-from surfaces import surface
-from placement import density
-from util import blender as butil
-from fluid.fluid import set_obj_on_fire
-from placement.factory import AssetFactory
 
-from rendering.render import enable_gpu
-from assets.utils.decorate import assign_material, read_base_co
-import tools.results.strip_alpha_background as strip_alpha_background
+from infinigen.assets.fluid.fluid import set_obj_on_fire
+from infinigen.assets.utils.decorate import assign_material, read_base_co
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup, tag_system
+from infinigen.assets.lighting import sky_lighting
 
-from util.math import FixedSeed
-from util import blender as butil
-from util.camera import get_3x4_P_matrix_from_blender
-from util.logging import Suppress
+from infinigen.core import surface
+from infinigen.core.placement import density, factory 
+from infinigen.core.rendering.render import enable_gpu
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.camera import get_3x4_P_matrix_from_blender
+from infinigen.core.util.logging import Suppress
+from infinigen.core.util import blender as butil
 
-from assets.utils.tag import tag_object, tag_nodegroup, tag_system
+from datagen.tools.results import strip_alpha_background as strip_alpha_background
 
-import generate  # to load most/all AssetFactory subclasses
-
+import generate_nature  # to load most/all factory.AssetFactory subclasses
 
 def build_scene_asset(factory_name, idx):
     factory = None
@@ -114,7 +109,7 @@ def build_scene_surface(factory_name, idx):
     except ModuleNotFoundError:
         try:
             with gin.unlock_config():
-                template = importlib.import_module(f'surfaces.templates.{factory_name}')
+                template = importlib.import_module(f'assets.materials.{factory_name}')
                 bpy.ops.mesh.primitive_ico_sphere_add(radius=.8, subdivisions=9)
                 asset = bpy.context.active_object
                 template.apply(asset)
@@ -140,7 +135,7 @@ def build_scene(path, idx, factory_name, args):
     camera, center = setup_camera(args)
 
     with FixedSeed(args.lighting):
-        lighting.add_lighting(camera)
+        sky_lighting.add_lighting(camera)
         nodes = bpy.data.worlds['World'].node_tree.nodes
         sky_texture = [n for n in nodes if n.name.startswith('Sky Texture')][-1]
         sky_texture.sun_elevation = np.deg2rad(args.elevation)
@@ -286,13 +281,13 @@ def main(args):
 
     factories = list(args.factories)
     if 'ALL_ASSETS' in factories:
-        factories += [f.__name__ for f in AssetFactory.__subclasses__()]
+        factories += [f.__name__ for f in factory.AssetFactory.__subclasses__()]
         factories.remove('ALL_ASSETS')
     if 'ALL_SCATTERS' in factories:
         factories += [f.stem for f in Path('surfaces/scatters').iterdir()]
         factories.remove('ALL_SCATTERS')
     if 'ALL_MATERIALS' in factories:
-        factories += [f.stem for f in Path('surfaces/templates').iterdir()]
+        factories += [f.stem for f in Path('infinigen/assets/materials').iterdir()]
         factories.remove('ALL_MATERIALS')
 
     for factory in factories:

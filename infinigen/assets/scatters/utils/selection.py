@@ -7,9 +7,9 @@
 import numpy as np
 from numpy.random import uniform
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from util.math import FixedSeed, int_hash
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.util.math import FixedSeed, int_hash
 
 
 def scatter_lower(nw: NodeWrangler, height_range=(.5, 2), fill_range=(.0, .8), noise_scale=.4):

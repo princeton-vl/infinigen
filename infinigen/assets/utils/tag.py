@@ -8,8 +8,8 @@ import os
 import bpy
 import json
 import numpy as np
-import util.blender as butil
-from nodes.node_wrangler import Nodes, NodeWrangler
+import infinigen.core.util.blender as butil
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 class AutoTag():
     tag_dict = {}

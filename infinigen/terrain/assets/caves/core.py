@@ -8,13 +8,14 @@ from pathlib import Path
 
 import bpy
 import gin
-import terrain.mesh_to_sdf as mesh_to_sdf
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.utils import Mesh
-from util.blender import SelectObjects, ViewportMode
-from util.math import FixedSeed
-from util.organization import AssetFile
+
+import infinigen.terrain.mesh_to_sdf as mesh_to_sdf
+from infinigen.terrain.utils import Mesh
+from infinigen.core.util.blender import SelectObjects, ViewportMode
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.organization import AssetFile
 
 from .geometry_utils import increment_step, pitch_up, yaw_clockwise
 from .pcfg import generate_string

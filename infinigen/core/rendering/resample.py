@@ -7,17 +7,17 @@
 
 import bpy
 
-from nodes.node_utils import resample_node_group
-from nodes.node_wrangler import NodeWrangler
+from infinigen.core.nodes.node_utils import resample_node_group
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 
-from lighting import lighting
+from infinigen.assets.lighting import sky_lighting
 
-from assets.trees.generate import TreeFactory, BushFactory
-from assets.glowing_rocks import GlowingRocksFactory
+from infinigen.assets.trees.generate import TreeFactory, BushFactory
+from infinigen.assets.lighting.glowing_rocks import GlowingRocksFactory
 
-from util.logging import Timer
-from util.math import FixedSeed, int_hash
-from util import blender as butil
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util import blender as butil
 
 def resample_all(factory_class):
     for placeholder_col in butil.get_collection('placeholders').children:
@@ -48,4 +48,4 @@ def resample_scene(scene_seed):
         resample_all(BushFactory)
         #resample_all(CreatureFactory)
     with FixedSeed(scene_seed):
-        lighting.add_lighting()
+        sky_lighting.add_lighting()

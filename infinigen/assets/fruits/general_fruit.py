@@ -8,28 +8,28 @@ import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category, hsv2rgba
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core import surface
 
-from util.math import FixedSeed
-from util import blender as butil
-from placement.factory import AssetFactory
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.factory import AssetFactory
 
-from assets.fruits.fruit_utils import nodegroup_shape_quadratic, nodegroup_align_top_to_horizon
-from assets.fruits.cross_section_lib import nodegroup_circle_cross_section, nodegroup_star_cross_section, nodegroup_coconut_cross_section
-from assets.fruits.stem_lib import nodegroup_basic_stem, nodegroup_pineapple_stem, nodegroup_calyx_stem, nodegroup_empty_stem, nodegroup_coconut_stem
+from infinigen.assets.fruits.fruit_utils import nodegroup_shape_quadratic, nodegroup_align_top_to_horizon
+from infinigen.assets.fruits.cross_section_lib import nodegroup_circle_cross_section, nodegroup_star_cross_section, nodegroup_coconut_cross_section
+from infinigen.assets.fruits.stem_lib import nodegroup_basic_stem, nodegroup_pineapple_stem, nodegroup_calyx_stem, nodegroup_empty_stem, nodegroup_coconut_stem
 
-from assets.fruits.surfaces.apple_surface import nodegroup_apple_surface
-from assets.fruits.surfaces.pineapple_surface import nodegroup_pineapple_surface
-from assets.fruits.surfaces.starfruit_surface import nodegroup_starfruit_surface
-from assets.fruits.surfaces.strawberry_surface import nodegroup_strawberry_surface
-from assets.fruits.surfaces.blackberry_surface import nodegroup_blackberry_surface
-from assets.fruits.surfaces.coconuthairy_surface import nodegroup_coconuthairy_surface
-from assets.fruits.surfaces.coconutgreen_surface import nodegroup_coconutgreen_surface
-from assets.fruits.surfaces.durian_surface import nodegroup_durian_surface
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.fruits.surfaces.apple_surface import nodegroup_apple_surface
+from infinigen.assets.fruits.surfaces.pineapple_surface import nodegroup_pineapple_surface
+from infinigen.assets.fruits.surfaces.starfruit_surface import nodegroup_starfruit_surface
+from infinigen.assets.fruits.surfaces.strawberry_surface import nodegroup_strawberry_surface
+from infinigen.assets.fruits.surfaces.blackberry_surface import nodegroup_blackberry_surface
+from infinigen.assets.fruits.surfaces.coconuthairy_surface import nodegroup_coconuthairy_surface
+from infinigen.assets.fruits.surfaces.coconutgreen_surface import nodegroup_coconutgreen_surface
+from infinigen.assets.fruits.surfaces.durian_surface import nodegroup_durian_surface
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 crosssectionlib = {
     'circle_cross_section': nodegroup_circle_cross_section,

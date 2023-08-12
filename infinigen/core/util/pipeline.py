@@ -14,9 +14,9 @@ import pandas as pd
 
 from contextlib import nullcontext
 
-from util.math import FixedSeed, int_hash
-from util.logging import Timer
-from util.blender import GarbageCollect, count_instance, count_objects
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.blender import GarbageCollect, count_instance, count_objects
 
 
 class RandomStageExecutor:

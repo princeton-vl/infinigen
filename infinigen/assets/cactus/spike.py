@@ -8,17 +8,17 @@ import colorsys
 import numpy as np
 from numpy.random import uniform
 
-from util import blender as butil
-from assets.utils.misc import sample_direction
-from assets.utils.decorate import assign_material
-from assets.utils.nodegroup import geo_radius
-from placement.factory import AssetFactory, make_asset_collection
-from nodes.node_wrangler import NodeWrangler, Nodes
-from surfaces import surface
-from assets.trees.tree import build_radius_tree
-import util.blender as butil
-from util.blender import deep_clone_obj
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.misc import sample_direction
+from infinigen.assets.utils.decorate import assign_material
+from infinigen.assets.utils.nodegroup import geo_radius
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core import surface
+from infinigen.assets.trees.tree import build_radius_tree
+import infinigen.core.util.blender as butil
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 def build_spikes(base_radius=.002, **kwargs):
     n_branch = 4

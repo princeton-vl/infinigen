@@ -7,10 +7,10 @@
 import numpy as np
 from numpy.random import uniform
 
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.instance_scatter import bucketed_instance, camera_cull_points
-from surfaces import surface
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.instance_scatter import bucketed_instance, camera_cull_points
+from infinigen.core import surface
 
 
 def select_points(nw: NodeWrangler, geometry, density, selection, radius, min_distance):

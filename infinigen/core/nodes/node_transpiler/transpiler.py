@@ -61,10 +61,10 @@ def prefix(dependencies_used) -> str:
         "import bpy\n"
         "import mathutils\n"
         "from numpy.random import uniform, normal, randint\n"
-        "from nodes.node_wrangler import Nodes, NodeWrangler\n"
-        "from nodes import node_utils\n"
-        "from nodes.color import color_category\n"
-        "from surfaces import surface\n"
+        "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
+        "from infinigen.core.nodes import node_utils\n"
+        "from infinigen.core.nodes.color import color_category\n"
+        "from infinigen.core import surface\n"
     )
 
     deps_table = [(ng_name, name_used[0]) for ng_name, name_used in dependencies_used.items() if name_used[1]]

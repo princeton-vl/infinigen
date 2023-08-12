@@ -7,17 +7,17 @@
 import bpy
 from numpy.random import uniform
 
-from assets.cactus.base import BaseCactusFactory
+from infinigen.assets.cactus.base import BaseCactusFactory
 import numpy as np
 
-from assets.utils.object import new_cube
-from assets.utils.decorate import geo_extension
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.object import new_cube
+from infinigen.assets.utils.decorate import geo_extension
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 class GlobularBaseCactusFactory(BaseCactusFactory):

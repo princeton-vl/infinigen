@@ -8,7 +8,7 @@ import base64
 import numpy as np
 
 from . import _marching_cubes_lewiner_luts as mcluts
-from terrain import _marching_cubes_lewiner_cy 
+from infinigen.terrain import marching_cubes as _marching_cubes_lewiner_cy 
 
 
 def marching_cubes(volume, level=None, *, spacing=(1., 1., 1.),

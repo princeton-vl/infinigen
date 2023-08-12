@@ -8,15 +8,15 @@ import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.leaves.leaf_maple import LeafFactoryMaple
-from assets.leaves.leaf_broadleaf import LeafFactoryBroadleaf
-from assets.leaves.leaf_ginko import LeafFactoryGinko
-from placement.factory import AssetFactory
+from infinigen.assets.leaves.leaf_maple import LeafFactoryMaple
+from infinigen.assets.leaves.leaf_broadleaf import LeafFactoryBroadleaf
+from infinigen.assets.leaves.leaf_ginko import LeafFactoryGinko
+from infinigen.core.placement.factory import AssetFactory
 
 def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

@@ -34,39 +34,25 @@ cd -
 # Build terrain
 rm -rf *.egg-info
 rm -rf __pycache__
-rm -rf ./worldgen/terrain/build
+rm -rf ./infinigen/terrain/build
 
-cd ./worldgen/terrain
+cd ./infinigen/terrain
 bash install_terrain.sh
 python setup.py build_ext --inplace --force
 cd -
 
-# Compile process_mesh (i.e. OpenGL-based ground truth)
-<<<<<<< HEAD
-cd ./process_mesh
-/usr/bin/cmake -S . -Bbuild -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_BUILD_TYPE=Release
-/usr/bin/cmake --build build --target all
-./build/process_mesh -in x -out x --height 100 --width 10
-if [ $? -eq 174 ]; then
-    echo "OpenGL/EGL ground truth is working."
-else
-    echo "WARNING: OpenGL/EGL is not supported on this machine. If you are running from a cluster head-node, this is likely not an issue."
-fi
-cd -
-<<<<<<< HEAD
-
 # Build NURBS
-cd ./worldgen/assets/creatures/geometry/cpp_utils
+cd ./infinigen/assets/creatures/geometry/cpp_utils
 rm -f *.so
 rm -rf build
 "../../../../../${BLENDER_PYTHON}" "${NURBS_SCRIPT}" build_ext --inplace
 cd -
 
 if [ "$1" = "opengl" ]; then
-    bash ./worldgen/tools/install/compile_opengl.sh
+    bash ./infinigen/tools/install/compile_opengl.sh
 fi
 
 # Build Flip Fluids addon
 if [ "$1" = "flip_fluids" ] || [ "$2" = "flip_fluids" ]; then
-    bash ./worldgen/tools/install/compile_flip_fluids.sh
+    bash ./infinigen/tools/install/compile_flip_fluids.sh
 fi

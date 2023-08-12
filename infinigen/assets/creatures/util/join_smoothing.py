@@ -11,9 +11,9 @@ import bpy, mathutils
 from mathutils.bvhtree import BVHTree
 from mathutils import geometry, Vector
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
-from assets.creatures.geometry.nurbs import compute_cylinder_topology, blender_mesh_from_pydata
+from infinigen.assets.creatures.util.geometry.nurbs import compute_cylinder_topology, blender_mesh_from_pydata
 
 import numpy as np
 

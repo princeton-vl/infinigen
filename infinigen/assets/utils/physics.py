@@ -6,8 +6,8 @@
 
 import bpy
 
-import util.blender as butil
-from util.logging import Suppress
+import infinigen.core.util.blender as butil
+from infinigen.core.util.logging import Suppress
 
 
 def free_fall(actives, passives, place_fn, t=100):

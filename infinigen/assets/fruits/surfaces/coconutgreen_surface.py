@@ -7,13 +7,13 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.fruit_utils import nodegroup_add_dent, nodegroup_surface_bump
-from assets.fruits.surfaces.surface_utils import nodegroup_stripe_pattern
+from infinigen.assets.fruits.fruit_utils import nodegroup_add_dent, nodegroup_surface_bump
+from infinigen.assets.fruits.surfaces.surface_utils import nodegroup_stripe_pattern
 
 def shader_coconut_green_shader(nw: NodeWrangler, basic_color, bottom_color):
     # Code generated using version 2.4.3 of the node_transpiler

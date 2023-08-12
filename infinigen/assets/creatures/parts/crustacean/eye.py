@@ -8,10 +8,10 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.creature import Part, PartFactory
-from assets.utils.decorate import join_objects
-from assets.utils.object import new_icosphere, origin2leftmost
-from placement.detail import remesh_with_attrs
+from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.utils.decorate import join_objects
+from infinigen.assets.utils.object import new_icosphere, origin2leftmost
+from infinigen.core.placement.detail import remesh_with_attrs
 
 
 class CrustaceanEyeFactory(PartFactory):

@@ -7,25 +7,23 @@
 import bpy
 import numpy as np
 from numpy.random import uniform, normal as N, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from util.math import clip_gaussian
-from assets.creatures import creature_util as cutil
+from infinigen.core.util.math import clip_gaussian
+from infinigen.assets.creatures.util.genome import Joint, IKParams
 
-from assets.creatures.genome import Joint, IKParams
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube, nodegroup_polar_bezier, nodegroup_simple_tube_v2, nodegroup_warped_circle_curve
+from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle, nodegroup_part_surface_simple, nodegroup_attach_part, nodegroup_smooth_taper, nodegroup_profile_part
+from infinigen.assets.creatures.util.nodegroups.geometry import nodegroup_solidify, nodegroup_symmetric_clone
+from infinigen.assets.creatures.util.nodegroups.math import nodegroup_deg2_rad
 
-from assets.creatures.nodegroups.curve import nodegroup_simple_tube, nodegroup_polar_bezier, nodegroup_simple_tube_v2, nodegroup_warped_circle_curve
-from assets.creatures.nodegroups.attach import nodegroup_surface_muscle, nodegroup_part_surface_simple, nodegroup_attach_part, nodegroup_smooth_taper, nodegroup_profile_part
-from assets.creatures.nodegroups.geometry import nodegroup_solidify, nodegroup_symmetric_clone
-from assets.creatures.nodegroups.math import nodegroup_deg2_rad
-
-from assets.creatures.creature import PartFactory
-from assets.creatures.util import part_util
-from assets.creatures.parts.eye import nodegroup_mammal_eye
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util import part_util
+from infinigen.assets.creatures.parts.eye import nodegroup_mammal_eye
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_carnivore_jaw', singleton=True, type='GeometryNodeTree')
 def nodegroup_carnivore_jaw(nw: NodeWrangler):

@@ -15,7 +15,6 @@ slurm-*.out
 __pycache__
 *.blend
 *.blend1
-*/worldgen/terrain/gen_occlusions/dependencies/*
 *.obj
 *.DS_Store
 **._.DS_Store

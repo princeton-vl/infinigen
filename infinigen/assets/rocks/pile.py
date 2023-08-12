@@ -9,15 +9,15 @@ import tqdm
 import numpy as np
 from numpy.random import uniform
 
-from assets.boulder import BoulderFactory
-from assets.utils.physics import free_fall
-from placement.detail import remesh_with_attrs
-from placement.factory import AssetFactory
-import util.blender as butil
-from assets.utils.decorate import join_objects, multi_res, toggle_hide
-from assets.utils.draw import surface_from_func
-from util.blender import deep_clone_obj
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.boulder import BoulderFactory
+from infinigen.assets.utils.physics import free_fall
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core.placement.factory import AssetFactory
+import infinigen.core.util.blender as butil
+from infinigen.assets.utils.decorate import join_objects, multi_res, toggle_hide
+from infinigen.assets.utils.draw import surface_from_func
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
 class BoulderPileFactory(AssetFactory):

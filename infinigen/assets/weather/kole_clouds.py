@@ -5,11 +5,11 @@ import bpy
 import gin
 import numpy as np
 from mathutils import Vector
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
-from util.random import random_general as rg
-from terrain.utils import drive_param
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
+from infinigen.core.util.random import random_general as rg
+from infinigen.terrain.utils import drive_param
 
 @gin.configurable
 def kole_clouds_shader(

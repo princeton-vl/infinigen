@@ -14,14 +14,14 @@ import mathutils
 import numpy as np
 import gin
 
-from util import blender as butil
-from nodes.nodegroups import transfer_attributes
-from util.blender import deep_clone_obj
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes.nodegroups import transfer_attributes
+from infinigen.core.util.blender import deep_clone_obj
 
 
 logger = logging.getLogger('detail')
 
-IS_COARSE = False # Global VARIABLE, set by generate.py and used only for whether to emit warnings
+IS_COARSE = False # Global VARIABLE, set by examples/generate_nature.py and used only for whether to emit warnings
 
 @gin.configurable
 def scatter_res_distance(dist):

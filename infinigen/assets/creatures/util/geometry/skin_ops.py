@@ -11,9 +11,9 @@ import bpy
 import numpy as np
 from numpy.random import uniform, normal
 
-from assets.creatures.geometry.lofting import Skin
-from util.math import lerp, randomspacing
-from assets.creatures.geometry import lofting 
+from infinigen.assets.creatures.util.geometry.lofting import Skin
+from infinigen.core.util.math import lerp, randomspacing
+from infinigen.assets.creatures.util.geometry import lofting 
 
 def extend_cap(skin: Skin, r=1, margin=0):
     res = copy(skin)

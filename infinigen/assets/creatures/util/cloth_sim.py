@@ -12,12 +12,12 @@ from numpy.random import normal, uniform
 
 import bpy
 
-from surfaces.surface import attribute_to_vertex_group
+from infinigen.core.surface import attribute_to_vertex_group
 
-from util import blender as butil
-from util.math import dict_convex_comb
-from util.logging import Timer
-from nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import dict_convex_comb
+from infinigen.core.util.logging import Timer
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 
 logger = logging.getLogger('cloth')
 

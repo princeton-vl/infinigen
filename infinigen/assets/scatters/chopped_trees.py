@@ -14,19 +14,19 @@ import numpy as np
 from numpy.random import uniform, normal
 from tqdm import tqdm, trange
 
-from util import blender as butil
-from util.math import rotate_match_directions, randomspacing
-from assets.creatures.geometry.metaballs import plusx_cylinder_unwrap
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import rotate_match_directions, randomspacing
+from infinigen.assets.creatures.util.geometry.metaballs import plusx_cylinder_unwrap
 
-from nodes import node_utils
-from placement.instance_scatter import scatter_instances
-from nodes.node_wrangler import Nodes, NodeWrangler
-from surfaces import surface
-from surfaces.templates import wood
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core import surface
+from infinigen.assets.materials import wood
 
-from placement.detail import remesh_with_attrs, target_face_size, scatter_res_distance
+from infinigen.core.placement.detail import remesh_with_attrs, target_face_size, scatter_res_distance
 
-from assets.trees.generate import GenericTreeFactory, random_species
+from infinigen.assets.trees.generate import GenericTreeFactory, random_species
 
 logger = logging.getLogger('chopped_trees')
 

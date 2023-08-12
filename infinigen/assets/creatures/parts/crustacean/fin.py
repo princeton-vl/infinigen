@@ -7,10 +7,10 @@
 import numpy as np
 from numpy.random import uniform
 
-from assets.creatures.creature import Part, PartFactory
-from assets.utils.draw import leaf
-from surfaces.surface import write_attr_data
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.utils.draw import leaf
+from infinigen.core.surface import write_attr_data
+from infinigen.core.util import blender as butil
 
 
 class CrustaceanFinFactory(PartFactory):

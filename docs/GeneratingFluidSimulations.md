@@ -4,7 +4,7 @@ This documentation details how to generate fire and water simulations like those
 
 ## Setup
 
-To generate fluids, you run install.sh with the optional FLIP-Fluids setup step (`bash install.sh flip_fluids`), or, please run `bash worldgen/tools/install/compile_flip_fluids.sh` to install flip fluids now.
+To generate fluids, you run install.sh with the optional FLIP-Fluids setup step (`bash install.sh flip_fluids`), or, please run `bash infinigen/tools/install/compile_flip_fluids.sh` to install flip fluids now.
 
 ## Example Commands
 

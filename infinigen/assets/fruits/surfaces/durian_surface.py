@@ -7,12 +7,12 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.fruit_utils import nodegroup_manhattan, nodegroup_point_on_mesh, nodegroup_surface_bump
+from infinigen.assets.fruits.fruit_utils import nodegroup_manhattan, nodegroup_point_on_mesh, nodegroup_surface_bump
 
 def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
     # Code generated using version 2.4.3 of the node_transpiler

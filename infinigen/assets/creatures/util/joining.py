@@ -9,14 +9,14 @@ import logging
 
 import numpy as np
 
-from assets.creatures.util import tree, join_smoothing
+from infinigen.assets.creatures.util import tree, join_smoothing
 
-from assets.creatures import rigging as creature_rigging
+from infinigen.assets.creatures.util import rigging as creature_rigging
 
-from surfaces import surface
-from placement import detail
-from util import blender as butil
-from util.logging import Suppress, Timer
+from infinigen.core import surface
+from infinigen.core.placement import detail
+from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Suppress, Timer
 
 logger = logging.getLogger('creatures')
 

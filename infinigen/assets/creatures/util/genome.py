@@ -14,10 +14,10 @@ import numpy as np
 from scipy.sparse.csgraph import maximum_bipartite_matching
 from scipy.sparse import csr_matrix
 
-from assets.creatures.util.tree import Tree
-from assets.creatures.creature_util import interp_dict
+from infinigen.assets.creatures.util.tree import Tree
+from infinigen.assets.creatures.util.creature_util import interp_dict
 
-from util.math import lerp
+from infinigen.core.util.math import lerp
 
 
 @dataclass

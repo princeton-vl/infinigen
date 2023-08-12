@@ -9,15 +9,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.deformed_trees.base import BaseDeformedTreeFactory
-from assets.utils.decorate import assign_material, join_objects, remove_vertices, separate_loose
-from assets.utils.draw import cut_plane
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
-from util.blender import deep_clone_obj
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.deformed_trees.base import BaseDeformedTreeFactory
+from infinigen.assets.utils.decorate import assign_material, join_objects, remove_vertices, separate_loose
+from infinigen.assets.utils.draw import cut_plane
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class FallenTreeFactory(BaseDeformedTreeFactory):
 

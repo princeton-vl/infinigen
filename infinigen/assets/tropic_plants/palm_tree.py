@@ -8,14 +8,14 @@ import bpy
 import mathutils
 import gin
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
-from placement.factory import AssetFactory
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
 import numpy as np
-from nodes.color import hsv2rgba
-from util import blender as butil
-from assets.tropic_plants.leaf_palm_plant import LeafPalmPlantFactory
+from infinigen.core.nodes.color import hsv2rgba
+from infinigen.core.util import blender as butil
+from infinigen.assets.tropic_plants.leaf_palm_plant import LeafPalmPlantFactory
 
 
 @node_utils.to_nodegroup('nodegroup_pedal_cross_contour_top', singleton=False, type='GeometryNodeTree')

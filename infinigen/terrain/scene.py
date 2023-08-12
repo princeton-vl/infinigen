@@ -5,18 +5,18 @@
 
 
 import gin
-from terrain.elements.caves import Caves
-from terrain.elements.ground import Ground
-from terrain.elements.landtiles import LandTiles, Volcanos, FloatingIce
-from terrain.elements.upsidedown_mountains import UpsidedownMountains
-from terrain.elements.voronoi_rocks import VoronoiRocks, VoronoiGrains
-from terrain.elements.warped_rocks import WarpedRocks
-from terrain.elements.waterbody import Waterbody
-from terrain.elements.atmosphere import Atmosphere
+from infinigen.terrain.elements.caves import Caves
+from infinigen.terrain.elements.ground import Ground
+from infinigen.terrain.elements.landtiles import LandTiles, Volcanos, FloatingIce
+from infinigen.terrain.elements.upsidedown_mountains import UpsidedownMountains
+from infinigen.terrain.elements.voronoi_rocks import VoronoiRocks, VoronoiGrains
+from infinigen.terrain.elements.warped_rocks import WarpedRocks
+from infinigen.terrain.elements.waterbody import Waterbody
+from infinigen.terrain.elements.atmosphere import Atmosphere
 
-from terrain.utils import chance
-from util.organization import ElementNames, Assets
-from util.math import FixedSeed, int_hash
+from infinigen.terrain.utils import chance
+from infinigen.core.util.organization import ElementNames, Assets
+from infinigen.core.util.math import FixedSeed, int_hash
 
 @gin.configurable
 def scene(

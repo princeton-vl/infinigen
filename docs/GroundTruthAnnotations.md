@@ -16,7 +16,7 @@
 
 Infinigen can produce some dense annotations using Blender's built-in render passes. Users may prefer to use these annotations over our extended annotation system's since it requires only the bare-minimum installation. It is also able to run without a GPU.
 
-These annotations are produced when using the `--pipeline_configs blender_gt` ground truth extraction config in [manage_datagen_jobs.py](/README.md#generate-images-in-one-command), or can be done manually as shown in the final step of the [Hello-World](/README.md#generate-a-scene-step-by-step) example.
+These annotations are produced when using the `--pipeline_configs blender_gt` ground truth extraction config in [manage_jobs.py](/README.md#generate-images-in-one-command), or can be done manually as shown in the final step of the [Hello-World](/README.md#generate-a-scene-step-by-step) example.
 
 ## Advanced Annotation Pipeline :large_blue_diamond:
 
@@ -61,7 +61,7 @@ bash install.sh opengl
 ```
 Or, if you have already run `install.sh` earlier, you can just run
 ```
-bash worldgen/tools/install/compile_opengl.sh
+bash infinigen/tools/install/compile_opengl.sh
 ```
 
 ### Extended Hello-World
@@ -70,11 +70,11 @@ Continuing the [Hello-World](/README.md#generate-a-scene-step-by-step) example, 
 
 4. Export the geometry from blender to disk
 ```
-$python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+python examples/generate_nature.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
 ```
 5. Generate dense annotations
 ```
-../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
+infinigen/datagen/customgt/build/customgt --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
 ```
 6. Summarize the file structure into a single JSON
 ```

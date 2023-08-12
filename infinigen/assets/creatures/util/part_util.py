@@ -11,11 +11,11 @@ import logging
 import bpy
 import numpy as np
 
-from assets.creatures.creature import Part, PartFactory, infer_skeleton_from_mesh
-from assets.creatures.geometry import nurbs
-from util import blender as butil
+from infinigen.assets.creatures.util.creature import Part, PartFactory, infer_skeleton_from_mesh
+from infinigen.assets.creatures.util.geometry import nurbs
+from infinigen.core.util import blender as butil
 
-from nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 
 def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
 

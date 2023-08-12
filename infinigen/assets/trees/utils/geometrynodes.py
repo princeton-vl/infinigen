@@ -11,8 +11,8 @@ import numpy as np
 from . import helper, mesh
 from .materials import new_link
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
 
 C = bpy.context
 D = bpy.data

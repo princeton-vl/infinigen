@@ -8,16 +8,16 @@ import bmesh
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.decorate import displace_vertices, join_objects, read_co
-from assets.utils.draw import bezier_curve, leaf
-from assets.utils.nodegroup import geo_radius
-from assets.utils.object import origin2lowest
-from surfaces import surface
-from assets.monocot.growth import MonocotGrowthFactory
-from assets.utils.misc import log_uniform
-from util import blender as butil
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.decorate import displace_vertices, join_objects, read_co
+from infinigen.assets.utils.draw import bezier_curve, leaf
+from infinigen.assets.utils.nodegroup import geo_radius
+from infinigen.assets.utils.object import origin2lowest
+from infinigen.core import surface
+from infinigen.assets.monocot.growth import MonocotGrowthFactory
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class BananaMonocotFactory(MonocotGrowthFactory):
 

@@ -13,8 +13,6 @@ from pathlib import Path
 import sys, os
 
 pwd = os.getcwd()
-if not pwd.endswith('worldgen'):
-    raise ValueError(f'Current working directory is {pwd}, please cd infinigen/worldgen and run ../blender/blender ...')
 sys.path.append(pwd)
     
 import generate # so gin can find all its targets

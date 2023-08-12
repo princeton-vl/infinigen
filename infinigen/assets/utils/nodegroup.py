@@ -9,11 +9,11 @@ from typing import Iterable
 import bpy
 import numpy as np
 
-from assets.utils.decorate import toggle_hide
-from nodes import node_utils
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from surfaces import surface
+from infinigen.assets.utils.decorate import toggle_hide
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core import surface
 
 
 def build_curve(nw: NodeWrangler, positions, circular=False, handle='VECTOR'):

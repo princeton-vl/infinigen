@@ -7,16 +7,16 @@
 import numpy as np
 from numpy.random import normal as N
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
 
-from assets.creatures.genome import Joint, IKParams
-from assets.creatures.nodegroups.curve import nodegroup_simple_tube_v2
-from assets.creatures.nodegroups.attach import nodegroup_surface_muscle
+from infinigen.assets.creatures.util.genome import Joint, IKParams
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
 
-from assets.creatures.creature import PartFactory
-from assets.creatures.util.part_util import nodegroup_to_part
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util.part_util import nodegroup_to_part
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_tail', singleton=False, type='GeometryNodeTree')
 def nodegroup_tail(nw: NodeWrangler):

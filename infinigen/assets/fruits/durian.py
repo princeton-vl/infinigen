@@ -11,16 +11,16 @@ import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
 
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category, hsv2rgba
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core import surface
 
-from util.math import FixedSeed
-from util import blender as butil
-from placement.factory import AssetFactory
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
+from infinigen.core.placement.factory import AssetFactory
 
-from assets.fruits.general_fruit import FruitFactoryGeneralFruit
+from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 @gin.register
 class FruitFactoryDurian(FruitFactoryGeneralFruit):

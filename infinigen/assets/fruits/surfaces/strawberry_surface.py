@@ -7,13 +7,13 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.fruits.seed_lib import nodegroup_strawberry_seed
-from assets.fruits.fruit_utils import nodegroup_point_on_mesh, nodegroup_add_crater, nodegroup_surface_bump, nodegroup_random_rotation_scale, nodegroup_instance_on_points, nodegroup_add_noise_scalar
+from infinigen.assets.fruits.seed_lib import nodegroup_strawberry_seed
+from infinigen.assets.fruits.fruit_utils import nodegroup_point_on_mesh, nodegroup_add_crater, nodegroup_surface_bump, nodegroup_random_rotation_scale, nodegroup_instance_on_points, nodegroup_add_noise_scalar
 
 def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
     # Code generated using version 2.4.3 of the node_transpiler

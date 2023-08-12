@@ -6,14 +6,14 @@
 
 import numpy as np
 
-from assets.mollusk import MolluskFactory
-from assets.utils.misc import CountInstance
-from placement.factory import AssetFactory, make_asset_collection
-from assets.utils.decorate import toggle_hide
-from util import blender as butil
-from nodes import node_utils
-from placement.instance_scatter import scatter_instances
-from surfaces import surface
+from infinigen.assets.mollusk import MolluskFactory
+from infinigen.assets.utils.misc import CountInstance
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.assets.utils.decorate import toggle_hide
+from infinigen.core.util import blender as butil
+from infinigen.core.nodes import node_utils
+from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core import surface
 
 
 def apply(obj, scale=0.4, density=1., n=10, selection=None):

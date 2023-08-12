@@ -7,9 +7,9 @@
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from terrain.utils import random_int
-from util.organization import Materials, Transparency, Tags, ElementNames, ElementTag
-from util.random import random_general as rg
+from infinigen.terrain.utils import random_int
+from infinigen.core.util.organization import Materials, Transparency, Tags, ElementNames, ElementTag
+from infinigen.core.util.random import random_general as rg
 
 from .core import Element
 

@@ -7,12 +7,10 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from placement.factory import AssetFactory, make_asset_collection
-from assets.corals.generate import CoralFactory, TableCoralFactory
-from nodes.node_wrangler import NodeWrangler
-from nodes import node_utils
-from placement.camera import ng_dist2camera
-from placement.instance_scatter import scatter_instances
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.assets.corals.generate import CoralFactory, TableCoralFactory
+
+from infinigen.core.placement.instance_scatter import scatter_instances
 
 
 def apply(obj, scale=1, density=5., n=12, selection=None, horizontal=False, **kwargs):
@@ -42,12 +40,6 @@ def apply_horizontal(obj, scale=1, density=5., n=4, selection=None):
     corals = make_asset_collection(factories, name='coral',
                                               weights=np.random.uniform(0.8, 1, len(factories)), n=n,
                                               verbose=True)
-
-    def scaling(nw):
-        basic = nw.uniform(1. * scale, 2. * scale)
-        camera_based = nw.build_float_curve(nw.new_node(ng_dist2camera().name), [(0, .2), (4, 1)])
-        return nw.vector_math('MINIMUM', basic, camera_based)
-
     r = np.deg2rad(10)
     scatter_obj = scatter_instances(
         base_obj=obj, collection=corals, 

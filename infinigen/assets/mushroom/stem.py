@@ -8,18 +8,18 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from assets.utils.decorate import assign_material, geo_extension, join_objects, subsurface2face_size
-from assets.utils.draw import spin
+from infinigen.assets.utils.decorate import assign_material, geo_extension, join_objects, subsurface2face_size
+from infinigen.assets.utils.draw import spin
 
-from assets.utils.misc import log_uniform
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
-from placement.detail import remesh_with_attrs
-from placement.factory import AssetFactory
-from surfaces import surface
-from util import blender as butil
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class MushroomStemFactory(AssetFactory):
 

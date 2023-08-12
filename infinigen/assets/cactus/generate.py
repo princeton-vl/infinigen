@@ -10,21 +10,21 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-import util.blender as butil
+import infinigen.core.util.blender as butil
 from .base import BaseCactusFactory
 from .globular import GlobularBaseCactusFactory
 from .columnar import ColumnarBaseCactusFactory
 from .pricky_pear import PrickyPearBaseCactusFactory
 from .kalidium import KalidiumBaseCactusFactory
-from assets.cactus import spike
-from assets.utils.misc import build_color_ramp, log_uniform
-from assets.utils.decorate import assign_material, join_objects
-from nodes.node_wrangler import NodeWrangler, Nodes
-from placement.detail import remesh_with_attrs
-from surfaces import surface
-from placement.factory import AssetFactory
-from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.cactus import spike
+from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.assets.utils.decorate import assign_material, join_objects
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
+from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 class CactusFactory(AssetFactory):
     

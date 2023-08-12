@@ -5,19 +5,19 @@
 
 import gin
 import bpy
-from placement.factory import AssetFactory
+from infinigen.core.placement.factory import AssetFactory
 
 
-from util import blender as butil
+from infinigen.core.util import blender as butil
 
-from fluid.fluid import (
+from infinigen.assets.fluid.fluid import (
     create_liquid_domain,
     create_liquid_flow,
     create_gas_domain,
     create_gas_flow,
     add_field,
 )
-from fluid.flip_fluid import (
+from infinigen.assets.fluid.flip_fluid import (
     create_flip_fluid_domain,
     set_flip_fluid_domain,
     create_flip_fluid_inflow,
@@ -25,7 +25,7 @@ from fluid.flip_fluid import (
     get_objs_inside_domain,
 )
 
-from util.logging import Timer
+from infinigen.core.util.logging import Timer
 
 
 @gin.configurable

@@ -25,4 +25,5 @@ def register_func(me, dll, name, argtypes=[], restype=None, caller_name=None):
     func.restype = restype
 
 def load_cdll(path):
-    return CDLL(Path(sys.path[-1]) / path, mode=RTLD_LOCAL)
+    root = Path(__file__).parent.parent.parent
+    return CDLL(root/path, mode=RTLD_LOCAL)

@@ -8,10 +8,10 @@ import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform, normal
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils, node_info
-from surfaces import surface
-from util import blender as butil
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils, node_info
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
 
 
 def uvs_to_attribute(obj, name='uv_map'):

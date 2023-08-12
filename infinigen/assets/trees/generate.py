@@ -13,28 +13,28 @@ from numpy.random import uniform, normal
 
 import bpy
 
-from assets.trees import tree, treeconfigs, branch
-from assets.leaves import leaf, leaf_v2, leaf_pine, leaf_ginko, leaf_broadleaf, leaf_maple
-from assets.fruits import apple, blackberry, coconutgreen, durian, starfruit, strawberry, compositional_fruit
-from nodes.node_info import Nodes
-from nodes.node_wrangler import NodeWrangler
+from infinigen.assets.trees import tree, treeconfigs, branch
+from infinigen.assets.leaves import leaf, leaf_v2, leaf_pine, leaf_ginko, leaf_broadleaf, leaf_maple
+from infinigen.assets.fruits import apple, blackberry, coconutgreen, durian, starfruit, strawberry, compositional_fruit
+from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 from . import tree_flower
 
-from util import blender as butil
-from util.math import FixedSeed
-from util.blender import deep_clone_obj
-from util import camera as camera_util
+from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util import camera as camera_util
 
-from placement.factory import AssetFactory, make_asset_collection
-from placement import detail
-from placement.split_in_view import split_inview
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement import detail
+from infinigen.core.placement.split_in_view import split_inview
 
 from infinigen.core import surface
 
-from assets.cloud.generate import CloudFactory
+from infinigen.assets.weather.cloud.generate import CloudFactory
 from ..utils.decorate import write_attribute
 
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 logger = logging.getLogger('trees')
 

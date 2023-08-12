@@ -5,21 +5,21 @@ import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
 
-from util.pipeline import RandomStageExecutor
-from placement import placement, density
+from infinigen.core.util.pipeline import RandomStageExecutor
+from infinigen.core.placement import placement, density
 
-from fluid.cached_factory_wrappers import (
+from infinigen.assets.fluid.cached_factory_wrappers import (
     CachedTreeFactory,
     CachedCreatureFactory, 
     CachedBoulderFactory, 
     CachedBushFactory, 
     CachedCactusFactory
 )
-from fluid.asset_cache import FireCachingSystem
-from fluid.fluid import is_fire_in_scene
-from fluid.flip_fluid import create_flip_fluid_domain, set_flip_fluid_domain, create_flip_fluid_inflow, set_flip_fluid_obstacle, get_objs_inside_domain, make_beach, make_river, make_tilted_river
+from infinigen.assets.fluid.asset_cache import FireCachingSystem
+from infinigen.assets.fluid.fluid import is_fire_in_scene
+from infinigen.assets.fluid.flip_fluid import create_flip_fluid_domain, set_flip_fluid_domain, create_flip_fluid_inflow, set_flip_fluid_obstacle, get_objs_inside_domain, make_beach, make_river, make_tilted_river
 
-def fire_scenecomp_options(p: RandomStageExecutor, terrain_mesh, params, tree_species_params):
+def cached_fire_scenecomp_options(p: RandomStageExecutor, terrain_mesh, params, tree_species_params):
 
     land_domain = params.get('land_domain_tags')
     underwater_domain = params.get('underwater_domain_tags')

@@ -1,5 +1,5 @@
-// Code generated using version 1.0.0 of worldgen/tools/kernelize_surfaces.py;
-// refer to worldgen/surfaces/templates/cracked_ground.py which has the
+// Code generated using version 1.0.0 of infinigen/tools/kernelize_surfaces.py;
+// refer to infinigen/assets/materials/cracked_ground.py which has the
 // copyright and authors
 DEVICE_FUNC void nodegroup_apply_value_to_normal(
     float Input_0, float Input_1, float3_nonbuiltin normal,

@@ -7,14 +7,14 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from surfaces import surface
-from surfaces.templates import snake_plant
-from placement.factory import AssetFactory
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core import surface
+from infinigen.assets.materials import snake_plant
+from infinigen.core.placement.factory import AssetFactory
 import numpy as np
-from util import blender as butil
-from assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util import blender as butil
+from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_pedal_thickness', singleton=False, type='GeometryNodeTree')
 def nodegroup_pedal_thickness(nw: NodeWrangler):

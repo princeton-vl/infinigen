@@ -12,10 +12,10 @@ from mathutils.bvhtree import BVHTree
 import numpy as np
 from tqdm import trange
 
-from util import blender as butil, camera as cam_util, math
-from util.logging import Suppress
-from placement.camera import get_sensor_coords
-from surfaces import surface
+from infinigen.core.util import blender as butil, camera as cam_util, math
+from infinigen.core.util.logging import Suppress
+from infinigen.core.placement.camera import get_sensor_coords
+from infinigen.core import surface
 
 def raycast_visiblity_mask(obj, cam, start=None, end=None, verbose=True):
 

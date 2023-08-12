@@ -14,8 +14,8 @@ import bpy
 import numpy as np
 from nodes.node_wrangler import Nodes, NodeWrangler
 from terrain.utils import Mesh, read
-from util.blender import clear_scene
-from util.organization import AssetFile
+from infinigen.core.util.blender import clear_scene
+from infinigen.core.util.organization import AssetFile
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

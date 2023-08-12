@@ -4,7 +4,7 @@
 # Authors: Hei Law
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=lPAYX8z9i8M by CGCookie
 
-from nodes.node_wrangler import Nodes
+from infinigen.core.nodes.node_wrangler import Nodes
 import numpy as np
 
 def cloud_geometry_func(

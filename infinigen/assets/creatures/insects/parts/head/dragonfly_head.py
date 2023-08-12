@@ -7,17 +7,17 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
-from nodes.node_wrangler import Nodes, NodeWrangler
-from nodes import node_utils
-from nodes.color import color_category
-from surfaces import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.color import color_category
+from infinigen.core import surface
 
-from assets.insects.utils.geom_utils import nodegroup_add_hair, nodegroup_attach_part, nodegroup_symmetric_clone, nodegroup_surface_bump
-from assets.insects.parts.mouth.dragonfly_mouth import nodegroup_dragonfly_mouth
-from assets.insects.parts.eye.dragonfly_eye import nodegroup_dragonfly_eye
-from assets.insects.parts.antenna.dragonfly_antenna import nodegroup_dragonfly_antenna
-from assets.insects.parts.hair.principled_hair import nodegroup_principled_hair 
-from assets.insects.utils.shader_utils import nodegroup_color_noise, shader_black_w_noise_shader
+from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_add_hair, nodegroup_attach_part, nodegroup_symmetric_clone, nodegroup_surface_bump
+from infinigen.assets.creatures.insects.parts.mouth.dragonfly_mouth import nodegroup_dragonfly_mouth
+from infinigen.assets.creatures.insects.parts.eye.dragonfly_eye import nodegroup_dragonfly_eye
+from infinigen.assets.creatures.insects.parts.antenna.dragonfly_antenna import nodegroup_dragonfly_antenna
+from infinigen.assets.creatures.insects.parts.hair.principled_hair import nodegroup_principled_hair 
+from infinigen.assets.creatures.insects.utils.shader_utils import nodegroup_color_noise, shader_black_w_noise_shader
 
 def shader_dragonfly_head_shader(nw: NodeWrangler, base_color, v):
     # Code generated using version 2.4.3 of the node_transpiler
