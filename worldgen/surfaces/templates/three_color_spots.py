@@ -160,11 +160,11 @@ def shader_spot(nw, rand=True, **input_kwargs):
 
     color1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': mix_1, 'Color1': (1.0, 0.0223, 0.0, 1.0), 'Color2': rgb})
-    sample_color(color1.inputs['Color1'].default_value)
+    sample_color(color1.inputs[6].default_value)
 
     color2 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': mix_4, 'Color1': (0.0021, 0.0021, 0.0144, 1.0), 'Color2': rgb})
-    sample_color(color2.inputs['Color1'].default_value)
+    sample_color(color2.inputs[6].default_value)
 
     mix_6 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': math, 'Color1': color1, 'Color2': color2})

@@ -262,8 +262,7 @@ def shader_MOUNTAIN(
 
             # ambient occlusion
             amb_occl = nw.new_node('ShaderNodeAmbientOcclusion', [])
-            ramp = nw.new_node('ShaderNodeMixRGB', [amb_occl, None, ramp])
-            ramp.inputs[1].default_value = (0.0, 0.0, 0.0, 1.0)
+            ramp = nw.new_node('ShaderNodeMixRGB', [amb_occl, (0.0, 0.0, 0.0, 1.0), ramp])
 
         else:
             if color is None:

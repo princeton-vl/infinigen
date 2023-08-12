@@ -52,7 +52,7 @@ def transfer_all(source, target, attributes=None, uvs=False):
     assert target.type == 'MESH'
 
     if attributes is None:
-        attributes = [a.name for a in source.data.attributes if a.data_type in node_info.DATATYPE_DIMS]
+        attributes = [a.name for a in source.data.attributes if not butil.blender_internal_attr(a)]
 
     if len(source.data.uv_layers) == 0:
         uvs = False
@@ -98,14 +98,15 @@ def transfer_att_node(nw, source, target, attribute_to_transfer_list=[]):
     group_output_sockets = {'Geometry': object_info.outputs["Geometry"]}
 
     for att_name, att_type in attribute_to_transfer_list:
-        transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-                                         attrs={'data_type': att_type},
-                                         input_kwargs={
-                                             'Source': group_input.outputs["Geometry"],
-                                             'Attribute': group_input.outputs[att_name],
-                                             'Source Position': position
-                                         })
+        transfer_attribute = nw.new_node(
+            Nodes.SampleNearestSurface,
+            attrs={'data_type': att_type},
+            input_kwargs={
+                'Mesh': group_input.outputs["Geometry"],
+                'Value': group_input.outputs[att_name],
+                'Sample Position': position
+            })
 
-        group_output_sockets[att_name] = (transfer_attribute, 'Attribute')
+        group_output_sockets[att_name] = (transfer_attribute, 'Value')
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs=group_output_sockets)

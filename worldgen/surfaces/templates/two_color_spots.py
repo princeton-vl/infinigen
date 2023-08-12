@@ -21,8 +21,8 @@ def shader_two_color_spots(nw, rand=True, **input_kwargs):
     mix_2 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': attribute.outputs["Fac"], 'Color1': (1.0, 0.2397, 0.0028, 1.0), 'Color2': (0.4915, 0.4636, 0.3855, 1.0)})
     if rand:
-        sample_color(mix_2.inputs["Color1"].default_value)
-        sample_color(mix_2.inputs["Color2"].default_value)
+        sample_color(mix_2.inputs[6].default_value)
+        sample_color(mix_2.inputs[7].default_value)
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_2},

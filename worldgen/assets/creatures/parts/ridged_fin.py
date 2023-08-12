@@ -413,7 +413,11 @@ def nodegroup_fish_fin(nw: NodeWrangler):
         attrs={'use_clamp': True})
     
     store_cloth_pin = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': transform_2, 'Name': 'cloth_pin_rigidity', 3: add_final_rigidity},
+        input_kwargs={
+            'Geometry': transform_2, 
+            'Name': 'cloth_pin_rigidity', 
+            'Value': add_final_rigidity
+        },
         label='store_cloth_pin')
     
     group_output = nw.new_node(Nodes.GroupOutput,

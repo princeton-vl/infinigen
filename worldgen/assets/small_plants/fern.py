@@ -95,18 +95,18 @@ def nodegroup_pinnae_level1_xaxis_rotation(nw: NodeWrangler):
 
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketFloat', 'From Max', 1.0000),
-                                            ('NodeSocketFloat', 'Value', 1.0000),
-                                            ('NodeSocketFloat', 'Value', 1.0000)])
+                                            ('NodeSocketFloat', 'Value1', 1.0000),
+                                            ('NodeSocketFloat', 'Value2', 1.0000)])
 
     map_range_1 = nw.new_node(Nodes.MapRange,
-                              input_kwargs={'Value': group_input.outputs["Value"], 2: group_input.outputs["From Max"]},
+                              input_kwargs={'Value': group_input.outputs["Value1"], 2: group_input.outputs["From Max"]},
                               attrs={'clamp': False})
 
     float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': map_range_1.outputs["Result"]})
     node_utils.assign_curve(float_curve.mapping.curves[0],
                             [(0.0000, 0.0000), (0.2000, 0.2563), (0.4843, 0.4089), (0.7882, 0.3441), (1.0000, 0.0000)])
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[2], 3: -1.5000, 4: 0.0000})
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value2'], 3: -1.5000, 4: 0.0000})
 
     multiply = nw.new_node(Nodes.Math,
                            input_kwargs={0: float_curve, 1: map_range.outputs["Result"]},
@@ -121,13 +121,13 @@ def nodegroup_pinnae_level1_stein(nw: NodeWrangler):
 
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Mesh', None),
-                                            ('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 0.5)])
+                                            ('NodeSocketFloat', 'Value1', 0.5),
+                                            ('NodeSocketFloat', 'Value2', 0.5)])
     mesh_to_curve = nw.new_node(Nodes.MeshToCurve, input_kwargs={'Mesh': group_input.outputs["Mesh"]})
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.01},
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value2'], 1: 0.01},
                            attrs={'operation': 'MULTIPLY'})
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': mesh_to_curve, 'Radius': multiply})
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 15.0},
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value1"], 1: 15.0},
                              attrs={'operation': 'MULTIPLY'})
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': multiply_1, 'Resolution': 10})
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
@@ -141,16 +141,16 @@ def nodegroup_pinnae_level1_scale(nw: NodeWrangler, pinnae_contour):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', 1.0),
-                                            ('NodeSocketFloat', 'Value', 1.0)])
+                              expose_input=[('NodeSocketFloat', 'Value1', 1.0),
+                                            ('NodeSocketFloat', 'Value2', 1.0)])
 
-    pinnae_contour_float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': group_input.outputs["Value"]},
+    pinnae_contour_float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': group_input.outputs["Value1"]},
                                              label='PinnaeContourFloatCurve')
     node_utils.assign_curve(pinnae_contour_float_curve.mapping.curves[0],
                             [(0.0, pinnae_contour[0]), (0.2, pinnae_contour[1]), (0.4, pinnae_contour[2]),
                              (0.55, pinnae_contour[3]), (0.7, pinnae_contour[4]), (0.8, pinnae_contour[5]),
                              (0.9, pinnae_contour[6]), (1.0, pinnae_contour[7])])
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[1], 3: 1.0, 4: 3.0})
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value2'], 3: 1.0, 4: 3.0})
     multiply = nw.new_node(Nodes.Math,
                            input_kwargs={0: pinnae_contour_float_curve, 1: map_range.outputs["Result"]},
                            attrs={'operation': 'MULTIPLY'})
@@ -162,10 +162,10 @@ def nodegroup_pinnae_level1_instance_rotation(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 1.0)])
-    map_range_8 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[1], 3: 2, 4: 3.1})
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: map_range_8.outputs["Result"]})
+                              expose_input=[('NodeSocketFloat', 'Value1', 0.5),
+                                            ('NodeSocketFloat', 'Value2', 1.0)])
+    map_range_8 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value2'], 3: 2, 4: 3.1})
+    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value1"], 1: map_range_8.outputs["Result"]})
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': add})
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Vector': combine_xyz})
 
@@ -177,16 +177,16 @@ def nodegroup_pinnae_level1_rotation(nw: NodeWrangler, gravity_rotation=1):
     position = nw.new_node(Nodes.InputPosition)
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Geometry', None),
-                                            ('NodeSocketFloat', 'Value', 1.0),
-                                            ('NodeSocketFloat', 'Value', 0.5)])
+                                            ('NodeSocketFloat', 'Value1', 1.0),
+                                            ('NodeSocketFloat', 'Value2', 0.5)])
     bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={'Geometry': group_input.outputs["Geometry"]})
     multiply = nw.new_node(Nodes.VectorMath, input_kwargs={0: bounding_box.outputs["Max"], 1: (0.0, 0.0, 1.0)},
                            attrs={'operation': 'MULTIPLY'})
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.0})
+    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value2'], 1: 0.0})
     pinnae_index = nw.new_node(Nodes.Index, label='PinnaeIndex')
     pinnaelevel1xaxisrotation = nw.new_node(nodegroup_pinnae_level1_xaxis_rotation().name,
                                             input_kwargs={'From Max': add, 1: pinnae_index,
-                                                          2: group_input.outputs["Value"]})
+                                                          2: group_input.outputs["Value1"]})
     vector_rotate = nw.new_node(Nodes.VectorRotate,
                                 input_kwargs={'Vector': position, 'Center': (0, 0, 0),
                                               'Angle': pinnaelevel1xaxisrotation},
@@ -218,12 +218,12 @@ def nodegroup_pinnae_level1_instance_position(nw: NodeWrangler, pinnae_contour):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', 1.0),
+                              expose_input=[('NodeSocketFloat', 'Value1', 1.0),
                                             ('NodeSocketFloat', 'From Max', 1.0),
-                                            ('NodeSocketFloat', 'Value', 1.0)])
+                                            ('NodeSocketFloat', 'Value2', 1.0)])
 
     map_range_3 = nw.new_node(Nodes.MapRange,
-                              input_kwargs={'Value': group_input.outputs["Value"], 2: group_input.outputs["From Max"],
+                              input_kwargs={'Value': group_input.outputs["Value1"], 2: group_input.outputs["From Max"],
                                             3: 1.0, 4: 0.0})
 
     float_curve_2 = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': map_range_3.outputs["Result"]})
@@ -233,7 +233,7 @@ def nodegroup_pinnae_level1_instance_position(nw: NodeWrangler, pinnae_contour):
                              (0.9, pinnae_contour[6]), (1.0, pinnae_contour[7])])
     accumulate_field_1 = nw.new_node(Nodes.AccumulateField, input_kwargs={1: float_curve_2})
     # pinnae scale w.r.t fern age
-    map_range_5 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[2], 3: 0.3, 4: 4.5})
+    map_range_5 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value2'], 3: 0.3, 4: 4.5})
     multiply = nw.new_node(Nodes.Math,
                            input_kwargs={0: accumulate_field_1.outputs[4], 1: map_range_5.outputs["Result"]},
                            attrs={'operation': 'MULTIPLY'})
@@ -249,11 +249,11 @@ def nodegroup_pinnae_level2_rotation(nw: NodeWrangler, z_axis_rotate, y_axis_rot
     position_1 = nw.new_node(Nodes.InputPosition)
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Geometry', None),
-                                            ('NodeSocketFloat', 'Value', 1.0),
-                                            ('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 0.5)])
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.0})
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[3], 1: 0.0})
+                                            ('NodeSocketFloat', 'Value1', 1.0),
+                                            ('NodeSocketFloat', 'Value2', 0.5),
+                                            ('NodeSocketFloat', 'Value3', 0.5)])
+    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value2'], 1: 0.0})
+    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value3'], 1: 0.0})
     map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': add, 'From Max': add_1})
     float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': map_range_2.outputs["Result"]})
     node_utils.assign_curve(float_curve_1.mapping.curves[0],
@@ -262,7 +262,7 @@ def nodegroup_pinnae_level2_rotation(nw: NodeWrangler, z_axis_rotate, y_axis_rot
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: float_curve_1, 1: -0.25})
 
     # pinna z-axis curvature w.r.t the fern age
-    map_range_7 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[1], 3: 1.2, 4: 0.0})
+    map_range_7 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value1'], 3: 1.2, 4: 0.0})
 
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: map_range_7.outputs["Result"]},
                              attrs={'operation': 'MULTIPLY'})
@@ -296,11 +296,11 @@ def nodegroup_pinnae_level2_set_point(nw: NodeWrangler, pinna_contour):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', 1.0),
+                              expose_input=[('NodeSocketFloat', 'Value1', 1.0),
                                             ('NodeSocketFloat', 'From Max', 1.0),
-                                            ('NodeSocketFloat', 'Value', 1.0)])
+                                            ('NodeSocketFloat', 'Value2', 1.0)])
     map_range_4 = nw.new_node(Nodes.MapRange,
-                              input_kwargs={'Value': group_input.outputs["Value"], 2: group_input.outputs["From Max"],
+                              input_kwargs={'Value': group_input.outputs["Value1"], 2: group_input.outputs["From Max"],
                                             3: 1.0, 4: 0.0})
     float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': map_range_4.outputs["Result"]})
     node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, pinna_contour[0]), (0.38, pinna_contour[1]),
@@ -309,7 +309,7 @@ def nodegroup_pinnae_level2_set_point(nw: NodeWrangler, pinna_contour):
     accumulate_field_2 = nw.new_node(Nodes.AccumulateField, input_kwargs={1: float_curve})
 
     # pinna scale w.r.t fern age
-    map_range_6 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[2], 3: 0.5, 4: 2.0})
+    map_range_6 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value2'], 3: 0.5, 4: 2.0})
     multiply = nw.new_node(Nodes.Math,
                            input_kwargs={0: accumulate_field_2.outputs[4], 1: map_range_6.outputs["Result"]},
                            attrs={'operation': 'MULTIPLY'})
@@ -324,9 +324,9 @@ def nodegroup_pinnae_level2_instance_on_points(nw: NodeWrangler, leaf, pinna_con
 
     group_input = nw.new_node(Nodes.GroupInput,
                               expose_input=[('NodeSocketGeometry', 'Points', None),
-                                            ('NodeSocketFloat', 'Value', 1.0),
-                                            ('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 1.0)])
+                                            ('NodeSocketFloat', 'Value1', 1.0),
+                                            ('NodeSocketFloat', 'Value2', 0.5),
+                                            ('NodeSocketFloat', 'Value3', 1.0)])
     index = nw.new_node(Nodes.Index)
     object_info_2 = nw.new_node(Nodes.ObjectInfo, input_kwargs={'Object': leaf})
     transform = nw.new_node(Nodes.Transform,
@@ -334,14 +334,14 @@ def nodegroup_pinnae_level2_instance_on_points(nw: NodeWrangler, leaf, pinna_con
     transform_2 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': object_info_2.outputs["Geometry"], 'Scale': (1.2, 1.0, 1.0)})
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform, transform_2]})
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: -0.3})
+    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value2'], 1: -0.3})
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': 1.57, 'Z': add})
-    float_curve_6 = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': group_input.outputs["Value"]})
+    float_curve_6 = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': group_input.outputs["Value1"]})
     node_utils.assign_curve(float_curve_6.mapping.curves[0], [(0.0, pinna_contour[0]), (0.38, pinna_contour[1]),
                                                               (0.55, pinna_contour[2]), (0.75, pinna_contour[3]),
                                                               (0.9, pinna_contour[4]), (1.0, pinna_contour[5])])
     # pinna leaf size w.r.t the fern age
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs[3], 3: 6, 4: 8})
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': group_input.outputs['Value3'], 3: 6, 4: 8})
     multiply = nw.new_node(Nodes.VectorMath, input_kwargs={0: float_curve_6, 1: map_range.outputs["Result"]},
                            attrs={'operation': 'MULTIPLY'})
     instance_on_points_2 = nw.new_node(Nodes.InstanceOnPoints,
@@ -356,15 +356,15 @@ def nodegroup_pinnae_level2_stein(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
-                              expose_input=[('NodeSocketFloat', 'Value', 0.5),
-                                            ('NodeSocketFloat', 'Value', 0.5),
+                              expose_input=[('NodeSocketFloat', 'Value1', 0.5),
+                                            ('NodeSocketFloat', 'Value2', 0.5),
                                             ('NodeSocketGeometry', 'Mesh', None)])
     mesh_to_curve_1 = nw.new_node(Nodes.MeshToCurve, input_kwargs={'Mesh': group_input.outputs["Mesh"]})
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 0.1},
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value1"], 1: 0.1},
                            attrs={'operation': 'MULTIPLY'})
     set_curve_radius_1 = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': mesh_to_curve_1, 'Radius': multiply})
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs[2], 1: 0.5},
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs['Value2'], 1: 0.5},
                              attrs={'operation': 'MULTIPLY'})
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': multiply_1, 'Resolution': 10})
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,

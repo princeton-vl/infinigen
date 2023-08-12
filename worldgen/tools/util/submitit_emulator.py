@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
     if test == 'render':
 
-        random_command = "../blender/blender --background -noaudio --python generate.py -- --seed 56823 --task coarse -p main.output_folder=outputs/test2 move_camera.stereo_baseline=0.15 LOG_DIR=logs"
+        random_command = "python generate.py -- --seed 56823 --task coarse -p main.output_folder=outputs/test2 move_camera.stereo_baseline=0.15 LOG_DIR=logs"
         executor = ScheduledLocalExecutor(folder="test_log")
         executor.update_parameters(gpus=1)
 

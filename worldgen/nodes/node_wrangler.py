@@ -22,6 +22,7 @@ import numpy as np
 from util.random import random_vector3
 from nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
 from nodes import node_info
+from nodes.compatibility import COMPATIBILITY_MAPPINGS
 
 
 logger = logging.getLogger(__name__)
@@ -155,12 +156,23 @@ class NodeWrangler():
         node.outputs[0].default_value = v
         return node
 
-    def new_node(self, node_type, input_args=None, attrs=None, input_kwargs=None, label=None,
-                 expose_input=None):
+    def new_node(
+        self, node_type, 
+        input_args=None, attrs=None, input_kwargs=None, label=None,
+        expose_input=None, compat_mode=True
+    ):
         if input_args is None:
             input_args = []
         if input_kwargs is None:
             input_kwargs = {}
+
+        if attrs is None:
+            attrs = {}
+
+        compat_map = COMPATIBILITY_MAPPINGS.get(node_type)
+        if compat_mode and compat_map is not None:
+            logger.debug(f'Using {compat_map.__name__=} for {node_type=}')
+            return compat_map(self, node_type, input_args, attrs, input_kwargs)
 
         node = self._make_node(node_type)
 
@@ -212,6 +224,10 @@ class NodeWrangler():
             self.connect_input(input_socket, input_item)
 
         if expose_input is not None:
+            names = [v[1] for v in expose_input]
+            uniq, counts = np.unique(names, return_counts=True)
+            if (counts > 1).any():
+                raise ValueError(f'expose_input with {names} features duplicate entries. in bl3.5 this is invalid.')
             for inp in expose_input:
                 nodeclass, name, val = inp
                 self.expose_input(name, val=val, dtype=nodeclass)

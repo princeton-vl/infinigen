@@ -24,8 +24,8 @@ def nodegroup_comb_direction(nw: NodeWrangler):
     
     normal = nw.new_node(Nodes.InputNormal)
     
-    surface_normal = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input.outputs["Surface"], 1: normal, 'Source Position': group_input.outputs["Root Positiion"]},
+    surface_normal = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': group_input.outputs["Surface"], 'Value': normal, 'Sample Position': group_input.outputs["Root Positiion"]},
         label='Surface Normal',
         attrs={'data_type': 'FLOAT_VECTOR'})
     
@@ -45,17 +45,16 @@ def nodegroup_comb_direction(nw: NodeWrangler):
         input_kwargs={0: subtract.outputs["Vector"]},
         attrs={'operation': 'NORMALIZE'})
     
-    skeleton_tangent = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input.outputs["Surface"], 1: normalize.outputs["Vector"], 'Source Position': group_input.outputs["Root Positiion"]},
-        label='Skeleton Tangent',
+    skeleton_tangent = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': group_input.outputs["Surface"], 'Value': normalize.outputs["Vector"], 'Sample Position': group_input.outputs["Root Positiion"]},
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     cross_product = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: surface_normal.outputs["Attribute"], 1: skeleton_tangent.outputs["Attribute"]},
+        input_kwargs={0: surface_normal, 1: skeleton_tangent},
         attrs={'operation': 'CROSS_PRODUCT'})
     
     cross_product_1 = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: surface_normal.outputs["Attribute"], 1: cross_product.outputs["Vector"]},
+        input_kwargs={0: surface_normal, 1: cross_product.outputs["Vector"]},
         attrs={'operation': 'CROSS_PRODUCT'})
     
     normalize_1 = nw.new_node(Nodes.VectorMath,
@@ -63,7 +62,11 @@ def nodegroup_comb_direction(nw: NodeWrangler):
         attrs={'operation': 'NORMALIZE'})
     
     group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Combing Direction': normalize_1.outputs["Vector"], 'Surface Normal': surface_normal.outputs["Attribute"], 'Skeleton Tangent': skeleton_tangent.outputs["Attribute"]})
+        input_kwargs={
+            'Combing Direction': normalize_1.outputs["Vector"], 
+            'Surface Normal': surface_normal.outputs["Attribute"], 
+            'Skeleton Tangent': skeleton_tangent
+        })
 
 @node_utils.to_nodegroup('nodegroup_hair_position', singleton=True, type='GeometryNodeTree')
 def nodegroup_hair_position(nw: NodeWrangler):
@@ -82,20 +85,23 @@ def nodegroup_hair_position(nw: NodeWrangler):
         input_kwargs={0: index, 1: spline_length.outputs["Point Count"]},
         attrs={'operation': 'SNAP'})
     
-    hair_root_position = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input.outputs["Curves"], 1: position, 'Index': snap},
+    hair_root_position = nw.new_node(Nodes.SampleIndex,
+        input_kwargs={'Geometry': group_input.outputs["Curves"], 'Value': position, 'Index': snap},
         label='Hair Root Position',
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'INDEX'})
+        attrs={'data_type': 'FLOAT_VECTOR'})
     
     position_1 = nw.new_node(Nodes.InputPosition)
     
     relative_position = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: position_1, 1: hair_root_position.outputs["Attribute"]},
+        input_kwargs={0: position_1, 1: hair_root_position},
         label='Relative Position',
         attrs={'operation': 'SUBTRACT'})
-    
+
     group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Root Position': hair_root_position.outputs["Attribute"], 'Relative Position': relative_position.outputs["Vector"]})
+        input_kwargs={
+            'Root Position': hair_root_position, 
+            'Relative Position': relative_position.outputs["Vector"]
+        })
 
 @node_utils.to_nodegroup('nodegroup_comb_hairs', singleton=True, type='GeometryNodeTree')
 def nodegroup_comb_hairs(nw: NodeWrangler):

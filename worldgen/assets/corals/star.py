@@ -53,8 +53,8 @@ class StarBaseCoralFactory(BaseCoralFactory):
         scale = nw.uniform(.9, 1.2)
         geometry = nw.new_node(Nodes.ScaleElements, [geometry, None, scale])
         geometry = nw.new_node(Nodes.StoreNamedAttribute,
-                               [geometry, 'custom_normal', nw.new_node(Nodes.InputNormal)],
-                               attrs={'data_type': 'FLOAT_VECTOR'})
+            input_kwargs={'Geometry': geometry, 'Name': 'custom_normal', 'Value': nw.new_node(Nodes.InputNormal)},
+            attrs={'data_type': 'FLOAT_VECTOR'})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     @staticmethod
@@ -65,7 +65,8 @@ class StarBaseCoralFactory(BaseCoralFactory):
         normal = nw.new_node(Nodes.NamedAttribute, ['custom_normal'], attrs={'data_type': 'FLOAT_VECTOR'})
         geometry = nw.new_node(Nodes.SetPosition, [geometry, None, None, nw.scale(offset, normal)])
         outer = nw.boolean_math('AND', nw.compare('GREATER_THAN', t, .4), nw.compare('LESS_THAN', t, .6))
-        geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, 'outermost', None, outer])
+        geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+            input_kwargs={'Geometry': geometry, 'Name': 'outermost', 'Value': outer})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     def create_asset(self, face_size=0.01, **params):

@@ -44,11 +44,10 @@ def get_cmd(
     cmd = ''
     if process_niceness is not None:
         cmd += f'nice -n {process_niceness} '
-    cmd += f'{BLENDER_PATH} --background -y -noaudio --python {driver_script} '
-    
+    cmd += f'python {driver_script} -- ''
     if blender_thread_limit is not None:
         cmd += f'--threads {blender_thread_limit} '
-
+        
     cmd += '-- '
 
     if input_folder is not None:

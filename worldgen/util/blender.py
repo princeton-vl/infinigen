@@ -557,6 +557,10 @@ def join_objects(objs, check_attributes=False):
     bpy.ops.object.join()
     return bpy.context.active_object
 
+def clear_mesh(obj):
+    with ViewportMode(obj, mode='EDIT'):
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.delete(type='VERT')
 
 def apply_modifiers(obj, mod=None, quiet=True):
     if mod is None:
@@ -569,7 +573,15 @@ def apply_modifiers(obj, mod=None, quiet=True):
     con = Suppress() if quiet else nullcontext()
     with SelectObjects(obj), con:
         for m in mod:
-            bpy.ops.object.modifier_apply(modifier=m.name)
+            try:
+                bpy.ops.object.modifier_apply(modifier=m.name)
+            except RuntimeError as e:
+                if m.type == 'NODES':
+                    logging.warn(f'apply_modifers on {obj.name=} {m.name=} raised {e}, ignoring and returning empty mesh for pre-3.5 compatibility reasons')
+                    bpy.ops.object.modifier_remove(modifier=m.name)
+                    clear_mesh(obj)
+                else:
+                    raise e
 
 
 def recalc_normals(obj, inside=False):
@@ -693,6 +705,15 @@ def object_to_trimesh(obj):
     vertex_attributes = object_to_vertex_attributes(obj)
     mesh.vertex_attributes.update(vertex_attributes)
     return mesh
+
+def blender_internal_attr(a):
+    if hasattr(a, 'name'):
+        a = a.name
+    if a.startswith('.'):
+        return True
+    if a in ['material_index', 'uv_map', 'UVMap']:
+        return True
+    return False
 
 def merge_by_distance(obj, face_size):
     with SelectObjects(obj), ViewportMode(obj, mode='EDIT'), Suppress():

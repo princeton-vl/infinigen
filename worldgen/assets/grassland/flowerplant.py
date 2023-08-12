@@ -605,7 +605,8 @@ class FlowerPlantFactory(AssetFactory):
         with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()
             bpy.ops.object.shade_flat()
-            bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        butil.apply_modifiers(obj)
 
         tag_object(obj, 'flowerplant')
         return obj

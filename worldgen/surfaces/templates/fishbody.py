@@ -567,7 +567,7 @@ def shader_fish_body_regular(nw: NodeWrangler, rand=True, **input_kwargs):
     mix_12 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_15.outputs["Color"], 'Color1': (0.0119, 0.0078, 0.0086, 1.0), 'Color2': mix_4})
     if rand:
-        sample_color(mix_12.inputs['Color1'].default_value, keep_sum=True)
+        sample_color(mix_12.inputs[6].default_value, keep_sum=True)
 
     principled_bsdf_1 = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_12, 'Subsurface Radius': (0.36, 0.46, 0.6), 'Subsurface Color': (1.0, 0.9405, 0.7747, 1.0), 'Metallic': 0.8, 'Specular': .9, 'Roughness': 0.3, 'IOR': 1.69},

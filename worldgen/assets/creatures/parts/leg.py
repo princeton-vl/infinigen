@@ -230,7 +230,7 @@ def nodegroup_insect_leg(nw: NodeWrangler):
         input_kwargs={'Skin Mesh': simple_tube_v2.outputs["Geometry"], 'Skeleton Curve': simple_tube_v2.outputs["Skeleton Curve"], 'Coord 0': (0.0, 0.0, 0.0), 'Coord 1': (0.01, 0.0, 0.0), 'Coord 2': (0.35, 0.0, 0.0), 'StartRad, EndRad, Fullness': combine_xyz, 'ProfileHeight, StartTilt, EndTilt': (0.73, 0.0, 0.0)})
     
     trim_curve = nw.new_node(Nodes.TrimCurve,
-        input_kwargs={'Curve': simple_tube_v2.outputs["Skeleton Curve"], 1: 0.4892, 2: 0.725})
+        input_kwargs={'Curve': simple_tube_v2.outputs["Skeleton Curve"], 'Start': 0.4892, 'End': 0.725})
     
     resample_curve = nw.new_node(Nodes.ResampleCurve,
         input_kwargs={'Curve': trim_curve, 'Count': 4})

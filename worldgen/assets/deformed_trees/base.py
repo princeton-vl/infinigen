@@ -41,7 +41,8 @@ class BaseDeformedTreeFactory(AssetFactory):
     def geo_xyz(nw: NodeWrangler):
         geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
         for name, component in zip('xyz', nw.separate(nw.new_node(Nodes.InputPosition))):
-            geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, name, None, component])
+            geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+                input_kwargs={'Geometry':geometry, 'Name': name, 'Value': component})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     @staticmethod

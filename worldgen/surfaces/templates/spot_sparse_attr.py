@@ -56,7 +56,7 @@ def shader_spots_sparse_attr(nw: NodeWrangler, rand=True, **input_kwargs):
             'Color2': colorramp_3.outputs["Color"]
         })
     if rand:
-        mix.inputs['Color1'].default_value = getcolor()
+        mix.inputs[6].default_value = getcolor()
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix, 'Specular': 0.0, 'Roughness': colorramp.outputs["Color"]})

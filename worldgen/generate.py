@@ -416,7 +416,9 @@ def main():
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
 
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    # handle case where running with blender --python <file> -- <rest of args>
+    argvs = sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:]
+    args = parser.parse_args(argvs)
 
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
     logging.basicConfig(

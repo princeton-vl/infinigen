@@ -126,7 +126,7 @@ class BoulderFactory(AssetFactory):
             tops.append(top)
 
         geometry = nw.new_node(Nodes.StoreNamedAttribute,
-                               [geometry, 'top', None, reduce(lambda *xs: nw.boolean_math('OR', *xs), tops)])
+            input_kwargs={'Geometry': geometry, 'Name': 'top', 'Value': reduce(lambda *xs: nw.boolean_math('OR', *xs), tops)})
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     def create_asset(self, i, placeholder, face_size=0.01, distance=0, **params):

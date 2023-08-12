@@ -22,9 +22,14 @@ class Nodes:
     Attribute = "ShaderNodeAttribute"
     CaptureAttribute = "GeometryNodeCaptureAttribute"
     AttributeStatistic = 'GeometryNodeAttributeStatistic'
-    TransferAttribute = "GeometryNodeAttributeTransfer"
+    TransferAttribute = "GeometryNodeAttributeTransfer" # removed in b3.4, still supported via compatibility.py
     DomainSize = 'GeometryNodeAttributeDomainSize'
     StoreNamedAttribute = "GeometryNodeStoreNamedAttribute"
+    NamedAttribute = 'GeometryNodeInputNamedAttribute'
+    SampleIndex = "GeometryNodeSampleIndex"
+    SampleNearest = "GeometryNodeSampleNearest"
+    SampleNearestSurface = "GeometryNodeSampleNearestSurface"
+
 
     # Color Menu
     ColorRamp = "ShaderNodeValToRGB"
@@ -37,6 +42,25 @@ class Nodes:
     SeparateColor = 'ShaderNodeSeparateColor'
     CombineRGB = 'ShaderNodeCombineRGB'
     CombineColor = 'ShaderNodeCombineColor'
+
+    #bl3.5 additions
+    SeparateComponents = 'GeometryNodeSeparateComponents'
+    SetID = 'GeometryNodeSetID'
+    InterpolateCurves = 'GeometryNodeInterpolateCurves'
+    SampleUVSurface = 'GeometryNodeSampleUVSurface'
+    MeshIsland = 'GeometryNodeInputMeshIsland'
+    IsViewport = 'GeometryNodeIsViewport'
+    ImageInfo = 'GeometryNodeImageInfo'
+    CurveofPoint = 'GeometryNodeCurveOfPoint'
+    CurvesInfo = 'ShaderNodeHairInfo'
+    Radius = 'GeometryNodeInputRadius'
+    EvaluateonDomain = 'GeometryNodeFieldOnDomain'
+    BlurAttribute = 'GeometryNodeBlurAttribute'
+    EndpointSelection = 'GeometryNodeCurveEndpointSelection'
+    PointsofCurve = 'GeometryNodePointsOfCurve'
+    SetSplineResolution = 'GeometryNodeSetSplineResolution'
+    OffsetPointinCurve = 'GeometryNodeOffsetPointInCurve'
+    SplineResolution = 'GeometryNodeInputSplineResolution'
 
     # Curve
     CurveToMesh = "GeometryNodeCurveToMesh"
@@ -102,7 +126,6 @@ class Nodes:
     Integer = 'FunctionNodeInputInt'
     LightPath = 'ShaderNodeLightPath'
     ShortestEdgePath = 'GeometryNodeInputShortestEdgePaths'
-    NamedAttribute = 'GeometryNodeInputNamedAttribute'
 
     # Instances
     RealizeInstances = "GeometryNodeRealizeInstances"
@@ -282,7 +305,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.RandomValue: ['data_type'],
 
     Nodes.Switch: ['input_type'],
-    Nodes.TransferAttribute: ['data_type', 'mapping'],
+    Nodes.TransferAttribute: ['data_type', 'mapping'], 
     Nodes.SeparateGeometry: ['domain'],
     Nodes.MergeByDistance: ['mode'],
 
@@ -366,7 +389,7 @@ OUTPUT_NODE_IDS = {
     bpy.types.CompositorNodeGroup: Nodes.GroupOutput,
 }
 
-DATATYPE_DIMS = {'FLOAT': 1, 'INT': 1, 'FLOAT_VECTOR': 3, 'FLOAT_COLOR': 4, 'BOOLEAN': 1, }
+DATATYPE_DIMS = {'FLOAT': 1, 'INT': 1, 'FLOAT_VECTOR': 3, 'FLOAT2': 2, 'FLOAT_COLOR': 4, 'BOOLEAN': 1, }
 DATATYPE_FIELDS = {
     'FLOAT': 'value',
     'INT': 'value',

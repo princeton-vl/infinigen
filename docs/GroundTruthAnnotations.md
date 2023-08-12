@@ -70,7 +70,7 @@ Continuing the [Hello-World](/README.md#generate-a-scene-step-by-step) example, 
 
 4. Export the geometry from blender to disk
 ```
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+$python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
 ```
 5. Generate dense annotations
 ```

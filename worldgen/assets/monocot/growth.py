@@ -130,7 +130,8 @@ class MonocotGrowthFactory(AssetFactory):
                 'Scale': scale
             })
             geometry = nw.new_node(Nodes.RealizeInstances, [instances])
-            geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, 'z_rotation', None, z_rotation])
+            geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+                input_kwargs={'Geometry': geometry, 'Name':'z_rotation', 'Value': z_rotation})
             geometry = nw.new_node(Nodes.JoinGeometry, [[stem, geometry]])
             nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 

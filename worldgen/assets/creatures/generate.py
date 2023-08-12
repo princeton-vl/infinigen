@@ -194,6 +194,8 @@ def join_and_rig_parts(
             
     if adaptive_resolution and smooth_attrs:
         for attr in joined.data.attributes.keys():
+            if butil.blender_internal_attr(attr):
+                continue
             logger.debug(f'Smoothing attr {attr}')
             surface.smooth_attribute(joined, attr, iters=10)
 

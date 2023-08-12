@@ -58,9 +58,9 @@ def coll_distribute(nw, merge_dist=None):
 
     position = nw.new_node(Nodes.InputPosition)
 
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': mesh_to_points, 1: position},
-        attrs={'data_type': 'FLOAT_VECTOR', 'mapping': 'NEAREST'})
+    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={'Mesh': mesh_to_points, 'Value': position},
+        attrs={'data_type': 'FLOAT_VECTOR'})
 
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': curve_to_points.outputs["Points"], 'Position': transfer_attribute.outputs["Attribute"]})

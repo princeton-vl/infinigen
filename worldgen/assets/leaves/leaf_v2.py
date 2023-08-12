@@ -5,6 +5,7 @@
 
 
 import colorsys
+import logging
 
 import numpy as np
 from numpy.random import uniform, normal
@@ -907,6 +908,9 @@ def geo_leaf_v2(nw, **kwargs):
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': leafgen.outputs["Mesh"], 'Offset': combine_xyz})
     
+    logging.warning(f'Disabling set_position to avoid LeafV2 segfault')
+    set_position = leafgen.outputs["Mesh"]
+
     applywave = nw.new_node(nodegroup_apply_wave(y_wave_control_points=kwargs['y_wave_control_points'], x_wave_control_points=kwargs['x_wave_control_points']).name,
         input_kwargs={'Geometry': set_position, 'Wave Scale X': 0.15, 'Wave Scale Y': 1.5, 'X Modulated': leafgen.outputs["X Modulated"]})
     

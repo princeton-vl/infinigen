@@ -111,11 +111,15 @@ def nodegroup_decode_noise(nw: NodeWrangler):
     map_range_1 = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': noise_texture.outputs["Fac"], 3: separate_xyz.outputs["X"], 4: separate_xyz.outputs["Y"]})
     
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={'Source': group_input.outputs["Source"], 2: map_range_1.outputs["Result"], 'Source Position': group_input.outputs["Source Position"]})
-    
+    transfer_attribute = nw.new_node(Nodes.SampleNearestSurface,
+        input_kwargs={
+            'Mesh': group_input.outputs["Source"], 
+            'Value': map_range_1.outputs["Result"], 
+            'Sample Position': group_input.outputs["Source Position"]
+        })
+
     group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Attribute': transfer_attribute.outputs[1]})
+        input_kwargs={'Attribute': (transfer_attribute, 'Value')})
 
 @node_utils.to_nodegroup('nodegroup_hair_grooming', singleton=True, type='GeometryNodeTree')
 def nodegroup_hair_grooming(nw: NodeWrangler):
@@ -186,7 +190,7 @@ def nodegroup_hair_grooming(nw: NodeWrangler):
         input_kwargs={'Value': spline_parameter.outputs["Factor"], 3: group_input.outputs["Root Radius"], 4: 0.0})
     
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius,
-        input_kwargs={'Curve': snaprootstosurface, 'Radius': map_range.outputs["Result"]})
+        input_kwargs={'Curves': snaprootstosurface, 'Radius': map_range.outputs["Result"]})
     
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': set_curve_radius})
@@ -222,10 +226,14 @@ def geo_transfer_hair_attributes(nw, obj, attrs):
         named_attr = nw.new_node(Nodes.NamedAttribute,
             attrs={'data_type': obj_attr.data_type},
             input_kwargs={'Name': attr_name})
-        transfer = nw.new_node(Nodes.TransferAttribute, 
+        transfer = nw.new_node(Nodes.SampleNearestSurface, 
             attrs={'data_type': obj_attr.data_type},
-            input_kwargs={'Source': object_info.outputs['Geometry'], "Attribute": named_attr, 'Source Position': hairposition})
-        attrs_out[attr_name] = (transfer, 'Attribute')
+            input_kwargs={
+                'Mesh': object_info.outputs['Geometry'], 
+                "Value": named_attr, 
+                'Sample Position': hairposition
+            })
+        attrs_out[attr_name] = (transfer, 'Value')
 
     nw.new_node(Nodes.GroupOutput, input_kwargs={
         'Geometry': group_input.outputs['Geometry'], **attrs_out})
@@ -329,7 +337,7 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
         input_kwargs={
             'Geometry': group_input.outputs["Geometry"], 
             'Name': group_input.outputs['to_attr'], 
-            2: transfer_attribute.outputs["Attribute"]},
+            'Value': transfer_attribute.outputs["Attribute"]},
         attrs={'data_type': 'FLOAT_VECTOR', 'domain': 'CURVE'})
     
     group_output = nw.new_node(Nodes.GroupOutput,

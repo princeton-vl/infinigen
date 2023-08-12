@@ -57,7 +57,7 @@ def shader_bark(nw, rand=False, **input_kwargs):
         input_kwargs={'Fac': colorramp_1.outputs["Color"], 'Color1': colorramp.outputs["Color"], 'Color2': (0.0897, 0.052, 0.0149, 1.0)})
     if rand:
         for i in range(3):
-            mix_1.inputs["Color2"].default_value[i] = (colorramp.color_ramp.elements[0].color[i] + colorramp.color_ramp.elements[1].color[i]) / 2
+            mix_1.inputs[7].default_value[i] = (colorramp.color_ramp.elements[0].color[i] + colorramp.color_ramp.elements[1].color[i]) / 2
 
     colorramp_2 = nw.new_node(Nodes.ColorRamp,
         input_kwargs={'Fac': noise_texture.outputs["Fac"]})

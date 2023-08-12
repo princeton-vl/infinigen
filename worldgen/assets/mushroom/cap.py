@@ -176,7 +176,11 @@ class MushroomCapFactory(AssetFactory):
             component = nw.math('ABSOLUTE', component)
             m = nw.new_node(Nodes.AttributeStatistic, [geometry, None, component]).outputs['Max']
             geometry = nw.new_node(Nodes.StoreNamedAttribute,
-                                   [geometry, name, None, nw.scalar_divide(component, m)])
+                input_kwargs={
+                    'Geometry': geometry, 
+                    'Name': name, 
+                    'Value': nw.scalar_divide(component, m)
+                })
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     @staticmethod
@@ -186,7 +190,8 @@ class MushroomCapFactory(AssetFactory):
             'Scale': uniform(15, 20),
             'Randomness': uniform(.5, 1)
         }, attrs={'feature': 'DISTANCE_TO_EDGE'}), .05)
-        geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, 'morel', None, selection])
+        geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+            input_kwargs={'Geometry':geometry, 'Name':'morel', 'Value': selection})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     def apply_cut(self, obj):

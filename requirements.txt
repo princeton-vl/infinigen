@@ -1,3 +1,4 @@
+bpy==3.6.0
 gin-config>=0.5.0
 tqdm
 opencv-python<=4.8.0.74

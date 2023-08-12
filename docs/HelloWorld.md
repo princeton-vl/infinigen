@@ -21,16 +21,16 @@ cd worldgen
 mkdir outputs
 
 # Generate a scene layout
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
+python generate.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
 
 # Populate unique assets
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
+python generate.py -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
 
 # Render RGB images
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
+python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
 
 # Render again for accurate ground-truth
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
+python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.

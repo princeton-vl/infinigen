@@ -36,8 +36,10 @@ def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, of
     curve = nw.new_node(Nodes.EdgePathToCurve, [geometry, None, nw.new_node(Nodes.ShortestEdgePath, [
         nw.compare('EQUAL', nw.new_node(Nodes.Index), 0), distance]).outputs[0]])
 
-    curve = nw.new_node(Nodes.StoreNamedAttribute, [curve, 'tangent', nw.new_node(Nodes.CurveTangent)],
-                        attrs={'data_type': 'FLOAT_VECTOR'})
+    curve = nw.new_node(
+        Nodes.StoreNamedAttribute, 
+        input_kwargs={'Geometry':curve, 'Name': 'tangent', 'Value': nw.new_node(Nodes.CurveTangent)},
+        attrs={'data_type': 'FLOAT_VECTOR'})
     geometry = nw.new_node(Nodes.MergeByDistance, [nw.curve2mesh(curve)])
 
     geometry = nw.new_node(Nodes.SetPosition, [geometry, None, None,

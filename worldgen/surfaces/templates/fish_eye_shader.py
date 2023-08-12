@@ -190,7 +190,7 @@ def shader_eyeball_fish(nw: NodeWrangler):
 
     mix_6 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_3.outputs["Color"], 'Color1': (0.7384, 0.5239, 0.2703, 1.0000), 'Color2': colorramp_4.outputs["Color"]})
-    sample_color(mix_6.inputs["Color1"].default_value)
+    sample_color(mix_6.inputs[6].default_value)
 
     mix_7 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_1.outputs["Color"], 'Color1': mix_6, 'Color2': (0.0000, 0.0000, 0.0000, 1.0000)})

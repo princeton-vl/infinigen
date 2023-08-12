@@ -173,8 +173,10 @@ def write_attribute(obj, fn, name, domain="POINT"):
     def geo_attribute(nw: NodeWrangler):
         geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
         attr = surface.eval_argument(nw, fn, position=nw.new_node(Nodes.InputPosition))
-        geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, name], input_kwargs={'Value': attr},
-                               attrs={'domain': domain})
+        geometry = nw.new_node(
+            Nodes.StoreNamedAttribute, 
+            input_kwargs={'Geometry': geometry, 'Name': name, 'Value': attr},
+            attrs={'domain': domain})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
     surface.add_geomod(obj, geo_attribute, apply=True)

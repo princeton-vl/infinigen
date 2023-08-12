@@ -34,7 +34,7 @@ def geo_face_colors(nw: NodeWrangler):
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'col', 2: random_value.outputs["Value"]},
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'col', "Value": random_value.outputs["Value"]},
         attrs={'data_type': 'FLOAT_VECTOR', 'domain': 'FACE'})
     
     group_output = nw.new_node(Nodes.GroupOutput,
