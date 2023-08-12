@@ -10,13 +10,13 @@ To generate fluids, you run install.sh with the optional FLIP-Fluids setup step 
 
 #### Generate a video of a single scene with simulated fire generated on the fly
 ```
-python -m tools.manage_datagen_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --cleanup none --config plain.gin fast_terrain_assets.gin use_on_the_fly_fire.gin
+python -m infinigen.datagen.manage_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --cleanup none --config plain.gin fast_terrain_assets.gin use_on_the_fly_fire.gin
 ```
 Because fluid simulation takes a long time, the fire resolution can be reduced in use_on_the_fly_fire.gin, by setting `set_obj_on_fire.resolution = {resolution}`. This will reduce the fire quality but speed up the simulation.
 
 #### Generate a video of a single valley scene with simulated river
 ```
-python -m tools.manage_datagen_jobs --specific_seed 1c95bb72 --output_folder outputs/river --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin --pipeline_overrides iterate_scene_tasks.frame_range=[150,200] --config river.gin simulated_river.gin no_assets.gin no_creatures.gin fast_terrain_assets.gin --cleanup none 
+python -m infinigen.datagen.manage_jobs --specific_seed 61fc881a --output_folder outputs/river --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin --pipeline_overrides iterate_scene_tasks.frame_range=[100,244] --config river.gin simulated_river.gin no_assets.gin no_creatures.gin fast_terrain_assets.gin --cleanup none 
 ```
 Similar to fire, the simulation can be sped up by reducing the resolution. In simulated_river.gin, the resolution can be modified by setting `make_river.resolution = {resolution}`. The simulation can also be sped up by reducing the simulation duration in simulated_river.gin by setting `make_river.simulation_duration = {duration}`. For instance, before running the command above, the duration can be reduced to a number greater than 200 since that is the last frame of the video.
 
@@ -24,7 +24,7 @@ Also, note that this command will produce a scene without assets to speed up the
 
 #### Generate videos of random scene types, with simulated fire generated on the fly when needed
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/onthefly  --num_scenes 10 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/onthefly  --num_scenes 10 \
     --pipeline_config slurm_high_memory.gin monocular_video.gin \
     --config fast_terrain_assets.gin use_on_the_fly_fire.gin \
     --cleanup none --warmup_sec 12000 
@@ -32,7 +32,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/onthefly  --num_scen
 
 #### Generate videos of valley scenes with simulated rivers
 ```
-python -m tools.manage_datagen_jobs --output_folder /n/fs/pvl-renders/kkayan/river --num_scenes 10 \
+python -m infinigen.datagen.manage_jobs --output_folder /n/fs/pvl-renders/kkayan/river --num_scenes 10 \
     --pipeline_config slurm_high_memory.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin \
     --pipeline_overrides iterate_scene_tasks.frame_range=[100,244] \ 
     --config simulated_river.gin no_assets.gin no_creatures.gin fast_terrain_assets.gin \

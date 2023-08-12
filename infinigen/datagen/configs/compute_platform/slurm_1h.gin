@@ -1,0 +1,14 @@
+include 'infinigen/datagen/configs/compute_platform/slurm.gin'
+
+iterate_scene_tasks.view_block_size = 3
+
+queue_combined.hours = 1
+queue_coarse.hours = 1
+queue_fine_terrain.hours = 1
+queue_populate.hours = 1
+queue_render.hours = 1
+queue_upload.hours = 1
+queue_mesh_save.hours = 1
+queue_opengl.hours = 1
+
+queue_coarse.cpus = 8

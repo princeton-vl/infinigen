@@ -1,33 +1,33 @@
-[submodule "worldgen/infinigen_gpl"]
-	path = worldgen/infinigen_gpl
+[submodule "infinigen/infinigen_gpl"]
+	path = infinigen/infinigen_gpl
 	url = https://github.com/princeton-vl/infinigen_gpl.git
-[submodule "process_mesh/dependencies/eigen"]
-	path = process_mesh/dependencies/eigen
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/eigen"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "process_mesh/dependencies/argparse"]
-	path = process_mesh/dependencies/argparse
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/argparse"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/argparse
 	url = https://github.com/p-ranav/argparse.git
-[submodule "process_mesh/dependencies/cnpy"]
-	path = process_mesh/dependencies/cnpy
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/cnpy"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/cnpy
 	url = https://github.com/rogersce/cnpy.git
-[submodule "process_mesh/dependencies/indicators"]
-	path = process_mesh/dependencies/indicators
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/indicators"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/indicators
 	url = https://github.com/p-ranav/indicators.git
-[submodule "process_mesh/dependencies/tinycolormap"]
-	path = process_mesh/dependencies/tinycolormap
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/tinycolormap"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/tinycolormap
 	url = https://github.com/yuki-koyama/tinycolormap.git
-[submodule "process_mesh/dependencies/glm"]
-	path = process_mesh/dependencies/glm
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/glm"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "process_mesh/dependencies/fast_obj"]
-	path = process_mesh/dependencies/fast_obj
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/fast_obj"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/fast_obj
 	url = https://github.com/thisistherk/fast_obj.git
-[submodule "process_mesh/dependencies/json"]
-	path = process_mesh/dependencies/json
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/json"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/json
 	url = https://github.com/nlohmann/json.git
-[submodule "process_mesh/dependencies/stb"]
-	path = process_mesh/dependencies/stb
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/stb"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/stb
 	url = https://github.com/nothings/stb.git
-[submodule "process_mesh/dependencies/glfw"]
-	path = process_mesh/dependencies/glfw
+[submodule "infinigen/datagen/custom_ground_truth/dependencies/glfw"]
+	path = infinigen/datagen/custom_ground_truth/dependencies/glfw
 	url = https://github.com/glfw/glfw.git

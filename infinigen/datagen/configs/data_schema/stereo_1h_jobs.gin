@@ -1,0 +1,14 @@
+
+iterate_scene_tasks.frame_range=(1, 1)
+iterate_scene_tasks.cam_id_ranges =(1, 2)
+
+iterate_scene_tasks.global_tasks = [
+    {'name': "coarse", 'func': @queue_coarse},
+    {'name': "fine", 'func': @queue_populate},
+    {'name': "fineterrain", 'func': @queue_fine_terrain}, 
+]
+iterate_scene_tasks.view_dependent_tasks = []
+iterate_scene_tasks.camera_dependent_tasks = [
+    {'name': 'rendershort', 'func': @rendershort/queue_render},
+    {'name': 'renderbackup', 'func': @renderbackup/queue_render, 'condition': 'prev_failed'}
+]

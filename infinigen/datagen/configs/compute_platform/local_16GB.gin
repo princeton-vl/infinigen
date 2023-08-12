@@ -1,0 +1,6 @@
+include 'infinigen/datagen/configs/compute_platform/local_256GB.gin'
+
+manage_datagen_jobs.num_concurrent=1
+
+
+

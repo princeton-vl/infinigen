@@ -1,0 +1,13 @@
+include 'infinigen/datagen/configs/compute_platform/slurm.gin'
+
+# Combined (only used when `stereo_combined.gin` or similar is included)
+queue_combined.mem_gb = 48
+queue_combined.cpus = 4
+queue_coarse.mem_gb = 48
+queue_coarse.cpus = 4
+queue_fine_terrain.mem_gb = 48
+queue_fine_terrain.cpus = 4
+queue_populate.mem_gb = 48
+queue_populate.cpus = 4
+queue_populate.hours = 24
+renderbackup/queue_populate.mem_gb = 48

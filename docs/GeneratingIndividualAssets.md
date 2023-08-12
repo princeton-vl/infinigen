@@ -3,7 +3,7 @@
 This tutorial will help you generate images or .blend files of specific assets of your choice.
 
 Limitations (to be addressed soon): 
-- This tool only exports .blend files. [See here](../worldgen/tools/export/README.md) for a prototype tool to convert these to standard mesh file formats, but it itself has some limitations. 
+- This tool only exports .blend files. [See here](../infinigen/datagen/tools/export/README.md) for a prototype tool to convert these to standard mesh file formats, but it itself has some limitations. 
 - This tool cannot currently generate or export terrain meshes.
 
 ### Example Commands

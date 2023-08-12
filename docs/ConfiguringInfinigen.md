@@ -7,8 +7,8 @@ This document explains how to configure various features of Infinigen. It assume
 ## Overview
 
 Generating scenes with Infinigen typically involves two main python scripts:
-1. [generate.py](../worldgen/generate.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
-1. [manage_datagen_jobs.py](../worldgen/tools/manage_datagen_jobs.py) - a script which invokes the above scene composition script many times to generate a useful dataset.
+1. [examples/generate_nature.py](../examples/generate_nature.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
+1. [manage_jobs.py](../infinigen/datagen/manage_jobs.py) - a script which invokes the above scene composition script many times to generate a useful dataset.
 
 `manage_datagen_jobs.py` controls how many and what jobs will be run, and `generate.py` determines what will happen during those jobs. Ultimately both programs must be configured correctly in order to make useful data.
 
@@ -47,7 +47,7 @@ Now that you understand the two major python programs and how to configure them,
 
 ```
 # Original hello world command
-python -m tools.manage_datagen_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \
 --configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin blender_gt.gin \ 
 --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
@@ -156,7 +156,7 @@ Some scene type configs are also generally more expensive than others. `forest.g
 
 ### Other `manage_datagen_jobs.py` commandline options
 
-Please run `pythom -m tools.manage_datagen_jobs --help` for an up-to-date description of other commandline arguments. We always use `--cleanup big_files --warmup_sec 30000` for large render jobs. Optionally, you can also log render progress to Weights & Biases.
+Please run `pythom -m infinigen.datagen.manage_jobs --help` for an up-to-date description of other commandline arguments. We always use `--cleanup big_files --warmup_sec 30000` for large render jobs. Optionally, you can also log render progress to Weights & Biases.
 
 ## Example Commands
 
@@ -171,7 +171,7 @@ All commands below are shown with using `local_256GB` config, but you can attemp
 Most videos in the "Introducing Infinigen" launch video were made using commands similar to the following:
 
 ````
-python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
 ````
@@ -179,7 +179,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 #### Creating large-scale stereo datasets
 
 ````
-python -m tools.manage_datagen_jobs --output_folder outputs/stereo_data --num_scenes 10000 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_data --num_scenes 10000 \
     --pipeline_config slurm stereo cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
 ````
@@ -187,7 +187,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/stereo_data --num_sc
 #### Creating a few low-resolution images to your test changes
 
 ```
-screen python -m tools.manage_datagen_jobs --output_folder outputs/dev --num_scenes 50 \
+screen python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes 50 \
     --pipeline_config slurm monocular cuda_terrain \
     --cleanup big_files --warmup_sec 1200 --configs dev
 ```
@@ -198,7 +198,7 @@ These commands are intended as inspiration - please read docs above for more adv
 
 <b> Create images that always have rain: </b>
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000  \
     --overrides compose_scene.rain_particles_chance=1.0
@@ -208,7 +208,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 
 <b> Create images that only have terrain: </b>
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config no_assets
 ```
@@ -217,7 +217,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 <b> Create videos at birds-eye-view camera altitudes: </b>
 
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
@@ -227,7 +227,7 @@ python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scen
 
 <b> Create 1 second video clips: </b>
 ```
-python -m tools.manage_datagen_jobs --output_folder outputs/my_videos --num_scenes 500 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
