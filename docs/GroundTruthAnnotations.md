@@ -61,7 +61,7 @@ bash install.sh opengl
 ```
 Or, if you have already run `install.sh` earlier, you can just run
 ```
-bash worldgen/tools/compile_opengl.sh
+bash worldgen/tools/install/compile_opengl.sh
 ```
 
 ### Extended Hello-World

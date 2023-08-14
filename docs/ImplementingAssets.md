@@ -14,21 +14,21 @@ This guide does not cover how to add new elements to the terrain marching cubes 
 
 ## Setting up the Blender UI for interactive development
 
-Unless you intend to work solely on python/other code (and dont intend to interact much with Blender APIs) it will help you to have easy access to Infinigen via the Blender UI.
+Unless you intend to work solely on python/other code (and don't intend to interact much with Blender APIs) it will help you to have easy access to Infinigen via the Blender UI.
 
 To open the Blender UI, run the following in a terminal:
 ```
 cd infinigen/worldgen
 $BLENDER dev_scene.blend
 ```
-:warning: You must use $BLENDER, which refers to the blender installation located in infinigen/blender, as it has additional dependencies installed. Using another blender installation is fine to open or inspect files, but it will not be able to run any of Blender's code or tools.
+:warning: You must use $BLENDER, which refers to the blender installation located in infinigen/blender, as it has additional dependencies installed. Using another blender installation is fine to open or inspect files, but it will not be able to run any of Infinigen's code or tools.
 
 We recommend you set your Blender UI up so you can see a Text Editor, Python Console, 3D Viewport, Geometry Nodes and a Shader Nodes window. The easiest way to do this is to complete the following steps (UI locations also marked in red in the screenshot below):
 1. Click the "Geometry Nodes" tab
-1. Use the dropdown in the topleft of the spreadsheet window (marked in #1 red) to change it to a Text Editor.
-1. Drag up from the bottom right of the window (marked in #2 red) to split it in half vertically. Convert this new window to a Python console using the dropdown in it's top-left corner, similarly to step 2.
+1. Use the dropdown in the top left of the spreadsheet window (marked in #1 red) to change it to a Text Editor.
+1. Drag up from the bottom right of the window (marked in #2 red) to split it in half vertically. Convert this new window to a Python console using the dropdown in its top-left corner, similarly to step 2.
 1. Click the New button (marked #4 in red) to add a geometry node group to the cube
-1. Drag left from the bottom right corner of the geometry nodes window (similarly as in step 3) to split the window in half, and use the dropdown in the topleft of the new window to convert it into a Shader Editor.   
+1. Drag left from the bottom right corner of the geometry nodes window (similarly as in step 3) to split the window in half, and use the dropdown in the top left of the new window to convert it into a Shader Editor.   
 
 ![Arranging Blender UI Panels](images/implementing_assets/setting_up_blender_ui_1.png)
 
@@ -36,19 +36,19 @@ Once these steps are complete, you should see something similar to the following
 
 ![Completed result after arranging](images/implementing_assets/setting_up_blender_ui_2.png)
 
-You do not have to use this UI configuration all the time, but the following steps assume you have these three windows (Text Editor, 3D Viewport, Geometry Nodes) visible to you. 
+You do not have to use this UI configuration all the time, but the following steps assume you know how to access these windows when needed. 
 
 ## Importing Infinigen's dependencies into the Blender UI
 
 Finally, to import Infinigen into your Blender UI, click the 'Open' button on your `Text Editor` panel, then navigate to and open `worldgen/tools/blendscript_import_infinigen.py`. Click the play button to execute the script. 
 
-<b>You will need to re-run this script every time you restart Blender. </b>
+:warning: You will need to re-run this script every time you restart Blender.
 
 ## Generating assets/materials via Blender Python Commandline
 
-Now that you have imported Infinigen into Blender, you can easily access all it's assets and materials via the commandline.
+Now that you have imported Infinigen into Blender, you can easily access all its assets and materials via the commandline.
 
-To start, we reccomend using Infinigen's sky lighting while you make your asset, so you can get a better sense of what the asset will look like in full scenes. To sample a random sky lighting, run the following two steps in your Blender console:
+To start, we recommend using Infinigen's sky lighting while you make your asset, so you can get a better sense of what the asset will look like in full scenes. To sample a random sky lighting, run the following two steps in your Blender console:
 ```
 from lighting import lighting
 lighting.add_lighting()
@@ -184,5 +184,5 @@ from assets import myasset
 importlib.reload(myasset) 
 
 seed = 0
-obj = myasset.MyAssetFactory(seed).spawn_asset()
+obj = myasset.MyAssetFactory(seed).spawn_asset(0)
 ```

@@ -28,3 +28,4 @@ compute_base_views.min_candidates_ratio = 1
 walk_same_altitude.ignore_missed_rays = True
 
 make_river.resolution = 400
+make_river.simulation_duration = 250

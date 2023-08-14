@@ -125,6 +125,6 @@ fi
 
 
 # Build Flip Fluids addon
-if [ "$1" = "flip_fluids" ] || if [ "$2" = "flip_fluids" ]; then
+if [ "$1" = "flip_fluids" ] || [ "$2" = "flip_fluids" ]; then
     bash ./worldgen/tools/install/compile_flip_fluids.sh
 fi

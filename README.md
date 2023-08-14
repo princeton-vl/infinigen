@@ -70,7 +70,7 @@ Please post this repository's Github Issues page for help. Please run your comma
 
 Infinigen wouldn't be possible without the fantastic work of the [Blender Foundation](https://www.blender.org/) and it's open-source contributors. Infinigen uses many open source projects, with special thanks to [Land-Lab](https://github.com/landlab/landlab), [BlenderProc](https://github.com/DLR-RM/BlenderProc) [Blender-FLIP-Fluids](https://github.com/rlguy/Blender-FLIP-Fluids) and [Blender-Differential-Growth](https://github.com/inca/blender-differential-growth).
 
-We thank [Thomas Kole](https://blenderartists.org/u/ThomasKole) for providing procedural clouds (which are more photorealistic than our original version) and [Pedro P. Lopes](https://blendswap.com/blend/30728) for the autoexposure nodegraph. 
+We thank [Thomas Kole](https://blenderartists.org/u/ThomasKole) for providing procedural clouds and [Pedro P. Lopes](https://blendswap.com/blend/30728) for the autoexposure nodegraph. 
 
 We learned tremendously from online tutorials of 
 [Andrew Price](https://www.youtube.com/channel/UCOKHwx1VCdgnxwbjyb9Iu1g),
