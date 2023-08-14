@@ -9,6 +9,8 @@
 shopt -s expand_aliases
 set -e
 
+cd ./infinigen/terrain
+
 elements=(
     "voronoi_rocks"
     "upsidedown_mountains"
@@ -130,3 +132,5 @@ mkdir -p lib/cpu/soil_machine
 gx1 -o lib/cpu/soil_machine/SoilMachine.o source/cpu/soil_machine/SoilMachine.cpp
 gx2 -o lib/cpu/soil_machine/SoilMachine.so lib/cpu/soil_machine/SoilMachine.o
 echo "compiled lib/cpu/soil_machine/SoilMachine.so"
+
+cd -

@@ -1,6 +1,8 @@
 # How to use
 
-This palette generating tool is enabled using `GoogleImagesSearch` (currently using Zeyu's API key). Also you need `json5`.
+This palette generating tool is enabled using `GoogleImagesSearch` (currently using Zeyu's API key). 
+
+Please `pip install google-images-search==1.4.4 json5` ontop of Infinigen's usual dependencies.
 
 ## Step 1
 

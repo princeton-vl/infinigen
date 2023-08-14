@@ -29,19 +29,41 @@ from frozendict import frozendict
 
 from infinigen.terrain import Terrain
 
-from infinigen.assets.trees.generate import TreeFactory, BushFactory, random_season
-from infinigen.assets.rocks.boulder import BoulderFactory
-from infinigen.assets.lighting.glowing_rocks import GlowingRocksFactory
-from infinigen.assets.creatures import (
-    CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
-    BeetleFactory, AntSwarmFactory, BirdFactory, SnakeFactory, \
-    CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory,
-    DragonflyFactory
+from infinigen.core.placement import (
+    particles, placement, density, 
+    camera as cam_util, 
+    split_in_view, 
+    factory,
+    animation_policy, 
+    instance_scatter, 
+    detail,
 )
-from infinigen.assets.weather.cloud.generate import CloudFactory
-from infinigen.assets.cactus import CactusFactory
 
-from infinigen.core.placement import placement, camera as cam_util
+from infinigen.assets.scatters import (
+    pebbles, grass, snow_layer, ground_leaves, ground_twigs, \
+    chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
+    slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells, \
+    pine_needle, seaweed, coral_reef, jellyfish, urchin
+)
+
+from infinigen.assets.materials import (
+    mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
+)
+
+from infinigen.assets import (
+    fluid, 
+    cactus, 
+    cactus, 
+    trees, 
+    monocot, 
+    rocks, 
+    underwater, 
+    creatures, 
+    lighting,
+    weather,
+)
+from infinigen.terrain import Terrain
 
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
@@ -53,25 +75,27 @@ from infinigen.core.util.organization import Task, Attributes, TerrainNames
 from infinigen.core.placement import placement, density, camera as cam_util
 from infinigen.core.placement.split_in_view import split_inview
 
-from infinigen.assets.fluid.fluid import set_fire_to_assets
-from infinigen.assets.fluid.asset_cache import FireCachingSystem
-from infinigen.assets.fluid.cached_factory_wrappers import CachedBoulderFactory, CachedBushFactory, CachedCactusFactory, CachedCreatureFactory, CachedTreeFactory
-
 import infinigen.assets.scatters
 from infinigen.assets.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
 from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 
-from infinigen.core.placement.factory import make_asset_collection
-from infinigen.core.util import blender as butil
+from infinigen.core.util import (
+    blender as butil,
+    logging as logging_util,
+    pipeline, 
+    exporting
+)
+
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core import execute_tasks, surface
+
+
 from infinigen.core.util import exporting
 from infinigen.core.util.logging import Timer, save_polycounts, create_text_file, Suppress
-from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import sample_registry
 
 from infinigen.assets.utils.tag import tag_system
-
-VERSION = '1.0.4'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -96,36 +120,36 @@ def populate_scene(
     p = RandomStageExecutor(scene_seed, output_folder, params)
     camera = bpy.context.scene.camera
 
-    season = p.run_stage('choose_season', random_season, use_chance=False, default=[])
+    season = p.run_stage('choose_season', trees.random_season, use_chance=False, default=[])
 
-    fire_cache_system = FireCachingSystem() if params.get('cached_fire') else None
+    fire_cache_system = fluid.FireCachingSystem() if params.get('cached_fire') else None
 
     populated = {}
     populated['trees'] = p.run_stage('populate_trees', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4))#,
+        fn=lambda: placement.populate_all(trees.TreeFactory, camera, season=season, vis_cull=4))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8)) 
     populated['boulders'] = p.run_stage('populate_boulders', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(BoulderFactory, camera, vis_cull=3))#,
+        fn=lambda: placement.populate_all(rocks.BoulderFactory, camera, vis_cull=3))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
     populated['bushes'] = p.run_stage('populate_bushes', use_chance=False,
-        fn=lambda: placement.populate_all(BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
+        fn=lambda: placement.populate_all(trees.BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
     p.run_stage('populate_kelp', use_chance=False,
         fn=lambda: placement.populate_all(kelp.KelpMonocotFactory, camera, vis_cull=5))
     populated['cactus'] = p.run_stage('populate_cactus', use_chance=False,
-        fn=lambda: placement.populate_all(CactusFactory, camera, vis_cull=6))
+        fn=lambda: placement.populate_all(cactus.CactusFactory, camera, vis_cull=6))
     p.run_stage('populate_clouds', use_chance=False,
-        fn=lambda: placement.populate_all(CloudFactory, camera, dist_cull=None, vis_cull=None))
+        fn=lambda: placement.populate_all(weather.CloudFactory, camera, dist_cull=None, vis_cull=None))
     p.run_stage('populate_glowing_rocks', use_chance=False,
-        fn=lambda: placement.populate_all(GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
+        fn=lambda: placement.populate_all(lighting.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
     
     populated['cached_fire_trees'] = p.run_stage('populate_cached_fire_trees', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
+        fn=lambda: placement.populate_all(fluid.CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
     populated['cached_fire_boulders'] = p.run_stage('populate_cached_fire_boulders', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(CachedBoulderFactory, camera, vis_cull=3, dist_cull=70, cache_system=fire_cache_system))
+        fn=lambda: placement.populate_all(fluid.CachedBoulderFactory, camera, vis_cull=3, dist_cull=70, cache_system=fire_cache_system))
     populated['cached_fire_bushes'] = p.run_stage('populate_cached_fire_bushes', use_chance=False,
-        fn=lambda: placement.populate_all(CachedBushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide', cache_system=fire_cache_system))
+        fn=lambda: placement.populate_all(fluid.CachedBushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide', cache_system=fire_cache_system))
     populated['cached_fire_cactus'] = p.run_stage('populate_cached_fire_cactus', use_chance=False,
-        fn=lambda: placement.populate_all(CachedCactusFactory, camera, vis_cull=6, cache_system=fire_cache_system))
+        fn=lambda: placement.populate_all(fluid.CachedCactusFactory, camera, vis_cull=6, cache_system=fire_cache_system))
     
     grime_selection_funcs = {
         'trees': scatter_lower,
@@ -170,11 +194,16 @@ def populate_scene(
     p.run_stage("snow_layer", lambda: apply_snow_layer(snow_layer.Snowlayer))
 
     creature_facs = {
-        'carnivore': CarnivoreFactory, 'herbivore': HerbivoreFactory,
-        'bird': BirdFactory, 'fish': FishFactory, 'snake': SnakeFactory,
-        'beetles': BeetleFactory, 
-        'flyingbird': FlyingBirdFactory, 'dragonfly': DragonflyFactory,
-        'crab': CrabFactory, 'crustacean': CrustaceanFactory
+        'beetles': creatures.BeetleFactory, 
+        'bird': creatures.BirdFactory, 
+        'carnivore': creatures.CarnivoreFactory, 
+        'crab': creatures.CrabFactory, 
+        'crustacean': creatures.CrustaceanFactory,
+        'dragonfly': creatures.DragonflyFactory,
+        'fish': creatures.FishFactory, 
+        'flyingbird': creatures.FlyingBirdFactory, 
+        'herbivore': creatures.HerbivoreFactory,
+        'snake': creatures.SnakeFactory,
     }
     for k, fac in creature_facs.items():
         p.run_stage(f'populate_{k}', use_chance=False,
@@ -187,7 +216,12 @@ def populate_scene(
     def set_fire(assets):
         objs = [o for *_, a in assets for _, o in a]
         with butil.EnableParentCollections(objs):
-            set_fire_to_assets(assets, bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
+            fluid.set_fire_to_assets(
+                assets, 
+                bpy.context.scene.frame_start-fire_warmup, 
+                simulation_duration, 
+                output_folder
+            )
 
     p.run_stage('trees_fire_on_the_fly', set_fire, populated['trees'], prereq='populate_trees')
     p.run_stage('bushes_fire_on_the_fly', set_fire, populated['bushes'], prereq='populate_bushes')   
@@ -250,11 +284,11 @@ def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
         current_frame_mesh_id_mapping.clear()
 
 def validate_version(scene_version):
-    if scene_version is None or scene_version.split('.')[:-1] != VERSION.split('.')[:-1]:
+    if scene_version is None or scene_version.split('.')[:-1] != infinigen.__version__.split('.')[:-1]:
         raise ValueError(
-            f'examples/generate_nature.py {VERSION=} attempted to load a scene created by version {scene_version=}')
-    if scene_version != VERSION:
-        logging.warning(f'{VERSION=} has minor version mismatch with {scene_version=}')
+            f'examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}')
+    if scene_version != infinigen.__version__:
+        logging.warning(f'{infinigen.__version__=} has minor version mismatch with {scene_version=}')
 
 @gin.configurable
 def group_collections(config):
@@ -297,7 +331,7 @@ def execute_tasks(
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
             tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
-        scene_version = get_scene_tag('VERSION')
+        scene_version = get_scene_tag('infinigen.__version__')
         butil.approve_all_drivers()
     
     if frame_range[1] < frame_range[0]:
@@ -331,7 +365,7 @@ def execute_tasks(
 
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
-        butil.spawn_empty(f'{VERSION=}')
+        butil.spawn_empty(f'{infinigen.__version__=}')
         compose_scene_func(output_folder, scene_seed)
 
     camera = cam_util.set_active_camera(*camera_id)
@@ -365,7 +399,7 @@ def execute_tasks(
         tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
         with (output_folder/ "version.txt").open('w') as f:
-            f.write(f"{VERSION}\n")
+            f.write(f"{infinigen.__version__}\n")
 
         with (output_folder/'polycounts.txt').open('w') as f:
             save_polycounts(f)
@@ -471,7 +505,7 @@ def main(
     version_req = ['3.6.0']
     assert bpy.app.version_string in version_req, f'You are using blender={bpy.app.version_string} which is ' \
                                                   f'not supported. Please use {version_req}'
-    logging.info(f'infinigen version {VERSION}')
+    logging.info(f'infinigen version {infinigen.__version__}')
     logging.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}")
 
     if input_folder is not None:

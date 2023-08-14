@@ -22,13 +22,6 @@ from infinigen.core.placement import (
     animation_policy, instance_scatter, detail,
 )
 
-from infinigen.assets.creatures import (
-    CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
-    BeetleFactory, AntSwarmFactory, BirdFactory, SnakeFactory, \
-    CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory, \
-    DragonflyFactory
-)
-
 from infinigen.assets.scatters import (
     pebbles, grass, snow_layer, ground_leaves, ground_twigs, \
     chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
@@ -42,11 +35,18 @@ from infinigen.assets.materials import (
 )
 
 from infinigen.assets import (
-    fluid, cactus, cactus, trees, monocot, rocks, underwater
+    fluid, 
+    cactus, 
+    cactus, 
+    trees, 
+    monocot, 
+    rocks, 
+    underwater, 
+    creatures, 
+    lighting,
+    weather
 )
 from infinigen.terrain import Terrain
-from infinigen.assets.lighting import sky_lighting, glowing_rocks, caustics_lamp
-from infinigen.assets.weather import kole_clouds, particles, cloud
 
 from infinigen.core.util import (
     blender as butil,
@@ -56,7 +56,6 @@ from infinigen.core.util import (
 from infinigen.core.util.organization import Tags
 from infinigen.core.util.random import sample_registry, random_general
 from infinigen.core.util.math import FixedSeed, int_hash
-
 from infinigen.core import execute_tasks, surface
 
 @gin.configurable
@@ -81,7 +80,7 @@ def compose_scene(output_folder, scene_seed, **params):
     underwater_domain = params.get('underwater_domain_tags')
     nonliving_domain = params.get('nonliving_domain_tags')
 
-    p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
+    p.run_stage('fancy_clouds', weather.kole_clouds.add_kole_clouds)
 
     season = p.run_stage('season', trees.random_season, use_chance=False)
     logging.info(f'{season=}')
@@ -118,7 +117,7 @@ def compose_scene(output_folder, scene_seed, **params):
     p.run_stage('bushes', add_bushes, terrain_mesh)
 
     def add_clouds(terrain_mesh):
-        cloud_factory = cloud.CloudFactory(int_hash((scene_seed, 0)), coarse=True, terrain_mesh=terrain_mesh)
+        cloud_factory = weather.CloudFactory(int_hash((scene_seed, 0)), coarse=True, terrain_mesh=terrain_mesh)
         placement.scatter_placeholders(cloud_factory.spawn_locations(), cloud_factory)
     p.run_stage('clouds', add_clouds, terrain_mesh)
 
@@ -136,7 +135,7 @@ def compose_scene(output_folder, scene_seed, **params):
 
     def add_glowing_rocks(terrain_mesh):
         selection = density.placement_mask(uniform(0.03, 0.3), normal_thresh=-1.1, select_thresh=0, tag=Tags.Cave)
-        fac = glowing_rocks.GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
+        fac = lighting.GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
         placement.scatter_placeholders_mesh(terrain_mesh, fac,
             overall_density=params.get("glow_rock_density", 0.025), selection=selection)
     p.run_stage('glowing_rocks', add_glowing_rocks, terrain_mesh)
@@ -173,7 +172,7 @@ def compose_scene(output_folder, scene_seed, **params):
     )
     cam = cam_util.get_camera(0, 0)
 
-    p.run_stage('lighting', sky_lighting.add_lighting, cam, use_chance=False)
+    p.run_stage('lighting', lighting.sky_lighting.add_lighting, cam, use_chance=False)
     
     # determine a small area of the terrain for the creatures to run around on
     # must happen before camera is animated, as camera may want to follow them around
@@ -189,7 +188,8 @@ def compose_scene(output_folder, scene_seed, **params):
         fac_class = sample_registry(params['ground_creature_registry'])
         fac = fac_class(int_hash((scene_seed, 0)), bvh=terrain_bvh, animation_mode='idle')
         n = params.get('max_ground_creatures', randint(1, 4))
-        selection = density.placement_mask(select_thresh=0, tag='beach', altitude_range=(-0.5, 0.5)) if fac_class is CrabFactory else 1
+        selection = density.placement_mask(select_thresh=0, tag='beach', altitude_range=(-0.5, 0.5)) \
+            if fac_class is creatures.CrabFactory else 1
         col = placement.scatter_placeholders_mesh(target, fac, num_placeholders=n, overall_density=1, selection=selection, altitude=0.2)
         return list(col.objects)
     pois += p.run_stage('ground_creatures', add_ground_creatures, target=terrain_center, default=[])
@@ -226,13 +226,13 @@ def compose_scene(output_folder, scene_seed, **params):
         deps = bpy.context.evaluated_depsgraph_get()
         terrain_inview_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_inview, deps)
 
-    p.run_stage('caustics', lambda: caustics_lamp.add_caustics(terrain_near))
+    p.run_stage('caustics', lambda: lighting.caustics_lamp.add_caustics(terrain_near))
 
     def add_fish_school():
         n = random_general(params.get("max_fish_schools", 3))
         for i in range(n):
             selection = density.placement_mask(0.1, select_thresh=0, tag=underwater_domain)
-            fac = FishSchoolFactory(randint(1e7), bvh=terrain_inview_bvh)
+            fac = creatures.FishSchoolFactory(randint(1e7), bvh=terrain_inview_bvh)
             col = placement.scatter_placeholders_mesh(terrain_near, fac, selection=selection,
                 overall_density=1, num_placeholders=1, altitude=2)
             placement.populate_collection(fac, col)
@@ -241,7 +241,7 @@ def compose_scene(output_folder, scene_seed, **params):
     def add_bug_swarm():
         n = randint(1, params.get("max_bug_swarms", 3) + 1)
         selection = density.placement_mask(0.1, select_thresh=0, tag=land_domain)
-        fac = AntSwarmFactory(randint(1e7), bvh=terrain_inview_bvh, coarse=True)
+        fac = creatures.AntSwarmFactory(randint(1e7), bvh=terrain_inview_bvh, coarse=True)
         col = placement.scatter_placeholders_mesh(terrain_inview, fac, 
             selection=selection, overall_density=1, num_placeholders=n, altitude=2)
         placement.populate_collection(fac, col)
@@ -330,8 +330,8 @@ def compose_scene(output_folder, scene_seed, **params):
     p.run_stage('decorative_plants', lambda: decorative_plants.apply(terrain_near,
         selection=density.placement_mask(scale=uniform(0.05, 0.2), select_thresh=uniform(0.5, 0.65), tag=land_domain, return_scalar=True)))
 
-    p.run_stage('wind', particles.wind_effector)
-    p.run_stage('turbulence', particles.turbulence_effector)
+    p.run_stage('wind', weather.particles.wind_effector)
+    p.run_stage('turbulence', weather.particles.turbulence_effector)
     emitter_off = Vector((0, 0, 5)) # to allow space to fall into frame from off screen
 
     def add_leaf_particles():

@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import sys
 
 from setuptools import setup, Extension
 
@@ -7,6 +8,24 @@ import numpy
 from Cython.Build import cythonize
 
 cwd = Path(__file__).parent
+
+TERRAIN = True
+CUSTOMGT = True
+FLUIDS = True
+RUN_BUILD_DEPS = True
+
+filtered_args = []
+for i, arg in enumerate(sys.argv):
+    if arg in ["clean", "egg_info", "sdist"]:
+        RUN_BUILD_DEPS = False
+    elif arg == '--noterrain':
+        TERRAIN = False
+    elif arg == '--nogt':
+        CUSTOMGT = False
+    elif arg == '--nofluids':
+        FLUIDS = False
+    filtered_args.append(arg)
+sys.argv = filtered_args
 
 def get_submodule_folders():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
@@ -24,12 +43,31 @@ def ensure_submodules():
 
     isempty = lambda p: not any(p.iterdir())
     if any(not p.exists() or isempty(p) for p in folders):
-        subprocess.check_call(
+        subprocess.run(
             ["git", "submodule", "update", "--init", "--recursive"], cwd=cwd
         )
 
-ensure_submodules() # not actually needed for this version of setup.py, but will be in future 
-    
+ensure_submodules()
+
+def build_deps(deps):
+    for dep, enabled in deps:
+        if not enabled:
+            continue
+        print(f'Building external executable {dep}')
+        try:
+            # Defer to Makefile
+            subprocess.run(['make', f'build_{dep}'], cwd=cwd)
+        except subprocess.CalledProcessError as e:
+            print(f'[WARNING] build_{dep} failed! {dep} features will not function. {e}')
+
+if RUN_BUILD_DEPS:
+    deps = [
+        ('terrain', TERRAIN),
+        ('custom_groundtruth', CUSTOMGT),
+        ('flip_fluids', FLUIDS)
+    ]
+    build_deps(deps)
+
 cython_extensions = [
     Extension(
         name="bnurbs",
@@ -46,6 +84,12 @@ cython_extensions = [
 setup(
     ext_modules=[
         *cythonize(cython_extensions)
+    ],
+    package_data=[
+        "infinigen/terrain/lib",
+        "infinigen/datagen/customgt/build"
     ]
-    # other opts come from setup.cfg
+    # other opts come from pyproject.toml and setup.cfg
 )
+
+

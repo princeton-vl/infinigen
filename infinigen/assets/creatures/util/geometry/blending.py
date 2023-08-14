@@ -22,9 +22,11 @@ from infinigen.core.util.math import wrap_around_cyclic_coord, new_domain_from_a
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
 
-from infinigen.assets.creatures.geometry.nurbs import blender_mesh_from_pydata, compute_cylinder_topology
-from infinigen.assets.creatures.geometry import nurbs
-from infinigen.assets.creatures.geometry import nurbs, lofting, skin_ops
+from infinigen.assets.creatures.util.geometry.nurbs import blender_mesh_from_pydata, compute_cylinder_topology
+from infinigen.assets.creatures.util.geometry import nurbs
+from infinigen.assets.creatures.util.geometry import nurbs, lofting, skin_ops
+
+raise NotImplementedError ('blending.py not currently used, please re-add shapely as a dependency and delete this line')
 
 from shapely.geometry import Polygon, Point, LineString
 import shapely

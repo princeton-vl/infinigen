@@ -18,12 +18,21 @@ You will not be able to pull or merge infinigen v1.0.1 into a v1.0.0 repo withou
 </details closed>
 
 **Run these commands to get started**
+
+Install dependencies:
+```
+# on Linux
+
+# on Mac
+arch -arm64 brew install llvm open-mpi libomp glm glew
+```
+
 ```
 git clone --recursive https://github.com/princeton-vl/infinigen.git
 cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
-bash install.sh
+python setup.py build_ext
 ```
 `install.sh` may take significant time to download Blender and compile all source files.
 Ignore non-fatal warnings. See [Getting Help](#getting-help) for guidelines on posting github issues

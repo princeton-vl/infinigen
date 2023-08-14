@@ -36,9 +36,9 @@ import submitit
 import wandb
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from tools.util import upload_util
-from tools.monitor_tasks import iterate_scene_tasks, on_scene_termination
-from tools.states import (
+from infinigen.datagen.util import upload_util
+from infinigen.datagen.monitor_tasks import iterate_scene_tasks, on_scene_termination
+from infinigen.datagen.states import (
     JobState, 
     SceneState, 
     CONCLUDED_JOBSTATES, 
@@ -63,6 +63,10 @@ from infinigen.datagen.job_funcs import (
     queue_render,
     queue_upload
 )
+from .util.submitit_emulator import ScheduledLocalExecutor, ImmediateLocalExecutor, LocalScheduleHandler, LocalJob
+
+from .util import upload_util
+from .util.upload_util import upload_job_folder # for pickle not to freak out
 
 # used only if enabled in gin configs
 PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' 
@@ -281,7 +285,7 @@ def get_disk_usage(folder):
 
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
     env = Environment(
-        loader=FileSystemLoader("tools"),
+        loader=FileSystemLoader("infinigen/datagen/tools"),
         autoescape=select_autoescape(),
     )
 
@@ -646,7 +650,6 @@ def main(args, shuffle=True, wandb_project='render', upload_commandfile_method=N
 
 if __name__ == "__main__":
     
-    assert Path('.').resolve().parts[-1] == 'worldgen'
     os.umask(0o007)
 
     slurm_available = (which("sbatch") is not None)
@@ -656,13 +659,6 @@ if __name__ == "__main__":
         '--output_folder', 
         type=Path, 
         required=True
-    )
-    parser.add_argument(
-        '--blender_path', 
-        type=str, 
-        default=None,
-        help="Full path to a `blender` executable with all dependencies installed. "
-        "If set to None, the system will use the $BLENDER environment variable"
     )
     parser.add_argument(
         '--num_scenes', 
@@ -763,7 +759,6 @@ if __name__ == "__main__":
         )
     
     assert args.specific_seed is None or args.num_scenes == 1
-    set_blender_path_global(args)
 
     overwrite_ok = args.use_existing or args.overwrite
     if args.output_folder.exists() and not overwrite_ok:

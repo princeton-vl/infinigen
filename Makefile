@@ -1,3 +1,15 @@
+build_terrain:
+	rm -r infinigen/terrain/*.egg-info
+	rm -r infinigen/terrain/__pycache__
+	rm -r infinigen/terrain/build
+	bash infinigen/tools/install/compile_terrain.sh
+
+build_custom_groundtruth:
+	bash ./infinigen/tools/install/compile_opengl.sh
+
+build_flip_fluids:
+	bash ./infinigen/tools/install/compile_flip_fluids.sh
+
 DOCKER_BUILD_PROGRESS ?= auto
 DOCKER_TAG ?= infinigen_docker_img
 
@@ -100,4 +112,3 @@ docker-run-no-gpu-opengl:
 		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		"$(DOCKER_TAG)" /bin/bash
-	
