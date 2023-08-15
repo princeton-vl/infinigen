@@ -38,4 +38,5 @@ compose_scene.rocks_chance = 0.3
 
 shader_atmosphere.density = 0
 water.geo.water_height = ("uniform", 0.002, 0.004)
+
 water.geo.with_ripples = 0

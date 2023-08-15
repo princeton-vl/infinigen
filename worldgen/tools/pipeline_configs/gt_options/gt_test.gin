@@ -1,0 +1,9 @@
+iterate_scene_tasks.camera_dependent_tasks = [
+    {'name': 'rendershort', 'func': @rendershort/queue_render}, 
+    {'name': 'renderbackup', 'func': @renderbackup/queue_render, 'condition': 'prev_failed'},
+    {'name': 'savemesh', 'func': @queue_mesh_save},
+    {'name': 'opengl', 'func': @queue_opengl},
+    {'name': 'blendergt', 'func': @ground_truth/queue_render},
+]
+
+queue_opengl.gt_testing = True

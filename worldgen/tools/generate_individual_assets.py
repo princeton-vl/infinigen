@@ -2,8 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this
 # source tree.
 
-# Authors: Lingjie Mei, Alex Raistrick
-
+# Authors: 
+# - Lingjie Mei
+# - Alex Raistrick
+# - Karhan Kayan - add fire option
 
 import argparse
 import ast
@@ -25,6 +27,8 @@ from PIL import Image
 from lighting import lighting
 from surfaces import surface
 from placement import density
+from util import blender as butil
+from fluid.fluid import set_obj_on_fire
 from placement.factory import AssetFactory
 
 from rendering.render import enable_gpu
@@ -60,6 +64,12 @@ def build_scene_asset(factory_name, idx):
             print(f'{factory}.spawn_asset({idx=}) FAILED!! {e}')
             raise e
         factory.finalize_assets(asset)
+        if args.fire:
+            set_obj_on_fire(asset,0,resolution = args.fire_res, simulation_duration = args.fire_duration, noise_scale=2, add_turbulence = True, adaptive_domain = False)
+            bpy.context.scene.frame_set(args.fire_duration)
+            bpy.context.scene.frame_end = args.fire_duration
+            bpy.data.worlds['World'].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
+            bpy.context.scene.view_settings.exposure = -1
         bpy.context.view_layer.objects.active = asset
         if asset.type == 'EMPTY':
             meshes = [o for o in asset.children_recursive if o.type == 'MESH']
@@ -69,15 +79,16 @@ def build_scene_asset(factory_name, idx):
                 sizes.append((np.amax(co, 0) - np.amin(co, 0)).sum())
             i = np.argmax(np.array(sizes))
             asset = meshes[i]
-        bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
-        plane = bpy.context.active_object
-        plane.location[-1] = np.amin(read_base_co(asset), 0)[-1]
-        plane.is_shadow_catcher = True
+        if not args.fire:
+            bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
+            plane = bpy.context.active_object
+            plane.location[-1] = np.amin(read_base_co(asset), 0)[-1]
+            plane.is_shadow_catcher = True
 
-        material = bpy.data.materials.new('plane')
-        material.use_nodes = True
-        material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
-        assign_material(plane, material)
+            material = bpy.data.materials.new('plane')
+            material.use_nodes = True
+            material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
+            assign_material(plane, material)
 
     return asset
 
@@ -123,8 +134,9 @@ def build_scene(path, idx, factory_name, args):
     scene.cycles.samples = args.samples
     butil.clear_scene()
 
-    bpy.context.scene.render.film_transparent = args.film_transparent
-    bpy.context.scene.world.node_tree.nodes['Background'].inputs[0].default_value[-1] = 0
+    if not args.fire:
+        bpy.context.scene.render.film_transparent = args.film_transparent
+        bpy.context.scene.world.node_tree.nodes['Background'].inputs[0].default_value[-1] = 0
     camera, center = setup_camera(args)
 
     with FixedSeed(args.lighting):
@@ -158,9 +170,18 @@ def build_scene(path, idx, factory_name, args):
         (path / 'scenes').mkdir(exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=f"{path}/scenes/scene_{idx:03d}.blend", filter_backup=True)
         tag_system.save_tag(f"{path}/MaskTag.json")
+
+    if args.fire:
+        bpy.data.worlds['World'].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
+        bpy.context.scene.view_settings.exposure = -2
+
     if args.render:
-        with Suppress():
-            bpy.ops.render.render(write_still=True)
+        if args.render_animation:
+            with Suppress():
+                bpy.ops.render.render(animation = True, write_still=True)
+        else:
+            with Suppress():
+                bpy.ops.render.render(write_still=True)
 
 
 def adjust_cam_distance(asset, camera, margin):
@@ -317,6 +338,10 @@ def make_args():
     parser.add_argument('-x', '--render', action='store_false', help="Whether to render the scene")
     parser.add_argument('-b', '--best_ratio', default=9 / 16, type=float,
                         help="Best aspect ratio for compiling the images into asset grid")
+    parser.add_argument('--fire', action = 'store_true')
+    parser.add_argument('--fire_res', default = 100, type = int)
+    parser.add_argument('--fire_duration', default = 30, type = int)
+    parser.add_argument('--render_animation', action = 'store_true')
     parser.add_argument('-t', '--film_transparent', default=1, type=int)
     parser.add_argument('--scale_reference', action='store_true', help="Add the scale reference")
     parser.add_argument('--skip_existing', action='store_true', help="Skip existing scenes and renders")

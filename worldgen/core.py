@@ -35,29 +35,33 @@ from placement import placement, density, camera as cam_util
 from placement.split_in_view import split_inview
 from lighting import lighting, kole_clouds
 
-from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
-from assets import boulder
+from assets.trees.generate import TreeFactory, BushFactory, random_season
+from assets.boulder import BoulderFactory
 from assets.glowing_rocks import GlowingRocksFactory
-from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
+from assets.creatures import (
+    CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
     BeetleFactory, AntSwarmFactory, BirdFactory, SnakeFactory, \
     CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
+)
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
 from assets.cactus import CactusFactory
 from assets.creatures import boid_swarm
 
 from placement import placement, camera as cam_util
-from assets.utils.misc import log_uniform
 
 from rendering.render import render_image
 from rendering.resample import resample_scene
 from assets.monocot import kelp
 from surfaces import surface
 
+from fluid.fluid import set_fire_to_assets
+from fluid.asset_cache import FireCachingSystem
+from fluid.cached_factory_wrappers import CachedBoulderFactory, CachedBushFactory, CachedCactusFactory, CachedCreatureFactory, CachedTreeFactory
+
 import surfaces.scatters
 from surfaces.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
-
 
 from placement.factory import make_asset_collection
 from util import blender as butil
@@ -69,7 +73,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -87,30 +91,43 @@ def sanitize_gin_override(overrides: list):
    
 @gin.configurable
 def populate_scene(
-    output_folder, terrain, scene_seed, **params
+    output_folder, 
+    scene_seed, 
+    **params
 ):
     p = RandomStageExecutor(scene_seed, output_folder, params)
     camera = bpy.context.scene.camera
 
     season = p.run_stage('choose_season', random_season, use_chance=False, default=[])
 
+    fire_cache_system = FireCachingSystem() if params.get('cached_fire') else None
+
     populated = {}
     populated['trees'] = p.run_stage('populate_trees', use_chance=False, default=[],
         fn=lambda: placement.populate_all(TreeFactory, camera, season=season, vis_cull=4))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8)) 
     populated['boulders'] = p.run_stage('populate_boulders', use_chance=False, default=[],
-        fn=lambda: placement.populate_all(boulder.BoulderFactory, camera, vis_cull=3))#,
+        fn=lambda: placement.populate_all(BoulderFactory, camera, vis_cull=3))#,
                                         #meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
-    p.run_stage('populate_bushes', use_chance=False,
+    populated['bushes'] = p.run_stage('populate_bushes', use_chance=False,
         fn=lambda: placement.populate_all(BushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide'))
     p.run_stage('populate_kelp', use_chance=False,
         fn=lambda: placement.populate_all(kelp.KelpMonocotFactory, camera, vis_cull=5))
-    p.run_stage('populate_cactus', use_chance=False,
+    populated['cactus'] = p.run_stage('populate_cactus', use_chance=False,
         fn=lambda: placement.populate_all(CactusFactory, camera, vis_cull=6))
     p.run_stage('populate_clouds', use_chance=False,
         fn=lambda: placement.populate_all(CloudFactory, camera, dist_cull=None, vis_cull=None))
     p.run_stage('populate_glowing_rocks', use_chance=False,
         fn=lambda: placement.populate_all(GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
+    
+    populated['cached_fire_trees'] = p.run_stage('populate_cached_fire_trees', use_chance=False, default=[],
+        fn=lambda: placement.populate_all(CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
+    populated['cached_fire_boulders'] = p.run_stage('populate_cached_fire_boulders', use_chance=False, default=[],
+        fn=lambda: placement.populate_all(CachedBoulderFactory, camera, vis_cull=3, dist_cull=70, cache_system=fire_cache_system))
+    populated['cached_fire_bushes'] = p.run_stage('populate_cached_fire_bushes', use_chance=False,
+        fn=lambda: placement.populate_all(CachedBushFactory, camera, vis_cull=1, adapt_mesh_method='subdivide', cache_system=fire_cache_system))
+    populated['cached_fire_cactus'] = p.run_stage('populate_cached_fire_cactus', use_chance=False,
+        fn=lambda: placement.populate_all(CachedCactusFactory, camera, vis_cull=6, cache_system=fire_cache_system))
     
     grime_selection_funcs = {
         'trees': scatter_lower,
@@ -164,6 +181,20 @@ def populate_scene(
     for k, fac in creature_facs.items():
         p.run_stage(f'populate_{k}', use_chance=False,
             fn=lambda: placement.populate_all(fac, camera=None))
+        
+    
+    fire_warmup = params.get('fire_warmup', 50)
+    simulation_duration = bpy.context.scene.frame_end - bpy.context.scene.frame_start + fire_warmup
+    
+    def set_fire(assets):
+        objs = [o for *_, a in assets for _, o in a]
+        with butil.EnableParentCollections(objs):
+            set_fire_to_assets(assets, bpy.context.scene.frame_start-fire_warmup, simulation_duration, output_folder)
+
+    p.run_stage('trees_fire_on_the_fly', set_fire, populated['trees'], prereq='populate_trees')
+    p.run_stage('bushes_fire_on_the_fly', set_fire, populated['bushes'], prereq='populate_bushes')   
+    p.run_stage('boulders_fire_on_the_fly', set_fire, populated['boulders'], prereq='populate_boulders')
+    p.run_stage('cactus_fire_on_the_fly', set_fire, populated['cactus'], prereq='populate_cactus')
 
     p.save_results(output_folder/'pipeline_fine.csv')
 
@@ -175,7 +206,11 @@ def get_scene_tag(name):
         return None
 
 @gin.configurable
-def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None):
+def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None, hide_water = False):
+    if hide_water and "water_fine" in bpy.data.objects:
+        logging.info("Hiding water fine")
+        bpy.data.objects["water_fine"].hide_render = True
+        bpy.data.objects['water_fine'].hide_viewport = True
     if resample_idx is not None and resample_idx != 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
     with Timer('Render Frames'):
@@ -231,6 +266,7 @@ def execute_tasks(
     generate_resolution=(1920,1080),
     reset_assets=True,
     focal_length=None,
+    dryrun=False,
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -241,6 +277,10 @@ def execute_tasks(
         if (not os.path.islink(output_folder/"assets")) and (not (output_folder/"assets").exists()) and input_folder is not None and (input_folder/"assets").exists():
             os.symlink(input_folder/"assets", output_folder/"assets")
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
+
+    if dryrun:
+        return
+
     if Task.Coarse not in task:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
@@ -258,8 +298,13 @@ def execute_tasks(
     bpy.context.view_layer.update()
 
     surface.registry.initialize_from_gin()
-    bpy.ops.preferences.addon_enable(module='ant_landscape')
-    bpy.ops.preferences.addon_enable(module='real_snow')
+
+    for name in ['ant_landscape', 'real_snow', 'flip_fluids_addon']:
+        try:
+            bpy.ops.preferences.addon_enable(module='ant_landscape')
+        except ModuleNotFoundError as e:
+            logging.warning(f'Could not load addon "{name}". {e}')
+            
     bpy.context.preferences.system.scrollback = 0 
     bpy.context.preferences.edit.undo_steps = 0
     bpy.context.scene.render.resolution_x = generate_resolution[0]
@@ -271,12 +316,10 @@ def execute_tasks(
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
 
-    terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
         butil.spawn_empty(f'{VERSION=}')
-        compose_scene_func(output_folder, terrain, scene_seed)
+        compose_scene_func(output_folder, scene_seed)
 
     camera = cam_util.set_active_camera(*camera_id)
     if focal_length is not None:
@@ -285,12 +328,10 @@ def execute_tasks(
     group_collections()
 
     if Task.Populate in task:
-        populate_scene(output_folder, terrain, scene_seed)
-
-    if Task.Fine in task:
-        raise RuntimeError(f'{task=} contains deprecated {Task.Fine=}')
+        populate_scene(output_folder, scene_seed)
 
     if Task.FineTerrain in task:
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
         terrain.fine_terrain(output_folder)
     
     group_collections()
@@ -305,16 +346,15 @@ def execute_tasks(
             for mesh in os.listdir(input_folder):
                 if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
                     os.symlink(input_folder / mesh, output_folder / mesh)
-        if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
-            bpy.context.preferences.system.scrollback = 100 
-            bpy.context.preferences.edit.undo_steps = 100
-            with Timer(f'Writing output blendfile to {output_folder / output_blend_name}'):
+        if Task.Coarse in task or Task.Populate in task:
+
+            with Timer(f'Writing output blendfile'):
+                logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
                 bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
                 tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
             with (output_folder/ "version.txt").open('w') as f:
-                scene_version = get_scene_tag('VERSION')
-                f.write(f"{scene_version}\n")
+                f.write(f"{VERSION}\n")
 
             with (output_folder/'polycounts.txt').open('w') as f:
                 save_polycounts(f)
@@ -323,6 +363,7 @@ def execute_tasks(
         col.hide_viewport = False
 
     if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
         terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
@@ -360,39 +401,25 @@ def apply_scene_seed(args):
     np.random.seed(scene_seed)
     return scene_seed
 
-def apply_gin_configs(args, scene_seed, skip_unknown=False):
+@gin.configurable
+def apply_gin_configs(
+    args, 
+    scene_seed, 
+    skip_unknown=False, 
+    mandatory_config_dir=Path('config/scene_types'),
+):
 
-    scene_types = [p.stem for p in Path('config/scene_types').iterdir()]
-    scene_specified = any(s in scene_types or s.startswith("figure") for s in args.gin_config)
-
-    weights = {
-        "kelp_forest": 0.3,
-        "coral_reef": 1,
-        "forest": 2,
-        "river": 2,
-        "desert": 1,
-        "coast": 1,
-        "cave": 1,
-        "mountain": 1,
-        "canyon": 1,
-        "plain": 1,
-        "cliff": 1,
-        "arctic": 1,
-        "snowy_mountain": 1,
-    }
-    assert all(k in scene_types for k in weights)
-
-    scene_types = [s for s in scene_types if s in weights]
-    weights = np.array([weights[k] for k in scene_types], dtype=float)
-    weights /= weights.sum()
-
-    if not scene_specified:
-        scene_type = np.random.RandomState(scene_seed).choice(scene_types, p=weights)
-        logging.warning(f'Randomly selected {scene_type=}. IF THIS IS NOT INTENDED THEN YOU ARE MISSING SCENE CONFIGS')
-        if len(args.gin_config) > 0 and args.gin_config[0] == 'base':
-            args.gin_config = [scene_type] + args.gin_config[1:]
-        else:
-            args.gin_config = [scene_type] + args.gin_config
+    if mandatory_config_dir is not None:
+        assert mandatory_config_dir.exists()
+        scene_types = [p.stem for p in mandatory_config_dir.iterdir()]
+        scenetype_specified = any(s in scene_types or s.split('.')[0] in scene_types for s in args.configs)
+    
+        if not scenetype_specified:
+            print(scene_types)
+            raise ValueError(
+                f"Please load one or more config from {mandatory_config_dir} using --configs to avoid unexpected behavior. "
+                "If you are sure you want to proceed without, override `apply_gin_configs.mandatory_config_dir=None`"
+            )
 
     def find_config(g):
         for p in Path('config').glob('**/*.gin'):
@@ -402,8 +429,8 @@ def apply_gin_configs(args, scene_seed, skip_unknown=False):
                 return p
         raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere config/**')
 
-    bindings = sanitize_gin_override(args.gin_param)
-    confs = [find_config(g) for g in ['base.gin'] + args.gin_config]
+    bindings = sanitize_gin_override(args.overrides)
+    confs = [find_config(g) for g in ['base.gin'] + args.configs]
     gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 
 def main(

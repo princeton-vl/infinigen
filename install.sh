@@ -18,6 +18,8 @@ if [ "${OS}" = "Linux" ]; then
     BLENDER_PYTHON="${BLENDER_DIR}/3.3/python/bin/python3.10"
     BLENDER_INCLUDE="${BLENDER_DIR}/3.3/python/include/python3.10"
     BLENDER_PACKAGES="${BLENDER_DIR}/3.3/python/lib/python3.10/site-packages"
+    BLENDER_ADDONS="${BLENDER_DIR}/3.3/scripts/addons"
+    BLENDER_EXE="${BLENDER_DIR}/blender"
 
     NURBS_SCRIPT="setup_linux.py"
 elif [ "${OS}" = "Darwin" ]; then
@@ -40,6 +42,8 @@ elif [ "${OS}" = "Darwin" ]; then
     BLENDER_PYTHON="${BLENDER_DIR}/Contents/Resources/3.3/python/bin/python3.10"
     BLENDER_INCLUDE="${BLENDER_DIR}/Contents/Resources/3.3/python/include/python3.10"
     BLENDER_PACKAGES="${BLENDER_DIR}/Contents/Resources/3.3/python/lib/python3.10/site-packages"
+    BLENDER_ADDONS="${BLENDER_DIR}/Contents/Resources/3.3/scripts/addons"
+    BLENDER_EXE="${BLENDER_DIR}/Contents/MacOS/Blender"
 
     export CC="${HOMEBREW_PREFIX}/opt/llvm/bin/clang"
     export CPATH="${HOMEBREW_PREFIX}/include:${CPATH}"
@@ -116,5 +120,11 @@ rm -rf build
 cd -
 
 if [ "$1" = "opengl" ]; then
-    bash ./worldgen/tools/compile_opengl.sh
+    bash ./worldgen/tools/install/compile_opengl.sh
+fi
+
+
+# Build Flip Fluids addon
+if [ "$1" = "flip_fluids" ] || [ "$2" = "flip_fluids" ]; then
+    bash ./worldgen/tools/install/compile_flip_fluids.sh
 fi

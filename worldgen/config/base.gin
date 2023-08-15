@@ -27,6 +27,9 @@ compose_scene.lighting_enabled = True
 compose_scene.coarse_terrain_enabled = True
 compose_scene.terrain_surface_enabled = True
 
+compose_scene.simulated_river_enabled=False
+compose_scene.tilted_river_enabled=False
+
 compose_scene.fancy_clouds_chance = 0.6
 
 compose_scene.trees_chance = 0.85
@@ -81,6 +84,16 @@ compose_scene.pine_needle_chance = 0.1
 compose_scene.caustics_chance = 0.0
 compose_scene.decorative_plants_chance = 0.1
 
+compose_scene.cached_fire = False
+populate_scene.cached_fire = False
+
+compose_scene.cached_fire_trees_chance= 0
+compose_scene.cached_fire_bushes_chance = 0
+compose_scene.cached_fire_boulders_chance = 0.0
+compose_scene.cached_fire_cactus_chance = 0
+
+
+
 populate_scene.slime_mold_chance = 0.0
 populate_scene.ivy_chance = 0.0
 populate_scene.lichen_chance = 0.0
@@ -89,6 +102,13 @@ populate_scene.moss_chance = 0.0
 populate_scene.snow_layer_chance = 0
 
 populate_scene.snow_layer_chance=0.0
+
+populate_scene.fire_warmup = 50
+populate_scene.trees_fire_on_the_fly_chance = 0
+populate_scene.bushes_fire_on_the_fly_chance = 0    
+populate_scene.creatures_fire_on_the_fly_chance = 0
+populate_scene.boulders_fire_on_the_fly_chance = 0
+populate_scene.cactus_fire_on_the_fly_chance = 0
 
 target_face_size.global_multiplier = 2
 scatter_res_distance.dist = 4
@@ -130,9 +150,9 @@ flat/render_image.passes_to_save = [
 
 render_image.exposure = 1
 
-render_image.use_dof = 'IF_TARGET_SET'
+render_image.use_dof = False
 render_image.dof_aperture_fstop = 3
-render_image.motion_blur = True
+render_image.motion_blur = False
 render_image.motion_blur_shutter = 0.15
 
 compositor_postprocessing.distort = False
@@ -141,7 +161,6 @@ compositor_postprocessing.color_correct=True
 compose_scene.generate_resolution = (1920, 1080)
 get_sensor_coords.H = 720
 get_sensor_coords.W = 1280
-
 
 min_terrain_distance = 2
 keep_cam_pose_proposal.min_terrain_distance = %min_terrain_distance

@@ -12,6 +12,7 @@ import bpy
 import numpy as np
 import trimesh.convex
 from numpy.random import uniform
+import gin
 
 from surfaces.scatters import ivy
 from util import blender as butil
@@ -57,7 +58,8 @@ class BoulderFactory(AssetFactory):
             method = np.random.choice(self.configs, p=self.weights)
             self.has_horizontal_cut, self.is_slab = self.config_mappings[method]
 
-    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+    @gin.configurable
+    def create_placeholder(self, boulder_scale = 1, **kwargs) -> bpy.types.Object:
         butil.select_none()
 
         vertices = np.random.uniform(-1, 1, (32, 3))
@@ -71,6 +73,8 @@ class BoulderFactory(AssetFactory):
             obj.scale = *log_uniform(.5, 2., 2), log_uniform(.1, .15)
         else:
             obj.scale = *log_uniform(.4, 1.2, 2), log_uniform(.4, .8)
+
+        obj.scale *= boulder_scale
         butil.apply_transform(obj)
         obj.rotation_euler[0] = uniform(-np.pi / 24, np.pi / 24)
         butil.apply_transform(obj)

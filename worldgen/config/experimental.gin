@@ -1,0 +1,3 @@
+# things that are not quite fully working correctly, but you can use if you please
+
+render_image.motion_blur = True # not fully supported in ground truth

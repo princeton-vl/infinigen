@@ -52,13 +52,18 @@ class Terrain:
         device="cpu",
         main_terrain=TerrainNames.OpaqueTerrain,
         under_water=False,
+        min_distance=1
     ):
         self.seed = seed
         self.device = device
         self.surface_registry = surface_registry
         self.main_terrain = main_terrain
         self.under_water = under_water
-        if Task.Coarse not in task and Task.FineTerrain not in task: return
+        self.min_distance = min_distance
+
+        if Task.Coarse not in task and Task.FineTerrain not in task: 
+            return
+            
         with Timer('Create terrain'):
             if asset_folder is None:
                 if not ASSET_ENV_VAR in os.environ:
@@ -297,13 +302,12 @@ class Terrain:
 
         return sdf
 
-    def get_bounding_box(self, min_distance=1):
-        self.min_distance = min_distance
+    def get_bounding_box(self):
         min_gen, max_gen = self.bounding_box
         if self.under_water:
-            max_gen[2] = min(max_gen[2], self.water_plane - min_distance)
+            max_gen[2] = min(max_gen[2], self.water_plane - self.min_distance)
         else:
-            min_gen[2] = max(min_gen[2], self.water_plane + min_distance)
+            min_gen[2] = max(min_gen[2], self.water_plane + self.min_distance)
         return min_gen, max_gen
 
     @gin.configurable

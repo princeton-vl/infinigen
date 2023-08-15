@@ -1,11 +1,12 @@
 
 manage_datagen_jobs.num_concurrent = 16
 
-# Job updater
 
-get_cmd.niceness = 20 # let UI processes etc take precedence, to make the smooth and UI usable
+get_cmd.process_niceness = 20 # let UI processes etc take precedence, to make the smooth and UI usable
 local_submit_cmd.use_scheduler = True
 LocalScheduleHandler.jobs_per_gpu = 1
+
+get_cmd.blender_thread_limit = 8
 
 # All will run locally, LocalScheduleHandler doesnt actually enforce cpu/ram constraints currently
 queue_coarse.submit_cmd = @local_submit_cmd

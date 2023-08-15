@@ -2,16 +2,11 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 import argparse
-import ast
 import os
-import random
 import sys
-import cProfile
 from pathlib import Path
 import logging
-from functools import partial
-import pprint
-from collections import defaultdict
+import itertools
 
 import bpy
 import mathutils
@@ -19,38 +14,47 @@ from mathutils import Vector
 import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
-from tqdm import tqdm
-from frozendict import frozendict
 
 sys.path.append(os.getcwd())
 
 from terrain import Terrain
 from util.organization import Task, Attributes, Tags, ElementNames
 
-from placement import placement, density, camera as cam_util
-from placement.split_in_view import split_inview
 from lighting import lighting, kole_clouds
 
 from assets.trees.generate import TreeFactory, BushFactory, random_season, random_leaf_collection
 from assets.glowing_rocks import GlowingRocksFactory
-from assets.creatures import CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
+from assets.creatures import (
+    CarnivoreFactory, HerbivoreFactory, FishFactory, FishSchoolFactory, \
     BeetleFactory, AntSwarmFactory, BirdFactory, SnakeFactory, \
     CrustaceanFactory, FlyingBirdFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
+)
 from assets.insects.assembled.dragonfly import DragonflyFactory
 from assets.cloud.generate import CloudFactory
 from assets.cactus import CactusFactory
-from assets.creatures import boid_swarm
+
+from fluid.flip_fluid import make_river, make_tilted_river
+from fluid.fluid_scenecomp_additions import fire_scenecomp_options
 
 import surfaces.scatters
-from surfaces.scatters import rocks, grass, snow_layer, ground_leaves, ground_twigs, \
+from surfaces.scatters import (
+    rocks, grass, snow_layer, ground_leaves, ground_twigs, \
     chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
     slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells
+)
 from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
-from surfaces.templates import mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+from surfaces.templates import (
+    mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
     soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud
+)
 from infinigen_gpl.surfaces import snow
 
-from placement import particles, placement, density, camera as cam_util, animation_policy, instance_scatter, detail
+from placement import (
+    particles, placement, density, 
+    camera as cam_util, 
+    animation_policy, instance_scatter, detail
+)
+from placement.split_in_view import split_inview
 from assets import particles as particle_assets
 
 from surfaces.scatters import pine_needle, seaweed, coral_reef, jellyfish, urchin
@@ -70,22 +74,31 @@ from util.random import sample_registry, random_general
 import core as infinigen
 
 @gin.configurable
-def compose_scene(output_folder, terrain, scene_seed, **params):
+def compose_scene(output_folder, scene_seed, **params):
 
     p = RandomStageExecutor(scene_seed, output_folder, params)
 
-    p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
+    def add_coarse_terrain():
+        terrain = Terrain(scene_seed, surface.registry, task='coarse', on_the_fly_asset_folder=output_folder/"assets")
+        terrain_mesh = terrain.coarse_terrain()
+        density.set_tag_dict(terrain.tag_dict)
+        return terrain, terrain_mesh
+    terrain, terrain_mesh = p.run_stage('terrain', add_coarse_terrain, use_chance=False, default=(None, None))
+    
+    if terrain_mesh is None:
+        terrain_mesh = butil.create_noise_plane()
+        density.set_tag_dict({})
 
-    season = p.run_stage('season', random_season, use_chance=False)
-    logging.info(f'{season=}')
-
-    terrain_mesh = p.run_stage('terrain', terrain.coarse_terrain, use_chance=False)
-    density.set_tag_dict(terrain.tag_dict)
     terrain_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
 
     land_domain = params.get('land_domain_tags')
     underwater_domain = params.get('underwater_domain_tags')
     nonliving_domain = params.get('nonliving_domain_tags')
+
+    p.run_stage('fancy_clouds', kole_clouds.add_kole_clouds)
+
+    season = p.run_stage('season', random_season, use_chance=False)
+    logging.info(f'{season=}')
 
     def choose_forest_params():
         # params to be shared between unique and instanced trees
@@ -133,6 +146,8 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
                 selection=selection, altitude=-0.25)
     p.run_stage('boulders', add_boulders, terrain_mesh)
 
+    fire_scenecomp_options(p, terrain_mesh, params, tree_species_params)
+
     def add_glowing_rocks(terrain_mesh):
         selection = density.placement_mask(uniform(0.03, 0.3), normal_thresh=-1.1, select_thresh=0, tag=Tags.Cave)
         fac = GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
@@ -160,14 +175,20 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
 
     def camera_preprocess():
         camera_rigs = cam_util.spawn_camera_rigs()
-        scene_bvhtrees = cam_util.camera_selection_preprocessing(terrain)   
-        return camera_rigs, scene_bvhtrees 
-    camera_rigs, scene_bvhtrees = p.run_stage('camera_preprocess', camera_preprocess, use_chance=False)
-    p.run_stage('pose_cameras', lambda: cam_util.configure_cameras(
-        camera_rigs, scene_bvhtrees, terrain), use_chance=False)
+        scene_preprocessed = cam_util.camera_selection_preprocessing(terrain, terrain_mesh)   
+        return camera_rigs, scene_preprocessed 
+    camera_rigs, scene_preprocessed = p.run_stage('camera_preprocess', camera_preprocess, use_chance=False)
+
+    bbox = terrain.get_bounding_box() if terrain is not None else butil.bounds(terrain_mesh)
+    p.run_stage(
+        'pose_cameras', 
+        lambda: cam_util.configure_cameras(camera_rigs, bbox, scene_preprocessed), 
+        use_chance=False
+    )
     cam = cam_util.get_camera(0, 0)
-    
+
     p.run_stage('lighting', lighting.add_lighting, cam, use_chance=False)
+    
     # determine a small area of the terrain for the creatures to run around on
     # must happen before camera is animated, as camera may want to follow them around
     terrain_center, *_ = split_inview(terrain_mesh, cam=cam, 
@@ -196,7 +217,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
     pois += p.run_stage('flying_creatures', flying_creatures, default=[])
 
     p.run_stage('animate_cameras', lambda: cam_util.animate_cameras(
-        camera_rigs, scene_bvhtrees, pois=pois), use_chance=False)
+        camera_rigs, scene_preprocessed, pois=pois), use_chance=False)
 
     with Timer('Compute coarse terrain frustrums'):
         terrain_inview, *_ = split_inview(terrain_mesh, verbose=True, outofview=False, print_areas=True,
@@ -348,7 +369,7 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
             emitter=butil.spawn_plane(location=emitter_off, size=60),
             subject=make_asset_collection(particle_assets.SnowflakeFactory(scene_seed), 5),
             settings=particles.snow_settings())
-
+    
     particle_systems = [
         p.run_stage('leaf_particles', add_leaf_particles, prereq='trees'),
         p.run_stage('rain_particles', add_rain_particles),
@@ -363,9 +384,19 @@ def compose_scene(output_folder, terrain, scene_seed, **params):
             particles.bake(emitter, system)
         butil.put_in_collection(emitter, butil.get_collection('particles'))
 
-    p.save_results(output_folder/'pipeline_coarse.csv')
 
-    return terrain
+    placeholders = list(itertools.chain.from_iterable(
+        c.all_objects for c in bpy.data.collections if c.name.startswith('placeholders:')
+    ))
+
+    add_simulated_river = lambda: make_river(terrain_mesh, placeholders, output_folder=output_folder)
+    p.run_stage('simulated_river', add_simulated_river, use_chance=False)
+
+    add_tilted_river = lambda: make_tilted_river(terrain_mesh, placeholders, output_folder=output_folder)
+    p.run_stage('tilted_river', add_tilted_river, use_chance=False)   
+
+    p.save_results(output_folder/'pipeline_coarse.csv')
+    return terrain, terrain_mesh
 
 def main():
     
@@ -375,10 +406,10 @@ def main():
     parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
     parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
                         choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save'])
-    parser.add_argument('-g', '--gin_config', nargs='+', default=['base'],
+    parser.add_argument('-g', '--configs', nargs='+', default=['base'],
                         help='Set of config files for gin (separated by spaces) '
                              'e.g. --gin_config file1 file2 (exclude .gin from path)')
-    parser.add_argument('-p', '--gin_param', nargs='+', default=[],
+    parser.add_argument('-p', '--overrides', nargs='+', default=[],
                         help='Parameter settings that override config defaults '
                              'e.g. --gin_param module_1.a=2 module_2.b=3')
     parser.add_argument('--task_uniqname', type=str, default=None)

@@ -52,7 +52,7 @@ def nodes_with_gpus(*gpu_names):
     if len(gpu_names) == 0:
         return []
     _, node_type_lookup, _ = get_gpu_nodes()
-    return sorted(chain.from_iterable(node_type_lookup[n] for n in gpu_names))
+    return sorted(chain.from_iterable(node_type_lookup.get(n, set()) for n in gpu_names))
 
 if __name__ == '__main__':
     gpu_table, node_type_lookup, shared_node_mem = get_gpu_nodes()

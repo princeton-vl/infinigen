@@ -37,7 +37,7 @@ for input_folder in args.input_folder:
         filters = " "
         if args.overlay:
             filters += f"-vf drawtext='text={seed_folder.absolute()}' "
-        cmd = f'ffmpeg -y -r {args.fps} -pattern_type glob -i {seed_folder.absolute()}/frames*/{args.image_type}*.png {filters} -pix_fmt yuv420p  {output_folder}/{seed_folder.name}_{args.image_type}.mp4'
+        cmd = f'ffmpeg -y -r {args.fps} -pattern_type glob -i {seed_folder.absolute()}/frames*_0/{args.image_type}*.png {filters} -pix_fmt yuv420p  {output_folder}/{seed_folder.name}_{args.image_type}.mp4'
         print(cmd.split())
         subprocess.run(cmd.split())
 

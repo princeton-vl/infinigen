@@ -24,6 +24,7 @@ import numpy as np
 import trimesh
 from itertools import chain, product
 from tqdm import tqdm
+import cv2
 
 from .math import lerp  # for other people to import from this file
 from . import math as mutil
@@ -141,6 +142,23 @@ class DisableModifiers:
         for m in self.modifiers_disabled:
             m.show_viewport = True
 
+class EnableParentCollections:
+
+    def __init__(self, objs, target_key='hide_viewport', target_value=False):
+        self.objs = objs
+        self.target_key = target_key
+        self.target_value = target_value
+
+    def __enter__(self):
+        self.enable_cols = set(chain.from_iterable([o.users_collection for o in self.objs]))
+        self.enable_cols_startstate = [getattr(c, self.target_key) for c in self.enable_cols]
+
+        for c in self.enable_cols:
+            setattr(c, self.target_key, self.target_value)
+
+    def __exit__(self, *_, **__):
+        for c, s in zip(self.enable_cols, self.enable_cols_startstate):
+            setattr(c, self.target_key, s)
 
 class TemporaryObject:
 
@@ -735,4 +753,34 @@ def approve_all_drivers():
 
     logging.warning(f'Re-initialized {n} as trusted. Do not run infinigen on untrusted blend files. ')
 
+def count_objects():
+    count = 0
+    for obj in bpy.context.scene.objects:
+        if element.type != "MESH": continue
+        count +=1
+    return count
+
+def count_objects():
+    count = 0
+    for obj in bpy.context.scene.objects:
+        if obj.type != "MESH": continue
+        count +=1
+    return count
+
+def count_instance():
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    return len([inst for inst in depsgraph.object_instances if inst.is_instance])
     
+    
+def bounds(obj):
+    bbox = np.array(obj.bound_box)
+    return bbox.min(axis=0), bbox.max(axis=0)
+
+def create_noise_plane(size=50, cuts=10, std=3, levels=3):
+    bpy.ops.mesh.primitive_grid_add(size=size, x_subdivisions=cuts, y_subdivisions=cuts)
+    obj = bpy.context.active_object
+
+    for v in obj.data.vertices:
+        v.co[2] = v.co[2] + np.random.normal(0, std)
+
+    return modify_mesh(obj, 'SUBSURF', levels=levels)

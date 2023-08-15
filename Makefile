@@ -64,7 +64,7 @@ docker-run:
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" bash
 
-	docker exec infinigen /bin/bash -c worldgen/tools/compile_opengl.sh
+	docker exec infinigen /bin/bash -c worldgen/tools/install/compile_opengl.sh
 
 docker-run-no-opengl:
 	echo "Launching Docker image without OpenGL ground truth"
@@ -91,7 +91,7 @@ docker-run-no-gpu:
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" /bin/bash \
 
-	docker exec infinigen /bin/bash -c worldgen/tools/compile_opengl.sh
+	docker exec infinigen /bin/bash -c worldgen/tools/install/compile_opengl.sh
 
 docker-run-no-gpu-opengl:
 	echo "Launching Docker image without GPU passthrough or OpenGL"

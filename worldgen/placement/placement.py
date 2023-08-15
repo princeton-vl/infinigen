@@ -4,7 +4,6 @@
 # Authors: Alexander Raistrick
 
 
-from itertools import groupby
 import re
 import logging
 from collections import defaultdict
@@ -131,7 +130,7 @@ def parse_asset_name(name):
 def populate_collection(
     factory: AssetFactory, placeholder_col, 
     asset_col_target=None, camera=None, 
-    dist_cull=None, vis_cull=None, verbose=True,
+    dist_cull=None, vis_cull=None, verbose=True, cache_system = None, 
     **asset_kwargs
 ):
     logging.info(f'Populating placeholders for {factory}')
@@ -165,18 +164,35 @@ def populate_collection(
                 logger.debug(f'{p.name=} culled due to {vis_dist=:.2f} > {vis_cull=}')
                 p.hide_render = True
                 continue
+
+            p['dist'] = dist
+            p['vis_dist'] = vis_dist
+
         else:
             dist = detail.scatter_res_distance()
             vis_dist = 0
 
-        obj = factory.spawn_asset(i, placeholder=p, 
-            distance=dist, vis_distance=vis_dist, **asset_kwargs)
+        if cache_system:
+            if sum(cache_system.n_placed.values()) < cache_system.max_fire_assets and cache_system.n_placed[factory.__class__.__name__] < cache_system.max_per_kind:
+                i_list = cache_system.find_i_list(factory)
+                ind = np.random.choice(len(i_list))
+                i_chosen, full_sim_folder, sim_folder = i_list[ind]
+                obj = factory.spawn_asset(int(i_chosen), placeholder=p, distance=dist, vis_distance=vis_dist)
+                dom = cache_system.link_fire(full_sim_folder, sim_folder, obj, factory)
+            else:
+                break
+        else:
+            obj = factory.spawn_asset(i, placeholder=p, 
+                distance=dist, vis_distance=vis_dist, **asset_kwargs)
         
         if p is not obj:
             p.hide_render = True
 
         for o in butil.iter_object_tree(obj):
             butil.put_in_collection(o, asset_col_target)
+
+        obj['dist'] = dist
+        obj['vis_dist'] = vis_dist
 
         updated_pholders.append((inst_seed, p))
         all_objs.append((inst_seed, obj))
@@ -188,7 +204,7 @@ def populate_collection(
     return all_objs, updated_pholders
 
 @gin.configurable
-def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
+def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, cache_system = None, **kwargs):
     
     '''
     Find all collections that may have been produced by factory_class, and update them
@@ -209,7 +225,7 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
             continue
 
         asset_target_col = butil.get_collection(f'unique_assets:{full_repr}')
-        asset_target_col.hide_viewport = True
+        asset_target_col.hide_viewport = False
 
         if len(asset_target_col.objects) > 0:
             logger.info(f'Skipping populating {col.name=} since {asset_target_col.name=} is already populated')
@@ -217,24 +233,10 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, **kwargs):
 
         new_assets, pholders = populate_collection(
             factory_class(int(fac_seed), **kwargs), col, asset_target_col, 
-            camera, dist_cull=dist_cull, vis_cull=vis_cull)
+            camera, dist_cull=dist_cull, vis_cull=vis_cull, cache_system=cache_system)
         results.append((fac_seed, pholders, new_assets))
 
     return results
-
-def placeholder_kd(include=None, exclude=None):
-    objs = []
-    if 'placeholders' in bpy.data.collections:
-        for c in bpy.data.collections['placeholders'].children:
-            classname = c.name.split('(')
-            if include is not None and classname not in include:
-                continue
-            if exclude is not None and classname in exclude:
-                continue
-            for obj in c.objects:
-                objs += [o for o in butil.iter_object_tree(obj) if o.type == 'MESH']
-
-    return butil.joined_kd(objs, include_origins=True)
 
 def make_placeholders_float(placeholder_col, terrain_bvh, water):
 

@@ -1,0 +1,16 @@
+sample_scene_spec.config_distribution = [
+    ("forest", 4),
+    ("river", 4),
+    ("desert", 3),
+    ("coast", 3),
+    ("kelp_forest", 2),
+    ("coral_reef", 2),
+    ("cave", 2),
+    ("mountain", 2),
+    ("canyon", 2),
+    ("plain", 2),
+    ("cliff", 2),
+    ("arctic", 1),
+    ("snowy_mountain", 1),
+]
+sample_scene_spec.config_sample_mode = 'random'

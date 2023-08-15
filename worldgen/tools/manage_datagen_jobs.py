@@ -22,13 +22,15 @@ import itertools
 from uuid import uuid4
 from enum import Enum
 from copy import copy
+from ast import literal_eval
 
 from functools import partial, cache
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from shutil import which, rmtree, copyfile
+from shutil import which, rmtree, copyfile, copytree
 
+import pandas as pd
 from tqdm import tqdm
 
 import numpy as np
@@ -43,6 +45,9 @@ from tools.util.submitit_emulator import ScheduledLocalExecutor, ImmediateLocalE
 from tools.util import upload_util
 from tools.util.upload_util import upload_job_folder # for pickle not to freak out
 
+PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' # used only if enabled in config
+EXCLUDE_FILE_ENVVAR = 'INFINIGEN_SLURM_EXCLUDENODES_LIST'
+
 class JobState:
     NotQueued = "notqueued"
     Queued = "queued"
@@ -55,6 +60,7 @@ class SceneState:
     Done = "done"
     Crashed = "crashed"
 
+JOB_OBJ_SUCCEEDED = 'MARK_AS_SUCCEEDED'
 CONCLUDED_STATES = {JobState.Succeeded, JobState.Failed}
 
 # Will throw exception if the scene was not found. Sometimes this happens if the scene was queued very very recently
@@ -73,6 +79,18 @@ def seff(job_obj, retry_on_error=True):
                 raise
             time.sleep(1)
 
+def node_from_slurm_jobid(scene_id):
+
+    if not which('sacct'):
+        return None
+    
+    try:
+        node_of_scene, *rest  = subprocess.check_output(f"{which('sacct')} -j {scene_id} --format Node --noheader".split()).decode().split()
+        return node_of_scene
+    except Exception as e:
+        logging.warning(f'sacct threw {e}')
+        return None
+
 def get_scene_state(scene_dict, taskname, scene_folder):
 
     if not scene_dict.get(f'{taskname}_submitted', False):
@@ -84,7 +102,7 @@ def get_scene_state(scene_dict, taskname, scene_folder):
     
     # for when both local and slurm scenes are being mixed
     if isinstance(job_obj, str):
-        assert job_obj == 'MARK_AS_SUCCEEDED'
+        assert job_obj == JOB_OBJ_SUCCEEDED
         return JobState.Succeeded
     elif isinstance(job_obj, LocalJob):
         res = job_obj.status()
@@ -106,15 +124,31 @@ def seed_generator():
     return hex(seed_int).removeprefix('0x')
 
 @gin.configurable
-def get_cmd(seed, task, configs, taskname, output_folder, driver_script='generate.py', input_folder=None, niceness=None):
+def get_cmd(
+    seed, 
+    task, 
+    configs, 
+    taskname, 
+    output_folder, 
+    blender_thread_limit=None,
+    driver_script='generate.py', 
+    input_folder=None, 
+    process_niceness=None,
+):
     
     if isinstance(task, list):
         task = " ".join(task)
 
     cmd = ''
-    if niceness is not None:
-        cmd += f'nice -n {niceness} '
-    cmd += f'{BLENDER_PATH} --background -y -noaudio --python {driver_script} -- '
+    if process_niceness is not None:
+        cmd += f'nice -n {process_niceness} '
+    cmd += f'{BLENDER_PATH} --background -y -noaudio --python {driver_script} '
+    
+    if blender_thread_limit is not None:
+        cmd += f'--threads {blender_thread_limit} '
+
+    cmd += '-- '
+
     if input_folder is not None:
         cmd += '--input_folder ' + str(input_folder) + ' '
     if output_folder is not None:
@@ -128,6 +162,8 @@ def get_cmd(seed, task, configs, taskname, output_folder, driver_script='generat
 
 @gin.configurable
 def get_slurm_banned_nodes(config_path=None):
+    if config_path == f'ENVVAR_{EXCLUDE_FILE_ENVVAR}':
+        config_path = os.environ.get(EXCLUDE_FILE_ENVVAR)
     if config_path is None:
         return []
     with Path(config_path).open('r') as f:
@@ -149,7 +185,19 @@ def get_suffix(indices):
     return suffix
 
 @gin.configurable
-def slurm_submit_cmd(cmd, folder, name, mem_gb=None, cpus=None, gpus=0, hours=1, slurm_account=None, slurm_exclude: list = None, **_):
+def slurm_submit_cmd(
+    cmd, 
+    folder, 
+    name, 
+    mem_gb=None, 
+    cpus=None, 
+    gpus=0, 
+    hours=1, 
+    slurm_account=None, 
+    slurm_exclude: list = None, 
+    slurm_niceness=None,
+    **_
+):
 
     executor = submitit.AutoExecutor(folder=(folder / "logs"))
     executor.update_parameters(
@@ -165,7 +213,20 @@ def slurm_submit_cmd(cmd, folder, name, mem_gb=None, cpus=None, gpus=0, hours=1,
     if gpus > 0:
         executor.update_parameters(gpus_per_node=gpus)
     if slurm_account is not None:
+
+        if slurm_account == f'ENVVAR_{PARTITION_ENVVAR}':
+            slurm_account = os.environ.get(PARTITION_ENVVAR)
+            if slurm_account is None:
+                logging.warning(f'{PARTITION_ENVVAR=} was not set, using no slurm account')
+
         executor.update_parameters(slurm_account=slurm_account)
+
+    slurm_additional_params = {}
+
+    if slurm_niceness is not None:
+        slurm_additional_params['nice'] = slurm_niceness
+
+    executor.update_parameters(slurm_additional_parameters=slurm_additional_params)
 
     while True:
         try:
@@ -328,15 +389,12 @@ def queue_combined(
     seed,
     configs,
     taskname=None,
-    mem_gb=None,
     exclude_gpus=[],
-    cpus=None,
     gpus=0,
-    hours=None,
-    slurm_account=None,
     overrides=[],
     include_coarse=True,
     input_indices=None, output_indices=None,
+    **kwargs
 ):
     
     input_suffix = get_suffix(input_indices)
@@ -361,14 +419,11 @@ def queue_combined(
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
     res = submit_cmd(cmd,
-        mem_gb=mem_gb,
         folder=folder,
         name=name,
-        cpus=cpus,
         gpus=gpus,
-        hours=hours,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
-        slurm_account=slurm_account,
+        **kwargs
     )
     return res, output_folder
 
@@ -426,10 +481,9 @@ def queue_mesh_save(
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return "MARK_AS_SUCCEEDED", None
+        return JOB_OBJ_SUCCEEDED, None
 
     input_suffix = get_suffix(input_indices)
-
     output_suffix = get_suffix(output_indices)
 
     output_folder = Path(f'{folder}/savemesh{output_suffix}')
@@ -465,22 +519,28 @@ def queue_opengl(
     exclude_gpus=[],
     input_indices=None, output_indices=None,
     reuse_subcams=True,
+    gt_testing=False,
     **submit_kwargs
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return "MARK_AS_SUCCEEDED", None
+        return JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
 
     tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
     tmp_script.parent.mkdir(exist_ok=True)
-    print(f"Creating {tmp_script}")
 
     process_mesh_path = Path("../process_mesh/build/process_mesh").resolve()
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
-    output_folder = Path(folder) / f"frames{output_suffix}"
-    output_folder.mkdir(exist_ok=True)
+    if (gt_testing):
+        copy_folder = Path(folder) / f"frames{output_suffix}"
+        output_folder  = Path(folder) / f"opengl_frames{output_suffix}"
+        copytree(copy_folder, output_folder, dirs_exist_ok=True)
+    else: 
+        output_folder = Path(folder) / f"frames{output_suffix}"
+        output_folder.mkdir(exist_ok=True)
+
     assert input_folder.exists(), input_folder
     assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
 
@@ -501,7 +561,8 @@ def queue_opengl(
     with (folder / "run_pipeline.sh").open('a') as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
+    res = submit_cmd(
+        cmd,
         folder=folder,
         name=name,
         slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
@@ -509,54 +570,99 @@ def queue_opengl(
     )
     return res, output_folder
 
+def init_db_from_existing(output_folder: Path):
+
+    # TODO in future: directly use existing_db (with some cleanup / checking).
+
+    db_path = output_folder/'scenes_db.csv'
+    if not db_path.exists():
+        raise ValueError(f'Recieved --use_existing but {db_path=} did not exist')
+    existing_db = pd.read_csv(db_path, converters={"configs": literal_eval})
+
+    def init_scene(seed_folder):
+        if not seed_folder.is_dir():
+            return None
+        if not (seed_folder/'logs').exists():
+            logging.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
+            return None
+
+        configs = existing_db.loc[existing_db["seed"] == seed_folder.name, "configs"].iloc[0]
+
+        scene_dict = {
+            'seed': seed_folder.name, 
+            'all_done': SceneState.NotDone,
+            'configs': list(configs)
+        }
+
+        finish_key = 'FINISH_'
+        for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
+            taskname = os.path.basename(finish_file_name)[len(finish_key):]
+            logging.info(f'Marking {seed_folder.name=} {taskname=} as completed')
+            scene_dict[f'{taskname}_submitted'] = True
+            scene_dict[f'{taskname}_job_obj'] = JOB_OBJ_SUCCEEDED
+
+        return scene_dict
+
+    return [init_scene(seed_folder) for seed_folder in output_folder.iterdir()]
+
 @gin.configurable
-def init_db(args, inorder_seeds=False, enumerate_scenetypes=[None]):
+def sample_scene_spec(i, seed_range=None, config_distribution=None, config_sample_mode='random'):
 
-    n_scenes = args.num_scenes
+    if seed_range is None:
+        seed = seed_generator()
+    else:
+        start, end = seed_range
+        if i > end - start:
+            return None
+        seed = hex(start + i).removeprefix('0x')
 
-    scenes = []
+    if config_distribution is None:
+        configs = []
+    elif config_sample_mode == 'random':
+        configs_options, weights = zip(*config_distribution) # list of rows to list per column
+        ps = np.array(weights) / sum(weights)
+        configs = np.random.choice(configs_options, p=ps)
+    elif config_sample_mode == 'roundrobin':
+        configs_options, weights = zip(*config_distribution) # list of rows to list per column
+        if not all(isinstance(w, int) for w in weights):
+            raise ValueError(f'{config_sample_mode=} expects integer scene counts as weights but got {weights=} with non-integer values')
+        idx = np.argmin(i % sum(weights) + 1 > np.cumsum(weights))
+        configs = configs_options[idx]
+    else:
+        raise ValueError(f'Unrecognized {config_sample_mode=}')
+    
+    if isinstance(configs, str) and " " in configs:
+        configs = configs.split(" ")
+    if not isinstance(configs, list):
+        configs = [configs]
+
+    return {
+        "all_done": SceneState.NotDone, 
+        "seed": seed, 
+        'configs': configs
+    }
+
+@gin.configurable
+def init_db(args):
 
     if args.use_existing:
-        for seed_folder in args.output_folder.iterdir():
-            
-            if not seed_folder.is_dir():
-                continue
-            if not (seed_folder/'logs').exists():
-                logging.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
-                continue
+        scenes = init_db_from_existing(args.output_folder)
+    elif args.specific_seed is not None:
+        scenes = [{"seed": s, "all_done": SceneState.NotDone} for s in args.specific_seed]
+    else:
+        scenes = [sample_scene_spec(i) for i in range(args.num_scenes)]    
 
-            n_scenes -= 1
+    scenes = [s for s in scenes if s is not None]
 
-            scene_dict = {'seed': seed_folder.name, 'all_done': SceneState.NotDone}
+    if len(scenes) < args.num_scenes:
+        logging.warning(f'Initialized only {len(scenes)=} despite {args.num_scenes=}. Likely due to --use_existing, --specific_seed or seed_range.')
 
-            finish_key = 'FINISH_'
-            for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
-                taskname = os.path.basename(finish_file_name)[len(finish_key):]
-                print(f'Marking {seed_folder.name=} {taskname=} as completed')
-                scene_dict[f'{taskname}_submitted'] = True
-                scene_dict[f'{taskname}_job_obj'] = 'MARK_AS_SUCCEEDED'
-
-            scenes.append(scene_dict)
-    elif args.specific_seed is not None and len(args.specific_seed):
-        return [{"seed": s, "all_done": SceneState.NotDone} for s in args.specific_seed]
-    
-    if n_scenes > 0:
-        for scenetype in enumerate_scenetypes:
-            for i in range(n_scenes//len(enumerate_scenetypes)):
-                seed = i if inorder_seeds else seed_generator()
-                configs = []
-                if scenetype is not None:
-                    configs.append(scenetype)
-                    seed = f'{scenetype}_{i}'
-                scene = {"all_done": SceneState.NotDone, "seed": seed, 'scene_configs': configs}
-                print(f'Added scene {seed}')
-                scenes.append(scene)
     return scenes
 
 def update_symlink(scene_folder, scenes):
     for new_name, scene in scenes:
 
-        if scene == 'MARK_AS_SUCCEEDED':
+        if scene == JOB_OBJ_SUCCEEDED:
             continue
         elif isinstance(scene, str):
             raise ValueError(f'Failed due to {scene=}')
@@ -593,16 +699,27 @@ def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
     with output_path.open('a') as f:
         f.write(html)
 
-def run_task(queue_func, scene_folder, scene_dict, taskname):
-
+@gin.configurable
+def run_task(
+    queue_func, 
+    scene_folder, 
+    scene_dict, 
+    taskname, 
+    dryrun=False
+):
+    
     assert scene_folder.parent.exists(), scene_folder
     scene_folder.mkdir(exist_ok=True)
     stage_scene_name = f"{scene_folder.parent.stem}_{scene_folder.stem}_{taskname}"
     assert not scene_dict.get(f'{taskname}_submitted', False)
 
+    if dryrun:
+        scene_dict[f'{taskname}_job_obj'] = JOB_OBJ_SUCCEEDED
+        scene_dict[f'{taskname}_submitted'] = 1
+        return
+
     seed = scene_dict['seed']
 
-    logging.info(f"{seed} - Submitting {taskname} scene")
     job_obj, output_folder = queue_func(
         folder=scene_folder,
         name=stage_scene_name,
@@ -699,15 +816,21 @@ def iterate_scene_tasks(
     scene_folder = args.output_folder/seed
     get_task_state = partial(get_scene_state, scene_dict=scene_dict, scene_folder=scene_folder)
 
-    global_overrides = [f'execute_tasks.frame_range={repr(list(frame_range))}', f'execute_tasks.camera_id=[0, 0]']
-    global_configs = args.configs + scene_dict.get('scene_configs', [])
-    global_iter = iterate_sequential_tasks(global_tasks, get_task_state,
-        overrides=args.override+global_overrides, configs=global_configs)
+    global_overrides = [
+        f'execute_tasks.frame_range={repr(list(frame_range))}', 
+        f'execute_tasks.camera_id=[0, 0]'
+    ]
+    global_configs = scene_dict.get('configs', []) + args.configs
+    global_iter = iterate_sequential_tasks(
+        global_tasks, 
+        get_task_state,
+        overrides=args.overrides+global_overrides, 
+        configs=global_configs
+    )
 
     for state, *rest in global_iter:
         yield state, *rest
     if not state == JobState.Succeeded:
-        logging.debug(f'{seed=} waiting on global')
         return
 
     view_range = render_frame_range if render_frame_range is not None else frame_range
@@ -728,7 +851,7 @@ def iterate_scene_tasks(
         view_idxs = dict(cam_rig=cam_rig, frame=view_frame)
         view_tasks_iter = iterate_sequential_tasks(
             view_dependent_tasks, get_task_state,
-            overrides=args.override+view_overrides, 
+            overrides=args.overrides+view_overrides, 
             configs=global_configs, output_indices=view_idxs
         )
         for state, *rest in view_tasks_iter:
@@ -736,7 +859,6 @@ def iterate_scene_tasks(
         if state not in CONCLUDED_STATES:
             if viewdep_paralell:
                 running_views += 1
-                logging.debug(f'{seed=} {cam_rig,view_frame=} waiting on viewdep')
                 continue
             else:
                 return 
@@ -746,6 +868,7 @@ def iterate_scene_tasks(
         running_blocks = 0
         for subcam, resample_idx in itertools.product(subcams, resamples):
             for cam_frame in range(view_frame_range[0], view_frame_range[1] + 1, cam_block_size):
+                
                 cam_frame_range = [cam_frame, min(view_frame_range[1], cam_frame + cam_block_size - 1)] # blender frame_end is INCLUSIVE
                 cam_overrides = [
                     f'execute_tasks.frame_range=[{cam_frame_range[0]},{cam_frame_range[1]}]',
@@ -754,20 +877,27 @@ def iterate_scene_tasks(
                 ]
 
                 camdep_indices = dict(
-                    cam_rig=cam_rig, frame=cam_frame, subcam=subcam, resample=resample_idx,
-                    view_first_frame=view_frame_range[0], last_view_frame=view_frame_range[1], last_cam_frame=cam_frame_range[1] # this line explicitly used by most jobs
+                    cam_rig=cam_rig, 
+                    frame=cam_frame, 
+                    subcam=subcam, 
+                    resample=resample_idx,
+                    view_first_frame=view_frame_range[0], 
+                    last_view_frame=view_frame_range[1], 
+                    last_cam_frame=cam_frame_range[1] # this line explicitly used by most jobs
                 ) 
                 camera_dep_iter = iterate_sequential_tasks(
-                    camera_dependent_tasks, get_task_state,
-                    overrides=args.override+cam_overrides, configs=global_configs,
+                    camera_dependent_tasks, 
+                    get_task_state,
+                    overrides=args.overrides+cam_overrides, 
+                    configs=global_configs,
                     input_indices=view_idxs if len(view_dependent_tasks) else None,
-                    output_indices=camdep_indices)
+                    output_indices=camdep_indices
+                )
                 for state, *rest in camera_dep_iter:
                     yield state, *rest
                 if state not in CONCLUDED_STATES:
                     if camdep_paralell:
                         running_blocks += 1
-                        logging.debug(f'{seed=} {cam_rig,cam_frame=} waiting on viewdep')
                         continue
                     else:
                         return
@@ -785,7 +915,6 @@ def iterate_scene_tasks(
                 path = scene_dict[f'{taskname}_output_folder']
                 print(f'Cleaning {path} for {taskname}')
                 if path == scene_folder:
-                    print(f'Skipping {path}')
                     continue
                 if path is not None and path.exists():
                     cleanup(path)
@@ -822,7 +951,7 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
 
     if "System is out of GPU memory" in error_log:
         return "Out of GPU memory"
-    elif "this scene is timed-out" in error_log:
+    elif "this scene is timed-out" in error_log or 'DUE TO TIME LIMIT' in error_log:
         return "Timed out"
     elif "<Signals.SIGKILL: 9>" in error_log:
         return "SIGKILL: 9 (out-of-memory, probably)"
@@ -839,8 +968,14 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
     output_text = f"{stdout_file.read_text()}\n{stderr_file.read_text()}\n"
     matches = re.findall("(Error:[^\n]+)\n", output_text)
 
+    ignore_errors = [
+        'Error: Not freed memory blocks',
+    ]
+
+    matches = [m for m in matches if not any(w in m for w in ignore_errors)]
+
     if len(matches):
-        return ','.join([m.strip() for m in matches if ('Error: Not freed memory blocks' not in m)])
+        return ','.join(matches)
     else:
         return f"Could not summarize cause, check {stderr_file}" 
 
@@ -848,14 +983,10 @@ def record_crashed_seed(crashed_seed, crash_stage, f, fatal=True):
     time_str = datetime.now().strftime("%m/%d %I:%M%p")
     stdout_file = args.output_folder / crashed_seed / "logs" / f"{crash_stage}.out"
     stderr_file = args.output_folder / crashed_seed / "logs" / f"{crash_stage}.err"
+
     scene_id, *_ = stderr_file.resolve().stem.split('_')
-    node_of_scene = ""
-    if which('sacct'):
-        try:
-            node_of_scene, *rest  = subprocess.check_output(f"{which('sacct')} -j {scene_id} --format Node --noheader".split()).decode().split()
-        except Exception as e:
-            logging.warning(f'sacct threw {e}')
-            return
+    node_of_scene = node_from_slurm_jobid(scene_id)
+        
     reason = infer_crash_reason(stdout_file, stderr_file)
     text = f"{crashed_seed} {crash_stage} {scene_id} {node_of_scene} {reason} {fatal=} {time_str}\n"
     print('Crashed: ' + text)
@@ -877,27 +1008,32 @@ def stats_summary(stats):
     stats = {k: v for k, v in stats.items() if not k.startswith(JobState.NotQueued)}
     lemmatized = set(l.split('_')[0] for l in stats.keys())
     stats = {l: sum(v for k, v in stats.items() if k.startswith(l)) for l in lemmatized}
-    for p in set(k.split('/')[0] for k in stats.keys()):
-        stats[f'{p}/total'] = sum(v for k, v in stats.items() if k.startswith(p))
-    return stats
+    
+    uniq_keys = set(k.split('/')[0] for k in stats.keys())
+    totals = {p: sum(v for k, v in stats.items() if k.startswith(p)) for p in uniq_keys}
 
-@gin.configurable
-def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, sleep_threshold=0.95):
+    for k, v in totals.items():
+        stats[f'{k}/total'] = v
+        
+    return stats, totals
 
-    if LocalScheduleHandler._inst is not None:
-        LocalScheduleHandler.instance().poll()
+def monitor_existing_jobs(all_scenes):
 
-    curr_concurrent_max = math.floor(1 + num_concurrent * elapsed / args.warmup_sec) if elapsed < args.warmup_sec else num_concurrent
-
-    # Check results / current state of scenes we have already launched 
     stats = defaultdict(int)
+
     for scene in all_scenes:
+
         scene['num_running'], scene['num_done'] = 0, 0
         any_fatal = False
         for state, taskname, _, fatal in iterate_scene_tasks(scene, args, monitor_all=True):
+            
+            if state == JobState.NotQueued:
+                continue
+
             stats[f'{state}/{taskname}'] += 1
             scene['num_done'] += state in CONCLUDED_STATES
             scene['num_running'] += state not in CONCLUDED_STATES
+            
             if state == JobState.Failed:
                 if not scene.get(f'{taskname}_crash_recorded', False):
                     scene[f'{taskname}_crash_recorded'] = True
@@ -906,43 +1042,70 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, sleep_threshold=0.9
                 if fatal:
                     any_fatal = True
 
+        if any_fatal:
+            scene['any_fatal_crash'] = True
+
         if scene['num_running'] == 0 and any_fatal and scene['all_done'] == SceneState.NotDone:
             scene['all_done'] = SceneState.Crashed    
             with (args.output_folder / "crash_summaries.txt").open('a') as f:
                 check_and_perform_cleanup(args, scene['seed'], crashed=True)
 
-    # Report stats, with sums by prefix, and extra info
-    stats = stats_summary(stats)
+    return stats
+
+def jobs_to_launch_next(all_scenes, greedy=True):
+    scenes = [j for j in all_scenes if (j["all_done"] == SceneState.NotDone)]
+    if greedy:
+        scenes = sorted(scenes, key=lambda s: s['num_running'] + s['num_done'], reverse=True)
+    for scene in scenes:
+        if scene.get('any_fatal_crash', False):
+            continue
+        for state, taskname, queue_func, _ in iterate_scene_tasks(scene, args, monitor_all=False):
+            if state != JobState.NotQueued:
+                continue
+            yield scene, taskname, queue_func
+
+@gin.configurable
+def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshold=0.95):
+
+    if LocalScheduleHandler._inst is not None:
+        LocalScheduleHandler.instance().poll()
+
+    warmup_pct = min(elapsed / args.warmup_sec, 1) if args.warmup_sec > 0 else 1
+    curr_concurrent_max = math.ceil(warmup_pct * num_concurrent)
+
+    # Check results / current state of scenes we have already launched 
+    stats = monitor_existing_jobs(all_scenes)
+    stats, totals = stats_summary(stats)
+
+    n_in_flight = totals.get(JobState.Running, 0) + totals.get(JobState.Queued, 0)
+    if n_in_flight > curr_concurrent_max:
+        raise ValueError(f'manage_datagen_jobs observed {n_in_flight=}, which exceeds allowed {curr_concurrent_max=}')
+    n_to_launch = max(curr_concurrent_max - n_in_flight, 0)
+
+    pd.DataFrame.from_records(all_scenes).to_csv(args.output_folder/'scenes_db.csv')
+
+    stats['n_in_flight'] = n_in_flight
+    stats['n_launching'] = n_to_launch
     stats['disk_usage'] = get_disk_usage(args.output_folder)
     stats['concurrent_max'] = curr_concurrent_max
     wandb.log(stats)
+    print("=" * 60)
     for k,v in sorted(stats.items()):
         print(f"{k.ljust(30)} : {v}")
     print("-" * 60)
 
     # Dont launch new scenes if disk is getting full
-    if stats['disk_usage'] > sleep_threshold:
+    if stats['disk_usage'] > disk_sleep_threshold:
         print(f"{args.output_folder} is too full ({get_disk_usage(args.output_folder)}%). Sleeping.")
         wandb.alert(title='Disk full', text=f'Sleeping due to full disk at {args.output_folder=}', wait_duration=3*60*60)
         time.sleep(60)
         return
 
-    # Launch new scenes to bring the current load back up to `curr_concurrent_max`
-    scenes = [j for j in all_scenes if (j["all_done"] == SceneState.NotDone)]
-    scenes = sorted(scenes, key=lambda s: s['num_running'] + s['num_done'], reverse=True) # greedily try to finish nearly-done videos asap
-    to_be_launched = curr_concurrent_max - stats.get(f'{JobState.Running}/all', 0) - stats.get(f'{JobState.Queued}/all', 0)
-    if to_be_launched <= 0:
-        return
-    for scene in scenes[:curr_concurrent_max]:
-        for state, taskname, queue_func, _ in iterate_scene_tasks(scene, args, monitor_all=False):
-            if state != JobState.NotQueued:
-                continue
-            to_be_launched -= 1
-            run_task(queue_func, args.output_folder / str(scene['seed']), scene, taskname)
-            if to_be_launched == 0:
-                break
-        if to_be_launched == 0:
-            break
+    # Launch to get back to intended n=`curr_concurrent_max` that should be in flight
+    for spec in itertools.islice(jobs_to_launch_next(all_scenes), n_to_launch):    
+        scene, taskname, queue_func = spec
+        logging.info(f"{scene['seed']} - running {taskname}")
+        run_task(queue_func, args.output_folder / str(scene['seed']), scene, taskname)
 
 @gin.configurable
 def main(args, shuffle=True, wandb_project='render_beta'):
@@ -956,7 +1119,7 @@ def main(args, shuffle=True, wandb_project='render_beta'):
     wandb.init(name=scene_name, config=vars(args), project=wandb_project, mode=args.wandb_mode)
 
     logging.basicConfig(
-        filename=str(args.output_folder / "jobs.log"),
+        #filename=str(args.output_folder / "jobs.log"),
         level=args.loglevel,
         format='[%(asctime)s]: %(message)s',
     )
@@ -971,20 +1134,23 @@ def main(args, shuffle=True, wandb_project='render_beta'):
     while any(j['all_done'] == SceneState.NotDone for j in all_scenes):
         now = datetime.now()
         print(f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}')
-        logging.info('=' * 80)
-        manage_datagen_jobs(scenes, elapsed=(now-start_time).seconds)
-        logging.info("-" * 80)
+        manage_datagen_jobs(scenes, elapsed=(now-start_time).total_seconds())
         time.sleep(4)
 
-def test_upload(args):
-
-    from_folder = args.output_folder/f'test_upload_{args.output_folder.name}'
-    from_folder.mkdir(parents=True, exist_ok=True)
-    (from_folder/'test_file.txt').touch()
-
-    upload_util.upload_folder(from_folder, Path('infinigen/test_upload/'))
-    rmtree(from_folder)
     
+def set_blender_path_global(args):
+
+    global BLENDER_PATH
+    if args.blender_path is None:
+        if 'BLENDER' in os.environ:
+            BLENDER_PATH = os.environ['BLENDER']
+        else:
+            BLENDER_PATH = '../blender/blender' # assuming we run from infinigen/worldgen
+    else:
+        BLENDER_PATH = args.blender_path
+    if not os.path.exists(BLENDER_PATH):
+        raise ValueError(f'Couldnt not find {BLENDER_PATH=}, make sure --blender_path or $BLENDER is specified')
+
 if __name__ == "__main__":
     assert Path('.').resolve().parts[-1] == 'worldgen'
 
@@ -1056,7 +1222,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-p', 
-        '--override', 
+        '--overrides', 
         nargs='+', 
         type=str, 
         default=[], 
@@ -1082,32 +1248,22 @@ if __name__ == "__main__":
         default=[], 
         help="List of gin overrides to configure this execution",
     )
+    parser.add_argument('--overwrite', action='store_true')
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
     args = parser.parse_args()
 
-    envvar = 'INFINIGEN_ASSET_FOLDER'
-
     if not args.upload and args.cleanup == 'all':
-        raise ValueError(f'Pipeline is configured with {args.cleanup=} yet {args.upload=} --- no output would be preserved')
-
-    global BLENDER_PATH
-    if args.blender_path is None:
-        if 'BLENDER' in os.environ:
-            BLENDER_PATH = os.environ['BLENDER']
-        else:
-            BLENDER_PATH = '../blender/blender' # assuming we run from infinigen/worldgen
-    else:
-        BLENDER_PATH = args.blender_path
-    if not os.path.exists(BLENDER_PATH):
-        raise ValueError(f'Couldnt not find {BLENDER_PATH=}, make sure --blender_path or $BLENDER is specified')
-
+        raise ValueError(f'Pipeline is configured with {args.cleanup=} yet {args.upload=}! No output would be preserved!')
+    if args.upload and args.cleanup == 'none':
+        raise ValueError(f'--upload currently applies --cleanup big_files')
     assert args.specific_seed is None or args.num_scenes == 1
+    set_blender_path_global(args)
 
-    if args.output_folder.exists() and not args.use_existing:
-        raise FileExistsError(f'--output_folder {args.output_folder} already exists! Quitting to avoid overwrite. Please delete it, or specify a new --output_folder')
-
-    args.output_folder.mkdir(parents=True, exist_ok=args.use_existing)
+    overwrite_ok = args.use_existing or args.overwrite
+    if args.output_folder.exists() and not overwrite_ok:
+        raise FileExistsError(f'--output_folder {args.output_folder} already exists! Please delete it, specify a different --output_folder, or use --overwrite')
+    args.output_folder.mkdir(parents=True, exist_ok=overwrite_ok)
 
     if args.meta_seed is not None:
         random.seed(args.meta_seed)
@@ -1120,7 +1276,7 @@ if __name__ == "__main__":
             if p.parts[-1] == f'{g}.gin':
                 return p
         raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere pipeline_configs/**')
-    configs = [find_config(n) for n in args.pipeline_configs]
+    configs = [find_config(n) for n in ['base.gin'] + args.pipeline_configs]
     for c in configs:
         assert os.path.exists(c), c
     bindings = args.pipeline_overrides

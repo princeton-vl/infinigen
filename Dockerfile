@@ -32,7 +32,7 @@ fi
 RUN mkdir /opt/infinigen
 WORKDIR /opt/infinigen
 COPY . .
-RUN chmod +x worldgen/tools/compile_opengl.sh
+RUN chmod +x worldgen/tools/install/compile_opengl.sh
 RUN conda init bash \
     && . ~/.bashrc \
     && conda create --name infinigen python=3.10 \

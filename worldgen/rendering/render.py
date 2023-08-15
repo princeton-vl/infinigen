@@ -171,6 +171,8 @@ def shader_random(nw: NodeWrangler):
 def global_flat_shading():
 
     for obj in bpy.context.scene.view_layers['ViewLayer'].objects:
+        if 'fire_system_type' in obj and obj['fire_system_type'] == 'volume':
+            continue
         if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
             bpy.data.objects.remove(obj)
         elif obj.active_material is not None:
@@ -185,6 +187,9 @@ def global_flat_shading():
         if obj.type != 'MESH':
             continue
         obj.hide_viewport = False
+        if 'fire_system_type' in obj and obj['fire_system_type'] == 'gt_mesh':
+            obj.hide_viewport = False
+            obj.hide_render = False
         if not hasattr(obj, 'material_slots'):
             print(obj.name, 'NONE')
             continue

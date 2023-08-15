@@ -1,0 +1,21 @@
+populate_scene.trees_fire_on_the_fly_chance = 0.1
+#compose_scene.trees_chance = 1
+populate_scene.bushes_fire_on_the_fly_chance = 0.8
+#compose_scene.bushes_chance = 1
+populate_scene.creatures_fire_on_the_fly_chance = 0
+populate_scene.boulders_fire_on_the_fly_chance = 0.1
+populate_scene.cactus_fire_on_the_fly_chance = 0.1
+compose_scene.glowing_rocks_chance = 0.0
+
+
+
+
+render_image.exposure = 0.4
+compose_scene.cached_fire = False
+LandTiles.land_process = None
+#scene.voronoi_rocks_chance = 1
+#animate_cameras.follow_poi_chance=0
+
+
+set_obj_on_fire.resolution = 430
+set_obj_on_fire.dissolve_speed = 25
