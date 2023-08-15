@@ -301,7 +301,7 @@ def execute_tasks(
 
     for name in ['ant_landscape', 'real_snow', 'flip_fluids_addon']:
         try:
-            bpy.ops.preferences.addon_enable(module='ant_landscape')
+            bpy.ops.preferences.addon_enable(module=name)
         except ModuleNotFoundError as e:
             logging.warning(f'Could not load addon "{name}". {e}')
             

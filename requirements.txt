@@ -1,6 +1,6 @@
 gin-config>=0.5.0
 tqdm
-opencv-python
+opencv-python<=4.8.0.74
 matplotlib
 scipy
 fastcore
