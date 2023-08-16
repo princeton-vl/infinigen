@@ -66,7 +66,7 @@ from surfaces.scatters.utils.selection import scatter_lower, scatter_upward
 from placement.factory import make_asset_collection
 from util import blender as butil
 from util import exporting
-from util.logging import Timer, save_polycounts, create_text_file
+from util.logging import Timer, save_polycounts, create_text_file, Suppress
 from util.math import FixedSeed, int_hash
 from util.pipeline import RandomStageExecutor
 from util.random import sample_registry
@@ -301,9 +301,10 @@ def execute_tasks(
 
     for name in ['ant_landscape', 'real_snow', 'flip_fluids_addon']:
         try:
-            bpy.ops.preferences.addon_enable(module=name)
-        except ModuleNotFoundError as e:
-            logging.warning(f'Could not load addon "{name}". {e}')
+            with Suppress():
+                bpy.ops.preferences.addon_enable(module=name)
+        except Exception as e:
+            logging.warning(f'Could not load addon "{name}"')
             
     bpy.context.preferences.system.scrollback = 0 
     bpy.context.preferences.edit.undo_steps = 0
