@@ -25,4 +25,10 @@ def register_func(me, dll, name, argtypes=[], restype=None, caller_name=None):
     func.restype = restype
 
 def load_cdll(path):
-    return CDLL(Path(sys.path[-1]) / path, mode=RTLD_LOCAL)
+    if sys.platform == 'win32':
+        #replace suffix .so to .dll
+        path = Path(path)
+        path = path.with_suffix('.dll')
+    
+    _path:Path = Path(sys.path[-1]) / path
+    return CDLL(_path.as_posix(), mode=RTLD_LOCAL)
