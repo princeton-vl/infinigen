@@ -166,14 +166,14 @@ def herbivore_genome():
     if U() < 1:
         hair = herbivore_hair()
         registry = [
-            (assets.materials.giraffe_attr, 1),
-            (assets.materials.spot_sparse_attr, 3)
+            (infinigen.assets.materials.giraffe_attr, 1),
+            (infinigen.assets.materials.spot_sparse_attr, 3)
         ]
     else:
         hair = None
         registry = [
-            (assets.materials.reptile_brown_circle_attr, 1),
-            (assets.materials.reptile_gray_attr, 1)
+            (infinigen.assets.materials.reptile_brown_circle_attr, 1),
+            (infinigen.assets.materials.reptile_gray_attr, 1)
         ]
 
     return genome.CreatureGenome(

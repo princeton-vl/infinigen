@@ -777,7 +777,8 @@ def approve_all_drivers():
 def count_objects():
     count = 0
     for obj in bpy.context.scene.objects:
-        if element.type != "MESH": continue
+        if obj.type != "MESH": 
+            continue
         count +=1
     return count
 

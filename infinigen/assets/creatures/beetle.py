@@ -22,6 +22,7 @@ from infinigen.assets.creatures.util.boid_swarm import BoidSwarmFactory
 
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.util.math import lerp, clip_gaussian, FixedSeed
+from infinigen.core import surface
 import infinigen.assets.materials.chitin
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
@@ -103,7 +104,7 @@ def beetle_genome():
         parts=body,
         postprocess_params=dict(
             surface_registry=[
-                (assets.materials.chitin, 1)
+                (infinigen.assets.materials.chitin, 1)
             ],
             hair=insect_hair_params()
         )

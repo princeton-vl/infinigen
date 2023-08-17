@@ -115,7 +115,7 @@ def dinosaur():
         postprocess_params=dict(
             animation=dict(), 
             surface_registry=[
-                (assets.materials.snake_scale, 1),
+                (infinigen.assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -178,7 +178,7 @@ def lizard_genome():
         postprocess_params=dict(
             anim=lizard_run_params(),
             surface_registry=[
-                (assets.materials.snake_scale, 1),
+                (infinigen.assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -227,7 +227,7 @@ def snake_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (assets.materials.snake_scale, 1),
+                (infinigen.assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -243,7 +243,7 @@ def chameleon_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (assets.materials.snake_scale, 1),
+                (infinigen.assets.materials.snake_scale, 1),
             ]
         ) 
     )
@@ -304,7 +304,7 @@ def frog_genome():
                 speed_m_s=0.5
             ), 
             surface_registry=[
-                (assets.materials.snake_scale, 1),
+                (infinigen.assets.materials.snake_scale, 1),
             ]
         ) 
     )

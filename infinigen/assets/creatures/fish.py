@@ -169,8 +169,8 @@ def fish_genome():
             cloth=fish_fin_cloth_sim_params(),
             anim=fish_swim_params(),
             surface_registry=[
-                (assets.materials.fishbody, 3),
-                #(assets.materials.scale, 1),
+                (infinigen.assets.materials.fishbody, 3),
+                #(infinigen.assets.materials.scale, 1),
             ]
         ) 
     )

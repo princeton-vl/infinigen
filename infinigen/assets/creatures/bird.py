@@ -30,6 +30,7 @@ from infinigen.assets.materials import bone, tongue, eyeball, beak
 from infinigen.core.util.math import clip_gaussian, FixedSeed
 from infinigen.core.util.random import random_general as rg
 from infinigen.core.util import blender as butil
+from infinigen.core import surface
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.assets.creatures.util.creature_util import offset_center
@@ -150,10 +151,10 @@ def duck_genome(mode):
             animation=dict(), 
             hair=bird_hair_params(flying=False),
             surface_registry=[
-                (assets.materials.spot_sparse_attr, 4),
-                (assets.materials.reptile_brown_circle_attr, 0.5),
-                (assets.materials.reptile_two_color_attr, 0.5),
-                (assets.materials.bird, 5)
+                (infinigen.assets.materials.spot_sparse_attr, 4),
+                (infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
+                (infinigen.assets.materials.reptile_two_color_attr, 0.5),
+                (infinigen.assets.materials.bird, 5)
             ]
         ) 
     )
@@ -227,10 +228,10 @@ def flying_bird_genome(mode):
             animation=dict(), 
             hair=bird_hair_params(flying=True),
             surface_registry=[
-                #(assets.materials.spot_sparse_attr, 4),
-                #(assets.materials.reptile_brown_circle_attr, 0.5),
-                #(assets.materials.reptile_two_color_attr, 0.5),
-                (assets.materials.bird, 5)
+                #(infinigen.assets.materials.spot_sparse_attr, 4),
+                #(infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
+                #(infinigen.assets.materials.reptile_two_color_attr, 0.5),
+                (infinigen.assets.materials.bird, 5)
             ]
         ) 
     )

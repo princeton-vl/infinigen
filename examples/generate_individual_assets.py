@@ -36,13 +36,13 @@ from infinigen.core.util.camera import get_3x4_P_matrix_from_blender
 from infinigen.core.util.logging import Suppress
 from infinigen.core.util import blender as butil
 
-from datagen.tools.results import strip_alpha_background as strip_alpha_background
+from infinigen.datagen.tools.results import strip_alpha_background as strip_alpha_background
 
 import generate_nature  # to load most/all factory.AssetFactory subclasses
 
 def build_scene_asset(factory_name, idx):
     factory = None
-    for subdir in os.listdir('assets'):
+    for subdir in os.listdir('infinigen/assets'):
         with gin.unlock_config():
             module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
         if hasattr(module, factory_name):
@@ -91,7 +91,7 @@ def build_scene_asset(factory_name, idx):
 def build_scene_surface(factory_name, idx):
     try:
         with gin.unlock_config():
-            scatter = importlib.import_module(f'surfaces.scatters.{factory_name}')
+            scatter = importlib.import_module(f'infinigen.assets.scatters.{factory_name}')
 
             if not hasattr(scatter, 'apply'):
                 raise ValueError(f'{scatter} has no apply()')
@@ -109,7 +109,7 @@ def build_scene_surface(factory_name, idx):
     except ModuleNotFoundError:
         try:
             with gin.unlock_config():
-                template = importlib.import_module(f'assets.materials.{factory_name}')
+                template = importlib.import_module(f'infinigen.assets.materials.{factory_name}')
                 bpy.ops.mesh.primitive_ico_sphere_add(radius=.8, subdivisions=9)
                 asset = bpy.context.active_object
                 template.apply(asset)

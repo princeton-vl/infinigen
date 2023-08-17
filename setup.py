@@ -41,8 +41,7 @@ def ensure_submodules():
 
     folders = get_submodule_folders()
 
-    isempty = lambda p: not any(p.iterdir())
-    if any(not p.exists() or isempty(p) for p in folders):
+    if any(not p.exists() or not any(p.iterdir()) for p in folders):
         subprocess.run(
             ["git", "submodule", "update", "--init", "--recursive"], cwd=cwd
         )
@@ -85,10 +84,12 @@ setup(
     ext_modules=[
         *cythonize(cython_extensions)
     ],
-    package_data=[
-        "infinigen/terrain/lib",
-        "infinigen/datagen/customgt/build"
-    ]
+    package_data={
+        "infinigen": [
+            "infinigen/terrain/lib",
+            "infinigen/datagen/customgt/build"
+        ]
+    }
     # other opts come from pyproject.toml and setup.cfg
 )
 

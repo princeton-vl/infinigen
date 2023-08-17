@@ -87,7 +87,7 @@ class LeafFactory(AssetFactory):
         butil.apply_transform(obj)
 
         return obj
-
+        
 class BerryFactory(AssetFactory):
 
     def __init__(self, factory_seed, genome, coarse=False):

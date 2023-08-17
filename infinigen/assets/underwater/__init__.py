@@ -1,1 +1,2 @@
-from . import seaweed, urchin
+from .seaweed import SeaweedFactory
+from .urchin import UrchinFactory

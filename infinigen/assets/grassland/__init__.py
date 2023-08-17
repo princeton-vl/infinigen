@@ -7,3 +7,4 @@
 from .dandelion import DandelionFactory, DandelionSeedFactory
 from .flowerplant import FlowerPlantFactory
 from .grass_tuft import GrassTuftFactory
+from .flower import FlowerFactory

@@ -4,10 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "infinigen"
+version = "1.1.0"
+requires-python = "==3.10.*"
 description = "Infinite Photorealistic Worlds using Procedural Generation"
-keywords = ["computer vision", "data generation", "procedural"]
+keywords = [
+    "computer vision", 
+    "data generation", 
+    "procedural"
+]
+classifiers = [
+    "Framework :: Blender", 
+    "Programming Language :: Python :: 3"
+]
 dependencies = [
-    "bpy == 3.6.0",
+    "bpy",
     "einops",
     "flow_vis",
     "frozendict",
@@ -27,11 +37,23 @@ dependencies = [
     "wandb",
     "zarr",
     "pandas",
+    "landlab == 2.4.1", 
+    "pycparser", 
+    "pyrender"
 ]
 
 [project.optional-dependencies]
-terrain = ["landlab == 2.4.1", "pycparser", "pyrender"]
-dev = ["pytest", "pytest-ordering", "pytest-cov", "black", "ruff", "tabulate"]
+dev = [
+    "pytest", 
+    "pytest-ordering", 
+    "pytest-cov", 
+    "black", 
+    "ruff", 
+    "tabulate" # for integration test results
+]
+
+[tool.setuptools]
+packages = ["infinigen"]
 
 [tool.pytest.ini_options]
 addopts = "--cov-report xml:coverage.xml --cov infinigen --cov-fail-under 0"
@@ -68,8 +90,8 @@ ignore = [
 [tool.ruff.per-file-ignores]
 "__init__.py" = []
 "infinigen/assets/*" = [
-    "F841",
-] #transpiler currently creates lots of unused variablesclassifiers = ["Framework :: Blender", "Programming Language :: Python :: 3"]
+    "F841", #transpiler currently creates lots of unused variables
+] 
 
 
 [tool.ruff.mccabe]

@@ -1,3 +1,5 @@
+# DO NOT MODIFY STRUCTURE OR COMMENTS: commands are read by test_hello_world.py
+
 # Generate a scene layout
 python examples/generate_nature.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
 

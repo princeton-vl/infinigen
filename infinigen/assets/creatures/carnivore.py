@@ -169,9 +169,9 @@ def tiger_genome():
             hair=tiger_hair_params(),
             skin=tiger_skin_sim_params(),
             surface_registry=[
-                (assets.materials.tiger_attr, 3),
-                (assets.materials.giraffe_attr, 0.2),
-                (assets.materials.spot_sparse_attr, 2)
+                (infinigen.assets.materials.tiger_attr, 3),
+                (infinigen.assets.materials.giraffe_attr, 0.2),
+                (infinigen.assets.materials.spot_sparse_attr, 2)
             ]
         ) 
     )

@@ -4,6 +4,9 @@ blender
 blender.tar.xz
 Blender.app
 
+.coverage
+coverage.xml
+
 */rclone.zip
 */miniconda.sh
 

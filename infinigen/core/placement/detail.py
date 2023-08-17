@@ -24,7 +24,7 @@ logger = logging.getLogger('detail')
 IS_COARSE = False # Global VARIABLE, set by examples/generate_nature.py and used only for whether to emit warnings
 
 @gin.configurable
-def scatter_res_distance(dist):
+def scatter_res_distance(dist=4):
     return dist
 
 @gin.configurable

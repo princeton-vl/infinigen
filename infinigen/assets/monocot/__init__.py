@@ -1,6 +1,5 @@
 from .agave import AgaveMonocotFactory
-from .grasses import GrassesMonocotFactory, WheatMonocotFactory, WheatEarMonocotFactory, MaizeMonocotFactory, \
-    ReedMonocotFactory
+from .grasses import GrassesMonocotFactory, WheatMonocotFactory, WheatEarMonocotFactory, MaizeMonocotFactory
 from .tussock import TussockMonocotFactory
 from .pinecone import PineconeFactory
 from .generate import MonocotFactory
