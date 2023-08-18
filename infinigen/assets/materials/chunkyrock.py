@@ -47,8 +47,8 @@ def shader_rocks(nw, rand=True, **input_kwargs):
         input_kwargs={'Fac': noise_texture_1.outputs["Fac"], 'Color1': (0.0, 0.0, 0.0, 1.0), 'Color2': (0.01, 0.024, 0.0283, 1.0)})
 
     if rand:
-        sample_color(rock_color1.inputs["Color1"].default_value)
-        sample_color(rock_color1.inputs["Color2"].default_value)
+        sample_color(rock_color1.inputs[6].default_value)
+        sample_color(rock_color1.inputs[7].default_value)
 
     noise_texture_2 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': mapping, 'Detail': 15.0})
@@ -57,8 +57,8 @@ def shader_rocks(nw, rand=True, **input_kwargs):
         input_kwargs={'Fac': noise_texture_2.outputs["Fac"], 'Color1': (0.0, 0.0, 0.0, 1.0), 'Color2': (0.0694, 0.1221, 0.0693, 1.0)})
 
     if rand:
-        sample_color(rock_color2.inputs["Color1"].default_value)
-        sample_color(rock_color2.inputs["Color2"].default_value)
+        sample_color(rock_color2.inputs[6].default_value)
+        sample_color(rock_color2.inputs[7].default_value)
 
     mix_1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_3.outputs["Color"], 'Color1': rock_color1, 'Color2': rock_color2})

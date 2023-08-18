@@ -271,15 +271,6 @@ def cloud_geometry_func(
                 'operation': 'GREATER_THAN',
             },
         )
-
-        if points_only:
-            group_output = nw.new_node(
-                Nodes.GroupOutput,
-                input_kwargs={
-                    'Geometry': separate_geometry,
-                },
-            )
-            return
         
         separate_geometry = nw.new_node(
             Nodes.SeparateGeometry,

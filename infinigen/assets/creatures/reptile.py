@@ -391,7 +391,7 @@ def chameleon_postprocessing(body_parts, extras, params):
     body = body_parts + get_extras('BodyExtra')
     main_template.apply(body)
 
-    chameleon_eye.apply(get_extras('Eye'))
+    #chameleon_eye.apply(get_extras('Eye'))
 
 @gin.configurable
 class LizardFactory(AssetFactory):
@@ -410,8 +410,6 @@ class LizardFactory(AssetFactory):
             postprocess_func=reptile_postprocessing, adapt_mode='remesh', rigging=rigging, **kwargs)
         if animate and arma is not None:
             pass 
-        if simulate:
-            pass
         else:
             joined = butil.join_objects([joined] + extras)
             

@@ -70,28 +70,28 @@ markers = [
 
 [tool.ruff]
 select = [
-    "E",
-    "F",
-    #"B",
+    "E", 
+    "F", 
+    #"B", 
     #"C901",
 ]
 target-version = "py310"
-line-length = 88
+line-length = 120 # will be reduced to 88 to match black soon
 
-exclude = ["*/dependencies/"]
+exclude = [
+    "*/dependencies/"
+]
 ignore = [
     "E402", # we have lots of sys.path and opencv statements that must preceed imports, ignore for now
     "E501", # ignore line length for now
     "E701", # disable multi line statements until we enable black
     "F401", # unused imports are sometimes necessary for gin to work
     "E712", # some people think `if x == True` is more explicit, not going to force it
-]
+] 
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = []
-"infinigen/assets/*" = [
-    "F841", #transpiler currently creates lots of unused variables
-] 
+"infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 
 [tool.ruff.mccabe]

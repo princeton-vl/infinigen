@@ -457,6 +457,8 @@ def apply(objs, shader_kwargs={}, **kwargs):
     else:
         kind = 'duck'
     shader_kwargs['kind'] = kind
+    if not isinstance(objs, list):
+        objs = [objs]
     for obj in objs:
         if "Tail" in obj.name:
             shader_kwargs['tail'] = True

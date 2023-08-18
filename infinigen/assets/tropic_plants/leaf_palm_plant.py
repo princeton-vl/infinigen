@@ -6,9 +6,21 @@
 
 import bpy
 import mathutils
-from numpy.random import uniform
-from infinigen.assets.tropic_plants.tropic_plant_utils import *
+import numpy as np
+from numpy.random import uniform, normal, randint
+from infinigen.assets.tropic_plants.tropic_plant_utils import (
+    nodegroup_nodegroup_leaf_gen,
+    nodegroup_nodegroup_leaf_rotate_x,
+    nodegroup_nodegroup_leaf_shader,
+    nodegroup_nodegroup_move_to_origin,
+    nodegroup_nodegroup_sub_vein,
+    hsv2rgba,
+    shader_stem_material,
+)
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.nodes import Nodes, NodeWrangler, node_utils
 from infinigen.core.util import blender as butil
+from infinigen.core import surface
 
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')

@@ -13,7 +13,14 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.nodes.color import hsv2rgba
-from infinigen.assets.tropic_plants.tropic_plant_utils import *
+from infinigen.assets.tropic_plants.tropic_plant_utils import (
+    nodegroup_nodegroup_leaf_gen,
+    nodegroup_nodegroup_leaf_rotate_x,
+    nodegroup_nodegroup_leaf_shader,
+    nodegroup_nodegroup_move_to_origin,
+    nodegroup_nodegroup_sub_vein,
+    shader_stem_material
+)
 from infinigen.core.util import blender as butil
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 

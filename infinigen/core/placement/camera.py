@@ -154,7 +154,8 @@ def get_camera(rig_id, subcam_id, checkonly=False):
     name = camera_name(rig_id, subcam_id)
     if name in col.objects.keys():
         return col.objects[name]
-    if checkonly: return None
+    if checkonly: 
+        return None
     raise ValueError(f'Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}')
 
 @node_utils.to_nodegroup('nodegroup_camera_info', singleton=True, type='GeometryNodeTree')
@@ -239,7 +240,8 @@ def camera_pose_proposal(
         loc = np.random.uniform(*terrain_bbox)
 
         alt = animation_policy.get_altitude(loc, terrain_bvh)
-        if alt is None: return None
+        if alt is None: 
+            return None
 
         headspace = animation_policy.get_altitude(loc, terrain_bvh, dir=Vector((0, 0, 1)))
         for headspace_retry in range(headspace_retries):
@@ -303,7 +305,7 @@ def keep_cam_pose_proposal(
         cam, terrain_bvh, terrain_tags_answers, vertexwise_min_dist, min_dist=min_terrain_distance)
     
     if dists is None:
-        logger.debug(f'keep_cam_pose_proposal rejects terrain dists')
+        logger.debug('keep_cam_pose_proposal rejects terrain dists')
         return None
     
     coverage = len(dists)/n_pix
@@ -417,7 +419,7 @@ def camera_selection_preprocessing(
     terrain_tags_ratio={},
 ):
     
-    with Timer(f'Building placeholders KDTree'):
+    with Timer('Building placeholders KDTree'):
         
         placeholders = list(chain.from_iterable(
             c.all_objects for c in bpy.data.collections if c.name.startswith('placeholders:')
@@ -496,7 +498,7 @@ def animate_cameras(
 
 
     for cam_rig in cam_rigs:
-        if policy_registry == None:  
+        if policy_registry is None:  
             if U() < follow_poi_chance and pois is not None and len(pois):
                 policy = animation_policy.AnimPolicyFollowObject(
                     target_obj=cam_rig, 

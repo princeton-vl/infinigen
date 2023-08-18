@@ -39,7 +39,7 @@ def make_virtual_transfer_attribute(nw, orig_type, input_args, attrs, input_kwar
         mapped_type = Nodes.SampleNearestSurface
         map_dict_keys(input_kwargs, {'Source': 'Mesh', 'Attribute': 'Value', 'Source Position': 'Sample Position'})
     elif attrs['mapping'] == 'NEAREST':
-        raise ValueError(f"Compatibility mapping for mode='NEAREST' is not supported, please modify the code to resolve this outdated instance of TransferAttribute")
+        raise ValueError("Compatibility mapping for mode='NEAREST' is not supported, please modify the code to resolve this outdated instance of TransferAttribute")
     elif attrs['mapping'] == 'INDEX':
         mapped_type = Nodes.SampleIndex
         map_dict_keys(input_kwargs, {'Source': 'Geometry', 'Attribute': 'Value'})

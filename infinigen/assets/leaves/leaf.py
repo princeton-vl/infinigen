@@ -87,7 +87,8 @@ class LeafFactory(AssetFactory):
         butil.apply_transform(obj)
 
         return obj
-        
+
+'''
 class BerryFactory(AssetFactory):
 
     def __init__(self, factory_seed, genome, coarse=False):
@@ -116,6 +117,7 @@ class BerryFactory(AssetFactory):
         tag_object(obj, 'leaf')
 
         return obj
+'''
 
 '''
 def init_berries(n_leaves=5, im_mat=None, **leaf_kargs):

@@ -189,7 +189,7 @@ class Mesh:
             return w_normals
     
     def facewise_mean(self, attr):
-        dll = load_cdll(f"terrain/lib/cpu/meshing/utils.so")
+        dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         facewise_mean = dll.facewise_mean
         facewise_mean.argtypes = [POINTER(c_double), POINTER(c_int32), c_int32, POINTER(c_double)]
         facewise_mean.restype = None
@@ -198,7 +198,7 @@ class Mesh:
         return result
     
     def facewise_intmax(self, attr):
-        dll = load_cdll(f"terrain/lib/cpu/meshing/utils.so")
+        dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         facewise_intmax = dll.facewise_intmax
         facewise_intmax.argtypes = [POINTER(c_int32), POINTER(c_int32), c_int32, POINTER(c_int32)]
         facewise_intmax.restype = None
@@ -207,7 +207,7 @@ class Mesh:
         return result
 
     def get_adjacency(self):
-        dll = load_cdll(f"terrain/lib/cpu/meshing/utils.so")
+        dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         get_adjacency = dll.get_adjacency
         get_adjacency.argtypes = [c_int32, c_int32, POINTER(c_int32), POINTER(c_int32)]
         get_adjacency.restype = None

@@ -8,6 +8,8 @@ It will configure the sys.path and load gin. This is necessary before any other 
 Once this is done, you can do things like `from infinigen.assets.creatures.util.genomes.carnivore import CarnivoreFactory` then `CarnivoreFactory(0).spawn_asset(0)` directly in the blender commandline
 '''
 
+# ruff: noqa
+
 import bpy
 from pathlib import Path
 import sys, os

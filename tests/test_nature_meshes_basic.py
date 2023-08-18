@@ -4,7 +4,6 @@ import pytest
 import bpy
 import gin
 
-from infinigen.assets import * # so gin can find them
 from infinigen.core.util import blender as butil
 
 from utils import (

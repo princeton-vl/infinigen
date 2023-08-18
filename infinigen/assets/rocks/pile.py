@@ -9,7 +9,7 @@ import tqdm
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.boulder import BoulderFactory
+from infinigen.assets.rocks.boulder import BoulderFactory
 from infinigen.assets.utils.physics import free_fall
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
@@ -17,7 +17,8 @@ import infinigen.core.util.blender as butil
 from infinigen.assets.utils.decorate import join_objects, multi_res, toggle_hide
 from infinigen.assets.utils.draw import surface_from_func
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.tag import tag_object
+from infinigen.core.util.random import log_uniform
 
 
 class BoulderPileFactory(AssetFactory):

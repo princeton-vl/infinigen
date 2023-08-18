@@ -271,33 +271,6 @@ def get_visible_vertices(cam, vertices, co2D=None, limit=0.02):
 
   return co2D, is_visible, in_frame
 
-
-def obj_point_sampling(cam, obj, n=300, start_frame=0, end_frame=10):
-  # Sample points distributed over mesh
-  geometry_point_distribute(obj)
-
-  dgraph = C.evaluated_depsgraph_get()
-  obj_eval = obj.evaluated_get(dgraph)
-  subset = subsample_vertices(obj_eval.data.vertices, n)
-
-  # Get point locations for all frames
-  all_pts = get_coords_clip(obj, start_frame, end_frame, subset)
-
-  # Remove geometry node modifier
-  obj.modifiers.remove(obj.modifiers[-1])
-
-  # Get visibility info for all points at each frame
-  all_2d, vis, infr = [], [], []
-  for i, pts in enumerate(all_pts):
-    C.scene.frame_set(i + start_frame)
-    co2D, is_visible, in_frame = get_visible_vertices(cam, pts)
-    all_2d += [co2D]
-    vis += [is_visible]
-    infr += [in_frame]
-
-  return all_pts, np.stack(all_2d, 0), np.stack(vis, 0), np.stack(infr, 0)
-
-
 def sanity_check_viz(all_pts, is_visible, in_frame, frame_idx=0):
   C.scene.frame_set(frame_idx)
   for i in range(all_pts.shape[1]):

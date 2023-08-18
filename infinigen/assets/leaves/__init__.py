@@ -1,4 +1,4 @@
-from .leaf import BerryFactory, LeafFactory
+from .leaf import LeafFactory
 from .leaf_broadleaf import LeafFactoryBroadleaf
 from .leaf_ginko import LeafFactoryGinko
 from .leaf_maple import LeafFactoryMaple

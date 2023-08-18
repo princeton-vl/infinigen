@@ -85,7 +85,7 @@ class CubeSphericalMesher:
         H = self.L - 2 * self.N0
         W = self.L - 2 * self.N1
         R = self.R
-        with Timer(f"init_and_get_emptytest_queries"):
+        with Timer("init_and_get_emptytest_queries"):
             test_L = (self.L - 1) // self.test_downscale  + 1
             test_R = (self.R - 1) // self.test_downscale  + 1
             positions = AC(np.zeros((6 * (test_L + 1) ** 2 * (test_R + 1), 3), dtype=np.float64))
@@ -129,7 +129,7 @@ class CubeSphericalMesher:
                         ASDOUBLE(AC(verts_i.astype(np.float64))), len(verts_i),
                         ASINT(AC(faces_i.astype(np.int32))), len(faces_i),
                     )
-            with Timer(f"collect new cnt"):
+            with Timer("collect new cnt"):
                 cnt = self.get_cnt()
             
         if self.upscale != -1 and self.upscale != 1:
@@ -172,7 +172,7 @@ class CubeSphericalMesher:
                                 ASDOUBLE(AC(verts_i.astype(np.float64))), len(verts_i),
                                 ASINT(AC(faces_i.astype(np.int32))), len(faces_i),
                             )
-                with Timer(f"collect new cnt"):
+                with Timer("collect new cnt"):
                     cnt = self.finefront_get_cnt()
 
             self.finefront_cleanup()

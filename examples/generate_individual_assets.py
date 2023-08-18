@@ -290,14 +290,14 @@ def main(args):
         factories += [f.stem for f in Path('infinigen/assets/materials').iterdir()]
         factories.remove('ALL_MATERIALS')
 
-    for factory in factories:
-        fac_path = path / factory
+    for fac in factories:
+        fac_path = path / fac
         if fac_path.exists() and args.skip_existing:
             continue
         fac_path.mkdir(exist_ok=True)
         for idx in range(args.n_images):
             try:
-                build_scene(fac_path, idx, factory, args)
+                build_scene(fac_path, idx, fac, args)
             except Exception as e:
                 print(e)
                 continue

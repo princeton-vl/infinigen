@@ -15,6 +15,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 
+from infinigen.assets.lighting import sky_lighting
 from infinigen.assets.weather.cloud.node import geometry_func, shader_material
 from infinigen.assets.weather.cloud.node import scatter_func
 

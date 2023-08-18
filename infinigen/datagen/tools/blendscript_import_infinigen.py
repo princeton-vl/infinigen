@@ -10,8 +10,10 @@ Once this is done, you can do things like `from assets.creatures.genomes.carnivo
 
 import bpy
 from pathlib import Path
-import sys, os
+import sys
+import os
 
+# ruff: noqa
 pwd = os.getcwd()
 sys.path.append(pwd)
 

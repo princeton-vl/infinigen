@@ -39,7 +39,7 @@ def objects_to_grid(objects, spacing):
 def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None):
     temp_vert = butil.spawn_vert('compute_placeholder_locations')
     geo = temp_vert.modifiers.new(name="GEOMETRY", type='NODES')
-    if geo.node_group == None:
+    if geo.node_group is None:
         group = geometry_node_group_empty_new()
         geo.node_group = group
     nw = NodeWrangler(geo)
@@ -52,7 +52,8 @@ def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitu
                                        'Distance Min': distance_min})
     verts = nw.new_node(Nodes.PointsToVertices, input_kwargs={'Points': points})
     verts = nw.new_node(Nodes.SetPosition, input_kwargs={'Geometry': verts, 'Offset': (0, 0, altitude)})
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': verts})
+    
+    nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': verts})
 
     # dump the point locations out as vertices
     butil.apply_modifiers(temp_vert, geo)

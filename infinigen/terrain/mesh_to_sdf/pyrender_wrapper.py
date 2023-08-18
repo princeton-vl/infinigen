@@ -14,6 +14,7 @@ if 'pyrender' in sys.modules:
 if 'OpenGL' in sys.modules:
     raise ImportError('The mesh_to_sdf package must be imported before OpenGL is imported.')
 
+# ruff: noqa: E402
 # Disable antialiasing:
 import OpenGL.GL
 

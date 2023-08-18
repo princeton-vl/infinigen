@@ -491,51 +491,6 @@ class CarnivoreJaw(PartFactory):
         tag_object(part.obj, 'carnivore_jaw')
         return part
 
-@node_utils.to_nodegroup('nodegroup_fish_head', singleton=True, type='GeometryNodeTree')
-def nodegroup_fish_head(nw: NodeWrangler):
-    # Code generated using version 2.4.3 of the node_transpiler
-
-    group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketVector', 'length_rad1_rad2', (0.51, 0.27, 0.12)),
-            ('NodeSocketVector', 'angles_deg', (7.0, -18.36, 0.0)),
-            ('NodeSocketFloat', 'aspect', 0.56),
-            ('NodeSocketFloat', 'fullness', 1.96),
-            ('NodeSocketVector', 'eye_coord', (0.5, 0.0, 1.0)),
-            ('NodeSocketFloatDistance', 'eye_radius', 0.05)])
-    
-    eyeball = nw.new_node(nodegroup_eyeball().name,
-        input_kwargs={'Radius': group_input.outputs["eye_radius"]})
-    
-    simple_tube_v2 = nw.new_node(nodegroup_simple_tube_v2().name,
-        input_kwargs={'length_rad1_rad2': group_input.outputs["length_rad1_rad2"], 'angles_deg': group_input.outputs["angles_deg"], 'aspect': group_input.outputs["aspect"], 'fullness': group_input.outputs["fullness"]})
-    
-    eyesockets = nw.new_node(nodegroup_eye_sockets().name,
-        input_kwargs={'Eyeball': eyeball, 'Skin Mesh': simple_tube_v2.outputs["Geometry"], 'Skeleton Curve': simple_tube_v2.outputs["Skeleton Curve"], 'Base Mesh': simple_tube_v2.outputs["Geometry"], 'Length/Yaw/Rad': group_input.outputs["eye_coord"]})
-    
-    group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Geometry': eyesockets.outputs["Geometry"], 'Skeleton Curve': simple_tube_v2.outputs["Skeleton Curve"], 'LeftEye': eyesockets.outputs["LeftEye"], 'RightEye': eyesockets.outputs["RightEye"]})
-
-class FishHead(PartFactory):
-
-    tags = ['head']
-
-    def sample_params(self):
-        return {
-            'length_rad1_rad2': (0.51, 0.27, 0.12),
-            'angles_deg': (7.0, -18.36, 0.0),
-            'aspect': 0.56,
-            'fullness': 1.96,
-            'eye_coord': (0.5, 0.0, 1.0),
-            'eye_radius': 0.0
-        }
-
-    def make_part(self, params):
-        part = part_util.nodegroup_to_part(nodegroup_fish_head, params)
-        part.iks = {1.0: IKParams('head', rotation_weight=0.1, chain_parts=2)}
-        part.settings['rig_extras'] = True
-        tag_object(part.obj, 'fish_head')
-        return part
-
 @node_utils.to_nodegroup('nodegroup_flying_bird_head', singleton=True, type='GeometryNodeTree')
 def nodegroup_flying_bird_head(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

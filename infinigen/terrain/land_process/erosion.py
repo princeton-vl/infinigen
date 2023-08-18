@@ -25,7 +25,7 @@ def run_erosion(
     ground_depth=25,
     sinking_rate=0.05,
 ):
-    dll = load_cdll(f"terrain/lib/cpu/soil_machine/SoilMachine.so")
+    dll = load_cdll("terrain/lib/cpu/soil_machine/SoilMachine.so")
     func = dll.run
     func.argtypes = [
         POINTER(c_float), POINTER(c_float), POINTER(c_float),

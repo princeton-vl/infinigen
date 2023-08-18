@@ -96,7 +96,7 @@ class AssetFactory:
             distance = detail.scatter_res_distance()
 
         if self.coarse:
-            raise ValueError(f'Attempted to spawn_asset() on an AssetFactory(coarse=True)')
+            raise ValueError('Attempted to spawn_asset() on an AssetFactory(coarse=True)')
 
         if placeholder is None:
             placeholder = self.spawn_placeholder(i=i, loc=loc, rot=rot)

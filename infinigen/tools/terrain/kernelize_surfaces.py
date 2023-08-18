@@ -7,12 +7,11 @@
 import os
 import sys
 
-sys.path.append(f"{os.path.split(os.path.abspath(__file__))[0]}/..")
 import subprocess
 from pathlib import Path
 
 import bpy
-from infinigen.core import VERSION
+from infinigen import __version__
 from infinigen.assets.materials import chunkyrock, cobble_stone, cracked_ground, dirt, ice, mountain, mud, sand, sandstone, snow, soil, stone
 from infinigen.terrain.surface_kernel.kernelizer import Kernelizer
 from infinigen.core.util.blender import clear_scene
@@ -29,7 +28,7 @@ if __name__ == "__main__":
         folder.mkdir(exist_ok=1)
         dst = folder/f"{surface.name}.h"
         with open(dst, "w") as f:
-            f.write(f'''// Code generated using version {VERSION} of infinigen/tools/kernelize_surfaces.py; refer to infinigen/assets/materials/{surface.name}.py which has the copyright and authors''')
+            f.write(f'''// Code generated using version {__version__} of infinigen/tools/kernelize_surfaces.py; refer to infinigen/assets/materials/{surface.name}.py which has the copyright and authors''')
             f.write(code)
             f.write("\n")
         # optional: clang-format needed to format output code

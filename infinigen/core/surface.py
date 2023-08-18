@@ -397,11 +397,11 @@ class Registry:
     def __call__(self, category_key):
         if self._registry is None:
             raise ValueError(
-                f'Surface registry has not been initialized! Have you loaded gin and called .initialize()?'
+                'Surface registry has not been initialized! Have you loaded gin and called .initialize()?'
                 'Note, this step cannot happen at module initialization time, as gin is not yet loaded'
             )
 
-        if not category_key in self._registry:
+        if category_key not in self._registry:
             raise KeyError(
                 f'registry recieved request with {category_key=}, but no gin_config for this key was provided. {self._registry.keys()=}')
 

@@ -232,10 +232,10 @@ def render_image(
     for exclude in excludes:
         bpy.data.objects[exclude].hide_render = True
 
-    with Timer(f"Enable GPU"):
+    with Timer("Enable GPU"):
         devices = enable_gpu()
 
-    with Timer(f"Render/Cycles settings"):
+    with Timer("Render/Cycles settings"):
         if motion_blur: bpy.context.scene.cycles.motion_blur_position = 'START'
 
         bpy.context.scene.cycles.samples = num_samples # i.e. infinity
@@ -250,8 +250,8 @@ def render_image(
         bpy.context.scene.cycles.use_denoising = True
         try:
             bpy.context.scene.cycles.denoiser = 'OPTIX'
-        except:
-            warnings.warn("Cannot use OPTIX denoiser")
+        except Exception as e:
+            warnings.warn(f"Cannot use OPTIX denoiser {e}")
         tmp_dir = frames_folder.parent.resolve() / "tmp"
         tmp_dir.mkdir(exist_ok=True)
         bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
@@ -268,7 +268,7 @@ def render_image(
             global_flat_shading()
 
 
-    with Timer(f"Compositing Setup"):
+    with Timer("Compositing Setup"):
         if not bpy.context.scene.use_nodes:
             bpy.context.scene.use_nodes = True
             compositor_node_tree = bpy.context.scene.node_tree
@@ -291,7 +291,7 @@ def render_image(
     for file_slot in compositor_nodes:
         file_slot.path = f"{file_slot.path}_####_{camera_rig_id:02d}_{subcam_id:02d}"
 
-    with Timer(f"get_camera"):
+    with Timer("get_camera"):
         camera = cam_util.get_camera(camera_rig_id, subcam_id)
         if use_dof == 'IF_TARGET_SET':
             use_dof = camera.data.dof.focus_object is not None
@@ -305,10 +305,10 @@ def render_image(
 
     # Render the scene
     bpy.context.scene.camera = camera
-    with Timer(f"Actual rendering"):
+    with Timer("Actual rendering"):
         bpy.ops.render.render(animation=True)
 
-    with Timer(f"Post Processing"):
+    with Timer("Post Processing"):
         for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
             if flat_shading:
                 bpy.context.scene.frame_set(frame)

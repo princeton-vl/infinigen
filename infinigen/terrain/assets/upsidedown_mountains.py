@@ -110,9 +110,9 @@ def upsidedown_mountains_asset(
     res = mg.at_node['topographic__elevation']
     upside = res.reshape((N, N))
     
-    cv2.imwrite(str(folder/f'upside.exr'), upside.astype(np.float32))
-    cv2.imwrite(str(folder/f'peak.exr'), peak.astype(np.float32))
-    cv2.imwrite(str(folder/f'downside.exr'), downside.astype(np.float32))
+    cv2.imwrite(str(folder/'upside.exr'), upside.astype(np.float32))
+    cv2.imwrite(str(folder/'peak.exr'), peak.astype(np.float32))
+    cv2.imwrite(str(folder/'downside.exr'), downside.astype(np.float32))
     with open(folder/f'{AssetFile.TileSize}.txt', "w") as f:
         f.write(f"{tile_size}\n")
 
@@ -125,10 +125,10 @@ def upsidedown_mountains_asset(
 
 def assets_to_data(folder):
     data = {}
-    upside = read(str(folder/f'upside.exr'))
+    upside = read(str(folder/'upside.exr'))
     N = upside.shape[0]
     data["upside"] = AC(upside.reshape(-1))
-    data["downside"] = AC(read(str(folder/f'downside.exr')).reshape(-1))
-    data["peak"] = AC(read(str(folder/f'peak.exr')).reshape(-1))
+    data["downside"] = AC(read(str(folder/'downside.exr')).reshape(-1))
+    data["peak"] = AC(read(str(folder/'peak.exr')).reshape(-1))
     L = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
     return L, N, data

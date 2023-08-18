@@ -99,7 +99,7 @@ def get_all_non_instances():
             yield dict(vertex_lookup=hair_vertices, radii=hair_radii, name=obj.name, matrices=mat, instance_ids=[get_id(deps_instance)],  is_instance=False)
 
 def parse_group_from_name(name: str):
-    for reg in [f"(.*)\.spawn_asset\(.*", f"scatter:(.*)", "([A-Za-z_]+)"]:
+    for reg in ["(.*)\.spawn_asset\(.*", "scatter:(.*)", "([A-Za-z_]+)"]:
         match = re.fullmatch(reg, name)
         if match:
             return match.group(1)

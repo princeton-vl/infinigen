@@ -50,7 +50,7 @@ def geo_two_color_spots(nw, rand=True, **input_kwargs):
     mix = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Color1': noise_texture.outputs["Color"], 'Color2': vector_math.outputs["Vector"]})
     if rand:
-        mix.inputs["Fac"].default_value = sample_range(0.5, 0.9)
+        mix.inputs["Factor"].default_value = sample_range(0.5, 0.9)
 
     voronoi_texture = nw.new_node(Nodes.VoronoiTexture,
         input_kwargs={'Vector': mix},

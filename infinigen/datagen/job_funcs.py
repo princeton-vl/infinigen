@@ -29,7 +29,7 @@ def get_cmd(
     taskname, 
     output_folder, 
     blender_thread_limit=None,
-    driver_script='generate.py', 
+    driver_script='examples/generate_nature.py', 
     input_folder=None, 
     process_niceness=None,
 ):
@@ -40,10 +40,12 @@ def get_cmd(
     cmd = ''
     if process_niceness is not None:
         cmd += f'nice -n {process_niceness} '
-    cmd += f'python {driver_script} -- ''
-    if blender_thread_limit is not None:
-        cmd += f'--threads {blender_thread_limit} '
-        
+    cmd += f'python {driver_script} '
+
+    # No longer supported using pip bpy
+    #if blender_thread_limit is not None:
+    #    cmd += f'--threads {blender_thread_limit} '
+    
     cmd += '-- '
 
     if input_folder is not None:

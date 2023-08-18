@@ -36,7 +36,7 @@ class UniformMesher:
         self.enclosed = enclosed
         self.upscale = upscale
         self.dimensions = dimensions
-        Lx, Ly, Lz = dimensions[1] - dimensions[0], dimensions[3] - dimensions[2], dimensions[5] - dimensions[4]
+        # Lx, Ly, Lz = dimensions[1] - dimensions[0], dimensions[3] - dimensions[2], dimensions[5] - dimensions[4]
         assert(np.sum(subdivisions == -1) in [0, 2])
         for i, s in enumerate(subdivisions):
             if s != -1:

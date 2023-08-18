@@ -24,7 +24,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
     mix = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': 0.7, 'Color1': noise_texture.outputs["Color"], 'Color2': texture_coordinate.outputs["Object"]})
     if rand:
-        mix.inputs["Fac"].default_value = sample_range(0.5, 0.9)
+        mix.inputs["Factor"].default_value = sample_range(0.5, 0.9)
 
     scale = nw.new_node(Nodes.Value)
     scale.outputs["Value"].default_value = input_kwargs['scale'] if 'scale' in input_kwargs else 2

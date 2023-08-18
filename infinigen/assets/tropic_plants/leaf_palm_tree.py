@@ -3,8 +3,24 @@
 
 # Authors: Beining Han
 
+import bpy
 
-from infinigen.assets.tropic_plants.tropic_plant_utils import *
+import numpy as np
+from numpy.random import uniform, normal, randint
+
+from infinigen.core.nodes import Nodes, NodeWrangler, node_utils
+from infinigen.core.nodes.color import hsv2rgba
+from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+
+from infinigen.assets.tropic_plants.tropic_plant_utils import (
+    nodegroup_nodegroup_leaf_shader, 
+    nodegroup_nodegroup_sub_vein,
+    nodegroup_nodegroup_leaf_gen,
+    nodegroup_nodegroup_move_to_origin,
+    nodegroup_nodegroup_leaf_rotate_x, 
+    shader_stem_material
+)
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')

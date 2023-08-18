@@ -108,7 +108,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
             if "[MAIN TOTAL] finished in" not in text: continue
             search = re.search(r'\[MAIN TOTAL\] finished in ([0-9]+):([0-9]+):([0-9]+)', text)
             d = None
-            if search == None: 
+            if search is None: 
                 search = re.search(r'\[MAIN TOTAL\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)', text)
                 d,h,m,s = search.group(1,2,3,4)
             else:
@@ -196,9 +196,9 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
         all_data[seed]["[Instances Generated] [Coarse] " + row["name"]] = row["instance_delta"]
 
     fine_stage_df = pd.read_csv(os.path.join(coarse_folder, "pipeline_fine.csv")) # this is supposed to be coarse folder
-    fine_stage_df["mem_delta"] = fine_stage_df[fine_stage_df['ran']==True]['mem_at_finish'].diff()
-    fine_stage_df["obj_delta"] = fine_stage_df[fine_stage_df['ran']==True]['obj_count'].diff()
-    fine_stage_df["instance_delta"] = fine_stage_df[fine_stage_df['ran']==True]['instance_count'].diff()
+    fine_stage_df["mem_delta"] = fine_stage_df[fine_stage_df['ran']]['mem_at_finish'].diff()
+    fine_stage_df["obj_delta"] = fine_stage_df[fine_stage_df['ran']]['obj_count'].diff()
+    fine_stage_df["instance_delta"] = fine_stage_df[fine_stage_df['ran']]['instance_count'].diff()
     for index, row in fine_stage_df.iterrows():
         if row["mem_delta"] == 0 or math.isnan(float(row["mem_delta"])) or row["ran"] == False: continue
         asset_mem_data["[Fine] " + row["name"]].append(row["mem_delta"])

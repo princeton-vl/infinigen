@@ -5,6 +5,7 @@
 
 import os, sys
 import numpy as np
+from numpy.random import uniform as U, normal as N
 import math as ma
 from infinigen.assets.materials.utils.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 import bpy

@@ -6,12 +6,12 @@
 
 import os
 
+# ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
 import cv2
 import numpy as np
-
 
 def boundary_smooth(ar, p=0.1):
     N = ar.shape[0]

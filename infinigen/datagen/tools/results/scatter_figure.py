@@ -11,29 +11,34 @@ import sys, importlib
 import numpy as np
 import os
 import argparse
-
-from surfaces.scatters import seashells
-
-sys.path.append(os.getcwd())
+import numpy as np
+from numpy.random import uniform as U
     
 import gin
+from infinigen.core.surface import registry
+
+from infinigen.assets.scatters import (
+    grass, 
+    chopped_trees, 
+    pine_needle, 
+    flowerplant, 
+    fern, 
+    pinecone, 
+    urchin, 
+    seaweed,
+    seashells
+)
+from infinigen.assets.materials import dirt, sand, mud
+from infinigen.core.placement import density
+import math
+from infinigen.core.util import blender as butil 
+from infinigen.assets.lighting import sky_lighting
+
 gin.clear_config()
 gin.enter_interactive_mode()
 
-import generate
 gin.parse_config_files_and_bindings(['config/base.gin'], [])
-from surfaces.surface import registry
 registry.initialize_from_gin()
-
-import numpy as np
-from numpy.random import uniform as U
-
-from surfaces.scatters import grass, chopped_trees, pine_needle, flowerplant, fern, pine_needle, pinecone, urchin, seaweed
-from surfaces.templates import dirt, sand, mud
-from placement import density
-import math
-from util import blender as butil 
-from lighting import lighting
 
 class ArgumentParserForBlender(argparse.ArgumentParser):
     """
@@ -121,7 +126,8 @@ def apply_scatters(obj, mode, index):
         pio, _ = pinecone.apply(obj,
             selection=density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6)),
             density=U(0.4, 0.6))
-        co, _ = chopped_trees.apply(obj, selection=density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6), density=U(0.4, 0.6))
+        selection = density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6), density=U(0.4, 0.6))
+        co, _ = chopped_trees.apply(obj, selection=selection)
         all_objects.append(po)
         all_objects.append(pio)
         all_objects.append(co)
@@ -142,7 +148,7 @@ rowsize = 10
 planeres = 300
 
 butil.clear_scene()
-lighting.add_lighting()
+sky_lighting.add_lighting()
 
 
 bpy.ops.object.camera_add(location=mathutils.Vector(args.view * np.array([-10,-10,10])), rotation=(np.deg2rad(70), 0, np.deg2rad(-45)))

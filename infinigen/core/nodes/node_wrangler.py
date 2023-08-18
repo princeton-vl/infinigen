@@ -244,8 +244,8 @@ class NodeWrangler():
         if attribute is not None:
             if self.modifier is None and val is None:
                 raise ValueError(
-                    f'Attempted to use expose_input(attribute=...) on NodeWrangler constructed from '
-                    f'node_tree.\n'
+                    'Attempted to use expose_input(attribute=...) on NodeWrangler constructed from '
+                    'node_tree.\n'
                     'Please construct by passing in the modifier instead, or specify expose_input(val=..., '
                     'attribute=...) to provide a fallback')
 

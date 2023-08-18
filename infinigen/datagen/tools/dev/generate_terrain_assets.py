@@ -13,13 +13,11 @@ import sys
 import argparse
 from pathlib import Path
 
-sys.path.append(os.getcwd())
-
 import bpy
-from terrain.assets.caves import caves_asset
-from terrain.assets.landtiles import landtile_asset
-from terrain.assets.upsidedown_mountains import upsidedown_mountains_asset
-from util import blender as butil
+from infinigen.terrain.assets.caves import caves_asset
+from infinigen.terrain.assets.landtiles import landtile_asset
+from infinigen.terrain.assets.upsidedown_mountains import upsidedown_mountains_asset
+from infinigen.core.util import blender as butil
 from infinigen.core.util.math import int_hash, FixedSeed
 from infinigen.core.util.organization import Assets, LandTile, AssetFile
 

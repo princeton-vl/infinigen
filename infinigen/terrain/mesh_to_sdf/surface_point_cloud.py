@@ -13,13 +13,14 @@ from .scan import Scan, get_camera_transform_looking_at_origin
 
 import trimesh
 import logging
-logging.getLogger("trimesh").setLevel(9000)
 import numpy as np
 from sklearn.neighbors import KDTree
 import math
 import pyrender
 from .utils import sample_uniform_points_in_unit_sphere
 from .utils import get_raster_points, check_voxels
+
+logging.getLogger("trimesh").setLevel(9000)
 
 class BadMeshException(Exception):
     pass

@@ -6,13 +6,12 @@
 
 import os
 import sys
-
-sys.path.append(f"{os.path.split(os.path.abspath(__file__))[0]}/../..")
 import argparse
 
 import bpy
 import numpy as np
-from nodes.node_wrangler import Nodes, NodeWrangler
+
+from infinigen.core.nodes import Nodes, NodeWrangler
 from terrain.utils import Mesh, read
 from infinigen.core.util.blender import clear_scene
 from infinigen.core.util.organization import AssetFile

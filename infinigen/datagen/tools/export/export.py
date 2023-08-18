@@ -13,7 +13,7 @@ import shutil
 
 def realizeInstances(obj):
     for mod in obj.modifiers:
-        if (mod == None or mod.type != 'NODES'): continue
+        if (mod is None or mod.type != 'NODES'): continue
         print(mod)
         print(mod.node_group)
         print("Realizing instances on " + obj.name)
@@ -81,7 +81,7 @@ def bakeTexture(obj, dest, img_size): # modified from https://blender.stackexcha
         diffuse_node.image = imgDiffuse
         nodes.active = diffuse_node
 
-        if (nodes.get("Principled BSDF") == None):
+        if (nodes.get("Principled BSDF") is None):
             noBSDF = True
         else:
             principled_bsdf_node = nodes["Principled BSDF"]
@@ -206,7 +206,7 @@ def main(args, source, dest):
                     obj.hide_render = True
 
         # remove grid
-        if (bpy.data.objects.get("Grid") != None):
+        if (bpy.data.objects.get("Grid") is not None):
             bpy.data.objects.remove(bpy.data.objects["Grid"], do_unlink=True)
 
         bpy.context.scene.render.engine = 'CYCLES'

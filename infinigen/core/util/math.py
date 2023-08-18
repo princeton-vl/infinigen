@@ -162,14 +162,8 @@ class BBox:
 
         return cls.from_center_dims(center, dims)
 
-    def spawn_empty(self, name='BBoxEmpty'):
-        obj = spawn_empty(name, disp_type='CUBE', s=0.5)  # rad 0.5, diameter 1
-        obj.location = self.center()
-        obj.scale = self.dims()
-        return obj
-
     @classmethod
-    def empty(cls, dim):
+    def empty_box(cls, dim):
         return cls(np.zeros(dim), np.zeros(dim))
 
     def to_limits(self):

@@ -99,7 +99,7 @@ def apply_manifest_cleanup(scene_folder, manifest):
 def rclone_upload_file(src_file, dst_folder):
 
     if GDRIVE_NAME is None:
-        raise ValueError(f'Please specify GDRIVE_NAME')
+        raise ValueError('Please specify GDRIVE_NAME')
 
     assert os.path.exists(src_file), src_file
     cmd = f"{shutil.which('rclone')} copy -P {src_file} {GDRIVE_NAME}:{dst_folder}"

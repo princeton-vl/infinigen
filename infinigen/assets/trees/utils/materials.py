@@ -90,7 +90,7 @@ def create_leaf_material(src_hue, glow=False):
     nt.nodes.new('ShaderNodeEmission')
     em = nt.nodes.get('Emission')
     em.inputs.get('Strength').default_value = 1
-    em.inputs.get('Color').default_value = (*utils.colorsys.hsv_to_rgb(src_hue + np.random.randn() * .1, 1, 1), 1)
+    em.inputs.get('Color').default_value = (*colorsys.hsv_to_rgb(src_hue + np.random.randn() * .1, 1, 1), 1)
     new_link(nt, em, 'Emission', out_node, 'Surface')
 
   else:

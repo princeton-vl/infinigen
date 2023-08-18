@@ -12,7 +12,7 @@ import numpy as np
 from matplotlib.text import Text
 from imageio import imread
 
-import numpy as np; np.random.seed(42)
+np.random.seed(42)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

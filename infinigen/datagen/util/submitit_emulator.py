@@ -243,6 +243,7 @@ def get_all_processes():
     groups = (psef_regex(l).groups() for l in psef_out.splitlines())
     return {int(pid):cmd for pid, cmd in groups}
 
+# ruff: noqa
 if __name__ == "__main__":
 
     test = 'upload'

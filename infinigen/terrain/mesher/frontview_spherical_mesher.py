@@ -83,7 +83,7 @@ class FrontviewSphericalMesher:
     def __call__(self, kernels):
         n_elements = len(kernels)
         
-        with Timer(f"init_and_get_emptytest_queries"):
+        with Timer("init_and_get_emptytest_queries"):
             test_H = (self.H - 1) // self.test_downscale  + 1
             test_W = (self.W - 1) // self.test_downscale  + 1
             test_R = (self.R - 1) // self.test_downscale  + 1
@@ -127,7 +127,7 @@ class FrontviewSphericalMesher:
                         ASDOUBLE(AC(verts_frac.astype(np.float64))), len(verts_int),
                         ASINT(AC(faces.astype(np.int32))), len(faces),
                     )
-            with Timer(f"collect new cnt"):
+            with Timer("collect new cnt"):
                 cnt = self.get_cnt()
             
         with Timer("merge identifiers and get coarse vert counts"):

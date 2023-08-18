@@ -15,7 +15,8 @@ import pprint
 import time
 from collections import defaultdict
 
-os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
+# ruff: noqa: F402
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2. 
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
 import bpy
@@ -54,16 +55,12 @@ from infinigen.assets.materials import (
 from infinigen.assets import (
     fluid, 
     cactus, 
-    cactus, 
     trees, 
-    monocot, 
     rocks, 
-    underwater, 
     creatures, 
     lighting,
     weather,
 )
-from infinigen.terrain import Terrain
 
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
@@ -72,11 +69,9 @@ from infinigen.core import surface
 
 from infinigen.core.util.organization import Task, Attributes, TerrainNames
 
-from infinigen.core.placement import placement, density, camera as cam_util
 from infinigen.core.placement.split_in_view import split_inview
 
 import infinigen.assets.scatters
-from infinigen.assets.scatters import ground_mushroom, slime_mold, moss, ivy, lichen, snow_layer
 from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 
 from infinigen.core.util import (
@@ -87,14 +82,9 @@ from infinigen.core.util import (
 )
 
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core import execute_tasks, surface
-
-
-from infinigen.core.util import exporting
 from infinigen.core.util.logging import Timer, save_polycounts, create_text_file, Suppress
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import sample_registry
-
 from infinigen.assets.utils.tag import tag_system
 
 def sanitize_gin_override(overrides: list):
@@ -331,7 +321,6 @@ def execute_tasks(
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
             tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
-        scene_version = get_scene_tag('infinigen.__version__')
         butil.approve_all_drivers()
     
     if frame_range[1] < frame_range[0]:
@@ -349,7 +338,7 @@ def execute_tasks(
         try:
             with Suppress():
                 bpy.ops.preferences.addon_enable(module=name)
-        except Exception as e:
+        except Exception:
             logging.warning(f'Could not load addon "{name}"')
             
     bpy.context.preferences.system.scrollback = 0 

@@ -90,11 +90,11 @@ class AnimPolicyBrownian:
     def __init__(self, speed=3, pos_var=15.0):
         self.speed = speed
         self.pos_var = pos_var
-
+        
 
     def __call__(self, obj, frame_curr, bvh, retry_pct):
         
-        speed = random_general(speed)
+        speed = random_general(self.speed)
         sampler = lambda: N(0, [self.pos_var, self.pos_var, 0.5])
         pos = walk_same_altitude(obj.location, sampler, bvh)
         time = np.linalg.norm(pos - obj.location) / speed
@@ -113,7 +113,7 @@ class AnimPolicyPan:
 
     def __call__(self, obj, frame_curr, bvh, retry_pct):
         
-        speed = random_general(speed)
+        speed = random_general(self.speed)
         def sampler():
             theta = U(0, 2*np.pi)
             zoff = np.sin(np.deg2rad(N(-30, 30)))
