@@ -1,2 +1,2 @@
-include 'infinigen/datagen/configs/data_schema/monocular_video.gin'
+include 'data_schema/monocular_video.gin'
 iterate_scene_tasks.cam_id_ranges = [1, 2]

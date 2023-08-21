@@ -1,4 +1,4 @@
-include 'infinigen/datagen/configs/compute_platform/slurm.gin'
+include 'compute_platform/slurm.gin'
 
 iterate_scene_tasks.view_block_size = 3
 

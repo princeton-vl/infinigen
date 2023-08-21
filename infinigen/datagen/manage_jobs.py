@@ -63,10 +63,9 @@ from infinigen.datagen.job_funcs import (
     queue_render,
     queue_upload
 )
-from .util.submitit_emulator import ScheduledLocalExecutor, ImmediateLocalExecutor, LocalScheduleHandler, LocalJob
 
-from .util import upload_util
-from .util.upload_util import upload_job_folder # for pickle not to freak out
+import infinigen.core.init
+from .util.cleanup import cleanup
 
 # used only if enabled in gin configs
 PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' 
@@ -284,8 +283,11 @@ def get_disk_usage(folder):
     return int(re.compile("[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
 
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
+
+    template_path = infinigen.core.init.repo_root()/"infinigen/datagen/util"
+    assert template_path.exists(), template_path
     env = Environment(
-        loader=FileSystemLoader("infinigen/datagen/tools"),
+        loader=FileSystemLoader(template_path),
         autoescape=select_autoescape(),
     )
 
@@ -323,12 +325,10 @@ def run_task(
         scene_dict[f'{taskname}_submitted'] = 1
         return
 
-    seed = scene_dict['seed']
-
     job_obj, output_folder = queue_func(
+        seed=scene_dict['seed'],
         folder=scene_folder,
         name=stage_scene_name,
-        seed=seed,
         taskname=taskname
     )
     scene_dict[f'{taskname}_job_obj'] = job_obj
@@ -772,19 +772,14 @@ if __name__ == "__main__":
         random.seed(args.meta_seed)
         np.random.seed(args.meta_seed)
 
-    def find_config(g):
-        for p in Path('infinigen/datagen/configs').glob('**/*.gin'):
-            if p.parts[-1] == g:
-                return p
-            if p.parts[-1] == f'{g}.gin':
-                return p
-        raise ValueError(
-            f'Couldn not locate {g} or {g}.gin in anywhere pipeline_configs/**'
-        )
-    configs = [find_config(n) for n in ['base.gin'] + args.pipeline_configs]
-    for c in configs:
-        assert os.path.exists(c), c
-    bindings = args.pipeline_overrides
-    gin.parse_config_files_and_bindings(configs, bindings=bindings)
+    infinigen.core.init.apply_gin_configs(
+        configs_folder=Path('infinigen/datagen/configs'),
+        configs=args.pipeline_configs,
+        overrides=args.pipeline_overrides,
+        mandatory_folders=[
+            'infinigen/datagen/configs/compute_platform',
+            'infinigen/datagen/configs/data_schema'
+        ]
+    )
 
     main(args)

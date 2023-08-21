@@ -110,8 +110,11 @@ def get_commit_hash():
     git = shutil.which('git')
     if git is None:
         return None
-    cmd = f"{git} rev-parse HEAD"
-    return subprocess.check_output(cmd.split()).decode().strip()
+    try:
+        cmd = f"{git} rev-parse HEAD"
+        return subprocess.check_output(cmd.split()).decode().strip()
+    except subprocess.CalledProcessError:
+        return None
 
 def write_metadata(parent_folder, seed, all_images):
     

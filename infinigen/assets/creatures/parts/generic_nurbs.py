@@ -22,9 +22,10 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-NURBS_BASE_PATH = Path('infinigen/assets/creatures/parts/nurbs_data/')
-load_nurbs = lambda p: np.load(p)[..., :3] # strip W coordinate if present
-ALL_NURBS = {p.stem: load_nurbs(p) for p in NURBS_BASE_PATH.iterdir()}
+NURBS_BASE_PATH = Path(__file__).parent/'nurbs_data'
+NURBS_KEYS = [p.stem for p in NURBS_BASE_PATH.iterdir()]
+def load_nurbs(name:str):
+    return np.load(NURBS_BASE_PATH/(name + '.npy'))[..., :3]
 
 def decompose_nurbs_handles(handles):
 
@@ -92,13 +93,13 @@ class NurbsPart(PartFactory):
 
         N = lambda u, v, d=1: np.random.normal(u, np.array(v) * self.var, d)
 
-        target_keys = [k for k in ALL_NURBS if self.prefix is None or k.startswith(self.prefix)]
+        target_keys = [k for k in NURBS_KEYS if self.prefix is None or k.startswith(self.prefix)]
         weights = part_util.random_convex_coord(target_keys, select=select, temp=self.temperature)
         if self.exps is not None:
             for k, exp in self.exps.items():
                 weights[k] = weights[k] ** exp
                 
-        handles = sum(w * ALL_NURBS[k] for k, w in weights.items())
+        handles = sum(w * load_nurbs(k) for k, w in weights.items())
         decomp = decompose_nurbs_handles(handles)
 
         sz = N(1, 0.1)

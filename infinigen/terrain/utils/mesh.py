@@ -103,7 +103,7 @@ class Mesh:
         elif obj is not None:
             verts_bpy = obj.data.vertices
             faces_bpy = obj.data.polygons
-            verts = np.zeros((len(verts_bpy)*3), dtype=np.float)
+            verts = np.zeros((len(verts_bpy)*3), dtype=float)
             verts_bpy.foreach_get("co", verts)
             verts = verts.reshape((-1, 3))
             faces = np.zeros((len(faces_bpy)*3), dtype=np.int32)

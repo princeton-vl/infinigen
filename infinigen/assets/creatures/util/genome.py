@@ -39,15 +39,15 @@ class Joint:
     stretch: float = 0
 
     def __post_init__(self):
-        self.rest = np.array(self.rest, dtype=np.float)
+        self.rest = np.array(self.rest, dtype=float)
         assert self.rest.shape == (3,), self.rest
 
         if self.pose is not None:
-            self.pose = np.array(self.pose, dtype=np.float)
+            self.pose = np.array(self.pose, dtype=float)
             assert self.pose.shape == (3,), self.pose
 
         if self.bounds is not None:
-            self.bounds = np.array(self.bounds, dtype=np.float)
+            self.bounds = np.array(self.bounds, dtype=float)
 
 
 @dataclass
@@ -61,7 +61,7 @@ class Attachment:
     smooth_rad: float = 0.0
 
     def __post_init__(self):
-        self.coord = np.array(self.coord, dtype=np.float)
+        self.coord = np.array(self.coord, dtype=float)
 
 
 @dataclass

@@ -161,6 +161,8 @@ pallete5 = [   ((0.1712, 0.2776, 0.0465, 1.0), 0.0),
     ((0.1329, 0.1812, 0.0395, 1.0), 0.9756),
     ((0.1195, 0.1651, 0.0319, 1.0), 1.0)]
 
+pallettes = np.array([pallete1, pallete2, pallete3, pallete4, pallete5], dtype=object)
+
 def shader_grass_texture_original(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -195,7 +197,7 @@ def shader_grass_texture_original(nw: NodeWrangler):
     map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1})
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': map_range_1.outputs["Result"]})
     
-    pallete = np.random.choice([pallete1, pallete2, pallete3, pallete4, pallete5])
+    pallete = np.random.choice(pallettes)
     np.random.shuffle(pallete)
     pallete = pallete[:np.random.randint(4, len(pallete))]
     for _ in range(len(pallete)-2):

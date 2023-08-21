@@ -1,0 +1,230 @@
+OVERALL_SEED = 0
+LOG_DIR = '.'
+
+Terrain.asset_folder = "" # Will read from $INFINIGEN_ASSET_FOLDER environment var when set to None, and on the fly when set to ""
+Terrain.asset_version = 'May27'
+
+util.math.FixedSeed.seed = %OVERALL_SEED
+
+execute_tasks.frame_range = [1, 1] # Between start/end frames should this job consider? Increase end frame to tackle video
+execute_tasks.camera_id = [0, 0] # Which camera rig
+
+save_obj_and_instances.output_folder="saved_mesh.obj"
+
+util.logging.create_text_file.log_dir = %LOG_DIR
+
+placement.populate_all.dist_cull = 70
+compose_scene.inview_distance = 70
+compose_scene.near_distance = 20
+compose_scene.center_distance = 35
+
+compose_scene.land_domain_tags = 'landscape,-liquid_covered,-cave,-beach'
+compose_scene.nonliving_domain_tags = 'landscape,-cave'
+compose_scene.underwater_domain_tags = 'landscape,liquid_covered,-cave'
+
+compose_scene.terrain_enabled = True
+compose_scene.lighting_enabled = True
+compose_scene.coarse_terrain_enabled = True
+compose_scene.terrain_surface_enabled = True
+
+compose_scene.simulated_river_enabled=False
+compose_scene.tilted_river_enabled=False
+
+compose_scene.fancy_clouds_chance = 0.6
+
+compose_scene.trees_chance = 0.85
+compose_scene.bushes_chance = 0.7
+compose_scene.clouds_chance = 0.0
+compose_scene.boulders_chance = 0.7
+
+compose_scene.glowing_rocks_chance = 0.0
+compose_scene.rocks_chance = 0.9
+
+compose_scene.ground_leaves_chance = 0.7
+compose_scene.ground_twigs_chance = 0.7
+compose_scene.chopped_trees_chance = 0.7
+
+compose_scene.grass_chance = 0.8
+compose_scene.ferns_chance = 0.25
+compose_scene.monocots_chance = 0.15
+
+compose_scene.flowers_chance = 0.2
+compose_scene.kelp_chance = 0.0
+compose_scene.cactus_chance = 0.0
+compose_scene.coconut_trees_chance = 0.0
+compose_scene.palm_trees_chance = 0.0
+
+compose_scene.instanced_trees_chance = 0.0 # conditioned on trees_chance as prereq
+
+compose_scene.fish_school_chance = 0.0
+compose_scene.bug_swarm_chance = 0.0
+
+compose_scene.rain_particles_chance = 0.0
+compose_scene.snow_particles_chance = 0.0
+compose_scene.leaf_particles_chance = 0.0
+compose_scene.dust_particles_chance = 0.0
+compose_scene.marine_snow_particles_chance = 0.0
+compose_scene.camera_based_lighting_chance = 0.0
+
+compose_scene.wind_chance = 0.5
+compose_scene.turbulence_chance = 0.3
+wind_effector.strength = ('uniform', 0, 0.02)
+turbulence_effector.strength = ('uniform', 0, 0.02)
+turbulence_effector.noise = ('uniform', 0, 0.015)
+
+compose_scene.corals_chance = 0.0
+compose_scene.seaweed_chance = 0.0
+compose_scene.seashells_chance = 0.0
+compose_scene.urchin_chance = 0.0
+compose_scene.jellyfish_chance = 0.0
+
+compose_scene.mushroom_chance = 0 # TEMP
+compose_scene.pinecone_chance = 0.1
+compose_scene.pine_needle_chance = 0.1
+compose_scene.caustics_chance = 0.0
+compose_scene.decorative_plants_chance = 0.1
+
+compose_scene.cached_fire = False
+populate_scene.cached_fire = False
+
+compose_scene.cached_fire_trees_chance= 0
+compose_scene.cached_fire_bushes_chance = 0
+compose_scene.cached_fire_boulders_chance = 0.0
+compose_scene.cached_fire_cactus_chance = 0
+
+
+
+populate_scene.slime_mold_chance = 0.0
+populate_scene.ivy_chance = 0.0
+populate_scene.lichen_chance = 0.0
+populate_scene.mushroom_chance = 0.0
+populate_scene.moss_chance = 0.0
+populate_scene.snow_layer_chance = 0
+
+populate_scene.snow_layer_chance=0.0
+
+populate_scene.fire_warmup = 50
+populate_scene.trees_fire_on_the_fly_chance = 0
+populate_scene.bushes_fire_on_the_fly_chance = 0    
+populate_scene.creatures_fire_on_the_fly_chance = 0
+populate_scene.boulders_fire_on_the_fly_chance = 0
+populate_scene.cactus_fire_on_the_fly_chance = 0
+
+target_face_size.global_multiplier = 2
+scatter_res_distance.dist = 4
+
+random_color_mapping.hue_stddev = 0.05 # Note: 1.0 is the whole color spectrum
+
+render.render_image_func = @full/render_image
+render_image.time_limit = 0
+
+full/render_image.min_samples = 100
+full/render_image.num_samples = 8192
+render_image.adaptive_threshold = 0.005
+full/render_image.flat_shading = False
+
+flat/render_image.min_samples = 1
+flat/render_image.num_samples = 1
+flat/render_image.flat_shading = True
+full/render_image.passes_to_save = [
+    ['diffuse_direct', 'DiffDir'],
+    ['diffuse_color', 'DiffCol'],
+    ['diffuse_indirect', 'DiffInd'],
+    ['glossy_direct', 'GlossDir'],
+    ['glossy_color', 'GlossCol'],
+    ['glossy_indirect', 'GlossInd'],
+    ['transmission_direct', 'TransDir'],
+    ['transmission_color', 'TransCol'],
+    ['transmission_indirect', 'TransInd'],
+    ['volume_direct', 'VolumeDir'],
+    ['emit', 'Emit'],
+    ['environment', 'Env'],
+    ['ambient_occlusion', 'AO']
+]
+flat/render_image.passes_to_save = [
+    ['z', 'Depth'],
+    ['normal', 'Normal'],
+    ['vector', 'Vector'],
+    ['object_index', 'IndexOB']
+]
+
+render_image.exposure = 1
+
+render_image.use_dof = False
+render_image.dof_aperture_fstop = 3
+render_image.motion_blur = False
+render_image.motion_blur_shutter = 0.15
+
+compositor_postprocessing.distort = False
+compositor_postprocessing.color_correct=True
+
+execute_tasks.generate_resolution = (1280, 720)
+get_sensor_coords.H = 720
+get_sensor_coords.W = 1280
+
+min_terrain_distance = 2
+keep_cam_pose_proposal.min_terrain_distance = %min_terrain_distance
+SphericalMesher.r_min = %min_terrain_distance
+
+build_terrain_bvh_and_attrs.avoid_border = False # disabled due to crashes 5/15
+
+animate_cameras.follow_poi_chance=0.0
+camera.camera_pose_proposal.altitude = ("weighted_choice",
+    (0.975, ("clip_gaussian", 2, 0.3, 0.5, 3)), # person height usually
+    (0.025, ("clip_gaussian", 15, 7, 5, 30)) # drone height sometimes
+)
+
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 30, 20, 160)
+
+# WARNING: Large camera rig translations or rotations require special handling. 
+#    if your cameras are not all approximately forward facing within a few centimeters, you must either:
+#    -  configure the pipeline to generate assets / terrain for each camera separately, rather than sharing it between the whole rig
+#    -  or, treat your camera rig as multiple camera rigs each with one camera, and implement code to positon them correctly
+camera.spawn_camera_rigs.n_camera_rigs = 1
+camera.spawn_camera_rigs.camera_rig_config = [
+    {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
+    {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}
+]
+
+# TERRAIN SEED #
+assets.materials.ice.geo_ice.random_seed = %OVERALL_SEED
+assets.materials.lava.lava_geo.random_seed = %OVERALL_SEED
+assets.materials.mud.geo_mud.random_seed = %OVERALL_SEED
+assets.materials.cobble_stone.geo_cobblestone.random_seed = %OVERALL_SEED
+assets.materials.dirt.geo_dirt.random_seed = %OVERALL_SEED
+assets.materials.stone.geo_stone.random_seed = %OVERALL_SEED
+assets.materials.cracked_ground.geo_cracked_ground.random_seed = %OVERALL_SEED
+assets.materials.soil.geometry_soil.random_seed = %OVERALL_SEED
+assets.materials.chunkyrock.geo_rocks.random_seed = %OVERALL_SEED
+
+assets.materials.mountain.shader.random_seed = %OVERALL_SEED
+assets.materials.sand.shader.random_seed = %OVERALL_SEED
+assets.materials.water.shader.random_seed = %OVERALL_SEED
+
+compose_scene.ground_creatures_chance = 0.0
+compose_scene.ground_creature_registry = [
+    (@CarnivoreFactory, 1),
+    (@HerbivoreFactory, 1),
+    (@BirdFactory, 1),
+    (@SnakeFactory, 1)
+]
+
+compose_scene.flying_creatures_chance=0.1
+compose_scene.flying_creature_registry = [
+    (@FlyingBirdFactory, 1),
+    (@DragonflyFactory, 0.1),
+]
+
+group_collections.config = [
+    {'name': 'assets',         'hide_viewport': True,  'hide_render': True}, # collections of assets used by scatters
+    {'name': 'scatter',        'hide_viewport': True,  'hide_render': False}, # actual instanced objects for scatters
+    {'name': 'placeholders',   'hide_viewport': False, 'hide_render': False}, # low-res markers / proxies for where assets will be spawned 
+    {'name': 'unique_assets',  'hide_viewport': True,  'hide_render': False}, # actual hi-res assets spawned at each placeholder location
+    {'name': 'particleassets', 'hide_viewport': True,  'hide_render': False}, # actual hi-res assets spawned at each placeholder location
+    {'name': 'particles',      'hide_viewport': True,  'hide_render': False}, # actual particle emitters / particle systems
+    {'name': 'animhelper',     'hide_viewport': False, 'hide_render': True}, # curves and iks
+]
+
+include 'base_surface_registry.gin'
+include 'natural.gin'
+

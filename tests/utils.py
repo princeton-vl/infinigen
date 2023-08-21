@@ -7,30 +7,27 @@ import bpy
 
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
+from infinigen.core import init
 
 def setup_gin():
     
     gin.clear_config()
-
-    gin.parse_config_files_and_bindings(
-        config_files=['examples/configs/base.gin'],
-        bindings=None,
+    init.apply_gin_configs(
+        configs_folder='infinigen_examples/configs',
         skip_unknown=True
     )
-
     surface.registry.initialize_from_gin()
 
 
-def get_def_from_folder(name, folder):
-    root = Path(__file__).parent.parent
-    for file in (root/folder).iterdir():
-        with gin.unlock_config():
-            module_parent = str(file.parent.relative_to(root)).replace('/', '.')
-            module = importlib.import_module(f'{module_parent}.{file.stem}')
-        if hasattr(module, name):
-            return getattr(module, name)
-
-    raise ModuleNotFoundError(f'Could not find any factory with {name=}, make sure it is imported by a direct descendent of infinigen.assets')
+def import_item(name):
+    *path_parts, name = name.split('.')
+    with gin.unlock_config():
+        
+        try:
+            return importlib.import_module('.' + name, '.'.join(path_parts))
+        except ModuleNotFoundError:
+            mod = importlib.import_module('.'.join(path_parts))
+            return getattr(mod, name)
 
 def load_txt_list(path):
     res = (Path(__file__).parent/path).read_text().splitlines()

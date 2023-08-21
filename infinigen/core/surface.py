@@ -372,8 +372,8 @@ class Registry:
         ]
         for prefix in prefixes:
             try:
-                return importlib.import_module(prefix + '.' + name)
-            except ModuleNotFoundError:
+                return importlib.import_module('.' + name, prefix)
+            except ModuleNotFoundError as e:
                 continue
 
         raise ValueError(f'Could not find {name=} in any of {prefixes}')

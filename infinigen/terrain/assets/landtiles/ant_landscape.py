@@ -56,7 +56,7 @@ def ant_landscape_asset(
     create(preset_name, N, N)
     obj = bpy.context.active_object
     N = int(len(obj.data.vertices) ** 0.5)
-    mverts_co = np.zeros((len(obj.data.vertices)*3), dtype=np.float)
+    mverts_co = np.zeros((len(obj.data.vertices)*3), dtype=float)
     obj.data.vertices.foreach_get("co", mverts_co)
     mverts_co = mverts_co.reshape((N, N, 3))
     heightmap = cv2.resize(np.float32(mverts_co[..., -1]), (resolution, resolution)) * tile_size / 2

@@ -4,8 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "infinigen"
-version = "1.1.0"
-requires-python = "==3.10.*"
+readme = "README.md"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+
 description = "Infinite Photorealistic Worlds using Procedural Generation"
 keywords = [
     "computer vision", 
@@ -14,32 +16,36 @@ keywords = [
 ]
 classifiers = [
     "Framework :: Blender", 
-    "Programming Language :: Python :: 3"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10"
 ]
+
+requires-python = "==3.10.*"
 dependencies = [
     "bpy",
     "einops",
     "flow_vis",
     "frozendict",
     "geomdl",
-    "gin_config",
+    "gin_config>=0.5.0",
     "imageio",
     "matplotlib",
-    "numpy",
-    "opencv-python",
+    "numpy==1.21.5",
+    "opencv-python<=4.8.0.74",
     "psutil",
-    "scikit-image",
+    "scikit-image==0.19.3",
     "scikit-learn",
     "scipy",
     "submitit",
     "tqdm",
-    "trimesh",
+    "trimesh==3.22.1",
     "wandb",
     "zarr",
     "pandas",
-    "landlab == 2.4.1", 
-    "pycparser", 
-    "pyrender"
+    "landlab==2.4.1", 
+    "pycparser==2.21", 
+    "pyrender",
+    "json5"
 ]
 
 [project.optional-dependencies]
@@ -53,20 +59,38 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["infinigen"]
+# include-package-data is terribly named. package-data is still included if false, 
+# just not the package-data setuptools would otherwise autogenerate from MANIFEST.in or version control
+include-package-data = false 
+
+[tool.setuptools.packages.find]
+include = ["infinigen*"]
+
+# must be specified as module paths with ., using classic filepaths with / will silently not do anything
+exclude = [
+    "infinigen.datagen.customgt.dependencies*",
+    "infinigen.datagen.customgt.build*",
+]
+
+[tool.setuptools.package-data]
+
+"*" = ["*.gin", "*.txt"]
+
+# Must be specified as paths relative to infinigen/ 
+"infinigen" = [
+    "terrain/**/*.soil", # extra files for SoilMachine
+    "terrain/lib/**/*.so", # created by terrain compilation
+    "terrain/lib/**/*.o", # created by terrain compilation
+    "datagen/customgt/build/customgt", # created during opengl compilation
+    "assets/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "infinigen.__version__"}
 
 [tool.pytest.ini_options]
-addopts = "--cov-report xml:coverage.xml --cov infinigen --cov-fail-under 0"
 testpaths = "tests"
 junit_family = "xunit2"
-markers = [
-    "integration: marks as integration test",
-    "notebooks: marks as notebook test",
-    "gpu: marks as gpu test",
-    "spark: marks tests which need Spark",
-    "slow: marks tests as slow",
-    "unit: fast offline tests",
-]
 
 [tool.ruff]
 select = [

@@ -88,7 +88,7 @@ def duck_genome(mode):
     body_lrr = np.array((0.85, 0.25, 0.38)) * N(1, 0.2) * N(1, 0.2, 3)
     body_fac = parts.generic_nurbs.NurbsBody(prefix='body_bird', tags=['body', 'rigid'], var=U(0.3, 1))
     body = genome.part(body_fac)
-    l = body_fac.params['length'].reshape(1)
+    l = body_fac.params['length'][0]
 
     tail = genome.part(parts.wings.BirdTail())
     genome.attach(tail, body, coord=(0.2, 1, 0.5), joint=Joint(rest=(0, 170 * N(1, 0.1), 0)))
@@ -163,7 +163,7 @@ def flying_bird_genome(mode):
 
     body_lrr = np.array((0.95, 0.13, 0.18)) * N(1.0, 0.05, size=(3,))
     body = genome.part(parts.body.BirdBody({'length_rad1_rad2': body_lrr}))
-    l = body_lrr[:1]
+    l = body_lrr[0]
 
     tail = genome.part(parts.wings.FlyingBirdTail())
     genome.attach(tail, body, coord=(U(0.08, 0.15), 1, 0.5), joint=Joint(rest=(0, 180 * N(1, 0.1), 0)))

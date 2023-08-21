@@ -28,8 +28,7 @@ def get_cmd(
     configs, 
     taskname, 
     output_folder, 
-    blender_thread_limit=None,
-    driver_script='examples/generate_nature.py', 
+    driver_script='infinigen_examples.generate_nature',  # replace with a regular path to a .py, or another installed module
     input_folder=None, 
     process_niceness=None,
 ):
@@ -40,7 +39,12 @@ def get_cmd(
     cmd = ''
     if process_niceness is not None:
         cmd += f'nice -n {process_niceness} '
-    cmd += f'python {driver_script} '
+    cmd += 'python '
+
+    if driver_script.endswith('.py'):
+        cmd += driver_script + ' '
+    else:
+        cmd += '-m ' + driver_script + ' '
 
     # No longer supported using pip bpy
     #if blender_thread_limit is not None:

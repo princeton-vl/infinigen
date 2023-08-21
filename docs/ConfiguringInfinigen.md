@@ -7,14 +7,14 @@ This document explains how to configure various features of Infinigen. It assume
 ## Overview
 
 Generating scenes with Infinigen typically involves two main python scripts:
-1. [examples/generate_nature.py](../examples/generate_nature.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
+1. [infinigen_examples/generate_nature.py](../infinigen_examples/generate_nature.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
 1. [manage_jobs.py](../infinigen/datagen/manage_jobs.py) - a script which invokes the above scene composition script many times to generate a useful dataset.
 
-`manage_jobs.py` controls how many and what jobs will be run, and `examples/generate_nature.py` determines what will happen during those jobs. Ultimately both programs must be configured correctly in order to make useful data.
+`manage_jobs.py` controls how many and what jobs will be run, and `infinigen_examples/generate_nature.py` determines what will happen during those jobs. Ultimately both programs must be configured correctly in order to make useful data.
 
 ### Scene tasks
 
-To complete one Infinigen scene, `manage_jobs.py` will run several "tasks", each composed of a single execution of `examples/generate_nature.py`(You ran similar processes yourself in the step by step part of "Hello World"). 
+To complete one Infinigen scene, `manage_jobs.py` will run several "tasks", each composed of a single execution of `infinigen_examples/generate_nature.py`(You ran similar processes yourself in the step by step part of "Hello World"). 
 
 Typically, these tasks are as follows:
    1. `coarse`, which generates coarse terrain shape, puts placeholders for creatures and large trees / obstacles, and generates all small assets (twigs, particles, etc) that will be "instanced", IE scattered across the terrain with repetition.
@@ -31,15 +31,15 @@ Infinigen is designed to run many independent scenes in paralell. This means tha
 
 #### Overrides and Config Files
 
-Both `manage_jobs.py` and `examples/generate_nature.py` can be configured via the commandline or config files, using [Google's "Gin Config"](https://github.com/google/gin-config). Gin allows you to insert new default keyword arguments ("kwargs") for any function decorated with `@gin.configurable`; many such functions exist in our codebase, and via gin overrides you can create datsets suiting many diverse applications, as is explained in the coming sections.
+Both `manage_jobs.py` and `infinigen_examples/generate_nature.py` can be configured via the commandline or config files, using [Google's "Gin Config"](https://github.com/google/gin-config). Gin allows you to insert new default keyword arguments ("kwargs") for any function decorated with `@gin.configurable`; many such functions exist in our codebase, and via gin overrides you can create datsets suiting many diverse applications, as is explained in the coming sections.
 
-To use gin, simply add commandline arguments such as `-p compose_scene.rain_particles_chance = 1.0` to override the chance of rain, or `--pipeline_overrides iterate_scene_tasks.frame_range=[1,25]` to set a video's length to 24 frames. You can chain many statements together, separated by spaces, to configure many parts of the system at once. These statements depend on knowing the python names of the function and keyword argument you wish to override. To find parameters you wish to override, you should browse `examples/configs/base.gin` and other configs, or `examples/generate_nature.py` and the definitions of any functions it calls. Better documentation and organization of the available parameters will come in future versions.
+To use gin, simply add commandline arguments such as `-p compose_scene.rain_particles_chance = 1.0` to override the chance of rain, or `--pipeline_overrides iterate_scene_tasks.frame_range=[1,25]` to set a video's length to 24 frames. You can chain many statements together, separated by spaces, to configure many parts of the system at once. These statements depend on knowing the python names of the function and keyword argument you wish to override. To find parameters you wish to override, you should browse `infinigen_examples/configs/base.gin` and other configs, or `infinigen_examples/generate_nature.py` and the definitions of any functions it calls. Better documentation and organization of the available parameters will come in future versions.
 
-If you find a useful and related combination of these commandline overrides, you can write them into a `.gin` file in `examples/configs`. Then, to load that config, just include the name of the file into the `--configs`. If your overrides target `manage_jobs` rather than `examples/generate_nature.py` you should place the config file in `datagen/configs` and use `--pipeline_configs` rather than `--configs`. 
+If you find a useful and related combination of these commandline overrides, you can write them into a `.gin` file in `infinigen_examples/configs`. Then, to load that config, just include the name of the file into the `--configs`. If your overrides target `manage_jobs` rather than `infinigen_examples/generate_nature.py` you should place the config file in `datagen/configs` and use `--pipeline_configs` rather than `--configs`. 
 
-Our `examples/generate_nature.py` driver always loads [`examples/configs/base.gin`][../examples/configs/base.gin], and you can inspect / modify this file to see many common and useful gin override options.
+Our `infinigen_examples/generate_nature.py` driver always loads [`infinigen_examples/configs/base.gin`][../infinigen_examples/configs/base.gin], and you can inspect / modify this file to see many common and useful gin override options.
 
-`examples/generate_nature.py` also expects that one file from (configs/scene_types/)[examples/configs/scene_types] will be loaded. These scene_type configs contain gin overrides designed to encode the semantic constraints of real natural habitats (e.g. `examples/configs/scene_types/desert.gin` causes sand to appear and cacti to be more likely).
+`infinigen_examples/generate_nature.py` also expects that one file from (configs/scene_types/)[infinigen_examples/configs/scene_types] will be loaded. These scene_type configs contain gin overrides designed to encode the semantic constraints of real natural habitats (e.g. `infinigen_examples/configs/scene_types/desert.gin` causes sand to appear and cacti to be more likely).
 
 ### Moving beyond "Hello World"
 
@@ -57,7 +57,7 @@ Here is a breakdown of what every commandline argument does, and ideas for how y
    - `--specific_seed 0` forces the system to use a random seed of your choice, rather than choosing one at random. Change this seed to get a different random variation, or remove it to have the program choose a seed at random
    - `--num_scenes` decides how many unique scenes the program will attempt to generate before terminating. Once you have removed `--specific_seed`, you can increase this to generate many scenes in sequence or in paralell. 
    - `--configs desert.gin simple.gin` forces the command to generate a desert scene, and to do so with relatively low mesh detail, low render resolution, low render samples, and some asset types disabled.
-      - Do `--configs snowy_mountain.gin simple.gin` to try out a different scene type (`snowy_mountain.gin` can instead be any scene_type option from `examples/configs/scene_types/`)
+      - Do `--configs snowy_mountain.gin simple.gin` to try out a different scene type (`snowy_mountain.gin` can instead be any scene_type option from `infinigen_examples/configs/scene_types/`)
       - Remove the `desert.gin` and just specify `--configs simple.gin` to use random scene types according to the weighted list in `datagen/configs/base.gin`.
       - You have the option of removing `simple.gin` and specify neither of the original configs. This turns off the many detail-reduction options included in `simple.gin`, and will create scenes closer to those in our intro video, albeit at significant compute costs. Removing `simple.gin` will likely cause crashes unless using a workstation/server with large amounts of RAM and VRAM. You can find more details on optimizing scene content for performance [here](#config-overrides-for-mesh-detail-and-performance).
    - `--pipeline_configs local_16GB.gin monocular.gin blender_gt.gin`
@@ -107,22 +107,22 @@ Generating a video, stereo or other dataset typically requires more render jobs,
 
 To create longer videos, modify `iterate_scene_tasks.frame_range` in `monocular_video.gin` (note: we use 24fps video by default). `iterate_scene_tasks.view_block_size` controls how many frames will be grouped into each `fine_terrain` and render / ground-truth task.
 
-If you need more than two cameras, or want to customize their placement, see `examples/configs/base.gin`'s `camera.spawn_camera_rigs.camera_rig_config` for advice on existing options, or write your own code to instantiate a custom camera setup.
+If you need more than two cameras, or want to customize their placement, see `infinigen_examples/configs/base.gin`'s `camera.spawn_camera_rigs.camera_rig_config` for advice on existing options, or write your own code to instantiate a custom camera setup.
 
 ### Config Overrides to Customize Scene Content
 
 :bulb: If you only care about few specific assets, or want to export Infinigen assets to another project, instead see [Generating individual assets](GeneratingIndividualAssets.md).
 
-You can achieve a great deal of customization by browsing and editing `examples/configs/base.gin` - e.g. modifying cameras, lighting, asset placement, etc.
+You can achieve a great deal of customization by browsing and editing `infinigen_examples/configs/base.gin` - e.g. modifying cameras, lighting, asset placement, etc.
    - `base.gin` only provides the default values of these configs, and may be overridden by scene_type configs. To apply a setting globally across all scene types, you should put them in a new config placed at the end of your `--configs` argument (so that it's overrides are applied last), or use commandline overrides.
 
-However, many options exist which are not present in base.gin. At present, you must browse `examples/generate_nature.py` to find the part of the code you wish to customize, and look through the relevant code for what more advanced @gin.configurable functions are available. You can also add @gin.configurable to most functions to allow additional configuration. More documentation on available parameters is coming soon.
+However, many options exist which are not present in base.gin. At present, you must browse `infinigen_examples/generate_nature.py` to find the part of the code you wish to customize, and look through the relevant code for what more advanced @gin.configurable functions are available. You can also add @gin.configurable to most functions to allow additional configuration. More documentation on available parameters is coming soon.
 
-For most steps of `examples/generate_nature.py`'s `compose_scene` function, we use our `RandomStageExecutor` wrapper to decide whether the stage is run, and handle other bookkeeping. This means that if you want to decide the probability with which some asset is included in a scene, you can use the gin override `compose_scene.trees_chance=1.0` or something similar depending on the name string provided as the first argument of the relevant  run_stage calls in this way, e.g. `compose_scene.rain_particles_chance=0.9`to make most scenes rainy, or `compose_scene.flowers_chance=0.1` to make flowers rarer.
+For most steps of `infinigen_examples/generate_nature.py`'s `compose_scene` function, we use our `RandomStageExecutor` wrapper to decide whether the stage is run, and handle other bookkeeping. This means that if you want to decide the probability with which some asset is included in a scene, you can use the gin override `compose_scene.trees_chance=1.0` or something similar depending on the name string provided as the first argument of the relevant  run_stage calls in this way, e.g. `compose_scene.rain_particles_chance=0.9`to make most scenes rainy, or `compose_scene.flowers_chance=0.1` to make flowers rarer.
 
-A common request is to just turn off things you don't want to see, which can be achieved by adding `compose_scene.trees_chance=0.0` or similar to your `-p` argument or a loaded config file. To conveniently turn off lots of things at the same time, we provide configs in `examples/configs/disable_assets` to disable things like all creatures, or all particles.
+A common request is to just turn off things you don't want to see, which can be achieved by adding `compose_scene.trees_chance=0.0` or similar to your `-p` argument or a loaded config file. To conveniently turn off lots of things at the same time, we provide configs in `infinigen_examples/configs/disable_assets` to disable things like all creatures, or all particles.
 
-You will also encounter configs using what we term a "registry pattern", e.g. `examples/configs/base_surface_registry.gin`'s `ground_collection`. "Registries", in this project, are a list of discrete generators, with weights indicating how relatively likely they are to be chosen each time the registry is sampled. 
+You will also encounter configs using what we term a "registry pattern", e.g. `infinigen_examples/configs/base_surface_registry.gin`'s `ground_collection`. "Registries", in this project, are a list of discrete generators, with weights indicating how relatively likely they are to be chosen each time the registry is sampled. 
    - For example, in `base_surface_registry.gin`, `surface.registry.beach` specifies `("sand", 10)` to indicate that sand has high weight to be chosen to be assigned for the beach category. 
    - Weights are normalized by their overall sum to obtain a probability distribution. 
    - Name strings undergo lookup in the relevant source code folders, e.g. the name "sand" in a surface registry maps to `infinigen/assets/materials/sand.py`.
@@ -143,7 +143,7 @@ Infinigen curbs memory costs by only populating assets up to a certain distance 
    - Similarly to the above, `compose_scene.near_distance` controls the maximum distance to scatter tiny particles like pine needles.
    - Infinigen does not populate assets which are far outside the camera frustrum. You may attempt to reduce camera FOV to minimize how many assets are in view, but be warned there will be minimal or significantly diminishing returns on performance, due to the need to keep out-of-view assets loaded to retain accurate lighting/shadows.
 
-We also provide `examples/configs/performance/dev.gin`, a config which sets many of the above performance parameters to achieve lower scenes. We often use this config to obtain previews for development purposes, but it may also be suitable for generating lower resolution images/scenes for some tasks.
+We also provide `infinigen_examples/configs/performance/dev.gin`, a config which sets many of the above performance parameters to achieve lower scenes. We often use this config to obtain previews for development purposes, but it may also be suitable for generating lower resolution images/scenes for some tasks.
 
 Our current system determines asset mesh resolution based on the _closest distance_ it comes to the camera during an entire trajectory. Therefore, longer videos are more expensive, as more assets will be closer to the camera at some point in the trajectory. Options exist to re-generate assets at new resolutions over the course of a video to curb these costs - please make a Github Issue for advice. 
 
@@ -152,7 +152,7 @@ If you find yourself bottlenecked by GPU time, you should consider the following
    - Reduce `base.gin`'s `full/render_image.num_samples = 8192` or `compose_scene.generate_resolution = (1920, 1080)`. This proportionally reduces rendering FLOPS, with some diminishing returns due to BVH setup time.
    - If your GPU(s) are _underutilized_, try the reverse of these tips.
 
-Some scene type configs are also generally more expensive than others. `forest.gin` and `coral.gin` are very expensive due to dense detailed fauna, wheras `artic` and `snowy_mountain` are very cheap. Low-resource compute settings (<64GB) of RAM may only be able to handle a subset of our `examples/configs/scene_type/` options, and you may wish to tune the ratios of scene_types by editing `datagen/configs/base.gin` or otherwise overriding `sample_scene_spec.config_distribution`. 
+Some scene type configs are also generally more expensive than others. `forest.gin` and `coral.gin` are very expensive due to dense detailed fauna, wheras `artic` and `snowy_mountain` are very cheap. Low-resource compute settings (<64GB) of RAM may only be able to handle a subset of our `infinigen_examples/configs/scene_type/` options, and you may wish to tune the ratios of scene_types by editing `datagen/configs/base.gin` or otherwise overriding `sample_scene_spec.config_distribution`. 
 
 ### Other `manage_jobs.py` commandline options
 
@@ -204,7 +204,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
     --overrides compose_scene.rain_particles_chance=1.0
 ```
 
-:bulb: You can substitute the `rain_particles` in `rain_particles_chance` for any `run_stage` name argument string in `examples/generate_nature.py`, such as `trees` or `ground_creatures`.
+:bulb: You can substitute the `rain_particles` in `rain_particles_chance` for any `run_stage` name argument string in `infinigen_examples/generate_nature.py`, such as `trees` or `ground_creatures`.
 
 <b> Create images that only have terrain: </b>
 ```
@@ -212,7 +212,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
     --pipeline_config slurm monocular cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config no_assets
 ```
-:bulb: You can substitute "no_assets" for `no_creatures` or `no_particles`, or the name of any file under `examples/configs`. The command shown uses `examples/configs/disable_assets/no_assets.gin`.
+:bulb: You can substitute "no_assets" for `no_creatures` or `no_particles`, or the name of any file under `infinigen_examples/configs`. The command shown uses `infinigen_examples/configs/disable_assets/no_assets.gin`.
 
 <b> Create videos at birds-eye-view camera altitudes: </b>
 
@@ -223,7 +223,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
 ```
 
-:bulb: The command shown is overriding `examples/configs/base.gin`'s default setting of `camera.camera_pose_proposal.altitude`. You can use a similar syntax to override any number of .gin config entries. Separate multiple entries with spaces. 
+:bulb: The command shown is overriding `infinigen_examples/configs/base.gin`'s default setting of `camera.camera_pose_proposal.altitude`. You can use a similar syntax to override any number of .gin config entries. Separate multiple entries with spaces. 
 
 <b> Create 1 second video clips: </b>
 ```
@@ -233,4 +233,4 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
 ```
 
-:bulb: This command uses `--pipeline_overrides` rather than `--overrides` since it is providing a gin override to the `manage_jobs.py` process, not some part of the main `examples/generate_nature.py` driver.
+:bulb: This command uses `--pipeline_overrides` rather than `--overrides` since it is providing a gin override to the `manage_jobs.py` process, not some part of the main `infinigen_examples/generate_nature.py` driver.

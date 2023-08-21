@@ -11,6 +11,9 @@ on:
     - main
     - develop
 
+env:
+  INFINIGEN_INSTALL_RUNBUILD: False # disable building terrain, opengl and fluids, which wont be tested by pytest
+
 jobs:
 
   checks:
@@ -20,21 +23,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          # stop the build if there are Python syntax errors or undefined names
+          ruff --format=github --select=E9,F63,F7,F82 .
+          # default set of ruff rules with GitHub Annotations
+          #ruff --format=github . # to be enabled in a future PR
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install infinigen & dependencies
         run: |
           pip install .[dev]
 
-      - name: Lint with ruff
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          ruff --format=github --select=E9,F63,F7,F82 .
-          # default set of ruff rules with GitHub Annotations
-          #ruff --format=github . # to be enabled in a future PR
       - name: Test with pytest
         run: |
           pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html

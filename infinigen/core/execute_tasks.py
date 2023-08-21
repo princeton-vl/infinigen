@@ -65,7 +65,7 @@ from infinigen.assets import (
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
 from infinigen.assets.monocot import kelp
-from infinigen.core import surface
+from infinigen.core import surface, init
 
 from infinigen.core.util.organization import Task, Attributes, TerrainNames
 
@@ -82,24 +82,10 @@ from infinigen.core.util import (
 )
 
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.logging import Timer, save_polycounts, create_text_file, Suppress
+from infinigen.core.util.logging import Timer, save_polycounts, create_text_file
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import sample_registry
 from infinigen.assets.utils.tag import tag_system
-
-def sanitize_gin_override(overrides: list):
-    if len(overrides) > 0:
-        print("Overriden parameters:", overrides)
-    output = list(overrides)
-    for i, o in enumerate(overrides):
-        if ('=' in o) and not any((c in o) for c in "\"'[]"):
-            k, v = o.split('=')
-            try:
-                ast.literal_eval(v)
-            except:
-                if "@" not in v:
-                    output[i] = f'{k}="{v}"'
-    return output
    
 @gin.configurable
 def populate_scene(
@@ -276,7 +262,7 @@ def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
 def validate_version(scene_version):
     if scene_version is None or scene_version.split('.')[:-1] != infinigen.__version__.split('.')[:-1]:
         raise ValueError(
-            f'examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}')
+            f'infinigen_examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}')
     if scene_version != infinigen.__version__:
         logging.warning(f'{infinigen.__version__=} has minor version mismatch with {scene_version=}')
 
@@ -330,28 +316,13 @@ def execute_tasks(
     bpy.context.scene.frame_start = int(frame_range[0])
     bpy.context.scene.frame_end = int(frame_range[1])
     bpy.context.scene.frame_set(int(frame_range[0]))
+    bpy.context.scene.render.resolution_x = generate_resolution[0]
+    bpy.context.scene.render.resolution_y = generate_resolution[1]
     bpy.context.view_layer.update()
 
     surface.registry.initialize_from_gin()
-
-    for name in ['ant_landscape', 'real_snow', 'flip_fluids_addon']:
-        try:
-            with Suppress():
-                bpy.ops.preferences.addon_enable(module=name)
-        except Exception:
-            logging.warning(f'Could not load addon "{name}"')
-            
-    bpy.context.preferences.system.scrollback = 0 
-    bpy.context.preferences.edit.undo_steps = 0
-    bpy.context.scene.render.resolution_x = generate_resolution[0]
-    bpy.context.scene.render.resolution_y = generate_resolution[1]
-    bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.cycles.device = 'GPU'
-
-    bpy.context.scene.cycles.volume_step_rate = 0.1
-    bpy.context.scene.cycles.volume_preview_step_rate = 0.1
-    bpy.context.scene.cycles.volume_max_steps = 32
-
+    init.configure_blender()
+    
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
         butil.spawn_empty(f'{infinigen.__version__=}')
@@ -420,67 +391,6 @@ def execute_tasks(
             output_folder=output_folder, 
             frame_range=frame_range, 
         )
-
-
-def determine_scene_seed(args):
-
-    if args.seed is None:
-        if Task.Coarse not in args.task:
-            raise ValueError(
-                'Running tasks on an already generated scene, you need to specify --seed or results will'
-                ' not be view-consistent')
-        return randint(1e7), 'chosen at random'
-
-    # WARNING: Do not add support for decimal numbers here, it will cause ambiguity, as some hex numbers are valid decimals
-
-    try:
-        return int(args.seed, 16), 'parsed as hexadecimal'
-    except ValueError:
-        pass
-
-    return int_hash(args.seed), 'hashed string to integer'
-
-def apply_scene_seed(args):
-    scene_seed, reason = determine_scene_seed(args)
-    logging.info(f'Converted {args.seed=} to {scene_seed=}, {reason}')
-    gin.constant('OVERALL_SEED', scene_seed)
-    del args.seed
-
-    random.seed(scene_seed)
-    np.random.seed(scene_seed)
-    return scene_seed
-
-@gin.configurable
-def apply_gin_configs(
-    args, 
-    configs_folder: Path,
-    skip_unknown=False, 
-    mandatory_config_dir: Path =None,
-):
-
-    if mandatory_config_dir is not None:
-        assert mandatory_config_dir.exists()
-        scene_types = [p.stem for p in mandatory_config_dir.iterdir()]
-        scenetype_specified = any(s in scene_types or s.split('.')[0] in scene_types for s in args.configs)
-    
-        if not scenetype_specified:
-            print(scene_types)
-            raise ValueError(
-                f"Please load one or more config from {mandatory_config_dir} using --configs to avoid unexpected behavior. "
-                "If you are sure you want to proceed without, override `apply_gin_configs.mandatory_config_dir=None`"
-            )
-
-    def find_config(g):
-        for p in configs_folder.glob('**/*.gin'):
-            if p.parts[-1] == g:
-                return p
-            if p.parts[-1] == f'{g}.gin':
-                return p
-        raise ValueError(f'Couldn not locate {g} or {g}.gin in anywhere config/**')
-
-    bindings = sanitize_gin_override(args.overrides)
-    confs = [find_config(g) for g in ['base.gin'] + args.configs]
-    gin.parse_config_files_and_bindings(confs, bindings=bindings, skip_unknown=skip_unknown)
 
 def main(
     input_folder, 

@@ -1,13 +1,19 @@
-build_terrain:
+cleanpip:
+	rm -rf *.egg-info
+	rm -rf build
+
+clean_terrain:
 	rm -rf infinigen/terrain/*.egg-info
 	rm -rf infinigen/terrain/__pycache__
 	rm -rf infinigen/terrain/build
+
+terrain: clean_terrain
 	bash infinigen/tools/install/compile_terrain.sh
 
-build_custom_groundtruth:
+customgt:
 	bash ./infinigen/tools/install/compile_opengl.sh
 
-build_flip_fluids:
+flip_fluids:
 	bash ./infinigen/tools/install/compile_flip_fluids.sh
 
 DOCKER_BUILD_PROGRESS ?= auto

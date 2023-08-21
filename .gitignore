@@ -40,7 +40,6 @@ Blender-FLIP-Fluids
 *.obj
 *.blend
 *.blend1
-*.in
 *.out
 profiles_*.npz
 *outputs
@@ -65,3 +64,6 @@ dist
 build
 blends
 *.ipynb_checkpoints
+
+process_mesh
+worldgen

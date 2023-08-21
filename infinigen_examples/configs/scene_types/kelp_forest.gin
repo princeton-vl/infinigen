@@ -1,0 +1,24 @@
+include 'scene_types/under_water.gin'
+
+multi_mountains_params.height = ("uniform", 1, 4)
+multi_mountains_params.min_freq = ("uniform", 0.01, 0.015)
+multi_mountains_params.max_freq = ("uniform", 0.03, 0.06)
+
+compose_scene.glowing_rocks_chance = 0.
+compose_scene.ground_leaves_chance = 0.2
+compose_scene.ground_twigs_chance = 0.4
+compose_scene.chopped_trees_chance = 0.
+
+compose_scene.kelp_chance = 1.0
+compose_scene.urchin_chance = 0.7
+
+compose_scene.corals_chance = 0.0
+compose_scene.seaweed_chance = 0.8
+compose_scene.seashell_chance = 0.8
+compose_scene.jellyfish_chance = 0.0
+
+water.shader.volume_density = ("uniform", 0.09, 0.13)
+water.shader.anisotropy = ("uniform", 0.45, 0.7)
+water.geo.with_waves=False
+
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 15, 60, 140)

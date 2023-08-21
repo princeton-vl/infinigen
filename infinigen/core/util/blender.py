@@ -577,7 +577,7 @@ def apply_modifiers(obj, mod=None, quiet=True):
                 bpy.ops.object.modifier_apply(modifier=m.name)
             except RuntimeError as e:
                 if m.type == 'NODES':
-                    logging.warn(f'apply_modifers on {obj.name=} {m.name=} raised {e}, ignoring and returning empty mesh for pre-3.5 compatibility reasons')
+                    logging.warning(f'apply_modifers on {obj.name=} {m.name=} raised {e}, ignoring and returning empty mesh for pre-3.5 compatibility reasons')
                     bpy.ops.object.modifier_remove(modifier=m.name)
                     clear_mesh(obj)
                 else:
@@ -696,7 +696,7 @@ def object_to_vertex_attributes(obj):
 def object_to_trimesh(obj):
     verts_bpy = obj.data.vertices
     faces_bpy = obj.data.polygons
-    verts = np.zeros((len(verts_bpy) * 3), dtype=np.float)
+    verts = np.zeros((len(verts_bpy) * 3), dtype=float)
     verts_bpy.foreach_get("co", verts)
     faces = np.zeros((len(faces_bpy) * 3), dtype=np.int32)
     faces_bpy.foreach_get("vertices", faces)

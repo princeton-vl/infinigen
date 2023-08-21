@@ -33,6 +33,11 @@ import gin
 
 from infinigen.core.util import blender as butil
 
+try:
+    bpy.ops.flip_fluid_operators.complete_installation()
+except Exception as e:
+    logging.warning(f'Could not complete flip fluids installation {e}')
+
 # find next available number for fluid cache folder
 def find_available_cache(cache_folder):
     Path(cache_folder).mkdir(parents=True, exist_ok=True)

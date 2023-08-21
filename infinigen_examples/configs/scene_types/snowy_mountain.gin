@@ -1,0 +1,35 @@
+include 'disable_assets/no_assets.gin'
+
+surface.registry.rock_collection = [
+    ('mountain', 1),
+]
+surface.registry.mountain_collection = [
+    ('mountain', 1),
+]
+    
+compose_scene.snow_particles_chance = 0.5
+
+shader_atmosphere.density = 0
+nishita_lighting.sun_elevation = ("spherical_sample", 10, 30)
+LandTiles.land_process = "snowfall"
+scene.waterbody_chance = 0
+scene.caves_chance = 0
+scene.ground_chance = 0
+scene.warped_rocks_chance = 0
+scene.voronoi_rocks_chance = 0
+scene.voronoi_grains_chance = 0
+
+tile_directions.MultiMountains = "initial"
+
+compose_scene.flying_creatures_chance = 0.5
+compose_scene.flying_creature_registry = [
+    (@FlyingBirdFactory, 1),
+]
+
+assets.materials.mountain.shader.layered_mountain = 0
+assets.materials.mountain.shader.snowy = 0 # TODO: re-enable once terrain flickering resolved
+compose_scene.boulders_chance = 1
+
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 30, 90, 100)
+keep_cam_pose_proposal.terrain_coverage_range = (0.3, 1)
+keep_cam_pose_proposal.min_terrain_distance = 40

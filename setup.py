@@ -1,96 +1,65 @@
 from pathlib import Path
 import subprocess
 import sys
+import os
 
-from setuptools import setup, Extension
+from setuptools import setup, find_packages, Extension
 
 import numpy
 from Cython.Build import cythonize
 
 cwd = Path(__file__).parent
 
-TERRAIN = True
-CUSTOMGT = True
-FLUIDS = True
-RUN_BUILD_DEPS = True
-
-filtered_args = []
-for i, arg in enumerate(sys.argv):
-    if arg in ["clean", "egg_info", "sdist"]:
-        RUN_BUILD_DEPS = False
-    elif arg == '--noterrain':
-        TERRAIN = False
-    elif arg == '--nogt':
-        CUSTOMGT = False
-    elif arg == '--nofluids':
-        FLUIDS = False
-    filtered_args.append(arg)
-sys.argv = filtered_args
-
-def get_submodule_folders():
+def ensure_submodules():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
+
     with (cwd/'.gitmodules').open() as f:
-        return [
+        submodule_folders = [
             cwd/line.split("=", 1)[1].strip()
             for line in f.readlines()
             if line.strip().startswith("path")
         ]
 
-def ensure_submodules():
-    # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
-
-    folders = get_submodule_folders()
-
-    if any(not p.exists() or not any(p.iterdir()) for p in folders):
+    if any(not p.exists() or not any(p.iterdir()) for p in submodule_folders):
         subprocess.run(
             ["git", "submodule", "update", "--init", "--recursive"], cwd=cwd
-        )
+        )    
 
 ensure_submodules()
 
-def build_deps(deps):
-    for dep, enabled in deps:
-        if not enabled:
-            continue
-        print(f'Building external executable {dep}')
-        try:
-            # Defer to Makefile
-            subprocess.run(['make', f'build_{dep}'], cwd=cwd)
-        except subprocess.CalledProcessError as e:
-            print(f'[WARNING] build_{dep} failed! {dep} features will not function. {e}')
+# inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
+# theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
+dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
+RUN_BUILD = not any(x in sys.argv[1] for x in dont_build_steps) 
+str_true = "True" # use strings as os.environ will turn any bool into a string anyway
+if RUN_BUILD and os.environ.get('INFINIGEN_INSTALL_RUNBUILD', str_true) == str_true:
+    if os.environ.get('INFINIGEN_INSTALL_TERRAIN', str_true) == str_true:
+        subprocess.run(['make', 'terrain'], cwd=cwd)
+    if os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', str_true) == str_true:
+        subprocess.run(['make', 'customgt'], cwd=cwd)
+    if os.environ.get('INFINIGEN_INSTALL_FLUIDS', str_true) == str_true:
+        subprocess.run(['make', 'flip_fluids'], cwd=cwd)
 
-if RUN_BUILD_DEPS:
-    deps = [
-        ('terrain', TERRAIN),
-        ('custom_groundtruth', CUSTOMGT),
-        ('flip_fluids', FLUIDS)
-    ]
-    build_deps(deps)
+cython_extensions = []
 
-cython_extensions = [
-    Extension(
-        name="bnurbs",
-        sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
-        include_dirs=[numpy.get_include()]
-    ),
+cython_extensions.append(Extension(
+    name="bnurbs",
+    sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
+    include_dirs=[numpy.get_include()]
+))
+cython_extensions.append(
     Extension(
         name="infinigen.terrain.marching_cubes",
         sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
         include_dirs=[numpy.get_include()]
-    ),
-]
+    )
+)
 
 setup(
     ext_modules=[
         *cythonize(cython_extensions)
-    ],
-    package_data={
-        "infinigen": [
-            "infinigen/terrain/lib",
-            "infinigen/datagen/customgt/build"
-        ]
-    }
-    # other opts come from pyproject.toml and setup.cfg
+    ]
+    # other opts come from pyproject.toml
 )
 
 

@@ -111,7 +111,7 @@ def tiger_genome():
         head_fac = parts.generic_nurbs.NurbsHead(prefix='head_carnivore', tags=['head'], var=0.5)
         head = genome.part(head_fac)
 
-        headl = head_fac.params['length']
+        headl = head_fac.params['length'][0]
         head_length_rad1_rad2 = np.array((headl, 0.20, 0.18)) * N(1, 0.1, 3)
         
         jaw_pct = np.array((0.7, 0.55, 0.5))

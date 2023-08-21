@@ -1,0 +1,31 @@
+include 'scene_types/river.gin'
+
+UniformMesher.enclosed=1
+animate_cameras.policy_registry = @cam/AnimPolicyRandomForwardWalk
+cam/AnimPolicyRandomForwardWalk.forward_vec = (0,0,-1)
+cam/AnimPolicyRandomForwardWalk.speed = 1
+cam/AnimPolicyRandomForwardWalk.step_range = (5, 10)
+cam/AnimPolicyRandomForwardWalk.yaw_dist = ("uniform",-10, 10)
+
+keep_cam_pose_proposal.min_terrain_distance = 1   
+
+compose_scene.hero_boulders_chance = 0.0
+compose_scene.simulated_river_enabled = True
+
+terrain.elements.landtiles.LandTiles.y_tilt = 0
+terrain.elements.landtiles.LandTiles.y_tilt_clip = 0
+
+camera_pose_proposal.override_loc = (0.45, -24, 8)
+camera_pose_proposal.override_rot = (-120, 180, -178)
+
+
+assets.boulder.create_placeholder.boulder_scale = 1
+LandTiles.land_process = None
+camera_selection_preprocessing.terrain_tags_ratio = {("altitude", -1e9, 0.75): (0, 1), "liquid": (0, 1)}
+
+core.render.hide_water = True
+compute_base_views.min_candidates_ratio = 1
+walk_same_altitude.ignore_missed_rays = True
+
+make_river.resolution = 400
+make_river.simulation_duration = 250

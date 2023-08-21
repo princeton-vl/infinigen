@@ -13,7 +13,7 @@ import re
 import time
 from itertools import chain
 
-CONFIG_FILE = Path(f"{os.path.split(os.path.abspath(__file__))[0]}/cfg.txt")
+CONFIG_FILE = Path(__file__).parent/'cfg.txt'
 assert CONFIG_FILE.exists(), CONFIG_FILE.resolve()
 
 STARTING_SYMBOL = 'Q'

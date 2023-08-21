@@ -7,7 +7,6 @@
 from infinigen.core.nodes.color import color_category
 import gin
 import numpy as np
-from infinigen.core.util.math import md5_hash, clip_gaussian
 import random
 import json
 import json5
@@ -16,9 +15,43 @@ import mathutils
 from matplotlib import colors
 from numpy.random import normal, uniform
 
+from infinigen.core.util.math import md5_hash, clip_gaussian
+from infinigen.core.init import repo_root
+
 
 def log_uniform(low, high, size=1):
     return np.exp(uniform(np.log(low), np.log(high), size))
+
+def sample_json_palette(pallette_name, n_sample=1):
+    
+    rel = f"infinigen_examples/configs/palette/{pallette_name}.json"
+
+    with (repo_root()/rel).open('r') as f:
+        color_template = json5.load(f)
+
+    colors = color_template["color"]
+    means = np.array(color_template["hsv"])
+    stds = np.array(color_template["std"])
+    probs = np.array(color_template["prob"])
+    selected = np.zeros(len(means), dtype=bool)
+    for c in colors:
+        selected[int(c)] = 1
+    means = means[selected]
+    stds = stds[selected]
+    probs = probs[selected]
+    i = np.random.choice(range(len(colors)), 1, p=probs / np.sum(probs))[0]
+    color_samples = []
+    for j in range(n_sample):
+        color = np.array(means[i]) + np.matmul(np.array(stds[i]).reshape((3, 3)), np.clip(np.random.randn(3), a_min=-1, a_max=1))
+        color[2] = max(min(color[2], 0.9), 0.1)
+        color = colorsys.hsv_to_rgb(*color)
+        color = np.clip(color, a_min=0, a_max=1)
+        color = np.where(color >= 0.04045,((color+0.055)/1.055) ** 2.4, color / 12.92)
+        color = np.concatenate((color, np.ones(1)))
+        color_samples.append(color)
+    if n_sample == 1:
+        return color
+    return color_samples
 
 def random_general(var):
     if not (isinstance(var, tuple) or isinstance(var, list)):
@@ -56,34 +89,7 @@ def random_general(var):
     elif func == "choice":
         return np.random.choice(args[0], 1, p=args[1])[0]
     elif func == "palette":
-        if len(args) == 1:
-            num_sample = 1
-        else:
-            num_sample = args[1]
-        color_template = json5.load(open(f"examples/configs/palette/{args[0]}.json", "r"))
-        colors = color_template["color"]
-        means = np.array(color_template["hsv"])
-        stds = np.array(color_template["std"])
-        probs = np.array(color_template["prob"])
-        selected = np.zeros(len(means), dtype=bool)
-        for c in colors:
-            selected[int(c)] = 1
-        means = means[selected]
-        stds = stds[selected]
-        probs = probs[selected]
-        i = np.random.choice(range(len(colors)), 1, p=probs / np.sum(probs))[0]
-        color_samples = []
-        for j in range(num_sample):
-            color = np.array(means[i]) + np.matmul(np.array(stds[i]).reshape((3, 3)), np.clip(np.random.randn(3), a_min=-1, a_max=1))
-            color[2] = max(min(color[2], 0.9), 0.1)
-            color = colorsys.hsv_to_rgb(*color)
-            color = np.clip(color, a_min=0, a_max=1)
-            color = np.where(color >= 0.04045,((color+0.055)/1.055) ** 2.4, color / 12.92)
-            color = np.concatenate((color, np.ones(1)))
-            color_samples.append(color)
-        if len(args) == 1:
-            return color
-        return color_samples
+        return sample_json_palette(*args)
     elif func == "color_category":
         return color_category(*args)
     else:

@@ -107,7 +107,7 @@ def represent_default_value(val, simple=True):
     elif isinstance(val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)):
         code = represent_tuple(tuple(val))
     elif isinstance(val, bpy.types.Collection):
-        logging.warn(f'Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing')
+        logging.warning(f'Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing')
         code = f'bpy.data.collections[{repr(val.name)}]'
     elif isinstance(val, bpy.types.Material):
         if val.use_nodes:
@@ -115,10 +115,10 @@ def represent_default_value(val, simple=True):
             new_transpiler_targets[funcname] = val
             code = f'surface.shaderfunc_to_material({funcname})'
         else:
-            logging.warn(f'Encountered material {val} but it has use_nodes=False')
+            logging.warning(f'Encountered material {val} but it has use_nodes=False')
             code = repr(val)
     elif val is None:
-        logging.warn('Transpiler introduced a None into result script, this may not have been intended by the user')
+        logging.warning('Transpiler introduced a None into result script, this may not have been intended by the user')
         code = 'None'
     else:
         raise ValueError(f'represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer')
@@ -396,10 +396,10 @@ def create_inputs_dict(node_tree, node, memo):
         for link in links:
 
             if not link.from_socket.enabled:
-                logging.warn(f'Transpiler encountered link from disabled socket {link.from_socket}, ignoring it')
+                logging.warning(f'Transpiler encountered link from disabled socket {link.from_socket}, ignoring it')
                 continue
             if not link.to_socket.enabled:
-                logging.warn(f'Transpiler encountered link to disabled socket {link.to_socket}, ignoring it')
+                logging.warning(f'Transpiler encountered link to disabled socket {link.to_socket}, ignoring it')
                 continue
 
             input_varname, input_code, targets = create_node(
@@ -502,7 +502,7 @@ def get_nodetype_expression(node):
         return repr(node.node_tree.name)
     else:
         node_name = node.name.split('.')[0].replace(' ', '')
-        logging.warn(
+        logging.warning(
             f'Please add an alias for \"{id}\" in nodes.node_info.Nodes.'
             f'\n\t Suggestion: {node_name} = {repr(id)}'
         )

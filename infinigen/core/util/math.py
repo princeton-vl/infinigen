@@ -18,7 +18,8 @@ import cv2
 class FixedSeed:
 
     def __init__(self, seed):
-        self.seed = seed
+        
+        self.seed = int(seed)
         self.py_state = None
         self.np_state = None
 
