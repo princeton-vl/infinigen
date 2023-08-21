@@ -1,7 +1,7 @@
 build_terrain:
-	rm -r infinigen/terrain/*.egg-info
-	rm -r infinigen/terrain/__pycache__
-	rm -r infinigen/terrain/build
+	rm -rf infinigen/terrain/*.egg-info
+	rm -rf infinigen/terrain/__pycache__
+	rm -rf infinigen/terrain/build
 	bash infinigen/tools/install/compile_terrain.sh
 
 build_custom_groundtruth:
