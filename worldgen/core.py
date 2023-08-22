@@ -334,9 +334,7 @@ def execute_tasks(
 
     if Task.FineTerrain in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-        terrain.fine_terrain(output_folder)
-        if not optimize_terrain_diskusage:
-            terrain.load_glb(output_folder, delete=True)
+        terrain.fine_terrain(output_folder, optimize_terrain_diskusage=optimize_terrain_diskusage)
 
     group_collections()
 
