@@ -271,7 +271,7 @@ class Terrain:
             np.save(output_folder / f"{mesh_name}.b_displacement", fine_meshes[mesh_name].blender_displacements)
             delete(obj)
     
-    def load_glb(self, output_folder):
+    def load_glb(self, output_folder, delete=False):
         for mesh_name in os.listdir(output_folder):
             if not mesh_name.endswith(".glb"): continue
             mesh_name = mesh_name[:-4]
@@ -289,6 +289,9 @@ class Terrain:
             object_to_copy_from.hide_viewport = True
             if mesh_name in hidden_in_viewport:
                 object_to_copy_to.hide_viewport = True
+            if delete:
+                os.unlink(output_folder/f"{mesh_name}.glb")
+                os.unlink(output_folder/f"{mesh_name}.b_displacement.npy")
 
     def compute_camera_space_sdf(self, XYZ):
         sdf = np.ones(len(XYZ), dtype=np.float32) * 1e9
