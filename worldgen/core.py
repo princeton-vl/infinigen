@@ -282,7 +282,7 @@ def execute_tasks(
     if dryrun:
         return
 
-    if Task.Coarse not in task:
+    if Task.Coarse not in task and task != Task.FineTerrain:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
             tag_system.load_tag(path=str(input_folder / "MaskTag.json"))

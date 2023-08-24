@@ -54,5 +54,5 @@ populate_scene.lichen_chance = 0.6
 populate_scene.mushroom_chance = 0.0
 populate_scene.moss_chance = 0.0
 
-compose_scene.rain_particles_chance = 0.3
+compose_scene.rain_particles_chance = 0.0
 compose_scene.leaf_particles_chance = 0.7

@@ -1,4 +1,4 @@
-iterate_scene_tasks.frame_range = [1, 192]
+iterate_scene_tasks.frame_range = [30, 222] # 192 frames with a 30 frame warmup
 iterate_scene_tasks.view_block_size = 16
 iterate_scene_tasks.cam_id_ranges = [1, 1]
 

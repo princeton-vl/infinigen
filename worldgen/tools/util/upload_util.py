@@ -104,7 +104,7 @@ def upload_job_folder(
     all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
     if len(all_images) > 0:
         thumb_path = parent_folder/f'{seed}_thumbnail.png'
-        copyfile(all_images, thumb_path)
+        copyfile(all_images[0], thumb_path)
         upload_func(thumb_path, upload_dest_folder)
 
     try:

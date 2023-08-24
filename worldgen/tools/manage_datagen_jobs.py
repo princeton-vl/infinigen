@@ -207,8 +207,11 @@ def slurm_submit_cmd(
         timeout_min=60*hours,
     )
     
+    exclude = get_slurm_banned_nodes()
     if slurm_exclude is not None:
-        executor.update_parameters(slurm_exclude=','.join(slurm_exclude))
+        exclude += slurm_exclude
+    if len(exclude):
+        executor.update_parameters(slurm_exclude=','.join(exclude))
     
     if gpus > 0:
         executor.update_parameters(gpus_per_node=gpus)
@@ -218,6 +221,9 @@ def slurm_submit_cmd(
             slurm_account = os.environ.get(PARTITION_ENVVAR)
             if slurm_account is None:
                 logging.warning(f'{PARTITION_ENVVAR=} was not set, using no slurm account')
+
+        if isinstance(slurm_account, list):
+            slurm_account = np.random.choice(slurm_account)
 
         executor.update_parameters(slurm_account=slurm_account)
 
@@ -285,7 +291,10 @@ def queue_coarse(
         LOG_DIR='{folder / "logs"}'
     '''.split("\n") + overrides
 
+    commit = upload_util.get_commit_hash()
+
     with (folder / "run_pipeline.sh").open('w') as f:
+        f.write(f"# git checkout {commit}\n\n")
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
     (folder / "run_pipeline.sh").chmod(0o774)
 
@@ -293,7 +302,7 @@ def queue_coarse(
         folder=folder,
         name=name,
         gpus=0,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **kwargs
     )
     return res, output_folder
@@ -333,7 +342,6 @@ def queue_populate(
         folder=folder,
         name=name,
         gpus=0,
-        slurm_exclude=get_slurm_banned_nodes(),
         **kwargs
     )
     return res, output_folder
@@ -376,7 +384,7 @@ def queue_fine_terrain(
         folder=folder,
         name=name,
         gpus=gpus,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **kwargs
     )
     return res, output_folder
@@ -422,7 +430,7 @@ def queue_combined(
         folder=folder,
         name=name,
         gpus=gpus,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **kwargs
     )
     return res, output_folder
@@ -460,7 +468,7 @@ def queue_render(
     res = submit_cmd(cmd,
         folder=folder,
         name=name,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **submit_kwargs,
     )
     return res, output_folder
@@ -502,7 +510,7 @@ def queue_mesh_save(
     res = submit_cmd(cmd,
         folder=folder,
         name=name,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **submit_kwargs,
     )
     return res, output_folder
@@ -565,7 +573,7 @@ def queue_opengl(
         cmd,
         folder=folder,
         name=name,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus) + get_slurm_banned_nodes(),
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **submit_kwargs,
     )
     return res, output_folder
@@ -707,9 +715,12 @@ def run_task(
     taskname, 
     dryrun=False
 ):
-    
+
     assert scene_folder.parent.exists(), scene_folder
     scene_folder.mkdir(exist_ok=True)
+
+    scene_folder = scene_folder.resolve()
+
     stage_scene_name = f"{scene_folder.parent.stem}_{scene_folder.stem}_{taskname}"
     assert not scene_dict.get(f'{taskname}_submitted', False)
 
@@ -1124,17 +1135,18 @@ def main(args, shuffle=True, wandb_project='render_beta'):
         format='[%(asctime)s]: %(message)s',
     )
 
-    start_time = datetime.now()
+    logging.info(f'Using {get_slurm_banned_nodes()=}')
 
-    scenes = [j for j in all_scenes if j['all_done'] == SceneState.NotDone]
     if shuffle:
-        np.random.shuffle(scenes)
+        np.random.shuffle(all_scenes)
     else:
-        scenes = sorted(scenes, key=lambda j: j['seed'])
+        all_scenes = sorted(all_scenes, key=lambda j: j['seed'])
+
+    start_time = datetime.now()
     while any(j['all_done'] == SceneState.NotDone for j in all_scenes):
         now = datetime.now()
         print(f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}')
-        manage_datagen_jobs(scenes, elapsed=(now-start_time).total_seconds())
+        manage_datagen_jobs(all_scenes, elapsed=(now-start_time).total_seconds())
         time.sleep(4)
 
     

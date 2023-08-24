@@ -19,7 +19,7 @@ compose_scene.flying_creature_registry = [
     (@FlyingBirdFactory, 0.2)
 ]
 
-compose_scene.rain_particles_chance = 0.4
+compose_scene.rain_particles_chance = 0.0
 populate_scene.slime_mold_chance = 0.3
 populate_scene.ivy_chance = 0.3
 populate_scene.lichen_chance = 0.3

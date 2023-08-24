@@ -11,7 +11,7 @@ compose_scene.fancy_clouds_chance = 0.0
 
 compose_scene.tree_density = 0.02
 
-compose_scene.rain_particles_chance = 0.01
+compose_scene.rain_particles_chance = 0.0
 compose_scene.snow_particles_chance = 0
 compose_scene.leaf_particles_chance = 0.05
 compose_scene.dust_particles_chance = 0.0

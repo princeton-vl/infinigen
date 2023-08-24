@@ -38,7 +38,7 @@ water.shader.volume_density = ("uniform", 0.03, 0.05)
 water.shader.color = ("color_category", 'under_water')
 water.shader.colored = 0
 water.shader.emissive_foam = 0
-water.is_ocean = ("bool", 0.5)
+water.is_ocean = False
 
 
 compose_scene.wind_chance = 0
@@ -47,7 +47,7 @@ compose_scene.snow_particles_chance = 0
 compose_scene.leaf_particles_chance = 0
 compose_scene.dust_particles_chance = 0
 compose_scene.marine_snow_particles_chance = 0
-compose_scene.caustics_chance = 0.8
+compose_scene.caustics_chance = 0.6
 
 atmosphere_light_haze.shader_atmosphere.enable_scatter = False 
 compose_scene.fancy_clouds_chance=0.0
