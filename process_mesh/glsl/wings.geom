@@ -12,7 +12,7 @@ out float tri_area;
 out float px_area;
 out float has_flow;
 out ivec3 face_id;
-out ivec2 instance_id;
+out ivec3 instance_id;
 out ivec3 tag;
 
 uniform mat4 wc2img;
@@ -23,7 +23,7 @@ in VS_OUT {
     vec3 pos_cc_next;
     bool has_flow;
     int vertex_id;
-    ivec2 instance_id;
+    ivec3 instance_id;
     int tag;
 } gs_in[];
 

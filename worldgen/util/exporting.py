@@ -59,18 +59,11 @@ def get_id(i: DepsgraphObjectInstance):
     parent_hash = (int_hash(i.parent.name)-2**31) if (i.parent is not None) else 0
     t = list(i.persistent_id)
     if list(t) == [0]*8:
-        return (0, parent_hash)
+        return (0, 0, parent_hash)
     a, b, *c = t
     assert c == [2**31-1]*6, t
-    assert (a == b) or ((a in {2**31-1,1,0}) or (b in {2**31-1,1,0})), t
     assert valid_int32(a) and valid_int32(b), t
-    if a == b:
-        return a
-    if a in {2**31-1,1,0}:
-        if b == 2**31-1:
-            return (a, parent_hash)
-        return (b, parent_hash)
-    return (a, parent_hash)
+    return (a, b, parent_hash)
 
 def get_all_instances():
     vertex_info = {}
@@ -208,6 +201,7 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             npz_data[f"{mesh_id}_transformations"] = matrices
             instance_ids_array = np.asarray(item["instance_ids"], dtype=np.int32)
             assert np.unique(instance_ids_array, axis=0).shape == instance_ids_array.shape
+            assert instance_ids_array.shape[1] == 3
             npz_data[f"{mesh_id}_instance_ids"] = instance_ids_array
             obj = bpy.data.objects[object_name]
             json_val = {"filename": filename.name, "mesh_id": mesh_id, "object_name": object_name, "num_verts": current_obj_num_verts, "children": [],

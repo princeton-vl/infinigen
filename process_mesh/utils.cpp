@@ -139,16 +139,16 @@ Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<double, 2> &inp
 }
 
 
-Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<int, 2> &input_image) {
+Eigen::Tensor<unsigned char, 3> to_color_map(const Eigen::Tensor<long, 2> &input_image) {
     std::vector<double> all_nonzero_values;
     const size_t width = input_image.dimension(1);
     const size_t height = input_image.dimension(0);
     Eigen::Tensor<unsigned char, 3> output(height, width, 3);
     output.setZero();
-    std::unordered_map<int, double> int2double;
+    std::unordered_map<long, double> int2double;
     for (int y=0; y<height; y++){
         for (int x=0; x<width; x++){
-            const int key = input_image(y, x);
+            const long key = input_image(y, x);
             double value;
             if (int2double.find(key) != int2double.end()) {
                 value = int2double[key];

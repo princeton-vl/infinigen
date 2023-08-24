@@ -6,7 +6,7 @@ layout (location = 0) in mat4 instanceMatrix;
 layout (location = 4) in mat4 instanceMatrixNext;
 layout (location = 8) in vec3 aPos;
 layout (location = 9) in vec3 aPos_next;
-layout (location = 10) in ivec2 instance_id;
+layout (location = 10) in ivec3 instance_id;
 layout (location = 11) in int tag;
 
 
@@ -26,7 +26,7 @@ out VS_OUT {
 	vec3 pos_cc_next;
 	bool has_flow;
 	int vertex_id;
-	ivec2 instance_id;
+	ivec3 instance_id;
 	int tag;
 } vs_out;
 

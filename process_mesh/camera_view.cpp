@@ -17,7 +17,7 @@ unsigned int CameraView::create_framebuffer(){
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);  
     constexpr GLenum color_attachments[8] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
-    constexpr bool is_float[8] = {false, true, true, false, true, false, false, true};
+    constexpr bool is_float[8] = {false, true, true, false, false, false, false, true};
     constexpr size_t num_color_attachments = sizeof(color_attachments)/sizeof(GLenum);
     glDrawBuffers(num_color_attachments, color_attachments);
     unsigned int textureColorbuffers[num_color_attachments];
