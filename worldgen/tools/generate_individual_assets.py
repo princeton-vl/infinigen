@@ -83,6 +83,9 @@ def build_scene_asset(factory_name, idx):
             i = np.argmax(np.array(sizes))
             asset = meshes[i]
         if not args.fire:
+            drivers = parent.animation_data.drivers.values()
+            for d in drivers:
+                parent.driver_remove(d.data_path)
             co = read_base_co(asset)
             x_min, x_max = np.amin(co, 0), np.amax(co, 0)
             parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0

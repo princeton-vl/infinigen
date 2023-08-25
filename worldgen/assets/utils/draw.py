@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 
 from assets.utils.decorate import read_co, remove_vertices, separate_loose, write_attribute, write_co
 from assets.utils.mesh import polygon_angles
+from assets.utils.misc import make_circular, make_circular_angle
 from assets.utils.object import data2mesh, mesh2obj
 from nodes.node_info import Nodes
 from placement.detail import sharp_remesh_with_attrs
@@ -153,9 +154,7 @@ def cut_plane(obj, cut_center, cut_normal, clear_outer=True):
     return obj, cut
 
 
-def make_circular_interp(low, high, n, fn =uniform):
-    xs = polygon_angles(n)
-    xs = np.array([xs[-1] - np.pi * 2, *xs, xs[0] + np.pi * 2])
-    ys = fn(low,high,n)
-    ys = np.array([ys[-1], *ys, ys[0]])
+def make_circular_interp(low, high, n, fn=uniform):
+    xs = make_circular_angle(polygon_angles(n))
+    ys = make_circular(fn(low, high, n))
     return interp1d(xs, ys, 'quadratic')

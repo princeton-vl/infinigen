@@ -56,3 +56,11 @@ def build_color_ramp(nw: NodeWrangler, x, positions, colors, mode='HSV'):
         elements[i].position = p
         elements[i].color = c
     return cr
+
+
+def make_circular_angle(xs):
+    return np.array([xs[-1] - np.pi * 2, *xs, xs[0] + np.pi * 2])
+
+
+def make_circular(xs):
+    return np.array([xs[-1], *xs, xs[0]])
