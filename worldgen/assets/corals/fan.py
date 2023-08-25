@@ -52,8 +52,7 @@ class FanBaseCoralFactory(BaseCoralFactory):
         surface.add_geomod(obj, geo_extension, apply=True)
         obj.scale = uniform(.6, 1.2), 1, 1
         butil.apply_transform(obj)
-        surface.add_geomod(obj, geo_shortest_path, input_args=[end_index, self.weight, .05],
-                           input_kwargs={'subdiv': 0}, apply=True)
+        surface.add_geomod(obj, geo_shortest_path, input_args=[end_index, self.weight, .05], apply=True)
         obj = self.add_radius(obj)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius', 32])
         butil.modify_mesh(obj, 'WELD', merge_threshold=.001)

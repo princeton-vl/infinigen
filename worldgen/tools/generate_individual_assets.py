@@ -378,7 +378,7 @@ def make_args():
                         help="Whether the background is transparent")
     parser.add_argument('-E', '--frame_end', type=int, default=120, help="End of frame in videos")
     parser.add_argument('-C', '--cycles', type=float, default=1, help="render video cycles")
-    parser.add_argument('-F', '--scale_reference', action='store_true', help="Add the scale reference")
+    parser.add_argument('-A', '--scale_reference', action='store_true', help="Add the scale reference")
     parser.add_argument('-S', '--skip_existing', action='store_true', help="Skip existing scenes and renders")
     parser.add_argument('-P', '--postprocessing_only', action='store_true', help="Only run postprocessing")
     parser.add_argument('-D', '--seed', type=int, default=-1, help="Run a specific seed.")

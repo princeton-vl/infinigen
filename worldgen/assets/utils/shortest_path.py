@@ -12,13 +12,10 @@ from surfaces import surface
 
 
 def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, offset=0., merge_threshold=.005,
-                      subdiv=1):
+                      subdiv=0):
     weight = surface.eval_argument(nw, weight)
     end_index = surface.eval_argument(nw, end_index)
     geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
-
-    if subdiv > 0:
-        geometry = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={'Mesh': geometry, 'Level': subdiv})
 
     geometry = nw.new_node(Nodes.StoreNamedAttribute,
                            [geometry, 'custom_normal', nw.new_node(Nodes.InputNormal)],
@@ -35,6 +32,8 @@ def geo_shortest_path(nw: NodeWrangler, end_index, weight, trim_threshold=.1, of
     distance = nw.vector_math('DISTANCE', *nw.new_node(Nodes.InputEdgeVertices).outputs[2:])
     curve = nw.new_node(Nodes.EdgePathToCurve, [geometry, None, nw.new_node(Nodes.ShortestEdgePath, [
         nw.compare('EQUAL', nw.new_node(Nodes.Index), 0), distance]).outputs[0]])
+    if subdiv > 0:
+        curve = nw.new_node(Nodes.SubdivisionSurface, [curve, subdiv])
 
     curve = nw.new_node(Nodes.StoreNamedAttribute, [curve, 'tangent', nw.new_node(Nodes.CurveTangent)],
                         attrs={'data_type': 'FLOAT_VECTOR'})

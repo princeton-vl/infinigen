@@ -63,8 +63,7 @@ class KalidiumBaseCactusFactory(BaseCactusFactory):
 
         weight = lambda nw: nw.scalar_multiply(
             nw.vector_math('DISTANCE', *nw.new_node(Nodes.InputEdgeVertices).outputs[2:]), nw.uniform(.8, 1))
-        surface.add_geomod(obj, geo_shortest_path, apply=True, input_args=[end_index, weight, .05],
-                           input_kwargs={'subdiv': 0})
+        surface.add_geomod(obj, geo_shortest_path, apply=True, input_args=[end_index, weight, .05])
         surface.add_geomod(obj, geo_radius, apply=True, input_args=[.006])
 
         twigs = make_asset_collection(self.build_twig, 5, verbose=False)
