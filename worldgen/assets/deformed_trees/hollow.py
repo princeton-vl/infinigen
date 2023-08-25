@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -9,14 +10,16 @@ import numpy as np
 from numpy.random import uniform
 
 from assets.deformed_trees.base import BaseDeformedTreeFactory
-from assets.utils.decorate import assign_material, join_objects, read_material_index, write_material_index
+from assets.utils.decorate import assign_material, join_objects, read_co, read_material_index, separate_loose, \
+    write_material_index
 from assets.utils.nodegroup import geo_selection
 from nodes.node_info import Nodes
 from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
-from util.blender import deep_clone_obj
+from util.blender import deep_clone_obj, select_none
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
+
 
 class HollowTreeFactory(BaseDeformedTreeFactory):
 
@@ -29,10 +32,20 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
         geometry = nw.new_node(Nodes.SetPosition, [geometry, selection, None, offset])
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
-    def create_asset(self, face_size, **params):
-        obj = self.build_tree(face_size, **params)
+    @staticmethod
+    def filter_lower(obj):
+        select_none()
+        objs = butil.split_object(obj)
+        filtered = [o for o in objs if np.min(read_co(o)[:, -1]) < .5]
+        obj = filtered[np.argmax([len(o.data.vertices) for o in filtered])]
+        objs.remove(obj)
+        butil.delete(objs)
+        return obj
+
+    def create_asset(self, i, distance=0, **params):
+        obj = self.build_tree(i, distance, **params)
         scale = uniform(.8, 1.)
-        threshold = uniform(.38, .42)
+        threshold = uniform(.36, .4)
 
         def selection(nw: NodeWrangler):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
@@ -58,7 +71,7 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
         self.trunk_surface.apply(obj)
         butil.apply_modifiers(obj)
         assign_material(hollow, self.material)
-        obj = join_objects([obj, hollow])
+        obj = join_objects([self.filter_lower(obj), self.filter_lower(hollow)])
 
         with butil.ViewportMode(obj, 'EDIT'):
             bpy.ops.mesh.select_all(action='SELECT')

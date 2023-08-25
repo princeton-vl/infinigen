@@ -41,7 +41,7 @@ class RottenTreeFactory(BaseDeformedTreeFactory):
         cutter = new_icosphere(subdivisions=6)
         angle = uniform(-np.pi, 0)
         depth = radius * uniform(.4, .9)
-        cutter_scale = np.array([radius * uniform(.8, 1.2), radius * uniform(.8, 1.2), log_uniform(.2, 1.2)])
+        cutter_scale = np.array([radius * uniform(.8, 1.2), radius * uniform(.8, 1.2), log_uniform(1., 1.2)])
         cutter_location = np.array([depth * np.cos(angle), depth * np.sin(angle), height])
         cutter.scale = cutter_scale
         cutter.location = cutter_location
@@ -54,8 +54,8 @@ class RottenTreeFactory(BaseDeformedTreeFactory):
             nw.sub(nw.new_node(Nodes.InputPosition), cutter_location), cutter_scale))
         return cutter, fn, inverse_fn, metric_fn
 
-    def create_asset(self, face_size, **params):
-        outer = self.build_tree(face_size, **params)
+    def create_asset(self, i, distance=0, **params):
+        outer = self.build_tree(i, distance, **params)
         radius = max([np.sqrt(v.co[0] ** 2 + v.co[1] ** 2) for v in outer.data.vertices if v.co[-1] < .1])
         height = uniform(.8, 1.6)
         cutter, fn, inverse_fn, metric_fn = self.build_cutter(radius, height)

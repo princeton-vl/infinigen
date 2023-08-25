@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -31,11 +32,8 @@ class BaseDeformedTreeFactory(AssetFactory):
             self.base_hue = uniform(.02, .08)
             self.material = surface.shaderfunc_to_material(self.shader_rings, self.base_hue)
 
-    def create_placeholder(self, **kwargs):
-        return self.base_factory.create_placeholder(**kwargs)
-
-    def build_tree(self, face_size, **params):
-        return self.base_factory.create_asset(**params, face_size=face_size, child_merge_dist=0)
+    def build_tree(self, i, distance, **kwargs):
+        return self.base_factory.spawn_asset(i=i, distance=distance)
 
     @staticmethod
     def geo_xyz(nw: NodeWrangler):
