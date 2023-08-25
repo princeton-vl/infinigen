@@ -47,7 +47,8 @@ class JellyfishFactory(AssetFactory):
             self.arm_mat_solid = self.make_solid()
 
             self.has_arm = uniform(0, 1) < .5
-            self.arm_radius_range = uniform(0, .3), uniform(.4, .7)
+            arm_radius = uniform(0, .3)
+            self.arm_radius_range = arm_radius, arm_radius + uniform(.1, .4)
             self.arm_height_range = -uniform(.4, .5), -uniform(0, .2)
             self.arm_min_distance = uniform(.06, .08)
             self.arm_size = uniform(.03, .06)
@@ -61,17 +62,24 @@ class JellyfishFactory(AssetFactory):
             self.tentacle_bend_angle = uniform(0, np.pi / 12)
 
             self.cap_thickness = uniform(.05, .6)
-            self.cap_inner_radius = uniform(.6, .9)
+            self.cap_inner_radius = uniform(.6, .8)
             self.cap_z_scale = log_uniform(.4, 1.5)
-            self.cap_dent = uniform(.1, .2) if uniform(0, 1) < .5 else 0
+            self.cap_dent = uniform(.15, .3) if uniform(0, 1) < .5 else 0
 
-            self.length_scale = log_uniform(.25, 1.5)
+            self.length_scale = log_uniform(.25, 2.)
             self.anim_freq = 1 / log_uniform(25, 100)
             self.move_freq = 1 / log_uniform(500, 1000)
 
     def create_asset(self, face_size, **params):
         obj, radius = self.build_cap(face_size)
+
         assign_material(obj, [self.outside_material, self.inside_material])
+        for axis in 'XY':
+            butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='TWIST', angle=uniform(-np.pi / 3, np.pi / 3),
+                              deform_axis=axis)
+        for axis in 'XY':
+            butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='BEND', angle=uniform(-np.pi / 3, np.pi / 3),
+                              deform_axis=axis)
 
         def selection(nw: NodeWrangler):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
@@ -96,11 +104,6 @@ class JellyfishFactory(AssetFactory):
         assign_material(tentacles, self.tentacle_material)
 
         obj = join_objects([obj] + long_arms + tentacles)
-        for axis in 'XY':
-            butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='BEND', angle=uniform(-np.pi / 3, np.pi / 3),
-                              deform_axis=axis)
-            butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='TWIST', angle=uniform(-np.pi / 2, np.pi / 2),
-                              deform_axis=axis)
         head_z = np.amax(read_co(obj)[:, -1])
         tail_z = -np.amin(read_co(obj)[:, -1])
         self.animate_expansion(obj, head_z, tail_z)
@@ -270,7 +273,7 @@ class JellyfishFactory(AssetFactory):
                           deform_axis='Y')
         co = read_co(obj)
         x, y, z = co.T
-        center = np.mean(co[z > -.02], 0)
+        center = np.mean(co[z > -.01], 0)
         obj.location[0] -= center[0]
         obj.location[1] -= center[1]
         butil.apply_transform(obj, loc=True)

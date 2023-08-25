@@ -83,9 +83,10 @@ def build_scene_asset(factory_name, idx):
             i = np.argmax(np.array(sizes))
             asset = meshes[i]
         if not args.fire:
-            drivers = parent.animation_data.drivers.values()
-            for d in drivers:
-                parent.driver_remove(d.data_path)
+            if parent.animation_data is not None:
+                drivers = parent.animation_data.drivers.values()
+                for d in drivers:
+                    parent.driver_remove(d.data_path)
             co = read_base_co(asset)
             x_min, x_max = np.amin(co, 0), np.amax(co, 0)
             parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
@@ -94,7 +95,6 @@ def build_scene_asset(factory_name, idx):
             plane = bpy.context.active_object
             plane.location[-1] = x_min[-1]
             plane.is_shadow_catcher = True
-
             material = bpy.data.materials.new('plane')
             material.use_nodes = True
             material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
