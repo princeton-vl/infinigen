@@ -24,7 +24,7 @@ from placement.detail import remesh_with_attrs
 from surfaces import surface
 from placement.factory import AssetFactory
 from util.math import FixedSeed
-from assets.utils.tag import tag_object, tag_nodegroup
+from assets.utils.tag import tag_object
 
 class CactusFactory(AssetFactory):
     
@@ -32,7 +32,7 @@ class CactusFactory(AssetFactory):
         super(CactusFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.factory_methods = [GlobularBaseCactusFactory, ColumnarBaseCactusFactory,
-                PrickyPearBaseCactusFactory]
+                PrickyPearBaseCactusFactory, KalidiumBaseCactusFactory]
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             if factory_method is None:

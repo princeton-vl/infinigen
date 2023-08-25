@@ -91,21 +91,7 @@ class KelpMonocotFactory(MonocotGrowthFactory):
         return obj
 
     def create_asset(self, **params):
-        obj = self.create_raw(apply=False)
-        obj, mod = butil.modify_mesh(obj, 'SIMPLE_DEFORM', False, deform_method='TWIST', deform_axis='Z',
-                                     return_mod=True)
-        twist_driver = mod.driver_add('angle').driver
-        extra_twist_angle = uniform(0, np.pi / 60)
-        twist_driver.expression = repeated_driver(self.twist_angle - extra_twist_angle,
-                                                  self.twist_angle + extra_twist_angle, self.anim_freq,
-                                                  self.anim_offset, self.anim_seed)
-        obj, mod = butil.modify_mesh(obj, 'SIMPLE_DEFORM', False, deform_method='BEND', deform_axis='Y',
-                                     return_mod=True)
-        bend_driver = mod.driver_add('angle').driver
-        extra_bend_angle = uniform(0, np.pi / 60)
-        bend_driver.expression = repeated_driver(self.bend_angle + extra_bend_angle,
-                                                 self.bend_angle - extra_bend_angle, self.anim_freq,
-                                                 self.anim_offset, self.anim_seed)
-        obj.scale = uniform(.8, 1.2), uniform(.8, 1.2), self.z_scale
+        obj = self.create_raw(**params)
+        self.decorate_monocot(obj)
         assign_material(obj, self.material)
         return obj

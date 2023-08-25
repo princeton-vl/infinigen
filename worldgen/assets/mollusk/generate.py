@@ -22,6 +22,7 @@ from placement.factory import AssetFactory
 from util.math import FixedSeed
 from assets.utils.tag import tag_object, tag_nodegroup
 
+
 class MolluskFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None):
         super(MolluskFactory, self).__init__(factory_seed, coarse)
@@ -40,12 +41,10 @@ class MolluskFactory(AssetFactory):
 
     def create_asset(self, face_size=0.01, **params):
         obj = self.factory.create_asset(**params)
-        for o in [obj] + obj.children_recursive:
-            if o.type == 'MESH':
-                self.decorate_mollusk(face_size, o)
+        self.decorate_mollusk(obj, face_size)
         return obj
 
-    def decorate_mollusk(self, face_size, obj):
+    def decorate_mollusk(self, obj, face_size):
         subsurface2face_size(obj, face_size)
         butil.modify_mesh(obj, 'SOLIDIFY', True, thickness=.005)
         t = np.random.choice(['STUCCI', 'MARBLE'])

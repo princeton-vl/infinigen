@@ -17,7 +17,7 @@ from assets.utils.tag import tag_object, tag_nodegroup
 
 class BlenderRockFactory(AssetFactory):
 
-    def __init__(self, factory_seed, detail):
+    def __init__(self, factory_seed, detail=1):
         super(BlenderRockFactory, self).__init__(factory_seed)
         self.detail = detail
 

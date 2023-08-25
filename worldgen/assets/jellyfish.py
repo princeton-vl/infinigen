@@ -30,6 +30,7 @@ from util.blender import deep_clone_obj
 from util.math import FixedSeed
 from assets.utils.tag import tag_object, tag_nodegroup
 
+
 class JellyfishFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
@@ -62,7 +63,7 @@ class JellyfishFactory(AssetFactory):
             down = nw.compare('LESS_THAN', nw.separate(nw.new_node(Nodes.InputNormal))[-1], 0)
             return nw.boolean_math('AND', center, down)
 
-        long_arms = self.place_tentacles(obj, selection, uniform(.04, .06), uniform(.03, .06),
+        long_arms = self.place_tentacles(obj, selection, uniform(.06, .08), uniform(.03, .06),
                                          log_uniform(2, 5) * length_scale, uniform(0, np.pi / 60))
         long_material_index = np.random.choice([0, 1, 2], len(long_arms), p=self.long_mat_prob)
         for i, mat in enumerate([self.long_mat_opaque, self.long_mat_transparent, self.long_mat_solid]):
@@ -90,7 +91,8 @@ class JellyfishFactory(AssetFactory):
         driver_x, driver_y, driver_z = [_.driver for _ in obj.driver_add('location')]
         driver_x.expression = repeated_driver(uniform(-.2, .2), uniform(-.2, .2), self.move_freq, offset, seed)
         driver_y.expression = repeated_driver(uniform(-.2, .2), uniform(-.2, .2), self.move_freq, offset, seed)
-        driver_z.expression = repeated_driver(- uniform(0, -1), uniform(0, 1), self.move_freq, offset, seed)
+        driver_z.expression = repeated_driver(uniform(-1.5, -.5), uniform(.5, 1.5), self.move_freq, offset,
+                                              seed)
         driver_rot = obj.driver_add('rotation_euler')[-1].driver
         twist_range = uniform(0, np.pi / 60)
         driver_rot.expression = repeated_driver(-twist_range, twist_range, self.move_freq, offset, seed)
@@ -203,11 +205,11 @@ class JellyfishFactory(AssetFactory):
 
     @staticmethod
     def build_arm(radius, length, bend_angle):
-        obj = new_circle()
+        obj = new_circle(vertices=16)
         obj.scale = radius, radius * uniform(0, 1), 1
         butil.apply_transform(obj)
         remove_vertices(obj, lambda x, y, z: y * (-1) ** np.random.randint(2) > 0)
-        steps = 512
+        steps = 256
 
         empty = new_empty(location=(0, 0, 1), rotation=(0, -uniform(0, np.pi / 24), 0))
         butil.modify_mesh(obj, 'SCREW', angle=log_uniform(.5, 3) * np.pi * (-1) ** int(uniform(0, 1)),

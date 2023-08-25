@@ -34,6 +34,6 @@ class CrustaceanEyeFactory(PartFactory):
         return Part(skeleton, obj)
 
     def sample_params(self):
-        radius = uniform(.03, .05)
+        radius = uniform(.015, .02)
         length = radius * uniform(1, 1.5)
         return {'radius': radius, 'length': length}

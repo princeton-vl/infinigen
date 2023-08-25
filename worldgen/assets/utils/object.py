@@ -106,4 +106,5 @@ def new_empty(**kwargs):
 def new_line(scale=1., subdivisions=7):
     obj = mesh2obj(data2mesh([[0, 0, 0], [scale, 0, 0]], [[0, 1]]))
     butil.modify_mesh(obj, 'SUBSURF', levels=subdivisions, render_levels=subdivisions)
+    obj.location = 0, 0, 0
     return obj

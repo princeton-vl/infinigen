@@ -62,7 +62,7 @@ class CrustaceanTailFactory(PartFactory):
         top_cutoff = 1
         n_segments = np.random.randint(6, 10)
         x_decay = log_uniform(.2, .3)
-        shell_ratio = uniform(1.02, 1.05)
+        shell_ratio = uniform(1.05, 1.08)
         fin_x_length = uniform(.5, .8)
         return {
             'x_length': x_length,

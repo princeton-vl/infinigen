@@ -21,6 +21,7 @@ from nodes.node_wrangler import NodeWrangler
 from surfaces import surface
 from assets.utils.tag import tag_object, tag_nodegroup
 
+
 class FanBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.
     noise_strength = 0.
@@ -44,14 +45,15 @@ class FanBaseCoralFactory(BaseCoralFactory):
         butil.apply_transform(obj)
 
         end_indices = np.nonzero(read_co(obj)[:, -1] < 1e-2)[0]
-        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, np.random.randint(1, 4)))
+        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, 5))
         texture = bpy.data.textures.new(name='fan', type='STUCCI')
         texture.noise_scale = uniform(.5, 1)
         butil.modify_mesh(obj, 'DISPLACE', texture=texture, strength=uniform(.5, 1.), direction='Y')
         surface.add_geomod(obj, geo_extension, apply=True)
         obj.scale = uniform(.6, 1.2), 1, 1
         butil.apply_transform(obj)
-        surface.add_geomod(obj, geo_shortest_path, input_args=[end_index, self.weight, .05], apply=True)
+        surface.add_geomod(obj, geo_shortest_path, input_args=[end_index, self.weight, .05],
+                           input_kwargs={'subdiv': 0}, apply=True)
         obj = self.add_radius(obj)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius', 32])
         butil.modify_mesh(obj, 'WELD', merge_threshold=.001)

@@ -15,7 +15,7 @@ from placement.factory import AssetFactory, make_asset_collection
 
 
 def apply(obj, scale=1, density=1., n=5, selection=None, **kwargs):
-    n_species = np.random.randint(2, 3)
+    n_species = np.random.randint(2, 5)
     factories = [SeaweedFactory(np.random.randint(1e5)) for i in range(n_species)]
     seaweeds = make_asset_collection(factories, name='seaweed',
                                                 weights=np.random.uniform(0.5, 1, len(factories)), n=n,

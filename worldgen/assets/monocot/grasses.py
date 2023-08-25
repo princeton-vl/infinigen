@@ -183,8 +183,8 @@ class ReedEarMonocotFactory(MonocotGrowthFactory):
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
         return obj
 
-    def create_asset(self, **params):
-        obj = super(ReedEarMonocotFactory, self).create_asset(**params)
+    def create_raw(self, **params):
+        obj = super(ReedEarMonocotFactory, self).create_raw(**params)
         write_attribute(obj, 1, 'ear', 'FACE')
         tag_object(obj, 'reed_ear')
         return obj
@@ -197,7 +197,7 @@ class ReedBranchMonocotFactory(MonocotGrowthFactory):
         super(ReedBranchMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.stem_offset = uniform(.6, .8)
-            self.branch_factory = ReedEarMonocotFactory(self.factory_seed)
+            self.ear_factory = ReedEarMonocotFactory(self.factory_seed)
             self.scale_curve = (0, 1), (.5, .6), (1, .1)
             self.min_y_angle = uniform(-np.pi / 10, -np.pi / 8)
             self.max_y_angle = uniform(-np.pi / 6, -np.pi / 8)
@@ -205,7 +205,7 @@ class ReedBranchMonocotFactory(MonocotGrowthFactory):
             self.radius = .005
 
     def make_collection(self, face_size):
-        return make_asset_collection(self.branch_factory.create_raw, 2, 'leaves', verbose=False,
+        return make_asset_collection(self.ear_factory.create_raw, 2, 'leaves', verbose=False,
                                      face_size=face_size)
 
 
