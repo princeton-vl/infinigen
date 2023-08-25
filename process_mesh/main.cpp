@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.35"
+#define VERSION "1.36"
 
 using std::cout, std::cerr, std::endl;
 
@@ -457,19 +457,20 @@ int main(int argc, char *argv[]) {
                 for (int j=-1; j<=1; j++){
                     const int next_x = o.x + lround(fx) + i;
                     const int next_y = o.y + lround(fy) + j;
-                    const bool face_ids_match = (
-                        (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
-                        (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
-                        (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
-                    );
-                    match_exists = match_exists || face_ids_match;
+                    if ((0 <= next_y) && (next_y < buffer_height) && (0 <= next_x) && (next_x < buffer_width)){
+                        const bool face_ids_match = (
+                            (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
+                            (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
+                            (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
+                        );
+                        match_exists = match_exists || face_ids_match;
+                    }
                 }
             }
-            flow_occlusion(o.y, o.x) = ((int)match_exists) * 255;
+            flow_occlusion(o.y, o.x) = ((unsigned char)match_exists) * 255;
             o.progressbar();
         }
         imwrite(output_dir / ("Flow3DMask_" + cd.frame_string + ".png"), flow_occlusion);
-
         }
 
         /*
