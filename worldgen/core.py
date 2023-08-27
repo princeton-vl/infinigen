@@ -267,7 +267,7 @@ def execute_tasks(
     reset_assets=True,
     focal_length=None,
     dryrun=False,
-    optimize_terrain_diskusage=True,
+    optimize_terrain_diskusage=False,
 ):
     if input_folder != output_folder:
         if reset_assets:
