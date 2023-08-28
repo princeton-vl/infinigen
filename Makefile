@@ -27,15 +27,11 @@ XAUTH=/tmp/.docker.xauth
 default:
 
 docker-build:
-	git submodule init
-	git submodule update
 	docker build \
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) .
 
 docker-build-cuda:
-	git submodule init
-	git submodule update
 	docker build \
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) \
@@ -58,7 +54,6 @@ docker-run:
 		--name="infinigen" \
 		--gpus=all \
 		--env NVIDIA_DISABLE_REQUIRE=1 \
-		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
@@ -71,7 +66,6 @@ docker-run:
 	|| docker run -td --privileged --net=host --ipc=host \
 		--name="infinigen" \
 		--device /dev/dri \
-		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
@@ -82,7 +76,6 @@ docker-run:
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" bash
 
-	docker exec infinigen /bin/bash -c infinigen/tools/install/compile_opengl.sh
 
 docker-run-no-opengl:
 	echo "Launching Docker image without OpenGL ground truth"
@@ -90,7 +83,6 @@ docker-run-no-opengl:
 		--name="infinigen" \
 		--gpus=all \
 		--env NVIDIA_DISABLE_REQUIRE=1 \
-		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-v $(PWD)/outputs:/opt/infinigen/outputs \
 		"$(DOCKER_TAG)" /bin/bash
 
@@ -98,7 +90,6 @@ docker-run-no-gpu:
 	echo "Launching Docker image without GPU passthrough"
 	docker run -td --privileged --net=host --ipc=host \
 		--name="infinigen" \
-		-e "BLENDER=/opt/infinigen/blender/blender" \
 		-e "DISPLAY=$(DISPLAY)" \
 		-e "QT_X11_NO_MITSHM=1" \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
@@ -108,8 +99,7 @@ docker-run-no-gpu:
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
 		"$(DOCKER_TAG)" /bin/bash \
-
-	docker exec infinigen /bin/bash -c infinigen/tools/install/compile_opengl.sh
+]
 
 docker-run-no-gpu-opengl:
 	echo "Launching Docker image without GPU passthrough or OpenGL"

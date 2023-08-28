@@ -11,6 +11,7 @@ RUN if [ "$APP_IMAGE" = "nvidia/cuda:12.0.0-devel-ubuntu22.04" ]; then \
     && mkdir /root/.conda \
     && bash Miniconda3-latest-Linux-x86_64.sh -b \
     && rm -f Miniconda3-latest-Linux-x86_64.sh; \
+    && apt-get install libxkbcommon-x11-0 \
 else \
     echo "Using Conda image" && \
     apt-get update -yq \
@@ -27,14 +28,14 @@ else \
         unzip \
         vim \
         zlib1g-dev; \
+    && apt-get install libxkbcommon-x11-0 \
 fi
 
 RUN mkdir /opt/infinigen
 WORKDIR /opt/infinigen
 COPY . .
-RUN chmod +x infinigen/tools/install/compile_opengl.sh
 RUN conda init bash \
     && . ~/.bashrc \
     && conda create --name infinigen python=3.10 \
     && conda activate infinigen \
-    && ./install.sh
+    && pip install -e .[dev]
