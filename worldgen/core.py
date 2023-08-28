@@ -267,6 +267,7 @@ def execute_tasks(
     reset_assets=True,
     focal_length=None,
     dryrun=False,
+    optimize_terrain_diskusage=False,
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -333,39 +334,36 @@ def execute_tasks(
 
     if Task.FineTerrain in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-        terrain.fine_terrain(output_folder)
-    
+        terrain.fine_terrain(output_folder, optimize_terrain_diskusage=optimize_terrain_diskusage)
+
     group_collections()
 
-    if task == [Task.FineTerrain]:
-        os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
-        os.symlink(input_folder / "MaskTag.json", output_folder / "MaskTag.json")
-        os.symlink(input_folder / "version.txt", output_folder / "version.txt")
-        os.symlink(input_folder / 'polycounts.txt', output_folder / 'polycounts.txt')
-    else:
-        if input_folder is not None:
-            for mesh in os.listdir(input_folder):
-                if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
-                    os.symlink(input_folder / mesh, output_folder / mesh)
-        if Task.Coarse in task or Task.Populate in task:
+    if input_folder is not None:
+        for mesh in os.listdir(input_folder):
+            if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
+                os.symlink(input_folder / mesh, output_folder / mesh)
+    if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
 
-            with Timer(f'Writing output blendfile'):
-                logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
-                bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
-                tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
+        with Timer(f'Writing output blendfile'):
+            logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
+            if optimize_terrain_diskusage and task == [Task.FineTerrain]: os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
+            else: bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+        
+        tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
-            with (output_folder/ "version.txt").open('w') as f:
-                f.write(f"{VERSION}\n")
+        with (output_folder/ "version.txt").open('w') as f:
+            f.write(f"{VERSION}\n")
 
-            with (output_folder/'polycounts.txt').open('w') as f:
-                save_polycounts(f)
+        with (output_folder/'polycounts.txt').open('w') as f:
+            save_polycounts(f)
 
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
 
     if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-        terrain.load_glb(output_folder)
+        if optimize_terrain_diskusage:
+            terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
         render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)
