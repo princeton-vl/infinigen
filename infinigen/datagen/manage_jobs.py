@@ -65,7 +65,10 @@ from infinigen.datagen.job_funcs import (
 )
 
 import infinigen.core.init
-from .util.cleanup import cleanup
+
+ORIG_SYS_PATH = list(sys.path) # Make a new instance of sys.path
+import infinigen.core.init
+BPY_SYS_PATH = list(sys.path) # Make instance of `bpy`'s modified sys.path
 
 # used only if enabled in gin configs
 PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' 
@@ -580,7 +583,9 @@ def record_states(stats, totals, control_state):
 def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshold=0.95):
 
     if LocalScheduleHandler._inst is not None:
+        sys.path = ORIG_SYS_PATH #hacky workaround because bpy module breaks with multiprocessing
         LocalScheduleHandler.instance().poll()
+        sys.path = BPY_SYS_PATH
 
     state_counts = monitor_existing_jobs(all_scenes)
     stats, totals = stats_summary(state_counts)
