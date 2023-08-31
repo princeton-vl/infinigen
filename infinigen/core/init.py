@@ -62,7 +62,7 @@ def sanitize_override(override: list):
         k, v = override.split('=')
         try:
             ast.literal_eval(v)
-        except ValueError:
+        except (ValueError, SyntaxError):
             if "@" not in v:
                 override = f'{k}="{v}"'
 
