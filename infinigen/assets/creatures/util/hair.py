@@ -24,7 +24,7 @@ from infinigen.assets.creatures.util.nodegroups.hair import nodegroup_comb_direc
     nodegroup_hair_position, nodegroup_comb_hairs, nodegroup_strand_noise, nodegroup_hair_length_rescale, \
     nodegroup_snap_roots_to_surface
 
-logger = logging.getLogger('creatures')
+logger = logging.getLogger(__name__)
 
 def add_hair_particles(obj, params, props):
 

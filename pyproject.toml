@@ -39,7 +39,6 @@ dependencies = [
     "submitit",
     "tqdm",
     "trimesh==3.22.1",
-    "wandb",
     "zarr",
     "pandas",
     "landlab==2.4.1", 
@@ -56,6 +55,9 @@ dev = [
     "black", 
     "ruff", 
     "tabulate" # for integration test results
+]
+wandb = [
+    "wandb"
 ]
 
 [tool.setuptools]
@@ -74,7 +76,7 @@ exclude = [
 
 [tool.setuptools.package-data]
 
-"*" = ["*.gin", "*.txt"]
+"*" = ["*.gin", "*.txt", "*.json"]
 
 # Must be specified as paths relative to infinigen/ 
 "infinigen" = [
@@ -91,6 +93,10 @@ version = {attr = "infinigen.__version__"}
 [tool.pytest.ini_options]
 testpaths = "tests"
 junit_family = "xunit2"
+
+[tool.cibuildwheel]
+test-extras = ["dev"]
+test-command = "pytest infinigen/tests"
 
 [tool.ruff]
 select = [

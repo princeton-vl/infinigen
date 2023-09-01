@@ -13,7 +13,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.assets.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):

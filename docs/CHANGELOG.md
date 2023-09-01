@@ -3,3 +3,4 @@ v1.0.1 - BSD-3 license, expanded ground-truth docs, show line-credits, miscellan
 v1.0.2 - New documentation, plant improvements, disk and reproducibility improvements <br>
 v1.0.3 - Fluid code release, implementing assets documentation, render tools improvements, integration tests <br>
 v1.0.4 - Rendering tools improvements, ground truth optimization
+v1.1.0 - Pip installable, unit tests <br>

@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import uniform, normal, randint
 
 from infinigen.core.nodes import Nodes, NodeWrangler, node_utils
-from infinigen.core.nodes.color import hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 

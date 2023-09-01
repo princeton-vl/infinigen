@@ -33,10 +33,14 @@ import gin
 
 from infinigen.core.util import blender as butil
 
-try:
+logger = logging.getLogger(__name__)
+
+FLUID_INITIALIZED = False
+
+def check_initalize_fluids():
+    if FLUID_INITIALIZED:
+        return
     bpy.ops.flip_fluid_operators.complete_installation()
-except Exception as e:
-    logging.warning(f'Could not complete flip fluids installation {e}')
 
 # find next available number for fluid cache folder
 def find_available_cache(cache_folder):
@@ -89,6 +93,7 @@ def create_liquid_domain(
     dimensions=None,
     output_folder=None,
 ):
+    check_initalize_fluids()
     bpy.ops.mesh.primitive_cube_add(size=size, location=location)
     obj = bpy.context.object
     if dimensions:
@@ -163,6 +168,7 @@ def create_liquid_flow(
     is_planar=False,
     z_velocity=4,
 ):
+    check_initalize_fluids()
     if is_planar:
         pass
     else:
@@ -182,6 +188,7 @@ def create_liquid_flow(
 
 @gin.configurable
 def make_liquid_effector(obj):
+    check_initalize_fluids()
     mod = obj.modifiers.new("Fluid", type="FLUID")
     mod.fluid_type = "EFFECTOR"
     settings = mod.effector_settings
@@ -190,7 +197,8 @@ def make_liquid_effector(obj):
 
 @gin.configurable
 def add_field(location, noise=None, strength=None):
-    logging.info("adding field")
+    check_initalize_fluids()
+    logger.info("adding field")
     bpy.ops.object.select_all(action="DESELECT")
     field = bpy.data.objects.new("turbulence", None)
 
@@ -210,7 +218,7 @@ def add_field(location, noise=None, strength=None):
         obj.field.strength = strength
     else:
         obj.field.strength = uniform(0, 0.2)
-    logging.info(f"field noise: {obj.field.noise}, field strength: {obj.field.strength}")
+    logger.info(f"field noise: {obj.field.noise}, field strength: {obj.field.strength}")
 
     return obj
 
@@ -230,6 +238,7 @@ def create_gas_domain(
     flame_vorticity = None,
     vorticity = None
 ):
+    check_initalize_fluids()
     bpy.ops.mesh.primitive_cube_add(size=size, location=location)
     obj = bpy.context.object
     set_gas_domain_settings(obj, start_frame, fluid_type, resolution, simulation_duration, adaptive_domain, output_folder, noise_scale, dissolve_speed, flame_vorticity, vorticity)
@@ -252,6 +261,7 @@ def set_gas_domain_settings(
     flame_vorticity = None,
     vorticity = None,
 ):
+    check_initalize_fluids()
     if "Fluid" not in obj.modifiers:
         mod = obj.modifiers.new("Fluid", type="FLUID")
     else:
@@ -321,6 +331,9 @@ def set_gas_domain_settings(
 
 @gin.configurable
 def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount=None):
+
+    check_initalize_fluids()
+
     bpy.ops.mesh.primitive_ico_sphere_add(radius=size, location=location)
     obj = bpy.context.object
     mod = obj.modifiers.new("Fluid", type="FLUID")
@@ -349,6 +362,9 @@ def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount
 
 @gin.configurable
 def set_gas_flow_settings(obj, fluid_type="fire_and_smoke", fuel_amount=None):
+
+    check_initalize_fluids()
+
     if "Fluid" not in obj.modifiers:
         mod = obj.modifiers.new("Fluid", type="FLUID")
     else:
@@ -489,7 +505,7 @@ def decimate_and_realize_instances(instance_obj, parent_col):
     instance_obj_clone.hide_viewport = False
 
     bpy.ops.object.modifier_apply(modifier=mod.name)
-    logging.debug(len(instance_obj_clone.data.polygons))
+    logger.debug(len(instance_obj_clone.data.polygons))
 
     instance_obj_clone.hide_render = True
     parent_col_copy.hide_render = True
@@ -516,6 +532,8 @@ def set_obj_on_fire(
     dissolve_speed=25,
     dom_scale=1,
 ):
+    check_initalize_fluids()
+
     dissolve_speed += np.random.randint(-3, 4)
     if add_turbulence:
         add_field(
@@ -591,6 +609,9 @@ def generate_waterfall(
     simulation_duration=30,
     fluid_type="water",
 ):
+
+    check_initalize_fluids()
+
     seed = np.random.randint(10000)
 
     bpy.ops.mesh.landscape_add(
@@ -700,6 +721,9 @@ def import_obj_simulate(
     resolution=300,
     simulation_duration=50,
 ):
+
+    check_initalize_fluids()
+
     # assuming we are importing to the origin
     bpy.ops.import_scene.obj(filepath=obj_filepath)
     terrain = bpy.context.selected_objects[0]
@@ -731,6 +755,8 @@ def find_root(node):
 @gin.configurable
 def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1):
     
+    check_initalize_fluids()
+
     if len(assets) == 0:
         return
 
@@ -752,7 +778,7 @@ def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=N
 
         closest = obj_dist[i]
         obj = closest[1]
-        logging.info(f"Setting fire to {i=} {obj.name=}")
+        logger.info(f"Setting fire to {i=} {obj.name=}")
 
         set_obj_on_fire(
             obj,
@@ -774,6 +800,9 @@ def duplicate_fluid_obj(obj):
 
 @gin.configurable
 def estimate_smoke_domain(obj, start_frame, simulation_duration):
+
+    check_initalize_fluids()
+
     bpy.ops.object.select_all(action="DESELECT")
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
@@ -800,6 +829,9 @@ def estimate_smoke_domain(obj, start_frame, simulation_duration):
 def estimate_liquid_domain(
     location, start_frame, simulation_duration, fluid_type="water"
 ):
+
+    check_initalize_fluids()
+
     source = create_liquid_flow(
         location,
         fluid_type=fluid_type,
@@ -829,6 +861,9 @@ def estimate_liquid_domain(
 
 @gin.configurable
 def set_fluid_to_smoke(obj, start_frame, resolution=300, simulation_duration=30):
+    
+    check_initalize_fluids()
+
     new_obj = duplicate_fluid_obj(obj)
     set_obj_on_fire(
         new_obj,

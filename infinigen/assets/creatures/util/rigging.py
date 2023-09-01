@@ -19,7 +19,7 @@ from infinigen.assets.creatures.util import tree
 from infinigen.assets.creatures.util.creature import Part, infer_skeleton_from_mesh
 from infinigen.assets.creatures.util.genome import Joint, IKParams
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 IK_TARGET_PREFIX = 'ik_target'
 

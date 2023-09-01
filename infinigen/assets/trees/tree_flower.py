@@ -13,11 +13,11 @@ from numpy.random import uniform, normal
 import numpy as np
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils, color
+from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
+from infinigen.core.util import blender as butil, color
 from infinigen.core.util.math import FixedSeed, dict_lerp
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 

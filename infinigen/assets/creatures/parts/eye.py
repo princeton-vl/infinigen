@@ -13,7 +13,7 @@ from numpy.random import uniform, normal as N, randint
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_value, nodegroup_norm_vec
 

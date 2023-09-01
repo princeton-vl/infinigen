@@ -13,15 +13,24 @@ Once this is done, you can do things like `from infinigen.assets.creatures.util.
 import bpy
 from pathlib import Path
 import sys, os
+import logging
 
 pwd = os.getcwd()
 sys.path.append(pwd)
     
-import examples.generate_nature # so gin can find all its targets
 import gin
 gin.clear_config()
 gin.enter_interactive_mode()
 
-gin.parse_config_files_and_bindings(['config/base.gin'], [])
-from infinigen.core.surface import registry
-registry.initialize_from_gin()
+from infinigen.core import init, surface
+from infinigen_examples import generate_nature 
+
+init.apply_gin_configs(Path(pwd)/'infinigen_examples/configs', ['base.gin'], skip_unknown=True)
+surface.registry.initialize_from_gin()
+
+logging.basicConfig(
+    format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.WARNING
+)
+logging.getLogger("infinigen").setLevel(logging.DEBUG)

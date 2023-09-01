@@ -21,7 +21,7 @@ from infinigen.assets.creatures.util import creature, creature_util as cutil
 from infinigen.core.util.math import clip_gaussian, randomspacing, lerp
 from infinigen.core.util import blender as butil
 
-logger = logging.getLogger('creatures.animation')
+logger = logging.getLogger(__name__)
 
 def foot_path(length, height, upturn, down_stroke, curve_resolution=8):
 

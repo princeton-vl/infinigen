@@ -8,15 +8,20 @@
 # - Karhan Kayan - add fire option
 
 import argparse
-import ast
 import importlib
 import math
 import os
-import re
 import sys
 import traceback
 from itertools import product
 from pathlib import Path
+import logging
+
+logging.basicConfig(
+    format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.WARNING
+)
 
 import bpy
 import gin
@@ -36,7 +41,7 @@ from infinigen.core.util.camera import get_3x4_P_matrix_from_blender
 from infinigen.core.util.logging import Suppress
 from infinigen.core.util import blender as butil
 
-from .tools.results import strip_alpha_background as strip_alpha_background
+from infinigen.tools.results import strip_alpha_background as strip_alpha_background
 
 import generate_nature  # to load most/all factory.AssetFactory subclasses
 
@@ -248,6 +253,14 @@ def main(args):
     init.apply_gin_configs('infinigen_examples/config')
     surface.registry.initialize_from_gin()
 
+    extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
+    logging.basicConfig(
+        format=f'[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] {extras}| %(message)s',
+        level=args.loglevel,
+        datefmt='%H:%M:%S'
+    )
+    logging.getLogger("infinigen").setLevel(args.loglevel)
+
     name = '_'.join(args.factories)
     path = Path(os.getcwd()) / 'outputs' / name
     path.mkdir(exist_ok=True)
@@ -317,9 +330,7 @@ def make_args():
     parser.add_argument('--scale_reference', action='store_true', help="Add the scale reference")
     parser.add_argument('--skip_existing', action='store_true', help="Skip existing scenes and renders")
 
-    args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
-    return args
-
+    return init.parse_args_blender(parser)
 
 if __name__ == '__main__':
     args = make_args()

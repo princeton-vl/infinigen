@@ -13,21 +13,16 @@ A clear and concise description of what the bug is.
 ## Steps to Reproduce
 
 ### What version of the code were you using? 
-'''
-What is the output of `git log -n 1`?
-'''
+Tell us the commit & commit hash from `git log`
 
 ### What command did you run?
-```
 
-```
 
 ### What are your FULL output logs?
-```
+Provide the FULL output logs from your command as a txt file.
 
-```
-
-### If this is your first time running Infinigen, what are the full output logs of `install.sh` ?**
+### If this is your first time running Infinigen, what are the full install logs?**
+Run `pip install -vv -e . > logs.txt 2>&1` and send logs.txt as an attachment.
 
 
 ### Platform

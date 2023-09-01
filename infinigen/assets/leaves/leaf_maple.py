@@ -11,7 +11,7 @@ import mathutils
 from numpy.random import uniform, normal, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core import surface
 from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave
 

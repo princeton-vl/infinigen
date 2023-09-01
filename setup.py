@@ -37,8 +37,6 @@ if RUN_BUILD and os.environ.get('INFINIGEN_INSTALL_RUNBUILD', str_true) == str_t
         subprocess.run(['make', 'terrain'], cwd=cwd)
     if os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', str_true) == str_true:
         subprocess.run(['make', 'customgt'], cwd=cwd)
-    if os.environ.get('INFINIGEN_INSTALL_FLUIDS', str_true) == str_true:
-        subprocess.run(['make', 'flip_fluids'], cwd=cwd)
 
 cython_extensions = []
 
@@ -61,5 +59,3 @@ setup(
     ]
     # other opts come from pyproject.toml
 )
-
-

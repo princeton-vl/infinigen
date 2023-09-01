@@ -48,15 +48,9 @@ Finally, to import Infinigen into your Blender UI, click the 'Open' button on yo
 Now that you have imported Infinigen into Blender, you can easily access all its assets and materials via the commandline.
 
 To start, we recommend using Infinigen's sky lighting while you make your asset, so you can get a better sense of what the asset will look like in full scenes. To sample a random sky lighting, run the following two steps in your Blender console:
-<<<<<<< HEAD
 ```python
-from lighting import lighting
-lighting.add_lighting()
-=======
-```
 from infingen.assets.lighting import sky_lighting
 sky_lighting.add_lighting()
->>>>>>> 5e32cd3eb (Fix all imports and paths)
 ```
 
 You can use this mechanism to access any asset or python file under the `infinigen/` folder. For example run `from infinigen.assets.scatters import grass` then `grass.apply(bpy.context.active_object)` in the Python Console window to apply our grassland scatter generator directly onto whichever object is selected & highlighted orange in your UI. The first statement imports the python script shown in `infinigen/assets/scatters/grass.py`. You can use a similar statement to test out any python file under the infinigen/ folder, by replacing `surfaces.scatters` and `grass` with the relevant subfolder names and python filename.
@@ -86,7 +80,7 @@ import mathutils
 from numpy.random import uniform, normal, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
 def shader_material(nw: NodeWrangler):
@@ -162,13 +156,8 @@ You can implement the `create_asset` function however you wish so long as it pro
 
 The simplest implementation for a new asset is to create a geometry nodes equivelant, transpile it similarly to as shown above, copy the code into the same file as the template shown above, and implement the `create_asset` function as shown:
 
-<<<<<<< HEAD
 ```python
-from util import blender as butil
-=======
-```
 from infinigen.core.util import blender as butil
->>>>>>> 5e32cd3eb (Fix all imports and paths)
 
 ...
 

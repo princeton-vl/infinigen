@@ -12,7 +12,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
-from infinigen.core.nodes.color import hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.assets.tropic_plants.tropic_plant_utils import (
     nodegroup_nodegroup_leaf_gen,
     nodegroup_nodegroup_leaf_rotate_x,

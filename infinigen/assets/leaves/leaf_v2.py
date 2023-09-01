@@ -19,7 +19,7 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 
 
 import bpy
@@ -27,7 +27,7 @@ import mathutils
 from numpy.random import uniform, normal
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 

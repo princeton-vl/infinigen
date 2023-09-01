@@ -12,7 +12,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
-from infinigen.core.nodes.color import hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util import blender as butil
 from infinigen.assets.tropic_plants.leaf_palm_tree import LeafPalmTreeFactory
 from infinigen.assets.fruits.coconutgreen import FruitFactoryCoconutgreen

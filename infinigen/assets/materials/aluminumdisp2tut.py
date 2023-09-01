@@ -14,7 +14,7 @@ from numpy.random import uniform, normal, randint
 from infinigen.assets.materials.utils.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 
 from infinigen.core import surface
 

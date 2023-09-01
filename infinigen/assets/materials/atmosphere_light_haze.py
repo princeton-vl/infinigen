@@ -10,7 +10,7 @@ import gin
 
 from infinigen.core.util.random import random_general as rg
 from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.core.nodes import color
+from infinigen.core.util import color
 from infinigen.core import surface
 
 type = None

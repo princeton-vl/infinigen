@@ -8,13 +8,13 @@ clean_terrain:
 	rm -rf infinigen/terrain/build
 
 terrain: clean_terrain
-	bash infinigen/tools/install/compile_terrain.sh
+	bash scripts/install/compile_terrain.sh
 
 customgt:
-	bash ./infinigen/tools/install/compile_opengl.sh
+	bash scripts/install/compile_opengl.sh
 
 flip_fluids:
-	bash ./infinigen/tools/install/compile_flip_fluids.sh
+	bash scripts/install/compile_flip_fluids.sh
 
 DOCKER_BUILD_PROGRESS ?= auto
 DOCKER_TAG ?= infinigen_docker_img

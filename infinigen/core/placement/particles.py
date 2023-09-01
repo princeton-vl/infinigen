@@ -19,10 +19,11 @@ from infinigen.core.util.logging import Suppress
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 
+logger = logging.getLogger(__name__)
 
 def bake(emitter, system):
 
-    logging.info(f'Baking particles for {emitter.name=}')
+    logger.info(f'Baking particles for {emitter.name=}')
 
     with butil.SelectObjects(emitter):
 

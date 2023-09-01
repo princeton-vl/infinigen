@@ -18,6 +18,7 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.blender import GarbageCollect, count_instance, count_objects
 
+logger = logging.getLogger(__name__)
 
 class RandomStageExecutor:
 
@@ -35,14 +36,14 @@ class RandomStageExecutor:
             except StopIteration:
                 raise ValueError(f'{self} could not find matching name for {prereq=}')
             if not e['ran']:
-                logging.info(f'Skipping run_stage({name}...) due to unmet {prereq=}')
+                logger.info(f'Skipping run_stage({name}...) due to unmet {prereq=}')
                 return
         with FixedSeed(int_hash((self.scene_seed, name, 0))):
             if use_chance and np.random.uniform() > self.params[f'{name}_chance']:
-                logging.debug(f'Not running {name} due to random chance')
+                logger.debug(f'Not running {name} due to random chance')
                 return False
             if not use_chance and not self.params.get(f'{name}_enabled', True):
-                logging.debug(f'Not running {name} due to manually set not enabled')
+                logger.debug(f'Not running {name} due to manually set not enabled')
                 return False      
         return True
     
@@ -68,7 +69,7 @@ class RandomStageExecutor:
         seed = self.params.get(f'{name}_seed')
         if seed is None:
             seed = int_hash((self.scene_seed, name))
-        logging.debug(f'run_stage({name=}) using {seed=}')
+        logger.debug(f'run_stage({name=}) using {seed=}')
         
         with FixedSeed(seed):
             with Timer(name), gc_context:

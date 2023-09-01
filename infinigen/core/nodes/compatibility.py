@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from .node_info import Nodes
 
-logger = logging.getLogger('node_wrangler')
+logger = logging.getLogger(__name__)
 
 def map_dict_keys(d, m):
     for m_from, m_to in m.items():

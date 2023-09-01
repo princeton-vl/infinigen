@@ -91,7 +91,7 @@ Infinigen currently only supports NVIDIA GPUs. Infinigen can use a GPU in accele
 
 To enable these GPU accelerated steps:
    - First, if you are using a `local_*.gin` pipeline config, you must first remove `--pipeline_overrides LocalScheduleHandler.use_gpu=False` from our Hello World command, or otherwise ensure this value is set to true via configs/overrides. This will make the GPU _visible_ to each child process, and will cause _rendering_ to automatically detect and use the GPU. `slurm.gin` assumes GPUs will be available by default, set it's GPU request amounts to 0 if this is not the case for your cluster.
-   - To enable GPU-acceleration for `fine_terrain`, you must ensure that `install.sh` was run on a machine with CUDA, then add `cuda_terrain.gin` to your `--pipeline_configs`.
+   - To enable GPU-acceleration for `fine_terrain`, you must ensure that installation was run on a machine with CUDA, then add `cuda_terrain.gin` to your `--pipeline_configs`.
    - OpenGL GT can be enabled described in [Extended ground-truth](GroundTruthAnnotations.md)
 
 Even if GPU access is enabled, *you will likely not see the GPU at 100% usage*. Both blender and our code require some CPU setup time to build acceleration data-structures before GPU usage can start, and even then, a single render job may not saturate your GPU's FLOPS. 

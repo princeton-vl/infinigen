@@ -25,7 +25,19 @@ from numpy.random import randint
 
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
-from infinigen.core.util.logging import Suppress
+from infinigen.core.util.logging import Suppress, LogLevel
+
+logger = logging.getLogger(__name__)
+
+def parse_args_blender(parser):
+    if '--' in sys.argv:
+        # Running using a blender commandline python. 
+        # args before '--' are intended for blender not infinigen
+        argvs = sys.argv[sys.argv.index('--')+1:]
+        return parser.parse_args(argvs)
+    else:
+        return parser.parse_args()
+    
 
 def parse_seed(seed, task=None):
 
@@ -47,7 +59,7 @@ def parse_seed(seed, task=None):
 
 def apply_scene_seed(seed, task=None):
     scene_seed, reason = parse_seed(seed, task)
-    logging.info(f'Converted {seed=} to {scene_seed=}, {reason}')
+    logger.info(f'Converted {seed=} to {scene_seed=}, {reason}')
     gin.constant('OVERALL_SEED', scene_seed)
     random.seed(scene_seed)
     np.random.seed(scene_seed)
@@ -71,7 +83,7 @@ def sanitize_override(override: list):
 def repo_root():
     return Path(__file__).parent.parent.parent
 
-def contains_any(filenames, folder):
+def contains_any_stem(filenames, folder):
     if not folder.exists():
         return False
     names = [p.stem for p in folder.iterdir()]
@@ -85,8 +97,8 @@ def mandatory_config_dir_satisfied(mandatory_folder, root, configs):
         raise FileNotFoundError(f'Could not find {mandatory_folder} or {mandatory_folder_rel}')
     
     return (
-        contains_any(configs, mandatory_folder) or
-        contains_any(configs, mandatory_folder_rel)
+        contains_any_stem(configs, mandatory_folder) or
+        contains_any_stem(configs, mandatory_folder_rel)
     )
 
 @gin.configurable
@@ -107,8 +119,6 @@ def apply_gin_configs(
     configs_folder = Path(configs_folder)
 
     root = repo_root()
-    print(root)
-    gin.add_config_file_search_path(root)
 
     configs_folder_rel = root/configs_folder
     if configs_folder_rel.exists():
@@ -139,11 +149,23 @@ def apply_gin_configs(
         except StopIteration:
             raise FileNotFoundError(f'Could not find {p} or {p.stem} in any of {search_paths}')
             
-    gin.parse_config_files_and_bindings(
-        [find_config(g) for g in ['base.gin'] + configs], 
-        bindings=[sanitize_override(o) for o in overrides], 
-        skip_unknown=skip_unknown
-    )
+    configs = [find_config(g) for g in ['base.gin'] + configs]
+    overrides = [sanitize_override(o) for o in overrides]
+
+    with LogLevel(logger=logging.getLogger(), level=logging.CRITICAL):
+        gin.parse_config_files_and_bindings(
+            configs, 
+            bindings=overrides, 
+            skip_unknown=skip_unknown
+        )
+
+def import_addons(names):
+    for name in names:
+        try:
+            with Suppress():
+                bpy.ops.preferences.addon_enable(module=name)
+        except Exception:
+            logger.warning(f'Could not load addon "{name}"')
 
 def configure_blender():
     bpy.context.preferences.system.scrollback = 0 
@@ -155,9 +177,6 @@ def configure_blender():
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
 
-    for name in ['ant_landscape', 'real_snow', 'flip_fluids_addon']:
-        try:
-            with Suppress():
-                bpy.ops.preferences.addon_enable(module=name)
-        except Exception:
-            logging.warning(f'Could not load addon "{name}"')
+    import_addons(['ant_landscape', 'real_snow'])
+
+    

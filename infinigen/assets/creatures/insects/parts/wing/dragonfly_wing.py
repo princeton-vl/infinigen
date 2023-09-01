@@ -9,7 +9,7 @@ import mathutils
 from numpy.random import uniform, normal, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
 from infinigen.assets.creatures.insects.utils.shader_utils import nodegroup_add_noise

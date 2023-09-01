@@ -19,7 +19,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general
 
-logger = logging.getLogger('boids')
+logger = logging.getLogger(__name__)
 
 
 def creature_col_to_particle_col(col, name, prefix='particleassets'):

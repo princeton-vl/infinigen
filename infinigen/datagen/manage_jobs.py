@@ -19,6 +19,8 @@ import sys
 import time
 import math
 import itertools
+import importlib
+
 from uuid import uuid4
 from enum import Enum
 from copy import copy
@@ -30,14 +32,16 @@ from pathlib import Path
 from shutil import which
 
 import pandas as pd
-
 import numpy as np
 import submitit
-import wandb
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from infinigen.datagen.util import upload_util
+ORIG_SYS_PATH = list(sys.path) # Make a new instance of sys.path
+import infinigen.core.init
+BPY_SYS_PATH = list(sys.path) # Make instance of `bpy`'s modified sys.path
+
 from infinigen.datagen.monitor_tasks import iterate_scene_tasks, on_scene_termination
+from infinigen.datagen.util import upload_util
 from infinigen.datagen.states import (
     JobState, 
     SceneState, 
@@ -64,11 +68,9 @@ from infinigen.datagen.job_funcs import (
     queue_upload
 )
 
-import infinigen.core.init
+logger = logging.getLogger(__name__)
 
-ORIG_SYS_PATH = list(sys.path) # Make a new instance of sys.path
-import infinigen.core.init
-BPY_SYS_PATH = list(sys.path) # Make instance of `bpy`'s modified sys.path
+wandb = None # will be imported and initialized ONLY if installed and enabled
 
 # used only if enabled in gin configs
 PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' 
@@ -84,7 +86,7 @@ def node_from_slurm_jobid(scene_id):
         node_of_scene, *rest  = subprocess.check_output(f"{which('sacct')} -j {scene_id} --format Node --noheader".split()).decode().split()
         return node_of_scene
     except Exception as e:
-        logging.warning(f'sacct threw {e}')
+        logger.warning(f'sacct threw {e}')
         return None
 
 def seed_generator():
@@ -136,7 +138,7 @@ def slurm_submit_cmd(
         if slurm_account == f'ENVVAR_{PARTITION_ENVVAR}':
             slurm_account = os.environ.get(PARTITION_ENVVAR)
             if slurm_account is None:
-                logging.warning(f'{PARTITION_ENVVAR=} was not set, using no slurm account')
+                logger.warning(f'{PARTITION_ENVVAR=} was not set, using no slurm account')
 
         if isinstance(slurm_account, list):
             slurm_account = np.random.choice(slurm_account)
@@ -188,7 +190,7 @@ def init_db_from_existing(output_folder: Path):
         if not seed_folder.is_dir():
             return None
         if not (seed_folder/'logs').exists():
-            logging.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
+            logger.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
             return None
 
         configs = existing_db.loc[existing_db["seed"] == seed_folder.name, "configs"].iloc[0]
@@ -202,7 +204,7 @@ def init_db_from_existing(output_folder: Path):
         finish_key = 'FINISH_'
         for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
             taskname = os.path.basename(finish_file_name)[len(finish_key):]
-            logging.info(f'Marking {seed_folder.name=} {taskname=} as completed')
+            logger.info(f'Marking {seed_folder.name=} {taskname=} as completed')
             scene_dict[f'{taskname}_submitted'] = True
             scene_dict[f'{taskname}_job_obj'] = JOB_OBJ_SUCCEEDED
 
@@ -260,7 +262,7 @@ def init_db(args):
     scenes = [s for s in scenes if s is not None]
 
     if len(scenes) < args.num_scenes:
-        logging.warning(f'Initialized only {len(scenes)=} despite {args.num_scenes=}. Likely due to --use_existing, --specific_seed or seed_range.')
+        logger.warning(f'Initialized only {len(scenes)=} despite {args.num_scenes=}. Likely due to --use_existing, --specific_seed or seed_range.')
 
     return scenes
 
@@ -573,7 +575,8 @@ def record_states(stats, totals, control_state):
     pretty_stats.update({f'control_state/{k}': v for k, v in control_state.items()})
     pretty_stats.update({f'{k}/total': v for k, v in totals.items()})
 
-    wandb.log(pretty_stats)
+    if wandb is not None:
+        wandb.log(pretty_stats)
     print("=" * 60)
     for k, v in sorted(pretty_stats.items()):
         print(f"{k.ljust(30)} : {v}")
@@ -602,12 +605,13 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshol
     if control_state['disk_usage'] > disk_sleep_threshold:
         message = f"{args.output_folder} is full ({100*control_state['disk_usage']}%). Sleeping."
         print(message)
-        wandb.alert(title=f'{args.output_folder} full', text=message, wait_duration=3*60*60)
+        if wandb is not None:
+            wandb.alert(title=f'{args.output_folder} full', text=message, wait_duration=3*60*60)
         time.sleep(60)
         return
 
     for scene, taskname, queue_func in new_jobs:    
-        logging.info(f"{scene['seed']} - running {taskname}")
+        logger.info(f"{scene['seed']} - running {taskname}")
         run_task(queue_func, args.output_folder / str(scene['seed']), scene, taskname)
 
 @gin.configurable
@@ -626,12 +630,17 @@ def main(args, shuffle=True, wandb_project='render', upload_commandfile_method=N
     if args.cleanup != all:
         write_html_summary(all_scenes, args.output_folder)
 
-    wandb.init(
-        name=scene_name, 
-        config=vars(args), 
-        project=wandb_project, 
-        mode=args.wandb_mode
-    )
+    if args.wandb_mode != 'disabled':
+        global wandb
+        wandb = importlib.import_module('wandb')
+
+    if wandb is not None:
+        wandb.init(
+            name=scene_name, 
+            config=vars(args), 
+            project=wandb_project, 
+            mode=args.wandb_mode
+        )
 
     logging.basicConfig(
         filename=str(args.output_folder / "jobs.log"),

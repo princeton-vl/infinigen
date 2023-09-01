@@ -4,7 +4,7 @@
 # Authors: Zeyu Ma, Alexander Raistrick
 
 
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 import gin
 import numpy as np
 import random

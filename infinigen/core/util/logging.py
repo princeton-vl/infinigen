@@ -16,22 +16,23 @@ import uuid
 import bpy
 import gin
 
-timer_results = logging.getLogger('times')
-
 @gin.configurable
 class Timer:
 
-    def __init__(self, desc, disable_timer=False):
+    def __init__(self, desc, disable_timer=False, logger=None):
         self.disable_timer = disable_timer
         if self.disable_timer:    
             return
         self.name = f'[{desc}]'
+        if logger is None:
+            logger = logging.getLogger("infinigen.times")
+        self.logger = logger
 
     def __enter__(self):
         if self.disable_timer:
             return
         self.start = datetime.now()
-        timer_results.info(f'{self.name}')
+        self.logger.info(f'{self.name}')
 
     def __exit__(self, exc_type, exc_val, traceback):
         if self.disable_timer:
@@ -39,22 +40,37 @@ class Timer:
         self.end = datetime.now()
         self.duration = self.end - self.start # timedelta
         if exc_type is None:
-            timer_results.info(f'{self.name} finished in {str(self.duration)}')
+            self.logger.info(f'{self.name} finished in {str(self.duration)}')
         else:
-            timer_results.info(f'{self.name} failed with {exc_type}')
+            self.logger.info(f'{self.name} failed with {exc_type}')
 
 class Suppress():
-  def __enter__(self, logfile=os.devnull):
-    open(logfile, 'w').close()
-    self.old = os.dup(1)
-    sys.stdout.flush()
-    os.close(1)
-    os.open(logfile, os.O_WRONLY)
 
-  def __exit__(self, type, value, traceback):
-    os.close(1)
-    os.dup(self.old)
-    os.close(self.old)
+    def __enter__(self, logfile=os.devnull):
+        open(logfile, 'w').close()
+        self.old = os.dup(1)
+        sys.stdout.flush()
+        os.close(1)
+        os.open(logfile, os.O_WRONLY)
+
+    def __exit__(self, type, value, traceback):
+        os.close(1)
+        os.dup(self.old)
+        os.close(self.old)
+
+class LogLevel():
+
+    def __init__(self, logger, level):
+        self.logger = logger
+        self.level = level
+        self.orig_level = None
+
+    def __enter__(self):
+        self.orig_level = self.logger.level
+        self.logger.setLevel(self.level)
+
+    def __exit__(self, *_):
+        self.logger.setLevel(self.orig_level)
 
 def save_polycounts(file):
     for col in bpy.data.collections:

@@ -87,6 +87,8 @@ from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import sample_registry
 from infinigen.assets.utils.tag import tag_system
    
+logger = logging.getLogger(__name__)
+
 @gin.configurable
 def populate_scene(
     output_folder, 
@@ -150,7 +152,7 @@ def populate_scene(
                         p_k = f'{grime_type}_on_{target_type}_per_instance_chance'
                         if uniform() > params.get(p_k, 0.4):
                             continue
-                        logging.debug(f'Applying {surface_fac} on {obj}')
+                        logger.debug(f'Applying {surface_fac} on {obj}')
                         surface_fac.apply(obj, selection=selection_func)
     for grime_type, surface_cls in grime_types.items():
         p.run_stage(grime_type, lambda: apply_grime(grime_type, surface_cls))
@@ -216,7 +218,7 @@ def get_scene_tag(name):
 @gin.configurable
 def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None, hide_water = False):
     if hide_water and "water_fine" in bpy.data.objects:
-        logging.info("Hiding water fine")
+        logger.info("Hiding water fine")
         bpy.data.objects["water_fine"].hide_render = True
         bpy.data.objects['water_fine'].hide_viewport = True
     if resample_idx is not None and resample_idx != 0:
@@ -244,7 +246,7 @@ def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
         bpy.context.view_layer.update()
         frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
         frame_info_folder.mkdir(parents=True, exist_ok=True)
-        logging.info(f"Working on frame {frame_idx}")
+        logger.info(f"Working on frame {frame_idx}")
 
         exporting.save_obj_and_instances(
             frame_info_folder / "mesh", 
@@ -264,7 +266,7 @@ def validate_version(scene_version):
         raise ValueError(
             f'infinigen_examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}')
     if scene_version != infinigen.__version__:
-        logging.warning(f'{infinigen.__version__=} has minor version mismatch with {scene_version=}')
+        logger.warning(f'{infinigen.__version__=} has minor version mismatch with {scene_version=}')
 
 @gin.configurable
 def group_collections(config):
@@ -312,7 +314,7 @@ def execute_tasks(
     if frame_range[1] < frame_range[0]:
         raise ValueError(f'{frame_range=} is invalid, frame range must be nonempty. Blender end frame is INCLUSIVE')
 
-    logging.info(f'Processing frames {frame_range[0]} through {frame_range[1]} inclusive')
+    logger.info(f'Processing frames {frame_range[0]} through {frame_range[1]} inclusive')
     bpy.context.scene.frame_start = int(frame_range[0])
     bpy.context.scene.frame_end = int(frame_range[1])
     bpy.context.scene.frame_set(int(frame_range[0]))
@@ -404,8 +406,8 @@ def main(
     version_req = ['3.6.0']
     assert bpy.app.version_string in version_req, f'You are using blender={bpy.app.version_string} which is ' \
                                                   f'not supported. Please use {version_req}'
-    logging.info(f'infinigen version {infinigen.__version__}')
-    logging.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}")
+    logger.info(f'infinigen version {infinigen.__version__}')
+    logger.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}")
 
     if input_folder is not None:
         input_folder = Path(input_folder).absolute()

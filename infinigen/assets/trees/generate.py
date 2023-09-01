@@ -36,7 +36,7 @@ from ..utils.decorate import write_attribute
 
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
-logger = logging.getLogger('trees')
+logger = logging.getLogger(__name__)
 
 @gin.configurable
 class GenericTreeFactory(AssetFactory):

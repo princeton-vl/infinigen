@@ -29,7 +29,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core.placement import detail
 
-logger = logging.getLogger('boulder')
+logger = logging.getLogger(__name__)
 
 class BoulderFactory(AssetFactory):
 

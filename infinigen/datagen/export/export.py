@@ -11,6 +11,8 @@ import sys
 import argparse
 import shutil
 
+from infinigen.core.init import parse_args_blender
+
 def realizeInstances(obj):
     for mod in obj.modifiers:
         if (mod is None or mod.type != 'NODES'): continue
@@ -288,9 +290,7 @@ def make_args():
     parser.add_argument('-v', '--vertex_colors', action = 'store_true')
     parser.add_argument('-r', '--resolution', default= 1024, type=int)
     
-    if '--' not in sys.argv:
-        raise ValueError("Arguments must be preceded by --")
-    args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+    args = parse_args_blender(parser)
 
     if (args.vertex_colors and (args.obj or args.stl)):
         raise ValueError("File format does not support vertex colors.")

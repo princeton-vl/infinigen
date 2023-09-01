@@ -19,7 +19,7 @@ from infinigen.core.nodes.nodegroups import transfer_attributes
 from infinigen.core.util.blender import deep_clone_obj
 
 
-logger = logging.getLogger('detail')
+logger = logging.getLogger(__name__)
 
 IS_COARSE = False # Global VARIABLE, set by infinigen_examples/generate_nature.py and used only for whether to emit warnings
 

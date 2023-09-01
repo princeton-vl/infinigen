@@ -19,7 +19,7 @@ from infinigen.assets.creatures.util import creature, creature_util as cutil
 from infinigen.core.util.math import clip_gaussian, randomspacing, lerp
 from infinigen.core.util import blender as butil
 
-logger = logging.getLogger('creatures.animation')
+logger = logging.getLogger(__name__)
 
 def sinusoid_driver(driver, mag, freq, off):
     driver.expression = f'{mag:.4f}*sin(({freq:.4f}*frame+{off:.4f})/(2*pi))'

@@ -55,13 +55,9 @@ If you do not have sudo access, you may attempt the following:
 - Install dependencies manually and set your $CPATH variables appropriately. 
 - Ask your administrator to install them on your behalf (YMMV).
 
-Finally, run
+Finally, run the following:
 ```
-bash install.sh opengl
-```
-Or, if you have already run `install.sh` earlier, you can just run
-```
-bash infinigen/tools/install/compile_opengl.sh
+bash scripts/install/compile_opengl.sh
 ```
 
 ### Extended Hello-World
@@ -70,19 +66,19 @@ Continuing the [Hello-World](/README.md#generate-a-scene-step-by-step) example, 
 
 4. Export the geometry from blender to disk
 ```
-python infinigen_examples/generate_nature.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+python -m infinigen_examples.generate_nature --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
 ```
 5. Generate dense annotations
 ```
-infinigen/datagen/customgt/build/customgt --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
+./infinigen/datagen/customgt/build/customgt --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
 ```
 6. Summarize the file structure into a single JSON
 ```
-python tools/summarize.py outputs/helloworld # creating outputs/helloworld/summary.json
+python -m infinigen.tools.results.summarize outputs/helloworld # creating outputs/helloworld/summary.json
 ```
 7. (Optional) Select for a segmentation mask of certain semantic tags, e.g. cactus
 ```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
+python -m infinigen.tools.ground_truth.segmentation_lookup outputs/helloworld 1 --query cactus
 ```
 
 ## Specification
@@ -91,7 +87,7 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query ca
 
 We provide a python script `summarize.py` which will aggregate all relevant output file paths into a JSON:
 ```
-python tools/summarize.py <output-folder>
+python infinigen.tools.results.summarize <output-folder>
 ```
 The resulting `<output-folder>/summary.json` will contains all file paths in the form:
 ```
@@ -127,7 +123,7 @@ Depth is stored as a 2160 x 3840 32-bit floating point numpy array.
 
 The depth and camera parameters can be used to warp one image to another frame by running:
 ```
-python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
+python -m infinigen.tools.ground_truth.rigid_warp <folder> <first-frame> <second-frame>
 ```
 
 **Surface Normals**
@@ -169,7 +165,7 @@ Channel 3 is the depth change between this frame and the next.
 To see an example of how optical flow can be used to warp one frame to the next, run
 
 ```
-python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
+python -m infinigen.tools.ground_truth.optical_flow_warp <folder> <frame-number>
 ```
 
 *Path:* `summary_json["Flow3D"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.npy`
@@ -239,8 +235,8 @@ Infinigen saves three types of semantic segmentation masks: 1) Object Segmentati
 
 Generally, most useful panoptic segmentation masks can be constructed by combining the aforementioned three arrays in some way. As an example, to visualize the 2D and [3D bounding boxes](#object-metadata-and-3d-bounding-boxes) for objects with the *blender_rock* semantic tag in the hello world scene, run 
 ```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query blender_rock --boxes
-python tools/ground_truth/bounding_boxes_3d.py outputs/helloworld 1 --query blender_rock
+python -m infinigen.tools.ground_truth.segmentation_lookup outputs/helloworld 1 --query blender_rock --boxes
+python -m infinigen.tools.ground_truth.bounding_boxes_3d outputs/helloworld 1 --query blender_rock
 ```
 which will output
 
@@ -253,7 +249,7 @@ By ommitting the --query flag, a list of available tags will be printed.
 One could also produce a mask for only *flower petals*:
 
 ```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query petal
+python -m infinigen.tools.ground_truth.segmentation_lookup outputs/helloworld 1 --query petal
 ```
 <p align="center">
 <img src="docs/images/gt_annotations/petal.png" width="400" />
@@ -262,8 +258,8 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query pe
 A benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
 
 ```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cave
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query warped_rocks
+python -m infinigen.tools.ground_truth.segmentation_lookup outputs/helloworld 1 --query cave
+python -m infinigen.tools.ground_truth.segmentation_lookup outputs/helloworld 1 --query warped_rocks
 ```
 <p align="center">
 <img src="docs/images/gt_annotations/caves.png" width="400" /> <img src="docs/images/gt_annotations/warped_rocks.png" width="400" />

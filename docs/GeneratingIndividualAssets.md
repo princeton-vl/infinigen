@@ -12,9 +12,9 @@ Shown are three examples of using our `generate_individual_assets.py` script to 
 
 ```bash
 mkdir outputs
-python tools/generate_individual_assets.py -- -f CoralFactory -n 8 --save_blend
-python tools/generate_individual_assets.py -- -f seashells -n 1 --save_blend
-python tools/generate_individual_assets.py -- -f chunkyrock -n 1 --save_blend
+python -m infinigen.tools.generate_individual_assets -f CoralFactory -n 8 --save_blend
+python -m infinigen.tools.generate_individual_assets -f seashells -n 1 --save_blend
+python -m infinigen.tools.generate_individual_assets -f chunkyrock -n 1 --save_blend
 ```
 
 <p align="center">
@@ -25,7 +25,7 @@ python tools/generate_individual_assets.py -- -f chunkyrock -n 1 --save_blend
 
 Running the above commands will save images and .blend files into your `outputs` folder.
 
-Please run `python tools/generate_individual_assets.py -- --help` for a full list of commandline arguments.
+Please run `python -m infinigen.tools.generate_individual_assets --help` for a full list of commandline arguments.
 
 The most commonly used arguments are:
 - `-f` to specify the name(s) of assets or materials to generate. `-f NAME` can specify to generate three different types of objects:

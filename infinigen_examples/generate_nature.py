@@ -5,8 +5,14 @@ import argparse
 import os
 import sys
 from pathlib import Path
-import logging
 import itertools
+import logging
+
+logging.basicConfig(
+    format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.WARNING
+)
 
 import bpy
 import mathutils
@@ -426,8 +432,7 @@ if __name__ == "__main__":
     parser.add_argument('--task_uniqname', type=str, default=None)
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
 
-    # handle case where running with blender --python <file> -- <rest of args>
-    argvs = sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:]
-    args = parser.parse_args(argvs)
+    args = init.parse_args_blender(parser)
+    logging.getLogger("infinigen").setLevel(args.loglevel)
 
     main(args)

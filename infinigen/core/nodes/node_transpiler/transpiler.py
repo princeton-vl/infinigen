@@ -21,6 +21,8 @@ import numpy as np
 
 from ..node_info import Nodes, OUTPUT_NODE_IDS, SINGLETON_NODES
 
+logger = logging.getLogger(__name__)
+
 VERSION = '2.6.4'
 indent_string = ' ' * 4
 LINE_LEN = 100
@@ -49,7 +51,7 @@ def node_attrs_available(node):
     attrs = set(node.__dir__())
     attrs = attrs.difference(UNIVERSAL_ATTR_NAMES)
     attrs = attrs.difference(SPECIAL_CASE_ATTR_NAMES)
-    print(node.name, attrs)
+    logging.info(node.name, attrs)
     return attrs
 
 def indent(s):
@@ -63,7 +65,7 @@ def prefix(dependencies_used) -> str:
         "from numpy.random import uniform, normal, randint\n"
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
         "from infinigen.core.nodes import node_utils\n"
-        "from infinigen.core.nodes.color import color_category\n"
+        "from infinigen.core.util.color import color_category\n"
         "from infinigen.core import surface\n"
     )
 
@@ -107,7 +109,7 @@ def represent_default_value(val, simple=True):
     elif isinstance(val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)):
         code = represent_tuple(tuple(val))
     elif isinstance(val, bpy.types.Collection):
-        logging.warning(f'Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing')
+        logger.warning(f'Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing')
         code = f'bpy.data.collections[{repr(val.name)}]'
     elif isinstance(val, bpy.types.Material):
         if val.use_nodes:
@@ -115,10 +117,10 @@ def represent_default_value(val, simple=True):
             new_transpiler_targets[funcname] = val
             code = f'surface.shaderfunc_to_material({funcname})'
         else:
-            logging.warning(f'Encountered material {val} but it has use_nodes=False')
+            logger.warning(f'Encountered material {val} but it has use_nodes=False')
             code = repr(val)
     elif val is None:
-        logging.warning('Transpiler introduced a None into result script, this may not have been intended by the user')
+        logger.warning('Transpiler introduced a None into result script, this may not have been intended by the user')
         code = 'None'
     else:
         raise ValueError(f'represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer')
@@ -341,7 +343,6 @@ def create_attrs_dict(node_tree, node):
     '''
 
     attr_names = node_attrs_available(node)
-    print(node.name, attr_names)
 
     for a in COMMON_ATTR_NAMES:
         if hasattr(node, a) and not a in attr_names:
@@ -396,10 +397,10 @@ def create_inputs_dict(node_tree, node, memo):
         for link in links:
 
             if not link.from_socket.enabled:
-                logging.warning(f'Transpiler encountered link from disabled socket {link.from_socket}, ignoring it')
+                logger.warning(f'Transpiler encountered link from disabled socket {link.from_socket}, ignoring it')
                 continue
             if not link.to_socket.enabled:
-                logging.warning(f'Transpiler encountered link to disabled socket {link.to_socket}, ignoring it')
+                logger.warning(f'Transpiler encountered link to disabled socket {link.to_socket}, ignoring it')
                 continue
 
             input_varname, input_code, targets = create_node(
@@ -502,7 +503,7 @@ def get_nodetype_expression(node):
         return repr(node.node_tree.name)
     else:
         node_name = node.name.split('.')[0].replace(' ', '')
-        logging.warning(
+        logger.warning(
             f'Please add an alias for \"{id}\" in nodes.node_info.Nodes.'
             f'\n\t Suggestion: {node_name} = {repr(id)}'
         )
@@ -612,7 +613,7 @@ def write_function_body(target):
     try:
         output_node = next(n for n in node_tree.nodes if n.bl_idname == output_node_id)
     except StopIteration:
-        print([n.bl_idname for n in node_tree.nodes])
+        logging.info([n.bl_idname for n in node_tree.nodes])
         raise ValueError(f'Couldnt find expected {output_node_id=} for node tree type {node_tree.bl_idname=}')
 
     memo = {}
@@ -664,16 +665,16 @@ def transpile(orig_targets, module_dependencies=[]):
     for module_name in module_dependencies:
         module = importlib.import_module(module_name)
         available_dependencies.update({k: [module_name, False] for k in dir(module) if k.startswith('nodegroup_')})
-    print(f'{available_dependencies.keys()=}')
+    logging.info(f'{available_dependencies.keys()=}')
 
     while any(not v[1] for v in targets.values()):
 
         funcname, (target, _) = next((k, v) for k, v in targets.items() if not v[1])
 
         if funcname in orig_names:
-            print(f'Transpiling initial target {orig_targets.index(target)} {repr(target)} as {funcname}()')
+            logging.info(f'Transpiling initial target {orig_targets.index(target)} {repr(target)} as {funcname}()')
         else:
-            print(f'Transpiling dependency {repr(target)} as {funcname}()')
+            logging.info(f'Transpiling dependency {repr(target)} as {funcname}()')
 
         # create function definition
         new_code = ''
@@ -691,7 +692,7 @@ def transpile(orig_targets, module_dependencies=[]):
         targets[funcname] = (target, True) # mark as finished
         for k, v in new_targets.items():
             if k in available_dependencies:
-                logging.info(f'Using {k} from dependency module {available_dependencies[k][0]} - assuming the definition is unchanged')
+                logger.info(f'Using {k} from dependency module {available_dependencies[k][0]} - assuming the definition is unchanged')
                 available_dependencies[k][1] = True # remember to add it to imports
                 continue # dont actually generate code for it
             if k not in targets:
@@ -704,7 +705,7 @@ def transpile_object(obj, module_dependencies=[]):
     targets = []
     targets += [mod for mod in obj.modifiers if mod.type == 'NODES']
     targets += [slot.material for slot in obj.material_slots if slot.material.use_nodes]
-    print(f'Found {len(targets)} initial transpile targets for object {repr(obj)}')
+    logging.info(f'Found {len(targets)} initial transpile targets for object {repr(obj)}')
 
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
 
@@ -712,7 +713,7 @@ def transpile_object(obj, module_dependencies=[]):
     code += func_code + '\n\n'
     code += postfix(funcnames, targets)
 
-    print('') # newline once done for ease of reading the logs
+    logging.info('') # newline once done for ease of reading the logs
     return code
 
 def transpile_world(module_dependencies=[], compositing=True, worldshader=True):

@@ -24,6 +24,8 @@ from infinigen.datagen.states import (
     get_suffix,
 )
 
+logger = logging.getLogger(__name__)
+
 def iterate_sequential_tasks(
     task_list, 
     get_task_state, 
@@ -68,13 +70,13 @@ def iterate_sequential_tasks(
 def apply_cleanup_options(args, seed, crashed, scene_folder):
 
     if args.cleanup == 'all' or (args.cleanup == 'except_crashed' and not crashed):
-        logging.info(f"{seed} - Removing entirety of {scene_folder}")
+        logger.info(f"{seed} - Removing entirety of {scene_folder}")
         rmtree(scene_folder)
     elif args.cleanup == 'big_files':
-        logging.info(f"{seed} - Cleaning up any large files")
+        logger.info(f"{seed} - Cleaning up any large files")
         cleanup(scene_folder, verbose=False)
     elif args.cleanup == 'except_logs':
-        logging.info(f"{seed} - Cleaning up everything except logs")
+        logger.info(f"{seed} - Cleaning up everything except logs")
         for f in scene_folder.iterdir():
             if f.name == 'logs':
                 continue

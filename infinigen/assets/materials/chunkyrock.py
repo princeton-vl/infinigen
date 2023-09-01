@@ -13,7 +13,7 @@ from numpy.random import uniform, normal, randint
 import gin
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.assets.materials.utils.surface_utils import sample_color, sample_range, sample_ratio
 from infinigen.core.util.organization import SurfaceTypes

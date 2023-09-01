@@ -29,7 +29,7 @@ from infinigen.core.util import blender as butil, logging as logging_util
 from infinigen.core.util.math import homogenize, lerp_sample, lerp
 from infinigen.core.nodes.node_wrangler import Nodes
 
-logger = logging.getLogger('creatures')
+logger = logging.getLogger(__name__)
 
 
 def infer_skeleton_from_mesh(obj):

@@ -3,35 +3,23 @@
 
 Export individaully generated assets in .blend files to various general-purpose file formats.
 
-In ```/export/```, install Blender 3.6 by running 
-
-```
-bash install.sh
-```
-
-Note: We install a separate instance of Blender because 3.6 has vastly improved auto-UV unwrapping. You can run this script on other blender versions, but the export may fail on meshes with complex UV unwraps such as bushes or snakes.
-
 Create a folder of ```.blend``` files and another empty folder for the export results.
 
-To export,
-
-```cd blender_3.6``` if on Linux or ```cd Blender.app/Contents/MacOS``` if on MacOS
-
-If on Linux, run
-
+Then, run the following:
 ```
-./blender -b -P ../export.py -- -b {PATH_TO_BLEND_FILE_FOLDER} -e {PATH_TO_OUTPUT_FOLDER} -o -r 1024
+python -m infinigen.datagen.export -b {PATH_TO_BLEND_FILE_FOLDER} -e {PATH_TO_OUTPUT_FOLDER} -o -r 1024
 ```
 
-If on MacOS, run
+Commandline options summary:
+- ```-o``` will export in .obj format, 
+- ```-f``` will export in .fbx format
+- ```-s``` will export in .stl format
+- ```-p``` will export in .ply format. 
+- ```-v``` enables per-vertex colors (only compatible with .fbx and .ply formats). 
+- ```-r {INT}``` controls the resolution of the baked texture maps. For instance, ```-r 1024``` will export 1024 x 1024 texture maps.
 
-```
-./Blender -b -P ../../../export.py -- -b {PATH_TO_BLEND_FILE_FOLDER} -e {PATH_TO_OUTPUT_FOLDER} -o -r 1024
-```
+Only one file type can be specified for each export.
 
-```-o``` will export in .obj format, ```-f``` will export in .fbx format, ```-s``` will export in .stl format, and ```-p``` will export in .ply format. If the ```-v``` flag is included, the meshes will export with per-vertex colors (only compatible with .fbx and .ply formats). Only one file type can be specified for each export.
-
-```-r {INT}``` controls the resolution of the baked texture maps. For instance, ```-r 1024``` will export 1024 x 1024 texture maps.
 ## Known Issues and Limitations
 
 * Assets that use transparency or have fur will have incorrect textures when exporting. This is unavoidable due to texture maps being generated from baking.

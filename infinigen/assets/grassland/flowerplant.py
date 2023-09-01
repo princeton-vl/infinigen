@@ -10,7 +10,7 @@ from numpy.random import uniform, normal, randint
 from infinigen.assets.grassland.flower import FlowerFactory
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 import numpy as np
 from infinigen.core import surface
 from infinigen.assets.materials import simple_greenery

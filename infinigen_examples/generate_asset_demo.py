@@ -10,6 +10,12 @@ from pathlib import Path
 import logging
 from copy import copy
 
+logging.basicConfig(
+    format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.WARNING
+)
+
 import bpy
 from mathutils import Vector, Matrix, bvhtree
 import gin
@@ -187,7 +193,7 @@ def main():
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
     parser.add_argument( '-v', '--verbose', action="store_const", dest="loglevel", const=logging.INFO)
 
-    args = parser.parse_args()
+    args = init.parse_args_blender(parser)
 
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
     logging.basicConfig(
@@ -195,6 +201,7 @@ def main():
         level=args.loglevel,
         datefmt='%H:%M:%S'
     )
+    logging.getLogger("infinigen").setLevel(args.loglevel)
 
     scene_seed = init.apply_scene_seed(args.seed, task=args.task)
     init.apply_gin_configs(

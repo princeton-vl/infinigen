@@ -20,23 +20,23 @@ Infinigen generates scenes by running multiple tasks (usually executed automatic
 mkdir outputs
 
 # Generate a scene layout
-python infinigen_examples/generate_nature.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
+python -m infinigen_examples.generate_nature -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
 
 # Populate unique assets
-python infinigen_examples/generate_nature.py -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
+python -m infinigen_examples.generate_nature -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
 
 # Render RGB images
-python infinigen_examples/generate_nature.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
+python -m infinigen_examples.generate_nature -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
 
 # Render again for accurate ground-truth
-python infinigen_examples/generate_nature.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
+python -m infinigen_examples.generate_nature -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
 ```
 
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 ## Generate image(s) in one command
 
-We provide `tools/manage_jobs.py`, a utility which runs similar steps automatically.
+We provide `infinigen/datagen/manage_jobs.py`, a utility which runs similar steps automatically.
 
 ```
 python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \

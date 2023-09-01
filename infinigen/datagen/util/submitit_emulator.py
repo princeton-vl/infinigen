@@ -242,35 +242,3 @@ def get_all_processes():
     psef_out = subprocess.check_output("ps -e -o pid,cmd --no-headers".split()).decode()
     groups = (psef_regex(l).groups() for l in psef_out.splitlines())
     return {int(pid):cmd for pid, cmd in groups}
-
-# ruff: noqa
-if __name__ == "__main__":
-
-    test = 'upload'
-
-    if test == 'render':
-
-        random_command = "python infinigen_examples/generate_nature.py -- --seed 56823 --task coarse -p main.output_folder=outputs/test2 move_camera.stereo_baseline=0.15 LOG_DIR=logs"
-        executor = ScheduledLocalExecutor(folder="test_log")
-        executor.update_parameters(gpus=1)
-
-        import submitit
-        newjob = executor.submit(submitit.helpers.CommandFunction(random_command.split()))
-
-    elif test == 'upload':
-
-        executor = ScheduledLocalExecutor(folder="test_log")
-        from manage_datagen_jobs import upload_folder
-        newjob = executor.submit(upload_folder, 'test_log', 'dev')
-
-    for i in range(3):
-        LocalScheduleHandler.instance().poll()
-        time.sleep(3)
-        print(newjob.status())
-        
-    processes = get_all_processes()
-    for pid, cmd in processes.items():
-        if cmd.startswith('blender'):
-            print(pid, cmd)
-    print(newjob)
-    newjob.kill()

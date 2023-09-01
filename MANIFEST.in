@@ -3,6 +3,8 @@
 # Explanation: files denoted here are excluded from `python setup.py sdist`,
 #     but some are still explicitly included in the .whl via
 
+include .gitmodules
+
 recursive-include infinigen *.*
 recursive-include tests *.*
 recursive-include docs *.*

@@ -32,20 +32,13 @@ git clone --recursive https://github.com/princeton-vl/infinigen.git
 cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
-python setup.py build_ext
+pip install -e .
 ```
-`install.sh` may take significant time to download Blender and compile all source files.
-Ignore non-fatal warnings. See [Getting Help](#getting-help) for guidelines on posting github issues
 
-:bulb: If you anticipate you will want to enable our custom ground-truth system, or generate fluid simulatios, consider running `bash install.sh opengl` or `bash install.sh flip_fluids` to enable these optional extras as specified in [GroundTruthAnnotations.md](./GroundTruthAnnotations.md) and [GeneratingFluidSimulations](./GeneratingFluidSimulations.md).
+:warning: If you observe errors during installation or hello world, please run `pip install -vv -e . > logs.txt 2>&1`, and either debug `logs.txt` yourself or post it as an attachment on your Github Issue.
 
-Run the following or add it to your `~/.bashrc` (Linux/WSL) or `~/.bash_profile` (Mac)
-```
-# on Linux/WSL
-export BLENDER="/PATH/TO/infinigen/blender/blender"
-# on MAC
-export BLENDER="/PATH/TO/infinigen/Blender.app/Contents/MacOS/Blender"
-```
+:bulb: If you wish to use our Custom Ground-Truth system or, you should complete [GroundTruthAnnotations.md](./GroundTruthAnnotations.md) and/or [GeneratingFluidSimulations](./GeneratingFluidSimulations.md) (not required for Hello World).
+
 
 <details closed>
 <summary><b>(Optional) Running Infinigen in a Docker Container</b></summary>

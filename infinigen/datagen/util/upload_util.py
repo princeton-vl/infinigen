@@ -17,6 +17,8 @@ from tqdm import tqdm
 import subprocess
 import shutil
 
+from infinigen.core.util.logging import Suppress
+
 from . import smb_client, cleanup
 
 GDRIVE_NAME = None
@@ -111,8 +113,9 @@ def get_commit_hash():
     if git is None:
         return None
     try:
-        cmd = f"{git} rev-parse HEAD"
-        return subprocess.check_output(cmd.split()).decode().strip()
+        with Suppress():
+            cmd = f"{git} rev-parse HEAD"
+            return subprocess.check_output(cmd.split()).decode().strip()
     except subprocess.CalledProcessError:
         return None
 

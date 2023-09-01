@@ -28,6 +28,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 import logging
 
+logger = logging.getLogger(__name__)
+
 RAND_SEED_MAX = 1e5
 ASSET_ENV_VAR = "ASSET_PATH"
 SPECIES_MAX = 20
@@ -51,7 +53,7 @@ class FireCachingSystem:
         self.n_placed = defaultdict(int)
         self.max_fire_assets = max_fire_assets
         self.max_per_kind = max_per_kind
-        logging.info(f"Fire cache folder is {self.cache_folder}")
+        logger.info(f"Fire cache folder is {self.cache_folder}")
 
     def get_cached_species(self, factory_class):
         factory_name = factory_class.__name__
@@ -167,7 +169,7 @@ class FireCachingSystem:
             return config
 
     def link_fire(self, full_sim_folder, sim_folder, obj, factory):
-        logging.info("importing fire")
+        logger.info("importing fire")
         blendfile = os.path.join(full_sim_folder, "simulation.blend")
         section = "\\Object\\"
         object = f"sd_{sim_folder}"

@@ -194,7 +194,7 @@ def global_flat_shading():
             print(obj.name, 'NONE')
             continue
         with butil.SelectObjects(obj):
-            while len(obj.material_slots):
+            for i in range(len(obj.material_slots)):
                 bpy.ops.object.material_slot_remove()
 
     for obj in bpy.context.scene.view_layers['ViewLayer'].objects:

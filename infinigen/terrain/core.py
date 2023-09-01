@@ -24,7 +24,7 @@ from infinigen.core.util.organization import SurfaceTypes, Attributes, Task, Ter
 from infinigen.assets.utils.tag import tag_object, tag_system
 from numpy import ascontiguousarray as AC
 
-logger = logging.getLogger('terrain')
+logger = logging.getLogger(__name__)
 
 fine_suffix = "_fine"
 hidden_in_viewport = [ElementNames.Atmosphere]
@@ -76,9 +76,9 @@ class Terrain:
                 asset_path = Path(asset_folder)/asset_version
                 if not asset_path.exists():
                     raise ValueError(f'{asset_folder=} did not contain {asset_version=}, please download it')
-                logging.info(f'Terrain using pre-generated {asset_path=} and on the fly {on_the_fly_asset_folder=}')
+                logger.info(f'Terrain using pre-generated {asset_path=} and on the fly {on_the_fly_asset_folder=}')
             else:
-                logging.info(f'Terrain using only on the fly {on_the_fly_asset_folder=}')
+                logger.info(f'Terrain using only on the fly {on_the_fly_asset_folder=}')
                 asset_path = Path("")
 
             self.on_the_fly_asset_folder = Path(on_the_fly_asset_folder)
@@ -86,7 +86,7 @@ class Terrain:
 
             self.elements, scene_infos = scene(seed, Path(on_the_fly_asset_folder), asset_path, device)
             self.elements_list = list(self.elements.values())
-            logging.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
+            logger.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
             transfer_scene_info(self, scene_infos)
 
     def __del__(self):

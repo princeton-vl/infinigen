@@ -20,7 +20,7 @@ from infinigen.terrain.assets.upsidedown_mountains import upsidedown_mountains_a
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import int_hash, FixedSeed
 from infinigen.core.util.organization import Assets, LandTile, AssetFile
-
+from infinigen.core import init
 
 def asset_generation(
     output_folder,
@@ -74,7 +74,8 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--check_only', type=int, default=0)
     parser.add_argument('--device', type=str, default="cpu")
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    args = init.parse_args_blender(parser)
+
     bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
     bpy.ops.preferences.addon_enable(module='ant_landscape')
     butil.clear_scene(targets=[bpy.data.objects])

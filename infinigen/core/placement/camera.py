@@ -425,7 +425,7 @@ def camera_selection_preprocessing(
             c.all_objects for c in bpy.data.collections if c.name.startswith('placeholders:')
         ))
         placeholders = [p for p in placeholders if p.type == 'MESH']
-        logging.info(f'Building placeholder kd for {len(placeholders)} objects')
+        logger.info(f'Building placeholder kd for {len(placeholders)} objects')
         placeholders_kd =  butil.joined_kd(placeholders, include_origins=True)
 
     if terrain is None:

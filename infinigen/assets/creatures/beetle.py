@@ -27,7 +27,7 @@ import infinigen.assets.materials.chitin
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
 
-logger = logging.getLogger('beetle')
+logger = logging.getLogger(__name__)
 
 def insect_hair_params():
 

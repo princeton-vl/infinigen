@@ -16,12 +16,14 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.terrain.utils import Mesh, read
 from infinigen.core.util.blender import clear_scene
 from infinigen.core.util.organization import AssetFile
+from infinigen.core import init
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str)
     parser.add_argument('-o', '--overlay', type=int, default=False)
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    args = init.parse_args_blender(parser)
+    
     folder = os.path.dirname(args.input)
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
     image = read(args.input)

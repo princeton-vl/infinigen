@@ -27,7 +27,7 @@ from .factory import AssetFactory
 
 from infinigen.core.placement import detail
 
-logger = logging.getLogger('placement')
+logger = logging.getLogger(__name__)
 
 
 def objects_to_grid(objects, spacing):
@@ -133,7 +133,7 @@ def populate_collection(
     dist_cull=None, vis_cull=None, verbose=True, cache_system = None, 
     **asset_kwargs
 ):
-    logging.info(f'Populating placeholders for {factory}')
+    logger.info(f'Populating placeholders for {factory}')
     
     if asset_col_target is None:
         asset_col_target = butil.get_collection(f'unique_assets:{repr(factory)}')

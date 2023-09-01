@@ -9,7 +9,7 @@ import mathutils
 from numpy.random import uniform as U, normal as N, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category
+from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
 @node_utils.to_nodegroup('nodegroup_norm_local_pos', singleton=True, type='ShaderNodeTree')

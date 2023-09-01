@@ -8,16 +8,10 @@ import importlib
 from pathlib import Path
 sys.path.append(os.getcwd())
 
+from infinigen.core import init
+
 from infinigen.assets.fluid.asset_cache import FireCachingSystem
-try:
-    from tools.asset_grid import import_surface_registry
-
-except ImportError:
-    sys.path.append(str(Path(os.path.split(os.path.abspath(__file__))[0])))
-    from tools.asset_grid import import_surface_registry
-
-
-
+from infinigen.core import surface
 
 if __name__ == "__main__":
     time.sleep(np.random.uniform(0, 3))
@@ -30,8 +24,10 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--resolution", type=int)
     parser.add_argument("--dissolve_speed", type=int, default=25)
     parser.add_argument("--dom_scale", type=float, default=1)
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
-    import_surface_registry()
+    
+    args = init.parse_args_blender(parser)
+    init.apply_gin_configs(configs=[], overrides=[], configs_folder='infinigen_examples/configs')
+    surface.registry.initialize_from_gin()
 
     factory_name = args.asset
     factory = None

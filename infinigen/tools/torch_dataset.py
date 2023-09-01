@@ -5,7 +5,8 @@ import numpy as np
 import logging
 
 import torch.utils.data
-from .states import parse_suffix, get_suffix
+
+from .data_suffixes import get_suffix, parse_suffix
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ from infinigen.core.placement import detail
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress, Timer
 
-logger = logging.getLogger('creatures')
+logger = logging.getLogger(__name__)
 
 def compute_joining_effects(genome, parts):
 

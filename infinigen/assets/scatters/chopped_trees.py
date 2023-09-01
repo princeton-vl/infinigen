@@ -28,7 +28,7 @@ from infinigen.core.placement.detail import remesh_with_attrs, target_face_size,
 
 from infinigen.assets.trees.generate import GenericTreeFactory, random_species
 
-logger = logging.getLogger('chopped_trees')
+logger = logging.getLogger(__name__)
 
 def approx_settle_transform(obj, samples=200):
     assert obj.type == 'MESH'

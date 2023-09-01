@@ -12,7 +12,7 @@ from numpy.random import uniform as U, normal as N, randint
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.color import color_category, hsv2rgba
+from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core import surface
 
 from .utils.geom_utils import nodegroup_symmetric_clone

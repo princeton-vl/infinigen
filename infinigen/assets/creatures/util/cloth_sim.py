@@ -19,7 +19,7 @@ from infinigen.core.util.math import dict_convex_comb
 from infinigen.core.util.logging import Timer
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 
-logger = logging.getLogger('cloth')
+logger = logging.getLogger(__name__)
 
 def local_pos_rigity_mask(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

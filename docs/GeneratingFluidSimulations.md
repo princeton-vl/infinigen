@@ -4,7 +4,7 @@ This documentation details how to generate fire and water simulations like those
 
 ## Setup
 
-To generate fluids, you run install.sh with the optional FLIP-Fluids setup step (`bash install.sh flip_fluids`), or, please run `bash infinigen/tools/install/compile_flip_fluids.sh` to install flip fluids now.
+Before you can generate fluids, you must run an additional installation step: `bash scripts/install/compile_flip_fluids.sh`, which will compile and install the flip fluids addon. This step has to be completed after having already installed the rest of infinigen.
 
 ## Example Commands
 
@@ -45,13 +45,13 @@ python -m infinigen.datagen.manage_jobs --output_folder /n/fs/pvl-renders/kkayan
 
 High-resolution fluid simulations take a long time, so assets on fire can pre-generated and imported in the scene instead of being baked on-the-fly. This allows for fire to be simulated once, instead of every time a scene is generated. To pre-generate fire assets of all types (bush, tree, creature, cactus, boulder), run:
 ```
-python tools/submit_asset_cache.py -b $BLENDER -f {fire_asset_folder} -n 1 -s -40 -d 184
+python -m infinigen.tools.submit_asset_cache -f {fire_asset_folder} -n 1 -s -40 -d 184
 ```
 where `fire_asset_folder` is where you want to save the fire. The number of assets per type, start frame and duration can be adjusted.  
 
 If you only want to pre-generate one type of asset once, run:
 ```
-$BLENDER --background -noaudio --python fluid/run_asset_cache.py -- -f {fire_asset_folder} -a {asset} -s {start_frame} -d {simulation_duration}
+python -m infinigen.assets.fluid.run_asset_cache -f {fire_asset_folder} -a {asset} -s {start_frame} -d {simulation_duration}
 ```
 where `fire_asset_folder` is where you want to save the fire. `asset` can be one of `CachedBushFactory`, `CachedTreeFactory`, `CachedCactusFactory`, `CachedCreatureFactory`, `CachedBoulderFactory`. 
 
@@ -59,5 +59,5 @@ where `fire_asset_folder` is where you want to save the fire. `asset` can be one
 After fire is pre-generated with one of the previous commands, edit config/use_cached_fire.gin and set the `FireCachingSystem.asset_folder` variable to `fire_asset_folder` you used when pre-generating fire. After this `use_cached_fire.gin` can be used instead of `use_on_the_fly_fire.gin` when generating a scene. This will import the fire from the folder it is saved instead of simulating it on-the-fly. 
 #### Example Command
 ```
-python -m tools.manage_datagen_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --wandb_mode online --cleanup none --config plain.gin fast_terrain_assets.gin use_cached_fire.gin
+python -m infinigen.datagen.manage_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --cleanup none --config plain.gin fast_terrain_assets.gin use_cached_fire.gin
 ```
