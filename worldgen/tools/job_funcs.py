@@ -21,7 +21,7 @@ from tools.util import upload_util
 from tools.util.upload_util import upload_job_folder 
 from tools.states import get_suffix
 
-from . import states
+from states import JOB_OBJ_SUCCEEDED
 
 BLENDER_PATH = None # set from args
 
@@ -292,7 +292,7 @@ def queue_mesh_save(
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return states.JOB_OBJ_SUCCEEDED, None
+        return JOB_OBJ_SUCCEEDED, None
 
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
@@ -335,7 +335,7 @@ def queue_opengl(
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return states.JOB_OBJ_SUCCEEDED, None
+        return JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
 
@@ -365,6 +365,9 @@ def queue_opengl(
             )
             line = re.sub("( \([A-Za-z0-9]+\))", "", line)
             f.write(line)
+        line = f"python {process_mesh_path.parent / 'compress_masks.py'} {output_folder}\n"
+        line = re.sub("( \([A-Za-z0-9]+\))", "", line)
+        f.write(line)
         f.write(f"touch {folder}/logs/FINISH_{taskname}")
 
     cmd = f"bash {tmp_script}".split()
