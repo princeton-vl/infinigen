@@ -1,0 +1,3 @@
+iterate_scene_tasks.finalize_tasks = [
+    {'name': "upload", 'func': @queue_upload}
+]

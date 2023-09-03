@@ -12,6 +12,7 @@ from pathlib import Path
 import logging
 from functools import partial
 import pprint
+import time
 from collections import defaultdict
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
@@ -263,7 +264,7 @@ def execute_tasks(
     frame_range, camera_id,
     resample_idx=None,
     output_blend_name="scene.blend",
-    generate_resolution=(1920,1080),
+    generate_resolution=(1280,720),
     reset_assets=True,
     focal_length=None,
     dryrun=False,
@@ -280,6 +281,7 @@ def execute_tasks(
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
 
     if dryrun:
+        time.sleep(15)
         return
 
     if Task.Coarse not in task and task != Task.FineTerrain:

@@ -1,4 +1,4 @@
-compose_scene.generate_resolution = (960, 540)
+execute_tasks.generate_resolution = (960, 540)
 
 full/render_image.min_samples = 32
 full/render_image.num_samples = 512

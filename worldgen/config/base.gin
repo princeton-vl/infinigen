@@ -158,7 +158,7 @@ render_image.motion_blur_shutter = 0.15
 compositor_postprocessing.distort = False
 compositor_postprocessing.color_correct=True
 
-compose_scene.generate_resolution = (1920, 1080)
+execute_tasks.generate_resolution = (1280, 720)
 get_sensor_coords.H = 720
 get_sensor_coords.W = 1280
 
