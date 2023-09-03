@@ -21,7 +21,7 @@ from tools.util import upload_util
 from tools.util.upload_util import upload_job_folder 
 from tools.states import get_suffix
 
-from .states import JOB_OBJ_SUCCEEDED
+from . import states
 
 BLENDER_PATH = None # set from args
 
@@ -292,7 +292,7 @@ def queue_mesh_save(
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return JOB_OBJ_SUCCEEDED, None
+        return states.JOB_OBJ_SUCCEEDED, None
 
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
@@ -335,7 +335,7 @@ def queue_opengl(
 ):
 
     if (output_indices['subcam'] > 0) and reuse_subcams:
-        return JOB_OBJ_SUCCEEDED, None
+        return states.JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
 
