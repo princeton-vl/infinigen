@@ -8,6 +8,7 @@
 #include "utils.hpp"
 #include <glad/glad.h>
 #include "io.hpp"
+#include "buffer_arrays.hpp"
 
 
 class CameraView
@@ -15,7 +16,7 @@ class CameraView
 
 private:
 
-    float calc_resolution_scale();
+    float calc_resolution_scale(const npz &camview) const;
     unsigned int create_framebuffer();
 
     glm::mat4 wc2img, projection, current_frame_view_matrix, next_frame_view_matrix;

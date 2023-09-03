@@ -66,19 +66,3 @@ Eigen::MatrixXd read_npy(const fs::path filepath){
 void assert_exists(const fs::path &filepath){
     MRASSERT(fs::exists(filepath), "Error: " + filepath.string() + " does not exist.");
 }
-
-std::array<int, 2> get_png_size(const fs::path &image_path){
-    RASSERT(image_path.extension().string() == ".png");
-    assert_exists(image_path);
-    std::ifstream in(image_path.c_str());
-    int width, height;
-
-    in.seekg(16);
-    in.read((char *)&width, 4);
-    in.read((char *)&height, 4);
-
-    width = ntohl(width);
-    height = ntohl(height);
-
-    return {width, height};
-}

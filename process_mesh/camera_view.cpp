@@ -49,33 +49,42 @@ unsigned int CameraView::create_framebuffer(){
 
 const Matrix4f FLIP_Y_Z = Eigen::Vector4f({1,-1,-1,1}).asDiagonal();
 
-float CameraView::calc_resolution_scale(){
-    const auto image_shape = get_png_size(frames_directory / ("Image_" + frame_string + ".png"));
-    RASSERT((buffer_width % image_shape[0]) == 0);
-    RASSERT((buffer_height % image_shape[1]) == 0);
-    RASSERT((buffer_height / image_shape[1]) == (buffer_width / image_shape[0]));
-    return buffer_height / image_shape[1];
+template <int h, int w, typename T_orig=double, typename T_final=float>
+Eigen::Matrix<T_final, h, w> load_matrix(const npz &camview, const std::string &key){
+    const auto blender_camera_pose_data = camview.read_data<T_orig>(key);
+    const auto tmp = Eigen::Matrix<T_orig, h, w>(blender_camera_pose_data.data());
+    return tmp.transpose().template cast<T_final>();
+}
+
+float CameraView::calc_resolution_scale(const npz &camview) const{
+    const auto image_shape = camview.read_data<long>("HW");
+    RASSERT((buffer_width % image_shape[1]) == 0);
+    RASSERT((buffer_height % image_shape[0]) == 0);
+    RASSERT((buffer_height / image_shape[0]) == (buffer_width / image_shape[1]));
+    return buffer_height / image_shape[0];
 }
 
 CameraView::CameraView(const std::string fstr, const fs::path fdir, const fs::path input_dir, const int width, const int height) : frame_string(fstr), frames_directory(fdir), buffer_width(width), buffer_height(height)
 {
     // Current Frame
-    const fs::path current_frame_cam_path = input_dir / ("T_"+frame_string+".npy");
-    const Matrix4f blender_camera_pose = read_npy(current_frame_cam_path).cast<float>() * FLIP_Y_Z; // TODO REMOVE
+    const fs::path current_frame_cam_path = input_dir / ("camview_"+frame_string+".npz");
+    const npz current_camview(current_frame_cam_path);
+    const Matrix4f blender_camera_pose = load_matrix<4, 4>(current_camview, "T") * FLIP_Y_Z; // TODO REMOVE
     current_frame_view_matrix = glm::make_mat4(Matrix4f(blender_camera_pose.inverse()).data());
 
     // Next Frame
-    const fs::path next_frame_cam_path = increment_int_substr({"frame_([0-9]{4})", "T_([0-9]{4})_00_00"}, current_frame_cam_path);
-    const Matrix4f next_blender_camera_pose = read_npy(next_frame_cam_path).cast<float>() * FLIP_Y_Z; // TODO REMOVE
+    const fs::path next_frame_cam_path = increment_int_substr({"frame_([0-9]{4})", "camview_([0-9]{4})_00_00"}, current_frame_cam_path);
+    const npz next_camview(next_frame_cam_path);
+    const Matrix4f next_blender_camera_pose = load_matrix<4, 4>(next_camview, "T") * FLIP_Y_Z; // TODO REMOVE
     next_frame_view_matrix = glm::make_mat4(Matrix4f(next_blender_camera_pose.inverse()).data());
 
     // Set Camera Position
     position = glm::make_vec3(blender_camera_pose.block<3, 1>(0, 3).data());
 
     // Set WC -> Img Transformation
-    const Matrix3f K_mat3x3 = read_npy(input_dir / ("K_"+frame_string+".npy")).cast<float>();
+    const Matrix3f K_mat3x3 = load_matrix<3, 3>(current_camview, "K");
     Matrix4f K_mat = Matrix4f::Identity();
-    K_mat.block<2,3>(0, 0) = calc_resolution_scale() * K_mat3x3.block<2,3>(0, 0);
+    K_mat.block<2,3>(0, 0) = calc_resolution_scale(current_camview) * K_mat3x3.block<2,3>(0, 0);
     wc2img = glm::make_mat4(Matrix4f(K_mat * FLIP_Y_Z * blender_camera_pose.inverse()).data());
 
     fx = K_mat(0,0);

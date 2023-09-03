@@ -517,14 +517,12 @@ def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use
             camera_obj.data.dof.use_dof = use_dof
         # Saving camera parameters
         K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        np.save(
-            output_folder / f"K_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
-            np.asarray(K, dtype=np.float64),
-        )
-        np.save(
-            output_folder / f"T_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
-            np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
-    )
+        output_file = output_folder / f"camview_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npz"
+        np.savez(output_file,
+                    K=np.asarray(K, dtype=np.float64),
+                    T=np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
+                    HW=np.array((bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x))
+                )
 
 @node_utils.to_nodegroup('ng_dist2camera', singleton=True, type='GeometryNodeTree')
 def ng_dist2camera(nw: NodeWrangler):
