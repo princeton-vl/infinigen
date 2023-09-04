@@ -17,7 +17,7 @@ This guide does not cover how to add new elements to the terrain marching cubes 
 Unless you intend to work solely on python/other code (and don't intend to interact much with Blender APIs) it will help you to have easy access to Infinigen via the Blender UI.
 
 To open the Blender UI, run the following in a terminal:
-```
+```bash
 cd infinigen/worldgen
 $BLENDER dev_scene.blend
 ```
@@ -49,7 +49,7 @@ Finally, to import Infinigen into your Blender UI, click the 'Open' button on yo
 Now that you have imported Infinigen into Blender, you can easily access all its assets and materials via the commandline.
 
 To start, we recommend using Infinigen's sky lighting while you make your asset, so you can get a better sense of what the asset will look like in full scenes. To sample a random sky lighting, run the following two steps in your Blender console:
-```
+```python
 from lighting import lighting
 lighting.add_lighting()
 ```
@@ -74,7 +74,7 @@ To start, use the Blender UI to implement a material of your choice. Below, we s
 
 Click the folder icon in the Text Editor window, and navigate to and open `nodes/transpiler/transpiler_dev_script.py`. You should see a new script appear. Now, make sure the target object containing your material or other asset nodegraphs is selected, then click the play button in the Text Editor window to run the transpiler. It should complete in less than one second, and will result in a new script being added to the Text Editor script-selection dropdown named `generated_surface_script.py`. Here is the resultant script for the snow example material:
 
-```
+```python
 import bpy
 import bpy
 import mathutils
@@ -132,7 +132,7 @@ You can then click play on the `generated_surface_script` to run it, and it shou
 
 All asset generators in Infinigen are defined by python files in `worldgen/assets`, usually following this template:
 
-```
+```python
 import bpy
 import numpy as np
 
@@ -157,7 +157,7 @@ You can implement the `create_asset` function however you wish so long as it pro
 
 The simplest implementation for a new asset is to create a geometry nodes equivelant, transpile it similarly to as shown above, copy the code into the same file as the template shown above, and implement the `create_asset` function as shown:
 
-```
+```python
 from util import blender as butil
 
 ...
@@ -176,7 +176,7 @@ class MyAssetFactory(AssetFactory):
 
 If you place the above text in a file located at `worldgen/assets/myasset.py`, you can add the following script to your Blender TextEditor and click play to repeatedly reload and test your asset generator as you continue to refine it.
 
-```
+```python
 import bpy
 import importlib
 
