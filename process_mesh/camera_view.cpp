@@ -73,7 +73,7 @@ CameraView::CameraView(const std::string fstr, const fs::path fdir, const fs::pa
     current_frame_view_matrix = glm::make_mat4(Matrix4f(blender_camera_pose.inverse()).data());
 
     // Next Frame
-    const fs::path next_frame_cam_path = increment_int_substr({"frame_([0-9]{4})", "camview_([0-9]{4})_00_00"}, current_frame_cam_path);
+    const fs::path next_frame_cam_path = increment_int_substr({"frame_([0-9]{4})", "camview_([0-9]{4})"}, current_frame_cam_path);
     const npz next_camview(next_frame_cam_path);
     const Matrix4f next_blender_camera_pose = load_matrix<4, 4>(next_camview, "T") * FLIP_Y_Z; // TODO REMOVE
     next_frame_view_matrix = glm::make_mat4(Matrix4f(next_blender_camera_pose.inverse()).data());

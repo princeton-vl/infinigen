@@ -88,8 +88,6 @@ def get_scene_state(scene: dict, taskname: str, scene_folder: Path):
     else:
         raise TypeError(f'Unrecognized {job_obj=}')
 
-    print(scene['seed'], res)
-
     # map from submitit's scene state strings to our JobState enum
     if res in {"PENDING", "REQUEUED"}:
         return JobState.Queued

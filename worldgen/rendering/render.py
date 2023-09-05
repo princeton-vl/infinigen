@@ -350,7 +350,11 @@ def render_image(
                 imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
                 uniq_inst_path.unlink()
             else:
-                cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frames_folder, frame)
+                cam_util.save_camera_parameters(
+                    camera_ids=cam_util.get_cameras_ids(),
+                    output_folder=frames_folder,
+                    frame=frame
+                )
 
 
     for file in tmp_dir.glob('*.png'):

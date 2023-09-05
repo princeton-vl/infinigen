@@ -21,7 +21,7 @@ from tools.util import upload_util
 from tools.util.upload_util import upload_job_folder 
 from tools.states import get_suffix
 
-from states import JOB_OBJ_SUCCEEDED
+from .states import JOB_OBJ_SUCCEEDED
 
 BLENDER_PATH = None # set from args
 
@@ -365,7 +365,7 @@ def queue_opengl(
             )
             line = re.sub("( \([A-Za-z0-9]+\))", "", line)
             f.write(line)
-        line = f"python {process_mesh_path.parent / 'compress_masks.py'} {output_folder}\n"
+        line = f"python {process_mesh_path.parent.parent / 'compress_masks.py'} {output_folder}\n"
         line = re.sub("( \([A-Za-z0-9]+\))", "", line)
         f.write(line)
         f.write(f"touch {folder}/logs/FINISH_{taskname}")
