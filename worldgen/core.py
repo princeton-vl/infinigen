@@ -360,8 +360,10 @@ def execute_tasks(
 
         with Timer(f'Writing output blendfile'):
             logging.info(f'Writing output blendfile to {output_folder / output_blend_name}')
-            if optimize_terrain_diskusage and task == [Task.FineTerrain]: os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
-            else: bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+            if optimize_terrain_diskusage and task == [Task.FineTerrain]: 
+                os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
+            else: 
+                bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
         
         tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
@@ -375,7 +377,12 @@ def execute_tasks(
         col.hide_viewport = False
 
     if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
-        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
+        terrain = Terrain(
+            scene_seed, 
+            surface.registry, 
+            task=task,
+            on_the_fly_asset_folder=output_folder/"assets"
+        )
         if optimize_terrain_diskusage:
             terrain.load_glb(output_folder)
 
