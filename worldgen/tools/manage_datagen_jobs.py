@@ -36,6 +36,7 @@ import submitit
 import wandb
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from tools.util import upload_util
 from tools.monitor_tasks import iterate_scene_tasks, on_scene_termination
 from tools.states import (
     JobState, 
@@ -63,8 +64,10 @@ from .job_funcs import (
     queue_upload
 )
 
-PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' # used only if enabled in config
+# used only if enabled in gin configs
+PARTITION_ENVVAR = 'INFINIGEN_SLURMPARTITION' 
 EXCLUDE_FILE_ENVVAR = 'INFINIGEN_SLURM_EXCLUDENODES_LIST'
+NUM_CONCURRENT_ENVVAR = 'INFINIGEN_NUMCONCURRENT_TARGET'
 
 def node_from_slurm_jobid(scene_id):
 
@@ -403,14 +406,16 @@ def write_html_summary(all_scenes, output_folder, max_size=5000):
             camera_pair_id=0, samples=[f"resmpl{i}" for i in range(5)], pages=names,
         )
             
-def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=True):
+def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=False):
 
     state_counts = defaultdict(int)
 
     for scene in all_scenes:
 
+        seed = scene['seed']
         scene['num_running'], scene['num_done'] = 0, 0
         any_fatal = False
+
         for state, taskname, _, fatal in iterate_scene_tasks(scene, args, monitor_all=True):
             
             if state == JobState.NotQueued:
@@ -423,12 +428,14 @@ def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=True):
             
             if state == JobState.Failed:
                 if not scene.get(f'{taskname}_crash_recorded', False):
+                    logging.info(f'{seed} - recording crash for {taskname}')
                     with (args.output_folder / "crash_summaries.txt").open('a') as f:
                         record_crashed_seed(scene, taskname, f, fatal=fatal)
                 if fatal:
                     any_fatal = True
 
         if any_fatal:
+            logging.info(f'{seed} - recording fatally crashed')
             scene['any_fatal_crash'] = True
 
         if aggressive_cancel_on_crash and any_fatal:
@@ -438,6 +445,7 @@ def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=True):
                 cancel_key = k.replace(suffix, 'force_cancelled')
                 if scene.get(cancel_key, False):
                     continue
+                logging.info(f'{seed} - cancelling {k} due to fatal crash')
                 scene[cancel_key] = True
                 cancel_job(scene[k])
                 
@@ -446,6 +454,7 @@ def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=True):
             scene['num_running'] == 0 and
             scene['all_done'] == SceneState.NotDone
         ):
+            logging.info(f'{seed} - processing scene termination due to fatal crash')
             on_scene_termination(args, scene, crashed=True)
 
 
@@ -459,22 +468,21 @@ def stats_summary(state_counts):
     totals = {s: get_count(s) for s in uniq_states}
 
     stats = {f'{s}/{t}': v for (s, t), v in state_counts.items()}        
-    for k, v in totals.items():
-        stats[f'{k}/total'] = v
 
-    inflight = totals.get(JobState.Running, 0) + totals.get(JobState.Queued, 0)
-    stats['n_in_flight'] = inflight
-    stats['disk_usage'] = get_disk_usage(args.output_folder)
-
-    return stats
+    return stats, totals
 
 @gin.configurable
 def jobs_to_launch_next(
     scenes: list[dict],
     state_counts: dict[tuple[str, str], int],
     greedy=True, 
+
+    # following kwargs are designed to help minimize over-eager starting new scenes, 
+    # or limit paralellism to help greedily finish scenes / lower overall latency.
+    # warning: may reduce throughput, especially if not using warmup_sec, or cluster capacity varies
     max_queued_task: int = None,
-    max_queued_total: int = None
+    max_queued_total: int = None,
+    max_stuck_at_task: int = None
 ):
     
     if greedy:
@@ -484,16 +492,31 @@ def jobs_to_launch_next(
             reverse=True
         )
 
+    done_counts = np.array([s['num_done'] for s in scenes])
+    numdone_unique, curr_at_each_numdone = np.unique(done_counts, return_counts=True)
+    numdone_unique = list(numdone_unique)
+
     total_queued = sum(
         v for (s, _), v in state_counts.items() 
         if s == JobState.Queued
     )
         
     for scene in scenes:
+
+        seed = scene['seed']
         
         if scene['all_done'] != SceneState.NotDone:
             continue
         if scene.get('any_fatal_crash', False):
+            continue
+
+        ndone_if_launch = scene['num_done'] + 1
+        stuck_at_next = (
+            curr_at_each_numdone[numdone_unique.index(ndone_if_launch)] 
+            if ndone_if_launch in numdone_unique else 0
+        )
+        if max_stuck_at_task is not None and stuck_at_next >= max_stuck_at_task:
+            logging.info(f"{seed} - Not launching due to {stuck_at_next=} > {max_stuck_at_task} for {scene['num_done']=}")
             continue
 
         for rec in iterate_scene_tasks(scene, args, monitor_all=False):
@@ -505,8 +528,10 @@ def jobs_to_launch_next(
             queued_key = (JobState.Queued, taskname.split('_')[0])
             queued = state_counts.get(queued_key, 0)
             if max_queued_task is not None and queued >= max_queued_task:
+                logging.info(f"{seed} - Not launching due to {queued=} > {max_queued_task} for {taskname}")
                 continue
             if max_queued_total is not None and total_queued >= max_queued_total:
+                logging.info(f"{seed} - Not launching due to {total_queued=} > {max_queued_total} for")
                 return
 
             yield scene, taskname, queue_func
@@ -514,49 +539,77 @@ def jobs_to_launch_next(
             state_counts[queued_key] += 1
             total_queued += 1
 
+def compute_control_state(args, totals, elapsed, num_concurrent):
+
+    if num_concurrent == f'ENVVAR_{NUM_CONCURRENT_ENVVAR}':
+        num_concurrent = int(os.environ[NUM_CONCURRENT_ENVVAR])
+
+    control_state = {}
+    control_state['n_in_flight'] = totals.get(JobState.Running, 0) + totals.get(JobState.Queued, 0)
+    control_state['disk_usage'] = get_disk_usage(args.output_folder)
+
+    warmup_pct = min(elapsed / args.warmup_sec, 1) if args.warmup_sec > 0 else 1
+    control_state['curr_concurrent_max'] = math.ceil(warmup_pct * num_concurrent)
+
+    if control_state['n_in_flight'] > control_state['curr_concurrent_max']:
+        raise ValueError(
+            f"manage_datagen_jobs observed {control_state['n_in_flight']=},"
+            f" which exceeds allowed {control_state['curr_concurrent_max']=}"
+        )
+    control_state['try_to_launch'] = max(control_state['curr_concurrent_max'] - control_state['n_in_flight'], 0)
+
+    return control_state
+
+def record_states(stats, totals, control_state):
+    
+    pretty_stats = copy(stats)
+    pretty_stats.update({f'control_state/{k}': v for k, v in control_state.items()})
+    pretty_stats.update({f'{k}/total': v for k, v in totals.items()})
+
+    wandb.log(pretty_stats)
+    print("=" * 60)
+    for k, v in sorted(pretty_stats.items()):
+        print(f"{k.ljust(30)} : {v}")
+    print("-" * 60)
+
 @gin.configurable
 def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshold=0.95):
 
     if LocalScheduleHandler._inst is not None:
         LocalScheduleHandler.instance().poll()
 
-    # Check results / current state of scenes we have already launched 
     state_counts = monitor_existing_jobs(all_scenes)
-    stats = stats_summary(state_counts)
+    stats, totals = stats_summary(state_counts)
+    control_state = compute_control_state(args, totals, elapsed, num_concurrent)
 
-    warmup_pct = min(elapsed / args.warmup_sec, 1) if args.warmup_sec > 0 else 1
-    stats['curr_concurrent_max'] = math.ceil(warmup_pct * num_concurrent)
-
-    if stats['n_in_flight'] > stats['curr_concurrent_max']:
-        raise ValueError(
-            f"manage_datagen_jobs observed {stats['n_in_flight']=},"
-            f" which exceeds allowed {stats['curr_concurrent_max']=}"
-        )
-    stats['n_to_launch'] = max(stats['curr_concurrent_max'] - stats['n_in_flight'], 0)
+    new_jobs = jobs_to_launch_next(all_scenes, state_counts)
+    new_jobs = list(itertools.islice(new_jobs, control_state['try_to_launch']))
+    control_state['will_launch'] = len(new_jobs) # may be less due to jobs_to_launch optional kwargs, or running out of num_jobs
 
     pd.DataFrame.from_records(all_scenes).to_csv(args.output_folder/'scenes_db.csv')
-    wandb.log(stats)
-    print("=" * 60)
-    for k,v in sorted(stats.items()):
-        print(f"{k.ljust(30)} : {v}")
-    print("-" * 60)
+    record_states(stats, totals, control_state)
 
     # Dont launch new scenes if disk is getting full
-    if stats['disk_usage'] > disk_sleep_threshold:
-        message = f"{args.output_folder} is full ({100*stats['disk_usage']}%). Sleeping."
-        wandb.alert(title='Disk full', text=message, wait_duration=3*60*60)
+    if control_state['disk_usage'] > disk_sleep_threshold:
+        message = f"{args.output_folder} is full ({100*control_state['disk_usage']}%). Sleeping."
+        print(message)
+        wandb.alert(title=f'{args.output_folder} full', text=message, wait_duration=3*60*60)
         time.sleep(60)
         return
 
-    # Launch to get back to intended n=`curr_concurrent_max` that should be in flight
-    new_jobs = jobs_to_launch_next(all_scenes, state_counts)
-    new_jobs = itertools.islice(new_jobs, stats['n_to_launch'])
     for scene, taskname, queue_func in new_jobs:    
         logging.info(f"{scene['seed']} - running {taskname}")
         run_task(queue_func, args.output_folder / str(scene['seed']), scene, taskname)
 
 @gin.configurable
-def main(args, shuffle=True, wandb_project='render_beta'):
+def main(args, shuffle=True, wandb_project='render', upload_commandfile_method=None):
+
+    command_path = args.output_folder/'datagen_command.sh'
+    with command_path.open('w') as f:
+        f.write(' '.join(sys.argv))
+    if upload_commandfile_method is not None:
+        upload = upload_util.get_upload_func(upload_commandfile_method)
+        upload(command_path, upload_util.get_upload_destfolder(args.output_folder))
 
     all_scenes = init_db(args)
     scene_name = args.output_folder.parts[-1]
@@ -572,11 +625,12 @@ def main(args, shuffle=True, wandb_project='render_beta'):
     )
 
     logging.basicConfig(
+        filename=str(args.output_folder / "jobs.log"),
         level=args.loglevel,
         format='[%(asctime)s]: %(message)s',
     )
 
-    logging.info(f'Using {get_slurm_banned_nodes()=}')
+    print(f'Using {get_slurm_banned_nodes()=}')
 
     if shuffle:
         np.random.shuffle(all_scenes)
@@ -588,7 +642,7 @@ def main(args, shuffle=True, wandb_project='render_beta'):
         now = datetime.now()
         print(f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}')
         manage_datagen_jobs(all_scenes, elapsed=(now-start_time).total_seconds())
-        time.sleep(4)
+        time.sleep(2)
 
     
 def set_blender_path_global(args):

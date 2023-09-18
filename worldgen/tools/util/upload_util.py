@@ -3,7 +3,7 @@
 
 # Authors: Lahav Lipson
 
-
+import argparse
 import os
 from pathlib import Path
 import platform
@@ -74,39 +74,8 @@ def reorganize_before_upload(parent_folder):
     
     copyfile(parent_folder / "run_pipeline.sh", log_dir / "run_pipeline.sh")  
 
-# DO NOT make gin.configurable
-# this function gets submitted via pickle in some settings, and gin args are not preserved
-def upload_job_folder(
-    parent_folder, 
-    task_uniqname, 
-    dir_prefix_len=3, 
-    method='smbclient', 
-):
-
-    parent_folder = Path(parent_folder)
-
-    if method == 'rclone':
-        upload_func = rclone_upload_file
-    elif method == 'smbclient':
-        upload_func = smb_client.upload
-    else:
-        raise ValueError(f'Unrecognized {method=}')  
-
-    jobname = parent_folder.parent.name
-    seed = parent_folder.name
+def write_metadata(parent_folder, seed, all_images):
     
-    upload_dest_folder = Path('infinigen')/'renders'/jobname
-    if dir_prefix_len != 0:
-        upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
-
-    print(f'{method=} {upload_dest_folder=}')
-
-    all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
-    if len(all_images) > 0:
-        thumb_path = parent_folder/f'{seed}_thumbnail.png'
-        copyfile(all_images[0], thumb_path)
-        upload_func(thumb_path, upload_dest_folder)
-
     try:
         version = (parent_folder / "coarse" / "version.txt").read_text().splitlines()[0]
     except FileNotFoundError:
@@ -122,19 +91,80 @@ def upload_job_folder(
         'commit': get_commit_hash(),
         'n_frames': len(all_images)
     }
+
     metadata_path = parent_folder/f'{seed}_metadata.json'
     with metadata_path.open('w') as f:
         json.dump(metadata, f, indent=4)
-    print(metadata_path, metadata)
-    upload_func(metadata_path, upload_dest_folder)
 
+    return metadata_path
+
+def write_thumbnail(parent_folder, seed, all_images):
+    if len(all_images) > 0:
+        thumb_path = parent_folder/f'{seed}_thumbnail.png'
+        copyfile(all_images[0], thumb_path)
+    else:
+        thumb_path = None    
+
+    return thumb_path
+
+def create_tarball(parent_folder):
     tar_path = parent_folder.with_suffix('.tar.gz')
     print(f"Performing cleanup and tar to {tar_path}")
-    cleanup.cleanup(parent_folder)
     with tarfile.open(tar_path, "w:gz") as tar:
         tar.add(parent_folder, os.path.sep)
     assert tar_path.exists()
+    return tar_path
+
+def get_upload_func(method='smbclient'):
+    if method == 'rclone':
+        return rclone_upload_file
+    elif method == 'smbclient':
+        return smb_client.upload
+    else:
+        raise ValueError(f'Unrecognized {method=}')  
+
+def get_upload_destfolder(job_folder):
+    return Path('infinigen')/'renders'/job_folder.name
+
+# DO NOT make gin.configurable
+# this function gets submitted via pickle in some settings, and gin args are not preserved
+def upload_job_folder(
+    parent_folder, 
+    task_uniqname, 
+    dir_prefix_len=0, 
+    method='smbclient'
+):
+
+    parent_folder = Path(parent_folder)
+    seed = parent_folder.name
+
+    upload_func = get_upload_func(method)
     
-    print(f"Uploading tarfile")
-    upload_func(tar_path, upload_dest_folder)
+    upload_dest_folder = get_upload_destfolder(parent_folder.parent)
+    if dir_prefix_len > 0:
+        upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
+
+    cleanup.cleanup(parent_folder)
+    all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
+
+    upload_paths = [
+        write_thumbnail(parent_folder, seed, all_images),
+        write_metadata(parent_folder, seed, all_images),
+        create_tarball(parent_folder)
+    ]
+    
+    for f in upload_paths:
+        if f is None:
+            continue
+        upload_func(f, upload_dest_folder)
+        f.unlink()
+
     (parent_folder / "logs" / f"FINISH_{task_uniqname}").touch()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('parent_folder', type=Path)
+    parser.add_argument('task_uniqname', type=str)
+    args = parser.parse_args()
+
+    upload_job_folder(args.parent_folder, args.task_uniqname)

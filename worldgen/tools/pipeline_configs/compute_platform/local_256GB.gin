@@ -6,6 +6,7 @@ get_cmd.process_niceness = 20 # let UI processes etc take precedence, to make th
 local_submit_cmd.use_scheduler = True
 LocalScheduleHandler.jobs_per_gpu = 1
 jobs_to_launch_next.max_queued_total = 1
+jobs_to_launch_next.max_stuck_at_task = 4
 
 get_cmd.blender_thread_limit = 8
 
@@ -33,7 +34,6 @@ queue_upload.submit_cmd = @local_submit_cmd
 queue_upload.mem_gb = 6
 queue_upload.cpus = 2
 queue_upload.hours = 24
-queue_upload.method = 'smbclient'
 queue_upload.dir_prefix_len = 2
 
 # Ground Truth

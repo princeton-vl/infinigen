@@ -1,5 +1,7 @@
 include 'tools/pipeline_configs/compute_platform/slurm.gin'
 
+iterate_scene_tasks.view_block_size = 3
+
 queue_combined.hours = 1
 queue_coarse.hours = 1
 queue_fine_terrain.hours = 1
