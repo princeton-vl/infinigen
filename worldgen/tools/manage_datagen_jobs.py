@@ -492,7 +492,7 @@ def jobs_to_launch_next(
             reverse=True
         )
 
-    done_counts = np.array([s['num_done'] for s in scenes])
+    done_counts = np.array([s['num_done'] + s['num_running'] for s in scenes])
     numdone_unique, curr_at_each_numdone = np.unique(done_counts, return_counts=True)
     numdone_unique = list(numdone_unique)
 
@@ -515,8 +515,9 @@ def jobs_to_launch_next(
             curr_at_each_numdone[numdone_unique.index(ndone_if_launch)] 
             if ndone_if_launch in numdone_unique else 0
         )
+
         if max_stuck_at_task is not None and stuck_at_next >= max_stuck_at_task:
-            logging.info(f"{seed} - Not launching due to {stuck_at_next=} > {max_stuck_at_task} for {scene['num_done']=}")
+            logging.info(f"{seed} - Not launching due to {stuck_at_next=} > {max_stuck_at_task} for {ndone_if_launch=}")
             continue
 
         for rec in iterate_scene_tasks(scene, args, monitor_all=False):
@@ -531,8 +532,8 @@ def jobs_to_launch_next(
                 logging.info(f"{seed} - Not launching due to {queued=} > {max_queued_task} for {taskname}")
                 continue
             if max_queued_total is not None and total_queued >= max_queued_total:
-                logging.info(f"{seed} - Not launching due to {total_queued=} > {max_queued_total} for")
-                return
+                logging.info(f"{seed} - Not launching due to {total_queued=} > {max_queued_total} for {taskname}")
+                continue
 
             yield scene, taskname, queue_func
 
@@ -777,9 +778,9 @@ if __name__ == "__main__":
             ' yet {args.upload=}! No output would be preserved!'
         )
     if using_upload and args.cleanup == 'none':
-        raise ValueError(
-            'uploading currently applies --cleanup big_files.'
-            f' Incompatible with {args.cleanup=}'
+        logging.warning(
+            f'Upload performs some cleanup, so combining upload.gin with '
+            '--cleanup none will not result in ALL files being preserved'
         )
     
     assert args.specific_seed is None or args.num_scenes == 1

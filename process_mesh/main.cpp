@@ -99,8 +99,8 @@ int main(int argc, char *argv[]) {
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", true);
 
     argparse::ArgumentParser program("main", VERSION);
-    program.add_argument("--width").default_value(1920).help("Width of output").scan<'i', int>();
-    program.add_argument("--height").default_value(1080).help("Height of output").scan<'i', int>();
+    program.add_argument("--width").default_value(1280).help("Width of output").scan<'i', int>();
+    program.add_argument("--height").default_value(720).help("Height of output").scan<'i', int>();
     program.add_argument("--frame").required().help("Current frame").scan<'i', int>();
     program.add_argument("-in", "--input_dir").required().help("The input/output dir");
     program.add_argument("-out", "--output_dir").required().help("The input/output dir");

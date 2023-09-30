@@ -15,6 +15,7 @@ import subprocess
 import gin
 
 from tools.util.cleanup import cleanup
+from tools.util import upload_util
 from tools.states import (
     JobState, 
     SceneState, 
@@ -69,7 +70,7 @@ def apply_cleanup_options(args, seed, crashed, scene_folder):
     if args.cleanup == 'all' or (args.cleanup == 'except_crashed' and not crashed):
         logging.info(f"{seed} - Removing entirety of {scene_folder}")
         rmtree(scene_folder)
-    elif args.cleanup == 'big_files' or (args.cleanup == 'except_crashed' and crashed):
+    elif args.cleanup == 'big_files':
         logging.info(f"{seed} - Cleaning up any large files")
         cleanup(scene_folder, verbose=False)
     elif args.cleanup == 'except_logs':
@@ -91,6 +92,7 @@ def on_scene_termination(
     args, 
     scene: dict, 
     crashed: bool, 
+    enforce_upload_manifest=False,
     remove_write_permission=False # safeguard finished data against accidental meddling
 ):
     seed = scene['seed']
@@ -112,6 +114,11 @@ def on_scene_termination(
         (remove_write_permission == 'except_crashed' and not crashed)
     ):
         subprocess.check_output(f"chmod -R a-w {scene_folder}".split())
+
+    if enforce_upload_manifest:
+        scene_folder = args.output_folder/scene['seed']
+        upload_util.check_files_covered(scene_folder, upload_util.UPLOAD_MANIFEST)
+        
 
 def check_intermediate_cleanup(args, scene, idxs, stagetype_name, tasklist):
 

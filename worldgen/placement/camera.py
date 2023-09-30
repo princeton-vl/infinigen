@@ -279,7 +279,7 @@ def keep_cam_pose_proposal(
     terrain_tags_answers,
     vertexwise_min_dist,
     terrain_tags_ratio,
-    min_placeholder_dist=1,
+    min_placeholder_dist=0,
     min_terrain_distance=0,
     terrain_coverage_range=(0.5, 1),
 ):

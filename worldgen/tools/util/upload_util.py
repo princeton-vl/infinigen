@@ -15,11 +15,86 @@ from datetime import datetime
 import gin
 from tqdm import tqdm
 import subprocess
-from shutil import which, copyfile
+import shutil
 
 from . import smb_client, cleanup
 
 GDRIVE_NAME = None
+
+UPLOAD_MANIFEST = [
+    ('frames*/*', 'KEEP'),
+    ('logs/*', 'KEEP'),
+    ('fine/scene.blend', 'KEEP'),
+    ('run_pipeline.sh', 'KEEP'),
+    ('frames*/camview*.npz', 'KEEP_MANDATORY'),
+
+    ('coarse/*.txt', 'KEEP'),
+    ('coarse/*.csv', 'KEEP'),
+    ('coarse/*.json', 'KEEP'),
+    ('fine*/*.txt', 'KEEP'),
+    ('fine*/*.csv', 'KEEP'),
+    ('fine*/*.json', 'KEEP'),
+
+    ('savemesh*', 'DELETE'),
+    ('coarse/assets', 'DELETE'),
+    ('coarse/scene.blend', 'DELETE'),
+    ('fine*/assets', 'DELETE'),
+    ('tmp', 'DELETE'),
+    ('*/*.b_displacement.npy', 'DELETE'),
+
+    # These two only show up during/after upload, we just specify them to prevent an error
+    ('*_thumbnail.png', 'KEEP'),
+    ('*_metadata.json', 'KEEP'),
+]
+
+def check_files_covered(scene_folder, manifest):
+
+    covered = set()
+
+    for glob, _ in UPLOAD_MANIFEST:
+        covered |= set(scene_folder.glob(glob))
+
+    extant = set(scene_folder.glob('*'))
+
+    not_covered = extant - covered
+
+    not_covered = {p for p in not_covered if not p.is_dir()}
+
+    if len(not_covered) == 0:
+        return
+    
+    raise ValueError(
+        f'{scene_folder=} had {not_covered=}. Please modify {__file__}.UPLOAD_MANIFEST'
+        ' to explicitly say whether you want these files to be deleted or included in the final tarball'
+    )
+
+def apply_manifest_cleanup(scene_folder, manifest):
+    
+    check_files_covered(scene_folder, manifest)
+
+    keep = set()
+    delete = set()
+
+    for glob, action in manifest:
+
+        affected = scene_folder.glob(glob)
+
+        if action == 'KEEP':
+            keep |= affected
+        elif action == 'KEEP_MANDATORY':
+            if len(affected) == 0:
+                raise ValueError(f'In {apply_manifest_cleanup.__name__} {glob=} had {action=} but failed to match any files')
+            keep |= affected
+        elif action == 'DELETE':
+            delete |= set(affected) - keep
+        else:
+            raise ValueError(f'Unrecognized {action=}')
+
+    for f in delete:
+        f.unlink()
+    for p in scene_folder.rglob('*'):
+        if p.is_dir() and len(list(p.iterdir())) == 0:
+            p.rmdir()
 
 def rclone_upload_file(src_file, dst_folder):
 
@@ -27,52 +102,16 @@ def rclone_upload_file(src_file, dst_folder):
         raise ValueError(f'Please specify GDRIVE_NAME')
 
     assert os.path.exists(src_file), src_file
-    cmd = f"{which('rclone')} copy -P {src_file} {GDRIVE_NAME}:{dst_folder}"
+    cmd = f"{shutil.which('rclone')} copy -P {src_file} {GDRIVE_NAME}:{dst_folder}"
     subprocess.check_output(cmd.split())
     print(f"Uploaded {src_file}")
 
 def get_commit_hash():
-    git = which('git')
+    git = shutil.which('git')
     if git is None:
         return None
     cmd = f"{git} rev-parse HEAD"
     return subprocess.check_output(cmd.split()).decode().strip()
-
-# DO NOT make gin.configurable
-# this function gets submitted via pickle in some settings, and gin args are not preserved
-def reorganize_before_upload(parent_folder):
-
-    seed = parent_folder.name
-    tmpdir = (parent_folder / "tmp" / seed)
-    log_dir = tmpdir / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    frames_folders = list(sorted(parent_folder.glob("frames*")))
-    for idx, frames_folder in enumerate(frames_folders):
-
-        subfolder_name = f"resample_{idx}" if (idx > 0) else "original"
-        subfolder = tmpdir / subfolder_name
-        info_dir = subfolder / "info"
-        info_dir.mkdir(parents=True, exist_ok=True)
-        ground_truth_dir = subfolder / "ground_truth"
-        ground_truth_dir.mkdir(parents=True, exist_ok=True)
-        color_passes_dir = subfolder / "color_passes"
-        color_passes_dir.mkdir(parents=True, exist_ok=True)
-        copyfile(frames_folder / "object_tree.json", info_dir / "object_tree.json")
-        for file in tqdm(sorted(frames_folder.rglob("*.png")), desc="Upload .png", disable=True):
-            copyfile(file, color_passes_dir / file.name)
-        for file in tqdm(sorted(frames_folder.rglob("*.exr")), desc="Upload .exr", disable=True):
-            copyfile(file, ground_truth_dir / file.name)
-        for file in tqdm(sorted(frames_folder.rglob("*.npy")), desc="Upload .npy", disable=True):
-            copyfile(file, info_dir / file.name)
-    for ext in ["out", "err"]:
-        for file in tqdm(sorted((parent_folder / "logs").rglob(f"*.{ext}")), desc=f"Upload .{ext}", disable=True):
-            if not file.is_symlink():
-                copyfile(file, log_dir / (file.name + ".txt"))
-    for file in tqdm(sorted((parent_folder / "logs").rglob(f"operative_gin_*")), desc=f"operative_gins", disable=True):
-        copyfile(file, log_dir / file.name)
-    
-    copyfile(parent_folder / "run_pipeline.sh", log_dir / "run_pipeline.sh")  
 
 def write_metadata(parent_folder, seed, all_images):
     
@@ -101,7 +140,7 @@ def write_metadata(parent_folder, seed, all_images):
 def write_thumbnail(parent_folder, seed, all_images):
     if len(all_images) > 0:
         thumb_path = parent_folder/f'{seed}_thumbnail.png'
-        copyfile(all_images[0], thumb_path)
+        shutil.copyfile(all_images[0], thumb_path)
     else:
         thumb_path = None    
 
@@ -144,7 +183,6 @@ def upload_job_folder(
     if dir_prefix_len > 0:
         upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
 
-    cleanup.cleanup(parent_folder)
     all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
 
     upload_paths = [
@@ -152,6 +190,12 @@ def upload_job_folder(
         write_metadata(parent_folder, seed, all_images),
         create_tarball(parent_folder)
     ]
+
+    orig_fine_path = parent_folder/'fine'/'scene.blend'
+    if orig_fine_path.exists():
+        dest_fine_path = parent_folder.parent / f'{seed}_fine.blend'
+        shutil.move(orig_fine_path, dest_fine_path)
+        upload_paths.append(dest_fine_path)
     
     for f in upload_paths:
         if f is None:

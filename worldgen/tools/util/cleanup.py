@@ -21,7 +21,6 @@ FILES_TO_DELETE = [
     "*.pkl",
     "*.blend",
     "*.blend1",
-    "*.npz",
     "assets/",
 ]
 
