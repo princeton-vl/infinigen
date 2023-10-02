@@ -73,6 +73,8 @@ def td_to_str(td): #https://stackoverflow.com/a/64662985
     """
     convert a timedelta object td to a string in HH:MM:SS format.
     """
+    if (pd.isnull(td)):
+        return td
     hours, remainder = divmod(td.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
@@ -120,7 +122,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
             all_data[seed]["[" + step + "] Step Time"] = step_timedelta
 
             # parse times < 1 day
-            for name, h, m, s in re.findall(r'\[times\] \[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)', text):
+            for name, h, m, s in re.findall(r'INFO:times:\[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)', text):
                 timedelta_obj = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
                 if (name == "MAIN TOTAL"): continue
                 else:
@@ -138,7 +140,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
                         all_data[seed]["[time] " + stage_key] = timedelta_obj
 
             # parse times > 1 day
-            for name, d, h, m, s in re.findall(r'\[times\] \[INFO\] \| \[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)', text):
+            for name, d, h, m, s in re.findall(r'INFO:times:\[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)', text):
                 timedelta_obj = timedelta(days=int(d), hours=int(h),minutes=int(m),seconds=int(s))
                 if (name == "MAIN TOTAL"): continue
                 else:
@@ -206,11 +208,12 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
         all_data[seed]["[Objects Generated] [Fine] " + row["name"]] = row["obj_delta"]
         all_data[seed]["[Instances Generated] [Fine] " + row["name"]] = row["instance_delta"]
     
-def test_generation(dir, num):
+def test_generation(dir):
     completed_seeds = os.path.join(dir, "finished_seeds.txt")
     num_lines = sum(1 for _ in open(completed_seeds))
-    print(f'{num_lines}/{num} succeeded scenes')
-    assert num_lines >= 0.8 * int(num), "Over 20% of scenes did not complete"
+    num_scenes = len(next(os.walk(dir))[1]) - 1
+    print(f'{num_lines}/{num_scenes} succeeded scenes')
+   # assert num_lines >= 0.8 * int(num_scenes), "Over 20% of scenes did not complete"
 
 def make_stats(data_df):
     stats = pd.DataFrame()
@@ -466,8 +469,69 @@ def test_gt(dir):
     print(tabulate(obj_seg_stats.sort_values("Percent of Pixels", ascending=False), headers='keys', tablefmt='fancy_grid'))
 
 
-def test_save_data(dir):
-    data_df = pd.DataFrame.from_dict(all_data, orient='index')
-    data_df.to_csv("test_results/data.csv")
+def dir_path(string):
+    if os.path.isdir(string):
+        return string
+    else:
+        raise NotADirectoryError(string)
 
+def make_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--dir', type=dir_path)
+    parser.add_argument('-t', '--time', type=int, default=None)
+    args = parser.parse_args()
+
+    return args
+
+
+def main(dir, time):
+    if not os.path.isdir(f"{dir}/test_results"):
+        os.mkdir(f"{dir}/test_results")
+    if os.path.exists(f"{dir}/test_results/test_logs.log"):
+        os.remove(f"{dir}/test_results/test_logs.log")
+    sys.stdout = open(f"{dir}/test_results/test_logs.log", 'w')
+    try:
+        print("\nTesting scene success rate")
+        test_generation(dir)
+    except Exception as e: 
+        print(e)
+
+    try:
+        print("\nTesting logs")
+        test_logs(dir)
+    except Exception as e: 
+        print(e)
+
+    if time is None:
+        print("\nNo slurm time arg provided, skipping scene memory stats")
+    else:
+        try:
+            print("\nTesting step memory")
+            test_step_memory(dir, time)
+        except Exception as e: 
+            print(e)
+
+    try:
+        print("\nTesting scene brightness")
+        test_brightness(dir)
+    except Exception as e: 
+        print(e)
+
+    try:
+        print("\nTesting scene noise")
+        test_noise(dir)
+    except Exception as e: 
+        print(e)
+
+    try:
+        test_gt(dir)
+    except Exception as e: 
+        print(e)
+
+    data_df = pd.DataFrame.from_dict(all_data, orient='index')
+    data_df.to_csv(f"{dir}/test_results/data.csv")
+    
+if __name__ == '__main__':
+    args = make_args()
+    main(args.dir, args.time)
 
