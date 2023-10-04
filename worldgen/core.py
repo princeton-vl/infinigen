@@ -74,7 +74,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
