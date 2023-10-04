@@ -239,6 +239,31 @@ def fix_missing_camviewdata(local_folder, dummy):
             with outpath.open('wb') as f:
                 np.savez(f, camdata)
 
+def fix_frames_folderstructure(p):
+
+    p = args.local_path / p
+
+    frames_dest = p/'frames'
+    for frames_old in p.glob('frames_*'):
+        print(frames_old)
+        for img_path in frames_old.iterdir():
+            dtype, *_ = img_path.name.split('_')
+            idxs = parse_suffix(img_path.name)
+            new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
+            new_path.parent.mkdir(exist_ok=True, parents=True)
+            shutil.move(img_path, new_path)
+        frames_old.rmdir()
+
+    for savemesh in p.glob('savemesh_*'):
+        shutil.rmtree(savemesh)
+
+    for folder in p.iterdir():
+        if not folder.is_dir():
+            continue
+        for f in folder.glob('*b_displacement.npy'):
+            f.unlink()
+
+
 def process_one_scene(p):
     
     print(f'Processing {p}')
@@ -273,7 +298,8 @@ def process_one_scene(p):
     fix_metadata(local_folder)
     optimize_groundtruth_filesize(local_folder)
     fix_missing_camviewdata(local_folder, dummy=dict(np.load('camview_dummy.npz')))
-    
+    fix_frames_folderstructure(local_folder)
+
     print(f'Validating {local_folder=}')
     dset = torch_dataset.InfinigenSceneDataset(local_folder)
     dset.validate()
@@ -313,7 +339,8 @@ def main(args):
         key=sort_key,
     )
 
-    mapfunc(try_process, job_scene_paths, n_workers=args.n_workers)
+    ps = list((args.local_path/args.jobscene_path).iterdir())
+    mapfunc(try_process, ps, n_workers=args.n_workers)
 
 if __name__ == "__main__":
 

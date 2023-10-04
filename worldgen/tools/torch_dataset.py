@@ -5,7 +5,8 @@ import numpy as np
 import logging
 
 import torch.utils.data
-from .states import parse_suffix, get_suffix
+
+from .suffixes import parse_suffix, get_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ ALLOWED_IMAGE_TYPES = {
     ('ObjectSegmentation', '.png'),
     ('SurfaceNormal', '.npy'),
     ('SurfaceNormal', '.png'),
-    ('Objects', 'json'),
+    ('Objects', '.json'),
 
     # blender_gt.gin only provides 2D flow. opengl_gt.gin produces Flow3D instead
     ('Flow3D', '.npy'),
@@ -64,23 +65,28 @@ def get_blocksize(scene_folder):
     return parse_suffix(second)['frame'] - parse_suffix(first)['frame']
 
 def get_framebounds_inclusive(scene_folder):
-
-    first, *_, last = sorted(scene_folder.glob('frames*_0/Image*'))
+    rgb = scene_folder/'frames'/'Image'/'camera_0'
+    first, *_, last = sorted(rgb.glob('*.png'))
     return (
         parse_suffix(first)['frame'],
         parse_suffix(last)['frame']
     ) 
 
 def get_subcams_available(scene_folder):
-    return {parse_suffix(f)['subcam'] for f in scene_folder.glob('frames*')}
+    rgb = scene_folder/'frames'/'Image'
+    return [int(p.name.split('_')[-1]) for p in rgb.iterdir()]
 
-def get_imagetypes_available(scene_folder, ext):
-    def imagetype(frame: Path):
-        return (
-            frame.name.split('_')[0],
-            frame.suffix
-        )
-    return {imagetype(f) for f in scene_folder.glob(f'frames*/*{ext}')}
+def get_imagetypes_available(scene_folder):
+    dtypes = []
+    for dtype_folder in (scene_folder/'frames').iterdir():
+        frames = dtype_folder/'camera_0'
+        uniq = set(p.suffix for p in frames.iterdir())
+        dtypes += [(dtype_folder.name, u) for u in uniq]
+    return dtypes
+
+def get_frame_path(scene_folder, cam_idx, frame_idx, data_type_name, data_type_ext):
+    imgname = f'{data_type_name}_0_0_{frame_idx:04d}_{cam_idx}{data_type_ext}'
+    return scene_folder/'frames'/data_type_name/f'camera_{cam_idx}'/imgname
 
 class InfinigenSceneDataset(torch.utils.data.Dataset):
 
@@ -98,7 +104,8 @@ class InfinigenSceneDataset(torch.utils.data.Dataset):
         self.gt_for_first_camera_only = gt_for_first_camera_only
 
         if image_types is None:
-            image_types = get_imagetypes_available(self.scene_folder, ext='.png')
+            image_types = get_imagetypes_available(self.scene_folder)
+            image_types = [v for v in image_types if v[1] != '.exr'] # loading not implemented yet
             logging.info(f'{self.__class__.__name__} recieved image_types=None, using whats available in {scene_folder}: {image_types}')
         for t in image_types:
             if t not in ALLOWED_IMAGE_TYPES:
@@ -109,34 +116,11 @@ class InfinigenSceneDataset(torch.utils.data.Dataset):
             subcam_keys = get_subcams_available(self.scene_folder)
         self.subcam_keys = subcam_keys
 
-        self.block_size = get_blocksize(self.scene_folder)
         self.framebounds_inclusive = get_framebounds_inclusive(self.scene_folder)
 
     def __len__(self):
         first, last = self.framebounds_inclusive
-        return last - first + 1
-    
-    def frame_path(self, frame_num, subcam, image_type):
-
-        first, last = self.framebounds_inclusive
-        assert frame_num  >= first and frame_num <= last
-
-        framefolder_idx = (frame_num - first) // self.block_size
-        framefolder_framenum = framefolder_idx * self.block_size + first
-        framefolder_keys = dict(
-            cam_rig=0, 
-            frame=framefolder_framenum, 
-            resample=0, 
-            subcam=subcam
-        )
-        framefolder_path = self.scene_folder/f'frames{get_suffix(framefolder_keys)}'
-
-        dtypename, extension = image_type
-        image_keys=dict(cam_rig=0, frame=frame_num, resample=0, subcam=subcam)
-        image_name = f'{dtypename}{get_suffix(image_keys)}{extension}'
-
-        path = framefolder_path/image_name
-        return path
+        return last - first
     
     @staticmethod
     def load_any_filetype(path):
@@ -177,16 +161,17 @@ class InfinigenSceneDataset(torch.utils.data.Dataset):
                     if not p.exists():
                         raise ValueError(f'validate() failed for {self.scene_folder}, could not find {p}')
 
-    def __getitem__(self, i):
-
+    def frame_path(self, i, subcam, dtype):
         frame_num = self.framebounds_inclusive[0] + i
+        return get_frame_path(self.scene_folder, subcam, frame_num, dtype[0], dtype[1])
+
+    def __getitem__(self, i):
 
         def get_camera_images(subcam):
             imgs = {}
-            for image_type in self._imagetypes_to_load(subcam):
-                path = self.frame_path(frame_num, subcam, image_type)
-                assert path.exists(), path
-                imgs[image_type[0]] = self.load_any_filetype(path)
+            for dtype in self._imagetypes_to_load(subcam):
+                path = self.frame_path(subcam, i, subcam, dtype)
+                imgs[dtype[0]] = self.load_any_filetype(path)
             return imgs
         
         per_camera_data = [get_camera_images(i) for i in self.subcam_keys]
