@@ -365,7 +365,8 @@ def queue_opengl(
             )
             line = re.sub("( \([A-Za-z0-9]+\))", "", line)
             f.write(line)
-        line = f"python {process_mesh_path.parent.parent / 'compress_masks.py'} {output_folder}\n"
+        worldgen = process_mesh_path.parent.parent
+        line = f"python {worldgen/'tools'/'compress_masks.py'} {output_folder}\n"
         line = re.sub("( \([A-Za-z0-9]+\))", "", line)
         f.write(line)
         f.write(f"touch {folder}/logs/FINISH_{taskname}")

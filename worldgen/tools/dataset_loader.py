@@ -4,7 +4,7 @@ import imageio
 import numpy as np
 import logging
 
-import torch.utils.data
+#import torch.utils.data IMPORTED ONLY IF USING get_infinigen_dataset
 
 from .suffixes import parse_suffix, get_suffix
 
@@ -22,9 +22,9 @@ ALLOWED_IMAGE_TYPES = {
     # names available via EITHER blender_gt.gin and opengl_gt.gin
     ('Depth', '.npy'),
     ('Depth', '.png'),
-    ('InstanceSegmentation', '.npy'),
+    ('InstanceSegmentation', '.npz'),
     ('InstanceSegmentation', '.png'),
-    ('ObjectSegmentation', '.npy'),
+    ('ObjectSegmentation', '.npz'),
     ('ObjectSegmentation', '.png'),
     ('SurfaceNormal', '.npy'),
     ('SurfaceNormal', '.png'),
@@ -35,13 +35,9 @@ ALLOWED_IMAGE_TYPES = {
     ('Flow3D', '.png'),
 
     # names available ONLY from opengl_gt.gin
-    ('OcclusionBoundaries', '.npy'),
     ('OcclusionBoundaries', '.png'),
-    ('TagSegmentation', '.npy'),
+    ('TagSegmentation', '.npz'),
     ('TagSegmentation', '.png'),
-    ('Flow3D', '.npy'),
-    ('Flow3D', '.png'),
-    ('Flow3DMask', '.npy'),
     ('Flow3DMask', '.png'),
  
     # info from blender image rendering passes, usually enabled regardless of GT method
@@ -88,7 +84,7 @@ def get_frame_path(scene_folder, cam_idx, frame_idx, data_type_name, data_type_e
     imgname = f'{data_type_name}_0_0_{frame_idx:04d}_{cam_idx}{data_type_ext}'
     return scene_folder/'frames'/data_type_name/f'camera_{cam_idx}'/imgname
 
-class InfinigenSceneDataset(torch.utils.data.Dataset):
+class InfinigenSceneDataset:
 
     def __init__(
         self, 
@@ -183,6 +179,8 @@ class InfinigenSceneDataset(torch.utils.data.Dataset):
 
 def get_infinigen_dataset(data_folder: Path, mode='concat', validate=False, **kwargs):
     
+    import torch.utils.data
+
     data_folder = Path(data_folder)
 
     scene_datasets = [
