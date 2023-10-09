@@ -10,6 +10,13 @@ from Cython.Build import cythonize
 
 cwd = Path(__file__).parent
 
+dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
+IS_BUILD_STEP = not any(x in sys.argv[1] for x in dont_build_steps) 
+str_true = "True"
+MINIMAL_INSTALL = os.environ.get('INFINIGEN_MINIMAL_INSTALL') == str_true
+BUILD_TERRAIN = os.environ.get('INFINIGEN_INSTALL_TERRAIN', str_true) == str_true
+BUILD_OPENGL = os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', str_true) == str_true
+
 def ensure_submodules():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
 
@@ -29,29 +36,27 @@ ensure_submodules()
 
 # inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
-dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
-RUN_BUILD = not any(x in sys.argv[1] for x in dont_build_steps) 
-str_true = "True" # use strings as os.environ will turn any bool into a string anyway
-if RUN_BUILD and os.environ.get('INFINIGEN_INSTALL_RUNBUILD', str_true) == str_true:
-    if os.environ.get('INFINIGEN_INSTALL_TERRAIN', str_true) == str_true:
+if IS_BUILD_STEP and not MINIMAL_INSTALL:
+    if BUILD_TERRAIN:
         subprocess.run(['make', 'terrain'], cwd=cwd)
-    if os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', str_true) == str_true:
+    if BUILD_OPENGL:
         subprocess.run(['make', 'customgt'], cwd=cwd)
 
 cython_extensions = []
 
-cython_extensions.append(Extension(
-    name="bnurbs",
-    sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
-    include_dirs=[numpy.get_include()]
-))
-cython_extensions.append(
-    Extension(
-        name="infinigen.terrain.marching_cubes",
-        sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
+if not MINIMAL_INSTALL:
+    cython_extensions.append(Extension(
+        name="bnurbs",
+        sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
         include_dirs=[numpy.get_include()]
+    ))
+    cython_extensions.append(
+        Extension(
+            name="infinigen.terrain.marching_cubes",
+            sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
+            include_dirs=[numpy.get_include()]
+        )
     )
-)
 
 setup(
     ext_modules=[

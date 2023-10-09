@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  INFINIGEN_INSTALL_RUNBUILD: False # disable building terrain, opengl and fluids, which wont be tested by pytest
+  INFINIGEN_INSTALL_TERRAIN: False
+  INFINIGEN_INSTALL_CUSTOMGT: False
 
 jobs:
 
