@@ -9,11 +9,13 @@ from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core import init
 
-def setup_gin():
+def setup_gin(configs=None, overrides=None):
     
     gin.clear_config()
     init.apply_gin_configs(
         configs_folder='infinigen_examples/configs',
+        configs=configs,
+        overrides=overrides,
         skip_unknown=True
     )
     surface.registry.initialize_from_gin()
