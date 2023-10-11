@@ -10,6 +10,7 @@ import json
 from itertools import product
 from copy import copy, deepcopy
 import pdb
+import tarfile
 
 import imageio
 import numpy as np
@@ -21,7 +22,7 @@ from .states import parse_suffix, get_suffix
 from . import dataset_loader
 from . import compress_masks
 
-TOOLKIT_VERSION = '0.1.0'
+TOOLKIT_VERSION = '0.1.1'
 
 IMAGE_RESIZE_ACTIONS = {
 
@@ -209,7 +210,7 @@ def resize_inplace(img_path, target_shape, interp_method, npz_prefix='NPZ_'):
             interp = cv2.resize((img.astype('float') / 255), target_shape[::-1], cv2.INTER_LINEAR)
             img = (255 * (interp > 0.01)).astype(img.dtype)
         case _:
-            raise ValueError(f'Unrecognized {method=}')
+            raise ValueError(f'Unrecognized {interp_method=}')
     
     if using_npz_compression:
         img = compress_masks.compress(img)
@@ -227,6 +228,9 @@ def resize_inplace(img_path, target_shape, interp_method, npz_prefix='NPZ_'):
 def optimize_groundtruth_filesize(scene_folder):
 
     frames_folders = sorted(list(scene_folder.glob('frames_*')))
+
+    if len(frames_folders) == 0:
+        raise ValueError(f'Couldnt find frames_* in {scene_folder}')
 
     first_folder_image_paths = list(frames_folders[0].glob('Image*.png'))
     base_img_res = np.array(imageio.imread(first_folder_image_paths[0]).shape[:2])
@@ -330,8 +334,22 @@ def fix_frames_folderstructure(p):
         for f in folder.glob('*b_displacement.npy'):
             f.unlink()
 
+def retar_for_distribution(local_folder, distrib_path):
 
-def process_one_scene(p):
+    seed = local_folder.name
+    frames_folder = (local_folder/'frames')
+
+    for dtype_folder in frames_folder.iterdir():
+        for camera_folder in dtype_folder.iterdir():
+            exts = set(p.suffix for p in camera_folder.iterdir())
+            for ext in exts:
+                tar_path = distrib_path/seed/f"{seed}_{dtype_folder.name}_{ext.strip('.')}_{camera_folder.name}.tar.gz"
+                tar_path.parent.mkdir(exist_ok=True, parents=True)
+                with tarfile.open(tar_path, 'w:gz') as f:
+                    for img in camera_folder.glob(f'*{ext}'):
+                        f.add(img, arcname=img.relative_to(local_folder.parent))
+
+def process_one_scene(p, args):
 
     stem = p.name.split('.')[0]
     scene_files = [
@@ -364,26 +382,31 @@ def process_one_scene(p):
         print(f'Skipping untar {local_tar}')
     assert local_folder.exists()
 
-    print(f'Postprocessing {local_folder=}')
-    fix_scene_structure(local_folder, n_subcams=2)
-    fix_metadata(local_folder)
-    optimize_groundtruth_filesize(local_folder)
-    fix_frames_folderstructure(local_folder)
+    if not (local_folder/'PREPROCESSED.txt').exists():
+        print(f'Postprocessing {local_folder=}')
+        fix_scene_structure(local_folder, n_subcams=2)
+        fix_metadata(local_folder)
+        optimize_groundtruth_filesize(local_folder)
+        fix_frames_folderstructure(local_folder)
+
+        with (local_folder/'PREPROCESSED.txt').open('w') as f:
+            f.write(f'{TOOLKIT_VERSION=}')
 
     print(f'Validating {local_folder=}')
     dset = dataset_loader.InfinigenSceneDataset(local_folder, image_types=dataset_loader.ALLOWED_IMAGE_TYPES)
     dset.validate()
 
-    with (local_folder/'PREPROCESSED.txt').open('w') as f:
-        f.write(f'{TOOLKIT_VERSION=}')
-
     if local_tar.exists():
         local_tar.unlink()
 
-def try_process(p):
+    if args.distrib_path is not None:
+        retar_for_distribution(local_folder, args.distrib_path)
+
+def try_process(p, args):
     try:
-        process_one_scene(p)
+        process_one_scene(p, args)
     except Exception as e:
+        print('FAILED', p, e)
         with (Path()/'failures.txt').open('a') as f:
             f.write(f'{p} | {e}\n')
         folder_name = p.parent/(p.name.split('.')[0])
@@ -412,7 +435,7 @@ def main(args):
 
     print(f'Found {len(job_scene_paths)=}')
 
-    mapfunc(try_process, job_scene_paths, n_workers=args.n_workers)
+    mapfunc(partial(try_process, args=args), job_scene_paths, n_workers=args.n_workers)
 
 if __name__ == "__main__":
 
@@ -420,20 +443,7 @@ if __name__ == "__main__":
     parser.add_argument('local_path', type=Path)
     parser.add_argument('smb_root', type=Path)
     parser.add_argument('--jobscene_path', type=Path, default=None)
-    parser.add_argument(
-        '--step', 
-        type=str, 
-        default='stream_all',
-        choices=[
-            'cleanup_smb',
-            'download', 
-            'untar', 
-            'fix_pre_v1_1', 
-            'demo_video', 
-            'retar', 
-            'stream_all'
-        ]
-    )
+    parser.add_argument('--distrib_path', type=Path, default=None)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--verbose', '-v', action='store_true')
     args = parser.parse_args()
