@@ -354,7 +354,7 @@ class Terrain:
                 altitude = terrain_mesh.vertices[:, 2]
                 terrain_tags_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
             else:
-                terrain_tags_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=np.bool)
+                terrain_tags_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
                 for key in self.tag_dict:
                     if set(q).issubset(set(key.split('.'))):
                         terrain_tags_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)

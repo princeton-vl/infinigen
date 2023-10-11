@@ -270,7 +270,7 @@ class Mesh:
         fov = (fov0, fov_rad)
         K = getK(fov, H, W)
         
-        self.vertex_attributes["invisible"] = np.zeros(len(self.vertices), np.bool)
+        self.vertex_attributes["invisible"] = np.zeros(len(self.vertices), bool)
         
         for cam_pose in cam_poses:
             coords = np.matmul(K, np.matmul(np.linalg.inv(cam_pose), np.concatenate((self.vertices.transpose(), np.ones((1, len(self.vertices)))), 0))[:3, :])

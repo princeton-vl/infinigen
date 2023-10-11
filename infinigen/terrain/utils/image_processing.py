@@ -44,7 +44,7 @@ def grid_distance(source, downsample):
     dist = np.zeros_like(source, dtype=np.float32) + 1e9
     N = source.shape[0]
     I, J = np.meshgrid(np.arange(N), np.arange(N), indexing="ij")
-    boundary = np.zeros_like(source, dtype=np.bool)
+    boundary = np.zeros_like(source, dtype=bool)
     boundary[:-1, :] |= ~source[1:, :]
     boundary[1:, :] |= ~source[:-1, :]
     boundary[:, :-1] |= ~source[:, 1:]

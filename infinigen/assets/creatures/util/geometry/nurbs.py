@@ -5,6 +5,7 @@
 
 
 import math
+import logging
 
 import bpy
 import bmesh
@@ -14,7 +15,14 @@ import numpy as np
 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import randomspacing
-import bnurbs
+
+logger = logging.getLogger(__name__)
+
+try:
+    import bnurbs
+except ImportError:
+    logger.warning(f'Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install')
+    bnurbs = None
 
 def compute_cylinder_topology(n: int, m: int, uvs=False, cyclic=True, h_neighbors=None):
 
@@ -197,6 +205,8 @@ def blender_nurbs_to_geomdl(s: bpy.types.Spline) -> NURBS.Surface:
     surf.ctrlpts_size_u = s.point_count_u + (s.order_u - 1 if s.use_cyclic_u else 0)
     surf.ctrlpts_size_v = s.point_count_v + (s.order_v - 1 if s.use_cyclic_v else 0)
 
+    if bnurbs is None:
+        logger.warning(f'Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install')
     surf.knotvector_u = bnurbs.get_knotsu(s)
     surf.knotvector_v = bnurbs.get_knotsv(s)
 
