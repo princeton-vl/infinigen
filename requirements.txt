@@ -17,6 +17,7 @@ geomdl
 numpy==1.21.5
 wandb
 zarr
+imagesize
 jinja2
 shapely
 rtree

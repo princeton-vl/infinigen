@@ -4,22 +4,26 @@
 # Authors: Lahav Lipson
 
 import argparse
-import json
+import shutil
 from pathlib import Path
 
+import cv2
+import imagesize
 import numpy as np
 from einops import einsum
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
 
+from ..dataset_loader import get_frame_path
 
-def transform(T, p):
-    assert T.shape == (4,4)
-    p = T[:3,:3] @ p
-    return p + T[:3, [3]]
-
-def from_homog(x):
-    return x[:-1] / x[[-1]]
+"""
+Usage: python -m tools.ground_truth.depth_to_normals <scene-folder> <frame-index>
+Output:
+- testbed
+    - A.png # Original image
+    - B.png # Surface normals from depth + finite-difference
+    - C.png # Surface normals from geometry
+"""
 
 def unproject(depth, K):
     H, W = depth.shape
@@ -38,19 +42,19 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    folder_data = json.loads((args.folder / "summary.json").read_text())
+    depth_path = get_frame_path(args.folder, 0, args.frame, 'Depth', '.npy')
+    normal_path = get_frame_path(args.folder, 0, args.frame, 'SurfaceNormal', '.png')
+    image_path = get_frame_path(args.folder, 0, args.frame, 'Image', '.png')
+    camview_path = get_frame_path(args.folder, 0, args.frame, 'camview', '.npz')
+    assert depth_path.exists()
+    assert image_path.exists()
+    assert camview_path.exists()
+    assert normal_path.exists()
 
-    depth_paths = folder_data["Depth"]['npy']["00"]["00"]
-    image_paths = folder_data["Image"]['png']["00"]["00"]
-    Ks = folder_data["Camera Intrinsics"]['npy']["00"]["00"]
-
-    frame = f"{args.frame:04d}"
-
-    image = imread(args.folder / image_paths[frame])
-    depth = np.load(args.folder / depth_paths[frame])
-    print(depth_paths)
-    K1 = np.load(args.folder / Ks[frame])
-    cam_coords = unproject(depth, K1)
+    image = imread(image_path)
+    depth = np.load(depth_path)
+    K = np.load(camview_path, allow_pickle=True)['K']
+    cam_coords = unproject(depth, K)
 
     cam_coords = cam_coords * np.array([1., -1., -1])
 
@@ -61,12 +65,14 @@ if __name__ == "__main__":
     vx = normalize(cam_coords[1:,1:] - cam_coords[1:,:-1])
     cross_prod = np.cross(vy, vx)
     normals = normalize(cross_prod)
-    print(cross_prod.shape, mask.shape)
     normals[~mask[1:,1:]] = 0
 
     normals_color = np.round((normals + 1) * (255/2)).astype(np.uint8)
+    normals_color = cv2.resize(normals_color, imagesize.get(normal_path))
 
     imwrite(args.output / "A.png", image)
     print(f'Wrote {args.output / "A.png"}')
     imwrite(args.output / "B.png", normals_color)
     print(f'Wrote {args.output / "B.png"}')
+    shutil.copyfile(normal_path, args.output / "C.png")
+    print(f'Wrote {args.output / "C.png"}')

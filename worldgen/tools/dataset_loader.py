@@ -80,9 +80,9 @@ def get_imagetypes_available(scene_folder):
         dtypes += [(dtype_folder.name, u) for u in uniq]
     return dtypes
 
-def get_frame_path(scene_folder, cam_idx, frame_idx, data_type_name, data_type_ext):
+def get_frame_path(scene_folder, cam_idx, frame_idx, data_type_name, data_type_ext) -> Path:
     imgname = f'{data_type_name}_0_0_{frame_idx:04d}_{cam_idx}{data_type_ext}'
-    return scene_folder/'frames'/data_type_name/f'camera_{cam_idx}'/imgname
+    return Path(scene_folder)/'frames'/data_type_name/f'camera_{cam_idx}'/imgname
 
 class InfinigenSceneDataset:
 

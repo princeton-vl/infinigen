@@ -4,7 +4,6 @@
 # Authors: Lahav Lipson
 
 import argparse
-import json
 from pathlib import Path
 
 import cv2
@@ -13,6 +12,16 @@ from einops import einsum
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
 
+from ..dataset_loader import get_frame_path
+
+"""
+Usage: python -m tools.ground_truth.rigid_warp <scene-folder> <frame-index-i> <frame-index-j>
+Output:
+- testbed
+    - A.png # Image at frame i
+    - B.png # Image at frame j, warped to i
+    - C.png # Image at frame j
+"""
 
 def transform(T, p):
     assert T.shape == (4,4)
@@ -40,28 +49,22 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    folder_data = json.loads((args.folder / "summary.json").read_text())
+    depth_path = get_frame_path(args.folder, 0, args.frame_1, 'Depth', '.npy')
+    image1_path = get_frame_path(args.folder, 0, args.frame_1, 'Image', '.png')
+    image2_path = get_frame_path(args.folder, 0, args.frame_2, 'Image', '.png')
+    camview1_path = get_frame_path(args.folder, 0, args.frame_1, 'camview', '.npz')
+    camview2_path = get_frame_path(args.folder, 0, args.frame_2, 'camview', '.npz')
 
-    depth_paths = folder_data["Depth"]['npy']["00"]["00"]
-    image_paths = folder_data["Image"]['png']["00"]["00"]
-    Ks = folder_data["Camera Intrinsics"]['npy']["00"]["00"]
-    Ts = folder_data["Camera Pose"]['npy']["00"]["00"]
-
-    frame1 = f"{args.frame_1:04d}"
-    frame2 = f"{args.frame_2:04d}"
-
-    image2 = imread(args.folder / image_paths[frame2])
-    image1 = imread(args.folder / image_paths[frame1])
-    H, W, _ = image1.shape
-    depth1 = np.load(args.folder / depth_paths[frame1])
-    pose1 = np.load(args.folder / Ts[frame1])
-    pose2 = np.load(args.folder / Ts[frame2])
-    K1 = np.load(args.folder / Ks[frame1])
-    K2 = np.load(args.folder / Ks[frame2])
+    image2 = imread(image2_path)
+    image1 = imread(image1_path)
+    depth1 = np.load(depth_path)
+    pose1 = np.load(camview1_path)['T']
+    pose2 = np.load(camview2_path)['T']
+    K1 = np.load(camview1_path)['K']
+    K2 = np.load(camview2_path)['K']
 
     H, W, _ = image1.shape
-    shape = (W, H)
-    depth1 = cv2.resize(np.load(args.folder / depth_paths[frame1]), dsize=shape, interpolation=cv2.INTER_LINEAR)
+    depth1 = cv2.resize(np.load(depth_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR)
 
     img2_coords = reproject(depth1, pose1, pose2, K1, K2)
 

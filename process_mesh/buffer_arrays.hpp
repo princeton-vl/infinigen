@@ -9,10 +9,6 @@
 
 struct InstanceID {
     const int n1, n2, n3;
-
-    std::string toString() const{
-        return std::to_string(n1) + '_' + std::to_string(n2) + '_' + std::to_string(n3);
-    }
 };
 
 inline bool operator==(const InstanceID& lhs, const InstanceID& rhs)

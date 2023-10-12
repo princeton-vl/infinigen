@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.37"
+#define VERSION "1.38"
 
 using std::cout, std::cerr, std::endl;
 
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
         */
         {
             std::ofstream o(output_dir / ("Objects_" + cd.frame_string + ".json"));
-            o << std::setw(4) << all_bboxes << std::endl;
+            o << json(all_bboxes).dump() << std::endl;
         }
 
         /*
