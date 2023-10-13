@@ -64,7 +64,7 @@ float CameraView::calc_resolution_scale(const npz &camview) const{
     return buffer_height / image_shape[0];
 }
 
-CameraView::CameraView(const std::string fstr, const fs::path fdir, const fs::path input_dir, const int width, const int height) : frame_string(fstr), frames_directory(fdir), buffer_width(width), buffer_height(height)
+CameraView::CameraView(const std::string fstr, const fs::path input_dir, const int width, const int height) : frame_string(fstr), buffer_width(width), buffer_height(height)
 {
     // Current Frame
     const fs::path current_frame_cam_path = input_dir / ("camview_"+frame_string+".npz");

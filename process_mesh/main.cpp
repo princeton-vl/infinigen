@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.38"
+#define VERSION "1.39"
 
 using std::cout, std::cerr, std::endl;
 
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
         const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
         MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
         const auto output_suffix = matches[1];
-        camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
+        camera_views.push_back({output_suffix, camera_dir, buffer_width, buffer_height});
     }
 
     const auto glsl = source_directory / "glsl";
