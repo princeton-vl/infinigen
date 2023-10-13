@@ -79,7 +79,6 @@ std::vector<T> read_buffer(GLenum color_attachment, const int width, const int h
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-
 int main(int argc, char *argv[]) {
 
     const fs::path source_directory = XSTR(PROJECT_SOURCE_DIR) ;
@@ -217,11 +216,10 @@ int main(int argc, char *argv[]) {
     const auto camera_dir = input_dir / frame_str / "cameras";
     assert_exists(camera_dir);
     for (const auto &entry : fs::directory_iterator(camera_dir)){
-        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
-        if (!matches.empty()){
-            const auto output_suffix = matches[1];
-            camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
-        }
+        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
+        MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
+        const auto output_suffix = matches[1];
+        camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
     }
 
     const auto glsl = source_directory / "glsl";

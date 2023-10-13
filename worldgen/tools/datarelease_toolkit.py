@@ -309,21 +309,30 @@ def fix_missing_camviewdata(local_folder, dummy):
             with outpath.open('wb') as f:
                 np.savez(f, camdata)
 
+def reorganize_old_framesfolder(frames_old):
+    
+    frames_old = Path(frames_old)
+    frames_dest = frames_old.parent/"frames"
+
+    for img_path in frames_old.iterdir():
+
+        if img_path.name == 'assets':
+            img_path.unlink()
+            continue
+
+        dtype, *_ = img_path.name.split('_')
+        idxs = parse_suffix(img_path.name)
+        new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
+        new_path.parent.mkdir(exist_ok=True, parents=True)
+        shutil.move(img_path, new_path)
+    frames_old.rmdir()
+
 def fix_frames_folderstructure(p):
 
     p = args.local_path / p
 
-    frames_dest = p/'frames'
     for frames_old in p.glob('frames_*'):
-        print(frames_old)
-        for img_path in frames_old.iterdir():
-
-            dtype, *_ = img_path.name.split('_')
-            idxs = parse_suffix(img_path.name)
-            new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
-            new_path.parent.mkdir(exist_ok=True, parents=True)
-            shutil.move(img_path, new_path)
-        frames_old.rmdir()
+        reorganize_old_framesfolder(frames_old)        
 
     for savemesh in p.glob('savemesh_*'):
         shutil.rmtree(savemesh)

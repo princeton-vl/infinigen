@@ -26,7 +26,6 @@ UPLOAD_MANIFEST = [
     ('logs/*', 'KEEP'),
     ('fine/scene.blend', 'KEEP'),
     ('run_pipeline.sh', 'KEEP'),
-    ('frames*/camview*.npz', 'KEEP_MANDATORY'),
 
     ('coarse/*.txt', 'KEEP'),
     ('coarse/*.csv', 'KEEP'),
@@ -35,7 +34,7 @@ UPLOAD_MANIFEST = [
     ('fine*/*.csv', 'KEEP'),
     ('fine*/*.json', 'KEEP'),
 
-    ('savemesh*', 'DELETE'),
+    ('savemesh*/*', 'DELETE'),
     ('coarse/assets', 'DELETE'),
     ('coarse/scene.blend', 'DELETE'),
     ('fine*/assets', 'DELETE'),

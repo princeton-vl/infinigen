@@ -185,13 +185,15 @@ def init_db_from_existing(output_folder: Path):
             logging.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
             return None
 
-        configs = existing_db.loc[existing_db["seed"] == seed_folder.name, "configs"].iloc[0]
-
         scene_dict = {
             'seed': seed_folder.name, 
             'all_done': SceneState.NotDone,
-            'configs': list(configs)
         }
+
+        if 'configs' in existing_db.columns:
+            mask = existing_db["seed"].astype(str) == seed_folder.name
+            configs = existing_db.loc[mask, "configs"].iloc[0]
+            scene_dict['configs']: list(configs)
 
         finish_key = 'FINISH_'
         for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):

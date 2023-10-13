@@ -29,6 +29,8 @@ from surfaces import surface
 from util import blender as butil
 from util import exporting as exputil
 from util.logging import Timer
+from tools.datarelease_toolkit import reorganize_old_framesfolder
+from tools.suffixes import get_suffix
 
 from .auto_exposure import nodegroup_auto_exposure
 
@@ -207,6 +209,43 @@ def global_flat_shading():
     for link in nw.links:
         nw.links.remove(link)
 
+def postprocess_blendergt_outputs(frames_folder, output_stem):
+
+    # Save flow visualization
+    flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
+    flow_array = load_flow(flow_dst_path)
+    np.save(flow_dst_path.with_name(f"Flow_{output_stem}.npy"), flow_array)
+    imwrite(flow_dst_path.with_name(f"Flow_{output_stem}.png"), colorize_flow(flow_array))
+    flow_dst_path.unlink()
+
+    # Save surface normal visualization
+    normal_dst_path = frames_folder / f"Normal_{output_stem}.exr"
+    normal_array = load_normals(normal_dst_path)
+    np.save(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.npy"), normal_array)
+    imwrite(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.png"), colorize_normals(normal_array))
+    normal_dst_path.unlink()
+
+    # Save depth visualization
+    depth_dst_path = frames_folder / f"Depth_{output_stem}.exr"
+    depth_array = load_depth(depth_dst_path)
+    np.save(flow_dst_path.with_name(f"Depth_{output_stem}.npy"), depth_array)
+    imwrite(depth_dst_path.with_name(f"Depth_{output_stem}.png"), colorize_depth(depth_array))
+    depth_dst_path.unlink()
+
+    # Save segmentation visualization
+    seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
+    seg_mask_array = load_seg_mask(seg_dst_path)
+    np.save(flow_dst_path.with_name(f"ObjectSegmentation_{output_stem}.npy"), seg_mask_array)
+    imwrite(seg_dst_path.with_name(f"ObjectSegmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
+    seg_dst_path.unlink()
+
+    # Save unique instances visualization
+    uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
+    uniq_inst_array = load_uniq_inst(uniq_inst_path)
+    np.save(flow_dst_path.with_name(f"InstanceSegmentation_{output_stem}.npy"), uniq_inst_array)
+    imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
+    uniq_inst_path.unlink()
+
 @gin.configurable
 def render_image(
     camera_id,
@@ -287,9 +326,12 @@ def render_image(
                 saving_ground_truth=flat_shading
             )
 
+    indices = dict(cam_rig=camera_rig_id, resample=0, subcam_id=subcam_id)
+
     ## Update output names
+    fileslot_suffix = get_suffix({'frame': "####", **indices})
     for file_slot in compositor_nodes:
-        file_slot.path = f"{file_slot.path}_####_{camera_rig_id:02d}_{subcam_id:02d}"
+        file_slot.path = f"{file_slot.path}{fileslot_suffix}"
 
     with Timer(f"get_camera"):
         camera = cam_util.get_camera(camera_rig_id, subcam_id)
@@ -312,43 +354,8 @@ def render_image(
         for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
             if flat_shading:
                 bpy.context.scene.frame_set(frame)
-
-                output_stem = f"{frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}"
-
-                # Save flow visualization
-                flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
-                flow_array = load_flow(flow_dst_path)
-                np.save(flow_dst_path.with_name(f"Flow_{output_stem}.npy"), flow_array)
-                imwrite(flow_dst_path.with_name(f"Flow_{output_stem}.png"), colorize_flow(flow_array))
-                flow_dst_path.unlink()
-
-                # Save surface normal visualization
-                normal_dst_path = frames_folder / f"Normal_{output_stem}.exr"
-                normal_array = load_normals(normal_dst_path)
-                np.save(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.npy"), normal_array)
-                imwrite(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.png"), colorize_normals(normal_array))
-                normal_dst_path.unlink()
-
-                # Save depth visualization
-                depth_dst_path = frames_folder / f"Depth_{output_stem}.exr"
-                depth_array = load_depth(depth_dst_path)
-                np.save(flow_dst_path.with_name(f"Depth_{output_stem}.npy"), depth_array)
-                imwrite(depth_dst_path.with_name(f"Depth_{output_stem}.png"), colorize_depth(depth_array))
-                depth_dst_path.unlink()
-
-                # Save segmentation visualization
-                seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
-                seg_mask_array = load_seg_mask(seg_dst_path)
-                np.save(flow_dst_path.with_name(f"ObjectSegmentation_{output_stem}.npy"), seg_mask_array)
-                imwrite(seg_dst_path.with_name(f"ObjectSegmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
-                seg_dst_path.unlink()
-
-                # Save unique instances visualization
-                uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
-                uniq_inst_array = load_uniq_inst(uniq_inst_path)
-                np.save(flow_dst_path.with_name(f"InstanceSegmentation_{output_stem}.npy"), uniq_inst_array)
-                imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
-                uniq_inst_path.unlink()
+                suffix = get_suffix(dict(frame=frame, **indices))
+                postprocess_blendergt_outputs(frames_folder, suffix)
             else:
                 cam_util.save_camera_parameters(
                     camera_ids=cam_util.get_cameras_ids(),
@@ -356,8 +363,9 @@ def render_image(
                     frame=frame
                 )
 
-
     for file in tmp_dir.glob('*.png'):
         file.unlink()
+
+    reorganize_old_framesfolder(frames_folder)
 
     logger.info(f"rendering time: {time.time() - tic}")

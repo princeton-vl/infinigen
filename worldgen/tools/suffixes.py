@@ -14,7 +14,10 @@ def get_suffix(indices):
 
     for key in SUFFIX_ORDERING:
         val = indices.get(key, 0)
-        suffix += '_' + (f'{val}' if key != 'frame' else f'{val:04d}')
+        if key == 'frame' and isinstance(val, int):
+            suffix += '_' + f'{val:04d}'
+        else:
+            suffix += '_' + str(val)
 
     return suffix
 

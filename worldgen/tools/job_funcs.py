@@ -339,9 +339,6 @@ def queue_opengl(
 
     output_suffix = get_suffix(output_indices)
 
-    tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
-    tmp_script.parent.mkdir(exist_ok=True)
-
     process_mesh_path = Path("../process_mesh/build/process_mesh").resolve()
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
     if (gt_testing):
@@ -355,21 +352,31 @@ def queue_opengl(
     assert input_folder.exists(), input_folder
     assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
 
+    tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
+    tmp_script.parent.mkdir(exist_ok=True)
     start_frame, end_frame = output_indices['frame'], output_indices['last_cam_frame']
     with tmp_script.open('w') as f:
-        f.write("set -e\n") # Necessary to detect if the script fails
-        for frame_idx in range(start_frame, end_frame + 1):
-            line = (
-                f"{process_mesh_path} --width 1920 --height 1080 -in {input_folder} "
-                f"--frame {frame_idx} -out {output_folder}\n"
-            )
+
+        lines = ["set -e"]
+        
+        lines += [
+            f"{process_mesh_path} -in {input_folder} --width 1280 --height 720 "
+            f"--frame {frame_idx} -out {output_folder}"
+            for frame_idx in range(start_frame, end_frame + 1)
+        ]
+            
+        worldgen = process_mesh_path.parent.parent.parent/'worldgen'
+        lines.append(f"python {worldgen/'tools'/'compress_masks.py'} {output_folder}")
+
+        lines.append(
+            f"python -c \"from tools.datarelease_toolkit import reorganize_old_framesfolder; "
+            f"reorganize_old_framesfolder({repr(str(output_folder))})\""
+        )
+        lines.append(f"touch {folder}/logs/FINISH_{taskname}")
+
+        for line in lines:
             line = re.sub("( \([A-Za-z0-9]+\))", "", line)
-            f.write(line)
-        worldgen = process_mesh_path.parent.parent
-        line = f"python {worldgen/'tools'/'compress_masks.py'} {output_folder}\n"
-        line = re.sub("( \([A-Za-z0-9]+\))", "", line)
-        f.write(line)
-        f.write(f"touch {folder}/logs/FINISH_{taskname}")
+            f.write(line + '\n')
 
     cmd = f"bash {tmp_script}".split()
 
