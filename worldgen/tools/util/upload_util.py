@@ -19,7 +19,7 @@ import shutil
 
 from . import smb_client, cleanup
 
-GDRIVE_NAME = None
+RCLONE_PREFIX_ENVVAR = "INFINIGEN_RCLONE_PREFIX"
 
 UPLOAD_MANIFEST = [
     ('frames*/*', 'KEEP'),
@@ -97,11 +97,14 @@ def apply_manifest_cleanup(scene_folder, manifest):
 
 def rclone_upload_file(src_file, dst_folder):
 
-    if GDRIVE_NAME is None:
-        raise ValueError(f'Please specify GDRIVE_NAME')
+    prefix = os.environ.get(RCLONE_PREFIX_ENVVAR)
+    if prefix is None:
+        raise ValueError(f'Please specify envvar {RCLONE_PREFIX_ENVVAR}')
+    if ':' not in prefix:
+        raise ValueError(f'Rclone prefix must contain ":" to separate remote from path prefix')
 
     assert os.path.exists(src_file), src_file
-    cmd = f"{shutil.which('rclone')} copy -P {src_file} {GDRIVE_NAME}:{dst_folder}"
+    cmd = f"{shutil.which('rclone')} copy -P {src_file} {prefix}{dst_folder}"
     subprocess.check_output(cmd.split())
     print(f"Uploaded {src_file}")
 
