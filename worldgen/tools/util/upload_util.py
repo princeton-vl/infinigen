@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import tarfile
 import json
+import itertools
 
 import time
 from datetime import datetime
@@ -34,9 +35,9 @@ UPLOAD_MANIFEST = [
     ('fine*/*.csv', 'KEEP'),
     ('fine*/*.json', 'KEEP'),
 
-    ('savemesh*/*', 'DELETE'),
+    ('savemesh*', 'DELETE'),
     ('coarse/assets', 'DELETE'),
-    ('coarse/scene.blend', 'DELETE'),
+    ('coarse/scene.blend*', 'DELETE'),
     ('fine*/assets', 'DELETE'),
     ('tmp', 'DELETE'),
     ('*/*.b_displacement.npy', 'DELETE'),
@@ -76,7 +77,13 @@ def apply_manifest_cleanup(scene_folder, manifest):
 
     for glob, action in manifest:
 
-        affected = scene_folder.glob(glob)
+        affected = set()
+        for p in scene_folder.glob(glob):
+            affected.add(p)
+            if p.is_dir():
+                affected |= set(p.rglob("*"))
+
+        print(f'{glob=} {action=} matched {len(affected)=}')
 
         if action == 'KEEP':
             keep |= affected
@@ -89,11 +96,18 @@ def apply_manifest_cleanup(scene_folder, manifest):
         else:
             raise ValueError(f'Unrecognized {action=}')
 
+    assert delete.isdisjoint(keep)
+
     for f in delete:
-        f.unlink()
-    for p in scene_folder.rglob('*'):
-        if p.is_dir() and len(list(p.iterdir())) == 0:
-            p.rmdir()
+        if not f.exists():
+            continue
+        if f.is_symlink() or not f.is_dir():
+            f.unlink()
+    for f in delete:
+        if not f.exists() or not f.is_dir():
+            continue
+        if len([f1 for f1 in f.rglob('*') if not f.is_dir()]) == 0:
+            shutil.rmtree(f)
 
 def rclone_upload_file(src_file, dst_folder):
 
@@ -150,7 +164,7 @@ def write_thumbnail(parent_folder, seed, all_images):
 
 def create_tarball(parent_folder):
     tar_path = parent_folder.with_suffix('.tar.gz')
-    print(f"Performing cleanup and tar to {tar_path}")
+    print(f"Tarring {parent_folder} to {tar_path}")
     with tarfile.open(tar_path, "w:gz") as tar:
         tar.add(parent_folder, os.path.sep)
     assert tar_path.exists()
@@ -179,13 +193,16 @@ def upload_job_folder(
     parent_folder = Path(parent_folder)
     seed = parent_folder.name
 
+    print(f'Performing cleanup on {parent_folder}')
+    apply_manifest_cleanup(parent_folder, UPLOAD_MANIFEST)
+
     upload_func = get_upload_func(method)
     
     upload_dest_folder = get_upload_destfolder(parent_folder.parent)
     if dir_prefix_len > 0:
         upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
 
-    all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
+    all_images = sorted(list(parent_folder.rglob("**/Image*.png")))
 
     upload_paths = [
         write_thumbnail(parent_folder, seed, all_images),

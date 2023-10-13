@@ -326,7 +326,7 @@ def render_image(
                 saving_ground_truth=flat_shading
             )
 
-    indices = dict(cam_rig=camera_rig_id, resample=0, subcam_id=subcam_id)
+    indices = dict(cam_rig=camera_rig_id, resample=0, subcam=subcam_id)
 
     ## Update output names
     fileslot_suffix = get_suffix({'frame': "####", **indices})

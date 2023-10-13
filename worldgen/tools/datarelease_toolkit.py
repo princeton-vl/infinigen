@@ -312,14 +312,14 @@ def fix_missing_camviewdata(local_folder, dummy):
 def reorganize_old_framesfolder(frames_old):
     
     frames_old = Path(frames_old)
+
+    for p in frames_old.iterdir():
+        if p.is_symlink():
+            p.unlink()
+
     frames_dest = frames_old.parent/"frames"
 
     for img_path in frames_old.iterdir():
-
-        if img_path.name == 'assets':
-            img_path.unlink()
-            continue
-
         dtype, *_ = img_path.name.split('_')
         idxs = parse_suffix(img_path.name)
         new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
