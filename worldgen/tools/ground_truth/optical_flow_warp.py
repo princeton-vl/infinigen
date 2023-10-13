@@ -10,6 +10,8 @@ import cv2
 import numpy as np
 from imageio.v3 import imread, imwrite
 
+from ..dataset_loader import get_frame_path
+
 """
 Usage: python -m tools.ground_truth.rigid_warp <scene-folder> <frame-index-i>
 Output:
@@ -26,14 +28,14 @@ if __name__ == "__main__":
     parser.add_argument('frame', type=int)
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
-    frame1 = f"{args.frame:04d}"
-    frame2 = f"{int(frame1)+1:04d}"
-    flow3d_path = args.folder / "frames" / "Flow3D" / "camera_0" / f"Flow3D_0_0_{frame1}_0.npy"
-    image1_path = args.folder / "frames" / "Image" / "camera_0" / f"Image_0_0_{frame1}_0.png"
-    image2_path = args.folder / "frames" / "Image" / "camera_0" / f"Image_0_0_{frame2}_0.png"
+    flow3d_path = get_frame_path(args.folder, 0, args.frame, "Flow3D", ".npy")
+    image1_path = get_frame_path(args.folder, 0, args.frame, "Image", ".png")
+    image2_path = get_frame_path(args.folder, 0, args.frame+1, "Image", ".png")
+    camview_path = get_frame_path(args.folder, 0, args.frame, 'camview', '.npz')
     assert flow3d_path.exists()
     assert image1_path.exists()
     assert image2_path.exists()
+    assert camview_path.exists()
 
     def warp_image_with_flow(image2, flow3d):
         H, W, _ = image2.shape
@@ -46,7 +48,8 @@ if __name__ == "__main__":
     image1 = imread(image1_path)
     H, W, _ = image1.shape
     shape = (W, H)
-    img_to_gt_ratio = 3840 / W
+    _, Wf = np.load(camview_path)['HW'] * 2
+    img_to_gt_ratio = Wf / W
 
     flow2d_resized = cv2.resize(np.load(flow3d_path), dsize=shape, interpolation=cv2.INTER_LINEAR)[...,:2] / img_to_gt_ratio
 

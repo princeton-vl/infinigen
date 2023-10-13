@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     image = imread(image_path)
     depth = np.load(depth_path)
-    K = np.load(camview_path, allow_pickle=True)['K']
+    K = np.load(camview_path)['K']
     cam_coords = unproject(depth, K)
 
     cam_coords = cam_coords * np.array([1., -1., -1])
