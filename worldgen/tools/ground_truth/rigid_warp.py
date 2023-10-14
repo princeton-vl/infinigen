@@ -49,11 +49,11 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    depth_path = get_frame_path(args.folder, 0, args.frame_1, 'Depth', '.npy')
-    image1_path = get_frame_path(args.folder, 0, args.frame_1, 'Image', '.png')
-    image2_path = get_frame_path(args.folder, 0, args.frame_2, 'Image', '.png')
-    camview1_path = get_frame_path(args.folder, 0, args.frame_1, 'camview', '.npz')
-    camview2_path = get_frame_path(args.folder, 0, args.frame_2, 'camview', '.npz')
+    depth_path = get_frame_path(args.folder, 0, args.frame_1, 'Depth_npy')
+    image1_path = get_frame_path(args.folder, 0, args.frame_1, 'Image_png')
+    image2_path = get_frame_path(args.folder, 0, args.frame_2, 'Image_png')
+    camview1_path = get_frame_path(args.folder, 0, args.frame_1, 'camview_npz')
+    camview2_path = get_frame_path(args.folder, 0, args.frame_2, 'camview_npz')
 
     image2 = imread(image2_path)
     image1 = imread(image1_path)

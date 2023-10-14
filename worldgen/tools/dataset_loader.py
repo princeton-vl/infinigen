@@ -14,46 +14,46 @@ ALLOWED_IMAGE_TYPES = {
 
     # Read docs/GroundTruthAnnotations.md for more explanations
 
-    ('Image', '.png'),
+    'Image_png',
     #('Image', '.exr'), # NOT IMPLEMENTED
 
-    ('camview', '.npz'), # contains intrinsic extrinsic etc
+    'camview_npz', # intrinisic, extrinsic, etc
 
     # names available via EITHER blender_gt.gin and opengl_gt.gin
-    ('Depth', '.npy'),
-    ('Depth', '.png'),
-    ('InstanceSegmentation', '.npz'),
-    ('InstanceSegmentation', '.png'),
-    ('ObjectSegmentation', '.npz'),
-    ('ObjectSegmentation', '.png'),
-    ('SurfaceNormal', '.npy'),
-    ('SurfaceNormal', '.png'),
-    ('Objects', '.json'),
+    'Depth_npy',
+    'Depth_png',
+    'InstanceSegmentation_npz',
+    'InstanceSegmentation_png',
+    'ObjectSegmentation_npz',
+    'ObjectSegmentation_png',
+    'SurfaceNormal_npy',
+    'SurfaceNormal_png',
+    'Objects_json',
 
     # blender_gt.gin only provides 2D flow. opengl_gt.gin produces Flow3D instead
-    ('Flow3D', '.npy'),
-    ('Flow3D', '.png'),
+    'Flow3D_npy',
+    'Flow3D_png',
 
     # names available ONLY from opengl_gt.gin
-    ('OcclusionBoundaries', '.png'),
-    ('TagSegmentation', '.npz'),
-    ('TagSegmentation', '.png'),
-    ('Flow3DMask', '.png'),
+    'OcclusionBoundaries_png',
+    'TagSegmentation_npz',
+    'TagSegmentation_png',
+    'Flow3DMask_png',
  
     # info from blender image rendering passes, usually enabled regardless of GT method
-    ('AO', '.png'), 
-    ('DiffCol', '.png'), 
-    ('DiffDir', '.png'), 
-    ('DiffInd', '.png'), 
-    ('Emit', '.png'), 
-    ('Env', '.png'), 
-    ('GlossCol', '.png'), 
-    ('GlossDir', '.png'), 
-    ('GlossInd', '.png'), 
-    ('TransCol', '.png'), 
-    ('TransDir', '.png'), 
-    ('TransInd', '.png'), 
-    ('VolumeDir', '.png'), 
+    'AO_png',
+    'DiffCol_png',
+    'DiffDir_png',
+    'DiffInd_png',
+    'Emit_png',
+    'Env_png',
+    'GlossCol_png',
+    'GlossDir_png',
+    'GlossInd_png',
+    'TransCol_png',
+    'TransDir_png',
+    'TransInd_png',
+    'VolumeDir_png',
 }
 
 def get_blocksize(scene_folder):
@@ -68,49 +68,46 @@ def get_framebounds_inclusive(scene_folder):
         parse_suffix(last)['frame']
     ) 
 
-def get_subcams_available(scene_folder):
-    rgb = scene_folder/'frames'/'Image'
-    return [int(p.name.split('_')[-1]) for p in rgb.iterdir()]
+def get_cameras_available(scene_folder):
+    return [int(p.name.split('_')[-1]) for p in (scene_folder/'frames'/'Image').iterdir()]
 
 def get_imagetypes_available(scene_folder):
     dtypes = []
     for dtype_folder in (scene_folder/'frames').iterdir():
         frames = dtype_folder/'camera_0'
         uniq = set(p.suffix for p in frames.iterdir())
-        dtypes += [(dtype_folder.name, u) for u in uniq]
+        dtypes += [f'{dtype_folder.name}_{u.strip(".")}' for u in uniq]
     return dtypes
 
-def get_frame_path(scene_folder, cam_idx, frame_idx, data_type_name, data_type_ext) -> Path:
-    imgname = f'{data_type_name}_0_0_{frame_idx:04d}_{cam_idx}{data_type_ext}'
-    return Path(scene_folder)/'frames'/data_type_name/f'camera_{cam_idx}'/imgname
+def get_frame_path(scene_folder, cam: int, frame_idx, data_type) -> Path:
+    data_type_name, data_type_ext = data_type.split('_')
+    imgname = f'{data_type_name}_0_0_{frame_idx:04d}_{cam}.{data_type_ext}'
+    return Path(scene_folder)/'frames'/data_type_name/f'camera_{cam}'/imgname
 
 class InfinigenSceneDataset:
 
     def __init__(
         self, 
         scene_folder: Path,
-        image_types: list[str] = None, # see ALLOWED_IMAGE_KEYS above. Use 'None' to retrieve all available PNG datatypes
-        
-        # [0] for monocular, [0, 1] for stereo, 'None' to use whatever is present in the dataset
-        subcam_keys=None,
+        data_types: list[str] = None, # see ALLOWED_IMAGE_KEYS above. Use 'None' to retrieve all available PNG datatypes
+        cameras=None,
         gt_for_first_camera_only=True,
     ):
 
         self.scene_folder = Path(scene_folder)
         self.gt_for_first_camera_only = gt_for_first_camera_only
 
-        if image_types is None:
-            image_types = get_imagetypes_available(self.scene_folder)
-            image_types = [v for v in image_types if v[1] != '.exr'] # loading not implemented yet
-            logging.info(f'{self.__class__.__name__} recieved image_types=None, using whats available in {scene_folder}: {image_types}')
-        for t in image_types:
+        if data_types is None:
+            data_types = get_imagetypes_available(self.scene_folder)
+            logging.info(f'{self.__class__.__name__} recieved data_types=None, using whats available in {scene_folder}: {data_types}')
+        for t in data_types:
             if t not in ALLOWED_IMAGE_TYPES:
-                raise ValueError(f'Recieved image_types containing {t} which is not in ALLOWED_IMAGE_TYPES')
-        self.image_types = image_types
+                raise ValueError(f'Recieved data_types containing {t} which is not in ALLOWED_IMAGE_TYPES')
+        self.data_types = data_types
 
-        if subcam_keys is None:
-            subcam_keys = get_subcams_available(self.scene_folder)
-        self.subcam_keys = subcam_keys
+        if cameras is None:
+            cameras = get_cameras_available(self.scene_folder)
+        self.cameras = cameras
 
         self.framebounds_inclusive = get_framebounds_inclusive(self.scene_folder)
 
@@ -136,46 +133,46 @@ class InfinigenSceneDataset:
             case _:
                 raise ValueError(f'Unhandled {path.suffix=} for {path=}')
 
-    def _imagetypes_to_load(self, subcam):
-        for image_type in self.image_types:
-            dtypename = image_type[0]
+    def _imagetypes_to_load(self, cam: int):
+        for data_type in self.data_types:
+            dtypename = data_type[0]
             if (
                 self.gt_for_first_camera_only and
-                subcam != 0 and
+                camera != 0 and
                 dtypename != 'Image' and
                 dtypename != 'camview'
             ):
                 continue
-            yield image_type
+            yield data_type
 
     def validate(self):
         for i in range(len(self)):
-            for j in self.subcam_keys:
-                for k in self._imagetypes_to_load(j):
+            for cam in self.cameras:
+                for dtype in self._imagetypes_to_load(cam):
                     frame = self.framebounds_inclusive[0]
-                    p = self.frame_path(frame + i, j, k)
+                    p = self.frame_path(frame + i, cam, dtype)
                     if not p.exists():
                         raise ValueError(f'validate() failed for {self.scene_folder}, could not find {p}')
 
-    def frame_path(self, i, subcam, dtype):
+    def frame_path(self, i: int, cam: int, dtype: str):
         frame_num = self.framebounds_inclusive[0] + i
-        return get_frame_path(self.scene_folder, subcam, frame_num, dtype[0], dtype[1])
+        return get_frame_path(self.scene_folder, cam, frame_num, dtype)
 
     def __getitem__(self, i):
 
-        def get_camera_images(subcam):
+        def get_camera_images(cam: int):
             imgs = {}
-            for dtype in self._imagetypes_to_load(subcam):
-                path = self.frame_path(subcam, i, subcam, dtype)
-                imgs[dtype[0]] = self.load_any_filetype(path)
+            for dtype in self._imagetypes_to_load(cam):
+                path = self.frame_path(i, cam, dtype)
+                imgs[dtype] = self.load_any_filetype(path)
             return imgs
         
-        per_camera_data = [get_camera_images(i) for i in self.subcam_keys]
+        per_camera_data = [get_camera_images(i) for i in self.cameras]
 
-        if len(per_camera_data) == 1:
-            per_camera_data = per_camera_data[0]
-
-        return per_camera_data
+        if len(self.cameras) == 1:
+            return per_camera_data[0]
+        else:
+            return per_camera_data
 
 def get_infinigen_dataset(data_folder: Path, mode='concat', validate=False, **kwargs):
     

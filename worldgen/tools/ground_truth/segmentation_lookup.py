@@ -74,10 +74,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load images & masks
-    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'ObjectSegmentation', '.npz')))
-    instance_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'InstanceSegmentation', '.npz')))
-    image = imread(get_frame_path(args.folder, 0, args.frame, "Image", ".png"))
-    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, 'Objects', '.json').read_text())
+    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'ObjectSegmentation_npz')))
+    instance_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'InstanceSegmentation_npz')))
+    image = imread(get_frame_path(args.folder, 0, args.frame, "Image_png"))
+    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, 'Objects_json').read_text())
     H, W = object_segmentation_mask.shape
     image = cv2.resize(image, dsize=(W, H), interpolation=cv2.INTER_LINEAR)
 

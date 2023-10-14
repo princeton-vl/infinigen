@@ -72,11 +72,11 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'ObjectSegmentation', '.npz')))
-    instance_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'InstanceSegmentation', '.npz')))
-    image = imread(get_frame_path(args.folder, 0, args.frame, "Image", ".png"))
-    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, 'Objects', '.json').read_text())
-    camview = np.load(get_frame_path(args.folder, 0, args.frame, 'camview', '.npz'))
+    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'ObjectSegmentation_npz')))
+    instance_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'InstanceSegmentation_npz')))
+    image = imread(get_frame_path(args.folder, 0, args.frame, "Image_png"))
+    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, 'Objects_json').read_text())
+    camview = np.load(get_frame_path(args.folder, 0, args.frame, 'camview_npz'))
 
     # Identify objects visible in the image
     unique_object_idxs = set(np.unique(object_segmentation_mask))

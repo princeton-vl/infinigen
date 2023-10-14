@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+
 import os
 from pathlib import Path
 import argparse
@@ -22,7 +27,7 @@ from .states import parse_suffix, get_suffix
 from . import dataset_loader
 from . import compress_masks
 
-TOOLKIT_VERSION = '0.1.1'
+TOOLKIT_VERSION = '0.2.0'
 
 IMAGE_RESIZE_ACTIONS = {
 
