@@ -15,6 +15,7 @@ from utils import (
 
 setup_gin()
 
+@pytest.mark.ci
 @pytest.mark.parametrize('pathspec', load_txt_list('test_materials_basic.txt'))
 def test_material_runs(pathspec, **kwargs):
     

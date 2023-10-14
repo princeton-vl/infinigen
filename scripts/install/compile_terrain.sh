@@ -37,10 +37,11 @@ surfaces=(
     "stone"
 )
 
-alias nx="/usr/local/cuda/bin/nvcc -O3 -Xcompiler -fPIC -shared "
+nvcc_location=$(which nvcc 2>/dev/null)
+alias nx="$nvcc_location -O3 -Xcompiler -fPIC -shared "
 
 # cuda part
-if [[ $USE_CUDA -eq 0 ]]; then
+if ! [ -x "$nvcc_location" ]; then
     echo "skipping cuda"
     rm -rf lib/cuda/utils/FastNoiseLite.so
     for element in "${elements[@]}"; do

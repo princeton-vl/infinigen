@@ -30,6 +30,7 @@ def test_noassets_noterrain():
     generate_nature.main(args)
 '''
 
+@pytest.mark.ci
 def test_compose_cube():
 
     setup_gin()

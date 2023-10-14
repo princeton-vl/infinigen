@@ -15,6 +15,7 @@ from utils import (
 
 setup_gin()
 
+@pytest.mark.ci
 @pytest.mark.parametrize('pathspec', load_txt_list('test_meshes_basic.txt'))
 def test_factory_runs(pathspec, **kwargs):
     fac_class = import_item(pathspec)
