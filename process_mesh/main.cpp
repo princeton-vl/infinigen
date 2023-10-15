@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.42"
+#define VERSION "1.43"
 
 using std::cout, std::cerr, std::endl;
 
@@ -120,16 +120,18 @@ int main(int argc, char *argv[]) {
     const std::string frame_str = "frame_" + zfill(4, frame_number);
     const auto camera_dir = input_dir / frame_str / "cameras";
     assert_exists(camera_dir);
-    int output_h, output_w;
+    std::vector<std::pair<fs::path, std::string>> camview_files;
     for (const auto &entry : fs::directory_iterator(camera_dir)){
         const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
+        const auto output_suffix = matches[1];
         MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
-        const npz ref_npz(entry);
-        const auto image_shape = ref_npz.read_data<long>("HW");
-        output_h = image_shape[0];
-        output_w = image_shape[1];
-        break;
+        camview_files.push_back({entry, output_suffix});
     }
+    MRASSERT(!camview_files.empty(), "camview_files is empty");
+
+    const auto image_shape = npz(camview_files[0].first).read_data<long>("HW");
+    const int output_h = image_shape[0];
+    const int output_w = image_shape[1];
     const int buffer_width = output_w * 2;
     const int buffer_height = output_h * 2;
 
@@ -222,13 +224,8 @@ int main(int argc, char *argv[]) {
     #endif
 
     std::vector<CameraView> camera_views;
-    for (const auto &entry : fs::directory_iterator(camera_dir)){
-        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
-        MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
-        const auto output_suffix = matches[1];
-        camera_views.push_back({output_suffix, camera_dir, output_w, output_h});
-    }
-    RASSERT(camera_views.size() > 0);
+    for (const auto &entry : camview_files)
+        camera_views.push_back({entry.second, camera_dir, output_w, output_h});
 
     const auto glsl = source_directory / "glsl";
     Shader spineShader((glsl / "wings.vert").c_str(), (glsl / "spine.frag").c_str(), (glsl / "spine.geom").c_str());

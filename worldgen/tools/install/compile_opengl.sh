@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 # Compile process_mesh (i.e. OpenGL-based ground truth)
 cd ./process_mesh
 cmake -S . -Bbuild -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_BUILD_TYPE=Release
