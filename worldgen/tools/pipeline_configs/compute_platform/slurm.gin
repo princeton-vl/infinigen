@@ -3,7 +3,7 @@ manage_datagen_jobs.num_concurrent = 'ENVVAR_INFINIGEN_NUMCONCURRENT_TARGET'
 slurm_submit_cmd.slurm_account = 'ENVVAR_INFINIGEN_SLURMPARTITION' # change to partitionname string, or None
 slurm_submit_cmd.slurm_niceness = 10000 
 get_slurm_banned_nodes.config_path = 'ENVVAR_INFINIGEN_SLURM_EXCLUDENODES_LIST'
-jobs_to_launch_next.max_queued_total = 8
+jobs_to_launch_next.max_queued_total = 10
 jobs_to_launch_next.max_stuck_at_task = 8
 
 # Combined (only used when `stereo_combined.gin` or similar is included)
