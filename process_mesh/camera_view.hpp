@@ -16,17 +16,17 @@ class CameraView
 
 private:
 
-    float calc_resolution_scale(const npz &camview) const;
+    // float calc_resolution_scale(const npz &camview) const;
     unsigned int create_framebuffer();
 
     glm::mat4 wc2img, projection, current_frame_view_matrix, next_frame_view_matrix;
     glm::vec3 position;
     double fx, fy, cx, cy;
-    const int buffer_width, buffer_height;
     float buffer_over_image; // should be >= 1
 
 public:
 
+    const int buffer_width, buffer_height, image_width, image_height;
     const std::string frame_string;
     unsigned int framebuffer, framebuffer_ob, framebuffer_next_faceids;
 

@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.40"
+#define VERSION "1.42"
 
 using std::cout, std::cerr, std::endl;
 
@@ -98,8 +98,6 @@ int main(int argc, char *argv[]) {
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", true);
 
     argparse::ArgumentParser program("main", VERSION);
-    program.add_argument("--width").default_value(1280).help("Width of output").scan<'i', int>();
-    program.add_argument("--height").default_value(720).help("Height of output").scan<'i', int>();
     program.add_argument("--frame").required().help("Current frame").scan<'i', int>();
     program.add_argument("-in", "--input_dir").required().help("The input/output dir");
     program.add_argument("-out", "--output_dir").required().help("The input/output dir");
@@ -109,12 +107,32 @@ int main(int argc, char *argv[]) {
     program.parse_args(argc, argv);
 
     const int occlusion_boundary_line_width = program.get<int>("--line_width");
-    const int factor = program.get<int>("--subdivide");
+
+    const fs::path input_dir(program.get<std::string>("--input_dir"));
+    const fs::path output_dir(program.get<std::string>("--output_dir"));
+    if (input_dir.stem().string() == "x")
+        exit(174); // Custom error code for checking if EGL is working
+    assert_exists(input_dir);
+    if (!fs::exists(output_dir))
+        fs::create_directory(output_dir);
+
     const int frame_number = program.get<int>("--frame");
-    const int output_h = program.get<int>("--height");
-    const int output_w = program.get<int>("--width");
-    const int buffer_width = output_w * factor;
-    const int buffer_height = output_h * factor;
+    const std::string frame_str = "frame_" + zfill(4, frame_number);
+    const auto camera_dir = input_dir / frame_str / "cameras";
+    assert_exists(camera_dir);
+    int output_h, output_w;
+    for (const auto &entry : fs::directory_iterator(camera_dir)){
+        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
+        MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
+        const npz ref_npz(entry);
+        const auto image_shape = ref_npz.read_data<long>("HW");
+        output_h = image_shape[0];
+        output_w = image_shape[1];
+        break;
+    }
+    const int buffer_width = output_w * 2;
+    const int buffer_height = output_h * 2;
+
     if ((buffer_width > 10000) || (buffer_height > 10000)){
         cout << "The image size [" << buffer_width << " x " << buffer_height << "] is too large." << endl;
         return 1;
@@ -203,24 +221,14 @@ int main(int argc, char *argv[]) {
         }
     #endif
 
-    const fs::path input_dir(program.get<std::string>("--input_dir"));
-    const fs::path output_dir(program.get<std::string>("--output_dir"));
-    if (input_dir.stem().string() == "x")
-        exit(174); // Custom error code for checking if EGL is working
-    assert_exists(input_dir);
-    if (!fs::exists(output_dir))
-        fs::create_directory(output_dir);
-
     std::vector<CameraView> camera_views;
-    const std::string frame_str = "frame_" + zfill(4, frame_number);
-    const auto camera_dir = input_dir / frame_str / "cameras";
-    assert_exists(camera_dir);
     for (const auto &entry : fs::directory_iterator(camera_dir)){
         const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
         MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
         const auto output_suffix = matches[1];
-        camera_views.push_back({output_suffix, camera_dir, buffer_width, buffer_height});
+        camera_views.push_back({output_suffix, camera_dir, output_w, output_h});
     }
+    RASSERT(camera_views.size() > 0);
 
     const auto glsl = source_directory / "glsl";
     Shader spineShader((glsl / "wings.vert").c_str(), (glsl / "spine.frag").c_str(), (glsl / "spine.geom").c_str());

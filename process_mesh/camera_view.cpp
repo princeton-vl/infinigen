@@ -56,15 +56,15 @@ Eigen::Matrix<T_final, h, w> load_matrix(const npz &camview, const std::string &
     return tmp.transpose().template cast<T_final>();
 }
 
-float CameraView::calc_resolution_scale(const npz &camview) const{
-    const auto image_shape = camview.read_data<long>("HW");
-    RASSERT((buffer_width % image_shape[1]) == 0);
-    RASSERT((buffer_height % image_shape[0]) == 0);
-    RASSERT((buffer_height / image_shape[0]) == (buffer_width / image_shape[1]));
-    return buffer_height / image_shape[0];
-}
+// float CameraView::calc_resolution_scale(const npz &camview) const{
+//     const auto image_shape = camview.read_data<long>("HW");
+//     RASSERT((buffer_width % image_shape[1]) == 0);
+//     RASSERT((buffer_height % image_shape[0]) == 0);
+//     RASSERT((buffer_height / image_shape[0]) == (buffer_width / image_shape[1]));
+//     return buffer_height / image_shape[0];
+// }
 
-CameraView::CameraView(const std::string fstr, const fs::path input_dir, const int width, const int height) : frame_string(fstr), buffer_width(width), buffer_height(height)
+CameraView::CameraView(const std::string fstr, const fs::path input_dir, const int width, const int height) : frame_string(fstr), image_height(height), image_width(width), buffer_height(height*2), buffer_width(width*2)
 {
     // Current Frame
     const fs::path current_frame_cam_path = input_dir / ("camview_"+frame_string+".npz");
@@ -84,7 +84,7 @@ CameraView::CameraView(const std::string fstr, const fs::path input_dir, const i
     // Set WC -> Img Transformation
     const Matrix3f K_mat3x3 = load_matrix<3, 3>(current_camview, "K");
     Matrix4f K_mat = Matrix4f::Identity();
-    buffer_over_image = calc_resolution_scale(current_camview);
+    buffer_over_image = 2;//calc_resolution_scale(current_camview);
     K_mat.block<2,3>(0, 0) = buffer_over_image * K_mat3x3.block<2,3>(0, 0);
     wc2img = glm::make_mat4(Matrix4f(K_mat * FLIP_Y_Z * blender_camera_pose.inverse()).data());
 

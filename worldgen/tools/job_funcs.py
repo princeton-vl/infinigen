@@ -360,7 +360,7 @@ def queue_opengl(
         lines = ["set -e"]
         
         lines += [
-            f"{process_mesh_path} -in {input_folder} --width 1280 --height 720 "
+            f"{process_mesh_path} -in {input_folder} "
             f"--frame {frame_idx} -out {output_folder}"
             for frame_idx in range(start_frame, end_frame + 1)
         ]
