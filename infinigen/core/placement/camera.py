@@ -41,6 +41,8 @@ from infinigen.core.util.math import clip_gaussian, lerp
 from infinigen.core.util import camera
 from infinigen.core.util.random import random_general
 
+from infinigen.tools.suffixes import get_suffix
+
 logger = logging.getLogger(__name__)
 
 CAMERA_RIGS_DIRNAME = 'CameraRigs'
@@ -531,13 +533,15 @@ def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
             camera_obj.data.dof.use_dof = use_dof
         # Saving camera parameters
         K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        output_file = output_folder / f"camview_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npz"
+        suffix = get_suffix(dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id))
+        output_file = output_folder / f"camview{suffix}.npz"
 
         height_width = np.array((
             bpy.context.scene.render.resolution_y, 
             bpy.context.scene.render.resolution_x
         ))
         T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.))
+        print("SAVE CAMERAS", output_file)
         np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 if __name__ == "__main__":

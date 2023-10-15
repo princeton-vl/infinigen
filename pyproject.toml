@@ -44,7 +44,8 @@ dependencies = [
     "landlab>=2.6.0", 
     "pycparser==2.21", 
     "pyrender",
-    "json5"
+    "json5",
+    "pandas"
 ]
 
 [project.optional-dependencies]

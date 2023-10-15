@@ -4,16 +4,28 @@
 # Authors: Lahav Lipson
 
 import argparse
+import colorsys
 import json
-from itertools import chain
+import sys
 from pathlib import Path
 
-import colorsys
 import cv2
 import numpy as np
+from einops import pack, rearrange
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
+from tqdm import tqdm
 
+from ..compress_masks import recover
+from ..dataset_loader import get_frame_path
+
+"""
+Usage: python -m tools.ground_truth.bounding_boxes_3d <scene-folder> <frame-index> [--query <query>]
+Output:
+- testbed
+    - A.png # Original image
+    - B.png # Original image + 3D-bounding-boxes for the provided query
+"""
 
 def transform(T, p):
     assert T.shape == (4,4)
@@ -46,88 +58,84 @@ def calc_bbox_pts(min_pt, max_pt):
 
     return points, faces
 
+# Deterministic, but probably slow. Good enough for visualization.
+def arr2color(e):
+    s = np.random.RandomState(np.array(e, dtype=np.uint32))
+    return (np.asarray(colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)) * 255).astype(np.uint8)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('folder', type=Path)
     parser.add_argument('frame', type=int)
-    parser.add_argument('--query', type=str)
+    parser.add_argument('--query', type=str, default=None)
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    folder_data = json.loads((args.folder / "summary.json").read_text())
+    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'ObjectSegmentation_npz')))
+    instance_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, 'InstanceSegmentation_npz')))
+    image = imread(get_frame_path(args.folder, 0, args.frame, "Image_png"))
+    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, 'Objects_json').read_text())
+    camview = np.load(get_frame_path(args.folder, 0, args.frame, 'camview_npz'))
 
-    depth_paths = folder_data["Depth"]['npy']["00"]["00"]
-    image_paths = folder_data["Image"]['png']["00"]["00"]
-    Ks = folder_data["Camera Intrinsics"]['npy']["00"]["00"]
-    Ts = folder_data["Camera Pose"]['npy']["00"]["00"]
+    # Identify objects visible in the image
+    unique_object_idxs = set(np.unique(object_segmentation_mask))
+    present_objects = [obj for obj in object_json if (obj['object_index'] in unique_object_idxs)]
 
-    frame = f"{args.frame:04d}"
-
-    image = imread(args.folder / image_paths[frame])
-    H, W, _ = image.shape
-    camera_pose = np.load(args.folder / Ts[frame])
-    K = np.load(args.folder / Ks[frame])
-
-    tag_mask = np.load(args.folder / folder_data["TagSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    instance_segmentation_mask = np.load(args.folder / folder_data["InstanceSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    object_segmentation_mask = np.load(args.folder / folder_data["ObjectSegmentation"]['npy']["00"]["00"][f"{args.frame:04d}"])
-    combined_mask = np.stack((object_segmentation_mask, instance_segmentation_mask), axis=-1).reshape((-1, 2))
-    uniq = np.unique(combined_mask, axis=0)
-
-    tag_lookup = json.loads((args.folder / folder_data["Mask Tags"][f"{args.frame:04d}"]).read_text())
-    tag_lookup_rev = {v:k for k,v in tag_lookup.items()}
-    tags_in_this_image = set(chain.from_iterable(tag_lookup_rev[e].split('.') for e in np.unique(tag_mask) if e > 0))
-
-    bounding_boxes = json.loads((args.folder / folder_data["Objects"]["json"]["00"]["00"][frame]).read_text())
-    unique_tag_numbers = set(np.unique(tag_mask))
-
-    canvas = np.copy(image)
-
+    # Complain if the query isn't valid/present
     if args.query is None:
         print('`--query` not specified. Choices are:')
-        for q in tags_in_this_image:
-            print(f"- {q}")
-    elif args.query not in tags_in_this_image:
+        for q in present_objects:
+            print(f"- {q['name']}")
+        sys.exit(0)
+    elif not any((args.query.lower() in obj['name'].lower()) for obj in present_objects):
         print(f'"{args.query}" doesn\'t match any tag in this image. Choices are:')
-        for q in tags_in_this_image:
-            print(f"- {q}")
-    else:
-        for k, v in tag_lookup.items():
-            if args.query in k.split('.'):
-                for bbox in bounding_boxes:
-                    tags = bbox['tags']
-                    if bbox['min'] is None:
-                        continue
-                    min_pt = np.asarray(bbox['min'])
-                    max_pt = np.asarray(bbox['max'])
-                    size = np.linalg.norm(max_pt - min_pt)
-                    if (v in tags) and (v in unique_tag_numbers):
-                        bbox_points, faces = calc_bbox_pts(min_pt, max_pt)
-                        for instance_id, model_mat in bbox['model matrices'].items():
-                            ident = np.asarray((bbox['object index'], int(instance_id)), dtype=np.int64)
-                            if not np.any(np.all(ident == uniq, axis=-1)):
-                                continue
-                            bbox_points_wc = transform(np.asarray(model_mat), bbox_points)
-                            bbox_points_cc = transform(inv(camera_pose), bbox_points_wc)
-                            bbox_points_h = (K @ bbox_points_cc.T).T
-                            bbox_points_uv = (bbox_points_h[:,:2] / bbox_points_h[:,[2]]).astype(int)
-                            if bbox_points_h[:,2].min() < 0:
-                                continue
-                            points_in_faces_uv = bbox_points_uv[faces.flatten()].reshape((6, 4, 2))
-                            sign = np.cross(points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0], points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0])
-                            sign = sign * np.array([-1, 1, 1, -1, -1, 1])
+        for q in present_objects:
+            print(f"- {q['name']}")
+        sys.exit(0)
 
-                            gen = np.random.RandomState(ident.astype(np.uint32))
-                            color = (np.asarray(colorsys.hsv_to_rgb(gen.uniform(0, 1), gen.uniform(0.1, 1), 1)) * 255).astype(np.uint8).tolist()
-                            for is_visible, indices in zip(sign < 0, faces):
-                                if is_visible:
-                                    for i in range(4):
-                                        canvas = cv2.line(canvas, bbox_points_uv[indices[i]], bbox_points_uv[indices[(i+1)%4]], color=color, thickness=2)
+    H, W, _ = image.shape
+    camera_pose = camview['T']
+    K = camview['K']
 
+    # Assign unique colors to each object instance
+    combined_mask, _ = pack([object_segmentation_mask, instance_segmentation_mask], 'h w *')
+    combined_mask = rearrange(combined_mask, 'h w d -> (h w) d')
+    visible_instances = np.unique(combined_mask, axis=0) # this line is a bottleneck
+    visible_instances = {tuple(row) for row in visible_instances}
 
-        args.output.mkdir(exist_ok=True)
-        imwrite(args.output / "A.png", image)
-        print(f'Wrote {args.output / "A.png"}')
-        imwrite(args.output / "B.png", canvas)
-        print(f'Wrote {args.output / "B.png"}')
+    boxes_to_draw = []
+    for obj in tqdm(present_objects, desc='Identifying boxes to draw'):
+        if args.query.lower() in obj['name'].lower():
+            for instance_id, model_mat in zip(obj['instance_ids'], np.asarray(obj['model_matrices'])):
+                if ((obj['object_index'],) + tuple(instance_id)) in visible_instances:
+                    boxes_to_draw.append(dict(model_mat=model_mat, min=obj['min'], max=obj['max'], color=arr2color(instance_id).tolist()))
+
+    canvas = np.copy(image)
+    for bbox in tqdm(boxes_to_draw, desc='Drawing boxes'):
+        if bbox['min'] is None: # Object has no volume (e.g. a light/camera)
+            continue
+        min_pt = np.asarray(bbox['min'])
+        max_pt = np.asarray(bbox['max'])
+        size = np.linalg.norm(max_pt - min_pt)
+        bbox_points, faces = calc_bbox_pts(min_pt, max_pt)
+        bbox_points_wc = transform(bbox['model_mat'], bbox_points)
+        bbox_points_cc = transform(inv(camera_pose), bbox_points_wc)
+        bbox_points_h = (K @ bbox_points_cc.T).T
+        bbox_points_uv = (bbox_points_h[:,:2] / bbox_points_h[:,[2]]).astype(int)
+        if bbox_points_h[:,2].min() < 0: # bbox goes behind the camera
+            continue
+        points_in_faces_uv = bbox_points_uv[faces.flatten()].reshape((6, 4, 2))
+        sign = np.cross(points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0], points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0])
+        sign = sign * np.array([-1, 1, 1, -1, -1, 1])
+
+        for is_visible, indices in zip(sign < 0, faces):
+            if is_visible:
+                for i in range(4):
+                    canvas = cv2.line(canvas, bbox_points_uv[indices[i]], bbox_points_uv[indices[(i+1)%4]], color=bbox['color'], thickness=1)
+
+    args.output.mkdir(exist_ok=True)
+    imwrite(args.output / "A.png", image)
+    print(f'Wrote {args.output / "A.png"}')
+    imwrite(args.output / "B.png", canvas)
+    print(f'Wrote {args.output / "B.png"}')

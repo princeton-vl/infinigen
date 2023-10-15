@@ -1,10 +1,10 @@
-import subprocess
-import time
-from copy import copy
-from pathlib import Path
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import gin
-import submitit
+# Authors: Alexander Raistrick
+
+from pathlib import Path
+from copy import copy
 
 SUFFIX_ORDERING = ['cam_rig', 'resample', 'frame', 'subcam']
 
@@ -19,7 +19,10 @@ def get_suffix(indices):
 
     for key in SUFFIX_ORDERING:
         val = indices.get(key, 0)
-        suffix += '_' + (f'{val}' if key != 'frame' else f'{val:04d}')
+        if key == 'frame' and isinstance(val, int):
+            suffix += '_' + f'{val:04d}'
+        else:
+            suffix += '_' + str(val)
 
     return suffix
 

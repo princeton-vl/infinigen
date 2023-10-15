@@ -193,13 +193,15 @@ def init_db_from_existing(output_folder: Path):
             logger.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
             return None
 
-        configs = existing_db.loc[existing_db["seed"] == seed_folder.name, "configs"].iloc[0]
-
         scene_dict = {
             'seed': seed_folder.name, 
             'all_done': SceneState.NotDone,
-            'configs': list(configs)
         }
+
+        if 'configs' in existing_db.columns:
+            mask = existing_db["seed"].astype(str) == seed_folder.name
+            configs = existing_db.loc[mask, "configs"].iloc[0]
+            scene_dict['configs']: list(configs)
 
         finish_key = 'FINISH_'
         for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
@@ -493,16 +495,15 @@ def jobs_to_launch_next(
     max_stuck_at_task: int = None
 ):
     
+    def inflight(s):
+        return s['num_running'] + s['num_done']
+    
     if greedy:
-        scenes = sorted(
-            copy(scenes), 
-            key=lambda s: s['num_running'] + s['num_done'], 
-            reverse=True
-        )
+        scenes = sorted(copy(scenes), key=inflight, reverse=True)
 
-    done_counts = np.array([s['num_done'] + s['num_running'] for s in scenes])
-    numdone_unique, curr_at_each_numdone = np.unique(done_counts, return_counts=True)
-    numdone_unique = list(numdone_unique)
+    inflight_counts = np.array([inflight(s) for s in scenes if s['all_done'] == SceneState.NotDone])
+    inflight_uniq, curr_per_inflight = np.unique(inflight_counts, return_counts=True)
+    inflight_uniq = list(inflight_uniq)
 
     total_queued = sum(
         v for (s, _), v in state_counts.items() 
@@ -518,14 +519,20 @@ def jobs_to_launch_next(
         if scene.get('any_fatal_crash', False):
             continue
 
-        ndone_if_launch = scene['num_done'] + 1
+        inflight_if_launch = inflight(scene) + 1
         stuck_at_next = (
-            curr_at_each_numdone[numdone_unique.index(ndone_if_launch)] 
-            if ndone_if_launch in numdone_unique else 0
+            curr_per_inflight[inflight_uniq.index(inflight_if_launch)] 
+            if inflight_if_launch in inflight_uniq else 0
         )
 
-        if max_stuck_at_task is not None and stuck_at_next >= max_stuck_at_task:
-            logging.info(f"{seed} - Not launching due to {stuck_at_next=} > {max_stuck_at_task} for {ndone_if_launch=}")
+        if (
+            max_stuck_at_task is not None and 
+            stuck_at_next >= max_stuck_at_task
+        ):
+            logging.info(
+                f"{seed} - Not launching due to {stuck_at_next=} >"
+                f" {max_stuck_at_task} for {inflight_if_launch=}"
+            )
             continue
 
         for rec in iterate_scene_tasks(scene, args, monitor_all=False):

@@ -15,7 +15,7 @@ import gin
 import submitit
 
 from infinigen.datagen.util.submitit_emulator import LocalJob
-from infinigen.tools.data_suffixes import get_suffix, parse_suffix # LEGACY, so others can import
+from infinigen.tools.suffixes import SUFFIX_ORDERING, get_suffix, parse_suffix
 
 class JobState:
     NotQueued = "notqueued"
@@ -32,6 +32,7 @@ class SceneState:
 
 CONCLUDED_JOBSTATES = {JobState.Succeeded, JobState.Failed, JobState.Cancelled}
 JOB_OBJ_SUCCEEDED = 'MARK_AS_SUCCEEDED'
+
 
 # Will throw exception if the scene was not found. Sometimes this happens if the scene was queued very very recently
 # Keys: JobID ArrayJobID User Group State Clustername Ncpus Nnodes Ntasks Reqmem PerNode Cput Walltime Mem ExitStatus

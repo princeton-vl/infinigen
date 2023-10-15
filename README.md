@@ -44,6 +44,7 @@ Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image &
 - [Installation Guide](docs/Installation.md)
 - ["Hello World": Generate your first Infinigen scene](docs/HelloWorld.md)
 - [Configuring Infinigen](docs/ConfiguringInfinigen.md)
+- [Downloading pre-generated data](docs/PreGeneratedData.md)
 - [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
