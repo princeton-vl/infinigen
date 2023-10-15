@@ -109,29 +109,32 @@ class CrabClawFactory(CrabLegFactory):
     @staticmethod
     def animate_bones(arma, bones, params):
         main_bones = [b for b in bones if 'extra' not in b.name]
-        bend_bones_lerp(arma, main_bones, params['claw_curl'], params['freq'])
+        bend_bones_lerp(arma, main_bones, params['claw_curl'], params['freq'], symmetric=False)
         extra_bones = [b for b in bones if 'extra' in b.name]
-        bend_bones_lerp(arma, extra_bones, params['claw_lower_curl'], params['freq'])
+        bend_bones_lerp(arma, extra_bones, params['claw_lower_curl'], params['freq'], symmetric=False)
 
     def sample_params(self):
+        params = super().sample_params()
+        z_length = params['y_length'] * uniform(1, 1.2)
         x_mid_first = uniform(.2, .25)
-        x_mid_second = uniform(.4, .45)
-        y_mid_first = uniform(1.2, 1.6)
-        y_mid_second = y_mid_first * log_uniform(.8, 1.2)
-        y_expand = uniform(1.2, 1.4)
+        x_mid_second = uniform(.4, .6)
+        y_mid_first = uniform(1.5, 2.)
+        y_mid_second = y_mid_first * log_uniform(1., 1.5)
+        y_expand = uniform(1.4, 1.5)
         noise_strength = uniform(.01, .02)
         top_shift = uniform(.6, .8)
         claw_y_first = uniform(.6, 1.5)
         claw_y_second = claw_y_first * uniform(.4, .6)
         claw_x_depth = (1 - x_mid_second) * uniform(.3, .5)
         claw_x_turn = uniform(.2, .4)
-        claw_z_width = uniform(.1, .2)
+        claw_z_width = uniform(.2, .3)
         claw_spike_strength = uniform(.02, .03)
         claw_spike_distance = uniform(.03, .06)
         lower_z_scale = uniform(.4, .6)
-        lower_scale = uniform(.6, .8)
+        lower_scale = uniform(.75, .9)
         lower_z_offset = uniform(-.5, .5)
-        return {**super().sample_params(),
+        return {**params,
+            'z_length': z_length,
             'x_mid_first': x_mid_first,
             'x_mid_second': x_mid_second,
             'y_mid_first': y_mid_first,
@@ -155,8 +158,8 @@ class CrabClawFactory(CrabLegFactory):
 class LobsterClawFactory(CrabClawFactory):
     def sample_params(self):
         y_expand = uniform(1.4, 1.5)
-        y_mid_first = uniform(1.2, 1.4)
-        y_mid_second = y_mid_first * log_uniform(1.2, 1.4)
+        y_mid_first = uniform(1.5, 2.)
+        y_mid_second = y_mid_first * log_uniform(1.2, 1.6)
         claw_y_first = uniform(1.2, 1.5)
         claw_y_second = claw_y_first * uniform(.7, .8)
         noise_strength = uniform(.01, .02)

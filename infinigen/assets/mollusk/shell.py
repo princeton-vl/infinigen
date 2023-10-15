@@ -21,6 +21,7 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
+
 class ShellBaseFactory(BaseMolluskFactory):
 
     def __init__(self, factory_seed, coarse=False):
@@ -128,18 +129,12 @@ class ShellBaseFactory(BaseMolluskFactory):
         lower = butil.deep_clone_obj(upper)
         lower.scale[-1] = -1
         butil.apply_transform(lower)
-        parent = butil.spawn_empty('shell')
-        upper.parent = parent
-        lower.parent = parent
-        self.animate_shell(lower, upper)
-        return parent
 
-    def animate_shell(self, lower, upper):
         base = uniform(0, np.pi / 4)
         lower.rotation_euler[1] = - base
-        rot_driver = upper.driver_add('rotation_euler')[1].driver
-        rot_driver.expression = repeated_driver(-base, -base - uniform(np.pi / 6, np.pi / 3),  #
-                                                1 / log_uniform(30, 100))
+        upper.rotation_euler[1] = - base - uniform(np.pi / 6, np.pi / 3)
+        obj = join_objects([lower, upper])
+        return obj
 
 
 class ScallopBaseFactory(ShellBaseFactory):

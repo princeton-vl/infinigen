@@ -134,7 +134,11 @@ def min_max_edgelen(mesh):
     verts = np.array([v.co for v in mesh.vertices])
     edges = np.array([e.vertices for e in mesh.edges])
     lens = np.linalg.norm(verts[edges[:, 0]] - verts[edges[:, 1]], axis=-1)
-    return lens.min(), lens.max()
+    lens = np.sort(lens)
+    if len(lens) <= 4:
+        return lens[0], lens[-1]
+    else:
+        return lens[len(lens) // 4], lens[-len(lens) // 4]
 
 
 def adapt_mesh_resolution(obj, face_size, method, approx=0.2, **kwargs):

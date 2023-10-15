@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -19,6 +20,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util import blender as butil
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
+
 class FallenTreeFactory(BaseDeformedTreeFactory):
 
     @staticmethod
@@ -28,7 +30,8 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
         selection = nw.compare('LESS_THAN', nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 1)
         offset = nw.scalar_multiply(nw.new_node(Nodes.Clamp, [nw.new_node(Nodes.NoiseTexture, input_kwargs={
             'Vector': nw.new_node(Nodes.InputPosition),
-            'Scale': scale}), .3, .7]), strength)
+            'Scale': scale
+        }), .3, .7]), strength)
         offset = nw.scalar_multiply(offset, nw.build_float_curve(x, [(-radius, 1), (radius, 0)]))
         anchors = (-1, 0), (-.5, 0), (0, -1), (.5, 0), (1, 0)
         offset = nw.scalar_multiply(offset, nw.build_float_curve(surface.eval_argument(nw, metric_fn), anchors))
@@ -53,18 +56,18 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
         surface.add_geomod(obj, self.geo_xyz, apply=True)
         return obj
 
-    def create_asset(self, face_size, **params):
-        upper = self.build_tree(face_size, **params)
+    def create_asset(self, i, distance=0, **params):
+        upper = self.build_tree(i, distance, **params)
         radius = max([np.sqrt(v.co[0] ** 2 + v.co[1] ** 2) for v in upper.data.vertices if v.co[-1] < .1])
         self.trunk_surface.apply(upper)
         butil.apply_modifiers(upper)
         lower = deep_clone_obj(upper, keep_materials=True)
-        cut_center = np.array([0, 0, uniform(.8, 1.5)])
+        cut_center = np.array([0, 0, uniform(.6, 1.2)])
         cut_normal = np.array([uniform(.1, .2), 0, 1])
         noise_strength = uniform(.3, .5)
         noise_scale = uniform(10, 15)
-        self.build_half(upper, cut_center, cut_normal, noise_strength, noise_scale, radius, True)
-        self.build_half(lower, cut_center, cut_normal, noise_strength, noise_scale, radius, False)
+        upper = self.build_half(upper, cut_center, cut_normal, noise_strength, noise_scale, radius, True)
+        lower = self.build_half(lower, cut_center, cut_normal, noise_strength, noise_scale, radius, False)
 
         ortho = np.array([-cut_normal[0], 0, 1])
         locations = np.array([v.co for v in lower.data.vertices])
@@ -75,7 +78,9 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
 
         x, _, z = np.mean(np.stack([v.co for v in upper.data.vertices]), 0)
         r = np.sqrt(x * x + z * z)
-        upper.rotation_euler[1] = np.pi / 2 + np.arcsin((highest[-1] - uniform(0, .2)) / r) - np.arctan(x / z)
+        if r > 0:
+            upper.rotation_euler[1] = np.pi / 2 + np.arcsin((highest[-1] - uniform(0, .2)) / r) - np.arctan(
+                x / z)
         upper.location = highest
         butil.apply_transform(upper, loc=True)
         remove_vertices(upper, lambda x, y, z: z < -.5)

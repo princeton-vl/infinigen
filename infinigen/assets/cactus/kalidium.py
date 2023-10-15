@@ -36,12 +36,12 @@ class KalidiumBaseCactusFactory(BaseCactusFactory):
             'path_kargs': lambda idx: {'n_pts': 5, 'std': .5, 'momentum': .85, 'sz': .01},
             'spawn_kargs': lambda idx: {'init_vec': (0, 0, 1)}
         }
-        obj = build_radius_tree(None, branch_config, .003)
+        obj = build_radius_tree(None, branch_config, .005)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius'])
         return obj
 
     def create_asset(self, face_size=.01, **params) -> bpy.types.Object:
-        resolution = 16
+        resolution = 20
         obj = new_cube(location=(1, 1, 1))
         butil.modify_mesh(obj, 'ARRAY', count=resolution, relative_offset_displace=(1, 0, 0),
                           use_merge_vertices=True)
@@ -53,9 +53,9 @@ class KalidiumBaseCactusFactory(BaseCactusFactory):
         obj.location = -1, -1, -.1
         butil.apply_transform(obj, loc=True)
         remove_vertices(obj,
-                        lambda x, y, z: (x ** 2 + y ** 2 + (z - 1) ** 2 > 1) | (uniform(0, 1, len(x)) < .2))
-        end_indices = np.nonzero(read_co(obj)[:, -1] < 2 / resolution)[0]
-        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, 4))
+                        lambda x, y, z: (x ** 2 + y ** 2 + (z - 1) ** 2 > 1.1) | (uniform(0, 1, len(x)) < .05))
+        end_indices = np.nonzero(read_co(obj)[:, -1] < 5 / resolution)[0]
+        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, 5))
         displace_vertices(obj, lambda x, y, z: uniform(-.8 / resolution, .8 / resolution, (3, len(x))))
         with butil.ViewportMode(obj, 'EDIT'):
             bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')

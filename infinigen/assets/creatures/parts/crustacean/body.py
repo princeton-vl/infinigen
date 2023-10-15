@@ -9,10 +9,12 @@ from numpy.random import uniform
 from scipy.interpolate import interp1d
 
 from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.utils.draw import geo_symmetric_texture
-from infinigen.assets.utils.decorate import add_distance_to_boundary, displace_vertices, join_objects, read_co
+from infinigen.assets.utils.decorate import add_distance_to_boundary, displace_vertices, join_objects, read_co, write_co
 from infinigen.assets.utils.draw import leaf, spin
 from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.object import new_line
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.placement import placeholder_locs
@@ -37,23 +39,36 @@ class CrabBodyFactory(PartFactory):
         obj = join_objects([upper, lower])
 
         x, y, z = read_co(obj).T
-        write_attr_data(obj, 'ratio', np.where(z > 0, 1, 0))
+        write_attr_data(obj, 'ratio', np.where(z > np.min(z) * params['color_cutoff'], 1, 0))
         butil.modify_mesh(obj, 'WELD', merge_threshold=.001)
 
         height_scale = interp1d([0, -x_tip + .01, -x_tip - .01, -1], [0, bend_height, bend_height, 0],
                                 'quadratic', fill_value="extrapolate")
         displace_vertices(obj, lambda x, y, z: (0, 0, height_scale(x / x_length)))
-
         self.add_head(obj, params)
+
+        line = new_line(x_length)
+        line.location[0] -= x_length
+        butil.apply_transform(line, loc=True)
+
+        line.rotation_euler[1] = np.pi / 2
+        butil.apply_transform(line)
+        butil.modify_mesh(line, 'SIMPLE_DEFORM', deform_method='BEND', angle=-params['bend_angle'],
+                          deform_axis='Y')
+        line.rotation_euler[1] = -np.pi / 2
+        butil.apply_transform(line)
+        skeleton = read_co(line)
+        butil.delete(line)
+
+        obj.rotation_euler[1] = np.pi / 2
+        butil.apply_transform(obj)
         butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='BEND', angle=-params['bend_angle'],
                           deform_axis='Y')
-
-        co = read_co(obj)
-        head_z = co[np.argmax(co[:, 0])][-1]
-        skeleton = np.zeros((2, 3))
-        skeleton[0, 0] = -x_length
-        skeleton[1, -1] = head_z
-        return Part(skeleton, obj)
+        obj.rotation_euler[1] = -np.pi / 2
+        butil.apply_transform(obj)
+        joints = {i: Joint((0, 0, 0), bounds=np.array([[0, 0, 0], [0, 0, 0]])) for i in
+            np.linspace(0, 1, 5, endpoint=True)}
+        return Part(skeleton, obj, joints=joints)
 
     def add_head(self, obj, params):
         def offset(nw: NodeWrangler, vector):
@@ -154,15 +169,15 @@ class CrabBodyFactory(PartFactory):
         back_midpoint = uniform(.7, .9)
         front_angle = uniform(np.pi / 12, np.pi / 8)
         back_angle = uniform(np.pi / 6, np.pi / 4)
-        tip_size = uniform(.1, .3)
-        upper_z = x_length * uniform(.25, .35)
+        tip_size = uniform(.05, .15)
+        upper_z = x_length * uniform(.15, .3)
         upper_alpha = uniform(.8, .9)
         upper_shift = uniform(-.6, -.4)
-        noise_strength = uniform(.03, .05)
+        noise_strength = uniform(.02, .03)
         noise_scale = uniform(8, 15)
         lower_alpha = uniform(.96, .98)
-        lower_z = x_length * uniform(.35, .45)
-        lower_shift = uniform(.2, .4)
+        lower_z = x_length * uniform(.3, .4)
+        lower_shift = uniform(.1, .2)
         spike_height = uniform(.05, .2) if uniform(0, 1) < .5 else 0
         spike_depth = log_uniform(.4, 2)
         spike_center = uniform(.3, .7)
@@ -171,8 +186,9 @@ class CrabBodyFactory(PartFactory):
         mouth_x = uniform(.1, .15)
         mouth_noise_scale = uniform(10, 15)
         mouth_noise_strength = uniform(.1, .2)
-        bend_angle = uniform(np.pi / 6, np.pi / 4)
+        bend_angle = uniform(0, np.pi / 3)
         bend_height = uniform(.08, .12)
+        color_cutoff = uniform(0, .5)
         return {
             'x_length': x_length,
             'y_length': y_length,
@@ -202,6 +218,7 @@ class CrabBodyFactory(PartFactory):
             'mouth_noise_strength': mouth_noise_strength,
             'bend_angle': bend_angle,
             'bend_height': bend_height,
+            'color_cutoff': color_cutoff,
         }
 
 
@@ -243,15 +260,15 @@ class LobsterBodyFactory(CrabBodyFactory):
         return Part(skeleton, obj)
 
     def sample_params(self):
-        x_length = uniform(.4, .6)
+        x_length = uniform(.6, .8)
         y_length = uniform(.15, .2)
         z_length = y_length * uniform(1, 1.2)
         midpoint_first = uniform(.65, .75)
         midpoint_second = uniform(.95, 1.05)
         z_shift = uniform(.4, .6)
         z_shift_midpoint = uniform(.2, .3)
-        noise_strength = uniform(.015, .02)
-        noise_scale = uniform(2, 5)
+        noise_strength = uniform(.02, .04)
+        noise_scale = uniform(5, 8)
         bottom_shift = uniform(.3, .5)
         bottom_cutoff = uniform(.2, .3)
         mouth_z = uniform(.5, .8)

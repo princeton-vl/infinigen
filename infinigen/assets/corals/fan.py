@@ -21,6 +21,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.assets.utils.tag import tag_object, tag_nodegroup
 
+
 class FanBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.
     noise_strength = 0.
@@ -44,7 +45,7 @@ class FanBaseCoralFactory(BaseCoralFactory):
         butil.apply_transform(obj)
 
         end_indices = np.nonzero(read_co(obj)[:, -1] < 1e-2)[0]
-        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, np.random.randint(1, 4)))
+        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, 5))
         texture = bpy.data.textures.new(name='fan', type='STUCCI')
         texture.noise_scale = uniform(.5, 1)
         butil.modify_mesh(obj, 'DISPLACE', texture=texture, strength=uniform(.5, 1.), direction='Y')

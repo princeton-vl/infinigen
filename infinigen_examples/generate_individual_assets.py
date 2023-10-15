@@ -11,6 +11,8 @@ import argparse
 import importlib
 import math
 import os
+import re
+import subprocess
 import sys
 import traceback
 from itertools import product
@@ -71,6 +73,7 @@ def build_scene_asset(factory_name, idx):
             bpy.data.worlds['World'].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
             bpy.context.scene.view_settings.exposure = -1
         bpy.context.view_layer.objects.active = asset
+        parent = asset
         if asset.type == 'EMPTY':
             meshes = [o for o in asset.children_recursive if o.type == 'MESH']
             sizes = []
@@ -80,11 +83,18 @@ def build_scene_asset(factory_name, idx):
             i = np.argmax(np.array(sizes))
             asset = meshes[i]
         if not args.fire:
+            if parent.animation_data is not None:
+                drivers = parent.animation_data.drivers.values()
+                for d in drivers:
+                    parent.driver_remove(d.data_path)
+            co = read_base_co(asset)
+            x_min, x_max = np.amin(co, 0), np.amax(co, 0)
+            parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
+            butil.apply_transform(parent, loc=True)
             bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
             plane = bpy.context.active_object
-            plane.location[-1] = np.amin(read_base_co(asset), 0)[-1]
+            plane.location[-1] = x_min[-1]
             plane.is_shadow_catcher = True
-
             material = bpy.data.materials.new('plane')
             material.use_nodes = True
             material.node_tree.nodes['Principled BSDF'].inputs[0].default_value = .015, .009, .003, 1
@@ -127,9 +137,6 @@ def build_scene_surface(factory_name, idx):
 def build_scene(path, idx, factory_name, args):
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
-    (path / 'images').mkdir(exist_ok=True)
-    imgpath = path / f"images/image_{idx:03d}.png"
-    scene.render.filepath = str(imgpath)
     scene.render.resolution_x, scene.render.resolution_y = map(int, args.resolution.split('x'))
     scene.cycles.samples = args.samples
     butil.clear_scene()
@@ -155,7 +162,7 @@ def build_scene(path, idx, factory_name, args):
         bpy.ops.mesh.primitive_cylinder_add(radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2))
 
     if args.cam_center > 0 and asset:
-        co = read_base_co(asset)
+        co = read_base_co(asset) + asset.location
         center.location = (np.amin(co, 0) + np.amax(co, 0)) / 2
         center.location[-1] += args.cam_zoff
 
@@ -175,17 +182,28 @@ def build_scene(path, idx, factory_name, args):
         bpy.data.worlds['World'].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
         bpy.context.scene.view_settings.exposure = -2
 
-    if args.render:
-        if args.render_animation:
-            with Suppress():
-                bpy.ops.render.render(animation = True, write_still=True)
-        else:
-            with Suppress():
-                bpy.ops.render.render(write_still=True)
+    if args.render == 'image':
+        (path / 'images').mkdir(exist_ok=True)
+        imgpath = path / f"images/image_{idx:03d}.png"
+        scene.render.filepath = str(imgpath)
+        bpy.ops.render.render(write_still=True)
+    elif args.render == 'video':
+        bpy.context.scene.frame_end = args.frame_end
+        parent(asset).driver_add('rotation_euler')[
+            -1].driver.expression = f"frame/{args.frame_end / (2 * np.pi * args.cycles)}"
+        (path / 'frames' / f'scene_{idx:03d}').mkdir(parents=True, exist_ok=True)
+        imgpath = path / f"frames/scene_{idx:03d}/frame_###.png"
+        scene.render.filepath = str(imgpath)
+        bpy.ops.render.render(animation=True)
+
+
+def parent(obj):
+    return obj if obj.parent is None else obj.parent
 
 
 def adjust_cam_distance(asset, camera, margin):
     co = read_base_co(asset)
+    co += asset.location
     lowest = np.amin(co, 0)
     highest = np.amax(co, 0)
     bbox = np.array(list(product(*zip(lowest, highest))))
@@ -247,6 +265,10 @@ def setup_camera(args):
     
 
 
+def subclasses(cls):
+    return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in subclasses(c)])
+
+
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces['Geometry Nodes']
     
@@ -270,7 +292,7 @@ def main(args):
 
     factories = list(args.factories)
     if 'ALL_ASSETS' in factories:
-        factories += [f.__name__ for f in factory.AssetFactory.__subclasses__()]
+        factories += [f.__name__ for f in subclasses(factory.AssetFactory)]
         factories.remove('ALL_ASSETS')
     if 'ALL_SCATTERS' in factories:
         factories += [f.stem for f in Path('surfaces/scatters').iterdir()]
@@ -284,16 +306,29 @@ def main(args):
         if fac_path.exists() and args.skip_existing:
             continue
         fac_path.mkdir(exist_ok=True)
-        for idx in range(args.n_images):
-            try:
+        n_images = args.n_images
+        if not args.postprocessing_only:
+            for idx in range(n_images):
+                if args.seed >= 0: idx = args.seed
                 build_scene(fac_path, idx, fac, args)
-            except Exception as e:
-                print(e)
-                continue
-        if args.render:
-            make_grid(args, fac_path, idx + 1)
-            if args.film_transparent:
-                strip_alpha_background.main(60, [fac_path / 'images', ])
+                try:
+                    pass
+                except Exception as e:
+                    print(e)
+                    continue
+        if args.render == 'image':
+            make_grid(args, fac_path, n_images)
+        if args.render == 'video':
+            (fac_path / 'videos').mkdir(exist_ok=True)
+            for i in range(n_images):
+                subprocess.run(
+                    f'ffmpeg -y -r 24 -pattern_type glob -i "{fac_path}/frames/scene_{i:03d}/frame*.png" '
+                    f'{fac_path}/videos/video_{i:03d}.mp4', shell=True)
+
+
+def snake_case(s):
+    return '_'.join(
+        re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', s.replace('-', ' '))).split()).lower()
 
 
 def make_args():
@@ -304,7 +339,7 @@ def make_args():
     parser.add_argument("-m", '--margin', default=.1,
                         help="Margin between the asset the boundary of the image when automatically adjusting "
                              "the camera")
-    parser.add_argument('-r', '--resolution', default='1024x1024', type=str,
+    parser.add_argument('-R', '--resolution', default='1024x1024', type=str,
                         help="Image resolution widthxheight")
     parser.add_argument('-p', '--samples', default=200, type=int, help="Blender cycles samples")
     parser.add_argument('-l', '--lighting', default=0, type=int, help="Lighting seed")
@@ -317,18 +352,22 @@ def make_args():
                         help="Distance from the camera to the look-at position")
     parser.add_argument('-a', '--cam_angle', default=(-30, 0, 0), type=float, nargs='+',
                         help="Camera rotation in XYZ")
-    parser.add_argument('-c', '--cam_center', default=1, type=int,
-                        help="Whether the camera look-at is at the center of the asset")
-    parser.add_argument('-x', '--render', action='store_false', help="Whether to render the scene")
+    parser.add_argument('-c', '--cam_center', default=1, type=int, help="Camera rotation in XYZ")
+    parser.add_argument('-r', '--render', default='image', type=str,
+                        help="Whether to render the scene in images or video")
     parser.add_argument('-b', '--best_ratio', default=9 / 16, type=float,
                         help="Best aspect ratio for compiling the images into asset grid")
-    parser.add_argument('--fire', action = 'store_true')
-    parser.add_argument('--fire_res', default = 100, type = int)
-    parser.add_argument('--fire_duration', default = 30, type = int)
-    parser.add_argument('--render_animation', action = 'store_true')
-    parser.add_argument('-t', '--film_transparent', default=1, type=int)
-    parser.add_argument('--scale_reference', action='store_true', help="Add the scale reference")
-    parser.add_argument('--skip_existing', action='store_true', help="Skip existing scenes and renders")
+    parser.add_argument('-F', '--fire', action = 'store_true')
+    parser.add_argument('-I', '--fire_res', default = 100, type = int)
+    parser.add_argument('-U', '--fire_duration', default = 30, type = int)
+    parser.add_argument('-t', '--film_transparent', default=1, type=int,
+                        help="Whether the background is transparent")
+    parser.add_argument('-E', '--frame_end', type=int, default=120, help="End of frame in videos")
+    parser.add_argument('-C', '--cycles', type=float, default=1, help="render video cycles")
+    parser.add_argument('-A', '--scale_reference', action='store_true', help="Add the scale reference")
+    parser.add_argument('-S', '--skip_existing', action='store_true', help="Skip existing scenes and renders")
+    parser.add_argument('-P', '--postprocessing_only', action='store_true', help="Only run postprocessing")
+    parser.add_argument('-D', '--seed', type=int, default=-1, help="Run a specific seed.")
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
 
     return init.parse_args_blender(parser)

@@ -95,7 +95,7 @@ def join_and_rig_parts(
     adaptive_resolution=True, adapt_mode='remesh', min_remesh_size=0.01, 
     smooth_joins=True, smooth_attrs=False,
     rigging=False, constraints=False, rig_before_subdiv=False,
-    materials=True,
+    materials=True, roll='GLOBAL_POS_Y',
     **_
 ):
 
@@ -104,7 +104,7 @@ def join_and_rig_parts(
 
     if rigging:
         logger.debug(f'Computing creature rig')
-        arma, ik_targets = creature_rigging.creature_rig(root, genome, parts, constraints=constraints)
+        arma, ik_targets = creature_rigging.creature_rig(root, genome, parts, constraints=constraints, roll=roll)
         arma.show_in_front=True
 
     with butil.SelectObjects(extras):

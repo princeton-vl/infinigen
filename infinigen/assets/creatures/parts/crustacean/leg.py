@@ -9,7 +9,7 @@ from numpy.random import uniform
 
 from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones_lerp
 from infinigen.assets.creatures.util.creature import Part, PartFactory
-from infinigen.assets.creatures.util.genome import  Joint
+from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.utils.draw import make_segments
 from infinigen.assets.utils.decorate import join_objects, read_co
 from infinigen.assets.utils.misc import log_uniform
@@ -37,7 +37,7 @@ class CrabLegFactory(PartFactory):
         segments = make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params)
         for obj in segments:
             z = read_co(obj).T[-1]
-            write_attr_data(obj, 'ratio', 1 + np.where(z > 0, 0, uniform(.5, 1.) * z / params['y_length']))
+            write_attr_data(obj, 'ratio', 1 + np.where(z > 0, 0, uniform(.8, 1.5) * z / params['y_length']))
         return segments, x_cuts
 
     def sample_params(self):
@@ -74,7 +74,7 @@ class CrabLegFactory(PartFactory):
 
     @staticmethod
     def animate_bones(arma, bones, params):
-        bend_bones_lerp(arma, bones, params['leg_curl'], params['freq'])
+        bend_bones_lerp(arma, bones, params['leg_curl'], params['freq'], rot=params['leg_rot'])
 
 
 class LobsterLegFactory(CrabLegFactory):

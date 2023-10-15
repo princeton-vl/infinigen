@@ -338,7 +338,7 @@ def parent_bones_by_part(creature, arma, part_bones):
             bone.bone.select = False
 
 
-def creature_rig(root, genome, parts, constraints=True):
+def creature_rig(root, genome, parts, constraints=True, roll='GLOBAL_POS_Y'):
     data = bpy.data.armatures.new(name=f'{root.name}.armature_data')
     arma = bpy.data.objects.new(f'{root.name}_armature', data)
     bpy.context.scene.collection.objects.link(arma)
@@ -349,7 +349,7 @@ def creature_rig(root, genome, parts, constraints=True):
     # force recalculate roll to eliminate bad guesses made by blender
     with butil.ViewportMode(arma, mode='EDIT'):
         bpy.ops.armature.select_all(action='SELECT')
-        bpy.ops.armature.calculate_roll(type='GLOBAL_POS_Y')
+        bpy.ops.armature.calculate_roll(type=roll)
 
     targets = create_ik_targets(arma, parts_atts, bones)
     for t in targets:

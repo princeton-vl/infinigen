@@ -24,7 +24,7 @@ def repeated_driver(start, end, freq, off=None, seed=None):
         return f"{start}+{end - start}*(smoothstep(0,{u},{t})-smoothstep({phase},{phase + v},{t}))"
 
 
-def bend_bones_lerp(arma, bones, total, freq):
+def bend_bones_lerp(arma, bones, total, freq, rot=None, symmetric=True):
     bone_lengths = []
     for bone in bones:
         length = bone.bone['length'] if isinstance(bone.bone['length'], (int, float)) else 0
@@ -32,16 +32,26 @@ def bend_bones_lerp(arma, bones, total, freq):
             bone_lengths.append((bone, length))
     bone_lengths = list(sorted(bone_lengths, key=lambda _: _[1]))
     bones = [b for (b, _) in bone_lengths] if bone_lengths else bones
-    factory = bones[0].bone['factory_class']
-    with FixedSeed(int_hash((arma.parent.name, factory))):
-        ratio = uniform(.5, 1, len(bones))
+    bone = bones[0].bone
+    hashable = arma.parent.name, bone['factory_class'], bone['index'] + (bone['side'] > 0) * symmetric
+    with FixedSeed(int_hash(hashable)):
+        ratio = uniform(1, 2, len(bones))
         ratio /= ratio.sum()
         total = [(t if uniform(0, 1) < .5 else (t[1], t[0])) if isinstance(t, tuple) else (t, t) for t in total]
-        (x0, x1), (y0, y1), (z0, z1) = total
-        for bone, r in zip(bones, ratio):
+        o0, o1, o2 = uniform(0, 1, 3)
+        seed = np.random.randint(1e5)
+        for i, (bone, r) in enumerate(zip(bones, ratio)):
             s = bone.bone['side']
             bone.rotation_mode = 'XYZ'
+            (x0, x1), (y0, y1), (z0, z1) = total
+            if rot is not None and i == 0:
+                x0 += rot[0]
+                x1 += rot[0]
+                y0 += rot[1]
+                y1 += rot[1]
+                z0 += rot[2]
+                z1 += rot[2]
             driver_x, driver_y, driver_z = [_.driver for _ in bone.driver_add('rotation_euler')]
-            driver_x.expression = f"({repeated_driver(x0, x1, freq)})*{s * r}"
-            driver_y.expression = f"({repeated_driver(y0, y1, freq)})*{s * r}"
-            driver_z.expression = f"({repeated_driver(z0, z1, freq)})*{r}"
+            driver_x.expression = f"({repeated_driver(x0, x1, freq, o0, seed)})*{r}"
+            driver_y.expression = f"({repeated_driver(y0, y1, freq, o1, seed)})*{r}"
+            driver_z.expression = f"({repeated_driver(z0, z1, freq, o2, seed)})*{s * r}"

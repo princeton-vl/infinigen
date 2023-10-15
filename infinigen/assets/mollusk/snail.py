@@ -138,6 +138,7 @@ class SnailBaseFactory(BaseMolluskFactory):
         obj.rotation_euler = uniform(0, np.pi * 2, 3)
         butil.apply_transform(obj)
         obj.location = -center(obj)
+        obj.location[-1] += obj.dimensions[-1] * .4
         butil.apply_transform(obj, loc=True)
         surface.add_geomod(obj, self.geo_affine, apply=True)
         tag_object(obj, 'snail')

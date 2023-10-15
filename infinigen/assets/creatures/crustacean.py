@@ -50,7 +50,6 @@ def crustacean_genome(sp):
     leg_fn = sp['leg_fn']
     leg_params = {k: v for k, v in leg_fn().params.items() if k in shared_leg_params}
     leg_fac = [leg_fn({**leg_params, 'x_length': leg_x_lengths[i]}) for i in range(n_legs)]
-
     for i in range(n_legs):
         for side in [1, -1]:
             attach(part(leg_fac[i]), obj, (x_legs[i + 1], leg_angle, .99),
@@ -93,7 +92,7 @@ def crustacean_genome(sp):
     eye_joint_x, eye_joint_y, eye_joint_z = sp['eye_joint']
     eye_fac = CrustaceanEyeFactory()
     for side in [1, -1]:
-        attach(part(eye_fac), obj, (x_eye, eye_angle, .8), Joint((eye_joint_x, eye_joint_y, eye_joint_z)),
+        attach(part(eye_fac), obj, (x_eye, eye_angle, .99), Joint((eye_joint_x, eye_joint_y, eye_joint_z)),
                side=side)
     # Add antenna
     antenna_fn = sp['antenna_fn']
@@ -105,20 +104,26 @@ def crustacean_genome(sp):
             attach(part(antenna_fac), obj, (x_antenna, antenna_angle, .99), Joint(sp['antenna_joint']),
                    side=side)
 
-    anim_keys = ['leg_curl', 'claw_curl', 'tail_curl', 'antenna_curl', 'claw_lower_curl']
-    anim_params = {k: v for k, v in sp.items() if k in anim_keys}
-    anim_params['freq'] = 1 / log_uniform(100, 200)
+    anim_params = {k: v for k, v in sp.items() if 'curl' in k or 'rot' in k}
+    anim_params['freq'] = sp['freq']
     postprocess_params = dict(material={'base_hue': sp['base_hue']}, anim=anim_params)
     return CreatureGenome(obj, postprocess_params)
 
 
+def build_base_hue():
+    if uniform(0, 1) < .6:
+        return uniform(0, .05)
+    else:
+        return uniform(.4, .45)
+
+
 def shader_crustacean(nw: NodeWrangler, params):
-    value_shift = log_uniform(1, 5)
+    value_shift = log_uniform(2, 10)
     base_hue = params['base_hue']
-    bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .6), log_uniform(.02, .05) * value_shift), 1
-    dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .6),
+    bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.8, 1.), log_uniform(.02, .05) * value_shift), 1
+    dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.8, 1.),
                                       log_uniform(.01, .02) * value_shift), 1
-    light_color = *colorsys.hsv_to_rgb(base_hue, uniform(.0, .2), 1), 1
+    light_color = *colorsys.hsv_to_rgb(base_hue, uniform(.0, .4), log_uniform(.2, 1.)), 1
     specular = uniform(.6, .8)
     specular_tint = uniform(0, 1)
     clearcoat = uniform(.2, .8)
@@ -127,7 +132,7 @@ def shader_crustacean(nw: NodeWrangler, params):
     x, y, z = nw.separate(nw.new_node(Nodes.NewGeometry).outputs['Position'])
     color = build_color_ramp(nw, nw.new_node(Nodes.MapRange, [
         nw.new_node(Nodes.MusgraveTexture, [nw.combine(x, nw.math('ABSOLUTE', y), z)],
-                    input_kwargs={'Scale': log_uniform(10, 20)}), -1, 1, 0, 1]), [.0, .3, .7, 1.],
+                    input_kwargs={'Scale': log_uniform(5, 8)}), -1, 1, 0, 1]), [.0, .3, .7, 1.],
                              [bright_color, bright_color, dark_color, dark_color], )
     ratio = nw.new_node(Nodes.Attribute, attrs={'attribute_name': 'ratio'}).outputs['Fac']
     color = nw.new_node(Nodes.MixRGB, [ratio, light_color, color])
@@ -201,7 +206,8 @@ class CrustaceanFactory(AssetFactory):
         joined, extras, arma, ik_targets = join_and_rig_parts(root, parts, genome,
                                                               postprocess_func=crustacean_postprocessing,
                                                               rigging=rigging, min_remesh_size=.005,
-                                                              face_size=kwargs['face_size'])
+                                                              face_size=kwargs['face_size'],
+                                                              roll='GLOBAL_POS_Z')
         if animate and arma is not None:
             animate_crustacean_move(arma, genome.postprocess_params['anim'])
         else:
@@ -209,6 +215,7 @@ class CrustaceanFactory(AssetFactory):
         return root
 
     def crab_params(self):
+        base_leg_curl = uniform(-np.pi * .15, np.pi * .15)
         return {
             'body_fn': CrabBodyFactory,
             'leg_fn': CrabLegFactory,
@@ -216,21 +223,21 @@ class CrustaceanFactory(AssetFactory):
             'tail_fn': None,
             'antenna_fn': None,
             'fin_fn': None,
-            'leg_x_length': lambda p: p['y_length'] * log_uniform(1.5, 2.5),
-            'claw_x_length': lambda p: p['y_length'] * log_uniform(1.2, 2.),
+            'leg_x_length': lambda p: p['y_length'] * log_uniform(2., 3.),
+            'claw_x_length': lambda p: p['y_length'] * log_uniform(1.5, 1.8),
             'tail_x_length': lambda p: 0,
             'antenna_x_length': lambda p: 0,
             'fin_x_length': lambda p: 0,
-            'x_legs': (np.linspace(uniform(.1, .15), uniform(.55, .6), n_limbs) + np.arange(n_limbs) * .02)[
+            'x_legs': (np.linspace(uniform(.08, .1), uniform(.55, .6), n_limbs) + np.arange(n_limbs) * .02)[
             ::-1],
             'leg_angle': uniform(.42, .44),
-            'leg_joint': (np.sort(uniform(-5, 5, n_legs))[::1 if uniform(0, 1) > .5 else -1],
-            np.sort(uniform(0, 10, n_legs)),
-            np.sort(uniform(75, 105, n_legs) + uniform(-10, 10)) + np.arange(n_legs) * 2),
-            'x_claw_offset': uniform(.04, .06),
+            'leg_joint': (
+            np.sort(uniform(-5, 5, n_legs))[::1 if uniform(0, 1) > .5 else -1], np.sort(uniform(0, 10, n_legs)),
+            np.sort(uniform(65, 105, n_legs) + uniform(-8, 8)) + np.arange(n_legs) * 2),
+            'x_claw_offset': uniform(.08, .1),
             'claw_angle': uniform(.44, .46),
             'claw_joint': (uniform(-50, -40), uniform(-20, 20), uniform(10, 20)),
-            'x_eye': uniform(.88, .92),
+            'x_eye': uniform(.92, .96),
             'eye_angle': uniform(.8, .85),
             'eye_joint': (0, uniform(-60, -0), uniform(10, 70)),
             'x_antenna': 0,
@@ -238,15 +245,19 @@ class CrustaceanFactory(AssetFactory):
             'antenna_joint': (0, 0, 0),
             'x_fins': 0,
             'fin_joints': ([0] * n_side_fin, [0] * n_side_fin, [0] * n_side_fin),
-            'leg_curl': ((-np.pi * .6, 0), 0, 0),
-            'claw_curl': ((-np.pi * .2, np.pi * .2), 0, 0),
+            'leg_rot': (uniform(np.pi * .8, np.pi * 1.1), 0, 0),
+            'leg_curl': (
+                (-np.pi * 1.1, -np.pi * .7), 0, (base_leg_curl - np.pi * .02, base_leg_curl + np.pi * .02)),
+            'claw_curl': ((-np.pi * .2, np.pi * .1), 0, (-np.pi * .1, np.pi * .1)),
             'claw_lower_curl': ((-np.pi * .1, np.pi * .1), 0, 0),
             'tail_curl': (0, 0, 0),
             'antenna_curl': (0, 0, 0),
-            'base_hue': uniform(.0, .1) if uniform(0, 1) < .5 else uniform(.4, .5),
+            'base_hue': build_base_hue(),
+            'freq': 1 / log_uniform(100, 200),
         }
 
     def lobster_params(self):
+        base_leg_curl = uniform(-np.pi * .4, np.pi * .4)
         return {
             'body_fn': LobsterBodyFactory,
             'leg_fn': LobsterLegFactory,
@@ -254,35 +265,37 @@ class CrustaceanFactory(AssetFactory):
             'tail_fn': CrustaceanTailFactory,
             'antenna_fn': LobsterAntennaFactory,
             'fin_fn': CrustaceanFinFactory,
-            'leg_x_length': lambda p: p['x_length'] * log_uniform(.8, 1.2),
-            'claw_x_length': lambda p: p['x_length'] * log_uniform(1.2, 2.5),
+            'leg_x_length': lambda p: p['x_length'] * log_uniform(.6, .8),
+            'claw_x_length': lambda p: p['x_length'] * log_uniform(1.2, 1.5),
             'tail_x_length': lambda p: p['x_length'] * log_uniform(1.2, 1.8),
             'antenna_x_length': lambda p: p['x_length'] * log_uniform(1.6, 3.),
             'fin_x_length': lambda p: p['y_length'] * log_uniform(1.2, 2.5),
-            'x_legs': (np.linspace(uniform(.0, .05), uniform(.25, .3), n_limbs) + np.arange(n_limbs) * .02)[
-            ::-1],
+            'x_legs': (np.linspace(.05, uniform(.2, .25), n_limbs) + np.arange(n_limbs) * .02)[::-1],
             'leg_angle': uniform(.3, .35),
-            'leg_joint': (uniform(-5, 5, n_legs), uniform(0, 10, n_legs),
-            np.sort(uniform(80, 110, n_legs) + uniform(-10, 10))),
-            'x_claw_offset': uniform(.04, .06),
-            'claw_angle': .5,
-            'claw_joint': (uniform(-80, -70), uniform(-20, -0), uniform(10, 20)),
-            'x_eye': uniform(.8, .84),
+            'leg_joint': (
+            uniform(-5, 5, n_legs), uniform(0, 10, n_legs), np.sort(uniform(95, 110, n_legs) + uniform(-8, 8))),
+            'x_claw_offset': uniform(.08, .1),
+            'claw_angle': uniform(.4, .5),
+            'claw_joint': (uniform(-80, -70), uniform(-10, 10), uniform(10, 20)),
+            'x_eye': uniform(.8, .88),
             'eye_angle': uniform(.8, .85),
             'eye_joint': (0, uniform(-60, -0), uniform(10, 70)),
             'x_antenna': uniform(.76, .8),
-            'antenna_angle': uniform(.4, .5),
+            'antenna_angle': uniform(.6, .7),
             'antenna_joint': (uniform(70, 110), uniform(-40, -30), uniform(20, 40)),
             'x_fins': np.sort(uniform(.85, .95, n_side_fin)),
             'fin_joints': (
                 np.sort(uniform(0, 30, n_side_fin))[::1 if uniform(0, 1) < .5 else -1], [0] * n_side_fin,
                 np.sort(uniform(10, 30, n_side_fin))),
-            'leg_curl': ((-np.pi * .6, 0), 0, 0),
-            'claw_curl': ((-np.pi * .2, np.pi * .3), 0, 0),
+            'leg_rot': (uniform(np.pi * .8, np.pi * 1.1), 0, 0),
+            'leg_curl': (
+                (-np.pi * 1.1, -np.pi * .7), 0, (base_leg_curl - np.pi * .02, base_leg_curl + np.pi * .02)),
+            'claw_curl': ((-np.pi * .1, np.pi * .2), 0, 0),
             'claw_lower_curl': ((-np.pi * .1, np.pi * .1), 0, 0),
-            'tail_curl': (0, 0, (-np.pi * .4, np.pi * .4)),
-            'antenna_curl': ((0, np.pi * .8), 0, 0),
-            'base_hue': uniform(.0, .1) if uniform(0, 1) < .5 else uniform(.5, .6),
+            'tail_curl': ((-np.pi * .6, 0), 0, 0),
+            'antenna_curl': ((np.pi * .1, np.pi * .3), 0, (0, np.pi * .8)),
+            'base_hue': build_base_hue(),
+            'freq': 1 / log_uniform(400, 500),
         }
 
     def spiny_lobster_params(self):
@@ -295,7 +308,7 @@ class CrustaceanFactory(AssetFactory):
             'claw_x_length': lobster_params['leg_x_length'],
             'claw_angle': lobster_params['leg_angle'],
             'claw_joint': (uniform(10, 40), uniform(0, 10), leg_joint_z_min),
-            'x_antenna': uniform(.5, .55),
+            'x_antenna': uniform(.7, .75),
             'antenna_angle': uniform(.4, .5),
         }
 
@@ -306,11 +319,13 @@ class CrabFactory(CrustaceanFactory):
         super().__init__(factory_seed, coarse)
         self.species = 'crab'
 
+
 @gin.configurable
 class LobsterFactory(CrustaceanFactory):
     def __init__(self, factory_seed, coarse=False, **_):
         super().__init__(factory_seed, coarse)
         self.species = 'lobster'
+
 
 @gin.configurable
 class SpinyLobsterFactory(CrustaceanFactory):

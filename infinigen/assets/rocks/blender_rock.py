@@ -19,7 +19,7 @@ bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
 class BlenderRockFactory(AssetFactory):
 
-    def __init__(self, factory_seed, detail=3):
+    def __init__(self, factory_seed, detail=1):
         super(BlenderRockFactory, self).__init__(factory_seed)
         self.detail = detail
 
