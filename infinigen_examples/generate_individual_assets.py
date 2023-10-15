@@ -43,13 +43,13 @@ from infinigen.core.util import blender as butil
 
 from infinigen.tools.results import strip_alpha_background as strip_alpha_background
 
-import generate_nature  # to load most/all factory.AssetFactory subclasses
+from . import generate_nature  # to load most/all factory.AssetFactory subclasses
 
 def build_scene_asset(factory_name, idx):
     factory = None
     for subdir in os.listdir('infinigen/assets'):
         with gin.unlock_config():
-            module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
+            module = importlib.import_module(f'infinigen.assets.{subdir.split(".")[0]}')
         if hasattr(module, factory_name):
             factory = getattr(module, factory_name)
             break
@@ -250,7 +250,7 @@ def setup_camera(args):
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces['Geometry Nodes']
     
-    init.apply_gin_configs('infinigen_examples/config')
+    init.apply_gin_configs('infinigen_examples/configs')
     surface.registry.initialize_from_gin()
 
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
@@ -313,7 +313,7 @@ def make_args():
     parser.add_argument('-g', '--gpu', action='store_true', help="Whether to use gpu in rendering")
     parser.add_argument('-s', '--save_blend', action='store_true', help="Whether to save .blend file")
     parser.add_argument('-e', '--elevation', default=60, type=float, help="Elevation of the sun")
-    parser.add_argument('-d', '--cam_dist', default=0, type=float,
+    parser.add_argument('--cam_dist', default=0, type=float,
                         help="Distance from the camera to the look-at position")
     parser.add_argument('-a', '--cam_angle', default=(-30, 0, 0), type=float, nargs='+',
                         help="Camera rotation in XYZ")
@@ -329,6 +329,7 @@ def make_args():
     parser.add_argument('-t', '--film_transparent', default=1, type=int)
     parser.add_argument('--scale_reference', action='store_true', help="Add the scale reference")
     parser.add_argument('--skip_existing', action='store_true', help="Skip existing scenes and renders")
+    parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
 
     return init.parse_args_blender(parser)
 

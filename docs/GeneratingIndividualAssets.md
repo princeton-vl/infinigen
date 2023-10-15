@@ -12,9 +12,9 @@ Shown are three examples of using our `generate_individual_assets.py` script to 
 
 ```bash
 mkdir outputs
-python -m infinigen.tools.generate_individual_assets -f CoralFactory -n 8 --save_blend
-python -m infinigen.tools.generate_individual_assets -f seashells -n 1 --save_blend
-python -m infinigen.tools.generate_individual_assets -f chunkyrock -n 1 --save_blend
+python -m infinigen_examples.generate_individual_assets -f CoralFactory -n 8 --save_blend
+python -m infinigen_examples.generate_individual_assets -f seashells -n 1 --save_blend
+python -m infinigen_examples.generate_individual_assets -f chunkyrock -n 1 --save_blend
 ```
 
 <p align="center">
