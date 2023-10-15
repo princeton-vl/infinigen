@@ -23,6 +23,7 @@ private:
     glm::vec3 position;
     double fx, fy, cx, cy;
     const int buffer_width, buffer_height;
+    float buffer_over_image; // should be >= 1
 
 public:
 

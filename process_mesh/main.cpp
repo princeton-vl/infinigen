@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.39"
+#define VERSION "1.40"
 
 using std::cout, std::cerr, std::endl;
 

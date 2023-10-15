@@ -84,7 +84,8 @@ CameraView::CameraView(const std::string fstr, const fs::path input_dir, const i
     // Set WC -> Img Transformation
     const Matrix3f K_mat3x3 = load_matrix<3, 3>(current_camview, "K");
     Matrix4f K_mat = Matrix4f::Identity();
-    K_mat.block<2,3>(0, 0) = calc_resolution_scale(current_camview) * K_mat3x3.block<2,3>(0, 0);
+    buffer_over_image = calc_resolution_scale(current_camview);
+    K_mat.block<2,3>(0, 0) = buffer_over_image * K_mat3x3.block<2,3>(0, 0);
     wc2img = glm::make_mat4(Matrix4f(K_mat * FLIP_Y_Z * blender_camera_pose.inverse()).data());
 
     fx = K_mat(0,0);
@@ -130,7 +131,7 @@ Tensor<double, 3> CameraView::project(const Tensor<double, 3> &cam_coords) const
             const double z = cam_coords(y, x, 2);
             const double u = cam_coords(y, x, 0) * (fx / z) + cx;
             const double v = cam_coords(y, x, 1) * (fy / z) + cy;
-            output(y, x, 0) = u; output(y, x, 1) = v; output(y, x, 2) = z;
+            output(y, x, 0) = u / buffer_over_image; output(y, x, 1) = v / buffer_over_image; output(y, x, 2) = z;
         }
     }
     return output;
