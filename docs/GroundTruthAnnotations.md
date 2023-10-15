@@ -1,9 +1,5 @@
 # Ground-Truth Annotations
 
-### Changelog
-
-- 07/03/23: Add specification for Blender's built-in annotations. Save built-in annotations as numpy arrays. Add more information to Objects_XXXX_XX_XX.json. Significant changes to built-in segmentation masks (fixes & filenames). Improve visualizations for built-in annotations. Always save camera parameters in frames/. Update docs.
-
 ### Agenda
 
 - Save forward and backward flow for both built-in and advanced annotations.
@@ -76,50 +72,20 @@ $BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save
 ```
 ../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
 ```
-6. Summarize the file structure into a single JSON
-```
-python tools/summarize.py outputs/helloworld # creating outputs/helloworld/summary.json
-```
-7. (Optional) Select for a segmentation mask of certain semantic tags, e.g. cactus
+6. (Optional) Select for a segmentation mask of certain semantic tags, e.g. cactus
 ```
 python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
 ```
 
 ## Specification
 
-**File structure:**
+Below, we specify the data format and resolution of all ground truth passes exported by the default infinigen configuration. Where applicable, H and W refer to the height and width of the RGB image; some ground truth is stored at integer-multiples of this resolution, as described below. 
 
-We provide a python script `summarize.py` which will aggregate all relevant output file paths into a JSON:
-```
-python tools/summarize.py <output-folder>
-```
-The resulting `<output-folder>/summary.json` will contains all file paths in the form:
-```
-{
-    <type>: {
-        <file-ext>: {
-            <rig>: {
-                <sub-cam>: {
-                    <frame>: <file-path> 
-                }
-            }
-        }
-    }
-}
-```
-
-`<rig>` and `<sub-cam>` are typically both "00" in the monocular setting; `<file-ext>` is typically "npy" or "png" for the the actual data and the visualization, respectively; `<frame>` is a 0-padded 4-digit number, e.g. "0013". `<type>` can be "SurfaceNormal", "Depth", etc. For example
-`summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `'frames/SurfaceNormal_0001_00_00.npy'`
-
-*Note: Currently our advanced ground-truth has only been tested for the aspect-ratio 16-9.*
+Note: In cases where both a .png and .npy file are available, we recommend you use the .png file only for visualization, and default to using the .npy file for training. 
 
 **Depth**
 
-Depth is stored as a 2160 x 3840 32-bit floating point numpy array.
-
-*Path:* `summary_json["Depth"]["npy"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.npy`
-
-*Visualization:* `summary_json["Depth"]["png"]["00"]["00"]["0001"]` -> `frames/Depth_0001_00_00.png`
+Depth is stored as a 2Hx2W 32-bit floating point numpy array.
 
 <p align="center">
 <img src="docs/images/gt_annotations/Depth_0001_00_00.png" width="400" />
@@ -132,13 +98,9 @@ python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
 
 **Surface Normals**
 
-Surface Normals are stored as a 1080 x 1920 x 3 32-bit floating point numpy array.
+Surface Normals are stored as a HxWx3 32-bit floating point numpy array.
 
 The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backward.
-
-*Path:* `summary_json["SurfaceNormal"]["npy"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.npy`
-
-*Visualization:* `summary_json["SurfaceNormal"]["png"]["00"]["00"]["0001"]` -> `frames/SurfaceNormal_0001_00_00.png`
 
 <p align="center">
 <img src="docs/images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
@@ -146,9 +108,7 @@ The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backw
 
 ### Occlusion Boundaries :large_blue_diamond:
 
-Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boundary and 0 otherwise.
-
-*Path/Visualization:* `summary_json["OcclusionBoundaries"]["png"]["00"]["00"]["0001"]` -> `frames/OcclusionBoundaries_0001_00_00.png`
+Occlusion Boundaries are stored as a >=2Hx2W png, with 255 indicating a boundary and 0 otherwise.
 
 <p align="center">
 <img src="docs/images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
@@ -156,7 +116,7 @@ Occlusion Boundaries are stored as a 2160 x 3840 png, with 255 indicating a boun
 
 ### Optical Flow
 
-Optical Flow / Scene Flow is stored as a 2160 x 3840 x 3 32-bit floating point numpy array.
+Optical Flow / Scene Flow is stored as a HxWx3 32-bit floating point numpy array.
 
 *Note: The values won't be meaningful if this is the final frame in a series, or in the single-view setting.*
 
@@ -172,33 +132,23 @@ To see an example of how optical flow can be used to warp one frame to the next,
 python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
 ```
 
-*Path:* `summary_json["Flow3D"]["npy"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.npy`
-
-*Visualization:* `summary_json["Flow3D"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3D_0001_00_00.png`
-
-For the built-in versions, replace `Flow3D` with `Flow`.
+If using `blender_gt.gin` rathern than `opengl_gt.gin` replace `Flow3D` with `Flow`, since Blender does not export 3D flow.
 
 ### Optical Flow Occlusion :large_blue_diamond:
 
-The mask of occluded pixels for the aforementioned optical flow is stored as a 2160 x 3840 png, with 255 indicating a co-visible pixel and 0 otherwise.
+The mask of occluded pixels for the aforementioned optical flow is stored as a HxW png, with 255 indicating a co-visible pixel and 0 otherwise.
 
 *Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
-*Path/Visualization:* `summary_json["Flow3DMask"]["png"]["00"]["00"]["0001"]` -> `frames/Flow3DMask_0001_00_00.png`
+### Camera Intrinsics & Extrinsics
 
-### Camera Intrinsics
+Camera intrinsics and extrinsics are stored as a numpy ".npz" file inside the "camview" folder.
 
 Infinigen renders images using a pinhole camera model. The resulting camera intrinsics for each frame are stored as a 3 x 3 numpy matrix.
-
-*Path:* `summary_json["Camera Intrinsics"]["npy"]["00"]["00"]["0001"]` -> `frames/K_0001_00_00.npy`
-
-### Camera Extrinsics
 
 The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinates to world coordinates.
 
 As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
-
-*Path:* `summary_json["Camera Pose"]["npy"]["00"]["00"]["0001"]` -> `frames/T_0001_00_00.npy`
 
 ### Panoptic Segmentation
 
@@ -208,34 +158,9 @@ Infinigen saves three types of semantic segmentation masks: 1) Object Segmentati
 
 *Instance Segmentation* distinguishes individual instances of a single object from one another (e.g. separate blades of grass, separate ferns, etc.), and is stored as a 2160 x 3840 32-bit integer numpy array. Each integer in this mask is the *instance-id* for a particular instance, which is unique for that object as defined in the Object Segmentation mask and Objects_XXXX_XX_XX.json.
 
-
-*Paths:*
-
-`summary_json["ObjectSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.npy`
-
-`summary_json["InstanceSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.npy`
-
-`summary_json["Objects"]["json"]["00"]["00"]["0001"]` -> `frames/Objects_0001_00_00.json`
-
-*Visualizations:*
-
-`summary_json["ObjectSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/ObjectSegmentation_0001_00_00.png`
-
-`summary_json["InstanceSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/InstanceSegmentation_0001_00_00.png`
-
 #### **Tag Segmentation** :large_blue_diamond:
 
 *Tag Segmentation* distinguishes vertices based on their semantic tags, and is stored as a 2160 x 3840 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Missing features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
-
-*Paths:*
-
-`summary_json["TagSegmentation"]["npy"]["00"]["00"]["0001"]` -> `frames/TagSegmentation_0001_00_00.npy`
-
-`summary_json["Mask Tags"][<frame>]` -> `fine/MaskTag.json`
-
-*Visualization:*
-
-`summary_json["TagSegmentation"]["png"]["00"]["00"]["0001"]` -> `frames/TagSegmentation_0001_00_00.png`
 
 Generally, most useful panoptic segmentation masks can be constructed by combining the aforementioned three arrays in some way. As an example, to visualize the 2D and [3D bounding boxes](#object-metadata-and-3d-bounding-boxes) for objects with the *blender_rock* semantic tag in the hello world scene, run 
 ```

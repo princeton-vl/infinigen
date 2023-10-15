@@ -143,7 +143,7 @@ class InfinigenSceneDataset:
             dtypename = data_type[0]
             if (
                 self.gt_for_first_camera_only and
-                camera != 0 and
+                cam != 0 and
                 dtypename != 'Image' and
                 dtypename != 'camview'
             ):
