@@ -91,14 +91,14 @@ std::vector<unsigned int> generate_buffer(const std::vector<unsigned int> &indic
     return vertices;
   }
 
-BufferArrays::BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type){
+BufferArrays::BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type, bool skip_indices){
 
     {
         const std::vector<int> instance_ids = my_npz.read_data<int>(mesh_id + "_instance_ids");
         const auto mwd = my_npz.read_data<float>(mesh_id + "_transformations");
-        RASSERT((mwd.size()/16) == instance_ids.size()/2);
+        RASSERT((mwd.size()/16) == instance_ids.size()/3);
         for (int i=0; i<(mwd.size()/16); i++)
-            model_mats[{instance_ids[i*2], instance_ids[i*2+1]}] = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>(&mwd[i*16]);
+            model_mats[{instance_ids[i*3], instance_ids[i*3+1], instance_ids[i*3+2]}] = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>(&mwd[i*16]);
     }
 
     if (obj_type == "MESH") {
@@ -107,6 +107,9 @@ BufferArrays::BufferArrays(const npz &my_npz, std::string mesh_id, std::string o
         // const auto face_tag_lookup = my_npz.read_data<int>(mesh_id + "_masktag");
         // tag_lookup.resize(lookup.size());
         tag_lookup = my_npz.read_data<int>(mesh_id + "_masktag");
+
+        if (skip_indices)
+            return;
 
         const auto loop_totals = my_npz.read_data<int>(mesh_id + "_loop_totals");
         // MRASSERT(loop_totals.size() == face_tag_lookup.size(), "loop_totals.size() ["+std::to_string(loop_totals.size())+"] != tag_lookup.size() ["+std::to_string(face_tag_lookup.size())+"]");

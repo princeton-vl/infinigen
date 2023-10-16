@@ -1,4 +1,4 @@
-water.is_ocean = ("bool", 0.5)
+water.is_ocean = False
 water.coastal = 1
 water.shader.colored = 0
 water.geo.with_ripples = 0

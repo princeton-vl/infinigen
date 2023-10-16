@@ -1,0 +1,53 @@
+include 'tools/pipeline_configs/compute_platform/slurm.gin'
+
+iterate_scene_tasks.view_block_size = 2
+
+# run on length short
+queue_coarse.hours = 23
+queue_combined.hours = 23
+queue_populate.hours = 23
+queue_mesh_save.hours = 23
+
+queue_coarse.mem_gb = 24
+queue_combined.mem_gb = 24
+queue_populate.mem_gb = 24
+queue_mesh_save.mem_gb = 24
+
+queue_coarse.cpus = 3
+queue_combined.cpus = 3
+queue_populate.cpus = 3
+queue_mesh_save.cpus = 3
+
+# will run on CPU only
+rendershort/queue_render.hours = 23
+rendershort/queue_render.gpus = 0
+rendershort/queue_render.cpus = 16
+rendershort/queue_render.mem_gb = 48
+
+# will run on gpu-short
+renderbackup/queue_render.hours = 23
+renderbackup/queue_render.gpus = 1
+renderbackup/queue_render.cpus = 4
+
+# will run on gpu-short with MiG
+queue_opengl.hours = 23
+queue_opengl.cpus = 23
+queue_opengl.memory = 30
+queue_opengl.slurm_account = 'mig'
+
+# will run on gpu-short with a big GPU
+queue_fine_terrain.hours = 23
+queue_fine_terrain.cpus = 3
+queue_fine_terrain.gpus = 1
+queue_fine_terrain.mem_gb = 24
+
+# the cpu cluster we use has no network access except on the head node
+queue_upload.submit_cmd = @local_submit_cmd
+queue_upload.cpus = 3 # does nothing on local
+queue_upload.mem_gb = 24 # does nothing on local
+queue_upload.hours = 23 # does nothing on local
+
+queue_coarse.exclude_gpus = []
+queue_populate.exclude_gpus = []
+rendershort/queue_render.exclude_gpus = []
+renderbackup/queue_render.exclude_gpus = []

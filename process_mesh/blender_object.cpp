@@ -55,11 +55,13 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
         }
     }
 
-    int idx = 0;
-    std::unordered_map<std::string, json> json_serializable_model_matrices;
-    for (const auto &m : model_matrices){
-        const auto instance_id = std::to_string(instance_ids[idx++].as_long());
-        json_serializable_model_matrices[instance_id] = {
+    std::vector<std::vector<long>> json_serializable_instance_ids(num_instances);
+    std::vector<json> json_serializable_model_matrices(num_instances);
+    for (int idx=0; idx<num_instances; idx++){
+        const auto instance_id = instance_ids[idx];
+        json_serializable_instance_ids[idx] = {instance_id.n1, instance_id.n2, instance_id.n3};
+        const auto m = model_matrices[idx];
+        json_serializable_model_matrices[idx] = {
             {m(0,0), m(0,1), m(0,2), m(0,3)},
             {m(1,0), m(1,1), m(1,2), m(1,3)},
             {m(2,0), m(2,1), m(2,2), m(2,3)},
@@ -67,11 +69,10 @@ json BaseBlenderObject::compute_bbox(const std::vector<unsigned int> &indices, c
         };
     }
 
-    MRASSERT(json(json_serializable_model_matrices).is_object(), "is not object");
-
     const std::set<int> unique_tags(tag_lookup.begin(), tag_lookup.end());
 
     json output = {
+        {"instance_ids", json_serializable_instance_ids},
         {"model_matrices", json_serializable_model_matrices},
         {"tags", std::vector<int>(unique_tags.begin(), unique_tags.end())},
         {"name", info.name},
@@ -125,12 +126,12 @@ BaseBlenderObject::BaseBlenderObject(const BufferArrays &current_buf, const Buff
         set_regular_buffer(VBO, vertex_lookup, 8, 3, attrib_stride);
         set_regular_buffer(VBO_next, vertex_lookup_next, 9, 3, attrib_stride);
 
-        static_assert(sizeof(int)*2 == sizeof(InstanceID));
+        static_assert(sizeof(int)*3 == sizeof(InstanceID));
         glGenBuffers(1, &VBO_instance_ids);
         glBindBuffer(GL_ARRAY_BUFFER, VBO_instance_ids);
         glBufferData(GL_ARRAY_BUFFER, num_instances * sizeof(InstanceID), instance_ids.data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(10);
-        glVertexAttribIPointer(10, 2, GL_INT, sizeof(InstanceID), 0);
+        glVertexAttribIPointer(10, 3, GL_INT, sizeof(InstanceID), 0);
         glVertexAttribDivisor(10, 1);
 
         set_regular_buffer(VBO_tag, tag_lookup, 11, 1, 1);

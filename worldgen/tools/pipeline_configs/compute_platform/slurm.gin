@@ -1,15 +1,15 @@
+manage_datagen_jobs.num_concurrent = 'ENVVAR_INFINIGEN_NUMCONCURRENT_TARGET'
 
-PARTITION = 'ENVVAR_INFINIGEN_SLURMPARTITION' # change to partitionname string, or None
-
-manage_datagen_jobs.num_concurrent = 200
-slurm_submit_cmd.slurm_niceness=10000 
+slurm_submit_cmd.slurm_account = 'ENVVAR_INFINIGEN_SLURMPARTITION' # change to partitionname string, or None
+slurm_submit_cmd.slurm_niceness = 10000 
 get_slurm_banned_nodes.config_path = 'ENVVAR_INFINIGEN_SLURM_EXCLUDENODES_LIST'
+jobs_to_launch_next.max_queued_total = 10
+jobs_to_launch_next.max_stuck_at_task = 8
 
 # Combined (only used when `stereo_combined.gin` or similar is included)
 queue_combined.mem_gb = 12
 queue_combined.cpus = 2
 queue_combined.hours = 48
-queue_combined.slurm_account = %PARTITION
 queue_combined.submit_cmd = @slurm_submit_cmd
 renderbackup/queue_combined.mem_gb = 24
 
@@ -17,22 +17,19 @@ renderbackup/queue_combined.mem_gb = 24
 queue_coarse.mem_gb = 24
 queue_coarse.cpus = 4
 queue_coarse.hours = 48
-queue_coarse.slurm_account = %PARTITION
 queue_coarse.submit_cmd = @slurm_submit_cmd
 queue_coarse.exclude_gpus = ['a6000', 'rtx_3090']
 
 # Fine terrain
 queue_fine_terrain.mem_gb = 24
 queue_fine_terrain.cpus = 4
-queue_fine_terrain.hours = 24
-queue_fine_terrain.slurm_account = %PARTITION
+queue_fine_terrain.hours = 48
 queue_fine_terrain.submit_cmd = @slurm_submit_cmd
 
 # Fine
 queue_populate.mem_gb = 24
 queue_populate.cpus = 4
 queue_populate.hours = 24
-queue_populate.slurm_account = %PARTITION
 queue_populate.submit_cmd = @slurm_submit_cmd
 renderbackup/queue_populate.mem_gb = 24
 queue_populate.exclude_gpus = ['a6000', 'rtx_3090']
@@ -44,46 +41,39 @@ queue_render.hours = 48
 # no point requesting less than 48GB RAM, 8CPUs, due to ratios of RAM:GPUs on pvl
 rendershort/queue_render.mem_gb = 48 
 rendershort/queue_render.cpus = 8
-rendershort/queue_render.slurm_account = %PARTITION
 rendershort/queue_render.gpus = 1
 rendershort/queue_render.render_type = "full"
 
 rendershort/queue_render.exclude_gpus = ['gtx_1080', 'k80']
+queue_opengl.exclude_gpus = ['gtx_1080', 'k80']
 renderbackup/queue_render.exclude_gpus = ['gtx_1080', 'k80', 'rtx_2080']
 
 renderbackup/queue_render.mem_gb = 96
 renderbackup/queue_render.cpus = 16
-renderbackup/queue_render.slurm_account = %PARTITION
 renderbackup/queue_render.gpus = 2
 renderbackup/queue_render.render_type = "full"
 
 # Upload
 queue_upload.submit_cmd = @slurm_submit_cmd
-queue_upload.slurm_account = %PARTITION
-queue_upload.mem_gb = 6
-queue_upload.cpus = 2
-queue_upload.hours = 24
-queue_upload.method = 'smbclient'
-queue_upload.dir_prefix_len = 2
+queue_upload.mem_gb = 24
+queue_upload.cpus = 4
+queue_upload.hours = 48
+queue_upload.dir_prefix_len = 0
 
 # Ground Truth
 queue_mesh_save.submit_cmd = @slurm_submit_cmd
 queue_mesh_save.mem_gb = 48
 queue_mesh_save.cpus = 8
 queue_mesh_save.hours = 24
-queue_mesh_save.slurm_account = %PARTITION
 queue_mesh_save.gpus = 0
 
 queue_opengl.submit_cmd = @slurm_submit_cmd
 queue_opengl.mem_gb = 48
 queue_opengl.cpus = 8
 queue_opengl.hours = 24
-queue_opengl.slurm_account = %PARTITION
 queue_opengl.gpus = 1
 
-ground_truth/queue_render.exclude_gpus = []
 ground_truth/queue_render.mem_gb = 48
 ground_truth/queue_render.hours = 24
-ground_truth/queue_render.slurm_account = %PARTITION
 ground_truth/queue_render.gpus = 0
 ground_truth/queue_render.render_type = "flat"

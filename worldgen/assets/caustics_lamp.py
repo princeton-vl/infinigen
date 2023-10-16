@@ -122,4 +122,4 @@ def add_caustics(obj, zoff=200):
     loc = Vector(np.array(obj.bound_box).mean(axis=0)) + Vector((0, 0, zoff))
     lamp = fac.spawn_asset(0, loc=loc)
     lamp.scale = (50, 50, 50) # only affects UI
-    lamp.data.energy = U(120e6, 250e6)
+    lamp.data.energy = U(100e6, 200e6)

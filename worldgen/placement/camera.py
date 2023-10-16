@@ -42,7 +42,11 @@ from util.math import clip_gaussian, lerp
 from util import camera
 from util.random import random_general
 
+from tools.suffixes import get_suffix
+
 logger = logging.getLogger(__name__)
+
+CAMERA_RIGS_DIRNAME = 'CameraRigs'
 
 @gin.configurable
 def get_sensor_coords(cam, H, W, sparse=False):
@@ -112,7 +116,7 @@ def spawn_camera():
     return cam
 
 def camera_name(rig_id, cam_id):
-    return f'CameraRigs/{rig_id}/{cam_id}'
+    return f'{CAMERA_RIGS_DIRNAME}/{rig_id}/{cam_id}'
 
 @gin.configurable
 def spawn_camera_rigs(
@@ -121,7 +125,7 @@ def spawn_camera_rigs(
 ):
 
     def spawn_rig(i):
-        rig_parent = butil.spawn_empty(f'CameraRigs/{i}')
+        rig_parent = butil.spawn_empty(f'{CAMERA_RIGS_DIRNAME}/{i}')
         for j, config in enumerate(camera_rig_config):
             cam = spawn_camera()
             cam.name = camera_name(i, j)
@@ -133,12 +137,23 @@ def spawn_camera_rigs(
         return rig_parent
 
     camera_rigs = [spawn_rig(i) for i in range(n_camera_rigs)]
-    butil.group_in_collection(camera_rigs, 'CameraRigs')
+    butil.group_in_collection(camera_rigs, CAMERA_RIGS_DIRNAME)
         
     return camera_rigs
 
+def get_cameras_ids() -> list[tuple]:
+
+    res = []
+    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
+    for i, root in enumerate(col.objects):
+        for j, subcam in enumerate(root.children):
+            assert subcam.name == camera_name(i, j)
+            res.append((i, j))
+                       
+    return res
+
 def get_camera(rig_id, subcam_id, checkonly=False):
-    col = bpy.data.collections['CameraRigs']
+    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
     name = camera_name(rig_id, subcam_id)
     if name in col.objects.keys():
         return col.objects[name]
@@ -266,7 +281,7 @@ def keep_cam_pose_proposal(
     terrain_tags_answers,
     vertexwise_min_dist,
     terrain_tags_ratio,
-    min_placeholder_dist=1,
+    min_placeholder_dist=0,
     min_terrain_distance=0,
     terrain_coverage_range=(0.5, 1),
 ):
@@ -506,25 +521,26 @@ def animate_cameras(
         )
 
 @gin.configurable
-def save_camera_parameters(camera_pair_id, camera_ids, output_folder, frame, use_dof=False):
+def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
     if frame is not None:
         bpy.context.scene.frame_set(frame)
-    for camera_id in camera_ids:
+    for camera_pair_id, camera_id in camera_ids:
         camera_obj = get_camera(camera_pair_id, camera_id)
         if use_dof is not None:
             camera_obj.data.dof.use_dof = use_dof
         # Saving camera parameters
         K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        np.save(
-            output_folder / f"K_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
-            np.asarray(K, dtype=np.float64),
-        )
-        np.save(
-            output_folder / f"T_{frame:04d}_{camera_pair_id:02d}_{camera_id:02d}.npy",
-            np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)),
-    )
+        suffix = get_suffix(dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id))
+        output_file = output_folder / f"camview{suffix}.npz"
+
+        height_width = np.array((
+            bpy.context.scene.render.resolution_y, 
+            bpy.context.scene.render.resolution_x
+        ))
+        T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.))
+        np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 @node_utils.to_nodegroup('ng_dist2camera', singleton=True, type='GeometryNodeTree')
 def ng_dist2camera(nw: NodeWrangler):

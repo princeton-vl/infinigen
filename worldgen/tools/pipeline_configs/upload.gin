@@ -1,0 +1,7 @@
+iterate_scene_tasks.finalize_tasks = [
+    {'name': "upload", 'func': @queue_upload}
+]
+
+main.upload_commandfile_method='smbclient'
+queue_upload.method = 'smbclient'
+on_scene_termination.enforce_upload_manifest = True

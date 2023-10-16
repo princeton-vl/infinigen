@@ -3,110 +3,134 @@
 
 # Authors: Lahav Lipson
 
-
+import argparse
 import os
 from pathlib import Path
 import platform
 import tarfile
 import json
+import itertools
 
 import time
 from datetime import datetime
 import gin
 from tqdm import tqdm
 import subprocess
-from shutil import which, copyfile
+import shutil
 
 from . import smb_client, cleanup
 
-GDRIVE_NAME = None
+RCLONE_PREFIX_ENVVAR = "INFINIGEN_RCLONE_PREFIX"
+
+UPLOAD_MANIFEST = [
+    ('frames*/*', 'KEEP'),
+    ('logs/*', 'KEEP'),
+    ('fine/scene.blend', 'KEEP'),
+    ('run_pipeline.sh', 'KEEP'),
+
+    ('coarse/*.txt', 'KEEP'),
+    ('coarse/*.csv', 'KEEP'),
+    ('coarse/*.json', 'KEEP'),
+    ('fine*/*.txt', 'KEEP'),
+    ('fine*/*.csv', 'KEEP'),
+    ('fine*/*.json', 'KEEP'),
+
+    ('savemesh*', 'DELETE'),
+    ('coarse/assets', 'DELETE'),
+    ('coarse/scene.blend*', 'DELETE'),
+    ('fine*/assets', 'DELETE'),
+    ('tmp', 'DELETE'),
+    ('*/*.b_displacement.npy', 'DELETE'),
+
+    # These two only show up during/after upload, we just specify them to prevent an error
+    ('*_thumbnail.png', 'KEEP'),
+    ('*_metadata.json', 'KEEP'),
+]
+
+def check_files_covered(scene_folder, manifest):
+
+    covered = set()
+
+    for glob, _ in UPLOAD_MANIFEST:
+        covered |= set(scene_folder.glob(glob))
+
+    extant = set(scene_folder.glob('*'))
+
+    not_covered = extant - covered
+
+    not_covered = {p for p in not_covered if not p.is_dir()}
+
+    if len(not_covered) == 0:
+        return
+    
+    raise ValueError(
+        f'{scene_folder=} had {not_covered=}. Please modify {__file__}.UPLOAD_MANIFEST'
+        ' to explicitly say whether you want these files to be deleted or included in the final tarball'
+    )
+
+def apply_manifest_cleanup(scene_folder, manifest):
+    
+    check_files_covered(scene_folder, manifest)
+
+    keep = set()
+    delete = set()
+
+    for glob, action in manifest:
+
+        affected = set()
+        for p in scene_folder.glob(glob):
+            affected.add(p)
+            if p.is_dir():
+                affected |= set(p.rglob("*"))
+
+        print(f'{glob=} {action=} matched {len(affected)=}')
+
+        if action == 'KEEP':
+            keep |= affected
+        elif action == 'KEEP_MANDATORY':
+            if len(affected) == 0:
+                raise ValueError(f'In {apply_manifest_cleanup.__name__} {glob=} had {action=} but failed to match any files')
+            keep |= affected
+        elif action == 'DELETE':
+            delete |= set(affected) - keep
+        else:
+            raise ValueError(f'Unrecognized {action=}')
+
+    assert delete.isdisjoint(keep)
+
+    for f in delete:
+        if not f.exists():
+            continue
+        if f.is_symlink() or not f.is_dir():
+            f.unlink()
+    for f in delete:
+        if not f.exists() or not f.is_dir():
+            continue
+        if len([f1 for f1 in f.rglob('*') if not f.is_dir()]) == 0:
+            shutil.rmtree(f)
 
 def rclone_upload_file(src_file, dst_folder):
 
-    if GDRIVE_NAME is None:
-        raise ValueError(f'Please specify GDRIVE_NAME')
+    prefix = os.environ.get(RCLONE_PREFIX_ENVVAR)
+    if prefix is None:
+        raise ValueError(f'Please specify envvar {RCLONE_PREFIX_ENVVAR}')
+    if ':' not in prefix:
+        raise ValueError(f'Rclone prefix must contain ":" to separate remote from path prefix')
 
     assert os.path.exists(src_file), src_file
-    cmd = f"{which('rclone')} copy -P {src_file} {GDRIVE_NAME}:{dst_folder}"
+    cmd = f"{shutil.which('rclone')} copy -P {src_file} {prefix}{dst_folder}"
     subprocess.check_output(cmd.split())
     print(f"Uploaded {src_file}")
 
 def get_commit_hash():
-    git = which('git')
+    git = shutil.which('git')
     if git is None:
         return None
     cmd = f"{git} rev-parse HEAD"
     return subprocess.check_output(cmd.split()).decode().strip()
 
-# DO NOT make gin.configurable
-# this function gets submitted via pickle in some settings, and gin args are not preserved
-def reorganize_before_upload(parent_folder):
-
-    seed = parent_folder.name
-    tmpdir = (parent_folder / "tmp" / seed)
-    log_dir = tmpdir / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    frames_folders = list(sorted(parent_folder.glob("frames*")))
-    for idx, frames_folder in enumerate(frames_folders):
-
-        subfolder_name = f"resample_{idx}" if (idx > 0) else "original"
-        subfolder = tmpdir / subfolder_name
-        info_dir = subfolder / "info"
-        info_dir.mkdir(parents=True, exist_ok=True)
-        ground_truth_dir = subfolder / "ground_truth"
-        ground_truth_dir.mkdir(parents=True, exist_ok=True)
-        color_passes_dir = subfolder / "color_passes"
-        color_passes_dir.mkdir(parents=True, exist_ok=True)
-        copyfile(frames_folder / "object_tree.json", info_dir / "object_tree.json")
-        for file in tqdm(sorted(frames_folder.rglob("*.png")), desc="Upload .png", disable=True):
-            copyfile(file, color_passes_dir / file.name)
-        for file in tqdm(sorted(frames_folder.rglob("*.exr")), desc="Upload .exr", disable=True):
-            copyfile(file, ground_truth_dir / file.name)
-        for file in tqdm(sorted(frames_folder.rglob("*.npy")), desc="Upload .npy", disable=True):
-            copyfile(file, info_dir / file.name)
-    for ext in ["out", "err"]:
-        for file in tqdm(sorted((parent_folder / "logs").rglob(f"*.{ext}")), desc=f"Upload .{ext}", disable=True):
-            if not file.is_symlink():
-                copyfile(file, log_dir / (file.name + ".txt"))
-    for file in tqdm(sorted((parent_folder / "logs").rglob(f"operative_gin_*")), desc=f"operative_gins", disable=True):
-        copyfile(file, log_dir / file.name)
+def write_metadata(parent_folder, seed, all_images):
     
-    copyfile(parent_folder / "run_pipeline.sh", log_dir / "run_pipeline.sh")  
-
-# DO NOT make gin.configurable
-# this function gets submitted via pickle in some settings, and gin args are not preserved
-def upload_job_folder(
-    parent_folder, 
-    task_uniqname, 
-    dir_prefix_len=3, 
-    method='smbclient', 
-):
-
-    parent_folder = Path(parent_folder)
-
-    if method == 'rclone':
-        upload_func = rclone_upload_file
-    elif method == 'smbclient':
-        upload_func = smb_client.upload
-    else:
-        raise ValueError(f'Unrecognized {method=}')  
-
-    jobname = parent_folder.parent.name
-    seed = parent_folder.name
-    
-    upload_dest_folder = Path('infinigen')/'renders'/jobname
-    if dir_prefix_len != 0:
-        upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
-
-    print(f'{method=} {upload_dest_folder=}')
-
-    all_images = sorted(list(parent_folder.rglob("frames*/Image*.png")))
-    if len(all_images) > 0:
-        thumb_path = parent_folder/f'{seed}_thumbnail.png'
-        copyfile(all_images, thumb_path)
-        upload_func(thumb_path, upload_dest_folder)
-
     try:
         version = (parent_folder / "coarse" / "version.txt").read_text().splitlines()[0]
     except FileNotFoundError:
@@ -122,19 +146,88 @@ def upload_job_folder(
         'commit': get_commit_hash(),
         'n_frames': len(all_images)
     }
+
     metadata_path = parent_folder/f'{seed}_metadata.json'
     with metadata_path.open('w') as f:
         json.dump(metadata, f, indent=4)
-    print(metadata_path, metadata)
-    upload_func(metadata_path, upload_dest_folder)
 
+    return metadata_path
+
+def write_thumbnail(parent_folder, seed, all_images):
+    if len(all_images) > 0:
+        thumb_path = parent_folder/f'{seed}_thumbnail.png'
+        shutil.copyfile(all_images[0], thumb_path)
+    else:
+        thumb_path = None    
+
+    return thumb_path
+
+def create_tarball(parent_folder):
     tar_path = parent_folder.with_suffix('.tar.gz')
-    print(f"Performing cleanup and tar to {tar_path}")
-    cleanup.cleanup(parent_folder)
+    print(f"Tarring {parent_folder} to {tar_path}")
     with tarfile.open(tar_path, "w:gz") as tar:
         tar.add(parent_folder, os.path.sep)
     assert tar_path.exists()
+    return tar_path
+
+def get_upload_func(method='smbclient'):
+    if method == 'rclone':
+        return rclone_upload_file
+    elif method == 'smbclient':
+        return smb_client.upload
+    else:
+        raise ValueError(f'Unrecognized {method=}')  
+
+def get_upload_destfolder(job_folder):
+    return Path('infinigen')/'renders'/job_folder.name
+
+# DO NOT make gin.configurable
+# this function gets submitted via pickle in some settings, and gin args are not preserved
+def upload_job_folder(
+    parent_folder, 
+    task_uniqname, 
+    dir_prefix_len=0, 
+    method='smbclient'
+):
+
+    parent_folder = Path(parent_folder)
+    seed = parent_folder.name
+
+    print(f'Performing cleanup on {parent_folder}')
+    apply_manifest_cleanup(parent_folder, UPLOAD_MANIFEST)
+
+    upload_func = get_upload_func(method)
     
-    print(f"Uploading tarfile")
-    upload_func(tar_path, upload_dest_folder)
+    upload_dest_folder = get_upload_destfolder(parent_folder.parent)
+    if dir_prefix_len > 0:
+        upload_dest_folder = upload_dest_folder/parent_folder.name[:dir_prefix_len]
+
+    all_images = sorted(list(parent_folder.rglob("**/Image*.png")))
+
+    upload_paths = [
+        write_thumbnail(parent_folder, seed, all_images),
+        write_metadata(parent_folder, seed, all_images),
+        create_tarball(parent_folder)
+    ]
+
+    orig_fine_path = parent_folder/'fine'/'scene.blend'
+    if orig_fine_path.exists():
+        dest_fine_path = parent_folder.parent / f'{seed}_fine.blend'
+        shutil.move(orig_fine_path, dest_fine_path)
+        upload_paths.append(dest_fine_path)
+    
+    for f in upload_paths:
+        if f is None:
+            continue
+        upload_func(f, upload_dest_folder)
+        f.unlink()
+
     (parent_folder / "logs" / f"FINISH_{task_uniqname}").touch()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('parent_folder', type=Path)
+    parser.add_argument('task_uniqname', type=str)
+    args = parser.parse_args()
+
+    upload_job_folder(args.parent_folder, args.task_uniqname)

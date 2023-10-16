@@ -8,19 +8,12 @@
 #include "io.hpp"
 
 struct InstanceID {
-    const int n1, n2;
-
-    // https://codereview.stackexchange.com/a/2608
-    long as_long() const {
-        const unsigned int n1ui = n1;
-        const unsigned int n2ui = n2;
-        return (((size_t) n2ui) << 32) | ((size_t) n1ui);
-    }
+    const int n1, n2, n3;
 };
 
 inline bool operator==(const InstanceID& lhs, const InstanceID& rhs)
 {
-    return lhs.as_long() == rhs.as_long();
+    return (lhs.n1 == rhs.n1) && (lhs.n2 == rhs.n2) && (lhs.n3 == rhs.n3);
 }
 
 template <>
@@ -28,7 +21,8 @@ struct std::hash<InstanceID>
 {
   std::size_t operator()(const InstanceID& k) const
   {
-    return hash<int>()(k.as_long());
+    std::size_t tmp = hash<int>()(k.n1) + hash<int>()(k.n2) + hash<int>()(k.n3);
+    return hash<std::size_t>()(tmp);
   }
 };
 
@@ -79,7 +73,7 @@ public:
 
     BufferArrays(){}
 
-    BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type);
+    BufferArrays(const npz &my_npz, std::string mesh_id, std::string obj_type, bool skip_indices=false);
 
     size_t sizeof_instance() const {
         return indices.size();

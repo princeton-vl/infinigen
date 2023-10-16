@@ -34,7 +34,7 @@ class GlowingRocksFactory(AssetFactory):
         assert obj.type == "EMPTY", obj.type
         obj.rotation_euler[:] = np.random.uniform(-np.pi, np.pi, size=(3,))
 
-    def __init__(self, factory_seed, coarse=False, transparent_for_bounce=True, watt_power_range=(500, 1200), **kwargs):
+    def __init__(self, factory_seed, coarse=False, transparent_for_bounce=True, watt_power_range=(400, 800), **kwargs):
         super().__init__(factory_seed, coarse=coarse)
         if coarse:
             return

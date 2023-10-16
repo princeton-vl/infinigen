@@ -12,6 +12,7 @@ from pathlib import Path
 import logging
 from functools import partial
 import pprint
+import time
 from collections import defaultdict
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
@@ -73,7 +74,7 @@ from util.random import sample_registry
 
 from assets.utils.tag import tag_system
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 def sanitize_gin_override(overrides: list):
     if len(overrides) > 0:
@@ -217,7 +218,7 @@ def render(scene_seed, output_folder, camera_id, render_image_func=render_image,
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
 
 @gin.configurable
-def save_meshes(scene_seed, output_folder, frame_range, camera_id, resample_idx=False):
+def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
     
     if resample_idx is not None and resample_idx > 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
@@ -228,17 +229,26 @@ def save_meshes(scene_seed, output_folder, frame_range, camera_id, resample_idx=
     for col in bpy.data.collections:
         col.hide_viewport = col.hide_render
 
-    camera_rig_id, subcam_id = camera_id
     previous_frame_mesh_id_mapping = frozendict()
     current_frame_mesh_id_mapping = defaultdict(dict)
     for frame_idx in range(int(frame_range[0]), int(frame_range[1]+2)):
+
         bpy.context.scene.frame_set(frame_idx)
         bpy.context.view_layer.update()
         frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
         frame_info_folder.mkdir(parents=True, exist_ok=True)
         logging.info(f"Working on frame {frame_idx}")
-        exporting.save_obj_and_instances(frame_info_folder / "mesh", previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping)
-        cam_util.save_camera_parameters(camera_rig_id, [subcam_id], frame_info_folder / "cameras", frame_idx)
+
+        exporting.save_obj_and_instances(
+            frame_info_folder / "mesh", 
+            previous_frame_mesh_id_mapping, 
+            current_frame_mesh_id_mapping
+        )
+        cam_util.save_camera_parameters(
+            camera_ids=cam_util.get_cameras_ids(),
+            output_folder=frame_info_folder / "cameras", 
+            frame=frame_idx
+        )
         previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
@@ -263,7 +273,7 @@ def execute_tasks(
     frame_range, camera_id,
     resample_idx=None,
     output_blend_name="scene.blend",
-    generate_resolution=(1920,1080),
+    generate_resolution=(1280,720),
     reset_assets=True,
     focal_length=None,
     dryrun=False,
@@ -280,9 +290,10 @@ def execute_tasks(
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
 
     if dryrun:
+        time.sleep(15)
         return
 
-    if Task.Coarse not in task:
+    if Task.Coarse not in task and task != Task.FineTerrain:
         with Timer('Reading input blendfile'):
             bpy.ops.wm.open_mainfile(filepath=str(input_folder / 'scene.blend'))
             tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
@@ -366,10 +377,19 @@ def execute_tasks(
             terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
-        render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)
+        render(
+            scene_seed, 
+            output_folder=output_folder, 
+            camera_id=camera_id, 
+            resample_idx=resample_idx
+        )
 
     if Task.MeshSave in task:
-        save_meshes(scene_seed, output_folder=output_folder, frame_range=frame_range, camera_id=camera_id)
+        save_meshes(
+            scene_seed, 
+            output_folder=output_folder, 
+            frame_range=frame_range, 
+        )
 
 
 def determine_scene_seed(args):
@@ -377,8 +397,8 @@ def determine_scene_seed(args):
     if args.seed is None:
         if Task.Coarse not in args.task:
             raise ValueError(
-                f'Running tasks on an already generated scene, you need to specify --seed or results will'
-                f' not be view-consistent')
+                'Running tasks on an already generated scene, you need to specify --seed or results will'
+                ' not be view-consistent')
         return randint(1e7), 'chosen at random'
 
     # WARNING: Do not add support for decimal numbers here, it will cause ambiguity, as some hex numbers are valid decimals

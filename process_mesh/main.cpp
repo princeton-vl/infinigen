@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.35"
+#define VERSION "1.43"
 
 using std::cout, std::cerr, std::endl;
 
@@ -79,7 +79,6 @@ std::vector<T> read_buffer(GLenum color_attachment, const int width, const int h
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-
 int main(int argc, char *argv[]) {
 
     const fs::path source_directory = XSTR(PROJECT_SOURCE_DIR) ;
@@ -99,8 +98,6 @@ int main(int argc, char *argv[]) {
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", true);
 
     argparse::ArgumentParser program("main", VERSION);
-    program.add_argument("--width").default_value(1920).help("Width of output").scan<'i', int>();
-    program.add_argument("--height").default_value(1080).help("Height of output").scan<'i', int>();
     program.add_argument("--frame").required().help("Current frame").scan<'i', int>();
     program.add_argument("-in", "--input_dir").required().help("The input/output dir");
     program.add_argument("-out", "--output_dir").required().help("The input/output dir");
@@ -110,12 +107,34 @@ int main(int argc, char *argv[]) {
     program.parse_args(argc, argv);
 
     const int occlusion_boundary_line_width = program.get<int>("--line_width");
-    const int factor = program.get<int>("--subdivide");
+
+    const fs::path input_dir(program.get<std::string>("--input_dir"));
+    const fs::path output_dir(program.get<std::string>("--output_dir"));
+    if (input_dir.stem().string() == "x")
+        exit(174); // Custom error code for checking if EGL is working
+    assert_exists(input_dir);
+    if (!fs::exists(output_dir))
+        fs::create_directory(output_dir);
+
     const int frame_number = program.get<int>("--frame");
-    const int output_h = program.get<int>("--height");
-    const int output_w = program.get<int>("--width");
-    const int buffer_width = output_w * factor;
-    const int buffer_height = output_h * factor;
+    const std::string frame_str = "frame_" + zfill(4, frame_number);
+    const auto camera_dir = input_dir / frame_str / "cameras";
+    assert_exists(camera_dir);
+    std::vector<std::pair<fs::path, std::string>> camview_files;
+    for (const auto &entry : fs::directory_iterator(camera_dir)){
+        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
+        const auto output_suffix = matches[1];
+        MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
+        camview_files.push_back({entry, output_suffix});
+    }
+    MRASSERT(!camview_files.empty(), "camview_files is empty");
+
+    const auto image_shape = npz(camview_files[0].first).read_data<long>("HW");
+    const int output_h = image_shape[0];
+    const int output_w = image_shape[1];
+    const int buffer_width = output_w * 2;
+    const int buffer_height = output_h * 2;
+
     if ((buffer_width > 10000) || (buffer_height > 10000)){
         cout << "The image size [" << buffer_width << " x " << buffer_height << "] is too large." << endl;
         return 1;
@@ -204,25 +223,9 @@ int main(int argc, char *argv[]) {
         }
     #endif
 
-    const fs::path input_dir(program.get<std::string>("--input_dir"));
-    const fs::path output_dir(program.get<std::string>("--output_dir"));
-    if (input_dir.stem().string() == "x")
-        exit(174); // Custom error code for checking if EGL is working
-    assert_exists(input_dir);
-    if (!fs::exists(output_dir))
-        fs::create_directory(output_dir);
-
     std::vector<CameraView> camera_views;
-    const std::string frame_str = "frame_" + zfill(4, frame_number);
-    const auto camera_dir = input_dir / frame_str / "cameras";
-    assert_exists(camera_dir);
-    for (const auto &entry : fs::directory_iterator(camera_dir)){
-        const auto matches = match_regex("T_([0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
-        if (!matches.empty()){
-            const auto output_suffix = matches[1];
-            camera_views.push_back({output_suffix, output_dir, camera_dir, buffer_width, buffer_height});
-        }
-    }
+    for (const auto &entry : camview_files)
+        camera_views.push_back({entry.second, camera_dir, output_w, output_h});
 
     const auto glsl = source_directory / "glsl";
     Shader spineShader((glsl / "wings.vert").c_str(), (glsl / "spine.frag").c_str(), (glsl / "spine.geom").c_str());
@@ -305,7 +308,7 @@ int main(int argc, char *argv[]) {
         */
         {
             std::ofstream o(output_dir / ("Objects_" + cd.frame_string + ".json"));
-            o << std::setw(4) << all_bboxes << std::endl;
+            o << json(all_bboxes).dump() << std::endl;
         }
 
         /*
@@ -378,24 +381,40 @@ int main(int argc, char *argv[]) {
        }
 
         /*
-            Reading/Writing the segmentation map
+            Reading/Writing the instance segmentation map
         */
         {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT6, buffer_width, buffer_height);
-            Eigen::Tensor<long, 2> instance_seg(buffer_height, buffer_width);
+            Eigen::Tensor<int, 3> instance_seg(buffer_height, buffer_width, 3);
             instance_seg.setZero();
-            Eigen::Tensor<int, 2> object_seg(buffer_height, buffer_width);
-            object_seg.setZero();
-            for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying object & instance segmentation masks")){
-                instance_seg(o.y, o.x) = InstanceID{pixels[o.j], pixels[o.j+1]}.as_long();
-                object_seg(o.y, o.x) = pixels[o.j+2];
+            for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying instance segmentation masks")){
+                for (int k=0; k<3; k++)
+                    instance_seg(o.y, o.x, k) = pixels[o.j + k];
                 o.progressbar();
             }
             save_npy(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".npy"), instance_seg);
-            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg.cast<int>()));
-            save_npy(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".npy"), object_seg);
-            imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg));
+
+            Eigen::Tensor<long, 2> instance_seg_2d(buffer_height, buffer_width);
+            for (const loop_obj &o : image_iterator(buffer_width, buffer_height))
+                instance_seg_2d(o.y, o.x) = long(instance_seg(o.y, o.x, 0) % 1000) + 1000 * long(instance_seg(o.y, o.x, 1) % 1000) + 1000000 * long(instance_seg(o.y, o.x, 2) % 1000);
+            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg_2d));
         }
+
+        /*
+            Reading/Writing the object segmentation map
+        */
+        {
+            const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT4, buffer_width, buffer_height);
+            Eigen::Tensor<int, 2> object_seg(buffer_height, buffer_width);
+            object_seg.setZero();
+            for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying object segmentation masks")){
+                object_seg(o.y, o.x) = pixels[o.j];
+                o.progressbar();
+            }
+            save_npy(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".npy"), object_seg);
+            imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg.cast<long>()));
+        }
+
         {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT5, buffer_width, buffer_height);
             Eigen::Tensor<int, 2> tag_seg(buffer_height, buffer_width);
@@ -405,7 +424,7 @@ int main(int argc, char *argv[]) {
                 o.progressbar();
             }
             save_npy(output_dir / ("TagSegmentation_" + cd.frame_string + ".npy"), tag_seg);
-            imwrite(output_dir / ("TagSegmentation_" + cd.frame_string + ".png"), to_color_map(tag_seg));
+            imwrite(output_dir / ("TagSegmentation_" + cd.frame_string + ".png"), to_color_map(tag_seg.cast<long>()));
         }
 
 
@@ -441,19 +460,20 @@ int main(int argc, char *argv[]) {
                 for (int j=-1; j<=1; j++){
                     const int next_x = o.x + lround(fx) + i;
                     const int next_y = o.y + lround(fy) + j;
-                    const bool face_ids_match = (
-                        (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
-                        (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
-                        (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
-                    );
-                    match_exists = match_exists || face_ids_match;
+                    if ((0 <= next_y) && (next_y < buffer_height) && (0 <= next_x) && (next_x < buffer_width)){
+                        const bool face_ids_match = (
+                            (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
+                            (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
+                            (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
+                        );
+                        match_exists = match_exists || face_ids_match;
+                    }
                 }
             }
-            flow_occlusion(o.y, o.x) = ((int)match_exists) * 255;
+            flow_occlusion(o.y, o.x) = ((unsigned char)match_exists) * 255;
             o.progressbar();
         }
         imwrite(output_dir / ("Flow3DMask_" + cd.frame_string + ".png"), flow_occlusion);
-
         }
 
         /*

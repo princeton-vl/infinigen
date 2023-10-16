@@ -23,7 +23,7 @@ auto parse_json(const fs::path json_path){
     const json data = json::parse(std::ifstream(json_path));
     std::unordered_map<std::string, ObjectInfo> output;
     for (const auto &instance_item : data){
-        if (instance_item.contains("filename")){
+        if (instance_item.contains("filename") && (instance_item["object_type"] == "MESH")){ // Ignore CURVES objects, for now
             const ObjectInfo ii(instance_item);
             MRASSERT(output.count(ii.mesh_id) == 0, ii.mesh_id);
             output[ii.mesh_id] = ii;
@@ -84,10 +84,11 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
             if (npz_lookup.count(next_npz_path.string()) == 0)
                 npz_lookup[next_npz_path.string()] = next_npz_path;
             const npz &next_npz = npz_lookup.at(next_npz_path.string());
-            next_buf = BufferArrays(next_npz, current_mesh_id, next_obj.type);
+            next_buf = BufferArrays(next_npz, current_mesh_id, next_obj.type, true);
         } else {
             next_buf = current_buf;
         }
+
         it++;
     }
 

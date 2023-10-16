@@ -21,19 +21,21 @@ cd worldgen
 mkdir outputs
 
 # Generate a scene layout
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/helloworld/coarse
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task coarse -g desert.gin simple.gin --output_folder outputs/hello_world/coarse
 
 # Populate unique assets
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/helloworld/coarse --output_folder outputs/helloworld/fine
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task populate fine_terrain -g desert.gin simple.gin --input_folder outputs/hello_world/coarse --output_folder outputs/hello_world/fine
 
 # Render RGB images
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/hello_world/fine --output_folder outputs/hello_world/frames
 
 # Render again for accurate ground-truth
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/frames -p render.render_image_func=@flat/render_image 
+$BLENDER -noaudio --background --python generate.py -- --seed 0 --task render -g desert.gin simple.gin --input_folder outputs/hello_world/fine --output_folder outputs/hello_world/frames -p render.render_image_func=@flat/render_image 
 ```
 
-Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/helloworld/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
+:warning: If you recieve the error message `-noaudio: command not found` you most likely missed the `export BLENDER=...` step of the Installation instructions.
+
+Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `$BLENDER outputs/hello_world/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
 ## Generate image(s) in one command
 

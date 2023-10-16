@@ -57,5 +57,3 @@ void save_npy(const fs::path filepath, const Eigen::Tensor<T, S> &mat){
 Eigen::MatrixXd read_npy(const fs::path filepath);
 
 void assert_exists(const fs::path &filepath);
-
-std::array<int, 2> get_png_size(const fs::path &image_path);
