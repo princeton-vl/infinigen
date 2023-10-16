@@ -31,29 +31,17 @@ if __name__ == "__main__":
     flow3d_path = get_frame_path(args.folder, 0, args.frame, "Flow3D_npy")
     image1_path = get_frame_path(args.folder, 0, args.frame, "Image_png")
     image2_path = get_frame_path(args.folder, 0, args.frame+1, "Image_png")
-    camview_path = get_frame_path(args.folder, 0, args.frame, 'camview_npz')
     assert flow3d_path.exists()
     assert image1_path.exists()
     assert image2_path.exists()
-    assert camview_path.exists()
-
-    def warp_image_with_flow(image2, flow3d):
-        H, W, _ = image2.shape
-        flow2d = cv2.resize(flow3d, dsize=(W, H), interpolation=cv2.INTER_LINEAR)[...,:2]
-        new_coords = flow2d + np.stack(np.meshgrid(np.arange(W), np.arange(H), indexing='xy'), axis=-1)
-        warmped_image2 = cv2.remap(image2, new_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR)
-        return warmped_image2
 
     image2 = imread(image2_path)
     image1 = imread(image1_path)
     H, W, _ = image1.shape
-    shape = (W, H)
-    _, Wf = np.load(camview_path)['HW'] * 2
-    img_to_gt_ratio = Wf / W
 
-    flow2d_resized = cv2.resize(np.load(flow3d_path), dsize=shape, interpolation=cv2.INTER_LINEAR)[...,:2] / img_to_gt_ratio
-
-    warped_image = warp_image_with_flow(image2, flow2d_resized)
+    flow2d = cv2.resize(np.load(flow3d_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR)[...,:2]
+    new_coords = flow2d + np.stack(np.meshgrid(np.arange(W), np.arange(H), indexing='xy'), axis=-1)
+    warped_image = cv2.remap(image2, new_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR)
 
     args.output.mkdir(exist_ok=True)
     imwrite(args.output / "A.png", image1)

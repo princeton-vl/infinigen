@@ -325,12 +325,16 @@ def reorganize_old_framesfolder(frames_old):
     frames_dest = frames_old.parent/"frames"
 
     for img_path in frames_old.iterdir():
+        if img_path.is_dir():
+            continue
         dtype, *_ = img_path.name.split('_')
         idxs = parse_suffix(img_path.name)
         new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
         new_path.parent.mkdir(exist_ok=True, parents=True)
         shutil.move(img_path, new_path)
-    frames_old.rmdir()
+
+    if frames_dest != frames_old:
+        frames_old.rmdir()
 
 def fix_frames_folderstructure(p):
 
@@ -358,7 +362,10 @@ def retar_for_distribution(local_folder, distrib_path):
             exts = set(p.suffix for p in camera_folder.iterdir())
             for ext in exts:
                 tar_path = distrib_path/seed/f"{seed}_{dtype_folder.name}_{ext.strip('.')}_{camera_folder.name}.tar.gz"
+                if tar_path.exists():
+                    continue
                 tar_path.parent.mkdir(exist_ok=True, parents=True)
+                print(f'Creating {tar_path}')
                 with tarfile.open(tar_path, 'w:gz') as f:
                     for img in camera_folder.glob(f'*{ext}'):
                         f.add(img, arcname=img.relative_to(local_folder.parent))
@@ -376,38 +383,42 @@ def process_one_scene(p, args):
     local_folder = local_tar.parent/(local_tar.name.split('.')[0])
     assert local_tar.name.endswith('.tar.gz'), local_tar
 
-    for s in scene_files:
-        local_s = args.local_path/s
-        local_s.parent.mkdir(exist_ok=True, parents=True)
-        if local_s == local_tar and local_folder.exists():
-            print(f'Skipping {s} as {local_folder} exists')
-            continue
-        if not local_s.exists():
-            print(f'Downloading {s}')
-            smb_client.download(args.smb_root/s, dest_folder=local_s.parent)
-        assert local_s.exists()
+    if False:
+        for s in scene_files:
+            local_s = args.local_path/s
+            local_s.parent.mkdir(exist_ok=True, parents=True)
+            if local_s == local_tar and local_folder.exists():
+                print(f'Skipping {s} as {local_folder} exists')
+                continue
+            if not local_s.exists():
+                print(f'Downloading {s}')
+                smb_client.download(args.smb_root/s, dest_folder=local_s.parent)
+            assert local_s.exists()
+
+        if not local_folder.exists():
+            print(f'Untarring {local_folder}')
+            assert local_tar.exists()
+            untar_folder = untar(local_tar)
+            assert untar_folder == local_folder
+        else:
+            print(f'Skipping untar {local_tar}')
+        assert local_folder.exists()
+
+        if not (local_folder/'PREPROCESSED.txt').exists():
+            print(f'Postprocessing {local_folder=}')
+            fix_scene_structure(local_folder, n_subcams=2)
+            fix_metadata(local_folder)
+            optimize_groundtruth_filesize(local_folder)
+            fix_frames_folderstructure(local_folder)
+
+            with (local_folder/'PREPROCESSED.txt').open('w') as f:
+                f.write(f'{TOOLKIT_VERSION=}')
 
     if not local_folder.exists():
-        print(f'Untarring {local_folder}')
-        assert local_tar.exists()
-        untar_folder = untar(local_tar)
-        assert untar_folder == local_folder
-    else:
-        print(f'Skipping untar {local_tar}')
-    assert local_folder.exists()
-
-    if not (local_folder/'PREPROCESSED.txt').exists():
-        print(f'Postprocessing {local_folder=}')
-        fix_scene_structure(local_folder, n_subcams=2)
-        fix_metadata(local_folder)
-        optimize_groundtruth_filesize(local_folder)
-        fix_frames_folderstructure(local_folder)
-
-        with (local_folder/'PREPROCESSED.txt').open('w') as f:
-            f.write(f'{TOOLKIT_VERSION=}')
+        return
 
     print(f'Validating {local_folder=}')
-    dset = dataset_loader.InfinigenSceneDataset(local_folder, image_types=dataset_loader.ALLOWED_IMAGE_TYPES)
+    dset = dataset_loader.InfinigenSceneDataset(local_folder, data_types=dataset_loader.ALLOWED_IMAGE_TYPES)
     dset.validate()
 
     if local_tar.exists():
@@ -417,8 +428,9 @@ def process_one_scene(p, args):
         retar_for_distribution(local_folder, args.distrib_path)
 
 def try_process(p, args):
+    process_one_scene(p, args)
     try:
-        process_one_scene(p, args)
+        pass
     except Exception as e:
         print('FAILED', p, e)
         with (Path()/'failures.txt').open('a') as f:

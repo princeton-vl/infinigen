@@ -19,7 +19,7 @@ from pathlib import Path
 from imageio import imwrite
 
 def load_exr(path):
-    assert Path(path).exists() and Path(path).suffix == ".exr"
+    assert Path(path).exists() and Path(path).suffix == ".exr", path
     return cv2.imread(str(path),  cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
 
 load_flow = load_exr

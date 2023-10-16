@@ -495,15 +495,23 @@ def jobs_to_launch_next(
     max_stuck_at_task: int = None
 ):
     
+    def is_candidate_for_launch(scene):
+        return (
+            scene['all_done'] == SceneState.NotDone and
+            not scene.get('any_fatal_crash', False)
+        )
+    scenes = [s for s in scenes if is_candidate_for_launch(s)]
+
     def inflight(s):
         return s['num_running'] + s['num_done']
-    
     if greedy:
         scenes = sorted(copy(scenes), key=inflight, reverse=True)
 
-    inflight_counts = np.array([inflight(s) for s in scenes if s['all_done'] == SceneState.NotDone])
-    inflight_uniq, curr_per_inflight = np.unique(inflight_counts, return_counts=True)
-    inflight_uniq = list(inflight_uniq)
+    started_counts = np.array([inflight(s) for s in scenes])
+    started_uniq, curr_per_started = np.unique(started_counts, return_counts=True)
+    started_uniq = list(started_uniq)
+
+    logging.debug(f'Pipeline state: {list(zip(started_uniq, curr_per_started))}')
 
     total_queued = sum(
         v for (s, _), v in state_counts.items() 
@@ -514,15 +522,10 @@ def jobs_to_launch_next(
 
         seed = scene['seed']
         
-        if scene['all_done'] != SceneState.NotDone:
-            continue
-        if scene.get('any_fatal_crash', False):
-            continue
-
-        inflight_if_launch = inflight(scene) + 1
+        started_if_launch = inflight(scene) + 1
         stuck_at_next = (
-            curr_per_inflight[inflight_uniq.index(inflight_if_launch)] 
-            if inflight_if_launch in inflight_uniq else 0
+            curr_per_started[started_uniq.index(started_if_launch)] 
+            if started_if_launch in started_uniq else 0
         )
 
         if (
@@ -531,7 +534,7 @@ def jobs_to_launch_next(
         ):
             logging.info(
                 f"{seed} - Not launching due to {stuck_at_next=} >"
-                f" {max_stuck_at_task} for {inflight_if_launch=}"
+                f" {max_stuck_at_task} for {started_if_launch=}"
             )
             continue
 

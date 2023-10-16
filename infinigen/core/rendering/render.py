@@ -212,38 +212,38 @@ def global_flat_shading():
 def postprocess_blendergt_outputs(frames_folder, output_stem):
 
     # Save flow visualization
-    flow_dst_path = frames_folder / f"Vector_{output_stem}.exr"
+    flow_dst_path = frames_folder / f"Vector{output_stem}.exr"
     flow_array = load_flow(flow_dst_path)
-    np.save(flow_dst_path.with_name(f"Flow_{output_stem}.npy"), flow_array)
-    imwrite(flow_dst_path.with_name(f"Flow_{output_stem}.png"), colorize_flow(flow_array))
+    np.save(flow_dst_path.with_name(f"Flow{output_stem}.npy"), flow_array)
+    imwrite(flow_dst_path.with_name(f"Flow{output_stem}.png"), colorize_flow(flow_array))
     flow_dst_path.unlink()
 
     # Save surface normal visualization
-    normal_dst_path = frames_folder / f"Normal_{output_stem}.exr"
+    normal_dst_path = frames_folder / f"Normal{output_stem}.exr"
     normal_array = load_normals(normal_dst_path)
-    np.save(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.npy"), normal_array)
-    imwrite(flow_dst_path.with_name(f"SurfaceNormal_{output_stem}.png"), colorize_normals(normal_array))
+    np.save(flow_dst_path.with_name(f"SurfaceNormal{output_stem}.npy"), normal_array)
+    imwrite(flow_dst_path.with_name(f"SurfaceNormal{output_stem}.png"), colorize_normals(normal_array))
     normal_dst_path.unlink()
 
     # Save depth visualization
-    depth_dst_path = frames_folder / f"Depth_{output_stem}.exr"
+    depth_dst_path = frames_folder / f"Depth{output_stem}.exr"
     depth_array = load_depth(depth_dst_path)
-    np.save(flow_dst_path.with_name(f"Depth_{output_stem}.npy"), depth_array)
-    imwrite(depth_dst_path.with_name(f"Depth_{output_stem}.png"), colorize_depth(depth_array))
+    np.save(flow_dst_path.with_name(f"Depth{output_stem}.npy"), depth_array)
+    imwrite(depth_dst_path.with_name(f"Depth{output_stem}.png"), colorize_depth(depth_array))
     depth_dst_path.unlink()
 
     # Save segmentation visualization
-    seg_dst_path = frames_folder / f"IndexOB_{output_stem}.exr"
+    seg_dst_path = frames_folder / f"IndexOB{output_stem}.exr"
     seg_mask_array = load_seg_mask(seg_dst_path)
-    np.save(flow_dst_path.with_name(f"ObjectSegmentation_{output_stem}.npy"), seg_mask_array)
-    imwrite(seg_dst_path.with_name(f"ObjectSegmentation_{output_stem}.png"), colorize_int_array(seg_mask_array))
+    np.save(flow_dst_path.with_name(f"ObjectSegmentation{output_stem}.npy"), seg_mask_array)
+    imwrite(seg_dst_path.with_name(f"ObjectSegmentation{output_stem}.png"), colorize_int_array(seg_mask_array))
     seg_dst_path.unlink()
 
     # Save unique instances visualization
-    uniq_inst_path = frames_folder / f"UniqueInstances_{output_stem}.exr"
+    uniq_inst_path = frames_folder / f"UniqueInstances{output_stem}.exr"
     uniq_inst_array = load_uniq_inst(uniq_inst_path)
-    np.save(flow_dst_path.with_name(f"InstanceSegmentation_{output_stem}.npy"), uniq_inst_array)
-    imwrite(uniq_inst_path.with_name(f"InstanceSegmentation_{output_stem}.png"), colorize_int_array(uniq_inst_array))
+    np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
+    imwrite(uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"), colorize_int_array(uniq_inst_array))
     uniq_inst_path.unlink()
 
 @gin.configurable
@@ -301,7 +301,8 @@ def render_image(
             object_data = set_pass_indices()
             json_object = json.dumps(object_data, indent=4)
             first_frame = bpy.context.scene.frame_start
-            (frames_folder / f"Objects_{first_frame:04d}_{camera_rig_id:02d}_{subcam_id:02d}.json").write_text(json_object)
+            suffix = get_suffix(dict(cam_rig=camera_rig_id, resample=0, frame=first_frame, subcam=subcam_id))
+            (frames_folder / f"Objects{suffix}.json").write_text(json_object)
 
         with Timer("Flat Shading"):
             global_flat_shading()

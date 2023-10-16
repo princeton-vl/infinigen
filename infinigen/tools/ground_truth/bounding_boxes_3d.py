@@ -83,15 +83,16 @@ if __name__ == "__main__":
     present_objects = [obj for obj in object_json if (obj['object_index'] in unique_object_idxs)]
 
     # Complain if the query isn't valid/present
+    unique_names = sorted({q['name'] for q in present_objects})
     if args.query is None:
         print('`--query` not specified. Choices are:')
-        for q in present_objects:
-            print(f"- {q['name']}")
+        for qn in unique_names:
+            print(f"- {qn}")
         sys.exit(0)
-    elif not any((args.query.lower() in obj['name'].lower()) for obj in present_objects):
-        print(f'"{args.query}" doesn\'t match any tag in this image. Choices are:')
-        for q in present_objects:
-            print(f"- {q['name']}")
+    elif not any((args.query.lower() in name.lower()) for name in unique_names):
+        print(f'"{args.query}" doesn\'t match any object names in this image. Choices are:')
+        for qn in unique_names:
+            print(f"- {qn}")
         sys.exit(0)
 
     H, W, _ = image.shape
