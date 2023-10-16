@@ -62,20 +62,13 @@ bash worldgen/tools/install/compile_opengl.sh
 
 ### Extended Hello-World
 
-Continuing the [Hello-World](/README.md#generate-a-scene-step-by-step) example, we can produce the full set of annotations that Infinigen supports. Following step 3:
+To generate the hello-world scene using our custom annotation system, run:
 
-4. Export the geometry from blender to disk
 ```
-$BLENDER -noaudio --background --python generate.py -- --seed 0 --task mesh_save -g desert simple --input_folder outputs/helloworld/fine --output_folder outputs/helloworld/saved_mesh
+python -m tools.manage_datagen_jobs --output_folder outputs/hello_world/0 --num_scenes 1 --specific_seed 0 \
+--configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin opengl_gt.gin --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
-5. Generate dense annotations
-```
-../process_mesh/build/process_mesh --frame 1 -in outputs/helloworld/saved_mesh -out outputs/helloworld/frames
-```
-6. (Optional) Select for a segmentation mask of certain semantic tags, e.g. cactus
-```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cactus
-```
+This is the [the previous manage_datagen_jobs command](https://github.com/princeton-vl/infinigen_internal/blob/oc16_update_docs/docs/HelloWorld.md#generate-images-in-one-command), but replacing `blender_gt.gin` with `opengl_gt.gin`
 
 ## Specification
 
@@ -85,38 +78,38 @@ Note: In cases where both a .png and .npy file are available, we recommend you u
 
 **Depth**
 
-Depth is stored as a 2Hx2W 32-bit floating point numpy array.
+Depth is stored as a 2H x 2W 32-bit floating point numpy array.
 
 <p align="center">
-<img src="docs/images/gt_annotations/Depth_0001_00_00.png" width="400" />
+<img src="images/gt_annotations/Depth_0001_00_00.png" width="400" />
 </p>
 
 The depth and camera parameters can be used to warp one image to another frame by running:
 ```
-python tools/ground_truth/rigid_warp.py <folder> <first-frame> <second-frame>
+python -m tools.ground_truth.rigid_warp <folder> <first-frame> <second-frame>
 ```
 
 **Surface Normals**
 
-Surface Normals are stored as a HxWx3 32-bit floating point numpy array.
+Surface Normals are stored as a H x W x 3 32-bit floating point numpy array.
 
 The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backward.
 
 <p align="center">
-<img src="docs/images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
+<img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
 </p>
 
 ### Occlusion Boundaries :large_blue_diamond:
 
-Occlusion Boundaries are stored as a >=2Hx2W png, with 255 indicating a boundary and 0 otherwise.
+Occlusion Boundaries are  a >= 2H x 2W png, with 255 indicating a boundary and 0 otherwise.
 
 <p align="center">
-<img src="docs/images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
+<img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
 </p>
 
 ### Optical Flow
 
-Optical Flow / Scene Flow is stored as a HxWx3 32-bit floating point numpy array.
+Optical Flow / Scene Flow is  a H x W x 3 32-bit floating point numpy array.
 
 *Note: The values won't be meaningful if this is the final frame in a series, or in the single-view setting.*
 
@@ -129,14 +122,14 @@ Channel 3 is the depth change between this frame and the next.
 To see an example of how optical flow can be used to warp one frame to the next, run
 
 ```
-python tools/ground_truth/optical_flow_warp.py <folder> <frame-number>
+python -m tools.ground_truth.optical_flow_warp <folder> <frame-number>
 ```
 
 If using `blender_gt.gin` rathern than `opengl_gt.gin` replace `Flow3D` with `Flow`, since Blender does not export 3D flow.
 
 ### Optical Flow Occlusion :large_blue_diamond:
 
-The mask of occluded pixels for the aforementioned optical flow is stored as a HxW png, with 255 indicating a co-visible pixel and 0 otherwise.
+The mask of occluded pixels for the aforementioned optical flow is stored as a H x W png, with 255 indicating a co-visible pixel and 0 otherwise.
 
 *Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
@@ -154,44 +147,25 @@ As is standard in computer vision, the assumed world coordinate system in the sa
 
 Infinigen saves three types of semantic segmentation masks: 1) Object Segmentation 2) Tag Segmentation 3) Instance Segmentation
 
-*Object Segmentation* distinguishes individual blender objects, and is stored as a 2160 x 3840 32-bit integer numpy array. Each integer in the mask maps to an object in Objects_XXXX_XX_XX.json with the same value for the `"object_index"` field. The definition of "object" is imposed by Blender; generally large or complex assets such as the terrain, trees, or animals are considered one singular object, while a large number of smaller assets (e.g. grass, coral) may be grouped together if they are using instanced-geometry for their implementation.
+*Object Segmentation* distinguishes individual blender objects, and is stored as a H x W 32-bit integer numpy array. Each integer in the mask maps to an object in Objects_XXXX_XX_XX.json with the same value for the `"object_index"` field. The definition of "object" is imposed by Blender; generally large or complex assets such as the terrain, trees, or animals are considered one singular object, while a large number of smaller assets (e.g. grass, coral) may be grouped together if they are using instanced-geometry for their implementation.
 
-*Instance Segmentation* distinguishes individual instances of a single object from one another (e.g. separate blades of grass, separate ferns, etc.), and is stored as a 2160 x 3840 32-bit integer numpy array. Each integer in this mask is the *instance-id* for a particular instance, which is unique for that object as defined in the Object Segmentation mask and Objects_XXXX_XX_XX.json.
+*Instance Segmentation* distinguishes individual instances of a single object from one another (e.g. separate blades of grass, separate ferns, etc.), and is stored as a H x W x 3 32-bit integer numpy array. Each integer in this mask is the *instance-id* for a particular instance, which is unique for that object as defined in the Object Segmentation mask and Objects_XXXX_XX_XX.json.
+
+Generally, most useful panoptic segmentation masks can be constructed by combining the aforementioned two arrays in some way. As an example, to visualize the 2D and [3D bounding boxes](#object-metadata-and-3d-bounding-boxes) for rock objects in the hello world scene, run 
+```
+python -m tools.ground_truth.segmentation_lookup outputs/hello_world/0 48 --query rock --boxes
+python -m tools.ground_truth.bounding_boxes_3d outputs/hello_world/0 48 --query rock
+```
+By ommitting the --query flag, a list of available tags will be printed.
 
 #### **Tag Segmentation** :large_blue_diamond:
 
-*Tag Segmentation* distinguishes vertices based on their semantic tags, and is stored as a 2160 x 3840 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Missing features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
-
-Generally, most useful panoptic segmentation masks can be constructed by combining the aforementioned three arrays in some way. As an example, to visualize the 2D and [3D bounding boxes](#object-metadata-and-3d-bounding-boxes) for objects with the *blender_rock* semantic tag in the hello world scene, run 
-```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query blender_rock --boxes
-python tools/ground_truth/bounding_boxes_3d.py outputs/helloworld 1 --query blender_rock
-```
-which will output
-
-<p align="center">
-<img src="docs/images/gt_annotations/blender_rock_2d.png" width="400" /> <img src="docs/images/gt_annotations/blender_rock_3d.png" width="400" />
-</p>
-
-By ommitting the --query flag, a list of available tags will be printed.
-
-One could also produce a mask for only *flower petals*:
-
-```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query petal
-```
-<p align="center">
-<img src="docs/images/gt_annotations/petal.png" width="400" />
-</p>
+*Tag Segmentation* distinguishes vertices based on their semantic tags, and is stored as a H x W 64-bit integer numpy array. Infinigen tags all vertices with an integer which can be associated to a list of semantic labels in `MaskTag.json`. Compared to Object Segmentation, Infinigen's tagging system is less automatic but much more flexible. Requested features in the tagging system are usually possible and straightforward to implement, wheras in the automaically generated Object Segmentation they are not. 
 
 A benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
 
-```
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query cave
-python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query warped_rocks
-```
 <p align="center">
-<img src="docs/images/gt_annotations/caves.png" width="400" /> <img src="docs/images/gt_annotations/warped_rocks.png" width="400" />
+<img src="images/gt_annotations/caves.png" width="400" /> <img src="images/gt_annotations/warped_rocks.png" width="400" />
 </p>
 
 ### Object Metadata and 3D bounding boxes
@@ -199,7 +173,7 @@ python tools/ground_truth/segmentation_lookup.py outputs/helloworld 1 --query wa
 Each item in `Objects_0001_00_00.json` also contains other metadata about each object:
 ```
 # Load object meta data
-object_data = json.loads((Path("output/helloworld") / summary_json["Objects"]["json"]["00"]["00"]["0001"]).read_text())
+object_data = json.loads(Path("outputs/helloworld/frames/Objects/camera_0/Objects_0_0_0001_0.json").read_text())
 
 # select nth object
 obj = object_data[n]
@@ -218,7 +192,7 @@ More fields :large_blue_diamond:
 obj["tags"] # list of tags which appear on at least one vertex 
 obj["min"] # min-corner of bounding box, in object coordinates
 obj["max"] # max-corner of bounding box, in object coordinates
-obj["model_matrices"] # mapping from instance-ids to 4x4 obj->world transformation matrices
+obj["model_matrices"] # 4x4 obj->world transformation matrices for all instances
 ```
 
-The **3D bounding box** for each instance can be computed using `obj["min"]`, `obj["max"]`, `obj["model_matrices"]`. For an example, refer to [the bounding_boxes_3d.py example above](#tag-segmentation-large_blue_diamond).
+The **3D bounding box** for each instance can be computed using `obj["min"]`, `obj["max"]`, `obj["model_matrices"]`. For an example, refer to [the bounding_boxes_3d.py example above](#panoptic-segmentation).

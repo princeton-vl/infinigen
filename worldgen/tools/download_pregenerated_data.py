@@ -21,26 +21,32 @@ ANNOT_DESCRIPTIONS = OrderedDict([
     
     ("Image_png", "RGB image as a .png."),
     ("Image_exr", "RGB image as an .exr"),
+
     ("camview_npz", "Camera intrinsic & extrinsic matricies, IE, camera calibration and poses."),
     
     ("Depth_npy", "Depth"),
+    ("Depth_png", "Color-mapped PNG of Depth_npy. FOR VISUALIZATION ONLY"),
+
     ("SurfaceNormal_npy", "Surface Normals"),
+    ("SurfaceNormal_png", "Color-mapped PNG of SurfaceNormal_npy. FOR VISUALIZATION ONLY"),
+
     ("Flow3D_npy", "Optical Flow and Depth change."),
+    ("Flow3D_png", "Color-wheel visualization of the 2D part of Flow3D_npy. FOR VISUALIZATION ONLY"),
+
     ("Flow3DMask_png", "Flow Occlusion mask."),
     ("OcclusionBoundaries_png", "Occlusion Boundaries."),
+
     ("ObjectSegmentation_npz", "Semantic Segmentation mask. Compressed using a lookup table - see docs for more info."),
+    ("ObjectSegmentation_png", "Color-mapped PNG of ObjectSegmentation.npz. FOR VISUALIZATION ONLY"),
+
     ("InstanceSegmentation_npz", "Instance Segmentation mask. Compressed using a lookup table - see docs for more info."),
+    ("InstanceSegmentation_png", "Color-mapped PNG of InstanceSegmentation.npz. FOR VISUALIZATION ONLY"),
+
     ("TagSegmentation_npz", "Segmentation mask to help distinguish different parts of the same object. Compressed using a lookup table - see docs for more info."),
+    ("TagSegmentation_png", "Color-mapped PNG of TagSegmentation_npz. FOR VISUALIZATION ONLY"),
 
     ("Objects_json", "LARGE json object specifying names, poses and bounding boxes of objects in the scene. Required for 2D/3D BBox."),
 
-    ("Depth_png", "Color-mapped PNG of Depth_npy. FOR VISUALIZATION ONLY - use the npy for training"),
-    ("SurfaceNormal_png", "Color-mapped PNG of SurfaceNormal_npy. FOR VISUALIZATION ONLY - use the npy for training"),
-    ("InstanceSegmentation_png", "Color-mapped PNG of InstanceSegmentation.npz. FOR VISUALIZATION ONLY - use the npz for training"),
-    ("ObjectSegmentation_png", "Color-mapped PNG of ObjectSegmentation.npz. FOR VISUALIZATION ONLY - use the npz for training"),
-    ("TagSegmentation_png", "Color-mapped PNG of TagSegmentation_npz. FOR VISUALIZATION ONLY - use the npy for training"),
-    ("Flow3D_png", "Color-wheel visualization of the 2D part of Flow3D_npy. FOR VISUALIZATION ONLY - use the npy for training"),
-        
     ("AO_png", "Ambient Occlusion."),
     ("DiffCol_png", "Diffuse Color, a.k.a Albedo."),
     ("DiffDir_png", "Diffuse Direct pass."),
@@ -157,7 +163,7 @@ def check_and_preprocess_args(args, metadata):
     if args.seeds is None:
         n = len(metadata['seeds'])
         print(
-            f"\How many videos do you wish to download? "
+            f"How many videos do you wish to download? "
             f"Enter a quantity from 1 to {n}, or type SELECT to pick specific seeds"
         )
         selection = input("Enter your selection: ")

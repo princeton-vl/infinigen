@@ -8,7 +8,8 @@ All pre-generated data released by the Princeton Vision and Learning lab is host
 Please run the script below, which will prompt you to determine what ground truth channels, cameras, how many scenes you wish to download.
 
 ```bash
-python -m tools.download_pregenerated_data outputs/my_download --release_name 2023_10_13_preview
+cd worldgen
+python tools/download_pregenerated_data.py outputs/my_download --release_name 2023_10_13_preview
 ```
 
 :warning: Downloading all available annotations will require ~30GB per scene. Selecting only the data you need will minimize your bandwidth and disk usage.

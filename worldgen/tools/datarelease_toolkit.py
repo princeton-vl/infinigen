@@ -325,12 +325,16 @@ def reorganize_old_framesfolder(frames_old):
     frames_dest = frames_old.parent/"frames"
 
     for img_path in frames_old.iterdir():
+        if img_path.is_dir():
+            continue
         dtype, *_ = img_path.name.split('_')
         idxs = parse_suffix(img_path.name)
         new_path = frames_dest/dtype/f"camera_{idxs['subcam']}"/img_path.name
         new_path.parent.mkdir(exist_ok=True, parents=True)
         shutil.move(img_path, new_path)
-    frames_old.rmdir()
+
+    if frames_dest != frames_old:
+        frames_old.rmdir()
 
 def fix_frames_folderstructure(p):
 

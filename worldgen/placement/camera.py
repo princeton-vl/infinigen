@@ -540,7 +540,6 @@ def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
             bpy.context.scene.render.resolution_x
         ))
         T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.))
-        print("SAVE CAMERAS", output_file)
         np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 @node_utils.to_nodegroup('ng_dist2camera', singleton=True, type='GeometryNodeTree')
