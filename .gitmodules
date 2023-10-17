@@ -1,33 +1,33 @@
 [submodule "infinigen/infinigen_gpl"]
 	path = infinigen/infinigen_gpl
 	url = https://github.com/princeton-vl/infinigen_gpl.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/eigen"]
+[submodule "infinigen/datagen/customgt/dependencies/eigen"]
 	path = infinigen/datagen/customgt/dependencies/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/argparse"]
+[submodule "infinigen/datagen/customgt/dependencies/argparse"]
 	path = infinigen/datagen/customgt/dependencies/argparse
 	url = https://github.com/p-ranav/argparse.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/cnpy"]
+[submodule "infinigen/datagen/customgt/dependencies/cnpy"]
 	path = infinigen/datagen/customgt/dependencies/cnpy
 	url = https://github.com/rogersce/cnpy.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/indicators"]
+[submodule "infinigen/datagen/customgt/dependencies/indicators"]
 	path = infinigen/datagen/customgt/dependencies/indicators
 	url = https://github.com/p-ranav/indicators.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/tinycolormap"]
+[submodule "infinigen/datagen/customgt/dependencies/tinycolormap"]
 	path = infinigen/datagen/customgt/dependencies/tinycolormap
 	url = https://github.com/yuki-koyama/tinycolormap.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/glm"]
+[submodule "infinigen/datagen/customgt/dependencies/glm"]
 	path = infinigen/datagen/customgt/dependencies/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/fast_obj"]
+[submodule "infinigen/datagen/customgt/dependencies/fast_obj"]
 	path = infinigen/datagen/customgt/dependencies/fast_obj
 	url = https://github.com/thisistherk/fast_obj.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/json"]
+[submodule "infinigen/datagen/customgt/dependencies/json"]
 	path = infinigen/datagen/customgt/dependencies/json
 	url = https://github.com/nlohmann/json.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/stb"]
+[submodule "infinigen/datagen/customgt/dependencies/stb"]
 	path = infinigen/datagen/customgt/dependencies/stb
 	url = https://github.com/nothings/stb.git
-[submodule "infinigen/datagen/custom_ground_truth/dependencies/glfw"]
+[submodule "infinigen/datagen/customgt/dependencies/glfw"]
 	path = infinigen/datagen/customgt/dependencies/glfw
 	url = https://github.com/glfw/glfw.git

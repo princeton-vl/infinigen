@@ -10,12 +10,13 @@ from Cython.Build import cythonize
 
 cwd = Path(__file__).parent
 
-dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
-IS_BUILD_STEP = not any(x in sys.argv[1] for x in dont_build_steps) 
 str_true = "True"
 MINIMAL_INSTALL = os.environ.get('INFINIGEN_MINIMAL_INSTALL') == str_true
 BUILD_TERRAIN = os.environ.get('INFINIGEN_INSTALL_TERRAIN', str_true) == str_true
-BUILD_OPENGL = os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', str_true) == str_true
+BUILD_OPENGL = os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', "False") == str_true
+
+dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
+is_build_step = not any(x in sys.argv[1] for x in dont_build_steps) 
 
 def ensure_submodules():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
@@ -36,7 +37,7 @@ ensure_submodules()
 
 # inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
-if IS_BUILD_STEP and not MINIMAL_INSTALL:
+if is_build_step and not MINIMAL_INSTALL:
     if BUILD_TERRAIN:
         subprocess.run(['make', 'terrain'], cwd=cwd)
     if BUILD_OPENGL:
@@ -50,13 +51,14 @@ if not MINIMAL_INSTALL:
         sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
         include_dirs=[numpy.get_include()]
     ))
-    cython_extensions.append(
-        Extension(
-            name="infinigen.terrain.marching_cubes",
-            sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
-            include_dirs=[numpy.get_include()]
+    if BUILD_TERRAIN:
+        cython_extensions.append(
+            Extension(
+                name="infinigen.terrain.marching_cubes",
+                sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
+                include_dirs=[numpy.get_include()]
+            )
         )
-    )
 
 setup(
     ext_modules=[
