@@ -1,6 +1,6 @@
 # Implementing new materials & assets
 
-This guide will get you started on making your own procedural assets. It assumes you have already completed our [Installation Instructions](Installation.md).
+This guide will get you started on making your own procedural assets. If not already done, you must complete the "Infinigen as a Blender-Python script" section of the [Installation Instructions](./Installation.md) to download a standalone copy of Blender.
 
 The workflow described in this guide requires some knowledge of python *and* the Blender UI. 
 - If you are familiar with Blender but not Python:
@@ -18,9 +18,8 @@ Unless you intend to work solely on python/other code (and don't intend to inter
 
 To open the Blender UI, run the following in a terminal:
 ```bash
-$BLENDER dev_scene.blend
+python -m infinigen.launch_blender dev_scene.blend
 ```
-:warning: You must use $BLENDER, which refers to the blender installation located in infinigen/blender, as it has additional dependencies installed. Using another blender installation is fine to open or inspect files, but it will not be able to run any of Infinigen's code or tools.
 
 We recommend you set your Blender UI up so you can see a Text Editor, Python Console, 3D Viewport, Geometry Nodes and a Shader Nodes window. The easiest way to do this is to complete the following steps (UI locations also marked in red in the screenshot below):
 1. Click the "Geometry Nodes" tab
@@ -36,12 +35,6 @@ Once these steps are complete, you should see something similar to the following
 ![Completed result after arranging](images/implementing_assets/setting_up_blender_ui_2.png)
 
 You do not have to use this UI configuration all the time, but the following steps assume you know how to access these windows when needed. 
-
-## Importing Infinigen's dependencies into the Blender UI
-
-Finally, to import Infinigen into your Blender UI, click the 'Open' button on your `Text Editor` panel, then navigate to and open `infinigen/tools/blendscript_import_infinigen.py`. Click the play button to execute the script. 
-
-:warning: You will need to re-run this script every time you restart Blender.
 
 ## Generating assets/materials via Blender Python Commandline
 

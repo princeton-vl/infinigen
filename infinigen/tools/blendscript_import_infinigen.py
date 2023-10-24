@@ -16,7 +16,7 @@ import sys, os
 import logging
 
 pwd = os.getcwd()
-sys.path.append(pwd)
+sys.path.append(str(Path(__file__).parent.parent.parent))
     
 import gin
 gin.clear_config()

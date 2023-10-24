@@ -37,7 +37,7 @@ surfaces=(
     "stone"
 )
 
-nvcc_location=$(which nvcc 2>/dev/null)
+nvcc_location="/usr/local/cuda/bin/nvcc"
 alias nx="$nvcc_location -O3 -Xcompiler -fPIC -shared "
 
 # cuda part

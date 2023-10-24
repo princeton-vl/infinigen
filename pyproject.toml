@@ -97,7 +97,7 @@ junit_family = "xunit2"
 
 [tool.cibuildwheel]
 test-extras = ["dev"]
-test-command = "pytest infinigen/tests"
+test-command = "pytest tests"
 
 [tool.ruff]
 select = [

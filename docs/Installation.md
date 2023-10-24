@@ -1,13 +1,6 @@
 
 # Installation
 
-
-## Supported Platforms
-
-## Hardware Requirements
-
-Running our [Hello World Example](./HelloWorld.md) requires ~16-20GB of RAM. Generating fully-detailed scenes requires 32+GB of RAM, and we . 
-
 ## Installation Options & Supported Platforms
 
 You can install Infinigen either as a Python Module or a Blender Python script:
@@ -18,9 +11,7 @@ You can install Infinigen either as a Python Module or a Blender Python script:
 - Blender Python script 
   - Can use Infinigen interactively in the Blender UI
   - Installs the `infinigen` package into *Blender's* built-in python interpreter, not the user's python.
-  - Uses a standard installation of Blender.
-
-Most technical documentation in this project assumes the user installed infinigen as a Python Module. If you used the Blender-Python option and encounter documentation which instructs you to run `python -m path.to.script ...` you should attempt to instead run `blender/blender -b --python path/to/script.py -- ...`.
+  - Uses a standard standalone installation of Blender.
 
 In either case, certain features have limited support on some operating systems, as shown below:
 
@@ -28,14 +19,14 @@ In either case, certain features have limited support on some operating systems,
 |--------------------|--------------------------|--------------|--------------|--------------|----------------|---------------------|
 | Minimal Install.   | objects & materials      | yes          | yes          | yes          | experimental   | experimental        |
 | Terrain (CPU)      | full scenes              | yes          | yes          | yes          | no             | experimental        |
-| Terrain (CUDA)     | speedup, faster videos   | yes          | no           | no           | no             | no                  |
+| Terrain (CUDA)     | speedup, faster videos   | yes          | no           | no           | no             | experimental        |
 | OpenGL Annotations | *additional* training GT | yes          | yes          | yes          | no             | experimental        |
 | Fluid Simulation   | fires, simulated water   | yes          | experimental | experimental | no             | experimental        |
 
 Users wishing to run our [Hello World Demo](./HelloWorld.md) or generate full scenes should install Infinigen as a Python Module and enable the Terrain (CPU) setting.
 Users wishing to use Infinigen assets in the Blender UI, or develop their own assets, can install Infinigen as a Blender-Python script with the "Minimal Install" setting.
 
-See our [Configuring Infinigen](./ConfiguringInfinigen.md), [Ground Truth Annotations ](./GroundTruthAnnotations.md), and [Fluid Simulation](./GeneratingFluidSimulations.md) docs for more information about the various optional features. Note: fields marked "experimental" are feasible but untested. Fields marked "no" are largely _possible_ but not yet implemented.
+See our [Configuring Infinigen](./ConfiguringInfinigen.md), [Ground Truth Annotations ](./GroundTruthAnnotations.md), and [Fluid Simulation](./GeneratingFluidSimulations.md) docs for more information about the various optional features. Note: fields marked "experimental" are feasible but untested and undocumented. Fields marked "no" are largely _possible_ but not yet implemented.
 
 Once you have chosen your configuration, proceed to the relevant section below for instructions.
 
@@ -63,19 +54,18 @@ First, download infinigen and set up your environment.
 
 On Linux / Mac / WSL:
 ```bash
-git clone https://github.com/princeton-vl/infinigen.git
+git clone https://github.com/princeton-vl/infinigen.git -b rc_1.1.1
+cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
 ```
 
-On Windows:
-- Install [Github Desktop](https://desktop.github.com/) and download a copy of this repository
-- Install [miniconda](https://docs.conda.io/projects/miniconda/en/latest/) and [open the Anaconda Prompt](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html)
-On Windows, we recommend downloading Infinigen via  and using the , then proceeding with the commands above.
-
 Then, install the infinigen package using one of the options below:
+
+:warning: Mac-ARM (M1/M2) users should prefix their installation command with `arch -arm64`
+
 ```bash
-# Default install (includes CPU Terrain, or CUDA if available)
+# Default install (includes CPU Terrain, and CUDA Terrain if available)
 pip install -e .
 
 # Minimal install (objects/materials only, no terrain or optional features)
@@ -86,26 +76,34 @@ INFINIGEN_INSTALL_CUSTOMGT=True pip install -e .
 
 ```
 
+:exclamation: If you encounter any issues with the above, please add `-vv > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.
+
 ## Installing Infinigen as a Blender Python script
 
 On Linux / Mac / WSL:
-```
-git clone https://github.com/princeton-vl/infinigen.git
+```bash
+git clone https://github.com/princeton-vl/infinigen.git -b rc_1.1.1
 cd infinigen
-
 ```
 
-On Windows:
-- Download a copy of this repository via [Github Desktop](https://desktop.github.com/)
-- Install [Mingw-w64](https://www.cygwin.com/install.html) (to allow you to run the bash script in the next step)
-- 
-First, download a copy of this repository, either through `git clone https://github.com/princeton-vl/infinigen.git` (preferred), via [Github Desktop](), or by downloading a ZIP. 
+Then, install using one of the options below:
+```bash
 
-Then, run the following in your terminal:
-```
-cd infinigen
+# Minimal installation (recommended setting for use in the Blender UI)
+INFINIGEN_MINIMAL_INSTALL=True bash scripts/install/interactive_blender.sh
 
+# Normal install (includes CPU Terrain, and CUDA Terrain if available)
+bash scripts/install/interactive_blender.sh
+
+# Enable OpenGL GT
+INFINIGEN_INSTALL_CUSTOMGT=True scripts/install/interactive_blender.sh
 ```
+
+:exclamation: If you encounter any issues with the above, please add ` > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.
+
+Once complete, you can use the helper script `python -m infinigen.launch_blender` to launch a blender UI, which will find and execute the `blender` executable in your `infinigen/blender` or `infinigen/Blender.app` folder.
+
+:warning: If you installed Infinigen as a Blender-Python scriptand encounter encounter example commands of the form `python -m <MODULEPATH> <ARGUMENTS>` in our documentation, you should instead run `python -m infinigen.launch_blender -m <MODULEPATH> -- <ARGUMENTS>` to launch them using your standalone blender installation rather than the system python..
 
 ## Using Infinigen in a Docker Container
 

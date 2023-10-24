@@ -30,7 +30,9 @@ def ensure_submodules():
 
     if any(not p.exists() or not any(p.iterdir()) for p in submodule_folders):
         subprocess.run(
-            ["git", "submodule", "update", "--init", "--recursive"], cwd=cwd
+            ["git", "submodule", "update", "--init", "--recursive"], 
+            cwd=cwd,
+            check=True
         )    
 
 ensure_submodules()
@@ -39,9 +41,9 @@ ensure_submodules()
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
 if is_build_step and not MINIMAL_INSTALL:
     if BUILD_TERRAIN:
-        subprocess.run(['make', 'terrain'], cwd=cwd)
+        subprocess.run(['make', 'terrain'], cwd=cwd, check=True)
     if BUILD_OPENGL:
-        subprocess.run(['make', 'customgt'], cwd=cwd)
+        subprocess.run(['make', 'customgt'], cwd=cwd, check=True)
 
 cython_extensions = []
 
