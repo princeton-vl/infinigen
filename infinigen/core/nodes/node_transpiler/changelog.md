@@ -14,3 +14,4 @@
 2.6.2 - Add dependency input, automatically import dependencies we need
 2.6.3 - Ignore reroutes
 2.6.4 - Fix world/compositor transpiling
+2.6.5 - Revert "Ignore reroutes"

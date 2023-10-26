@@ -23,10 +23,9 @@ from ..node_info import Nodes, OUTPUT_NODE_IDS, SINGLETON_NODES
 
 logger = logging.getLogger(__name__)
 
-VERSION = '2.6.4'
+VERSION = '2.6.5'
 indent_string = ' ' * 4
 LINE_LEN = 100
-IGNORE_REROUTES = True
 
 COMMON_ATTR_NAMES = ['data_type', 'mode', 'operation']
 VALUE_NODES = [Nodes.Value, Nodes.Vector, Nodes.RGB, Nodes.InputColor, Nodes.Integer]
@@ -519,11 +518,7 @@ def create_node(node_tree, node, memo):
         for n in memo:
             if node_tree.nodes[n].bl_idname == idname:
                 return memo[n], "", {}
-
-    if IGNORE_REROUTES and idname == Nodes.Reroute:
-        link, = get_connected_link(node_tree, node.inputs[0])
-        return create_node(node_tree, link.from_node, memo)
-
+            
     code = ""
     new_transpile_targets = {}
 
