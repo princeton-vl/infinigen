@@ -15,7 +15,6 @@ import uuid
 
 import bpy
 import gin
-from termcolor import colored
 
 timer_results = logging.getLogger('times')
 

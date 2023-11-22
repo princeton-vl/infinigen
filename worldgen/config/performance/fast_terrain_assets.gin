@@ -1,4 +1,10 @@
 landtiles.load_assets.on_the_fly_instances = 1
 upsidedown_mountains.load_assets.on_the_fly_instances = 1
 caves.load_assets.on_the_fly_instances = 1
-run_erosion.n_iters = [10000, 50000]
+
+run_erosion.n_iters = [1,1]
+scene.caves_chance=0.0
+
+multi_mountains_asset.snowfall = False 
+coast_asset.snowfall = False 
+ant_landscape_asset.snowfall = False

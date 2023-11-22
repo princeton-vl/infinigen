@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if ! command -v wget &> /dev/null
 then
     echo "wget could not be found, please 'sudo apt-get install wget' or 'brew install wget'"

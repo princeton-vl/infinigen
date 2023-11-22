@@ -75,7 +75,7 @@ ATTRTYPE_NP = {
     AttributeType.Int: np.int32,
     AttributeType.FloatVector: np.float32,
     AttributeType.FloatColor: np.float32,
-    AttributeType.Boolean: np.bool,
+    AttributeType.Boolean: bool,
 }
 
 NPTYPEDIM_ATTR = {

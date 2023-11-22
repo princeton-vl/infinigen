@@ -9,6 +9,8 @@ from pathlib import Path
 import bpy
 import cv2
 import numpy as np
+import gin
+
 from terrain.land_process.erosion import run_erosion
 from terrain.land_process.snowfall import run_snowfall
 from terrain.utils import smooth, random_int
@@ -41,7 +43,7 @@ def create(
     elif preset_name == LandTile.Mountain:
         presets(noise_offset_x=0, noise_offset_y=0, noise_offset_z=0, noise_size_x=1, noise_size_y=1, noise_size_z=1, noise_size=1, noise_type='hetero_terrain', basis_type='BLENDER', vl_basis_type='BLENDER', distortion=1, hard_noise='0', noise_depth=8, amplitude=0.5, frequency=2, dimension=1, lacunarity=2, offset=1, gain=1, marble_bias='0', marble_sharp='0', marble_shape='0', height=0.5, height_invert=False, height_offset=0, fx_mixfactor=0, fx_mix_mode='0', fx_type='0', fx_bias='0', fx_turb=0, fx_depth=0, fx_amplitude=0.5, fx_frequency=2, fx_size=1, fx_loc_x=0, fx_loc_y=0, fx_height=1, fx_invert=False, fx_offset=0, edge_falloff='3', falloff_x=4, falloff_y=4, edge_level=0, maximum=1, minimum=-1, vert_group="", strata=5, strata_type='0')
 
-
+@gin.configurable
 def ant_landscape_asset(
     folder,
     preset_name,
@@ -55,7 +57,7 @@ def ant_landscape_asset(
     create(preset_name, N, N)
     obj = bpy.context.active_object
     N = int(len(obj.data.vertices) ** 0.5)
-    mverts_co = np.zeros((len(obj.data.vertices)*3), dtype=np.float)
+    mverts_co = np.zeros((len(obj.data.vertices)*3), dtype=float)
     obj.data.vertices.foreach_get("co", mverts_co)
     mverts_co = mverts_co.reshape((N, N, 3))
     heightmap = cv2.resize(np.float32(mverts_co[..., -1]), (resolution, resolution)) * tile_size / 2
