@@ -10,6 +10,8 @@ from pathlib import Path
 import cv2
 import gin
 import numpy as np
+import gin
+
 from terrain.elements.core import Element
 from terrain.elements.mountains import Mountains
 from terrain.land_process.erosion import run_erosion
@@ -118,7 +120,7 @@ def coast_heightmapping(heightmap):
     mapped[heightmap < -seafloor_loc] = -sea_depth
     return mapped
 
-
+@gin.configurable
 def multi_mountains_asset(
     folder,
     tile_size,
@@ -152,7 +154,7 @@ def multi_mountains_asset(
     if erosion: run_erosion(folder)
     if snowfall: run_snowfall(folder)
     
-
+@gin.configurable
 def coast_asset(
     folder,
     tile_size,

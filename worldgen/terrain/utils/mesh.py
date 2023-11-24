@@ -101,7 +101,7 @@ class Mesh:
         elif obj is not None:
             verts_bpy = obj.data.vertices
             faces_bpy = obj.data.polygons
-            verts = np.zeros((len(verts_bpy)*3), dtype=np.float)
+            verts = np.zeros((len(verts_bpy)*3), dtype=float)
             verts_bpy.foreach_get("co", verts)
             verts = verts.reshape((-1, 3))
             faces = np.zeros((len(faces_bpy)*3), dtype=np.int32)
@@ -226,7 +226,7 @@ class Mesh:
 
     def cat(meshes):
         verts = np.zeros((0, 3))
-        faces = np.zeros((0, 3), dtype=np.int)
+        faces = np.zeros((0, 3), dtype=int)
         lenv = 0
         vertex_attributes = {}
         for mesh in meshes:
@@ -268,7 +268,7 @@ class Mesh:
         fov = (fov0, fov_rad)
         K = getK(fov, H, W)
         
-        self.vertex_attributes["invisible"] = np.zeros(len(self.vertices), np.bool)
+        self.vertex_attributes["invisible"] = np.zeros(len(self.vertices), bool)
         
         for cam_pose in cam_poses:
             coords = np.matmul(K, np.matmul(np.linalg.inv(cam_pose), np.concatenate((self.vertices.transpose(), np.ones((1, len(self.vertices)))), 0))[:3, :])

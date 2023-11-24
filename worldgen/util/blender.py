@@ -684,7 +684,7 @@ def object_to_vertex_attributes(obj):
 def object_to_trimesh(obj):
     verts_bpy = obj.data.vertices
     faces_bpy = obj.data.polygons
-    verts = np.zeros((len(verts_bpy) * 3), dtype=np.float)
+    verts = np.zeros((len(verts_bpy) * 3), dtype=float)
     verts_bpy.foreach_get("co", verts)
     faces = np.zeros((len(faces_bpy) * 3), dtype=np.int32)
     faces_bpy.foreach_get("vertices", faces)

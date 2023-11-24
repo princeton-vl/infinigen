@@ -40,11 +40,11 @@ def read(input_heightmap_path):
 
 def grid_distance(source, downsample):
     M = source.shape[0]
-    source = cv2.resize(source.astype(np.float), (downsample, downsample)) > 0.5
+    source = cv2.resize(source.astype(float), (downsample, downsample)) > 0.5
     dist = np.zeros_like(source, dtype=np.float32) + 1e9
     N = source.shape[0]
     I, J = np.meshgrid(np.arange(N), np.arange(N), indexing="ij")
-    boundary = np.zeros_like(source, dtype=np.bool)
+    boundary = np.zeros_like(source, dtype=bool)
     boundary[:-1, :] |= ~source[1:, :]
     boundary[1:, :] |= ~source[:-1, :]
     boundary[:, :-1] |= ~source[:, 1:]
