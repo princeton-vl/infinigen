@@ -16,6 +16,8 @@ import uuid
 import bpy
 import gin
 
+timer_results = logging.getLogger('times')
+
 @gin.configurable
 class Timer:
 

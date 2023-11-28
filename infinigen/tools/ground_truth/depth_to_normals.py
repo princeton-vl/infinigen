@@ -8,11 +8,11 @@ import shutil
 from pathlib import Path
 
 import cv2
-import imagesize
 import numpy as np
 from einops import einsum
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
+import imageio
 
 from ..dataset_loader import get_frame_path
 
@@ -42,14 +42,16 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
+    args.output.mkdir(exist_ok=True)
+
     depth_path = get_frame_path(args.folder, 0, args.frame, 'Depth_npy')
     normal_path = get_frame_path(args.folder, 0, args.frame, 'SurfaceNormal_png')
     image_path = get_frame_path(args.folder, 0, args.frame, 'Image_png')
     camview_path = get_frame_path(args.folder, 0, args.frame, 'camview_npz')
-    assert depth_path.exists()
-    assert image_path.exists()
-    assert camview_path.exists()
-    assert normal_path.exists()
+    assert depth_path.exists(), depth_path
+    assert image_path.exists(), image_path
+    assert camview_path.exists(), camview_path
+    assert normal_path.exists(), normal_path
 
     image = imread(image_path)
     depth = np.load(depth_path)
@@ -68,7 +70,8 @@ if __name__ == "__main__":
     normals[~mask[1:,1:]] = 0
 
     normals_color = np.round((normals + 1) * (255/2)).astype(np.uint8)
-    normals_color = cv2.resize(normals_color, imagesize.get(normal_path))
+    target_shape = imageio.imread(normal_path).shape[:2][::-1]
+    normals_color = cv2.resize(normals_color, target_shape)
 
     imwrite(args.output / "A.png", image)
     print(f'Wrote {args.output / "A.png"}')

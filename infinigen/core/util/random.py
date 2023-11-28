@@ -9,7 +9,6 @@ import gin
 import numpy as np
 import random
 import json
-import json5
 import colorsys
 import mathutils
 from matplotlib import colors

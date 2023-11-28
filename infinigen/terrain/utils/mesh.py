@@ -228,7 +228,7 @@ class Mesh:
 
     def cat(meshes):
         verts = np.zeros((0, 3))
-        faces = np.zeros((0, 3), dtype=np.int)
+        faces = np.zeros((0, 3), dtype=int)
         lenv = 0
         vertex_attributes = {}
         for mesh in meshes:

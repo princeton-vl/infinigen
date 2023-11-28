@@ -98,7 +98,7 @@ def new_attr_data(obj, attr, type, domain, data: np.array):
 def smooth_attribute(obj, name, iters=20, weight=0.05, verbose=False):
     data = read_attr_data(obj, name)
 
-    edges = np.empty(len(obj.data.edges) * 2, dtype=np.int)
+    edges = np.empty(len(obj.data.edges) * 2, dtype=int)
     obj.data.edges.foreach_get('vertices', edges)
     edges = edges.reshape(-1, 2)
 
