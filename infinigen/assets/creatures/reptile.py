@@ -46,7 +46,6 @@ from infinigen.core.placement import animation_policy
 
 from infinigen.assets.creatures.util.animation.run_cycle import follow_path
 
-
 def dinosaur():
     open_mouth = U() > 0
     # body_size = {
@@ -393,6 +392,14 @@ def chameleon_postprocessing(body_parts, extras, params):
 
     #chameleon_eye.apply(get_extras('Eye'))
 
+def purge_empty_materials(obj):
+    with butil.SelectObjects(obj):
+        for i, m in enumerate(obj.material_slots):
+            if m.name != '':
+                continue
+            bpy.context.object.active_material_index = i
+            bpy.ops.object.material_slot_remove()
+
 @gin.configurable
 class LizardFactory(AssetFactory):
 
@@ -413,6 +420,8 @@ class LizardFactory(AssetFactory):
         else:
             joined = butil.join_objects([joined] + extras)
             
+        purge_empty_materials(joined)
+
         return root
     
 @gin.configurable

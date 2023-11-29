@@ -298,9 +298,6 @@ def execute_tasks(
             os.symlink(input_folder/"assets", output_folder/"assets")
             # in this way, even coarse task can have input_folder to have pregenerated on-the-fly assets (e.g., in last run) to speed up developing
 
-    if frame_range[0] > 50:
-        raise ValueError(f'Deliberate test crash')
-
     if dryrun:
         time.sleep(15)
         return

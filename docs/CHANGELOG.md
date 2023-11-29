@@ -16,4 +16,7 @@ v1.0.4
 - ground truth updates
 - render throughput improvements
 
-v1.1.0 - Pip installable, unit tests
+v1.1.0
+- Update to blender 3.6, install blender either via pip or standalone
+- Restructure project into an `infinigen` python package and `infinigen_examples` directory
+- Add unit tests

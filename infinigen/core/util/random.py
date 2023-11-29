@@ -26,7 +26,7 @@ def sample_json_palette(pallette_name, n_sample=1):
     rel = f"infinigen_examples/configs/palette/{pallette_name}.json"
 
     with (repo_root()/rel).open('r') as f:
-        color_template = json5.load(f)
+        color_template = json.load(f)
 
     colors = color_template["color"]
     means = np.array(color_template["hsv"])

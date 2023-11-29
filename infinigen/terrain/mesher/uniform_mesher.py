@@ -3,7 +3,7 @@
 
 # Authors: Zeyu Ma
 
-
+import logging
 from ctypes import POINTER, c_double, c_int32
 
 import gin
@@ -13,8 +13,13 @@ from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh
 from infinigen.terrain.utils import Timer as tTimer
 from infinigen.terrain.utils import Vars, load_cdll, register_func, write_attributes
 
-from ._marching_cubes_lewiner import marching_cubes
+logger = logging.getLogger(__name__)
 
+try:
+    from ._marching_cubes_lewiner import marching_cubes
+except ImportError as e:
+    logger.warning(f'Could not import marching_cubes, terrain is likely not installed')
+    marching_cubes = None
 
 @gin.configurable("UniformMesherTimer")
 class Timer(tTimer):
@@ -94,6 +99,13 @@ class UniformMesher:
         return np.stack(sdfs, -1)
 
     def __call__(self, kernels):
+
+        if marching_cubes is None:
+            raise ValueError(
+                f'Attempted to run {self.__class__.__name__} but marching_cubes was not imported. '
+                'Either the user opted out of installing terrain (e.g. via INFINIGEN_MINIMAL_INSTALL), or there was an error during installation'
+            )
+
         with Timer("get_coarse_queries"):
             positions = AC(np.zeros(((self.x_N + 1) * (self.y_N + 1) * (self.z_N + 1), 3), dtype=np.float64))
             self.init_and_get_coarse_queries(

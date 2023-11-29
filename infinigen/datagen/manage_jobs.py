@@ -398,6 +398,7 @@ def record_crashed_seed(scene, taskname, f, fatal=True):
     reason = infer_crash_reason(stdout_file, stderr_file)
     text = f"{time_str} {str(stderr_file)} {reason=} {node=} {fatal=}\n"
     print('Crashed: ' + text)
+    f.write(text)
 
     scene[f'{taskname}_crash_recorded'] = True
 

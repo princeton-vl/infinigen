@@ -5,14 +5,21 @@
 
 
 from ctypes import POINTER, c_double, c_int32
+import logging
 
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from ._marching_cubes_lewiner import marching_cubes
 from infinigen.terrain.utils import Mesh, ASDOUBLE, ASINT, write_attributes, register_func, load_cdll
 from infinigen.terrain.utils import Timer as tTimer
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
+
+try:
+    from ._marching_cubes_lewiner import marching_cubes
+except ImportError as e:
+    logger.warning(f'Could not import marching_cubes, terrain is likely not installed')
 
 @gin.configurable("FrontviewSphericalMesherTimer")
 class Timer(tTimer):

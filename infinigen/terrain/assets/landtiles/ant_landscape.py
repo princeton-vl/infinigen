@@ -9,6 +9,7 @@ from pathlib import Path
 import bpy
 import cv2
 import numpy as np
+import gin
 
 from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall

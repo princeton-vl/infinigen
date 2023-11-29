@@ -22,7 +22,7 @@ classifiers = [
 
 requires-python = "==3.10.*"
 dependencies = [
-    "bpy",
+    "bpy==3.6.0",
     "einops",
     "flow_vis",
     "frozendict",
@@ -31,20 +31,18 @@ dependencies = [
     "imageio",
     "matplotlib",
     "numpy",
-    "opencv-python<=4.8.0.74",
+    "opencv-python",
     "psutil",
     "scikit-image",
     "scikit-learn",
     "scipy",
     "submitit",
     "tqdm",
-    "trimesh==3.22.1",
-    "zarr",
+    "trimesh",
     "pandas",
     "landlab>=2.6.0", 
-    "pycparser==2.21", 
+    "pycparser", 
     "pyrender",
-    "json5",
     "pandas"
 ]
 
@@ -101,8 +99,12 @@ test-command = "pytest tests"
 
 [tool.ruff]
 select = [
-    "E", 
-    "F", 
+    "E9", 
+    "F63", 
+    "F7", 
+    "F82"
+    #"E", 
+    #"F", 
     #"B", 
     #"C901",
 ]
