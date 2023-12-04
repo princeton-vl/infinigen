@@ -82,6 +82,7 @@ from infinigen.core.placement import density, placement, split_in_view
 from infinigen.core.util import blender as butil
 from infinigen.core.util import logging as logging_util
 from infinigen.core.util import pipeline
+from infinigen.core.util.imu import save_imu_tum_files
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import Tags, Task
 from infinigen.core.util.pipeline import RandomStageExecutor
@@ -347,11 +348,18 @@ def compose_nature(output_folder, scene_seed, **params):
 
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
 
+    def animate_cameras():
+        cam_util.animate_cameras(camera_rigs, bbox, scene_preprocessed, pois=pois)
+
+        save_imu_tum_data = params.get("save_imu_tum_data")
+        if save_imu_tum_data:
+            frames_folder = output_folder.parent / "frames"
+            animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+
     p.run_stage(
         "animate_cameras",
-        lambda: cam_util.animate_cameras(
-            camera_rigs, bbox, scene_preprocessed, pois=pois
-        ),
+        animate_cameras,
         use_chance=False,
     )
 

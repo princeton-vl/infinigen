@@ -147,6 +147,26 @@ The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinate
 
 As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
 
+### IMU and TUM
+
+IMU and TUM output is stored as ".txt" files inside the "imu_tum" folder. Enable IMU and TUM collection with config `infinigen_examples/configs_nature/extras/imu.gin`:
+
+```
+--configs imu
+```
+
+Inertial Measurement Unit (IMU) records the rotational velocity and linear acceleration of each camera at each frame. Each row contains the timestamp, rotational velocity (x y z), and linear acceleration (x y z) with each value separated by a space:
+
+```
+timestamp rv_x rv_y rv_z a_x a_y a_z
+```
+
+The [TUM trajectory format](https://github.com/MichaelGrupp/evo/wiki/Formats#tum---tum-rgb-d-dataset-trajectory-format) records the pose of the camera at each frame. Each row contains the timestamp, position, and rotation (as quarternion) with each value separated by a space:
+
+```
+timestamp x y z q_x q_y q_z q_w
+```
+
 ### Panoptic Segmentation
 
 Infinigen saves three types of semantic segmentation masks: 1) Object Segmentation 2) Tag Segmentation 3) Instance Segmentation
