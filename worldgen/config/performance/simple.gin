@@ -1,6 +1,0 @@
-include 'config/performance/dev.gin'
-include 'config/disable_assets/no_creatures.gin'
-include 'config/performance/fast_terrain_assets.gin'
-
-run_erosion.n_iters = [1,1]
-full/render_image.num_samples = 100

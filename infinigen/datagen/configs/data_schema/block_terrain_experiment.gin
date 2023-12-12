@@ -1,0 +1,10 @@
+iterate_scene_tasks.global_tasks = [
+    {'name': 'coarse', 'func': @queue_coarse}, 
+    {'name': "populate", 'func': @queue_populate},
+    {'name': 'backuppopulate', 'func': @renderbackup/queue_populate, 'condition': 'prev_failed'},
+]
+iterate_scene_tasks.view_dependent_tasks = [
+    {'name': "fineterrain", 'func': @queue_fine_terrain},
+]
+
+queue_populate.input_prefix = "coarse"

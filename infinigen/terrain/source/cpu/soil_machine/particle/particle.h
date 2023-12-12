@@ -36,7 +36,7 @@ struct Particle {
 
   // because I can't solve the bug, I'm not familiar with static in c++, so I make SCALE an arg --- Zeyu
   //This is applied to multiple types of erosion, so I put it in here!
-  static void cascade(float SCALE, vec2 pos, Layermap& map, Vertexpool<Vertex>& vertexpool, int transferloop = 0){
+  static void cascade(float c_eq_factor, float SCALE, vec2 pos, Layermap& map, Vertexpool<Vertex>& vertexpool, int transferloop = 0){
 
     ivec2 ipos = round(pos);
 
@@ -72,7 +72,7 @@ struct Particle {
     for(auto& npos: sn){
 
       //Full Height-Different Between Positions!
-      float diff = (map.height(ipos) - map.height(npos))*(float)SCALE/80.0f;
+      float diff = (map.height(ipos) - map.height(npos))*(float)SCALE * c_eq_factor;
 
       if(diff == 0)   //No Height Difference
         continue;
@@ -98,12 +98,13 @@ struct Particle {
 
       if(map.remove(tpos, transfer) != 0)
         recascade = true;
-      map.add(bpos, map.pool.get(transfer, param.cascades));
+      sec *addition = map.pool.get(transfer, param.cascades);
+      map.add(bpos, addition);
       // map.update(tpos, vertexpool);
       // map.update(bpos, vertexpool);
 
       if(recascade && transferloop > 0)
-        cascade(SCALE, npos, map, vertexpool, --transferloop);
+        cascade(c_eq_factor, SCALE, npos, map, vertexpool, --transferloop);
 
     }
 

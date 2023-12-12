@@ -103,7 +103,6 @@ If you have more than one GPU and are using a `local_*.gin` compute config, each
 
 Generating a video, stereo or other dataset typically requires more render jobs, so we must instruct `manage_jobs.py` to run those jobs. `datagen/configs/data_schema/` provides many options for you to use in your `--pipeline_configs`, including `monocular_video.gin` and `stereo.gin`. <br> These configs are typically mutually exclusive, and you must include at least one </br>
 
-:exclamation: Our terrain system resolves its signed distance function (SDF) to view-specific meshes, which must be updated as the camera moves. For video rendering, we strongly recommend using the `high_quality_terrain` config to avoid perceptible flickering and temporal aliasing. This config meshes the SDF at very high detail, to create seamless video. However, it has high compute costs, so we recommend also using `--pipeline_config cuda_terrain` on a machine with an NVIDIA GPU. For applications with fast moving cameras, you may need to update the terrain mesh more frequently by decreasing `iterate_scene_tasks.view_block_size = 16`.
 
 To create longer videos, modify `iterate_scene_tasks.frame_range` in `monocular_video.gin` (note: we use 24fps video by default). `iterate_scene_tasks.view_block_size` controls how many frames will be grouped into each `fine_terrain` and render / ground-truth task.
 
@@ -166,14 +165,14 @@ If you have any issues with these commands, or wish to customize them to your ne
 
 All commands below are shown with using `local_256GB` config, but you can attempt to swap this for any compute config as discussed in [Configuring available computing resources](#configuring-available-computing-resources).
 
-#### Creating videos similar to the intro video
+#### Creating high quality videos
 
-Most videos in the "Introducing Infinigen" launch video were made using commands similar to the following:
+We recommend this command as a starting point for generating high quality videos. Generating multi-view consistent terrain is not computationally tractible without CUDA accelleration, so make sure to follow the CUDA Terrain instructions in Installation.md, and we recommend not to remove the `cuda_terrain` flag below.
 
 ````
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config video high_quality_terrain
 ````
 
 #### Creating large-scale stereo datasets
@@ -219,7 +218,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 ```
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
 ```
 
@@ -229,7 +228,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 ```
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
 ```
 

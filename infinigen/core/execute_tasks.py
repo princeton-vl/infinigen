@@ -342,7 +342,7 @@ def execute_tasks(
 
     group_collections()
 
-    if input_folder is not None:
+    if input_folder is not None and input_folder != output_folder:
         for mesh in os.listdir(input_folder):
             if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(output_folder / mesh):
                 os.symlink(input_folder / mesh, output_folder / mesh)

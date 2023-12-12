@@ -13,7 +13,7 @@ import gin
 
 from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall
-from infinigen.terrain.utils import smooth, random_int
+from infinigen.terrain.utils import smooth, random_nat
 from infinigen.core.util.organization import AssetFile, LandTile
 
 
@@ -23,7 +23,7 @@ def create(
     subdivision_y,
 ):
     def presets(**kwargs):
-        bpy.ops.mesh.landscape_add(ant_terrain_name="Landscape", land_material="", water_material="", texture_block="", at_cursor=True, smooth_mesh=True, tri_face=False, sphere_mesh=False, subdivision_x=subdivision_x, subdivision_y=subdivision_y, mesh_size=2, mesh_size_x=2, mesh_size_y=2, random_seed=max(0, random_int()), water_plane=False, water_level=0.01, remove_double=False, show_main_settings=True, show_noise_settings=True, show_displace_settings=True, refresh=True, auto_refresh=True, **kwargs)
+        bpy.ops.mesh.landscape_add(ant_terrain_name="Landscape", land_material="", water_material="", texture_block="", at_cursor=True, smooth_mesh=True, tri_face=False, sphere_mesh=False, subdivision_x=subdivision_x, subdivision_y=subdivision_y, mesh_size=2, mesh_size_x=2, mesh_size_y=2, random_seed=random_nat(), water_plane=False, water_level=0.01, remove_double=False, show_main_settings=True, show_noise_settings=True, show_displace_settings=True, refresh=True, auto_refresh=True, **kwargs)
 
     if preset_name == LandTile.Canyon:
         strata = np.random.randint(6, 12)

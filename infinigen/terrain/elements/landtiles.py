@@ -53,6 +53,7 @@ class LandTiles(Element):
         transparency=Transparency.Opaque,
         use_cblerp=False,
         smooth=False,
+        direction_deg=0,
     ):
         self.device = device
         self.on_the_fly_asset_folder = on_the_fly_asset_folder
@@ -105,7 +106,8 @@ class LandTiles(Element):
             randomness, frequency, attribute_probability, attribute_distance_range, island_probability, tile_size,
             none_to_0(height_modification_start), none_to_0(height_modification_end),
             none_to_0(attribute_modification_start_height), none_to_0(attribute_modification_end_height),
-            attribute_modification_distort_freq, attribute_modification_distort_mag, empty_below, y_tilt, y_tilt_clip, sharpen, mask_random_freq,
+            attribute_modification_distort_freq, attribute_modification_distort_mag, empty_below, y_tilt, y_tilt_clip, sharpen,
+            mask_random_freq, direction_deg,
             *tile_heights,
         ]), float_data)).astype(np.float32))
     

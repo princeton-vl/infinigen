@@ -47,31 +47,46 @@ def get_expanded_fov(cam_pose0, cam_poses, fov):
 
 
 @gin.configurable
-def get_caminfo(cameras, relax=1.05):
+def get_caminfo(cameras, relax=1.05, ids_within_rig=2):
     cam_poses = []
+    fovs = []
+    Ks = []
+    Hs = []
+    Ws = []
     coords_trans_matrix = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
     fs, fe = bpy.context.scene.frame_start, bpy.context.scene.frame_end
     fc = bpy.context.scene.frame_current
     for f in range(fs, fe + 1):
         bpy.context.scene.frame_set(f)
         for cam in cameras:
-            cam_pose = np.array(cam.matrix_world)
-            cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
-            cam_poses.append(cam_pose)
-            fov_rad  = cam.data.angle
             _, cid0, cid1 = cam.name.split("/")
-            cam = get_camera(cid0, 1 - int(cid1), 1)
-            if cam is None: continue
-            cam_pose = np.array(cam.matrix_world)
-            cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
-            cam_poses.append(cam_pose)
+            rig = []
+            if ids_within_rig is not None:
+                for id in range(ids_within_rig):
+                    c = get_camera(cid0, id, 1)
+                    if c is not None: rig.append(c)
+            else:
+                rig.append(cam)
+            for c in rig:
+                cam_pose = np.array(c.matrix_world)
+                cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
+                cam_poses.append(cam_pose)
+                fov_rad  = cam.data.angle
+                fov_rad *= relax
+                H, W = bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x
+                fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
+                fov = np.array([fov0, fov_rad])
+                fovs.append(fov)
+                K = getK(fov, H, W)
+                Ks.append(K)
+                Hs.append(H)
+                Ws.append(W)
     bpy.context.scene.frame_set(fc)
     cam_poses = np.stack(cam_poses)
     cam_pose = pose_average(cam_poses)
-    fov_rad *= relax
-    H, W = bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x
-    fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
-    fov = (fov0, fov_rad)
+    fovs = np.stack(fovs)
+    fov = fovs.max(axis=0)
     fov = get_expanded_fov(cam_pose, cam_poses, fov)
-    K = getK(fov, H, W)
-    return cam_pose, cam_poses, fov, H, W, K
+    H = max(Hs)
+    W = max(Ws)
+    return (cam_poses, Ks, Hs, Ws), cam_pose, fov, H, W, K

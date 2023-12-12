@@ -121,6 +121,7 @@ def queue_populate(
     seed,
     configs,
     taskname=None,
+    input_prefix="fine",
     overrides=[],
     input_indices=None, output_indices=None,
     **kwargs,
@@ -132,7 +133,7 @@ def queue_populate(
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    input_folder = folder/f'coarse{input_suffix}'
+    input_folder = folder/f'{input_prefix}{input_suffix}'
     output_folder = input_folder
 
     cmd = get_cmd(seed, 'populate', configs, taskname, 

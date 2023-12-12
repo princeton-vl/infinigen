@@ -55,7 +55,8 @@ DEVICE_FUNC void landtiles(
     float y_tilt_clip = f_params[14];
     float sharpen = f_params[15];
     float mask_random_freq = f_params[16];
-    const int f_offset = 17;
+    float direction_deg = f_params[17];
+    const int f_offset = 18;
 
     float *tile_heights = f_params + f_offset;
     float *heightmap = f_params + f_offset + len_tiles;
@@ -63,7 +64,11 @@ DEVICE_FUNC void landtiles(
     float *coast_direction = f_params + f_offset + len_tiles + \
         len_tiles * n_instances * N * N + intrinsic_auxiliaries * len_tiles * n_instances * N * N;
 
-
+    direction_deg = 90 - direction_deg;
+    float px = position.x;
+    position.x = position.x * cos(direction_deg / 180 * acosf(-1.0)) - position.y * sin(direction_deg / 180 * acosf(-1.0));
+    position.y = position.y * cos(direction_deg / 180 * acosf(-1.0)) + px * sin(direction_deg / 180 * acosf(-1.0));
+    
     const int n_neighbors = 8;
     float heights_i0, height_grad_i0, covers_i0[intrinsic_auxiliaries];
     for (int i = 0; i < n_lattice; i++) {

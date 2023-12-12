@@ -187,7 +187,9 @@ def init_db_from_existing(output_folder: Path):
     existing_db = pd.read_csv(db_path, converters={"configs": literal_eval})
 
     def init_scene(seed_folder):
-        if not seed_folder.is_dir():
+        if not seed_folder.is_symlink() and not seed_folder.is_dir():
+            return None
+        if seed_folder.is_symlink() and not seed_folder.readlink().is_dir():
             return None
         if not (seed_folder/'logs').exists():
             logger.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')

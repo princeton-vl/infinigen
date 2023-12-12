@@ -11,7 +11,7 @@ from .camera import get_caminfo
 from .image_processing import (
     boundary_smooth, smooth, read, sharpen, grid_distance, get_normal
 )
-from .random import perlin_noise, chance, drive_param, random_int, random_int_large
+from .random import perlin_noise, chance, drive_param, random_int, random_int_large, random_nat
 
 from .kernelizer_util import (
     ATTRTYPE_DIMS, ATTRTYPE_FIELDS, ATTRTYPE_NP, NODE_ATTRS_AVAILABLE,

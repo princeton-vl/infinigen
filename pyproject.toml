@@ -43,7 +43,8 @@ dependencies = [
     "landlab>=2.6.0", 
     "pycparser", 
     "pyrender",
-    "pandas"
+    "pandas",
+    "vnoise",
 ]
 
 [project.optional-dependencies]

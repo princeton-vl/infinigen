@@ -138,7 +138,12 @@ def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, 
             setattr(viewlayer.cycles, f"use_pass_{viewlayer_pass}", True)
         slot_input = file_output_node.file_slots.new(socket_name)
         render_socket = render_layers.outputs[socket_name]
-        nw.links.new(render_socket, slot_input)
+        if viewlayer_pass == "vector":
+            separate_color = nw.new_node(Nodes.CompSeparateColor, [render_socket])
+            comnbine_color = nw.new_node(Nodes.CompCombineColor, [0, (separate_color, 3), (separate_color, 2), 0])
+            nw.links.new(comnbine_color.outputs[0], slot_input)
+        else:
+            nw.links.new(render_socket, slot_input)
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
     slot_input = file_output_node.file_slots['Image']

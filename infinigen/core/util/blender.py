@@ -206,10 +206,11 @@ class GarbageCollect:
 
 
 def select_none():
-    if bpy.context.active_object is not None:
+    if hasattr(bpy.context, "active_object") and bpy.context.active_object is not None:
         bpy.context.active_object.select_set(False)
-    for obj in bpy.context.selected_objects:
-        obj.select_set(False)
+    if hasattr(bpy.context, "selected_objects"):
+        for obj in bpy.context.selected_objects:
+            obj.select_set(False)
 
 
 def select(objs):

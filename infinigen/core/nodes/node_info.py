@@ -42,8 +42,10 @@ class Nodes:
     CombineHSV = 'ShaderNodeCombineHSV'
     SeparateRGB = 'ShaderNodeSeparateRGB'
     SeparateColor = 'ShaderNodeSeparateColor'
+    CompSeparateColor = 'CompositorNodeSeparateColor'
     CombineRGB = 'ShaderNodeCombineRGB'
     CombineColor = 'ShaderNodeCombineColor'
+    CompCombineColor = 'CompositorNodeCombineColor'
 
     #bl3.5 additions
     SeparateComponents = 'GeometryNodeSeparateComponents'

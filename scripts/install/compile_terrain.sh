@@ -135,3 +135,7 @@ gx2 -o lib/cpu/soil_machine/SoilMachine.so lib/cpu/soil_machine/SoilMachine.o
 echo "compiled lib/cpu/soil_machine/SoilMachine.so"
 
 cd -
+
+cd ./infinigen/OcMesher
+source install.sh
+cd -

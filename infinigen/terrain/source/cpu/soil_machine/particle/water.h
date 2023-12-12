@@ -112,10 +112,10 @@ struct WaterParticle : public Particle {
 
   }
 
-  bool interact(Layermap& map, Vertexpool<Vertex>& vertexpool){
+  bool interact(float c_eq_factor, Layermap& map, Vertexpool<Vertex>& vertexpool){
 
     //Equilibrium Sediment Transport Amount
-    double c_eq = param.solubility*(map.height(ipos)-map.height(pos))*(double)SCALE/80.0;
+    double c_eq = param.solubility*(map.height(ipos)-map.height(pos))*(double)SCALE * c_eq_factor;
     if(c_eq < 0.0) c_eq = 0.0;
     if(c_eq > 1.0) c_eq = 1.0;
 
@@ -145,12 +145,13 @@ struct WaterParticle : public Particle {
     else if(cdiff < 0) {
 
       sediment += soils[contains].equrate*cdiff;
-      map.add(ipos, map.pool.get(-soils[contains].equrate*cdiff*volume, contains));
+      sec *addition = map.pool.get(-soils[contains].equrate*cdiff*volume, contains);
+      map.add(ipos, addition);
 
     }
 
     //Particle Cascade: Thermal Erosion!
-    Particle::cascade(SCALE, pos, map, vertexpool, 0);
+    Particle::cascade(c_eq_factor, SCALE, pos, map, vertexpool, 0);
 
     //Update Map, Particle
     sediment /= (1.0-evaprate);
@@ -160,7 +161,7 @@ struct WaterParticle : public Particle {
 
   }
 
-  bool flood(Layermap& map, Vertexpool<Vertex>& vertexpool){
+  bool flood(float c_eq_factor, Layermap& map, Vertexpool<Vertex>& vertexpool){
 
     if(volume < minvol || spill-- <= 0)
       return false;
@@ -170,13 +171,15 @@ struct WaterParticle : public Particle {
     // Add Water
 
     // Add Remaining Soil
+    sec *addition;
+    addition = map.pool.get(sediment*soils[contains].equrate, contains);
+    map.add(ipos, addition);
+    Particle::cascade(c_eq_factor, SCALE, pos, map, vertexpool, 0);
 
-    map.add(ipos, map.pool.get(sediment*soils[contains].equrate, contains));
-    Particle::cascade(SCALE, pos, map, vertexpool, 0);
-
-    map.add(ipos, map.pool.get(volume*volumeFactor, soilmap["Air"]));
+    addition = map.pool.get(volume*volumeFactor, soilmap["Air"]);
+    map.add(ipos, addition);
     seep(ipos, map, vertexpool);
-    WaterParticle::cascade(SCALE, ipos, map, vertexpool, spill);
+    WaterParticle::cascade(c_eq_factor, SCALE, ipos, map, vertexpool, spill);
 
     // map.update(ipos, vertexpool);
     return false;
@@ -187,7 +190,7 @@ struct WaterParticle : public Particle {
 
 
 
-  static void cascade(float SCALE, vec2 pos, Layermap& map, Vertexpool<Vertex>& vertexpool, int spill = 0){
+  static void cascade(float c_eq_factor, float SCALE, vec2 pos, Layermap& map, Vertexpool<Vertex>& vertexpool, int spill = 0){
 
     ivec2 ipos = pos;
 
@@ -244,7 +247,7 @@ struct WaterParticle : public Particle {
         fB = secB->floor;
 
       // Actual Height Difference Between Watertables
-      double diff = (fA + whA - fB - whB)*(double)SCALE/80.0;
+      double diff = (fA + whA - fB - whB)*(double)SCALE * c_eq_factor;
       if(diff == 0)   //No Height Difference
         continue;
 
@@ -274,7 +277,6 @@ struct WaterParticle : public Particle {
       bool recascade = false;
 
       if(transfer == wh){
-
         double diff = map.remove(tpos, transfer);
         // map.update(tpos, vertexpool);
 
@@ -286,15 +288,14 @@ struct WaterParticle : public Particle {
         particle.volume = transfer / WaterParticle::volumeFactor;
 
         while(true){
-          while(particle.move(map, vertexpool) && particle.interact(map, vertexpool));
-          if(!particle.flood(map, vertexpool))
+          while(particle.move(map, vertexpool) && particle.interact(c_eq_factor, map, vertexpool));
+          if(!particle.flood(c_eq_factor, map, vertexpool))
             break;
         }
 
       }
 
       else {
-
         if(map.remove(tpos, transfer) != 0)
           recascade = true;
         if(transfer > 0) recascade = true;
@@ -306,7 +307,7 @@ struct WaterParticle : public Particle {
       }
 
       if(recascade && spill > 0)
-        WaterParticle::cascade(SCALE, npos, map, vertexpool, --spill);
+        WaterParticle::cascade(c_eq_factor, SCALE, npos, map, vertexpool, --spill);
 
     }
 
@@ -351,8 +352,9 @@ struct WaterParticle : public Particle {
       if(transfer > 0){
 
         // Remove from Top Layer
-        if(top->type == soilmap["Air"])
+        if(top->type == soilmap["Air"]) {
           double diff = map.remove(ipos, seepage*transfer);
+        }
         else
           top->saturation -= (seepage*transfer) / (top->size*param.porosity);
 
@@ -368,12 +370,12 @@ struct WaterParticle : public Particle {
 
   }
 
-  static void seep(float SCALE, Layermap& map, Vertexpool<Vertex>& vertexpool){
+  static void seep(float c_eq_factor, float SCALE, Layermap& map, Vertexpool<Vertex>& vertexpool){
 
     for(size_t x = 0; x < map.dim.x; x++)
     for(size_t y = 0; y < map.dim.y; y++){
       seep(ivec2(x,y), map, vertexpool);
-      WaterParticle::cascade(SCALE, ivec2(x,y), map, vertexpool, 3);
+      WaterParticle::cascade(c_eq_factor, SCALE, ivec2(x,y), map, vertexpool, 3);
     }
 
   }

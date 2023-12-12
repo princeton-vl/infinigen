@@ -4,9 +4,6 @@
 # Authors: Zeyu Ma
 
 
-'''
-fileheader placeholder
-'''
 
 import os
 import sys

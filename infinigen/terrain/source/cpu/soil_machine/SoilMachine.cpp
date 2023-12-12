@@ -33,6 +33,7 @@ extern "C" {
 		int NWATER,
 		int NWIND,
 		float SCALE0,
+        float c_eq_factor,
 		char* soil_file
 	) {
 		layers.clear();
@@ -44,18 +45,19 @@ extern "C" {
 		WindParticle::init(SIZEX, SIZEY);
 		Layermap map(SEED, glm::ivec2(SIZEX, SIZEY), SCALE0, heightmap);
 
+        c_eq_factor /= 80;
 		for(int i = 0; i < NWATER; i++){
 			WaterParticle particle(map, SCALE0);
 
 			while(true){
-				while(particle.move(map, vertexpool) && particle.interact(map, vertexpool));
-				if(!particle.flood(map, vertexpool))
+				while(particle.move(map, vertexpool) && particle.interact(c_eq_factor, map, vertexpool));
+				if(!particle.flood(c_eq_factor, map, vertexpool))
 					break;
 			}
 
 		}
 
-		WaterParticle::seep(SCALE0, map, vertexpool);
+		WaterParticle::seep(c_eq_factor, SCALE0, map, vertexpool);
 
 		for(int i = 0; i < NWIND; i++){
 			WindParticle particle(map, SCALE0);

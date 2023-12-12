@@ -16,6 +16,11 @@ from .ctype_util import ASFLOAT, load_cdll
 def random_int():
     return np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
 
+
+def random_nat():
+    return np.random.randint(1, np.iinfo(np.int32).max)
+
+
 def random_int_large():
     return random.getrandbits(128)
 

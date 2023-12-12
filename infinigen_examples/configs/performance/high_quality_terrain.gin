@@ -1,3 +1,4 @@
+OcMesher.pixels_per_cube = 3
 OpaqueSphericalMesher.pixels_per_cube = 0.92
 TransparentSphericalMesher.pixels_per_cube = 1.38
 

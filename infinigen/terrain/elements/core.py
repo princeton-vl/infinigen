@@ -6,15 +6,18 @@
 
 from ctypes import POINTER, c_float, c_int32, c_size_t
 
+import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 from infinigen.terrain.utils import ASFLOAT, ASINT, Vars, load_cdll, register_func
 from infinigen.core.util.organization import Materials
 
-
+@gin.configurable
 class Element:
     called_time = {}
-    def __init__(self, lib_name, material, transparency):
+    def __init__(self, lib_name, material, transparency, bounding_shape=None, is_asset=False):
+        self.bounding_shape = bounding_shape
+        self.is_asset = is_asset
         if lib_name in Element.called_time:
             lib_name_X = f"{lib_name}_{Element.called_time[lib_name]}"
             print(f"{lib_name} already loaded, loading {lib_name_X} instead")
@@ -76,6 +79,14 @@ class Element:
             else:
                 auxs.append(None)
         self.call(N, ASFLOAT(AC(positions.astype(np.float32))), ASFLOAT(sdf), *[POINTER(c_float)() if x is None else ASFLOAT(x) for x in auxs])
+        bounding_shape = self.bounding_shape
+        if not self.is_asset and bounding_shape is not None:
+            if bounding_shape[0] == "cube":
+                x_min, x_max, y_min, y_max, z_min, z_max = bounding_shape[1:]
+                out_bound = (positions[:, 0] < x_min) | (positions[:, 0] > x_max) \
+                    | (positions[:, 1] < y_min) | (positions[:, 1] > y_max) \
+                    | (positions[:, 2] < z_min) | (positions[:, 2] > z_max)
+                sdf[out_bound] = 1e6
         ret = {}
         ret[Vars.SDF] = sdf
 

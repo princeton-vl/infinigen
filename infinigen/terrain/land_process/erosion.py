@@ -20,18 +20,19 @@ from infinigen.core.init import repo_root
 def run_erosion(
     folder,
     Ns=[512, 2048],
-    n_iters = [int(1e4), int(5e5)],
+    n_iters=[int(1e4), int(5e5)],
     mask_height_range=None,
     spatial=1,
     mask_range=(4, 47),
     ground_depth=25,
     sinking_rate=0.05,
+    c_eq_factor=[1, 1],
 ):
     dll = load_cdll("terrain/lib/cpu/soil_machine/SoilMachine.so")
     func = dll.run
     func.argtypes = [
         POINTER(c_float), POINTER(c_float), POINTER(c_float),
-        c_int32, c_int32, c_int32, c_int32, c_int32, c_float, c_char_p
+        c_int32, c_int32, c_int32, c_int32, c_int32, c_float, c_float, c_char_p
     ]
     func.restype = None
 
@@ -46,14 +47,15 @@ def run_erosion(
         if N > M: heightmap = smooth(heightmap, 3)
         original_heightmap = heightmap.copy()
         ground_level = heightmap.min() - ground_depth
-        heightmap = AC((heightmap - ground_level).astype(np.float32))
+        height_scale = 1
+        heightmap = AC((heightmap - ground_level).astype(np.float32) * height_scale)
         result_heightmap = np.zeros_like(heightmap)
         watertrack = np.zeros_like(heightmap)
         func(
             ASFLOAT(heightmap),  ASFLOAT(result_heightmap),  ASFLOAT(watertrack),
-            N, N, 0, n_iter, 0, spatial * tile_size, str(soil_config_path).encode('utf-8'),
+            N, N, 0, n_iter, 0, spatial * tile_size, c_eq_factor[i], str(soil_config_path).encode('utf-8'),
         )
-        heightmap = result_heightmap + ground_level
+        heightmap = result_heightmap / height_scale + ground_level
         watertrack = watertrack.reshape((N, N))
         watertrack = np.clip((watertrack - mask_range[0]) / (mask_range[1] - mask_range[0]), a_min=0, a_max=1)
         watertrack = watertrack ** 0.2

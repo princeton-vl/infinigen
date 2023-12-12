@@ -71,6 +71,7 @@ class Mesh:
         path=None,
         heightmap=None, L=None, downsample=1,
         vertices=None, faces=None, vertex_attributes=None,
+        mesh=None,
         obj=None, mesh_only=False, **kwargs
     ):
         self.normal_mode = normal_mode
@@ -100,6 +101,8 @@ class Mesh:
             _trimesh = trimesh.Trimesh(verts, faces)
         elif vertices is not None:
             _trimesh = trimesh.Trimesh(vertices=vertices, faces=faces.astype(np.int32), vertex_attributes=vertex_attributes, process=False)
+        elif mesh is not None:
+            _trimesh = mesh
         elif obj is not None:
             verts_bpy = obj.data.vertices
             faces_bpy = obj.data.polygons

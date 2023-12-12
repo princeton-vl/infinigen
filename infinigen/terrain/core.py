@@ -12,16 +12,19 @@ import bpy
 import gin
 import numpy as np
 from mathutils.bvhtree import BVHTree
+
+from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
 from infinigen.terrain.mesher import OpaqueSphericalMesher, TransparentSphericalMesher, UniformMesher
 from infinigen.terrain.scene import scene, transfer_scene_info
 from infinigen.terrain.surface_kernel.core import SurfaceKernel
-from infinigen.terrain.utils import Mesh, move_modifier, Vars, AttributeType, FieldsType
+from infinigen.terrain.utils import Mesh, move_modifier, Vars, AttributeType, FieldsType, get_caminfo, write_attributes
 from infinigen.terrain.assets.ocean import ocean_asset
 from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import SurfaceTypes, Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
 from infinigen.assets.utils.tag import tag_object, tag_system
+
 from numpy import ascontiguousarray as AC
 
 logger = logging.getLogger(__name__)
@@ -39,6 +42,36 @@ def get_surface_type(surface, degrade_sdf_to_displacement=True):
             return SurfaceTypes.Displacement
         return surface.type
 
+
+class OcMesher(UntexturedOcMesher):
+    def __init__(self, cameras, **kwargs):
+        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], **kwargs)
+        
+    def __call__(self, kernels):
+        sdf_kernels = [(lambda x, k0=k: k0(x)[Vars.SDF]) for k in kernels]
+        meshes, in_view_tags = UntexturedOcMesher.__call__(self, sdf_kernels)
+        with Timer("compute attributes"):
+            write_attributes(kernels, None, meshes)
+            for mesh, tag in zip(meshes, in_view_tags):
+                mesh.vertex_attributes[Tags.OutOfView] = (~tag).astype(np.int32)
+        with Timer("concat meshes"):
+            mesh = Mesh.cat(meshes)
+        return mesh
+
+class CollectiveOcMesher(UntexturedOcMesher):
+    def __init__(self, cameras, **kwargs):
+        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], **kwargs)
+        
+    def __call__(self, kernels):
+        sdf_kernels = [lambda x: np.stack([k(x)[Vars.SDF] for k in kernels], -1).min(axis=-1)]
+        mesh, in_view_tag = UntexturedOcMesher.__call__(self, sdf_kernels)
+        mesh = mesh[0]
+        with Timer("compute attributes"):
+            write_attributes(kernels, mesh, [])
+            mesh.vertex_attributes[Tags.OutOfView] = (~in_view_tag[0]).astype(np.int32)
+        mesh = Mesh(mesh=mesh)
+        return mesh
+    
 @gin.configurable
 class Terrain:
     def __init__(
@@ -99,11 +132,10 @@ class Terrain:
 
     @gin.configurable("export")
     def export(self,
-        spherical=False,
+        dynamic=False,
+        spherical=True, # false for OcMesher
         cameras=None,
         main_terrain_only=False,
-        collective_transparent_overrides={},
-        coarse_hidden=True,
         remove_redundant_attrs=True,
     ):
         meshes_dict = {}
@@ -112,11 +144,9 @@ class Terrain:
             opaque_elements = [element for element in self.elements_list if element.transparency == Transparency.Opaque]
             if opaque_elements != []:
                 attributes_dict[TerrainNames.OpaqueTerrain] = set()
-                if spherical:
-                    if coarse_hidden:
-                        mesher = OpaqueSphericalMesher(cameras=cameras)
-                    else:
-                        mesher = TransparentSphericalMesher(cameras=cameras)
+                if dynamic:
+                    if spherical: mesher = OpaqueSphericalMesher(cameras=cameras)
+                    else: mesher = OcMesher(cameras=cameras)
                 else:
                     mesher = UniformMesher()
                 with Timer(f"meshing {TerrainNames.OpaqueTerrain}"):
@@ -128,12 +158,13 @@ class Terrain:
         individual_transparent_elements = [element for element in self.elements_list if element.transparency == Transparency.IndividualTransparent]
         for element in individual_transparent_elements:
             if not main_terrain_only or element.__class__.name == self.main_terrain:
-                if spherical:
+                if dynamic:
                     special_args = {}
                     if element.__class__.name == ElementNames.Atmosphere:
-                        special_args["coarse_multiplier"] = 64
-                        special_args["upscale"] = 1
-                    mesher = TransparentSphericalMesher(cameras=cameras, **special_args)
+                        special_args["pixels_per_cube"] = 100
+                        special_args["inv_scale"] = 1
+                    if spherical: mesher = TransparentSphericalMesher(cameras=cameras, **special_args)
+                    else: mesher = OcMesher(cameras=cameras, simplify_occluded=False, **special_args)
                 else: mesher = UniformMesher(enclosed=True)
                 with Timer(f"meshing {element.__class__.name}"):
                     mesh = mesher([element])
@@ -144,8 +175,9 @@ class Terrain:
             collective_transparent_elements = [element for element in self.elements_list if element.transparency == Transparency.CollectiveTransparent]
             if collective_transparent_elements != []:
                 attributes_dict[TerrainNames.CollectiveTransparentTerrain] = set()
-                if spherical:
-                    mesher = TransparentSphericalMesher(cameras=cameras, **collective_transparent_overrides)
+                if dynamic:
+                    if spherical: mesher = TransparentSphericalMesher(cameras=cameras)
+                    else: mesher = CollectiveOcMesher(cameras=cameras, simplify_occluded=False)
                 else:
                     mesher = UniformMesher()
                 with Timer(f"meshing {TerrainNames.CollectiveTransparentTerrain}"):
@@ -154,7 +186,7 @@ class Terrain:
                 for element in collective_transparent_elements:
                     attributes_dict[TerrainNames.CollectiveTransparentTerrain].update(element.attributes)
 
-        if main_terrain_only or spherical:
+        if main_terrain_only or dynamic:
             for mesh_name in meshes_dict:
                 mesh_name_unapplied = mesh_name
                 if mesh_name + "_unapplied" in bpy.data.objects.keys():
@@ -173,7 +205,7 @@ class Terrain:
                     if get_surface_type(surface) == SurfaceTypes.BlenderDisplacement:
                         meshes_dict[mesh_name].blender_displacements.append(surface.mod_name)
 
-        if spherical:
+        if dynamic:
             if remove_redundant_attrs:
                 for mesh_name in meshes_dict:
                     if len(attributes_dict[mesh_name]) == 1:
@@ -263,7 +295,7 @@ class Terrain:
             with FixedSeed(int_hash(["Ocean", self.seed])):
                 ocean_asset(output_folder / Assets.Ocean, bpy.context.scene.frame_start, bpy.context.scene.frame_end, link_folder=self.on_the_fly_asset_folder / Assets.Ocean)
         self.surfaces_into_sdf()
-        fine_meshes, _ = self.export(spherical=True, cameras=[bpy.context.scene.camera])
+        fine_meshes, _ = self.export(dynamic=True, cameras=[bpy.context.scene.camera])
         for mesh_name in fine_meshes:
             obj = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
             if mesh_name not in hidden_in_viewport: self.tag_terrain(obj)

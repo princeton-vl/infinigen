@@ -4,7 +4,7 @@ compose_scene.underwater_domain_tags = 'landscape,liquid_covered'
 
 compose_scene.trees_chance = 0.4
 compose_scene.rocks_chance = 0.8
-compose_scene.glowing_rocks_chance = 0.5
+compose_scene.glowing_rocks_chance = 1
 compose_scene.grass_chance = 0.4
 compose_scene.ferns_chance = 0.6
 compose_scene.mushroom_chance = 0.8
