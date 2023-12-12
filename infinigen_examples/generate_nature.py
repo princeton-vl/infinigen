@@ -31,8 +31,8 @@ from infinigen.core.placement import (
 )
 
 from infinigen.assets.scatters import (
-    pebbles, grass, snow_layer, ground_leaves, ground_twigs, \
-    chopped_trees, pinecone, fern, flowerplant, monocot, ground_mushroom, \
+    pebbles, grass, ground_leaves, ground_twigs, \
+    chopped_trees, pinecone, fern, flowerplant, monocot as monocots, ground_mushroom, \
     slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells, \
     pine_needle, seaweed, coral_reef, jellyfish, urchin
 )
@@ -290,11 +290,11 @@ def compose_scene(output_folder, scene_seed, **params):
     def add_monocots(target):
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, tag=land_domain)
-        monocot.apply(terrain_inview, grass=True, selection=selection)
+        monocots.apply(terrain_inview, grass=True, selection=selection)
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, select_thresh=0.55,
             tag=params.get("grass_habitats", None))
-        monocot.apply(target, grass=False, selection=selection)
+        monocots.apply(target, grass=False, selection=selection)
     p.run_stage('monocots', add_monocots, terrain_inview)
 
     def add_ferns(target):
@@ -350,22 +350,22 @@ def compose_scene(output_folder, scene_seed, **params):
     def add_rain_particles():
         return particles.particle_system(
             emitter=butil.spawn_plane(location=emitter_off, size=30),
-            subject=factory.make_asset_collection(particles.RaindropFactory(scene_seed), 5),
+            subject=factory.make_asset_collection(weather.particles.RaindropFactory(scene_seed), 5),
             settings=particles.rain_settings())
     def add_dust_particles():
         return particles.particle_system(
             emitter=butil.spawn_cube(location=Vector(), size=30),
-            subject=factory.make_asset_collection(particles.DustMoteFactory(scene_seed), 5),
+            subject=factory.make_asset_collection(weather.particles.DustMoteFactory(scene_seed), 5),
             settings=particles.floating_dust_settings())
     def add_marine_snow_particles():
         return particles.particle_system(
             emitter=butil.spawn_cube(location=Vector(), size=30),
-            subject=factory.make_asset_collection(particles.DustMoteFactory(scene_seed), 5),
+            subject=factory.make_asset_collection(weather.particles.DustMoteFactory(scene_seed), 5),
             settings=particles.marine_snow_setting())
     def add_snow_particles():
         return particles.particle_system(
             emitter=butil.spawn_plane(location=emitter_off, size=60),
-            subject=factory.make_asset_collection(particles.SnowflakeFactory(scene_seed), 5),
+            subject=factory.make_asset_collection(weather.particles.SnowflakeFactory(scene_seed), 5),
             settings=particles.snow_settings())
     
     particle_systems = [
