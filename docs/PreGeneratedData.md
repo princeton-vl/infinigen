@@ -9,7 +9,7 @@ Please run the script below, which will prompt you to determine what ground trut
 
 ```bash
 cd worldgen
-python tools/download_pregenerated_data.py outputs/my_download --release_name 2023_10_13_preview
+python -m infinigen.tools.download_pregenerated_data outputs/my_download --release_name 2023_10_13_preview
 ```
 
 :warning: Downloading all available annotations will require ~30GB per scene. Selecting only the data you need will minimize your bandwidth and disk usage.
