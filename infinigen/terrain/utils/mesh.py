@@ -180,10 +180,11 @@ class Mesh:
         if material is not None:
             new_object.data.materials.append(material)
 
+        butil.put_in_collection(bpy.data.objects[name], butil.get_collection('terrain'))
+
         with butil.SelectObjects(new_object):
             bpy.ops.object.shade_flat()
 
-        butil.put_in_collection(bpy.data.objects[name], butil.get_collection('terrain'))
         return new_object
     
     @property
