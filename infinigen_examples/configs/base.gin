@@ -218,7 +218,7 @@ compose_scene.flying_creature_registry = [
 group_collections.config = [
     {'name': 'assets',         'hide_viewport': True,  'hide_render': True}, # collections of assets used by scatters
     {'name': 'scatter',        'hide_viewport': True,  'hide_render': False}, # actual instanced objects for scatters
-    {'name': 'placeholders',   'hide_viewport': True, 'hide_render': True}, # low-res markers / proxies for where assets will be spawned 
+    {'name': 'placeholders',   'hide_viewport': False, 'hide_render': True}, # low-res markers / proxies for where assets will be spawned 
     {'name': 'unique_assets',  'hide_viewport': True,  'hide_render': False}, # actual hi-res assets spawned at each placeholder location
     {'name': 'particleassets', 'hide_viewport': True,  'hide_render': False}, # actual hi-res assets spawned at each placeholder location
     {'name': 'particles',      'hide_viewport': True,  'hide_render': False}, # actual particle emitters / particle systems
