@@ -117,15 +117,20 @@ class GenericTreeFactory(AssetFactory):
         skeleton_obj = placeholder.children[0]
 
         if not self.coarse_mesh_placeholder:
-            placeholder = self._create_coarse_mesh(skeleton_obj)
-            self.trunk_surface.apply(placeholder)
-            butil.parent_to(skeleton_obj, placeholder, no_inverse=True)
-            placeholder.hide_render = True
+            skin_obj = self._create_coarse_mesh(skeleton_obj)
+            self.trunk_surface.apply(skin_obj)
+            butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
+        else:
+            skin_obj = butil.deep_clone_obj(placeholder)
 
         if self.child_col is not None:
             assert self.genome.child_placement is not None
 
-            max_needed_child_fs = detail.target_face_size(self.min_dist, global_multiplier=1) if self.min_dist is not None else None
+            max_needed_child_fs = (
+                detail.target_face_size(self.min_dist, global_multiplier=1) 
+                if self.min_dist is not None 
+                else None
+            )
 
             logger.debug(f'adding tree children using {self.child_col=}')
             butil.select_none()
@@ -135,12 +140,15 @@ class GenericTreeFactory(AssetFactory):
             ))
 
         if self.camera is not None and distance < self.cam_meshing_max_dist:
+            
             assert self.adapt_mesh_method != 'remesh'
-            skin_obj, outofview, vert_dists, _ = split_inview(placeholder, cam=self.camera, vis_margin=0.15)
+            
+            skin_obj_cleanup = skin_obj
+            skin_obj, outofview, vert_dists, _ = split_inview(skin_obj, cam=self.camera, vis_margin=0.15)
             butil.parent_to(outofview, skin_obj, no_inverse=True, no_transform=True)
+
+            butil.delete(skin_obj_cleanup)
             face_size = detail.target_face_size(vert_dists.min())
-        else:
-            skin_obj = deep_clone_obj(placeholder, keep_modifiers=True, keep_materials=True)
 
         skin_obj.hide_render = False
 
@@ -153,11 +161,13 @@ class GenericTreeFactory(AssetFactory):
         butil.parent_to(skin_obj, placeholder, no_inverse=True, no_transform=True)
 
         if self.realize:
+        
             logger.debug(f'realizing tree children')
             butil.apply_modifiers(skin_obj)
             butil.apply_modifiers(skeleton_obj)
-            with butil.SelectObjects([skin_obj, skeleton_obj], active=0):
-                bpy.ops.object.join()
+        
+            butil.join_objects([skin_obj, skeleton_obj])
+            assert len(skin_obj.children) == 0
         else:
             butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
 

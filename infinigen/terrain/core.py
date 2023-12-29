@@ -130,7 +130,7 @@ class Terrain:
             for e in self.elements:
                 self.elements[e].cleanup()
 
-    @gin.configurable("export")
+    @gin.configurable()
     def export(self,
         dynamic=False,
         spherical=True, # false for OcMesher

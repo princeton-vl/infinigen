@@ -115,18 +115,19 @@ class AssetFactory:
 
         obj.name = f'{repr(self)}.spawn_asset({i})'
 
+        print(f'{keep_placeholder=} {placeholder.name=} {list(placeholder.children)=} {obj.name=} {list(obj.children)=}')
         if keep_placeholder:
             if obj is not placeholder:
                 if obj.parent is None:
                     butil.parent_to(obj, placeholder, no_inverse=True)
             else:
                 obj.hide_render = False
-            
         else:
             obj.parent = None
             obj.location = placeholder.location
             obj.rotation_euler = placeholder.rotation_euler
             butil.delete(placeholder)
+
         return obj
 
     __call__ = spawn_asset  # for convinience
@@ -145,6 +146,7 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
 
     if verbose:
         logger.info(f'Generating collection of {n} assets from {name}')
+
     objs = [[] for _ in range(len(spawn_fns))]
     r = trange(n) if verbose else range(n)
     for i in r:

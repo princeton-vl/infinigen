@@ -8,7 +8,6 @@ All pre-generated data released by the Princeton Vision and Learning lab is host
 Please run the script below, which will prompt you to determine what ground truth channels, cameras, how many scenes you wish to download.
 
 ```bash
-cd worldgen
 python -m infinigen.tools.download_pregenerated_data outputs/my_download --release_name 2023_10_13_preview
 ```
 

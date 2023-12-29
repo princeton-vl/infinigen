@@ -42,10 +42,10 @@ Then, install the following dependencies using the method of your choice. Exampl
 sudo apt-get install wget cmake g++ libgles2-mesa-dev libglew-dev libglfw3-dev libglm-dev
 
 # on an Mac ARM (M1/M2/...)
-arch -arm64 brew install wget llvm open-mpi libomp glm glew
+arch -arm64 brew install wget cmake llvm open-mpi libomp glm glew
 
 # on  Mac x86_64 (Intel)
-brew install wget llvm open-mpi libomp glm glew
+brew install wget cmake llvm open-mpi libomp glm glew
 ```
 
 ### Installation

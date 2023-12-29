@@ -13,6 +13,8 @@ from uuid import uuid4
 from functools import partial
 from pathlib import Path
 from shutil import  copytree
+import logging
+import sys
 
 from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
 from infinigen.datagen.util import upload_util
@@ -22,6 +24,8 @@ from infinigen.datagen.states import get_suffix
 from . import states
 
 from infinigen.core.init import repo_root
+
+logger = logging.getLogger(__name__)
 
 @gin.configurable
 def get_cmd(
@@ -41,7 +45,7 @@ def get_cmd(
     cmd = ''
     if process_niceness is not None:
         cmd += f'nice -n {process_niceness} '
-    cmd += 'python '
+    cmd += f'{sys.executable} '
 
     if driver_script.endswith('.py'):
         cmd += driver_script + ' '
@@ -322,6 +326,10 @@ def queue_mesh_save(
     )
     return res, output_folder
 
+process_mesh_path = Path(__file__).parent/'customgt'/'build'/'customgt'
+if not process_mesh_path.exists():
+    logger.warning(f'{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail')
+
 @gin.configurable
 def queue_opengl(
     submit_cmd,
@@ -342,8 +350,6 @@ def queue_opengl(
         return states.JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
-
-    process_mesh_path = Path(__file__)
     
     input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
     if (gt_testing):
@@ -371,10 +377,10 @@ def queue_opengl(
         ]
             
         
-        lines.append(f"python {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
+        lines.append(f"{sys.executable} {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
 
         lines.append(
-            f"python -c \"from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder; "
+            f"{sys.executable} -c \"from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder; "
             f"reorganize_old_framesfolder({repr(str(output_folder))})\""
         )
         lines.append(f"touch {folder}/logs/FINISH_{taskname}")

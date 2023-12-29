@@ -84,7 +84,7 @@ def apply_cleanup_options(args, seed, crashed, scene_folder):
                 rmtree(f)
             else:
                 f.unlink()
-    elif args.cleanup == 'none':
+    elif args.cleanup == 'none' or (args.cleanup == 'except_crashed' and crashed):
         pass
     else:
         raise ValueError(f'Unrecognized {args.cleanup=} {crashed=}')

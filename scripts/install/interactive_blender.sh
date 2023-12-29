@@ -66,4 +66,4 @@ fi
 # Install Blender dependencies
 "${BLENDER_PYTHON}" -m ensurepip
 
-CFLAGS="-I/usr/include/python3.10 ${CFLAGS}" "${BLENDER_PYTHON}" -m pip install -vv -e .
+CFLAGS="-I/usr/include/python3.10 ${CFLAGS}" "${BLENDER_PYTHON}" -m pip install -e .

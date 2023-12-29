@@ -42,7 +42,7 @@ Path(args.asset_folder).mkdir(parents=True, exist_ok=True)
 
 for asset in args.assets:
     for i in range(args.number):
-        cmd = f"python -m infinigen.asstes.fluid.run_asset_cache -f {args.asset_folder}/ -a {asset} -s {args.start_frame} -d {args.simulation_duration}".split(" ")
+        cmd = f"{sys.executable} -m infinigen.assets.fluid.run_asset_cache -f {args.asset_folder}/ -a {asset} -s {args.start_frame} -d {args.simulation_duration}".split(" ")
         print(cmd)
         executor = submitit.AutoExecutor(folder=str(Path(args.asset_folder) / "logs"))
         executor.update_parameters(
