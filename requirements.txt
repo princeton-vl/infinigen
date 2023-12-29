@@ -4,7 +4,7 @@ opencv-python
 matplotlib
 scipy
 imageio
-scikit-image==0.19.3
+scikit-image==0.22.0
 submitit
 frozendict
 flow_vis
