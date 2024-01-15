@@ -54,7 +54,7 @@ First, download infinigen and set up your environment.
 
 On Linux / Mac / WSL:
 ```bash
-git clone https://github.com/princeton-vl/infinigen.git -b rc_1.1.1
+git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
 conda create --name infinigen python=3.10
 conda activate infinigen
