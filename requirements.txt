@@ -4,14 +4,14 @@ opencv-python
 matplotlib
 scipy
 imageio
-scikit-image==0.19.3
+scikit-image==0.22.0
 submitit
 frozendict
 flow_vis
 trimesh
 einops
 geomdl
-numpy==1.26.2
+numpy==1.26.3
 wandb
 jinja2
 shapely
