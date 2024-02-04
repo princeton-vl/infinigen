@@ -122,7 +122,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
             all_data[seed]["[" + step + "] Step Time"] = step_timedelta
 
             # parse times < 1 day
-            for name, h, m, s in re.findall(r'INFO:times:\[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)', text):
+            for name, h, m, s in re.findall(r'\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)', text):
                 timedelta_obj = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
                 if (name == "MAIN TOTAL"): continue
                 else:
@@ -140,7 +140,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
                         all_data[seed]["[time] " + stage_key] = timedelta_obj
 
             # parse times > 1 day
-            for name, d, h, m, s in re.findall(r'INFO:times:\[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)', text):
+            for name, d, h, m, s in re.findall(r'\[INFO\] \| \[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)', text):
                 timedelta_obj = timedelta(days=int(d), hours=int(h),minutes=int(m),seconds=int(s))
                 if (name == "MAIN TOTAL"): continue
                 else:
@@ -195,7 +195,7 @@ def parse_scene_log(scene_path, step_times, asset_time_data, poly_data, asset_me
         all_data[seed]["[Objects Generated] [Coarse] " + row["name"]] = row["obj_delta"]
         all_data[seed]["[Instances Generated] [Coarse] " + row["name"]] = row["instance_delta"]
 
-    fine_stage_df = pd.read_csv(os.path.join(coarse_folder, "pipeline_fine.csv")) # this is supposed to be coarse folder
+    fine_stage_df = pd.read_csv(os.path.join(fine_folder, "pipeline_fine.csv")) # this is supposed to be coarse folder
     fine_stage_df["mem_delta"] = fine_stage_df[fine_stage_df['ran']]['mem_at_finish'].diff()
     fine_stage_df["obj_delta"] = fine_stage_df[fine_stage_df['ran']]['obj_count'].diff()
     fine_stage_df["instance_delta"] = fine_stage_df[fine_stage_df['ran']]['instance_count'].diff()
@@ -501,7 +501,7 @@ def main(dir, time):
         test_logs(dir)
     except Exception as e: 
         print(e)
-
+        
     if time is None:
         print("\nNo slurm time arg provided, skipping scene memory stats")
     else:

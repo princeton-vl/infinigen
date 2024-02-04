@@ -39,3 +39,7 @@ v1.2.6
 v1.3.1
 - Fix configuration bug causing massive render slowdown 
 - Create noisier video trajectories optimized for training
+
+v1.3.2
+- Bugfix USD/OBJ exporter, add export options to generate_individual_assets
+
