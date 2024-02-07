@@ -1,6 +1,6 @@
 # eliminate blurs / distortion that cause blurs or bad alignment of the depth map
 compositor_postprocessing.distort = False
-render_image.motion_blur = False
+configure_blender.motion_blur = False
 render_image.use_dof = False
 
 # remove volume scatters, as the corrupt blender's depth map

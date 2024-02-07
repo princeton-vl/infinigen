@@ -116,15 +116,21 @@ scatter_res_distance.dist = 4
 random_color_mapping.hue_stddev = 0.05 # Note: 1.0 is the whole color spectrum
 
 render.render_image_func = @full/render_image
-render_image.time_limit = 0
+configure_render_cycles.time_limit = 0
 
-full/render_image.min_samples = 100
-full/render_image.num_samples = 8192
-render_image.adaptive_threshold = 0.005
-full/render_image.flat_shading = False
+configure_render_cycles.min_samples = 0
+configure_render_cycles.num_samples = 8192
+configure_render_cycles.adaptive_threshold = 0.01
+configure_render_cycles.denoise = False
+configure_render_cycles.exposure = 1
+configure_blender.motion_blur_shutter = 0.15
+render_image.use_dof = False
+render_image.dof_aperture_fstop = 3
+compositor_postprocessing.distort = False
+compositor_postprocessing.color_correct = False
 
-flat/render_image.min_samples = 1
-flat/render_image.num_samples = 1
+flat/configure_render_cycles.min_samples = 1
+flat/configure_render_cycles.num_samples = 16
 flat/render_image.flat_shading = True
 full/render_image.passes_to_save = [
     ['diffuse_direct', 'DiffDir'],
@@ -148,17 +154,8 @@ flat/render_image.passes_to_save = [
     ['object_index', 'IndexOB']
 ]
 
-render_image.exposure = 1
-
-render_image.use_dof = False
-render_image.dof_aperture_fstop = 3
-render_image.motion_blur = False
-render_image.motion_blur_shutter = 0.15
-
-compositor_postprocessing.distort = False
-compositor_postprocessing.color_correct=True
-
 execute_tasks.generate_resolution = (1280, 720)
+execute_tasks.fps = 24
 get_sensor_coords.H = 720
 get_sensor_coords.W = 1280
 

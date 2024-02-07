@@ -36,3 +36,6 @@ v1.2.6
 - Fix bug where manage_jobs.py would ignore CUDA_VISIBLE_DEVICES that didnt start at 0
 - Add NotImplementedError for dynamic hair.
 
+v1.3.1
+- Fix configuration bug causing massive render slowdown 
+- Create noisier video trajectories optimized for training

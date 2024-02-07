@@ -395,7 +395,7 @@ def chameleon_postprocessing(body_parts, extras, params):
 def purge_empty_materials(obj):
     with butil.SelectObjects(obj):
         for i, m in enumerate(obj.material_slots):
-            if m.name != '':
+            if m.material is not None:
                 continue
             bpy.context.object.active_material_index = i
             bpy.ops.object.material_slot_remove()

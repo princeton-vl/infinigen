@@ -34,7 +34,7 @@ compose_scene.flying_creature_registry = [
 ]
 
 atmosphere_light_haze.shader_atmosphere.enable_scatter = False
-render_image.exposure = 1.3
+configure_render_cycles.exposure = 1.3
 
 
 # scene composition config
@@ -50,8 +50,6 @@ Caves.scale_increase = 1
 
 scene.waterbody_chance = 0.8
 Waterbody.height = -5
-
-full/render_image.min_samples = 500
 
 # camera selection config
 Terrain.populated_bounds = (-25, 25, -25, 25, -25, 0)

@@ -29,6 +29,19 @@ from infinigen.core.util.logging import Suppress, LogLevel
 
 logger = logging.getLogger(__name__)
 
+CYCLES_GPUTYPES_PREFERENCE = [
+
+    # key must be a valid cycles device_type
+    # ordering indicate preference - earlier device types will be used over later if both are available
+    #  - e.g most OPTIX gpus will also show up as a CUDA gpu, but we will prefer to use OPTIX due to this list's ordering
+
+    'OPTIX',
+    'CUDA',  
+    'HIP', # untested
+    'ONEAPI', # untested
+    'CPU',
+]
+
 def parse_args_blender(parser):
     if '--' in sys.argv:
         # Running using a blender commandline python. 
@@ -193,15 +206,100 @@ def import_addons(names):
         except Exception:
             logger.warning(f'Could not load addon "{name}"')
 
-def configure_blender():
-    bpy.context.preferences.system.scrollback = 0 
-    bpy.context.preferences.edit.undo_steps = 0
-    bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.cycles.device = 'GPU'
+@gin.configurable
+def configure_render_cycles(
 
+    # supplied by gin.config
+    min_samples,
+    num_samples,
+    time_limit,
+    adaptive_threshold,
+    exposure,
+    denoise
+):
+    bpy.context.scene.render.engine = 'CYCLES'
+
+    # For now, denoiser is always turned on, but the  _used_
+    if denoise:
+        try:
+            bpy.context.scene.cycles.use_denoising = True
+            bpy.context.scene.cycles.denoiser = 'OPTIX'
+        except Exception as e:
+            logger.warning(f"Cannot use OPTIX denoiser {e}")
+
+    bpy.context.scene.cycles.samples = num_samples # i.e. infinity
+    bpy.context.scene.cycles.adaptive_min_samples = min_samples
+    bpy.context.scene.cycles.adaptive_threshold = adaptive_threshold # i.e. noise threshold
+    bpy.context.scene.cycles.time_limit = time_limit
+    bpy.context.scene.cycles.film_exposure = exposure
     bpy.context.scene.cycles.volume_step_rate = 0.1
     bpy.context.scene.cycles.volume_preview_step_rate = 0.1
     bpy.context.scene.cycles.volume_max_steps = 32
+    bpy.context.scene.cycles.volume_bounces = 4
+
+@gin.configurable
+def configure_cycles_devices(
+    use_gpu=True
+):
+    
+    if use_gpu is False:
+        logger.info(f'Render will use CPU-only due to {use_gpu=}')
+        bpy.context.scene.cycles.device = 'CPU'
+        return
+
+    assert bpy.context.scene.render.engine == 'CYCLES'
+    bpy.context.scene.cycles.device = 'GPU'
+    prefs = bpy.context.preferences.addons['cycles'].preferences
+
+    # Necessary to "remind" cycles that the devices exist? Not sure. Without this no devices are found.
+    for dt in prefs.get_device_types(bpy.context):
+        prefs.get_devices_for_type(dt[0])
+
+    assert len(prefs.devices) != 0, prefs.devices
+
+    types = list(d.type for d in prefs.devices)
+
+    types = sorted(types, key=CYCLES_GPUTYPES_PREFERENCE.index)
+    logger.info(f'Available devices have {types=}')
+    use_device_type = types[0]
+
+    if use_device_type == 'CPU':
+        logger.warning(f'Render will use CPU-only, only found {types=}')
+        bpy.context.scene.cycles.device = 'CPU'
+        return
+
+    bpy.context.preferences.addons['cycles'].preferences.compute_device_type = use_device_type
+    use_devices = [d for d in prefs.devices if d.type == use_device_type]
+
+
+    logger.info(f'Cycles will use {use_device_type=}, {len(use_devices)=}')
+
+    for d in prefs.devices:
+        d.use = False
+    for d in use_devices:
+        d.use = True
+
+    return use_devices
+
+@gin.configurable
+def configure_blender(
+    render_engine='CYCLES',
+    motion_blur=False,
+    motion_blur_shutter=0.5,
+):
+    bpy.context.preferences.system.scrollback = 0 
+    bpy.context.preferences.edit.undo_steps = 0
+
+    if render_engine == 'CYCLES':
+        configure_render_cycles()
+        configure_cycles_devices()
+    else:
+        raise ValueError(f'Unrecognized {render_engine=}')
+
+    bpy.context.scene.render.use_motion_blur = motion_blur
+    if motion_blur: 
+        bpy.context.scene.cycles.motion_blur_position = 'START'
+        bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
 
     import_addons(['ant_landscape', 'real_snow'])
 

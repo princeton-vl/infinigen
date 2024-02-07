@@ -72,9 +72,6 @@ Atmosphere.hacky_offset = 0.1
 WarpedRocks.slope_shift = -23
 scene.waterbody_chance = 1
 
-full/render_image.min_samples = 100
-render_image.adaptive_threshold = 0.01
-
 Terrain.under_water = 1
 
 compose_scene.turbulence_chance = 0.7

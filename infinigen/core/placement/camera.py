@@ -498,8 +498,8 @@ def animate_cameras(
         terrain_tags_ratio=scene_preprocessed['terrain_tags_ratio'] if strict_selection else {},
     )
 
-
     for cam_rig in cam_rigs:
+
         if policy_registry is None:  
             if U() < follow_poi_chance and pois is not None and len(pois):
                 policy = animation_policy.AnimPolicyFollowObject(
@@ -511,7 +511,9 @@ def animate_cameras(
                 policy = animation_policy.AnimPolicyRandomWalkLookaround()
         else:
             policy = policy_registry()
+
         logger.info(f'Animating {cam_rig=} using {policy=}')
+
         animation_policy.animate_trajectory(
             cam_rig, 
             scene_preprocessed['terrain_bvh'],

@@ -283,6 +283,7 @@ def execute_tasks(
     resample_idx=None,
     output_blend_name="scene.blend",
     generate_resolution=(1280,720),
+    fps=24,
     reset_assets=True,
     focal_length=None,
     dryrun=False,
@@ -315,6 +316,7 @@ def execute_tasks(
     bpy.context.scene.frame_start = int(frame_range[0])
     bpy.context.scene.frame_end = int(frame_range[1])
     bpy.context.scene.frame_set(int(frame_range[0]))
+    bpy.context.scene.render.fps = fps
     bpy.context.scene.render.resolution_x = generate_resolution[0]
     bpy.context.scene.render.resolution_y = generate_resolution[1]
     bpy.context.view_layer.update()

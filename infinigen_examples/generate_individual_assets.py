@@ -275,6 +275,8 @@ def main(args):
     init.apply_gin_configs('infinigen_examples/configs')
     surface.registry.initialize_from_gin()
 
+    init.configure_blender()
+
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
     logging.basicConfig(
         format=f'[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] {extras}| %(message)s',
@@ -345,7 +347,6 @@ def make_args():
     parser.add_argument('-l', '--lighting', default=0, type=int, help="Lighting seed")
     parser.add_argument('-o', '--cam_zoff', '--z_offset', type=float, default=.0,
                         help="Additional offset on Z axis for camera look-at positions")
-    parser.add_argument('-g', '--gpu', action='store_true', help="Whether to use gpu in rendering")
     parser.add_argument('-s', '--save_blend', action='store_true', help="Whether to save .blend file")
     parser.add_argument('-e', '--elevation', default=60, type=float, help="Elevation of the sun")
     parser.add_argument('--cam_dist', default=0, type=float,

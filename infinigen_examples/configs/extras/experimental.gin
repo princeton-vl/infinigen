@@ -1,6 +1,6 @@
 # things that are not quite fully working correctly, but you can use if you please
 
-render_image.motion_blur = True # not fully supported in ground truth
+configure_blender.motion_blur = True # not fully supported in ground truth
 compose_scene.rain_particles_chance = 0.1 # doesnt look good when not using motion blur
 
 # compose_scene.marine_snow_particles_chance = 0.1 # TODO only put this in underwater scenes
