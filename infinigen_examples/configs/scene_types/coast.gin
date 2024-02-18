@@ -29,7 +29,8 @@ shader_atmosphere.anisotropy = 1
 shader_atmosphere.density = 0
 
 # camera selection config
-camera_selection_preprocessing.terrain_tags_ratio = {"liquid": (0.05, 0.6), "beach": (0.05, 0.6)}
+camera_selection_tags_ratio.liquid = (0.05, 0.6)
+camera_selection_tags_ratio.beach = (0.05, 0.6)
 
 compose_scene.ground_creatures_chance = 0.0
 compose_scene.ground_creature_registry = [

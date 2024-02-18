@@ -183,6 +183,9 @@ camera.spawn_camera_rigs.camera_rig_config = [
     {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}
 ]
 
+camera_selection_tags_ratio.liquid = (0, 0.5)
+camera_selection_keep_in_animation.liquid = True
+
 # TERRAIN SEED #
 assets.materials.ice.geo_ice.random_seed = %OVERALL_SEED
 assets.materials.lava.lava_geo.random_seed = %OVERALL_SEED

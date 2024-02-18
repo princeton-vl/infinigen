@@ -381,7 +381,7 @@ class Terrain:
             terrain_obj = bpy.context.view_layer.objects.active
 
         terrain_mesh = Mesh(obj=terrain_obj)
-        terrain_tags_answers = {}
+        camera_selection_answers = {}
         for q0 in terrain_tags_queries:
             if type(q0) is not tuple:
                 q = (q0,)
@@ -391,13 +391,13 @@ class Terrain:
             if q[0] == SelectionCriterions.Altitude:
                 min_altitude, max_altitude = q[1:3]
                 altitude = terrain_mesh.vertices[:, 2]
-                terrain_tags_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
+                camera_selection_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
             else:
-                terrain_tags_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
+                camera_selection_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
                 for key in self.tag_dict:
                     if set(q).issubset(set(key.split('.'))):
-                        terrain_tags_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
-                terrain_tags_answers[q0] = terrain_mesh.facewise_mean(terrain_tags_answers[q0].astype(np.float64))
+                        camera_selection_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
+                camera_selection_answers[q0] = terrain_mesh.facewise_mean(camera_selection_answers[q0].astype(np.float64))
 
         if np.abs(np.asarray(terrain_obj.matrix_world) - np.eye(4)).max() > 1e-4:
             raise ValueError(f"Not all transformations on {terrain_obj.name} have been applied. This function won't work correctly.")
@@ -424,7 +424,7 @@ class Terrain:
         terrain_bvh = BVHTree.FromObject(terrain_obj, depsgraph)
         delete(terrain_obj)
 
-        return terrain_bvh, terrain_tags_answers, vertexwise_min_dist
+        return terrain_bvh, camera_selection_answers, vertexwise_min_dist
 
 
     def tag_terrain(self, obj):
