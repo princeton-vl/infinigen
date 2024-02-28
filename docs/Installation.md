@@ -46,6 +46,13 @@ arch -arm64 brew install wget cmake llvm open-mpi libomp glm glew
 
 # on  Mac x86_64 (Intel)
 brew install wget cmake llvm open-mpi libomp glm glew
+
+# on Conda. Useful when you don't have sudo permissions
+conda install conda-forge::gxx=11.4.0 mesalib glew glm menpo::glfw3
+export C_INCLUDE_PATH=$CONDA_PREFIX/include:$C_INCLUDE_PATH
+export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CPLUS_INCLUDE_PATH
+export LIBRARY_PATH=$CONDA_PREFIX/lib:$LIBRARY_PATH
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
 
 ### Installation
