@@ -553,6 +553,10 @@ def join_objects(objs, check_attributes=False):
                 else:
                     join_target.data.attributes.new(att.name, att.data_type, att.domain)
 
+    empty_objs = [o for o in objs if len(o.data.vertices) == 0]
+    objs = [o for o in objs if len(o.data.vertices) > 0]
+    delete(empty_objs)
+
     select(objs)
     bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.object.join()

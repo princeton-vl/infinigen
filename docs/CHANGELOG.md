@@ -23,3 +23,6 @@ v1.1.0
 
 v1.2.0
 - Integrate OcMesher terrain option - see https://github.com/princeton-vl/OcMesher
+
+v1.2.4
+- Fix TreeFactory crash for season='winter'
