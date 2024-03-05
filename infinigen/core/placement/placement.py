@@ -129,7 +129,7 @@ def parse_asset_name(name):
     
 def populate_collection(
     factory: AssetFactory, placeholder_col, 
-    asset_col_target=None, camera=None, 
+    asset_col_target=None, cameras=None,
     dist_cull=None, vis_cull=None, verbose=True, cache_system = None, 
     **asset_kwargs
 ):
@@ -151,22 +151,28 @@ def populate_collection(
         if classname is None:
             continue
 
-        if camera is not None:
-            points = get_placeholder_points(p)
-            dists, vis_dists = camera_util.min_dists_from_cam_trajectory(points, camera)
-            dist, vis_dist = dists.min(), vis_dists.min()
-
-            if dist_cull is not None and dist > dist_cull:
-                logger.debug(f'{p.name=} culled due to {dist=:.2f} > {dist_cull=}')
+        if cameras is not None:
+            populate = False
+            dist_list = []
+            vis_dist_list = []
+            for i, camera in enumerate(cameras):
+                points = get_placeholder_points(p)
+                dists, vis_dists = camera_util.min_dists_from_cam_trajectory(points, camera)
+                dist, vis_dist = dists.min(), vis_dists.min()
+                if dist_cull is not None and dist > dist_cull:
+                    logger.debug(f'{p.name=} temporarily culled in camera {i} due to {dist=:.2f} > {dist_cull=}')
+                    continue
+                if vis_cull is not None and vis_dist > vis_cull:
+                    logger.debug(f'{p.name=} temporarily culled in camera {i} due to {vis_dist=:.2f} > {vis_cull=}')
+                    continue
+                populate = True
+                dist_list.append(dist)
+                vis_dist_list.append(vis_dist)
+            if not populate:
                 p.hide_render = True
                 continue
-            if vis_cull is not None and vis_dist > vis_cull:
-                logger.debug(f'{p.name=} culled due to {vis_dist=:.2f} > {vis_cull=}')
-                p.hide_render = True
-                continue
-
-            p['dist'] = dist
-            p['vis_dist'] = vis_dist
+            p['dist'] = min(dist_list)
+            p['vis_dist'] = min(vis_dist_list)
 
         else:
             dist = detail.scatter_res_distance()

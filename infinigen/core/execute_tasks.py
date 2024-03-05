@@ -96,7 +96,7 @@ def populate_scene(
     **params
 ):
     p = RandomStageExecutor(scene_seed, output_folder, params)
-    camera = bpy.context.scene.camera
+    camera = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
 
     season = p.run_stage('choose_season', trees.random_season, use_chance=False, default=[])
 
@@ -340,7 +340,8 @@ def execute_tasks(
 
     if Task.FineTerrain in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-        terrain.fine_terrain(output_folder, optimize_terrain_diskusage=optimize_terrain_diskusage)
+        cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
+        terrain.fine_terrain(output_folder, cameras=cameras, optimize_terrain_diskusage=optimize_terrain_diskusage)
 
     group_collections()
 

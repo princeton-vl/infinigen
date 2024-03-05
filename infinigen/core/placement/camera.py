@@ -144,7 +144,8 @@ def get_cameras_ids() -> list[tuple]:
 
     res = []
     col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
-    for i, root in enumerate(col.objects):
+    rigs = [o for o in col.objects if o.name.count("/") == 1]
+    for i, root in enumerate(rigs):
         for j, subcam in enumerate(root.children):
             assert subcam.name == camera_name(i, j)
             res.append((i, j))

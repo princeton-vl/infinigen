@@ -295,14 +295,14 @@ class Terrain:
                 self.tag_terrain(self.terrain_objs[name])
         return main_obj
 
-    def fine_terrain(self, output_folder, optimize_terrain_diskusage=True):
+    def fine_terrain(self, output_folder, cameras, optimize_terrain_diskusage=True):
         # redo sampling to achieve attribute -> surface correspondance
         self.sample_surface_templates()
         if (self.on_the_fly_asset_folder / Assets.Ocean).exists():
             with FixedSeed(int_hash(["Ocean", self.seed])):
                 ocean_asset(output_folder / Assets.Ocean, bpy.context.scene.frame_start, bpy.context.scene.frame_end, link_folder=self.on_the_fly_asset_folder / Assets.Ocean)
         self.surfaces_into_sdf()
-        fine_meshes, _ = self.export(dynamic=True, cameras=[bpy.context.scene.camera])
+        fine_meshes, _ = self.export(dynamic=True, cameras=cameras)
         for mesh_name in fine_meshes:
             obj = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
             if mesh_name not in hidden_in_viewport: self.tag_terrain(obj)
