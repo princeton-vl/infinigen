@@ -45,7 +45,7 @@ def shader_ice(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             'Subsurface': 1.0000, 
-            'Subsurface Radius': (0.1000, 0.1000, 0.2000), 
+            'Subsurface Radius': (0.0010, 0.0010, 0.0020), 
             'Subsurface Color': tuple(col_ice),
             'Roughness': color_ramp.outputs["Color"], 
             'IOR': 1.3100
