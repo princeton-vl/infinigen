@@ -303,7 +303,6 @@ def render_image(
     for exclude in excludes:
         bpy.data.objects[exclude].hide_render = True
 
-    bpy.context.scene.cycles.device = 'GPU'
     init.configure_cycles_devices()
 
     tmp_dir = frames_folder.parent.resolve() / "tmp"

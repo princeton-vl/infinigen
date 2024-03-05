@@ -37,6 +37,7 @@ CYCLES_GPUTYPES_PREFERENCE = [
 
     'OPTIX',
     'CUDA',  
+    'METAL', # untested
     'HIP', # untested
     'ONEAPI', # untested
     'CPU',
