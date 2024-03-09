@@ -89,7 +89,7 @@ INFINIGEN_INSTALL_CUSTOMGT=True pip install -e .
 
 On Linux / Mac / WSL:
 ```bash
-git clone https://github.com/princeton-vl/infinigen.git -b rc_1.1.1
+git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
 ```
 
