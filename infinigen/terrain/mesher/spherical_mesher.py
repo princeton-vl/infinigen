@@ -15,15 +15,17 @@ from .frontview_spherical_mesher import FrontviewSphericalMesher
 magnifier = 1e6
 
 @gin.configurable
-def kernel_caller(kernels, XYZ, r_bound_max=None, cam_loc=None):
+def kernel_caller(kernels, XYZ, bounds=None):
     sdfs = []
     for kernel in kernels:
         ret = kernel(XYZ, sdf_only=1)
         sdf = ret[Vars.SDF]
-        if r_bound_max is not None:
-            R = np.linalg.norm(XYZ - cam_loc, axis=-1)
-            mask = R / r_bound_max - 1
-            sdf = np.maximum(sdf, mask * magnifier)
+        if bounds is not None:
+            out_bound = np.zeros(len(XYZ), dtype=bool)
+            for i in range(3):
+                out_bound |= XYZ[:, i] <= bounds[i*2]
+                out_bound |= XYZ[:, i] >= bounds[i*2+1]
+            sdf[out_bound] = 1e6 # because of skimage mc only provides coords, which is has precision limit
         sdfs.append(sdf)
     ret = np.stack(sdfs, -1)
     return ret
@@ -32,20 +34,30 @@ def kernel_caller(kernels, XYZ, r_bound_max=None, cam_loc=None):
 class SphericalMesher:
     def __init__(self,
         cameras,
+        bounds,
         r_min=1,
-        r_max=1e3,
         complete_depth_test=True,
     ):
-        _, self.cam_pose, self.fov, self.H, self.W, _ = get_caminfo(cameras)
+        full_info, self.cam_pose, self.fov, self.H, self.W, _ = get_caminfo(cameras)
+        cams = full_info[0]
         assert self.fov[0] < np.pi / 2 and self.fov[1] < np.pi / 2, "the algorithm does not support larger-than-90-degree fov yet"
         self.r_min = r_min
-        self.r_max = r_max
         self.complete_depth_test = complete_depth_test
+        self.bounds = bounds
+        self.r_max = 0
+        for cam in cams:
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        r_max = np.linalg.norm(np.array([self.bounds[i], self.bounds[2+j], self.bounds[4+k]]) - cam[:3, 3])
+                        self.r_max = max(self.r_max, r_max)
+        self.r_max *= 1.1
 
 @gin.configurable
 class OpaqueSphericalMesher(SphericalMesher):
     def __init__(self,
         cameras,
+        bounds,
         base_90d_resolution=None,
         pixels_per_cube=1.84,
         test_downscale=5,
@@ -53,7 +65,7 @@ class OpaqueSphericalMesher(SphericalMesher):
         upscale2=4,
         r_lengthen=1,
     ):
-        SphericalMesher.__init__(self, cameras)
+        SphericalMesher.__init__(self, cameras, bounds)
         inview_upscale_coarse = upscale1
         inview_upscale_fine = upscale1 *  upscale2
         outview_upscale = 1
@@ -84,7 +96,7 @@ class OpaqueSphericalMesher(SphericalMesher):
             test_downscale=test_downscale,
             complete_depth_test=self.complete_depth_test,
         )
-        self.frontview_mesher.kernel_caller = kernel_caller
+        self.frontview_mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
         self.background_mesher = CubeSphericalMesher(
             self.cam_pose,
             self.r_min, self.r_max,
@@ -94,7 +106,7 @@ class OpaqueSphericalMesher(SphericalMesher):
             H_fov=rounded_fov[0], W_fov=rounded_fov[1],
             N0=N0, N1=N1,
         )
-        self.background_mesher.kernel_caller = kernel_caller
+        self.background_mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
 
     def __call__(self, kernels):
         with Timer("OpaqueSphericalMesher: frontview_mesher"):
@@ -110,6 +122,7 @@ class OpaqueSphericalMesher(SphericalMesher):
 class TransparentSphericalMesher(SphericalMesher):
     def __init__(self,
         cameras,
+        bounds,
         base_90d_resolution=None,
         pixels_per_cube=1.84,
         test_downscale=5,
@@ -117,7 +130,7 @@ class TransparentSphericalMesher(SphericalMesher):
         r_lengthen=3,
         camera_annotation_frames=None,
     ):
-        SphericalMesher.__init__(self, cameras)
+        SphericalMesher.__init__(self, cameras, bounds)
         self.cameras = cameras
         self.camera_annotation_frames = camera_annotation_frames
         assert bool(base_90d_resolution is None) ^ bool(pixels_per_cube is None)
@@ -144,8 +157,7 @@ class TransparentSphericalMesher(SphericalMesher):
             N0=N0, N1=N1,
             complete_depth_test=self.complete_depth_test,
         )
-        r_bound_max = np.exp(np.log(self.r_min) + (np.log(self.r_max) - np.log(self.r_min)) * (base_R - 0.5) / base_R)
-        self.mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, r_bound_max, self.cam_pose[:3, 3])
+        self.mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
 
 
     def __call__(self, kernels):

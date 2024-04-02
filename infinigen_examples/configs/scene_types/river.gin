@@ -37,5 +37,5 @@ scene.ground_chance = 0
 scene.warped_rocks_chance = 0
 
 # camera selection config
-UniformMesher.dimensions = (-25, 25, -25, 25, -15, 35)
+Terrain.populated_bounds = (-25, 25, -25, 25, -15, 35)
 camera_selection_preprocessing.terrain_tags_ratio = {("altitude", -1e9, 0.75): (0.1, 1), "liquid": (0.05, 1)}

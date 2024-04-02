@@ -141,7 +141,6 @@ def multi_mountains_asset(
         coverage=params["coverage"],
         slope_freq=params["slope_freq"],
         slope_height=params["slope_height"],
-        is_asset=True,
     )
     heightmap = mountains.get_heightmap(X, Y)
     mountains.cleanup()
@@ -176,7 +175,6 @@ def coast_asset(
         coverage=params1["coverage"],
         slope_freq=params1["slope_freq"],
         slope_height=params1["slope_height"],
-        is_asset=True,
     )
     heightmap = mountains.get_heightmap(X, Y)
     mountains.cleanup()

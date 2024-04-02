@@ -54,7 +54,7 @@ Waterbody.height = -5
 full/render_image.min_samples = 500
 
 # camera selection config
-UniformMesher.dimensions = (-25, 25, -25, 25, -25, 0)
+Terrain.populated_bounds = (-25, 25, -25, 25, -25, 0)
 keep_cam_pose_proposal.terrain_coverage_range = (1, 1)
 camera_selection_preprocessing.terrain_tags_ratio = {"cave": (0.3, 1), ("closeup", 4): (0, 0.3)}
 

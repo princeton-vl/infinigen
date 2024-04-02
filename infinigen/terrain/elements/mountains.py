@@ -34,7 +34,6 @@ class Mountains(Element):
         slope_octaves=9,
         material=Materials.MountainCollection,
         transparency=Transparency.Opaque,
-        is_asset=False,
     ):
         self.device = device
         min_freq = rg(min_freq)
@@ -58,5 +57,5 @@ class Mountains(Element):
             slope_freq, slope_octaves, slope_height,
         ], dtype=np.float32))
 
-        Element.__init__(self, "mountains", material, transparency, is_asset=is_asset)
+        Element.__init__(self, "mountains", material, transparency)
         self.tag = ElementTag.Terrain

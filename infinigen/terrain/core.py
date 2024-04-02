@@ -44,8 +44,8 @@ def get_surface_type(surface, degrade_sdf_to_displacement=True):
 
 
 class OcMesher(UntexturedOcMesher):
-    def __init__(self, cameras, **kwargs):
-        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], **kwargs)
+    def __init__(self, cameras, bounds, **kwargs):
+        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], bounds, **kwargs)
         
     def __call__(self, kernels):
         sdf_kernels = [(lambda x, k0=k: k0(x)[Vars.SDF]) for k in kernels]
@@ -59,8 +59,8 @@ class OcMesher(UntexturedOcMesher):
         return mesh
 
 class CollectiveOcMesher(UntexturedOcMesher):
-    def __init__(self, cameras, **kwargs):
-        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], **kwargs)
+    def __init__(self, cameras, bounds, **kwargs):
+        UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], bounds, **kwargs)
         
     def __call__(self, kernels):
         sdf_kernels = [lambda x: np.stack([k(x)[Vars.SDF] for k in kernels], -1).min(axis=-1)]
@@ -74,6 +74,7 @@ class CollectiveOcMesher(UntexturedOcMesher):
     
 @gin.configurable
 class Terrain:
+    instance = None
     def __init__(
         self,
         seed,
@@ -85,7 +86,9 @@ class Terrain:
         device="cpu",
         main_terrain=TerrainNames.OpaqueTerrain,
         under_water=False,
-        min_distance=1
+        min_distance=1,
+        populated_bounds=(-75, 75, -75, 75, -25, 55),
+        bounds=(-500, 500, -500, 500, -500, 500),
     ):
         self.seed = seed
         self.device = device
@@ -93,10 +96,13 @@ class Terrain:
         self.main_terrain = main_terrain
         self.under_water = under_water
         self.min_distance = min_distance
+        self.populated_bounds = populated_bounds
+        self.bounds = bounds
 
-        if Task.Coarse not in task and Task.FineTerrain not in task: 
+        if Terrain.instance is not None:
+            self.__dict__ = Terrain.instance.__dict__.copy()
             return
-            
+
         with Timer('Create terrain'):
             if asset_folder is None:
                 if not ASSET_ENV_VAR in os.environ:
@@ -121,6 +127,7 @@ class Terrain:
             self.elements_list = list(self.elements.values())
             logger.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
             transfer_scene_info(self, scene_infos)
+            Terrain.instance = self
 
     def __del__(self):
         self.cleanup()
@@ -145,10 +152,10 @@ class Terrain:
             if opaque_elements != []:
                 attributes_dict[TerrainNames.OpaqueTerrain] = set()
                 if dynamic:
-                    if spherical: mesher = OpaqueSphericalMesher(cameras=cameras)
-                    else: mesher = OcMesher(cameras=cameras)
+                    if spherical: mesher = OpaqueSphericalMesher(cameras, self.bounds)
+                    else: mesher = OcMesher(cameras, self.bounds)
                 else:
-                    mesher = UniformMesher()
+                    mesher = UniformMesher(self.populated_bounds)
                 with Timer(f"meshing {TerrainNames.OpaqueTerrain}"):
                     mesh = mesher([element for element in opaque_elements])
                     meshes_dict[TerrainNames.OpaqueTerrain] = mesh
@@ -163,9 +170,9 @@ class Terrain:
                     if element.__class__.name == ElementNames.Atmosphere:
                         special_args["pixels_per_cube"] = 100
                         special_args["inv_scale"] = 1
-                    if spherical: mesher = TransparentSphericalMesher(cameras=cameras, **special_args)
-                    else: mesher = OcMesher(cameras=cameras, simplify_occluded=False, **special_args)
-                else: mesher = UniformMesher(enclosed=True)
+                    if spherical: mesher = TransparentSphericalMesher(cameras, self.bounds, **special_args)
+                    else: mesher = OcMesher(cameras, self.bounds, simplify_occluded=False, **special_args)
+                else: mesher = UniformMesher(self.populated_bounds, enclosed=True)
                 with Timer(f"meshing {element.__class__.name}"):
                     mesh = mesher([element])
                     meshes_dict[element.__class__.name] = mesh
@@ -176,10 +183,10 @@ class Terrain:
             if collective_transparent_elements != []:
                 attributes_dict[TerrainNames.CollectiveTransparentTerrain] = set()
                 if dynamic:
-                    if spherical: mesher = TransparentSphericalMesher(cameras=cameras)
-                    else: mesher = CollectiveOcMesher(cameras=cameras, simplify_occluded=False)
+                    if spherical: mesher = TransparentSphericalMesher(cameras, self.bounds)
+                    else: mesher = CollectiveOcMesher(cameras, self.bounds, simplify_occluded=False)
                 else:
-                    mesher = UniformMesher()
+                    mesher = UniformMesher(self.populated_bounds)
                 with Timer(f"meshing {TerrainNames.CollectiveTransparentTerrain}"):
                     mesh = mesher([element for element in collective_transparent_elements])
                     meshes_dict[TerrainNames.CollectiveTransparentTerrain] = mesh
@@ -211,7 +218,7 @@ class Terrain:
                     if len(attributes_dict[mesh_name]) == 1:
                         meshes_dict[mesh_name].vertex_attributes.pop(list(attributes_dict[mesh_name])[0])
         else:
-            self.bounding_box = np.array(mesher.dimensions)[::2], np.array(mesher.dimensions)[1::2]
+            self.bounding_box = np.array(self.populated_bounds)[::2], np.array(self.populated_bounds)[1::2]
 
         return meshes_dict, attributes_dict
     

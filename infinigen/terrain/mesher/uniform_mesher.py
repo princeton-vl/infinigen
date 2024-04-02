@@ -30,7 +30,7 @@ class Timer(tTimer):
 @gin.configurable
 class UniformMesher:
     def __init__(self,
-        dimensions=(-75, 75, -75, 75, -25, 55),
+        bounds,
         subdivisions=(64, -1, -1), # -1 means automatic
         upscale=3,
         enclosed=False,
@@ -40,29 +40,29 @@ class UniformMesher:
     ):
         self.enclosed = enclosed
         self.upscale = upscale
-        self.dimensions = dimensions
-        # Lx, Ly, Lz = dimensions[1] - dimensions[0], dimensions[3] - dimensions[2], dimensions[5] - dimensions[4]
+        self.bounds = bounds
+
         assert(np.sum(subdivisions == -1) in [0, 2])
         for i, s in enumerate(subdivisions):
             if s != -1:
-                coarse_voxel_size = (dimensions[i * 2 + 1] - dimensions[i * 2]) / s
+                coarse_voxel_size = (bounds[i * 2 + 1] - bounds[i * 2]) / s
         
         if subdivisions[0] != -1:
             self.x_N = subdivisions[0]
         else:
-            self.x_N = int((dimensions[1] - dimensions[0]) / coarse_voxel_size)
+            self.x_N = int((bounds[1] - bounds[0]) / coarse_voxel_size)
         if subdivisions[1] != -1:
             self.y_N = subdivisions[1]
         else:
-            self.y_N = int((dimensions[3] - dimensions[2]) / coarse_voxel_size)
+            self.y_N = int((bounds[3] - bounds[2]) / coarse_voxel_size)
         if subdivisions[2] != -1:
             self.z_N = subdivisions[2]
         else:
-            self.z_N = int((dimensions[5] - dimensions[4]) / coarse_voxel_size)
+            self.z_N = int((bounds[5] - bounds[4]) / coarse_voxel_size)
 
-        self.x_min, self.x_max = dimensions[0], dimensions[1]
-        self.y_min, self.y_max = dimensions[2], dimensions[3]
-        self.z_min, self.z_max = dimensions[4], dimensions[5]
+        self.x_min, self.x_max = bounds[0], bounds[1]
+        self.y_min, self.y_max = bounds[2], bounds[3]
+        self.z_min, self.z_max = bounds[4], bounds[5]
         self.closing_margin = coarse_voxel_size / upscale / 2
         self.verbose = verbose
         self.bisection_iters = bisection_iters
@@ -94,7 +94,7 @@ class UniformMesher:
                 out_bound = (XYZ[:, 0] < self.x_min + self.closing_margin) | (XYZ[:, 0] > self.x_max - self.closing_margin) \
                     | (XYZ[:, 1] < self.y_min + self.closing_margin) | (XYZ[:, 1] > self.y_max - self.closing_margin) \
                     | (XYZ[:, 2] < self.z_min + self.closing_margin) | (XYZ[:, 2] > self.z_max - self.closing_margin)
-                sdf[out_bound] = 1e11
+                sdf[out_bound] = 1e6
             sdfs.append(sdf)
         return np.stack(sdfs, -1)
 

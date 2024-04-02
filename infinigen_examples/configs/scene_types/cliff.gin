@@ -13,7 +13,7 @@ WarpedRocks.slope_shift=-15
 Ground.height = -15
 
 # camera selection config
-UniformMesher.dimensions = (-25, 25, -25, 25, -15, 35)
+Terrain.populated_bounds = (-25, 25, -25, 25, -15, 35)
 keep_cam_pose_proposal.terrain_coverage_range = (0, 0.8)
 camera_selection_preprocessing.terrain_tags_ratio = {("altitude", 10, 1e9): (0.01, 1)}
 

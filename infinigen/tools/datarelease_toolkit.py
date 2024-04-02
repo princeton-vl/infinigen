@@ -324,8 +324,17 @@ def reorganize_old_framesfolder(frames_old):
 
     frames_dest = frames_old.parent/"frames"
 
+    excludes = [
+        "version.txt",
+        "polycounts.txt",
+        "version.txt",
+        "MaskTag.json",
+        "scene.blend",
+        "pipeline_coarse.csv",
+    ]
+
     for img_path in frames_old.iterdir():
-        if img_path.is_dir():
+        if img_path.is_dir() or img_path.name in excludes:
             continue
         dtype, *_ = img_path.name.split('_')
         idxs = parse_suffix(img_path.name)
