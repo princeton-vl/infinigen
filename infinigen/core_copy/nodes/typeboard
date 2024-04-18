@@ -1,0 +1,8 @@
+attrs_dict:  {"'image'": "bpy.data.images['hammeredmetall_1_BaseColor.jpg']"}
+attrs_dict:  {"'is_active_output'": 'True'}
+code:  base_color = nw.new_node(Nodes.ShaderImageTexture,
+    label='Base Color',
+    attrs={'image': bpy.data.images['hammeredmetall_1_BaseColor.jpg']})
+
+    attrs_dict:  {'image': "bpy.data.images['hammeredmetall_1_BaseColor.jpg']", 'alpha': 'STRAIGHT', 'color_space': 'sRGB'}
+    attrs_dict:  {'is_active_output': 'True'}
