@@ -1,4 +1,17 @@
+### About this forked repo
+Enabled material node reconstruction. 
 
+
+
+### Getting Started
+The background and citation info all follow from the original repo.
+
+The installation steps follow from the original repo: https://github.com/princeton-vl/infinigen/tree/main
+
+### Usage of material node transpiler
+#### Command line arguments
+```blender --background ../blender/test3.blend --python [path_to_transpiler_dev_script_args.py] --mode [write_file/make_script] --script_name [path of script file saved] --save_path [path of images saved] --dependencies [path of dependencies, separated by comma]
+```
 
 ## [Infinigen: Infinite Photorealistic Worlds using Procedural Generation](https://infinigen.org)
 
