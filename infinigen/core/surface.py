@@ -10,7 +10,7 @@ import string
 from collections import defaultdict
 import importlib
 from inspect import signature
-
+import inspect
 import bpy
 from mathutils import Vector
 import gin
@@ -165,8 +165,13 @@ def eval_argument(nw, argument, default_value=1.0, **kwargs):
         raise ValueError(f'surface.eval_argument couldnt parse {argument}')
 
 
+def print_material(material):
+    print('material: ', material.node_tree.nodes[1])
+
 def shaderfunc_to_material(shader_func, *args, name=None, **kwargs):
     '''
+    add_material -- shaderfunc_to_material
+    
     Convert a shader_func(nw) directly to a bpy.data.material
 
     Used in add_material and transpiler's Nodes.SetMaterial handler
@@ -180,14 +185,17 @@ def shaderfunc_to_material(shader_func, *args, name=None, **kwargs):
     material.node_tree.nodes.remove(material.node_tree.nodes['Principled BSDF'])  # remove the default BSDF
 
     nw = NodeWrangler(material.node_tree)
+    print('nw: ', nw)
     new_node_tree = shader_func(nw, *args, **kwargs)
 
     if new_node_tree is not None:
+        print('new_node_tree: ', new_node_tree.nodes)
         if isinstance(new_node_tree, tuple) and isnode(new_node_tree[1]):
             new_node_tree, volume = new_node_tree
             nw.new_node(Nodes.MaterialOutput, input_kwargs={'Volume': volume})
         nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': new_node_tree})
 
+    
     return material
 
 
@@ -203,14 +211,19 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
     if not isinstance(objs, list):
         objs = [objs]
 
+
     if selection is None:
+
+        # The case of no selection criterion for varying the material application
         if name is None:
             name = shader_func.__name__
         if (not reuse) and (name in bpy.data.materials):
             name += f"_{seed_generator(8)}"
-        material = shaderfunc_to_material(shader_func, *input_args, **input_kwargs)
+        print('here')
+        # The function that converts python code into blender material
+        material = shaderfunc_to_material(shader_func, *input_args, **input_kwargs) 
     elif isinstance(selection, str):
-
+        print('there')
         name = "MixedSurface"
         if name in objs[0].data.materials:
             material = objs[0].data.materials[name]
@@ -265,6 +278,7 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
 
     for obj in objs:
         obj.active_material = material
+    
     return material
 
 def add_geomod(objs, geo_func,

@@ -24,6 +24,10 @@ from infinigen.core.nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
 from infinigen.core.nodes import node_info
 from infinigen.core.nodes.compatibility import COMPATIBILITY_MAPPINGS
 
+SUB_ATTRS = {
+    'color_space': "node.image.colorspace_settings.name = val",
+    'alpha' : "node.image.alpha_mode = val"
+}
 
 logger = logging.getLogger(__name__)
 
@@ -180,16 +184,26 @@ class NodeWrangler():
             node.label = label
             node.name = label
 
+        print('attrs: ', node.__dir__())
+
         if attrs is not None:
             for key, val in attrs.items():
-                # if key not in NODE_ATTRS_AVAILABLE.get(node.bl_idname, []):
-                #    warnings.warn(f'Node Wrangler is setting attr {repr(key)} on {node.bl_idname=},
-                #    but it is not in node_info.NODE_ATTRS_AVAILABLE. Please add it so that the transpiler is
-                #    aware')
-                try:
-                    setattr(node, key, val)
-                except AttributeError:
-                    exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
+                print('key: ', key)
+                if key not in NODE_ATTRS_AVAILABLE.get(node.bl_idname, []):
+                    print(f'NODE_ATTRS_AVAILABLE does not recognize {key}.')
+                
+                # If it is a sub_attr
+                if key == 'color_space':
+                    node.image.colorspace_settings.name = val
+                elif key == 'alpha':
+                    node.image.alpha_mode = val
+                # If it is a normal attr
+                else:
+                    try:
+                        #print('node: ', node.image.colorspace_settings.name, ' key: ', key, ' val: ', val)
+                        setattr(node, key, val)
+                    except AttributeError:
+                        exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
 
         if node_type in [Nodes.VoronoiTexture, Nodes.NoiseTexture, Nodes.WaveTexture, Nodes.WhiteNoiseTexture,
             Nodes.MusgraveTexture]:
@@ -364,6 +378,7 @@ class NodeWrangler():
             node = self.nodes.new(nodegroup_type)
             node.node_tree = bpy.data.node_groups[node_type]
         else:
+            print('here2')
             node = self.nodes.new(node_type)
 
         return node
