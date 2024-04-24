@@ -83,39 +83,58 @@ def sanitize_override(override: list):
 def repo_root():
     return Path(__file__).parent.parent.parent
 
-def contains_any_stem(filenames, folder):
-    if not folder.exists():
-        return False
+def contained_stems(filenames: list[str], folder: Path):
+    assert folder.exists()
     names = [p.stem for p in folder.iterdir()]
-    return any(s.stem in names or s.name in names for s in map(Path, filenames))
+    return {s.stem in names or s.name in names for s in map(Path, filenames)}
 
-def mandatory_config_dir_satisfied(mandatory_folder, root, configs):
-    mandatory_folder = Path(mandatory_folder)
-    mandatory_folder_rel = root/mandatory_folder
-
-    if not (mandatory_folder.exists() or mandatory_folder_rel.exists()):
-        raise FileNotFoundError(f'Could not find {mandatory_folder} or {mandatory_folder_rel}')
-    
-    return (
-        contains_any_stem(configs, mandatory_folder) or
-        contains_any_stem(configs, mandatory_folder_rel)
-    )
+def resolve_folder_maybe_relative(folder, root):
+    folder = Path(folder)
+    if folder.exists():
+        return folder
+    folder_rel = root/folder
+    if folder_rel.exists():
+        return folder_rel
+    raise FileNotFoundError(f'Could not find {folder} or {folder_rel}')
 
 @gin.configurable
 def apply_gin_configs(
     configs_folder: Path,
     configs: list[str] = None,
     overrides: list[str] = None, 
-    skip_unknown=False, 
-    mandatory_folders: Path = None,
+    skip_unknown: bool = False, 
+    mandatory_folders: list[Path] = None,
+    mutually_exclusive_folders: list[Path] = None
 ):
     
+    """
+    Apply gin configuration files and bindings.
+
+    Parameters
+    ----------
+    configs_folder : Path
+        The path to the toplevel folder containing the gin configuration files.
+    configs : list[str]
+        A list of filenames to find within the configs_folder.
+    overrides : list[str]
+        A list of gin-formatted pairs to override the configs with.
+    skip_unknown : bool
+        If True, ignore errors for configs that were set by the user but not used anywhere
+    mandatory_folders : list[Path]
+        For each folder in the list, at least one config file must be loaded from that folder.
+    mutually_exclusive_folders : list[Path]
+        For each folder in the list, at most one config file must be loaded from that folder.
+        
+    """
+
     if configs is None:
         configs = []
     if overrides is None:
         overrides = []
     if mandatory_folders is None:
         mandatory_folders = []
+    if mutually_exclusive_folders is None:
+        mutually_exclusive_folders = []
     configs_folder = Path(configs_folder)
 
     root = repo_root()
@@ -128,30 +147,37 @@ def apply_gin_configs(
         gin.add_config_file_search_path(configs_folder)
     else:
         raise FileNotFoundError(f'Couldnt find {configs_folder} or {configs_folder_rel}')
-
-    for p in mandatory_folders:
-        if not mandatory_config_dir_satisfied(p, root, configs):
-            raise ValueError(
-                f"Please load one or more config from {p} to avoid unexpected behavior."
-            )
         
     search_paths = [configs_folder, root, Path('.')]
 
     def find_config(p):
         p = Path(p)
-        try:
-            return next(
-                file
-                for folder in search_paths
-                for file in folder.glob('**/*.gin')
-                if file.stem == p.stem
-            )
-        except StopIteration:
-            raise FileNotFoundError(f'Could not find {p} or {p.stem} in any of {search_paths}')
-            
+        for folder in search_paths:
+            for file in folder.glob('**/*.gin'):
+                if file.stem == p.stem:
+                    return file
+        raise FileNotFoundError(f'Could not find {p} or {p.stem} in any of {search_paths}')
+      
     configs = [find_config(g) for g in ['base.gin'] + configs]
     overrides = [sanitize_override(o) for o in overrides]
 
+    for mandatory_folder in mandatory_folders:
+        mandatory_folder = resolve_folder_maybe_relative(mandatory_folder, root)
+        if not contained_stems(configs, mandatory_folder):
+            raise FileNotFoundError(
+                f'At least one config file must be loaded from {mandatory_folder} to avoid unexpected behavior'
+            )
+        
+    for mutex_folder in mutually_exclusive_folders:
+        mutex_folder = resolve_folder_maybe_relative(mutex_folder, root)
+        stems = {s.stem for s in mutex_folder.iterdir()}
+        config_stems = {s.stem for s in configs}
+        both = stems.intersection(config_stems)
+        if len(both) > 1:
+            raise ValueError(
+                f'At most one config file must be loaded from {mutex_folder} to avoid unexpected behavior, instead got {both=}'
+            )
+        
     with LogLevel(logger=logging.getLogger(), level=logging.CRITICAL):
         gin.parse_config_files_and_bindings(
             configs, 
