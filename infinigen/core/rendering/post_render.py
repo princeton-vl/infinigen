@@ -12,7 +12,6 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"]="1" # This must be done BEFORE import cv2
 
 import cv2
 import colorsys
-import flow_vis # run pip install flow_vis
 import numpy as np
 from matplotlib import pyplot as plt
 from pathlib import Path
@@ -29,6 +28,7 @@ load_seg_mask = lambda p: load_exr(p)[...,2].astype(np.int64)
 load_uniq_inst = lambda p: load_exr(p).view(np.int32)
 
 def colorize_flow(optical_flow):
+    import flow_vis
     flow_uv = optical_flow[...,:2]
     flow_color = flow_vis.flow_to_color(flow_uv, convert_to_bgr=False)
     return flow_color
@@ -69,10 +69,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.flow_path is not None:
-        flow_color = colorize_flow(load_flow(args.flow_path))
-        output_path = args.flow_path.with_suffix('.png')
-        imwrite(output_path, flow_color)
-        print(f"Wrote {output_path}")
+        try:
+            flow_color = colorize_flow(load_flow(args.flow_path))
+            output_path = args.flow_path.with_suffix('.png')
+            imwrite(output_path, flow_color)
+            print(f"Wrote {output_path}")
+        except ModuleNotFoundError:
+            print("Flow visualization requires the 'flow_vis' package. Install it with 'pip install flow_vis'")
+            pass
 
     if args.normals_path is not None:
         normal_color = colorize_normals(load_normals(args.normals_path))
