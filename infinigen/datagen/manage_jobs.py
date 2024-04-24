@@ -216,8 +216,31 @@ def init_db_from_existing(output_folder: Path):
 
     return [init_scene(seed_folder) for seed_folder in output_folder.iterdir()]
 
+def _sample_config_distribution(i: int, config_distribution: list[tuple[str, float]], config_sample_mode: str):
+    
+    match config_sample_mode:
+        case 'random':
+            configs_options, weights = zip(*config_distribution) # list of rows to list per column
+            ps = np.array(weights) / sum(weights)
+            return np.random.choice(configs_options, p=ps)
+        case 'roundrobin':
+            configs_options, weights = zip(*config_distribution) # list of rows to list per column
+            if not all(isinstance(w, int) for w in weights):
+                raise ValueError(f'{config_sample_mode=} expects integer scene counts as weights but got {weights=} with non-integer values')
+            idx = np.argmin(i % sum(weights) + 1 > np.cumsum(weights))
+            return configs_options[idx]
+        case _:
+            raise ValueError(f'Unrecognized {config_sample_mode=}')
+
+
 @gin.configurable
-def sample_scene_spec(i, seed_range=None, config_distribution=None, config_sample_mode='random'):
+def sample_scene_spec(
+    args: argparse.Namespace, 
+    i: int, 
+    seed_range=None, 
+    config_distribution=None, 
+    config_sample_mode='random'
+):
 
     if seed_range is None:
         seed = seed_generator()
@@ -228,19 +251,19 @@ def sample_scene_spec(i, seed_range=None, config_distribution=None, config_sampl
         seed = hex(start + i).removeprefix('0x')
 
     if config_distribution is None:
-        configs = []
-    elif config_sample_mode == 'random':
-        configs_options, weights = zip(*config_distribution) # list of rows to list per column
-        ps = np.array(weights) / sum(weights)
-        configs = np.random.choice(configs_options, p=ps)
-    elif config_sample_mode == 'roundrobin':
-        configs_options, weights = zip(*config_distribution) # list of rows to list per column
-        if not all(isinstance(w, int) for w in weights):
-            raise ValueError(f'{config_sample_mode=} expects integer scene counts as weights but got {weights=} with non-integer values')
-        idx = np.argmin(i % sum(weights) + 1 > np.cumsum(weights))
-        configs = configs_options[idx]
+        config_distribution = []
+
+    conf_keys = {k.split('.')[0] for k, _ in config_distribution}
+    arg_confs = {k.split('.')[0] for k in args.configs}
+    inter = conf_keys.intersection(arg_confs)
+
+    if len(inter) == 0:
+        configs = _sample_config_distribution(i, config_distribution, config_sample_mode)
+    elif len(inter) == 1:
+        configs = list(inter)
     else:
-        raise ValueError(f'Unrecognized {config_sample_mode=}')
+        raise ValueError(f'Got user specified configs {inter}, only 1 is expected')
+    
     
     if isinstance(configs, str) and " " in configs:
         configs = configs.split(" ")
@@ -261,7 +284,7 @@ def init_db(args):
     elif args.specific_seed is not None:
         scenes = [{"seed": s, "all_done": SceneState.NotDone} for s in args.specific_seed]
     else:
-        scenes = [sample_scene_spec(i) for i in range(args.num_scenes)]    
+        scenes = [sample_scene_spec(args, i) for i in range(args.num_scenes)]    
 
     scenes = [s for s in scenes if s is not None]
 
@@ -765,11 +788,24 @@ if __name__ == "__main__":
         default=[], 
         help="List of gin overrides to configure this execution",
     )
-    parser.add_argument('--overwrite', action='store_true')
-    parser.add_argument('-d', '--debug', action="store_const", 
-                        dest="loglevel", const=logging.DEBUG, default=logging.INFO)
-    parser.add_argument( '-v', '--verbose', action="store_const", 
-                        dest="loglevel", const=logging.INFO)
+    parser.add_argument(
+        '--overwrite', action='store_true'
+    )
+    parser.add_argument(
+        '-d', 
+        '--debug', 
+        action="store_const", 
+        dest="loglevel", 
+        const=logging.DEBUG, 
+        default=logging.INFO
+    )
+    parser.add_argument(
+        '-v', 
+        '--verbose', 
+        action="store_const", 
+        dest="loglevel", 
+        const=logging.INFO
+    )
     args = parser.parse_args()
 
     using_upload = any('upload' in x for x in args.pipeline_configs)
@@ -799,14 +835,16 @@ if __name__ == "__main__":
         random.seed(args.meta_seed)
         np.random.seed(args.meta_seed)
 
+    mandatory_exclusive = [
+        'infinigen/datagen/configs/compute_platform',
+        'infinigen/datagen/configs/data_schema'
+    ]
     infinigen.core.init.apply_gin_configs(
         configs_folder=Path('infinigen/datagen/configs'),
         configs=args.pipeline_configs,
         overrides=args.pipeline_overrides,
-        mandatory_folders=[
-            'infinigen/datagen/configs/compute_platform',
-            'infinigen/datagen/configs/data_schema'
-        ]
+        mandatory_folders=mandatory_exclusive,
+        mutually_exclusive_folders=mandatory_exclusive,
     )
 
     main(args)
