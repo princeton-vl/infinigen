@@ -26,3 +26,13 @@ v1.2.0
 
 v1.2.4
 - Fix TreeFactory crash for season='winter'
+
+v1.2.5
+- Add Terrain.populated_bounds parameters
+- Fix reinitalizing terrain
+
+v1.2.6
+- Fix bug where manage_jobs.py would pick a random scene_type config even if one was already loaded
+- Fix bug where manage_jobs.py would ignore CUDA_VISIBLE_DEVICES that didnt start at 0
+- Add NotImplementedError for dynamic hair.
+
