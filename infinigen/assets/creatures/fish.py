@@ -224,16 +224,26 @@ class FishFactory(AssetFactory):
 
     max_distance = 40
 
-    def __init__(self, factory_seed=None, bvh=None, coarse=False, animation_mode=None, species_variety=None, **_):
+    def __init__(
+        self, 
+        factory_seed=None, 
+        bvh=None, 
+        coarse=False, 
+        animation_mode=None, 
+        species_variety=None, 
+        clothsim_skin: bool = False,
+        **_
+    ):
         super().__init__(factory_seed, coarse)
         self.bvh = bvh
         self.animation_mode = animation_mode
+        self.clothsim_skin = clothsim_skin
 
         with FixedSeed(factory_seed):
             self.species_genome = fish_genome()
             self.species_variety = species_variety if species_variety is not None else clip_gaussian(0.2, 0.1, 0.05, 0.45)
 
-    def create_asset(self, i, simulate=False, **kwargs):
+    def create_asset(self, i, **kwargs):
         
         instance_genome = genome.interp_genome(self.species_genome, fish_genome(), self.species_variety)
 
@@ -255,7 +265,7 @@ class FishFactory(AssetFactory):
             else:
                 raise ValueError(f'Unrecognized {self.animation_mode=}')
             
-        if simulate:
+        if self.clothsim_skin:
             joined = simulate_fish_cloth(joined, extras, instance_genome.postprocess_params['cloth'])
         else:
             joined = butil.join_objects([joined] + extras)

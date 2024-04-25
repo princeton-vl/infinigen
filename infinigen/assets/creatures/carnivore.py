@@ -7,6 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U, normal as N
 import gin
+import bpy, mathutils
 
 from infinigen.assets.creatures.util import genome
 from infinigen.assets.creatures.util.genome import Joint
@@ -179,15 +180,32 @@ def tiger_genome():
 @gin.configurable
 class CarnivoreFactory(AssetFactory):
 
-    def __init__(self, factory_seed=None, bvh=None, coarse=False, animation_mode=None, **kwargs):
+    def __init__(
+        self, 
+        factory_seed=None, 
+        bvh: mathutils.bvhtree.BVHTree = None, 
+        coarse: bool = False, 
+        animation_mode: str = None, 
+        hair: bool = True,
+        clothsim_skin: bool = False,
+        **kwargs
+    ):
         super().__init__(factory_seed, coarse)
         self.bvh = bvh
         self.animation_mode = animation_mode
+        self.hair = hair
+        self.clothsim_skin = clothsim_skin
+
+        if self.hair and (self.animation_mode is not None or self.clothsim_skin):
+            raise NotImplementedError(
+                'Dynamic hair is not yet fully working. '
+                'Please disable either hair or both of animation/clothsim'
+            )
 
     def create_placeholder(self, **kwargs):
         return butil.spawn_cube(size=4)
 
-    def create_asset(self, i, placeholder, hair=True, simulate=False, **kwargs):
+    def create_asset(self, i, placeholder, **kwargs):
         
         genome = tiger_genome()
         root, parts = creature.genome_to_creature(genome, name=f'carnivore({self.factory_seed}, {i})')
@@ -202,9 +220,14 @@ class CarnivoreFactory(AssetFactory):
         
         butil.parent_to(root, placeholder, no_inverse=True)
 
-        if hair:
+        if self.hair:
             creature_hair.configure_hair(
-                joined, root, genome.postprocess_params['hair'])
+                joined, 
+                root, 
+                genome.postprocess_params['hair'], 
+                is_dynamic=dynamic
+            )
+            
         if dynamic:
             if self.animation_mode == 'run':
                 run_cycle.animate_run(root, arma, ik_targets)
@@ -215,7 +238,7 @@ class CarnivoreFactory(AssetFactory):
                 pass
             else:
                 raise ValueError(f'Unrecognized mode {self.animation_mode=}')
-        if simulate:
+        if self.clothsim_skin:
             rigidity = surface.write_vertex_group(
                 joined, cloth_sim.local_pos_rigity_mask, apply=True)
             cloth_sim.bake_cloth(joined, genome.postprocess_params['skin'], 

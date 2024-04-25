@@ -399,11 +399,13 @@ def compose_scene(output_folder, scene_seed, **params):
 def main(args):
 
     scene_seed = init.apply_scene_seed(args.seed)
+    mandatory_exclusive = [Path('infinigen_examples/configs/scene_types')]
     init.apply_gin_configs(
         configs=args.configs, 
         overrides=args.overrides,
         configs_folder='infinigen_examples/configs', 
-        mandatory_folders=['infinigen_examples/configs/scene_types'], 
+        mandatory_folders=mandatory_exclusive,
+        mutually_exclusive_folders=mandatory_exclusive, 
     )
     
     execute_tasks.main(

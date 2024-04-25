@@ -174,8 +174,6 @@ def compute_chain_length(parts_atts: tree.Tree, bones, part, ik: IKParams):
     if ik.chain_length is not None:
         chain_length += ik.chain_length
 
-    logger.debug(f'Com')
-
     return chain_length
 
 

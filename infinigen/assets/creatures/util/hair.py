@@ -317,27 +317,45 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
         attrs={'transform_space': 'RELATIVE'})
     obj = object_info.outputs["Geometry"]
     
+    domain = 'POINT'
+    uvtype = 'FLOAT_VECTOR'
+
     uv = nw.new_node(Nodes.NamedAttribute,
         input_kwargs={'Name': group_input.outputs["from_uv"]},
-        attrs={'data_type': 'FLOAT_VECTOR'})
-    capture = nw.new_node(Nodes.CaptureAttribute, 
-                     input_kwargs={'Geometry': obj, 'Value': uv},
-                     attrs={'data_type': 'FLOAT_VECTOR', 'domain': 'FACE'})
+        attrs={'data_type': uvtype})
+    
+    capture = nw.new_node(
+        Nodes.CaptureAttribute, 
+        input_kwargs={'Geometry': obj, 'Value': uv},
+        attrs={'data_type': uvtype, 'domain': domain}
+    )
     
     root_pos = nw.new_node(nodegroup_hair_position().name, [group_input.outputs['Geometry']])
-    transfer_attribute = nw.new_node(Nodes.TransferAttribute,
-        input_kwargs={
-            'Source': capture.outputs['Geometry'], 
-            1: capture.outputs["Attribute"],
-            #'Source Position': root_pos
-        },
-        attrs={'data_type': 'FLOAT_VECTOR'})#, 'mapping': 'NEAREST'})
+
+    nearest_idx = nw.new_node(Nodes.SampleNearest, input_kwargs={
+        'Geometry': capture.outputs['Geometry'], 
+        'Sample Position': root_pos
+    }, 
+    attrs={'domain': domain})
+    #transfer_attribute = nw.new_node(Nodes.SampleNearest,
+    #    input_kwargs={
+    #        'Mesh': capture.outputs['Geometry'], 
+    #        'Value': capture.outputs["Attribute"],
+    #        'Sample Position': root_pos
+    #    },
+    #    attrs={'data_type': 'FLOAT_VECTOR'})
+    transfer_attribute = nw.new_node(Nodes.SampleIndex, input_kwargs={
+        'Geometry': capture.outputs['Geometry'],
+        'Index': nearest_idx.outputs['Index'],
+        'Value': capture.outputs["Attribute"]
+    },
+    attrs={'data_type': uvtype, 'domain': domain})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={
             'Geometry': group_input.outputs["Geometry"], 
             'Name': group_input.outputs['to_attr'], 
-            'Value': transfer_attribute.outputs["Attribute"]},
+            'Value': transfer_attribute},
         attrs={'data_type': 'FLOAT_VECTOR', 'domain': 'CURVE'})
     
     group_output = nw.new_node(Nodes.GroupOutput,

@@ -28,7 +28,10 @@ import gin
 import numpy as np
 from shutil import which
 
+logger = logging.getLogger(__name__)
+
 CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
+NVIDIA_SMI_PATH = '/bin/nvidia-smi'
 
 @dataclass
 class LocalJob:
@@ -150,18 +153,22 @@ class LocalScheduleHandler:
         resources = {}
 
         if self.use_gpu:
-            if which('/bin/nvidia-smi') is not None:
-                result = subprocess.check_output('/bin/nvidia-smi -L'.split()).decode()                                            
-                gpus_uuids = set(i for i in range(len(result.splitlines())))
 
-                if CUDA_VARNAME in os.environ:
-                    visible = [int(s.strip()) for s in os.environ[CUDA_VARNAME].split(',')]
-                    gpus_uuids = gpus_uuids.intersection(visible)
-                    print(f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting")
+            if which(NVIDIA_SMI_PATH) is None:
+                raise ValueError(f'LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}')
 
-                resources['gpus'] = set(itertools.product(range(len(gpus_uuids)), range(self.jobs_per_gpu)))
-            else:
-                resources['gpus'] = {'0'}
+            result = subprocess.check_output(f'{NVIDIA_SMI_PATH} -L'.split()).decode()                                            
+            gpus_uuids = set(i for i in range(len(result.splitlines())))
+
+            if CUDA_VARNAME in os.environ:
+                visible = [int(s.strip()) for s in os.environ[CUDA_VARNAME].split(',')]
+                gpus_uuids = gpus_uuids.intersection(visible)
+                logger.debug(f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting")
+
+            resources['gpus'] = set(itertools.product(
+                gpus_uuids, 
+                range(self.jobs_per_gpu)
+            ))
             
         return resources
 
@@ -174,12 +181,14 @@ class LocalScheduleHandler:
                 continue
             if (g := job_rec['gpu_assignment']) is not None:
                 resources['gpus'] -= g
+
         return resources
         
     def poll(self):
 
         total = self.total_resources()
         available = self.resources_available(total)
+        logger.debug(f'Checked resources, {total=} {available=}')
 
         for job_rec in self.queue:
             if job_rec['job'].status() != 'PENDING':
