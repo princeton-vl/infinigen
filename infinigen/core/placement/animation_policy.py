@@ -13,11 +13,12 @@ import bpy
 import gin
 import mathutils
 import numpy as np
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Vector
 from mathutils.bvhtree import BVHTree
+from numpy.matlib import repmat
 from numpy.random import normal as N
 from numpy.random import uniform as U
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
@@ -323,13 +324,11 @@ class AnimPolicyFollowObject:
 
 
 def validate_keyframe_range(
-    obj,
-    start_frame,
-    end_frame,
-    bvhtree,
-    validate_pose_func=None,
-    stride=5,  # runs faster but imperfect precision
-    check_straight_line=True,  # rules out proposals faster, but has imperfect precision
+    obj, 
+    start_frame, end_frame, 
+    bvhtree, validate_pose_func=None,
+    stride=1, # runs faster but imperfect precision
+    check_straight_line=True # rules out proposals faster, but has imperfect precision
 ):
     last_pos = deepcopy(obj.location)
 
@@ -370,6 +369,8 @@ def try_animate_trajectory(
     max_step_tries=50,
     verbose=True,
 ):
+ 
+    frame_prev = bpy.context.scene.frame_start
     frame_curr = bpy.context.scene.frame_start
     pbar = tqdm(total=duration_frames) if verbose else None
     while frame_curr < bpy.context.scene.frame_start + duration_frames:
@@ -392,14 +393,10 @@ def try_animate_trajectory(
             step_frames = int(duration * bpy.context.scene.render.fps) + 1
             step_end_frame = frame_curr + step_frames
 
-            keyframe(obj, loc, rot, step_end_frame, interp="BEZIER")
+            keyframe(obj, loc, rot, step_end_frame, interp=interp)
 
-            if not validate_keyframe_range(
-                obj, frame_curr, step_end_frame, bvh, validate_pose_func
-            ):
-                logger.debug(
-                    f"validate_keyframe_range failed on moving {obj.location} to {loc}"
-                )
+            if not validate_keyframe_range(obj, frame_prev, step_end_frame, bvh, validate_pose_func, check_straight_line=False):
+                logger.debug(f'validate_keyframe_range failed on moving {obj.location} to {loc}')
                 # clear out the candidate keyframes we just inserted, they were no good
                 for fc in obj.animation_data.action.fcurves:
                     if fc.data_path == "":
@@ -408,15 +405,14 @@ def try_animate_trajectory(
                 continue
 
             if verbose:
-                pbar.update(
-                    min(step_frames, duration_frames - frame_curr)
-                )  # dont overshoot the pbar, it makes the formatting not nice
+                pbar.update(min(step_frames, bpy.context.scene.frame_start + duration_frames - frame_curr)) # dont overshoot the pbar, it makes the formatting not nice
 
             break  # we found a good pose
 
         else:  # for-else block triggers when for loop terminates w/o a break statement
             return False
 
+        frame_prev = frame_curr
         frame_curr = step_end_frame
         bpy.context.scene.frame_current = frame_curr
 
@@ -601,10 +597,10 @@ def animate_trajectory(
         if attempt > 0 and retry_rotation:
             obj.rotation_euler.z = U(0, 2 * np.pi)
 
-        if hasattr(policy_func, "reset"):
+        if hasattr(policy_func, "reset") and attempt > 0:
             policy_func.reset()
 
-        keyframe(obj, obj.location, obj.rotation_euler, 0, interp="LINEAR")
+        keyframe(obj, obj.location, obj.rotation_euler, 0)
         try_animate_trajectory_func = (
             try_animate_trajectory
             if not path_finding_enabled
@@ -637,26 +633,26 @@ def animate_trajectory(
                         (
                             obj.animation_data.action.fcurves[0]
                             .keyframe_points[j]
-                            .co.y,
+                            .co.x,
                             obj.animation_data.action.fcurves[1]
                             .keyframe_points[j]
                             .co.y,
                             obj.animation_data.action.fcurves[2]
                             .keyframe_points[j]
-                            .co.y,
+                            .co.z,
                         )
                     )
                     kf_rots.append(
                         (
                             obj.animation_data.action.fcurves[3]
                             .keyframe_points[j]
-                            .co.y,
+                            .co.x,
                             obj.animation_data.action.fcurves[4]
                             .keyframe_points[j]
                             .co.y,
                             obj.animation_data.action.fcurves[5]
                             .keyframe_points[j]
-                            .co.y,
+                            .co.z,
                         )
                     )
                 obj.animation_data_clear()

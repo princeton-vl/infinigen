@@ -21,6 +21,21 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+from infinigen.core.placement import (
+    particles, placement, density, 
+    camera as cam_util, 
+    split_in_view, factory,
+    animation_policy, instance_scatter, detail,
+    camera_trajectories as cam_traj
+)
+
+from infinigen.assets.scatters import (
+    pebbles, grass, ground_leaves, ground_twigs, \
+    chopped_trees, pinecone, fern, flowerplant, monocot as monocots, ground_mushroom, \
+    slime_mold, moss, ivy, lichen, mushroom, decorative_plants, seashells, \
+    pine_needle, seaweed, coral_reef, jellyfish, urchin
+)
+
 # unused imports required for gin to find modules currently, # TODO remove
 # ruff: noqa: F401
 from infinigen.assets import fluid, lighting, weather
@@ -75,8 +90,18 @@ from infinigen.terrain.core import Terrain
 logger = logging.getLogger(__name__)
 
 
+from infinigen.core.util import (
+    blender as butil,
+    logging as logging_util,
+    pipeline, rrt
+)
+from infinigen.core.util.organization import Tags
+from infinigen.core.util.random import sample_registry, random_general
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core import execute_tasks, surface, init
+
 @gin.configurable
-def compose_nature(output_folder, scene_seed, **params):
+def compose_scene(output_folder, scene_seed, **params):
     p = pipeline.RandomStageExecutor(scene_seed, output_folder, params)
 
     def add_coarse_terrain():
@@ -265,16 +290,7 @@ def compose_nature(output_folder, scene_seed, **params):
         if terrain is not None
         else butil.bounds(terrain_mesh)
     )
-    p.run_stage(
-        "pose_cameras",
-        lambda: cam_util.configure_cameras(
-            camera_rigs,
-            scene_preprocessed,
-            init_bounding_box=bbox,
-            terrain_mesh=terrain_mesh,
-        ),
-        use_chance=False,
-    )
+
     primary_cams = [rig.children[0] for rig in camera_rigs]
 
     p.run_stage(
@@ -349,13 +365,11 @@ def compose_nature(output_folder, scene_seed, **params):
             ]
             save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
-    p.run_stage(
-        "animate_cameras",
-        animate_cameras,
-        use_chance=False,
-    )
 
     with logging_util.Timer("Compute coarse terrain frustrums"):
+    # pregenerate a list of camera trajectories, and animate the n best trajectories (with one for each rig)
+    p.run_stage('animate base trajectories', lambda: cam_traj.animate_trajectories(camera_rigs, bbox, scene_preprocessed), use_chance=False)
+    with logging_util.Timer('Compute coarse terrain frustrums'):
         terrain_inview, *_ = split_in_view.split_inview(
             terrain_mesh,
             primary_cams,
