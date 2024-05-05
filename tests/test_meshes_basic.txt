@@ -61,7 +61,6 @@ infinigen.assets.leaves.LeafFactoryMaple
 infinigen.assets.leaves.LeafFactoryPine
 infinigen.assets.leaves.LeafFactoryV2
 infinigen.assets.lighting.CausticsLampFactory
-infinigen.assets.lighting.GlowingRocksFactory
 infinigen.assets.mollusk.AugerFactory
 infinigen.assets.mollusk.ClamFactory
 infinigen.assets.mollusk.ConchFactory
@@ -85,6 +84,7 @@ infinigen.assets.monocot.WheatMonocotFactory
 infinigen.assets.mushroom.MushroomFactory
 infinigen.assets.rocks.BlenderRockFactory
 infinigen.assets.rocks.BoulderFactory
+infinigen.assets.rocks.GlowingRocksFactory
 infinigen.assets.small_plants.FernFactory
 infinigen.assets.small_plants.SnakePlantFactory
 infinigen.assets.small_plants.SpiderPlantFactory

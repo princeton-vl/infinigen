@@ -811,3 +811,11 @@ def create_noise_plane(size=50, cuts=10, std=3, levels=3):
         v.co[2] = v.co[2] + np.random.normal(0, std)
 
     return modify_mesh(obj, 'SUBSURF', levels=levels)
+
+def purge_empty_materials(obj):
+    with SelectObjects(obj):
+        for i, m in enumerate(obj.material_slots):
+            if m.material is not None:
+                continue
+            bpy.context.object.active_material_index = i
+            bpy.ops.object.material_slot_remove()

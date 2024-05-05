@@ -13,7 +13,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.assets.lighting import sky_lighting
 
 from infinigen.assets.trees.generate import TreeFactory, BushFactory
-from infinigen.assets.lighting.glowing_rocks import GlowingRocksFactory
+from infinigen.assets.rocks.glowing_rocks import GlowingRocksFactory
 
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.math import FixedSeed, int_hash

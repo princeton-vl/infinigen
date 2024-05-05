@@ -143,7 +143,7 @@ def compose_scene(output_folder, scene_seed, **params):
 
     def add_glowing_rocks(terrain_mesh):
         selection = density.placement_mask(uniform(0.03, 0.3), normal_thresh=-1.1, select_thresh=0, tag=Tags.Cave)
-        fac = lighting.GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
+        fac = rocks.GlowingRocksFactory(int_hash((scene_seed, 0)), coarse=True)
         placement.scatter_placeholders_mesh(terrain_mesh, fac,
             overall_density=params.get("glow_rock_density", 0.025), selection=selection)
     p.run_stage('glowing_rocks', add_glowing_rocks, terrain_mesh)

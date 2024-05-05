@@ -40,4 +40,10 @@ def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
     butil.clear_scene()
     fac = fac_class(seed1)
     asset = fac.spawn_asset(seed2, distance=distance_m)
+
+    for o in butil.iter_object_tree(asset):
+        for i, slot in enumerate(o.material_slots):
+            if slot.material is None:
+                raise ValueError(f'{asset.name=} {o.name=} had material slot {i=} {slot=} with {slot.material=}')
+
     assert isinstance(asset, bpy.types.Object)

@@ -220,9 +220,9 @@ def configure_render_cycles(
     bpy.context.scene.render.engine = 'CYCLES'
 
     # For now, denoiser is always turned on, but the  _used_
+    bpy.context.scene.cycles.use_denoising = denoise
     if denoise:
         try:
-            bpy.context.scene.cycles.use_denoising = True
             bpy.context.scene.cycles.denoiser = 'OPTIX'
         except Exception as e:
             logger.warning(f"Cannot use OPTIX denoiser {e}")

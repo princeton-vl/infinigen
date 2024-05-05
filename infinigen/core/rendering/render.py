@@ -133,11 +133,7 @@ def configure_compositor_output(
     image_noisy, 
     passes_to_save, 
     saving_ground_truth, 
-    use_denoised=False
 ):
-    
-    if use_denoised and image_noisy is None:
-        raise ValueError(f'{use_denoised=} yet {image_noisy=}, denoiser was not actually enabled')
 
     file_output_node = nw.new_node(Nodes.OutputFile, attrs={
         "base_path": str(frames_folder),
@@ -163,7 +159,7 @@ def configure_compositor_output(
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
     slot_input = file_output_node.file_slots['Image']
-    image = image_denoised if use_denoised else image_noisy
+    image = image_denoised if image_denoised is not None else image_noisy
     nw.links.new(image, file_output_node.inputs['Image'])
     if saving_ground_truth:
         slot_input.path = 'UniqueInstances'

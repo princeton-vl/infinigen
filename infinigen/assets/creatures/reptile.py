@@ -392,14 +392,6 @@ def chameleon_postprocessing(body_parts, extras, params):
 
     #chameleon_eye.apply(get_extras('Eye'))
 
-def purge_empty_materials(obj):
-    with butil.SelectObjects(obj):
-        for i, m in enumerate(obj.material_slots):
-            if m.material is not None:
-                continue
-            bpy.context.object.active_material_index = i
-            bpy.ops.object.material_slot_remove()
-
 @gin.configurable
 class LizardFactory(AssetFactory):
 
@@ -420,7 +412,7 @@ class LizardFactory(AssetFactory):
         else:
             joined = butil.join_objects([joined] + extras)
             
-        purge_empty_materials(joined)
+        butil.purge_empty_materials(joined)
 
         return root
     
@@ -517,6 +509,8 @@ class SnakeFactory(AssetFactory):
 
                 root.parent = butil.spawn_empty('snake_parent_temp') # so AssetFactory.spawn_asset doesnt attempt to parent
                 butil.parent_to(joined, root, keep_transform=True)
+
+        butil.purge_empty_materials(joined)
 
         return joined
 

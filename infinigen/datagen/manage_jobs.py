@@ -112,6 +112,7 @@ def slurm_submit_cmd(
     gpus=0, 
     hours=1, 
     slurm_account=None, 
+    slurm_partition=None,
     slurm_exclude: list = None, 
     slurm_niceness=None,
     **_
@@ -149,6 +150,9 @@ def slurm_submit_cmd(
 
     if slurm_niceness is not None:
         slurm_additional_params['nice'] = slurm_niceness
+
+    if slurm_partition is not None:
+        slurm_additional_params['partition'] = slurm_partition
 
     executor.update_parameters(slurm_additional_parameters=slurm_additional_params)
 

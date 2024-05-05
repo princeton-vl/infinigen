@@ -123,7 +123,11 @@ def particle_system(
     
     dur = bpy.context.scene.frame_end - bpy.context.scene.frame_start
     system.settings.frame_start = bpy.context.scene.frame_start - settings.pop('warmup_frames', 0)
-    system.settings.frame_end = bpy.context.scene.frame_start + settings.pop('emit_duration', dur) + settings.pop('warmup_frames', 0)
+    system.settings.frame_end = (
+        bpy.context.scene.frame_start + 
+        settings.pop('emit_duration', dur) + 
+        settings.pop('warmup_frames', 0)
+    )
 
     if (g := settings.pop('effect_gravity', None)) is not None:
         system.settings.effector_weights.gravity = g

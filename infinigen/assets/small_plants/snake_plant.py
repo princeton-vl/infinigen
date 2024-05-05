@@ -269,6 +269,8 @@ class SnakePlantFactory(AssetFactory):
         obj.scale = (0.2, 0.2, 0.2)
         butil.apply_transform(obj, scale=True)        
 
+        butil.purge_empty_materials(obj)
+
         tag_object(obj, 'snake_plant')
         return obj
 

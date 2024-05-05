@@ -118,7 +118,7 @@ def populate_scene(
     p.run_stage('populate_clouds', use_chance=False,
         fn=lambda: placement.populate_all(weather.CloudFactory, camera, dist_cull=None, vis_cull=None))
     p.run_stage('populate_glowing_rocks', use_chance=False,
-        fn=lambda: placement.populate_all(lighting.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
+        fn=lambda: placement.populate_all(rocks.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
     
     populated['cached_fire_trees'] = p.run_stage('populate_cached_fire_trees', use_chance=False, default=[],
         fn=lambda: placement.populate_all(fluid.CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
