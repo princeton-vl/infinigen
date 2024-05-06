@@ -37,21 +37,12 @@ parser = argparse.ArgumentParser(description='Blender material node transpiler')
 parser.add_argument('--background', type=str, default='')
 parser.add_argument('--python', type=str, default='')
 parser.add_argument('--mode', type=str, default='write_file')
-parser.add_argument('--save_path', type=str, default='/Users/richardguyunqi/infinigen/my_test/') # Dir for all files, including images and script
-parser.add_argument('--script_name', type=str, default='example.py') # The name for the script
+parser.add_argument('--save_path', type=str) # Dir for all files, including images and script
+parser.add_argument('--script_name', type=str) # The name for the script
 
 parser.add_argument('--target', type=str, default='object')
 parser.add_argument('--target_obj', type=str, default=bpy.context.active_object.name)
 parser.add_argument('--dependencies', type=str, default='', help='Comma-separated file paths of dependencies')
-
-# mode = 'write_file'
-# target = 'object'
-# target_obj = 'Cube2'
-# save_path = '/Users/richardguyunqi/infinigen/my_test/'
-# dependencies = [
-#     # if your transpile target is using nodegroups taken from some python file,
-#     # add those filepaths here so the transpiler imports from them rather than creating a duplicate definition.
-# ]
 
 
 find_image_func_str = '''
@@ -154,5 +145,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.dependencies = args.dependencies.split(',') if args.dependencies else []
 
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
     #print(args)
     run_transpiler(args)
