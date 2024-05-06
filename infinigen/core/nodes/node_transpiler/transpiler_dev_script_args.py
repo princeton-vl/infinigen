@@ -45,49 +45,6 @@ parser.add_argument('--target_obj', type=str, default=bpy.context.active_object.
 parser.add_argument('--dependencies', type=str, default='', help='Comma-separated file paths of dependencies')
 
 
-find_image_func_str = '''
-
-def find_images_from_local():
-    # Get the current working directory
-    cwd = os.getcwd()
-    
-    # Patterns for each file type
-    jpg_pattern = os.path.join(cwd, '*.jpg')
-    exr_pattern = os.path.join(cwd, '*.exr')
-    png_pattern = os.path.join(cwd, '*.png')
-
-    # Get lists of files for each pattern
-    jpg_files = glob.glob(jpg_pattern)
-    exr_files = glob.glob(exr_pattern)
-    png_files = glob.glob(png_pattern)
-    
-    # Combine the lists
-    all_files = jpg_files + exr_files + png_files
-    
-    return all_files
-
-'''
-
-load_image_func_str = '''
-
-def load_images_from_local(image_files):
-    for image_file_name in image_files:
-        # Construct the full file path
-        cwd = os.getcwd()
-        image_file_path = os.path.join(cwd, image_file_name)
-
-        # Check if the image is already loaded
-        image = bpy.data.images.get(image_file_name)
-
-        # If not, load the image
-        if not image:
-            try:
-                image = bpy.data.images.load(image_file_path)
-            except RuntimeError as e:
-                print(f"Error loading image {image_file_path}: {e}")
-'''
-
-
 # Main function
 def run_transpiler(args):
     # Unpack all packed files with the 'USE_LOCAL' option
@@ -124,13 +81,13 @@ def run_transpiler(args):
     elif args.mode == 'write_file':
         
         res_debug = (
-            "import os\n"+ f'os.chdir("{args.save_path}")\n\n' + "import bpy\n" + 'import glob\n' + load_image_func_str + '\n' + find_image_func_str + '\n' +
+            "import os\n" + 'import glob\n' + load_image_func_str + '\n' + find_image_func_str + '\n' +
             res + 
             "\nimage_files = find_images_from_local()" + "\nload_images_from_local(image_files)" + "\napply(bpy.context.active_object)"
         )
 
-        print(f'Writing generated script to {args.save_path + args.script_name}')
-        with Path(args.save_path + args.script_name).open('w') as f:
+        print(f'Writing generated script to {os.path.join(args.save_path, args.script_name)}')
+        with Path(os.path.join(args.save_path, args.script_name)).open('w') as f:
             f.write(res_debug)
     else:
         raise ValueError(f'Unrecognized {args.mode=}')
@@ -144,6 +101,46 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     args.dependencies = args.dependencies.split(',') if args.dependencies else []
+
+    find_image_func_str = f'''
+def find_images_from_local():
+    # Get the current working directory
+    cwd = '{args.save_path}'
+    
+    # Patterns for each file type
+    jpg_pattern = os.path.join(cwd, '*.jpg')
+    exr_pattern = os.path.join(cwd, '*.exr')
+    png_pattern = os.path.join(cwd, '*.png')
+
+    # Get lists of files for each pattern
+    jpg_files = glob.glob(jpg_pattern)
+    exr_files = glob.glob(exr_pattern)
+    png_files = glob.glob(png_pattern)
+    
+    # Combine the lists
+    all_files = jpg_files + exr_files + png_files
+    
+    return all_files
+
+    '''
+
+    load_image_func_str = f'''
+def load_images_from_local(image_files):
+    for image_file_name in image_files:
+        # Construct the full file path
+        cwd = '{args.save_path}'        
+        image_file_path = os.path.join(cwd, image_file_name)
+
+        # Check if the image is already loaded
+        image = bpy.data.images.get(image_file_name)
+
+        # If not, load the image
+        if not image:
+            try:
+                image = bpy.data.images.load(image_file_path)
+            except RuntimeError as e:
+                print(f"Error loading image {{image_file_path}}: {{e}}")
+    '''
 
     if not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
