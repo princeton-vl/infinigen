@@ -31,10 +31,10 @@ import mathutils
 from infinigen.core.nodes.node_transpiler import transpiler
 from infinigen.core.nodes import node_wrangler, node_info
 
-mode = 'write_file'
-target = 'object'
-target_obj = 'Cube'
-save_path = '/Users/richardguyunqi/infinigen/my_test/'
+mode = 'write_file' # TODO set this!
+target = 'object' 
+target_obj = 'Cube' # TODO set this!
+save_path = None # TODO set this!
 
 dependencies = [
     # if your transpile target is using nodegroups taken from some python file,
