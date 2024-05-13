@@ -131,5 +131,3 @@ elif mode == 'write_file':
         f.write(res_debug)
 else:
     raise ValueError(f'Unrecognized {mode=}')
-
-
