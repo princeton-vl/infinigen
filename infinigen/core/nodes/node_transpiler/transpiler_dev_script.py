@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 
-if not os.path.exists(save_path):
+if mode == 'write_file' and not os.path.exists(save_path):
     os.makedirs(save_path)
 
 find_image_func_str = f'''

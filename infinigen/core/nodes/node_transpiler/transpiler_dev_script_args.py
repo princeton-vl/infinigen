@@ -142,7 +142,7 @@ def load_images_from_local(image_files):
                 print(f"Error loading image {{image_file_path}}: {{e}}")
     '''
 
-    if not os.path.exists(args.save_path):
+    if args.mode == 'write_file' and not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
     #print(args)
     run_transpiler(args)

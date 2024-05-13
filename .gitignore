@@ -3,6 +3,9 @@ Python-*.tgz
 blender
 blender.tar.xz
 Blender.app
+my_test
+blender.sh
+run_infinigen.sh
 
 .coverage
 coverage.xml
