@@ -780,7 +780,8 @@ def get_func_name(target):
     if hasattr(target, 'bl_idname') and target.bl_idname.endswith('NodeGroup'):
         # Nodegroup wrapper nodes dont have good names, use the name of the nodegroup itself
         category = 'nodegroup'
-        name = snake_case(target.node_tree.name)
+        name = snake_case(target.node_tree.name).replace(',', '')
+
     else:
         category = snake_case(node_tree.bl_idname).split('_')[0]
         name = snake_case(target.name)
