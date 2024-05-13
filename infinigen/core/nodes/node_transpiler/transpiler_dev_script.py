@@ -31,21 +31,25 @@ import mathutils
 from infinigen.core.nodes.node_transpiler import transpiler
 from infinigen.core.nodes import node_wrangler, node_info
 
-mode = 'write_file'
-target = 'object'
-target_obj = 'Cube'
-save_path = '/Users/richardguyunqi/infinigen/my_test/'
-
+mode = 'write_file' # TODO set this!
+target = 'object' 
+target_obj = 'Cube' # TODO set this!
+save_path = None # TODO set this!
+filename = None
 dependencies = [
     # if your transpile target is using nodegroups taken from some python file,
     # add those filepaths here so the transpiler imports from them rather than creating a duplicate definition.
 ]
 
-find_image_func_str = '''
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
+find_image_func_str = f'''
 
 def find_images_from_local():
     # Get the current working directory
-    cwd = os.getcwd()
+    cwd = '{save_path}'
     
     # Patterns for each file type
     jpg_pattern = os.path.join(cwd, '*.jpg')
@@ -64,12 +68,12 @@ def find_images_from_local():
 
 '''
 
-load_image_func_str = '''
+load_image_func_str = f'''
 
 def load_images_from_local(image_files):
     for image_file_name in image_files:
         # Construct the full file path
-        cwd = os.getcwd()
+        cwd = '{save_path}'        
         image_file_path = os.path.join(cwd, image_file_name)
 
         # Check if the image is already loaded
@@ -80,8 +84,9 @@ def load_images_from_local(image_files):
             try:
                 image = bpy.data.images.load(image_file_path)
             except RuntimeError as e:
-                print(f"Error loading image {image_file_path}: {e}")
+                print(f"Error loading image {{image_file_path}}: {{e}}")
 '''
+
 # Unpack all packed files with the 'USE_LOCAL' option
 bpy.ops.file.unpack_all(method='USE_LOCAL')
 
@@ -116,16 +121,13 @@ elif mode == 'make_script':
 elif mode == 'write_file':
     
     res_debug = (
-        "import os\n"+ f'os.chdir("{save_path}")\n\n' + "import bpy\n" + 'import glob\n' + load_image_func_str + '\n' + find_image_func_str + '\n' +
+        "import os\n"+ "import bpy\n" + 'import glob\n' + load_image_func_str + '\n' + find_image_func_str + '\n' +
         res + 
         "\nimage_files = find_images_from_local()" + "\nload_images_from_local(image_files)" + "\napply(bpy.context.active_object)"
     )
 
-    filename = 'testcase1.py'
-    print(f'Writing generated script to {save_path + filename}')
-    with Path(save_path + filename).open('w') as f:
+    print(f'Writing generated script to {os.path.join(save_path, filename)}')
+    with Path(os.path.join(save_path, filename)).open('w') as f:
         f.write(res_debug)
 else:
     raise ValueError(f'Unrecognized {mode=}')
-
-
