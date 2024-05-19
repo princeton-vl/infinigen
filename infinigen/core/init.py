@@ -65,7 +65,7 @@ def apply_scene_seed(seed, task=None):
     np.random.seed(scene_seed)
     return scene_seed
 
-def sanitize_override(override: list):
+def sanitize_override(override: str):
 
     if (
         ('=' in override) and 
@@ -163,7 +163,7 @@ def apply_gin_configs(
 
     for mandatory_folder in mandatory_folders:
         mandatory_folder = resolve_folder_maybe_relative(mandatory_folder, root)
-        if not contained_stems(configs, mandatory_folder):
+        if not any(contained_stems(configs, mandatory_folder)):
             raise FileNotFoundError(
                 f'At least one config file must be loaded from {mandatory_folder} to avoid unexpected behavior'
             )
