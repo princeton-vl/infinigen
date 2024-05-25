@@ -33,8 +33,9 @@ def import_item(name):
 
 def load_txt_list(path):
     res = (Path(__file__).parent/path).read_text().splitlines()
-    res = [f for f in res if not f.startswith('#')]
-    return res
+    res = [f.strip() for f in res if not f.startswith('#')]
+    res = [f for f in res if len(f) > 0]
+    return sorted(res)
 
 def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
     butil.clear_scene()

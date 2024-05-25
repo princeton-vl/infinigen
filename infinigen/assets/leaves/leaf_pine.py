@@ -366,6 +366,7 @@ class LeafFactoryPine(AssetFactory):
         obj = bpy.context.object
         obj.scale *= normal(1, 0.05) * self.scale
         butil.apply_transform(obj)
+        butil.purge_empty_materials(obj) # TODO remove when geonodes emptymats solved
         tag_object(obj, 'leaf_pine')
 
         return obj

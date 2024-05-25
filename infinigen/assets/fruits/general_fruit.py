@@ -169,6 +169,9 @@ class FruitFactoryGeneralFruit(AssetFactory):
         obj.scale *= normal(1, 0.1) * self.scale * scale_multiplier
         butil.apply_transform(obj)
 
+        # TODO remove when empty materials from geonodes is debugged
+        butil.purge_empty_materials(obj) 
+
         tag_object(obj, 'fruit_'+self.name)
         return obj
 
