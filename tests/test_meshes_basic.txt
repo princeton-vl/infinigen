@@ -1,25 +1,43 @@
-#AntSwarmFactory
-#BoidSwarmFactory
-#ChameleonFactory
-#FanCoralFactory
-#FrogFactory
+
+# Helper factories, not intended to be used directly
 #FruitFactoryGeneralFruit
 #GenericTreeFactory
-#HerbivoreFactory
-#infinigen.assets.creatures.CrabFactory # slow
-#infinigen.assets.creatures.LobsterFactory # slow
-#infinigen.assets.creatures.SpinyLobsterFactory # slow
-#infinigen.assets.trees.TreeFactory # slow, TODO test with no leaves
+
+# Factories which arent fully tested/integrated in current nature generate code
+#FrogFactory
+#ChameleonFactory
 #LeafFactoryIvy
 #LizardFactory
 #OctopusFactory
+#AntSwarmFactory
+#BoidSwarmFactory
+# infinigen.assets.tropic_plants.PalmTreeFactory
+# infinigen.assets.creatures.JellyfishFactory
+# infinigen.assets.tropic_plants.LeafPalmPlantFactory
+# infinigen.assets.tropic_plants.LeafPalmTreeFactory
+# infinigen.assets.tropic_plants.CoconutTreeFactory
+
+# currently a special exception from the "no unapplied geonodes" rule, or else the animation cant play
+#infinigen.assets.creatures.DragonflyFactory
+
+# Slow factories - shouldnt be tested in full in CI
+#HerbivoreFactory
+#infinigen.assets.trees.TreeFactory # slow, TODO test with no leaves
+#FanCoralFactory
+#infinigen.assets.creatures.CrabFactory # slow
+#infinigen.assets.creatures.LobsterFactory # slow
+#infinigen.assets.creatures.SpinyLobsterFactory # slow
 #ReedMonocotFactory
+# infinigen.assets.cactus.KalidiumCactusFactory # slow, fails 120sec timeout
+# infinigen.assets.corals.BrainCoralFactory # slow, fails 120sec timeout
+# infinigen.assets.creatures.CrustaceanFactory # slow, fails 120sec timeout
+# infinigen.assets.creatures.SnakeFactory
+
 infinigen.assets.cactus.CactusFactory
 infinigen.assets.cactus.ColumnarCactusFactory
 infinigen.assets.cactus.GlobularCactusFactory
-infinigen.assets.cactus.KalidiumCactusFactory
+
 infinigen.assets.cactus.PrickyPearCactusFactory
-infinigen.assets.corals.BrainCoralFactory
 infinigen.assets.corals.BushCoralFactory
 infinigen.assets.corals.CauliflowerCoralFactory
 infinigen.assets.corals.CoralFactory
@@ -33,12 +51,8 @@ infinigen.assets.corals.TwigCoralFactory
 infinigen.assets.creatures.BeetleFactory
 infinigen.assets.creatures.BirdFactory
 infinigen.assets.creatures.CarnivoreFactory
-infinigen.assets.creatures.CrustaceanFactory
-infinigen.assets.creatures.DragonflyFactory
 infinigen.assets.creatures.FishFactory
 infinigen.assets.creatures.FlyingBirdFactory
-infinigen.assets.creatures.JellyfishFactory
-infinigen.assets.creatures.SnakeFactory
 infinigen.assets.debris.LichenFactory
 infinigen.assets.debris.MossFactory
 infinigen.assets.debris.PineNeedleFactory
@@ -91,11 +105,7 @@ infinigen.assets.small_plants.SpiderPlantFactory
 infinigen.assets.small_plants.SucculentFactory
 infinigen.assets.trees.BushFactory
 infinigen.assets.trees.TreeFlowerFactory
-infinigen.assets.tropic_plants.CoconutTreeFactory
 infinigen.assets.tropic_plants.LeafBananaTreeFactory
-infinigen.assets.tropic_plants.LeafPalmPlantFactory
-infinigen.assets.tropic_plants.LeafPalmTreeFactory
-infinigen.assets.tropic_plants.PalmTreeFactory
 infinigen.assets.tropic_plants.PlantBananaTreeFactory
 infinigen.assets.underwater.SeaweedFactory
 infinigen.assets.underwater.UrchinFactory

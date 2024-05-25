@@ -49,12 +49,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest", 
-    "pytest-ordering", 
-    "pytest-cov", 
-    "black", 
+    "pytest",
+    "pytest-ordering",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest-timeout",
     "ruff", 
-    "tabulate" # for integration test results
 ]
 wandb = [
     "wandb"
@@ -93,6 +93,7 @@ version = {attr = "infinigen.__version__"}
 [tool.pytest.ini_options]
 testpaths = "tests"
 junit_family = "xunit2"
+timeout = 240
 
 [tool.cibuildwheel]
 test-extras = ["dev"]
