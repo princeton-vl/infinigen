@@ -43,3 +43,9 @@ v1.3.1
 v1.3.2
 - Bugfix USD/OBJ exporter, add export options to generate_individual_assets
 
+v1.3.3
+- Bugfix camera code to allow multiple cameras, prevent all-water frames
+- Tweak rendering settings
+- Tweak test lists & add timeouts, pass all tests
+
+
