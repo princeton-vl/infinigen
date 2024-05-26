@@ -36,7 +36,7 @@ python -m infinigen_examples.generate_nature --seed 0 --task render -g desert.gi
 
 Output logs should indicate what the code is working on. Use `--debug` for even more detail. After each command completes you can inspect it's `--output_folder` for results, including running `python -m infinigen.launch_blender outputs/hello_world/coarse/scene.blend` or similar to view blender files. We hide many meshes by default for viewport stability; to view them, click "Render" or use the UI to unhide them.
 
-## Generate image(s) in one command
+## Generate scenes in one command
 
 We provide `infinigen/datagen/manage_jobs.py`, a utility which runs similar steps automatically.
 
@@ -47,6 +47,10 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world --nu
 
 This command will repeatedly print summaries of the status of each stage of the pipeline. Please look in `outputs/hello_world/1/logs` for full output logs of the underlying tasks.
 
-We encourage you to visit [Configuring Infinigen](ConfiguringInfinigen.md) for a breakdown of this command and more advanced usage instructions / example commands.
+## Next steps
+
+Read [Configuring Infinigen](ConfiguringInfinigen.md) for more advanced usage instructions / example commands.
 
 See [Extended ground-truth](GroundTruthAnnotations.md) for a guide on using our custom ground-truth extraction system.
+
+See [ExportingToExternalFileFormats](ExportingToExternalFileFormats.md) for advice on exporting to OBJ/USD and more.
