@@ -1,4 +1,4 @@
-include 'opengl_gt.gin' # incase someone adds other settings to it
+include 'gt_options/opengl_gt.gin' # incase someone adds other settings to it
 
 iterate_scene_tasks.camera_dependent_tasks = [
     {'name': 'renderbackup', 'func': @renderbackup/queue_render}, # still call it "backup" since it is reusing the compute_platform's backup config. we are just skipping straight to the backup

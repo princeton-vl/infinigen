@@ -96,7 +96,7 @@ def populate_scene(
     **params
 ):
     p = RandomStageExecutor(scene_seed, output_folder, params)
-    camera = bpy.context.scene.camera
+    camera = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
 
     season = p.run_stage('choose_season', trees.random_season, use_chance=False, default=[])
 
@@ -118,7 +118,7 @@ def populate_scene(
     p.run_stage('populate_clouds', use_chance=False,
         fn=lambda: placement.populate_all(weather.CloudFactory, camera, dist_cull=None, vis_cull=None))
     p.run_stage('populate_glowing_rocks', use_chance=False,
-        fn=lambda: placement.populate_all(lighting.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
+        fn=lambda: placement.populate_all(rocks.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None))
     
     populated['cached_fire_trees'] = p.run_stage('populate_cached_fire_trees', use_chance=False, default=[],
         fn=lambda: placement.populate_all(fluid.CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system))
@@ -283,6 +283,7 @@ def execute_tasks(
     resample_idx=None,
     output_blend_name="scene.blend",
     generate_resolution=(1280,720),
+    fps=24,
     reset_assets=True,
     focal_length=None,
     dryrun=False,
@@ -315,6 +316,7 @@ def execute_tasks(
     bpy.context.scene.frame_start = int(frame_range[0])
     bpy.context.scene.frame_end = int(frame_range[1])
     bpy.context.scene.frame_set(int(frame_range[0]))
+    bpy.context.scene.render.fps = fps
     bpy.context.scene.render.resolution_x = generate_resolution[0]
     bpy.context.scene.render.resolution_y = generate_resolution[1]
     bpy.context.view_layer.update()
@@ -338,7 +340,8 @@ def execute_tasks(
 
     if Task.FineTerrain in task:
         terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
-        terrain.fine_terrain(output_folder, optimize_terrain_diskusage=optimize_terrain_diskusage)
+        cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
+        terrain.fine_terrain(output_folder, cameras=cameras, optimize_terrain_diskusage=optimize_terrain_diskusage)
 
     group_collections()
 

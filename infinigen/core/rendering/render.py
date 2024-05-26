@@ -18,7 +18,7 @@ import gin
 import numpy as np
 from imageio import imread, imwrite
 
-from infinigen.infinigen_gpl.extras.enable_gpu import enable_gpu
+from infinigen.core import init
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.post_render import (colorize_depth, colorize_flow,
@@ -119,10 +119,22 @@ def compositor_postprocessing(nw, source, show=True, autoexpose=False, autoexpos
     if show:
         nw.new_node(Nodes.Composite, input_kwargs={'Image': source})
 
-    return source.outputs[0]
+    return (
+        source.outputs[0]
+        if hasattr(source, 'outputs')
+        else source
+    )
 
 @gin.configurable
-def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, passes_to_save, saving_ground_truth, use_denoised=False):
+def configure_compositor_output(
+    nw, 
+    frames_folder, 
+    image_denoised, 
+    image_noisy, 
+    passes_to_save, 
+    saving_ground_truth, 
+):
+
     file_output_node = nw.new_node(Nodes.OutputFile, attrs={
         "base_path": str(frames_folder),
         "format.file_format": 'OPEN_EXR' if saving_ground_truth else 'PNG',
@@ -147,7 +159,7 @@ def configure_compositor_output(nw, frames_folder, image_denoised, image_noisy, 
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
     slot_input = file_output_node.file_slots['Image']
-    image = image_denoised if use_denoised else image_noisy
+    image = image_denoised if image_denoised is not None else image_noisy
     nw.links.new(image, file_output_node.inputs['Image'])
     if saving_ground_truth:
         slot_input.path = 'UniqueInstances'
@@ -250,25 +262,40 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
     imwrite(uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"), colorize_int_array(uniq_inst_array))
     uniq_inst_path.unlink()
+    
+def configure_compositor(frames_folder, passes_to_save, flat_shading):
+    compositor_node_tree = bpy.context.scene.node_tree
+    nw = NodeWrangler(compositor_node_tree)
+
+    render_layers = nw.new_node(Nodes.RenderLayers)
+    final_image_denoised = compositor_postprocessing(nw, source=render_layers.outputs["Image"])
+
+    final_image_noisy = (
+        compositor_postprocessing(nw, source=render_layers.outputs["Noisy Image"], show=False)
+        if bpy.context.scene.cycles.use_denoising else None
+    )
+
+    return configure_compositor_output(
+        nw,
+        frames_folder,
+        image_denoised=final_image_denoised,
+        image_noisy=final_image_noisy,
+        passes_to_save=passes_to_save,
+        saving_ground_truth=flat_shading
+    )
 
 @gin.configurable
 def render_image(
     camera_id,
-    min_samples,
-    num_samples,
-    time_limit,
     frames_folder,
-    adaptive_threshold,
-    exposure,
     passes_to_save,
-    flat_shading,
-    use_dof=False,
-    dof_aperture_fstop=2.8,
-    motion_blur=False,
-    motion_blur_shutter=0.5,
+    flat_shading=False,
     render_resolution_override=None,
     excludes=[],
+    use_dof=False,
+    dof_aperture_fstop=2.8,
 ):
+    
     tic = time.time()
 
     camera_rig_id, subcam_id = camera_id
@@ -276,30 +303,11 @@ def render_image(
     for exclude in excludes:
         bpy.data.objects[exclude].hide_render = True
 
-    with Timer("Enable GPU"):
-        devices = enable_gpu()
+    init.configure_cycles_devices()
 
-    with Timer("Render/Cycles settings"):
-        if motion_blur: bpy.context.scene.cycles.motion_blur_position = 'START'
-
-        bpy.context.scene.cycles.samples = num_samples # i.e. infinity
-        bpy.context.scene.cycles.adaptive_min_samples = min_samples
-        bpy.context.scene.cycles.adaptive_threshold = adaptive_threshold # i.e. noise threshold
-        bpy.context.scene.cycles.time_limit = time_limit
-    
-        bpy.context.scene.cycles.film_exposure = exposure
-        bpy.context.scene.render.use_motion_blur = motion_blur
-        bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
-
-        bpy.context.scene.cycles.use_denoising = True
-        try:
-            bpy.context.scene.cycles.denoiser = 'OPTIX'
-        except Exception as e:
-            warnings.warn(f"Cannot use OPTIX denoiser {e}")
-        tmp_dir = frames_folder.parent.resolve() / "tmp"
-        tmp_dir.mkdir(exist_ok=True)
-        bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
-
+    tmp_dir = frames_folder.parent.resolve() / "tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
 
     if flat_shading:
         with Timer("Set object indices"):
@@ -313,39 +321,23 @@ def render_image(
             global_flat_shading()
 
 
-    with Timer("Compositing Setup"):
-        if not bpy.context.scene.use_nodes:
-            bpy.context.scene.use_nodes = True
-            compositor_node_tree = bpy.context.scene.node_tree
-            nw = NodeWrangler(compositor_node_tree)
-
-            render_layers        = nw.new_node(Nodes.RenderLayers)
-            final_image_denoised = compositor_postprocessing(nw, source=render_layers.outputs["Image"])
-            final_image_noisy    = compositor_postprocessing(nw, source=render_layers.outputs["Noisy Image"], show=False)
-
-            compositor_nodes = configure_compositor_output(
-                nw,
-                frames_folder,
-                image_denoised=final_image_denoised,
-                image_noisy=final_image_noisy,
-                passes_to_save=passes_to_save,
-                saving_ground_truth=flat_shading
-            )
+    if not bpy.context.scene.use_nodes:
+        bpy.context.scene.use_nodes = True
+    file_slot_nodes = configure_compositor(frames_folder, passes_to_save, flat_shading)
 
     indices = dict(cam_rig=camera_rig_id, resample=0, subcam=subcam_id)
 
     ## Update output names
     fileslot_suffix = get_suffix({'frame': "####", **indices})
-    for file_slot in compositor_nodes:
+    for file_slot in file_slot_nodes:
         file_slot.path = f"{file_slot.path}{fileslot_suffix}"
 
-    with Timer("get_camera"):
-        camera = cam_util.get_camera(camera_rig_id, subcam_id)
-        if use_dof == 'IF_TARGET_SET':
-            use_dof = camera.data.dof.focus_object is not None
-        if use_dof is not None:
-            camera.data.dof.use_dof = use_dof
-            camera.data.dof.aperture_fstop = dof_aperture_fstop
+    camera = cam_util.get_camera(camera_rig_id, subcam_id)
+    if use_dof == 'IF_TARGET_SET':
+        use_dof = camera.data.dof.focus_object is not None
+    if use_dof is not None:
+        camera.data.dof.use_dof = use_dof
+        camera.data.dof.aperture_fstop = dof_aperture_fstop
 
     if render_resolution_override is not None:
         bpy.context.scene.render.resolution_x = render_resolution_override[0]

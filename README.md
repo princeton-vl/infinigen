@@ -45,8 +45,9 @@ Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image &
 - ["Hello World": Generate your first Infinigen scene](docs/HelloWorld.md)
 - [Configuring Infinigen](docs/ConfiguringInfinigen.md)
 - [Downloading pre-generated data](docs/PreGeneratedData.md)
-- [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
+- [Exporting to external fileformats (OBJ, OpenUSD, etc)](docs/ExportingToExternalFileFormats.md)
+- [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
 - [Generating fluid simulations](docs/GeneratingFluidSimulations.md)
 

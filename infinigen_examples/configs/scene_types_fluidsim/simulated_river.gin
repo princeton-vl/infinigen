@@ -21,7 +21,6 @@ camera_pose_proposal.override_rot = (-120, 180, -178)
 
 assets.boulder.create_placeholder.boulder_scale = 1
 LandTiles.land_process = None
-camera_selection_preprocessing.terrain_tags_ratio = {("altitude", -1e9, 0.75): (0, 1), "liquid": (0, 1)}
 
 core.render.hide_water = True
 compute_base_views.min_candidates_ratio = 1

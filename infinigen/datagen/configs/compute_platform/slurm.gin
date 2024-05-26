@@ -74,6 +74,6 @@ queue_opengl.hours = 24
 queue_opengl.gpus = 1
 
 ground_truth/queue_render.mem_gb = 48
-ground_truth/queue_render.hours = 24
+ground_truth/queue_render.hours = 48
 ground_truth/queue_render.gpus = 0
 ground_truth/queue_render.render_type = "flat"

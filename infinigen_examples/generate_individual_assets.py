@@ -18,6 +18,7 @@ import traceback
 from itertools import product
 from pathlib import Path
 import logging
+from multiprocessing import Pool
 
 logging.basicConfig(
     format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
@@ -29,6 +30,8 @@ import bpy
 import gin
 import numpy as np
 from PIL import Image
+
+import submitit
 
 from infinigen.assets.fluid.fluid import set_obj_on_fire
 from infinigen.assets.utils.decorate import assign_material, read_base_co
@@ -43,7 +46,27 @@ from infinigen.core.util.camera import get_3x4_P_matrix_from_blender
 from infinigen.core.util.logging import Suppress
 from infinigen.core.util import blender as butil
 
-from infinigen.tools.results import strip_alpha_background as strip_alpha_background
+from infinigen.tools import export
+
+def load_txt_list(path, skip_sharp=False):
+    res = (Path(__file__).parent/path).read_text().splitlines()
+    res = [
+        f.lstrip('#').lstrip(' ') 
+        for f in res if 
+        len(f) > 0 and not '#' in f
+    ] 
+    print(res)
+    return res
+
+def load_txt_list(path, skip_sharp=False):
+    res = (Path(__file__).parent/path).read_text().splitlines()
+    res = [
+        f.lstrip('#').lstrip(' ') 
+        for f in res if 
+        len(f) > 0 and not '#' in f
+    ] 
+    print(res)
+    return res
 
 from . import generate_nature  # to load most/all factory.AssetFactory subclasses
 
@@ -67,7 +90,9 @@ def build_scene_asset(factory_name, idx):
             raise e
         factory.finalize_assets(asset)
         if args.fire:
-            set_obj_on_fire(asset,0,resolution = args.fire_res, simulation_duration = args.fire_duration, noise_scale=2, add_turbulence = True, adaptive_domain = False)
+            from infinigen.assets.fluid.fluid import set_obj_on_fire
+            set_obj_on_fire(asset, 0, resolution=args.fire_res, simulation_duration=args.fire_duration,
+                            noise_scale=2, add_turbulence=True, adaptive_domain=False)
             bpy.context.scene.frame_set(args.fire_duration)
             bpy.context.scene.frame_end = args.fire_duration
             bpy.data.worlds['World'].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
@@ -134,7 +159,24 @@ def build_scene_surface(factory_name, idx):
     return asset
 
 
-def build_scene(path, idx, factory_name, args):
+def build_and_save_asset(payload: dict):
+
+    # unpack payload - args are packed into payload for compatibility with slurm/multiprocessing
+    factory_name = payload['fac']
+    args = payload['args']
+    idx = payload['idx']
+
+    if args.seed > 0:
+        idx = args.seed
+
+    if args.gpu:
+        enable_gpu()
+
+    path = args.output_folder / factory_name
+    if path and args.skip_existing:
+        return
+    path.mkdir(exist_ok=True)
+
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
     scene.render.resolution_x, scene.render.resolution_y = map(int, args.resolution.split('x'))
@@ -195,6 +237,28 @@ def build_scene(path, idx, factory_name, args):
         imgpath = path / f"frames/scene_{idx:03d}/frame_###.png"
         scene.render.filepath = str(imgpath)
         bpy.ops.render.render(animation=True)
+    elif args.render == 'none':
+        pass
+    else:
+        raise ValueError(f'Unrecognized {args.render=}')
+
+    if args.export is not None:
+        export_path = path/'export'/f'export_{idx:03d}'
+        export_path.mkdir(exist_ok=True, parents=True)
+        export.export_curr_scene(
+            export_path,
+            format=args.export,
+            image_res=args.export_texture_res
+        )
+
+    if args.export is not None:
+        export_path = path/'export'/f'export_{idx:03d}'
+        export_path.mkdir(exist_ok=True, parents=True)
+        export.export_curr_scene(
+            export_path,
+            format=args.export,
+            image_res=args.export_texture_res
+        )
 
 
 def parent(obj):
@@ -262,18 +326,39 @@ def setup_camera(args):
         cam_info_ng.nodes['Object Info'].inputs['Object'].default_value = camera
     return camera, camera.parent
 
-    
-
-
 def subclasses(cls):
     return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in subclasses(c)])
 
+def mapfunc(f, its, args):
+    if args.n_workers == 1:
+        return [f(i) for i in its]
+    elif not args.slurm:
+        with Pool(args.n_workers) as p:
+            return list(p.imap(f, its))
+    else:
+        executor = submitit.AutoExecutor(
+            folder=args.output_folder/'logs'
+        )
+        executor.update_parameters(
+            name=args.output_folder.name,
+            timeout_min=60,
+            cpus_per_task=2,
+            mem_gb=8,
+            slurm_partition=os.environ['INFINIGEN_SLURMPARTITION'],
+            slurm_array_parallelism=args.n_workers
+        )
+        jobs = executor.map_array(f, its)
+        for j in jobs:
+            print(f'Job finished {j.wait()}')
+            
 
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces['Geometry Nodes']
     
     init.apply_gin_configs('infinigen_examples/configs')
     surface.registry.initialize_from_gin()
+
+    init.configure_blender()
 
     extras = '[%(filename)s:%(lineno)d] ' if args.loglevel == logging.DEBUG else ''
     logging.basicConfig(
@@ -282,13 +367,6 @@ def main(args):
         datefmt='%H:%M:%S'
     )
     logging.getLogger("infinigen").setLevel(args.loglevel)
-
-    name = '_'.join(args.factories)
-    path = Path(os.getcwd()) / 'outputs' / name
-    path.mkdir(exist_ok=True)
-
-    if args.gpu:
-        enable_gpu()
 
     factories = list(args.factories)
     if 'ALL_ASSETS' in factories:
@@ -301,26 +379,24 @@ def main(args):
         factories += [f.stem for f in Path('infinigen/assets/materials').iterdir()]
         factories.remove('ALL_MATERIALS')
 
+    args.output_folder.mkdir(exist_ok=True)
+
+    if not args.postprocessing_only:
+        for fac in factories:
+            targets = [
+                {'args': args, 'fac': fac, 'idx': idx}
+                for idx in range(args.n_images)
+            ]
+            mapfunc(build_and_save_asset, targets, args)
+
     for fac in factories:
-        fac_path = path / fac
-        if fac_path.exists() and args.skip_existing:
-            continue
-        fac_path.mkdir(exist_ok=True)
-        n_images = args.n_images
-        if not args.postprocessing_only:
-            for idx in range(n_images):
-                if args.seed >= 0: idx = args.seed
-                build_scene(fac_path, idx, fac, args)
-                try:
-                    pass
-                except Exception as e:
-                    print(e)
-                    continue
+        fac_path = args.output_folder/fac
+        assert fac_path.exists()
         if args.render == 'image':
-            make_grid(args, fac_path, n_images)
+            make_grid(args, fac_path, args.n_images)
         if args.render == 'video':
             (fac_path / 'videos').mkdir(exist_ok=True)
-            for i in range(n_images):
+            for i in range(args.n_images):
                 subprocess.run(
                     f'ffmpeg -y -r 24 -pattern_type glob -i "{fac_path}/frames/scene_{i:03d}/frame*.png" '
                     f'{fac_path}/videos/video_{i:03d}.mp4', shell=True)
@@ -330,9 +406,9 @@ def snake_case(s):
     return '_'.join(
         re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', s.replace('-', ' '))).split()).lower()
 
-
 def make_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--output_folder', type=Path)
     parser.add_argument('-f', '--factories', default=[], nargs='+',
                         help="List factories/surface scatters/surface materials you want to render")
     parser.add_argument('-n', '--n_images', default=4, type=int, help="Number of scenes to render")
@@ -345,7 +421,6 @@ def make_args():
     parser.add_argument('-l', '--lighting', default=0, type=int, help="Lighting seed")
     parser.add_argument('-o', '--cam_zoff', '--z_offset', type=float, default=.0,
                         help="Additional offset on Z axis for camera look-at positions")
-    parser.add_argument('-g', '--gpu', action='store_true', help="Whether to use gpu in rendering")
     parser.add_argument('-s', '--save_blend', action='store_true', help="Whether to save .blend file")
     parser.add_argument('-e', '--elevation', default=60, type=float, help="Elevation of the sun")
     parser.add_argument('--cam_dist', default=0, type=float,
@@ -353,7 +428,7 @@ def make_args():
     parser.add_argument('-a', '--cam_angle', default=(-30, 0, 0), type=float, nargs='+',
                         help="Camera rotation in XYZ")
     parser.add_argument('-c', '--cam_center', default=1, type=int, help="Camera rotation in XYZ")
-    parser.add_argument('-r', '--render', default='image', type=str,
+    parser.add_argument('-r', '--render', default='image', type=str, choices=['image', 'video', 'none'],
                         help="Whether to render the scene in images or video")
     parser.add_argument('-b', '--best_ratio', default=9 / 16, type=float,
                         help="Best aspect ratio for compiling the images into asset grid")
@@ -369,6 +444,12 @@ def make_args():
     parser.add_argument('-P', '--postprocessing_only', action='store_true', help="Only run postprocessing")
     parser.add_argument('-D', '--seed', type=int, default=-1, help="Run a specific seed.")
     parser.add_argument('-d', '--debug', action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
+
+    parser.add_argument('--n_workers', type=int, default=1)
+    parser.add_argument('--slurm', action='store_true')
+
+    parser.add_argument('--export', type=str, default=None, choices=export.FORMAT_CHOICES)
+    parser.add_argument('--export_texture_res', type=int, default=1024)
 
     return init.parse_args_blender(parser)
 

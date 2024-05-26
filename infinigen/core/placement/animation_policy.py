@@ -170,15 +170,17 @@ class AnimPolicyRandomWalkLookaround:
     def __init__(
         self, 
         speed=('uniform', 1, 2.5), 
-        yaw_range=(-20, 20), 
-        step_range=(10, 15),
+        step_speed_mult=('uniform', 0.5, 2),
+        yaw_sampler=('uniform',-20, 20), 
+        step_range=('clip_gaussian', 3, 5, 0.5, 10),
         rot_vars=(5, 0, 5),
         motion_dir_zoff=('clip_gaussian', 0, 90, 0, 180)
     ):
         
         self.speed = random_general(speed)
 
-        self.yaw_range = yaw_range
+        self.step_speed_mult = step_speed_mult
+        self.yaw_sampler = yaw_sampler
         self.step_range = step_range
         self.rot_vars = rot_vars
 
@@ -195,15 +197,16 @@ class AnimPolicyRandomWalkLookaround:
         orig_motion_dir_euler = copy(self.motion_dir_euler)
         def sampler():
             self.motion_dir_euler = copy(orig_motion_dir_euler)
-            self.motion_dir_euler[2] += np.deg2rad(U(*self.yaw_range))
-            step = U(*self.step_range)
+            self.motion_dir_euler[2] += np.deg2rad(random_general(self.yaw_sampler))
+            step = random_general(self.step_range)
             off = Euler(self.motion_dir_euler, 'XYZ').to_matrix() @ Vector((0, 0, -step))
             off.z = 0
             return off
 
         pos = walk_same_altitude(obj.location, sampler, bvh)
 
-        time = np.linalg.norm(pos - obj.location) / self.speed
+        step_speed = self.speed * random_general(self.step_speed_mult)
+        time = np.linalg.norm(pos - obj.location) / step_speed
         rot = np.array(obj.rotation_euler) + np.deg2rad(N(0, self.rot_vars, 3))
 
         return Vector(pos), Vector(rot), time, 'BEZIER'

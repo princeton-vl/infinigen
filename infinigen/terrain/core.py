@@ -295,14 +295,14 @@ class Terrain:
                 self.tag_terrain(self.terrain_objs[name])
         return main_obj
 
-    def fine_terrain(self, output_folder, optimize_terrain_diskusage=True):
+    def fine_terrain(self, output_folder, cameras, optimize_terrain_diskusage=True):
         # redo sampling to achieve attribute -> surface correspondance
         self.sample_surface_templates()
         if (self.on_the_fly_asset_folder / Assets.Ocean).exists():
             with FixedSeed(int_hash(["Ocean", self.seed])):
                 ocean_asset(output_folder / Assets.Ocean, bpy.context.scene.frame_start, bpy.context.scene.frame_end, link_folder=self.on_the_fly_asset_folder / Assets.Ocean)
         self.surfaces_into_sdf()
-        fine_meshes, _ = self.export(dynamic=True, cameras=[bpy.context.scene.camera])
+        fine_meshes, _ = self.export(dynamic=True, cameras=cameras)
         for mesh_name in fine_meshes:
             obj = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
             if mesh_name not in hidden_in_viewport: self.tag_terrain(obj)
@@ -381,7 +381,7 @@ class Terrain:
             terrain_obj = bpy.context.view_layer.objects.active
 
         terrain_mesh = Mesh(obj=terrain_obj)
-        terrain_tags_answers = {}
+        camera_selection_answers = {}
         for q0 in terrain_tags_queries:
             if type(q0) is not tuple:
                 q = (q0,)
@@ -391,13 +391,13 @@ class Terrain:
             if q[0] == SelectionCriterions.Altitude:
                 min_altitude, max_altitude = q[1:3]
                 altitude = terrain_mesh.vertices[:, 2]
-                terrain_tags_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
+                camera_selection_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
             else:
-                terrain_tags_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
+                camera_selection_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
                 for key in self.tag_dict:
                     if set(q).issubset(set(key.split('.'))):
-                        terrain_tags_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
-                terrain_tags_answers[q0] = terrain_mesh.facewise_mean(terrain_tags_answers[q0].astype(np.float64))
+                        camera_selection_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
+                camera_selection_answers[q0] = terrain_mesh.facewise_mean(camera_selection_answers[q0].astype(np.float64))
 
         if np.abs(np.asarray(terrain_obj.matrix_world) - np.eye(4)).max() > 1e-4:
             raise ValueError(f"Not all transformations on {terrain_obj.name} have been applied. This function won't work correctly.")
@@ -424,7 +424,7 @@ class Terrain:
         terrain_bvh = BVHTree.FromObject(terrain_obj, depsgraph)
         delete(terrain_obj)
 
-        return terrain_bvh, terrain_tags_answers, vertexwise_min_dist
+        return terrain_bvh, camera_selection_answers, vertexwise_min_dist
 
 
     def tag_terrain(self, obj):

@@ -36,3 +36,16 @@ v1.2.6
 - Fix bug where manage_jobs.py would ignore CUDA_VISIBLE_DEVICES that didnt start at 0
 - Add NotImplementedError for dynamic hair.
 
+v1.3.1
+- Fix configuration bug causing massive render slowdown 
+- Create noisier video trajectories optimized for training
+
+v1.3.2
+- Bugfix USD/OBJ exporter, add export options to generate_individual_assets
+
+v1.3.3
+- Bugfix camera code to allow multiple cameras, prevent all-water frames
+- Tweak rendering settings
+- Tweak test lists & add timeouts, pass all tests
+
+

@@ -112,6 +112,7 @@ def slurm_submit_cmd(
     gpus=0, 
     hours=1, 
     slurm_account=None, 
+    slurm_partition=None,
     slurm_exclude: list = None, 
     slurm_niceness=None,
     **_
@@ -149,6 +150,9 @@ def slurm_submit_cmd(
 
     if slurm_niceness is not None:
         slurm_additional_params['nice'] = slurm_niceness
+
+    if slurm_partition is not None:
+        slurm_additional_params['partition'] = slurm_partition
 
     executor.update_parameters(slurm_additional_parameters=slurm_additional_params)
 
@@ -201,9 +205,11 @@ def init_db_from_existing(output_folder: Path):
         }
 
         if 'configs' in existing_db.columns:
-            mask = existing_db["seed"].astype(str) == seed_folder.name
+            mask = (existing_db["seed"].astype(str) == seed_folder.name)
+            if not mask.any():
+                raise ValueError(f"Couldnt find configs for {seed_folder.name}")
             configs = existing_db.loc[mask, "configs"].iloc[0]
-            scene_dict['configs']: list(configs)
+            scene_dict['configs'] = list(configs)
 
         finish_key = 'FINISH_'
         for finish_file_name in (seed_folder/'logs').glob(finish_key + '*'):
@@ -282,7 +288,14 @@ def init_db(args):
     if args.use_existing:
         scenes = init_db_from_existing(args.output_folder)
     elif args.specific_seed is not None:
-        scenes = [{"seed": s, "all_done": SceneState.NotDone} for s in args.specific_seed]
+        scenes = [
+            {
+                "seed": s, 
+                "configs": args.configs,
+                "all_done": SceneState.NotDone
+            } 
+            for s in args.specific_seed
+        ]
     else:
         scenes = [sample_scene_spec(args, i) for i in range(args.num_scenes)]    
 

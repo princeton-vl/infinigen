@@ -115,7 +115,6 @@ class AssetFactory:
 
         obj.name = f'{repr(self)}.spawn_asset({i})'
 
-        print(f'{keep_placeholder=} {placeholder.name=} {list(placeholder.children)=} {obj.name=} {list(obj.children)=}')
         if keep_placeholder:
             if obj is not placeholder:
                 if obj.parent is None:
