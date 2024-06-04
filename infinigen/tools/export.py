@@ -444,7 +444,7 @@ def run_export(exportPath: Path, format: str, vertex_colors: bool, individual_ex
     
     if format == "stl": bpy.ops.export_mesh.stl(filepath = exportPath, use_selection = individual_export)
 
-    if format == "ply": bpy.ops.export_mesh.ply(filepath = exportPath, use_selection = individual_export)
+    if format == "ply": bpy.ops.wm.ply_export(filepath = exportPath, export_selected_objects = individual_export)
     
     if format in ["usda", "usdc"]: bpy.ops.wm.usd_export(filepath = exportPath, export_textures=True, use_instancing=True, selected_objects_only=individual_export)
 
