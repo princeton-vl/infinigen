@@ -162,11 +162,10 @@ def bakeVertexColors(obj):
 def apply_baked_tex(obj, paramDict={}):
     bpy.context.view_layer.objects.active = obj 
     bpy.context.object.data.uv_layers['ExportUV'].active_render = True
-    
     for uv_layer in reversed(obj.data.uv_layers):
-        if uv_layer.name != "ExportUV":
-            obj.data.uv_layers.remove(uv_layer)
+        if "ExportUV" not in uv_layer.name:
             logging.info(f"Removed extraneous UV Layer {uv_layer}")
+            obj.data.uv_layers.remove(uv_layer)
 
     for slot in obj.material_slots:
         mat = slot.material
