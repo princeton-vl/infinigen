@@ -549,17 +549,6 @@ def export_curr_scene(
         logging.info(f"Unhiding object {obj.name} from render")
         obj.hide_render = False
 
-    for col in bpy.data.collections:
-        if col.hide_render:
-            for obj in col.objects:
-                obj.hide_render = True
-
-    # remove all hidden assets if we realized
-    if not export_usd:
-        for obj in bpy.data.objects:
-            if obj.hide_render:
-                bpy.data.objects.remove(obj, do_unlink=True)    
-
     clean_names()
 
     if individual_export:
