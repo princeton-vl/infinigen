@@ -50,4 +50,4 @@ v1.3.3
 
 v1.3.4
 - Fixed bug where individual export would fail on objects hidden from viewport
-
+- Fixed Terrain.populated_bounds bad merge
