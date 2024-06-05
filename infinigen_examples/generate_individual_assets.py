@@ -40,7 +40,7 @@ from infinigen.assets.lighting import sky_lighting
 
 from infinigen.core import surface, init
 from infinigen.core.placement import density, factory 
-from infinigen.core.rendering.render import enable_gpu
+from infinigen.infinigen_gpl.extras.enable_gpu import enable_gpu
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.camera import get_3x4_P_matrix_from_blender
 from infinigen.core.util.logging import Suppress

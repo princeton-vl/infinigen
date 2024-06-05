@@ -48,4 +48,6 @@ v1.3.3
 - Tweak rendering settings
 - Tweak test lists & add timeouts, pass all tests
 
-
+v1.3.4
+- Fixed bug where individual export would fail on objects hidden from viewport
+- Fixed Terrain.populated_bounds bad merge

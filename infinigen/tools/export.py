@@ -24,10 +24,10 @@ def apply_all_modifiers(obj):
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj 
             bpy.ops.object.modifier_apply(modifier=mod.name)
-            logging.info(f"Applied modifier {mod.name} on {obj}")
+            logging.info(f"Applied modifier {mod} on {obj}")
             obj.select_set(False)
         except RuntimeError:
-            logging.info(f"Can't apply {mod.name} on {obj}")
+            logging.info(f"Can't apply {mod} on {obj}")
             obj.select_set(False)
             return 
 
@@ -107,32 +107,25 @@ def remove_obj_parents():
         obj.parent = None
         obj.matrix_world.translation = world_loc
 
-def update_visibility(export_usd):
+def update_visibility():
     outliner_area = next(a for a in bpy.context.screen.areas if a.type == 'OUTLINER')
     space = outliner_area.spaces[0]
     space.show_restrict_column_viewport = True  # Global visibility (Monitor icon)
     revealed_collections = []
     hidden_objs = []
     for collection in bpy.data.collections:
-        if export_usd:
-            collection.hide_viewport = False #reenables viewports for all
-            # enables renders for all collections
-            if collection.hide_render:
-                collection.hide_render = False
-                revealed_collections.append(collection)
-
-        elif collection.hide_render: # hides assets if we are realizing instances
-            for obj in collection.objects:
-                obj.hide_render = True
+        collection.hide_viewport = False #reenables viewports for all
+        # enables renders for all collections
+        if collection.hide_render:
+            collection.hide_render = False
+            revealed_collections.append(collection)
     
-    # disables viewports and renders for all objs
-    if export_usd:
-        for obj in bpy.data.objects:
-            obj.hide_viewport = True
-            if not obj.hide_render:
-                hidden_objs.append(obj)
-                obj.hide_render = True
-    
+    for obj in bpy.data.objects:
+        obj.hide_viewport = True
+        if not obj.hide_render:
+            hidden_objs.append(obj)
+            obj.hide_render = True
+        
     return revealed_collections, hidden_objs
     
 def uv_unwrap(obj):
@@ -157,6 +150,7 @@ def uv_unwrap(obj):
     return True
 
 def bakeVertexColors(obj):
+    logging.info(f"Baking vertex color on {obj}")
     bpy.ops.object.select_all(action='DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj 
@@ -168,6 +162,11 @@ def bakeVertexColors(obj):
 def apply_baked_tex(obj, paramDict={}):
     bpy.context.view_layer.objects.active = obj 
     bpy.context.object.data.uv_layers['ExportUV'].active_render = True
+    for uv_layer in reversed(obj.data.uv_layers):
+        if "ExportUV" not in uv_layer.name:
+            logging.info(f"Removed extraneous UV Layer {uv_layer}")
+            obj.data.uv_layers.remove(uv_layer)
+
     for slot in obj.material_slots:
         mat = slot.material
         if (mat is None): 
@@ -277,6 +276,7 @@ def bake_pass(
         img_node.name = f'{bake_type}_node'
         img_node.image = img
         nodes.active = img_node
+        img_node.select = True
 
         if len(output.inputs[0].links) != 0:
             surface_node = output.inputs[0].links[0].from_node
@@ -388,14 +388,10 @@ def bake_object(obj, dest, img_size):
     
     obj.select_set(False)
 
-def skipBake(obj, export_usd):
+def skipBake(obj):
     if not obj.data.materials:
         logging.info("No material on mesh, skipping...")
         return True 
-
-    if obj.hide_render and not export_usd:
-        logging.info("Mesh hidden from render, skipping ...")
-        return True
     
     if len(obj.data.vertices) == 0:
         logging.info("Mesh has no vertices, skipping ...")
@@ -412,27 +408,22 @@ def bake_scene(folderPath: Path, image_res, vertex_colors, export_usd):
         if obj.type != 'MESH' or obj not in list(bpy.context.view_layer.objects):
             logging.info("Not mesh, skipping ...")
             continue
-     
-        handle_geo_modifiers(obj, export_usd)
 
-        if skipBake(obj, export_usd): continue
+        if skipBake(obj): continue
         
         if format == "stl": 
             continue
-
+        
+        obj.hide_render = False 
+        obj.hide_viewport = False
+        
         if vertex_colors: 
             bakeVertexColors(obj)
-            continue
-        
-        if export_usd: 
-            obj.hide_render = False 
-            obj.hide_viewport = False
-        
-        bake_object(obj, folderPath, image_res)
+        else:
+            bake_object(obj, folderPath, image_res)
 
-        if export_usd: 
-            obj.hide_render = True
-            obj.hide_viewport = True
+        obj.hide_render = True
+        obj.hide_viewport = True
 
 def run_export(exportPath: Path, format: str, vertex_colors: bool, individual_export: bool):
 
@@ -441,9 +432,9 @@ def run_export(exportPath: Path, format: str, vertex_colors: bool, individual_ex
     
     if format == "obj":
         if vertex_colors:
-            bpy.ops.wm.obj_export(filepath = exportPath, export_colors=True, export_selected_objects=individual_export)  
+            bpy.ops.wm.obj_export(filepath = exportPath, export_colors=True, export_eval_mode='DAG_EVAL_RENDER', export_selected_objects=individual_export)  
         else:         
-            bpy.ops.wm.obj_export(filepath = exportPath, path_mode='COPY', export_materials=True, export_pbr_extensions=True, export_selected_objects=individual_export)
+            bpy.ops.wm.obj_export(filepath = exportPath, path_mode='COPY', export_materials=True, export_pbr_extensions=True, export_eval_mode='DAG_EVAL_RENDER', export_selected_objects=individual_export)
 
     if format == "fbx":
         if vertex_colors:
@@ -453,7 +444,7 @@ def run_export(exportPath: Path, format: str, vertex_colors: bool, individual_ex
     
     if format == "stl": bpy.ops.export_mesh.stl(filepath = exportPath, use_selection = individual_export)
 
-    if format == "ply": bpy.ops.export_mesh.ply(filepath = exportPath, export_selected_objects = individual_export)
+    if format == "ply": bpy.ops.wm.ply_export(filepath = exportPath, export_selected_objects = individual_export)
     
     if format in ["usda", "usdc"]: bpy.ops.wm.usd_export(filepath = exportPath, export_textures=True, use_instancing=True, selected_objects_only=individual_export)
 
@@ -520,7 +511,19 @@ def export_curr_scene(
     #             logging.info(f"{obj.name} has no faces, removing...")  
     #             bpy.data.objects.remove(obj, do_unlink=True)   
     
-    revealed_collections, hidden_objs = update_visibility(export_usd)
+    revealed_collections, hidden_objs = update_visibility()
+
+    for obj in bpy.data.objects:
+        if obj.type != 'MESH' or obj not in list(bpy.context.view_layer.objects):
+            continue
+        viewport_status = obj.hide_viewport
+        obj.hide_viewport = False
+        if export_usd:
+            apply_all_modifiers(obj)
+        else:
+            realizeInstances(obj)
+            apply_all_modifiers(obj)
+        obj.hide_viewport = viewport_status
 
     bpy.context.scene.render.engine = 'CYCLES'
     bpy.context.scene.cycles.device = 'GPU'
@@ -544,12 +547,6 @@ def export_curr_scene(
     for obj in hidden_objs:
         logging.info(f"Unhiding object {obj.name} from render")
         obj.hide_render = False
-
-    # remove all hidden assets if we realized
-    if not export_usd:
-        for obj in bpy.data.objects:
-            if obj.hide_render:
-                bpy.data.objects.remove(obj, do_unlink=True)    
 
     clean_names()
 
@@ -596,7 +593,6 @@ def main(args):
             vertex_colors=args.vertex_colors,
             individual_export=args.individual,
         )
-
         # wanted to use shutil here but kept making corrupted files
         subprocess.call(['zip', '-r', str(folder.absolute().with_suffix('.zip')), str(folder.absolute())]) 
     
