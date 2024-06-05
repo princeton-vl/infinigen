@@ -31,6 +31,7 @@ from infinigen.core.util.organization import (
     Transparency,
 )
 from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
+from infinigen.OcMesher.ocmesher import __version__ as ocmesher_version
 from infinigen.terrain.assets.ocean import ocean_asset
 from infinigen.terrain.mesher import (
     OpaqueSphericalMesher,
@@ -48,6 +49,8 @@ from infinigen.terrain.utils import (
     move_modifier,
     write_attributes,
 )
+
+assert ocmesher_version == "1.0"
 
 logger = logging.getLogger(__name__)
 
