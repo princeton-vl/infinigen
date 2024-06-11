@@ -403,7 +403,7 @@ def main(
     **kwargs
 ):
     
-    version_req = ['3.6.0']
+    version_req = ['4.1.0']
     assert bpy.app.version_string in version_req, f'You are using blender={bpy.app.version_string} which is ' \
                                                   f'not supported. Please use {version_req}'
     logger.info(f'infinigen version {infinigen.__version__}')
