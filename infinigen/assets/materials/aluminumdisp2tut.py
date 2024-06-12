@@ -1,15 +1,15 @@
-import os, sys
-import numpy as np
-import math as ma
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Mingzhe Wang
+# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=FY0lR96Mwas by Sam Bowman
+
+
+import os
 import bpy
-import mathutils
-from numpy.random import uniform, normal, randint
 
-from infinigen.assets.materials.utils.surface_utils import clip, sample_range, sample_ratio, sample_color, geo_voronoi_noise
+from infinigen.assets.materials.utils.surface_utils import sample_range, sample_ratio, sample_color
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
-
 from infinigen.core import surface
 
 def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):

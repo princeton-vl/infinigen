@@ -1,22 +1,3 @@
-# START RUN
-# pathspec = 'infinigen.assets.materials.water', kwargs = {}, asset = bpy.data.objects['Icosphere']
-# mat = <module 'infinigen.assets.materials.water' from '/Users/shawwalters/infinigen/infinigen/assets/materials/water.py'>
-
-#     @pytest.mark.ci
-#     @pytest.mark.parametrize('pathspec', load_txt_list('test_materials_basic.txt'))
-#     def test_material_runs(pathspec, **kwargs):
-    
-#         butil.clear_scene()
-#         bpy.ops.mesh.primitive_ico_sphere_add(radius=.8, subdivisions=5)
-#         asset = bpy.context.active_object
-    
-#         mat = import_item(pathspec)
-# >       mat.apply(asset)
-
-# tests/test_materials_basic.py:27: 
-# END RUN
-
-
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
@@ -85,7 +66,7 @@ def geo_water(
         if with_ripples:
             water_height_node.outputs[0].default_value *= 0.1
             ripple_height_node.outputs[0].default_value = water_height
-        water_height_node = nw.scalar_multiply(water_height_node, nw.scalar_add(0.5, nw.new_node(Nodes.MusgraveTexture, input_kwargs={"Scale": rg(height_modulation_scale)})))
+        water_height_node = nw.scalar_multiply(water_height_node, nw.scalar_add(0.5, nw.new_node("ShaderNodeTexMusgrave", input_kwargs={"Scale": rg(height_modulation_scale)})))
         water_dimension_node = nw.new_node(Nodes.Value, label=f"water_dimension")
         water_dimension_node.outputs[0].default_value = rg(water_dimension)
         water_lacunarity_node = nw.new_node(Nodes.Value, label=f"water_lacunarity")
@@ -99,7 +80,7 @@ def geo_water(
         if waves_animation_speed is not None:
             drive_param(animated_position.inputs[0], rg(waves_animation_speed), offset=uniform(0, 10), index=1)
 
-        wave0 = nw.new_node(Nodes.MusgraveTexture, [
+        wave0 = nw.new_node("ShaderNodeTexMusgrave", [
             animated_position, None,
             water_scale_node,
             water_detail_node,
@@ -157,7 +138,7 @@ def geo_water(
             weight1 = nw.scalar_multiply(1 / np.pi, nw.scalar_sub(np.pi / 2, nw.new_node(Nodes.Math, [nw.scalar_multiply(0.1, nw.scalar_add(30, X))], attrs={'operation': 'ARCTANGENT'})))
             weight2 = nw.scalar_add(0.5, nw.scalar_multiply(1 / np.pi, nw.new_node(Nodes.Math, [nw.scalar_multiply(0.1, nw.scalar_add(60, X))], attrs={'operation': 'ARCTANGENT'})))
             offset = nw.multiply(offset, nw.scalar_multiply(weight1, weight2))
-            offset = nw.add(offset, nw.multiply(nw.new_node(Nodes.MusgraveTexture, input_kwargs={"Scale": 1}), [0, 0, 0.03]))
+            offset = nw.add(offset, nw.multiply(nw.new_node("ShaderNodeTexMusgrave", input_kwargs={"Scale": 1}), [0, 0, 0.03]))
             foam = nw.multiply(foam, weight2)
 
         group_input = nw.new_node(
