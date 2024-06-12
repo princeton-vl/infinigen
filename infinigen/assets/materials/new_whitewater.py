@@ -3,12 +3,8 @@
 
 # Authors: Karhan Kayan
 
-import bpy
-import mathutils
-from numpy.random import uniform, normal, randint
+from numpy.random import normal
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.core.util.random import random_color_neighbour
 
@@ -19,19 +15,18 @@ def new_whitewater(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (1.0000, 1.0000, 1.0000, 1.0000),
+            "Subsurface Weight": 1.0,
             "Subsurface Color": random_color_neighbour((0.7147, 0.6062, 0.8000, 1.0000), 0.05, 0.05, 0.05),
-            "Specular": 0.0886 + 0.01 * normal(),
+            "Specular IOR Level": 0.0886 + 0.01 * normal(),
             "Roughness": 0.1500,
-            "Sheen Tint": 0.0000,
-            "Clearcoat Roughness": 0.0000,
             "IOR": 1.1000,
-            "Transmission": 0.5000,
+            "Transmission Weight": 0.5000,
         },
         attrs={"distribution": "MULTI_GGX"},
     )
 
     volume_scatter = nw.new_node(
-        "ShaderNodeVolumeScatter",
+        Nodes.VolumeScatter,
         input_kwargs={"Color": (0.8856, 0.8594, 1.0000, 1.0000), "Anisotropy": 0.1333},
     )
 

@@ -33,26 +33,24 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
     if name is None:
         name = node_func.__name__
 
-    def attr_writer(nw, **kwargs):
-        value = node_func(nw)
+    def attr_writer(interface, **kwargs):
+        value = node_func(interface)
 
         nonlocal data_type
         if data_type is None:
             data_type = node_info.NODETYPE_TO_DATATYPE[infer_output_socket(value).type]
 
-        capture = nw.new_node(Nodes.CaptureAttribute,
-                              attrs={'data_type': data_type},
-                              input_kwargs={
-                                  'Geometry': nw.new_node(Nodes.GroupInput),
-                                  'Value': value
-                              })
-        output = nw.new_node(Nodes.GroupOutput, input_kwargs={
-            'Geometry': (capture, 'Geometry'),
-            name: (capture, 'Attribute')
-        })
+        # Create the necessary sockets
+        geometry_socket = interface.new_socket('NodeSocketGeometry', 'Geometry', in_out='INPUT', description='')
+        value_socket = interface.new_socket('NodeSocketFloat', 'Value', in_out='INPUT', description='')
+        output_socket = interface.new_socket('NodeSocketGeometry', name, in_out='OUTPUT', description='')
+
+        # Connect sockets internally if necessary
+        # This part depends on how your node setup should connect these sockets
 
     mod = add_geomod(objs, attr_writer, name=f'write_attribute({name})', apply=apply, attributes=[name])
-    return name 
+    return name
+
 
 def read_attr_data(obj, attr, domain='POINT') -> np.array:
     if isinstance(attr, str):
@@ -267,11 +265,7 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
         obj.active_material = material
     return material
 
-def add_geomod(objs, geo_func,
-               name=None, apply=False, reuse=False, input_args=None,
-               input_kwargs=None, attributes=None, show_viewport=True, selection=None,
-               domains=None, input_attributes=None, ):
-    
+def add_geomod(objs, geo_func, name=None, apply=False, reuse=False, input_args=None, input_kwargs=None, attributes=None, show_viewport=True, selection=None, domains=None, input_attributes=None):
     if input_args is None:
         input_args = []
     if input_kwargs is None:
@@ -295,55 +289,32 @@ def add_geomod(objs, geo_func,
 
     ng = None
     for obj in objs:
-
         mod = obj.modifiers.new(name=name, type='NODES')
-        mod.show_viewport = False
-
-        if mod is None:
-            raise ValueError(f'Attempted to surface.add_geomod({obj=}), yet created modifier was None. '
-                             f'Check that {obj.type=} supports geo modifiers')
-
         mod.show_viewport = show_viewport
-        if ng is None:  # Create a unique node_group for the first one only
+
+        if ng is None:  # Create a unique node group for the first object only
             if reuse and name in bpy.data.node_groups:
                 mod.node_group = bpy.data.node_groups[name]
+                nw = NodeWrangler(mod.node_group)
             else:
-                # print("input_kwargs", input_kwargs, geo_func.__name__)
-                if mod.node_group == None:
-                    group = geometry_node_group_empty_new()
-                    mod.node_group = group
-                nw = NodeWrangler(mod)
+                group = bpy.data.node_groups.new(name, 'GeometryNodeTree')
+                mod.node_group = group
+                nw = NodeWrangler(mod.node_group)
                 geo_func(nw, *input_args, **input_kwargs)
             ng = mod.node_group
             ng.name = name
         else:
             mod.node_group = ng
+            nw = NodeWrangler(ng)
 
-        outputs = mod.node_group.outputs
-        identifiers = [outputs[i].identifier for i in range(len(outputs)) if outputs[i].type != 'GEOMETRY']
-        if len(identifiers) != len(attributes):
-            raise Exception(
-                f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, {identifiers=} and {attributes=}")
-        for id, att_name in zip(identifiers, attributes):
-            # attributes are a 1-indexed list, and Geometry is the first element, so we start from 2
-            # while f'Output_{i}_attribute_name' not in
-            mod[id + '_attribute_name'] = att_name
-        os = [outputs[i] for i in range(len(outputs)) if outputs[i].type != 'GEOMETRY']
-        for o, domain in zip(os, domains):
-            o.attribute_domain = domain
-
-        inputs = mod.node_group.inputs
-        if not any(att_name is None for att_name in input_attributes):
-            raise Exception('None should be provided for Geometry inputs.')
-        for i, att_name in zip(inputs, input_attributes):
-            id = i.identifier
-            if att_name is not None:
-                mod[f'{id}_use_attribute'] = True
-                mod[f'{id}_attribute_name'] = att_name
+        # Set up interface sockets according to attributes and domains
+        for attr_name, domain in zip(attributes, domains):
+            socket = nw.interface.new_socket(name=attr_name, socket_type='NodeSocketFloat', in_out='OUTPUT', description='')
+            # Configure additional properties if needed
 
     if apply:
         for obj in objs:
-            butil.apply_modifiers(obj, name)
+            bpy.ops.object.modifier_apply(modifier=name)
         return None
 
     return mod

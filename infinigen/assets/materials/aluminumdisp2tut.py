@@ -1,9 +1,3 @@
-# Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
-
-# Authors: Mingzhe Wang
-# Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=FY0lR96Mwas by Sam Bowman
-
 import os, sys
 import numpy as np
 import math as ma
@@ -19,25 +13,26 @@ from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
 def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
-    # Code generated using version 2.4.3 of the node_transpiler
-
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
     
     separate_xyz = nw.new_node(Nodes.SeparateXYZ,
         input_kwargs={'Vector': texture_coordinate.outputs["Generated"]})
     
     multiply = nw.new_node(Nodes.Math,
-        input_kwargs={0: separate_xyz.outputs["X"], 1: 0.1},
+        input_kwargs={'Value': separate_xyz.outputs["X"], 'Value_1': 0.1},
         attrs={'operation': 'MULTIPLY'})
     if rand:
-        multiply.inputs[1].default_value = sample_range(-1, 1)
+        multiply.inputs['Value_1'].default_value = sample_range(-1, 1)
+    
     multiply_1 = nw.new_node(Nodes.Math,
-        input_kwargs={0: separate_xyz.outputs["Y"]},
+        input_kwargs={'Value': separate_xyz.outputs["Y"], 'Value_1': 0.1},
         attrs={'operation': 'MULTIPLY'})
     if rand:
-        multiply_1.inputs[1].default_value = sample_range(-1, 1)
+        multiply_1.inputs['Value_1'].default_value = sample_range(-1, 1)
+    
     add = nw.new_node(Nodes.Math,
-        input_kwargs={0: multiply, 1: multiply_1})
+        input_kwargs={'Value': multiply.outputs["Value"], 'Value_1': multiply_1.outputs["Value"]},
+        attrs={'operation': 'ADD'})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'Z': add})
@@ -48,13 +43,9 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     mapping = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: mapping_1.outputs["Vector"], 1: (1, 75, 1)},
         attrs={'operation': 'MULTIPLY'})
-
-    #mapping = nw.new_node(Nodes.Mapping,
-    #    input_kwargs={'Vector': mapping_1, 'Scale': (1.0, sample_range(50, 100) if rand else 75.0, 1.0)})
     
     musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
-        input_kwargs={'Vector': mapping, 'W': 0.7, 'Scale': 2.0, 'Detail': 10.0, 'Dimension': 1.0},
-        attrs={'musgrave_dimensions': '4D'})
+        input_kwargs={'Vector': mapping.outputs["Vector"], 'W': 0.7, 'Scale': 2.0, 'Detail': 10.0, 'Dimensions': '4D'})
     if rand:
         musgrave_texture.inputs['W'].default_value = sample_range(0, 5)
         musgrave_texture.inputs['Scale'].default_value = sample_ratio(2, 0.5, 2)
@@ -80,7 +71,6 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
         for e in colorramp_1.color_ramp.elements:
             sample_color(e.color, offset=0.02)
 
-
     colorramp = nw.new_node(Nodes.ColorRamp,
         input_kwargs={'Fac': colorramp_4.outputs["Color"]})
     colorramp.color_ramp.elements[0].position = 0.74
@@ -96,7 +86,7 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp_1.outputs["Color"], 'Metallic': colorramp.outputs["Color"], 'Roughness': colorramp_3.outputs["Color"]},
+        input_kwargs={'Base Color': colorramp_1.outputs["Color"], 'Metallic': colorramp.outputs["Color"], 'Specular IOR Level': colorramp_3.outputs["Color"]},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
@@ -104,16 +94,9 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
 
 def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
+    # NodeWrangler has a new `interface` attribute that allows you to access the node wrangler interface
 
-    group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketGeometry', 'Geometry', None)])
-    
-    #subdivide_level = nw.new_node(Nodes.Value,
-    #    label='SubdivideLevel')
-    #subdivide_level.outputs[0].default_value = 0
-    
-    #subdivide_mesh = nw.new_node(Nodes.SubdivideMesh,
-    #    input_kwargs={'Mesh': group_input.outputs["Geometry"], 'Level': subdivide_level})
+    group_input = nw.expose_input('Geometry', dtype='NodeSocketGeometry')
     
     position = nw.new_node(Nodes.InputPosition)
     
@@ -125,7 +108,7 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
         input_kwargs={0: position, 1: scale},
         attrs={'operation': 'MULTIPLY'})
     
-    noise_texture = nw.new_node(Nodes.NoiseTexture,
+    noise_texture = nw.new_node(Nodes.MusgraveTexture,
         input_kwargs={'Vector': multiply.outputs["Vector"], 'Scale': 4.0},
         attrs={'noise_dimensions': '4D'})
     if rand:
@@ -178,7 +161,7 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
         attrs={'operation': 'MULTIPLY'})
     
     set_position = nw.new_node(Nodes.SetPosition,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': multiply_2.outputs["Vector"]})
+        input_kwargs={'Geometry': group_input, 'Offset': multiply_2.outputs["Vector"]})
     
     capture_attribute = nw.new_node(Nodes.CaptureAttribute,
         input_kwargs={'Geometry': set_position, 1: mix},

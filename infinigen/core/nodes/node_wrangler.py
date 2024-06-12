@@ -31,11 +31,14 @@ class NodeMisuseWarning(UserWarning):
     pass
 
 
-# This is for Blender 3.3 because of the nodetree change
+# This is for Blender 4.1 because of the nodetree change
 def geometry_node_group_empty_new():
     group = bpy.data.node_groups.new("Geometry Nodes", 'GeometryNodeTree')
-    group.inputs.new('NodeSocketGeometry', "Geometry")
-    group.outputs.new('NodeSocketGeometry', "Geometry")
+    interface = group.interface
+
+    interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry', description="")
+    interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry', description="")
+
     input_node = group.nodes.new('NodeGroupInput')
     output_node = group.nodes.new('NodeGroupOutput')
     output_node.is_active_output = True
@@ -49,6 +52,7 @@ def geometry_node_group_empty_new():
     group.links.new(output_node.inputs[0], input_node.outputs[0])
 
     return group
+
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
@@ -138,6 +142,8 @@ class NodeWrangler():
         else:
             raise ValueError(f'Couldnt initialize NodeWrangler with {node_group=}, {type(node_group)=}')
 
+        self.interface = self.node_group.interface
+
         self.nodes = self.node_group.nodes
         self.links = self.node_group.links
 
@@ -174,7 +180,7 @@ class NodeWrangler():
             logger.debug(f'Using {compat_map.__name__=} for {node_type=}')
             return compat_map(self, node_type, input_args, attrs, input_kwargs)
 
-        node = self._make_node(node_type)
+        node = self.node_group.nodes.new(type=node_type)
 
         if label is not None:
             node.label = label
@@ -188,9 +194,10 @@ class NodeWrangler():
                 #    aware')
                 try:
                     setattr(node, key, val)
-                except AttributeError:
-                    exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
+                except AttributeError as e:
+                    logger.error(f"Failed to set attribute {key} on node {node.name}: {e}")
 
+        # TODO: This section causes errors
         if node_type in [Nodes.VoronoiTexture, Nodes.NoiseTexture, Nodes.WaveTexture, Nodes.WhiteNoiseTexture,
             Nodes.MusgraveTexture]:
             if not (input_args != [] or "Vector" in input_kwargs):
@@ -204,41 +211,41 @@ class NodeWrangler():
                 else:
                     pass #print(f"{w}, please fix it if you found it causes inconsistency")
 
-        input_keyval_list = list(enumerate(input_args)) + list(input_kwargs.items())
-        for input_socket_name, input_item in input_keyval_list:
-            if input_item is None:
-                continue
-            if node_type == Nodes.GroupOutput:
-                assert not isinstance(input_socket_name,
-                                      int), f'Attribute inputs to group output nodes must be given a string ' \
-                                            f'name, integer name ' \
-                                            f'{input_socket_name} will not suffice'
-                assert not isinstance(input_item,
-                                      list), 'Multi-input sockets to GroupOutput nodes are impossible'
-                if input_socket_name not in node.inputs:
-                    nodeclass = infer_output_socket(input_item).bl_idname
-                    self.node_group.outputs.new(nodeclass, input_socket_name)
-                    assert input_socket_name in node.inputs and node.inputs[input_socket_name].enabled
+        # input_keyval_list = list(enumerate(input_args)) + list(input_kwargs.items())
+        # for input_socket_name, input_item in input_keyval_list:
+        #     if input_item is None:
+        #         continue
+        # if node_type == Nodes.GroupOutput:
+        #     assert not isinstance(input_socket_name, int), (
+        #         'Attribute inputs to group output nodes must be given a string '
+        #         'name, integer name {input_socket_name} will not suffice'
+        #     )
+        #     assert not isinstance(input_item, list), 'Multi-input sockets to GroupOutput nodes are impossible'
+        #     if input_socket_name not in node.inputs:
+        #         nodeclass = infer_output_socket(input_item).bl_idname
+        #         self.node_group.interface.new_socket(
+        #             name=input_socket_name, in_out='OUTPUT', socket_type=nodeclass, description=''
+        #         )
+        #         assert input_socket_name in node.inputs and node.inputs[input_socket_name].enabled
 
-            input_socket = infer_input_socket(node, input_socket_name)
-            self.connect_input(input_socket, input_item)
+        #     input_socket = infer_input_socket(node, input_socket_name)
+        #     self.connect_input(input_socket, input_item)
 
-        if expose_input is not None:
-            names = [v[1] for v in expose_input]
-            uniq, counts = np.unique(names, return_counts=True)
-            if (counts > 1).any():
-                raise ValueError(f'expose_input with {names} features duplicate entries. in bl3.5 this is invalid.')
-            for inp in expose_input:
-                nodeclass, name, val = inp
-                self.expose_input(name, val=val, dtype=nodeclass)
+        # if expose_input is not None:
+        #     names = [v[1] for v in expose_input]
+        #     uniq, counts = np.unique(names, return_counts=True)
+        #     if (counts > 1).any():
+        #         raise ValueError(f'expose_input with {names} features duplicate entries. in bl3.5 this is invalid.')
+        #     for inp in expose_input:
+        #         nodeclass, name, val = inp
+        #         self.expose_input(name, val=val, dtype=nodeclass)
 
         return node
+
 
     def expose_input(self, name, val=None, attribute=None, dtype=None, use_namednode=False):
         '''
         Expose an input to the nodegroups interface, making it able to be specified externally
-
-        If this nodegroup is 
         '''
 
         if attribute is not None:
@@ -255,13 +262,8 @@ class NodeWrangler():
 
         group_input = self.new_node(Nodes.GroupInput)  # will reuse singleton
 
-        if name in self.node_group.inputs:
-            assert len([o for o in group_input.outputs if o.name == name]) == 1
-            return group_input.outputs[name]
-
-        # Infer from args what type of node input to make (NodeSocketFloat / NodeSocketVector / etc)
         nodeclass = self._infer_nodeclass_from_args(dtype, val)
-        inp = self.node_group.inputs.new(nodeclass, name)
+        inp = self.node_group.interface.new_socket(name=name, in_out='INPUT', socket_type=nodeclass)
 
         def prepare_cast(to_type, val):
             # cast val only when necessary, and only when type(val) wont crash
@@ -285,8 +287,8 @@ class NodeWrangler():
                 self.modifier[f'{id}_attribute_name'] = attribute
                 self.modifier[f'{id}_use_attribute'] = 1
 
-        assert len([o for o in group_input.outputs if o.name == name]) == 1
-        return group_input.outputs[name]
+        return group_input.outputs[inp.name]
+
 
     @staticmethod
     def _infer_nodeclass_from_args(dtype, val=None):

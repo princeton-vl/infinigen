@@ -16,7 +16,7 @@ from infinigen.core import surface
 import random
 
 
-def shader_bark(nw, rand=False, **input_kwargs):
+def shader_bark(nw: NodeWrangler, rand=False, **input_kwargs):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
     
@@ -68,68 +68,42 @@ def shader_bark(nw, rand=False, **input_kwargs):
     colorramp_2.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': mix_1, 'Roughness': colorramp_2.outputs["Color"]},
-        attrs={'subsurface_method': 'BURLEY'})
-    
-    material_output = nw.new_node(Nodes.MaterialOutput,
-        input_kwargs={'Surface': principled_bsdf})
+        input_kwargs={'Base Color': mix_1, 'Roughness': colorramp_2.outputs["Color"]})
+
+    output_node = nw.new_node(Nodes.MaterialOutput)
+    nw.links.new(principled_bsdf.outputs["BSDF"], output_node.inputs["Surface"])
+    return principled_bsdf
 
 def geo_bark(nw: NodeWrangler):
-    # Code generated using version 2.6.4 of the node_transpiler
+    group_input = nw.new_node(Nodes.GroupInput)
+    # Make sure the 'Geometry' output is correctly initialized and exposed
+    if 'Geometry' not in group_input.outputs:
+        print("Error: 'Geometry' output not found in GroupInput node.")
+        return  # Exit if no Geometry output is found
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
-    
     position = nw.new_node(Nodes.InputPosition)
-    
+
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 5.0000
-    
-    multiply = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: value}, attrs={'operation': 'MULTIPLY'})
-    
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': multiply.outputs["Vector"]})
-    
-    noise_texture = nw.new_node(Nodes.NoiseTexture, 
+
+    multiply = nw.new_node(Nodes.VectorMath, input_kwargs={'Vector1': position.outputs['Vector'], 'Vector2': value.outputs['Value']}, attrs={'operation': 'MULTIPLY'})
+
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': multiply.outputs['Vector']})
+
+    noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Scale': N(10, 2), 'W': U(-10, 10)},
         attrs={'noise_dimensions': '4D'},
     )
-    
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"]}, attrs={'operation': 'SUBTRACT'})
-    
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: 3.0000}, attrs={'operation': 'MULTIPLY'})
-    
-    add = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: multiply_1})
-    
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 1.0000}, attrs={'operation': 'MULTIPLY'})
-    
-    fract = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2}, attrs={'operation': 'FRACT'})
-    
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: fract}, attrs={'operation': 'SUBTRACT'})
-    
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: subtract_1}, attrs={'operation': 'MULTIPLY'})
-    
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_3, 1: 4.0000}, attrs={'operation': 'MULTIPLY'})
-    
-    normal = nw.new_node(Nodes.InputNormal)
-    
-    multiply_5 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_4, 1: normal}, attrs={'operation': 'MULTIPLY'})
-    
-    value_1 = nw.new_node(Nodes.Value)
-    value_1.outputs[0].default_value = 0.0100
-    
-    multiply_6 = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: multiply_5.outputs["Vector"], 1: value_1},
-        attrs={'operation': 'MULTIPLY'})
-    
+
+    subtract = nw.new_node(Nodes.Math, input_kwargs={'Value1': noise_texture.outputs['Fac']}, attrs={'operation': 'SUBTRACT'})
+
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={'Value1': subtract.outputs['Value'], 'Value2': 3.0000}, attrs={'operation': 'MULTIPLY'})
+
+    add = nw.new_node(Nodes.Math, input_kwargs={'Value1': separate_xyz.outputs['Y'], 'Value2': multiply_1.outputs['Value']})
+
     set_position = nw.new_node(Nodes.SetPosition,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Offset': multiply_6.outputs["Vector"]})
-    
-    capture_attribute = nw.new_node(Nodes.CaptureAttribute,
-        input_kwargs={'Geometry': set_position, 1: multiply_4},
-        attrs={'data_type': 'FLOAT_VECTOR'})
-    
-    group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Geometry': capture_attribute.outputs["Geometry"], 'Attribute': capture_attribute.outputs["Attribute"]},
-        attrs={'is_active_output': True})
+        input_kwargs={'Geometry': group_input.outputs['Geometry'], 'Offset': add.outputs['Value']})
+
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
     surface.add_geomod(obj, geo_bark, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])

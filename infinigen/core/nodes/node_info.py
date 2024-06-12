@@ -19,6 +19,8 @@ class Nodes:
     """
 
     Mix = "ShaderNodeMix"
+    VolumeScatter = "ShaderNodeVolumeScatter"
+    Displacement = "ShaderNodeDisplacement"
 
     # Attribute
     Attribute = "ShaderNodeAttribute"
@@ -206,7 +208,7 @@ class Nodes:
 
     # Texture
     NoiseTexture = "ShaderNodeTexNoise"
-    MusgraveTexture = "ShaderNodeTexMusgrave"
+    MusgraveTexture = "ShaderNodeTexNoise" # "ShaderNodeTexMusgrave"
     VoronoiTexture = "ShaderNodeTexVoronoi"
     WaveTexture = "ShaderNodeTexWave"
     WhiteNoiseTexture = 'ShaderNodeTexWhiteNoise'

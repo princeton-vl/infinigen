@@ -18,7 +18,7 @@ from infinigen.core import surface
 
 def shader_chitin(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
-
+    # NodeWrangler has a new `interface` attribute that allows you to access the node wrangler interface
     geometry = nw.new_node('ShaderNodeNewGeometry')
     
     colorramp_1 = nw.new_node(Nodes.ColorRamp,
@@ -151,8 +151,6 @@ def shader_chitin(nw: NodeWrangler, rand=True, **input_kwargs):
     colorramp_2.color_ramp.elements[1].color = (0.1347, 0.0156, 0.0115, 1.0)
     if rand:
         colorramp_2.color_ramp.elements[1].color = hsv2rgba((np.mod(normal(0.2, 0.4), 1), uniform(0, 1), uniform(0.05, 0.5)))
-        #for i in range(3):
-        #    colorramp_2.color_ramp.elements[1].color[i] /= 7
 
     invert = nw.new_node('ShaderNodeInvert',
         input_kwargs={'Color': multiply_2})
@@ -168,15 +166,21 @@ def shader_chitin(nw: NodeWrangler, rand=True, **input_kwargs):
         input_kwargs={'Base Color': colorramp_2.outputs["Color"], 'Metallic': 0.7, 'Roughness': colorramp_11.outputs["Color"]},
         attrs={'subsurface_method': 'BURLEY'})
     
-    material_output = nw.new_node(Nodes.MaterialOutput,
-        input_kwargs={'Surface': principled_bsdf})
+    output_node = nw.new_node(Nodes.MaterialOutput)
+    nw.links.new(principled_bsdf.outputs["BSDF"], output_node.inputs["Surface"])
+    return principled_bsdf
+
 
 def geometry_chitin(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
+    # NodeWrangler has a new `interface` attribute that allows you to access the node wrangler interface
 
-    group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketGeometry', 'Geometry', None)])
-    
+    group_input = nw.new_node(Nodes.GroupInput)
+    # Make sure the 'Geometry' output is correctly initialized and exposed
+    if 'Geometry' not in group_input.outputs:
+        print("Error: 'Geometry' output not found in GroupInput node.")
+        return  # Exit if no Geometry output is found
+
     normal = nw.new_node(Nodes.InputNormal)
     
     noise_texture = nw.new_node(Nodes.NoiseTexture,
@@ -213,12 +217,7 @@ def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
 if __name__ == "__main__":
     for i in range(1):
         bpy.ops.wm.open_mainfile(filepath='dev_scene_1019.blend')
-        #creature(73349, 0).parts(0, factory=QuadrupedBody)
         obj = "creature(36230, 0).parts(0, factory=BeetleBody)"
-        #obj = "creature(73349, 0).parts(0, factory=QuadrupedBody)"
         apply(bpy.data.objects[obj], geo_kwargs={'rand': True}, shader_kwargs={'rand': True})
         fn = os.path.join(os.path.abspath(os.curdir), 'dev_scene_test_beetle_attr.blend')
         bpy.ops.wm.save_as_mainfile(filepath=fn)
-        #bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
-        #bpy.context.scene.render.image_settings.file_format='JPEG'
-        #bpy.ops.render.render(write_still=True)
