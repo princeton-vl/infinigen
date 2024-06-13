@@ -27,25 +27,6 @@ BUILD_OPENGL = os.environ.get('INFINIGEN_INSTALL_CUSTOMGT', "False") == str_true
 dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
 is_build_step = not any(x in sys.argv[1] for x in dont_build_steps) 
 
-def ensure_submodules():
-    # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
-
-    with (cwd/'.gitmodules').open() as f:
-        submodule_folders = [
-            cwd/line.split("=", 1)[1].strip()
-            for line in f.readlines()
-            if line.strip().startswith("path")
-        ]
-
-    if any(not p.exists() or not any(p.iterdir()) for p in submodule_folders):
-        subprocess.run(
-            ["git", "submodule", "update", "--init", "--recursive"], 
-            cwd=cwd,
-            check=True
-        )    
-
-ensure_submodules()
-
 # inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
 if is_build_step and not MINIMAL_INSTALL:

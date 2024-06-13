@@ -26,7 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
 
       - name: Lint with ruff
         run: |
