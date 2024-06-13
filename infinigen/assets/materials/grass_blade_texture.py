@@ -187,7 +187,7 @@ def shader_grass_texture_original(nw: NodeWrangler):
         input_kwargs={'Vector': separate_xyz.outputs["Y"], 'Scale': 25.0, 'Distortion': 8.0, 'Detail Scale': 6.0})
     
     musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
-        input_kwargs={'Vector': combine_xyz, 'Scale': 8.0, 'Detail': 5.0, 'Dimension': 0.1, 'Lacunarity': 3.0})
+        input_kwargs={'Vector': combine_xyz, 'Scale': 8.0, 'Detail': 5.0, 'Roughness': 0.1, 'Lacunarity': 3.0})
     
     mix_1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': 0.2, 'Color1': wave_texture.outputs["Color"], 'Color2': musgrave_texture})

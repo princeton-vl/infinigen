@@ -19,19 +19,19 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
         input_kwargs={'Vector': texture_coordinate.outputs["Generated"]})
     
     multiply = nw.new_node(Nodes.Math,
-        input_kwargs={'Value': separate_xyz.outputs["X"], 'Value_1': 0.1},
+        input_kwargs={'Value': separate_xyz.outputs["X"], 'Value_001': 0.1},
         attrs={'operation': 'MULTIPLY'})
     if rand:
-        multiply.inputs['Value_1'].default_value = sample_range(-1, 1)
+        multiply.inputs['Value_001'].default_value = sample_range(-1, 1)
     
     multiply_1 = nw.new_node(Nodes.Math,
-        input_kwargs={'Value': separate_xyz.outputs["Y"], 'Value_1': 0.1},
+        input_kwargs={'Value': separate_xyz.outputs["Y"], 'Value_001': 0.1},
         attrs={'operation': 'MULTIPLY'})
     if rand:
-        multiply_1.inputs['Value_1'].default_value = sample_range(-1, 1)
+        multiply_1.inputs['Value_001'].default_value = sample_range(-1, 1)
     
     add = nw.new_node(Nodes.Math,
-        input_kwargs={'Value': multiply.outputs["Value"], 'Value_1': multiply_1.outputs["Value"]},
+        input_kwargs={'Value': multiply.outputs["Value"], 'Value_001': multiply_1.outputs["Value"]},
         attrs={'operation': 'ADD'})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
@@ -45,9 +45,10 @@ def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
         attrs={'operation': 'MULTIPLY'})
     
     musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
-        input_kwargs={'Vector': mapping.outputs["Vector"], 'W': 0.7, 'Scale': 2.0, 'Detail': 10.0, 'Dimensions': '4D'})
+        input_kwargs={'Vector': mapping.outputs["Vector"], 'Roughness': 0.7, 'Scale': 2.0, 'Detail': 10.0},
+        attrs={'musgrave_dimensions': '4D'})
     if rand:
-        musgrave_texture.inputs['W'].default_value = sample_range(0, 5)
+        musgrave_texture.inputs['Roughness'].default_value = sample_range(0, 5)
         musgrave_texture.inputs['Scale'].default_value = sample_ratio(2, 0.5, 2)
 
     colorramp_4 = nw.new_node(Nodes.ColorRamp,

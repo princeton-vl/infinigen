@@ -298,7 +298,7 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind='duck', **input_kwargs):
         group.inputs['W'].default_value = sample_range(-2, 2)
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': group, 'Subsurface IOR': 0.0, 'Specular': 0.0, 'Roughness': 1.0})
+        input_kwargs={'Base Color': group, 'Subsurface Weight': 0.0, 'Roughness': 1.0})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})
@@ -356,7 +356,7 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind='duck', tail=False, **
         input_kwargs={'Fac': 0.5 if tail else 1.0, 'Color1': colorramp2.outputs["Color"], 'Color2': colorramp.outputs["Color"]})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-    input_kwargs={'Base Color': (mix, "Result"), 'Specular': 0.0, 'Roughness': 1.0},
+    input_kwargs={'Base Color': (mix, "Result"), 'Roughness': 1.0},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
@@ -445,7 +445,7 @@ def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': (0.0091, 0.0091, 0.0091, 1.0), 'Specular': 0.0, 'Roughness': 0.4409})
+        input_kwargs={'Base Color': (0.0091, 0.0091, 0.0091, 1.0), 'Roughness': 0.4409})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})

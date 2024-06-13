@@ -21,6 +21,7 @@ class Nodes:
     Mix = "ShaderNodeMix"
     VolumeScatter = "ShaderNodeVolumeScatter"
     Displacement = "ShaderNodeDisplacement"
+    Tree = "ShaderNodeTree"
 
     # Attribute
     Attribute = "ShaderNodeAttribute"

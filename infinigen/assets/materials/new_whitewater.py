@@ -16,8 +16,7 @@ def new_whitewater(nw: NodeWrangler):
         input_kwargs={
             "Base Color": (1.0000, 1.0000, 1.0000, 1.0000),
             "Subsurface Weight": 1.0,
-            "Subsurface Color": random_color_neighbour((0.7147, 0.6062, 0.8000, 1.0000), 0.05, 0.05, 0.05),
-            "Specular IOR Level": 0.0886 + 0.01 * normal(),
+            "Subsurface Radius": (0.05, 0.05, 0.05),
             "Roughness": 0.1500,
             "IOR": 1.1000,
             "Transmission Weight": 0.5000,
@@ -33,9 +32,7 @@ def new_whitewater(nw: NodeWrangler):
     material_output = nw.new_node(
         Nodes.MaterialOutput,
         input_kwargs={"Surface": principled_bsdf, "Volume": volume_scatter},
-        attrs={"is_active_output": True},
     )
-
 
 def apply(obj, selection=None, **kwargs):
     surface.add_material(obj, new_whitewater, selection=selection)

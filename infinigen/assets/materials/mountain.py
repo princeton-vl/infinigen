@@ -29,8 +29,8 @@ def geo_MOUNTAIN_general(
     crack_modulation_params,
     selection=None
 ):
-    position = nw.new_node("GeometryNodeInputPosition", [])
-    normal = nw.new_node("GeometryNodeInputNormal", [])
+    position = nw.new_node(Nodes.InputPosition, [])
+    normal = nw.new_node(Nodes.InputNormal, [])
 
     noises = []
 
@@ -231,7 +231,7 @@ def shader_MOUNTAIN(
             z_noise.inputs[1].default_value = np.random.uniform(0.1, 0.3)
             z = nw.add2(z, z_noise)
 
-            ramp = nw.new_node('ShaderNodeValToRGB', [z])
+            ramp = nw.new_node(Nodes.ColorRamp, [z])
             elements = ramp.color_ramp.elements
             elements.remove(elements[0])
             # todo: better way to sample the initial color

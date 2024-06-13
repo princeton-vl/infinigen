@@ -25,19 +25,18 @@ def shader_material(nw: NodeWrangler):
         input_kwargs={'Surface': principled_bsdf})
 
 def geo_face_colors(nw: NodeWrangler):
-    # Code generated using version 2.4.3 of the node_transpiler
+    # Code generated using version 2.6.5 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketGeometry', 'Geometry', None)])
+    group_input = nw.expose_input('Geometry', dtype='NodeSocketGeometry')
     
     random_value = nw.new_node(Nodes.RandomValue,
         attrs={'data_type': 'FLOAT_VECTOR'})
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
-        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': 'col', "Value": random_value.outputs["Value"]},
+        input_kwargs={'Geometry': group_input, 'Name': 'col', "Value": random_value.outputs["Value"]},
         attrs={'data_type': 'FLOAT_VECTOR', 'domain': 'FACE'})
     
-    group_output = nw.new_node(Nodes.GroupOutput,
+    nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': store_named_attribute})
 
 

@@ -105,7 +105,7 @@ def shader_snake_plant(nw: NodeWrangler):
                                     'Color2': colorramp_3.outputs["Color"]})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-                                  input_kwargs={'Base Color': mix, 'Roughness': U(8.0, 15.0), 'Clearcoat Roughness': 0.0})
+                                  input_kwargs={'Base Color': mix, 'Roughness': U(8.0, 15.0), 'Coat Roughness': 0.0})
 
     material_output = nw.new_node(Nodes.MaterialOutput,
                                   input_kwargs={'Surface': principled_bsdf})

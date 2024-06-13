@@ -26,7 +26,7 @@ def shader_tongue(nw: NodeWrangler):
     colorramp.color_ramp.elements[1].color = (0.0979, 0.0979, 0.0979, 1.0)
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': (0.8, 0.0605, 0.0437, 1.0), 'Subsurface': 0.0312, 'Subsurface Color': (0.8, 0.0, 0.2679, 1.0), 'Roughness': colorramp.outputs["Color"]})
+        input_kwargs={'Base Color': (0.8, 0.0605, 0.0437, 1.0), 'Subsurface Weight': 0.0312, 'Roughness': colorramp.outputs["Color"]})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})
