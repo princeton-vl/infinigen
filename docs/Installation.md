@@ -63,7 +63,7 @@ On Linux / Mac / WSL:
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
-conda create --name infinigen python=3.10
+conda create --name infinigen python=3.11
 conda activate infinigen
 ```
 

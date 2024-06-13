@@ -67,8 +67,8 @@ def geo_SAND(nw,
     selection=None,
 ):
     nw.force_input_consistency()
-    normal = nw.new_node("GeometryNodeInputNormal", [])
-    position = nw.new_node("GeometryNodeInputPosition", [])
+    normal = nw.new_node(Nodes.InputNormal, [])
+    position = nw.new_node(Nodes.InputPosition, [])
 
     offsets = []
     for i in range(n_waves):

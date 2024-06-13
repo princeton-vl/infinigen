@@ -54,7 +54,7 @@ def shader_black_white_snake(nw: NodeWrangler, rand=True):
             sample_color(e.color, offset=0.05, keep_sum=True)
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Metallic': 0.6, 'Specular': 0.2, 'Roughness': 0.4},
+        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Metallic': 0.6, 'Roughness': 0.4},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,
@@ -83,7 +83,7 @@ def shader_brown(nw: NodeWrangler, rand=False):
             sample_color(e.color, offset=0.05)
     
     principled_bsdf_1 = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp_2.outputs["Color"], 'Metallic': 0.4, 'Specular': 0.3, 'Roughness': 1},
+        input_kwargs={'Base Color': colorramp_2.outputs["Color"], 'Metallic': 0.4, 'Roughness': 1},
         attrs={'subsurface_method': 'BURLEY'})
     
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
@@ -183,7 +183,7 @@ def shader_golden(nw: NodeWrangler, rand=False):
             sample_color(e.color, offset=0.05, keep_sum=True)
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Metallic': 0.4, 'Specular': 0.2, 'Roughness': 0.4},
+        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Metallic': 0.4, 'Roughness': 0.4},
         attrs={'subsurface_method': 'BURLEY'})
     
     material_output = nw.new_node(Nodes.MaterialOutput,

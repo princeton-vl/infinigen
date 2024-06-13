@@ -13,7 +13,7 @@ from tqdm import trange
 import bpy
 
 from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, geometry_node_group_empty_new
 from infinigen.core.util.blender import group_in_collection
 from infinigen.core.util.color import random_color_mapping
 
@@ -47,7 +47,8 @@ def to_nodegroup(name, singleton, type='GeometryNodeTree'):
             if singleton and name in bpy.data.node_groups:
                 return bpy.data.node_groups[name]
             else:
-                ng = bpy.data.node_groups.new(name, type)
+                ng = geometry_node_group_empty_new()
+                ng.name = name
                 nw = NodeWrangler(ng)
                 fn(nw, *args, **kwargs)
                 return ng

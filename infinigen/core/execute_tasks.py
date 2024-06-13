@@ -47,10 +47,10 @@ from infinigen.assets.scatters import (
     pine_needle, seaweed, coral_reef, jellyfish, urchin
 )
 
-from infinigen.assets.materials import (
-    mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
-    soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
-)
+# from infinigen.assets.materials import (
+#     mountain, sand, water, atmosphere_light_haze, sandstone, cracked_ground, \
+#     soil, dirt, cobble_stone, chunkyrock, stone, lava, ice, mud, snow
+# )
 
 from infinigen.assets import (
     fluid, 
@@ -403,7 +403,7 @@ def main(
     **kwargs
 ):
     
-    version_req = ['3.6.0']
+    version_req = ['4.1.0']
     assert bpy.app.version_string in version_req, f'You are using blender={bpy.app.version_string} which is ' \
                                                   f'not supported. Please use {version_req}'
     logger.info(f'infinigen version {infinigen.__version__}')

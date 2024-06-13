@@ -54,10 +54,9 @@ def shader_slimy(nw, rand=False, **input_kwargs):
         input_kwargs={'Color1': colorramp_1.outputs["Color"], 'Color2': colorramp_4.outputs["Color"]})
     
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': (0.6605, 0.0279, 0.0359, 1.0), 'Subsurface': 0.2, 'Subsurface Color': (0.4621, 0.0213, 0.0265, 1.0), 'Specular': 0.8591, 'Roughness': mix_1})
+        input_kwargs={'Base Color': (0.6605, 0.0279, 0.0359, 1.0), 'Subsurface Weight': 0.2, 'Roughness': mix_1})
     if rand:
         sample_color(principled_bsdf.inputs['Base Color'].default_value)
-        sample_color(principled_bsdf.inputs['Subsurface Color'].default_value)
 
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf})

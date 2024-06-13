@@ -16,7 +16,7 @@ def shader_nose(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
-        input_kwargs={'Scale': U(2, 6), 'Detail': 14.699999999999999, 'Dimension': 1.5})
+        input_kwargs={'Scale': U(2, 6), 'Detail': 14.699999999999999, 'Roughness': 1.5})
     
     colorramp = nw.new_node(Nodes.ColorRamp,
         input_kwargs={'Fac': musgrave_texture})

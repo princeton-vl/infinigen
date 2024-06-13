@@ -17,7 +17,7 @@ def shader_spider_plant(nw: NodeWrangler):
     main_color = hsv2rgba(main_hsv_color)
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-                                  input_kwargs={'Base Color': main_color, 'Subsurface IOR': 1.01,
+                                  input_kwargs={'Base Color': main_color, 'Subsurface Weight': 1.01,
                                                 'Roughness': 2.0})
 
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF,

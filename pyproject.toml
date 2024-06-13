@@ -15,14 +15,13 @@ keywords = [
     "procedural"
 ]
 classifiers = [
-    "Framework :: Blender", 
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10"
+    "Programming Language :: Python :: 3.11"
 ]
 
-requires-python = "==3.10.*"
+requires-python = "==3.11.*"
 dependencies = [
-    "bpy==3.6.0",
+    "bpy==4.1.0",
     "einops",
     "flow_vis",
     "frozendict",
