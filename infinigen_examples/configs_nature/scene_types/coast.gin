@@ -1,0 +1,46 @@
+water.is_ocean = False
+water.coastal = 1
+water.shader.colored = 0
+water.geo.with_ripples = 0
+sand.shader.wet = 1
+
+
+# scene composition config
+LandTiles.tile_density = 1.5
+LandTiles.tiles = ["MultiMountains", "Coast", "MultiMountains"]
+LandTiles.tile_heights = [-10, 0, 0]
+LandTiles.attribute_modification_start_height = ("uniform", -6, -5)
+LandTiles.attribute_modification_end_height = ("uniform", 2, 4)
+LandTiles.use_cblerp = 1
+LandTiles.smooth = 1
+
+scene.ground_chance = 0
+scene.waterbody_chance = 1
+scene.warped_rocks_chance = 0
+scene.voronoi_rocks_chance = 0.8
+scene.volcanos_chance = 0.5
+
+
+# lighting
+nishita_lighting.dust_density = 0
+nishita_lighting.air_density = ("uniform", 0.2, 0.5)
+
+shader_atmosphere.anisotropy = 1
+shader_atmosphere.density = 0
+
+# camera selection config
+compose_nature.camera_selection_tags_ratio = {
+    "liquid": (0.05, 0.6),
+    "beach": (0.05, 0.6),
+}
+
+compose_nature.ground_creatures_chance = 0.0
+compose_nature.ground_creature_registry = [
+    (@BirdFactory, 0.1),
+    (@CrabFactory, 1)
+]
+compose_nature.max_ground_creatures = 8
+compose_nature.flying_creatures_chance=0.6
+compose_nature.flying_creature_registry = [
+    (@FlyingBirdFactory, 1)
+]

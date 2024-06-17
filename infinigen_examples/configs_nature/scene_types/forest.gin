@@ -1,0 +1,58 @@
+Ground.scale = 10
+multi_mountains_params.height = 15
+multi_mountains_params.min_freq = ("uniform", 0.008, 0.012)
+multi_mountains_params.max_freq = ("uniform", 0.024, 0.036)
+scene.warped_rocks_chance = 0
+
+compose_nature.inview_distance = 40
+placement.populate_all.dist_cull = 40
+
+surface.registry.ground_collection = [
+    ('mud', 2),
+    ('dirt', 1),
+    ('soil', 1),
+]
+
+surface.registry.mountain_collection = [
+    ('dirt', 1),
+    ('soil', 1),
+    ('cracked_ground', 0.5)
+]
+
+compose_nature.ground_creatures_chance = 0.1
+compose_nature.ground_creature_registry = [
+    #(@CarnivoreFactory, 2),
+    #(@HerbivoreFactory, 0.8),
+    (@SnakeFactory, 2)
+]
+
+compose_nature.flying_creatures_chance = 0.7
+compose_nature.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+    (@FlyingBirdFactory, 0.2)
+]
+
+compose_nature.bug_swarm_chance = 0.0
+
+compose_nature.trees_chance = 1.0
+compose_nature.tree_density = 0.11
+
+compose_nature.ground_leaves_chance = 0.7
+compose_nature.ground_twigs_chance = 0.7
+compose_nature.chopped_trees_chance = 0.3
+compose_nature.grass_chance = 0.4
+compose_nature.ferns_chance = 0.6
+compose_nature.flowers_chance = 0.4
+compose_nature.monocots_chance = 0.5
+compose_nature.mushroom_chance = 0.3
+compose_nature.pinecone_chance = 0.5
+compose_nature.pine_needle_chance = 0.6
+
+populate_scene.slime_mold_chance = 0.0
+populate_scene.ivy_chance = 0.0
+populate_scene.lichen_chance = 0.6
+populate_scene.mushroom_chance = 0.0
+populate_scene.moss_chance = 0.0
+
+compose_nature.rain_particles_chance = 0.0
+compose_nature.leaf_particles_chance = 0.7

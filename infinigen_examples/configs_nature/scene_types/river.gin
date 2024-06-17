@@ -1,0 +1,46 @@
+surface.registry.erosion_collection = [
+    ('sand', 2),
+    ('cracked_ground', 2),
+    ('dirt', 1),
+    ('stone', 3),
+    ('soil', 1),
+]
+
+compose_nature.ground_creatures_chance = 0.0
+compose_nature.ground_creature_registry = [
+    (@CarnivoreFactory, 2),
+    (@HerbivoreFactory, 0.5),
+    (@SnakeFactory, 0.5)
+]
+
+compose_nature.flying_creatures_chance = 0.7
+compose_nature.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+    (@FlyingBirdFactory, 0.2)
+]
+
+compose_nature.rain_particles_chance = 0.0
+populate_scene.slime_mold_chance = 0.3
+populate_scene.ivy_chance = 0.3
+populate_scene.lichen_chance = 0.3
+populate_scene.moss_chance = 0.0
+
+random_season.weights = {'autumn': 1, 'summer': 1, 'spring': 1, 'winter': 0.1}
+
+# scene composition config
+LandTiles.tiles = ["Mountain", "River", "Mountain"]
+LandTiles.tile_heights = [1.75, -0.75, 1.75]
+LandTiles.randomness = 1
+
+scene.waterbody_chance = 1
+scene.ground_chance = 0
+scene.warped_rocks_chance = 0
+
+# camera selection config
+Terrain.populated_bounds = (-25, 25, -25, 25, -15, 35)
+compose_nature.camera_selection_ranges_ratio = {
+    "altitude": ("altitude", -1e9, 0.75, 0.1, 1)
+}
+compose_nature.camera_selection_tags_ratio = {
+    "liquid": (0.05, 1)
+}

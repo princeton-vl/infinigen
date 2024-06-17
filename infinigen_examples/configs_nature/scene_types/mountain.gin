@@ -1,0 +1,13 @@
+compose_nature.flying_creatures_chance=0.7
+compose_nature.max_flying_creatures = 3
+
+animate_cameras.follow_poi_chance=0.0
+
+compose_nature.trees_chance = 0.5
+compose_nature.tree_density = 0.06
+
+# scene composition config
+scene.upsidedown_mountains_chance = 0.4
+WarpedRocks.slope_shift = -3
+
+water.shader.volume_density = ("uniform", 2, 10)

@@ -1,0 +1,16 @@
+execute_tasks.generate_resolution = (960, 540)
+
+full/configure_render_cycles.min_samples = 32
+full/configure_render_cycles.num_samples = 512
+
+OpaqueSphericalMesher.pixels_per_cube = 4
+TransparentSphericalMesher.pixels_per_cube = 4
+target_face_size.global_multiplier = 2
+
+compose_nature.ground_creatures_chance = 0.0
+compose_nature.flying_creatures_chance = 0.0
+
+compose_nature.inview_distance = 35
+placement.populate_all.dist_cull = 35
+compose_nature.near_distance = 10
+compose_nature.center_distance = 20

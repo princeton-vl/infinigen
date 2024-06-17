@@ -1,0 +1,5 @@
+include 'infinigen_examples/configs_nature/performance/dev.gin'
+include 'infinigen_examples/configs_nature/disable_assets/no_creatures.gin'
+include 'infinigen_examples/configs_nature/performance/fast_terrain_assets.gin'
+run_erosion.n_iters = [1,1]
+full/configure_render_cycles.num_samples = 100
