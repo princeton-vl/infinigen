@@ -11,9 +11,11 @@ import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from .fan import FanBaseCoralFactory
-from ..utils.decorate import assign_material, join_objects
+from infinigen.assets.utils.misc import assign_material
+from infinigen.assets.utils.object import join_objects
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -30,7 +32,8 @@ from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFacto
 from .tube import TubeBaseCoralFactory
 from .star import StarBaseCoralFactory
 from . import tentacles
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 
 class CoralFactory(AssetFactory):
@@ -63,11 +66,11 @@ class CoralFactory(AssetFactory):
             else:
                 self.apply_bump(obj)
 
+        tag_object(obj, 'coral')
+
         if uniform(0, 1) < self.factory.tentacle_prob and not has_bump:
             t = tentacles.apply(obj, self.factory.points_fn, self.factory.density, realize, self.base_hue)
             obj = join_objects([obj, t])
-
-        tag_object(obj, 'coral')
 
         return obj
 
@@ -75,7 +78,7 @@ class CoralFactory(AssetFactory):
         t = np.random.choice(['STUCCI', 'MARBLE'])
         texture = bpy.data.textures.new(name='coral', type=t)
         texture.noise_scale = log_uniform(.01, .02)
-        butil.modify_mesh(obj, 'DISPLACE', True, strength=self.factory.noise_strength * uniform(.8, 1.5),
+        butil.modify_mesh(obj, 'DISPLACE', True, strength=self.factory.noise_strength * uniform(.9, 1.2),
                           mid_level=0, texture=texture)
 
     def apply_bump(self, obj):
@@ -98,10 +101,10 @@ class CoralFactory(AssetFactory):
     @staticmethod
     def shader_coral(nw: NodeWrangler, base_hue):
         shift = uniform(.05, .1) * (-1) ** np.random.randint(2)
-        subsurface_color = *colorsys.hsv_to_rgb(uniform(0, 1), uniform(0, 1), 1.), 1
-        bright_color = *colorsys.hsv_to_rgb((base_hue + shift) % 1, uniform(.7, .9), .2), 1
-        dark_color = *colorsys.hsv_to_rgb(base_hue, uniform(.5, .7), .1), 1
-        light_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.2, .2)) % 1, uniform(.2, .4), .4), 1
+        subsurface_color = hsv2rgba(uniform(0, 1), uniform(0, 1), 1.)
+        bright_color = hsv2rgba((base_hue + shift) % 1, uniform(.7, .9), .2)
+        dark_color = hsv2rgba(base_hue, uniform(.5, .7), .1)
+        light_color = hsv2rgba((base_hue + uniform(-.2, .2)) % 1, uniform(.2, .4), .4)
         specular = uniform(.25, .5)
 
         color = build_color_ramp(nw, nw.musgrave(uniform(10, 20)), [.0, .3, .7, 1.],

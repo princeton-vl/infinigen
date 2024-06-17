@@ -177,6 +177,7 @@ def shader(
     emissive_foam=False,
     volume_density=("uniform", 0.07, 0.09),
     anisotropy=("clip_gaussian", 0.75, 0.2, 0.5, 1),
+    mix_surface=False,
     random_seed=0,
 ):
     nw.force_input_consistency()
@@ -195,12 +196,14 @@ def shader(
         principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
             "Base Color": color_of_transparent_bsdf_principled_bsdf, "Roughness": 0.0, "IOR": 1.33, "Transmission": 1.0
         })
-        surface_shader = nw.new_node(Nodes.MixShader, input_kwargs={
-            'Fac': nw.scalar_multiply(1.0, light_path.outputs["Is Camera Ray"]),
-            1: transparent_bsdf,
-            2: principled_bsdf
-        })
-
+        if mix_surface:
+            surface_shader = nw.new_node(Nodes.MixShader, input_kwargs={
+                'Fac': nw.scalar_multiply(1.0, light_path.outputs["Is Camera Ray"]),
+                1: transparent_bsdf,
+                2: principled_bsdf
+            })
+        else:
+            surface_shader = principled_bsdf
         if asset_paths != []:
             if emissive_foam:
                 foam_bsdf = nw.new_node(Nodes.Emission, input_kwargs={'Strength': 1})

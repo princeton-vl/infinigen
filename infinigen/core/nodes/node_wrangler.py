@@ -1,6 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
-
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 # Authors:
 # - Alexander Raistrick: NodeWrangler class, node linking, expose_input, nodegroup support
 # - Zeyu Ma: initial version, fixes, arithmetic utilties
@@ -13,7 +13,7 @@ import sys
 import warnings
 import traceback
 import logging
-
+import itertools
 from collections.abc import Iterable
 
 import bpy
@@ -22,10 +22,11 @@ import numpy as np
 from infinigen.core.util.random import random_vector3
 from infinigen.core.nodes.node_info import Nodes, NODE_ATTRS_AVAILABLE
 from infinigen.core.nodes import node_info
-from infinigen.core.nodes.compatibility import COMPATIBILITY_MAPPINGS
 
+from .compatibility import COMPATIBILITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
+
 
 class NodeMisuseWarning(UserWarning):
     pass
@@ -62,18 +63,13 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
 
 
-warnings.showwarning = warn_with_traceback
-
-warnings.simplefilter('always', NodeMisuseWarning)
-
-
 def isnode(x):
     return isinstance(x, (bpy.types.ShaderNode, bpy.types.NodeInternal, bpy.types.GeometryNode))
 
 
 def infer_output_socket(item):
     """
-    Figure out if `item` somehow represents a node with an output we can use. 
+    Figure out if `item` somehow represents a node with an output we can use.
     If so, return that output socket
     """
 
@@ -114,14 +110,13 @@ def infer_input_socket(node, input_socket_name):
         input_socket = node.inputs[input_socket_name]
 
     if not input_socket.enabled:
-        warnings.warn(
+        logger.warning(
             f'Attempted to use ({input_socket.name=},{input_socket.type=}) of {node.name=}, but it was '
             f'disabled. Either change attrs={{...}}, '
             f'change the socket index, or specify the socket by name (assuming two enabled sockets don\'t '
             f'share a name).'
             f'The input sockets are '
-            f'{[(i.name, i.type, ("ENABLED" if i.enabled else "DISABLED")) for i in node.inputs]}.',
-            NodeMisuseWarning)
+            f'{[(i.name, i.type, ("ENABLED" if i.enabled else "DISABLED")) for i in node.inputs]}.', )
 
     return input_socket
 
@@ -156,11 +151,8 @@ class NodeWrangler():
         node.outputs[0].default_value = v
         return node
 
-    def new_node(
-        self, node_type, 
-        input_args=None, attrs=None, input_kwargs=None, label=None,
-        expose_input=None, compat_mode=True
-    ):
+    def new_node(self, node_type, input_args=None, attrs=None, input_kwargs=None, label=None, expose_input=None,
+                 compat_mode=True):
         if input_args is None:
             input_args = []
         if input_kwargs is None:
@@ -171,7 +163,7 @@ class NodeWrangler():
 
         compat_map = COMPATIBILITY_MAPPINGS.get(node_type)
         if compat_mode and compat_map is not None:
-            logger.debug(f'Using {compat_map.__name__=} for {node_type=}')
+            # logger.debug(f'Using {compat_map.__name__=} for {node_type=}')
             return compat_map(self, node_type, input_args, attrs, input_kwargs)
 
         node = self._make_node(node_type)
@@ -183,7 +175,7 @@ class NodeWrangler():
         if attrs is not None:
             for key, val in attrs.items():
                 # if key not in NODE_ATTRS_AVAILABLE.get(node.bl_idname, []):
-                #    warnings.warn(f'Node Wrangler is setting attr {repr(key)} on {node.bl_idname=},
+                #    logger.warn(f'Node Wrangler is setting attr {repr(key)} on {node.bl_idname=},
                 #    but it is not in node_info.NODE_ATTRS_AVAILABLE. Please add it so that the transpiler is
                 #    aware')
                 try:
@@ -202,7 +194,7 @@ class NodeWrangler():
                     else:
                         input_kwargs["Vector"] = self.new_node(Nodes.InputPosition)
                 else:
-                    pass #print(f"{w}, please fix it if you found it causes inconsistency")
+                    pass  # print(f"{w}, please fix it if you found it causes inconsistency")
 
         input_keyval_list = list(enumerate(input_args)) + list(input_kwargs.items())
         for input_socket_name, input_item in input_keyval_list:
@@ -227,7 +219,8 @@ class NodeWrangler():
             names = [v[1] for v in expose_input]
             uniq, counts = np.unique(names, return_counts=True)
             if (counts > 1).any():
-                raise ValueError(f'expose_input with {names} features duplicate entries. in bl3.5 this is invalid.')
+                raise ValueError(
+                    f'expose_input with {names} features duplicate entries. in bl3.5 this is invalid.')
             for inp in expose_input:
                 nodeclass, name, val = inp
                 self.expose_input(name, val=val, dtype=nodeclass)
@@ -238,7 +231,7 @@ class NodeWrangler():
         '''
         Expose an input to the nodegroups interface, making it able to be specified externally
 
-        If this nodegroup is 
+        If this nodegroup is
         '''
 
         if attribute is not None:
@@ -355,11 +348,10 @@ class NodeWrangler():
                         f'regular node'
 
             nodegroup_type = {
-                'ShaderNodeTree': 'ShaderNodeGroup', 
+                'ShaderNodeTree': 'ShaderNodeGroup',
                 'GeometryNodeTree': 'GeometryNodeGroup',
                 'CompositorNodeTree': 'CompositorNodeGroup'
-            }[
-                bpy.data.node_groups[node_type].bl_idname]
+            }[bpy.data.node_groups[node_type].bl_idname]
 
             node = self.nodes.new(nodegroup_type)
             node.node_tree = bpy.data.node_groups[node_type]
@@ -372,6 +364,27 @@ class NodeWrangler():
         if not i in self.position_translation_seed:
             self.position_translation_seed[i] = random_vector3()
         return self.position_translation_seed[i]
+
+    def find(self, name):
+        return [n for n in self.nodes if name in type(n).__name__]
+
+    def find_recursive(self, name):
+        return [(self, n) for n in self.find(name)] + sum(
+            (NodeWrangler(n.node_tree).find_recursive(name) for n in self.nodes if n.type == 'GROUP'), [])
+
+    def find_from(self, to_socket):
+        return [l for l in self.links if l.to_socket == to_socket]
+
+    def find_from_recursive(self, name):
+        return [(self, n) for n in self.find(name)] + sum(
+            (NodeWrangler(n.node_tree).find_from_recursive(name) for n in self.nodes if n.type == 'GROUP'), [])
+
+    def find_to(self, from_socket):
+        return [l for l in self.links if l.from_socket == from_socket]
+
+    def find_to_recursive(self, name):
+        return [(self, n) for n in self.find(name)] + sum(
+            (NodeWrangler(n.node_tree).find_to_recursive(name) for n in self.nodes if n.type == 'GROUP'), [])
 
     @staticmethod
     def is_socket(node):

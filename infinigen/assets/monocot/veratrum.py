@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -11,10 +12,12 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.decorate import add_distance_to_boundary, assign_material, join_objects, write_attribute, \
-    write_material_index
+from infinigen.assets.utils.decorate import distance2boundary, write_attribute, write_material_index
+from infinigen.assets.utils.misc import assign_material
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import leaf, spin
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -22,7 +25,8 @@ from infinigen.core import surface
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+
 
 class VeratrumMonocotFactory(MonocotGrowthFactory):
 
@@ -49,7 +53,7 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
 
     @staticmethod
     def shader_ear(nw: NodeWrangler):
-        color = *colorsys.hsv_to_rgb(uniform(.1, .35), uniform(.1, .5), log_uniform(.2, .5)), 1
+        color = hsv2rgba(uniform(.1, .35), uniform(.1, .5), log_uniform(.2, .5))
         specular = uniform(.0, .2)
         clearcoat = 0 if uniform(0, 1) < .8 else uniform(.2, .5)
         noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': 50})
@@ -68,9 +72,9 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
         x_anchors = 0, .2 * np.cos(self.bud_angle), uniform(.6, .7), .8
         y_anchors = 0, .2 * np.sin(self.bud_angle), uniform(.06, .1), 0
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
-        distance = add_distance_to_boundary(obj)
+        distance = distance2boundary(obj)
 
-        vg = obj.vertex_groups['distance']
+        vg = obj.vertex_groups.new(name='distance')
         weights = np.cos(self.freq * distance) ** 4
         for i, w in enumerate(weights):
             vg.add([i], w, 'REPLACE')
@@ -86,7 +90,7 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
 
         self.decorate_monocot(obj)
         assign_material(obj, [self.material, self.branch_material])
-        write_material_index(obj, surface.read_attr_data(obj, 'ear', 'FACE').astype(int)[:, 0])
+        write_material_index(obj, surface.read_attr_data(obj, 'ear', 'FACE').astype(int))
         tag_object(obj, 'veratrum')
         return obj
 
@@ -128,10 +132,10 @@ class VeratrumEarMonocotFactory(MonocotGrowthFactory):
         self.leaf_range = 0, .98
 
     def build_leaf(self, face_size):
-        x_achors = 0, .04, .06, .04, 0
+        x_anchors = 0, .04, .06, .04, 0
         y_anchors = 0, .01, 0, -.01, 0
         z_anchors = 0, - .01, -.01, -.006, 0
-        anchors = [x_achors, y_anchors, z_anchors]
+        anchors = [x_anchors, y_anchors, z_anchors]
         obj = spin(anchors, [0, 2, 4], dupli=True, loop=True, resolution=np.random.randint(3, 5),
                    axis=(1, 0, 0))
         butil.modify_mesh(obj, 'WELD', merge_threshold=face_size / 2)

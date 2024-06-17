@@ -8,16 +8,16 @@ import colorsys
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.misc import sample_direction
-from infinigen.assets.utils.decorate import assign_material
+from infinigen.assets.utils.misc import assign_material, sample_direction
 from infinigen.assets.utils.nodegroup import geo_radius
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 from infinigen.core import surface
 from infinigen.assets.trees.tree import build_radius_tree
 import infinigen.core.util.blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup, COMBINED_ATTR_NAME
 
 def build_tentacles(**kwargs):
     n_branch = 5
@@ -29,7 +29,6 @@ def build_tentacles(**kwargs):
 
     obj = build_radius_tree(None, branch_config, uniform(.002, .004))
     surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius'])
-    tag_object(obj, 'tentacle')
     return obj
 
 
@@ -85,20 +84,20 @@ def geo_tentacles(nw: NodeWrangler, tentacles, points_fn=None, density=500, real
         realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': tentacles})
     else:
         realize_instances = tentacles
-    
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': realize_instances})
 
 
 def shader_tentacles(nw: NodeWrangler, base_hue=.3):
     roughness = .8
     specular = .25
-    color = *colorsys.hsv_to_rgb((base_hue + uniform(-0.1, 0.1)) % 1, uniform(.4, .6), .5), 1
+    color = hsv2rgba((base_hue + uniform(-0.1, 0.1)) % 1, uniform(.4, .6), .5)
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
         'Base Color': color,
         'Roughness': roughness,
         'Specular': specular,
         'Subsurface': .01})
-    fresnel_color = *colorsys.hsv_to_rgb(uniform(0, 1), .6, .6), 1
+    fresnel_color = hsv2rgba(uniform(0, 1), .6, .6)
     fresnel_bdsf = nw.new_node(Nodes.PrincipledBSDF, [fresnel_color])
     mixed_shader = nw.new_node(Nodes.MixShader, [nw.new_node(Nodes.Fresnel), principled_bsdf, fresnel_bdsf])
     return mixed_shader
@@ -106,6 +105,9 @@ def shader_tentacles(nw: NodeWrangler, base_hue=.3):
 
 def apply(obj, points_fn, density, realize=True, base_hue=.3):
     tentacles = deep_clone_obj(obj)
+    if COMBINED_ATTR_NAME in tentacles.data.attributes:
+        tentacles.data.attributes.remove(tentacles.data.attributes[COMBINED_ATTR_NAME])
+
     instances = make_asset_collection(build_tentacles, 5, 'spikes', verbose=False)
     surface.add_geomod(tentacles, geo_tentacles, apply=realize,
                        input_args=[instances, points_fn, density, realize])

@@ -15,7 +15,7 @@ from infinigen.assets.utils.reaction_diffusion import feed2kill, make_periodic_w
 import infinigen.core.util.blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core import surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class ReactionDiffusionBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.

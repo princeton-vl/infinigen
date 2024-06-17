@@ -25,7 +25,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 
 from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 def square(x):
     return x * x

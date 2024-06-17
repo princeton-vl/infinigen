@@ -21,7 +21,7 @@ from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_
 from infinigen.assets.creatures.util.nodegroups.geometry import nodegroup_solidify, nodegroup_symmetric_clone, nodegroup_taper
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_cat_ear', singleton=False, type='GeometryNodeTree')
 def nodegroup_cat_ear(nw: NodeWrangler):

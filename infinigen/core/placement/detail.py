@@ -78,7 +78,7 @@ def remesh_with_attrs(obj, face_size, apply=True, min_remesh_size=None, attribut
     logger.debug(f'remesh_with_attrs on {obj.name=} with {face_size=:.4f} {attributes=}')
 
     temp_copy = deep_clone_obj(obj)
-    
+
     remesh_size = face_size if min_remesh_size is None else max(face_size, min_remesh_size)
     butil.modify_mesh(obj, type='REMESH', apply=True, voxel_size=remesh_size)
 
@@ -96,7 +96,8 @@ def sharp_remesh_with_attrs(obj, face_size, apply=True, min_remesh_size=None, at
 
     remesh_size = face_size if min_remesh_size is None else max(face_size, min_remesh_size)
     butil.modify_mesh(obj, 'REMESH', apply=apply, mode='SHARP',
-                      octree_depth=int(np.ceil(np.log2((max(obj.dimensions) + .01) / remesh_size))))
+                      octree_depth=int(np.ceil(np.log2((max(obj.dimensions) + .01) / remesh_size))),
+                      use_remove_disconnected=False)
 
     transfer_attributes.transfer_all(source=temp_copy, target=obj, attributes=attributes, uvs=True)
     bpy.data.objects.remove(temp_copy, do_unlink=True)
@@ -113,7 +114,7 @@ def subdivide_to_face_size(obj, from_facesize, to_facesize, apply=True, max_leve
         logger.warn(f'subdivide_to_facesize({obj.name=}, {from_facesize=:.6f}, {to_facesize=:.6f}) attempted {levels=}, clamping to {max_levels=}')
         levels = max_levels
     logger.debug(f'subdivide_to_face_size applying {levels=} of subsurf to {obj.name=}')
-    _, mod = butil.modify_mesh(obj, 'SUBSURF', apply=apply, 
+    _, mod = butil.modify_mesh(obj, 'SUBSURF', apply=apply,
                     levels=levels, render_levels=levels, return_mod=True)
     return mod # None if apply=True
 
@@ -142,7 +143,7 @@ def min_max_edgelen(mesh):
 
 
 def adapt_mesh_resolution(obj, face_size, method, approx=0.2, **kwargs):
-    
+
     assert obj.type == 'MESH'
     assert 0 <= approx and approx <= 0.5
 

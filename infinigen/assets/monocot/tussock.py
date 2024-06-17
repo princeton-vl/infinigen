@@ -8,9 +8,9 @@ from numpy.random import uniform
 
 from infinigen.assets.utils.draw import leaf
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object
+from infinigen.core.tagging import tag_object
 
 
 class TussockMonocotFactory(MonocotGrowthFactory):

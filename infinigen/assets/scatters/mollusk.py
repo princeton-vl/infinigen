@@ -7,9 +7,8 @@
 import numpy as np
 
 from infinigen.assets.mollusk import MolluskFactory
-from infinigen.assets.utils.misc import CountInstance
+from infinigen.assets.utils.misc import CountInstance, toggle_hide
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.assets.utils.decorate import toggle_hide
 from infinigen.core.util import blender as butil
 from infinigen.core.nodes import node_utils
 from infinigen.core.placement.instance_scatter import scatter_instances
@@ -29,7 +28,7 @@ def apply(obj, scale=0.4, density=1., n=10, selection=None):
 
         scatter_obj = scatter_instances('mollusk',
             base_obj=obj, collection=mollusk,
-            density=density, scaling=scaling, 
+            density=density, scaling=scaling,
             min_spacing=scale, normal=(0,0,1),
             selection=selection, taper_density=True)
 

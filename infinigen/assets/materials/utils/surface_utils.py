@@ -1,14 +1,16 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Mingzhe Wang
+# Authors: Mingzhe Wang, Lingjie Mei
 
 
 import random
 import math
 
+import numpy as np
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
+from infinigen.core.nodes import Nodes, node_utils
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
@@ -19,24 +21,24 @@ def nodegroup_norm_value(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloat', 'Attribute', 0.0000),
             ('NodeSocketGeometry', 'Geometry', None)])
-    
+
     attribute_statistic_1 = nw.new_node(Nodes.AttributeStatistic,
         input_kwargs={'Geometry': group_input.outputs["Geometry"], 2: group_input.outputs["Attribute"]})
-    
+
     subtract = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["Attribute"], 1: attribute_statistic_1.outputs["Min"]},
         attrs={'operation': 'SUBTRACT'})
-    
+
     subtract_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: attribute_statistic_1.outputs["Max"], 1: attribute_statistic_1.outputs["Min"]},
         attrs={'operation': 'SUBTRACT'})
-    
+
     divide = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: subtract_1}, attrs={'operation': 'DIVIDE'})
-    
+
     subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide}, attrs={'operation': 'SUBTRACT'})
-    
+
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract_2, 1: 2.0000}, attrs={'operation': 'MULTIPLY'})
-    
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Value': multiply}, attrs={'is_active_output': True})
 
 @node_utils.to_nodegroup('nodegroup_norm_vec', singleton=False, type='GeometryNodeTree')
@@ -47,24 +49,24 @@ def nodegroup_norm_vec(nw: NodeWrangler):
         expose_input=[('NodeSocketGeometry', 'Geometry', None),
             ('NodeSocketString', 'Name', ''),
             ('NodeSocketVector', 'Vector', (0.0000, 0.0000, 0.0000))])
-    
+
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': group_input.outputs["Vector"]})
-    
+
     normvalue = nw.new_node(nodegroup_norm_value().name,
         input_kwargs={'Attribute': separate_xyz_1.outputs["X"], 'Geometry': group_input.outputs["Geometry"]})
-    
+
     normvalue_1 = nw.new_node(nodegroup_norm_value().name,
         input_kwargs={'Attribute': separate_xyz_1.outputs["Y"], 'Geometry': group_input.outputs["Geometry"]})
-    
+
     normvalue_2 = nw.new_node(nodegroup_norm_value().name,
         input_kwargs={'Attribute': separate_xyz_1.outputs["Z"], 'Geometry': group_input.outputs["Geometry"]})
-    
+
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': normvalue, 'Y': normvalue_1, 'Z': normvalue_2})
-    
+
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': group_input.outputs["Name"], 2: combine_xyz},
         attrs={'data_type': 'FLOAT_VECTOR'})
-    
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': store_named_attribute}, attrs={'is_active_output': True})
 
 
@@ -107,7 +109,7 @@ def sample_color(color, offset=0, keep_sum=False):
                 color[i] = mean-offset*(f*pcg+(1-f)*(1-pcg))
                 f = 0
         return
-        
+
     for i in range(3):
         if offset == 0:
             color[i] = random.random()
@@ -180,3 +182,19 @@ def geo_voronoi_noise(nw, rand=False, **input_kwargs):
     group_output = nw.new_node(Nodes.GroupOutput,
                                input_kwargs={'Geometry': capture_attribute.outputs["Geometry"],
                                    'Attribute': capture_attribute.outputs["Attribute"]})
+
+
+def perturb_coordinates(nw, node, location, rotation):
+    for name in ['Generated', 'Object', "Position", "UV"]:
+        if name in node.outputs:
+            node_socket = node.outputs[name]
+            to_links = nw.find_to(node_socket)
+            if len(to_links) == 0:
+                continue
+            shifted = nw.new_node(Nodes.Mapping, [node_socket], input_kwargs={'Location': location,
+                'Rotation': nw.combine(0, 0, rotation)}).outputs[0]
+            to_sockets = [tl.to_socket for tl in to_links]
+            for to_link in to_links:
+                nw.links.remove(to_link)
+            for to_socket in to_sockets:
+                nw.connect_input(shifted, to_socket)

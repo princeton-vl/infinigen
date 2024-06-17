@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -11,15 +12,15 @@ from scipy.interpolate import interp1d
 from infinigen.assets.creatures.util.creature import Part, PartFactory
 from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.utils.draw import geo_symmetric_texture
-from infinigen.assets.utils.decorate import add_distance_to_boundary, displace_vertices, join_objects, read_co, write_co
+from infinigen.assets.utils.decorate import distance2boundary, displace_vertices, read_co, write_co
 from infinigen.assets.utils.draw import leaf, spin
 from infinigen.assets.utils.misc import log_uniform
-from infinigen.assets.utils.object import new_line
+from infinigen.assets.utils.object import join_objects, new_line
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.placement import placeholder_locs
 from infinigen.core import surface
-from infinigen.core.surface import write_attr_data
+from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
 
 
@@ -103,12 +104,11 @@ class CrabBodyFactory(PartFactory):
             vector_locations = []
         obj = leaf(x_anchors, y_anchors, vector_locations)
         butil.modify_mesh(obj, 'SUBSURF', levels=1, render_levels=1)
-        add_distance_to_boundary(obj)
+        distance2boundary(obj)
         return obj
 
     def make_surface_side(self, obj, params, prefix="upper"):
-        vg = obj.vertex_groups['distance']
-        distance = np.array([vg.weight(i) for i in range(len(obj.data.vertices))])
+        distance = read_attr_data(obj, 'distance')
         height_scale = interp1d([0, .5, 1], [0, params[f'{prefix}_alpha'], 1], 'quadratic')
         displace_vertices(obj, lambda x, y, z: (
             0, 0, (1 if prefix == 'upper' else -1) * height_scale(distance) * params[f'{prefix}_z']))

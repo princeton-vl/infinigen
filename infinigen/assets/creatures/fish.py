@@ -33,7 +33,7 @@ from infinigen.core.util.math import clip_gaussian, FixedSeed
 from infinigen.assets.creatures.util.animation.driver_wiggle import animate_wiggle_bones
 from infinigen.assets.creatures.util.creature_util import offset_center
 
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.assets.materials import fish_eye_shader
 

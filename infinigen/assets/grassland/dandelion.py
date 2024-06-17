@@ -16,7 +16,7 @@ from infinigen.assets.materials import simple_brownish
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_pedal_stem_head_geometry', singleton=False, type='GeometryNodeTree')

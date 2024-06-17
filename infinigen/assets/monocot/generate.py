@@ -16,9 +16,9 @@ from .growth import MonocotGrowthFactory
 from .tussock import TussockMonocotFactory
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-from ..utils.decorate import join_objects
-from ..utils.mesh import polygon_angles
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.assets.utils.object import join_objects
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class MonocotFactory(AssetFactory):
     max_cluster = 10

@@ -12,12 +12,12 @@ import numpy as np
 
 from infinigen.assets.utils.object import new_cube
 from infinigen.assets.utils.decorate import geo_extension
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core import tagging
 
 
 class GlobularBaseCactusFactory(BaseCactusFactory):
@@ -46,11 +46,13 @@ class GlobularBaseCactusFactory(BaseCactusFactory):
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry, 'Selection': selection})
 
     def create_asset(self, face_size=.01, **params) -> bpy.types.Object:
+        
         obj = new_cube()
         surface.add_geomod(obj, self.geo_globular, apply=True, attributes=['selection'])
         surface.add_geomod(obj, geo_extension, apply=True, input_kwargs={'musgrave_dimensions': '2D'})
+        
         obj.scale = uniform(.8, 1.5, 3)
         obj.rotation_euler[-1] = uniform(0, np.pi * 2)
         butil.apply_transform(obj)
-        tag_object(obj, 'globular_cactus')
+        
         return obj

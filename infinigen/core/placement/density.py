@@ -1,7 +1,9 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Alexander Raistrick
+# Authors:
+# - Alexander Raistrick: The majority part
+# - Zeyu Ma: Selection based on tag
 
 
 import pdb
@@ -22,6 +24,30 @@ tag_dict = None
 def set_tag_dict(tag_dict_):
     global tag_dict
     tag_dict = tag_dict_
+
+def tag_mask(nw, tag):
+    keys = list(tag_dict.keys())
+    tag_parts = tag.split(',')
+    logger.debug(f'Parsing {tag=} into {len(tag_parts)=}, matching against {len(tag_dict)=}')
+    for part in tag_parts:
+        if part.startswith("-"):
+            keys = [k for k in keys if part[1:] not in k.split('.')]
+        else:
+            keys = [k for k in keys if part in k.split('.')]
+    conditions = []
+    for k in keys:
+        comp = nw.new_node(
+            Nodes.Compare, 
+            attrs={'operation': "EQUAL", "data_type": "FLOAT"}, 
+            input_args=[eval_argument(nw, "MaskTag"), tag_dict[k]]
+        )
+        conditions.append(comp)
+    if len(conditions):
+        return nw.scalar_add(*conditions)
+    else:
+        mask = nw.new_node(Nodes.Value)
+        mask.outputs["Value"].default_value = 1
+        return mask
 
 def placement_mask(scale=0.05, select_thresh=0.55, normal_thresh=0.5, normal_thresh_high=2.,
                                normal_dir=(0, 0, 1), tag=None, return_scalar=False, altitude_range=None):
@@ -45,22 +71,10 @@ def placement_mask(scale=0.05, select_thresh=0.55, normal_thresh=0.5, normal_thr
                 mask = nw.scalar_multiply(mask, facing_mask)
 
         if tag is not None:
-            keys = list(tag_dict.keys())
-            tag_parts = tag.split(',')
-            logger.debug(f'Parsing {tag=} into {len(tag_parts)=}, matching against {len(tag_dict)=}')
-            for part in tag_parts:
-                if part.startswith("-"):
-                    keys = [k for k in keys if part[1:] not in k.split('.')]
-                else:
-                    keys = [k for k in keys if part in k.split('.')]
-            conditions = []
-            for k in keys:
-                conditions.append(nw.new_node(Nodes.Compare, attrs={'operation': "EQUAL", "data_type": "FLOAT"}, input_args=[eval_argument(nw, "MaskTag"), tag_dict[k]]))
-            if len(conditions) > 0:
-                mask = nw.scalar_multiply(
-                    mask,
-                    nw.scalar_add(*conditions)
-                )
+            mask = nw.scalar_multiply(
+                mask,
+                tag_mask(nw, tag)
+            )
         if altitude_range is not None:
             z = (nw.new_node(Nodes.SeparateXYZ, [nw.new_node(Nodes.InputPosition)]), 2)
             start, end = altitude_range

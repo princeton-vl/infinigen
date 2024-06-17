@@ -21,7 +21,7 @@ from infinigen.assets.tropic_plants.tropic_plant_utils import (
     nodegroup_nodegroup_leaf_rotate_x, 
     shader_stem_material
 )
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_nodegroup_apply_wave', singleton=False, type='GeometryNodeTree')
 def nodegroup_nodegroup_apply_wave(nw: NodeWrangler):

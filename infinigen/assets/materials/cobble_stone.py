@@ -18,10 +18,10 @@ mod_name = "geo_cobblestone"
 name = "cobble_stone"
 
 
-def shader_cobblestone(nw: NodeWrangler):
+def shader_cobblestone(nw: NodeWrangler, random_seed=0):
     # Code generated using version 2.4.3 of the node_transpiler, and modified
     nw.force_input_consistency()
-    stone_color = geo_cobblestone(nw, geometry=False)
+    stone_color = geo_cobblestone(nw, random_seed=random_seed, geometry=False)
     noise_texture = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': nw.new_node('ShaderNodeNewGeometry'), 'Scale': N(10, 1.5) / 25, 'W': U(-5, 5)},
         attrs={'noise_dimensions': '4D'})

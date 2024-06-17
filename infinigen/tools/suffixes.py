@@ -43,6 +43,7 @@ def parse_suffix(s):
     if len(s_parts) == len(SUFFIX_ORDERING) + 1:
         s_parts = s_parts[1:] # discard leading filename / description etc
 
-    assert len(s_parts) == len(SUFFIX_ORDERING), s
+    if len(s_parts) != len(SUFFIX_ORDERING):
+        return None
 
     return {SUFFIX_ORDERING[i]: int(s_parts[i]) for i in range(len(s_parts))}

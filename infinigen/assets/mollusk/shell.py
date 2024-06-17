@@ -11,15 +11,15 @@ from numpy.random import normal, uniform
 import infinigen.core.util.blender as butil
 from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
 from infinigen.assets.mollusk.base import BaseMolluskFactory
-from infinigen.assets.utils.object import mesh2obj, data2mesh, new_circle
+from infinigen.assets.utils.object import join_objects, mesh2obj, data2mesh, new_circle
 from infinigen.assets.utils.draw import shape_by_angles
-from infinigen.assets.utils.misc import log_uniform
-from infinigen.assets.utils.decorate import displace_vertices, join_objects
+from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.decorate import displace_vertices
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class ShellBaseFactory(BaseMolluskFactory):

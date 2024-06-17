@@ -17,7 +17,7 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil, color
 from infinigen.core.util.math import FixedSeed, dict_lerp
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_polar_to_cart_old', singleton=True)
 def nodegroup_polar_to_cart_old(nw):

@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -11,18 +12,27 @@ from mathutils import Vector
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.utils.decorate import read_co
+from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import select_none
 
 
 def center(obj):
     return (Vector(obj.bound_box[0]) + Vector(obj.bound_box[-2])) * obj.scale / 2.
 
 
-def origin2lowest(obj, vertical=False):
+def origin2lowest(obj, vertical=False, centered=False, approximate=False):
     co = read_co(obj)
     if not len(co):
         return
     i = np.argmin(co[:, -1])
-    if vertical:
+    if approximate:
+        indices = np.argsort(co[:, -1])
+        obj.location = -np.mean(co[indices[:len(co) // 10]], 0)
+        obj.location[-1] = -co[i, -1]
+    elif centered:
+        obj.location = -center(obj)
+        obj.location[-1] = -co[i, -1]
+    elif vertical:
         obj.location[-1] = -co[i, -1]
     else:
         obj.location = -co[i]
@@ -65,9 +75,7 @@ def trimesh2obj(trimesh):
 
 
 def obj2trimesh(obj):
-    with butil.ViewportMode(obj, 'EDIT'):
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+    butil.modify_mesh(obj, 'TRIANGULATE', min_vertices=3)
     vertices = read_co(obj)
     arr = np.zeros(len(obj.data.polygons) * 3)
     obj.data.polygons.foreach_get('vertices', arr)
@@ -79,6 +87,22 @@ def new_cube(**kwargs):
     kwargs['location'] = kwargs.get('location', (0, 0, 0))
     bpy.ops.mesh.primitive_cube_add(**kwargs)
     return bpy.context.active_object
+
+
+def new_bbox(x, x_, y, y_, z, z_):
+    obj = new_cube()
+    obj.location = (x + x_) / 2, (y + y_) / 2, (z + z_) / 2
+    obj.scale = (x_ - x) / 2, (y_ - y) / 2, (z_ - z) / 2
+    butil.apply_transform(obj, True)
+    return obj
+
+
+def new_bbox_2d(x, x_, y, y_, z=0):
+    obj = new_plane()
+    obj.location = (x + x_) / 2, (y + y_) / 2, z
+    obj.scale = (x_ - x) / 2, (y_ - y) / 2, 1
+    butil.apply_transform(obj, True)
+    return obj
 
 
 def new_icosphere(**kwargs):
@@ -95,6 +119,13 @@ def new_circle(**kwargs):
     return obj
 
 
+def new_base_circle(**kwargs):
+    kwargs['location'] = kwargs.get('location', (0, 0, 0))
+    bpy.ops.mesh.primitive_circle_add(**kwargs)
+    obj = bpy.context.active_object
+    return obj
+
+
 def new_empty(**kwargs):
     kwargs['location'] = kwargs.get('location', (0, 0, 0))
     bpy.ops.object.empty_add(**kwargs)
@@ -103,8 +134,81 @@ def new_empty(**kwargs):
     return obj
 
 
-def new_line(scale=1., subdivisions=7):
-    obj = mesh2obj(data2mesh([[0, 0, 0], [scale, 0, 0]], [[0, 1]]))
-    butil.modify_mesh(obj, 'SUBSURF', levels=subdivisions, render_levels=subdivisions)
-    obj.location = 0, 0, 0
+def new_plane(**kwargs):
+    kwargs['location'] = kwargs.get('location', (0, 0, 0))
+    bpy.ops.mesh.primitive_plane_add(**kwargs)
+    obj = bpy.context.active_object
+    butil.apply_transform(obj, loc=True)
     return obj
+
+
+def new_cylinder(**kwargs):
+    kwargs['location'] = kwargs.get('location', (0, 0, .5))
+    kwargs['depth'] = kwargs.get('depth', 1)
+    bpy.ops.mesh.primitive_cylinder_add(**kwargs)
+    obj = bpy.context.active_object
+    butil.apply_transform(obj, loc=True)
+    return obj
+
+
+def new_base_cylinder(**kwargs):
+    bpy.ops.mesh.primitive_cylinder_add(**kwargs)
+    obj = bpy.context.active_object
+    butil.apply_transform(obj, loc=True)
+    return obj
+
+
+def new_grid(**kwargs):
+    kwargs['location'] = kwargs.get('location', (0, 0, 0))
+    bpy.ops.mesh.primitive_grid_add(**kwargs)
+    obj = bpy.context.active_object
+    butil.apply_transform(obj, loc=True)
+    return obj
+
+
+def new_line(subdivisions=1, scale=1.):
+    vertices = np.stack(
+        [np.linspace(0, scale, subdivisions + 1), np.zeros(subdivisions + 1), np.zeros(subdivisions + 1)], -1)
+    edges = np.stack([np.arange(subdivisions), np.arange(1, subdivisions + 1)], -1)
+    obj = mesh2obj(data2mesh(vertices, edges))
+    return obj
+
+
+def join_objects(obj):
+    butil.select_none()
+    if not isinstance(obj, list):
+        obj = [obj]
+    if len(obj) == 1:
+        return obj[0]
+    bpy.context.view_layer.objects.active = obj[0]
+    butil.select_none()
+    butil.select(obj)
+    bpy.ops.object.join()
+    obj = bpy.context.active_object
+    obj.location = 0, 0, 0
+    obj.rotation_euler = 0, 0, 0
+    obj.scale = 1, 1, 1
+    butil.select_none()
+    return obj
+
+
+def separate_loose(obj):
+    select_none()
+    objs = butil.split_object(obj)
+    i = np.argmax([len(o.data.vertices) for o in objs])
+    obj = objs[i]
+    objs.remove(obj)
+    butil.delete(objs)
+    return obj
+
+
+def print3d_clean_up(obj):
+    bpy.ops.preferences.addon_enable(module='object_print3d_utils')
+    with butil.ViewportMode(obj, 'EDIT'), butil.Suppress():
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+        bpy.ops.mesh.fill_holes()
+        bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+        bpy.ops.mesh.normals_make_consistent()
+        bpy.ops.mesh.print3d_clean_distorted()
+        bpy.ops.mesh.print3d_clean_non_manifold()

@@ -24,7 +24,7 @@ from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.util.math import lerp, clip_gaussian, FixedSeed
 from infinigen.core import surface
 import infinigen.assets.materials.chitin
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 logger = logging.getLogger(__name__)

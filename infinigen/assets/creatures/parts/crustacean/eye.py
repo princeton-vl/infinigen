@@ -9,8 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.creatures.util.creature import Part, PartFactory
-from infinigen.assets.utils.decorate import join_objects
-from infinigen.assets.utils.object import new_icosphere, origin2leftmost
+from infinigen.assets.utils.object import join_objects, new_icosphere, origin2leftmost
 from infinigen.core.placement.detail import remesh_with_attrs
 
 

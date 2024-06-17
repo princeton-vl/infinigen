@@ -11,7 +11,7 @@ from infinigen.assets.deformed_trees import FallenTreeFactory, HollowTreeFactory
 from infinigen.assets.deformed_trees.truncated import TruncatedTreeFactory
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class DeformedTreeFactory(AssetFactory):

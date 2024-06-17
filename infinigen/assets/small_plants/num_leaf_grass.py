@@ -16,7 +16,7 @@ from infinigen.assets.small_plants.leaf_general import LeafFactory
 from infinigen.assets.small_plants.leaf_heart import LeafHeartFactory
 from infinigen.assets.materials import simple_greenery
 import numpy as np
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_leafon_stem', singleton=False, type='GeometryNodeTree')
 def nodegroup_leaf_on_stem(nw: NodeWrangler, z_rotation=(0, 0, 0,), leaf_scale=1.0, leaf=None):

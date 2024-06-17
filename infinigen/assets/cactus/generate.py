@@ -16,23 +16,28 @@ from .globular import GlobularBaseCactusFactory
 from .columnar import ColumnarBaseCactusFactory
 from .pricky_pear import PrickyPearBaseCactusFactory
 from .kalidium import KalidiumBaseCactusFactory
+
 from infinigen.assets.cactus import spike
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
-from infinigen.assets.utils.decorate import assign_material, join_objects
+from infinigen.assets.utils.misc import assign_material
+from infinigen.assets.utils.object import join_objects
+
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object
+from infinigen.core import tagging
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class CactusFactory(AssetFactory):
-    
+
     def __init__(self, factory_seed, coarse=False, factory_method=None):
         super(CactusFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.factory_methods = [GlobularBaseCactusFactory, ColumnarBaseCactusFactory,
-                PrickyPearBaseCactusFactory, KalidiumBaseCactusFactory]
+                PrickyPearBaseCactusFactory]#, KalidiumBaseCactusFactory]
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             if factory_method is None:
@@ -44,6 +49,7 @@ class CactusFactory(AssetFactory):
 
     def create_asset(self, face_size=0.01, realize=True, **params):
         obj = self.factory.create_asset(**params)
+
         remesh_with_attrs(obj, face_size)
 
         if self.factory.noise_strength > 0:
@@ -52,20 +58,25 @@ class CactusFactory(AssetFactory):
             texture.noise_scale = log_uniform(.1, .15)
             butil.modify_mesh(obj, 'DISPLACE', True, strength=self.factory.noise_strength, mid_level=0,
                               texture=texture)
+
         assign_material(obj, self.material)
+
         if face_size <= .05 and self.factory.density > 0:
             t = spike.apply(obj, self.factory.points_fn, self.factory.base_radius, realize)
+        
+            tagging.tag_object(obj, "cactus_spike")
             obj = join_objects([obj, t])
 
-        tag_object(obj, 'cactus')
+        tagging.tag_object(obj, 'cactus')
+
         return obj
 
     @staticmethod
     def shader_cactus(nw: NodeWrangler, base_hue):
         shift = uniform(-.15, .15)
-        bright_color = *colorsys.hsv_to_rgb((base_hue + shift) % 1, 1., .02), 1
-        dark_color = *colorsys.hsv_to_rgb(base_hue, .8, .01), 1
-        fresnel_color = *colorsys.hsv_to_rgb((base_hue - uniform(.05, .1)) % 1, .9, uniform(.3, .5)), 1
+        bright_color = hsv2rgba((base_hue + shift) % 1, 1., .02)
+        dark_color = hsv2rgba(base_hue, .8, .01)
+        fresnel_color = hsv2rgba((base_hue - uniform(.05, .1)) % 1, .9, uniform(.3, .5))
         specular = .25
 
         fresnel = nw.scalar_multiply(nw.new_node(Nodes.Fresnel), log_uniform(.6, 1.))

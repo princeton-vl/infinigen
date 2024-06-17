@@ -15,7 +15,7 @@ from infinigen.assets.trees.utils import helper, mesh, materials
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 C = bpy.context
 D = bpy.data

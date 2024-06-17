@@ -18,12 +18,12 @@ from infinigen.core.util.math import md5_hash, clip_gaussian
 from infinigen.core.init import repo_root
 
 
-def log_uniform(low, high, size=1):
+def log_uniform(low, high, size=None):
     return np.exp(uniform(np.log(low), np.log(high), size))
 
 def sample_json_palette(pallette_name, n_sample=1):
     
-    rel = f"infinigen_examples/configs/palette/{pallette_name}.json"
+    rel = f"infinigen_examples/configs_nature/palette/{pallette_name}.json"
 
     with (repo_root()/rel).open('r') as f:
         color_template = json.load(f)
@@ -51,6 +51,7 @@ def sample_json_palette(pallette_name, n_sample=1):
     if n_sample == 1:
         return color
     return color_samples
+
 
 def random_general(var):
     if not (isinstance(var, tuple) or isinstance(var, list)):
@@ -80,13 +81,16 @@ def random_general(var):
     elif func == "power_uniform":
         return 10 ** np.random.uniform(*args)
     elif func == "log_uniform":
-        return log_uniform(*args)[0]
+        return log_uniform(*args)
     elif func == "discrete_uniform":
         return np.random.randint(args[0], args[1] + 1)
     elif func == "bool":
         return np.random.uniform() < args[0]
     elif func == "choice":
-        return np.random.choice(args[0], 1, p=args[1])[0]
+        return np.random.choice(args[0], 1, p=args[1] if len(args) > 1 else None)[0]
+    elif func == 'categorical':
+        prob = np.array(args)
+        return np.random.choice(np.arange(len(args)), p=prob/prob.sum())
     elif func == "palette":
         return sample_json_palette(*args)
     elif func == "color_category":
@@ -203,3 +207,4 @@ def sample_registry(reg):
     classes, weights = zip(*reg)
     weights = np.array(weights)
     return np.random.choice(classes, p=weights/weights.sum())
+

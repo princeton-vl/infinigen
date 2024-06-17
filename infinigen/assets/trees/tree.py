@@ -18,7 +18,7 @@ from infinigen.assets.leaves import leaf
 
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util import blender as butil
-from ..utils.object import data2mesh, mesh2obj
+from infinigen.assets.utils.object import data2mesh, mesh2obj
 
 C = bpy.context
 D = bpy.data

@@ -1,21 +1,22 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
 
 from collections.abc import Sized
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-from infinigen.assets.utils.decorate import read_co, remove_vertices, separate_loose, write_attribute, write_co
+from infinigen.assets.utils.decorate import read_co, remove_vertices, write_attribute, write_co
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import make_circular, make_circular_angle
-from infinigen.assets.utils.object import data2mesh, mesh2obj
+from infinigen.assets.utils.object import data2mesh, mesh2obj, separate_loose
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.placement.detail import sharp_remesh_with_attrs
 from infinigen.core.surface import read_attr_data
@@ -61,37 +62,73 @@ def surface_from_func(fn, div_x=16, div_y=16, size_x=2, size_y=2):
     return mesh
 
 
-def bezier_curve(anchors, vector_locations=(), resolution=64):
+def bezier_curve(anchors, vector_locations=(), resolution=64, to_mesh=True):
     n = [len(r) for r in anchors if isinstance(r, Sized)][0]
     anchors = np.array([np.array(r, dtype=float) if isinstance(r, Sized) else np.full(n, r) for r in anchors])
     bpy.ops.curve.primitive_bezier_curve_add(location=(0, 0, 0))
     obj = bpy.context.active_object
 
-    with butil.ViewportMode(obj, 'EDIT'):
-        bpy.ops.curve.subdivide(number_cuts=n - 2)
-        points = obj.data.splines[0].bezier_points
-        for i in range(n):
-            points[i].co = anchors[:, i]
-        for i in range(n):
-            points[i].handle_left_type = 'AUTO'
-            points[i].handle_right_type = 'AUTO'
-        for i in vector_locations:
+    if n > 2:
+        with butil.ViewportMode(obj, 'EDIT'):
+            bpy.ops.curve.subdivide(number_cuts=n - 2)
+    points = obj.data.splines[0].bezier_points
+    for i in range(n):
+        points[i].co = anchors[:, i]
+    for i in range(n):
+        if i in vector_locations:
             points[i].handle_left_type = 'VECTOR'
             points[i].handle_right_type = 'VECTOR'
+        else:
+            points[i].handle_left_type = 'AUTO'
+            points[i].handle_right_type = 'AUTO'
     obj.data.splines[0].resolution_u = resolution
+    if to_mesh:
+        return curve2mesh(obj)
+    return obj
+
+
+def curve2mesh(obj):
     with butil.SelectObjects(obj):
         bpy.ops.object.convert(target='MESH')
+    obj = bpy.context.active_object
     butil.modify_mesh(obj, 'WELD', merge_threshold=1e-4)
-    return bpy.context.active_object
+    return obj
 
 
-def remesh_fill(obj):
+def align_bezier(anchors, axes=None, scale=None, vector_locations=(), resolution=64, to_mesh=True):
+    obj = bezier_curve(anchors, vector_locations, resolution, False)
+    points = obj.data.splines[0].bezier_points
+    if scale is None:
+        scale = np.ones(2 * len(points) - 2)
+    if axes is None:
+        axes = [None] * len(points)
+    scale = [1, *scale, 1]
+    for i, p in enumerate(points):
+        a = axes[i]
+        if a is None:
+            continue
+        a = np.array(a)
+        p.handle_left_type = 'FREE'
+        p.handle_right_type = 'FREE'
+        proj_left = np.array(p.handle_left - p.co) @ a * a
+        p.handle_left = np.array(p.co) + proj_left / np.linalg.norm(proj_left) * np.linalg.norm(
+            p.handle_left - p.co) * scale[2 * i]
+        proj_right = np.array(p.handle_right - p.co) @ a * a
+        p.handle_right = np.array(p.co) + proj_right / np.linalg.norm(proj_right) * np.linalg.norm(
+            p.handle_right - p.co) * scale[2 * i + 1]
+    if to_mesh:
+        return curve2mesh(obj)
+    return obj
+
+
+def remesh_fill(obj, resolution=.005):
     n = len(obj.data.vertices)
     butil.modify_mesh(obj, 'SOLIDIFY', thickness=.1)
     write_attribute(obj, lambda nw, position: nw.compare('GREATER_EQUAL', nw.new_node(Nodes.Index), n), 'top')
-    sharp_remesh_with_attrs(obj, .005)
-    is_top = read_attr_data(obj, 'top')[:, 0] > 1e-3
+    sharp_remesh_with_attrs(obj, resolution)
+    is_top = read_attr_data(obj, 'top') > 1e-3
     remove_vertices(obj, lambda x, y, z: is_top)
+    obj.data.attributes.remove(obj.data.attributes['top'])
     return obj
 
 
@@ -101,7 +138,7 @@ def spin(anchors, vector_locations=(), subdivision=64, resolution=None, axis=(0,
     co = read_co(obj)
     max_radius = np.amax(np.linalg.norm(co - (co @ np.array(axis))[:, np.newaxis] * np.array(axis), axis=-1))
     if resolution is None: resolution = min(int(2 * np.pi * max_radius / .005), 128)
-    butil.modify_mesh(obj, 'WELD', merge_threshold=.001)
+    butil.modify_mesh(obj, 'WELD', merge_threshold=1e-4)
     if loop:
         with butil.ViewportMode(obj, 'EDIT'), butil.Suppress():
             bpy.ops.mesh.select_all(action='SELECT')
@@ -110,7 +147,8 @@ def spin(anchors, vector_locations=(), subdivision=64, resolution=None, axis=(0,
     with butil.ViewportMode(obj, 'EDIT'), butil.Suppress():
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.spin(steps=resolution, angle=np.pi * 2, axis=axis, dupli=dupli)
-        bpy.ops.mesh.remove_doubles(threshold=.001)
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=1e-4)
     return obj
 
 

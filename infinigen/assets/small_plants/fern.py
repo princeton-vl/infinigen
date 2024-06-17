@@ -21,7 +21,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core import surface
 from infinigen.assets.materials import simple_greenery
 
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 def random_pinnae_level2_curvature():
     z_max_curvature = uniform(0.3, 0.45, (1,))[0]

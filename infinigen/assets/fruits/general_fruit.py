@@ -29,7 +29,7 @@ from infinigen.assets.fruits.surfaces.blackberry_surface import nodegroup_blackb
 from infinigen.assets.fruits.surfaces.coconuthairy_surface import nodegroup_coconuthairy_surface
 from infinigen.assets.fruits.surfaces.coconutgreen_surface import nodegroup_coconutgreen_surface
 from infinigen.assets.fruits.surfaces.durian_surface import nodegroup_durian_surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 crosssectionlib = {
     'circle_cross_section': nodegroup_circle_cross_section,

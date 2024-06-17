@@ -4,8 +4,8 @@
 # Authors: Lingjie Mei
 
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from numpy.random import uniform
 from skimage.measure import find_contours, marching_cubes

@@ -1,7 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Alejandro Newell
+# Authors: Alejandro Newell, Lingjie Mei
 
 
 import numpy as np
@@ -11,6 +11,7 @@ import colorsys
 
 import bpy
 
+from infinigen.core.util.color import hsv2rgba
 from . import helper
 
 C = bpy.context
@@ -36,7 +37,7 @@ def init_color_material(color, prefix='', hsv_variance=[0,0,0],
   nt = m.node_tree
   color = np.array(color) + np.random.randn(3) * np.array(hsv_variance)
   color = list(color.clip(0,1))
-  color = (*colorsys.hsv_to_rgb(*color), 1)
+  color = (hsv2rgba(*color))
 
   if is_emission:
     out_node = nt.nodes.get('Material Output')

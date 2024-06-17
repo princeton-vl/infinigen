@@ -14,13 +14,15 @@ import infinigen.core.util.blender as butil
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
 from infinigen.assets.utils.object import new_circle
 from infinigen.assets.utils.draw import shape_by_angles, shape_by_xs
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class PineconeFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -33,8 +35,8 @@ class PineconeFactory(MonocotGrowthFactory):
             self.stem_offset = uniform(.2, .4)
             self.perturb = 0
             self.scale_curve = [(0, .5), (.5, uniform(.6, 1.)), (1, uniform(.1, .2))]
-            self.bright_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .01), 1
-            self.dark_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .005), 1
+            self.bright_color = hsv2rgba(uniform(.02, .06), uniform(.8, 1.), .01)
+            self.dark_color = hsv2rgba(uniform(.02, .06), uniform(.8, 1.), .005)
             self.material = shaderfunc_to_material(self.shader_monocot, self.dark_color, self.bright_color,
                                                    self.use_distance)
 

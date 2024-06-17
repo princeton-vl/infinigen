@@ -16,7 +16,7 @@ from infinigen.assets.materials import spider_plant
 import numpy as np
 
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_set_leaf_countour', singleton=False, type='GeometryNodeTree')
 def nodegroup_set_leaf_countour(nw: NodeWrangler):

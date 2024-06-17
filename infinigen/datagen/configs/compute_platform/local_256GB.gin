@@ -22,6 +22,11 @@ queue_combined.cpus = 2
 queue_combined.hours = 48
 queue_combined.submit_cmd = @local_submit_cmd
 
+# Export
+queue_export.cpus = 4
+queue_export.hours = 24
+queue_export.submit_cmd = @local_submit_cmd
+
 # Rendering
 queue_render.cpus = 4
 queue_render.submit_cmd = @local_submit_cmd

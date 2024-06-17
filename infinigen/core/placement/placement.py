@@ -3,7 +3,6 @@
 
 # Authors: Alexander Raistrick
 
-
 import re
 import logging
 from collections import defaultdict
@@ -65,7 +64,7 @@ def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitu
 
     return locations
 
-def points_near_camera(cam, terrain_bvh, n, alt, dist_range):
+def points_near_camera(cam, scene_bvh, n, alt, dist_range):
     points = []
 
     while len(points) < n:
@@ -75,7 +74,7 @@ def points_near_camera(cam, terrain_bvh, n, alt, dist_range):
         off = rad * mathutils.Vector((np.cos(angle), np.sin(angle), 0))
         pos = cam.location + off
 
-        pos, *_ = terrain_bvh.ray_cast(pos, mathutils.Vector((0, 0, -1)))
+        pos, *_ = scene_bvh.ray_cast(pos, mathutils.Vector((0, 0, -1)))
         if pos is None:
             continue
         pos.z += alt
@@ -122,7 +121,7 @@ def get_placeholder_points(obj):
         return np.array([obj.matrix_world.translation]).reshape(1, 3)
 
 def parse_asset_name(name):
-    match = re.fullmatch('(.*)\((\d+)\)\.spawn_(.*)\((\d+)\)', name)
+    match = re.fullmatch('(.*)\((\d+)\)\..*_(.*)\((\d+)\)', name)
     if not match:
         return None, None, None, None
     return list(match.groups())
@@ -244,7 +243,7 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, cache_system 
 
     return results
 
-def make_placeholders_float(placeholder_col, terrain_bvh, water):
+def make_placeholders_float(placeholder_col, scene_bvh, water):
 
     deps = bpy.context.evaluated_depsgraph_get()
     water_bvh = mathutils.bvhtree.BVHTree.FromObject(water, deps)
@@ -254,7 +253,7 @@ def make_placeholders_float(placeholder_col, terrain_bvh, water):
     for p in tqdm(placeholder_col.objects, desc=f'Computing fluid-floating locations for {placeholder_col.name=}'):
         w_up, *_ = water_bvh.ray_cast(p.location + margin, up)
         if w_up is not None:
-            t_up, *_ = terrain_bvh.ray_cast(p.location + margin, up)
+            t_up, *_ = scene_bvh.ray_cast(p.location + margin, up)
             z = min(w_up.z, t_up.z) if t_up is not None else w_up.z
             z = max(p.location.z, z - 0.7) # the origin will be the creature's foot, allow some space for the rest of it
             p.location.z = np.random.uniform(p.location.z, z)

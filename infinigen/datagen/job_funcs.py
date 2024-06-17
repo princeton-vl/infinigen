@@ -4,7 +4,9 @@
 # Authors: 
 # - Alex Raistrick: refactor, local rendering, video rendering
 # - Lahav Lipson: stereo version, local rendering
+# - David Yan: export integration
 # - Hei Law: initial version
+
 
 import re
 import gin
@@ -74,6 +76,38 @@ def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method='r
     func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
     res = submit_cmd((func, folder, taskname), folder, name, **kwargs)
     return res, None
+
+
+@gin.configurable
+def queue_export(
+    folder,
+    submit_cmd,
+    name,
+    seed,
+    configs,
+    taskname=None,
+    exclude_gpus=[],
+    overrides=[],
+    input_indices=None, output_indices=None,
+    **kwargs
+):
+    input_suffix = get_suffix(input_indices)
+    input_folder=f'{folder}/coarse{input_suffix}'
+
+    cmd = get_cmd(seed, 'export', configs, taskname, output_folder=f'{folder}/frames', input_folder=input_folder)+ f'''
+        LOG_DIR='{folder / "logs"}'
+    '''.split("\n") + overrides
+
+    with (folder / "run_pipeline.sh").open('a') as f:
+        f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
+
+    res = submit_cmd(cmd,
+        folder=folder,
+        name=name,
+        gpus=0,
+        **kwargs
+    )
+    return res, folder
 
 @gin.configurable
 def queue_coarse(
@@ -266,8 +300,22 @@ def queue_render(
 
     output_folder = Path(f'{folder}/frames{output_suffix}')
 
+    input_folder_priority_options = [
+        f"fine{input_suffix}",
+        "fine",
+        f"coarse{input_suffix}",
+        "coarse"
+    ]
+
+    for option in input_folder_priority_options:
+        input_folder = f'{folder}/{option}'
+        if (Path(input_folder)/'scene.blend').exists():
+            break
+    else:
+        raise ValueError(f'No scene.blend found in {input_folder} for any of {input_folder_priority_options}')
+    
     cmd = get_cmd(seed, "render", configs, taskname,
-                  input_folder=f'{folder}/fine{input_suffix}',
+                  input_folder=input_folder,
                   output_folder=f'{output_folder}') + f'''
         render.render_image_func=@{render_type}/render_image
         LOG_DIR='{folder / "logs"}'
@@ -310,7 +358,7 @@ def queue_mesh_save(
     output_folder.mkdir(parents=True, exist_ok=True)
 
     cmd = get_cmd(seed, "mesh_save", configs, taskname,
-                  input_folder=f'{folder}/fine{input_suffix}',
+                  input_folder=f'{folder}/coarse{input_suffix}',
                   output_folder=f'{folder}/savemesh{output_suffix}') + f'''
         LOG_DIR='{folder / "logs"}'
     '''.split("\n") + overrides

@@ -1,10 +1,11 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
-# Authors: 
+# Authors:
 # - Alex Raistrick: primary author
 # - Lahav Lipson: Surface mixing
-
+# - Lingjie Mei: attributes and geo nodes
 
 import string
 from collections import defaultdict
@@ -18,9 +19,12 @@ import numpy as np
 from tqdm import trange
 
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import set_geomod_inputs # got moved, left here for import compatibility
-from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes, isnode, infer_output_socket, geometry_node_group_empty_new
+from infinigen.core.util.blender import set_geomod_inputs  # got moved, left here for import compatibility
+from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes, isnode, infer_output_socket, \
+    geometry_node_group_empty_new
 from infinigen.core.nodes import node_info
+from infinigen.core import tagging, tags as t
+
 
 def remove_materials(obj):
     with butil.SelectObjects(obj):
@@ -40,23 +44,21 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
         if data_type is None:
             data_type = node_info.NODETYPE_TO_DATATYPE[infer_output_socket(value).type]
 
-        capture = nw.new_node(Nodes.CaptureAttribute,
-                              attrs={'data_type': data_type},
-                              input_kwargs={
-                                  'Geometry': nw.new_node(Nodes.GroupInput),
-                                  'Value': value
+        capture = nw.new_node(Nodes.CaptureAttribute, attrs={'data_type': data_type},
+                              input_kwargs={'Geometry': nw.new_node(Nodes.GroupInput), 'Value': value
                               })
-        output = nw.new_node(Nodes.GroupOutput, input_kwargs={
-            'Geometry': (capture, 'Geometry'),
-            name: (capture, 'Attribute')
-        })
+        output = nw.new_node(Nodes.GroupOutput,
+                             input_kwargs={'Geometry': (capture, 'Geometry'), name: (capture, 'Attribute')
+                             })
 
     mod = add_geomod(objs, attr_writer, name=f'write_attribute({name})', apply=apply, attributes=[name])
-    return name 
+    return name
 
-def read_attr_data(obj, attr, domain='POINT') -> np.array:
+
+def read_attr_data(obj, attr, domain='POINT', result_dtype=None) -> np.array:
     if isinstance(attr, str):
         attr = obj.data.attributes[attr]
+        domain = attr.domain
 
     if domain == 'POINT':
         n = len(obj.data.vertices)
@@ -66,13 +68,26 @@ def read_attr_data(obj, attr, domain='POINT') -> np.array:
         n = len(obj.data.polygons)
     else:
         raise NotImplementedError
-    dtype = attr.data_type
-    dim = node_info.DATATYPE_DIMS[dtype]
-    field = node_info.DATATYPE_FIELDS[dtype]
 
-    data = np.empty(n * dim)
+    dim = node_info.DATATYPE_DIMS[attr.data_type]
+    field = node_info.DATATYPE_FIELDS[attr.data_type]
+
+    if result_dtype is None:
+        result_dtype = node_info.DATATYPE_TO_PYTYPE[attr.data_type]
+
+    data = np.empty(n * dim, dtype=result_dtype)
     attr.data.foreach_get(field, data)
-    return data.reshape(-1, dim)
+
+    if dim > 1:
+        data = data.reshape(-1, dim)
+
+    return data
+
+
+def set_active(obj, name):
+    attributes = obj.data.attributes
+    attributes.active_index = next((i for i, a in enumerate(attributes) if a.name == name))
+    attributes.active = attributes[attributes.active_index]
 
 
 def write_attr_data(obj, attr, data: np.array, type='FLOAT', domain='POINT'):
@@ -85,9 +100,10 @@ def write_attr_data(obj, attr, data: np.array, type='FLOAT', domain='POINT'):
     field = node_info.DATATYPE_FIELDS[attr.data_type]
     attr.data.foreach_set(field, data.reshape(-1))
 
+
 def new_attr_data(obj, attr, type, domain, data: np.array):
-    assert(isinstance(attr, str))
-    assert(attr not in obj.data.attributes)
+    assert (isinstance(attr, str))
+    assert (attr not in obj.data.attributes)
 
     obj.data.attributes.new(name=attr, type=type, domain=domain)
     attr = obj.data.attributes[attr]
@@ -126,7 +142,8 @@ def attribute_to_vertex_group(obj, attr, name=None, min_thresh=0, binary=False):
 
     if attr_data.shape[-1] != 1:
         raise ValueError(
-            f'Could not convert non-scalar attribute {attr} to vertex group, expected 1 data dimension but got {attr_data.shape=}')
+            f'Could not convert non-scalar attribute {attr} to vertex group, expected 1 data dimension but '
+            f'got {attr_data.shape=}')
 
     group = obj.vertex_groups.new(name=name)
 
@@ -180,8 +197,9 @@ def shaderfunc_to_material(shader_func, *args, name=None, **kwargs):
     material.node_tree.nodes.remove(material.node_tree.nodes['Principled BSDF'])  # remove the default BSDF
 
     nw = NodeWrangler(material.node_tree)
-    new_node_tree = shader_func(nw, *args, **kwargs)
 
+    new_node_tree = shader_func(nw, *args, **kwargs)
+    
     if new_node_tree is not None:
         if isinstance(new_node_tree, tuple) and isnode(new_node_tree[1]):
             new_node_tree, volume = new_node_tree
@@ -209,15 +227,18 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
         if (not reuse) and (name in bpy.data.materials):
             name += f"_{seed_generator(8)}"
         material = shaderfunc_to_material(shader_func, *input_args, **input_kwargs)
-    elif isinstance(selection, str):
+    elif isinstance(selection, (str, t.Semantics)):
 
+        if isinstance(selection, t.Semantics):
+            selection = selection.value
         name = "MixedSurface"
         if name in objs[0].data.materials:
             material = objs[0].data.materials[name]
         else:
             material = bpy.data.materials.new(name=name)
             material.use_nodes = True
-            material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (1, 0, 1, 1)  # Set Magenta
+            material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (
+            1, 0, 1, 1)  # Set Magenta
             objs[0].active_material = material
 
         nw = NodeWrangler(material.node_tree)
@@ -229,7 +250,8 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
                 socket_index_old = 2
             else:
                 socket_index_old = 0
-            new_attribute_sum_node = nw.scalar_add((old_attribute_sum_node, socket_index_old), (new_attribute_node, 2))
+            new_attribute_sum_node = nw.scalar_add((old_attribute_sum_node, socket_index_old),
+                                                   (new_attribute_node, 2))
             old_attribute_sum_node.name = "Attribute Sum Old"
             new_attribute_sum_node.name = "Attribute Sum"
         else:
@@ -243,16 +265,14 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
             socket_index_new = 2
         else:
             socket_index_new = 0
-        selection_weight = nw.divide2(
-            (new_attribute_node, 2),
-            (new_attribute_sum_node, socket_index_new)
-        )
+        selection_weight = nw.divide2((new_attribute_node, 2), (new_attribute_sum_node, socket_index_new))
 
         # spawn in the node tree to mix with it
         new_node_tree = shader_func(nw, **input_kwargs)
         if new_node_tree is None:
             raise ValueError(
-                f'{shader_func} returned None while attempting add_material(selection=...). Shaderfunc must return its output to be mixable')
+                f'{shader_func} returned None while attempting add_material(selection=...). Shaderfunc must '
+                f'return its output to be mixable')
         if isinstance(new_node_tree, tuple) and isnode(new_node_tree[1]):
             new_node_tree, volume = new_node_tree
             nw.new_node(Nodes.MaterialOutput, input_kwargs={'Volume': volume})
@@ -267,11 +287,9 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
         obj.active_material = material
     return material
 
-def add_geomod(objs, geo_func,
-               name=None, apply=False, reuse=False, input_args=None,
-               input_kwargs=None, attributes=None, show_viewport=True, selection=None,
-               domains=None, input_attributes=None, ):
-    
+
+def add_geomod(objs, geo_func, name=None, apply=False, reuse=False, input_args=None, input_kwargs=None,
+               attributes=None, show_viewport=True, selection=None, domains=None, input_attributes=None, ):
     if input_args is None:
         input_args = []
     if input_kwargs is None:
@@ -295,7 +313,6 @@ def add_geomod(objs, geo_func,
 
     ng = None
     for obj in objs:
-
         mod = obj.modifiers.new(name=name, type='NODES')
         mod.show_viewport = False
 
@@ -323,7 +340,8 @@ def add_geomod(objs, geo_func,
         identifiers = [outputs[i].identifier for i in range(len(outputs)) if outputs[i].type != 'GEOMETRY']
         if len(identifiers) != len(attributes):
             raise Exception(
-                f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, {identifiers=} and {attributes=}")
+                f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, "
+                f"{identifiers=} and {attributes=}")
         for id, att_name in zip(identifiers, attributes):
             # attributes are a 1-indexed list, and Geometry is the first element, so we start from 2
             # while f'Output_{i}_attribute_name' not in
@@ -364,12 +382,9 @@ class Registry:
     def get_surface(name):
         if name == '':
             return NoApply
-        
-        prefixes = [
-            'infinigen.infinigen_gpl.surfaces', 
-            'infinigen.assets.materials', 
-            'infinigen.assets.scatters'
-        ]
+
+        prefixes = ['infinigen.infinigen_gpl.surfaces', 'infinigen.assets.materials',
+            'infinigen.assets.scatters']
         for prefix in prefixes:
             try:
                 return importlib.import_module('.' + name, prefix)
@@ -385,7 +400,6 @@ class Registry:
 
     @gin.configurable('registry')
     def initialize_from_gin(self, smooth_categories=0, **gin_category_info):
-
         if smooth_categories != 0:
             raise NotImplementedError
 
@@ -398,14 +412,14 @@ class Registry:
         if self._registry is None:
             raise ValueError(
                 'Surface registry has not been initialized! Have you loaded gin and called .initialize()?'
-                'Note, this step cannot happen at module initialization time, as gin is not yet loaded'
-            )
+                'Note, this step cannot happen at module initialization time, as gin is not yet loaded')
 
         if category_key not in self._registry:
             raise KeyError(
-                f'registry recieved request with {category_key=}, but no gin_config for this key was provided. {self._registry.keys()=}')
+                f'registry recieved request with {category_key=}, but no gin_config for this key was '
+                f'provided. {self._registry.keys()=}')
 
-        return self.sample_registry(self._registry[category_key])        
+        return self.sample_registry(self._registry[category_key])
 
 
 registry = Registry()

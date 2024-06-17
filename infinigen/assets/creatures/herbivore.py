@@ -31,7 +31,7 @@ from infinigen.assets.creatures.util import hair as creature_hair, cloth_sim
 from infinigen.assets.creatures.util.animation import idle, run_cycle
 
 from infinigen.assets.materials import bone, tongue, eyeball, nose, horn
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.core.util import blender as butil
 
@@ -219,7 +219,7 @@ class HerbivoreFactory(AssetFactory):
     def create_asset(self, i, placeholder, **kwargs):
         genome = herbivore_genome()
         root, parts = creature.genome_to_creature(genome, name=f'herbivore({self.factory_seed}, {i})')
-        tag_object(root, 'herbivore')
+        # tag_object(root, 'herbivore')
         offset_center(root)
         
         dynamic = self.animation_mode is not None

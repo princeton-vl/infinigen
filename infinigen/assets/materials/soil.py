@@ -1,7 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Ankit Goyal, Zeyu Ma
+# Authors: Ankit Goyal, Zeyu Ma, Lingjie Mei
 
 
 import gin
@@ -58,7 +58,7 @@ def nodegroup_pebble(nw):
         position = nw.new_node('ShaderNodeNewGeometry')
     else:
         position = nw.new_node(Nodes.InputPosition)
-    
+
     # Code generated using version 2.3.1 of the node_transpiler
 
     noise1_w = nw.new_node(Nodes.Value, label="noise1_w ~ U(0, 10)")
@@ -122,9 +122,9 @@ def nodegroup_pebble_shader(nw):
     nodegroup_pebble(nw)
 
 
-def shader_soil(nw):
+def shader_soil(nw, random_seed=0):
     nw.force_input_consistency()
-    big_stone = geometry_soil(nw, geometry=False)
+    big_stone = geometry_soil(nw, random_seed=random_seed, geometry=False)
     # Code generated using version 2.3.1 of the node_transpiler
     darkness = 1.5
     soil_col_1 = random_color_neighbour((0.28 / darkness, 0.11 / darkness, 0.042 / darkness, 1.0), 0.05, 0.1, 0.1)
@@ -220,7 +220,7 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
     else:
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
-    
+
     with FixedSeed(random_seed):
         # Code generated using version 2.3.1 of the node_transpiler
 

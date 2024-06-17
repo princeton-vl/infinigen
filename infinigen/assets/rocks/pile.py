@@ -14,10 +14,12 @@ from infinigen.assets.utils.physics import free_fall
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
 import infinigen.core.util.blender as butil
-from infinigen.assets.utils.decorate import join_objects, multi_res, toggle_hide
+from infinigen.assets.utils.decorate import multi_res
+from infinigen.assets.utils.misc import toggle_hide
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import surface_from_func
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.assets.utils.tag import tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.random import log_uniform
 
 

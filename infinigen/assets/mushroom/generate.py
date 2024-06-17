@@ -13,12 +13,12 @@ from numpy.random import uniform
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from .growth import MushroomGrowthFactory
-from infinigen.assets.utils.decorate import join_objects
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from ..utils.misc import log_uniform
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.util.random import log_uniform
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class MushroomFactory(AssetFactory):
     max_cluster = 10

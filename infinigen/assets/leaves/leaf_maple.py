@@ -18,7 +18,7 @@ from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 def deg2rad(deg):
     return deg / 180.0 * np.pi

@@ -17,39 +17,7 @@ from infinigen.core.util import blender as butil
 
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 
-def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
-
-    assert k in nodegroup.outputs
-    assert target_obj.type == 'MESH'
-
-    vert = butil.spawn_vert('extract_nodegroup_geo.temp')
-
-    butil.modify_mesh(vert, type='NODES', apply=False)
-    mod = vert.modifiers[0]
-    mod.node_group = bpy.data.node_groups.new('extract_nodegroup_geo', 'GeometryNodeTree')
-    nw = NodeWrangler(mod.node_group)
-    obj_inp = nw.new_node(Nodes.ObjectInfo, [target_obj])
-
-    group_input_kwargs = {**ng_params}
-    if 'Geometry' in nodegroup.inputs:
-        group_input_kwargs['Geometry'] = obj_inp.outputs['Geometry']
-
-    try:
-        group = nw.new_node(nodegroup.name, input_kwargs=group_input_kwargs)
-    except KeyError as e:
-        print(f"Error while performing extract_nodegroup_geo for {nodegroup=} on {target_obj=}, output_key={k}")
-        raise e
-
-    geo = group.outputs[k]
-
-    if k.endswith('Curve'): 
-        # curves dont export from geonodes well, convert it to a mesh
-        geo = nw.new_node(Nodes.CurveToMesh, [geo])
-
-    output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geo})
-
-    butil.apply_modifiers(vert)
-    return vert
+from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 
 def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False):
 

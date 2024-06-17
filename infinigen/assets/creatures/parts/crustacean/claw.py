@@ -13,9 +13,10 @@ from infinigen.assets.creatures.util.creature import Part
 from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory
 from infinigen.assets.creatures.parts.utils.draw import decorate_segment
-from infinigen.assets.utils.decorate import displace_vertices, join_objects, read_co, remove_vertices
+from infinigen.assets.utils.decorate import displace_vertices, read_co, remove_vertices
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import spin
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.assets.utils.nodegroup import geo_base_selection
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler

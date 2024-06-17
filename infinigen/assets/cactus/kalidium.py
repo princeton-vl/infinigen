@@ -10,8 +10,8 @@ from numpy.random import uniform
 
 from infinigen.assets.trees.tree import TreeVertices, build_radius_tree, recursive_path
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import data2mesh, mesh2obj, new_cube, origin2lowest
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, remove_vertices, separate_loose, \
+from infinigen.assets.utils.object import data2mesh, mesh2obj, new_cube, origin2lowest, separate_loose
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, remove_vertices, \
     subsurface2face_size
 from infinigen.assets.utils.shortest_path import geo_shortest_path
 from infinigen.core.nodes.node_info import Nodes
@@ -21,7 +21,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.assets.cactus.base import BaseCactusFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class KalidiumBaseCactusFactory(BaseCactusFactory):

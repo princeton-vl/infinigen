@@ -6,8 +6,8 @@
 
 from collections.abc import Iterable
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from mathutils import Matrix
 from numpy.random import uniform

@@ -25,24 +25,24 @@ type = SurfaceTypes.SDFPerturb
 mod_name = "geo_rocks"
 name = "chunkyrock"
 
-def shader_rocks(nw, rand=True, **input_kwargs):
+def shader_rocks(nw, rand=True, random_seed=0, **input_kwargs):
     nw.force_input_consistency()
     position = nw.new_node('ShaderNodeNewGeometry')
-    depth = geo_rocks(nw, geometry=False)
-    
+    depth = geo_rocks(nw, random_seed=random_seed, geometry=False)
+
     colorramp_3 = nw.new_node(Nodes.ColorRamp,
         input_kwargs={'Fac': depth})
     colorramp_3.color_ramp.elements[0].position = 0.0285
     colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_3.color_ramp.elements[1].position = 0.1347
     colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
-    
+
     mapping = nw.new_node(Nodes.Mapping,
         input_kwargs={'Vector': position, 'Scale': (0.2, 0.2, 0.2)})
-    
+
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
         input_kwargs={'Vector': mapping, 'Detail': 15.0})
-    
+
     rock_color1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': noise_texture_1.outputs["Fac"], 'Color1': (0.0, 0.0, 0.0, 1.0), 'Color2': (0.01, 0.024, 0.0283, 1.0)})
 
@@ -62,7 +62,7 @@ def shader_rocks(nw, rand=True, **input_kwargs):
 
     mix_1 = nw.new_node(Nodes.MixRGB,
         input_kwargs={'Fac': colorramp_3.outputs["Color"], 'Color1': rock_color1, 'Color2': rock_color2})
-    
+
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
         input_kwargs={'Base Color': mix_1})
 
@@ -77,16 +77,16 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
     else:
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
-    
+
     with FixedSeed(random_seed):
         # Code generated using version 2.4.3 of the node_transpiler
-        
+
         noise_texture = nw.new_node(Nodes.NoiseTexture,
             input_kwargs={'Vector': position})
-        
+
         mix = nw.new_node(Nodes.MixRGB,
             input_kwargs={'Fac': 0.8, 'Color1': noise_texture.outputs["Color"], 'Color2': position})
-        
+
         if rand:
             sample_max = 2
             sample_min = 1/2
@@ -112,19 +112,19 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
             colorramp.color_ramp.elements[1].position = sample_ratio(colorramp.color_ramp.elements[1].position, 0.5, 2)
 
         depth = colorramp
-        
+
         multiply = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: colorramp.outputs["Color"], 1: normal},
             attrs={'operation': 'MULTIPLY'})
-        
+
         value = nw.new_node(Nodes.Value)
         value.outputs[0].default_value = 0.4
-        
+
         offset = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: multiply.outputs["Vector"], 1: value},
             attrs={'operation': 'MULTIPLY'})
-        
-    
+
+
     if geometry:
         groupinput = nw.new_node(Nodes.GroupInput)
         noise_params = {"scale": ("uniform", 10, 20), "detail": 9, "roughness": 0.6, "zscale": ("log_uniform", 0.08, 0.12)}

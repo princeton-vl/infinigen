@@ -14,7 +14,7 @@ from infinigen.assets.utils.object import new_icosphere
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class TubeBaseCoralFactory(BaseCoralFactory):
     default_scale = [.7] * 3

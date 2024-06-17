@@ -10,12 +10,14 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import assign_material, displace_vertices, geo_extension, join_objects, \
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension, \
     subsurface2face_size
+from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.mesh import polygon_angles
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
-from infinigen.assets.utils.object import data2mesh, mesh2obj
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
@@ -23,7 +25,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class MushroomCapFactory(AssetFactory):
 
@@ -177,8 +180,8 @@ class MushroomCapFactory(AssetFactory):
             m = nw.new_node(Nodes.AttributeStatistic, [geometry, None, component]).outputs['Max']
             geometry = nw.new_node(Nodes.StoreNamedAttribute,
                 input_kwargs={
-                    'Geometry': geometry, 
-                    'Name': name, 
+                    'Geometry': geometry,
+                    'Name': name,
                     'Value': nw.scalar_divide(component, m)
                 })
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
@@ -190,7 +193,7 @@ class MushroomCapFactory(AssetFactory):
             'Scale': uniform(15, 20),
             'Randomness': uniform(.5, 1)
         }, attrs={'feature': 'DISTANCE_TO_EDGE'}), .05)
-        geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+        geometry = nw.new_node(Nodes.StoreNamedAttribute,
             input_kwargs={'Geometry':geometry, 'Name':'morel', 'Value': selection})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
@@ -225,8 +228,9 @@ class MushroomCapFactory(AssetFactory):
         assign_material(obj, self.material_cap)
 
         if self.is_morel:
-            obj.data.attributes.active = obj.data.attributes['morel']
-            bpy.ops.geometry.attribute_convert(mode='VERTEX_GROUP')
+            with butil.SelectObjects(obj):
+                surface.set_active(obj,'morel')
+                bpy.ops.geometry.attribute_convert(mode='VERTEX_GROUP')
             butil.modify_mesh(obj, 'DISPLACE', vertex_group='morel', strength=.04, mid_level=.7)
 
         if self.gill_config is not None:
@@ -252,12 +256,12 @@ class MushroomCapFactory(AssetFactory):
 
     @staticmethod
     def shader_voronoi(nw: NodeWrangler, base_hue):
-        bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .8), log_uniform(.05, .2)), 1
+        bright_color = hsv2rgba(base_hue, uniform(.4, .8), log_uniform(.05, .2))
         dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                           log_uniform(.01, .05)), 1
         subsurface_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                                 log_uniform(.05, .2)), 1
-        light_color = *colorsys.hsv_to_rgb(base_hue, uniform(0, .1), uniform(.2, .8)), 1
+        light_color = hsv2rgba(base_hue, uniform(0, .1), uniform(.2, .8))
         anchors = [.0, .3, .6, 1.] if uniform(0, 1) < .5 else [.0, .4, .7, 1.]
         color = build_color_ramp(nw, nw.musgrave(500), anchors,
                                  [dark_color, dark_color, bright_color, bright_color])
@@ -296,12 +300,12 @@ class MushroomCapFactory(AssetFactory):
 
     @staticmethod
     def shader_speckle(nw: NodeWrangler, base_hue):
-        bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .8), log_uniform(.05, .2)), 1
+        bright_color = hsv2rgba(base_hue, uniform(.4, .8), log_uniform(.05, .2))
         dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                           log_uniform(.01, .05)), 1
         subsurface_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                                 log_uniform(.05, .2)), 1
-        light_color = *colorsys.hsv_to_rgb(base_hue, uniform(0, .1), uniform(.2, .8)), 1
+        light_color = hsv2rgba(base_hue, uniform(0, .1), uniform(.2, .8))
         anchors = [.0, .3, .6, 1.] if uniform(0, 1) < .5 else [.0, .4, .7, 1.]
         color = build_color_ramp(nw, nw.musgrave(500), anchors,
                                  [dark_color, dark_color, bright_color, bright_color])
@@ -325,12 +329,12 @@ class MushroomCapFactory(AssetFactory):
 
     @staticmethod
     def shader_noise(nw: NodeWrangler, base_hue):
-        bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .8), log_uniform(.05, .2)), 1
+        bright_color = hsv2rgba(base_hue, uniform(.4, .8), log_uniform(.05, .2))
         dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                           log_uniform(.01, .05)), 1
         subsurface_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                                 log_uniform(.05, .2)), 1
-        light_color = *colorsys.hsv_to_rgb(base_hue, uniform(0, .1), uniform(.2, .8)), 1
+        light_color = hsv2rgba(base_hue, uniform(0, .1), uniform(.2, .8))
         anchors = [.0, .3, .6, 1.] if uniform(0, 1) < .5 else [.0, .4, .7, 1.]
         color = build_color_ramp(nw, nw.musgrave(500), anchors,
                                  [dark_color, dark_color, bright_color, bright_color])
@@ -356,10 +360,10 @@ class MushroomCapFactory(AssetFactory):
 
     @staticmethod
     def shader_cap(nw: NodeWrangler, base_hue):
-        bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.6, .8), log_uniform(.05, .2)), 1
+        bright_color = hsv2rgba(base_hue, uniform(.6, .8), log_uniform(.05, .2))
         dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.4, .8),
                                           log_uniform(.01, .05)), 1
-        light_color = *colorsys.hsv_to_rgb(base_hue, uniform(0, .1), uniform(.6, .8)), 1
+        light_color = hsv2rgba(base_hue, uniform(0, .1), uniform(.6, .8))
         subsurface_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.6, .8),
                                                 log_uniform(.05, .2)), 1
 

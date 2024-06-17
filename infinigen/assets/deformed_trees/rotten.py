@@ -9,16 +9,16 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.deformed_trees.base import BaseDeformedTreeFactory
-from infinigen.assets.utils.decorate import assign_material, join_objects, read_material_index, remove_vertices, \
-    separate_loose, write_material_index
-from infinigen.assets.utils.misc import log_uniform
-from infinigen.assets.utils.object import new_icosphere
+from infinigen.assets.utils.decorate import read_material_index, remove_vertices, write_material_index
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.object import join_objects, new_icosphere, separate_loose
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class RottenTreeFactory(BaseDeformedTreeFactory):
     @staticmethod

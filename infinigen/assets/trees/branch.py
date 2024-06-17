@@ -15,7 +15,7 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_surface_bump', singleton=False, type='GeometryNodeTree')
 def nodegroup_surface_bump(nw: NodeWrangler):

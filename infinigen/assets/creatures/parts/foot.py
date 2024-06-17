@@ -19,7 +19,7 @@ from infinigen.assets.creatures.util.nodegroups.math import nodegroup_deg2_rad
 
 from infinigen.assets.creatures.util.creature import Part, PartFactory
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_tiger_toe', singleton=False, type='GeometryNodeTree')
 def nodegroup_tiger_toe(nw: NodeWrangler):

@@ -4,21 +4,21 @@
 # Authors: Lingjie Mei
 
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from mathutils import Vector
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.corals.base import BaseCoralFactory
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, join_objects
-from infinigen.assets.utils.object import new_empty, new_icosphere
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension
+from infinigen.assets.utils.object import join_objects, new_empty, new_icosphere
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class StarBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 1.
@@ -65,7 +65,7 @@ class StarBaseCoralFactory(BaseCoralFactory):
         normal = nw.new_node(Nodes.NamedAttribute, ['custom_normal'], attrs={'data_type': 'FLOAT_VECTOR'})
         geometry = nw.new_node(Nodes.SetPosition, [geometry, None, None, nw.scale(offset, normal)])
         outer = nw.boolean_math('AND', nw.compare('GREATER_THAN', t, .4), nw.compare('LESS_THAN', t, .6))
-        geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+        geometry = nw.new_node(Nodes.StoreNamedAttribute,
             input_kwargs={'Geometry': geometry, 'Name': 'outermost', 'Value': outer})
         nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 

@@ -1,17 +1,26 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Lingjie Mei
 import math
 
 import colorsys
 
 from numpy.random import uniform as U
 
+from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.assets.utils.object import new_cube
-from infinigen.assets.utils.misc import build_color_ramp
-from infinigen.assets.utils.decorate import assign_material
-from infinigen.assets.utils.tag import tag_object
-
-from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.color import hsv2rgba
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
 from infinigen.core import surface
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.placement.instance_scatter import scatter_instances
+
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class MossFactory(AssetFactory):
 
@@ -27,14 +36,14 @@ class MossFactory(AssetFactory):
         v_perturb = U(1., 1.5)
 
         def map_perturb(h, s, v):
-            return *colorsys.hsv_to_rgb(h + h_perturb, s + s_perturb, v / v_perturb), 1.
+            return hsv2rgba(h + h_perturb, s + s_perturb, v / v_perturb)
 
         subsurface_ratio = .05
         roughness = 1.
         mix_ratio = .2
 
-        cr = build_color_ramp(nw, 
-            nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': 5.}).outputs["Fac"], 
+        cr = build_color_ramp(nw,
+            nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': 5.}).outputs["Fac"],
             [0, .5, 1],
             [map_perturb(base_hue, .8, .1), map_perturb(base_hue - 0.05, .8, .1), (0., 0., 0., 1.)]
         )

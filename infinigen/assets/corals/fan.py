@@ -4,14 +4,15 @@
 # Authors: Lingjie Mei
 
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.corals.base import BaseCoralFactory
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, subsurface2face_size, treeify
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, subsurface2face_size
+from infinigen.assets.utils.mesh import treeify
 from infinigen.assets.utils.draw import shape_by_angles
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import new_circle, origin2lowest
@@ -19,7 +20,7 @@ from infinigen.assets.utils.shortest_path import geo_shortest_path
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class FanBaseCoralFactory(BaseCoralFactory):

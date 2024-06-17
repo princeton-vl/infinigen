@@ -23,7 +23,7 @@ from infinigen.assets.creatures.util.nodegroups.math import nodegroup_aspect_to_
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util import part_util
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_eyelid', singleton=True, type='GeometryNodeTree')
 def nodegroup_eyelid(nw: NodeWrangler):

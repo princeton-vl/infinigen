@@ -5,7 +5,7 @@
 
 
 import math
-
+import bpy
 import bmesh
 import numpy as np
 import tqdm

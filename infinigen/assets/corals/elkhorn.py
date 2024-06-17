@@ -4,25 +4,24 @@
 # Authors: Lingjie Mei
 
 
-import bmesh
 import bpy
+import bmesh
 import numpy as np
 from mathutils import kdtree
 from numpy.random import uniform
 
 from infinigen.assets.corals.base import BaseCoralFactory
 from infinigen.assets.corals.tentacles import make_radius_points_fn
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, remove_vertices, \
-    separate_loose, write_co
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, remove_vertices, write_co
 from infinigen.assets.utils.draw import make_circular_interp
-from infinigen.assets.utils.misc import log_uniform
-from infinigen.assets.utils.object import new_circle, origin2lowest
+from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.object import new_circle, origin2lowest, separate_loose
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class ElkhornBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.

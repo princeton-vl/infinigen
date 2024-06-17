@@ -32,7 +32,7 @@ After manually comemnt out them, you have:
 
 ![](demo4.png)
 
-Then you move the ready palatte to location: `infinigen/infinigen_examples/configs/palette`
+Then you move the ready palatte to location: `infinigen/infinigen_examples/configs_nature/palette`
 
 ## Step 3
 

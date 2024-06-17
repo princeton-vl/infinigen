@@ -11,8 +11,9 @@ from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones
 from infinigen.assets.creatures.util.creature import Part, PartFactory
 from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.utils.draw import make_segments
-from infinigen.assets.utils.decorate import join_objects, read_co
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.decorate import read_co
+from infinigen.assets.utils.object import join_objects
+from infinigen.core.util.random import log_uniform
 from infinigen.core.surface import write_attr_data
 
 

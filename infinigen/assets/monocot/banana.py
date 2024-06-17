@@ -3,21 +3,21 @@
 
 # Authors: Lingjie Mei
 
-
+import bpy
 import bmesh
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import displace_vertices, join_objects, read_co
+from infinigen.assets.utils.decorate import displace_vertices, read_co
 from infinigen.assets.utils.draw import bezier_curve, leaf
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import origin2lowest
+from infinigen.assets.utils.object import join_objects, origin2lowest
 from infinigen.core import surface
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class BananaMonocotFactory(MonocotGrowthFactory):
 

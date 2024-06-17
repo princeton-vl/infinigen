@@ -5,11 +5,11 @@ on:
   pull_request:
     branches:
     - main
-    - develop
+    - develop*
   push:
     branches:
     - main
-    - develop
+    - develop*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -22,7 +22,7 @@ env:
 jobs:
 
   checks:
-
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
@@ -32,7 +32,7 @@ jobs:
         run: |
           pip install ruff
           # stop the build if there are Python syntax errors or undefined names
-          ruff --output-format=github --select=E9,F63,F7,F82 .
+          ruff check --output-format=github --select=E9,F63,F7,F82 .
           # default set of ruff rules with GitHub Annotations
           #ruff --format=github . # to be enabled in a future PR
 
@@ -47,4 +47,4 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest tests -m ci
+          pytest tests -k 'not skip_for_ci'
