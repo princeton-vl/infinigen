@@ -36,6 +36,8 @@ class FruitCover:
                 base_obj=obj, collection=self.col, density=1e3,
                 min_spacing=scale * self.dimension * uniform(.5, .7), scale=scale,
                 scale_rand=uniform(0.1, 0.3), selection=selection,
+                ground_offset=self.dimension * .2 * scale, apply_geo=True, realize=True
+                )
 
 
 class FruitContainerFactory(AssetFactory):
