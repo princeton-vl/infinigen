@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from copy import copy
 
 import numpy as np
+from shapely.affinity import rotate
 
 import bpy
 import trimesh
@@ -30,6 +31,7 @@ from mathutils import Vector, Quaternion
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints import constraint_language as cl, reasoning as r
 
+from infinigen.core import tagging, tags as t
 from infinigen.core.constraints.constraint_language import util as iu
 
 import logging
@@ -124,6 +126,8 @@ def stable_against(
     mask = tagging.tagged_face_mask(sb.obj, relation.parent_tags)
     mask = state.planes.tagged_plane_mask(sb.obj, mask, pb)
     assert mask.any()
+    b_trimesh_mask = b_trimesh.submesh([np.where(mask)[0]], append=True)
+
     # Project mesh A onto the plane of mesh B
     projected_a = trimesh.path.polygons.projected(a_trimesh, normal_b, origin_b)
     projected_b = trimesh.path.polygons.projected(b_trimesh_mask, normal_b, origin_b)
