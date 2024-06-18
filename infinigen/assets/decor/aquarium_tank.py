@@ -19,6 +19,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class AquariumTankFactory(AssetFactory):
@@ -37,8 +38,18 @@ class AquariumTankFactory(AssetFactory):
             self.thickness = uniform(.01, .02)
             self.belt_thickness = log_uniform(.02, .05)
 
+            materials = AssetList['AquariumTankFactory']()
+            self.glass_surface = materials['glass_surface'].assign_material()
+            self.belt_surface = materials['belt_surface'].assign_material()
+            self.water_surface = materials['water_surface'].assign_material()
 
+            scratch_prob, edge_wear_prob = materials['wear_tear_prob']
+            self.scratch, self.edge_wear = materials['wear_tear']
+            is_scratch = uniform() < scratch_prob
+            is_edge_wear = uniform() < edge_wear_prob
+            if not is_scratch:
                 self.scratch = None
+            if not is_edge_wear:
                 self.edge_wear = None
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
@@ -94,4 +105,8 @@ class AquariumTankFactory(AssetFactory):
     def finalize_assets(self, assets):
         self.glass_surface.apply(assets, selection='glass')
         self.belt_surface.apply(assets, selection='belt')
+
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
