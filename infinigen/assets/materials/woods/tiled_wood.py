@@ -17,6 +17,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import rgb2hsv
 
+from infinigen.assets.materials.bark_random import get_random_bark_params, hex_to_rgb
+
 
 @node_utils.to_nodegroup('nodegroup_tiling', singleton=False, type='ShaderNodeTree')
 def nodegroup_tiling(nw: NodeWrangler):
@@ -121,6 +123,7 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
         attrs={'blend_type': 'MULTIPLY', 'data_type': 'RGBA'})
 
     hue_saturation_value = nw.new_node('ShaderNodeHueSaturation',
+        input_kwargs={'Saturation': 0.8000, 'Value': 0.2000, 'Fac': 0.0, 'Color': group_input.outputs["Main Color"]})
 
     mix_3 = nw.new_node(Nodes.Mix,
         input_kwargs={0: mix_2.outputs[2], 6: hue_saturation_value, 7: group_input.outputs["Main Color"]},
@@ -144,6 +147,7 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
         input_kwargs={'BSDF': principled_bsdf, 'Displacement': multiply_1},
         attrs={'is_active_output': True})
 
+
 def shader_wood_tiled(nw: NodeWrangler, hscale=None, vscale=None, base_color=None, seed=None, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -166,6 +170,13 @@ def shader_wood_tiled(nw: NodeWrangler, hscale=None, vscale=None, base_color=Non
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': group.outputs["BSDF"], 'Displacement': displacement},
         attrs={'is_active_output': True})
+
+
+def get_random_light_wood_params():
+    color_fac = [0xdeb887, 0xcdaa7d, 0xfff8dc]
+    color_factory = [hex_to_rgb(c) for c in color_fac]
+    return color_factory[randint(len(color_fac))]
+
 
 def apply(obj, selection=None, **kwargs):
     common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
