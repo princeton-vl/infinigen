@@ -30,10 +30,12 @@ from infinigen.assets.tableware import PlantContainerFactory
 from infinigen.core.util import blender as butil
 
 @pytest.mark.parametrize('key', generate_indoors.default_greedy_stages().keys())
+def test_stages_relations(key):
 
     pprint(generate_indoors.default_greedy_stages())
 
     v = generate_indoors.default_greedy_stages()[key]
+
     assert not v.is_recursive()
 
     if len(v.relations) != 0:
@@ -42,6 +44,7 @@ from infinigen.core.util import blender as butil
             raise ValueError(f"Stage {key} has no positive relation, {[r for r, _ in v.relations]}")
         #if any(isinstance(r, cl.AnyRelation) for r, _ in v.relations):
         #    raise ValueError(f"Stage {key} has an AnyRelation which is underspecified, {v}")
+
 #@pytest.mark.parametrize('key', generate_indoors.default_greedy_stages().keys())
 #@pytest.mark.parametrize('roomtype', cu.room_types)
 #def test_stage_bound_roomsubs(key: str, roomtype: t.Semantics):
@@ -81,11 +84,16 @@ def test_validate_stages():
 def test_example_intersects():
 
     on_wall_complex = cl.StableAgainst(
+        {-t.Subpart.Top, t.Subpart.Back, -t.Subpart.Front}, 
+        {t.Subpart.Wall, t.Subpart.Visible, -t.Subpart.Ceiling, -t.Subpart.SupportSurface}
     )
+    on_wall_simple = cl.StableAgainst({}, {t.Subpart.Wall})
     assert on_wall_simple.intersects(on_wall_complex)
 
     dom = r.Domain(
+        {t.Semantics.WallDecoration, t.Semantics.Object}, 
         relations=[
+            (on_wall_complex, r.Domain({t.Semantics.Room}, []))
         ]
     )
 
@@ -95,15 +103,28 @@ def test_example_intersects():
 def test_contradiction_fail():
 
     prob = cl.Problem(constraints=[
+        cl.scene()[{t.Semantics.Object, -t.Semantics.Object}].count().in_range(1, 3)
     ], score_terms=[])
     with pytest.raises(ValueError):
         checks.check_contradictory_domains(prob)
 
 def get_walldec():
     return r.Domain(
+        {t.Semantics.WallDecoration, t.Semantics.Object, -t.Semantics.Room}, 
+        [(
+            cl.StableAgainst(
+                {-t.Subpart.Front, -t.Subpart.Top, t.Subpart.Back}, 
+                {-t.Subpart.SupportSurface, -t.Subpart.Ceiling, t.Subpart.Visible, t.Subpart.Wall}
+            ), 
+            r.Domain({t.Semantics.Room, -t.Semantics.Object}, [])
+        )]
+    )
+
 def test_example_walldec():
     
     dom = get_walldec()
+    stages = generate_indoors.default_greedy_stages()
+
     assert not propose_discrete.active_for_stage(dom, stages['on_ceiling'])
     assert not propose_discrete.active_for_stage(dom, stages['on_floor'])
 
