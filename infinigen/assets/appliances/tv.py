@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix rotation
 
 import bpy
 import bmesh
@@ -25,6 +28,7 @@ class TVFactory(AssetFactory):
         super(TVFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.aspect_ratio = np.random.choice([9 / 16, 3 / 4])
+            self.width = uniform(0.6, 2.1)
             self.screen_bevel_width = uniform(0, .01)
             self.side_margin = log_uniform(.005, .01)
             self.bottom_margin = uniform(.005, .03)
@@ -109,6 +113,7 @@ class TVFactory(AssetFactory):
             write_attribute(l, 1, 'leg', 'FACE', 'INT')
         parts.extend(legs)
         obj = join_objects(parts)
+        butil.apply_transform(obj)
         return obj
 
     def make_screen(self, obj):
