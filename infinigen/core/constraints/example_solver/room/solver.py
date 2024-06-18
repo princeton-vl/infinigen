@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -11,6 +14,7 @@ from shapely import LineString, Polygon, union
 from shapely.ops import shared_paths
 
 from infinigen.core.constraints.example_solver.room.constants import SEGMENT_MARGIN
+import infinigen.core.constraints.example_solver.room.constants as constants
     linear_extend_y, canonicalize, update_exterior_edges, update_shared_edges, update_staircase_occupancies
 
 
@@ -152,6 +156,7 @@ class BlueprintSolver:
         is_vertical = np.abs(x - x_) < 1e-2
         line = LineString(coords[k:k + 2])
         mod = len(coords) - 1
+        stride = constants.UNIT * (np.random.randint(self.max_stride) + 1)
         if is_vertical:
             new_x = x + stride if (y_ < y) ^ out else x - stride
             new_first = new_x, linear_extend_x(coords[(k - 1) % mod], coords[k], new_x)
@@ -262,6 +267,7 @@ class BlueprintStaircaseSolver:
             return RoomSolverMsg('success')
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for i in range(self.n_trials):
+            stride = constants.UNIT * (np.random.randint(self.max_stride) + 1)
             x, y = directions[np.random.randint(4)]
             coords = list((x_ + x * stride, y_ + y * stride) for x_, y_ in staircase.boundary.coords[:])
             p = Polygon(LineString(coords))
