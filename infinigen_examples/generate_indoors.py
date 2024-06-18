@@ -27,6 +27,7 @@ from infinigen.assets import (lighting)
 from infinigen.assets.utils.decorate import read_co
 from infinigen.terrain import Terrain
 from infinigen.assets.materials import invisible_to_camera
+
 from infinigen.core.constraints import (
     constraint_language as cl, 
     reasoning as r,
@@ -129,16 +130,20 @@ def default_greedy_stages():
 all_vars = [cu.variable_room, cu.variable_obj]
 
 @gin.configurable
+    p = pipeline.RandomStageExecutor(scene_seed, output_folder, overrides)
 
     logger.debug(overrides)
 
+    def add_coarse_terrain():
         terrain = Terrain(
             scene_seed, 
             surface.registry, 
             task='coarse',
             on_the_fly_asset_folder=output_folder / "assets"
         )
+        terrain_mesh = terrain.coarse_terrain()
         # placement.density.set_tag_dict(terrain.tag_dict)
+        return terrain, terrain_mesh
 
     p.run_stage('sky_lighting', lighting.sky_lighting.add_lighting, use_chance=False)    
 
@@ -281,6 +286,8 @@ all_vars = [cu.variable_room, cu.variable_obj]
     #state.print()
     state.to_json(output_folder / 'solve_state.json')
 
+    cam = cam_util.get_camera(0, 0)
+    
     def turn_off_lights():
         for o in bpy.data.objects:
             if o.type == 'LIGHT' and not o.data.cycles.is_portal:
@@ -312,6 +319,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
         use_chance=False
     )
 
+    height = p.run_stage(
         'nature_backdrop', 
         create_outdoor_backdrop, 
         terrain, 
@@ -320,6 +328,8 @@ all_vars = [cu.variable_room, cu.variable_obj]
         p=p, 
         params=overrides,
         use_chance=False,
+        prereq='terrain',
+        default=0,
     )
     if overrides.get('topview', False):
         rooms_split['exterior'].hide_viewport = True
@@ -351,7 +361,11 @@ all_vars = [cu.variable_room, cu.variable_obj]
                         break
                 break
     
+    return {
+        "height_offset": height,
         "whole_bbox": house_bbox,
+    }
+
 
 def main(args):
     scene_seed = init.apply_scene_seed(args.seed)
