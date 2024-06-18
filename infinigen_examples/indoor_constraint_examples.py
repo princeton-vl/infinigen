@@ -150,6 +150,7 @@ def home_constraints():
         cl.center_stable_surface_dist(rugs.related_to(r)).minimize(weight=1)
     ))
 
+    vertical_diff = lambda o, r: (o.distance(r, cu.floortags) - o.distance(r, cu.ceilingtags)).abs()
 
     constraints['wall_decorations'] = rooms.all(lambda r: (
         wall_art.related_to(r).count().in_range(0, 6)
