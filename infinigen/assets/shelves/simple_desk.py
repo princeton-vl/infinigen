@@ -23,12 +23,22 @@ from infinigen.assets.shelves.utils import nodegroup_tagged_cube
 def nodegroup_table_legs(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
+    group_input = nw.new_node(Nodes.GroupInput,
+                              expose_input=[('NodeSocketFloat', 'thickness', 0.5000),
+                                            ('NodeSocketFloat', 'height', 0.5000),
+                                            ('NodeSocketFloatDistance', 'radius', 0.0200),
+                                            ('NodeSocketFloat', 'width', 0.5000),
+                                            ('NodeSocketFloat', 'depth', 0.5000),
+                                            ('NodeSocketFloat', 'dist', 0.5000)])
 
     subtract = nw.new_node(Nodes.Math,
                            input_kwargs={0: group_input.outputs["height"], 1: group_input.outputs["thickness"]},
                            attrs={'operation': 'SUBTRACT'})
 
+    cylinder = nw.new_node('GeometryNodeMeshCylinder',
+                           input_kwargs={'Radius': group_input.outputs["radius"], 'Depth': subtract, 'Vertices': 128})
 
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["width"]}, attrs={'operation': 'MULTIPLY'})
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["dist"], 1: 0.0000})
 
@@ -41,20 +51,26 @@ def nodegroup_table_legs(nw: NodeWrangler):
 
     multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': subtract_1, 'Y': subtract_2, 'Z': multiply_2})
 
     transform = nw.new_node(Nodes.Transform,
                             input_kwargs={'Geometry': cylinder.outputs["Mesh"], 'Translation': combine_xyz_2})
 
+    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': multiply_3, 'Y': subtract_2, 'Z': multiply_2})
 
     transform_2 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': cylinder.outputs["Mesh"], 'Translation': combine_xyz_3})
 
+    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_2, 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': subtract_1, 'Y': multiply_4, 'Z': multiply_2})
 
     transform_3 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': cylinder.outputs["Mesh"], 'Translation': combine_xyz_4})
 
+    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': multiply_3, 'Y': multiply_4, 'Z': multiply_2})
 
     transform_4 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': cylinder.outputs["Mesh"], 'Translation': combine_xyz_5})
@@ -72,17 +88,29 @@ def nodegroup_table_legs(nw: NodeWrangler):
 def nodegroup_table_top(nw: NodeWrangler, tag_support=True):
     # Code generated using version 2.6.4 of the node_transpiler
 
+    group_input = nw.new_node(Nodes.GroupInput,
+                              expose_input=[('NodeSocketFloat', 'depth', 0.0000),
+                                            ('NodeSocketFloat', 'width', 0.0000),
+                                            ('NodeSocketFloat', 'height', 0.5000),
+                                            ('NodeSocketFloat', 'thickness', 0.5000)])
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["thickness"], 1: 0.0000})
 
+    combine_xyz = nw.new_node(Nodes.CombineXYZ,
+                              input_kwargs={'X': group_input.outputs["width"], 'Y': group_input.outputs["depth"],
+                                            'Z': add})
 
     if tag_support:
         cube = nw.new_node(nodegroup_tagged_cube().name, input_kwargs={'Size': combine_xyz})
 
     else:
+        cube = nw.new_node(Nodes.MeshCube,
+                           input_kwargs={'Size': combine_xyz, 'Vertices X': 10, 'Vertices Y': 10, 'Vertices Z': 10})
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={'operation': 'MULTIPLY'})
 
+    subtract = nw.new_node(Nodes.Math,
+                           input_kwargs={0: group_input.outputs["height"], 1: multiply},
                            attrs={'operation': 'SUBTRACT'})
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': subtract})
@@ -108,8 +136,13 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
     top_thickness = nw.new_node(Nodes.Value, label='top_thickness')
     top_thickness.outputs[0].default_value = kwargs['thickness']
 
+    table_top = nw.new_node(nodegroup_table_top(tag_support=True).name,
+                            input_kwargs={'depth': table_depth, 'width': table_width, 'height': table_height,
+                                          'thickness': top_thickness})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+                               input_kwargs={'Geometry': table_top,
+                                             'Material': surface.shaderfunc_to_material(kwargs['top_material'])})
 
     leg_radius = nw.new_node(Nodes.Value, label='leg_radius')
     leg_radius.outputs[0].default_value = kwargs['leg_radius']
@@ -117,8 +150,13 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
     leg_center_to_edge = nw.new_node(Nodes.Value, label='leg_center_to_edge')
     leg_center_to_edge.outputs[0].default_value = kwargs['leg_dist']
 
+    table_legs = nw.new_node(nodegroup_table_legs().name,
+                             input_kwargs={'thickness': top_thickness, 'height': table_height, 'radius': leg_radius,
+                                           'width': table_width, 'depth': table_depth, 'dist': leg_center_to_edge})
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+                                 input_kwargs={'Geometry': table_legs,
+                                               'Material': surface.shaderfunc_to_material(kwargs['leg_material'])})
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, set_material_1]})
 
@@ -126,6 +164,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 
     triangulate = nw.new_node('GeometryNodeTriangulate', input_kwargs={'Mesh': realize_instances})
 
+    transform = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': triangulate, 'Rotation': (0.0000, 0.0000, 1.5708)})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform},
                                attrs={'is_active_output': True})
@@ -192,6 +231,8 @@ class SimpleDeskBaseFactory(AssetFactory):
         return params
 
     def create_asset(self, i=0, **params):
+        bpy.ops.mesh.primitive_plane_add(
+            size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
@@ -203,6 +244,8 @@ class SimpleDeskBaseFactory(AssetFactory):
 class SimpleDeskFactory(SimpleDeskBaseFactory):
     def sample_params(self):
         params = dict()
+        params['Dimensions'] = (uniform(0.5, 0.75),
+                                uniform(0.6, 0.8))
         params['depth'] = params['Dimensions'][0]
         params['width'] = params['Dimensions'][1]
         params['height'] = params['Dimensions'][2]
