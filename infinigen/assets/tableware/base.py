@@ -14,6 +14,8 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 
 from infinigen.core.util import blender as butil
+from infinigen.assets.utils.decorate import read_co, write_attribute
+from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.material_assignments import AssetList
 
 
