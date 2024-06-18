@@ -16,6 +16,7 @@ from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.assets.table_decorations.utils import nodegroup_lofting_poly
 from infinigen.assets.tables.table_utils import nodegroup_n_gon_profile
+from infinigen.assets.material_assignments import AssetList
 
 
 class RangeHoodFactory(AssetFactory):
@@ -27,6 +28,22 @@ class RangeHoodFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
             
+            
+    def get_material_params(self):
+        material_assignments = AssetList['RangeHoodFactory']()
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+                
     @staticmethod
     def sample_parameters(dimensions):
         # all in meters
@@ -62,6 +79,9 @@ class RangeHoodFactory(AssetFactory):
         surface.add_geomod(obj, geometry_generate_hood, apply=True, input_kwargs=self.params)
         butil.modify_mesh(obj, 'SOLIDIFY', apply=True, thickness=.002)
         butil.modify_mesh(obj, 'SUBSURF', apply=True, levels=1, render_levels=1)
+
+        if self.scratch:
+        if self.edge_wear:
 
 
 def geometry_generate_hood(nw: NodeWrangler, **kwargs):
