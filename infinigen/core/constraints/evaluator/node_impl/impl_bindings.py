@@ -1,3 +1,5 @@
+# Copyright (c) Princeton University.
+
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: 
@@ -21,6 +23,7 @@ from infinigen.core import tags as t
 from infinigen.core.constraints.evaluator import domain_contains
 
 from . import trimesh_geometry, symmetry
+import inspect
 
 logger = logging.getLogger(__name__)
 
