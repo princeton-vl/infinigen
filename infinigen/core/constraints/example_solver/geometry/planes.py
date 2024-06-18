@@ -4,6 +4,17 @@
 # Authors: Karhan Kayan
 
 from __future__ import annotations
+import logging
+
+import bpy
+import numpy as np
+import gin
+
+import infinigen.core.util.blender as butil
+from infinigen.core import tagging, tags as t
+
+logger = logging.getLogger(__name__)
+
 def global_vertex_coordinates(obj, local_vertex):
     return obj.matrix_world @ local_vertex.co
 
@@ -11,6 +22,10 @@ def global_polygon_normal(obj, polygon):
     loc, rot, scale = obj.matrix_world.decompose()
     rot = rot.to_matrix()
     normal = rot @ polygon.normal
+    try:
+        return normal / np.linalg.norm(normal)
+    except ZeroDivisionError:
+        raise ZeroDivisionError(f"Zero division error in global_polygon_normal for {obj.name=}, {polygon.index=}, {normal=}")
 
 class Planes:
     def __init__(self):
@@ -54,6 +69,7 @@ class Planes:
         normal_normalized = normal / np.linalg.norm(normal)
         distance = np.dot(normal_normalized, point)
         return (tuple(np.round(normal_normalized / tolerance).astype(int)), round(distance / tolerance))
+
     def compute_all_planes_fast(self, obj, face_mask, tolerance=1e-4):
         # Cache computations
         
@@ -113,17 +129,22 @@ class Planes:
         """
         get all unique planes formed by faces tagged with tags
         """
+
+        tags = t.to_tag_set(tags)
+
         if not mask.any():
             logger.warning(
                 f'Attempted to get_tagged_planes {obj.name=} {tags=} but mask was empty, {obj_tags=}'
             )
             return []
+        
         if fast:
             planes = self.get_all_planes_cached(obj, mask)
         else:
             planes = self.compute_all_planes_fast(obj, mask)
         return planes
 
+    def get_rel_state_planes(self, state, name: str, relation_state: tuple):
 
         obj = state.objs[name].obj
         relation = relation_state.relation
@@ -144,11 +165,13 @@ class Planes:
         #return
 
         if relation_state.parent_plane_idx >= len(parent_all_planes):
+            logging.warning(f'{parent_obj.name=} had too few planes ({len(parent_all_planes)}) for {relation_state}')
             parent_plane = None
         else:
             parent_plane = parent_all_planes[relation_state.parent_plane_idx]
 
         if relation_state.child_plane_idx >= len(obj_all_planes):
+            logging.warning(f'{obj.name=} had too few planes ({len(obj_all_planes)}) for {relation_state}')
             obj_plane = None
         else:
             obj_plane = obj_all_planes[relation_state.child_plane_idx]
@@ -216,11 +239,14 @@ class Planes:
         
         # Composite key now includes face_mask_hash
         cache_key = (obj_id, plane_hash, face_mask_hash)
+
         # Check if the mesh has been modified since last calculation or if the face mask has changed
         mesh_or_face_mask_changed = cache_key not in self._cached_plane_masks or self._mesh_hashes.get(obj_id) != current_hash
+
         if not mesh_or_face_mask_changed:
             # logger.info(f'Cache HIT plane mask for {obj.name=}')
             return self._cached_plane_masks[cache_key]['mask']
+
         # If mesh or face mask changed, update the hash and recompute
         self._mesh_hashes[obj_id] = current_hash
 
@@ -266,3 +292,4 @@ class Planes:
             plane_mask[candidate_polygon.index] = in_plane
                 
                 
+        return plane_mask
