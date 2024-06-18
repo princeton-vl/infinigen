@@ -72,11 +72,28 @@ def operator_impl(
             return functools.reduce(cons.func, operands)
     except ZeroDivisionError as e:
         raise ZeroDivisionError(f'{e} in {cons=}, {operands=}')
+
 @register_node_impl(cl.center_stable_surface_dist)
+def center_stable_surface_impl(
     cons: cl.center_stable_surface_dist, 
+    state: state_def.State, 
+    child_vals: dict
+):
+    objs = child_vals['objs']
+    return trimesh_geometry.center_stable_surface(state.trimesh_scene, objs, state)
+
+@register_node_impl(cl.accessibility_cost)
+def accessibility_impl(
+    cons: cl.accessibility_cost, 
+    state: state_def.State, 
     child_vals: dict,
     use_collision_impl: bool = True
+):
     
+    objs = statenames_to_blnames(state, child_vals['objs'])
+    others = statenames_to_blnames(state, child_vals['others'])
+    if len(objs) == 0:
+        return 0
     
     if use_collision_impl:
         res = trimesh_geometry.accessibility_cost_cuboid_penetration(
@@ -92,9 +109,11 @@ def operator_impl(
             state.trimesh_scene, objs, others, cons.normal
         )
     return res
+
 @register_node_impl(cl.distance)
     cons: cl.Node, 
     state: state_def.State, 
+    child_vals: dict,
     others_tags: set = None
 ):
 
@@ -149,17 +168,24 @@ def focus_score_impl(
         return 0
     
     return trimesh_geometry.focus_score(
+        state, 
         a=a,
         b=b
     )
 
+@register_node_impl(cl.angle_alignment_cost)
 def angle_alignment_impl(
+    cons: cl.angle_alignment_cost, 
     state: state_def.State, 
+    child_vals: dict, 
+    others_tags: set = None
 ):
     a = statenames_to_blnames(state, child_vals['objs'])
     b = statenames_to_blnames(state, child_vals['others'])
     if len(a) == 0 or len(b) == 0:
         return 0
+    return trimesh_geometry.angle_alignment_cost(
+        state, a, b, others_tags
     )
 
 @register_node_impl(cl.freespace_2d)
@@ -179,7 +205,33 @@ def rotational_asymmetry_impl(
         return 0
     return symmetry.compute_total_rotation_asymmetry(objs)
 
+@register_node_impl(cl.reflectional_asymmetry)
+def reflectional_asymmetry_impl(
+    cons: cl.reflectional_asymmetry, 
+    state: state_def.State, 
+    child_vals: dict, 
     use_long_plane: bool = True,
+):
+
+    objs = statenames_to_blnames(state, child_vals['objs'])
+    others = statenames_to_blnames(state, child_vals['others'])
+    if len(objs) <= 1:
+        return 0
+    return trimesh_geometry.reflectional_asymmetry_score(
+        state.trimesh_scene, objs, others, use_long_plane
+    )
+
+@register_node_impl(cl.coplanarity_cost)
+def coplanarity_cost_impl(
+    cons: cl.coplanarity_cost,
+    state: state_def.State,
+    child_vals: dict
+):
+    objs = child_vals['objs']
+    if len(objs) <= 1:
+        return 0
+    return trimesh_geometry.coplanarity_cost(state.trimesh_scene, objs)
+
 
 @register_node_impl(cl.tagged)
 def tagged_impl(
