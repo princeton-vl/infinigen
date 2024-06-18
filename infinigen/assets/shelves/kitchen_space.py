@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: Yiming Zuo, Stamatis Alexandropoulos
 
 import bpy
@@ -190,6 +193,8 @@ class KitchenSpaceFactory(AssetFactory):
             else:
                 raise NotImplementedError
             
+            # parts += [sink, cabinet_top_left, cabinet_top_right, top_mid]
+            parts += [cabinet_top_left, cabinet_top_right, top_mid]
 
         kitchen_space = butil.join_objects(parts)#[cabinet_bottom, sink, cabinet_top_left, cabinet_top_right, top_mid])
         
