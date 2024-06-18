@@ -20,6 +20,7 @@ def shader_ceramic(nw: NodeWrangler, clear=False, roughness_min=0, roughness_max
     roughness = nw.build_float_curve(nw.musgrave(log_uniform(20, 40)), [(0, roughness_min), (1, roughness_max)])
     clearcoat_roughness = nw.build_float_curve(nw.musgrave(log_uniform(20, 40)),
                                                [(0, roughness_min), (1, roughness_max)])
+
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
         "Roughness": roughness,
         'Clearcoat': 1,
