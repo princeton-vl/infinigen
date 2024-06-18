@@ -17,6 +17,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 import logging
 from collections.abc import Iterable
 
+logger = logging.getLogger(__name__)
+
 
 def get_scratch_params():
     return {
@@ -108,7 +110,10 @@ def find_normal_input(bsdf):
     for i, o in enumerate(bsdf.inputs):
         if o.name == "Normal":
             return i
+    logger.debug(f"Normal not found for {bsdf}")
     return None
+
+MARKER_LABEL = "scratch"
 
 def apply_over(obj, selection=None, **shader_kwargs):
     
@@ -120,6 +125,7 @@ def apply_over(obj, selection=None, **shader_kwargs):
         return
     
     if len(shader_kwargs) == 0:
+        logging.debug("Obtaining Randomized Scratch Parameters")
         shader_kwargs = get_scratch_params()
     
     for material_name, material in materials:
@@ -127,16 +133,24 @@ def apply_over(obj, selection=None, **shader_kwargs):
         # get material node tree
         # https://blender.stackexchange.com/questions/240278/how-to-access-shader-node-via-python-script
         material_node_tree = material.node_tree
+
+        if any([n.label == MARKER_LABEL for n in material_node_tree.nodes]):
+            logging.warning(f"Scratch already applied to {material_name}! Skipping")
+            continue
+
         nw = NodeWrangler(material_node_tree)
         
         result = nw.find_recursive("ShaderNodeBsdf")
         if len(result) == 0:
+            logging.debug("No BSDF found in the object's materials! Returning")
             continue
         
         # final_bsdf = scratch_shader(nw_bsdf, bsdf, **shader_kwargs)
         
                 
                 # connecting nodes: https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
+
+        nw_bsdf.label = MARKER_LABEL
 
 def apply(obj):
     if not isinstance(obj, Iterable):
