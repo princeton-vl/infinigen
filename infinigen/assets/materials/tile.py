@@ -15,6 +15,8 @@ from ...core.nodes import NodeWrangler, Nodes
 from ...core.util.math import FixedSeed
 from ...core.util.random import log_uniform
 
+from functools import partial
+
 
 def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections):
     n = len(selections) + 1
@@ -304,8 +306,11 @@ def get_shader_funcs():
 def apply(obj, selection=None, vertical=False, shader_func=None, scale=None, alternating=None, shape=None,
           **kwargs):
     funcs, weights = zip(*get_shader_funcs())
+    weights = np.array(weights) / sum(weights)
     if shader_func is None:
         shader_func = np.random.choice(funcs, p=weights)
+    name = shader_func.__name__
+
     if scale is None:
         scale = log_uniform(1., 2.)
 
