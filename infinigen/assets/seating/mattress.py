@@ -21,6 +21,7 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
+from infinigen.assets.material_assignments import AssetList
 
 
 
@@ -79,6 +80,8 @@ class MattressFactory(AssetFactory):
             self.wrap_distance = .05
             self.surface = fabrics
             self.type= rg(self.types)
+            materials = AssetList['MattressFactory']()
+            self.surface = materials['surface'].assign_material()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
