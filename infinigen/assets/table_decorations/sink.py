@@ -27,6 +27,7 @@ from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 from infinigen.core.util.math import FixedSeed
 from infinigen.core import tagging, tags as t
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.material_assignments import AssetList
 
 
 class SinkFactory(AssetFactory):
@@ -35,8 +36,33 @@ class SinkFactory(AssetFactory):
         self.dimensions = dimensions
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+        self.params.update(self.material_params)
+
         self.tap_factory = TapFactory(factory_seed)
 
+    def get_material_params(self):
+        material_assignments = AssetList['SinkFactory']()
+        params = {
+            "Sink": material_assignments['sink'].assign_material(),
+            "Tap": material_assignments['tap'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = U() < scratch_prob
+        is_edge_wear = U() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
 
     @staticmethod
         depth = U(0.4, 0.5)
@@ -104,13 +130,17 @@ class SinkFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
     
 class TapFactory(AssetFactory):
 
     def __init__(self, factory_seed):
         super().__init__(factory_seed)
+        with FixedSeed(factory_seed):
+            self.params, self.scratch, self.edge_wear = self.get_material_params()
 
 
     @staticmethod
@@ -132,15 +162,39 @@ class TapFactory(AssetFactory):
         return params
 
 
+    def get_material_params(self):
+        material_assignments = AssetList['TapFactory']()
+        tap_material = material_assignments['tap'].assign_material()
+        
+        wrapped_params = {
+            'Tap': surface.shaderfunc_to_material(tap_material)
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = U() < scratch_prob
+        is_edge_wear = U() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
     def create_asset(self, **_):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_water_tap(), ng_inputs=self.params, apply=True)
         obj.scale = (0.4,)*3
         obj.rotation_euler.z += np.pi
         butil.apply_transform(obj)
         return obj
     
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
 
@@ -220,6 +274,8 @@ def nodegroup_water_tap(nw: NodeWrangler):
             ('NodeSocketBool', 'one_side', True if U()>0.5 else False),
             ('NodeSocketBool', 'different_type', True if U()>0.8 else False),
             ('NodeSocketBool', 'length_one_side', True if U()>0.8 else False)])
+    group_input = nw.new_node(Nodes.GroupInput,
+        expose_input=[('NodeSocketMaterial', 'Tap', None)])
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.0500})
 
     fill_curve_1 = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': curve_circle.outputs["Curve"]})
@@ -453,6 +509,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
     
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={
         'Geometry': join_geometry_6,
+        'Material': group_input.outputs["Tap"]
     })
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material}, attrs={'is_active_output': True})
@@ -465,6 +522,10 @@ def nodegroup_sink_geometry(nw: NodeWrangler):
         ('NodeSocketFloatDistance', 'Depth', 2.0000), ('NodeSocketFloat', 'Curvature', 0.9500),
         ('NodeSocketFloat', 'Upper Height', 1.0000), ('NodeSocketFloat', 'Lower Height', -0.0500),
         ('NodeSocketFloatDistance', 'HoleRadius', 0.1000), ('NodeSocketFloat', 'Margin', 0.5000),
+        ('NodeSocketFloat', 'WaterTapMargin', 0.5000),
+        ('NodeSocketMaterial', 'Tap', None),
+        ('NodeSocketMaterial', 'Sink', None),])
+    
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Depth"]})
 
     reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Width"]})
@@ -654,6 +715,7 @@ def nodegroup_sink_geometry(nw: NodeWrangler):
 
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={
         'Geometry': join_geometry_1,
+        'Material': group_input.outputs["Sink"]
     })
 
     add_7 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["WaterTapMargin"], 1: group_input.outputs["Margin"]})
