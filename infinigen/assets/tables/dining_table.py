@@ -132,6 +132,7 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
 
 
 class TableDiningFactory(AssetFactory):
+    def __init__(self, factory_seed, coarse=False, dimensions=None):
         super(TableDiningFactory, self).__init__(factory_seed, coarse=coarse)
 
         self.dimensions = dimensions
@@ -146,6 +147,24 @@ class TableDiningFactory(AssetFactory):
             self.clothes_scatter = NoApply()
     @staticmethod
     def sample_parameters(dimensions):
+
+        if dimensions is None:
+
+            width = uniform(0.91, 1.16)
+
+            if uniform() < 0.7:
+                # oblong
+                length = uniform(1.4, 2.8)
+            else:
+                # approx square
+                length = width * normal(1, 0.1)
+            
+            dimensions = (
+                length,
+                width,
+                uniform(0.65, 0.85) 
+            )
+
         # all in meters
         x, y, z = dimensions
 
@@ -186,6 +205,7 @@ class TableDiningFactory(AssetFactory):
         else:
             raise NotImplementedError
 
+        top_thickness = uniform(0.03, 0.06)
 
         parameters = {
             'Top Profile N-gon': NGon,
@@ -218,9 +238,33 @@ class TableDiningFactory(AssetFactory):
         # surface.add_geomod(obj, geometry_assemble_table, apply=False, input_kwargs=self.params)
         surface.add_geomod(obj, geometry_assemble_table, apply=True, input_kwargs=self.params)
         tagging.tag_system.relabel_obj(obj)
+        assert tagging.tagged_face_mask(obj, {t.Subpart.SupportSurface}).sum() != 0
 
         return obj
 
     def finalize_assets(self, assets):
             self.scratch.apply(assets)
             self.edge_wear.apply(assets)
+    #def finalize_assets(self, assets):
+    #    self.clothes_scatter.apply(assets)
+
+class SideTableFactory(TableDiningFactory):
+
+    def __init__(self, factory_seed, coarse=False, dimensions=None):
+        if dimensions is None:
+            w = 0.55 * normal(1, 0.05)
+            h = 0.95 * w * normal(1, 0.05)
+            dimensions = (w, w, h)
+        super().__init__(factory_seed, coarse=coarse, dimensions=dimensions)
+
+class CoffeeTableFactory(TableDiningFactory):
+
+    def __init__(self, factory_seed, coarse=False, dimensions=None):
+        if dimensions is None:
+            dimensions = (
+                uniform(1, 1.5),
+                uniform(0.6, 0.9),
+                uniform(0.4, 0.5)
+            )
+        super().__init__(factory_seed, coarse=coarse, dimensions=dimensions)
+
