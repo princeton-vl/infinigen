@@ -27,6 +27,7 @@ from infinigen.assets.wall_decorations.range_hood import RangeHoodFactory
 from infinigen.core.util import blender as butil
 
 from infinigen.assets.tables.table_top import nodegroup_generate_table_top
+from infinigen.assets.materials.table_materials import shader_marble
 from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
 
 def nodegroup_tag_cube(nw: NodeWrangler):
