@@ -20,6 +20,7 @@ infinigen.assets.materials.glass
 infinigen.assets.materials.hardwood_floor
 infinigen.assets.materials.leather_and_fabrics.leather
 infinigen.assets.materials.leather_and_fabrics.velvet
+infinigen.assets.materials.marble_regular
 infinigen.assets.materials.marble_voronoi
 infinigen.assets.materials.metal.metal_basic
 infinigen.assets.materials.mirror
