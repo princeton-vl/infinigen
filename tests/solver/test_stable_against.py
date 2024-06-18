@@ -2,8 +2,80 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Karhan Kayan
+
+import bpy 
+from itertools import chain
+from functools import partial
+
+# import pytest
+import numpy as np
+import sys 
+import os
+
+from infinigen.core.constraints.example_solver.geometry import dof, parse_scene, planes, stability, validity
+from mathutils import Vector
+
+from infinigen.core.constraints import (
+    usage_lookup,
+    example_solver as solver,
+    constraint_language as cl
+)
+from infinigen.core.util import blender as butil
+from infinigen.core.constraints.example_solver import (
+    state_def
+)
+
+def make_scene(loc2):
     """Create a scene with a table and a cup, and return the state."""
+    butil.clear_scene()
+    objs = {}
+
+    table = butil.spawn_cube(scale=(5, 5, 1), name='table')
+    cup = butil.spawn_cube(scale=(1, 1, 1), name='cup', location=loc2)
+
+    for o in [table, cup]:
+        butil.apply_transform(o)
+        parse_scene.preprocess_obj(o)
+        tagging.tag_canonical_surfaces(o)
+
+    assert table.scale == Vector((1,1,1))
+    assert cup.location != Vector((0,0,0))
+
+    bpy.context.view_layer.update()
+
+    objs['table'] = state_def.ObjectState(table)
+    objs['cup'] = state_def.ObjectState(cup)
+    objs['cup'].relations.append(
+        state_def.RelationState(
+            target_name='table',
+            child_plane_idx=0,
+            parent_plane_idx=0
+        )
+    )
+
     # butil.save_blend('test.blend')
+
+    return state_def.State(objs=objs)
+
+def test_stable_against():
+
+    # too low, intersects ground
+    assert not validity.check_post_move_validity(make_scene((0, 0, 0.5)), 'cup')
+
+    # exactly touches surface
+    assert validity.check_post_move_validity(make_scene((0, 0, 1)), 'cup')
+
+    # underneath
+    assert not validity.check_post_move_validity(make_scene((0, 0, -3)), 'cup')
+
+    # exactly at corner
+    assert validity.check_post_move_validity(make_scene((2, 2, 1)), 'cup')
+
+    # slightly over corner
+    assert not validity.check_post_move_validity(make_scene((2.1, 2.1, 1)), 'cup')
+
+    # farr away
+    assert not validity.check_post_move_validity(make_scene((4, 4, 0.5)), 'cup')
 
 def test_horizontal_stability():
     butil.clear_scene()
@@ -79,6 +151,8 @@ def test_horizontal_stability():
     assert validity.check_post_move_validity(state, 'chair4')
 
     # butil.save_blend('test.blend')
+
+    
 
 if __name__ == '__main__':
     test_horizontal_stability()
