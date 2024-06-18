@@ -18,6 +18,7 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core import tagging, tags as t
 
 from infinigen.core.util.random import log_uniform, clip_gaussian
 
@@ -492,6 +493,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         label='SeatCushion')
     
     upwards_part = nw.new_node(Nodes.Compare, input_kwargs={'A': nw.new_node(Nodes.Index), 'B': 2}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+    seat_cushion = tagging.tag_nodegroup(nw, seat_cushion, t.Subpart.SupportSurface, selection=upwards_part)
     
     index = nw.new_node(Nodes.Index)
     
