@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 import bpy
 import bmesh
@@ -117,3 +120,4 @@ class PanFactory(TablewareFactory):
         cutter.scale = *([uniform(.06, .1)] * 2), 1
         cutter.location[0] = self.r_expand + uniform(.8, .9) * self.x_handle
         butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='DIFFERENCE')
+        butil.delete(cutter)
