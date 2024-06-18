@@ -11,6 +11,7 @@ from infinigen.core.util import blender as butil
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.material_assignments import AssetList
 
 class LampFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.], lamp_type="FloorLamp"):
@@ -63,6 +64,34 @@ class LampFactory(AssetFactory):
         }}
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            
+        self.params.update(self.material_params)
+            
+    def get_material_params(self):
+        material_assignments = AssetList['LampFactory']()
+        black_material = material_assignments['black_material'].assign_material()
+        white_material = material_assignments['metal'].assign_material()
+        lampshade_material = material_assignments['lampshade'].assign_material()
+        
+        wrapped_params = {
+            'BlackMaterial': surface.shaderfunc_to_material(black_material),
+            'MetalMaterial': surface.shaderfunc_to_material(white_material),
+            'LampshadeMaterial': surface.shaderfunc_to_material(lampshade_material)
+        }
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
     def sample_parameters(self, dimensions, use_default=False):
         if use_default:
             if self.lamp_type == "DeskLamp":
@@ -109,13 +138,20 @@ class LampFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
 
 @node_utils.to_nodegroup('nodegroup_bulb', singleton=False, type='GeometryNodeTree')
 def nodegroup_bulb(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+    group_input = nw.new_node(Nodes.GroupInput,
+        expose_input=[
+            ('NodeSocketMaterial', 'LampshadeMaterial', None),            
+            ('NodeSocketMaterial', 'MetalMaterial', None)])
+    
     curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={'Start': (0.0000, 0.0000, -0.2000), 'End': (0.0000, 0.0000, 0.0000)})
 
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.1500, 'Resolution': 100})
@@ -152,6 +188,7 @@ def nodegroup_bulb(nw: NodeWrangler):
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [curve_to_mesh_1, curve_to_mesh_2, curve_to_mesh_3]})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': join_geometry_1, 'Material': group_input.outputs['MetalMaterial']})
 
     curve_line = nw.new_node(Nodes.CurveLine)
 
@@ -170,6 +207,7 @@ def nodegroup_bulb(nw: NodeWrangler):
         input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"]})
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': curve_to_mesh, 'Material': group_input.outputs['LampshadeMaterial']})
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, set_material_1]})
 
@@ -260,6 +298,14 @@ def nodegroup_reversiable_bulb(nw: NodeWrangler):
 
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloat', 'Scale', 0.3000),
+            ('NodeSocketBool', 'Reverse', False),
+            ('NodeSocketMaterial', 'BlackMaterial', None),
+            ('NodeSocketMaterial', 'LampshadeMaterial', None),
+            ('NodeSocketMaterial', 'MetalMaterial', None)])
+    
+    bulb = nw.new_node(nodegroup_bulb().name, input_kwargs={'LampshadeMaterial': group_input.outputs["LampshadeMaterial"],
+                                                            'MetalMaterial': group_input.outputs["MetalMaterial"]})
+    
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["Scale"], 'Y': group_input.outputs["Scale"], 'Z': group_input.outputs["Scale"]})
 
@@ -293,10 +339,21 @@ def nodegroup_lamp_head(nw: NodeWrangler):
             ('NodeSocketFloat', 'BotRadius', 0.5000),
             ('NodeSocketBool', 'ReverseBulb', True),
             ('NodeSocketFloatDistance', 'RackThickness', 0.0050),
+            ('NodeSocketFloat', 'RackHeight', 0.5000),
+            ('NodeSocketMaterial', 'BlackMaterial', None),
+            ('NodeSocketMaterial', 'LampshadeMaterial', None),
+            ('NodeSocketMaterial', 'MetalMaterial', None)])
+    
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["TopRadius"], 1: 0.8000},
         attrs={'operation': 'MULTIPLY'})
 
+    reversiable_bulb = nw.new_node(nodegroup_reversiable_bulb().name, 
+                                   input_kwargs={'Scale': multiply,
+                                                 'BlackMaterial': group_input.outputs["BlackMaterial"],
+                                                 'LampshadeMaterial': group_input.outputs["LampshadeMaterial"],
+                                                 'MetalMaterial': group_input.outputs["MetalMaterial"]})
+    
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 0.1500}, attrs={'operation': 'MULTIPLY'})
 
     multiply_add = nw.new_node(Nodes.Math,
@@ -311,6 +368,7 @@ def nodegroup_lamp_head(nw: NodeWrangler):
         input_kwargs={'Thickness': group_input.outputs["RackThickness"], 'InnerRadius': multiply_1, 'OuterRadius': group_input.outputs["TopRadius"], 'InnerHeight': reversiable_bulb.outputs["RackSupport"], 'OuterHeight': multiply_2})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': bulb_rack, 'Material': group_input.outputs["BlackMaterial"]})
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_2})
 
@@ -345,6 +403,7 @@ def nodegroup_lamp_head(nw: NodeWrangler):
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [flip_faces, extrude_mesh.outputs["Mesh"]]})
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': join_geometry_1, 'Material': group_input.outputs["LampshadeMaterial"]})
 
     join_geometry = nw.new_node(Nodes.JoinGeometry,
         input_kwargs={'Geometry': [reversiable_bulb.outputs["Geometry"], set_material, set_material_1]})
@@ -366,6 +425,11 @@ def nodegroup_lamp_geometry(nw: NodeWrangler):
             ('NodeSocketFloatDistance', 'RackThickness', 0.0050),
             ('NodeSocketVectorTranslation', 'CurvePoint1', (0.0000, 0.0000, 0.0000)),
             ('NodeSocketVectorTranslation', 'CurvePoint2', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketVectorTranslation', 'CurvePoint3', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketMaterial', 'BlackMaterial', None),
+            ('NodeSocketMaterial', 'LampshadeMaterial', None),
+            ('NodeSocketMaterial', 'MetalMaterial', None)])
+    
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["BaseHeight"]})
 
     curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={'End': combine_xyz_1})
@@ -392,6 +456,7 @@ def nodegroup_lamp_geometry(nw: NodeWrangler):
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [curve_to_mesh_1, curve_to_mesh]})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': join_geometry, 'Material': group_input.outputs["BlackMaterial"]})
 
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["ShadeHeight"], 1: 0.4000},
@@ -406,6 +471,16 @@ def nodegroup_lamp_geometry(nw: NodeWrangler):
         attrs={'operation': 'MULTIPLY_ADD'})
 
     lamp_head = nw.new_node(nodegroup_lamp_head().name,
+        input_kwargs={'ShadeHeight': group_input.outputs["ShadeHeight"], 
+                      'TopRadius': group_input.outputs["HeadTopRadius"], 
+                      'BotRadius': group_input.outputs["HeadBotRadius"], 
+                      'ReverseBulb': group_input.outputs["ReverseLamp"], 
+                      'RackThickness': group_input.outputs["RackThickness"], 
+                      'RackHeight': multiply_add,
+                      'BlackMaterial': group_input.outputs["BlackMaterial"],
+                      'LampshadeMaterial': group_input.outputs["LampshadeMaterial"],
+                      'MetalMaterial': group_input.outputs["MetalMaterial"],})
+    
     sample_curve = nw.new_node(Nodes.SampleCurve,
         input_kwargs={'Curves': bezier_segment, 'Factor': 1.0000},
         attrs={'use_all_curves': True})
