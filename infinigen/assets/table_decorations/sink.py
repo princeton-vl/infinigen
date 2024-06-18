@@ -7,22 +7,59 @@
 # - Stamatis Alexandropoulos: taps
 # - Alexander Raistrick: placeholder, optimize detail, redo cutter
 
+import random
 
 import bpy
+import mathutils
 
 import numpy as np
+from numpy.random import uniform as U, normal as N, randint as RI
+
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util.color import color_category
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
 
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 
+from infinigen.core.util.math import FixedSeed
 from infinigen.core import tagging, tags as t
+from infinigen.core.placement.factory import AssetFactory
+
+
+class SinkFactory(AssetFactory):
+        super(SinkFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.dimensions = dimensions
         self.factory_seed = factory_seed
+        with FixedSeed(factory_seed):
         self.tap_factory = TapFactory(factory_seed)
 
+
+    @staticmethod
+        depth = U(0.4, 0.5)
         curvature = U(1.0, 1.0)
             upper_height = U(0.2, 0.4)
         lower_height = U(0.00, 0.01)
+        hole_radius = U(0.02, 0.05)
+        margin = U(0.02, 0.05)
+        watertap_margin = U(0.1, 0.12)
+
+        params = {
+            'Width': width,
+            'Depth': depth,
+            'Curvature': curvature,
+            'Upper Height': upper_height,
+            'Lower Height': lower_height,
+            'HoleRadius': hole_radius,
+            'Margin': margin,
+            'WaterTapMargin': watertap_margin,
             'ProtrudeAboveCounter': U(0.01, 0.025),
+        }
+        return params
+
     def _extract_geo_results(self):
 
         params = self.params.copy()
@@ -106,6 +143,11 @@ class TapFactory(AssetFactory):
             self.scratch.apply(assets)
             self.edge_wear.apply(assets)
 
+
+@node_utils.to_nodegroup('nodegroup_handle', singleton=False, type='GeometryNodeTree')
+def nodegroup_handle(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     bezier_segment = nw.new_node(Nodes.CurveBezierSegment, input_kwargs={
         'Start': (0.0000, 0.0000, 0.0000),
         'Start Handle': (0.0000, 0.0000, 0.7000),
@@ -113,7 +155,10 @@ class TapFactory(AssetFactory):
         'End': (1.0000, 0.0000, 0.9000)
     })
 
+    spline_parameter = nw.new_node(Nodes.SplineParameter)
 
+    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': spline_parameter.outputs["Factor"]})
+    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0000, 0.9750), (1.0000, 0.1625)])
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: 1.3000},
                            attrs={'operation': 'MULTIPLY'})
@@ -121,6 +166,7 @@ class TapFactory(AssetFactory):
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius,
                                    input_kwargs={'Curve': bezier_segment, 'Radius': multiply})
 
+    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.2000})
 
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={
         'Curve': set_curve_radius,
@@ -128,11 +174,14 @@ class TapFactory(AssetFactory):
         'Fill Caps': True
     })
 
+    position = nw.new_node(Nodes.InputPosition)
 
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position})
 
     map_range = nw.new_node(Nodes.MapRange,
                             input_kwargs={'Value': separate_xyz.outputs["X"], 1: 0.2000, 3: 1.0000, 4: 2.5000})
 
+    multiply_1 = nw.new_node(Nodes.Math,
                              input_kwargs={0: separate_xyz.outputs["Y"], 1: map_range.outputs["Result"]},
                              attrs={'operation': 'MULTIPLY'})
 
@@ -145,10 +194,17 @@ class TapFactory(AssetFactory):
     set_position = nw.new_node(Nodes.SetPosition,
                                input_kwargs={'Geometry': curve_to_mesh, 'Position': combine_xyz})
 
+    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={'Mesh': set_position, 'Level': 2})
 
+    set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': subdivision_surface})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_shade_smooth},
                                attrs={'is_active_output': True})
+
+
+@node_utils.to_nodegroup('nodegroup_water_tap', singleton=False, type='GeometryNodeTree')
+def nodegroup_water_tap(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloatDistance', 'base_width', U(0.2,0.3)),
@@ -164,22 +220,31 @@ class TapFactory(AssetFactory):
             ('NodeSocketBool', 'one_side', True if U()>0.5 else False),
             ('NodeSocketBool', 'different_type', True if U()>0.8 else False),
             ('NodeSocketBool', 'length_one_side', True if U()>0.8 else False)])
+    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.0500})
 
+    fill_curve_1 = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': curve_circle.outputs["Curve"]})
 
+    extrude_mesh_1 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={'Mesh': fill_curve_1, 'Offset Scale': 0.1500})
 
     quadrilateral = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
                                 input_kwargs={'Width': 0.2000, 'Height': 0.7000})
 
+    fillet_curve = nw.new_node('GeometryNodeFilletCurve',
                                input_kwargs={'Curve': quadrilateral, 'Count': 19, 'Radius': 0.1000},
                                attrs={'mode': 'POLY'})
 
+    fill_curve = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': fillet_curve})
 
+    extrude_mesh = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={'Mesh': fill_curve, 'Offset Scale': 0.0500})
 
+    curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={'End': (0.0000, 0.0000, 0.6000)})
     
+    curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.0300})
     
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': curve_line, 'Profile Curve': curve_circle_1.outputs["Curve"]})
     
+    curve_circle_2 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.2000})
     
     transform_geometry = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': curve_circle_2.outputs["Curve"], 'Translation': (0.0000, 0.2000, 0.0000)})
@@ -208,7 +273,9 @@ class TapFactory(AssetFactory):
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': switch.outputs[6], 'Profile Curve': curve_circle_1.outputs["Curve"]})
     
+    position = nw.new_node(Nodes.InputPosition)
     
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position})
     
     greater_than = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Z"], 1: -0.0100}, attrs={'operation': 'GREATER_THAN'})
     
@@ -237,6 +304,7 @@ class TapFactory(AssetFactory):
     transform_geometry_5 = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': join_geometry, 'Rotation': combine_xyz_1, 'Scale': combine_xyz_2})
     
+    handle = nw.new_node(nodegroup_handle().name)
     
     transform_geometry_4 = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': handle, 'Translation': (0.0000, -0.2000, 0.0000), 'Rotation': (0.0000, 0.0000, 3.6652), 'Scale': (0.3000, 0.3000, 0.3000)})
@@ -390,16 +458,23 @@ class TapFactory(AssetFactory):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material}, attrs={'is_active_output': True})
 
 @node_utils.to_nodegroup('nodegroup_sink_geometry', singleton=False, type='GeometryNodeTree')
+def nodegroup_sink_geometry(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketFloatDistance', 'Width', 2.0000),
         ('NodeSocketFloatDistance', 'Depth', 2.0000), ('NodeSocketFloat', 'Curvature', 0.9500),
         ('NodeSocketFloat', 'Upper Height', 1.0000), ('NodeSocketFloat', 'Lower Height', -0.0500),
         ('NodeSocketFloatDistance', 'HoleRadius', 0.1000), ('NodeSocketFloat', 'Margin', 0.5000),
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Depth"]})
 
+    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Width"]})
 
     quadrilateral = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
                                 input_kwargs={'Width': reroute_3, 'Height': reroute_2})
 
+    minimum = nw.new_node(Nodes.Math, input_kwargs={0: reroute_3, 1: reroute_2}, attrs={'operation': 'MINIMUM'})
 
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: minimum, 1: 0.1000}, attrs={'operation': 'MULTIPLY'})
 
     # inside of sink curve
     sink_interior_border = nw.new_node('GeometryNodeFilletCurve',
@@ -413,6 +488,7 @@ class TapFactory(AssetFactory):
 
     transform_1 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': sink_interior_border, 'Scale': combine_xyz_1})
 
+    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': group_input.outputs["HoleRadius"]})
 
     join_geometry_4 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [transform_1, curve_circle.outputs["Curve"]]})
@@ -421,7 +497,9 @@ class TapFactory(AssetFactory):
 
     #fill_curve_1 = tagging.tag_nodegroup(nw, fill_curve_1, t.Subpart.SupportSurface)
 
+    reroute = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Lower Height"]})
 
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': reroute})
 
     transform_2 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': fill_curve_1, 'Translation': combine_xyz_2})
@@ -440,8 +518,11 @@ class TapFactory(AssetFactory):
     join_geometry_6 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [curve_circle.outputs["Curve"], transform_5]})
 
+    fill_curve_4 = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': join_geometry_6})
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: reroute, 1: -0.0100})
 
+    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': add})
 
     transform_6 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': fill_curve_4, 'Translation': combine_xyz_4})
@@ -452,8 +533,11 @@ class TapFactory(AssetFactory):
         'Individual': False
     })
 
+    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Lower Height"], 1: -0.0100})
 
+    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': add_1})
 
+    curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={'End': combine_xyz_6})
 
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={
         'Curve': curve_line,
@@ -472,22 +556,29 @@ class TapFactory(AssetFactory):
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform, sink_interior_border]})
 
+    fill_curve = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': join_geometry})
 
     extrude_mesh_1 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
         'Mesh': fill_curve,
         'Offset Scale': group_input.outputs["Lower Height"]
     })
 
+    position = nw.new_node(Nodes.InputPosition)
 
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position})
 
     less_than = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Z"], 1: 0.0000},
                             attrs={'operation': 'LESS_THAN'})
 
+    position_1 = nw.new_node(Nodes.InputPosition)
 
+    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position_1})
 
+    multiply_1 = nw.new_node(Nodes.Math,
                              input_kwargs={0: separate_xyz_1.outputs["X"], 1: group_input.outputs["Curvature"]},
                              attrs={'operation': 'MULTIPLY'})
 
+    multiply_2 = nw.new_node(Nodes.Math,
                              input_kwargs={0: separate_xyz_1.outputs["Y"], 1: group_input.outputs["Curvature"]},
                              attrs={'operation': 'MULTIPLY'})
 
@@ -506,6 +597,7 @@ class TapFactory(AssetFactory):
     add_3 = nw.new_node(Nodes.Math,
                         input_kwargs={0: group_input.outputs["Depth"], 1: group_input.outputs["Margin"]})
 
+    add_4 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: group_input.outputs["WaterTapMargin"]})
 
     quadrilateral_1 = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
                                   input_kwargs={'Width': add_4, 'Height': add_2})
@@ -513,28 +605,36 @@ class TapFactory(AssetFactory):
     multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["WaterTapMargin"], 1: -0.5000},
                              attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': multiply_3})
 
     transform_8 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': quadrilateral_1, 'Translation': combine_xyz_7})
 
+    fillet_curve_1 = nw.new_node('GeometryNodeFilletCurve',
                                  input_kwargs={'Curve': transform_8, 'Count': 10, 'Radius': multiply},
                                  attrs={'mode': 'POLY'})
 
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [sink_interior_border, fillet_curve_1]})
 
+    fill_curve_2 = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': join_geometry_2})
 
     multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Lower Height"], 1: -1.0000},
                              attrs={'operation': 'MULTIPLY'})
 
+    add_5 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Upper Height"], 1: multiply_4})
 
+    extrude_mesh_3 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={'Mesh': fill_curve_2, 'Offset Scale': add_5})
 
+    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Lower Height"]})
 
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': reroute_1})
 
     transform_3 = nw.new_node(Nodes.Transform, input_kwargs={
         'Geometry': extrude_mesh_3.outputs["Mesh"],
         'Translation': combine_xyz_3
     })
 
+    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': transform_3})
 
     #watertap = nw.new_node(nodegroup_water_tap().name, input_kwargs={'Tap': group_input.outputs['Tap']})
 
@@ -542,6 +642,8 @@ class TapFactory(AssetFactory):
         0: group_input.outputs["Depth"],
         1: group_input.outputs["WaterTapMargin"]
     })
+
+    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_6, 1: -0.5000}, attrs={'operation': 'MULTIPLY'})
 
     combine_xyz_8 = nw.new_node(Nodes.CombineXYZ,
                                 input_kwargs={'X': multiply_5, 'Z': group_input.outputs["Upper Height"]})
