@@ -18,6 +18,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.surface import NoApply
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
+from infinigen.core import tagging, tags as t
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
