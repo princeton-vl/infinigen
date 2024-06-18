@@ -20,6 +20,7 @@ from infinigen.core.constraints import (
     example_solver as solver,
     constraint_language as cl
 )
+from infinigen.core import tagging, tags as t
 from infinigen.core.util import blender as butil
 from infinigen.core.constraints.example_solver import (
     state_def
@@ -47,6 +48,7 @@ def make_scene(loc2):
     objs['cup'] = state_def.ObjectState(cup)
     objs['cup'].relations.append(
         state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Bottom}, {t.Subpart.Top}),
             target_name='table',
             child_plane_idx=0,
             parent_plane_idx=0
@@ -118,6 +120,7 @@ def test_horizontal_stability():
     objs['chair4'] = state_def.ObjectState(chair4)
     objs['chair1'].relations.append(
         state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Back}, {t.Subpart.Front}, check_z=False),
             target_name='table',
             child_plane_idx=0,
             parent_plane_idx=0
@@ -125,6 +128,7 @@ def test_horizontal_stability():
     )
     objs['chair2'].relations.append(
         state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Back}, {t.Subpart.Front}, check_z=False),
             target_name='table',
             child_plane_idx=0,
             parent_plane_idx=0
@@ -132,6 +136,7 @@ def test_horizontal_stability():
     )
     objs['chair3'].relations.append(
         state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Front}, {t.Subpart.Back}, check_z=False),
             target_name='table',
             child_plane_idx=0,
             parent_plane_idx=0
@@ -139,6 +144,7 @@ def test_horizontal_stability():
     )
     objs['chair4'].relations.append(
         state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Front}, {t.Subpart.Back}, check_z=False),
             target_name='table',
             child_plane_idx=0,
             parent_plane_idx=0
