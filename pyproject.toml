@@ -34,7 +34,7 @@ dependencies = [
     "landlab>=2.6.0",
     "matplotlib",
     "networkx",
-    "numpy",
+    "numpy<2",
     "opencv-python",
     "pandas",
     "psutil",

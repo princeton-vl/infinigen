@@ -11,7 +11,6 @@
 
 Infinigen has distinct scene generation & rendering stages. We typically run these automatically for you (skip to [Generate scenes automatically](#generating-scenes-automatically)
 
-
 #### Generate a blender file
 
 First, run ONE command of your choosing from the block below. This will generate a 3D blender file for use in the subsequent steps.

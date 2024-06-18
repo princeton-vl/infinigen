@@ -68,10 +68,10 @@ conda activate infinigen
 Then, install the infinigen package using one of the options below:
 
 ```bash
-# Minimal install (No terrain or opengl GT: ok for Infinigen-Indoors or single-object generation) 
+# Minimal install (No terrain or opengl GT, ok for Infinigen-Indoors or single-object generation) 
 INFINIGEN_MINIMAL_INSTALL=True pip install -e .
 
-# Full install (Terrain & OpenGL-GT enabled; Needed for Infinigen-Nature HelloWorld)
+# Full install (Terrain & OpenGL-GT enabled, needed for Infinigen-Nature HelloWorld)
 pip install -e .
 
 # Developer install (includes pytest, ruff, other recommended dev tools)
