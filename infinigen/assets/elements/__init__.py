@@ -6,4 +6,5 @@ from .staircases import *
 from .doors import *
 from .rug import RugFactory
 from .warehouses import *
+from .nature_shelf_trinkets.generate import NatureShelfTrinketsFactory
 from .pillars import PillarFactory
