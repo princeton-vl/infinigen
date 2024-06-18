@@ -23,7 +23,15 @@ class FoodBoxFactory(AssetFactory):
             self.dimensions = np.array([dimensions[1], dimensions[0], dimensions[2]])
             self.surface = text.Text(self.factory_seed)
             self.texture_shared = uniform() < .4
+        
+    def create_placeholder(self, **params):
         obj = new_cube()
         obj.scale = self.dimensions / 2
         butil.apply_transform(obj)
+        return obj
+
+    def create_asset(self, placeholder, **params) -> bpy.types.Object:
+        obj = butil.copy(placeholder)
+        wrap_six_sides(obj, self.surface, self.texture_shared)
+        butil.modify_mesh(obj, 'BEVEL', width=.001)
         return obj
