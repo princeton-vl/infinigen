@@ -733,11 +733,13 @@ def home_constraints():
         ))
 
     ))
+
     score_terms['bathroom'] = (
         mirror.related_to(bathrooms).distance(sink).minimize(weight=0.2)
         + cl.accessibility_cost(mirror, furniture, cu.down_dir).maximize(weight=3)
     )
     #endregion
+
     #region MISC OBJECTS
 
     if params['has_aquarium_tank']:
