@@ -20,6 +20,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
 
 
@@ -32,6 +33,8 @@ class PlantPotFactory(PotFactory):
             self.r_expand = uniform(1.1, 1.3)
             alpha = uniform(.5, .8)
             self.r_mid = (self.r_expand - 1) * alpha + 1
+            material_assignments = AssetList["PlantContainerFactory"]()
+            self.surface = material_assignments["surface"].assign_material()
             self.scale = log_uniform(.08, .12)
 
 
@@ -44,6 +47,8 @@ class PlantContainerFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             self.base_factory = PlantPotFactory(self.factory_seed, coarse)
             self.dirt_ratio = uniform(.7, .8)
+            material_assignments = AssetList["PlantContainerFactory"]()
+            self.dirt_surface = material_assignments["dirt_surface"].assign_material()
             fn = np.random.choice(self.plant_factories)
             self.plant_factory = fn(self.factory_seed)
             self.side_size = self.base_factory.scale * self.base_factory.r_expand
@@ -85,6 +90,7 @@ class PlantContainerFactory(AssetFactory):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.fill_grid()
         subsurf(dirt_, 3)
+        self.dirt_surface.apply(dirt_)
         butil.apply_modifiers(dirt_)
 
         remove_vertices(dirt_, lambda x, y, z: np.sqrt(x ** 2 + y ** 2) > radius * 0.92)
