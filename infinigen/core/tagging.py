@@ -1,4 +1,6 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Yihan Wang, Karhan Kayan: face based tagging, canonical surface tagging, mask extraction
 
@@ -22,10 +24,13 @@ logger = logging.getLogger(__name__)
 PREFIX = 'TAG_'
 COMBINED_ATTR_NAME = 'MaskTag'
 
+
 class AutoTag():
     tag_dict = {}
+
     def __init__(self):
         self.tag_dict = {}
+
     def clear(self):
         self.tag_dict = {}
 
@@ -35,6 +40,7 @@ class AutoTag():
     def save_tag(self, path='./MaskTag.json'):
         with open(path, 'w') as f:
             json.dump(self.tag_dict, f)
+
     def load_tag(self, path='./MaskTag.json'):
         with open(path, 'r') as f:
             self.tag_dict = json.load(f)
@@ -307,6 +313,7 @@ def _name_for_tagval(i: int) -> str | None:
     
     return name
 
+def union_object_tags(obj):
 
     if COMBINED_ATTR_NAME not in obj.data.attributes:
         return set()
@@ -323,6 +330,7 @@ def _name_for_tagval(i: int) -> str | None:
             return t.to_tag(x)
         except ValueError:
             return x
+
     return {try_convert(x) for x in res}
 
 def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarray:
@@ -366,6 +374,7 @@ def extract_tagged_faces(obj: bpy.types.Object, tags: set, nonempty=False) -> bp
     # Ensure we're dealing with a mesh object
     if obj.type != 'MESH':
         raise TypeError("Object is not a mesh!")
+
     face_mask = tagged_face_mask(obj, tags)
 
     if nonempty and not face_mask.any():
