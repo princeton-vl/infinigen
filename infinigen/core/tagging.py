@@ -1,13 +1,32 @@
+import os
+import bpy
+import json
 import logging
 
+import numpy as np
 from infinigen.core import surface
 
 logger = logging.getLogger(__name__)
 
 PREFIX = 'TAG_'
 COMBINED_ATTR_NAME = 'MaskTag'
+
+class AutoTag():
+    tag_dict = {}
+    def __init__(self):
+        self.tag_dict = {}
     def clear(self):
         self.tag_dict = {}
+
+    # This function now only supports APPLIED OBJECTS
+    # PLEASE KEEP ALL THE GEOMETRY APPLIED BEFORE SCATTERING THEM ON THE TERRAIN
+    # PLEASE DO NOT USE BOOLEAN TAGS FOR OTHER USE
+    def save_tag(self, path='./MaskTag.json'):
+        with open(path, 'w') as f:
+            json.dump(self.tag_dict, f)
+    def load_tag(self, path='./MaskTag.json'):
+        with open(path, 'r') as f:
+            self.tag_dict = json.load(f)
 
     def _extract_incoming_tagmasks(self, obj):
         
@@ -115,6 +134,8 @@ COMBINED_ATTR_NAME = 'MaskTag'
         mask_tag_attr.data.foreach_set('value', tagint)
         
 
+    def relabel_obj(self, root_obj):
+
         tag_name_lookup = [None] * len(self.tag_dict)
 
         for name, tag_id in self.tag_dict.items():
@@ -126,7 +147,13 @@ COMBINED_ATTR_NAME = 'MaskTag'
             tag_name_lookup[key] = name
 
         for obj in butil.iter_object_tree(root_obj):
+            if obj.type != 'MESH':
+                continue
             self._relabel_obj_single(obj, tag_name_lookup)
+
+        return root_obj
+
+tag_system = AutoTag()
     
 def print_segments_summary(obj: bpy.types.Object):
 
@@ -138,6 +165,7 @@ def print_segments_summary(obj: bpy.types.Object):
         results.append((vi, mask.mean()))
 
     results.sort(key=lambda x: x[1], reverse=True)
+
     print(f'Tag Segments Summary for {obj.name=}')
     for vi, mean in results:
         name = _name_for_tagval(vi)
@@ -174,6 +202,7 @@ def tag_object(obj, name=None, mask=None):
             )
 
         tag_system.relabel_obj(obj)
+
 def vert_mask_to_tri_mask(obj, vert_mask, require_all=True):
     arr = np.zeros(len(obj.data.polygons) * 3)
     obj.data.polygons.foreach_get('vertices', arr)
@@ -231,6 +260,7 @@ def tag_canonical_surfaces(obj, rtol=0.01):
             'data_type': 'BOOLEAN'
         }
     )
+    return store_named_attribute
 
 def _name_for_tagval(i: int) -> str | None:
 
