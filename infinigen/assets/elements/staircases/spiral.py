@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 import numpy as np
 from numpy.random import uniform
@@ -28,6 +31,7 @@ class SpiralStaircaseFactory(CurvedStaircaseFactory):
         while True:
             self.full_angle = np.random.randint(1, 5) * np.pi / 2
             self.n = np.random.randint(13, 21)
+            self.step_height = constants.WALL_HEIGHT / self.n
             self.theta = self.full_angle / self.n
             self.step_length = self.step_height * log_uniform(1, 1.2)
             self.radius = self.step_length / self.theta
