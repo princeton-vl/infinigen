@@ -74,6 +74,7 @@ class BarChairFactory(AssetFactory):
         # all in meters
         if dimensions is None:
             x = uniform(0.35, 0.45)
+            z = uniform(0.7, 1)
             dimensions = (x, x, z)
 
         x, y, z = dimensions
@@ -158,6 +159,8 @@ class BarChairFactory(AssetFactory):
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        surface.add_geomod(obj, geometry_assemble_chair, apply=True, input_kwargs=self.params)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
