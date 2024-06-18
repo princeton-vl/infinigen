@@ -2,6 +2,9 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix constants
 
 from collections import defaultdict
 
@@ -12,6 +15,7 @@ from numpy.random import uniform
 from shapely import LineString, union
 
 from infinigen.assets.utils.shapes import shared
+from infinigen.core.constraints.example_solver.room.utils import compute_neighbours, cut_polygon_by_line, canonicalize, is_valid_polygon, \
     unit_cast, update_exterior_edges, update_shared_edges, update_staircase_occupancies
 import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.core.util.random import log_uniform
