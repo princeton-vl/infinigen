@@ -120,6 +120,8 @@ class WindowFactory(AssetFactory):
         if curtain:
             open = False
         sub_frame_thickness = U(0.01, frame_thickness)
+        
+        open = False # keep windows closed on generation, let articulation module handle this later on
         open_type = RI(0, 3)
         open_offset = 0
         oe_offset = 0
