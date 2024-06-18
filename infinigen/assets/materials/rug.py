@@ -20,6 +20,12 @@ def shader_rug(nw: NodeWrangler, strength=1., **kwargs):
         voronoi = nw.new_node(Nodes.VoronoiTexture, [vec], input_kwargs={'Scale': scale * base_scale}).outputs[
             0]
         height = nw.new_node(Nodes.MixRGB, [nw.math('GREATER_THAN', voronoi, thresh), voronoi, height])
+
+    displacement = nw.new_node(Nodes.Displacement, input_kwargs={
+        'Scale': strength,
+        'Height': height
+    })
+
     base_hue = uniform(0, 1)
     base_value = uniform(.2, .5)
     if uniform() < .2:
@@ -37,6 +43,8 @@ def shader_rug(nw: NodeWrangler, strength=1., **kwargs):
         back_color])
     roughness = nw.build_float_curve(nw.musgrave(uniform(20, 50)), [(.5, .9), (1, .8)])
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+                                  input_kwargs={'Base Color': color, 'Roughness': roughness})
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf, 'Displacement': displacement})
 
 def apply(obj, selection=None, **kwargs):
     common.apply(obj, shader_rug, selection, **kwargs)
