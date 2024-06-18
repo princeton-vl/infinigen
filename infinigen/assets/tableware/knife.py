@@ -12,6 +12,7 @@ from infinigen.core.util.random import log_uniform
 from .base import TablewareFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.assets.utils.object import new_grid
 
 
 class KnifeFactory(TablewareFactory):
