@@ -13,9 +13,13 @@ from infinigen.core.placement.factory import AssetFactory
 
 
 from infinigen.assets.tables.cocktail_table import geometry_create_legs
+from infinigen.assets.material_assignments import AssetList
 
 def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
+    generateseat = nw.new_node(generate_round_seats(thickness=kwargs['Top Thickness'], 
+                                                    radius=kwargs['Top Profile Width'],
+                                                    seat_material=kwargs['SeatMaterial']).name)
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [seat_instance, legs]})
@@ -28,6 +32,35 @@ class BarChairFactory(AssetFactory):
         self.dimensions = dimensions
 
         with FixedSeed(factory_seed):
+            self.params, leg_style = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params(leg_style)
+            
+        self.params.update(self.material_params)
+            
+    def get_material_params(self, leg_style):
+        material_assignments = AssetList['BarChairFactory'](leg_style=leg_style)
+        
+        params = {
+            "SeatMaterial": material_assignments['seat'].assign_material(),
+            "LegMaterial": material_assignments['leg'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = uniform() < scratch_prob
+        is_edge_wear = uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
     @staticmethod
     def sample_parameters(dimensions):
         # all in meters
@@ -63,6 +96,7 @@ class BarChairFactory(AssetFactory):
                 'Leg Number': leg_number,
                 'Leg Diameter': leg_diameter,
                 'Leg Curve Control Points': leg_curve_ctrl_pts,
+                # 'Leg Material': choice(['metal', 'wood'])
             })
 
         elif leg_style == "straight":
@@ -75,6 +109,7 @@ class BarChairFactory(AssetFactory):
                 'Leg Number': leg_number,
                 'Leg Diameter': leg_diameter,
                 'Leg Curve Control Points': leg_curve_ctrl_pts,
+                # 'Leg Material': choice(['metal', 'wood']),
                 'Strecher Relative Pos': uniform(0.6, 0.9),
                 'Strecher Increament': choice([0, 1, 2])
             })
@@ -98,6 +133,7 @@ class BarChairFactory(AssetFactory):
                 'Leg Wheel Width': wheel_width,
                 'Leg Wheel Rot': wheel_rot,
                 'Leg Pole Length': pole_length,
+                # 'Leg Material': choice(['metal'])
             })
 
         else:
@@ -105,6 +141,7 @@ class BarChairFactory(AssetFactory):
 
 
 
+        return parameters, leg_style
 
     def create_asset(self, **params):
 
