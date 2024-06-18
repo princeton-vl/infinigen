@@ -204,7 +204,9 @@ def geometry_nodes(nw: NodeWrangler):
 
 
 
+class CeilingClassicLampFactory(AssetFactory):
     def __init__(self, factory_seed):
+        super(CeilingClassicLampFactory, self).__init__(factory_seed)
         with FixedSeed(factory_seed):
             self.params = {
                 'cable_length': uniform(0.6, 0.710),
