@@ -1,6 +1,9 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: 
+# - Yiming Zuo: primary author
+# - Alexander Raistrick: implement placeholder
 
 import bpy
 import bpy
@@ -97,10 +100,14 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
     generatetabletop = nw.new_node(nodegroup_generate_table_top().name,
+        input_kwargs={
+            'Thickness': kwargs['Top Thickness'],
             'N-gon': kwargs['Top Profile N-gon'],
             'Profile Width': kwargs['Top Profile Width'],
             'Aspect Ratio': kwargs['Top Profile Aspect Ratio'],
             'Fillet Ratio': kwargs['Top Profile Fillet Ratio'],
+            'Fillet Radius Vertical': kwargs['Top Vertical Fillet Ratio'],
+        })
 
     tabletop_instance = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': generatetabletop,
@@ -113,6 +120,20 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [tabletop_instance, legs]})
 
+    resample_curve = nw.new_node(Nodes.ResampleCurve, input_kwargs={'Curve': generatetabletop.outputs["Curve"]})
+    fill_curve = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': resample_curve})
+
+    voff = kwargs['Top Height'] + kwargs['Top Thickness']
+    extrude_mesh = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={'Mesh': fill_curve, 'Offset Scale': -voff, 'Individual': False})
+    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [extrude_mesh.outputs["Mesh"], fill_curve]})
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform, input_kwargs={
+            'Geometry': join_geometry_1, 'Translation': (0, 0, voff)
+        }
+    )
+    switch = nw.new_node(Nodes.Switch, input_kwargs={1: kwargs['is_placeholder'], 14: join_geometry, 15: transform_geometry_1})
+
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': switch}, attrs={'is_active_output': True})
 
 
 class TableCocktailFactory(AssetFactory):
@@ -221,14 +242,23 @@ class TableCocktailFactory(AssetFactory):
 
         return parameters
 
+    def _execute_geonodes(self, is_placeholder):
 
         bpy.ops.mesh.primitive_plane_add(
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        kwargs = {**self.params, 'is_placeholder': is_placeholder}
+        surface.add_geomod(obj, geometry_assemble_table, apply=True, input_kwargs=kwargs)
         tagging.tag_system.relabel_obj(obj)
 
         return obj
+    
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        return self._execute_geonodes(is_placeholder=True)
+
+    def create_asset(self, **_):
+        return self._execute_geonodes(is_placeholder=False)
 
     def finalize_assets(self, assets):
         self.clothes_scatter.apply(assets)
