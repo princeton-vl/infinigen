@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: Alexander Raistrick, Stamatis Alexandropolous, Yiming Zuo
 
 import bpy
@@ -29,19 +32,26 @@ def nodegroup_array_fill_line(nw: NodeWrangler):
             ('NodeSocketVector', 'Instance Dimensions', (0.0000, 0.0000, 0.0000)),
             ('NodeSocketInt', 'Count', 10),
             ('NodeSocketGeometry', 'Instance', None)])
+
     multiply = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: group_input.outputs["Instance Dimensions"], 1: (0.0000, -0.5000, 0.0000)},
         attrs={'operation': 'MULTIPLY'})
+
     add = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["Line End"], 1: multiply.outputs["Vector"]})
+
     subtract = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: group_input.outputs["Line Start"], 1: multiply.outputs["Vector"]},
         attrs={'operation': 'SUBTRACT'})
+
     mesh_line = nw.new_node(Nodes.MeshLine,
         input_kwargs={'Count': group_input.outputs["Count"], 'Start Location': add.outputs["Vector"], 'Offset': subtract.outputs["Vector"]},
         attrs={'mode': 'END_POINTS'})
+
     instance_on_points_1 = nw.new_node(Nodes.InstanceOnPoints,
         input_kwargs={'Points': mesh_line, 'Instance': group_input.outputs["Instance"]})
+
     realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': instance_on_points_1})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': realize_instances_1}, attrs={'is_active_output': True})
 
 @node_utils.to_nodegroup('nodegroup_corner_cube', singleton=False, type='GeometryNodeTree')
@@ -56,20 +66,26 @@ def nodegroup_corner_cube(nw: NodeWrangler):
             ('NodeSocketInt', 'Vertices X', 4),
             ('NodeSocketInt', 'Vertices Y', 4),
             ('NodeSocketInt', 'Vertices Z', 4)])
+
     cube = nw.new_node(Nodes.MeshCube,
         input_kwargs={'Size': group_input.outputs["Dimensions"], 'Vertices X': group_input.outputs["Vertices X"], 'Vertices Y': group_input.outputs["Vertices Y"], 'Vertices Z': group_input.outputs["Vertices Z"]})
+
     map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Vector': group_input.outputs["CenteringLoc"], 9: (0.5000, 0.5000, 0.5000), 10: (-0.5000, -0.5000, -0.5000)},
         attrs={'data_type': 'FLOAT_VECTOR'})
+
     multiply_add = nw.new_node(Nodes.VectorMath,
         input_kwargs={0: map_range.outputs["Vector"], 1: group_input.outputs["Dimensions"], 2: group_input.outputs["Location"]},
         attrs={'operation': 'MULTIPLY_ADD'})
+
     transform_geometry = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': cube.outputs["Mesh"], 'Translation': multiply_add.outputs["Vector"]})
+
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': transform_geometry, 'Name': 'UVMap', 3: cube.outputs["UV Map"]},
         attrs={'data_type': 'FLOAT_VECTOR'})
 
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': store_named_attribute}, attrs={'is_active_output': True})
 
 ARM_TYPE_SQUARE = 0
 ARM_TYPE_ROUND = 1
@@ -639,6 +655,7 @@ def sofa_parameter_distribution(dimensions=None):
         ),
         'Back Dimensions': (
             uniform(0.15, 0.25),
+            0.0000,
             uniform(0.5, 0.75)
         ),
         'Seat Dimensions': (
@@ -648,6 +665,7 @@ def sofa_parameter_distribution(dimensions=None):
         ),
         'Foot Dimensions': (
             uniform(0.07, 0.25),
+            0.06,
             0.06
         ),
         'Baseboard Height': uniform(0.05, 0.09),
