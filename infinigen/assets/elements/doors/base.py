@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 import bpy
 import gin
@@ -25,6 +28,8 @@ class BaseDoorFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(BaseDoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
+            self.width = constants.DOOR_WIDTH
+            self.height = constants.DOOR_SIZE
             self.depth = uniform(.04, .06)
             self.panel_margin = log_uniform(.08, .12)
             self.bevel_width = uniform(.005, .01)
