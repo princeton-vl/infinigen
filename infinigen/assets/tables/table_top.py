@@ -119,6 +119,10 @@ def nodegroup_generate_table_top(nw: NodeWrangler):
     
     transform_1 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': flip_faces, 'Translation': combine_xyz_2})
     
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={
+        'Geometry': transform_1,
+        'Curve': ngoncylinder.outputs["Profile Curve"],
+    })
 
 def geometry_generate_table_top_wrapper(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
