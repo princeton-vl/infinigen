@@ -26,6 +26,7 @@ from infinigen.assets.tables.legs.wheeled import nodegroup_wheeled_leg
 from infinigen.assets.tables.strechers import nodegroup_strecher
 
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 @node_utils.to_nodegroup('geometry_create_legs', singleton=False, type='GeometryNodeTree')
 def geometry_create_legs(nw: NodeWrangler, **kwargs):
@@ -88,6 +89,7 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
         raise NotImplementedError
 
     leg = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': leg, 'Material': kwargs['LegMaterial']})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': leg}, attrs={'is_active_output': True})
 
@@ -105,6 +107,7 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
 
     tabletop_instance = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': tabletop_instance, 'Material': kwargs['TopMaterial']})
 
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
 
@@ -125,6 +128,32 @@ class TableCocktailFactory(AssetFactory):
             # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
             #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
             self.clothes_scatter = NoApply()
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+
+        self.params.update(self.material_params)
+            
+    def get_material_params(self):
+        material_assignments = AssetList['TableCocktailFactory']()
+        params = {
+            "TopMaterial": material_assignments['top'].assign_material(),
+            "LegMaterial": material_assignments['leg'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = uniform() < scratch_prob
+        is_edge_wear = uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
 
     @staticmethod
     def sample_parameters(dimensions):
@@ -174,6 +203,7 @@ class TableCocktailFactory(AssetFactory):
             'Top Profile Fillet Ratio': 0.499 if round_table else uniform(0.0, 0.05),
             'Top Thickness': top_thickness,
             'Top Vertical Fillet Ratio': uniform(0.1, 0.3),
+            # 'Top Material': choice(['marble', 'tiled_wood', 'plastic', 'glass']),
             'Height': z,
             'Top Height': z - top_thickness,
             'Leg Number': leg_number,
@@ -184,6 +214,7 @@ class TableCocktailFactory(AssetFactory):
             'Leg Height': 1.0,
             'Leg Diameter': leg_diameter,
             'Leg Curve Control Points': leg_curve_ctrl_pts,
+            # 'Leg Material': choice(['metal', 'wood', 'glass']),
             'Strecher Relative Pos': uniform(0.2, 0.6),
             'Strecher Increament': choice([0, 1, 2])
         }
@@ -201,3 +232,7 @@ class TableCocktailFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         self.clothes_scatter.apply(assets)
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
