@@ -18,6 +18,7 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.assets.table_decorations.utils import nodegroup_lofting, nodegroup_star_profile
+from infinigen.assets.material_assignments import AssetList
 
 class VaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=None):
@@ -27,6 +28,32 @@ class VaseFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            
+        self.params.update(self.material_params)
+            
+    def get_material_params(self):
+        material_assignments = AssetList['VaseFactory']()
+        params = {
+            'Material': material_assignments['surface'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = uniform() < scratch_prob
+        is_edge_wear = uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
     @staticmethod
     def sample_parameters(dimensions):
         # all in meters
@@ -73,7 +100,9 @@ class VaseFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
 
@@ -258,6 +287,8 @@ def geometry_vases(nw: NodeWrangler, **kwargs):
         'Selection': lofting.outputs["Top"]
     })
 
+    set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': delete_geometry, 'Material': kwargs['Material']})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material},
                                attrs={'is_active_output': True})
