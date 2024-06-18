@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 from collections import defaultdict
 
@@ -8,6 +11,7 @@ import shapely
 from shapely import LineString, MultiLineString, Polygon, remove_repeated_points, simplify
 from shapely.ops import linemerge, orient, polygonize, shared_paths, unary_union
 
+import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.assets.utils.decorate import write_co
 from infinigen.assets.utils.object import new_circle
 from infinigen.assets.utils.shapes import simplify_polygon
@@ -55,6 +59,9 @@ def canonicalize(p):
         raise NotImplementedError('Invalid multi polygon')
 
 
+def unit_cast(x, unit=None):
+    if unit is None:
+        unit = constants.UNIT
     return int(x / unit) * unit
 
 
