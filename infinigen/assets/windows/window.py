@@ -1,6 +1,9 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: 
+# - Hongyu Wen: primary author
+# - Alexander Raistrick: update window glass
 
 import bpy
 import random
@@ -15,8 +18,31 @@ from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
+from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.materials import metal_shader_list, wood_shader_list
 
+from infinigen.assets.utils.autobevel import BevelSharp
+
+def shader_window_glass(nw: NodeWrangler):
+
+    """ Non-refractive glass shader, since windows consist of a one-sided mesh currently and would not properly 
+        refract-then un-refract the light
+    """
+
+    roughness = clip_gaussian(0, 0.015, 0, 0.03, 0.03)
+    transmission = uniform(0.05, 0.12)
+
+    # non-refractive glass
+    transparent_bsdf = nw.new_node(Nodes.TransparentBSDF)
+    shader = nw.new_node(Nodes.GlossyBSDF, input_kwargs={'Roughness': roughness})
+    shader = nw.new_node(Nodes.MixShader, input_kwargs={'Fac': transmission, 1: transparent_bsdf, 2: shader})
+
+    # complete pass-through for non-camera rays, for render efficiency
+    light_path = nw.new_node(Nodes.LightPath)
+    shader = nw.new_node(Nodes.MixShader, input_kwargs={'Fac': light_path.outputs["Is Camera Ray"], 1: transparent_bsdf, 2: shader})
+
+    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': shader}, attrs={'is_active_output': True})
 
 class WindowFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, curtain=None, shutter=None):
@@ -24,6 +50,7 @@ class WindowFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters()
+            self.beveler = BevelSharp()
             self.curtain = curtain
             self.shutter = shutter
 
@@ -66,6 +93,7 @@ class WindowFactory(AssetFactory):
             "FrameMaterial": surface.shaderfunc_to_material(shader_frame_material_choice, vertical=True),
             "CurtainFrameMaterial": surface.shaderfunc_to_material(shader_curtain_frame_material_choice),
             "CurtainMaterial": surface.shaderfunc_to_material(shader_curtain_material_choice),
+            "Material": surface.shaderfunc_to_material(shader_window_glass)
         }
         return params
 
@@ -104,10 +132,14 @@ class WindowFactory(AssetFactory):
                     open_offset = U(0, width / panel_h_amount)
                 else:
                     open_offset = 0
+        open_h_angle = U(0, 0.3) if open_type == 1 and open else 0
+        open_v_angle = -U(0, 0.3) if open_type == 2 and open else 0
 
         curtain_interval_number = int(width / U(0.08, 0.2))
         curtain_mid_l = -U(0, width / 2)
         curtain_mid_r = U(0, width / 2)
+        return {
+            **self.params,
             "Width": width,
             "Height": height,
             "FrameThickness": frame_thickness,
@@ -127,6 +159,7 @@ class WindowFactory(AssetFactory):
 
     def create_asset(self, dimensions=None, open=None, realized=True, **params):
         obj = butil.spawn_cube()
+        
         butil.modify_mesh(
             obj, 
             'NODES', 
@@ -138,11 +171,29 @@ class WindowFactory(AssetFactory):
         obj.rotation_euler[0] = np.pi / 2
         butil.apply_transform(obj, True)
         obj_ =deep_clone_obj(obj)
+        self.beveler(obj)
         if max(obj.dimensions) > 8:
             butil.delete(obj)
             obj = obj_
         else:
             butil.delete(obj_)
+
+        bpy.ops.object.light_add(
+            type='AREA', 
+            radius=1, 
+            align='WORLD', 
+            location=(0,0,0),
+            scale=(1,1,1)
+        )
+        portal = bpy.context.active_object
+
+        w, _, h = obj.dimensions
+        portal.scale = (w, h, 1)
+        portal.data.cycles.is_portal = True
+        portal.rotation_euler = (-np.pi/2, 0, 0)
+        butil.parent_to(portal, obj, no_inverse=True)
+        portal.hide_viewport = True
+
         return obj
 
 
