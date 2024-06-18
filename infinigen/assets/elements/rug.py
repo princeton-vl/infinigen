@@ -14,6 +14,7 @@ from infinigen.core.nodes import NodeWrangler, Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class RugFactory(AssetFactory):
@@ -27,6 +28,10 @@ class RugFactory(AssetFactory):
                 self.length = self.width
             self.rounded_buffer = self.width * uniform(.1, .5)
             self.thickness = uniform(.01, .02)
+            material_assignments = AssetList['RugFactory']()
+            self.surface = material_assignments['surface'].assign_material()
+            if self.surface == ArtRug:
+                self.surface = self.surface(self.factory_seed)
 
     def build_shape(self):
         match self.rug_shape:
