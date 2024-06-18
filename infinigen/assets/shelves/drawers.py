@@ -12,6 +12,7 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 import bpy
 from infinigen.assets.materials.shelf_shaders import (
