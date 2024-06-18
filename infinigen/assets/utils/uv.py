@@ -16,6 +16,9 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.core.util import blender as butil
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def face_corner2faces(obj):
@@ -136,6 +139,11 @@ def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwa
         groupings = [[i] for i in range(len(axes))]
     for indices in groupings:
         selected = sum(selections[i] for i in indices)
+        try:
+            surface.apply(obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs)
+        except TypeError:
+            logger.debug(f'apply() for {surface=} with kwarg bbox failed, trying again without')
+            surface.apply(obj, selected, **kwargs)
 
 
 def wrap_front_back(obj, surface, shared=True, **kwargs):
