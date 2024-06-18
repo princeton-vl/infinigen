@@ -16,6 +16,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 
 class FoodBagFactory(AssetFactory):
@@ -33,6 +34,10 @@ class FoodBagFactory(AssetFactory):
                 self.depth = self.width * uniform(.6, 1.)
                 self.curve_profile = uniform(4, 8)
             self.extrude_length = uniform(.05, .1)
+            material_assignments = AssetList["FoodBagFactory"]()
+            self.surface = material_assignments["surface"].assign_material()
+            if self.surface == text.Text:
+                self.surface = self.surface(self.factory_seed)
             self.texture_shared = uniform() < .2
 
     def create_asset(self, **params) -> bpy.types.Object:
