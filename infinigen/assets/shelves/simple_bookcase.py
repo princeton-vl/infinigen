@@ -503,6 +503,7 @@ class SimpleBookcaseBaseFactory(AssetFactory):
 
         obj_params = self.get_asset_params(i)
         surface.add_geomod(obj, geometry_nodes, apply=True, attributes=[], input_kwargs=obj_params)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
