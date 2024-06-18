@@ -1,0 +1,2 @@
+export_curr_scene.format = 'obj'
+export_curr_scene.individual_export = True
