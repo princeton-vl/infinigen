@@ -12,8 +12,10 @@ from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder
 from infinigen.assets.utils.uv import wrap_front_back
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.materials import text
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class BottleFactory(AssetFactory):
@@ -75,6 +77,17 @@ class BottleFactory(AssetFactory):
                         self.z_neck + uniform(.1, .2), 1 - self.z_cap, 1, 1]
                     self.is_vector = [0, 1, 0, 1, 1, 0, 1, 1, 0]
 
+            material_assignments = AssetList['BottleFactory']()
+            self.surface = material_assignments['surface'].assign_material()
+            self.wrap_surface = material_assignments['wrap_surface'].assign_material()
+            if self.wrap_surface == text.Text:
+                self.wrap_surface = text.Text(self.factory_seed, False)
+
+            self.cap_surface = material_assignments['cap_surface'].assign_material()
+            scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+            self.scratch, self.edge_wear = material_assignments['wear_tear']
+            self.scratch = None if uniform() > scratch_prob else self.scratch
+            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.texture_shared = uniform() < .2
             self.cap_subsurf = uniform() < .5
@@ -88,7 +101,9 @@ class BottleFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
     def make_bottle(self):
