@@ -2,15 +2,20 @@
 # of this source tree.
 
 # Authors: Alexander Raistrick
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
+from enum import Enum
 from copy import deepcopy
 import logging
 
+from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 
 logger = logging.getLogger(__name__)
+
+@dataclass(frozen=True)
 class Relation(ABC):
     @abstractmethod
     def implies(self, other) -> bool:
@@ -27,7 +32,9 @@ class Relation(ABC):
         pass
 
     @abstractmethod
+    def intersects(self, other, strict=False) -> bool:
         pass
+
     @abstractmethod
     def intersection(self, other: Relation) -> Relation:
         pass
@@ -48,6 +55,7 @@ class AnyRelation(Relation):
     def satisfies(self, other: cl.Relation) -> bool:
         return other.__class__ is AnyRelation
     
+    def intersects(self, _other: Relation, strict=False) -> bool:
         return True
 
     def intersection(self, other: Relation) -> Relation:
@@ -76,6 +84,7 @@ class NegatedRelation(Relation):
             case _:
                 return (
                     not self.rel.implies(other)
+                    and not self.intersects(other, strict=True)
                 )
             
     def satisfies(self, other: cl.Relation) -> bool:
@@ -90,6 +99,7 @@ class NegatedRelation(Relation):
                     and not self.intersects(other, strict=True)
                 )
     
+    def intersects(self, other: Relation, strict=False) -> bool:
 
         match other:
             case NegatedRelation(rel):
@@ -99,6 +109,7 @@ class NegatedRelation(Relation):
                 return True
             case _:
                 # implementationn depends on other's type, let them handle it
+                return other.intersects(self, strict=strict) 
     
     def intersection(self, other: Relation) -> Relation:
         return self.rel.difference(other)
@@ -106,6 +117,9 @@ class NegatedRelation(Relation):
     def difference(self, other: Relation) -> Relation:
         return self.rel.intersection(other)
 
+class ConnectorType(Enum):
+    Door = "door"
+@dataclass(frozen=True)
     connector_types: frozenset[ConnectorType] = field(default_factory=frozenset)
     def __post_init__(self):
         if self.connector_types is not None:
@@ -159,9 +173,19 @@ def no_frozenset_repr(self: GeometryRelation):
     setrepr = lambda s: f'{{{", ".join(repr(x) for x in sorted(list(s), key=is_neg))}}}'
     return f'{self.__class__.__name__}({setrepr(self.child_tags)}, {setrepr(self.parent_tags)})'
 
+@dataclass(frozen=True)
+class GeometryRelation(Relation):
+    child_tags: frozenset[t.Subpart] = field(default_factory=frozenset)
+    parent_tags: frozenset[t.Subpart] = field(default_factory=frozenset)
+
     __repr__ = no_frozenset_repr
         
+    def __post_init__(self):
+        # allow the user to init with sets that subsequently get frozen
         # use object.__setattr__ to bypass dataclass's frozen since it is guaranteed safe here
+        object.__setattr__(self, 'child_tags', frozenset(self.child_tags))
+        object.__setattr__(self, 'parent_tags', frozenset(self.parent_tags))
+
     def _extra_fields(self) ->  list[str]:
         """Return any fields added by subclasses. Useful for implementing implies/intersects 
         which must check these fields regardless of inheritance. TODO, Hacky.
@@ -247,6 +271,12 @@ def no_frozenset_repr(self: GeometryRelation):
                 raise ValueError(f'{self.satisfies} encountered unhandled {other=}')
             
     def intersects(self, other: Relation, strict=False) -> bool:
+
+        def tags_compatible(a, b):
+            if strict:
+                return t.implies(a, b) or t.implies(b, a)
+            else:
+                return not t.contradiction(a.union(b))
             
         logger.debug(f'{self.intersects} other=%s', other)
 
@@ -259,8 +289,10 @@ def no_frozenset_repr(self: GeometryRelation):
                 if not self._compatibility_checks(other):
                     logger.debug(f'{self.intersects} failed compatibility for other=%s', other)
                     return False
+                if not tags_compatible(self.child_tags, ochild):
                     logger.debug(f'{self.intersects} failed child tags for other=%s', other)
                     return False
+                if not tags_compatible(self.parent_tags, oparent):
                     logger.debug('{self.intersects} failed parent tags for other=%s', other)
                     return False
                 return True
@@ -320,6 +352,7 @@ def no_frozenset_repr(self: GeometryRelation):
                 logger.warning(f'Encountered unhandled {other=} for {self.intersection}')
                 return -AnyRelation()
         
+@dataclass(frozen=True)
 class Touching(GeometryRelation):
     __repr__ = no_frozenset_repr
 
@@ -328,6 +361,10 @@ class Touching(GeometryRelation):
 class SupportedBy(Touching):
     __repr__ = no_frozenset_repr
 
+
+@dataclass(frozen=True)
+class StableAgainst(GeometryRelation):
+    margin: float = 0
     
     # check_ if False, only check x/z stability, z is allowed to overhand. 
     # typical use is chair-against-table relation
