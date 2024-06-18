@@ -1,0 +1,10 @@
+sample_scene_spec.config_distribution = [
+    ("forest", 4),
+    ("river", 4),
+    ("desert", 4),
+    ("mountain", 2),
+    ("canyon", 2),
+    ("plain", 4),
+    ("coast", 8),
+    #("snowy_mountain", 4), # disabled until fast_terrain_assets.gin works for snow sim @mazeyu
+]
