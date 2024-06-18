@@ -1,0 +1,3 @@
+compose_indoors.solve_large_enabled = False
+compose_indoors.solve_medium_enabled = False
+compose_indoors.solve_small_enabled = False
