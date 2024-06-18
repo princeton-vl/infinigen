@@ -5,12 +5,14 @@
 
 from numpy.random import uniform, normal, randint
 
+from infinigen.assets.materials.shelf_shaders import get_shelf_material
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 from infinigen.core.util.math import FixedSeed
 
@@ -19,6 +21,7 @@ from infinigen.assets.shelves.utils import nodegroup_tagged_cube, blender_rotate
 from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory, LargeShelfFactory
 from infinigen.assets.shelves.doors import CabinetDoorBaseFactory
 from infinigen.assets.shelves.drawers import CabinetDrawerBaseFactory
+from infinigen.assets.materials.shelf_shaders import (
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler
