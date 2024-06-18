@@ -14,6 +14,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core import tagging, tags as t
 
 
 class PalletFactory(AssetFactory):
@@ -29,6 +30,7 @@ class PalletFactory(AssetFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         bbox = new_bbox(0, self.width, 0, self.depth, 0, self.height)
+        write_attr_data(bbox, f'{PREFIX}{t.Subpart.SupportSurface.value}', read_normal(bbox)[:, -1] > .5, 'INT',
                         'FACE')
         return bbox
 
