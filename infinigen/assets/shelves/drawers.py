@@ -4,6 +4,8 @@
 # Authors: Beining Han
 
 from numpy.random import uniform, normal, randint
+
+from infinigen.assets.materials import metal
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
@@ -15,6 +17,7 @@ import bpy
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler,
+    shader_glass)
 
 
 @node_utils.to_nodegroup('nodegroup_board_rail', singleton=False, type='GeometryNodeTree')
@@ -391,6 +394,7 @@ class CabinetDrawerBaseFactory(AssetFactory):
                 params['frame_material'] = lambda x: shader_shelves_wood(x, z_axis_texture=True)
 
         if params['knob_material'] == 'metal':
+            params['knob_material'] = metal.get_shader()
         else:
             params['knob_material'] = params['frame_material']
 
