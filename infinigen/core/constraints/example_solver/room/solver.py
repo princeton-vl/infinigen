@@ -2,6 +2,9 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix constants
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -13,8 +16,11 @@ from numpy.random import uniform
 from shapely import LineString, Polygon, union
 from shapely.ops import shared_paths
 
+from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_type
+from infinigen.core.constraints.example_solver.room.configs import EXTERIOR_CONNECTED_ROOM_TYPES
 from infinigen.core.constraints.example_solver.room.constants import SEGMENT_MARGIN
 import infinigen.core.constraints.example_solver.room.constants as constants
+from infinigen.core.constraints.example_solver.room.utils import compute_neighbours, cut_polygon_by_line, is_valid_polygon, linear_extend_x, \
     linear_extend_y, canonicalize, update_exterior_edges, update_shared_edges, update_staircase_occupancies
 
 
