@@ -13,10 +13,12 @@ from shapely import Polygon
 from tqdm import tqdm, trange
 import gin
 
+from infinigen.assets.utils.misc import toggle_hide
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general as rg
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 from .constants import WALL_HEIGHT
 
 from .graph import GraphMaker
@@ -29,6 +31,7 @@ from .utils import polygon2obj, unit_cast
 from infinigen.core.constraints.example_solver.room import constants
 
 from infinigen.core.constraints.example_solver.state_def import State, ObjectState
+from infinigen.core.constraints.constraint_language import Semantics
 
 
 @gin.configurable
@@ -87,7 +90,9 @@ class RoomSolver:
 
         state, rooms_meshed = self.solidifier.solidify(assignment, info)
 
+        unique_roomtypes = set(Semantics(s.split('_')[0]) for s in self.graph.rooms)
         dimensions = self.width, self.height, constants.WALL_HEIGHT
+
         return state, unique_roomtypes, dimensions
 
 
@@ -188,6 +193,7 @@ class MultistoryRoomSolver:
         unique_roomtypes = set()
         for graph in self.graphs:
             for s in graph.rooms:
+                unique_roomtypes.add(Semantics(s.split('_')[0]))
         dimensions = self.widths[0], self.heights[0], WALL_HEIGHT * self.n_stories
         return State(obj_states), unique_roomtypes, dimensions
 
