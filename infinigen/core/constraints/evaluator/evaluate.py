@@ -10,6 +10,7 @@ import copy
 import logging
 import operator
 import pandas as pd
+
 from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.constraints.evaluator import node_impl, eval_memo
 
@@ -64,6 +65,10 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
                 name: evaluate_node(c, state, memo) 
                 for name, c in node.children()
             }
+            kwargs = {}
+            if hasattr(node, 'others_tags'):
+                kwargs['others_tags'] = getattr(node, 'others_tags')
+            return impl_func(node, state, child_vals, **kwargs)
         case cl.Problem():
             raise TypeError(f'evaluate_node is invalid for {node}, please use evaluate_problem')
         case _:
