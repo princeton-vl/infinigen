@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 import bpy
 import numpy as np
@@ -21,6 +24,7 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
 
     def build_size_config(self):
         self.n = int(np.random.randint(13, 21) / 2) * 2
+        self.step_height = constants.WALL_HEIGHT / self.n
         self.step_width = log_uniform(.9, 1.5)
         self.step_length = self.step_height * log_uniform(1, 1.2)
 
