@@ -262,6 +262,7 @@ def bar_chair_materials(leg_style=None):
                                    *metal_shaders],
                                   [1.0] + probs),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
+        'wear_tear_prob': [DEFAULT_SCRATCH_PROB, 0.0]
     }
 
 def chair_materials():
