@@ -27,6 +27,7 @@ class EnumTag(Tag, Enum, metaclass=ABCEnumMeta):
     pass
 
 class Semantics(EnumTag):
+
     # Mesh types
     Room = "room"
     Object = "object"
@@ -79,6 +80,7 @@ class Semantics(EnumTag):
     Utensils = "utensils"
     ClothDrapeItem = "cloth-drape"
 
+    # Object Access Type
     AccessTop = "access-top"
     AccessFront = "access-front"
     AccessAnySide = "access-any-side"
@@ -92,6 +94,11 @@ class Semantics(EnumTag):
 
     # Special Case Objects
     Chair = "chair"
+    Window = 'window'
+    Open = 'open'
+    Entrance = 'entrance'
+    Door = 'door'
+    StaircaseWall = 'staircase-wall'
         
     # Solver feature flags
     # TODO these should not be in Semantics
