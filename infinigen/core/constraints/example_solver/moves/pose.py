@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Alexander Raistrick, Karhan Kayan
 
 from dataclasses import dataclass
 import numpy as np
@@ -10,6 +15,7 @@ import mathutils
 
 from infinigen.core.util import blender as butil
 from infinigen.core.constraints.example_solver.geometry import validity, dof
+from infinigen.core.constraints.constraint_language import util as iu
 
 from . import moves
 from ..state_def import State
