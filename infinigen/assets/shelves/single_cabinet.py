@@ -17,6 +17,7 @@ from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.assets.shelves.doors import CabinetDoorBaseFactory
 
 from infinigen.core.util.math import FixedSeed
+from infinigen.assets.utils.object import new_bbox
 
 def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -77,6 +78,8 @@ class SingleCabinetBaseFactory(AssetFactory):
         self.mat_params = {}
         self.shelf_fac = LargeShelfBaseFactory(factory_seed)
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
+        with FixedSeed(factory_seed):
+            self.params = self.sample_params()
 
     def sample_params(self):
         # Update fac params
@@ -222,3 +225,7 @@ class SingleCabinetFactory(SingleCabinetBaseFactory):
         params['shelf_cell_height'] = [(params['Dimensions'][2] - 0.083) / num_h for _ in range(num_h)]
         params['shelf_cell_width'] = [params['Dimensions'][1]]
         self.shelf_params = params
+        self.dims = params['Dimensions']
+
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        x,y,z = self.dims
