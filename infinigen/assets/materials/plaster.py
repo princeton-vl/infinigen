@@ -32,12 +32,18 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
     noise = nw.new_node(Nodes.NoiseTexture, [uv_map],
                         input_kwargs={'Detail': log_uniform(15, 30), 'Distortion': log_uniform(4, 8)})
     difference = nw.new_node(Nodes.MixRGB, [musgrave, noise], attrs={'blend_type': 'DIFFERENCE'})
+
+    displacement = nw.new_node(Nodes.Displacement, input_kwargs={
+        'Scale': log_uniform(.0001, .0003),
         'Height': nw.new_node(Nodes.MusgraveTexture, input_kwargs={'Scale': uniform(1e3, 2e3)})
     })
+
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
         'Base Color': base_color,
         'Roughness': uniform(.7, .8),
     })
+    
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf, 'Displacement': displacement})
 
 
 def apply(obj, selection=None, plaster_colored=None, **kwargs):
