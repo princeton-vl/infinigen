@@ -1,6 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the GPL license found in the LICENSE file in the root directory of this
 # source tree.
+# Authors: Mingzhe Wang, Lingjie Mei
 import colorsys
 
 from infinigen.core.util.color import hsv2rgba
@@ -10,11 +11,17 @@ from infinigen.assets.materials.utils.surface_utils import sample_range
 from numpy.random import uniform
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     layer_weight = nw.new_node('ShaderNodeLayerWeight', input_kwargs={'Blend': sample_range(0.2, 0.4)})
 
     rgb = nw.new_node(Nodes.RGB)
+
+    if clear:
+        base_color = hsv2rgba(0, 0, log_uniform(.4, .8))
+    else:
+        base_color = hsv2rgba(uniform(0, 1), uniform(.5, .8), log_uniform(.4, .8))
     rgb.outputs[0].default_value = base_color
 
     value = nw.new_node(Nodes.Value)
