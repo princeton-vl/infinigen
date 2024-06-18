@@ -17,6 +17,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.assets.tables.table_utils import nodegroup_n_gon_cylinder, nodegroup_create_cap
+from infinigen.core.tagging import tag_nodegroup
+from infinigen.core import tags as t
 
 @node_utils.to_nodegroup('nodegroup_capped_cylinder', singleton=False, type='GeometryNodeTree')
 def nodegroup_capped_cylinder(nw: NodeWrangler):
@@ -110,6 +112,7 @@ def nodegroup_generate_table_top(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare, input_kwargs={'A': index, 'B': 0}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
 
+    cap = tag_nodegroup(nw, ngoncylinder.outputs["Caps"], t.Subpart.SupportSurface, selection=equal)
     
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform_5, cap]})
 
