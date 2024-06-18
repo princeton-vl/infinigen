@@ -14,6 +14,7 @@ from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_b
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 
 class BathroomSinkFactory(BathtubFactory):
@@ -128,6 +129,10 @@ class BathroomSinkFactory(BathtubFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
 
 
 class StandingSinkFactory(BathroomSinkFactory):
