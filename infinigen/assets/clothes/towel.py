@@ -19,6 +19,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import normalize
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class TowelFactory(AssetFactory):
@@ -34,6 +35,11 @@ class TowelFactory(AssetFactory):
         self.fold_count = 15
         self.roll_count = 256
         self.roll_total = self.compute_roll_total()
+        materials = AssetList['TowelFactory']()
+        self.surface = materials['surface'].assign_material()
+        if self.surface == ArtRug:
+            self.surface = self.surface(self.factory_seed)
+            
     def fold(self, obj):
         x, y, z = read_co(obj).T
         if np.max(x) - np.min(x) > np.max(y) - np.min(y):
