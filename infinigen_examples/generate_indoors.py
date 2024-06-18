@@ -1,0 +1,356 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+import argparse
+from pathlib import Path
+import logging
+from time import time
+import pprint
+import copy
+logging.basicConfig(
+    format='[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s',
+    datefmt='%H:%M:%S', 
+    level=logging.INFO
+)
+
+import bpy
+from mathutils import Vector
+import gin
+import numpy as np
+import trimesh
+from numpy import deg2rad
+
+from infinigen.assets.utils.decorate import read_co
+from infinigen.terrain import Terrain
+from infinigen.assets.materials import invisible_to_camera
+from infinigen.core.constraints import (
+    constraint_language as cl, 
+    reasoning as r,
+    example_solver,
+    checks, 
+    usage_lookup
+)
+
+from infinigen.assets import (
+    fluid, 
+    cactus, 
+    cactus, 
+    trees, 
+    monocot, 
+    rocks, 
+    underwater, 
+    creatures, 
+    lighting,
+    weather
+)
+from infinigen.assets.scatters import grass, pebbles
+from infinigen.assets.utils.decorate import read_co
+
+from infinigen.core.placement import density, camera as cam_util, split_in_view
+
+from infinigen.core import (
+    execute_tasks, 
+    surface, 
+    init, 
+    placement, 
+    tags as t, 
+    tagging
+)
+from infinigen.core.util import (blender as butil, pipeline)
+
+from infinigen.core.constraints.example_solver.room import decorate as room_dec, constants
+from infinigen.core.constraints.example_solver import state_def, greedy, populate, Solver
+
+from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT
+from infinigen.core.util.camera import points_inview
+
+from infinigen_examples.generate_nature import compose_nature # so gin can find it
+    create_outdoor_backdrop,
+    place_cam_overhead,
+    overhead_view,
+    hide_other_rooms,
+    restrict_solving,
+    apply_greedy_restriction
+)
+
+logger = logging.getLogger(__name__)
+
+def default_greedy_stages():
+
+    """Returns descriptions of what will be covered by each greedy stage of the solver.
+
+    Any domain containing one or more VariableTags is greedy: it produces many separate domains, 
+        one for each possible assignment of the unresolved variables.
+    """
+
+    on_floor = cl.StableAgainst({}, cu.floortags)
+    on_wall = cl.StableAgainst({}, cu.walltags)
+    on_ceiling = cl.StableAgainst({}, cu.ceilingtags)
+    side = cl.StableAgainst({}, cu.side)
+
+    all_obj = r.Domain({t.Semantics.Object, -t.Semantics.Room})
+
+    all_obj_in_room = all_obj.with_relation(cl.AnyRelation(), all_room.with_tags(cu.variable_room))
+    primary = all_obj_in_room.with_relation(-cl.AnyRelation(), all_obj)
+
+    greedy_stages = {}
+
+    greedy_stages['rooms'] = all_room        
+    
+    greedy_stages['on_floor'] = primary.with_relation(on_floor, all_room)
+    greedy_stages['on_wall'] = (
+        primary.with_relation(-on_floor, all_room)
+        .with_relation(-on_ceiling, all_room)
+        .with_relation(on_wall, all_room)
+    )
+    greedy_stages['on_ceiling'] = (
+        primary.with_relation(-on_floor, all_room)
+        .with_relation(on_ceiling, all_room)
+        .with_relation(-on_wall, all_room)
+    )
+
+    secondary = all_obj.with_relation(cl.AnyRelation(), primary.with_tags(cu.variable_obj)) 
+
+    greedy_stages['side_obj'] = secondary.with_relation(side, all_obj)
+    nonside = secondary.with_relation(-side, all_obj)
+
+    greedy_stages['obj_ontop_obj'] = nonside.with_relation(cu.ontop, all_obj).with_relation(-cu.on, all_obj)
+    greedy_stages['obj_on_support'] = nonside.with_relation(cu.on, all_obj).with_relation(-cu.ontop, all_obj)
+
+    return greedy_stages
+
+
+all_vars = [cu.variable_room, cu.variable_obj]
+
+@gin.configurable
+
+    logger.debug(overrides)
+
+        terrain = Terrain(
+            scene_seed, 
+            surface.registry, 
+            task='coarse',
+            on_the_fly_asset_folder=output_folder / "assets"
+        )
+    p.run_stage('sky_lighting', lighting.sky_lighting.add_lighting, use_chance=False)    
+
+    consgraph = home_constraints()
+    stages = default_greedy_stages()
+    checks.check_all(consgraph, stages, all_vars)
+
+    stages, consgraph, limits = restrict_solving(stages, consgraph)
+
+    if overrides.get('restrict_single_supported_roomtype', False):
+        restrict_parent_rooms = {
+            np.random.choice([
+
+                # Only these roomtypes have constraints written in home_constraints. 
+                # Others will be empty-ish besides maybe storage and plants
+                # TODO: add constraints to home_constraints for garages, offices, balconies, etc
+
+                t.Semantics.Bedroom, 
+                t.Semantics.LivingRoom, 
+                t.Semantics.Kitchen, 
+                t.Semantics.Bathroom,
+                t.Semantics.DiningRoom
+            ])
+        }
+        logger.info(f'Restricting to {restrict_parent_rooms}')
+        apply_greedy_restriction(stages, restrict_parent_rooms, cu.variable_room)
+
+    solver = Solver(output_folder=output_folder)
+    def solve_rooms():
+        return solver.solve_rooms(scene_seed, consgraph, stages['rooms'])
+    state: state_def.State = p.run_stage('solve_rooms', solve_rooms, use_chance=False)
+
+    def solve_large():
+        assignments = greedy.iterate_assignments(
+            stages['on_floor'], state, all_vars, limits, nonempty=True
+        )
+        for i, vars in enumerate(assignments):
+            solver.solve_objects(
+                consgraph, 
+                stages['on_floor'], 
+                var_assignments=vars, 
+                n_steps=overrides['solve_steps_large'], 
+                desc=f"on_floor_{i}", 
+                abort_unsatisfied=overrides.get('abort_unsatisfied_large', False)
+            )
+        return solver.state
+    state = p.run_stage('solve_large', solve_large, use_chance=False, default=state)
+
+    solved_rooms = [
+        state.objs[assignment[cu.variable_room]].obj
+        for assignment in greedy.iterate_assignments(
+            stages['on_floor'], state, [cu.variable_room], limits
+        )
+    ]    
+    solved_bound_points = np.concatenate([butil.bounds(r) for r in solved_rooms])
+    solved_bbox = (np.min(solved_bound_points, axis=0), np.max(solved_bound_points, axis=0))
+
+    house_bbox = np.concatenate([butil.bounds(obj) for obj in solver.get_bpy_objects(r.Domain({t.Semantics.Room}))])
+    house_bbox = (np.min(house_bbox, axis=0), np.max(house_bbox, axis=0))
+
+    camera_rigs = placement.camera.spawn_camera_rigs()
+
+    def pose_cameras():
+
+        nonroom_objs = [
+            o.obj for o in state.objs.values() if t.Semantics.Room not in o.tags
+        ]
+        scene_objs = solved_rooms + nonroom_objs
+
+        scene_preprocessed = placement.camera.camera_selection_preprocessing(
+            terrain=None, 
+            scene_objs=scene_objs
+        )
+
+        solved_floor_surface = butil.join_objects([
+            tagging.extract_tagged_faces(o, {t.Subpart.SupportSurface})
+            for o in solved_rooms
+        ])
+        
+        placement.camera.configure_cameras(
+            camera_rigs,
+            scene_preprocessed=scene_preprocessed,
+            init_surfaces=solved_floor_surface
+        )
+
+        return scene_preprocessed
+    
+    scene_preprocessed = p.run_stage('pose_cameras', pose_cameras, use_chance=False)
+
+    def animate_cameras():
+        cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
+    p.run_stage('animate_cameras', animate_cameras, use_chance=False, prereq='pose_cameras')
+
+    p.run_stage(
+        'populate_intermediate_pholders', 
+        populate.populate_state_placeholders, 
+        solver.state,
+        final=False,
+        use_chance=False
+    )
+    
+    def solve_medium():
+        n_steps = overrides['solve_steps_medium']
+        for i, vars in enumerate(greedy.iterate_assignments(stages['on_wall'], state, all_vars, limits)):
+            solver.solve_objects(consgraph, stages['on_wall'], vars, n_steps, desc=f"on_wall_{i}")
+        for i, vars in enumerate(greedy.iterate_assignments(stages['on_ceiling'], state, all_vars, limits)):
+            solver.solve_objects(consgraph, stages['on_ceiling'], vars, n_steps, desc=f"on_ceiling_{i}")
+        for i, vars in enumerate(greedy.iterate_assignments(stages['side_obj'], state, all_vars, limits)):
+            solver.solve_objects(consgraph, stages['side_obj'], vars, n_steps, desc=f"side_obj_{i}")
+        return solver.state
+    state = p.run_stage('solve_medium', solve_medium, use_chance=False, default=state)
+
+    def solve_small():
+        n_steps = overrides['solve_steps_small']
+        for i, vars in enumerate(greedy.iterate_assignments(stages['obj_ontop_obj'], state, all_vars, limits)):
+            solver.solve_objects(consgraph, stages['obj_ontop_obj'], vars, n_steps, desc=f"obj_ontop_obj_{i}")
+        for i, vars in enumerate(greedy.iterate_assignments(stages['obj_on_support'], state, all_vars, limits)):
+            solver.solve_objects(consgraph, stages['obj_on_support'], vars, n_steps, desc=f"obj_on_support_{i}")
+        #for i, vars in enumerate(greedy.iterate_assignments(stages['tertiary'], state, all_vars, limits)):
+        #    solver.solve_objects(consgraph, stages['tertiary'], vars, n_steps, desc=f"tertiary_{i}")
+        return solver.state
+    state = p.run_stage('solve_small', solve_small, use_chance=False, default=state)
+
+    p.run_stage('populate_assets', populate.populate_state_placeholders, state, use_chance=False)
+    
+    door_filter = r.Domain({t.Semantics.Door}, [(cl.AnyRelation(), stages['rooms'])])
+    window_filter = r.Domain({t.Semantics.Window}, [(cl.AnyRelation(), stages['rooms'])])    
+    p.run_stage('room_doors', lambda: room_dec.populate_doors(solver.get_bpy_objects(door_filter)), use_chance=False)
+    p.run_stage('room_windows', lambda: room_dec.populate_windows(solver.get_bpy_objects(window_filter)), use_chance=False)
+
+    room_meshes = solver.get_bpy_objects(r.Domain({t.Semantics.Room}))
+    p.run_stage('room_stairs', lambda: room_dec.room_stairs(state, room_meshes), use_chance=False)
+    p.run_stage('skirting_floor', lambda: make_skirting_board(room_meshes, t.Subpart.SupportSurface))
+
+    rooms_meshed = butil.get_collection('placeholders:room_meshes')
+
+    #state.print()
+    state.to_json(output_folder / 'solve_state.json')
+
+    def turn_off_lights():
+        for o in bpy.data.objects:
+            if o.type == 'LIGHT' and not o.data.cycles.is_portal:
+                print(f'Deleting {o.name}')
+                butil.delete(o)
+    p.run_stage('lights_off', turn_off_lights)
+
+    def invisible_room_ceilings():
+        rooms_split['exterior'].hide_viewport = True
+        rooms_split['exterior'].hide_render = True
+        invisible_to_camera.apply(list(rooms_split['ceiling'].objects))        
+        invisible_to_camera.apply([o for o in bpy.data.objects if 'CeilingLight' in o.name])
+    p.run_stage('invisible_room_ceilings', invisible_room_ceilings, use_chance=False)
+
+    p.run_stage(
+        'overhead_cam', 
+        place_cam_overhead, 
+        cam=camera_rigs[0], 
+        bbox=solved_bbox,
+        use_chance=False
+    )
+
+    p.run_stage(
+        'hide_other_rooms',
+        hide_other_rooms,
+        state, 
+        rooms_split, 
+        keep_rooms=[r.name for r in solved_rooms],
+        use_chance=False
+    )
+
+        'nature_backdrop', 
+        create_outdoor_backdrop, 
+        terrain, 
+        house_bbox=house_bbox,
+        cam=cam,
+        p=p, 
+        params=overrides,
+        use_chance=False,
+    )
+    if overrides.get('topview', False):
+        rooms_split['exterior'].hide_viewport = True
+        rooms_split['ceiling'].hide_viewport = True
+        rooms_split['exterior'].hide_render = True
+        rooms_split['ceiling'].hide_render = True
+    
+        "whole_bbox": house_bbox,
+def main(args):
+    scene_seed = init.apply_scene_seed(args.seed)
+    init.apply_gin_configs(
+        configs=args.configs, 
+        overrides=args.overrides,
+        configs_folder='infinigen_examples/configs_indoor'
+    )
+    constants.initialize_constants()
+
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output_folder', type=Path)
+    parser.add_argument('--input_folder', type=Path, default=None)
+    parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
+    parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
+    parser.add_argument('-g', '--configs', nargs='+', default=['base'],
+                        help='Set of config files for gin (separated by spaces) '
+                             'e.g. --gin_config file1 file2 (exclude .gin from path)')
+    parser.add_argument('-p', '--overrides', nargs='+', default=[],
+                        help='Parameter settings that override config defaults '
+                             'e.g. --gin_param module_1.a=2 module_2.b=3')
+    parser.add_argument('--task_uniqname', type=str, default=None)
+    parser.add_argument('-d', '--debug', type=str, nargs='*', default=None)
+
+    args = init.parse_args_blender(parser)
+    logging.getLogger("infinigen").setLevel(logging.INFO)
+    logging.getLogger("infinigen.core.nodes.node_wrangler").setLevel(logging.CRITICAL)
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith('infinigen'):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
+
