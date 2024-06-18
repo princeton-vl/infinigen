@@ -13,8 +13,10 @@ from infinigen.core.util import blender as butil
 
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube, blender_rotate
+from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.assets.shelves.doors import CabinetDoorBaseFactory
 
+from infinigen.core.util.math import FixedSeed
 
 def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -80,6 +82,12 @@ class SingleCabinetBaseFactory(AssetFactory):
         # Update fac params
         pass
 
+    def get_material_params(self):
+        with FixedSeed(self.factory_seed):
+            params = self.mat_params.copy()
+            if params.get('frame_material', None) is None:
+                params['frame_material'] = np.random.choice(['white', 'black_wood', 'wood'], p=[0.5, 0.2, 0.3])
+            return params
 
     def get_shelf_params(self, i=0):
         params = self.shelf_params.copy()
@@ -155,6 +163,7 @@ class SingleCabinetBaseFactory(AssetFactory):
 
     def get_cabinet_components(self, i):
         # update material params
+        self.mat_params = self.get_material_params()
 
         # create shelf
         shelf_params = self.get_shelf_params(i=i)
