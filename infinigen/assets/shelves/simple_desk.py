@@ -237,6 +237,7 @@ class SimpleDeskBaseFactory(AssetFactory):
 
         obj_params = self.get_asset_params(i)
         surface.add_geomod(obj, geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
@@ -245,10 +246,20 @@ class SimpleDeskFactory(SimpleDeskBaseFactory):
     def sample_params(self):
         params = dict()
         params['Dimensions'] = (uniform(0.5, 0.75),
+                                uniform(0.8, 2),
                                 uniform(0.6, 0.8))
         params['depth'] = params['Dimensions'][0]
         params['width'] = params['Dimensions'][1]
         params['height'] = params['Dimensions'][2]
         return params
 
+class SidetableDeskFactory(SimpleDeskBaseFactory):
+    def sample_params(self):
+        params = dict()
+        w = 0.55 * normal(1, 0.1)
+        params['Dimensions'] = (w, w, w * normal(1, 0.05))
+        params['depth'] = params['Dimensions'][0]
+        params['width'] = params['Dimensions'][1]
+        params['height'] = params['Dimensions'][2]
+        return params
 
