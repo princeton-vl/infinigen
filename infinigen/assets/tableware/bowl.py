@@ -30,6 +30,7 @@ class BowlFactory(TablewareFactory):
             self.thickness = uniform(.01, .03)
             self.has_inside = uniform(0, 1) < .5
             self.scale = log_uniform(.15, .4)
+        self.edge_wear = None
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         radius = self.x_end * self.scale
