@@ -6,6 +6,7 @@
 
 from typing import Type, Callable
 from dataclasses import dataclass
+import copy
 import logging
 import operator
 import pandas as pd
@@ -19,21 +20,28 @@ from infinigen.core.constraints import (
 
 logger = logging.getLogger(__name__)
 
+SPECIAL_CASE_NODES = [
     cl.ForAll,
     cl.SumOver,
     cl.MeanOver,
+    cl.item,
     cl.Problem,
     cl.scene
+]
     
 gather_funcs = {
     cl.ForAll: all,
     cl.SumOver: sum,
     cl.MeanOver: lambda vs: (sum(vs) / len(vs)) if len(vs) else 0
 }
+
 def _compute_node_val(node: cl.Node, state: State, memo: dict):
+
+    match node:
         case cl.scene():
             return set(k for k, v in state.objs.items() if v.active)                
         case cl.ForAll(objs, var, pred) | cl.SumOver(objs, var, pred) | cl.MeanOver(objs, var, pred):
+            assert isinstance(var, str)
 
             loop_over_objs = evaluate_node(objs, state, memo)
 
@@ -46,12 +54,24 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
             logger.debug(f'{node.__class__.__name__} had {len(results)=}')
 
             return gather_funcs[node.__class__](results)
+        case cl.item():
             raise ValueError(
                 f'_compute_node_val encountered undefined variable {node}. {memo.keys()}'
             )
+        case cl.Node() if node.__class__ in node_impl.node_impls:
+            impl_func = node_impl.node_impls.get(node.__class__)
+            child_vals = {
                 name: evaluate_node(c, state, memo) 
+                for name, c in node.children()
+            }
+        case cl.Problem():
+            raise TypeError(f'evaluate_node is invalid for {node}, please use evaluate_problem')
+        case _:
+            raise NotImplementedError(
                 f'Couldnt compute value for {type(node)}, please add it to '
                 f'{node_impl.node_impls.keys()=} or add a specialcase'
+            )
+
 def relevant(
     node: cl.Node, 
     filter: r.Domain | None
@@ -163,12 +183,18 @@ class ConstraintsViolated:
         return False
     
 def evaluate_node(node: cl.Node, state: State, memo=None):
+
     k = eval_memo.memo_key(node)
 
     if memo is None:
         memo = {}
+    elif k in memo:
+        return memo[k]
     val = _compute_node_val(node, state, memo)
+    
+    memo[k] = val
     logger.debug(f'Evaluated {node.__class__} to {val}')
+    
     return val
 
 @dataclass
