@@ -4,8 +4,29 @@
 
 # Authors: Alexander Raistrick
 
+from __future__ import annotations
+
+from abc import ABCMeta
+from enum import Enum, EnumMeta
 from dataclasses import dataclass
 
+class ABCEnumMeta(EnumMeta, ABCMeta):
+    pass
+
+class Tag:
+
+    def __neg__(self) -> Negated:
+        return Negated(self)
+
+class StringTag(Tag):
+    
+    def __init__(self, desc: str):
+        self.desc = desc
+
+class EnumTag(Tag, Enum, metaclass=ABCEnumMeta):
+    pass
+
+class Semantics(EnumTag):
     # Mesh types
     Room = "room"
     Object = "object"
@@ -81,12 +102,27 @@ from dataclasses import dataclass
     SingleGenerator = 'single-generator'
     NoRotation = 'no-rotation'
     NoCollision = 'no-collision'
+    NoChildren = 'no-children'
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.value})'
 
     def __repr__(self):
         return f'{self.__class__.__name__}.{self.name}'
+
+class Subpart(EnumTag):
+    SupportSurface = "support"
+    Interior = "interior"
+    Exterior = "exterior"
+    Visible = "visible"
+    Invisible = "invisible"
+    Bottom = "bottom"
+    Top = "top"
+    Side = "side"
+    Back = "back"
+    Front = "front"
+    Ceiling = "ceiling"
+    Wall = "wall"
 
     StaircaseWall = "staircase-wall" # TODO Lingjie Remove
     
@@ -95,6 +131,10 @@ from dataclasses import dataclass
 
     def __repr__(self):
         return f'{self.__class__.__name__}.{self.name}'
+
+@dataclass(frozen=True)
+class FromGenerator(Tag):
+    generator: type
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.generator.__name__})'
@@ -112,6 +152,9 @@ class Negated(Tag):
     def __post_init__(self):
         assert not isinstance(self.tag, Negated), "dont construct double negative tags"
 
+@dataclass(frozen=True)
+class Variable(Tag):
+    name: str
 
     def __post_init__(self):
         assert isinstance(self.name, str)
@@ -122,7 +165,11 @@ class Negated(Tag):
     def __str__(self):
         return self.name
 
+@dataclass(frozen=True)
+class SpecificObject(Tag):
+    name: str
 
+def decompose_tags(tags: set[Tag]):
     
     positive, negative = set(), set()
 
@@ -132,16 +179,34 @@ class Negated(Tag):
                 negative.add(tag)
             case _:
                 positive.add(t)
+
     return positive, negative
+
+def contradiction(tags: set[Tag]):
+    
     pos, neg = decompose_tags(tags)
+
+    if pos.intersection(neg):
+        return True
+    
     if len([t for t in pos if isinstance(t, FromGenerator)]) > 1:
         return True
     if len([t for t in tags if isinstance(t, SpecificObject | Variable)]) > 1:
+        return True
+    
+    return False
+
+def implies(t1: set[Tag], t2: set[Tag]):
+
     p1, n1 = decompose_tags(t1)
     p2, n2 = decompose_tags(t2)
+
+    return (
         not contradiction(t1)
         and p1.issuperset(p2)
         and n1.issuperset(n2)
+    )
+
 def satisfies(t1: set[Tag], t2: set[Tag]):
 
     p1, n1 = decompose_tags(t1)
@@ -181,9 +246,14 @@ def to_tag(s: str | Tag | type, fac_context=None) -> Tag:
         return FromGenerator(s)
     
     assert isinstance(s, str), s
+
+    if s.startswith("-"):
+        return Negated(to_tag(s[1:]))
     
+    if fac_context is not None:
         fac = next((f for f in fac_context.keys() if f.__name__ == s), None)
         if fac:
+            return FromGenerator(fac)
 
     s = s.strip("\"\'")
 
@@ -203,6 +273,17 @@ def to_string(tag: Tag | str):
 
     if isinstance(tag, str):
         return tag
+
+    match tag:
+        case Semantics() | Subpart():
+            return tag.value
+        case StringTag():
+            return tag.desc
+        case FromGenerator():
+            return tag.__name__
+        case Negated():
+            raise ValueError(f'Negated tag {tag=} is not allowed here')
+        case _:
             raise ValueError(f'to_string unhandled {tag=}')
         
 def to_tag_set(x, fac_context=None):
