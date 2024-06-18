@@ -13,6 +13,8 @@ from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.materials.art import ArtFabric
+from infinigen.assets.material_assignments import AssetList
 
 class BlanketFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -21,6 +23,10 @@ class BlanketFactory(AssetFactory):
         self.size = self.width * log_uniform(.4, .7)
         self.thickness = log_uniform(.004, .008)
 
+        materials = AssetList['BlanketFactory']()
+        self.surface = materials['surface'].assign_material()
+        if self.surface == ArtFabric:
+            self.surface = self.surface(self.factory_seed)
 
 
     def create_asset(self, **params) -> bpy.types.Object:
