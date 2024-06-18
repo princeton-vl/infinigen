@@ -26,6 +26,8 @@ from infinigen.core.constraints.example_solver.geometry import parse_scene, plan
 from .room import RoomSolver, MultistoryRoomSolver
 
 from infinigen.core.constraints.example_solver.state_def import State
+from infinigen.core.constraints.constraint_language.util import delete_obj
+
 from infinigen.core.constraints.example_solver import (
     propose_continous,
     propose_discrete,
@@ -140,6 +142,7 @@ class Solver:
 
         return schedules
 
+    @gin.configurable
     def choose_move_type(
         self, 
         it: int, 
@@ -154,6 +157,7 @@ class Solver:
     def solve_rooms(self, scene_seed, consgraph: cl.Problem, filter: r.Domain):
         self.state, self.all_roomtypes, self.dimensions = self.room_solver_fn(scene_seed).solve()
         return self.state
+
     @gin.configurable
     def solve_objects(
         self, 
