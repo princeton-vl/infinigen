@@ -7,6 +7,7 @@
 import typing
 from dataclasses import dataclass, field
 
+from infinigen.core import tags as t
 from infinigen.core.constraints import usage_lookup
 from .relations import Relation, AnyRelation
 from .expression import Expression, BoolExpression, ScalarExpression, nodedataclass
@@ -25,6 +26,7 @@ class scene(ObjectSetExpression):
 @nodedataclass()
 class tagged(ObjectSetExpression):
     objs: ObjectSetExpression
+    tags: set[t.Tag] = field(default_factory=set)
 
     def __post_init__(self):
         self.tags = t.to_tag_set(self.tags, fac_context=usage_lookup._factory_lookup)
@@ -37,6 +39,7 @@ def excludes(objs, tags):
     if isinstance(objs, tagged):
         tags = tags.difference(objs.tags)
 
+    return tagged(objs, {t.Negated(x) for x in tags})        
     
 @ObjectSetExpression.register_postfix_func
 @nodedataclass()
