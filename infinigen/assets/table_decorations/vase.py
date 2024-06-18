@@ -1,13 +1,48 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: Yiming Zuo
 
+import bpy
+import bpy
+import mathutils
+from numpy.random import uniform, normal, randint, choice, randint
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util.color import color_category
+from infinigen.core import surface
+
+import infinigen.core.util.blender as butil
+
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+
+from infinigen.assets.table_decorations.utils import nodegroup_lofting, nodegroup_star_profile
+
+class VaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=None):
+        super(VaseFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.dimensions = dimensions
+
+        with FixedSeed(factory_seed):
+            self.params = self.sample_parameters(dimensions)
+    @staticmethod
+    def sample_parameters(dimensions):
+        # all in meters
         if dimensions is None:
             z = uniform(0.25, 0.40)
             x = uniform(0.2, 0.4) * z
             dimensions = (x, x, z)
 
+        x, y, z = dimensions
+
+        U_resolution = 64
+        V_resolution = 64
+
+        neck_scale = uniform(0.2, 0.8)
+
+        parameters = {
             'Profile Inner Radius': choice([1.0, uniform(0.8, 1.0)]),
             'Profile Star Points': randint(16, U_resolution // 2 + 1),
             'U_resolution': U_resolution,
@@ -24,15 +59,27 @@
             'Foot Height': uniform(0.01, 0.1),
             'Material': choice(['glass', 'ceramic'])
         }
+
+        return parameters
+
+    def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0),
             scale=(1, 1, 1))
+        obj = bpy.context.active_object
+
         butil.modify_mesh(obj, 'SOLIDIFY', apply=True, thickness=.002)
         butil.modify_mesh(obj, 'SUBSURF', apply=True, levels=2, render_levels=2)
+
         return obj
 
     def finalize_assets(self, assets):
             self.scratch.apply(assets)
             self.edge_wear.apply(assets)
+
+
+@node_utils.to_nodegroup('nodegroup_vase_profile', singleton=False, type='GeometryNodeTree')
+def nodegroup_vase_profile(nw: NodeWrangler):
+    # Code generated using version 2.6.4 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Profile Curve', None),
         ('NodeSocketFloat', 'Height', 0.0000), ('NodeSocketFloat', 'Diameter', 0.0000),
@@ -41,6 +88,7 @@
         ('NodeSocketFloat', 'Shoulder Position', 0.0000), ('NodeSocketFloat', 'Shoulder Thickness', 0.0000),
         ('NodeSocketFloat', 'Foot Scale', 0.0000), ('NodeSocketFloat', 'Foot Height', 0.0000)])
 
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["Height"]})
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={
         0: group_input.outputs["Top Scale"],
@@ -58,6 +106,7 @@
         1: group_input.outputs["Neck Position"]
     }, attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_1})
 
     multiply_2 = nw.new_node(Nodes.Math, input_kwargs={
         0: group_input.outputs["Diameter"],
@@ -82,10 +131,12 @@
     multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_add, 1: group_input.outputs["Height"]},
                              attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_3})
 
     add = nw.new_node(Nodes.Math,
                       input_kwargs={0: group_input.outputs["Neck Scale"], 1: group_input.outputs["Top Scale"]})
 
+    divide = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={'operation': 'DIVIDE'})
 
     multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Diameter"], 1: divide},
                              attrs={'operation': 'MULTIPLY'})
@@ -109,9 +160,11 @@
         1: group_input.outputs["Foot Height"]
     }, attrs={'operation': 'SUBTRACT'})
 
+    multiply_5 = nw.new_node(Nodes.Math,
                              input_kwargs={0: subtract_1, 1: group_input.outputs["Shoulder Thickness"]},
                              attrs={'operation': 'MULTIPLY'})
 
+    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: multiply_5})
 
     minimum = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["Neck Position"]},
                           attrs={'operation': 'MINIMUM'})
@@ -119,6 +172,7 @@
     multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: minimum, 1: group_input.outputs["Height"]},
                              attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_6})
 
     body_top = nw.new_node(Nodes.Transform, input_kwargs={
         'Geometry': group_input.outputs["Profile Curve"],
@@ -135,6 +189,7 @@
     multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: maximum, 1: group_input.outputs["Height"]},
                              attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_7})
 
     body_bottom = nw.new_node(Nodes.Transform, input_kwargs={
         'Geometry': group_input.outputs["Profile Curve"],
@@ -142,12 +197,14 @@
         'Scale': group_input.outputs["Diameter"]
     })
 
+    body_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [body_bottom, body_top]})
 
     multiply_8 = nw.new_node(Nodes.Math, input_kwargs={
         0: group_input.outputs["Foot Height"],
         1: group_input.outputs["Height"]
     }, attrs={'operation': 'MULTIPLY'})
 
+    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_8})
 
     multiply_9 = nw.new_node(Nodes.Math, input_kwargs={
         0: group_input.outputs["Diameter"],
@@ -160,13 +217,19 @@
         'Scale': multiply_9
     })
 
+    foot_bottom = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': group_input, 'Scale': multiply_9})
 
+    foot_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [foot_bottom, foot_top]})
 
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [foot_geometry, body_geometry, neck_geometry]})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': join_geometry_2},
                                attrs={'is_active_output': True})
+
+
+def geometry_vases(nw: NodeWrangler, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
     starprofile = nw.new_node(nodegroup_star_profile().name, input_kwargs={
         'Resolution': kwargs['U_resolution'],
         'Points': kwargs['Profile Star Points'],
@@ -187,6 +250,7 @@
         'Foot Height': kwargs['Foot Height']
     })
 
+    lofting = nw.new_node(nodegroup_lofting().name,
                           input_kwargs={'Profile Curves': vaseprofile, 'U Resolution': 64, 'V Resolution': 64})
 
     delete_geometry = nw.new_node(Nodes.DeleteGeometry, input_kwargs={
@@ -194,5 +258,8 @@
         'Selection': lofting.outputs["Top"]
     })
 
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material},
                                attrs={'is_active_output': True})
+
+
