@@ -40,11 +40,22 @@ class WallArtFactory(AssetFactory):
         self.scratch = assignments['wear_tear'][0] if is_scratch else None
         self.edge_wear = assignments['wear_tear'][1] if is_edge_wear else None
        
+
+    def create_placeholder(self, **params):
         return new_bbox(
+            -0.01, 
+            -self.width / 2 - self.thickness, 
+            self.width / 2 + self.thickness,
+            -self.height / 2 - self.thickness, 
+            self.height / 2 + self.thickness, 
+        )
+
+    def create_asset(self, placeholder, **params) -> bpy.types.Object:
         obj = new_plane()
         obj.scale = self.width / 2, self.height / 2, 1
         obj.rotation_euler = np.pi / 2, 0, np.pi / 2
         butil.apply_transform(obj, True)
+
         frame = deep_clone_obj(obj)
         wrap_sides(obj, self.surface, 'x', 'y', 'z')
         butil.select_none()
@@ -55,6 +66,7 @@ class WallArtFactory(AssetFactory):
         with butil.ViewportMode(frame, 'EDIT'):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.bridge_edge_loops()
+        butil.modify_mesh(frame, 'SOLIDIFY', thickness=self.depth, offset=1)
         if self.frame_bevel_segments > 0:
             butil.modify_mesh(frame, 'BEVEL', width=self.frame_bevel_width, segments=self.frame_bevel_segments)
         self.frame_surface.apply(frame)
