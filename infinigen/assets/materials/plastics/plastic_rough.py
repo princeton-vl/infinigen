@@ -1,7 +1,14 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the GPL license found in the LICENSE file in the root directory of this
+# source tree.
+# Authors: Mingzhe Wang, Lingjie Mei
+
 import bpy
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+
+from infinigen.assets.materials import common
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.random import log_uniform
@@ -45,12 +52,17 @@ def nodegroup_plastics(nw: NodeWrangler):
         input_kwargs={'BSDF': principled_bsdf, 'Displacement': multiply_3},
         attrs={'is_active_output': True})
 
+def shader_rough_plastic(nw: NodeWrangler, scale=1.0, base_color=None, roughness=None, seed=None, clear=False, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
     if roughness is None:
         roughness = uniform(0.0, 1.0)
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
     if base_color is None:
+        if clear:
+            base_color = hsv2rgba(0, 0, log_uniform(.02, .8))
+        else:
+            base_color = hsv2rgba(uniform(0, 1), uniform(.5, .8), log_uniform(.01, .5))
 
     group = nw.new_node(nodegroup_plastics().name, 
         input_kwargs={'Base Color': base_color,
@@ -67,3 +79,4 @@ def nodegroup_plastics(nw: NodeWrangler):
 
 
 def apply(obj, selection=None, **kwargs):
+    common.apply(obj, shader_rough_plastic, selection, **kwargs)
