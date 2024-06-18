@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix constants
 
 from collections import defaultdict
 
@@ -6,11 +9,33 @@ import gin
 import numpy as np
 from shapely import LineString, Polygon
 
+from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_type
+from infinigen.core.constraints.example_solver.room.configs import EXTERIOR_CONNECTED_ROOM_TYPES, FUNCTIONAL_ROOM_TYPES, SQUARE_ROOM_TYPES, \
     TYPICAL_AREA_ROOM_TYPES
+from infinigen.core.constraints.example_solver.room.utils import abs_distance, buffer, unit_cast
 
 
 @gin.configurable(denylist=['graph'])
 class BlueprintScorer:
+    def __init__(
+        self, 
+        graph, 
+        shortest_path_weight=2., 
+        typical_area_weight=10.,
+        typical_area_room_types=TYPICAL_AREA_ROOM_TYPES, 
+        aspect_ratio_weight=10.,
+        aspect_ratio_room_types=SQUARE_ROOM_TYPES, 
+        convexity_weight=50., 
+        conciseness_weight=2.,
+        exterior_connected_room_types=EXTERIOR_CONNECTED_ROOM_TYPES, 
+        exterior_length_weight=.2,
+        exterior_corner_weight=.02, 
+        collinearity_weight=.02, 
+        functional_room_weight=.2,
+        functional_room_types=FUNCTIONAL_ROOM_TYPES, 
+        narrow_passage_weight=5.,
+        narrow_passage_thresh=1.5
+    ):
         self.graph = graph
         self.shortest_path_weight = shortest_path_weight
 
