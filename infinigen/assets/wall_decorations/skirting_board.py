@@ -1,7 +1,12 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+
 import bmesh
+import bpy
+import mathutils
+import numpy as np
+from numpy.random import uniform, normal, randint, choice, randint
 from infinigen.assets.creatures.util.geometry.curve import Curve
 from infinigen.assets.utils.decorate import (
     read_co, read_edge_length, remove_edges, read_edge_direction, read_edges,
@@ -12,15 +17,39 @@ from infinigen.assets.utils.object import new_plane, join_objects
 from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, DOOR_WIDTH, WALL_THICKNESS
 from infinigen.core.constraints.example_solver.room.types import get_room_level
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
 from infinigen.core.surface import write_attr_data
+from infinigen.core.util.color import color_category
+from infinigen.core import surface
+
+import infinigen.core.util.blender as butil
+
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.materials.plastics import plastic_rough
+
+from shapely.geometry import Polygon, MultiPolygon
+from shapely import affinity
+from shapely.ops import unary_union
 from infinigen.assets.utils.shapes import polygon2obj, obj2polygon
 from shapely.plotting import plot_polygon
 
+
+@node_utils.to_nodegroup('nodegroup_make_skirting_board_001', singleton=False, type='GeometryNodeTree')
+def nodegroup_make_skirting_board(nw: NodeWrangler, control_points):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
+        expose_input=[('NodeSocketCollection', 'Parent', None),
+            ('NodeSocketFloat', 'Thickness', 0.0300),
+            ('NodeSocketFloat', 'Height', 0.1500),
+            ('NodeSocketFloatDistance', 'Resolution', 0.0050),
             ('NodeSocketBool', 'Is Ceiling', False)]
     )
 
+    collection_info = nw.new_node(Nodes.CollectionInfo, input_kwargs={'Collection': group_input.outputs["Parent"]})
 
     mesh = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': collection_info})
 
@@ -38,6 +67,7 @@ from shapely.plotting import plot_polygon
         Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -0.5000}, attrs={'operation': 'MULTIPLY'}
     )
 
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': multiply, 'Y': multiply_1})
 
     transform_geometry = nw.new_node(
         Nodes.Transform, input_kwargs={'Geometry': quadrilateral, 'Translation': combine_xyz}
@@ -45,23 +75,32 @@ from shapely.plotting import plot_polygon
 
     resample_curve_1 = nw.new_node(
         Nodes.ResampleCurve,
+        input_kwargs={'Curve': transform_geometry, 'Count': 220, 'Length': group_input.outputs["Resolution"]},
         attrs={'mode': 'LENGTH'}
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': position})
 
+    greater_than = nw.new_node(Nodes.Compare, input_kwargs={0: separate_xyz.outputs["X"]})
 
     multiply_2 = nw.new_node(
         Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -1.0000}, attrs={'operation': 'MULTIPLY'}
     )
 
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': separate_xyz.outputs["Y"], 1: multiply_2, 2: 0.0000})
 
+    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': map_range.outputs["Result"]})
+    node_utils.assign_curve(float_curve.mapping.curves[0], control_points)
 
     multiply_3 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: float_curve, 1: group_input.outputs["Thickness"]},
         attrs={'operation': 'MULTIPLY'}
     )
 
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': multiply_3, 'Y': separate_xyz.outputs["Y"]})
 
     set_position = nw.new_node(
         Nodes.SetPosition,
@@ -92,9 +131,25 @@ from shapely.plotting import plot_polygon
         Nodes.GroupOutput, input_kwargs={'Geometry': set_shade_smooth}, attrs={'is_active_output': True}
     )
 
+
 def apply_skirtingboard(nw: NodeWrangler, contour, is_ceiling=False, seed=None, thickness=.02):
+    # Code generated using version 2.6.5 of the node_transpiler
+
+    # TODO: randomize style / size / materials
+    if seed is None:
+        seed = randint(0, 10000)
+    with FixedSeed(seed):
         thickness = uniform(.02, .05)
+        height = uniform(0.08, 0.15)
+        color = color_category('white')
+        roughness = uniform(0.5, 1.0)
+        n_peaks = randint(1, 4)
+        start_y = uniform(0.0, 0.5)
+        mid_x = uniform(0.2, 0.8)
+        peak_xs = np.sort(uniform(0.0, mid_x, size=n_peaks))
+        peak_ys = np.sort(uniform(start_y, 1.0, size=n_peaks))
         control_points = [(0.0000, start_y)]
+        control_points += [(x, y) for x, y in zip(peak_xs, peak_ys)]
         control_points += [(mid_x, 1.0000),
             (1.0000, 1.0000)]
 
@@ -117,18 +172,27 @@ def apply_skirtingboard(nw: NodeWrangler, contour, is_ceiling=False, seed=None, 
             )
         }
     )
+
     group_output = nw.new_node(
         Nodes.GroupOutput, input_kwargs={'Geometry': makeskirtingboard}, attrs={'is_active_output': True}
     )
 
+
 def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
+    # make the outline curve 
+
         tagging.extract_tagged_faces(o, {tag, t.Subpart.Visible}, nonempty=True)
+    all_polys = []
+    all_zs = []
         all_polys.append(obj2polygon(floor_pieces))
         all_zs.append(read_co(floor_pieces)[:, -1] + floor_pieces.location[-1])
+
     floor_z = np.mean(np.concatenate(all_zs))
     boundary = unary_union(all_polys).buffer(.05, join_style='mitre').buffer(-.05, join_style='mitre')
 
+    if isinstance(boundary, Polygon):
         boundaries = [boundary]
+    else:
         boundaries = boundary.geoms
 
     contours = []
@@ -145,11 +209,14 @@ def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
             o.location[-1] += floor_z
             butil.apply_transform(o, True)
     return contours
+
+
 def make_skirting_board(objs, tag, joined=True):
     if joined:
         seqs = list([o for o in objs if get_room_level(o.name.split('.')[0]) == i] for i in [0])
     else:
         seqs = [[o] for o in objs]
+
     for s in seqs:
         logger.debug(f'make_skirting_board for {len(objs)=} {tag=}')
 
