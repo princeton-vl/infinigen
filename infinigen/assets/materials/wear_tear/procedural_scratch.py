@@ -17,6 +17,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 import logging
 from collections.abc import Iterable
 
+from infinigen.core.util.random import log_uniform
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,6 +26,10 @@ def get_scratch_params():
     return {
         'angle1': uniform(10., 80.0),
         'angle2': uniform(-80.0, -10.0),
+        'scratch_scale': log_uniform(5,80),
+        'scratch_mask_ratio': log_uniform(0.01, 0.9),
+        'scratch_mask_noise': log_uniform(5, 40),
+        'scratch_depth': log_uniform(.1,1.), 
     }
 
 def scratch_shader(nw: NodeWrangler, 
@@ -145,10 +151,15 @@ def apply_over(obj, selection=None, **shader_kwargs):
             logging.debug("No BSDF found in the object's materials! Returning")
             continue
         
+        nw_bsdf, bsdf = result[-1]
         # final_bsdf = scratch_shader(nw_bsdf, bsdf, **shader_kwargs)
         
+        if 'Normal' in bsdf.inputs.keys():
+            if len(nw_bsdf.find_from(bsdf.inputs['Normal'])) == 0:
+                bump = scratch_shader(nw_bsdf, None, **shader_kwargs)['Normal']
                 
                 # connecting nodes: https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
+                nw_bsdf.links.new(bump.outputs[0], bsdf.inputs['Normal'])
 
         nw_bsdf.label = MARKER_LABEL
 
