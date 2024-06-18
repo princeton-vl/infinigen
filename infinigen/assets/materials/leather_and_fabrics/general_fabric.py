@@ -1,9 +1,29 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Yiming Zuo
+# Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=umrARvXC_MI by Ryan King Art
+
+
 from infinigen.assets.materials import common
 
+import bpy
+import bpy
+import mathutils
+import numpy as np
+from numpy.random import uniform, normal, randint
 
 from infinigen.assets.utils.uv import ensure_uv, unwrap_faces
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util.color import color_category
+from infinigen.core import surface
+
 
 def func_fabric(nw: NodeWrangler, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
+
+    texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     group_input = {
         'Weave Scale': 0.,
@@ -20,7 +40,10 @@ def func_fabric(nw: NodeWrangler, **kwargs):
         'Detail': 15.0000
     }, attrs={'bands_direction': 'Y'})
 
+    value_2 = nw.new_node(Nodes.Value)
+    value_2.outputs[0].default_value = 0.1000
 
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={'Value': wave_texture_1.outputs["Color"], 1: value_2})
 
     wave_texture = nw.new_node(Nodes.WaveTexture, input_kwargs={
         'Vector': texture_coordinate.outputs["UV"],
@@ -29,13 +52,16 @@ def func_fabric(nw: NodeWrangler, **kwargs):
         'Detail': 15.0000
     })
 
+    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': wave_texture.outputs["Color"], 1: value_2})
 
+    mix = nw.new_node(Nodes.Mix,
                       input_kwargs={6: map_range.outputs["Result"], 7: map_range_1.outputs["Result"]},
                       attrs={'data_type': 'RGBA'})
 
     greater_than = nw.new_node(Nodes.Math, input_kwargs={0: mix.outputs[2], 1: 0.1000},
                                attrs={'operation': 'GREATER_THAN'})
 
+    transparent_bsdf = nw.new_node(Nodes.TransparentBSDF)
 
     less_than = nw.new_node(Nodes.Math, input_kwargs={0: group_input["Color Pattern Scale"], 1: 0.0001},
                             attrs={'operation': 'LESS_THAN'})
@@ -80,6 +106,7 @@ def func_fabric(nw: NodeWrangler, **kwargs):
         7: mix_4.outputs[2]
     }, attrs={'data_type': 'RGBA'})
 
+    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={'Value': mix.outputs[2], 3: 1.0000, 4: 0.9000})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
         'Base Color': mix_3.outputs[2],
@@ -94,17 +121,31 @@ def func_fabric(nw: NodeWrangler, **kwargs):
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input["Weave Scale"], 1: 5.0000},
                            attrs={'operation': 'MULTIPLY'})
 
+    musgrave_texture = nw.new_node(Nodes.MusgraveTexture, input_kwargs={'Scale': multiply})
 
     mix_1 = nw.new_node(Nodes.Mix, input_kwargs={6: musgrave_texture, 7: mix.outputs[2]},
                         attrs={'data_type': 'RGBA'})
 
+    subtract = nw.new_node(Nodes.Math, input_kwargs={0: mix_1.outputs[2]}, attrs={'operation': 'SUBTRACT'})
 
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: 0.0010}, attrs={'operation': 'MULTIPLY'})
 
     displacement = nw.new_node(
         'ShaderNodeDisplacement', input_kwargs={'Height': multiply_1, 'Midlevel': 0.0000}
     )
 
     return {'Shader': mix_shader, 'Displacement': displacement}
+
+
+def shader_fabric(nw: NodeWrangler, weave_scale=500.0, color_scale=None, color_1=None, color_2=None, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
+
+    if color_scale is None:
+        color_scale = np.random.choice([0.0, uniform(5., 20.)])
+    if color_1 is None:
+        color_1 = color_category('fabric')
+    if color_2 is None:
+        color_2 = color_category('white')
 
     group = func_fabric(nw, **{
         'Weave Scale': weave_scale,
