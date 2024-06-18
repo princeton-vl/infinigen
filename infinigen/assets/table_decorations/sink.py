@@ -8,14 +8,72 @@
 # - Alexander Raistrick: placeholder, optimize detail, redo cutter
 
 
+import bpy
+
+import numpy as np
+
+from infinigen.assets.utils import bbox_from_mesh
+from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
+
+from infinigen.core import tagging, tags as t
         self.factory_seed = factory_seed
+        self.tap_factory = TapFactory(factory_seed)
+
         curvature = U(1.0, 1.0)
+            upper_height = U(0.2, 0.4)
         lower_height = U(0.00, 0.01)
+            'ProtrudeAboveCounter': U(0.01, 0.025),
+    def _extract_geo_results(self):
+
+        params = self.params.copy()
+        params.pop('ProtrudeAboveCounter')
+
+        with butil.TemporaryObject(butil.spawn_vert()) as temp:
+            obj = extract_nodegroup_geo(
+                temp, nodegroup_sink_geometry(), 'Geometry', ng_params=params
+            )
+            cutter = extract_nodegroup_geo(
+                temp, nodegroup_sink_geometry(), 'Cutter', ng_params=params
+            )
+
+        return obj, cutter
+
+    def create_placeholder(self, i, **kwargs) -> bpy.types.Object:
+
+        obj, cutter = self._extract_geo_results()
+        butil.delete(cutter)
+
+        min_corner, max_corner = butil.bounds(obj)
+        min_corner[-1] = max_corner[-1] - self.params['ProtrudeAboveCounter']
+        top_slice_placeholder = bbox_from_mesh.box_from_corners(min_corner, max_corner)
+
+        butil.delete(obj)
+        
+        return top_slice_placeholder
+
+    def create_asset(self,i, placeholder, state=None, **params):
+
+        obj, cutter = self._extract_geo_results()
+        tagging.tag_system.relabel_obj(obj)
+
+        cutter.parent = obj
+        cutter.name = repr(self) + f'.spawn_placeholder({i}).cutter'
+        cutter.hide_render = True
+
+        tap_loc = (-self.params['Depth'] / 2, 0, self.params['Upper Height'])
+        tap = self.tap_factory.spawn_asset(i, loc=tap_loc, rot=(0,0,0))
+        tap.parent = obj
+
         return obj
 
     def finalize_assets(self, assets):
             self.scratch.apply(assets)
             self.edge_wear.apply(assets)
+    
+class TapFactory(AssetFactory):
+
+    def __init__(self, factory_seed):
+        super().__init__(factory_seed)
 
 
     @staticmethod
@@ -36,6 +94,12 @@
         }
         return params
 
+
+    def create_asset(self, **_):
+        obj = butil.spawn_cube()
+        obj.scale = (0.4,)*3
+        obj.rotation_euler.z += np.pi
+        butil.apply_transform(obj)
         return obj
     
     def finalize_assets(self, assets):
@@ -269,6 +333,7 @@
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': curve_to_mesh_3, 'Position': combine_xyz_5, 'Offset': (0.0000, 0.0000, 0.0000)})
     
+    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={'Mesh': set_position, 'Level': 1})
     
     set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': subdivision_surface})
     
@@ -324,6 +389,7 @@
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material}, attrs={'is_active_output': True})
 
+@node_utils.to_nodegroup('nodegroup_sink_geometry', singleton=False, type='GeometryNodeTree')
     group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketFloatDistance', 'Width', 2.0000),
         ('NodeSocketFloatDistance', 'Depth', 2.0000), ('NodeSocketFloat', 'Curvature', 0.9500),
         ('NodeSocketFloat', 'Upper Height', 1.0000), ('NodeSocketFloat', 'Lower Height', -0.0500),
@@ -335,6 +401,9 @@
 
 
 
+    # inside of sink curve
+    sink_interior_border = nw.new_node('GeometryNodeFilletCurve',
+                               input_kwargs={'Curve': quadrilateral, 'Count': 50, 'Radius': multiply},
                                attrs={'mode': 'POLY'})
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={
@@ -342,15 +411,20 @@
         'Y': group_input.outputs["Curvature"]
     })
 
+    transform_1 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': sink_interior_border, 'Scale': combine_xyz_1})
 
 
     join_geometry_4 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [transform_1, curve_circle.outputs["Curve"]]})
 
+    fill_curve_1 = nw.new_node(Nodes.FillCurve, input_kwargs={'Curve': join_geometry_4})
+
+    #fill_curve_1 = tagging.tag_nodegroup(nw, fill_curve_1, t.Subpart.SupportSurface)
 
 
 
     transform_2 = nw.new_node(Nodes.Transform,
+                              input_kwargs={'Geometry': fill_curve_1, 'Translation': combine_xyz_2})
 
     extrude_mesh_2 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
         'Mesh': transform_2,
@@ -394,7 +468,9 @@
     })
 
     transform = nw.new_node(Nodes.Transform,
+                            input_kwargs={'Geometry': sink_interior_border, 'Scale': (0.9900, 0.9900, 1.0000)})
 
+    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform, sink_interior_border]})
 
 
     extrude_mesh_1 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
@@ -444,6 +520,7 @@
                                  input_kwargs={'Curve': transform_8, 'Count': 10, 'Radius': multiply},
                                  attrs={'mode': 'POLY'})
 
+    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [sink_interior_border, fillet_curve_1]})
 
 
     multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Lower Height"], 1: -1.0000},
@@ -459,6 +536,7 @@
     })
 
 
+    #watertap = nw.new_node(nodegroup_water_tap().name, input_kwargs={'Tap': group_input.outputs['Tap']})
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={
         0: group_input.outputs["Depth"],
@@ -469,6 +547,7 @@
                                 input_kwargs={'X': multiply_5, 'Z': group_input.outputs["Upper Height"]})
 
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={
+        'Geometry': [join_geometry_5, set_position, join_geometry_3]#, transform_geometry]
     })
 
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={
@@ -483,7 +562,45 @@
     
     set_position_1 = nw.new_node(Nodes.SetPosition, input_kwargs={'Geometry': set_material, 'Offset': combine_xyz_8})
     
+    # region CREATE CUTTER (manually added by araistrick post-fact)
+
+    sink_interior_border_simplified = nw.new_node('GeometryNodeFilletCurve',
+        input_kwargs={
+            'Curve': quadrilateral, 'Count': 3, 'Radius': multiply
+        },
+        attrs={'mode': 'POLY'}
+    )
+
+    scaled_sink_interior_border = nw.new_node(Nodes.Transform, input_kwargs={
+        'Geometry': sink_interior_border_simplified,
+        'Scale': (1.01, 1.01, 1) #scale it up just a little to avoid zclip
+    })
+
+    fill_interior = nw.new_node(
+        Nodes.FillCurve, 
+        input_kwargs={'Curve': scaled_sink_interior_border},
+        attrs={'mode': 'NGONS'}
+    )
+
+    extrude_amt = nw.scalar_add(
+        group_input.outputs["Lower Height"], 
+        group_input.outputs["Upper Height"],
+        0.05
+    )
+    extrude = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
+        'Mesh': fill_interior, 
+        'Offset Scale': extrude_amt
+    })
+
+    # same translation as set_position_1, to keep it in sync
+    setpos_move_cutter = nw.new_node(Nodes.SetPosition, input_kwargs={'Geometry': extrude, 'Offset': combine_xyz_8})
+
+    # endregion
     
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={
+        'Geometry': set_position_1,
+        'Cutter': setpos_move_cutter
+    })
 
 
 
