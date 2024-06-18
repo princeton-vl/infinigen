@@ -1,0 +1,58 @@
+include 'infinigen_examples/configs_nature/base.gin'
+include 'infinigen_examples/configs_nature/base_surface_registry.gin'
+include 'infinigen_examples/configs_nature/natural.gin'
+include 'infinigen_examples/configs_nature/performance/fast_terrain_assets.gin'
+
+# overriden in fast_solve.gin if present
+compose_indoors.solve_steps_large = 500
+compose_indoors.solve_steps_medium = 200
+compose_indoors.solve_steps_small = 300
+
+SimulatedAnnealingSolver.initial_temp = 3
+SimulatedAnnealingSolver.final_temp = 0.001
+SimulatedAnnealingSolver.finetune_pct = 0.15
+SimulatedAnnealingSolver.max_invalid_candidates = 5
+
+render_image.use_dof = True
+animate_cameras.follow_poi_chance=0.0
+camera.camera_pose_proposal.altitude = ("clip_gaussian", 1.5, 0.8, 0.5, 2.2)
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 15, 60, 95)
+camera.camera_pose_proposal.focal_length = 15
+export.spherical = False # spherical mesher doesnt support short focal length / wide fov
+
+camera.spawn_camera_rigs.n_camera_rigs = 1
+camera.spawn_camera_rigs.camera_rig_config = [
+    {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
+    {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}
+]
+keep_cam_pose_proposal.min_terrain_distance = 0.7 # stuff will inevitably be closer to the camera indoors
+
+# animating the camera takes more search time when indoors
+animate_trajectory.max_step_tries=40
+animate_trajectory.max_full_retries=20
+compute_base_views.min_candidates_ratio=10
+compute_base_views.max_tries=50000
+compose_indoors.animate_cameras_enabled = False # not yet working robustly
+
+group_collections.config = [
+    {'name': 'assets',         'hide_viewport': True,  'hide_render': True}, # collections of assets used by scatters
+    {'name': 'placeholders',   'hide_viewport': True, 'hide_render': True}, # low-res markers / proxies for where assets will be spawned
+    {'name': 'unique_assets',  'hide_viewport': False,  'hide_render': False}, # actual hi-res assets spawned at each placeholder location
+]
+
+configure_render_cycles.exposure = 3
+configure_render_cycles.denoise = False
+configure_render_cycles.adaptive_threshold = 0.005
+
+nishita_lighting.strength = 0.25
+nishita_lighting.sun_elevation = ("clip_gaussian", 40, 25, 6, 70)
+
+compose_indoors.lights_off_chance=0.2
+
+
+
+# for create_outdoor_backdrop
+compose_indoors.fancy_clouds_chance = 0.5
+compose_indoors.grass_chance = 0.5
+compose_indoors.rocks_chance = 0.5
+compose_indoors.near_distance = 20
