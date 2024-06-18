@@ -35,6 +35,7 @@ class PlantPotFactory(PotFactory):
 
 
 class PlantContainerFactory(AssetFactory):
+    plant_factories = [CactusFactory, MushroomFactory, FernFactory, SucculentFactory, SpiderPlantFactory,
         SnakePlantFactory]
 
     def __init__(self, factory_seed, coarse=False):
@@ -48,23 +49,34 @@ class PlantContainerFactory(AssetFactory):
             self.top_size = uniform(.4, .6)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        return new_bbox(
             -self.side_size,
             self.side_size,
             -self.side_size,
             self.side_size,
             -.02,
+            self.base_factory.depth * self.base_factory.scale + self.top_size
+        )
 
+    def create_asset(self, i, **params) -> bpy.types.Object:
+        obj = self.base_factory.create_asset(i=i, **params)
         horizontal = np.abs(read_edge_direction(obj)[:, -1]) < .1
+
         edge_center = read_edge_center(obj)
         z = edge_center[:, -1]
         dirt_z = self.dirt_ratio * self.base_factory.depth * self.base_factory.scale
+        idx = np.argmin(np.abs(z - dirt_z) - horizontal * 10)
+        radius = np.sqrt((edge_center[idx] ** 2)[:2].sum())
+
         selection = np.zeros_like(z).astype(bool)
+        selection[idx] = True
         with butil.ViewportMode(obj, 'EDIT'):
             bpy.ops.mesh.select_mode(type="EDGE")
             select_edges(obj, selection)
             bpy.ops.mesh.loop_multi_select(ring=False)
             bpy.ops.mesh.duplicate_move()
             bpy.ops.mesh.separate(type='SELECTED')
+
         dirt_ = bpy.context.selected_objects[-1]
         butil.select_none()
         self.base_factory.finalize_assets(obj)
@@ -73,10 +85,14 @@ class PlantContainerFactory(AssetFactory):
             bpy.ops.mesh.fill_grid()
         subsurf(dirt_, 3)
         butil.apply_modifiers(dirt_)
+
+        remove_vertices(dirt_, lambda x, y, z: np.sqrt(x ** 2 + y ** 2) > radius * 0.92)
         dirt_.location[-1] -= .02
+
         plant = self.plant_factory.spawn_asset(i=i, loc=(0, 0, 0), rot=(0, 0, 0))
         origin2lowest(plant, approximate=True)
         self.plant_factory.finalize_assets(plant)
+
         scale = np.min(
             np.array([self.side_size, self.side_size, self.top_size]) / np.max(
                 np.abs(np.array(plant.bound_box)), 0
@@ -84,11 +100,13 @@ class PlantContainerFactory(AssetFactory):
         )
         plant.scale = [scale] * 3
         plant.location[-1] = dirt_z
+
         obj = join_objects([obj, plant, dirt_])
         return obj
 
 
 class LargePlantContainerFactory(PlantContainerFactory):
+    plant_factories = [MonocotFactory]
 
     def __init__(self, factory_seed, coarse=False):
         super(LargePlantContainerFactory, self).__init__(factory_seed, coarse)
