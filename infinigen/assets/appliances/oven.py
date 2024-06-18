@@ -21,6 +21,11 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.utils.object import new_bbox
+from infinigen.core.surface import write_attr_data
+from infinigen.assets.utils.decorate import read_normal
+from infinigen.core.tagging import PREFIX
+from infinigen.core import tagging, tags as t
 
 class OvenFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.]):
@@ -119,6 +124,16 @@ class OvenFactory(AssetFactory):
             "MiddleRatio",
         ]}
         return params, geometry_node_params
+    
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+       # x, y, z = self.params["Depth"], self.params["Width"], self.params["Height"]
+       # box = new_bbox(-x/2 - 0.05, x/2 + self.params["DoorThickness"] + 0.1, -y/2, y/2, 0, z + 0.1)
+       # tagging.tag_object(box, f'{PREFIX}{t.Subpart.SupportSurface.value}', read_normal(box)[:, -1] > .5)
+       # box_top = new_bbox(-x/2 - 0.05, -x/2 - 0.05 + self.params["PanelThickness"], -y/2, y/2, z + 0.1, z+ 0.1 + 0.5)
+       # box_top.rotation_euler[1] = -0.1
+        #box = butil.join_objects([box, box_top])
+        obj = butil.spawn_cube()
+    
     def create_asset(self, **params):
         obj = butil.spawn_cube()
         butil.modify_mesh(obj, 'NODES', node_group=nodegroup_oven_geometry(preprocess=True, use_gas=self.params["UseGas"]), ng_inputs=self.geometry_node_params, apply=True)
@@ -762,6 +777,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup('nodegroup_oven_geometry', singleton=False, type='GeometryNodeTree')
+def nodegroup_oven_geometry(nw: NodeWrangler, preprocess: bool=False, use_gas: bool=False, is_placeholder: bool=False):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -784,6 +800,9 @@ def nodegroup_cube(nw: NodeWrangler):
             ('NodeSocketMaterial', 'Surface', None),
             ('NodeSocketMaterial', 'WhiteMetal', None),
             ('NodeSocketMaterial', 'SuperBlackGlass', None),
+            ('NodeSocketMaterial', 'Back', None),
+            ('NodeSocketBool', 'is_placeholder', is_placeholder)])
+            
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["DoorThickness"], 'Y': group_input.outputs["Width"], 'Z': group_input.outputs["Height"]})
@@ -791,6 +810,7 @@ def nodegroup_cube(nw: NodeWrangler):
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': group_input.outputs["Depth"]})
 
     cube = nw.new_node(nodegroup_cube().name, input_kwargs={'Size': combine_xyz_1, 'Pos': combine_xyz_2})
+    
     position = nw.new_node(Nodes.InputPosition)
 
     center = nw.new_node(nodegroup_center().name,
@@ -1154,7 +1174,12 @@ def nodegroup_cube(nw: NodeWrangler):
 
     combine_xyz_14 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["Height"]})
 
+    panel_bbox = nw.new_node(Nodes.BoundingBox,input_kwargs={'Geometry': geometry_to_instance_3})
+
+    switch_1 = nw.new_node(Nodes.Switch, input_kwargs={'Switch': group_input.outputs["is_placeholder"], 'False': geometry_to_instance_3, 'True': panel_bbox})
+
     rotate_instances_1 = nw.new_node(Nodes.RotateInstances,
+        input_kwargs={'Instances': switch_1, 'Rotation': (0.0000, -0.1745, 0.0000), 'Pivot Point': combine_xyz_14})
 
     rotate_instances_1 = nw.new_node(Nodes.RealizeInstances, [rotate_instances_1])
 
@@ -1177,6 +1202,13 @@ def nodegroup_cube(nw: NodeWrangler):
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [door, racks, heater_1, panel, body]})
 
+    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [door, racks, heater_1, body]})
+    body_bbox = nw.new_node(Nodes.BoundingBox,input_kwargs={'Geometry': join_geometry_2})
+    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [body_bbox, panel]})
+    
+
+    switch_2 = nw.new_node(Nodes.Switch, input_kwargs={'Switch': group_input.outputs["is_placeholder"], 'False': join_geometry, 'True': join_geometry_3})
+    geometry = nw.new_node(Nodes.RealizeInstances,[switch_2])
 
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': geometry})
