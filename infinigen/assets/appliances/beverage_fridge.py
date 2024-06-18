@@ -22,6 +22,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.assets.material_assignments import AssetList
 
 class BeverageFridgeFactory(AssetFactory):
+
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.]):
         super(BeverageFridgeFactory, self).__init__(factory_seed, coarse=coarse)
 
