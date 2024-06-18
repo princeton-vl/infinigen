@@ -1,0 +1,23 @@
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+
+
+def shader_super_black_glass(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+    glossy_bsdf = nw.new_node(Nodes.GlossyBSDF, input_kwargs={'Color': (0.0095, 0.0095, 0.0095, 1.0000), 'Roughness': 0.0000})
+    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': glossy_bsdf}, attrs={'is_active_output': True})
+
+
+def shader_black_medal(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
+    anisotropic_bsdf = nw.new_node('ShaderNodeBsdfAnisotropic', input_kwargs={'Color': (0.0167, 0.0167, 0.0167, 1.0000)})
+
+    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': anisotropic_bsdf}, attrs={'is_active_output': True})
+
+def shader_glass(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
+    glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={'IOR': 1.5000})
+
+    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': glass_bsdf}, attrs={'is_active_output': True})
+
