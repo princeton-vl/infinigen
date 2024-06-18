@@ -21,6 +21,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core import tagging, tags as t
 from infinigen.core.util.math import FixedSeed
 
 
@@ -54,6 +55,7 @@ class RackFactory(AssetFactory):
             obj.scale = self.depth / 2, self.width / 2 - self.thickness, 1
             obj.location = -self.depth / 2, self.width / 2, self.height * i
             butil.apply_transform(obj, True)
+            write_attr_data(obj, f'{PREFIX}{t.Subpart.SupportSurface.value}', np.ones(1).astype(bool), 'INT', 'FACE')
             objs.append(obj)
         obj = join_objects(objs)
         return obj
