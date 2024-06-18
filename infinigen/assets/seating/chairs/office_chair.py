@@ -1,6 +1,10 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: Yiming Zuo
 
 import bpy
+from numpy.random import uniform, choice
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
@@ -8,6 +12,7 @@ from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 
+from infinigen.assets.seating.chairs.seats.curvy_seats import generate_curvy_seats
 
 from infinigen.assets.tables.cocktail_table import geometry_create_legs
 from infinigen.assets.material_assignments import AssetList
@@ -26,14 +31,20 @@ def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
             'Back Bent': kwargs['Top Back Bent'],
             'Back Relative Width': kwargs['Top Back Relative Width'],
             'Mid Pos': kwargs['Top Mid Pos'],
+            'Seat Height': kwargs['Top Thickness'],
         })
 
+    seat_instance = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': generateseat,
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
+
     seat_instance = nw.new_node(Nodes.SetMaterial,
         input_kwargs={'Geometry': seat_instance, 'Material': kwargs['TopMaterial']})
 
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
+
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [seat_instance, legs]})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': join_geometry}, attrs={'is_active_output': True})
 
 class OfficeChairFactory(AssetFactory):
@@ -73,6 +84,7 @@ class OfficeChairFactory(AssetFactory):
     @staticmethod
     def sample_parameters(dimensions):
         # all in meters
+
         if dimensions is None:
             x = uniform(0.5, 0.6)
             z = uniform(1.0, 1.4)
@@ -114,6 +126,7 @@ class OfficeChairFactory(AssetFactory):
             leg_number = 1
             leg_diameter = uniform(0.7*x, 0.9*x)
 
+            leg_curve_ctrl_pts = [(0.0, uniform(0.1, 0.2)),
                 (0.5, uniform(0.1, 0.2)), (0.9, uniform(0.2, 0.3)), (1.0, 1.0)]
 
             parameters.update({
@@ -171,6 +184,11 @@ class OfficeChairFactory(AssetFactory):
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        return obj
+
+    def finalize_assets(self, assets):
         if self.scratch:
+            self.scratch.apply(assets)
         if self.edge_wear:
+            self.edge_wear.apply(assets)
 
