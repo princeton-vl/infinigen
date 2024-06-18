@@ -13,6 +13,8 @@ from infinigen.assets.utils.misc import generate_text
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
+from infinigen.core.util.blender import delete
+from infinigen.core.util.bevelling import get_bevel_edges, add_bevel, complete_bevel, complete_no_bevel
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
@@ -25,6 +27,9 @@ class OvenFactory(AssetFactory):
 
         self.dimensions = dimensions
         with FixedSeed(factory_seed):
+            self.params, self.geometry_node_params = self.sample_parameters(dimensions)
+        self.geometry_node_params.update(self.material_params)
+
 
     @staticmethod
     def sample_parameters(dimensions):
@@ -47,7 +52,21 @@ class OvenFactory(AssetFactory):
         heat_radius_ratio = U(0.1, 0.2)
         brand_name = generate_text()
 
+        use_gas = RI(2)
+        n_grids = RI(2, 5)
+        grids = [RI(1, 4) for i in range(n_grids)]
+        branches = 2 * RI(2, 9)
+        grate_thickness = U(0.01, 0.03)
+        center_ratio = U(0.05, 0.15)
+        middle_ratio = U(0.5, 0.7)
+        
         params = {
+            "UseGas": use_gas,
+            "Grids": grids,
+            "Branches": branches,
+            "GrateThickness": grate_thickness,
+            "CenterRatio": center_ratio,
+            "MiddleRatio": middle_ratio,
             "Depth": depth,
             "Width": width,
             "Height": height,
@@ -64,13 +83,125 @@ class OvenFactory(AssetFactory):
             "HeaterRadiusRatio": heat_radius_ratio,
             "BrandName": brand_name,
         }
+        geometry_node_params = {k: params[k] for k in params.keys() if k not in [
+            "UseGas",
+            "Grids",
+            "Branches",
+            "GrateThickness",
+            "CenterRatio",
+            "MiddleRatio",
+        ]}
+        return params, geometry_node_params
     def create_asset(self, **params):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_oven_geometry(preprocess=True, use_gas=self.params["UseGas"]), ng_inputs=self.geometry_node_params, apply=True)
+        bevel_edges = get_bevel_edges(obj)
+        delete(obj)
+        obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_oven_geometry(use_gas=self.params["UseGas"]), ng_inputs=self.geometry_node_params, apply=True)
+        obj = add_bevel(obj, bevel_edges, offset=0.01)
+        if not self.params["UseGas"]: return obj
+        width, depth = self.params["Width"], self.params["Depth"] + 2 * self.params["DoorThickness"]
+        grate_width, grate_depth = width * 0.8, depth * 0.6
+        grate_thickness = self.params["GrateThickness"]
+        grates = gas_grates(width, depth, grate_width, grate_depth, self.params["Height"] + self.params["DoorThickness"] - grate_thickness, grate_thickness, self.params["Grids"], self.params["Branches"], self.params["CenterRatio"], self.params["MiddleRatio"])
+        grates.data.materials.append(self.geometry_node_params["WhiteMetal"])
+        obj.data.materials.append(self.geometry_node_params["Back"])
+        with butil.SelectObjects(obj):
+            obj.active_material_index = len(obj.material_slots) - 1
+            for i in range(len(obj.material_slots)): bpy.ops.object.material_slot_move(direction='UP')
+        hollow= butil.spawn_cube(
+            size=1,
+            location=(depth / 2, width / 2, self.params["Height"] + self.params["DoorThickness"]),
+            scale=(grate_depth + grate_thickness, grate_width + grate_thickness, grate_thickness * 2),
+        )
+        with butil.SelectObjects(hollow):
+            bpy.ops.object.modifier_add(type='BEVEL')
+            bpy.context.object.modifiers["Bevel"].segments = 8
+            bpy.context.object.modifiers["Bevel"].width = grate_thickness
+            bpy.ops.object.modifier_apply(modifier="Bevel")
+        with butil.SelectObjects(obj):
+            bpy.ops.object.modifier_add(type='BOOLEAN')
+            bpy.context.object.modifiers["Boolean"].object = hollow
+            bpy.context.object.modifiers["Boolean"].use_hole_tolerant = True
+            bpy.ops.object.modifier_apply(modifier="Boolean")
+        butil.delete(hollow)
+        butil.join_objects([obj, grates], check_attributes=True)            
+
         return obj
 
     def finalize_assets(self, assets):
             self.scratch.apply(assets)
             self.edge_wear.apply(assets)
+
+def gas_grates(width, depth, grate_width, grate_depth, height, thickness, grids, branches, center_ratio, middle_ratio):
+    high_height = height + thickness * 0.9
+    grates = []
+    for i, n in enumerate(grids):
+        cubes = [
+            butil.spawn_cube(size=1, location=(depth / 2, grate_width / len(grids) * i + (width - grate_width) / 2 + thickness / 2, height), scale=(grate_depth + thickness, thickness, thickness), name=None),
+            butil.spawn_cube(size=1, location=(depth / 2, grate_width / len(grids) * (i+1) + (width - grate_width) / 2 - thickness / 2, height), scale=(grate_depth + thickness, thickness, thickness), name=None),
+        ]
+        for j in range(n+1):
+            cubes.append(butil.spawn_cube(
+                size=1,
+                location=(grate_depth / n * j + (depth - grate_depth) / 2, grate_width / len(grids) * (i+0.5) + (width - grate_width) / 2, high_height),
+                scale=(thickness, grate_width / len(grids), thickness),
+            ))
+        for j in range(n):
+            min_dist = min(grate_width / len(grids) / 2, grate_depth / n / 2)
+            line_len = max(grate_width / len(grids) / 2, grate_depth / n / 2) - min_dist
+            center_dist = min_dist * center_ratio
+            middle_dist = min_dist * middle_ratio
+            if grate_width / len(grids) / 2 > grate_depth / n / 2:
+                x_center, y_center = center_dist, line_len + center_dist
+                x_middle, y_middle = middle_dist, line_len + middle_dist
+                x_full, y_full =  min_dist, line_len + min_dist
+            else:
+                x_center, y_center = center_dist + line_len, center_dist
+                x_middle, y_middle = middle_dist + line_len, middle_dist
+                x_full, y_full =  min_dist + line_len, min_dist
+            center = (grate_depth / n * (j+0.5) + (depth - grate_depth) / 2), grate_width / len(grids) * (i+0.5) + (width - grate_width) / 2
+            for k in range(branches):
+                angle = 2 * np.pi / branches * k
+                x0, y0 = x_center * np.cos(angle), y_center * np.sin(angle)
+                x1, y1 = x_middle * np.cos(angle), y_middle * np.sin(angle)
+                location = center[0] + (x0 + x1) / 2, center[1] + (y0 + y1) / 2, high_height
+                scale = ((x0 - x1) ** 2 + (y0 - y1) ** 2) ** 0.5, thickness, thickness
+                actual_angle = np.arctan2(y1-y0, x1-x0)
+                obj = butil.spawn_cube(size=1, location=location, scale=scale)
+                bpy.context.object.rotation_euler[2] = actual_angle
+                cubes.append(obj)
+                x0, y0 = x1, y1
+                if x_full - abs(x0) < y_full - abs(y0):
+                    x1, y1 = x_full * np.sign(x0), y0
+                else:
+                    x1, y1 = x0, y_full * np.sign(y0)
+                location = center[0] + (x0 + x1) / 2, center[1] + (y0 + y1) / 2, high_height
+                scale = ((x0 - x1) ** 2 + (y0 - y1) ** 2) ** 0.5, thickness, thickness
+                actual_angle = np.arctan2(y1-y0, x1-x0)
+                obj = butil.spawn_cube(size=1, location=location, scale=scale)
+                bpy.context.object.rotation_euler[2] = actual_angle
+                cubes.append(obj)
+            grates.append(butil.spawn_cylinder(center_dist + thickness, thickness / 2, location=(center[0], center[1], height)))
+        obj = butil.boolean(cubes)
+        for i in range(1, len(cubes)):
+            butil.delete(cubes[i])
+        with butil.SelectObjects(obj):
+            bpy.ops.object.modifier_add(type='REMESH')
+            remesh_type = "VOXEL"
+            bpy.context.object.modifiers["Remesh"].mode = remesh_type
+            bpy.context.object.modifiers["Remesh"].voxel_size = 0.004
+            bpy.ops.object.modifier_apply(modifier="Remesh")
+            bpy.ops.object.modifier_add(type='SMOOTH')
+            bpy.context.object.modifiers["Smooth"].iterations = 8
+            bpy.context.object.modifiers["Smooth"].factor = 1
+            bpy.ops.object.modifier_apply(modifier="Smooth")
+        grates.append(obj)
+    obj = butil.boolean(grates)
+    for i in range(1, len(grates)):
+        butil.delete(grates[i])
+    return obj
 
 @node_utils.to_nodegroup('nodegroup_hollow_cube', singleton=False, type='GeometryNodeTree')
 def nodegroup_hollow_cube(nw: NodeWrangler):
@@ -79,6 +210,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVectorTranslation', 'Size', (0.1000, 10.0000, 4.0000)),
             ('NodeSocketVector', 'Pos', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketInt', 'Resolution', 2),
             ('NodeSocketFloat', 'Thickness', 0.0000),
             ('NodeSocketBool', 'Switch1', False),
             ('NodeSocketBool', 'Switch2', False),
@@ -100,6 +232,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': group_input.outputs["Thickness"], 'Y': subtract, 'Z': subtract_1})
 
     cube_2 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_4, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube_2.outputs["Mesh"], 'Name': 'uv_map', 3: cube_2.outputs["UV Map"]},
@@ -135,6 +268,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'X': separate_xyz.outputs["X"], 'Y': subtract_3, 'Z': group_input.outputs["Thickness"]})
 
     cube_1 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_2, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_4 = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube_1.outputs["Mesh"], 'Name': 'uv_map', 3: cube_1.outputs["UV Map"]},
@@ -158,6 +292,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'X': separate_xyz.outputs["X"], 'Y': subtract_5, 'Z': group_input.outputs["Thickness"]})
 
     cube = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube.outputs["Mesh"], 'Name': 'uv_map', 3: cube.outputs["UV Map"]},
@@ -183,6 +318,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'X': group_input.outputs["Thickness"], 'Y': subtract_6, 'Z': subtract_7})
 
     cube_3 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_6, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_5 = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube_3.outputs["Mesh"], 'Name': 'uv_map', 3: cube_3.outputs["UV Map"]},
@@ -206,6 +342,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'X': separate_xyz.outputs["X"], 'Y': group_input.outputs["Thickness"], 'Z': separate_xyz.outputs["Z"]})
 
     cube_4 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_9, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_2 = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube_4.outputs["Mesh"], 'Name': 'uv_map', 3: cube_4.outputs["UV Map"]},
@@ -227,6 +364,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'X': separate_xyz.outputs["X"], 'Y': group_input.outputs["Thickness"], 'Z': separate_xyz.outputs["Z"]})
 
     cube_5 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_10, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_3 = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': cube_5.outputs["Mesh"], 'Name': 'uv_map', 3: cube_5.outputs["UV Map"]},
@@ -567,6 +705,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVectorTranslation', 'Size', (0.1000, 10.0000, 4.0000)),
             ('NodeSocketVector', 'Pos', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketInt', 'Resolution', 2)])
 
     cube = nw.new_node(Nodes.MeshCube,
         input_kwargs={'Size': group_input.outputs["Size"], 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
@@ -589,6 +728,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform}, attrs={'is_active_output': True})
 
 
+@node_utils.to_nodegroup('nodegroup_oven_geometry', singleton=False, type='GeometryNodeTree')
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -622,6 +762,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
     set_material_3 = nw.new_node(Nodes.SetMaterial,
 
+    # set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_3})
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: 0.0500}, attrs={'operation': 'MULTIPLY'})
 
@@ -660,16 +801,26 @@ def nodegroup_cube(nw: NodeWrangler):
     text = nw.new_node(nodegroup_text().name,
         input_kwargs={'Translation': combine_xyz_12, 'String': group_input.outputs["BrandName"], 'Size': multiply_7})
 
+    text = complete_no_bevel(nw, text, preprocess)
+
     set_material_9 = nw.new_node(Nodes.SetMaterial,
 
+    set_material_8 = complete_bevel(nw, set_material_8, preprocess)
+
+    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_3, set_material_8, set_material_9]})
 
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': join_geometry_3})
 
+    y = nw.scalar_multiply(group_input.outputs["DoorRotation"], 1 if not preprocess else 0)
+
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Y': y})
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': group_input.outputs["Depth"]})
 
     rotate_instances = nw.new_node(Nodes.RotateInstances,
         input_kwargs={'Instances': geometry_to_instance, 'Rotation': combine_xyz_3, 'Pivot Point': combine_xyz_4})
+
+    rotate_instances = nw.new_node(Nodes.RealizeInstances, [rotate_instances])
 
     door = nw.new_node(Nodes.Reroute, input_kwargs={'Input': rotate_instances}, label='door')
 
@@ -725,6 +876,8 @@ def nodegroup_cube(nw: NodeWrangler):
 
     set_material = nw.new_node(Nodes.SetMaterial,
 
+    set_material = nw.new_node(Nodes.RealizeInstances, [set_material])
+    
     racks = nw.new_node(Nodes.Reroute, input_kwargs={'Input': set_material}, label='racks')
 
     add_5 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Depth"], 1: group_input.outputs["DoorThickness"]})
@@ -745,6 +898,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
     set_material_5 = nw.new_node(Nodes.SetMaterial,
 
+    # set_shade_smooth_1 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_5})
 
     subtract_3 = nw.new_node(Nodes.Math,
         input_kwargs={0: reroute_10, 1: group_input.outputs["PanelThickness"]},
@@ -763,6 +917,12 @@ def nodegroup_cube(nw: NodeWrangler):
 
     transform_2 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': heater, 'Translation': combine_xyz_15})
 
+    transform_2 = complete_no_bevel(nw, transform_2, preprocess)
+
+    if use_gas:
+        join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_5]})
+    else:
+        join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_5, transform_2]})
 
     heater_1 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': join_geometry_2}, label='heater')
 
@@ -786,6 +946,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
     set_material_7 = nw.new_node(Nodes.SetMaterial,
 
+    # set_shade_smooth_3 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_7})
 
     reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["PanelThickness"]})
 
@@ -810,6 +971,10 @@ def nodegroup_cube(nw: NodeWrangler):
     text_1 = nw.new_node(nodegroup_text().name,
         input_kwargs={'Translation': combine_xyz_16, 'String': '12:01', 'Size': multiply_15})
 
+    set_material_7 = complete_bevel(nw, set_material_7, preprocess)
+    text_1 = complete_no_bevel(nw, text_1, preprocess)
+
+    join_geometry_5 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_7, text_1]})
 
     combine_xyz_21 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["BottonThickness"]})
 
@@ -934,6 +1099,8 @@ def nodegroup_cube(nw: NodeWrangler):
 
     botton = nw.new_node(Nodes.Reroute, input_kwargs={'Input': set_material_6}, label='botton')
 
+    botton = complete_no_bevel(nw, botton, preprocess)
+
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [join_geometry_5, botton]})
 
     geometry_to_instance_3 = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': join_geometry_1})
@@ -941,6 +1108,8 @@ def nodegroup_cube(nw: NodeWrangler):
     combine_xyz_14 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["Height"]})
 
     rotate_instances_1 = nw.new_node(Nodes.RotateInstances,
+
+    rotate_instances_1 = nw.new_node(Nodes.RealizeInstances, [rotate_instances_1])
 
     panel = nw.new_node(Nodes.Reroute, input_kwargs={'Input': rotate_instances_1}, label='panel')
 
@@ -952,8 +1121,11 @@ def nodegroup_cube(nw: NodeWrangler):
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
 
+    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': set_material_1, 'Level': 0})
 
+    # set_shade_smooth_2 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': subdivide_mesh})
 
+    body = nw.new_node(Nodes.Reroute, input_kwargs={'Input': subdivide_mesh}, label='Body')
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [door, racks, heater_1, panel, body]})
 
