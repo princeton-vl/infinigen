@@ -26,6 +26,7 @@ from infinigen.core.util.random import random_general as rg
 
 class ChairFactory(AssetFactory):
     back_types = 'weighted_choice', (1, 'whole'), (1, 'partial'), (1, 'horizontal-bar'), (1, 'vertical-bar')
+
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
@@ -75,6 +76,10 @@ class ChairFactory(AssetFactory):
                 self.panel_surface = self.surface
             else:
                 self.panel_surface = materials['panel'].assign_material()
+            #from infinigen.assets.clothes import blanket
+            #from infinigen.assets.scatters.clothes import ClothesCover
+            #self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
+            #                                    size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
             self.clothes_scatter = NoApply()
             self.post_init()
 
@@ -116,21 +121,37 @@ class ChairFactory(AssetFactory):
             -self.leg_height,
             self.back_height * 1.2
         )
+        obj.rotation_euler.z += np.pi / 2
+        butil.apply_transform(obj)
+        return obj
 
     def create_asset(self, **params) -> bpy.types.Object:
+        
         obj = self.make_seat()
         legs = self.make_legs()
         backs = self.make_backs()
+        
         parts = [obj] + legs + backs
         parts.extend(self.make_leg_decors(legs))
         if self.has_arm:
             parts.extend(self.make_arms(obj, backs))
         parts.extend(self.make_back_decors(backs))
+        
         for obj in legs:
             self.solidify(obj, 2)
         for obj in backs:
             self.solidify(obj, 2, self.back_thickness)
+        
         obj = join_objects(parts)
+        obj.rotation_euler.z += np.pi / 2
+        butil.apply_transform(obj)
+
+        with FixedSeed(self.factory_seed):
+            # TODO: wasteful to create unique materials for each individual asset
+            self.surface.apply(obj)
+            self.panel_surface.apply(obj, selection='panel')
+            self.limb_surface.apply(obj, selection='limb')
+
         return obj
 
     def finalize_assets(self, assets):
@@ -326,3 +347,4 @@ class ChairFactory(AssetFactory):
         write_attribute(obj, 1, 'limb', 'FACE')
         return obj
 
+        
