@@ -21,6 +21,7 @@ from infinigen.core.constraints.constraint_language.util import (
 import fcl
 
 def to_trimesh(obj: bpy.types.Object):
+    bpy.context.view_layer.update()
     verts = np.array([obj.matrix_world @ v.co for v in obj.data.vertices])
     faces = np.array([p.vertices for p in obj.data.polygons])
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
