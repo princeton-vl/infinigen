@@ -13,6 +13,8 @@ from infinigen.core.util.random import random_general as rg
 from .. import common
 from ...utils.uv import unwrap_faces
 
+fabric_shader_list = 'weighted_choice', (1, shader_coarse_fabric_random), (1, shader_fine_fabric_random), \
+                (2, shader_leather), (1, shader_sofa_fabric),  # (1, shader_fabric), 
 
 
 def apply(obj, selection=None, **kwargs):
