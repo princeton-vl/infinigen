@@ -19,6 +19,7 @@ from .indoor_lights import PointLampFactory
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core.util.color import color_category
 
+from infinigen.assets.materials.ceiling_light_shaders import shader_lamp_bulb_nonemissive
 
 
 def shader_lamp_material(nw: NodeWrangler):
@@ -191,6 +192,7 @@ def geometry_nodes(nw: NodeWrangler):
     ico_sphere = nw.new_node(Nodes.MeshIcoSphere, input_kwargs={'Radius': 0.0500, 'Subdivisions': 4})
     
     set_material_3 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': ico_sphere.outputs["Mesh"], 'Material': surface.shaderfunc_to_material(shader_lamp_bulb_nonemissive)})
     
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, join_geometry_1, set_material_3]})
     
@@ -229,4 +231,7 @@ def geometry_nodes(nw: NodeWrangler):
         return obj
 
     def create_asset(self, i, placeholder, face_size, **_):
+        obj = butil.deep_clone_obj(placeholder, keep_materials=True)
+        light = self.light_factory.spawn_asset(i)
+        butil.parent_to(light, obj)
         return obj
