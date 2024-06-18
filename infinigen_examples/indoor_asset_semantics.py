@@ -327,6 +327,13 @@ def home_asset_usage():
         elements.RugFactory,
     }
 
+    used_as[Semantics.NoChildren] = {
+        elements.RugFactory,
+        wall_decorations.MirrorFactory,
+        wall_decorations.WallArtFactory,
+        lighting.CeilingLightFactory,        
+    }
+
     # endregion
 
     return used_as
