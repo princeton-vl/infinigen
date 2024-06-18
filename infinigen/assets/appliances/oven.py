@@ -133,6 +133,7 @@ class OvenFactory(AssetFactory):
        # box_top.rotation_euler[1] = -0.1
         #box = butil.join_objects([box, box_top])
         obj = butil.spawn_cube()
+        return butil.modify_mesh(obj, 'NODES', node_group=nodegroup_oven_geometry(use_gas=self.params["UseGas"], is_placeholder=True), ng_inputs=self.geometry_node_params, apply=True)
     
     def create_asset(self, **params):
         obj = butil.spawn_cube()
