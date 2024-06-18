@@ -7,6 +7,7 @@ from numpy.random import uniform
 
 from . import common
 from .utils.surface_utils import perturb_coordinates
+from .table_materials import shader_wood
 from infinigen.assets.utils.object import new_plane
 from ...core.nodes import NodeWrangler, Nodes
 from ...core.util.random import log_uniform
