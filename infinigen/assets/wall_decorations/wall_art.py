@@ -14,6 +14,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class WallArtFactory(AssetFactory):
@@ -27,9 +28,11 @@ class WallArtFactory(AssetFactory):
             self.depth = uniform(.01, .02)
             self.frame_bevel_segments = np.random.choice([0, 1, 4])
             self.frame_bevel_width = uniform(self.depth / 4, self.depth / 2)
+            self.material_assignments = AssetList['WallArtFactory']()
             self.assign_materials()
 
     def assign_materials(self):
+            # self.surface = Art(self.factory_seed)
         assignments = self.material_assignments
         self.surface = assignments['surface'].assign_material()
         if self.surface == Art:
@@ -82,4 +85,5 @@ class WallArtFactory(AssetFactory):
 class MirrorFactory(WallArtFactory):
     def __init__(self, factory_seed, coarse=False):
         super(MirrorFactory, self).__init__(factory_seed, coarse)
+        self.material_assignments = AssetList['MirrorFactory']()
         self.assign_materials()
