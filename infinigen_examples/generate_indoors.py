@@ -421,3 +421,4 @@ if __name__ == "__main__":
             if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
                 logging.getLogger(name).setLevel(logging.DEBUG)
 
+    main(args)
