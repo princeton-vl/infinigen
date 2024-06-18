@@ -17,14 +17,48 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.math import FixedSeed
+
+from infinigen.assets.utils.autobevel import BevelSharp
 
 
 class BathtubFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(BathtubFactory, self).__init__(factory_seed, coarse)
+        with FixedSeed(factory_seed):
+            self.width = uniform(1.5, 2)
+            self.size = uniform(.8, 1)
+            self.depth = uniform(.55, .7)
+            prob = np.array([2, 2])
             self.bathtub_type = np.random.choice(['alcove', 'freestanding'], p=prob / prob.sum())  # , 'corner'
+            self.contour_fn = self.make_corner_contour if self.has_corner else self.make_box_contour
+            self.has_curve = uniform() < .5
+            self.has_legs = uniform() < .5
+
+            self.thickness = uniform(.04, .08) if self.has_base else uniform(.02, .04)
+            self.disp_x = uniform(0, .2, 2)
+            self.disp_y = uniform(0, .1)
+
+            self.leg_height = uniform(.2, .3) * self.depth
+            self.leg_side = uniform(.05, .1)
+            self.leg_radius = uniform(.02, .03)
+            self.leg_y_scale = uniform()
+            self.leg_subsurf_level = np.random.randint(3)
+
+            self.taper_factor = uniform(-.1, .1)
+            self.stretch_factor = uniform(-.2, .2)
+
+            self.alcove_levels = np.random.randint(1, 3) if self.has_base else 1
+            self.levels = 5
+            self.side_levels = 2
+
+            self.is_hole_centered = False
+            self.hole_radius = uniform(.015, .02)
+
             # /////////////////// assign materials ///////////////////
             # ////////////////////////////////////////////////////////
+
+            self.beveler = BevelSharp(mult=5, segments=5)
 
     @property
     def has_base(self):
@@ -35,6 +69,7 @@ class BathtubFactory(AssetFactory):
         return self.bathtub_type == 'corner'
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        return new_bbox(-self.size, 0, 0, self.width, 0, self.depth)
 
     def create_asset(self, **params) -> bpy.types.Object:
         if self.has_base:
@@ -56,6 +91,11 @@ class BathtubFactory(AssetFactory):
         obj = join_objects([obj, hole])
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
+
+        if self.bathtub_type == 'freestanding':
+            butil.modify_mesh(obj, 'SUBSURF', levels=1, apply=True)
+        else:
+            self.beveler(obj)
 
         return obj
 
