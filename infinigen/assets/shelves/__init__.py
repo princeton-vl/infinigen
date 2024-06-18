@@ -1,3 +1,4 @@
+from .simple_desk import SimpleDeskFactory, SidetableDeskFactory
 from .simple_bookcase import SimpleBookcaseFactory
 from .cell_shelf import CellShelfFactory, TVStandFactory
 from .triangle_shelf import TriangleShelfFactory
