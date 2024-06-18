@@ -11,6 +11,7 @@ from infinigen.core import surface
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core import tagging, tags as t
 
 from infinigen.assets.seating.chairs.seats.round_seats import generate_round_seats
 
