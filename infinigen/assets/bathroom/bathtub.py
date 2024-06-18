@@ -20,6 +20,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 
 from infinigen.assets.utils.autobevel import BevelSharp
+from infinigen.assets.material_assignments import AssetList
 
 
 class BathtubFactory(AssetFactory):
@@ -56,6 +57,14 @@ class BathtubFactory(AssetFactory):
             self.hole_radius = uniform(.015, .02)
 
             # /////////////////// assign materials ///////////////////
+            material_assignments = AssetList['BathtubFactory']()
+            self.surface = material_assignments["surface"].assign_material()
+            self.leg_surface = material_assignments["leg"].assign_material()
+            self.hole_surface = material_assignments["hole"].assign_material()
+            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
+            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
+            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
+            self.edge_wear = material_assignments["wear_tear"][1] if is_edge_wear else None
             # ////////////////////////////////////////////////////////
 
             self.beveler = BevelSharp(mult=5, segments=5)
@@ -273,4 +282,8 @@ class BathtubFactory(AssetFactory):
         if self.has_legs and not self.has_base:
             self.leg_surface.apply(assets, 'leg', metal_color='bw+natural')
         self.hole_surface.apply(assets, 'hole', metal_color='bw+natural')
+
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
