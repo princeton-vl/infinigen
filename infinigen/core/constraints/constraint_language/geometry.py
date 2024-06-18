@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from infinigen.core import tags as t
+from .relations import Relation
 from .expression import Expression, BoolExpression, ScalarExpression, nodedataclass
 from .set_reasoning import ObjectSetExpression
 
