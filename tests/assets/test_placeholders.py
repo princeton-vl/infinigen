@@ -18,18 +18,22 @@ from infinigen.core.constraints.example_solver.geometry import dof
 from infinigen_examples.indoor_asset_semantics import home_asset_usage
 
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 import numpy as np
 
 
 def get_real_placeholder_facs():
     used_as = home_asset_usage()
     usage_lookup.initialize_from_dict(used_as)
+    pholder_facs = usage_lookup.factories_for_usage({t.Semantics.RealPlaceholder})
     return sorted(list(pholder_facs), key=lambda x: x.__name__)
 
 def get_asset_facs():
     used_as = home_asset_usage()
     usage_lookup.initialize_from_dict(used_as)
+    asset_facs = usage_lookup.factories_for_usage({t.Semantics.PlaceholderBBox})
     return sorted(list(asset_facs), key=lambda x: x.__name__)
+
 
 @pytest.mark.skip # TODO re-enable. Too many assets fail this
 @pytest.mark.parametrize('fac', get_real_placeholder_facs())
