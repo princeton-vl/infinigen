@@ -17,15 +17,20 @@ from infinigen.core.constraints.example_solver.geometry import dof
 from infinigen_examples.indoor_constraint_examples import home_asset_usage
 
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 def test_canonical_planes_real_placeholders():
 
     used_as = home_asset_usage()
     usage_lookup.initialize_from_dict(used_as)
     
+    pholder_facs = usage_lookup.factories_for_usage({t.Semantics.RealPlaceholder})
+    asset_facs = usage_lookup.factories_for_usage({t.Semantics.AssetAsPlaceholder})
     test_facs = pholder_facs.union(asset_facs)
 
     test_facs.intersection_update(
+        usage_lookup.factories_for_usage({t.Semantics.Storage})
+        .union(usage_lookup.factories_for_usage({t.Semantics.Seating}))
     )
 
     for fac in test_facs:
