@@ -65,6 +65,7 @@ def shader_marble(nw: NodeWrangler,**kwargs):
         attrs={'noise_dimensions': '4D'})
 
     mix_1 = nw.new_node(Nodes.Mix,
+        input_kwargs={0: 0.8000, 6: noise_texture.outputs["Fac"], 7: noise_texture_1.outputs["Fac"]},
         attrs={'data_type': 'RGBA'})
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': mix_1.outputs[2]})
