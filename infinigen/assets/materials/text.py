@@ -1,6 +1,11 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: 
+# - Lingjie Mei: text & art generators
+# - Stamatis Alexandropoulos: image postprocessing effects
+# Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=hpamCaVrbTk by Joey Carlino
+
 import colorsys
 import inspect
 import io
@@ -9,6 +14,7 @@ import matplotlib.font_manager
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from numpy.random import uniform, rand
 
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
@@ -213,6 +219,35 @@ class Text:
         image = self.build_image(bbox)
 
         def shader_text(nw: NodeWrangler, **kwargs):
+            uv_map = nw.new_node(Nodes.UVMap)
+            
+            reroute = nw.new_node(Nodes.Reroute, input_kwargs={'Input': uv_map})
+            
+            voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={'Vector': reroute, 'Scale': 60.0000})
+            
+            voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture, input_kwargs={'Vector': reroute, 'Scale': 60.0000})
+            
+            mix = nw.new_node(Nodes.Mix,
+                input_kwargs={6: voronoi_texture.outputs["Position"], 7: voronoi_texture_1.outputs["Position"]},
+                attrs={'data_type': 'RGBA'})
+            
+            musgrave_texture = nw.new_node(Nodes.MusgraveTexture, input_kwargs={'Vector': reroute, 'Detail': 5.6000, 'Dimension': 1.4000})
+            
+            noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
+                input_kwargs={'Vector': reroute, 'Scale': 35.4000, 'Detail': 3.3000, 'Roughness': 1.0000})
+            
+            mix_3 = nw.new_node(Nodes.Mix,
+                input_kwargs={0: uniform(0.2,1.0), 6: musgrave_texture, 7: noise_texture_1.outputs["Color"]},
+                attrs={'data_type': 'RGBA'})
+            
+            mix_1 = nw.new_node(Nodes.Mix, input_kwargs={0: 0.0417, 6: mix.outputs[2], 7: mix_3.outputs[2]}, attrs={'data_type': 'RGBA'})
+            
+            if rand() < 0.5:
+                mix_2 = nw.new_node(Nodes.Mix, input_kwargs={0: uniform(0, 0.4), 6: mix_1.outputs[2], 7: uv_map}, attrs={'data_type': 'RGBA'})
+            else:
+                mix_2 = nw.new_node(Nodes.Mix, input_kwargs={0: 1.0, 6: mix_1.outputs[2], 7: uv_map}, attrs={'data_type': 'RGBA'})
+            # mix_2 = nw.new_node(Nodes.Mix, input_kwargs={0: 0.7375, 6: uv, 7: mix_1.outputs[2]}, attrs={'data_type': 'RGBA'})
+            color = nw.new_node(Nodes.ShaderImageTexture, [mix_2], attrs={'image': image}).outputs[0]
             roughness = nw.new_node(Nodes.NoiseTexture)
             if self.emission > 0:
                 emission = color
