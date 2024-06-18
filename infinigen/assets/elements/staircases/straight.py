@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 import bpy
 import bmesh
@@ -112,6 +115,7 @@ class StraightStaircaseFactory(AssetFactory):
 
     def build_size_config(self):
         self.n = np.random.randint(13, 21)
+        self.step_height = constants.WALL_HEIGHT / self.n
         self.step_width = uniform(.8, 1.6)
         self.step_length = self.step_height * log_uniform(.8, 1.2)
 
