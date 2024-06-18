@@ -17,6 +17,7 @@ from infinigen.core.constraints import (
     reasoning as r
 )
 from infinigen.core.constraints.example_solver import state_def
+from infinigen.core import tags as t
 from infinigen.core.constraints.evaluator import domain_contains
 
 from . import trimesh_geometry, symmetry
@@ -111,6 +112,7 @@ def accessibility_impl(
     return res
 
 @register_node_impl(cl.distance)
+def min_distance_impl(
     cons: cl.Node, 
     state: state_def.State, 
     child_vals: dict,
@@ -120,7 +122,9 @@ def accessibility_impl(
     objs = statenames_to_blnames(state, child_vals['objs'])
     others = statenames_to_blnames(state, child_vals['others'])
 
+    if len(objs) == 0 or len(others) == 0:
         logger.debug('min_distance had no targets')
+        return 0
     
     res = trimesh_geometry.min_dist(
         state.trimesh_scene, 
@@ -136,27 +140,35 @@ def accessibility_impl(
     return res.dist
 
 @register_node_impl(cl.min_distance_internal)
+def min_distance_internal_impl(
     cons: cl.min_distance_internal, 
     state: state_def.State, 
     child_vals: dict
 ):
     objs = statenames_to_blnames(state, child_vals['objs'])
     if len(objs) <= 1:
+        return 0
     return trimesh_geometry.min_dist(
+        state.trimesh_scene, a=objs
     ).dist
 
 @register_node_impl(cl.min_dist_2d)
 def min_dist_2d_impl(
+    cons: cl.min_dist_2d, 
     state: state_def.State, 
     child_vals: dict
 ):
     a = statenames_to_blnames(state, child_vals['objs'])
     b = statenames_to_blnames(state, child_vals['others'])
+    if len(a) == 0 or len(b) == 0:
+        return 0
     return trimesh_geometry.min_dist_2d(
+        state.trimesh_scene, a, b
     )
 
 @register_node_impl(cl.focus_score)
 def focus_score_impl(
+    cons: cl.focus_score, 
     state: state_def.State, 
     child_vals: dict,
 ):
@@ -190,6 +202,7 @@ def angle_alignment_impl(
 
 @register_node_impl(cl.freespace_2d)
 def freespace_2d_impl(
+    cons: cl.freespace_2d, 
     state: state_def.State, 
     child_vals: dict
 ):
@@ -197,6 +210,7 @@ def freespace_2d_impl(
 
 @register_node_impl(cl.rotational_asymmetry)
 def rotational_asymmetry_impl(
+    cons: cl.rotational_asymmetry, 
     state: state_def.State, 
     child_vals: dict
 ):
@@ -235,6 +249,7 @@ def coplanarity_cost_impl(
 
 @register_node_impl(cl.tagged)
 def tagged_impl(
+    cons: cl.tagged, 
     state: state_def.State, 
     child_vals: dict
 ):
@@ -247,29 +262,56 @@ def tagged_impl(
 
     return res
 
+@register_node_impl(cl.count)
+def count_impl(
+    cons: cl.count, 
     state: state_def.State, 
+    child_vals: dict  
+):
+    return len(child_vals['objs'])
 
+@register_node_impl(cl.in_range)
+def in_range_impl(
+    cons: cl.in_range, 
     state: state_def.State, 
+    child_vals: dict  
+):
+    x = child_vals['val']
+    return (
+        x <= cons.high and
+        x >= cons.low
+    )
+
 @register_node_impl(cl.related_to)
+def related_children_impl(
     cons: cl.related_to,
     state: state_def.State,
     child_vals: dict
 ):
+    
+    r = cons.relation
     children: set[str] = child_vals['child']
     parents: set[str] = child_vals['parent']
+
     res = set()
     for o in children:
+        if any(
             rs.relation.implies(r) and rs.target_name in parents
+            for rs in state.objs[o].relations
         ):
             res.add(o)
 
     #logger.debug('related_to %s produced %s from %i candidates', cons.relation, res, len(children))
 
     return res
+
 @register_node_impl(cl.excludes)
 def excludes_impl(
     cons: cl.excludes,
     state: state_def.State,
+    child_vals: dict
+):
+    
     return {
         o for o in child_vals['objs']
         if state.objs[o].tags.isdisjoint(cons.tags)
