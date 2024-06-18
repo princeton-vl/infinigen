@@ -1,3 +1,11 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: 
+# - Hongyu Wen: primary author
+# - Alexander Raistrick: add point light
+
 import bpy
 import random
 import mathutils
@@ -11,11 +19,16 @@ from infinigen.core.util import blender as butil
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from .indoor_lights import PointLampFactory
 from infinigen.assets.material_assignments import AssetList
 
 class LampFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.], lamp_type="FloorLamp"):
         super(LampFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.bulb_fac = PointLampFactory(factory_seed)
+        self.bulb_fac.params['Temperature'] = max(self.bulb_fac.params['Temperature'] * 0.6, 2500)
+        self.bulb_fac.params['Wattage'] *= 0.5
 
         self.dimensions = dimensions
         self.lamp_type = lamp_type
@@ -134,7 +147,14 @@ class LampFactory(AssetFactory):
             }
             return params
 
+    def create_asset(self, i, **params):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_lamp_geometry(), ng_inputs=self.params, apply=True)
+
+        if np.random.uniform() < 0.6:
+            bulb = self.bulb_fac(i)
+            butil.parent_to(bulb, obj, no_inverse=True, no_transform=True)
+
         return obj
 
     def finalize_assets(self, assets):
@@ -142,6 +162,18 @@ class LampFactory(AssetFactory):
             self.scratch.apply(assets)
         if self.edge_wear:
             self.edge_wear.apply(assets)
+
+class DeskLampFactory(LampFactory):
+
+    def __init__(self, factory_seed, coarse=False):
+        super().__init__(factory_seed, coarse=coarse, lamp_type='DeskLamp')
+
+class FloorLampFactory(LampFactory):
+
+    def __init__(self, factory_seed, coarse=False):
+        super().__init__(factory_seed, coarse, lamp_type=np.random.choice(['FloorLamp1', 'FloorLamp2']))
+
+
 
 
 @node_utils.to_nodegroup('nodegroup_bulb', singleton=False, type='GeometryNodeTree')
