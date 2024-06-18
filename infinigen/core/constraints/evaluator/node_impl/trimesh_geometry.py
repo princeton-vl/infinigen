@@ -1,5 +1,11 @@
+# Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
+# - Karhan Kayan: primary author
+# - Alexander Raistrick: initial version of collision/distance
 # Acknowledgement: Some metrics draw inspiration from https://dl.acm.org/doi/10.1145/1964921.1964981 by Yu et al.
+
 from __future__ import annotations
 from typing import Union, Any
 import logging
@@ -7,6 +13,7 @@ from dataclasses import dataclass
 from copy import copy
 
 import numpy as np
+import gin
 
 import bpy
 import trimesh
@@ -28,13 +35,42 @@ from mathutils import Vector, Quaternion
 
 import infinigen.core.constraints.constraint_language.util as iu 
 from infinigen.core.constraints.example_solver import state_def
+from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
+
 import infinigen.core.constraints.evaluator.node_impl.symmetry as symmetry
 
+# from infinigen.core.tagging import tag_object,tag_system
 # from scipy.optimize import dual_annealing
 # from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
+def get_cardinal_planes_bbox(vertices: np.ndarray):
+    """
+    Get the mid dividing planes. Assumes vertices form a box
+    """
+    centroid = np.mean(vertices, axis=0)
+
+    # Calculate the covariance matrix and principal components
+    centered_vertices = vertices - centroid
+    cov_matrix = np.cov(centered_vertices[:,:2].T)  # Covariance on XY plane
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Sort eigenvectors based on eigenvalues
+    order = eigenvalues.argsort()[::-1]
+    principal_axes = eigenvectors[:, order]
+
+    # Determine the longer and shorter plane normals and normalize them
+    if eigenvalues[order[0]] > eigenvalues[order[1]]:
+        longer_plane_normal = np.array([principal_axes[0, 1], principal_axes[1, 1], 0])
+        shorter_plane_normal = np.array([principal_axes[0, 0], principal_axes[1, 0], 0])
+    else:
+        longer_plane_normal = np.array([principal_axes[0, 0], principal_axes[1, 0], 0])
+        shorter_plane_normal = np.array([principal_axes[0, 1], principal_axes[1, 1], 0])
+
+    longer_plane_normal /= np.linalg.norm(longer_plane_normal)
+    shorter_plane_normal /= np.linalg.norm(shorter_plane_normal)
+    return [[Vector(centroid), Vector(longer_plane_normal)], [Vector(centroid), Vector(shorter_plane_normal)]]
 
     a_front_planes = state.planes.get_tagged_planes(obj, tag)
     if len(a_front_planes) > 1:
@@ -46,17 +82,33 @@ logger = logging.getLogger(__name__)
     front_plane_normal = iu.global_polygon_normal(obj, a_poly)
     return front_plane_pt, front_plane_normal
 
+def preprocess_collision_query_cases(a, b, a_tags, b_tags):
+
+    if isinstance(a, list):
+        a = set(a)
+    if isinstance(b, list):
+        b = set(b)
+
+    if len(a) == 1:
+        a = a.pop()
+    if len(b) == 1:
+        b = b.pop()
 
     # eliminate symmetrical cases
     if (
         a is None or
+        (isinstance(b, set) and not isinstance(a, set))
     ):
         a, b = b, a
+        a_tags, b_tags = b_tags, a_tags
 
     # nobody wants to be told a 0 distance if they query how far a chair is from the set of all chairs
+    if isinstance(b, str) and isinstance(a, set) and b in a:
         a.remove(b)
 
+    if isinstance(a, set) and len(a) == 0:
         raise ValueError(f'query recieved empty input {a=}')
+    if isinstance(a, set) and len(a) == 0:
         raise ValueError(f'query recieved empty input {b=}')
 
     # single-to-single is treated as many-to-single
@@ -65,7 +117,12 @@ logger = logging.getLogger(__name__)
 
     assert a is not None
 
+    if a_tags is None:
+        a_tags = set()
+    if b_tags is None:
+        b_tags = set()
 
+    return a, b, a_tags, b_tags
 
 @dataclass 
 class ContactResult:
@@ -76,6 +133,10 @@ class ContactResult:
 def any_touching(
     scene: Scene, 
     a: Union[str, list[str]], 
+    b: Union[str, list[str]] = None,
+    a_tags=None,
+    b_tags=None,
+    bvh_cache=None
 ):
     
     '''
@@ -83,6 +144,8 @@ def any_touching(
 
     In all cases, returns True if any one object from a and b touch
     '''
+    a, b, a_tags, b_tags = preprocess_collision_query_cases(a, b, a_tags, b_tags)
+
     col = iu.col_from_subset(scene, a, a_tags, bvh_cache)
     
     if b is None and len(a) == 1:
@@ -120,9 +183,13 @@ class DistanceResult:
     names: list[str]
     data: trimesh.collision.DistanceData
 
+def min_dist(
     scene: Scene, 
     a: Union[str, list[str]], 
     b: Union[str, list[str]] = None,
+    a_tags: set = None,  
+    b_tags: set = None,
+    bvh_cache: dict = None
 ):
     
     '''
@@ -133,6 +200,7 @@ class DistanceResult:
     # we get fcl error otherwise
     if len(a) == 1 and len(b) == 1 and a[0] == b[0]:
         return DistanceResult(dist=0, names=[a[0], b[0]], data=None)
+    a, b, a_tags, b_tags = preprocess_collision_query_cases(a, b, a_tags, b_tags)
     col = iu.col_from_subset(scene, a, a_tags, bvh_cache)
 
 
@@ -167,6 +235,7 @@ class DistanceResult:
 
     return DistanceResult(
         dist=dist,
+        names=list(data.names) if data is not None else None,
         data=data
     )
 
@@ -562,8 +631,13 @@ def angle_alignment_cost_base(state: state_def.State, a: Union[str, list[str]], 
 
     return score
 
+def angle_alignment_cost(
     state: state_def.State, 
+    a: Union[str, list[str]], 
     b: Union[str, list[str]], 
+    b_tags=None, 
+    visualize=False
+):
     if b_tags is not None:
         return angle_alignment_cost_tagged(state, a, b, b_tags, visualize)
     return angle_alignment_cost_base(state, a, b, visualize)
@@ -784,7 +858,88 @@ def dist_soft_score(res: dict, min, max):
         return min - res.dist
     else:
         return 0
+    
+_accessibility_vis_seen_objs = set() # used to make vis=True below less spammy
 
+def accessibility_cost_cuboid_penetration(
+    scene: trimesh.Scene, 
+    a: Union[str, list[str]],
+    b: Union[str, list[str]],
+    normal_dir: np.ndarray,
+    dist: float,
+    bvh_cache: dict = None,
+    vis=False
+):
+    
+    """
+    Extrude the bbox of a by dist in the direction of normal_dir, and check for collisions with b
+    Return the maximum distance that any part of b penetrates this extrusion
+    """
+
+    if isinstance(a, str):
+        a = [a]
+    if isinstance(b, str):
+        b = [b]
+
+    if len(a) == 0 or len(b) == 0:
+        return 0
+
+    a_free_col = trimesh.collision.CollisionManager()
+
+    # find which of +X, -X +Y, -Y, +Z, -Z is the normal_dir. Only these values are supported
+    if (
+        not np.isclose(np.linalg.norm(normal_dir), 1) or
+        np.isclose(normal_dir, 0).sum() != 2
+    ):
+        raise ValueError(f'Invalid normal_dir {normal_dir=}, expected +X, -X, +Y, -Y, +Z, -Z')
+    normal_axis = np.argmax(np.abs(normal_dir))
+    normal_sign = np.sign(normal_dir[normal_axis])
+
+    visobjs = []
+    for name in a:
+
+        T, g = scene.graph[name]
+        geom = scene.geometry[g]
+
+        # create an extrusion of the bbox by dist in the direction of normal_dir
+        bpy_obj = bpy.data.objects[name]
+
+        freespace_exts = np.copy(np.array(bpy_obj.dimensions))
+        freespace_exts[normal_axis] = dist
+        freespace_box = trimesh.creation.box(freespace_exts)
+
+        bbox = np.array(bpy_obj.bound_box)
+        origin_to_bbox_center = bbox.mean(axis=0)
+        extent_from_real_origin = bbox[0 if normal_sign < 0 else -1][normal_axis]
+
+        offset_vec = normal_dir * (dist/2 + extent_from_real_origin - origin_to_bbox_center[normal_axis])
+        total_offset_vec = origin_to_bbox_center + offset_vec
+
+        freespace_box_transform = np.array(bpy_obj.matrix_world) @ trimesh.transformations.translation_matrix(total_offset_vec)
+        
+        a_free_col.add_object(name, freespace_box, freespace_box_transform)
+        
+        visobjs.append(geom.apply_transform(T))
+        
+        visobjs.append(freespace_box.apply_transform(freespace_box_transform))
+
+    b_col = iu.col_from_subset(scene, b, bvh_cache=bvh_cache)
+    hit, contacts = b_col.in_collision_other(a_free_col, return_data=True)
+
+    if vis:
+        bobjs = iu.meshes_from_names(scene, b)
+        print(f"{np.round(origin_to_bbox_center, 3)=} {extent_from_real_origin} {bpy_obj.dimensions}")
+        if not all(name in _accessibility_vis_seen_objs for name in a + b):
+            trimesh.Scene(visobjs + bobjs).show()
+        _accessibility_vis_seen_objs.update(a + b)
+
+    if hit:
+        return max(c.depth for c in contacts)
+    else:
+        return 0
+
+@gin.configurable
+def accessibility_cost(scene, a, b, normal, visualize=False, fast = True):
     """
     Computes how much objs b block front access to a. b obj blockages are not summed.
     the closest b obj to a is taken as the representative blockage
@@ -809,7 +964,12 @@ def dist_soft_score(res: dict, min, max):
 
     score = 0
     for a_name, a_obj, a_trimesh in zip(a, a_objs, a_trimeshes):
+        
         a_centroid = a_trimesh.centroid
+    
+        front_plane_pt = a_centroid
+        front_plane_normal = np.array(a_obj.matrix_world.to_3x3() @ Vector(normal))
+
         a_centroid_proj = a_centroid - np.dot(a_centroid - front_plane_pt, front_plane_normal) * front_plane_normal
 
 
@@ -827,6 +987,7 @@ def dist_soft_score(res: dict, min, max):
             b_closest_pt = res.data.point(b_chosen)
         
         centroid_to_b = b_closest_pt - a_centroid_proj
+
         dist = np.linalg.norm(centroid_to_b)
         bounds = iu.meshes_from_names(scene, b_chosen)[0].bounds
         diag_length = np.linalg.norm(bounds[1] - bounds[0])
@@ -858,7 +1019,12 @@ def center_stable_surface(scene, a, state):
 
     score = 0
     a_trimeshes = iu.meshes_from_names(
+        scene, 
+        [state.objs[ai].obj.name for ai in a]
+    )
+
     for  name, mesh in zip(a, a_trimeshes):
+        obj_state = state.objs[name]
         obj = obj_state.obj
         for i, relation_state in enumerate(obj_state.relations):
             relation = relation_state.relation
@@ -871,9 +1037,12 @@ def center_stable_surface(scene, a, state):
             obj_plane = obj_all_planes[relation_state.child_plane_idx]
             
             if relation_state.parent_plane_idx >= len(parent_all_planes):
+                logging.warning(f'{parent_obj.name=} had too few planes ({len(parent_all_planes)}) for {relation_state}')
                 return False
             if relation_state.child_plane_idx >= len(obj_all_planes):
+                logging.warning(f'{obj.name=} had too few planes ({len(obj_all_planes)}) for {relation_state}')
                 return False
+
             splitted_parent = state.planes.extract_tagged_plane(parent_obj, parent_tags, parent_plane)
             parent_trimesh = add_to_scene(state.trimesh_scene, splitted_parent, preprocess=True)
             # splitted_obj = planes.extract_tagged_plane(obj, obj_tags, obj_plane)
@@ -883,6 +1052,7 @@ def center_stable_surface(scene, a, state):
             score += np.linalg.norm(obj_centroid - parent_centroid)
 
             iu.delete_obj(scene, splitted_parent.name)
+
     return score
 
 
