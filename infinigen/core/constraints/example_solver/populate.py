@@ -106,6 +106,9 @@ def populate_state_placeholders(state: State, filter=None, final=True):
             logger.debug(f'{populate_state_placeholders.__name__} cut {cutter.name=} from {cut_objs=}')
             update_state_mesh_objs += cut_objs
 
+    if final:
+        return
+
     # objects modified in any way (via pholder update or boolean cut) must be synched with trimesh state
     for objkey, old_objname in tqdm(set(update_state_mesh_objs), desc='Updating trimesh with populated objects'):
 
