@@ -35,6 +35,7 @@ def setup_gin(configs_folder, configs=None, overrides=None):
 def import_item(name):
     *path_parts, name = name.split('.')
     with gin.unlock_config():
+
         try:
             return importlib.import_module('.' + name, '.'.join(path_parts))
         except ModuleNotFoundError:
