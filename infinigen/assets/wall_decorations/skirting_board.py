@@ -1,12 +1,17 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: Yiming Zuo, Lingjie Mei, Alexander Raistrick
+
+import logging
 
 import bmesh
 import bpy
 import mathutils
 import numpy as np
 from numpy.random import uniform, normal, randint, choice, randint
+from tqdm import tqdm
+
 from infinigen.assets.creatures.util.geometry.curve import Curve
 from infinigen.assets.utils.decorate import (
     read_co, read_edge_length, remove_edges, read_edge_direction, read_edges,
@@ -29,11 +34,15 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.assets.materials.plastics import plastic_rough
 
+import shapely
 from shapely.geometry import Polygon, MultiPolygon
 from shapely import affinity
 from shapely.ops import unary_union
+
 from infinigen.assets.utils.shapes import polygon2obj, obj2polygon
 from shapely.plotting import plot_polygon
+
+logger = logging.getLogger(__name__)
 
 
 @node_utils.to_nodegroup('nodegroup_make_skirting_board_001', singleton=False, type='GeometryNodeTree')
@@ -181,13 +190,21 @@ def apply_skirtingboard(nw: NodeWrangler, contour, is_ceiling=False, seed=None, 
 def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
     # make the outline curve 
 
+    assert len(objs) > 0
+
+    objs = [
         tagging.extract_tagged_faces(o, {tag, t.Subpart.Visible}, nonempty=True)
+        for o in list(objs)
+    ]
+
     all_polys = []
     all_zs = []
+    for floor_pieces in objs:
         all_polys.append(obj2polygon(floor_pieces))
         all_zs.append(read_co(floor_pieces)[:, -1] + floor_pieces.location[-1])
 
     floor_z = np.mean(np.concatenate(all_zs))
+
     boundary = unary_union(all_polys).buffer(.05, join_style='mitre').buffer(-.05, join_style='mitre')
 
     if isinstance(boundary, Polygon):
@@ -208,6 +225,7 @@ def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
             contours.append(o)
             o.location[-1] += floor_z
             butil.apply_transform(o, True)
+    butil.delete(objs)
     return contours
 
 
