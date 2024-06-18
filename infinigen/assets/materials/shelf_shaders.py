@@ -255,6 +255,7 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
     mix_3 = nw.new_node(Nodes.Mix,
                         input_kwargs={0: 0.0040, 6: colorramp_1.outputs["Color"], 7: colorramp_2.outputs["Color"]},
                         attrs={'data_type': 'RGBA'})
+
     bump = nw.new_node(Nodes.Bump, input_kwargs={'Strength': 0.5000, 'Height': mix_3.outputs[2]})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
@@ -287,5 +288,11 @@ def get_shelf_material(name, **kwargs):
         case 'glass':
             shader_func = shader_glass
         case _:
+            shader_func = np.random.choice([shader_shelves_white, shader_rough_plastic,
+                                            shader_shelves_black_wood, wood.shader_wood,
+                                            shader_shelves_wood], p=[.3, .2, .3, .1, .1])
         shader_func = np.random.choice(metal_shader_list)
+        shader_func = np.random.choice([shader_shelves_white, shader_rough_plastic,
+                                shader_shelves_black_wood, wood.shader_wood,
+                                shader_shelves_wood], p=[.3, .2, .3, .1, .1])
     return surface.shaderfunc_to_material(shader_func, **kwargs)
