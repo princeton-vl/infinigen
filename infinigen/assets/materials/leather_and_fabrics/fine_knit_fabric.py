@@ -16,6 +16,8 @@
 
 import bpy
 from numpy.random import uniform
+
+from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.assets.materials import common
 
@@ -141,10 +143,12 @@ def shader_material(
     )
 
 
+def shader_fabric_random(nw: NodeWrangler, **kwargs):
     fabric_params = get_texture_params()
     fabric_params["_map"] = "Object"
     return shader_material(nw, **fabric_params)
 
 
 def apply(obj, selection=None, **kwargs):
+    unwrap_faces(obj, selection)
     common.apply(obj, shader_fabric_random, selection, **kwargs)
