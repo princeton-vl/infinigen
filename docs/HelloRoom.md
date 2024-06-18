@@ -3,6 +3,8 @@
 <p align="center">
   <img src="images/hello_room/dining_blender.png" width="350" />
   <img src="images/hello_room/dining.png" width="350" />
+  <img src="images/hello_room/dining_depth.png" width="350" />
+  <img src="images/hello_room/dining_obj.png" width="350" />
 </p>
 
 ## Generate a scene step-by-step
