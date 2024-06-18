@@ -15,6 +15,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
+from infinigen.assets.material_assignments import AssetList
 
 
 class PillowFactory(AssetFactory):
@@ -36,6 +37,10 @@ class PillowFactory(AssetFactory):
         self.has_seam = uniform() < .3 and not self.shape == 'torus'
         self.seam_radius = uniform(.01, .02)
 
+        materials = AssetList['PillowFactory']()
+        self.surface = materials['surface'].assign_material()
+        if self.surface == art.ArtFabric:
+            self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
         match self.shape:
