@@ -23,6 +23,7 @@ from infinigen.assets.shelves.drawers import CabinetDrawerBaseFactory
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler
 )
+from infinigen.assets.utils.object import new_bbox
 
 
 def geometry_nodes(nw: NodeWrangler, **kwargs):
@@ -82,6 +83,8 @@ class KitchenCabinetBaseFactory(AssetFactory):
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
         self.drawer_fac = CabinetDrawerBaseFactory(factory_seed)
         self.drawer_only = False
+        with FixedSeed(factory_seed):
+            self.params = self.sample_params()
 
     def sample_params(self):
         pass
@@ -300,6 +303,7 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
             uniform(0.25, 0.35),
             uniform(1.0, 4.0),
             uniform(0.5, 1.3))
+            self.dimensions = dimensions
         else:
             dimensions = self.dimensions
         params['Dimensions'] = dimensions
@@ -316,3 +320,6 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
         intervals = intervals / intervals.sum() * params['Dimensions'][1]
         self.cabinet_widths = intervals.tolist()
 
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        x,y,z = self.dimensions
+        return new_bbox(-x/2 * 1.2, x/2 * 1.2, 0, y * 1.1, 0, (z + 0.06) * 1.03)
