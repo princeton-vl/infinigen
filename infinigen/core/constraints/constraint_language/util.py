@@ -2,13 +2,29 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Karhan Kayan
+from typing import Union
+import random
+import math
+import functools
+import logging
 
 import bpy 
+import mathutils
+from trimesh import Trimesh, Scene
 import trimesh
 from shapely import LineString, Point, Polygon, MultiPolygon
 import numpy as np
+
+from mathutils import Matrix, Vector
+import gin
+
 from infinigen.core.util import blender as butil
 
+logger = logging.getLogger(__name__)
+
+@gin.configurable
+def bvh_caching_config(enabled=True):
+    return enabled
 
 @functools.cache
 def group(scene, x):
@@ -167,8 +183,12 @@ def sample_random_point(polygon):
         if polygon.contains(p):
             return p
         
+def delete_obj(scene, a, delete_blender=True):
     if isinstance(a, str):
         a = [a]
+    if delete_blender:
+        obj_list = [bpy.data.objects[obj_name] for obj_name in a]
+        butil.delete(obj_list)
     for obj_name in a:
         # bpy.data.objects.remove(bpy.data.objects[obj_name], do_unlink=True)
         if scene: 
@@ -176,6 +196,7 @@ def sample_random_point(polygon):
             scene.delete_geometry(obj_name + '_mesh')
 
 
+def global_vertex_coordinates(obj, local_vertex) -> Vector:
     return obj.matrix_world @ local_vertex.co
 
 def global_polygon_normal(obj, polygon):
@@ -260,21 +281,46 @@ def add_object_cached(col,
     col._manager.update()
     return o
 
+def col_from_subset(scene, names, tags=None, bvh_cache=None):
 
     if isinstance(names, str):
         names = [names]
 
+
+    if bvh_cache is not None and bvh_caching_config():
+        tag_key = frozenset(tags) if tags is not None else None
+        key = (frozenset(names), tag_key)
+        res = bvh_cache.get(key)
+        if res is not None:
+            return res
+
     col = trimesh.collision.CollisionManager()
+
     for name in names:
         T, g = scene.graph[name]
+        geom = scene.geometry[g]
         if tags is not None and len(tags) > 0:
+            obj = blender_objs_from_names(name)[0]
+            mask = tagging.tagged_face_mask(obj, tags)
+            if not mask.any():
+                logger.warning(f'{name=} had {mask.sum()=} for {tags=}')
+                continue
+            geom = geom.submesh(np.where(mask), append=True)
             T = trimesh.transformations.identity_matrix()
             t = fcl.Transform(T[:3, :3], T[:3, 3])
             geom.fcl_obj = col._get_fcl_obj(geom)
             geom.col_obj = fcl.CollisionObject(geom.fcl_obj, t)
+            assert len(geom.faces) == mask.sum()
         # col.add_object(name, geom, T)
         add_object_cached(col, name, geom.col_obj, geom.fcl_obj)
+
+    if len(col._objs) == 0:
+        logger.debug(f'{names=} got no objs, returning None')
+        col = None
+
     if bvh_cache is not None and bvh_caching_config():
+        bvh_cache[key] = col
+
     return col
 
 def plot_geometry(ax, geom, color = 'blue'):
