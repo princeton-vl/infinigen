@@ -37,6 +37,8 @@ def generate_curvy_seats(nw: NodeWrangler):
             ('NodeSocketFloat', 'Top Relative Width', 0.5000),
             ('NodeSocketFloat', 'Top Bent', -0.2000),
             ('NodeSocketFloat', 'Seat Height', 0.6000),
+            ('NodeSocketFloat', 'Mid Pos', 0.5000),
+            ('NodeSocketMaterial', 'SeatMaterial', None)])
 
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Resolution': group_input.outputs["U Resolution"], 'Radius': 0.5000})
 
@@ -140,7 +142,9 @@ def generate_curvy_seats(nw: NodeWrangler):
     warparoundcurvealt = nw.new_node(nodegroup_warp_around_curve().name,
         input_kwargs={'Geometry': lofting_001.outputs["Geometry"], 'Curve': bezier_segment})
 
+    # material_func =np.random.choice([plastic.shader_rough_plastic, metal.get_shader(), wood_new.shader_wood, leather.shader_leather])
 
     warparoundcurvealt = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': warparoundcurvealt, 'Material': group_input.outputs["SeatMaterial"]})
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': warparoundcurvealt}, attrs={'is_active_output': True})
 
