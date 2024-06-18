@@ -9,7 +9,9 @@ import numpy as np
 from typing import Union
 from trimesh import Trimesh, Scene
 from mathutils import Vector, Matrix
+
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 from infinigen.core.constraints.constraint_language.util import (
     translate,
     rotate,
@@ -41,9 +43,14 @@ def preprocess_scene(objects):
 
 
 
+def parse_scene(objects):
     # convert all bpy.objects into a trimesh.Scene
 
+    preprocess_scene(objects)
+
     scene = trimesh.Scene()
+    for obj in objects:
+        add_to_scene(scene, obj)
 
     return scene
 
