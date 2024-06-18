@@ -1,12 +1,21 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: 
 # - Hongyu Wen: sink geometry
 # - Meenal Parakh: material assignment
 # - Stamatis Alexandropoulos: taps
 # - Alexander Raistrick: placeholder, optimize detail, redo cutter
 
+
         self.factory_seed = factory_seed
         curvature = U(1.0, 1.0)
         lower_height = U(0.00, 0.01)
+        return obj
+
+    def finalize_assets(self, assets):
+            self.scratch.apply(assets)
+            self.edge_wear.apply(assets)
 
 
     @staticmethod
@@ -27,6 +36,56 @@
         }
         return params
 
+        return obj
+    
+    def finalize_assets(self, assets):
+            self.scratch.apply(assets)
+            self.edge_wear.apply(assets)
+
+    bezier_segment = nw.new_node(Nodes.CurveBezierSegment, input_kwargs={
+        'Start': (0.0000, 0.0000, 0.0000),
+        'Start Handle': (0.0000, 0.0000, 0.7000),
+        'End Handle': (0.2000, 0.0000, 0.7000),
+        'End': (1.0000, 0.0000, 0.9000)
+    })
+
+
+
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: 1.3000},
+                           attrs={'operation': 'MULTIPLY'})
+
+    set_curve_radius = nw.new_node(Nodes.SetCurveRadius,
+                                   input_kwargs={'Curve': bezier_segment, 'Radius': multiply})
+
+
+    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={
+        'Curve': set_curve_radius,
+        'Profile Curve': curve_circle.outputs["Curve"],
+        'Fill Caps': True
+    })
+
+
+
+    map_range = nw.new_node(Nodes.MapRange,
+                            input_kwargs={'Value': separate_xyz.outputs["X"], 1: 0.2000, 3: 1.0000, 4: 2.5000})
+
+                             input_kwargs={0: separate_xyz.outputs["Y"], 1: map_range.outputs["Result"]},
+                             attrs={'operation': 'MULTIPLY'})
+
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={
+        'X': separate_xyz.outputs["X"],
+        'Y': multiply_1,
+        'Z': separate_xyz.outputs["Z"]
+    })
+
+    set_position = nw.new_node(Nodes.SetPosition,
+                               input_kwargs={'Geometry': curve_to_mesh, 'Position': combine_xyz})
+
+
+
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_shade_smooth},
+                               attrs={'is_active_output': True})
+
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketFloatDistance', 'base_width', U(0.2,0.3)),
             ('NodeSocketFloat', 'tap_head', U(0.7,1.1)),
@@ -41,6 +100,17 @@
             ('NodeSocketBool', 'one_side', True if U()>0.5 else False),
             ('NodeSocketBool', 'different_type', True if U()>0.8 else False),
             ('NodeSocketBool', 'length_one_side', True if U()>0.8 else False)])
+
+
+
+    quadrilateral = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
+                                input_kwargs={'Width': 0.2000, 'Height': 0.7000})
+
+                               input_kwargs={'Curve': quadrilateral, 'Count': 19, 'Radius': 0.1000},
+                               attrs={'mode': 'POLY'})
+
+
+
     
     
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
@@ -82,6 +152,7 @@
         input_kwargs={0: group_input.outputs["Switch"], 2: greater_than, 3: 1.0000},
         attrs={'input_type': 'FLOAT'})
     
+    separate_geometry = nw.new_node(Nodes.SeparateGeometry,
         input_kwargs={'Geometry': curve_to_mesh_1, 'Selection': switch_1.outputs["Output"]})
     
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': 1.0000, 'Y': 1.0000, 'Z': group_input.outputs["tap_head"]})
@@ -247,8 +318,162 @@
     
     join_geometry_6 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [switch_6.outputs[6], extrude_mesh_1.outputs["Mesh"]]})
     
+    set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={
         'Geometry': join_geometry_6,
+    })
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material}, attrs={'is_active_output': True})
+
+    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketFloatDistance', 'Width', 2.0000),
+        ('NodeSocketFloatDistance', 'Depth', 2.0000), ('NodeSocketFloat', 'Curvature', 0.9500),
+        ('NodeSocketFloat', 'Upper Height', 1.0000), ('NodeSocketFloat', 'Lower Height', -0.0500),
+        ('NodeSocketFloatDistance', 'HoleRadius', 0.1000), ('NodeSocketFloat', 'Margin', 0.5000),
+
+
+    quadrilateral = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
+                                input_kwargs={'Width': reroute_3, 'Height': reroute_2})
+
+
+
+                               attrs={'mode': 'POLY'})
+
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={
+        'X': group_input.outputs["Curvature"],
+        'Y': group_input.outputs["Curvature"]
+    })
+
+
+
+    join_geometry_4 = nw.new_node(Nodes.JoinGeometry,
+                                  input_kwargs={'Geometry': [transform_1, curve_circle.outputs["Curve"]]})
+
+
+
+
+    transform_2 = nw.new_node(Nodes.Transform,
+
+    extrude_mesh_2 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
+        'Mesh': transform_2,
+        'Offset Scale': -0.0100,
+        'Individual': False
+    })
+
+    transform_5 = nw.new_node(Nodes.Transform, input_kwargs={
+        'Geometry': curve_circle.outputs["Curve"],
+        'Scale': (0.7000, 0.7000, 1.0000)
+    })
+
+    join_geometry_6 = nw.new_node(Nodes.JoinGeometry,
+                                  input_kwargs={'Geometry': [curve_circle.outputs["Curve"], transform_5]})
+
+
+
+
+    transform_6 = nw.new_node(Nodes.Transform,
+                              input_kwargs={'Geometry': fill_curve_4, 'Translation': combine_xyz_4})
+
+    extrude_mesh_4 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
+        'Mesh': transform_6,
+        'Offset Scale': group_input.outputs["Lower Height"],
+        'Individual': False
+    })
+
+
+
+
+    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={
+        'Curve': curve_line,
+        'Profile Curve': curve_circle.outputs["Curve"]
+    })
+
+    transform_7 = nw.new_node(Nodes.Transform,
+                              input_kwargs={'Geometry': curve_to_mesh, 'Translation': combine_xyz_2})
+
+    join_geometry_5 = nw.new_node(Nodes.JoinGeometry, input_kwargs={
+        'Geometry': [extrude_mesh_2.outputs["Mesh"], transform_2, extrude_mesh_4.outputs["Mesh"], transform_7]
+    })
+
+    transform = nw.new_node(Nodes.Transform,
+
+
+
+    extrude_mesh_1 = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={
+        'Mesh': fill_curve,
+        'Offset Scale': group_input.outputs["Lower Height"]
+    })
+
+
+
+    less_than = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Z"], 1: 0.0000},
+                            attrs={'operation': 'LESS_THAN'})
+
+
+
+                             input_kwargs={0: separate_xyz_1.outputs["X"], 1: group_input.outputs["Curvature"]},
+                             attrs={'operation': 'MULTIPLY'})
+
+                             input_kwargs={0: separate_xyz_1.outputs["Y"], 1: group_input.outputs["Curvature"]},
+                             attrs={'operation': 'MULTIPLY'})
+
+    combine_xyz = nw.new_node(Nodes.CombineXYZ,
+                              input_kwargs={'X': multiply_1, 'Y': multiply_2, 'Z': separate_xyz_1.outputs["Z"]})
+
+    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={
+        'Geometry': extrude_mesh_1.outputs["Mesh"],
+        'Selection': less_than,
+        'Position': combine_xyz
+    })
+
+    add_2 = nw.new_node(Nodes.Math,
+                        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["Margin"]})
+
+    add_3 = nw.new_node(Nodes.Math,
+                        input_kwargs={0: group_input.outputs["Depth"], 1: group_input.outputs["Margin"]})
+
+
+    quadrilateral_1 = nw.new_node('GeometryNodeCurvePrimitiveQuadrilateral',
+                                  input_kwargs={'Width': add_4, 'Height': add_2})
+
+    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["WaterTapMargin"], 1: -0.5000},
+                             attrs={'operation': 'MULTIPLY'})
+
+
+    transform_8 = nw.new_node(Nodes.Transform,
+                              input_kwargs={'Geometry': quadrilateral_1, 'Translation': combine_xyz_7})
+
+                                 input_kwargs={'Curve': transform_8, 'Count': 10, 'Radius': multiply},
+                                 attrs={'mode': 'POLY'})
+
+
+
+    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Lower Height"], 1: -1.0000},
+                             attrs={'operation': 'MULTIPLY'})
+
+
+
+
+
+    transform_3 = nw.new_node(Nodes.Transform, input_kwargs={
+        'Geometry': extrude_mesh_3.outputs["Mesh"],
+        'Translation': combine_xyz_3
+    })
+
+
+
+    add_6 = nw.new_node(Nodes.Math, input_kwargs={
+        0: group_input.outputs["Depth"],
+        1: group_input.outputs["WaterTapMargin"]
+    })
+
+    combine_xyz_8 = nw.new_node(Nodes.CombineXYZ,
+                                input_kwargs={'X': multiply_5, 'Z': group_input.outputs["Upper Height"]})
+
+    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={
+    })
+
+    set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={
+        'Geometry': join_geometry_1,
+    })
 
     add_7 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["WaterTapMargin"], 1: group_input.outputs["Margin"]})
     
