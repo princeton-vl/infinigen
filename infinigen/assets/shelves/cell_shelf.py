@@ -2,11 +2,16 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
+
 from numpy.random import uniform, normal, randint
+import numpy as np
+import bpy
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+
+from infinigen.core.util import blender as butil, math as mu
 
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube
     shader_shelves_white, shader_shelves_white_sampler,
@@ -755,8 +760,15 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 
 
 class CellShelfBaseFactory(AssetFactory):
+    def __init__(self, factory_seed, coarse=False):
         super(CellShelfBaseFactory, self).__init__(factory_seed, coarse=coarse)
+            self.params = self.sample_params()
+            self.params = self.get_asset_params(self.params)
 
+    def get_asset_params(self, params):
+
+        if params is None:
+            params = {}
 
         if params.get('depth', None) is None:
             params['depth'] = np.clip(normal(0.39, 0.05), 0.29, 0.49)
@@ -788,6 +800,7 @@ class CellShelfBaseFactory(AssetFactory):
         if params.get('attachment_size', None) is None:
             params['attachment_size'] = np.clip(normal(0.05, 0.02), 0.02, 0.1)
         if params.get('wood_material', None) is None:
+            params['wood_material'] = np.random.choice(['black_wood', 'white', 'wood'], p=[0.3, 0.2, 0.5])
         params['tag_support'] = True
         params = self.get_material_func(params, randomness=True)
         return params
@@ -831,11 +844,14 @@ class CellShelfBaseFactory(AssetFactory):
             size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        surface.add_geomod(obj, geometry_nodes, attributes=[], input_kwargs=obj_params, apply=True)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
 
 class CellShelfFactory(CellShelfBaseFactory):
+
     def sample_params(self):
         params = dict()
         params['Dimensions'] = (uniform(0.3, 0.45),
@@ -847,4 +863,24 @@ class CellShelfFactory(CellShelfBaseFactory):
         params['vertical_cell_num'] = max(int(params['Dimensions'][2] / params['cell_size']), 1)
         params['depth'] = params['Dimensions'][0]
         params['has_base_frame'] = False
+        return params
+        return new_bbox(0, x, -y/2 * 1.1, y/2 * 1.1, 0, z + (self.params['vertical_cell_num'] - 1) * self.params['division_board_thickness'] + 2 * self.params['external_board_thickness'] )
+    
+class TVStandFactory(CellShelfFactory):
+
+    def sample_params(self): # TODO HACK copied code just following the pattern to get this working
+        params = dict()
+        params['Dimensions'] = (
+            uniform(0.3, 0.45),
+            uniform(2 * 0.35, 6 * 0.35),
+            uniform(0.3, 0.5)
+        )
+        h_cell_num = int(params['Dimensions'][1] / 0.35)
+        params['cell_size'] = params['Dimensions'][1] / h_cell_num
+        params['horizontal_cell_num'] = h_cell_num
+        params['vertical_cell_num'] = max(int(params['Dimensions'][2] / params['cell_size']), 1)
+        params['depth'] = params['Dimensions'][0]
+        params['has_base_frame'] = False
+        params['Dimensions'] = list(params['Dimensions'])
+        params['Dimensions'][2] = params['vertical_cell_num'] * params['cell_size']
         return params
