@@ -1,0 +1,4 @@
+compose_indoors.topview=True
+compose_indoors.terrain_enabled=False
+compose_indoors.solve_large_enabled=False
+compose_indoors.solve_small_enabled=False
