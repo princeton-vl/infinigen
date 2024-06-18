@@ -3,6 +3,8 @@ MultistoryRoomSolver.n_divide_trials = 60
 RoomSolver.iters_mult = 120
 MultistoryRoomSolver.iters_mult = 120
 
+compose_indoors.solve_steps_large = 150
 compose_indoors.solve_steps_medium = 40
+compose_indoors.solve_steps_small = 10
 
 compose_indoors.terrain_enabled = False
