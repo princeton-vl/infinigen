@@ -17,6 +17,7 @@ from infinigen.core.util import blender as butil
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.material_assignments import AssetList
 
 class BeverageFridgeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.]):
@@ -25,7 +26,34 @@ class BeverageFridgeFactory(AssetFactory):
         self.dimensions = dimensions
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+        self.params.update(self.material_params)
 
+    def get_material_params(self):
+        material_assignments = AssetList['BeverageFridgeFactory']()
+        params = {
+            "Surface": material_assignments['surface'].assign_material(),
+            "Front": material_assignments['front'].assign_material(),
+            "Handle": material_assignments['handle'].assign_material(),
+            "Back": material_assignments['back'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
     @staticmethod
     def sample_parameters(dimensions):
         depth = 1 + N(0, 0.1)
@@ -55,6 +83,7 @@ class BeverageFridgeFactory(AssetFactory):
 
     def create_asset(self, **params):
         obj = butil.spawn_cube()
+            
         return obj
     
     def finalize_assets(self, assets):
@@ -496,6 +525,11 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
             ('NodeSocketFloatDistance', 'RackRadius', 0.0100),
             ('NodeSocketInt', 'RackDAmount', 5),
             ('NodeSocketInt', 'RackHAmount', 2),
+            ('NodeSocketString', 'BrandName', 'BrandName'),
+            ('NodeSocketMaterial', 'Surface', None),
+            ('NodeSocketMaterial', 'Front', None),
+            ('NodeSocketMaterial', 'Handle', None),
+            ('NodeSocketMaterial', 'Back', None)])
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["Depth"], 'Y': group_input.outputs["Width"], 'Z': group_input.outputs["Height"]})
@@ -505,6 +539,8 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
 
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+    input_kwargs={'Geometry': hollowcube, 'Material': group_input.outputs["Surface"]})
+    
 
 
 
@@ -521,8 +557,10 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': cube, 'Vector': position, 'MarginX': -1.0000, 'MarginY': 0.1000, 'MarginZ': 0.1500})
 
     set_material_2 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cube, 'Selection': center.outputs["In"], 'Material': group_input.outputs["Front"]})
 
     set_material_3 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': set_material_2, 'Selection': center.outputs["Out"], 'Material': group_input.outputs["Surface"]})
 
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: 0.0500}, attrs={'operation': 'MULTIPLY'})
@@ -546,6 +584,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': handle, 'Translation': combine_xyz_13, 'Rotation': (0.0000, 1.5708, 0.0000)})
 
     set_material_8 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': transform_1, 'Material': group_input.outputs["Handle"]})
 
     geometry_to_instance_4 = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': set_material_8})
 
@@ -563,6 +602,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     text = nw.new_node(nodegroup_text().name,
 
     set_material_9 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': text, 'Material': group_input.outputs["Handle"]})
 
 
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': join_geometry_3})
@@ -625,6 +665,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': duplicate_elements.outputs["Geometry"], 'Offset': combine_xyz_5})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': set_position, 'Material': group_input.outputs["Handle"]})
 
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Depth"], 1: group_input.outputs["DoorThickness"]})
@@ -644,6 +685,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     cube_1 = nw.new_node(nodegroup_cube().name, input_kwargs={'Size': combine_xyz_6, 'Pos': combine_xyz_7})
 
     set_material_5 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cube_1, 'Material': group_input.outputs["Back"]})
 
 
 
