@@ -1,15 +1,30 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=jDEijCwz6to by Lachlan Sarv
 
 import numpy as np
+from numpy.random import uniform, normal, randint
 
+from infinigen.assets.materials import (
     metal_shader_list,
     shader_glass,
+    shader_rough_plastic,
+    wood,
+)
+from infinigen.assets.materials.leather_and_fabrics import fabric_shader_list
+from infinigen.core import surface
 
 
 
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core import surface
 
+import json
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.random import random_general as rg
 
 
 def shader_shelves_white(nw: NodeWrangler, **kwargs):
@@ -268,6 +283,7 @@ def get_shelf_material(name, **kwargs):
             shader_func = np.random.choice([shader_shelves_black_wood, wood.shader_wood], p=[.6, .4])
         case 'wood':
             shader_func = np.random.choice([shader_shelves_wood, wood.shader_wood], p=[.6, .4])
+
         case 'glass':
             shader_func = shader_glass
         case _:
