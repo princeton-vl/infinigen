@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 # Authors: 
 # - Lingjie Mei: primary author
 # - Karhan Kayan: bug fixes
@@ -15,6 +18,7 @@ def make_np(xs):
 
 @gin.configurable
 def global_params(unit=.5, segment_margin=1.2, wall_thickness=('uniform', .2, .3),
+                  wall_height=('uniform', 2.7, 3.8)):
     wall_thickness = rg(wall_thickness)
     wall_height = rg(wall_height)
     return {
@@ -70,14 +74,21 @@ def staircase_params(staircase_snap=('uniform', .8, 1.2)):
 STAIRCASE_SNAP = make_np(staircase_params().values())
 
 
+def init_global_params():
     ys = make_np(global_params().values())
     xs = UNIT, SEGMENT_MARGIN, WALL_THICKNESS, WALL_HEIGHT
     for x, y in zip(xs, ys):
         x.fill(y)
+
+
+def init_door_params():
     ys = make_np(door_params().values())
     xs = DOOR_WIDTH, DOOR_MARGIN, DOOR_SIZE
     for x, y in zip(xs, ys):
         x.fill(y)
+
+
+def init_window_params():
     ys = make_np(window_params().values())
     xs = MAX_WINDOW_LENGTH, WINDOW_HEIGHT, WINDOW_MARGIN, WINDOW_SIZE
     for x, y in zip(xs, ys):
