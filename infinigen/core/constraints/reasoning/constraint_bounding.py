@@ -22,6 +22,7 @@ from .constraint_domain import constraint_domain
 from .domain_substitute import  domain_tag_substitute
     
 from .constraint_constancy import is_constant
+from infinigen.core import tags as t
 
 logger = logging.getLogger(__name__)
 
