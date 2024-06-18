@@ -11,6 +11,7 @@ from infinigen.assets.utils.decorate import read_material_index, write_material_
 from infinigen.core import surface
 from infinigen.core.surface import read_attr_data
 
+from infinigen.core import tags as t, tagging
 from infinigen.core.util.math import FixedSeed
 
 
@@ -29,6 +30,7 @@ def apply(obj, shader_func, selection=None, *args, **kwargs):
         if selection is None:
             material_index = full_like
         elif isinstance(selection, t.Tag):
+            sel = tagging.tagged_face_mask(o, selection)
             material_index = np.where(sel, index, material_index)
         elif isinstance(selection, str):
             try:
@@ -45,6 +47,7 @@ def get_selection(obj, selection):
     if selection is None:
         return np.ones(len(obj.data.polygons))
     elif isinstance(selection, t.Tag):
+        return tagging.tagged_face_mask(obj, selection)
     elif isinstance(selection, str):
         return read_attr_data(obj, selection.lstrip('!'), 'FACE')
     else:
