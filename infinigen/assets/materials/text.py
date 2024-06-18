@@ -9,9 +9,15 @@
 import colorsys
 import inspect
 import io
+import string
+import logging
+import colorsys
 
 import matplotlib.font_manager
 import matplotlib.pyplot as plt
+from matplotlib.patches import Arrow, BoxStyle, Circle, Ellipse, FancyBboxPatch, Rectangle, RegularPolygon, Wedge
+
+import bpy
 import numpy as np
 from PIL import Image
 from numpy.random import uniform, rand
@@ -20,13 +26,17 @@ from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane
 from infinigen.assets.utils.uv import compute_uv_direction
+from infinigen.assets.materials import common
+
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
+from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 
 from infinigen.core.util.random import random_general as rg
 
+logger = logging.getLogger(__name__)
 
 class Text:
     font_names_all = matplotlib.font_manager.get_font_names()
@@ -68,6 +78,12 @@ class Text:
         lightness = np.concatenate(
             [np.linspace(uniform(.1, .3), mid, count // 2), np.linspace(mid, uniform(.1, .3), count // 2)]
         )
+        saturation = np.concatenate([np.linspace(1, .5, count // 2), np.linspace(.5, 1, count // 2)]) 
+
+        # TODO hack
+        saturation *= uniform(0, 1)
+        lightness *= uniform(0.5, 1)
+
         return np.array([colorsys.hls_to_rgb(h, l, s) for h, l, s in zip(hue, lightness, saturation)])
 
     @staticmethod
@@ -76,6 +92,11 @@ class Text:
         hue = (uniform() + np.linspace(0, .5, count)) % 1
         lightness = np.linspace(uniform(.0), uniform(.6, .8), count)
         saturation = np.concatenate([np.linspace(1, .5, count // 2), np.linspace(.5, 1, count // 2)])
+
+        # TODO hack
+        saturation *= uniform(0, 1)
+        lightness *= uniform(0.5, 1)
+
         return np.array([colorsys.hls_to_rgb(h, l, s) for h, l, s in zip(hue, lightness, saturation)])
 
     @property
@@ -186,6 +207,9 @@ class Text:
                     )
                 case _:
                     raise NotImplementedError
+            try:
+                plt.gca().add_patch(patch)
+            except MemoryError:
                 logger.warning(f'Failed to add patch {fn.__name__} at {x, y} with {w, h} due to MemoryError')
 
     def add_texts(self, locs):
@@ -251,6 +275,8 @@ class Text:
             roughness = nw.new_node(Nodes.NoiseTexture)
             if self.emission > 0:
                 emission = color
+                color = (0.05, 0.05, 0.05, 1)
+                roughness = 0.05
             else:
                 emission = None
             principled_bsdf = nw.new_node(
@@ -271,6 +297,7 @@ class Text:
         common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
 
 
+def apply(obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs):
     Text(np.random.randint(1e5), has_barcode, emission).apply(obj, selection, bbox, **kwargs)
 
 
