@@ -4,7 +4,10 @@
 
 # Authors: Alexander Raistrick
 
+from collections import OrderedDict
+
 import numpy as np
+import random
 from numpy.random import uniform, normal, randint
 
 import infinigen
@@ -77,6 +80,8 @@ def home_constraints():
 
     doors = cutters[Semantics.Door]
 
+    constraints = OrderedDict()
+    score_terms = OrderedDict()
 
     #region overall fullness
 
@@ -100,6 +105,7 @@ def home_constraints():
 
     score_terms['furniture_aesthetics'] = wallfurn.sum(lambda t: (
         t.distance(wallfurn).hinge(0.2, 0.6).maximize(weight=0.6) +
+    ))
 
     
     constraints['storage'] = rooms.all(lambda r: (
@@ -162,6 +168,7 @@ def home_constraints():
             + cl.accessibility_cost(w, furniture, dist=1).minimize(weight=5)
             + cl.center_stable_surface_dist(w).minimize(weight=1)
         ))
+    ))
 
     score_terms['floor_covering'] = (
         rugs.sum(lambda rug: (
@@ -181,6 +188,7 @@ def home_constraints():
     constraints['plants'] = rooms.all(lambda r: (
         big_plants.related_to(r).count().in_range(0, 1) *
         small_plants.related_to(storage.related_to(r)).count().in_range(0, 5)
+    ))
     score_terms['plants'] = rooms.sum(lambda r: (
         
         big_plants.related_to(r).sum(lambda p: p.distance(doors)).maximize(weight=5)
@@ -190,7 +198,9 @@ def home_constraints():
             .related_to(storage.related_to(r))
             .sum(lambda p: p.distance(window.related_to(r)))
         ).minimize(weight=1)
+    ))
     #endregion
+
     #region SIDETABLE
     sidetable = furniture[Semantics.SideTable].related_to(furniture, cu.side_by_side)
 
@@ -212,6 +222,7 @@ def home_constraints():
             (obj[Semantics.OfficeShelfItem].related_to(t, cu.on).count() >= 0) *
             (deskchair.related_to(r).related_to(t).count() == 1)
         ))
+    ))
 
     score_terms['desk'] = rooms.sum(lambda r: desks.sum(lambda d: (
         
@@ -321,11 +332,13 @@ def home_constraints():
         storage.related_to(r).all(lambda s: (
             (obj[Semantics.OfficeShelfItem].related_to(s, cu.on).count() >= 0)
         ))
+    ))
 
     score_terms['bedroom'] = bedrooms.sum(lambda r: (
         beds.related_to(r).count().maximize(weight=3) + 
         beds.related_to(r).sum(lambda t: cl.distance(r, doors)).maximize(weight=0.5) + 
         sidetable.related_to(r).sum(lambda t: t.distance(beds.related_to(r))).minimize(weight=3)
+    ))
 
     #endregion
 
@@ -340,6 +353,7 @@ def home_constraints():
     constraints['kitchen_counters'] = kitchens.all(lambda r: (
         wallcounter.related_to(r).count().in_range(1, 2) *
         island.related_to(r).count().in_range(0, 1)
+    ))
 
     if params['has_kitchen_barstools']:
         constraints['kitchen_barchairs'] = kitchens.all(lambda r: (
@@ -382,6 +396,7 @@ def home_constraints():
         wallcounter.sum(lambda t: 
             cl.focus_score(t, island.related_to(r)).minimize(weight=5)                
         )
+    ))
 
     sink_flush_on_counter = cl.StableAgainst(cu.bottom, {Subpart.SupportSurface}, margin=0.001)
     sink_against_wall = cl.StableAgainst(cu.back, cu.walltags, margin=0.1)
@@ -415,6 +430,7 @@ def home_constraints():
             ))
         ))
 
+    ))
 
     kitchen_appliances = obj[Semantics.KitchenAppliance]
     kitchen_appliances_big = kitchen_appliances.related_to(kitchens, cu.on_floor).related_to(kitchens, cu.against_wall)
@@ -613,6 +629,7 @@ def home_constraints():
             obj[Semantics.TableDisplayItem].related_to(t, cu.ontop).count().in_range(0, 1) *
             (obj[Semantics.OfficeShelfItem].related_to(t, cu.on).count() >= 0)
         ))
+    ))
 
     #endregion
 
@@ -703,6 +720,7 @@ def home_constraints():
             .minimize(weight=15)
         ))
 
+    ))
     score_terms['bathroom'] = (
         mirror.related_to(bathrooms).distance(sink).minimize(weight=0.2)
         + cl.accessibility_cost(mirror, furniture, cu.down_dir).maximize(weight=3)
