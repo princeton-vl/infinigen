@@ -17,6 +17,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 import logging
 from collections.abc import Iterable
 
+logger = logging.getLogger(__name__)
 
 def get_edge_wear_params():
     return {
@@ -217,6 +218,8 @@ def shader_edge_tear_free_node_group(nw: NodeWrangler,
     return mix_shader_1, total_displacement
 
 
+MARKER_LABEL = "wear_tear"
+
 def apply_over(obj, selection=None, **shader_kwargs):
     
     # get all materials
@@ -227,6 +230,7 @@ def apply_over(obj, selection=None, **shader_kwargs):
         return
 
     if len(shader_kwargs) == 0:
+        logging.debug("Obtaining Randomized Scratch Parameters")
         shader_kwargs = get_edge_wear_params()
 
     for material_name, material in materials:
@@ -234,10 +238,15 @@ def apply_over(obj, selection=None, **shader_kwargs):
         # get material node tree
         # https://blender.stackexchange.com/questions/240278/how-to-access-shader-node-via-python-script
         material_node_tree = material.node_tree
+
+        if any([node.label == MARKER_LABEL for node in material_node_tree.nodes]):
+            continue
+
         nw = NodeWrangler(material_node_tree)
         
         result = nw.find("ShaderNodeOutputMaterial")
         if len(result) == 0:
+            logger.warning("No Material Output Node found in the object's materials! Returning")
             continue
         
         # get nodes and links connected to specific inputs
@@ -255,6 +264,8 @@ def apply_over(obj, selection=None, **shader_kwargs):
         # https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
         material_node_tree.links.new(final_bsdf.outputs[0], result[0].inputs['Surface'])
         material_node_tree.links.new(final_displacement.outputs[0], result[0].inputs['Displacement'])
+
+        final_bsdf.label = MARKER_LABEL
         
     return
 
