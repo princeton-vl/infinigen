@@ -11,6 +11,8 @@ import mathutils
 import numpy as np
 from numpy.random import uniform, normal, randint, choice
 
+# from infinigen.assets.materials import metal, metal_shader_list
+# from infinigen.assets.materials.leather_and_fabrics import fabric
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.surface import NoApply
@@ -30,6 +32,7 @@ from infinigen.assets.tables.legs.square import nodegroup_generate_leg_square
 from infinigen.assets.tables.strechers import nodegroup_strecher
 
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 
 @node_utils.to_nodegroup('geometry_create_legs', singleton=False, type='GeometryNodeTree')
@@ -101,6 +104,8 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
     else:
         raise NotImplementedError
 
+    leg = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': leg, 'Material': kwargs['LegMaterial']})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': leg},
                                attrs={'is_active_output': True})
@@ -122,6 +127,9 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
         'Geometry': generatetabletop,
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])
     })
+    
+    tabletop_instance = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': tabletop_instance, 'Material': kwargs['TopMaterial']})
 
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
 
@@ -145,6 +153,34 @@ class TableDiningFactory(AssetFactory):
             # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
             #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
             self.clothes_scatter = NoApply()
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            
+        self.params.update(self.material_params)
+            
+    def get_material_params(self):
+        material_assignments = AssetList['TableDiningFactory']()
+        params = {
+            "TopMaterial": material_assignments['top'].assign_material(),
+            "LegMaterial": material_assignments['leg'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = uniform() < scratch_prob
+        is_edge_wear = uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
+    
     @staticmethod
     def sample_parameters(dimensions):
 
@@ -214,6 +250,7 @@ class TableDiningFactory(AssetFactory):
             'Top Profile Fillet Ratio': uniform(0.0, 0.02),
             'Top Thickness': top_thickness,
             'Top Vertical Fillet Ratio': uniform(0.1, 0.3),
+            # 'Top Material': choice(['marble', 'tiled_wood', 'metal', 'fabric'], p=[.3, .3, .2, .2]),
             'Height': z,
             'Top Height': z - top_thickness,
             'Leg Number': leg_number,
@@ -224,6 +261,7 @@ class TableDiningFactory(AssetFactory):
             'Leg Height': 1.0,
             'Leg Diameter': leg_diameter,
             'Leg Curve Control Points': leg_curve_ctrl_pts,
+            # 'Leg Material': choice(['metal', 'wood', 'glass', 'plastic']),
             'Strecher Relative Pos': uniform(0.2, 0.6),
             'Strecher Increament': choice([0, 1, 2])
         }
@@ -243,8 +281,11 @@ class TableDiningFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
+            
     #def finalize_assets(self, assets):
     #    self.clothes_scatter.apply(assets)
 
