@@ -78,6 +78,8 @@ def home_constraints():
     rooms = cl.scene()[{Semantics.Room, -Semantics.Object}]
     obj = cl.scene()[{Semantics.Object, -Semantics.Room}]
 
+    cutters = cl.scene()[Semantics.Cutter]
+    window = cutters[Semantics.Window]
     doors = cutters[Semantics.Door]
 
     constraints = OrderedDict()
@@ -105,6 +107,8 @@ def home_constraints():
 
     score_terms['furniture_aesthetics'] = wallfurn.sum(lambda t: (
         t.distance(wallfurn).hinge(0.2, 0.6).maximize(weight=0.6) +
+        cl.accessibility_cost(t, furniture).minimize(weight=5) +
+        cl.accessibility_cost(t, rooms).minimize(weight=10)
     ))
 
     
@@ -449,6 +453,10 @@ def home_constraints():
 
     score_terms['kitchen_appliance'] = kitchens.sum(lambda r: (
         kitchen_appliances.sum(lambda t: (
+            t.distance(wallcounter.related_to(r)).minimize(weight=1)
+            + cl.accessibility_cost(t, r, dist=1).minimize(weight=10)
+            + cl.accessibility_cost(t, furniture.related_to(r), dist=1).minimize(weight=10)
+            + t.distance(island.related_to(r)).hinge(0.7, 1e7).minimize(weight=10)
         ))
     ))
 
@@ -460,6 +468,7 @@ def home_constraints():
         * (obj[Semantics.FoodPantryItem].related_to(storage.related_to(r), cu.on).count() >= 0)
         
         * island.related_to(r).all(lambda t: (
+            obj[Semantics.TableDisplayItem].related_to(t, cu.ontop).count().in_range(0, 4)
         ))
     ))
 
@@ -469,6 +478,9 @@ def home_constraints():
             .sum(lambda t: t.distance(r, cu.walltags))
             .minimize(weight=3)
         )
+        + cl.center_stable_surface_dist(
+            obj.related_to(island.related_to(r), cu.ontop)
+        ).minimize(weight=1)
     ))
 
     # disabled for now bc tertiary
