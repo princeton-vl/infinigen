@@ -12,6 +12,7 @@ from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 class JarFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -24,6 +25,14 @@ class JarFactory(AssetFactory):
             self.x_cap = uniform(.6, .9) * np.cos(np.pi / self.n_base)
             self.z_cap = uniform(.05, .08)
             self.z_neck = uniform(.15, .2)
+
+            material_assignments = AssetList["JarFactory"]()
+            self.surface = material_assignments["surface"].assign_material()
+            self.cap_surface = material_assignments["cap_surface"].assign_material()
+            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            self.scratch, self.edge_wear = material_assignments["wear_tear"]
+            self.scratch = None if uniform() > scratch_prob else self.scratch
+            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.cap_subsurf = uniform() < .5
 
@@ -68,3 +77,7 @@ class JarFactory(AssetFactory):
     def finalize_assets(self, assets):
         self.surface.apply(assets, clear=uniform() < .5)
         self.cap_surface.apply(assets, selection='cap')
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
