@@ -14,11 +14,15 @@ from trimesh import Trimesh, Scene
 import trimesh
 from shapely import LineString, Point, Polygon, MultiPolygon
 import numpy as np
+from sklearn.decomposition import PCA
+import bpy
+import fcl
 
 from mathutils import Matrix, Vector
 import gin
 
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 logger = logging.getLogger(__name__)
 
