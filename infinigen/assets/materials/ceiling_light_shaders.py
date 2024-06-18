@@ -8,6 +8,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
 
+def shader_lamp_bulb_nonemissive(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     light_path = nw.new_node(Nodes.LightPath)
