@@ -1,4 +1,10 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: 
 # - Alexander Raistrick: populate_state_placeholders, apply_cutter
+# - Stamatis Alexandropoulos: Initial version of window cutting
+
 import logging
 
 import bpy
