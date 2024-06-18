@@ -13,6 +13,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
+from infinigen.core import tagging, tags as t
 
 from infinigen.assets.utils.object import new_bbox
 
@@ -37,6 +38,7 @@ def nodegroup_tag_cube(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare, input_kwargs={2: index, 3: 5}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
     
+    cube = tagging.tag_nodegroup(nw, group_input.outputs['Geometry'], t.Subpart.SupportSurface, selection=equal)
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': cube}, attrs={'is_active_output': True})
 
