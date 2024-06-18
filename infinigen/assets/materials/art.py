@@ -93,6 +93,7 @@ class ArtFabric(ArtComposite):
 def apply(obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
     if scale is not None:
         write_uv(obj, read_uv(obj) * scale)
+    Art(np.random.randint(1e5)).apply(obj, selection, bbox, **kwargs)
 
 
 def make_sphere():
