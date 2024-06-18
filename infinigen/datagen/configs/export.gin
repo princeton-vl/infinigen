@@ -1,0 +1,3 @@
+iterate_scene_tasks.finalize_tasks = [
+    {'name': "export", 'func': @queue_export}
+]
