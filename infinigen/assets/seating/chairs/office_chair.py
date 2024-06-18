@@ -4,12 +4,17 @@
 # Authors: Yiming Zuo
 
 import bpy
+
+import numpy as np
 from numpy.random import uniform, choice
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
+from infinigen.core import surface, tagging
 
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util import blender as butil
 from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.assets.seating.chairs.seats.curvy_seats import generate_curvy_seats
@@ -183,6 +188,13 @@ class OfficeChairFactory(AssetFactory):
         bpy.ops.mesh.primitive_plane_add(
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
+
+
+        surface.add_geomod(obj, geometry_assemble_chair, apply=True, input_kwargs=self.params)
+        tagging.tag_system.relabel_obj(obj)
+
+        obj.rotation_euler.z += np.pi / 2
+        butil.apply_transform(obj)
 
         return obj
 
