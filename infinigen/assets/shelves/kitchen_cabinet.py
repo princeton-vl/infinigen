@@ -2,6 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
+
 from numpy.random import uniform, normal, randint
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -20,6 +21,8 @@ from infinigen.assets.shelves.doors import CabinetDoorBaseFactory
 from infinigen.assets.shelves.drawers import CabinetDrawerBaseFactory
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
+    shader_shelves_wood, shader_shelves_wood_sampler
+)
 
 
 def geometry_nodes(nw: NodeWrangler, **kwargs):
@@ -61,6 +64,10 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
                                                                'Translation': (0, kwargs['y_translations'][i], 0)})
         cabinets.append(transform)
 
+    try:
+        join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': cabinets})
+    except TypeError:
+        import pdb; pdb.set_trace()
     group_output = nw.new_node(Nodes.GroupOutput,
                                input_kwargs={'Geometry': join_geometry_1}, attrs={'is_active_output': True})
 
@@ -186,6 +193,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
 
     def get_cabinet_params(self, i=0):
         x_translations = []
+        accum_w, thickness = 0, self.frame_params.get('side_board_thickness', 0.005) # instructed by Beining
         for w in self.cabinet_widths:
             accum_w += thickness + w / 2.
             x_translations.append(accum_w)
@@ -274,6 +282,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
 
             #butil.delete(c[:1])
         obj = butil.join_objects(join_objs)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
