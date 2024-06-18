@@ -3,6 +3,7 @@
 
 # Authors: Karhan Kayan
 
+import bpy
 import trimesh
 from shapely import LineString, Point
 import numpy as np
@@ -60,11 +61,13 @@ def add_to_scene(scene, obj, preprocess=True):
     obj_matrix_world = Matrix(obj.matrix_world)
     obj.matrix_world = Matrix.Identity(4)
     tmesh = to_trimesh(obj)
+    tmesh.metadata['tags'] = tagging.union_object_tags(obj)
     scene.add_geometry(
         geometry=tmesh,
         # transform=np.array(obj.matrix_world),
         geom_name=obj.name + '_mesh',
         node_name=obj.name
+    )
     col = trimesh.collision.CollisionManager()
     T = trimesh.transformations.identity_matrix()
     t = fcl.Transform(T[:3, :3], T[:3, 3])
