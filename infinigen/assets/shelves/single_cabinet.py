@@ -10,6 +10,7 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube, blender_rotate
