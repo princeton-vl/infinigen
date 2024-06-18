@@ -13,6 +13,8 @@ from infinigen.assets.materials import metal
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
+from infinigen.core.util.blender import delete
+from infinigen.core.util.bevelling import get_bevel_edges, add_bevel, complete_bevel, complete_no_bevel
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
@@ -83,7 +85,13 @@ class DishwasherFactory(AssetFactory):
 
     def create_asset(self, **params):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_dishwasher_geometry(preprocess=True), ng_inputs=self.params, apply=True)
+        bevel_edges = get_bevel_edges(obj)
+        delete(obj)
+        obj = butil.spawn_cube()
         butil.modify_mesh(obj, 'NODES', node_group=nodegroup_dishwasher_geometry(), ng_inputs=self.params, apply=True)
+        obj = add_bevel(obj, bevel_edges, offset=0.01)
+ 
         return obj
 
     def finalize_assets(self, assets):
@@ -400,6 +408,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVectorTranslation', 'Size', (0.1000, 10.0000, 4.0000)),
             ('NodeSocketVector', 'Pos', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketInt', 'Resolution', 2)])
 
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={
         'Size': group_input.outputs["Size"],
@@ -441,6 +450,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVectorTranslation', 'Size', (0.1000, 10.0000, 4.0000)),
             ('NodeSocketVector', 'Pos', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketInt', 'Resolution', 2),
             ('NodeSocketFloat', 'Thickness', 0.0000),
             ('NodeSocketBool', 'Switch1', False),
             ('NodeSocketBool', 'Switch2', False),
@@ -467,6 +477,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube_2 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_4, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_1 = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube_2.outputs["Mesh"],
@@ -510,6 +521,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube_1 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_2, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_4 = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube_1.outputs["Mesh"],
@@ -543,6 +555,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube.outputs["Mesh"],
@@ -578,6 +591,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube_3 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_6, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_5 = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube_3.outputs["Mesh"],
@@ -609,6 +623,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube_4 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_9, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_2 = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube_4.outputs["Mesh"],
@@ -638,6 +653,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     })
 
     cube_5 = nw.new_node(Nodes.MeshCube,
+        input_kwargs={'Size': combine_xyz_10, 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
 
     store_named_attribute_3 = nw.new_node(Nodes.StoreNamedAttribute, input_kwargs={
         'Geometry': cube_5.outputs["Mesh"],
@@ -671,6 +687,8 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
 
 
 
+@node_utils.to_nodegroup('nodegroup_dishwasher_geometry', singleton=False, type='GeometryNodeTree')
+def nodegroup_dishwasher_geometry(nw: NodeWrangler, preprocess: bool = False):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput, 
@@ -704,8 +722,11 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     set_material_1 = nw.new_node(Nodes.SetMaterial,
         input_kwargs={'Geometry': hollowcube, 'Material': group_input.outputs["Surface"]})
     
+    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': set_material_1, 'Level': 0})
 
+    # set_shade_smooth_2 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': subdivide_mesh})
 
+    body = nw.new_node(Nodes.Reroute, input_kwargs={'Input': subdivide_mesh}, label='Body')
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={
         'X': group_input.outputs["DoorThickness"],
@@ -734,6 +755,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': set_material_2, 'Selection': center.outputs["Out"], 'Material': group_input.outputs["Surface"]})
 
 
+    # set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_3})
 
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: 0.0500},
                            attrs={'operation': 'MULTIPLY'})
@@ -783,12 +805,21 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         'Size': multiply_6
     })
 
-    set_material_9 = nw.new_node(Nodes.SetMaterial,
+    text = complete_no_bevel(nw, text, preprocess)
 
+    set_material_9 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': text, 'Material': group_input.outputs["NameMaterial"]})
+
+    set_material_8 = complete_bevel(nw, set_material_8, preprocess)
+
+    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_3, set_material_8, set_material_9]})
 
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance',
                                        input_kwargs={'Geometry': join_geometry_3})
 
+    y = nw.scalar_multiply(group_input.outputs["DoorRotation"], 1 if not preprocess else 0)
+
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Y': y})
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': group_input.outputs["Depth"]})
 
@@ -797,6 +828,8 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
         'Rotation': combine_xyz_3,
         'Pivot Point': combine_xyz_4
     })
+
+    rotate_instances = nw.new_node(Nodes.RealizeInstances, [rotate_instances])
 
     door = nw.new_node(Nodes.Reroute, input_kwargs={'Input': rotate_instances}, label='door')
 
@@ -858,6 +891,8 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     set_material = nw.new_node(Nodes.SetMaterial,
         input_kwargs={'Geometry': set_position, 'Material': group_input.outputs["Surface"]})
 
+    set_material = nw.new_node(Nodes.RealizeInstances, [set_material])
+
     racks = nw.new_node(Nodes.Reroute, input_kwargs={'Input': set_material}, label='racks')
 
     add_4 = nw.new_node(Nodes.Math,
@@ -881,7 +916,9 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     set_material_5 = nw.new_node(Nodes.SetMaterial,
         input_kwargs={'Geometry': cube_1, 'Material': group_input.outputs["Top"]})
 
+    # set_shade_smooth_1 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_5})
 
+    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': set_material_5})
 
     heater = nw.new_node(Nodes.Reroute, input_kwargs={'Input': join_geometry_2}, label='heater')
 
