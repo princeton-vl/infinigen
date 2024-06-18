@@ -6,10 +6,12 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.rocks.boulder import BoulderFactory
 from infinigen.assets.cactus import CactusFactory
 from infinigen.assets.corals import CoralFactory
 from infinigen.assets.mollusk import MolluskFactory
 from infinigen.assets.mushroom import MushroomFactory
+from infinigen.assets.underwater.seaweed import SeaweedFactory
 from infinigen.assets.materials import metal, water
 from infinigen.assets.materials import glass
 from infinigen.assets.utils.decorate import read_co, write_attribute
