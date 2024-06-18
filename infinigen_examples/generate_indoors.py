@@ -94,6 +94,7 @@ def default_greedy_stages():
     on_ceiling = cl.StableAgainst({}, cu.ceilingtags)
     side = cl.StableAgainst({}, cu.side)
 
+    all_room = r.Domain({t.Semantics.Room, -t.Semantics.Object})
     all_obj = r.Domain({t.Semantics.Object, -t.Semantics.Room})
 
     all_obj_in_room = all_obj.with_relation(cl.AnyRelation(), all_room.with_tags(cu.variable_room))
@@ -130,6 +131,7 @@ def default_greedy_stages():
 all_vars = [cu.variable_room, cu.variable_obj]
 
 @gin.configurable
+def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p = pipeline.RandomStageExecutor(scene_seed, output_folder, overrides)
 
     logger.debug(overrides)
@@ -145,6 +147,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
         # placement.density.set_tag_dict(terrain.tag_dict)
         return terrain, terrain_mesh
 
+    terrain, terrain_mesh = p.run_stage('terrain', add_coarse_terrain, use_chance=False, default=(None, None))
     p.run_stage('sky_lighting', lighting.sky_lighting.add_lighting, use_chance=False)    
 
     consgraph = home_constraints()
@@ -241,6 +244,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
         'populate_intermediate_pholders', 
         populate.populate_state_placeholders, 
         solver.state,
+        filter=t.Semantics.AssetPlaceholderForChildren, 
         final=False,
         use_chance=False
     )
@@ -280,8 +284,12 @@ all_vars = [cu.variable_room, cu.variable_obj]
     p.run_stage('skirting_ceiling', lambda: make_skirting_board(room_meshes, t.Subpart.Ceiling))
 
     rooms_meshed = butil.get_collection('placeholders:room_meshes')
+    rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
+    p.run_stage('room_walls', room_dec.room_walls, rooms_split['wall'].objects, use_chance=False)
     p.run_stage('room_pillars', room_dec.room_pillars, state, rooms_split['wall'].objects, use_chance=False)
+    p.run_stage('room_floors', room_dec.room_floors, rooms_split['floor'].objects, use_chance=False)
+    p.run_stage('room_ceilings', room_dec.room_ceilings, rooms_split['ceiling'].objects, use_chance=False)
 
     #state.print()
     state.to_json(output_folder / 'solve_state.json')
@@ -331,6 +339,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
         prereq='terrain',
         default=0,
     )
+
     if overrides.get('topview', False):
         rooms_split['exterior'].hide_viewport = True
         rooms_split['ceiling'].hide_viewport = True
@@ -346,6 +355,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
         camera = camera_rigs[0].children[0]
         camera_rigs[0].location = 0, 0, 0
         camera_rigs[0].rotation_euler = 0, 0, 0
+        bpy.contexScene.camera = camera
         rot_x = deg2rad(overrides.get('topview_rot_x', 0))
         rot_z = deg2rad(overrides.get('topview_rot_z', 0))
         camera.rotation_euler = rot_x, 0, rot_z
@@ -356,6 +366,7 @@ all_vars = [cu.variable_room, cu.variable_obj]
             bpy.context.view_layer.update()
             inview = points_inview(bbox, camera)
             if inview.all():
+                for area in bpy.contexScreen.areas:
                     if area.type == 'VIEW_3D':
                         area.spaces.active.region_3d.view_perspective = 'CAMERA'
                         break
@@ -376,6 +387,7 @@ def main(args):
     )
     constants.initialize_constants()
 
+    execute_tasks.main(compose_scene_func=compose_indoors, input_folder=args.input_folder,
                        output_folder=args.output_folder, task=args.task, task_uniqname=args.task_uniqname,
                        scene_seed=scene_seed)
 
