@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 # Authors: 
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix constants
@@ -9,6 +12,7 @@ import gin
 import numpy as np
 from shapely import LineString, Polygon
 
+import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_type
 from infinigen.core.constraints.example_solver.room.configs import EXTERIOR_CONNECTED_ROOM_TYPES, FUNCTIONAL_ROOM_TYPES, SQUARE_ROOM_TYPES, \
     TYPICAL_AREA_ROOM_TYPES
@@ -220,7 +224,9 @@ class BlueprintScorer:
     def narrow_passage(self, assignment, info):
         scores = []
         for p in info['segments'].values():
+            for d in np.arange(1, int(self.narrow_passage_thresh / constants.UNIT)):
                 with np.errstate(invalid="ignore"):
+                    length = d * constants.UNIT / 2
                     b = buffer(p, -length)
                     c = buffer(b, length)
                 scores.append(p.area - c.area + (
