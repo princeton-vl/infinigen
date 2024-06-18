@@ -5,12 +5,14 @@
 
 
 import bpy
+from numpy.random import uniform, choice
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 
+from infinigen.assets.seating.chairs.seats.round_seats import generate_round_seats
 
 from infinigen.assets.tables.cocktail_table import geometry_create_legs
 from infinigen.assets.material_assignments import AssetList
@@ -20,9 +22,15 @@ def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     generateseat = nw.new_node(generate_round_seats(thickness=kwargs['Top Thickness'], 
                                                     radius=kwargs['Top Profile Width'],
                                                     seat_material=kwargs['SeatMaterial']).name)
+
+    seat_instance = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': generateseat,
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
+
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
+
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [seat_instance, legs]})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': join_geometry}, attrs={'is_active_output': True})
 
 class BarChairFactory(AssetFactory):
@@ -90,6 +98,7 @@ class BarChairFactory(AssetFactory):
             leg_number = 1
             leg_diameter = uniform(0.7*x, 0.9*x)
 
+            leg_curve_ctrl_pts = [(0.0, uniform(0.1, 0.2)),
                 (0.5, uniform(0.1, 0.2)), (0.9, uniform(0.2, 0.3)), (1.0, 1.0)]
 
             parameters.update({
@@ -151,4 +160,10 @@ class BarChairFactory(AssetFactory):
 
 
         return obj
+
+    def finalize_assets(self, assets):
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
 
