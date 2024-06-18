@@ -31,13 +31,17 @@ import matplotlib.pyplot as plt
 # from infinigen.core.util import blender as butil
 from infinigen.core.util import blender as butil
 from mathutils import Vector, Quaternion
+from scipy.optimize import linear_sum_assignment
+
 
 
 import infinigen.core.constraints.constraint_language.util as iu 
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
 
+from infinigen.core import tags as t, tagging
 import infinigen.core.constraints.evaluator.node_impl.symmetry as symmetry
+
 
 # from infinigen.core.tagging import tag_object,tag_system
 # from scipy.optimize import dual_annealing
@@ -71,6 +75,8 @@ def get_cardinal_planes_bbox(vertices: np.ndarray):
     longer_plane_normal /= np.linalg.norm(longer_plane_normal)
     shorter_plane_normal /= np.linalg.norm(shorter_plane_normal)
     return [[Vector(centroid), Vector(longer_plane_normal)], [Vector(centroid), Vector(shorter_plane_normal)]]
+
+def get_axis(state: state_def.State, obj: bpy.types.Object, tag = t.Subpart.Front):
 
     a_front_planes = state.planes.get_tagged_planes(obj, tag)
     if len(a_front_planes) > 1:
@@ -214,6 +220,7 @@ def min_dist(
         geom = scene.geometry[g]
         if b_tags is not None and len(b_tags) > 0:
             obj = iu.blender_objs_from_names(b)[0]
+            mask = tagging.tagged_face_mask(obj, b_tags)
             if not mask.any():
                 logger.warning(f'{b=} had {mask.sum()=} for {b_tags=}')
             geom = geom.submesh(np.where(mask), append=True)
@@ -225,6 +232,7 @@ def min_dist(
             data._points[b] = data._points['__external']
             data._points.pop('__external')
             logging.debug(f"WARNING: swapped __external for {b} to make {data.names}")
+    elif isinstance(b, (list, set)):
         col2 = iu.col_from_subset(scene, b, b_tags, bvh_cache)
         dist, data = col.min_distance_other(col2, return_data=True)
     else:
@@ -508,6 +516,7 @@ def angle_alignment_cost_tagged(state: state_def.State, a: Union[str, list[str]]
     b_objs = iu.blender_objs_from_names(b)
     b_surfs = []
     for b_obj in b_objs:
+        b_surf = tagging.extract_tagged_faces(b_obj, b_tags)
         b_surfs.append(b_surf)
 
     b_surf_names = []
