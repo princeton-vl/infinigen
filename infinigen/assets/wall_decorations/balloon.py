@@ -28,6 +28,7 @@ class BalloonFactory(AssetFactory):
             self.thickness = uniform(.06, .1)
             material_assignments = AssetList['BalloonFactory']()
             self.surface = material_assignments['surface'].assign_material()
+            self.rel_scale = uniform(.2, .3) * 4
             self.displace = uniform(.02, .04)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
