@@ -15,9 +15,12 @@ import typing
 import gin
 import numpy as np
 from pprint import pprint, pformat
+
+from infinigen.core.constraints import (
     constraint_language as cl,
     reasoning as r,
     usage_lookup
+)
 from infinigen.core.constraints.evaluator.domain_contains import (
     domain_contains, objkeys_in_dom
 )
@@ -26,8 +29,10 @@ from . import (
     moves,
     state_def, 
     propose_relations
+) 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
+from infinigen.core import tags as t
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +41,12 @@ class DummyCubeGenerator(AssetFactory):
     def __init__(self, seed):
         super().__init__(seed)
 
+    def create_asset(self, *_, **__):
         return butil.spawn_cube()
 
+def lookup_generator(preds: set[t.Semantics]):
+
+    if t.contradiction(preds):
         raise ValueError(f'Got lookup_generator for unsatisfiable {preds=}')
     
     preds_pos, preds_neg = t.decompose_tags(preds)
@@ -91,6 +100,8 @@ def propose_addition_bound_gen(
         raise ValueError(f'Attempted to propose unconstrained {gen_class.__name__} with no relations')
 
     found_tags = usage_lookup.usages_of_factory(gen_class)
+    goal_pos, *_ = t.decompose_tags(goal_bound.domain.tags)
+    if not t.implies(found_tags, goal_pos) and found_tags.issuperset(goal_pos):
         raise ValueError(f'Got {gen_class=} for {goal_pos=}, but it had {found_tags=}')
 
     prop_dom = goal_bound.domain.intersection(filter_domain)
@@ -289,6 +300,7 @@ def propose_resample(
     for cand in cand_objs:
 
         os = curr.objs[cand]
+        if usage_lookup.has_usage(os.generator.__class__, t.Semantics.SingleGenerator):
             continue
         
         yield moves.Resample(names=[cand], align_corner=None)
