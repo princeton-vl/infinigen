@@ -48,8 +48,14 @@ nishita_lighting.strength = 0.25
 nishita_lighting.sun_elevation = ("clip_gaussian", 40, 25, 6, 70)
 
 compose_indoors.lights_off_chance=0.2
+compose_indoors.skirting_floor_chance=0.7
+compose_indoors.skirting_ceiling_chance=0.2
 
+compose_indoors.near_distance = 60
 
+compose_indoors.invisible_room_ceilings_enabled = False
+compose_indoors.overhead_cam_enabled = False
+compose_indoors.hide_other_rooms_enabled = False
 
 # for create_outdoor_backdrop
 compose_indoors.fancy_clouds_chance = 0.5
