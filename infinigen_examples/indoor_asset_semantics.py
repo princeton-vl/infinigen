@@ -284,6 +284,10 @@ def home_asset_usage():
         wall_decorations.BalloonFactory,
         wall_decorations.MirrorFactory,
         wall_decorations.WallArtFactory,
+        shelves.SingleCabinetFactory,
+        shelves.KitchenCabinetFactory,
+        shelves.CellShelfFactory,
+        elements.NatureShelfTrinketsFactory
     }
 
     used_as[Semantics.AssetAsPlaceholder] = set()
@@ -294,6 +298,8 @@ def home_asset_usage():
         shelves.SingleCabinetFactory,
         shelves.KitchenCabinetFactory,
         shelves.LargeShelfFactory,
+        table_decorations.SinkFactory,
+        tables.TableCocktailFactory
     }
 
     used_as[Semantics.PlaceholderBBox] = {
