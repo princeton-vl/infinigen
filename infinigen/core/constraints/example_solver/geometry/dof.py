@@ -6,8 +6,10 @@
 import logging
 
 import gin
+import bpy
 import numpy as np
 from infinigen.core.constraints.example_solver.geometry import stability
+from mathutils import Vector
 
 from infinigen.core import tags as t, tagging
 from infinigen.core.constraints import constraint_language as cl
@@ -34,6 +36,7 @@ def stable_against_matrix(point, normal):
     # Normalize the normal vector
     normal = np.array(normal)
     normalized_normal = normal / np.linalg.norm(normal)
+
     # Create a matrix that restricts movement along the normal direction
     restriction_matrix = np.identity(3) - np.outer(normalized_normal, normalized_normal)
     return restriction_matrix
@@ -60,6 +63,7 @@ def rotation_constraint(normal):
     # Normalize the normal vector
     normal = np.array(normal)
     normalized_normal = normal / np.linalg.norm(normal)
+
     return normalized_normal
 
 def combine_rotation_constraints(parent_planes, eps=0.01):
@@ -75,12 +79,16 @@ def combine_rotation_constraints(parent_planes, eps=0.01):
 
     # Start with the first constraint
     combined_axis = rotation_constraint(normals[0])
+
     for normal in normals[1:]:
         axis = rotation_constraint(normal)
+
         # If the axes are not parallel, there's a conflict
         if not np.isclose(combined_axis.dot(axis), 1, atol=eps):
             return None
+
         # Otherwise, keep the current axis (since they're parallel)
+
     return combined_axis
 
 
@@ -91,9 +99,11 @@ def rotate_object_around_axis(obj, axis, std, angle=None):
     # Normalize the axis
     axis = np.array(axis)
     normalized_axis = axis / np.linalg.norm(axis)
+
     # If no angle is provided, generate a random angle between 0 and 2*pi
     if angle is None:
         angle = np.random.normal(0,std)
+
     obj.rotation_mode = 'AXIS_ANGLE'
     obj.rotation_axis_angle = Vector([angle]+ list(normalized_axis))
 
