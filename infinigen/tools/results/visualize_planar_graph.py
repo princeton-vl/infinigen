@@ -16,6 +16,7 @@ from infinigen.core.util.math import FixedSeed
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
 from infinigen_examples.generate_individual_assets import make_args
+from infinigen.core.constraints.example_solver.room import GraphMaker
 
 def build_scene(idx, path):
     with FixedSeed(idx):
