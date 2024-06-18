@@ -17,6 +17,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import normalize, FixedSeed
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 
 class ToiletFactory(AssetFactory):
@@ -55,6 +56,7 @@ class ToiletFactory(AssetFactory):
             material_assignments = AssetList['ToiletFactory']()
             self.surface = material_assignments['surface'].assign_material()
             self.hardware_surface = material_assignments['hardware_surface'].assign_material()
+
             is_scratch = uniform() < material_assignments['wear_tear_prob'][0]
             is_edge_wear = uniform() < material_assignments['wear_tear_prob'][1]
             self.scratch = material_assignments['wear_tear'][0] if is_scratch else None
@@ -284,3 +286,7 @@ class ToiletFactory(AssetFactory):
     def finalize_assets(self, assets):
         self.surface.apply(assets, clear=True, metal_color='plain')
         self.hardware_surface.apply(assets, 'hardware', metal_color='natural')
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
