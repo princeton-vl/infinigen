@@ -18,10 +18,14 @@ def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
         else:
             color = hsv2rgba(uniform(0, 1), uniform(.5, .9), uniform(.6, .9))
 
+    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={'Roughness': 0.0000, 'Transmission': 1.0000})
 
     volume_absorption = nw.new_node('ShaderNodeVolumeAbsorption',
+        input_kwargs={'Color': color, 'Density': density})
 
     material_output = nw.new_node(Nodes.MaterialOutput,
+        input_kwargs={'Surface': principled_bsdf, 'Volume': volume_absorption},
+        attrs={'is_active_output': True})
 
 def apply(obj, selection=None, **kwargs):
     common.apply(obj, shader_glass_volume, selection, **kwargs)
