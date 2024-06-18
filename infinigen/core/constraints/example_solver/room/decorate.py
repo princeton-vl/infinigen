@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 # Authors: 
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix constants
@@ -32,6 +35,7 @@ from infinigen.core.constraints.example_solver.room.types import RoomType, get_r
 from infinigen.core.constraints.example_solver import state_def
 
 from infinigen.core.util.blender import deep_clone_obj
+import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.core.constraints.example_solver.room.types import get_room_type
 from infinigen.core.util.random import random_general as rg
 
@@ -161,6 +165,7 @@ def populate_doors(
 
             door = factory(int(j))
             door.parent = placeholders[j]
+            door.location = constants.DOOR_WIDTH / 2, constants.WALL_THICKNESS / 2, -constants.DOOR_SIZE / 2
             door.rotation_euler[-1] = -rot_z
             doors.append(door)
 
