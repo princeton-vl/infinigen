@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: Stamatis Alexandropoulos
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=55MMAnTYhWI by Dikko
 
@@ -12,6 +15,7 @@ from infinigen.core import surface
 
 
 
+def shader_velvet(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler
     
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
