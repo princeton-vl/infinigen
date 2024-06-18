@@ -20,6 +20,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, normalize
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 from infinigen.core.util.random import random_general as rg
 
@@ -72,10 +73,23 @@ class ChairFactory(AssetFactory):
             self.back_vertical_cuts = np.random.randint(1, 4)
             self.back_partial_scale = uniform(1, 1.4)
 
+            materials = AssetList['ChairFactory']()
+            self.limb_surface = materials['limb'].assign_material()
+            self.surface = materials['surface'].assign_material()
             if uniform() < .3:
                 self.panel_surface = self.surface
             else:
                 self.panel_surface = materials['panel'].assign_material()
+
+            scratch_prob, edge_wear_prob = materials['wear_tear_prob']
+            self.scratch, self.edge_wear = materials['wear_tear']
+            is_scratch = uniform() < scratch_prob
+            is_edge_wear = uniform() < edge_wear_prob
+            if not is_scratch:
+                self.scratch = None
+            if not is_edge_wear:
+                self.edge_wear = None
+
             #from infinigen.assets.clothes import blanket
             #from infinigen.assets.scatters.clothes import ClothesCover
             #self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
