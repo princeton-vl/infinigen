@@ -16,6 +16,7 @@ from infinigen.assets.materials import (metal, plastic, text, ceramic, woods, di
                                         sofa_fabric, leather, rug, water, glass)
 from infinigen.assets.materials.plastics import plastic_rough
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
+from infinigen.assets.materials import (glass_volume, plaster, wood,
 from infinigen.assets.materials import (beverage_fridge_shaders, dishwasher_shaders, 
                                         ceiling_light_shaders,
                                         vase_shaders,
@@ -66,6 +67,8 @@ def get_all_metal_shaders():
     return new_shaders
     
 def plastic_furniture():
+    new_shader = functools.partial(shader_rough_plastic, base_color=real_color_distribution('sofa_leather'))
+    new_shader.__name__ = shader_rough_plastic.__name__
     return new_shader
 
 
@@ -189,6 +192,7 @@ def acquarium_materials():
 def ceiling_light_materials():
     return {
         "black_material": TextureAssignments([ceiling_light_shaders.shader_black], [1.0]),
+        "white_material": TextureAssignments([ceiling_light_shaders.shader_lamp_bulb_nonemissive], [1.0]),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB]    }
 
@@ -227,6 +231,7 @@ def table_dining_materials():
     return {
         'top': MaterialOptions([
             (table_marble.shader_marble, 2.0),
+            (wood.shader_wood, 1.0),
             (dishwasher_shaders.shader_glass_002, 1.0),
             (oven_shaders.shader_super_black_glass, 1.0),
             (woods.tiled_wood.shader_wood_tiled, 2.0),
@@ -234,6 +239,7 @@ def table_dining_materials():
             *(zip(metal_shaders, probs)),
         ]),
         'leg': MaterialOptions([
+            (wood.shader_wood, 1.0),
             (glass_volume.shader_glass_volume, 1.0),
             (plastic_furniture(), 1.0),
             *(zip(metal_shaders, probs)),
@@ -478,6 +484,15 @@ def kitchen_tap_materials():
         "tap": TextureAssignments(tap_shaders, [1.0, 1.0, 1.0, 1.0]),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB]
+    }
+
+def rug_materials():
+    return {
+        "surface": MaterialOptions([
+            (rug, 3.0),
+            (ArtRug, 2.0),
+            (fabrics, 5.0),
+        ])
     }
 
 AssetList = {
