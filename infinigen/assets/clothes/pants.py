@@ -14,6 +14,8 @@ from infinigen.assets.utils.uv import unwrap_faces, wrap_front_back, wrap_top_bo
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.materials.art import ArtFabric
 
 
 class PantsFactory(AssetFactory):
@@ -31,6 +33,10 @@ class PantsFactory(AssetFactory):
                 self.length = self.size + uniform(.5, .7)
         self.neck_shrink = uniform(.1, .15)
         self.thickness = log_uniform(.02, .03)
+        materials = AssetList['PantsFactory']()
+        self.surface = materials['surface'].assign_material()
+        if self.surface == ArtFabric:
+            self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = 0, self.width / 2, self.width / 2 * (
