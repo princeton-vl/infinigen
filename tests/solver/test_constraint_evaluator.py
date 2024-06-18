@@ -18,6 +18,7 @@ from infinigen.core.constraints import (
     example_solver as solver,
     constraint_language as cl
 )
+from infinigen.core.constraints.evaluator import evaluate
 from infinigen.core.constraints.evaluator.node_impl import node_impls
 from infinigen.core.constraints.example_solver.state_def import state_from_dummy_scene, State, ObjectState
 from infinigen.core.util import blender as butil
@@ -38,24 +39,59 @@ def test_home_constraints_implemented():
     cons = home_constraints()
 
     for node in cons.traverse():
+        if node.__class__ in evaluate.SPECIAL_CASE_NODES:
             continue
         assert node.__class__ in node_impls
 
 def make_chair_table():
+    butil.clear_scene()
+    col = butil.get_collection("indoor_scene_test")
+    chairs = butil.get_collection("chair")
+    tables = butil.get_collection("table")    
+    col.children.link(chairs)
+    col.children.link(tables)
+
+    chair = butil.spawn_cube(size=2, location=(0, 0, 0), name='chair1')
+    butil.put_in_collection(chair, chairs)
+
+    table = butil.spawn_cube(size=2, location=(3, 0, 0), name='table1')
+    butil.put_in_collection(table, tables)
 
     return col
 
+def test_parse_scene():
     butil.clear_scene()
+    state = state_from_dummy_scene(make_chair_table())
+
+    assert state.objs['chair1'].tags == {t.Semantics.Chair, t.SpecificObject('chair1')}
+    assert state.objs['table1'].tags == {t.Semantics.Table, t.SpecificObject('table1')}
+
+def test_eval_node():
     butil.clear_scene()
+
+    state = state_from_dummy_scene(make_chair_table())
+    eval = partial(evaluate.evaluate_node, state=state)
+                   
+    scene = cl.scene()
+    assert eval(scene) == {"chair1", "table1"}
+
+    assert eval(scene.tagged({t.Semantics.Chair})) == {'chair1'}
+    assert eval(scene.tagged({t.Semantics.Seating})) == set()
+    assert eval(scene.tagged({t.Semantics.Chair}).count()) == 1
+
 def test_min_dist():
     butil.clear_scene()
 
     col = make_chair_table()
+    state = state_from_dummy_scene(col)
 
     constraints = []
     score_terms = []
 
     scene = cl.scene()
+    chair = cl.tagged(scene, {t.Semantics.Chair})
+    table = cl.tagged(scene, {t.Semantics.Table})
+    sofa = cl.tagged(scene, {t.Semantics.Seating})
 
     score_terms += [cl.distance(chair, table)]
     problem = cl.Problem(constraints, score_terms)
@@ -66,7 +102,10 @@ def test_min_dist():
     problem = cl.Problem(constraints, score_terms)
     assert np.isclose(evaluate.evaluate_problem(problem, state).loss(), 2)
 
+    s = butil.spawn_cube(size=2, location=(-4, 0, 0), name="sofa1")
     sofas = butil.get_collection("seating")
+    col.children.link(sofas)
+    butil.put_in_collection(s, sofas)
 
     score_terms = []
     score_terms += [cl.distance(chair, sofa) + cl.distance(chair, table)]
@@ -106,6 +145,8 @@ def test_accessibility_monotonicity():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.accessibility_cost(chair, table, dist=3)]
         problem = cl.Problem(constraints, score_terms)
@@ -142,6 +183,8 @@ def test_accessibility_side():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
@@ -172,6 +215,8 @@ def test_accessibility_angle():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
@@ -201,6 +246,8 @@ def test_accessibility_volume():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
@@ -230,6 +277,8 @@ def test_accessibility_volume():
 #     constraints = []
 #     score_terms = []
 #     scene = cl.scene()
+#     chair = cl.tagged(scene, {t.Semantics.Chair})
+#     table = cl.tagged(scene, {t.Semantics.Table})
 
 #     score_terms += [cl.accessibility_cost(chair, table)]
 #     problem = cl.Problem(constraints, score_terms)
@@ -264,6 +313,8 @@ def test_angle_alignment():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.angle_alignment_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
@@ -302,6 +353,8 @@ def test_angle_alignment_multiple_objects():
         score_terms = []
         scene = cl.scene()
         
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        tables = cl.tagged(scene, {t.Semantics.Table})
         
         score_terms += [cl.angle_alignment_cost(chair, tables)]
         
@@ -348,6 +401,8 @@ def test_angle_alignment_multiple_objects_varying_positions():
         score_terms = []
         scene = cl.scene()
         
+        chair_obj = cl.tagged(scene, {t.Semantics.Chair})
+        table_objs = cl.tagged(scene, {t.Semantics.Table})
         
         score_terms += [cl.angle_alignment_cost(chair_obj, table_objs)]
         
@@ -410,6 +465,8 @@ def test_angle_alignment_multipolygon_projection():
         score_terms = []
         scene = cl.scene()
         
+        chair_obj = cl.tagged(scene, {t.Semantics.Chair})
+        table_objs = cl.tagged(scene, {t.Semantics.Table})
         
         score_terms += [cl.angle_alignment_cost(chair_obj, table_objs)]
         
@@ -440,7 +497,10 @@ def test_angle_alignment_tagged():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    chair = cl.tagged(scene, {t.Semantics.Chair})
+    table = cl.tagged(scene, {t.Semantics.Table})
 
+    score_terms += [cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
     
@@ -463,7 +523,10 @@ def test_angle_alignment_tagged():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    chair = cl.tagged(scene, {t.Semantics.Chair})
+    table = cl.tagged(scene, {t.Semantics.Table})
 
+    score_terms += [cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
     
@@ -493,6 +556,8 @@ def test_focus_score():
         constraints = []
         score_terms = []
         scene = cl.scene()
+        chair = cl.tagged(scene, {t.Semantics.Chair})
+        table = cl.tagged(scene, {t.Semantics.Table})
 
         score_terms += [cl.focus_score(chair, table)]
         problem = cl.Problem(constraints, score_terms)
@@ -517,22 +582,26 @@ def test_viol_amounts():
 
         return State(objs=obj_states)  
     
+    cons = cl.Problem([cl.scene().tagged(t.Semantics.Furniture).count().in_range(1, 3)], [])
     assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 1
     assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(7))[1] == 4
 
+    cons = cl.Problem([cl.scene().tagged(t.Semantics.Furniture).count() <= 3], [])
     assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 1
     assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 3
 
+    cons = cl.Problem([cl.scene().tagged(t.Semantics.Furniture).count() >= 3], [])
     assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 3
     assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 2
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 0
 
+    cons = cl.Problem([cl.scene().tagged(t.Semantics.Furniture).count() == 3], [])
     assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 3
     assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 2
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
@@ -558,9 +627,12 @@ def test_min_dist_tagged():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    chair = cl.tagged(scene, {t.Semantics.Chair})
+    table = cl.tagged(scene, {t.Semantics.Table})
 
     
     
+    score_terms += [cl.distance(chair, table, others_tags={t.Subpart.Front})]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 4)
@@ -568,8 +640,11 @@ def test_min_dist_tagged():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    # chair = cl.tagged(scene, {t.Semantics.Chair})
+    # table = cl.tagged(scene, {t.Semantics.Table})
 
     # butil.save_blend('table_chair.blend')
+    score_terms += [cl.distance(chair, table, others_tags={t.Subpart.Top})]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 2)
@@ -577,7 +652,10 @@ def test_min_dist_tagged():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    # chair = cl.tagged(scene, {t.Semantics.Chair})
+    # table = cl.tagged(scene, {t.Semantics.Table})
 
+    score_terms += [cl.distance(chair, table, others_tags={t.Subpart.Bottom})]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 6)
@@ -606,6 +684,10 @@ def test_table():
         bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
 
     tagging.tag_canonical_surfaces(obj)
+    tagging.extract_tagged_faces(obj, {t.Subpart.Front})
+    tagging.extract_tagged_faces(obj, {t.Subpart.Top})
+    tagging.extract_tagged_faces(obj, {t.Subpart.Bottom})
+    tagging.extract_tagged_faces(obj, {t.Subpart.Back})
     # butil.save_blend('table.blend')
 
     #     obj_tags = tagging.union_object_tags(obj)
@@ -796,6 +878,7 @@ def test_coplanarity():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    chairs = cl.tagged(scene, {t.Semantics.Chair})
 
     score_terms += [cl.coplanarity_cost(chairs)]
     problem = cl.Problem(constraints, score_terms)
