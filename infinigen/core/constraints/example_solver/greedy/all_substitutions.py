@@ -65,6 +65,7 @@ def substitutions(
     nonempty: bool = False,
 ) -> typing.Iterator[r.Domain]:
 
+    """Find all t.Variable in d's tags or relations, and return one Domain for each possible assignment
 
     limits cuts off enumeration of each varname with some integer count
     """
@@ -148,7 +149,15 @@ def iterate_assignments(
     if not combined.intersects(combined):
         raise ValueError(f'{iterate_assignments.__name__} with {var=} arrived at contradictory {combined=}')
     
+    candidates = sorted(objkeys_in_dom(combined, state))
+
+    candidates = [
+        c for c in candidates 
+        if t.Semantics.NoChildren not in state.objs[c].tags
+    ]
+        
     i = None
+    for i, objkey in enumerate(candidates):
 
         limit = limits.get(var, None)
         if limit is not None and i >= limits[var]:
