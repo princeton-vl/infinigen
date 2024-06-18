@@ -73,6 +73,8 @@ def lookup_generator(preds: set[t.Semantics]):
         options -= usage_lookup.factories_for_usage(neg_tag)
 
     options = list(options)
+    # sort options to ensure deterministic behavior
+    options.sort(key=lambda x: x.__name__)
     np.random.shuffle(options)
 
     return options
@@ -210,6 +212,7 @@ def propose_addition(
     if len(bounds) == 0:
         logger.debug(f'Found no bounds for {filter_domain=}')
         return
+    
     for i, bound in enumerate(bounds):
 
         if bound.low is None:
@@ -225,6 +228,7 @@ def propose_addition(
         for gen_class in fac_options:
             yield from propose_addition_bound_gen(cons, curr, bounds, i, gen_class, filter_domain)
 
+    logger.debug(f'propose_addition found no candidate moves for {bound}')
 
 def propose_deletion(
     cons: cl.Node,
@@ -268,6 +272,7 @@ def propose_relation_plane_change(
                 continue
             
             target_obj = curr.objs[rels.target_name].obj
+            n_planes = len(curr.planes.get_tagged_planes(target_obj, rels.relation.parent_tags))
             if n_planes <= 1:
                 continue
 
