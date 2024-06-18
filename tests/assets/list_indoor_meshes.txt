@@ -38,6 +38,7 @@ infinigen.assets.lighting.FloorLampFactory
 infinigen.assets.lighting.ceiling_classic_lamp.CeilingClassicLampFactory
 
 infinigen.assets.seating.chairs.BarChairFactory
+infinigen.assets.seating.chairs.ChairFactory
 infinigen.assets.seating.chairs.OfficeChairFactory
 infinigen.assets.seating.BedFactory
 infinigen.assets.seating.BedFrameFactory
