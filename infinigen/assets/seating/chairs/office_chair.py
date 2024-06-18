@@ -1,0 +1,140 @@
+# Authors: Yiming Zuo
+
+import bpy
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import node_utils
+from infinigen.core.util.color import color_category
+
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+
+
+from infinigen.assets.tables.cocktail_table import geometry_create_legs
+
+def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
+
+    generateseat = nw.new_node(generate_curvy_seats().name,
+        input_kwargs={
+            'Width': kwargs['Top Profile Width'],
+            'Front Relative Width': kwargs['Top Front Relative Width'],
+            'Front Bent': kwargs['Top Front Bent'],
+            'Seat Bent': kwargs['Top Seat Bent'],
+            'Mid Bent': kwargs['Top Mid Bent'],
+            'Mid Relative Width': kwargs['Top Mid Relative Width'],
+            'Back Bent': kwargs['Top Back Bent'],
+            'Back Relative Width': kwargs['Top Back Relative Width'],
+            'Mid Pos': kwargs['Top Mid Pos'],
+        })
+
+        'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
+    seat_instance = nw.new_node(Nodes.SetMaterial,
+
+    legs = nw.new_node(geometry_create_legs(**kwargs).name)
+    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [seat_instance, legs]})
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': join_geometry}, attrs={'is_active_output': True})
+
+class OfficeChairFactory(AssetFactory):
+    def __init__(self, factory_seed, coarse=False, dimensions=None):
+        super(OfficeChairFactory, self).__init__(factory_seed, coarse=coarse)
+
+        self.dimensions = dimensions
+
+        with FixedSeed(factory_seed):
+    @staticmethod
+    def sample_parameters(dimensions):
+        # all in meters
+        if dimensions is None:
+            x = uniform(0.5, 0.6)
+            z = uniform(1.0, 1.4)
+            dimensions = (
+                x, x, z
+            )
+
+        x, y, z = dimensions
+
+        top_thickness = uniform(0.5, 0.7)
+
+        # straight has the bug that seat and legs are disjoint, so disable for now.
+
+        # leg_style = choice(['straight', 'single_stand', 'wheeled'])
+        leg_style = choice(['single_stand', 'wheeled'])
+
+        parameters = {
+            'Top Profile Width': x,
+            'Top Thickness': top_thickness,
+            'Top Front Relative Width': uniform(0.5, 0.8),
+            'Top Front Bent': uniform(-1.5, -0.4),
+            'Top Seat Bent': uniform(-1.5, -0.4),
+            'Top Mid Bent': uniform(-2.4, -0.5),
+            'Top Mid Relative Width': uniform(0.5, 0.9),
+            'Top Back Bent': uniform(-1, -0.1),
+            'Top Back Relative Width': uniform(0.6, 0.9),
+            'Top Mid Pos': uniform(0.4, 0.6),
+            'Height': z,
+            'Top Height': z - top_thickness,
+            'Leg Style': leg_style,
+            'Leg NGon': choice([4, 32]),
+            'Leg Placement Top Relative Scale': 0.7,
+            'Leg Placement Bottom Relative Scale': uniform(1.1, 1.3),
+            'Leg Height': 1.0,
+        }
+
+        if leg_style == "single_stand":
+            leg_number = 1
+            leg_diameter = uniform(0.7*x, 0.9*x)
+
+                (0.5, uniform(0.1, 0.2)), (0.9, uniform(0.2, 0.3)), (1.0, 1.0)]
+
+            parameters.update({
+                'Leg Number': leg_number,
+                'Leg Diameter': leg_diameter,
+                'Leg Curve Control Points': leg_curve_ctrl_pts,
+            })
+
+        elif leg_style == "straight":
+            leg_diameter = uniform(0.04, 0.06)
+            leg_number = 4
+
+            leg_curve_ctrl_pts = [(0.0, 1.0), (0.4, uniform(0.85, 0.95)), (1.0, uniform(0.4, 0.6))]
+
+            parameters.update({
+                'Leg Number': leg_number,
+                'Leg Diameter': leg_diameter,
+                'Leg Curve Control Points': leg_curve_ctrl_pts,
+                'Strecher Relative Pos': uniform(0.2, 0.6),
+                'Strecher Increament': choice([0, 1, 2])
+            })
+
+        elif leg_style == "wheeled":
+            leg_diameter = uniform(0.03, 0.05)
+            leg_number = 1
+            pole_number = choice([4, 5])
+            joint_height = uniform(0.5, 0.8) * (z - top_thickness)
+            wheel_arc_sweep_angle = uniform(120, 240)
+            wheel_width = uniform(0.11, 0.15)
+            wheel_rot = uniform(0, 360)
+            pole_length = uniform(1.6, 2.0)
+
+            parameters.update({
+                'Leg Number': leg_number,
+                'Leg Pole Number': pole_number,
+                'Leg Diameter': leg_diameter,
+                'Leg Joint Height': joint_height,
+                'Leg Wheel Arc Sweep Angle': wheel_arc_sweep_angle,
+                'Leg Wheel Width': wheel_width,
+                'Leg Wheel Rot': wheel_rot,
+                'Leg Pole Length': pole_length,
+            })
+
+        else:
+            raise NotImplementedError
+
+
+    def create_asset(self, **params):
+
+        bpy.ops.mesh.primitive_plane_add(
+            size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        obj = bpy.context.active_object
+
+
