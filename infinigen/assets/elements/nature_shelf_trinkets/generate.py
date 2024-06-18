@@ -91,6 +91,7 @@ class NatureShelfTrinketsFactory(AssetFactory):
         cur_loc = asset.location
         new_location = [
             cur_loc[i]-(bounds[0][i] + bounds[1][i])/2 for i in range(3)]
+        new_location[2] = cur_loc[2] - (bounds[0][2] + bounding_box[2]/2)
         asset.location = new_location
         butil.apply_transform(asset,loc=True)
         return asset
