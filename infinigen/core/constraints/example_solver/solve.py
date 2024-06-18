@@ -4,6 +4,7 @@
 
 # Authors: Alexander Raistrick
 
+import logging
 from pathlib import Path
 import copy
 
@@ -25,12 +26,17 @@ from infinigen.core.constraints.example_solver.geometry import parse_scene, plan
 from .room import RoomSolver, MultistoryRoomSolver
 
 from infinigen.core.constraints.example_solver.state_def import State
+from infinigen.core.constraints.example_solver import (
     propose_continous,
     propose_discrete,
     greedy,
+)
 from infinigen.core.constraints.evaluator import domain_contains
+
 from infinigen.core.placement.placement import parse_asset_name
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
+
 from .annealing import SimulatedAnnealingSolver
 
 logger = logging.getLogger(__name__)
@@ -86,6 +92,7 @@ class Solver:
         )
         self.room_solver_fn = MultistoryRoomSolver if multistory else RoomSolver
         self.state: State = None
+
         self.moves = self._configure_move_weights(restrict_moves)
     
 
@@ -195,6 +202,7 @@ class Solver:
             f"Finished solving {desc_full}, added {len(self.state.objs) - n_start} "
             f"objects, loss={self.optim.curr_result.loss():.4f} viol={self.optim.curr_result.viol_count()}"
         )
+
         logger.info(self.optim.curr_result.to_df())
 
         violations = {
