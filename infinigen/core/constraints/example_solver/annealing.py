@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Alexander Raistrick, Karhan Kayan
 
 from collections import defaultdict
 import logging
@@ -23,6 +28,7 @@ from .moves import Move
 from .state_def import State
 from infinigen.core.util import blender as butil
 
+from infinigen.core.constraints.constraint_language import util as impl_util
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +312,7 @@ class SimulatedAnnealingSolver:
                 f"{temp=:.2e} {diff=:.2f} {viol_diff=:.1f} {prob=:.2f} {accept=} "
                 f"{move_log}"
             )
+
 
         if is_log_step:
             self.stats.append(dict(
