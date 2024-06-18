@@ -16,7 +16,7 @@ from infinigen.core.util import blender as butil
 
 C = bpy.context
 D = bpy.data
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class LeafFactory(AssetFactory):
     

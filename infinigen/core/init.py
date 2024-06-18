@@ -1,5 +1,7 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 import bpy
 
 import argparse
@@ -117,6 +119,7 @@ def apply_gin_configs(
     configs: list[str] = None,
     overrides: list[str] = None, 
     skip_unknown: bool = False, 
+    finalize_config=False,
     mandatory_folders: list[Path] = None,
     mutually_exclusive_folders: list[Path] = None
 ):
@@ -192,11 +195,12 @@ def apply_gin_configs(
                 f'At most one config file must be loaded from {mutex_folder} to avoid unexpected behavior, instead got {both=}'
             )
         
-    with LogLevel(logger=logging.getLogger(), level=logging.CRITICAL):
+    with LogLevel(logger=logging.getLogger(), level=logging.WARNING):
         gin.parse_config_files_and_bindings(
             configs, 
-            bindings=overrides, 
-            skip_unknown=skip_unknown
+            bindings=overrides,
+            skip_unknown=skip_unknown,
+            finalize_config=finalize_config
         )
 
 def import_addons(names):

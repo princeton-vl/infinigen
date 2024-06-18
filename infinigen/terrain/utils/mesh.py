@@ -37,6 +37,18 @@ def object_to_vertex_attributes(obj, specified=None, skip_internal=True):
             vertex_attributes[attr] = tmp.reshape((len(obj.data.vertices), -1))
     return vertex_attributes
 
+def object_to_face_attributes(obj, specified=None, skip_internal=True):
+    face_attributes = {}
+    for attr in obj.data.attributes.keys():
+        if skip_internal and butil.blender_internal_attr(attr):
+            continue
+        if ((specified is None) or (specified is not None and attr in specified)) and obj.data.attributes[attr].domain == "FACE":
+            type_key = obj.data.attributes[attr].data_type
+            tmp = np.zeros(len(obj.data.polygons) * ATTRTYPE_DIMS[type_key], dtype=np.float32)
+            obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
+            face_attributes[attr] = tmp.reshape((len(obj.data.polygons), -1))
+    return face_attributes
+
 def objectdata_from_VF(vertices, faces):
     new_mesh = bpy.data.meshes.new("")
     new_mesh.vertices.add(len(vertices))
@@ -75,6 +87,7 @@ class Mesh:
         obj=None, mesh_only=False, **kwargs
     ):
         self.normal_mode = normal_mode
+        self.face_attributes = {}
         if path is not None:
             geometry = trimesh.load(path, process=False).geometry
             key = list(geometry.keys())[0]
@@ -116,6 +129,7 @@ class Mesh:
             if not mesh_only:
                 vertex_attributes = object_to_vertex_attributes(obj)
                 _trimesh.vertex_attributes.update(vertex_attributes)
+                self.face_attributes.update(object_to_face_attributes(obj))
             for key in kwargs:
                 setattr(self, key, kwargs[key])
         else:

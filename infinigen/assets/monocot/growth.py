@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -12,13 +13,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import assign_material, displace_vertices, geo_extension, join_objects
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.assets.utils.decorate import displace_vertices, geo_extension
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.core.placement.detail import adapt_mesh_resolution
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.object import data2mesh, mesh2obj, new_cube, origin2leftmost
+from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_cube, origin2leftmost
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -26,7 +29,9 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core import surface
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_utils import build_color_ramp
+
 
 class MonocotGrowthFactory(AssetFactory):
     use_distance = False
@@ -51,9 +56,9 @@ class MonocotGrowthFactory(AssetFactory):
             self.align_factor = 0
             self.align_direction = 1, 0, 0
             self.base_hue = self.build_base_hue()
-            self.bright_color = *colorsys.hsv_to_rgb(self.base_hue, uniform(.6, .8), log_uniform(.05, .1)), 1
-            self.dark_color = *colorsys.hsv_to_rgb((self.base_hue + uniform(-.03, .03)) % 1, uniform(.8, 1.),
-                                                   log_uniform(.05, .2)), 1
+            self.bright_color = hsv2rgba(self.base_hue, uniform(.6, .8), log_uniform(.05, .1))
+            self.dark_color = hsv2rgba((self.base_hue + uniform(-.03, .03)) % 1, uniform(.8, 1.),
+                                       log_uniform(.05, .2))
             self.material = shaderfunc_to_material(self.shader_monocot, self.dark_color, self.bright_color,
                                                    self.use_distance)
 
@@ -130,7 +135,7 @@ class MonocotGrowthFactory(AssetFactory):
                 'Scale': scale
             })
             geometry = nw.new_node(Nodes.RealizeInstances, [instances])
-            geometry = nw.new_node(Nodes.StoreNamedAttribute, 
+            geometry = nw.new_node(Nodes.StoreNamedAttribute,
                 input_kwargs={'Geometry': geometry, 'Name':'z_rotation', 'Value': z_rotation})
             geometry = nw.new_node(Nodes.JoinGeometry, [[stem, geometry]])
             nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})

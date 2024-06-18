@@ -52,6 +52,7 @@ def nishita_lighting(
     sky_texture.air_density =rg(air_density)
     sky_texture.dust_density = rg(dust_density)
     sky_texture.ozone_density = clip_gaussian(1, 1, 0.1, 10)
+    
     strength = rg(strength)
     return nw.new_node(Nodes.Background, input_kwargs={'Color': sky_texture, 'Strength': strength})
 

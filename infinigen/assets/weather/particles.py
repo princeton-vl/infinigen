@@ -18,7 +18,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.assets.materials import dirt
 from infinigen.infinigen_gpl.surfaces import snow

@@ -11,15 +11,14 @@ from numpy.random import uniform
 
 from infinigen.assets.corals.base import BaseCoralFactory
 from infinigen.assets.corals.tentacles import make_radius_points_fn
-from infinigen.assets.utils.decorate import separate_loose
-from infinigen.assets.utils.object import mesh2obj, data2mesh
+from infinigen.assets.utils.object import mesh2obj, data2mesh, separate_loose
 from infinigen.assets.utils.nodegroup import geo_radius
 import infinigen.core.util.blender as butil
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.util.math import FixedSeed
 from infinigen.core import surface
 from infinigen.assets.trees.tree import build_radius_tree, recursive_path, FineTreeVertices
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class TreeBaseCoralFactory(BaseCoralFactory):
     default_scale = [1] * 3

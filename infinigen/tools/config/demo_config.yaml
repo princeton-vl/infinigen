@@ -1,0 +1,12 @@
+
+scene:
+  num_static_objs: 5
+  num_rearrange_objs: 5
+  ground_size: 2.0
+  support_scene: 'scene_000'
+  support_restitution: 0.5
+  support_static_friction: 0.6
+  support_dynamic_friction: 0.4
+  camera_resolution: (1280, 720)
+  robot_base_ori: [0, 0, -90]
+

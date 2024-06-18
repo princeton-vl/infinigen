@@ -29,7 +29,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('shader_nodegroup_sub_vein', singleton=False, type='ShaderNodeTree')
 def shader_nodegroup_sub_vein(nw):

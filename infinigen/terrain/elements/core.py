@@ -63,9 +63,14 @@ class Element:
             len(self.int_params3), ASINT(self.int_params3), len(self.float_params3), ASFLOAT(self.float_params3),
         )
         self.displacement = []
+        self.height_offset = 0
+        self.whole_bbox = None
 
 
     def __call__(self, positions, sdf_only=False):
+        if self.whole_bbox is not None:
+            mask = (positions >= self.whole_bbox[0].reshape((1, 3))).all(axis=-1) & (positions <= self.whole_bbox[1].reshape((1, 3))).all(axis=-1)
+        positions[:, 2] += self.height_offset
         N = len(positions)
         sdf = AC(np.zeros(N, dtype=np.float32))
         auxs = []
@@ -77,6 +82,10 @@ class Element:
             else:
                 auxs.append(None)
         self.call(N, ASFLOAT(AC(positions.astype(np.float32))), ASFLOAT(sdf), *[POINTER(c_float)() if x is None else ASFLOAT(x) for x in auxs])
+
+        if self.whole_bbox is not None:
+            sdf[mask] = 1e6
+            
         ret = {}
         ret[Vars.SDF] = sdf
 
@@ -93,6 +102,7 @@ class Element:
         for surface in self.displacement:
             ret.update(surface({Vars.Position: positions, **ret}))
             ret[Vars.SDF] -= ret.pop(Vars.Offset)
+        positions[:, 2] -= self.height_offset
         return ret
 
     def get_heightmap(self, X, Y):

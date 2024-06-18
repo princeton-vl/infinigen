@@ -117,11 +117,11 @@ def compose_scene(
     # find a flat spot on the terrain to do the demo\
     terrain = Terrain(scene_seed, surface.registry, task='coarse', on_the_fly_asset_folder=output_folder/"assets")
     terrain_mesh = terrain.coarse_terrain()
-    terrain_bvh = bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
+    scene_bvh = bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
     if asset_factory is not None:
         center = find_flat_location(
             terrain_mesh, 
-            terrain_bvh, 
+            scene_bvh, 
             rad=camera_circle_radius * 1.5, 
             alt=camera_altitude * 1.5
         )
@@ -145,7 +145,7 @@ def compose_scene(
 
     # snap all the locations the floor
     for i, l in enumerate(locs):
-        floorloc, *_ = terrain_bvh.ray_cast(Vector(l), Vector((0, 0, -1)))
+        floorloc, *_ = scene_bvh.ray_cast(Vector(l), Vector((0, 0, -1)))
         if floorloc is None:
             raise ValueError('Found a hole in the terain')
         locs[i] = np.array(floorloc + Vector(asset_offset))
@@ -207,8 +207,8 @@ def main():
     init.apply_gin_configs(
         configs=args.configs,
         overrides=args.overrides,
-        configs_folder='infinigen_examples/configs', 
-        mandatory_folders=['infinigen_examples/configs/scene_types'], 
+        configs_folder='infinigen_examples/configs_nature', 
+        mandatory_folders=['infinigen_examples/configs_nature/scene_types'], 
         skip_unknown=True
     )
     

@@ -7,7 +7,7 @@ import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.assets.utils.decorate import assign_material
+from infinigen.assets.utils.misc import assign_material
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
@@ -31,10 +31,10 @@ class MossCover:
                            nw.new_node(Nodes.FloatToInt, [nw.scalar_multiply(nw.musgrave(10), 2 * n)]), n)
 
         scatter_obj = scatter_instances(
-            base_obj=obj, collection=self.col, 
-            density=2e4, min_spacing=.005, 
+            base_obj=obj, collection=self.col,
+            density=2e4, min_spacing=.005,
             scale=1, scale_rand=U(0.3, 0.7),
-            selection=selection, 
+            selection=selection,
             instance_index=instance_index)
 
         return scatter_obj

@@ -11,7 +11,7 @@ from infinigen.assets.utils.object import mesh2obj
 from infinigen.assets.utils.decorate import geo_extension
 import infinigen.core.util.blender as butil
 from infinigen.core import surface
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class CauliflowerBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.4

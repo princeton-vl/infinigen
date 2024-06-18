@@ -1,0 +1,8 @@
+export.spherical = False # use OcMesher
+AnimPolicyRandomWalkLookaround.speed = ('uniform', 0.5, 1)
+AnimPolicyRandomWalkLookaround.step_speed_mult = 1
+AnimPolicyRandomWalkLookaround.yaw_sampler = ('uniform',-20, 20)
+AnimPolicyRandomWalkLookaround.step_range = ('clip_gaussian', 7, 5, 4, 10)
+AnimPolicyRandomWalkLookaround.rot_vars = (5, 0, 5)
+AnimPolicyRandomWalkLookaround.motion_dir_zoff = ('clip_gaussian', 0, 100, 0, 180)
+

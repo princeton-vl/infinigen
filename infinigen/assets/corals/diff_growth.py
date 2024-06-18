@@ -16,7 +16,7 @@ from infinigen.assets.utils.mesh import polygon_angles
 import infinigen.core.util.blender as butil
 from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class DiffGrowthBaseCoralFactory(BaseCoralFactory):
     default_scale = [1] * 3

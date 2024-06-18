@@ -8,9 +8,9 @@ import colorsys
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.misc import sample_direction
-from infinigen.assets.utils.decorate import assign_material
+from infinigen.assets.utils.misc import assign_material, sample_direction, toggle_show, toggle_hide
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
@@ -18,7 +18,7 @@ from infinigen.core import surface
 from infinigen.assets.trees.tree import build_radius_tree
 import infinigen.core.util.blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup, COMBINED_ATTR_NAME
 
 def build_spikes(base_radius=.002, **kwargs):
     n_branch = 4
@@ -33,7 +33,6 @@ def build_spikes(base_radius=.002, **kwargs):
             np.arange(size * resolution) / (size * resolution))
     obj = build_radius_tree(radius_fn, branch_config, base_radius)
     surface.add_geomod(obj, geo_radius, apply=True, input_args=['radius', None, .001])
-    tag_object(obj, 'spike')
     return obj
 
 
@@ -58,8 +57,15 @@ def make_default_selections(spike_distance, cap_percentage, density):
 
 
 def geo_spikes(nw: NodeWrangler, spikes, points_fn=None, realize=True):
-    geometry, selection = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None),
-        ('NodeSocketFloat', 'Selection', None)]).outputs[:2]
+    
+    geometry, selection = nw.new_node(
+        Nodes.GroupInput, 
+        expose_input=[
+            ('NodeSocketGeometry', 'Geometry', None),
+            ('NodeSocketFloat', 'Selection', None)
+        ]
+    ).outputs[:2]
+    
     capture = nw.new_node(Nodes.CaptureAttribute,
                           input_kwargs={'Geometry': geometry, 'Value': nw.new_node(Nodes.InputNormal)})
 
@@ -86,7 +92,7 @@ def geo_spikes(nw: NodeWrangler, spikes, points_fn=None, realize=True):
         realize_instances = nw.new_node(Nodes.RealizeInstances, [spikes])
     else:
         realize_instances = spikes
-    
+
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': realize_instances})
 
 
@@ -94,7 +100,7 @@ def shader_spikes(nw: NodeWrangler):
     roughness = .8
     specular = .25
     mix_ratio = .9
-    color = *colorsys.hsv_to_rgb(uniform(.2, .4), uniform(.1, .3), .8), 1
+    color = hsv2rgba(uniform(.2, .4), uniform(.1, .3), .8)
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
         'Base Color': color,
         'Roughness': roughness,
@@ -108,10 +114,16 @@ def shader_spikes(nw: NodeWrangler):
 
 def apply(obj, points_fn, base_radius=.002, realize=True):
     spikes = deep_clone_obj(obj)
+
+    if COMBINED_ATTR_NAME in spikes.data.attributes:
+        spikes.data.attributes.remove(spikes.data.attributes[COMBINED_ATTR_NAME])
+
     instances = make_asset_collection(build_spikes, 5, 'spikes', verbose=False, base_radius=base_radius)
     mat = surface.shaderfunc_to_material(shader_spikes)
+    toggle_show(instances)
     for o in instances.objects:
-        assign_material(o, mat) 
+        assign_material(o, mat)
+    toggle_hide(instances)
     surface.add_geomod(spikes, geo_spikes, apply=realize, input_args=[instances, points_fn, realize],
                        input_attributes=[None, 'selection'])
     butil.delete_collection(instances)

@@ -11,7 +11,7 @@ from mathutils import Vector
 from numpy.random import uniform as U, normal as N, randint, uniform
 import numpy as np
 
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.placement import placement

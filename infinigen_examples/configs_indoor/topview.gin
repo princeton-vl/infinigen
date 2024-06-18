@@ -1,0 +1,8 @@
+execute_tasks.generate_resolution = (720, 720)
+get_sensor_coords.H = 720
+get_sensor_coords.W = 720
+
+compose_indoors.topview=True
+compose_indoors.terrain_enabled=False
+compose_indoors.solve_large_enabled=False
+compose_indoors.solve_small_enabled=False

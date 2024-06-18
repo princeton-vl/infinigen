@@ -14,16 +14,17 @@ import trimesh.convex
 from numpy.random import uniform
 import gin
 
+from infinigen.assets.scatters import ivy
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
 from infinigen.assets.utils.object import trimesh2obj
 from infinigen.assets.utils.decorate import geo_extension, write_attribute
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.placement.detail import remesh_with_attrs
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.placement.split_in_view import split_inview
@@ -143,5 +144,7 @@ class BoulderFactory(AssetFactory):
         with butil.DisableModifiers(skin_obj):
             detail.adapt_mesh_resolution(skin_obj, face_size, method=self.adapt_mesh_method, apply=True)
 
+        butil.apply_modifiers(skin_obj)
         tag_object(skin_obj, 'boulder')
+        
         return skin_obj

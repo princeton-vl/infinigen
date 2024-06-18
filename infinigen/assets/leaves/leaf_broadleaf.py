@@ -18,7 +18,7 @@ from infinigen.assets.leaves.leaf_maple import nodegroup_leaf_shader
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_random_mask_vein', singleton=False, type='GeometryNodeTree')

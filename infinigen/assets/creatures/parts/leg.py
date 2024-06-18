@@ -21,7 +21,7 @@ from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_quadruped_back_leg', singleton=False, type='GeometryNodeTree')
 def nodegroup_quadruped_back_leg(nw: NodeWrangler):

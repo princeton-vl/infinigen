@@ -1,0 +1,9 @@
+compose_indoors.room_doors_enabled = False
+compose_indoors.room_windows_enabled = False
+
+compose_indoors.room_floors_enabled = False
+compose_indoors.room_walls_enabled = False
+compose_indoors.room_ceilings_enabled = False
+
+compose_indoors.skirting_floor_enabled = False
+compose_indoors.skirting_ceiling_enabled = False

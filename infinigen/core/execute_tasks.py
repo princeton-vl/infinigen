@@ -14,6 +14,7 @@ from functools import partial
 import pprint
 import time
 from collections import defaultdict
+import pickle
 
 # ruff: noqa: F402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2. 
@@ -80,12 +81,13 @@ from infinigen.core.util import (
     pipeline, 
     exporting
 )
-
+from infinigen.tools.export import export_scene
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.logging import Timer, save_polycounts, create_text_file
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import sample_registry
-from infinigen.assets.utils.tag import tag_system
+from infinigen.core.tagging import tag_system
+
    
 logger = logging.getLogger(__name__)
 
@@ -226,12 +228,29 @@ def render(scene_seed, output_folder, camera_id, render_image_func=render_image,
     with Timer('Render Frames'):
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
 
+def triangulate_meshes():
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH':
+            view_state = obj.hide_viewport
+            obj.hide_viewport = False
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            logging.info(f"Triangulating {obj}")
+            bpy.ops.mesh.quads_convert_to_tris()
+            bpy.ops.object.mode_set(mode='OBJECT')
+            obj.select_set(False)
+            obj.hide_viewport = view_state
+
 @gin.configurable
 def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
-    
+
     if resample_idx is not None and resample_idx > 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
-
+    
+    triangulate_meshes()
+    
     for obj in bpy.data.objects:
         obj.hide_viewport = obj.hide_render
 
@@ -285,9 +304,8 @@ def execute_tasks(
     generate_resolution=(1280,720),
     fps=24,
     reset_assets=True,
-    focal_length=None,
     dryrun=False,
-    optimize_terrain_diskusage=False,
+    optimize_terrain_diskusage=False
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -327,19 +345,26 @@ def execute_tasks(
     if Task.Coarse in task:
         butil.clear_scene(targets=[bpy.data.objects])
         butil.spawn_empty(f'{infinigen.__version__=}')
-        compose_scene_func(output_folder, scene_seed)
-
+        info = compose_scene_func(output_folder, scene_seed)
+        outpath = output_folder/"assets"
+        outpath.mkdir(exist_ok=True)
+        with open(outpath/"info.pickle", 'wb') as f:
+            pickle.dump(info, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
     camera = cam_util.set_active_camera(*camera_id)
-    if focal_length is not None:
-        camera.data.lens = focal_length
 
     group_collections()
 
     if Task.Populate in task:
         populate_scene(output_folder, scene_seed)
 
-    if Task.FineTerrain in task:
-        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets")
+    need_terrain_processing = 'OpaqueTerrain' in bpy.data.objects 
+
+    if Task.FineTerrain in task and need_terrain_processing:
+        with open(output_folder/"assets"/"info.pickle", 'rb') as f:
+            info = pickle.load(f)
+        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder/"assets", height_offset=info["height_offset"], whole_bbox=info["whole_bbox"])
+
         cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
         terrain.fine_terrain(output_folder, cameras=cameras, optimize_terrain_diskusage=optimize_terrain_diskusage)
 
@@ -369,7 +394,11 @@ def execute_tasks(
     for col in bpy.data.collections['unique_assets'].children:
         col.hide_viewport = False
 
-    if Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task:
+    if need_terrain_processing and (
+        Task.Render in task 
+        or Task.GroundTruth in task 
+        or Task.MeshSave in task
+    ):
         terrain = Terrain(
             scene_seed, 
             surface.registry, 
@@ -386,6 +415,9 @@ def execute_tasks(
             camera_id=camera_id, 
             resample_idx=resample_idx
         )
+    
+    if Task.Export in task:
+        export_scene(input_folder / output_blend_name, output_folder)
 
     if Task.MeshSave in task:
         save_meshes(

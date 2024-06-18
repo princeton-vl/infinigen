@@ -27,6 +27,7 @@ If you want a different output format, please use the "--help" flag or use one o
 - `-v` enables per-vertex colors (only compatible with .fbx and .ply formats).
 - `-r {INT}` controls the resolution of the baked texture maps. For instance, `-r 1024` will export 1024 x 1024 texture maps.
 - `--individual` will export each object in a scene in its own individual file.
+- `--omniverse` will prepare the scene for import to IsaacSim or other NVIDIA Omniverse programs. See more in [Exporting to Simulators](./ExportingToSimulators.md).
 
 
 ## :warning: Exporting full Infinigen scenes is only supported for USDC files.
@@ -54,19 +55,13 @@ If you require OBJ/FBX/PLY files for your research, you have a few options:
 ## Other Known Issues and Limitations
 
 
-* Some material features used in Infinigen are not yet supported by this exporter. Specifically, this script only handles Albedo, Roughness and Metallicity maps. Any other procedural parameters of the material will be ignored. Many file formats also have limited support for spatially varying transmission, clearcoat, and sheen. Generally, you should not expect any materials (but especially skin, translucent leaves, glowing lava) to be perfectly reproduced outside of Blender. 
-
+* Some material features used in Infinigen are not yet supported by this exporter. Specifically, this script only handles Albedo, Roughness, Normal, and Metallicity maps. Any other procedural parameters of the material will be ignored. Many file formats also have limited support for spatially varying transmission, clearcoat, and sheen. Generally, you should not expect any materials (but especially skin, translucent leaves, glowing lava) to be perfectly reproduced outside of Blender. 
 
 * Exporting *animated* 3D files is generally untested and not officially supported. This includes exporting particles, articulated creatures, deforming plants, etc. These features are *in principle* supported by OpenUSD, but are untested by us and not officially supported by this export script.
 
-
 * Assets with transparent materials (water, glass-like materials, etc.) may have incorrect textures for all material parameters after export.
 
-
 * Large scenes and assets may take a long time to export and will crash Blender if you do not have enough RAM. The export results may also be unusably large.
-
-
-* When exporting in .fbx format, the embedded roughness texture maps in the file may sometimes be too bright or too dark. The .png roughness map in the folder is accurate, however.
 
 
 * .fbx exports occasionally fail due to invalid UV values on complicated geometry. Adjusting the 'island_margin' value in bpy.ops.uv.smart_project() sometimes remedies this

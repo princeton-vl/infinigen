@@ -1,0 +1,65 @@
+compose_nature.land_domain_tags = 'landscape,-liquid_covered'
+compose_nature.nonliving_domain_tags = 'landscape'
+compose_nature.underwater_domain_tags = 'landscape,liquid_covered'
+
+compose_nature.trees_chance = 0.4
+compose_nature.rocks_chance = 0.8
+compose_nature.glowing_rocks_chance = 1
+compose_nature.grass_chance = 0.4
+compose_nature.ferns_chance = 0.6
+compose_nature.mushroom_chance = 0.8
+
+compose_nature.snow_particles_chance=0.0
+compose_nature.leaves_chance=0.0
+compose_nature.rain_particles_chance=0.0
+
+surface.registry.liquid_collection = [
+    ('water', 0.7),
+    ('lava', 0.3)
+]
+
+compose_nature.bug_swarm_chance=0.0
+
+compose_nature.ground_creatures_chance = 0.0
+compose_nature.ground_creature_registry = [
+    (@CarnivoreFactory, 1),
+    (@HerbivoreFactory, 0.3),
+    (@BirdFactory, 0.5),
+    (@BeetleFactory, 1)
+]
+
+compose_nature.flying_creatures_chance=0.2
+compose_nature.flying_creature_registry = [
+    (@DragonflyFactory, 1),
+]
+
+atmosphere_light_haze.shader_atmosphere.enable_scatter = False
+configure_render_cycles.exposure = 1.3
+
+
+# scene composition config
+scene.caves_chance = 1
+scene.ground_chance = 0.5
+Caves.randomness = 0
+Caves.height_offset = -4
+Caves.frequency = 0.01
+Caves.noise_scale = ("uniform", 2, 5)
+Caves.n_lattice = 1
+Caves.is_horizontal = 1
+Caves.scale_increase = 1
+
+scene.waterbody_chance = 0.8
+Waterbody.height = -5
+
+# camera selection config
+Terrain.populated_bounds = (-25, 25, -25, 25, -25, 0)
+keep_cam_pose_proposal.terrain_coverage_range = (1, 1)
+compose_nature.camera_selection_ranges_ratio = {
+    "closeup": ("closeup", 4, 0, 0.3)
+}
+compose_nature.camera_selection_tags_ratio = {
+    "liquid": (0, 0.5),
+    "cave": (0.3, 1)
+}
+
+SphericalMesher.r_min = 0.2

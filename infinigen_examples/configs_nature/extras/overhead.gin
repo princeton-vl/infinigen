@@ -1,0 +1,10 @@
+animate_cameras.follow_poi_chance=0.0
+camera.camera_pose_proposal.altitude = ("clip_gaussian", 30, 20, 17, 70)
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 0, 30, 0, 15)
+
+placement.populate_all.dist_cull = 70
+compose_nature.inview_distance = 70
+compose_nature.near_distance = 40
+compose_nature.center_distance = 40
+
+compose_nature.animate_cameras_enabled = False

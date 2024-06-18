@@ -8,3 +8,9 @@ from .cached_factory_wrappers import (
     CachedCreatureFactory, 
     CachedTreeFactory
 )
+from .flip_fluid import (
+    make_river,
+    make_still_water,
+    make_tilted_river,
+    make_beach
+)

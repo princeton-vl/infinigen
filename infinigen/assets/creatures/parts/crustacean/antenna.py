@@ -11,8 +11,9 @@ from infinigen.assets.creatures.util.animation.driver_repeated import bend_bones
 from infinigen.assets.creatures.util.creature import Part
 from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory
-from infinigen.assets.utils.decorate import displace_vertices, join_objects
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.decorate import displace_vertices
+from infinigen.assets.utils.object import join_objects
+from infinigen.core.util.random import log_uniform
 
 
 class LobsterAntennaFactory(CrabLegFactory):

@@ -14,7 +14,7 @@ from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.nodes import node_utils
 
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class Snowlayer:
     def __init__(self):

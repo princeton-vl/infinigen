@@ -68,7 +68,7 @@ ATTRTYPE_FIELDS = {
     AttributeType.Int: FieldsType.Value,
     AttributeType.FloatVector: FieldsType.Vector,
     AttributeType.FloatColor: FieldsType.Color,
-    AttributeType.Boolean: FieldsType.Boolean,
+    AttributeType.Boolean: FieldsType.Value,
 }
 
 ATTRTYPE_NP = {

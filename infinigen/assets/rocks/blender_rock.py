@@ -13,7 +13,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
@@ -50,8 +50,12 @@ class BlenderRockFactory(AssetFactory):
                 pass
             except RuntimeError:
                 pass
+
         obj = bpy.context.active_object
         bpy.ops.object.shade_flat()
+
+        butil.apply_modifiers(obj)
+
         tag_object(obj, 'blender_rock')
 
         return obj

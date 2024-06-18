@@ -43,7 +43,7 @@ def get_expanded_fov(cam_pose0, cam_poses, fov):
                 bounds[1] = max(bounds[1], p[0] / p[2])
                 bounds[2] = min(bounds[2], p[1] / p[2])
                 bounds[3] = max(bounds[3], p[1] / p[2])
-    return (max(-bounds[2], bounds[3]) * 2, max(-bounds[0], bounds[1]) * 2)
+    return (np.arctan(max(-bounds[2], bounds[3])) * 2, np.arctan(max(-bounds[0], bounds[1])) * 2)
 
 
 @gin.configurable

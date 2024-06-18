@@ -14,13 +14,15 @@ import infinigen.core.util.blender as butil
 from .base import BaseMolluskFactory
 from .shell import ShellBaseFactory, ScallopBaseFactory, ClamBaseFactory, MusselBaseFactory
 from .snail import SnailBaseFactory, ConchBaseFactory, AugerBaseFactory, VoluteBaseFactory, NautilusBaseFactory
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
-from ..utils.decorate import assign_material, subsurface2face_size
+from infinigen.core.nodes.node_utils import build_color_ramp
+from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.decorate import subsurface2face_size
+from infinigen.assets.utils.misc import assign_material
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class MolluskFactory(AssetFactory):

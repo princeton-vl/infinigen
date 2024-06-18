@@ -18,7 +18,7 @@ from infinigen.assets.small_plants import leaf_general as Leaf
 from infinigen.assets.grassland import flower as Flower
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 @node_utils.to_nodegroup('nodegroup_stem_branch_leaf_s_r', singleton=False, type='GeometryNodeTree')

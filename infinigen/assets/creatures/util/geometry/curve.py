@@ -11,9 +11,9 @@ from infinigen.core.util import blender as butil
 class Curve:
 
     def __init__(
-        self, points, 
-        profile=None, taper=None, 
-        closed=False, sharp=None, 
+        self, points,
+        profile=None, taper=None,
+        closed=False, sharp=None,
         scale=None
     ):
         self.points = points
@@ -23,7 +23,7 @@ class Curve:
         self.sharp = sharp
         self.scale = scale
 
-    def to_curve_obj(self, name='curve', 
+    def to_curve_obj(self, name='curve',
         resu=4, curvetype='NURBS', extrude=0, fill_caps = True,
         to_mesh=False, cleanup=True
     ):
@@ -33,7 +33,7 @@ class Curve:
         curveData.resolution_u = resu
         curveData.use_fill_caps = fill_caps
         curveData.twist_mode = 'MINIMUM'
-        curveData.extrude = extrude
+        curveData.bevel_depth = extrude
 
         polyline = curveData.splines.new(curvetype)
 
@@ -89,7 +89,7 @@ class Curve:
                     if o is not None:
                         o.select_set(True)
                 bpy.ops.object.delete(use_global=False, confirm=False)
-                
+
                 self.profile = None
                 self.taper = None
 

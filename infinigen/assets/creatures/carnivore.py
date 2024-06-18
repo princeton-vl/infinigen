@@ -3,7 +3,6 @@
 
 # Authors: Alexander Raistrick
 
-
 import numpy as np
 from numpy.random import uniform as U, normal as N
 import gin
@@ -27,7 +26,7 @@ from infinigen.assets.creatures.util import creature, joining
 from infinigen.assets.creatures.util import hair as creature_hair, cloth_sim
 from infinigen.assets.creatures.util.animation import idle, run_cycle
 
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.core.util import blender as butil
 
@@ -209,7 +208,7 @@ class CarnivoreFactory(AssetFactory):
         
         genome = tiger_genome()
         root, parts = creature.genome_to_creature(genome, name=f'carnivore({self.factory_seed}, {i})')
-        tag_object(root, 'carnivore')
+        # tag_object(root, 'carnivore')
         offset_center(root)
         
         dynamic = self.animation_mode is not None

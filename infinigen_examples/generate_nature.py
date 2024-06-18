@@ -67,8 +67,8 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core import execute_tasks, surface, init
 
 @gin.configurable
-def compose_scene(output_folder, scene_seed, **params):
-
+def compose_nature(output_folder, scene_seed, **params):
+    
     p = pipeline.RandomStageExecutor(scene_seed, output_folder, params)
 
     def add_coarse_terrain():
@@ -82,7 +82,7 @@ def compose_scene(output_folder, scene_seed, **params):
         terrain_mesh = butil.create_noise_plane()
         density.set_tag_dict({})
 
-    terrain_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
+    scene_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
 
     land_domain = params.get('land_domain_tags')
     underwater_domain = params.get('underwater_domain_tags')
@@ -168,14 +168,20 @@ def compose_scene(output_folder, scene_seed, **params):
 
     def camera_preprocess():
         camera_rigs = cam_util.spawn_camera_rigs()
-        scene_preprocessed = cam_util.camera_selection_preprocessing(terrain, terrain_mesh)   
+        scene_preprocessed = cam_util.camera_selection_preprocessing(
+            terrain, 
+            terrain_mesh,
+            tags_ratio=params.get('camera_selection_tags_ratio'),
+            ranges_ratio=params.get('camera_selection_ranges_ratio'),
+            anim_criterion_keys=params.get('camera_selection_anim_criterion_keys', False),
+        )   
         return camera_rigs, scene_preprocessed 
     camera_rigs, scene_preprocessed = p.run_stage('camera_preprocess', camera_preprocess, use_chance=False)
 
     bbox = terrain.get_bounding_box() if terrain is not None else butil.bounds(terrain_mesh)
     p.run_stage(
         'pose_cameras', 
-        lambda: cam_util.configure_cameras(camera_rigs, bbox, scene_preprocessed), 
+        lambda: cam_util.configure_cameras(camera_rigs, scene_preprocessed, init_bounding_box=bbox), 
         use_chance=False
     )
     cam = cam_util.get_camera(0, 0)
@@ -194,7 +200,7 @@ def compose_scene(output_folder, scene_seed, **params):
 
     def add_ground_creatures(target):
         fac_class = sample_registry(params['ground_creature_registry'])
-        fac = fac_class(int_hash((scene_seed, 0)), bvh=terrain_bvh, animation_mode='idle')
+        fac = fac_class(int_hash((scene_seed, 0)), bvh=scene_bvh, animation_mode='idle')
         n = params.get('max_ground_creatures', randint(1, 4))
         selection = density.placement_mask(select_thresh=0, tag='beach', altitude_range=(-0.5, 0.5)) \
             if fac_class is creatures.CrabFactory else 1
@@ -204,14 +210,14 @@ def compose_scene(output_folder, scene_seed, **params):
 
     def flying_creatures():
         fac_class = sample_registry(params['flying_creature_registry'])
-        fac = fac_class(randint(1e7), bvh=terrain_bvh, animation_mode='idle')
+        fac = fac_class(randint(1e7), bvh=scene_bvh, animation_mode='idle')
         n = params.get('max_flying_creatures', randint(2, 7))
         col = placement.scatter_placeholders_mesh(terrain_center, fac, num_placeholders=n, overall_density=1, altitude=0.2)
         return list(col.objects)
     pois += p.run_stage('flying_creatures', flying_creatures, default=[])
 
     p.run_stage('animate_cameras', lambda: cam_util.animate_cameras(
-        camera_rigs, scene_preprocessed, pois=pois), use_chance=False)
+        camera_rigs, bbox, scene_preprocessed, pois=pois), use_chance=False)
 
     with logging_util.Timer('Compute coarse terrain frustrums'):
         terrain_inview, *_ = split_in_view.split_inview(
@@ -394,22 +400,25 @@ def compose_scene(output_folder, scene_seed, **params):
     p.run_stage('tilted_river', add_tilted_river, use_chance=False)   
 
     p.save_results(output_folder/'pipeline_coarse.csv')
-    return terrain, terrain_mesh
+    return {
+        "height_offset": 0,
+        "whole_bbox": None,
+    }
 
 def main(args):
 
     scene_seed = init.apply_scene_seed(args.seed)
-    mandatory_exclusive = [Path('infinigen_examples/configs/scene_types')]
+    mandatory_exclusive = [Path('infinigen_examples/configs_nature/scene_types')]
     init.apply_gin_configs(
         configs=args.configs, 
         overrides=args.overrides,
-        configs_folder='infinigen_examples/configs', 
+        configs_folder='infinigen_examples/configs_nature', 
         mandatory_folders=mandatory_exclusive,
         mutually_exclusive_folders=mandatory_exclusive, 
     )
     
     execute_tasks.main(
-        compose_scene_func=compose_scene,
+        compose_scene_func=compose_nature,
         input_folder=args.input_folder, 
         output_folder=args.output_folder, 
         task=args.task, 
@@ -424,7 +433,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_folder', type=Path, default=None)
     parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
     parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
-                        choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save'])
+                        choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save', 'export'])
     parser.add_argument('-g', '--configs', nargs='+', default=['base'],
                         help='Set of config files for gin (separated by spaces) '
                              'e.g. --gin_config file1 file2 (exclude .gin from path)')

@@ -11,6 +11,7 @@ class Task:
     Render = "render"
     GroundTruth = "ground_truth"
     MeshSave = "mesh_save"
+    Export = "export"
 
 
 class Materials:

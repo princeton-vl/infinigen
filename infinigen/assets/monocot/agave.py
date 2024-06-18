@@ -12,13 +12,14 @@ from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.decorate import add_distance_to_boundary, join_objects, displace_vertices
+from infinigen.assets.utils.decorate import distance2boundary, displace_vertices
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import cut_plane, leaf
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.random import log_uniform
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class AgaveMonocotFactory(MonocotGrowthFactory):
     use_distance = True
@@ -45,7 +46,7 @@ class AgaveMonocotFactory(MonocotGrowthFactory):
         x_anchors = 0, .2 * np.cos(self.bud_angle), uniform(1., 1.4), 1.5
         y_anchors = 0, .2 * np.sin(self.bud_angle), uniform(.1, .15), 0
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
-        distance = add_distance_to_boundary(obj)
+        distance = distance2boundary(obj)
 
         lower = deep_clone_obj(obj)
         z_offset = -log_uniform(.08, .16)

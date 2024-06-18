@@ -4,7 +4,7 @@
 # Authors: Ankit Goyal, Mingzhe Wang, Zeyu Ma
 
 
- 
+
 # Code generated using version v2.0.0 of the node_transpiler
 import gin
 from infinigen.core.nodes import node_utils
@@ -410,7 +410,7 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
     )
 
     normal = nw.new_node("GeometryNodeInputNormal", [])
-    
+
     group_3 = nw.new_node(
         nodegroup_roughness().name,
         input_kwargs={"Noise 1 Scale": 200.0, "Noise 1 Magnitude": 0.5, 'Normal': normal},
@@ -556,7 +556,7 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
             nw.new_value(0.2, "stripe_warp_mag"),
         )
     )
-    
+
     offset2 = nw.add(
         multiply_3,
         nw.multiply(
@@ -571,7 +571,7 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
             normal,
         )
     )
-    
+
     noise_params = {"scale": ("uniform", 10, 20), "detail": 9, "roughness": 0.6, "zscale": ("log_uniform", 0.05, 0.1)}
 
     offset = nw.add(

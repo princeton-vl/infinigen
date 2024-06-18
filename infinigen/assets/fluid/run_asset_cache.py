@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Karhan Kayan
+
 import time
 import argparse
 import numpy as np
@@ -26,7 +31,7 @@ if __name__ == "__main__":
     parser.add_argument("--dom_scale", type=float, default=1)
     
     args = init.parse_args_blender(parser)
-    init.apply_gin_configs(configs=[], overrides=[], configs_folder='infinigen_examples/configs')
+    init.apply_gin_configs(configs=[], overrides=[], configs_folder='infinigen_examples/configs_nature')
     surface.registry.initialize_from_gin()
 
     factory_name = args.asset

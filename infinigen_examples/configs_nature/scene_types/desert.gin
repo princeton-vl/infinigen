@@ -1,0 +1,46 @@
+
+compose_nature.trees_chance = 0.25
+compose_nature.cactus_chance = .7
+compose_nature.ground_leaves_chance = 0.5
+compose_nature.ground_twigs_chance = 0.3
+compose_nature.chopped_trees_chance = 0.1
+compose_nature.grass_chance = 0.1
+compose_nature.ferns_chance = 0.0
+compose_nature.pine_needle_chance = 0.05
+compose_nature.fancy_clouds_chance = 0.0
+
+compose_nature.tree_density = 0.02
+
+compose_nature.rain_particles_chance = 0.0
+compose_nature.snow_particles_chance = 0
+compose_nature.leaf_particles_chance = 0.05
+compose_nature.dust_particles_chance = 0.0
+
+atmosphere_light_haze.shader_atmosphere.density = ("uniform", 0, 0.0015)
+atmosphere_light_haze.shader_atmosphere.anisotropy = 0
+
+animate_cameras.follow_poi_chance=0.5
+
+compose_nature.ground_creatures_chance = 1.0
+compose_nature.ground_creature_registry = [
+    (@SnakeFactory, 1)
+]
+
+surface.registry.ground_collection = [
+    ('sand', 1),
+]
+
+surface.registry.mountain_collection = [
+    ("sandstone", 1),
+]
+
+# scene composition config
+LandTiles.tiles = ["Mountain"]
+LandTiles.randomness = 1
+LandTiles.tile_heights = [-2]
+LandTiles.tile_density = 0.25
+WarpedRocks.slope_shift = -3
+Ground.with_sand_dunes = 1
+
+
+scene.waterbody_chance = 0

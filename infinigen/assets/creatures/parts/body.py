@@ -21,7 +21,7 @@ from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_
 
 from infinigen.assets.creatures.util import part_util
 from infinigen.assets.creatures.util.geometry import lofting, nurbs
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_quadruped_body', singleton=False, type='GeometryNodeTree')
 def nodegroup_quadruped_body(nw: NodeWrangler):

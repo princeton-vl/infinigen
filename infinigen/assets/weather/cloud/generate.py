@@ -20,7 +20,7 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general as rg
 
 from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 @gin.configurable
@@ -78,13 +78,18 @@ class CloudFactory(AssetFactory):
         return butil.spawn_empty('placeholder', disp_type='CUBE', s=self.max_scale)
 
     def create_asset(self, distance, **kwargs):
+        
         cloud_type = np.random.choice(self.cloud_types)
+        
         resolution_min, resolution_max = self.resolutions[cloud_type]
         resolution = max(1 - distance / self.max_distance, 0)
         resolution = resolution * (resolution_max - resolution_min) + resolution_min
         resolution = int(resolution)
+        
         new_cloud = cloud_type("Cloud", self.ref_cloud)
         new_cloud = new_cloud.make_cloud(marching_cubes=False, resolution=resolution, )
+        butil.apply_transform(new_cloud)
+
         tag_object(new_cloud, 'cloud')
         return new_cloud
 

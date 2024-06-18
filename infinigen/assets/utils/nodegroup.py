@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
 
@@ -9,7 +10,7 @@ from typing import Iterable
 import bpy
 import numpy as np
 
-from infinigen.assets.utils.decorate import toggle_hide
+from infinigen.assets.utils.misc import toggle_hide
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -42,12 +43,17 @@ def build_curve(nw: NodeWrangler, positions, circular=False, handle='VECTOR'):
     return curve
 
 
-def geo_radius(nw: NodeWrangler, radius, resolution=6, merge_distance=.004):
+def geo_radius(nw: NodeWrangler, radius, resolution=6, merge_distance=.004, rotation=0, to_align_tilt=True,
+               align_tilt_axis=(0, 0, 1)):
     skeleton = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
     radius = surface.eval_argument(nw, radius)
-    curve = align_tilt(nw, nw.new_node(Nodes.MeshToCurve, [skeleton]))
+    curve = nw.new_node(Nodes.MeshToCurve, [skeleton])
+    if to_align_tilt:
+        curve = align_tilt(nw, curve, align_tilt_axis)
     skeleton = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': curve, 'Radius': radius})
-    geometry = nw.curve2mesh(skeleton, nw.new_node(Nodes.CurveCircle, input_kwargs={'Resolution': resolution}))
+    geometry = nw.curve2mesh(skeleton, nw.new_node(Nodes.Transform, [
+        nw.new_node(Nodes.CurveCircle, input_kwargs={'Resolution': resolution})],
+                                                   input_kwargs={'Rotation': [0, 0, rotation]}))
     if merge_distance > 0:
         geometry = nw.new_node(Nodes.MergeByDistance, [geometry, None, merge_distance])
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
@@ -57,6 +63,14 @@ def geo_selection(nw: NodeWrangler, selection):
     geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
     selection = surface.eval_argument(nw, selection)
     geometry = nw.new_node(Nodes.SeparateGeometry, [geometry, selection])
+    nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
+
+
+def geo_selection_attribute(nw: NodeWrangler, selection, name, domain='POINT'):
+    geometry = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketGeometry', 'Geometry', None)])
+    selection = surface.eval_argument(nw, selection)
+    geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, None, name, None, selection],
+                           attrs={'domain': domain})
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geometry})
 
 

@@ -1,18 +1,68 @@
 
+<div align="center">
+<img src="docs/images/infinigen.png" width="300"></img>
+</div>
 
-## [Infinigen: Infinite Photorealistic Worlds using Procedural Generation](https://infinigen.org)
+# [Infinigen: Infinite Photorealistic Worlds Using Procedural Generation](https://infinigen.org)
 
-Please visit our website, [https://infinigen.org](https://infinigen.org)
+[**Getting Started**](#getting-started)
+| [**Website**](https://infinigen.org/)
+| [**Intro Video**](https://www.youtube.com/watch?v=6tgspeI-GHY)
+| [**Papers**](#papers)
+| [**Documentation**](#documentation)
+| [**Contributing**](#contributing)
 
-[![Infinigen Intro Video](docs/images/video_thumbnail.png)](https://youtu.be/6tgspeI-GHY)
+<div align="center">
+<a href="https://youtu.be/6tgspeI-GHY"> <img src="docs/images/video_thumbnail.png" width="500"></a>
+</div>
 
-If you use Infinigen in your work, please cite our [academic paper]([https://arxiv.org/abs/2306.09310](https://arxiv.org/abs/2306.09310)):
+## Getting Started
+
+First, follow our [Installation Instructions](docs/Installation.md).
+
+### Hello Room: Getting Started with Infinigen Indoors
+
+<p align="center">
+  <img src="docs/images/hello_room/dining_blender.png" width="300" />
+  <img src="docs/images/hello_room/dining.png" width="300" />
+  <img src="docs/images/hello_room/dining_depth.png" width="300" />
+  <img src="docs/images/hello_room/dining_obj.png" width="300" />
+</p>
+
+See instructions & example commands for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
+
+### Hello World: Getting Started with Infinigen Nature
+
+<p align="center">
+  <img src="docs/images/hello_world/Image0048_00_00.png" width="300" />
+  <img src="docs/images/hello_world/Depth0048_00_00.png" width="300" />
+  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="300" />
+  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="300" />
+</p>
+
+See instructions & example commands for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
+
+## Papers
+
+If you use Infinigen in your work, please cite our academic papers:
 
 <h3 align="center"><a href="https://arxiv.org/pdf/2306.09310">Infinite Photorealistic Worlds using Procedural Generation</a></h3>
 <p align="center">
-<a href="http://araistrick.com/">Alexander Raistrick</a>*, <a href="https://www.lahavlipson.com/">Lahav Lipson</a>*, <a href="https://mazeyu.github.io/">Zeyu Ma</a>* (*equal contribution, alphabetical order) <br>
-<a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>, <a href="https://www.cs.princeton.edu/~mingzhew">Mingzhe Wang</a>, <a href="https://zuoym15.github.io/">Yiming Zuo</a>, <a href="https://kkayan.com/">Karhan Kayan</a>, <a href="https://hermera.github.io/">Hongyu Wen</a>, <a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, <br>
-<a href="https://pvl.cs.princeton.edu/people.html">Yihan Wang</a>, <a href="http://www-personal.umich.edu/~alnewell/index.html">Alejandro Newell</a>, <a href="https://heilaw.github.io/">Hei Law</a>, <a href="https://imankgoyal.github.io/">Ankit Goyal</a>, <a href="https://yangky11.github.io/">Kaiyu Yang</a>, <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+<a href="http://araistrick.com/">Alexander Raistrick</a>*, 
+<a href="https://www.lahavlipson.com/">Lahav Lipson</a>*, 
+<a href="https://mazeyu.github.io/">Zeyu Ma</a>* (*equal contribution, alphabetical order) <br>
+<a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>, 
+<a href="https://www.cs.princeton.edu/~mingzhew">Mingzhe Wang</a>, 
+<a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
+<a href="https://kkayan.com/">Karhan Kayan</a>, 
+<a href="https://hermera.github.io/">Hongyu Wen</a>, 
+<a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, <br>
+<a href="https://pvl.cs.princeton.edu/people.html">Yihan Wang</a>, 
+<a href="http://www-personal.umich.edu/~alnewell/index.html">Alejandro Newell</a>, 
+<a href="https://heilaw.github.io/">Hei Law</a>, 
+<a href="https://imankgoyal.github.io/">Ankit Goyal</a>, 
+<a href="https://yangky11.github.io/">Kaiyu Yang</a>, 
+<a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
 Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
@@ -26,23 +76,39 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 }
 ```
 
-### Getting Started
-
-First, follow our [Installation Instructions](docs/Installation.md).
-
-Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image & ground truth similar to those shown below.
-
+<h3 align="center"><a href="https://arxiv.org/abs/2406.11824">Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation</a></h3>
 <p align="center">
-  <img src="docs/images/hello_world/Image0048_00_00.png" width="350" />
-  <img src="docs/images/hello_world/Depth0048_00_00.png" width="350" />
-  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="350" />
-  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="350" />
+<a href="http://araistrick.com/">Alexander Raistrick</a>*, 
+<a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>*, 
+<a href="https://kkayan.com/">Karhan Kayan</a>*, (*equal contribution, random order) <br>
+<a href="https://david-yan1.github.io/">David Yan</a>, 
+<a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
+<a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
+<a href="https://hermera.github.io/">Hongyu Wen</a>, 
+<a href="https://scholar.google.com/citations?user=q38OfTQAAAAJ&hl=en">Meenal Parakh</a>, <br>
+<a href="https://stamatisalex.github.io/">Stamatis Alexandropoulos</a>, 
+<a href="https://www.lahavlipson.com/">Lahav Lipson</a>, 
+<a href="https://mazeyu.github.io/">Zeyu Ma</a>,
+<a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 </p>
 
-### Documentation
+```
+@inproceedings{infinigen2024indoors,
+    author    = {Raistrick, Alexander and Mei, Lingjie and Kayan, Karhan and Yan, David and Zuo, Yiming and Han, Beining and Wen, Hongyu and Parakh, Meenal and Alexandropoulos, Stamatis and Lipson, Lahav and Ma, Zeyu and Deng, Jia},
+    title     = {Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2024},
+    pages     = {21783-21794}
+}
+```
+
+## Documentation
 
 - [Installation Guide](docs/Installation.md)
-- ["Hello World": Generate your first Infinigen scene](docs/HelloWorld.md)
+- ["Hello World": Generate your first Infinigen-Nature scene](docs/HelloWorld.md)
+- ["Hello Room": Generate your first Infinigen-Indoors scene](docs/HelloRoom.md)
 - [Configuring Infinigen](docs/ConfiguringInfinigen.md)
 - [Downloading pre-generated data](docs/PreGeneratedData.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
@@ -51,10 +117,10 @@ Next, see our ["Hello World" example](docs/HelloWorld.md) to generate an image &
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
 - [Generating fluid simulations](docs/GeneratingFluidSimulations.md)
 
-### Coming Soon
 Please see our [project roadmap](https://infinigen.org/roadmap) and follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
-### Contributing
+## Contributing
+
 We welcome contributions! You can contribute in many ways:
 - **Contribute code to this repository** - We welcome code contributions. More guidelines coming soon.
 - **Contribute procedural generators** - `infinigen/nodes/node_transpiler/dev_script.py` provides tools to convert artist-friendly [Blender Nodes](https://docs.blender.org/manual/en/2.79/render/blender_render/materials/nodes/introduction.html) into python code. Tutorials and guidelines coming soon.

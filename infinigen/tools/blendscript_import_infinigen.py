@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Alexander Raistrick
 
 
 '''
@@ -25,7 +30,7 @@ gin.enter_interactive_mode()
 from infinigen.core import init, surface
 from infinigen_examples import generate_nature 
 
-init.apply_gin_configs(Path(pwd)/'infinigen_examples/configs', ['base.gin'], skip_unknown=True)
+init.apply_gin_configs(Path(pwd)/'infinigen_examples/configs_nature', ['base.gin'], skip_unknown=True)
 surface.registry.initialize_from_gin()
 
 logging.basicConfig(

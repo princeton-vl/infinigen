@@ -10,12 +10,12 @@ dynamic = ["version"]
 
 description = "Infinite Photorealistic Worlds using Procedural Generation"
 keywords = [
-    "computer vision", 
-    "data generation", 
+    "computer vision",
+    "data generation",
     "procedural"
 ]
 classifiers = [
-    "Framework :: Blender", 
+    "Framework :: Blender",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10"
 ]
@@ -29,22 +29,29 @@ dependencies = [
     "geomdl",
     "gin_config>=0.5.0",
     "imageio",
+    "ipython",
+    "json5",
+    "landlab>=2.6.0",
     "matplotlib",
-    "numpy",
+    "networkx",
+    "numpy<2",
     "opencv-python",
+    "pandas",
     "psutil",
+    "pycparser==2.22",
+    "pyrender",
+    "python-fcl",
+    "Rtree",
     "scikit-image",
     "scikit-learn",
     "scipy",
+    "shapely",
     "submitit",
     "tqdm",
     "trimesh",
-    "pandas",
-    "landlab>=2.6.0", 
-    "pycparser", 
-    "pyrender",
-    "pandas",
     "vnoise",
+    "zarr",
+    "networkx",
 ]
 
 [project.optional-dependencies]
@@ -54,16 +61,25 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "pytest-timeout",
-    "ruff", 
+    "pytype",
+    "ruff",
+    "isort",
+    "tabulate", # for integration test results
 ]
+
+vis = [
+    "numba", # for ground truth visuals
+    "pyglet<2" # for trimesh_scene.show()
+]
+
 wandb = [
     "wandb"
 ]
 
 [tool.setuptools]
-# include-package-data is terribly named. package-data is still included if false, 
+# include-package-data is terribly named. package-data is still included if false,
 # just not the package-data setuptools would otherwise autogenerate from MANIFEST.in or version control
-include-package-data = false 
+include-package-data = false
 
 [tool.setuptools.packages.find]
 include = ["infinigen*"]
@@ -78,7 +94,7 @@ exclude = [
 
 "*" = ["*.gin", "*.txt", "*.json"]
 
-# Must be specified as paths relative to infinigen/ 
+# Must be specified as paths relative to infinigen/
 "infinigen" = [
     "terrain/**/*.soil", # extra files for SoilMachine
     "terrain/lib/**/*.so", # created by terrain compilation
@@ -93,14 +109,26 @@ version = {attr = "infinigen.__version__"}
 [tool.pytest.ini_options]
 testpaths = "tests"
 junit_family = "xunit2"
+markers = ["nature", "indoors", "skip_for_ci"]
 timeout = 240
+
+filterwarnings = [
+
+    "ignore:The value of the smallest subnormal for <class 'numpy.float:UserWarning",
+
+    # ignore warnings from landlab, not our problem
+    "ignore:pkg_resources is deprecated as an API:DeprecationWarning", 
+    "ignore:Importing from numpy.matlib is deprecated since 1.19.0:PendingDeprecationWarning",
+    "ignore:Please import `label` from the `scipy.ndimage` namespace; the `scipy.ndimage.measurements` namespace is deprecated and will be removed in SciPy 2.0.0:DeprecationWarning"
+
+]
 
 [tool.cibuildwheel]
 test-extras = ["dev"]
 test-command = "pytest tests"
 
 [tool.ruff]
-select = [
+lint.select = [
     "E9", 
     "F63", 
     "F7", 
@@ -116,18 +144,19 @@ line-length = 120 # will be reduced to 88 to match black soon
 exclude = [
     "*/dependencies/"
 ]
-ignore = [
+lint.ignore = [
     "E402", # we have lots of sys.path and opencv statements that must preceed imports, ignore for now
     "E501", # ignore line length for now
     "E701", # disable multi line statements until we enable black
     "F401", # unused imports are sometimes necessary for gin to work
     "E712", # some people think `if x == True` is more explicit, not going to force it
-] 
+]
 
-[tool.ruff.per-file-ignores]
+lint.mccabe.max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = []
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
-
-[tool.ruff.mccabe]
-max-complexity = 10
+[tool.pytype]
+inputs = ['infinigen', 'infinigen_examples']

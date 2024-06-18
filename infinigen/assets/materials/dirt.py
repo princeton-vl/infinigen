@@ -22,9 +22,9 @@ mod_name = "geo_dirt"
 name = "dirt"
 
 
-def shader_dirt(nw):
+def shader_dirt(nw, random_seed=0):
     nw.force_input_consistency()
-    dirt_base_color, dirt_roughness = geo_dirt(nw, selection=None, geometry=False)
+    dirt_base_color, dirt_roughness = geo_dirt(nw, selection=None, random_seed=random_seed, geometry=False)
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
@@ -108,7 +108,7 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             # label = "color_ramp_1_VAR",
             attrs={'clamp': True}
         )
-        
+
         #nw.new_node(
         #    Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]},
         #    label="color_ramp_1_VAR"
@@ -168,30 +168,30 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             input_kwargs={0: vector_math_5.outputs["Vector"], 1: value_3},
             attrs={"operation": "MULTIPLY"},
         )
-        
+
         noise_texture_3 = nw.new_node(Nodes.NoiseTexture,
             input_kwargs={'Vector': position, "W": nw.new_value(uniform(0, 10), "noise_texture_3_w"), 'Scale': sample_ratio(5, 3/4, 4/3)},
             attrs={"noise_dimensions": "4D"})
-        
+
         subtract = nw.new_node(Nodes.Math,
             input_kwargs={0: noise_texture_3.outputs["Fac"]},
             attrs={'operation': 'SUBTRACT'})
-        
+
         multiply_8 = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: subtract, 1: normal},
             attrs={'operation': 'MULTIPLY'})
-        
+
         value_5 = nw.new_node(Nodes.Value)
         value_5.outputs[0].default_value = 0.05
-        
+
         multiply_9 = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: multiply_8.outputs["Vector"], 1: value_5},
             attrs={'operation': 'MULTIPLY'})
-        
+
         noise_texture_4 = nw.new_node(Nodes.NoiseTexture,
             input_kwargs={'Vector': position, 'Scale': sample_ratio(20, 3/4, 4/3), "W": nw.new_value(uniform(0, 10), "noise_texture_4_w")},
             attrs={'noise_dimensions': '4D'})
-        
+
         colorramp_5 = nw.new_node(Nodes.ColorRamp,
             input_kwargs={'Fac': noise_texture_4.outputs["Fac"]})
         colorramp_5.color_ramp.elements.new(0)
@@ -204,22 +204,22 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp_5.color_ramp.elements[2].color = (0.5, 0.5, 0.5, 1.0)
         colorramp_5.color_ramp.elements[3].position = 1.0
         colorramp_5.color_ramp.elements[3].color = (1.0, 1.0, 1.0, 1.0)
-        
+
         subtract_1 = nw.new_node(Nodes.Math,
             input_kwargs={0: colorramp_5.outputs["Color"]},
             attrs={'operation': 'SUBTRACT'})
-        
+
         multiply_10 = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: subtract_1, 1: normal},
             attrs={'operation': 'MULTIPLY'})
-        
+
         value_6 = nw.new_node(Nodes.Value)
         value_6.outputs[0].default_value = 0.1
-        
+
         multiply_11 = nw.new_node(Nodes.VectorMath,
             input_kwargs={0: multiply_10.outputs["Vector"], 1: value_6},
             attrs={'operation': 'MULTIPLY'})
-        
+
         colorramp = nw.new_node(
             Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
         )
@@ -232,7 +232,7 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp.color_ramp.elements[2].color = (0.19, 0.03, 0.02, 1.0)
         sample_color(colorramp.color_ramp.elements[1].color, offset=0.05)
         sample_color(colorramp.color_ramp.elements[2].color, offset=0.05)
-        
+
         dirt_base_color = nw.new_node(
             Nodes.MixRGB,
             input_kwargs={
@@ -249,12 +249,12 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
         colorramp_3.color_ramp.elements[1].position = 0.768
         colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
-        
+
         dirt_roughness = colorramp_3
 
         offset = nw.add(multiply_11, multiply_9, vector_math_8)
 
-    if geometry:  
+    if geometry:
         noise_params = {"scale": ("uniform", 1, 5), "detail": 7, "roughness": 0.7, "zscale": ("power_uniform", -1, -0.5)}
         offset = nw.add(
             geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}),
@@ -290,4 +290,3 @@ if __name__ == "__main__":
         bpy.context.scene.render.image_settings.file_format='JPEG'
         bpy.ops.render.render(write_still=True)
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join('outputs', mat, 'landscape_surface_dev_dirt.blend'))
-        

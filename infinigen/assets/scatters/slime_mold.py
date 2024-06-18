@@ -8,20 +8,22 @@ import colorsys
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import assign_material, treeify
+from infinigen.assets.utils.mesh import treeify
+from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.nodegroup import geo_base_selection, geo_radius
 from infinigen.assets.utils.shortest_path import geo_shortest_path
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
-from infinigen.assets.utils.misc import build_color_ramp
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util import blender as butil
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 
 def shader_mold(nw: NodeWrangler, base_hue):
-    bright_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.04, .04)) % 1, uniform(.8, 1.), .8), 1
-    dark_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .6), .2), 1
+    bright_color = hsv2rgba((base_hue + uniform(-.04, .04)) % 1, uniform(.8, 1.), .8)
+    dark_color = hsv2rgba(base_hue, uniform(.4, .6), .2)
 
     color = build_color_ramp(nw, nw.musgrave(10), [.0, .3, .7, 1.],
                              [dark_color, dark_color, bright_color, bright_color])

@@ -1,7 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Alexander Raistrick, Yiming Zuo, Alejandro Newell
+# Authors: Alexander Raistrick, Yiming Zuo, Alejandro Newell, Lingjie Mei
 
 
 import pdb
@@ -32,9 +32,10 @@ from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core import surface
 
 from infinigen.assets.weather.cloud.generate import CloudFactory
-from ..utils.decorate import write_attribute
+from infinigen.assets.utils.decorate import write_attribute
 
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from ..utils.misc import toggle_show, toggle_hide
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +173,8 @@ class GenericTreeFactory(AssetFactory):
             butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
 
         tag_object(skin_obj, 'tree')
+        butil.apply_modifiers(skin_obj)
+
         return skin_obj
         
 
@@ -272,11 +275,13 @@ def make_leaf_collection(seed,
     col = make_asset_collection(child_factories, n_leaf, verbose=True, weights=weights)
     # if leaf_surface is not None:
     #     leaf_surface.apply(list(col.objects))
+    toggle_show(col)
     for obj in col.objects:
         if decimate_rate > 0:
             butil.modify_mesh(obj, 'DECIMATE', ratio=1.0-decimate_rate, apply=True)
         butil.apply_transform(obj, rot=True, scale=True)
         butil.apply_modifiers(obj)
+    toggle_hide(col)
     return col
 
 def random_leaf_collection(season, n=5):

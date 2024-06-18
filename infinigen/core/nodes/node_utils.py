@@ -36,13 +36,15 @@ def to_material(name, singleton):
     return registration_fn
 
 
-def to_nodegroup(name, singleton, type='GeometryNodeTree'):
+def to_nodegroup(name=None, singleton=False, type='GeometryNodeTree'):
     """Wrapper for initializing and registering new nodegroups."""
 
-    if singleton:
-        name += ' (no gc)'
-
     def registration_fn(fn):
+        nonlocal name
+        if name is None:
+            name = fn.__name__
+        if singleton:
+            name = name + ' (no gc)'
         def init_fn(*args, **kwargs):
             if singleton and name in bpy.data.node_groups:
                 return bpy.data.node_groups[name]
@@ -105,3 +107,17 @@ def resample_node_group(nw: NodeWrangler, scene_seed: int):
 
             if input_socket.name == "Seed":
                 input_socket.default_value = np.random.randint(1000)
+
+def build_color_ramp(nw, x, positions, colors, mode='HSV'):
+    cr = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': x})
+    cr.color_ramp.color_mode = mode
+    elements = cr.color_ramp.elements
+    size = len(positions)
+    assert len(colors) == size
+    if size > 2:
+        for _ in range(size - 2):
+            elements.new(0)
+    for i, (p, c) in enumerate(zip(positions, colors)):
+        elements[i].position = p
+        elements[i].color = c
+    return cr

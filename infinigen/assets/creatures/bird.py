@@ -37,7 +37,7 @@ from infinigen.assets.creatures.util.creature_util import offset_center
 from infinigen.assets.creatures.util import creature, hair as creature_hair, joining
 from infinigen.assets.creatures.util.animation.driver_wiggle import animate_wiggle_bones
 from infinigen.assets.creatures.util.animation import idle, run_cycle
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 from infinigen.core.placement import animation_policy
 

@@ -1,10 +1,10 @@
-manage_datagen_jobs.num_concurrent = 'ENVVAR_INFINIGEN_NUMCONCURRENT_TARGET'
+manage_datagen_jobs.num_concurrent = 100
 
 slurm_submit_cmd.slurm_account = 'ENVVAR_INFINIGEN_SLURMPARTITION' # change to partitionname string, or None
 slurm_submit_cmd.slurm_niceness = 10000 
 get_slurm_banned_nodes.config_path = 'ENVVAR_INFINIGEN_SLURM_EXCLUDENODES_LIST'
-jobs_to_launch_next.max_queued_total = 10
-jobs_to_launch_next.max_stuck_at_task = 8
+jobs_to_launch_next.max_queued_total = 40
+jobs_to_launch_next.max_stuck_at_task = 40
 
 # Combined (only used when `stereo_combined.gin` or similar is included)
 queue_combined.mem_gb = 12
@@ -17,7 +17,7 @@ renderbackup/queue_combined.mem_gb = 24
 queue_coarse.mem_gb = 24
 queue_coarse.cpus = 4
 queue_coarse.hours = 48
-queue_coarse.submit_cmd = @slurm_submit_cmd
+queue_coarse.submit_cmd = @coarse/slurm_submit_cmd
 queue_coarse.exclude_gpus = ['a6000', 'rtx_3090']
 
 # Fine terrain
@@ -33,6 +33,13 @@ queue_populate.hours = 24
 queue_populate.submit_cmd = @slurm_submit_cmd
 renderbackup/queue_populate.mem_gb = 24
 queue_populate.exclude_gpus = ['a6000', 'rtx_3090']
+
+# Export
+queue_export.mem_gb = 50
+queue_export.cpus = 4
+queue_export.hours = 24
+queue_export.submit_cmd = @slurm_submit_cmd
+queue_export.exclude_gpus = ['a6000', 'rtx_3090']
 
 # Rendering
 queue_render.submit_cmd = @slurm_submit_cmd

@@ -39,13 +39,13 @@ Please install anaconda or miniconda. Platform-specific instructions can be foun
 Then, install the following dependencies using the method of your choice. Examples are shown for Ubuntu, Mac ARM and Mac x86.
 ```bash
 # on Ubuntu / Debian / WSL / etc
-sudo apt-get install wget cmake g++ libgles2-mesa-dev libglew-dev libglfw3-dev libglm-dev
+sudo apt-get install wget cmake g++ libgles2-mesa-dev libglew-dev libglfw3-dev libglm-dev zlib1g-dev
 
 # on an Mac ARM (M1/M2/...)
-arch -arm64 brew install wget cmake llvm open-mpi libomp glm glew
+arch -arm64 brew install wget cmake llvm open-mpi libomp glm glew zlib
 
 # on  Mac x86_64 (Intel)
-brew install wget cmake llvm open-mpi libomp glm glew
+brew install wget cmake llvm open-mpi libomp glm glew zlib
 
 # on Conda. Useful when you don't have sudo permissions
 conda install conda-forge::gxx=11.4.0 mesalib glew glm menpo::glfw3
@@ -57,9 +57,7 @@ export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 ### Installation
 
-First, download infinigen and set up your environment.
-
-On Linux / Mac / WSL:
+First, download the repo and set up a conda environment (you may need to [install conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html))
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
@@ -69,18 +67,15 @@ conda activate infinigen
 
 Then, install the infinigen package using one of the options below:
 
-:warning: Mac-ARM (M1/M2) users should prefix their installation command with `arch -arm64`
-
 ```bash
-# Default install (includes CPU Terrain, and CUDA Terrain if available)
-pip install -e .
-
-# Minimal install (objects/materials only, no terrain or optional features)
+# Minimal install (No terrain or opengl GT, ok for Infinigen-Indoors or single-object generation) 
 INFINIGEN_MINIMAL_INSTALL=True pip install -e .
 
-# Enable OpenGL GT
-INFINIGEN_INSTALL_CUSTOMGT=True pip install -e .
+# Full install (Terrain & OpenGL-GT enabled, needed for Infinigen-Nature HelloWorld)
+pip install -e .
 
+# Developer install (includes pytest, ruff, other recommended dev tools)
+pip install -e ".[dev]"
 ```
 
 :exclamation: If you encounter any issues with the above, please add `-vv > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.

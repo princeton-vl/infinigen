@@ -222,8 +222,16 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': join_geometry_3})
     
+    # TODO replace this hacky postprocess transform
+    result = nw.new_node(Nodes.Transform, input_kwargs={
+        'Geometry': realize_instances, 
+        'Translation': (0.6, 0, 0), # position origin at ~center of dragonfly
+        'Rotation': (0, 0, -np.pi / 2),
+        'Scale': (kwargs['PostprocessScale'],) * 3
+    })
+
     group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Geometry': realize_instances})
+        input_kwargs={'Geometry': result})
 
 
 @gin.configurable
@@ -236,7 +244,6 @@ class DragonflyFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.genome = self.sample_geo_genome()
             y = U(20, 60)
-            self.scale = 0.015 * N(1, 0.1)
             self.policy = animation_policy.AnimPolicyRandomForwardWalk(
                 forward_vec=(1, 0, 0), speed=U(7, 10), 
                 step_range=(0.2, 7), yaw_dist=("uniform", -y, y), rot_vars=[0,0,0])
@@ -283,6 +290,7 @@ class DragonflyFactory(AssetFactory):
                 'Eye Color': eye_color_rgba,
                 'V': U(0.0, 0.5),
                 'Ring Length': U(0.0, 0.3),
+                'PostprocessScale': 0.015 * N(1, 0.1),
             }
 
     def create_placeholder(self, i, loc, rot):
@@ -306,12 +314,6 @@ class DragonflyFactory(AssetFactory):
         phenome = self.genome.copy()
 
         surface.add_geomod(obj, geometry_dragonfly, apply=False, input_kwargs=phenome)
-
-        obj = bpy.context.object
-        obj.scale *= N(1, 0.1) * self.scale
-
         obj.parent = placeholder
-        obj.location.x += 0.6
-        obj.rotation_euler.z = -np.pi / 2 # TODO: dragonfly should have been defined facing +X
 
         return obj

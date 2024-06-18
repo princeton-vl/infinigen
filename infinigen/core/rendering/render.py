@@ -1,7 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: 
+# Authors:
 # - Lahav Lipson - Render, flat shading, etc
 # - Alex Raistrick - Compositing
 # - Hei Law - Initial version
@@ -12,6 +12,7 @@ import logging
 import os
 import time
 import warnings
+from pathlib import Path
 
 import bpy
 import gin
@@ -104,11 +105,11 @@ def compositor_postprocessing(nw, source, show=True, autoexpose=False, autoexpos
     if distort > 0:
         source = nw.new_node(Nodes.LensDistortion,
             input_kwargs={'Image': source, 'Dispersion': distort})
-    
+
     if color_correct:
         source = nw.new_node(Nodes.BrightContrast,
             input_kwargs={'Image': source, 'Bright': 1.0, 'Contrast': 4.0})
-    
+
     if glare:
         source = nw.new_node(
             Nodes.Glare,
@@ -127,12 +128,12 @@ def compositor_postprocessing(nw, source, show=True, autoexpose=False, autoexpos
 
 @gin.configurable
 def configure_compositor_output(
-    nw, 
-    frames_folder, 
-    image_denoised, 
-    image_noisy, 
-    passes_to_save, 
-    saving_ground_truth, 
+    nw,
+    frames_folder,
+    image_denoised,
+    image_noisy,
+    passes_to_save,
+    saving_ground_truth,
 ):
 
     file_output_node = nw.new_node(Nodes.OutputFile, attrs={
@@ -262,8 +263,12 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
     imwrite(uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"), colorize_int_array(uniq_inst_array))
     uniq_inst_path.unlink()
-    
-def configure_compositor(frames_folder, passes_to_save, flat_shading):
+
+def configure_compositor(
+    frames_folder: Path, 
+    passes_to_save: list, 
+    flat_shading: bool,
+):
     compositor_node_tree = bpy.context.scene.node_tree
     nw = NodeWrangler(compositor_node_tree)
 

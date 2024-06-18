@@ -11,15 +11,18 @@ import colorsys
 import numpy as np
 from numpy.random import uniform, normal as N
 
-from infinigen.assets.utils.decorate import assign_material
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 from infinigen.assets.utils.object import data2mesh
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.core.util import blender as butil
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class LichenFactory(AssetFactory):
 
@@ -46,7 +49,7 @@ class LichenFactory(AssetFactory):
         v_perturb = uniform(1., 1.5)
 
         def map_perturb(h, s, v):
-            return *colorsys.hsv_to_rgb(h + h_perturb, s + s_perturb, v / v_perturb), 1.
+            return hsv2rgba(h + h_perturb, s + s_perturb, v / v_perturb)
 
         subsurface_ratio = .02
         roughness = 1.
@@ -93,6 +96,6 @@ class LichenFactory(AssetFactory):
         butil.apply_transform(obj)
         assign_material(obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen,
                                                             (self.base_hue + uniform(-.04, .04)) % 1))
-        
+
         tag_object(obj, 'lichen')
         return obj

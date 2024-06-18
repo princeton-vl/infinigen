@@ -11,11 +11,14 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.decorate import assign_material, join_objects, remove_vertices, write_attribute, \
+from infinigen.assets.utils.decorate import remove_vertices, write_attribute, \
     write_material_index
+from infinigen.assets.utils.misc import assign_material
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import bezier_curve, leaf, spin
 from infinigen.assets.utils.mesh import polygon_angles
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -26,7 +29,7 @@ from infinigen.core import surface
 from infinigen.core.surface import read_attr_data, shaderfunc_to_material
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class GrassesMonocotFactory(MonocotGrowthFactory):
 
@@ -136,7 +139,6 @@ class MaizeMonocotFactory(GrassesMonocotFactory):
             self.leaf_range = .1, .7
 
     def build_leaf(self, face_size):
-        super().build_leaf(face_size)
         x_anchors = np.array([0, uniform(.1, .2), uniform(.5, .7), 1.])
         y_anchors = np.array([0, uniform(.03, .06), uniform(.03, .06), 0])
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
@@ -238,7 +240,7 @@ class ReedMonocotFactory(GrassesMonocotFactory):
 
     @staticmethod
     def shader_ear(nw: NodeWrangler):
-        color = *colorsys.hsv_to_rgb(uniform(.06, .1), uniform(.2, .5), log_uniform(.2, .5)), 1
+        color = hsv2rgba(uniform(.06, .1), uniform(.2, .5), log_uniform(.2, .5))
         specular = uniform(.0, .2)
         clearcoat = 0 if uniform(0, 1) < .8 else uniform(.2, .5)
         noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': 50})

@@ -62,14 +62,24 @@ suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 all_data = defaultdict(dict)
 
-def sizeof_fmt(num, suffix="B"): #https://stackoverflow.com/a/1094933
+'''
+The following function s attributed to Sridhar Ratnakumar from Stack Overflow at https://stackoverflow.com/a/1094933
+and is licensed under CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.en#ref-appropriate-credit). 
+David Yan used this code WITHOUT modification. 
+'''
+def sizeof_fmt(num, suffix="B"): 
     for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
         if abs(num) < 1024.0:
             return f"{num:3.1f} {unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}"
 
-def td_to_str(td): #https://stackoverflow.com/a/64662985
+'''
+The following function s attributed to FObersteiner from Stack Overflow at https://stackoverflow.com/a/64662985
+and is licensed under CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.en#ref-appropriate-credit). 
+David Yan used this code WITHOUT modification. 
+'''
+def td_to_str(td):
     """
     convert a timedelta object td to a string in HH:MM:SS format.
     """

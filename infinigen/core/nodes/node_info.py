@@ -1,13 +1,10 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
-
-# Authors: all infinigen authors
-
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 import bpy
 
 import numpy as np
-
 
 class Nodes:
     """
@@ -24,14 +21,13 @@ class Nodes:
     Attribute = "ShaderNodeAttribute"
     CaptureAttribute = "GeometryNodeCaptureAttribute"
     AttributeStatistic = 'GeometryNodeAttributeStatistic'
-    TransferAttribute = "GeometryNodeAttributeTransfer" # removed in b3.4, still supported via compatibility.py
+    TransferAttribute = "GeometryNodeAttributeTransfer"  # removed in b3.4, still supported via compatibility.py
     DomainSize = 'GeometryNodeAttributeDomainSize'
     StoreNamedAttribute = "GeometryNodeStoreNamedAttribute"
     NamedAttribute = 'GeometryNodeInputNamedAttribute'
     SampleIndex = "GeometryNodeSampleIndex"
     SampleNearest = "GeometryNodeSampleNearest"
     SampleNearestSurface = "GeometryNodeSampleNearestSurface"
-
 
     # Color Menu
     ColorRamp = "ShaderNodeValToRGB"
@@ -47,7 +43,7 @@ class Nodes:
     CombineColor = 'ShaderNodeCombineColor'
     CompCombineColor = 'CompositorNodeCombineColor'
 
-    #bl3.5 additions
+    # bl3.5 additions
     SeparateComponents = 'GeometryNodeSeparateComponents'
     SetID = 'GeometryNodeSetID'
     InterpolateCurves = 'GeometryNodeInterpolateCurves'
@@ -86,6 +82,7 @@ class Nodes:
     ReverseCurve = 'GeometryNodeReverseCurve'
     SplineLength = 'GeometryNodeSplineLength'
     FillCurve = 'GeometryNodeFillCurve'
+    FilletCurve = 'GeometryNodeFilletCurve'
 
     # Curve Primitves
     QuadraticBezier = 'GeometryNodeCurveQuadraticBezier'
@@ -130,6 +127,10 @@ class Nodes:
     Integer = 'FunctionNodeInputInt'
     LightPath = 'ShaderNodeLightPath'
     ShortestEdgePath = 'GeometryNodeInputShortestEdgePaths'
+    EdgeNeighbors = 'GeometryNodeInputMeshEdgeNeighbors'
+    ShaderNodeNormalMap = 'ShaderNodeNormalMap'
+    HueSaturationValue = 'ShaderNodeHueSaturation'
+    BlackBody = "ShaderNodeBlackbody"
 
     # Instances
     RealizeInstances = "GeometryNodeRealizeInstances"
@@ -158,6 +159,7 @@ class Nodes:
     EdgePathToCurve = 'GeometryNodeEdgePathsToCurves'
     DeleteGeom = 'GeometryNodeDeleteGeometry'
     SplitEdges = 'GeometryNodeSplitEdges'
+    VertexNeighbors = "GeometryNodeInputMeshVertexNeighbors"
 
     # Mesh Primitives
     MeshCircle = "GeometryNodeMeshCircle"
@@ -176,7 +178,7 @@ class Nodes:
     Composite = "CompositorNodeComposite"
     Viewer = "CompositorNodeViewer"
 
-    # Point    
+    # Point
     DistributePointsOnFaces = "GeometryNodeDistributePointsOnFaces"
     PointsToVertices = "GeometryNodePointsToVertices"
     PointsToVolume = 'GeometryNodePointsToVolume'
@@ -188,6 +190,7 @@ class Nodes:
     VectorCurve = "ShaderNodeVectorCurve"
     VectorRotate = "ShaderNodeVectorRotate"
     AlignEulerToVector = "FunctionNodeAlignEulerToVector"
+    Displacement = "ShaderNodeDisplacement"
 
     # Volume
     VolumeToMesh = 'GeometryNodeVolumeToMesh'
@@ -213,6 +216,10 @@ class Nodes:
     ImageTexture = "GeometryNodeImageTexture"
     GradientTexture = 'ShaderNodeTexGradient'
     ShaderImageTexture = "ShaderNodeTexImage"
+    MagicTexture = "ShaderNodeTexMagic"
+    BrickTexture = 'ShaderNodeTexBrick'
+    CheckerTexture = "ShaderNodeTexChecker"
+    EnvironmentTexture = "ShaderNodeTexEnvironment"
 
     # Shaders
     MixShader = "ShaderNodeMixShader"
@@ -229,6 +236,8 @@ class Nodes:
     GlassBSDF = "ShaderNodeBsdfGlass"
     GlossyBSDF = "ShaderNodeBsdfGlossy"
     LayerWeight = "ShaderNodeLayerWeight"
+    UVMap = "ShaderNodeUVMap"
+    Bump = "ShaderNodeBump"
 
     # Layout
     Reroute = "NodeReroute"
@@ -248,7 +257,7 @@ class Nodes:
     SkyTexture = "ShaderNodeTexSky"
     Background = "ShaderNodeBackground"
 
-    #bl3.5 additions
+    # bl3.5 additions
     SeparateComponents = 'GeometryNodeSeparateComponents'
     SetID = 'GeometryNodeSetID'
     InterpolateCurves = 'GeometryNodeInterpolateCurves'
@@ -266,6 +275,7 @@ class Nodes:
     SetSplineResolution = 'GeometryNodeSetSplineResolution'
     OffsetPointinCurve = 'GeometryNodeOffsetPointInCurve'
     SplineResolution = 'GeometryNodeInputSplineResolution'
+
 
 '''
 Blender doesnt have an automatic way of discovering what properties
@@ -310,7 +320,7 @@ NODE_ATTRS_AVAILABLE = {
     Nodes.RandomValue: ['data_type'],
 
     Nodes.Switch: ['input_type'],
-    Nodes.TransferAttribute: ['data_type', 'mapping'], 
+    Nodes.TransferAttribute: ['data_type', 'mapping'],
     Nodes.SeparateGeometry: ['domain'],
     Nodes.MergeByDistance: ['mode'],
 
@@ -355,33 +365,36 @@ NODE_ATTRS_AVAILABLE = {
 SINGLETON_NODES = [Nodes.GroupInput, Nodes.GroupOutput, Nodes.MaterialOutput, Nodes.WorldOutput, Nodes.Viewer,
     Nodes.Composite, Nodes.RenderLayers, Nodes.LightOutput]
 
-# Map the type of a socket (ie, .outputs[0].type), to the corresponding value to put into a 
-# data_type attr, ie CaptureAttributes data_type. Frustratingly these are not directly related. 
+# Map the type of a socket (ie, .outputs[0].type), to the corresponding value to put into a
+# data_type attr, ie CaptureAttributes data_type. Frustratingly these are not directly related.
 NODETYPE_TO_DATATYPE = {
     'VALUE': 'FLOAT',
     'INT': 'INT',
     'VECTOR': 'FLOAT_VECTOR',
     'FLOAT_COLOR': 'RGBA',
-    'BOOLEAN': 'BOOLEAN'}
+    'BOOLEAN': 'BOOLEAN'
+}
 
 NODECLASS_TO_DATATYPE = {
     'NodeSocketFloat': 'FLOAT',
     'NodeSocketInt': 'INT',
     'NodeSocketVector': 'FLOAT_VECTOR',
     'NodeSocketColor': 'RGBA',
-    'NodeSocketBool': 'BOOLEAN'}
+    'NodeSocketBool': 'BOOLEAN'
+}
 
 DATATYPE_TO_NODECLASS = {v: k for k, v in NODECLASS_TO_DATATYPE.items()}
 NODECLASSES = [k for k in dir(bpy.types) if 'NodeSocket' in k]
 
 PYTYPE_TO_DATATYPE = {
-    int: 'INT', 
-    float: 'FLOAT', 
+    int: 'INT',
+    float: 'FLOAT',
     np.float32: 'FLOAT',
     np.float64: 'FLOAT',
-    np.array: 'FLOAT_VECTOR', 
+    np.array: 'FLOAT_VECTOR',
     bool: 'BOOLEAN'
 }
+DATATYPE_TO_PYTYPE = {v: k for k, v in PYTYPE_TO_DATATYPE.items()}
 
 # Each thing containing nodes has a different output node id
 OUTPUT_NODE_IDS = {
@@ -408,4 +421,5 @@ DATATYPE_FIELDS = {
     'INT': 'value',
     'FLOAT_VECTOR': 'vector',
     'FLOAT_COLOR': 'color',
-    'BOOLEAN': 'boolean', }
+    'BOOLEAN': 'value',
+}

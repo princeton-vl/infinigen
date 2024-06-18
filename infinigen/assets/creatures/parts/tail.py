@@ -16,7 +16,7 @@ from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 @node_utils.to_nodegroup('nodegroup_tail', singleton=False, type='GeometryNodeTree')
 def nodegroup_tail(nw: NodeWrangler):
@@ -39,7 +39,7 @@ class Tail(PartFactory):
 
     def sample_params(self):
         return {
-            'length_rad1_rad2': (N(1.5, 0.5), 0.05, 0.02),
+            'length_rad1_rad2': (N(0.5, 0.1), 0.05, 0.02),
             'angles_deg': np.array((31.39, 65.81, -106.93)) * N(1, 0.1),
             'aspect': N(1, 0.05)
         }

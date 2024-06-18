@@ -4,4 +4,4 @@
 # Authors: Zeyu Ma
 
 
-from .core import Terrain
+from .core import Terrain, hidden_in_viewport

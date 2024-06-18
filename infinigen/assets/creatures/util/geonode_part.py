@@ -3,48 +3,13 @@
 
 # Authors: Alexander Raistrick
 
-
-import pdb
-import bpy
-
 import numpy as np
 
 from infinigen.assets.creatures.util.creature import Part, Joint, infer_skeleton_from_mesh
 from infinigen.core.util import blender as butil
 
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes, geometry_node_group_empty_new
-
-def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
-
-    assert k in nodegroup.outputs
-    assert target_obj.type == 'MESH'
-
-    vert = butil.spawn_vert('extract_nodegroup_geo.temp')
-
-    butil.modify_mesh(vert, type='NODES', apply=False)
-    if vert.modifiers[0].node_group == None:
-        group = geometry_node_group_empty_new()
-        vert.modifiers[0].node_group = group
-    ng = vert.modifiers[0].node_group
-    nw = NodeWrangler(ng)
-    obj_inp = nw.new_node(Nodes.ObjectInfo, [target_obj])
-
-    group_input_kwargs = {**ng_params}
-    if 'Geometry' in nodegroup.inputs:
-        group_input_kwargs['Geometry'] = obj_inp.outputs['Geometry']
-    group = nw.new_node(nodegroup.name, input_kwargs=group_input_kwargs)
-
-    geo = group.outputs[k]
-
-    if k.endswith('Curve'): 
-        # curves dont export from geonodes well, convert it to a mesh
-        geo = nw.new_node(Nodes.CurveToMesh, [geo])
-
-    output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': geo})
-
-    butil.apply_modifiers(vert)
-    bpy.data.node_groups.remove(ng)
-    return vert
+from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 
 class GeonodePartFactory:
 
@@ -69,7 +34,12 @@ class GeonodePartFactory:
         with butil.TemporaryObject(self.base_obj()) as base_obj:
             ng = self.nodegroup_func()
             geo_outputs = [o for o in ng.outputs if o.bl_socket_idname == 'NodeSocketGeometry']
-            results = {o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=ng_params) for o in geo_outputs}
+            results = {
+                o.name: extract_nodegroup_geo(
+                    base_obj, ng, o.name, ng_params=ng_params
+                ) 
+                for o in geo_outputs
+            }
     
         return results
 

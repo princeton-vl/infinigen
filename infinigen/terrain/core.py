@@ -23,8 +23,7 @@ from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import SurfaceTypes, Attributes, Task, TerrainNames, ElementNames, Transparency, Materials, Assets, ElementTag, Tags, SelectionCriterions
-from infinigen.assets.utils.tag import tag_object, tag_system
-
+from infinigen.core.tagging import tag_object, tag_system
 from numpy import ascontiguousarray as AC
 
 logger = logging.getLogger(__name__)
@@ -87,6 +86,8 @@ class Terrain:
         main_terrain=TerrainNames.OpaqueTerrain,
         under_water=False,
         min_distance=1,
+        height_offset=0,
+        whole_bbox=None,
         populated_bounds=(-75, 75, -75, 75, -25, 55),
         bounds=(-500, 500, -500, 500, -500, 500),
     ):
@@ -128,6 +129,10 @@ class Terrain:
             logger.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
             transfer_scene_info(self, scene_infos)
             Terrain.instance = self
+
+        for e in self.elements:
+            self.elements[e].height_offset = height_offset
+            self.elements[e].whole_bbox = whole_bbox
 
     def __del__(self):
         self.cleanup()
@@ -393,11 +398,11 @@ class Terrain:
                 altitude = terrain_mesh.vertices[:, 2]
                 camera_selection_answers[q0] = terrain_mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
             else:
-                camera_selection_answers[q0] = np.zeros(len(terrain_mesh.vertices), dtype=bool)
+                camera_selection_answers[q0] = np.zeros(len(terrain_mesh.faces), dtype=bool)
                 for key in self.tag_dict:
                     if set(q).issubset(set(key.split('.'))):
-                        camera_selection_answers[q0] |= (terrain_mesh.vertex_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
-                camera_selection_answers[q0] = terrain_mesh.facewise_mean(camera_selection_answers[q0].astype(np.float64))
+                        camera_selection_answers[q0] |= (terrain_mesh.face_attributes["MaskTag"] == self.tag_dict[key]).reshape(-1)
+                camera_selection_answers[q0] = camera_selection_answers[q0].astype(np.float64)
 
         if np.abs(np.asarray(terrain_obj.matrix_world) - np.eye(4)).max() > 1e-4:
             raise ValueError(f"Not all transformations on {terrain_obj.name} have been applied. This function won't work correctly.")
@@ -421,22 +426,27 @@ class Terrain:
         vertexwise_min_dist = terrain_mesh.facewise_mean(terrain_mesh.vertex_attributes["vertexwise_min_dist"].reshape(-1))
 
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        terrain_bvh = BVHTree.FromObject(terrain_obj, depsgraph)
+        scene_bvh = BVHTree.FromObject(terrain_obj, depsgraph)
         delete(terrain_obj)
 
-        return terrain_bvh, camera_selection_answers, vertexwise_min_dist
+        return scene_bvh, camera_selection_answers, vertexwise_min_dist
 
 
     def tag_terrain(self, obj):
         if len(obj.data.vertices) == 0: return
+
+
+        mesh = Mesh(obj=obj)
         first_time = 1
         #initialize with element tag
         element_tag = np.zeros(len(obj.data.vertices), dtype=np.int32)
         obj.data.attributes[Attributes.ElementTag].data.foreach_get("value", element_tag)
+        element_tag_f = mesh.facewise_intmax(element_tag)
+
         for i in range(ElementTag.total_cnt):
-            mask_i = element_tag == i
+            mask_i = element_tag_f == i
             if mask_i.any():
-                obj.data.attributes.new(name=f"TAG_{ElementTag.map[i]}", type="FLOAT", domain='POINT')
+                obj.data.attributes.new(name=f"TAG_{ElementTag.map[i]}", type="FLOAT", domain='FACE')
                 obj.data.attributes[f"TAG_{ElementTag.map[i]}"].data.foreach_set("value", AC(mask_i.astype(np.float32)))
                 if first_time:
                     # "landscape" is a collective name for terrain and water
@@ -445,86 +455,29 @@ class Terrain:
                 else:
                     tag_object(obj)
         obj.data.attributes.remove(obj.data.attributes[Attributes.ElementTag])
-        # consider cave
-        if Tags.Cave in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Tags.Cave].data.foreach_get("value", tag)
-            tag = tag > 0.5
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Tags.Cave}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Tags.Cave}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
 
-        # consider liquid covered
-        if Tags.LiquidCovered in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Tags.LiquidCovered].data.foreach_get("value", tag)
-            tag = tag > 0.5
-            obj.data.attributes.remove(obj.data.attributes[Tags.LiquidCovered])
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Tags.LiquidCovered}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Tags.LiquidCovered}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
+        tag_thresholds = [
+            (Tags.Cave, 0.5, 0),
+            (Tags.LiquidCovered, 0.5, 1),
+            (Materials.Eroded, 0.1, 0),
+            (Materials.Lava, 0.1, 0),
+            (Materials.Snow, 0.1, 0),
+            (Tags.UpsidedownMountainsLowerPart, 0.5, 1),
+            (Materials.Beach, 0.5, 0),
+            (Tags.OutOfView, 0.5, 1),
+        ]
+            
+        for tag_name, threshold, to_remove in tag_thresholds:
+            if tag_name in obj.data.attributes.keys():
+                tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
+                obj.data.attributes[tag_name].data.foreach_get("value", tag)
+                tag_f = mesh.facewise_mean(tag)
+                tag_f = tag_f > threshold
+                if to_remove:
+                    obj.data.attributes.remove(obj.data.attributes[tag_name])
+                if tag_f.any():
+                    obj.data.attributes.new(name=f"TAG_{tag_name}", type="FLOAT", domain='FACE')
+                    obj.data.attributes[f"TAG_{tag_name}"].data.foreach_set("value", AC(tag_f.astype(np.float32)))
+                    tag_object(obj)
 
-        # consider erosion collection
-        if Materials.Eroded in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Materials.Eroded].data.foreach_get("value", tag)
-            tag = tag > 0.1
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Materials.Eroded}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Materials.Eroded}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-
-        # consider lava
-        if Materials.Lava in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Materials.Lava].data.foreach_get("value", tag)
-            tag = tag > 0.1
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{ElementNames.Liquid}.{Materials.Lava}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{ElementNames.Liquid}.{Materials.Lava}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-
-        # consider snow
-        if Materials.Snow in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Materials.Snow].data.foreach_get("value", tag)
-            tag = tag > 0.1
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Materials.Snow}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Materials.Snow}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-
-        # consider lower part of upsidedown mountain
-        if Tags.UpsidedownMountainsLowerPart in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Tags.UpsidedownMountainsLowerPart].data.foreach_get("value", tag)
-            obj.data.attributes.remove(obj.data.attributes[Tags.UpsidedownMountainsLowerPart])
-            tag = tag > 0.5
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Tags.UpsidedownMountainsLowerPart}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Tags.UpsidedownMountainsLowerPart}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-
-        # consider beach
-        if Materials.Beach in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Materials.Beach].data.foreach_get("value", tag)
-            tag = tag > 0.5
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Materials.Beach}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Materials.Beach}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-
-        if Tags.OutOfView in obj.data.attributes.keys():
-            tag = np.zeros(len(obj.data.vertices), dtype=np.float32)
-            obj.data.attributes[Tags.OutOfView].data.foreach_get("value", tag)
-            obj.data.attributes.remove(obj.data.attributes[Tags.OutOfView])
-            tag = tag > 0.5
-            if tag.any():
-                obj.data.attributes.new(name=f"TAG_{Tags.OutOfView}", type="FLOAT", domain='POINT')
-                obj.data.attributes[f"TAG_{Tags.OutOfView}"].data.foreach_set("value", AC(tag.astype(np.float32)))
-                tag_object(obj)
-        
         self.tag_dict = tag_system.tag_dict

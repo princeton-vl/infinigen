@@ -15,7 +15,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core import surface
 from infinigen.assets.cactus.base import BaseCactusFactory
 from infinigen.assets.trees.tree import build_radius_tree
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core import tagging
 
 
 class ColumnarBaseCactusFactory(BaseCactusFactory):
@@ -75,7 +75,6 @@ class ColumnarBaseCactusFactory(BaseCactusFactory):
         surface.add_geomod(obj, self.geo_star, apply=True, input_attributes=[None, 'radius'],
                            attributes=['selection'])
         surface.add_geomod(obj, geo_extension, apply=True, input_kwargs={'musgrave_dimensions': '2D'})
-        tag_object(obj, 'columnar_cactus')
         return obj
 
     @staticmethod

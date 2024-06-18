@@ -1,0 +1,67 @@
+surface.registry.ground_collection = [
+    ('mud', 2),
+    ('sand', 1),
+    ('cobble_stone', 1),
+    ('cracked_ground', 1),   
+    ('dirt', 1),
+    ('stone', 1),
+    ('soil', 1),
+    ('chunkyrock', 0),
+]
+
+surface.registry.beach = [
+    ('sand', 10),
+    ('cracked_ground', 1),
+    ('dirt', 1),
+    ('stone', 1),
+    ('soil', 1),
+]
+
+surface.registry.eroded = [
+    ('sand', 1),
+    ('cracked_ground', 1),
+    ('dirt', 1),
+    ('stone', 1),
+    ('soil', 1),
+]
+
+surface.registry.mountain_collection = [
+    ('mountain', 10),
+    ("sandstone", 2),
+]
+
+surface.registry.rock_collection = [
+    # ('aluminumdisp2tut', 0.5),
+    ('stone', 1),
+    ('mountain', 5),
+    # ('ice', 1),
+]
+
+surface.registry.liquid_collection = [
+    ('water', 0.95),
+    # ('lava', 0.05),
+]
+
+surface.registry.lava = [
+    ('lava', 1),
+]
+
+surface.registry.snow = [
+    ('snow', 1),
+]
+
+surface.registry.atmosphere = [
+    ('atmosphere_light_haze', 1),
+]
+
+surface.registry.bark = [
+    ('bark_birch', 0.1),
+    ('bark_random', 0.9),
+    #('wood', 0.01),
+]
+
+surface.registry.greenery = [
+    ('simple_greenery', 1),
+]
+
+surface.registry.smooth_categories = 0

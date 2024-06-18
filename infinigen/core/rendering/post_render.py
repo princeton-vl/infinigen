@@ -6,16 +6,22 @@
 
 import argparse
 import os
+import logging
 
 # ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"]="1" # This must be done BEFORE import cv2. 
 
 import cv2
 import colorsys
+
 import numpy as np
 from matplotlib import pyplot as plt
 from pathlib import Path
 from imageio import imwrite
+
+import flow_vis
+
+logger = logging.getLogger(__name__)
 
 def load_exr(path):
     assert Path(path).exists() and Path(path).suffix == ".exr", path
@@ -28,7 +34,6 @@ load_seg_mask = lambda p: load_exr(p)[...,2].astype(np.int64)
 load_uniq_inst = lambda p: load_exr(p).view(np.int32)
 
 def colorize_flow(optical_flow):
-    import flow_vis
     flow_uv = optical_flow[...,:2]
     flow_color = flow_vis.flow_to_color(flow_uv, convert_to_bgr=False)
     return flow_color

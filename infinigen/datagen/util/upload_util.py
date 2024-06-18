@@ -1,7 +1,9 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Lahav Lipson
+# Authors: 
+# - Alexander Raistrick: create_upload_payload, metadata
+# - Lahav Lipson: initial version
 
 import argparse
 import os

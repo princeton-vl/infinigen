@@ -1,10 +1,11 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: 
+# Authors:
 # - Lahav Lipson: logging formats, timer format
 # - Alex Raistrick: Timer
 # - Alejandro Newell: Suppress
+# - Lingjie Mei: disable
 
 
 import os, sys
@@ -23,7 +24,7 @@ class Timer:
 
     def __init__(self, desc, disable_timer=False, logger=None):
         self.disable_timer = disable_timer
-        if self.disable_timer:    
+        if self.disable_timer:
             return
         self.name = f'[{desc}]'
         if logger is None:
@@ -54,11 +55,14 @@ class Suppress():
         sys.stdout.flush()
         os.close(1)
         os.open(logfile, os.O_WRONLY)
+        self.level = logging.root.manager.disable
+        logging.disable(logging.CRITICAL)
 
     def __exit__(self, type, value, traceback):
         os.close(1)
         os.dup(self.old)
         os.close(self.old)
+        logging.disable(self.level)
 
 class LogLevel():
 
@@ -88,3 +92,7 @@ def create_text_file(log_dir, filename, text=None):
     (log_dir / filename).touch()
     if text is not None:
         (log_dir / filename).write_text(text)
+
+
+class BadSeedError(ValueError):
+    pass

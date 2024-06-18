@@ -1,3 +1,8 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Zeyu Ma
+
 from pathlib import Path
 
 import pytest
@@ -7,13 +12,16 @@ from infinigen.terrain import Terrain
 from infinigen.core.surface import registry
 from infinigen.core.util.organization import Task
 
-from utils import (
+from infinigen_examples.util.test_utils import (
     setup_gin, 
 )
 
+@pytest.mark.skip_for_ci
+@pytest.mark.nature
 def test_terrain_runs():
 
     setup_gin(
+        'infinigen_examples/configs_nature',
         configs=['fast_terrain_assets'],
         overrides=[
             'scene.caves_chance=1',
@@ -36,3 +44,4 @@ def test_terrain_runs():
     terrain.coarse_terrain()
 
     gin.clear_config()
+    gin.unlock_config()

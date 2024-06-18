@@ -14,7 +14,7 @@ from infinigen.assets.creatures.util import part_util
 from infinigen.core.util import blender as butil
 
 from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 def square(x):
     return x * x

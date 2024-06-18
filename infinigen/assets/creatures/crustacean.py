@@ -22,14 +22,17 @@ from infinigen.assets.creatures.parts.crustacean.fin import CrustaceanFinFactory
 from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory, LobsterLegFactory
 from infinigen.assets.creatures.parts.crustacean.body import CrabBodyFactory, LobsterBodyFactory
 from infinigen.assets.creatures.parts.crustacean.tail import CrustaceanTailFactory
-from infinigen.assets.utils.decorate import assign_material, read_material_index, write_material_index
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.assets.utils.decorate import read_material_index, write_material_index
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import read_attr_data, shaderfunc_to_material
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 n_legs = 4
 n_limbs = 5
@@ -120,10 +123,10 @@ def build_base_hue():
 def shader_crustacean(nw: NodeWrangler, params):
     value_shift = log_uniform(2, 10)
     base_hue = params['base_hue']
-    bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.8, 1.), log_uniform(.02, .05) * value_shift), 1
-    dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.05, .05)) % 1, uniform(.8, 1.),
-                                      log_uniform(.01, .02) * value_shift), 1
-    light_color = *colorsys.hsv_to_rgb(base_hue, uniform(.0, .4), log_uniform(.2, 1.)), 1
+    bright_color = hsv2rgba(base_hue, uniform(.8, 1.), log_uniform(.02, .05) * value_shift)
+    dark_color = hsv2rgba((base_hue + uniform(-.05, .05)) % 1, uniform(.8, 1.),
+                          log_uniform(.01, .02) * value_shift)
+    light_color = hsv2rgba(base_hue, uniform(.0, .4), log_uniform(.2, 1.))
     specular = uniform(.6, .8)
     specular_tint = uniform(0, 1)
     clearcoat = uniform(.2, .8)

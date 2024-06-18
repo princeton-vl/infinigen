@@ -99,7 +99,7 @@ def geo_instance_scatter(
     scaling=Vector((1, 1, 1)), normal=None, normal_fac=1, rotation_offset=None,
     selection=True, taper_scale=False, taper_density=False,
     ground_offset=0, instance_index=None,
-    transform_space='RELATIVE', reset_children=True
+    transform_space='RELATIVE', reset_children=True, realize=False
 ):
     base_geo = nw.new_node(Nodes.ObjectInfo, [base_obj], attrs={'transform_space':transform_space}).outputs['Geometry']
 
@@ -174,15 +174,16 @@ def geo_instance_scatter(
     if ground_offset != 0:
         instances = nw.new_node(Nodes.TranslateInstances, [instances],
             input_kwargs={ "Translation": nw.combine(0, 0, point_fields['ground_offset']), "Local Space": True})
-
-    instances = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': instances, 'Shade Smooth': False})
+    
+    if realize:
+        instances = nw.new_node(Nodes.RealizeInstances, [instances])
 
     nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': instances})
 
 def scatter_instances(
     collection, 
     density=None, vol_density=None, max_density=5000,
-    scale=None, scale_rand=0, scale_rand_axi=0,
+    scale=None, scale_rand=0, scale_rand_axi=0, apply_geo=False,
     **kwargs
 ):
     
@@ -217,6 +218,6 @@ def scatter_instances(
     scatter_obj = butil.spawn_vert(name)
     kwargs.update(dict(collection=collection, density=density))
     with CountInstance(name):
-        surface.add_geomod(scatter_obj, geo_instance_scatter, apply=False, input_kwargs=kwargs)
+        surface.add_geomod(scatter_obj, geo_instance_scatter, apply=apply_geo, input_kwargs=kwargs)
     butil.put_in_collection(scatter_obj, butil.get_collection('scatters'))
     return scatter_obj

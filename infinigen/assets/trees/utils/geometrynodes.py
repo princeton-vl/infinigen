@@ -3,8 +3,6 @@
 
 # Authors: Alejandro Newell
 
-
-import imp
 import bpy
 import numpy as np
 

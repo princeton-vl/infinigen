@@ -13,14 +13,14 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 from .cap import MushroomCapFactory
 from .stem import MushroomStemFactory
-from infinigen.assets.utils.object import origin2lowest
+from infinigen.assets.utils.object import join_objects, origin2lowest
 from infinigen.core.placement.factory import AssetFactory
-from ..utils.decorate import join_objects
-from ..utils.misc import build_color_ramp, log_uniform
-
+from infinigen.assets.utils.object import join_objects
+from infinigen.core.util.random import log_uniform
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class MushroomGrowthFactory(AssetFactory):
-    
+
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):

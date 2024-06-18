@@ -12,7 +12,8 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
-from infinigen.assets.utils.decorate import assign_material, read_co, subsurface2face_size, write_co
+from infinigen.assets.utils.decorate import read_co, subsurface2face_size, write_co
+from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.draw import make_circular_interp
 import infinigen.core.util.blender as butil
 from infinigen.core.placement.factory import AssetFactory
@@ -21,10 +22,11 @@ from infinigen.assets.utils.object import mesh2obj, data2mesh
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.core.nodes.node_wrangler import NodeWrangler, Nodes
 from infinigen.core import surface
-from infinigen.assets.utils.misc import build_color_ramp, log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
-
+from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 class SeaweedFactory(AssetFactory):
 
@@ -107,7 +109,7 @@ class SeaweedFactory(AssetFactory):
         v_perturb = log_uniform(1., 2)
 
         def map_perturb(h, s, v):
-            return *colorsys.hsv_to_rgb(h + h_perturb, s + s_perturb, v / v_perturb), 1.
+            return hsv2rgba(h + h_perturb, s + s_perturb, v / v_perturb)
 
         subsurface_ratio = .01
         roughness = .8

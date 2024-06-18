@@ -39,12 +39,12 @@ class RandomStageExecutor:
                 logger.info(f'Skipping run_stage({name}...) due to unmet {prereq=}')
                 return
         with FixedSeed(int_hash((self.scene_seed, name, 0))):
+            if not self.params.get(f'{name}_enabled', True):
+                logger.debug(f'Not running {name} due to manually set not enabled')
+                return False      
             if use_chance and np.random.uniform() > self.params[f'{name}_chance']:
                 logger.debug(f'Not running {name} due to random chance')
                 return False
-            if not use_chance and not self.params.get(f'{name}_enabled', True):
-                logger.debug(f'Not running {name} due to manually set not enabled')
-                return False      
         return True
     
     def save_results(self, path):

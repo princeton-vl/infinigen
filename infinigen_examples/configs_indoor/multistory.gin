@@ -1,0 +1,14 @@
+execute_tasks.generate_resolution = (720, 720)
+get_sensor_coords.H = 720
+get_sensor_coords.W = 720
+MultistoryRoomSolver.n_divide_trials = 100
+
+compose_indoors.terrain_enabled=False
+compose_indoors.solve_large_enabled=False
+compose_indoors.solve_small_enabled=False
+compose_indoors.solve_medium_enabled=False
+
+compose_indoors.topview=True
+compose_indoors.topview_rot_x=45
+compose_indoors.topview_rot_z=-45
+Solver.multistory=True

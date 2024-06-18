@@ -7,7 +7,6 @@
 
 import colorsys
 
-import bmesh
 import numpy as np
 import bpy
 from mathutils import Vector
@@ -17,10 +16,13 @@ from scipy.interpolate import interp1d
 from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.nodegroup import geo_base_selection
-from infinigen.assets.utils.object import data2mesh, mesh2obj, new_circle, new_empty, new_icosphere, origin2highest
-from infinigen.assets.utils.decorate import assign_material, geo_extension, join_objects, read_co, remove_vertices, \
+from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_circle, new_empty, \
+    new_icosphere, origin2highest
+from infinigen.assets.utils.decorate import geo_extension, read_co, remove_vertices, \
     subsurface2face_size, write_attribute, write_co
-from infinigen.assets.utils.misc import log_uniform, make_circular, make_circular_angle
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -30,7 +32,7 @@ import infinigen.core.util.blender as butil
 
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class JellyfishFactory(AssetFactory):
@@ -284,10 +286,10 @@ class JellyfishFactory(AssetFactory):
     def shader_jellyfish(nw: NodeWrangler, base_hue, saturation, transparency):
         layerweight = nw.build_float_curve(nw.new_node(Nodes.LayerWeight, input_kwargs={'Blend': 0.3}),
                                        [(0, 0), (.4, 0), (uniform(.6, .9), 1), (1, 1)])
-        emission_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .6), 1), 1
-        transparent_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.1, .1)) % 1, saturation, 1), 1
+        emission_color = hsv2rgba(base_hue, uniform(.4, .6), 1)
+        transparent_color = hsv2rgba((base_hue + uniform(-.1, .1)) % 1, saturation, 1)
         emission = nw.new_node(Nodes.Emission, [emission_color])
-        glossy = nw.new_node(Nodes.GlossyBSDF, 
+        glossy = nw.new_node(Nodes.GlossyBSDF,
             input_kwargs={'Color': transparent_color, 'Roughness': uniform(0.8, 1)})
         transparent = nw.new_node(Nodes.TransparentBSDF, [transparent_color])
         mix_shader = nw.new_node(Nodes.MixShader, [0.5, glossy, transparent])

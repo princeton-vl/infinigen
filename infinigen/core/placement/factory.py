@@ -1,7 +1,8 @@
 # Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
-# Authors: 
+# Authors:
 # - Alexander Raistrick: AssetFactory, make_asset_collection
 # - Lahav Lipson: quickly_resample
 
@@ -17,13 +18,14 @@ from tqdm import trange
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
 from . import detail
+from ...assets.utils.object import center
 
 logger = logging.getLogger(__name__)
+
 
 class AssetFactory:
 
     def __init__(self, factory_seed=None, coarse=False):
-
         self.factory_seed = factory_seed
         if self.factory_seed is None:
             self.factory_seed = np.random.randint(1e9)
@@ -51,8 +53,11 @@ class AssetFactory:
 
     def asset_parameters(self, distance: float, vis_distance: float) -> dict:
         # Optionally, override to determine the **params input of create_asset w.r.t. camera distance
-        return {'face_size': detail.target_face_size(distance), 'distance': distance,
-                'vis_distance': vis_distance}
+        return {
+            'face_size': detail.target_face_size(distance),
+            'distance': distance,
+            'vis_distance': vis_distance
+        }
 
     def create_asset(self, **params) -> bpy.types.Object:
         # Override this function to produce a high detail asset
@@ -78,16 +83,20 @@ class AssetFactory:
             obj.rotation_euler = rot
         else:
             logger.debug(f'Not assigning placeholder {obj.name=} location due to presence of'
-                'location-sensitive constraint, typically a follow curve')
+                         'location-sensitive constraint, typically a follow curve')
         obj.name = f'{repr(self)}.spawn_placeholder({i})'
 
         if obj.parent is not None:
-            logger.warning(f'{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated')
+            logger.warning(
+                f'{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated')
 
         return obj
 
     def spawn_asset(self, i, placeholder=None, distance=None, vis_distance=0, loc=(0, 0, 0), rot=(0, 0, 0),
                     **kwargs):
+
+        if not isinstance(i, int):
+            raise TypeError(f'{i=} {type(i)=}, expected int')
         # Not intended to be overridden - override create_asset instead
 
         logger.debug(f'{self}.spawn_asset({i}...)')
@@ -98,13 +107,14 @@ class AssetFactory:
         if self.coarse:
             raise ValueError('Attempted to spawn_asset() on an AssetFactory(coarse=True)')
 
-        if placeholder is None:
+        user_provided_placeholder = placeholder is not None
+
+        if user_provided_placeholder:
+            assert loc == (0, 0, 0) and rot == (0, 0, 0)
+        else:
             placeholder = self.spawn_placeholder(i=i, loc=loc, rot=rot)
             self.finalize_placeholders([placeholder])
-            keep_placeholder = False
-        else:
-            keep_placeholder = True
-            assert loc == (0, 0, 0) and rot == (0, 0, 0)
+            
 
         gc_targets = [bpy.data.meshes, bpy.data.textures, bpy.data.node_groups, bpy.data.materials]
 
@@ -115,7 +125,7 @@ class AssetFactory:
 
         obj.name = f'{repr(self)}.spawn_asset({i})'
 
-        if keep_placeholder:
+        if user_provided_placeholder:
             if obj is not placeholder:
                 if obj.parent is None:
                     butil.parent_to(obj, placeholder, no_inverse=True)
@@ -130,10 +140,12 @@ class AssetFactory:
         return obj
 
     __call__ = spawn_asset  # for convinience
-    
 
-def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, verbose=True, **kwargs):
+    def post_init(self):
+        pass
 
+def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, verbose=True, centered=False,
+                          **kwargs):
     if not isinstance(spawn_fns, list):
         spawn_fns = [spawn_fns]
     if weights is None:
@@ -151,13 +163,16 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
     for i in r:
         fn_idx = np.random.choice(np.arange(len(spawn_fns)), p=weights)
         obj = spawn_fns[fn_idx](i=i, **kwargs)
+        if centered:
+            obj.location = -center(obj)
+            butil.apply_transform(obj, True)
         objs[fn_idx].append(obj)
-    
+
     for os, f in zip(objs, spawn_fns):
         if hasattr(f, 'finalize_assets'):
             f.finalize_assets(os)
 
-    objs = sum(objs, start=[])    
+    objs = sum(objs, start=[])
 
     if as_list:
         return objs
@@ -166,3 +181,4 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
         col.hide_viewport = True
         col.hide_render = True
         return col
+

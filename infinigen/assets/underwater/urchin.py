@@ -10,16 +10,18 @@ from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
-from infinigen.assets.utils.object import new_icosphere
-from infinigen.assets.utils.decorate import assign_material, geo_extension, separate_loose
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.assets.utils.object import new_icosphere, separate_loose
+from infinigen.assets.utils.decorate import geo_extension
+from infinigen.assets.utils.misc import assign_material
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import adapt_mesh_resolution
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class UrchinFactory(AssetFactory):
@@ -88,7 +90,7 @@ class UrchinFactory(AssetFactory):
         transmission = uniform(.95, .99)
         subsurface = uniform(.1, .2)
         roughness = uniform(.5, .8)
-        color = *colorsys.hsv_to_rgb(base_hue, uniform(.5, 1.), log_uniform(.05, 1.)), 1
+        color = hsv2rgba(base_hue, uniform(.5, 1.), log_uniform(.05, 1.))
         principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
             'Base Color': color,
             'Roughness': roughness,
@@ -101,7 +103,7 @@ class UrchinFactory(AssetFactory):
     @staticmethod
     def shader_girdle(nw: NodeWrangler, base_hue):
         roughness = uniform(.5, .8)
-        color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .5), log_uniform(.02, .1)), 1
+        color = hsv2rgba(base_hue, uniform(.4, .5), log_uniform(.02, .1))
         principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
                                       input_kwargs={'Base Color': color, 'Roughness': roughness})
         return principled_bsdf
@@ -109,7 +111,7 @@ class UrchinFactory(AssetFactory):
     @staticmethod
     def shader_base(nw: NodeWrangler, base_hue):
         roughness = uniform(.5, .8)
-        color = *colorsys.hsv_to_rgb(base_hue, uniform(.8, 1.), log_uniform(.01, .02)), 1
+        color = hsv2rgba(base_hue, uniform(.8, 1.), log_uniform(.01, .02))
         principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
                                       input_kwargs={'Base Color': color, 'Roughness': roughness})
         return principled_bsdf

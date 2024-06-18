@@ -34,6 +34,7 @@ from shutil import which
 import pandas as pd
 import numpy as np
 import submitit
+import submitit.core.utils  
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 ORIG_SYS_PATH = list(sys.path) # Make a new instance of sys.path
@@ -400,8 +401,6 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
         return "SIGKILL: 9 (out-of-memory, probably)"
     elif "SIGCONT" in error_log:
         return "SIGCONT (timeout?)"
-    elif "srun: error" in error_log:
-        return "srun error"
 
     if not stdout_file.exists():
         return f'{stdout_file} not found'
@@ -409,13 +408,29 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
         return f'{stderr_file} not found'
 
     output_text = f"{stdout_file.read_text()}\n{stderr_file.read_text()}\n"
-    matches = re.findall("(Error:[^\n]+)\n", output_text)
+    matches = re.findall("([^\.\n]*[Ee]rror):(.*)\n", output_text)
 
-    ignore_errors = [
-        'Error: Not freed memory blocks',
+    ignore_errors = {
+
+        # happens for every failed submitit job, not informative to report in summary
+        "FailedProcessError", 
+        "CalledProcessError",
+
+        # happens for every failed slurm job on IONIC
+        "srun: error",
+        "FailedJobError",
+    }
+
+    ignore_messages = [
+        "Not freed memory blocks"
     ]
 
-    matches = [m for m in matches if not any(w in m for w in ignore_errors)]
+    matches = [
+        f'{m[0]}: {m[1]}' for m in matches if not (
+            m[0] in ignore_errors
+            or any(x in m[1] for x in ignore_messages)
+        )
+    ]
 
     if len(matches):
         return ','.join(matches)

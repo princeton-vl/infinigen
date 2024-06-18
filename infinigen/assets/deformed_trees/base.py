@@ -11,7 +11,8 @@ from numpy.random import uniform
 
 from infinigen.assets.trees import TreeFactory
 from infinigen.assets.trees.generate import GenericTreeFactory, random_species
-from infinigen.assets.utils.misc import log_uniform
+from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.random import log_uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -49,7 +50,7 @@ class BaseDeformedTreeFactory(AssetFactory):
         ratio = nw.new_node(Nodes.WaveTexture, [position],
                             input_kwargs={'Scale': uniform(10, 20), 'Distortion': uniform(4, 10)},
                             attrs={'wave_type': 'RINGS', 'rings_direction': 'Z', 'wave_profile': 'SAW'})
-        bright_color = *colorsys.hsv_to_rgb(base_hue, uniform(.4, .8), log_uniform(.2, .8)), 1.
+        bright_color = hsv2rgba(base_hue, uniform(.4, .8), log_uniform(.2, .8))
         dark_color = *colorsys.hsv_to_rgb((base_hue + uniform(-.02, .02)) % 1, uniform(.4, .8),
                                           log_uniform(.02, .05)), 1.
         color = nw.new_node(Nodes.MixRGB, [ratio, dark_color, bright_color])

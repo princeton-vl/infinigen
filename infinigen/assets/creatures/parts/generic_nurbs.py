@@ -20,7 +20,7 @@ from infinigen.assets.creatures.util.geometry import lofting
 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
-from infinigen.assets.utils.tag import tag_object, tag_nodegroup
+from infinigen.core.tagging import tag_object, tag_nodegroup
 
 NURBS_BASE_PATH = Path(__file__).parent/'nurbs_data'
 NURBS_KEYS = [p.stem for p in NURBS_BASE_PATH.iterdir()]

@@ -1,9 +1,0 @@
-compose_scene.inview_distance = 30
-
-full/configure_render_cycles.min_samples = 50
-full/configure_render_cycles.num_samples = 300
-
-configure_blender.motion_blur = False
-configure_blender.use_dof = True
-
-full/render_image.passes_to_save = []

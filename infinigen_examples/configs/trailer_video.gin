@@ -1,8 +1,0 @@
-export.spherical = False # use OcMesher
-AnimPolicyRandomWalkLookaround.speed=('uniform', 1, 2.5), 
-AnimPolicyRandomWalkLookaround.step_speed_mult=('uniform', 0.5, 2),
-AnimPolicyRandomWalkLookaround.yaw_sampler=('uniform',-20, 20), 
-AnimPolicyRandomWalkLookaround.step_range=('clip_gaussian', 3, 5, 0.5, 10),
-AnimPolicyRandomWalkLookaround.rot_vars=(5, 0, 5),
-AnimPolicyRandomWalkLookaround.motion_dir_zoff=('clip_gaussian', 0, 90, 0, 180)
-execute_tasks.fps = 16

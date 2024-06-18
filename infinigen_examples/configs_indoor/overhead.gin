@@ -1,0 +1,15 @@
+compose_indoors.invisible_room_ceilings_enabled = True
+compose_indoors.hide_other_rooms_enabled = True  
+
+compose_indoors.pose_cameras_enabled = False
+compose_indoors.overhead_cam_enabled = True 
+
+compose_indoors.terrain_enabled = False
+compose_indoors.nature_backdrop_enabled = False
+
+compose_indoors.lights_off_chance = 0.0
+
+compose_indoors.skirting_floor_chance = 0.0
+compose_indoors.skirting_ceiling_chance = 0.0
+
+
