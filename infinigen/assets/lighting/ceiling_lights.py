@@ -119,8 +119,11 @@ class CeilingLightFactory(AssetFactory):
         
         return obj
 
+    def finalize_assets(self, assets):
         if self.scratch:
+            self.scratch.apply(assets)
         if self.edge_wear:
+            self.edge_wear.apply(assets)
 
 
 @node_utils.to_nodegroup('nodegroup_ceiling_light_geometry', singleton=True, type='GeometryNodeTree')
