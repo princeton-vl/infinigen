@@ -5,6 +5,7 @@
 # - Alexander Raistrick: state, print, to_json
 # - Karhan Kayan: add dof / trimesh
 from __future__ import annotations
+from dataclasses import dataclass, field
 import typing
 import pickle
 import copy
@@ -28,17 +29,23 @@ from infinigen.core.constraints import (
 )
 from .geometry import parse_scene
 import trimesh
+from infinigen.core import tags as t
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class RelationState:
+    relation: cl.Relation
     target_name: str
     child_plane_idx: int = None
     parent_plane_idx: int = None
+
 @dataclass
 class ObjectState:
 
     obj: bpy.types.Object
     generator: typing.Optional[AssetFactory] = None
+    tags: set = field(default_factory=set)
     relations: list[RelationState] = field(default_factory=list)
     dof_matrix_translation: np.array = None
     dof_rotation_axis: np.array = None
@@ -53,6 +60,7 @@ class ObjectState:
     active: bool = True 
 
     def __post_init__(self):
+        assert not t.contradiction(self.tags)
         assert not any(isinstance(r.relation, cl.NegatedRelation) for r in self.relations), self.relations
 
     def __repr__(self):
@@ -179,6 +187,7 @@ def state_from_dummy_scene(col: bpy.types.Collection) -> State:
     objs = {}
     for obj in col.all_objects:
         obj.rotation_mode = 'AXIS_ANGLE'
+        tags = {t.Semantics(c.name) for c in col.children if obj.name in c.objects}
         tags.add(t.SpecificObject(obj.name))
         objs[obj.name] = ObjectState(
             obj=obj,
