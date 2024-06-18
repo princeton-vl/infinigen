@@ -4,6 +4,8 @@
 
 # Authors: Alexander Raistrick, Karhan Kayan
 
+from infinigen.core.tags import Semantics, Negated
+from .types import Node
 
 from .expression import (
     Expression,
