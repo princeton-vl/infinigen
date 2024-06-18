@@ -31,11 +31,13 @@ from infinigen.assets.material_assignments import AssetList
 
 
 class SinkFactory(AssetFactory):
+    def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.], upper_height=None):
         super(SinkFactory, self).__init__(factory_seed, coarse=coarse)
 
         self.dimensions = dimensions
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
+            self.params = self.sample_parameters(dimensions, upper_height=upper_height)
             self.material_params, self.scratch, self.edge_wear = self.get_material_params()
         self.params.update(self.material_params)
 
@@ -65,8 +67,11 @@ class SinkFactory(AssetFactory):
         return wrapped_params, scratch, edge_wear
 
     @staticmethod
+    def sample_parameters(dimensions, upper_height, use_default=False, open=False):
+        width = U(0.4, 1.0)
         depth = U(0.4, 0.5)
         curvature = U(1.0, 1.0)
+        if upper_height is None:
             upper_height = U(0.2, 0.4)
         lower_height = U(0.00, 0.01)
         hole_radius = U(0.02, 0.05)
