@@ -54,6 +54,7 @@ class FruitContainerFactory(AssetFactory):
     def cover(self):
         return FruitCover(self.cover_seed)
 
+    def create_placeholder(self, **params):
         box = self.base_factory.create_placeholder(**params)
         co = read_co(box)
         co[co[:, -1] > .02, -1] += .05
@@ -61,6 +62,7 @@ class FruitContainerFactory(AssetFactory):
         write_co(box, co)
         butil.apply_transform(box)
         return box
+
     def create_asset(self, **params) -> bpy.types.Object:
         return self.base_factory.create_asset(**params)
 
