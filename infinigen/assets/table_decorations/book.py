@@ -5,6 +5,7 @@
 import bpy
 import bmesh
 import numpy as np
+import math
 import trimesh
 from numpy.random import uniform
 from trimesh import proximity
@@ -153,6 +154,8 @@ class BookColumnFactory(AssetFactory):
         butil.apply_transform(obj, True)
         return obj
 
+def rotate(theta, x, y):
+    return x * math.cos(theta) - y * math.sin(theta), x * math.sin(theta) + y * math.cos(theta)
 
 class BookStackFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -165,6 +168,20 @@ class BookStackFactory(AssetFactory):
             self.max_skewness = max(f.skewness for f in self.base_factories)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        x_lo = -.15 * self.max_rel_scale / 2
+        x_hi = .15 * self.max_rel_scale / 2
+        y_lo = -.15 * self.max_rel_scale / 2 * self.max_skewness
+        y_hi = .15 * self.max_rel_scale / 2 * self.max_skewness
+
+        theta = self.max_angle
+        x_1, y_1 = rotate(theta, x_lo, y_lo)
+        x_2, y_2 = rotate(theta, x_lo, y_hi)
+        x_3, y_3 = rotate(theta, x_hi, y_lo)
+        x_4, y_4 = rotate(theta, x_hi, y_hi)
+
+        return new_bbox(min(min([x_1,x_2,x_3,x_4]), x_lo ), max(max([x_1,x_2,x_3,x_4]), x_hi),
+                        min(min([y_1,y_2,y_3,y_4]), y_lo), max(max([y_1,y_2,y_3,y_4]), y_hi), 
+                        0, self.n_books * .02 * self.max_rel_scale * 0.8)
 
     def create_asset(self, **params) -> bpy.types.Object:
         books = []
