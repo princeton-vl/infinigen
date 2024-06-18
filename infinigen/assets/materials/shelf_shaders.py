@@ -291,8 +291,13 @@ def get_shelf_material(name, **kwargs):
             shader_func = np.random.choice([shader_shelves_white, shader_rough_plastic,
                                             shader_shelves_black_wood, wood.shader_wood,
                                             shader_shelves_wood], p=[.3, .2, .3, .1, .1])
+    r = uniform() 
+    if name == 'metal':
         shader_func = np.random.choice(metal_shader_list)
+    else:
         shader_func = np.random.choice([shader_shelves_white, shader_rough_plastic,
                                 shader_shelves_black_wood, wood.shader_wood,
                                 shader_shelves_wood], p=[.3, .2, .3, .1, .1])
+    # elif r < .3:
+    #     shader_func = rg(fabric_shader_list)
     return surface.shaderfunc_to_material(shader_func, **kwargs)
