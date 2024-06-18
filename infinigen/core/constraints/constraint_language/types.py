@@ -40,3 +40,6 @@ class Node:
             yield from c.traverse(inorder=inorder)
         if not inorder:
             yield self
+
+    def size(self):
+        return len(list(self.traverse()))
