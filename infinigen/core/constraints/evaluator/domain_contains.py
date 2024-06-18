@@ -14,6 +14,7 @@ from infinigen.core.constraints import (
     reasoning as r,
 )
 from infinigen.core.constraints.example_solver import state_def
+from infinigen.core import tags as t
 
 logger = logging.getLogger(__name__)
 
