@@ -1,4 +1,9 @@
 # Copyright (c) Princeton University.
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix constants
+
+import logging
 
 import bmesh
 import bpy
@@ -19,16 +24,31 @@ from infinigen.assets.utils.decorate import read_area, read_co, read_edge_direct
 from infinigen.assets.utils.object import obj2trimesh
 from infinigen.assets.windows import WindowFactory
 from infinigen.assets.elements.doors import random_door_factory
+
 from infinigen.core.constraints.example_solver.room.configs import PILLAR_ROOM_TYPES, ROOM_FLOORS, ROOM_WALLS
 from infinigen.core.constraints.example_solver.room.constants import DOOR_WIDTH, WALL_HEIGHT, WALL_THICKNESS
 from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_level
+from infinigen.core.constraints.example_solver import state_def
+
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.constraints.example_solver.room.types import get_room_type
 from infinigen.core.util.random import random_general as rg
 
 
 from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.util import blender as butil
 
+logger = logging.getLogger(__name__)
+
+def split_rooms(rooms_meshed: list[bpy.types.Object]):
+    
+    meshes = {
+        n: [
+            tagging.extract_tagged_faces(r, tags) 
+            for r in rooms_meshed
+        ] 
+        for n, tags in extract_tags.items()
+    }
 
     for k, ms in meshes.items():
         m2delete = []
@@ -40,7 +60,19 @@ from infinigen.core.constraints import constraint_language as cl
         for m in m2delete:
             ms.remove(m)
 
+        butil.origin_set(objs, 'ORIGIN_GEOMETRY', center='MEDIAN')
+    meshes = {
+        n: butil.put_in_collection(objs, 'unique_assets:room_' + n) 
+        for n, objs in meshes.items()
+    }
+def room_walls(wall_objs: list[bpy.types.Object]):
+    
+    wall_fns = list(rg(ROOM_WALLS[get_room_type(r.name)]) for r in wall_objs)
+
+    logger.debug(f'{room_walls.__name__} adding materials to {len(wall_objs)=}, using {len(wall_fns)=}')
+
     for wall_fn in set(wall_fns):
+        rooms_ = [o for o, w in zip(wall_objs, wall_fns) if w == wall_fn]
         shape = np.random.choice(['square', 'rectangle', 'hexagon'])
         kwargs = dict(vertical=True, alternating=False, shape=shape)
         if wall_fn in [tile, plaster]:
@@ -52,8 +84,12 @@ from infinigen.core.constraints import constraint_language as cl
             wall_fn.apply(rooms_, **kwargs)
 
 
+def room_ceilings(ceilings: list[bpy.types.Object]):
+    logger.debug(f'{room_ceilings.__name__} adding materials to {len(ceilings)=}')
 
 
+def room_floors(floors: list[bpy.types.Object]):
+    logger.debug(f'{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}')
     for floor_fn in set(floor_fns):
         if floor_fn in [tile, plaster]:
             indices = np.random.randint(0, 3, len(rooms_))
@@ -61,33 +97,79 @@ from infinigen.core.constraints import constraint_language as cl
                 rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
         else:
 
+
+def populate_doors(
+    placeholders: list[bpy.types.Object], 
+    n_doors=3, 
+    door_chance=1, 
+    casing_chance=0.0, 
+    all_open=False
+):
+
     factories = [random_door_factory()(np.random.randint(1e7)) for _ in range(3)]
+
+    logger.debug(f'{populate_doors.__name__} populating {len(placeholders)=} with {n_doors=} and {len(factories)=}')
+
+    indices = np.random.randint(0, len(factories), len(placeholders))
+    col = butil.get_collection('unique_assets:doors')
+    casing_col = butil.get_collection('unique_assets:door_casings')
+
     for i in trange(n_doors, desc='Placing doors'):
         factory = factories[i]
         casing_factory = factory.casing_factory
         doors, casings = [], []
         for j in np.nonzero(indices == i)[0]:
+            
+            if uniform() > door_chance:
+                continue
+            else:
+            rot_z *= np.pi / 2
+
             door = factory(int(j))
+            door.parent = placeholders[j]
             door.rotation_euler[-1] = -rot_z
             doors.append(door)
+
+            if uniform() > casing_chance:
+                continue
+
             casing = casing_factory(int(j))
+            casing.parent = placeholders[j]
             casing.location = 0, 0, -constants.DOOR_SIZE / 2
             casings.append(casing)
+
         factory.finalize_assets(doors)
+        butil.put_in_collection(doors, col)
+        
         casing_factory.finalize_assets(casings)
         butil.put_in_collection(casings, casing_col)
 
 
+def populate_windows(placeholders: list[bpy.types.Object], n_windows=1):
+
+    factories = [WindowFactory(np.random.randint(1e5)) for _ in range(n_windows)]
+
+    logger.debug(f'{populate_windows.__name__} populating {len(placeholders)=} with {n_windows=} and {len(factories)=}')
+
+    indices = np.random.randint(0, len(factories), len(placeholders))
+    col = butil.get_collection('unique_assets:windows')
+    for i in range(n_windows):
         factory = factories[i]
         windows = []
         for j in np.nonzero(indices == i)[0]:
+            cutter_dims = placeholders[j].dimensions
             dims = cutter_dims[0], cutter_dims[2], cutter_dims[1] * uniform(.1, .2)
             window = factory(int(j), dimensions=dims)
+            window.parent = placeholders[j]
             window.location[1] = -WALL_THICKNESS / 2
+            window.rotation_euler[1] = np.pi
+            butil.put_in_collection(list(butil.iter_object_tree(window)), col)
         factory.finalize_assets(windows)
 
 
 def room_stairs(state, rooms_meshed):
+
+    col = butil.get_collection('unique_assets:staircases')
     states = list(s for k, s in state.objs.items() if get_room_type(k) == RoomType.Staircase)
     contours, doors = [], []
     for s in states:
@@ -183,9 +265,18 @@ def room_stairs(state, rooms_meshed):
     return placeholders
 
 
+def room_pillars(state: state_def.State, walls: list[bpy.types.Object]):
+    
     col = butil.get_collection('pillars')
+    
+    pillar_rooms = [
+        s for k, s in state.objs.items() 
+        if get_room_type(k) in PILLAR_ROOM_TYPES
+    ]
+
     for s in pillar_rooms:
         factory = PillarFactory(np.random.randint(1e7))
+        mesh = next(m for m in walls if m.name.startswith(s.obj.name.split('.')[0]))
         remove_faces(interior, read_area(interior) < WALL_THICKNESS / 2 * WALL_HEIGHT)
         selection = (read_edge_length(interior) > WALL_HEIGHT / 2) & (
             np.abs(read_edge_direction(interior))[:, -1] > .9)
@@ -204,3 +295,26 @@ def room_stairs(state, rooms_meshed):
                 bmesh.ops.delete(bm, geom=geom)
         interiors_ = [i for i in interiors if len(i.data.vertices) > 0]
         butil.delete([i for i in interiors if len(i.data.vertices) == 0])
+
+        if len(interiors_) == 0:
+            return
+        
+        with butil.Suppress():
+            interior = butil.join_objects(interiors_)
+
+        staircases = list(butil.get_collection('staircases').objects)
+        if len(staircases) == 0:
+            return
+        
+        staircases = np.concatenate([
+            read_co(o) + np.array([o.location]) for o in staircases
+        ])
+        cos = read_co(interior)
+        cos[:, -1] = mesh.location[-1] + WALL_THICKNESS / 2
+        cos = cos[np.min(np.linalg.norm(cos[:, np.newaxis] - staircases[np.newaxis], axis=-1),
+                            -1) > WALL_THICKNESS]
+        for co in cos:
+            obj = factory(np.random.randint(1e7))
+            obj.location = co
+            butil.put_in_collection(obj, col)
+        butil.delete(interior)
