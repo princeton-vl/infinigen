@@ -45,6 +45,7 @@ class FoodBagFactory(AssetFactory):
         self.add_seal(obj)
         self.build_uv(obj)
         subsurf(obj, 2)
+        surface.add_geomod(obj, geo_extension, input_kwargs={'musgrave_dimensions': '2D'}, apply=True)
         return obj
 
     def make_base(self):
