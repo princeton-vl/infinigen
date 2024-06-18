@@ -1,3 +1,4 @@
+
 from numpy.random import uniform, normal, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
@@ -500,6 +501,8 @@ def nodegroup_panel_edge_frame(nw: NodeWrangler):
 
     transform_1 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': transform, 'Scale': (-1.0000, 1.0000, 1.0000)})
 
+    # transform_1 = nw.new_node(Nodes.FlipFaces, input_kwargs={'Mesh': transform_1})
+
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry,
                                   input_kwargs={'Geometry': [transform_3, transform_2, transform_1, transform]})
 
@@ -609,6 +612,9 @@ def geometry_door_nodes(nw: NodeWrangler, **kwargs):
     transform_1 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': triangulate,
                                             'Scale': (-1.0 if kwargs['door_left_hinge'] else 1.0, 1.0000, 1.0000)})
+
+    if kwargs['door_left_hinge']:
+        transform_1 = nw.new_node(Nodes.FlipFaces, input_kwargs={'Mesh': transform_1})
 
     transform_2 = nw.new_node(Nodes.Transform,
                               input_kwargs={'Geometry': transform_1, 'Rotation': (0.0000, 0.0000, -1.5708)})
