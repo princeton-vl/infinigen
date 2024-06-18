@@ -43,6 +43,7 @@ class BowlFactory(TablewareFactory):
         obj = spin(anchors, [2, 3], 16, 64)
         subsurf(obj, 1)
         self.solidify_with_inside(obj, self.thickness)
+        butil.modify_mesh(obj, 'BEVEL', width=self.thickness / 2, segments=np.random.randint(2, 5))
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
         subsurf(obj, 1)
