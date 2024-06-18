@@ -49,13 +49,23 @@ def test_bounds_simple():
     assert r.constraint_bounds(1 <= count) == lower
 
 @pytest.mark.skip # no longer supported for timebeing
+def test_bounds_compound():
     chair = cl.tagged(cl.scene(), tags={t.Semantics.Chair})
     table = cl.tagged(cl.scene(), tags={t.Semantics.Table})
+
     scene_state = [(r.Domain({t.Semantics.Table}), 4)]
     cons = (cl.count(chair) < cl.count(table) * 3) * (cl.count(chair) > cl.count(table))
+
+    bounds = r.constraint_bounds(cons, scene_state)
+
+    assert bounds == [
         r.Bound(r.Domain({t.Semantics.Chair}), high=11),
         r.Bound(r.Domain({t.Semantics.Chair}), low=5)
+    ]
+
+    bounds2 = r.constraint_bounds(cl.in_range(cl.count(chair), cl.count(table), cl.count(table) * 3), scene_state)
     assert bounds2 == [r.Bound(r.Domain({t.Semantics.Chair}), 4, 12)]
+
 def test_bounds_and():
     
     tags = {t.Semantics.Furniture}
