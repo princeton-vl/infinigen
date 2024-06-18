@@ -7,6 +7,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.tableware.base import TablewareFactory
+from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import read_co, remove_vertices, subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.draw import spin
@@ -15,6 +16,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class CupFactory(TablewareFactory):
@@ -49,7 +51,14 @@ class CupFactory(TablewareFactory):
             self.has_wrap = uniform() < .3
             self.has_wrap = True
             self.wrap_margin = uniform(.1, .2)
+            
+            material_assignments = AssetList['CupFactory']()
+            self.surface = material_assignments['surface'].assign_material()
+            self.wrap_surface = material_assignments['wrap_surface'].assign_material()
+            if self.wrap_surface == text.Text:
+                self.wrap_surface = text.Text(self.factory_seed, False)
             self.scratch = self.edge_wear = None
+                
             self.has_inside = uniform(0, 1) < .5
             self.scale = log_uniform(.15, .3)
 
@@ -121,3 +130,7 @@ class CupFactory(TablewareFactory):
         if self.has_wrap:
             for obj in assets if isinstance(assets, list) else [assets]:
                 wrap_sides(obj, self.wrap_surface, 'u', 'v', 'z', selection='text')
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
