@@ -76,6 +76,7 @@ pip install -e .
 
 # Developer install (includes pytest, ruff, other recommended dev tools)
 pip install -e ".[dev]"
+pre-commit install
 ```
 
 :exclamation: If you encounter any issues with the above, please add `-vv > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.

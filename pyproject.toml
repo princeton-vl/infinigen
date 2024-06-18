@@ -65,6 +65,7 @@ dev = [
     "ruff",
     "isort",
     "tabulate", # for integration test results
+    "pre-commit"
 ]
 
 vis = [
@@ -142,20 +143,12 @@ target-version = "py310"
 line-length = 120 # will be reduced to 88 to match black soon
 
 exclude = [
-    "*/dependencies/"
+    "*/dependencies/",
+    "infinigen/OcMesher",
 ]
-lint.ignore = [
-    "E402", # we have lots of sys.path and opencv statements that must preceed imports, ignore for now
-    "E501", # ignore line length for now
-    "E701", # disable multi line statements until we enable black
-    "F401", # unused imports are sometimes necessary for gin to work
-    "E712", # some people think `if x == True` is more explicit, not going to force it
-]
-
-lint.mccabe.max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = []
+"__init__.py" = ["F401"]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 [tool.pytype]
