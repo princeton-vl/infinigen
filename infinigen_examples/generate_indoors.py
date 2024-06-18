@@ -24,6 +24,7 @@ import trimesh
 from numpy import deg2rad
 
 from infinigen.assets import (lighting)
+from infinigen.assets.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.utils.decorate import read_co
 from infinigen.terrain import Terrain
 from infinigen.assets.materials import invisible_to_camera
