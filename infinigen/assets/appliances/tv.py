@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 # Authors: 
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix rotation
@@ -113,6 +116,7 @@ class TVFactory(AssetFactory):
             write_attribute(l, 1, 'leg', 'FACE', 'INT')
         parts.extend(legs)
         obj = join_objects(parts)
+        obj.rotation_euler[2] = np.pi / 2
         butil.apply_transform(obj)
         return obj
 
