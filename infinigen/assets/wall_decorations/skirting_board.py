@@ -40,6 +40,7 @@ from shapely import affinity
 from shapely.ops import unary_union
 
 from infinigen.assets.utils.shapes import polygon2obj, obj2polygon
+from infinigen.core import tagging, tags as t
 from shapely.plotting import plot_polygon
 
 logger = logging.getLogger(__name__)
