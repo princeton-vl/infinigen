@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Lingjie Mei, Karhan Kayan: fix constants
+
 from copy import deepcopy
 
 import bpy
@@ -81,6 +87,7 @@ class RoomSolver:
 
         state, rooms_meshed = self.solidifier.solidify(assignment, info)
 
+        dimensions = self.width, self.height, constants.WALL_HEIGHT
         return state, unique_roomtypes, dimensions
 
 
@@ -153,6 +160,8 @@ class MultistoryRoomSolver:
                     self.contours.append(contour)
                     break
                 else:
+                    self.widths[i] -= constants.UNIT
+                    self.heights[i] -= constants.UNIT
 
     def solve(self):
         assignments, infos = [], []
