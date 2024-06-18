@@ -14,6 +14,7 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.assets.materials import common
 from infinigen.core.util.random import log_uniform
+from infinigen.core.nodes.node_utils import build_color_ramp
 
 
 def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
@@ -31,7 +32,9 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
                            input_kwargs={'Detail': log_uniform(15, 30), 'Dimension': 0})
     noise = nw.new_node(Nodes.NoiseTexture, [uv_map],
                         input_kwargs={'Detail': log_uniform(15, 30), 'Distortion': log_uniform(4, 8)})
+    noise = build_color_ramp(nw, noise, [0, uniform(.3, .5)], [(0, 0, 0, 1), (1, 1, 1, 1)])
     difference = nw.new_node(Nodes.MixRGB, [musgrave, noise], attrs={'blend_type': 'DIFFERENCE'})
+    base_color = build_color_ramp(nw, difference, [uniform(.2, .3), 1], [back_color, front_color])
 
     displacement = nw.new_node(Nodes.Displacement, input_kwargs={
         'Scale': log_uniform(.0001, .0003),
