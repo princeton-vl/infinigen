@@ -1,16 +1,16 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+import bmesh
+
 # Authors: Lingjie Mei
 import bpy
-import bmesh
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import (
-    read_center, read_co, read_normal, subsurf, write_attribute,
-    write_co,
-)
+from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.utils.autobevel import BevelSharp
+from infinigen.assets.utils.decorate import read_center, read_co, read_normal, subsurf, write_attribute, write_co
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube, new_cylinder, new_line
 from infinigen.core import surface
@@ -19,45 +19,42 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 
-from infinigen.assets.utils.autobevel import BevelSharp
-from infinigen.assets.material_assignments import AssetList
-
 
 class BathtubFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(BathtubFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.width = uniform(1.5, 2)
-            self.size = uniform(.8, 1)
-            self.depth = uniform(.55, .7)
+            self.size = uniform(0.8, 1)
+            self.depth = uniform(0.55, 0.7)
             prob = np.array([2, 2])
-            self.bathtub_type = np.random.choice(['alcove', 'freestanding'], p=prob / prob.sum())  # , 'corner'
+            self.bathtub_type = np.random.choice(["alcove", "freestanding"], p=prob / prob.sum())  # , 'corner'
             self.contour_fn = self.make_corner_contour if self.has_corner else self.make_box_contour
-            self.has_curve = uniform() < .5
-            self.has_legs = uniform() < .5
+            self.has_curve = uniform() < 0.5
+            self.has_legs = uniform() < 0.5
 
-            self.thickness = uniform(.04, .08) if self.has_base else uniform(.02, .04)
-            self.disp_x = uniform(0, .2, 2)
-            self.disp_y = uniform(0, .1)
+            self.thickness = uniform(0.04, 0.08) if self.has_base else uniform(0.02, 0.04)
+            self.disp_x = uniform(0, 0.2, 2)
+            self.disp_y = uniform(0, 0.1)
 
-            self.leg_height = uniform(.2, .3) * self.depth
-            self.leg_side = uniform(.05, .1)
-            self.leg_radius = uniform(.02, .03)
+            self.leg_height = uniform(0.2, 0.3) * self.depth
+            self.leg_side = uniform(0.05, 0.1)
+            self.leg_radius = uniform(0.02, 0.03)
             self.leg_y_scale = uniform()
             self.leg_subsurf_level = np.random.randint(3)
 
-            self.taper_factor = uniform(-.1, .1)
-            self.stretch_factor = uniform(-.2, .2)
+            self.taper_factor = uniform(-0.1, 0.1)
+            self.stretch_factor = uniform(-0.2, 0.2)
 
             self.alcove_levels = np.random.randint(1, 3) if self.has_base else 1
             self.levels = 5
             self.side_levels = 2
 
             self.is_hole_centered = False
-            self.hole_radius = uniform(.015, .02)
+            self.hole_radius = uniform(0.015, 0.02)
 
             # /////////////////// assign materials ///////////////////
-            material_assignments = AssetList['BathtubFactory']()
+            material_assignments = AssetList["BathtubFactory"]()
             self.surface = material_assignments["surface"].assign_material()
             self.leg_surface = material_assignments["leg"].assign_material()
             self.hole_surface = material_assignments["hole"].assign_material()
@@ -71,11 +68,11 @@ class BathtubFactory(AssetFactory):
 
     @property
     def has_base(self):
-        return self.bathtub_type != 'freestanding'
+        return self.bathtub_type != "freestanding"
 
     @property
     def has_corner(self):
-        return self.bathtub_type == 'corner'
+        return self.bathtub_type == "corner"
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(-self.size, 0, 0, self.width, 0, self.depth)
@@ -84,7 +81,7 @@ class BathtubFactory(AssetFactory):
         if self.has_base:
             obj = self.make_base()
             cutter = self.make_cutter()
-            butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='DIFFERENCE')
+            butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
             butil.delete(cutter)
         else:
             obj = self.make_freestanding()
@@ -93,7 +90,7 @@ class BathtubFactory(AssetFactory):
                 parts.extend(self.make_legs(obj))
             else:
                 parts.append(self.add_base(obj))
-            butil.modify_mesh(obj, 'SOLIDIFY', thickness=self.thickness)
+            butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
             subsurf(obj, self.side_levels)
             obj = join_objects(parts)
         hole = self.add_hole(obj)
@@ -101,8 +98,8 @@ class BathtubFactory(AssetFactory):
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
 
-        if self.bathtub_type == 'freestanding':
-            butil.modify_mesh(obj, 'SUBSURF', levels=1, apply=True)
+        if self.bathtub_type == "freestanding":
+            butil.modify_mesh(obj, "SUBSURF", levels=1, apply=True)
         else:
             self.beveler(obj)
 
@@ -111,28 +108,26 @@ class BathtubFactory(AssetFactory):
     def make_freestanding(self):
         obj = self.make_bowl()
         self.remove_top(obj)
-        with butil.ViewportMode(obj, 'EDIT'):
-            bpy.ops.mesh.select_mode(type='EDGE')
-            bpy.ops.mesh.select_all(action='SELECT')
+        with butil.ViewportMode(obj, "EDIT"):
+            bpy.ops.mesh.select_mode(type="EDGE")
+            bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
             bpy.ops.mesh.extrude_edges_move()
-            bpy.ops.transform.resize(
-                value=(1 + self.thickness * 2 / self.width, 1 + self.thickness / self.size, 1)
-            )
+            bpy.ops.transform.resize(value=(1 + self.thickness * 2 / self.width, 1 + self.thickness / self.size, 1))
         obj.location[1] -= self.size / 2
         butil.apply_transform(obj, True)
-        butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='TAPER', angle=self.taper_factor)
-        butil.modify_mesh(obj, 'SIMPLE_DEFORM', deform_method='STRETCH', angle=self.taper_factor)
-        obj.location = 0, self.size / 2, -np.min(read_co(obj)[:, -1]) * uniform(.5, .7)
+        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.taper_factor)
+        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="STRETCH", angle=self.taper_factor)
+        obj.location = 0, self.size / 2, -np.min(read_co(obj)[:, -1]) * uniform(0.5, 0.7)
         butil.apply_transform(obj, True)
         return obj
 
     def remove_top(self, obj):
         butil.select_none()
-        with butil.ViewportMode(obj, 'EDIT'):
+        with butil.ViewportMode(obj, "EDIT"):
             bm = bmesh.from_edit_mesh(obj.data)
             geom = [f for f in bm.faces if f.calc_center_median()[-1] > self.depth]
-            bmesh.ops.delete(bm, geom=geom, context='FACES_KEEP_BOUNDARY')
+            bmesh.ops.delete(bm, geom=geom, context="FACES_KEEP_BOUNDARY")
             bmesh.update_edit_mesh(obj.data)
 
     def make_legs(self, obj):
@@ -152,13 +147,12 @@ class BathtubFactory(AssetFactory):
                 write_co(leg, np.stack([p, q, r]))
                 subsurf(leg, self.leg_subsurf_level)
                 surface.add_geomod(
-                    leg, geo_radius, apply=True, input_args=[self.leg_radius, 32],
-                    input_kwargs={'to_align_tilt': False}
+                    leg, geo_radius, apply=True, input_args=[self.leg_radius, 32], input_kwargs={"to_align_tilt": False}
                 )
-                butil.modify_mesh(leg, 'BEVEL', width=self.leg_radius * uniform(.3, .7))
+                butil.modify_mesh(leg, "BEVEL", width=self.leg_radius * uniform(0.3, 0.7))
                 leg.location[-1] = self.leg_radius
                 butil.apply_transform(leg, True)
-                write_attribute(leg, 1, 'leg', 'FACE')
+                write_attribute(leg, 1, "leg", "FACE")
                 legs.append(leg)
         return legs
 
@@ -168,42 +162,46 @@ class BathtubFactory(AssetFactory):
         x, y, z_ = read_co(obj).T
         cutter.scale = 10, 10, np.min(z_) + self.leg_height
         butil.apply_transform(cutter, True)
-        butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='INTERSECT')
+        butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="INTERSECT")
         butil.delete(cutter)
-        with butil.ViewportMode(obj, 'EDIT'):
+        with butil.ViewportMode(obj, "EDIT"):
             bm = bmesh.from_edit_mesh(obj.data)
             geom = [f for f in bm.faces if len(f.verts) > 10]
-            bmesh.ops.delete(bm, geom=geom, context='FACES_KEEP_BOUNDARY')
+            bmesh.ops.delete(bm, geom=geom, context="FACES_KEEP_BOUNDARY")
             bmesh.update_edit_mesh(obj.data)
-            bpy.ops.mesh.select_mode(type='EDGE')
-            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.select_mode(type="EDGE")
+            bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
-            bpy.ops.mesh.select_all(action='INVERT')
-            bpy.ops.mesh.delete(type='EDGE')
-            bpy.ops.mesh.select_all(action='SELECT')
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={'value': (0, 0, -self.depth)})
+            bpy.ops.mesh.select_all(action="INVERT")
+            bpy.ops.mesh.delete(type="EDGE")
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, -self.depth)})
         x, y, z = read_co(obj).T
         z = np.clip(z, 0, None)
         write_co(obj, np.stack([x, y, z], -1))
-        with butil.ViewportMode(obj, 'EDIT'):
-            bpy.ops.mesh.select_all(action='SELECT')
+        with butil.ViewportMode(obj, "EDIT"):
+            bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.normals_make_consistent(inside=False)
         subsurf(obj, 2)
-        butil.modify_mesh(obj, 'SOLIDIFY', thickness=self.thickness)
+        butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
         return obj
 
     def make_box_contour(self, t, i):
-        return [(t + self.disp_x[0] * i, t + self.disp_y * i),
+        return [
+            (t + self.disp_x[0] * i, t + self.disp_y * i),
             (self.width - t - self.disp_x[1] * i, t + self.disp_y * i),
             (self.width - t - self.disp_x[1] * i, self.size - t - self.disp_y * i),
-            (t + self.disp_x[0] * i, self.size - t - self.disp_y * i)]
+            (t + self.disp_x[0] * i, self.size - t - self.disp_y * i),
+        ]
 
     def make_corner_contour(self, t, i):
-        return [(t + self.disp_y * i, t + self.disp_y * i),
+        return [
+            (t + self.disp_y * i, t + self.disp_y * i),
             (self.width - t - self.disp_x[1] * i, t + self.disp_y * i),
             (self.width - t - self.disp_x[1] * i, self.size - (t + self.disp_y * i) / np.sqrt(2)),
             (self.size - (t + self.disp_y * i) / np.sqrt(2), self.width - t - self.disp_x[0] * i),
-            (t + self.disp_y * i, self.width - t - self.disp_x[0] * i)]
+            (t + self.disp_y * i, self.width - t - self.disp_x[0] * i),
+        ]
 
     # noinspection PyArgumentList
     def make_base(self):
@@ -241,8 +239,10 @@ class BathtubFactory(AssetFactory):
             upper = self.contour_fn(self.thickness, 0)
         obj = new_cylinder(vertices=len(lower))
         co = np.concatenate(
-            [np.array([[x, y, self.thickness], [z, w, self.depth * 2 - self.thickness]]) for (x, y), (z, w) in
-                zip(lower[::-1], upper[::-1])]
+            [
+                np.array([[x, y, self.thickness], [z, w, self.depth * 2 - self.thickness]])
+                for (x, y), (z, w) in zip(lower[::-1], upper[::-1])
+            ]
         )
         write_co(obj, co)
         subsurf(obj, self.alcove_levels, True)
@@ -262,26 +262,26 @@ class BathtubFactory(AssetFactory):
 
     def add_hole(self, obj):
         match self.bathtub_type:
-            case 'alcove':
+            case "alcove":
                 location = self.find_hole(obj)
-            case 'freestanding':
-                location = self.find_hole(obj, uniform(.35, .4) * self.width)
+            case "freestanding":
+                location = self.find_hole(obj, uniform(0.35, 0.4) * self.width)
             case _:
                 location = self.find_hole(obj, self.size / 2, self.size / 2)
         if self.is_hole_centered:
             location = self.find_hole(obj)
         obj = new_cylinder()
-        obj.scale = self.hole_radius, self.hole_radius, .005
+        obj.scale = self.hole_radius, self.hole_radius, 0.005
         obj.location = location
         butil.apply_transform(obj, True)
-        write_attribute(obj, 1, 'hole', 'FACE')
+        write_attribute(obj, 1, "hole", "FACE")
         return obj
 
     def finalize_assets(self, assets):
         self.surface.apply(assets, clear=True)
         if self.has_legs and not self.has_base:
-            self.leg_surface.apply(assets, 'leg', metal_color='bw+natural')
-        self.hole_surface.apply(assets, 'hole', metal_color='bw+natural')
+            self.leg_surface.apply(assets, "leg", metal_color="bw+natural")
+        self.hole_surface.apply(assets, "hole", metal_color="bw+natural")
 
         if self.scratch:
             self.scratch.apply(assets)

@@ -5,11 +5,12 @@
 
 import bpy
 import mathutils
-from numpy.random import uniform, normal, randint
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
+from numpy.random import normal, randint, uniform
+
 from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import color_category
 
 
 def geometry_geometry_nodes(nw: NodeWrangler, obj):
@@ -17,9 +18,7 @@ def geometry_geometry_nodes(nw: NodeWrangler, obj):
 
     object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": obj})
 
-    bounding_box = nw.new_node(
-        Nodes.BoundingBox, input_kwargs={"Geometry": object_info.outputs["Geometry"]}
-    )
+    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": object_info.outputs["Geometry"]})
 
     object_info.transform_space = "RELATIVE"
 

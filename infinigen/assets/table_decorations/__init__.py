@@ -1,3 +1,3 @@
-from .vase import VaseFactory
+from .book import BookColumnFactory, BookFactory, BookStackFactory
 from .sink import SinkFactory, TapFactory
-from .book import BookFactory, BookColumnFactory, BookStackFactory
+from .vase import VaseFactory

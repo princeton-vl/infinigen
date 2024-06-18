@@ -3,15 +3,16 @@
 
 # Authors: Karhan Kayan
 
-import bpy 
-import trimesh
-from trimesh import Scene
-from shapely import LineString, Point
-import numpy as np
-from typing import Union
-import random
-import math
 import functools
+import math
+import random
+from typing import Union
+
+import bpy
+import numpy as np
+import trimesh
+from shapely import LineString, Point
+from trimesh import Scene
 
 
 def meshes_from_names(scene, names):
@@ -19,10 +20,12 @@ def meshes_from_names(scene, names):
         names = [names]
     return [scene.geometry[g] for _, g in (scene.graph[n] for n in names)]
 
+
 def blender_objs_from_names(names):
     if isinstance(names, str):
         names = [names]
     return [bpy.data.objects[n] for n in names]
+
 
 def name_from_mesh(scene, mesh):
     mesh_name = None
@@ -32,30 +35,33 @@ def name_from_mesh(scene, mesh):
             break
     return mesh_name
 
+
 def project_to_xy_path2d(mesh: trimesh.Trimesh) -> trimesh.path.Path2D:
-    poly = trimesh.path.polygons.projected(mesh, (0,0,1), (0,0,0))
+    poly = trimesh.path.polygons.projected(mesh, (0, 0, 1), (0, 0, 0))
     d = trimesh.path.exchange.misc.polygon_to_path(poly)
-    return trimesh.path.Path2D(entities = d['entities'], vertices = d['vertices'])
+    return trimesh.path.Path2D(entities=d["entities"], vertices=d["vertices"])
+
 
 def project_to_xy_poly(mesh: trimesh.Trimesh):
-    poly = trimesh.path.polygons.projected(mesh, (0,0,1), (0,0,0))
+    poly = trimesh.path.polygons.projected(mesh, (0, 0, 1), (0, 0, 0))
     return poly
 
 
 def closest_edge_to_point(polygon, point):
-    closest_distance = float('inf')
+    closest_distance = float("inf")
     closest_edge = None
 
     for i, coord in enumerate(polygon.exterior.coords[:-1]):
         start, end = coord, polygon.exterior.coords[i + 1]
         line = LineString([start, end])
         distance = line.distance(point)
-        
+
         if distance < closest_distance:
             closest_distance = distance
             closest_edge = line
 
     return closest_edge
+
 
 def compute_outward_normal(line, polygon):
     dx = line.xy[0][1] - line.xy[0][0]  # x1 - x0
@@ -68,20 +74,20 @@ def compute_outward_normal(line, polygon):
     # Normalize the vectors (optional but recommended for consistency)
     normal_vector_1 = normal_vector_1 / np.linalg.norm(normal_vector_1)
     normal_vector_2 = normal_vector_2 / np.linalg.norm(normal_vector_2)
-    
+
     # Midpoint of the line segment
     mid_point = line.interpolate(0.5, normalized=True)
-    
+
     # Move a tiny bit in the direction of the normals to check which points outside
     test_point_1 = mid_point.coords[0] + 0.01 * normal_vector_1
     test_point_2 = mid_point.coords[0] + 0.01 * normal_vector_2
-    
+
     # Return the normal for which the test point lies outside the polygon
     if polygon.contains(Point(test_point_1)):
         return normal_vector_2
     else:
         return normal_vector_1
-    
+
 
 def get_transformed_axis(scene, obj_name):
     obj = bpy.data.objects[obj_name]
@@ -100,8 +106,6 @@ def set_axis(scene, objs: Union[str, list[str]], canonical_axis):
         obj.axis = get_transformed_axis(scene, obj_name)
 
 
-
-
 def get_plane_from_3dmatrix(matrix):
     """Extract the plane_normal and plane_origin from a transformation matrix."""
     # The normal of the plane can be extracted from the 3x3 rotation part of the matrix
@@ -115,6 +119,7 @@ def project_points_onto_plane(points, plane_origin, plane_normal):
     d = np.dot(points - plane_origin, plane_normal)[:, None]
     return points - d * plane_normal
 
+
 def to_2d_coordinates(points, plane_normal):
     """Convert 3D points to 2D using the plane defined by its normal."""
     # Compute two perpendicular vectors on the plane
@@ -124,7 +129,7 @@ def to_2d_coordinates(points, plane_normal):
     u /= np.linalg.norm(u)
     v = np.cross(plane_normal, u)
     v /= np.linalg.norm(v)
-    
+
     # Convert 3D points to 2D using dot products
     return np.column_stack([points.dot(u), points.dot(v)])
 
@@ -136,10 +141,11 @@ def ensure_correct_order(points):
     """
     # Calculate signed area
     n = len(points)
-    area = sum((points[i][0] * points[(i+1)%n][1]) - (points[(i+1)%n][0] * points[i][1]) for i in range(n)) / 2.0
+    area = (
+        sum((points[i][0] * points[(i + 1) % n][1]) - (points[(i + 1) % n][0] * points[i][1]) for i in range(n)) / 2.0
+    )
     # Return the points in reverse order if area is negative
     return points[::-1] if area < 0 else points
-
 
 
 def sample_random_point(polygon):
@@ -151,26 +157,28 @@ def sample_random_point(polygon):
         p = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
         if polygon.contains(p):
             return p
-        
 
-def delete_obj(a, scene = None):
+
+def delete_obj(a, scene=None):
     if isinstance(a, str):
         a = [a]
     for obj_name in a:
         bpy.data.objects.remove(bpy.data.objects[obj_name], do_unlink=True)
-        if scene: 
+        if scene:
             scene.graph.transforms.remove_node(obj_name)
-            scene.delete_geometry(obj_name + '_mesh')
+            scene.delete_geometry(obj_name + "_mesh")
 
 
 def global_vertex_coordinates(obj, local_vertex):
     return obj.matrix_world @ local_vertex.co
+
 
 def global_polygon_normal(obj, polygon):
     loc, rot, scale = obj.matrix_world.decompose()
     rot = rot.to_matrix()
     normal = rot @ polygon.normal
     return normal / np.linalg.norm(normal)
+
 
 def is_planar(obj, tolerance=1e-6):
     if len(obj.data.polygons) != 1:
@@ -190,8 +198,9 @@ def is_planar(obj, tolerance=1e-6):
 
     return True
 
+
 def planes_parallel(plane_obj_a, plane_obj_b, tolerance=1e-6):
-    if plane_obj_a.type != 'MESH' or plane_obj_b.type != 'MESH':
+    if plane_obj_a.type != "MESH" or plane_obj_b.type != "MESH":
         raise ValueError("Both objects should be of type 'MESH'")
 
     # # Check if the objects are planar
@@ -205,12 +214,13 @@ def planes_parallel(plane_obj_a, plane_obj_b, tolerance=1e-6):
 
     return math.isclose(dot_product, 1, abs_tol=tolerance) or math.isclose(dot_product, -1, abs_tol=tolerance)
 
-    
+
 def distance_to_plane(point, plane_point, plane_normal):
     """Compute the distance from a point to a plane defined by a point and a normal."""
     return abs((point - plane_point).dot(plane_normal))
 
-def is_within_margin_from_plane(obj, obj_b, margin, tol = 1e-6):
+
+def is_within_margin_from_plane(obj, obj_b, margin, tol=1e-6):
     """Check if all vertices of an object are within a given margin from a plane."""
     polygon_b = obj_b.data.polygons[0]
     plane_point_b = global_vertex_coordinates(obj_b, obj_b.data.vertices[polygon_b.vertices[0]])
@@ -222,9 +232,10 @@ def is_within_margin_from_plane(obj, obj_b, margin, tol = 1e-6):
             return False
     return True
 
+
 # def update_blender_representation(scene, trimesh_obj):
 
-#     transform_matrix = 
+#     transform_matrix =
 
 
 # def update_trimesh_representation(scnene, blender_obj):

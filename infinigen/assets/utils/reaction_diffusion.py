@@ -5,15 +5,26 @@
 
 
 import math
-import bpy
+
 import bmesh
+import bpy
 import numpy as np
 import tqdm
-from numpy.random import uniform, normal
+from numpy.random import normal, uniform
 
 
-def reaction_diffusion(obj, weight_fn, steps=1000, dt=1., scale=.5, diff_a=.18, diff_b=.09, feed_rate=.055,
-                       kill_rate=.062, perturb=.05):
+def reaction_diffusion(
+    obj,
+    weight_fn,
+    steps=1000,
+    dt=1.0,
+    scale=0.5,
+    diff_a=0.18,
+    diff_b=0.09,
+    feed_rate=0.055,
+    kill_rate=0.062,
+    perturb=0.05,
+):
     diff_a = diff_a * scale
     diff_b = diff_b * scale
     bm = bmesh.new()
@@ -31,7 +42,7 @@ def reaction_diffusion(obj, weight_fn, steps=1000, dt=1., scale=.5, diff_a=.18, 
         b_msg = b[edge_to] - b[edge_from]
         lap_a = np.bincount(edge_from, a_msg, size) - np.bincount(edge_to, a_msg, size)
         lap_b = np.bincount(edge_from, b_msg, size) - np.bincount(edge_to, b_msg, size)
-        ab2 = a * b ** 2
+        ab2 = a * b**2
         new_a = a + (diff_a * lap_a - ab2 + feed_rate * (1 - a)) * dt
         new_b = b + (diff_b * lap_b + ab2 - (kill_rate + feed_rate) * b) * dt
         a = new_a
@@ -47,15 +58,15 @@ def reaction_diffusion(obj, weight_fn, steps=1000, dt=1., scale=.5, diff_a=.18, 
     lap_a *= 1 + normal(0, perturb, n)
     lap_a *= 1 + normal(0, perturb, n)
 
-    vg_a = obj.vertex_groups.new(name='A')
-    vg_b = obj.vertex_groups.new(name='B')
-    vg_la = obj.vertex_groups.new(name='LA')
-    vg_lb = obj.vertex_groups.new(name='LB')
+    vg_a = obj.vertex_groups.new(name="A")
+    vg_b = obj.vertex_groups.new(name="B")
+    vg_la = obj.vertex_groups.new(name="LA")
+    vg_lb = obj.vertex_groups.new(name="LB")
     for i in range(n):
-        vg_la.add([i], lap_a[i], 'REPLACE')
-        vg_lb.add([i], lap_b[i], 'REPLACE')
-        vg_a.add([i], a[i], 'REPLACE')
-        vg_b.add([i], b[i], 'REPLACE')
+        vg_la.add([i], lap_a[i], "REPLACE")
+        vg_lb.add([i], lap_b[i], "REPLACE")
+        vg_a.add([i], a[i], "REPLACE")
+        vg_b.add([i], b[i], "REPLACE")
     obj.vertex_groups.update()
     obj.data.update()
 
@@ -64,7 +75,7 @@ def feed2kill(feed):
     return math.sqrt(feed) / 2 - feed
 
 
-def make_periodic_weight_fn(n_instances, stride=.1):
+def make_periodic_weight_fn(n_instances, stride=0.1):
     def periodic_weight_fn(coords):
         multiplier = uniform(20, 100, (1, n_instances))
         center = coords[np.random.randint(0, len(coords) - 1, n_instances)]

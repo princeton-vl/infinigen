@@ -13,6 +13,7 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import 
 import cv2
 import numpy as np
 
+
 def boundary_smooth(ar, p=0.1):
     N = ar.shape[0]
     P = int(N * p)

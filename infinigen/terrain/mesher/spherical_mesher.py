@@ -4,15 +4,17 @@
 # Authors: Zeyu Ma
 
 
-import numpy as np
 import gin
+import numpy as np
 
 from infinigen.core.util.logging import Timer
-from infinigen.terrain.utils import Mesh, get_caminfo, write_attributes, Vars
+from infinigen.terrain.utils import Mesh, Vars, get_caminfo, write_attributes
+
 from .cube_spherical_mesher import CubeSphericalMesher
 from .frontview_spherical_mesher import FrontviewSphericalMesher
 
 magnifier = 1e6
+
 
 @gin.configurable
 def kernel_caller(kernels, XYZ, bounds=None):
@@ -23,16 +25,18 @@ def kernel_caller(kernels, XYZ, bounds=None):
         if bounds is not None:
             out_bound = np.zeros(len(XYZ), dtype=bool)
             for i in range(3):
-                out_bound |= XYZ[:, i] <= bounds[i*2]
-                out_bound |= XYZ[:, i] >= bounds[i*2+1]
-            sdf[out_bound] = 1e6 # because of skimage mc only provides coords, which is has precision limit
+                out_bound |= XYZ[:, i] <= bounds[i * 2]
+                out_bound |= XYZ[:, i] >= bounds[i * 2 + 1]
+            sdf[out_bound] = 1e6  # because of skimage mc only provides coords, which is has precision limit
         sdfs.append(sdf)
     ret = np.stack(sdfs, -1)
     return ret
 
+
 @gin.configurable
 class SphericalMesher:
-    def __init__(self,
+    def __init__(
+        self,
         cameras,
         bounds,
         r_min=1,
@@ -40,7 +44,9 @@ class SphericalMesher:
     ):
         full_info, self.cam_pose, self.fov, self.H, self.W, _ = get_caminfo(cameras)
         cams = full_info[0]
-        assert self.fov[0] < np.pi / 2 and self.fov[1] < np.pi / 2, "the algorithm does not support larger-than-90-degree fov yet"
+        assert (
+            self.fov[0] < np.pi / 2 and self.fov[1] < np.pi / 2
+        ), "the algorithm does not support larger-than-90-degree fov yet"
         self.r_min = r_min
         self.complete_depth_test = complete_depth_test
         self.bounds = bounds
@@ -49,13 +55,17 @@ class SphericalMesher:
             for i in range(2):
                 for j in range(2):
                     for k in range(2):
-                        r_max = np.linalg.norm(np.array([self.bounds[i], self.bounds[2+j], self.bounds[4+k]]) - cam[:3, 3])
+                        r_max = np.linalg.norm(
+                            np.array([self.bounds[i], self.bounds[2 + j], self.bounds[4 + k]]) - cam[:3, 3]
+                        )
                         self.r_max = max(self.r_max, r_max)
         self.r_max *= 1.1
 
+
 @gin.configurable
 class OpaqueSphericalMesher(SphericalMesher):
-    def __init__(self,
+    def __init__(
+        self,
         cameras,
         bounds,
         base_90d_resolution=None,
@@ -67,19 +77,26 @@ class OpaqueSphericalMesher(SphericalMesher):
     ):
         SphericalMesher.__init__(self, cameras, bounds)
         inview_upscale_coarse = upscale1
-        inview_upscale_fine = upscale1 *  upscale2
+        inview_upscale_fine = upscale1 * upscale2
         outview_upscale = 1
         assert bool(base_90d_resolution is None) ^ bool(pixels_per_cube is None)
-        if base_90d_resolution is None: base_90d_resolution = int(1 / (pixels_per_cube * inview_upscale_fine * self.fov[0] / np.pi * 2 / self.H))
+        if base_90d_resolution is None:
+            base_90d_resolution = int(1 / (pixels_per_cube * inview_upscale_fine * self.fov[0] / np.pi * 2 / self.H))
         base_90d_resolution = base_90d_resolution // test_downscale * test_downscale
 
-        print(f"In view visible mesh angle resolution 90d/{base_90d_resolution * inview_upscale_fine}, about {base_90d_resolution * inview_upscale_fine * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel")
-        print(f"In view invisible mesh angle resolution 90d/{base_90d_resolution * inview_upscale_coarse}, about {base_90d_resolution * inview_upscale_coarse * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel")
-        print(f"Out view mesh angle resolution 90d/{base_90d_resolution * outview_upscale}, about {base_90d_resolution * outview_upscale * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel")
+        print(
+            f"In view visible mesh angle resolution 90d/{base_90d_resolution * inview_upscale_fine}, about {base_90d_resolution * inview_upscale_fine * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel"
+        )
+        print(
+            f"In view invisible mesh angle resolution 90d/{base_90d_resolution * inview_upscale_coarse}, about {base_90d_resolution * inview_upscale_coarse * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel"
+        )
+        print(
+            f"Out view mesh angle resolution 90d/{base_90d_resolution * outview_upscale}, about {base_90d_resolution * outview_upscale * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel"
+        )
 
         fov = self.fov
         base_angle_resolution = np.pi / 2 / base_90d_resolution
-        base_R =  int((np.log(self.r_max) - np.log(self.r_min)) / (np.pi/2 / base_90d_resolution) / r_lengthen)
+        base_R = int((np.log(self.r_max) - np.log(self.r_min)) / (np.pi / 2 / base_90d_resolution) / r_lengthen)
         N0 = int(np.floor((1 - fov[0] * 2 / np.pi) / 2 * base_90d_resolution))
         N1 = int(np.floor((1 - fov[1] * 2 / np.pi) / 2 * base_90d_resolution))
         rounded_fov = (2 * (np.pi / 4 - N0 * base_angle_resolution), 2 * (np.pi / 4 - N1 * base_angle_resolution))
@@ -89,9 +106,13 @@ class OpaqueSphericalMesher(SphericalMesher):
         print(f"In view invisible mesh marching cube resolution {H}x{W}x{R}")
         self.frontview_mesher = FrontviewSphericalMesher(
             self.cam_pose,
-            rounded_fov[0], rounded_fov[1],
-            self.r_min, self.r_max,
-            H, W, R,
+            rounded_fov[0],
+            rounded_fov[1],
+            self.r_min,
+            self.r_max,
+            H,
+            W,
+            R,
             upscale2,
             test_downscale=test_downscale,
             complete_depth_test=self.complete_depth_test,
@@ -99,12 +120,15 @@ class OpaqueSphericalMesher(SphericalMesher):
         self.frontview_mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
         self.background_mesher = CubeSphericalMesher(
             self.cam_pose,
-            self.r_min, self.r_max,
+            self.r_min,
+            self.r_max,
             base_90d_resolution * outview_upscale,
             base_R * outview_upscale,
             test_downscale=test_downscale,
-            H_fov=rounded_fov[0], W_fov=rounded_fov[1],
-            N0=N0, N1=N1,
+            H_fov=rounded_fov[0],
+            W_fov=rounded_fov[1],
+            N0=N0,
+            N1=N1,
         )
         self.background_mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
 
@@ -117,10 +141,10 @@ class OpaqueSphericalMesher(SphericalMesher):
         return mesh
 
 
-
 @gin.configurable
 class TransparentSphericalMesher(SphericalMesher):
-    def __init__(self,
+    def __init__(
+        self,
         cameras,
         bounds,
         base_90d_resolution=None,
@@ -134,12 +158,17 @@ class TransparentSphericalMesher(SphericalMesher):
         self.cameras = cameras
         self.camera_annotation_frames = camera_annotation_frames
         assert bool(base_90d_resolution is None) ^ bool(pixels_per_cube is None)
-        if base_90d_resolution is None: base_90d_resolution = int(1 / (pixels_per_cube * inv_scale * self.fov[0] / np.pi * 2 / self.H))
+        if base_90d_resolution is None:
+            base_90d_resolution = int(1 / (pixels_per_cube * inv_scale * self.fov[0] / np.pi * 2 / self.H))
         base_90d_resolution = base_90d_resolution // test_downscale * test_downscale
 
-        base_R = int((np.log(self.r_max) - np.log(self.r_min)) / (np.pi/2 / base_90d_resolution) / r_lengthen)
-        print(f"In view mesh angle resolution 90d/{base_90d_resolution * inv_scale}, about {base_90d_resolution * inv_scale * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel")
-        print(f"Out view mesh angle resolution 90d/{base_90d_resolution}, about {base_90d_resolution * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel")
+        base_R = int((np.log(self.r_max) - np.log(self.r_min)) / (np.pi / 2 / base_90d_resolution) / r_lengthen)
+        print(
+            f"In view mesh angle resolution 90d/{base_90d_resolution * inv_scale}, about {base_90d_resolution * inv_scale * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel"
+        )
+        print(
+            f"Out view mesh angle resolution 90d/{base_90d_resolution}, about {base_90d_resolution * self.fov[0] / np.pi * 2 / self.H: .2f} marching cube per pixel"
+        )
 
         fov = self.fov
         base_angle_resolution = np.pi / 2 / base_90d_resolution
@@ -148,17 +177,19 @@ class TransparentSphericalMesher(SphericalMesher):
         rounded_fov = (2 * (np.pi / 4 - N0 * base_angle_resolution), 2 * (np.pi / 4 - N1 * base_angle_resolution))
         self.mesher = CubeSphericalMesher(
             self.cam_pose,
-            self.r_min, self.r_max,
+            self.r_min,
+            self.r_max,
             base_90d_resolution,
             base_R,
             test_downscale=test_downscale,
             inview_upscale=inv_scale,
-            H_fov=rounded_fov[0], W_fov=rounded_fov[1],
-            N0=N0, N1=N1,
+            H_fov=rounded_fov[0],
+            W_fov=rounded_fov[1],
+            N0=N0,
+            N1=N1,
             complete_depth_test=self.complete_depth_test,
         )
         self.mesher.kernel_caller = lambda k, xyz: kernel_caller(k, xyz, self.bounds)
-
 
     def __call__(self, kernels):
         with Timer("TransparentSphericalMesher"):

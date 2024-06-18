@@ -1,1 +1,1 @@
-from . import geometry, attach, curve
+from . import attach, curve, geometry

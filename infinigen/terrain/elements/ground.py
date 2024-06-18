@@ -7,9 +7,10 @@
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from infinigen.terrain.utils import random_int
-from infinigen.core.util.organization import Materials, Transparency, Tags, ElementNames, ElementTag
+
+from infinigen.core.util.organization import ElementNames, ElementTag, Materials, Tags, Transparency
 from infinigen.core.util.random import random_general as rg
+from infinigen.terrain.utils import random_int
 
 from .core import Element
 
@@ -17,6 +18,7 @@ from .core import Element
 @gin.configurable
 class Ground(Element):
     name = ElementNames.Ground
+
     def __init__(
         self,
         device,
@@ -50,12 +52,23 @@ class Ground(Element):
             self.float_params2 = caves.float_params
 
         self.int_params = AC(np.array([seed, is_3d, with_sand_dunes], dtype=np.int32))
-        self.float_params = AC(np.array([
-            spherical_radius,
-            freq, octaves, scale, height,
-            sand_dunes_warping_freq, sand_dunes_warping_octaves, sand_dunes_warping_scale,
-            sand_dunes_freq, sand_dunes_scale
-        ], dtype=np.float32))
+        self.float_params = AC(
+            np.array(
+                [
+                    spherical_radius,
+                    freq,
+                    octaves,
+                    scale,
+                    height,
+                    sand_dunes_warping_freq,
+                    sand_dunes_warping_octaves,
+                    sand_dunes_warping_scale,
+                    sand_dunes_freq,
+                    sand_dunes_scale,
+                ],
+                dtype=np.float32,
+            )
+        )
 
         self.meta_params = [caves is not None]
         Element.__init__(self, "ground", material, transparency)

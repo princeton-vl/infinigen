@@ -3,44 +3,36 @@
 
 # Authors: Karhan Kayan
 
+import logging
 import os
 import sys
 from itertools import chain
 from pathlib import Path
-from numpy.random import uniform, normal, randint
-from mathutils import Vector
-import logging
-from infinigen.core.util.math import clip_gaussian
 
-from infinigen.core.nodes.node_wrangler import (
-    Nodes,
-    NodeWrangler,
-    infer_input_socket,
-    infer_output_socket,
-)
 import bpy
+import gin
 import numpy as np
-
-
-from infinigen.assets.materials import water, lava
+from mathutils import Vector
+from numpy.random import normal, randint, uniform
 
 from infinigen.assets.fluid import duplication_geomod
-from infinigen.assets.materials import blackbody_shader, waterfall_material, smoke_material
+from infinigen.assets.materials import blackbody_shader, lava, smoke_material, water, waterfall_material
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, infer_input_socket, infer_output_socket
+from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.logging import Timer
-
-import gin
-
-from infinigen.core.util import blender as butil
+from infinigen.core.util.math import clip_gaussian
 
 logger = logging.getLogger(__name__)
 
 FLUID_INITIALIZED = False
 
+
 def check_initalize_fluids():
     if FLUID_INITIALIZED:
         return
     bpy.ops.flip_fluid_operators.complete_installation()
+
 
 # find next available number for fluid cache folder
 def find_available_cache(cache_folder):
@@ -72,9 +64,7 @@ def create_spray_particles(num_particles=7):
 
         mean_size = 0.13
         size = np.random.uniform(mean_size - 0.05, mean_size + 0.05)
-        bpy.ops.mesh.primitive_ico_sphere_add(
-            subdivisions=1, scale=(size, size, size), rotation=rot, location=loc
-        )
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, scale=(size, size, size), rotation=rot, location=loc)
         objs.append(bpy.context.object)
 
     return butil.group_in_collection(objs, "spray_particles")
@@ -108,14 +98,10 @@ def create_liquid_domain(
     settings.use_diffusion = True
     if output_folder:
         cache_folder = os.path.join(output_folder, "cache")
-        settings.cache_directory = os.path.join(
-            cache_folder, find_available_cache(cache_folder)
-        )
+        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
     else:
         cache_folder = os.path.join(os.getcwd(), "cache")
-        settings.cache_directory = os.path.join(
-            cache_folder, find_available_cache(cache_folder)
-        )
+        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
     settings.cache_frame_end = start_frame + simulation_duration
     settings.cache_frame_start = start_frame
 
@@ -126,7 +112,6 @@ def create_liquid_domain(
     settings.use_collision_border_left = False
     settings.use_collision_border_right = False
     settings.use_collision_border_top = False
-
 
     if fluid_type == "water":
         if waterfall:
@@ -231,17 +216,29 @@ def create_gas_domain(
     size=1,
     resolution=64,
     simulation_duration=100,
-    adaptive_domain = True,
+    adaptive_domain=True,
     output_folder=None,
     noise_scale=3,
     dissolve_speed=0,
-    flame_vorticity = None,
-    vorticity = None
+    flame_vorticity=None,
+    vorticity=None,
 ):
     check_initalize_fluids()
     bpy.ops.mesh.primitive_cube_add(size=size, location=location)
     obj = bpy.context.object
-    set_gas_domain_settings(obj, start_frame, fluid_type, resolution, simulation_duration, adaptive_domain, output_folder, noise_scale, dissolve_speed, flame_vorticity, vorticity)
+    set_gas_domain_settings(
+        obj,
+        start_frame,
+        fluid_type,
+        resolution,
+        simulation_duration,
+        adaptive_domain,
+        output_folder,
+        noise_scale,
+        dissolve_speed,
+        flame_vorticity,
+        vorticity,
+    )
     return obj
 
 
@@ -256,10 +253,10 @@ def set_gas_domain_settings(
     adaptive_domain=True,
     output_folder=None,
     noise_scale=2,
-    noise_strength = None,
+    noise_strength=None,
     dissolve_speed=0,
-    flame_vorticity = None,
-    vorticity = None,
+    flame_vorticity=None,
+    vorticity=None,
 ):
     check_initalize_fluids()
     if "Fluid" not in obj.modifiers:
@@ -286,14 +283,10 @@ def set_gas_domain_settings(
     settings.cache_frame_start = start_frame
     if output_folder:
         cache_folder = os.path.join(output_folder, "cache")
-        settings.cache_directory = os.path.join(
-            cache_folder, find_available_cache(cache_folder)
-        )
+        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
     else:
         cache_folder = os.path.join(os.getcwd(), "cache")
-        settings.cache_directory = os.path.join(
-            cache_folder, find_available_cache(cache_folder)
-        )
+        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
 
     settings.use_collision_border_back = False
     settings.use_collision_border_bottom = False
@@ -331,7 +324,6 @@ def set_gas_domain_settings(
 
 @gin.configurable
 def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount=None):
-
     check_initalize_fluids()
 
     bpy.ops.mesh.primitive_ico_sphere_add(radius=size, location=location)
@@ -362,7 +354,6 @@ def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount
 
 @gin.configurable
 def set_gas_flow_settings(obj, fluid_type="fire_and_smoke", fuel_amount=None):
-
     check_initalize_fluids()
 
     if "Fluid" not in obj.modifiers:
@@ -442,9 +433,7 @@ def decimate_and_realize_instances(instance_obj, parent_col):
         # crashes the normal way of writing this, no idea why
         for i in range(len(objs_to_copy)):
             obj = objs_to_copy[i]
-            copied_objs.append(
-                deep_clone_obj(obj, keep_modifiers=True, keep_materials=True)
-            )
+            copied_objs.append(deep_clone_obj(obj, keep_modifiers=True, keep_materials=True))
 
         parent_col_copy = butil.group_in_collection(copied_objs, "cloned_parent_col")
 
@@ -463,9 +452,7 @@ def decimate_and_realize_instances(instance_obj, parent_col):
 
     with Timer("Copying Instance"):
         # copy instance
-        instance_obj_clone = deep_clone_obj(
-            instance_obj, keep_modifiers=True, keep_materials=True
-        )
+        instance_obj_clone = deep_clone_obj(instance_obj, keep_modifiers=True, keep_materials=True)
         bpy.context.collection.objects.unlink(instance_obj_clone)
         bpy.data.scenes["Scene"].collection.objects.link(instance_obj_clone)
         # not very general, works on trees
@@ -542,13 +529,13 @@ def set_obj_on_fire(
                 obj.matrix_world.translation[1],
                 obj.matrix_world.translation[2] + uniform(2, 3),
             ),
-            turbulence_noise, 
-            turbulence_strength
+            turbulence_noise,
+            turbulence_strength,
         )
 
     butil.select_none()
     fire_dfs(obj, fluid_type)
-    
+
     # disabled for now
     # with Timer('Decimating and Realizing Instance'):
     #     instanced_obj = get_instanced_part(obj)
@@ -609,7 +596,6 @@ def generate_waterfall(
     simulation_duration=30,
     fluid_type="water",
 ):
-
     check_initalize_fluids()
 
     seed = np.random.randint(10000)
@@ -691,9 +677,7 @@ def generate_waterfall(
 
     make_liquid_effector(terrain)
 
-    obj = create_liquid_flow(
-        location=(0, 2.4, 6.5), fluid_type=fluid_type, size=0.5, flow_behavior="INFLOW"
-    )
+    obj = create_liquid_flow(location=(0, 2.4, 6.5), fluid_type=fluid_type, size=0.5, flow_behavior="INFLOW")
     dom = create_liquid_domain(
         location=(0, 0, 4),
         fluid_type=fluid_type,
@@ -702,9 +686,7 @@ def generate_waterfall(
         cache_frame_end=simulation_duration,
     )
     if fluid_type == "lava":
-        set_fluid_to_smoke(
-            dom, start_frame, resolution=300, simulation_duration=simulation_duration
-        )
+        set_fluid_to_smoke(dom, start_frame, resolution=300, simulation_duration=simulation_duration)
 
     bpy.ops.fluid.bake_all()
     bpy.ops.wm.save_mainfile(filepath=output_folder)
@@ -721,7 +703,6 @@ def import_obj_simulate(
     resolution=300,
     simulation_duration=50,
 ):
-
     check_initalize_fluids()
 
     # assuming we are importing to the origin
@@ -754,7 +735,6 @@ def find_root(node):
 
 @gin.configurable
 def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1):
-    
     check_initalize_fluids()
 
     if len(assets) == 0:
@@ -775,7 +755,6 @@ def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=N
         return
 
     for i in range(max_fire_assets):
-
         closest = obj_dist[i]
         obj = closest[1]
         logger.info(f"Setting fire to {i=} {obj.name=}")
@@ -792,15 +771,16 @@ def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=N
             dom_scale=1.1,
         )
 
+
 def duplicate_fluid_obj(obj):
     bpy.ops.mesh.primitive_plane_add()
     new_obj = bpy.context.object
     duplication_geomod.apply(new_obj=new_obj, old_obj=obj)
     return new_obj
 
+
 @gin.configurable
 def estimate_smoke_domain(obj, start_frame, simulation_duration):
-
     check_initalize_fluids()
 
     bpy.ops.object.select_all(action="DESELECT")
@@ -826,10 +806,7 @@ def estimate_smoke_domain(obj, start_frame, simulation_duration):
 
 
 @gin.configurable
-def estimate_liquid_domain(
-    location, start_frame, simulation_duration, fluid_type="water"
-):
-
+def estimate_liquid_domain(location, start_frame, simulation_duration, fluid_type="water"):
     check_initalize_fluids()
 
     source = create_liquid_flow(
@@ -861,7 +838,6 @@ def estimate_liquid_domain(
 
 @gin.configurable
 def set_fluid_to_smoke(obj, start_frame, resolution=300, simulation_duration=30):
-    
     check_initalize_fluids()
 
     new_obj = duplicate_fluid_obj(obj)
@@ -886,9 +862,7 @@ def fire_smoke_ground_truth(domain):
     bpy.context.view_layer.update()
     translation = domain.matrix_world @ Vector(domain.bound_box[0])
     # assumes modifier name
-    cache_dir = bpy.path.abspath(
-        domain.modifiers["Fluid"].domain_settings.cache_directory
-    )
+    cache_dir = bpy.path.abspath(domain.modifiers["Fluid"].domain_settings.cache_directory)
     data_dir = os.path.join(cache_dir, "data")
     contents = [f for f in os.listdir(data_dir)]
     filepath = os.path.join(data_dir, contents[0])

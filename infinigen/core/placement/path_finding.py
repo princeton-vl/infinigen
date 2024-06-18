@@ -3,15 +3,16 @@
 
 # Authors: Zeyu Ma
 
-from tqdm import tqdm
-import numpy as np
-import mathutils
 import itertools
-import networkx as nx
-from scipy.sparse import csr_matrix
-import matplotlib.pyplot as plt
 import os
-            
+
+import mathutils
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+from scipy.sparse import csr_matrix
+from tqdm import tqdm
+
 
 def camera_rotation_matrix(pointing_direction, up_vector):
     forward = pointing_direction / np.linalg.norm(pointing_direction)
@@ -21,22 +22,24 @@ def camera_rotation_matrix(pointing_direction, up_vector):
     up /= np.linalg.norm(up)
     return np.column_stack((right, up, forward))
 
+
 def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000, margin=0.1):
     volume = np.product(bounding_box[1] - bounding_box[0])
-    N = np.floor((bounding_box[1] - bounding_box[0]) * (resolution / volume) ** (1/3)).astype(np.int32)
+    N = np.floor((bounding_box[1] - bounding_box[0]) * (resolution / volume) ** (1 / 3)).astype(np.int32)
     NN = np.product(N)
     # print(f"{N=}")
     start_location, start_rotation = start_pose
     end_location, end_rotation = end_pose
-    margin_d = np.ceil((resolution / volume) ** (1/3) * margin)
+    margin_d = np.ceil((resolution / volume) ** (1 / 3) * margin)
     row = []
     col = []
     data = []
-    
+
     def freespace_ray_check(a, b, margin=0):
         v = b - a
         location, *_ = bvhtree.ray_cast(a, v, v.length)
-        if location is not None: return False
+        if location is not None:
+            return False
         if margin != 0:
             if v[0] != 0:
                 perp = mathutils.Vector([v[1], -v[0], 0])
@@ -48,7 +51,8 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
             angle = np.pi * 2 / check_N
             for i in range(check_N):
                 location, *_ = bvhtree.ray_cast(a + offset, v, v.length)
-                if location is not None: return False
+                if location is not None:
+                    return False
                 tar_direction = offset.cross(v)
                 tar_direction *= margin / tar_direction.length
                 offset = offset * np.cos(angle) + tar_direction * np.sin(angle)
@@ -58,15 +62,22 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
         return i * N[1] * N[2] + j * N[2] + k
 
     x, y, z = np.meshgrid(np.arange(N[0]), np.arange(N[1]), np.arange(N[2]), indexing="ij")
-    x = bounding_box[0][0] + (bounding_box[1][0]-bounding_box[0][0]) * (x+0.5) / N[0] 
-    y = bounding_box[0][1] + (bounding_box[1][1]-bounding_box[0][1]) * (y+0.5) / N[1]
-    z = bounding_box[0][2] + (bounding_box[1][2]-bounding_box[0][2]) * (z+0.5) / N[2]
+    x = bounding_box[0][0] + (bounding_box[1][0] - bounding_box[0][0]) * (x + 0.5) / N[0]
+    y = bounding_box[0][1] + (bounding_box[1][1] - bounding_box[0][1]) * (y + 0.5) / N[1]
+    z = bounding_box[0][2] + (bounding_box[1][2] - bounding_box[0][2]) * (z + 0.5) / N[2]
     x, y, z = x.reshape(-1), y.reshape(-1), z.reshape(-1)
 
-    start_index = index(*np.floor((np.array(start_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(np.int32))
-    end_index = index(*np.floor((np.array(end_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(np.int32))
-    if end_index == start_index: return None
-    
+    start_index = index(
+        *np.floor((np.array(start_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(
+            np.int32
+        )
+    )
+    end_index = index(
+        *np.floor((np.array(end_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(np.int32)
+    )
+    if end_index == start_index:
+        return None
+
     x[start_index] = start_pose[0].x
     y[start_index] = start_pose[0].y
     z[start_index] = start_pose[0].z
@@ -78,8 +89,18 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
     for i, j, k in list(itertools.product(range(N[0]), range(N[1]), range(N[2]))):
         index_ijk = index(i, j, k)
         pos_from = mathutils.Vector([x[index_ijk], y[index_ijk], z[index_ijk]])
-        for di, dj, dk in [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 1, 1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [1, 0, -1]]:
-            ni, nj, nk = i+di, j+dj, k+dk
+        for di, dj, dk in [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 0],
+            [0, 1, 1],
+            [1, 0, 1],
+            [1, -1, 0],
+            [0, 1, -1],
+            [1, 0, -1],
+        ]:
+            ni, nj, nk = i + di, j + dj, k + dk
             if ni >= 0 and nj >= 0 and nk >= 0 and ni < N[0] and nj < N[1] and nk < N[2]:
                 index_nijk = index(ni, nj, nk)
                 pos_to = mathutils.Vector([x[index_nijk], y[index_nijk], z[index_nijk]])
@@ -111,8 +132,8 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
     for n in lengths_dict:
         lengths[n] = lengths_dict[n]
 
-    mask1 = (lengths[row] >= margin_d)
-    mask2 = (lengths[col] >= margin_d)
+    mask1 = lengths[row] >= margin_d
+    mask2 = lengths[col] >= margin_d
     row = row[mask1 & mask2]
     col = col[mask1 & mask2]
     data = data[mask1 & mask2]
@@ -120,24 +141,27 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
     A = csr_matrix((data, (row, col)), shape=(NN, NN))
     G = nx.from_scipy_sparse_array(A)
 
-
     try:
         path = nx.shortest_path(G, start_index, end_index, weight="weight")
     except:
         return None
-    
+
     stack = [start_index]
 
     for p in path[1:]:
         back = 0
-        while freespace_ray_check(mathutils.Vector([x[stack[-1-back]], y[stack[-1-back]], z[stack[-1-back]]]), mathutils.Vector([x[p], y[p], z[p]]), margin=margin):
+        while freespace_ray_check(
+            mathutils.Vector([x[stack[-1 - back]], y[stack[-1 - back]], z[stack[-1 - back]]]),
+            mathutils.Vector([x[p], y[p], z[p]]),
+            margin=margin,
+        ):
             back += 1
             if back == len(stack):
                 break
         if back != 1:
-            stack = stack[:1-back]
+            stack = stack[: 1 - back]
         stack.append(p)
-    
+
     locations = []
     lengths = []
     for i, p in enumerate(stack):
@@ -147,7 +171,8 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
             locations.append(end_pose[0])
         else:
             locations.append(mathutils.Vector([x[p], y[p], z[p]]))
-        if len(locations) >= 2: lengths.append((locations[-1] - locations[-2]).length)
+        if len(locations) >= 2:
+            lengths.append((locations[-1] - locations[-2]).length)
     keyframed_poses = []
 
     for i in range(len(stack)):
@@ -157,16 +182,18 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
             if i == len(stack) - 1:
                 rotation_euler = end_pose[1]
             else:
-                rotation_matrix = mathutils.Matrix(camera_rotation_matrix(np.array(locations[i] - locations[i-1]), np.array([0, 0, 1]))) @ mathutils.Matrix([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+                rotation_matrix = mathutils.Matrix(
+                    camera_rotation_matrix(np.array(locations[i] - locations[i - 1]), np.array([0, 0, 1]))
+                ) @ mathutils.Matrix([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
                 rotation_euler = rotation_matrix.to_euler()
                 if rotation_euler.y != 0:
                     rotation_euler.y = 0
                     rotation_euler.x += np.pi
                     rotation_euler.z += np.pi
             angle_differece = [
-                abs(rotation_euler.z - 2 * np.pi - keyframed_poses[i-1][2].z),
-                abs(rotation_euler.z - keyframed_poses[i-1][2].z),
-                abs(rotation_euler.z + 2 * np.pi - keyframed_poses[i-1][2].z),
+                abs(rotation_euler.z - 2 * np.pi - keyframed_poses[i - 1][2].z),
+                abs(rotation_euler.z - keyframed_poses[i - 1][2].z),
+                abs(rotation_euler.z + 2 * np.pi - keyframed_poses[i - 1][2].z),
             ]
             rotation_euler.z += (np.argmin(angle_differece) - 1) * 2 * np.pi
             keyframed_poses.append((np.sum(lengths[:i]), locations[i], rotation_euler))

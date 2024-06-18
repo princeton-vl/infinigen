@@ -3,7 +3,7 @@
 
 # Authors: Karhan Kayan
 
-import pytest
 import bpy
+import pytest
 
-pytest.main(['fluid/unit_tests.py', '-rP'])
+pytest.main(["fluid/unit_tests.py", "-rP"])

@@ -5,25 +5,20 @@
 
 
 import bpy
-
-import numpy as np
 import mathutils
-
-from tqdm import trange, tqdm
-from numpy.random import uniform, normal
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core import surface
-
-from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.weather.cloud.node import geometry_func, shader_material
-from infinigen.assets.weather.cloud.node import scatter_func
-
+import numpy as np
+from numpy.random import normal, uniform
 from scipy.ndimage import distance_transform_edt
 from skimage import measure
+from tqdm import tqdm, trange
 
-from infinigen.core.util.logging import Suppress
+from infinigen.assets.lighting import sky_lighting
+from infinigen.assets.weather.cloud.node import geometry_func, scatter_func, shader_material
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Suppress
 
 
 def set_curves(curve, points):
@@ -83,20 +78,25 @@ class Cumulus(object):
         rotate_angle = np.random.uniform(*cls.ANGLE_ROTATE_RANGE)
 
         return {
-            'density': density,
-            'anisotropy': anisotropy,
-            'noise_scale': noise_scale,
-            'noise_detail': noise_detail,
-            'voronoi_scale': voronoi_scale,
-            'mix_factor': mix_factor,
-            'rotate_angle': rotate_angle,
-            'emission_strength': emission, }
+            "density": density,
+            "anisotropy": anisotropy,
+            "noise_scale": noise_scale,
+            "noise_detail": noise_detail,
+            "voronoi_scale": voronoi_scale,
+            "mix_factor": mix_factor,
+            "rotate_angle": rotate_angle,
+            "emission_strength": emission,
+        }
 
     def update_geo_params(self, geo_params):
         return geo_params
 
     def update_shader_params(self, shader_params):
-        shader_params.update({'density': np.random.uniform(0.05, 0.25), })
+        shader_params.update(
+            {
+                "density": np.random.uniform(0.05, 0.25),
+            }
+        )
         return shader_params
 
     def get_node_params(self):
@@ -104,7 +104,12 @@ class Cumulus(object):
         curve_func = self.get_curve_func()
 
         params = self.get_params()
-        params.update({'scale': scale, 'curve_func': curve_func, })
+        params.update(
+            {
+                "scale": scale,
+                "curve_func": curve_func,
+            }
+        )
 
         geo_params = self.update_geo_params(dict(params))
         shader_params = self.update_shader_params(dict(params))
@@ -120,10 +125,19 @@ class Cumulus(object):
         forth_pt_x = 1.0
         forth_pt_y = np.random.uniform(0.90, 1.00)
 
-        return [[first_pt_x, first_pt_y], [second_pt_x, second_pt_y], [third_pt_x, third_pt_y],
-            [forth_pt_x, forth_pt_y], ]
+        return [
+            [first_pt_x, first_pt_y],
+            [second_pt_x, second_pt_y],
+            [third_pt_x, third_pt_y],
+            [forth_pt_x, forth_pt_y],
+        ]
 
-    def make_cloud(self, marching_cubes=False, resolution=128, selection=None, ):
+    def make_cloud(
+        self,
+        marching_cubes=False,
+        resolution=128,
+        selection=None,
+    ):
         cloud = bpy.data.objects.new(self.name, self.ref_cloud.copy())
         link_object(cloud)
 
@@ -131,14 +145,27 @@ class Cumulus(object):
         shader_params = self.shader_params
         points_only = marching_cubes
 
-        mat = surface.add_material(cloud, shader_material, selection=selection, input_kwargs=shader_params, )
+        mat = surface.add_material(
+            cloud,
+            shader_material,
+            selection=selection,
+            input_kwargs=shader_params,
+        )
 
-        geo_params['material'] = mat
-        surface.add_geomod(cloud, geometry_func(points_only=points_only, resolution=resolution, ),
-            selection=selection, input_kwargs=geo_params, apply=True, )
+        geo_params["material"] = mat
+        surface.add_geomod(
+            cloud,
+            geometry_func(
+                points_only=points_only,
+                resolution=resolution,
+            ),
+            selection=selection,
+            input_kwargs=geo_params,
+            apply=True,
+        )
 
         if not marching_cubes:
-            cloud.dimensions = geo_params['scale']
+            cloud.dimensions = geo_params["scale"]
             return cloud
 
         name = cloud.name
@@ -171,14 +198,14 @@ class Cumulus(object):
 
         cloud = bpy.data.objects.new(name, mesh)
         cloud.active_material = mat
-        cloud.dimensions = geo_params['scale']
+        cloud.dimensions = geo_params["scale"]
 
         link_object(cloud)
 
         with Suppress():
             # Set origin
             butil.select(cloud)
-            bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+            bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
             # Fix normals
             bpy.context.view_layer.objects.active = cloud
@@ -217,12 +244,24 @@ class Cumulonimbus(Cumulus):
         forth_pt_x = 1.0
         forth_pt_y = np.random.uniform(-1.0, 0.50)
 
-        return [[first_pt_x, first_pt_y], [second_pt_x, second_pt_y], [third_pt_x, third_pt_y],
-            [forth_pt_x, forth_pt_y], ]
+        return [
+            [first_pt_x, first_pt_y],
+            [second_pt_x, second_pt_y],
+            [third_pt_x, third_pt_y],
+            [forth_pt_x, forth_pt_y],
+        ]
 
-    def make_cloud(self, marching_cubes=False, resolution=128, selection=None, ):
-        return super().make_cloud(marching_cubes=marching_cubes, resolution=resolution * 2,
-            selection=selection, )
+    def make_cloud(
+        self,
+        marching_cubes=False,
+        resolution=128,
+        selection=None,
+    ):
+        return super().make_cloud(
+            marching_cubes=marching_cubes,
+            resolution=resolution * 2,
+            selection=selection,
+        )
 
     def get_scale(self):
         scale_x = np.random.uniform(512.0, 1024.0)
@@ -232,7 +271,11 @@ class Cumulonimbus(Cumulus):
         return scales
 
     def update_shader_params(self, shader_params):
-        shader_params.update({'density': np.random.uniform(0.1, 0.3), })
+        shader_params.update(
+            {
+                "density": np.random.uniform(0.1, 0.3),
+            }
+        )
         return shader_params
 
 
@@ -240,7 +283,11 @@ class Stratocumulus(Cumulus):
     ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
 
     def update_shader_params(self, shader_params):
-        shader_params.update({'density': np.random.uniform(0.01, 0.10), })
+        shader_params.update(
+            {
+                "density": np.random.uniform(0.01, 0.10),
+            }
+        )
         return shader_params
 
     def get_scale(self):
@@ -311,33 +358,48 @@ class Altocumulus(Cumulus):
         voronoi_scale = np.random.uniform(*cls.SCATTER_VORONOI_SCALE_RANGE)
         vertices_x = np.random.randint(*cls.SCATTER_GRID_VERTICES_RANGE)
         vertices_y = np.random.randint(*cls.SCATTER_GRID_VERTICES_RANGE)
-        scatter_params = {'voronoi_scale': voronoi_scale, 'vertices_x': vertices_x, 'vertices_y': vertices_y, }
+        scatter_params = {
+            "voronoi_scale": voronoi_scale,
+            "vertices_x": vertices_x,
+            "vertices_y": vertices_y,
+        }
 
         return {
-            'densities': densities,
-            'anisotropies': anisotropies,
-            'noise_scales': noise_scales,
-            'noise_details': noise_details,
-            'voronoi_scales': voronoi_scales,
-            'mix_factors': mix_factors,
-            'rotate_angles': rotate_angles,
-            'emission_strengths': emissions,
-            'scatter_params': scatter_params, }
+            "densities": densities,
+            "anisotropies": anisotropies,
+            "noise_scales": noise_scales,
+            "noise_details": noise_details,
+            "voronoi_scales": voronoi_scales,
+            "mix_factors": mix_factors,
+            "rotate_angles": rotate_angles,
+            "emission_strengths": emissions,
+            "scatter_params": scatter_params,
+        }
 
     def update_shader_params(self, shader_params):
-        params = zip(shader_params['anisotropies'], shader_params['noise_scales'],
-            shader_params['noise_details'], shader_params['voronoi_scales'], shader_params['mix_factors'],
-            shader_params['rotate_angles'], shader_params['emission_strengths'], )
+        params = zip(
+            shader_params["anisotropies"],
+            shader_params["noise_scales"],
+            shader_params["noise_details"],
+            shader_params["voronoi_scales"],
+            shader_params["mix_factors"],
+            shader_params["rotate_angles"],
+            shader_params["emission_strengths"],
+        )
 
-        shader_params = [{
-            'density': np.random.uniform(0.05, 0.25),
-            'anisotropy': param[0],
-            'noise_scale': param[1],
-            'noise_detail': param[2],
-            'voronoi_scale': param[3],
-            'mix_factor': param[4],
-            'rotate_angle': param[5],
-            'emission_strength': param[6], } for param in params]
+        shader_params = [
+            {
+                "density": np.random.uniform(0.05, 0.25),
+                "anisotropy": param[0],
+                "noise_scale": param[1],
+                "noise_detail": param[2],
+                "voronoi_scale": param[3],
+                "mix_factor": param[4],
+                "rotate_angle": param[5],
+                "emission_strength": param[6],
+            }
+            for param in params
+        ]
         return shader_params
 
     def get_node_params(self):
@@ -347,13 +409,23 @@ class Altocumulus(Cumulus):
         curve_funcs = [self.get_curve_func() for _ in range(cls.NUM_SUBCLOUDS)]
 
         params = self.get_params()
-        params.update({'scale': scale, 'curve_funcs': curve_funcs, })
+        params.update(
+            {
+                "scale": scale,
+                "curve_funcs": curve_funcs,
+            }
+        )
 
         geo_params = self.update_geo_params(dict(params))
         shader_params = self.update_shader_params(dict(params))
         return geo_params, shader_params
 
-    def make_cloud(self, marching_cubes=False, resolution=128, selection=None, ):
+    def make_cloud(
+        self,
+        marching_cubes=False,
+        resolution=128,
+        selection=None,
+    ):
         resolution = min(resolution, 64)
         cloud = bpy.data.objects.new(self.name, self.ref_cloud.copy())
         link_object(cloud)
@@ -362,15 +434,22 @@ class Altocumulus(Cumulus):
         shader_params = self.shader_params
         points_only = apply = marching_cubes
 
-        mats = [surface.shaderfunc_to_material(shader_material, **shader_param) for shader_param in
-            shader_params]
+        mats = [surface.shaderfunc_to_material(shader_material, **shader_param) for shader_param in shader_params]
 
-        geo_params['materials'] = mats
-        surface.add_geomod(cloud, scatter_func(points_only=points_only, resolution=resolution, ),
-            selection=selection, input_kwargs=geo_params, apply=True, )
+        geo_params["materials"] = mats
+        surface.add_geomod(
+            cloud,
+            scatter_func(
+                points_only=points_only,
+                resolution=resolution,
+            ),
+            selection=selection,
+            input_kwargs=geo_params,
+            apply=True,
+        )
 
         # TODO: fix this and check if scales is still needed
-        cloud.dimensions = geo_params['scale']
+        cloud.dimensions = geo_params["scale"]
         return cloud
 
 
@@ -429,7 +508,7 @@ def create_3d_grid(steps=64):
     ys = np.linspace(-1.0, 1.0, steps)
     zs = np.linspace(-1.0, 1.0, steps)
 
-    xs, ys, zs = np.meshgrid(xs, ys, zs, indexing='ij')
+    xs, ys, zs = np.meshgrid(xs, ys, zs, indexing="ij")
     xs = xs.reshape(-1)
     ys = ys.reshape(-1)
     zs = zs.reshape(-1)
@@ -437,7 +516,7 @@ def create_3d_grid(steps=64):
     return np.stack((xs, ys, zs), axis=1)
 
 
-def create_cube(name, steps=128, collection='Clouds'):
+def create_cube(name, steps=128, collection="Clouds"):
     grid = create_3d_grid(steps=steps)
     mesh = bpy.data.meshes.new(name)
 
@@ -450,8 +529,8 @@ def create_cube(name, steps=128, collection='Clouds'):
 
 
 def initialize(collection):
-    bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.cycles.device = 'GPU'
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.device = "GPU"
 
     bpy.context.scene.cycles.preview_samples = 32
     bpy.context.scene.cycles.samples = 128
@@ -467,20 +546,39 @@ def initialize(collection):
     resolution = 256
 
     ref_grid = create_3d_grid(steps=128)
-    ref_cloud = bpy.data.meshes.new('ref_cloud')
+    ref_cloud = bpy.data.meshes.new("ref_cloud")
     ref_cloud.from_pydata(ref_grid, [], [])
     ref_cloud.update()
 
     clouds = []
-    clouds += [Cumulus(f'Cumulus_{i:03d}', ref_cloud).make_cloud(marching_cubes=False, resolution=resolution, )
-        for i in range(6)]
-    clouds += [Cumulonimbus(f'Cumulonimbus{i:03d}', ref_cloud).make_cloud(marching_cubes=False,
-        resolution=resolution, ) for i in range(6)]
-    clouds += [Stratocumulus(f'Stratocumulus{i:03d}', ref_cloud).make_cloud(marching_cubes=False,
-        resolution=resolution, ) for i in range(6)]
     clouds += [
-        Altocumulus(f'Altocumulus{i:03d}', ref_cloud).make_cloud(marching_cubes=False, resolution=resolution, )
-        for i in range(7)]
+        Cumulus(f"Cumulus_{i:03d}", ref_cloud).make_cloud(
+            marching_cubes=False,
+            resolution=resolution,
+        )
+        for i in range(6)
+    ]
+    clouds += [
+        Cumulonimbus(f"Cumulonimbus{i:03d}", ref_cloud).make_cloud(
+            marching_cubes=False,
+            resolution=resolution,
+        )
+        for i in range(6)
+    ]
+    clouds += [
+        Stratocumulus(f"Stratocumulus{i:03d}", ref_cloud).make_cloud(
+            marching_cubes=False,
+            resolution=resolution,
+        )
+        for i in range(6)
+    ]
+    clouds += [
+        Altocumulus(f"Altocumulus{i:03d}", ref_cloud).make_cloud(
+            marching_cubes=False,
+            resolution=resolution,
+        )
+        for i in range(7)
+    ]
     for cloud in clouds:
         bpy.data.collections[collection].objects.link(cloud)
     bpy.context.view_layer.update()
@@ -510,7 +608,7 @@ def create_collection(name):
 def main():
     clean()
 
-    collection_name = 'Clouds'
+    collection_name = "Clouds"
 
     remove_collection(collection_name)
     create_collection(collection_name)
@@ -520,13 +618,13 @@ def main():
 def single():
     clean()
 
-    collection_name = 'Clouds'
+    collection_name = "Clouds"
 
     remove_collection(collection_name)
     create_collection(collection_name)
 
-    bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.cycles.device = 'GPU'
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.device = "GPU"
 
     bpy.context.scene.cycles.preview_samples = 32
     bpy.context.scene.cycles.samples = 128
@@ -538,12 +636,17 @@ def single():
     ys = ys.reshape(-1)
 
     ref_grid = create_3d_grid(steps=256)
-    ref_cloud = bpy.data.meshes.new('ref_cloud')
+    ref_cloud = bpy.data.meshes.new("ref_cloud")
     ref_cloud.from_pydata(ref_grid, [], [])
     ref_cloud.update()
 
-    clouds = [Cumulonimbus(f'Cumulonimbus_{i:03d}', ref_cloud).make_cloud(marching_cubes=True, resolution=128, )
-        for i in range(1)]
+    clouds = [
+        Cumulonimbus(f"Cumulonimbus_{i:03d}", ref_cloud).make_cloud(
+            marching_cubes=True,
+            resolution=128,
+        )
+        for i in range(1)
+    ]
     for cloud in clouds:
         bpy.data.collections[collection_name].objects.link(cloud)
     bpy.context.view_layer.update()

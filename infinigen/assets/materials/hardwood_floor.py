@@ -5,25 +5,32 @@
 import numpy as np
 from numpy.random import uniform
 
-from . import common
-from .utils.surface_utils import perturb_coordinates
-from .table_materials import shader_wood
 from infinigen.assets.utils.object import new_plane
-from ...core.nodes import NodeWrangler, Nodes
+
+from ...core.nodes import Nodes, NodeWrangler
 from ...core.util.random import log_uniform
+from . import common
+from .table_materials import shader_wood
+from .utils.surface_utils import perturb_coordinates
 
 
 def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
-    vec = nw.new_node(Nodes.Mapping, [nw.new_node(Nodes.TextureCoord).outputs["Object"]],
-                      input_kwargs={'Rotation': rotation})
+    vec = nw.new_node(
+        Nodes.Mapping, [nw.new_node(Nodes.TextureCoord).outputs["Object"]], input_kwargs={"Rotation": rotation}
+    )
     color, mortar = map(
-        nw.new_node(Nodes.BrickTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), (0, 0, 0, uniform(.01, .02))],
-                    input_kwargs={
-                        'Scale': 1,
-                        'Row Height': log_uniform(.06, .15),
-                        'Brick Width': log_uniform(.6, 1),
-                        'Mortar Size': uniform(.002, .002)
-                    }).outputs.get, ['Color', 'Fac'])
+        nw.new_node(
+            Nodes.BrickTexture,
+            [vec, (0, 0, 0, 1), (1, 1, 1, 1), (0, 0, 0, uniform(0.01, 0.02))],
+            input_kwargs={
+                "Scale": 1,
+                "Row Height": log_uniform(0.06, 0.15),
+                "Brick Width": log_uniform(0.6, 1),
+                "Mortar Size": uniform(0.002, 0.002),
+            },
+        ).outputs.get,
+        ["Color", "Fac"],
+    )
     location = nw.combine(color, color, color)
     shader_wood(nw)
     perturb_coordinates(nw, nw.find(Nodes.TextureCoord)[1], location, 0)
@@ -36,7 +43,7 @@ def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
 
 def apply(obj, selection=None, rotation=None, **kwargs):
     if rotation is None:
-        rotation = (0,0,0) if uniform() < .1 else (0,0,np.pi / 2)
+        rotation = (0, 0, 0) if uniform() < 0.1 else (0, 0, np.pi / 2)
     return common.apply(obj, shader_hardwood_floor, selection, rotation, **kwargs)
 
 

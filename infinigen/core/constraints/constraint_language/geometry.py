@@ -9,13 +9,16 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from infinigen.core import tags as t
+
+from .expression import BoolExpression, Expression, ScalarExpression, nodedataclass
 from .relations import Relation
-from .expression import Expression, BoolExpression, ScalarExpression, nodedataclass
 from .set_reasoning import ObjectSetExpression
+
 
 @nodedataclass()
 class center_stable_surface_dist(ScalarExpression):
     objs: ObjectSetExpression
+
 
 @nodedataclass()
 class accessibility_cost(ScalarExpression):
@@ -29,6 +32,7 @@ class accessibility_cost(ScalarExpression):
             self.normal = np.array(self.normal)
         assert isinstance(self.normal, np.ndarray)
 
+
 @ObjectSetExpression.register_postfix_func
 @nodedataclass()
 class distance(ScalarExpression):
@@ -41,14 +45,17 @@ class distance(ScalarExpression):
         assert isinstance(self.others, ObjectSetExpression)
         assert isinstance(self.others_tags, set)
 
+
 @nodedataclass()
 class min_distance_internal(ScalarExpression):
     objs: ObjectSetExpression
-    
+
+
 @nodedataclass()
 class focus_score(ScalarExpression):
     objs: ObjectSetExpression
     others: ObjectSetExpression
+
 
 @nodedataclass()
 class angle_alignment_cost(ScalarExpression):
@@ -61,19 +68,23 @@ class angle_alignment_cost(ScalarExpression):
             self.others_tags = set()
         assert isinstance(self.others_tags, set), type(self.others_tags)
 
+
 @nodedataclass()
 class freespace_2d(ScalarExpression):
     objs: ObjectSetExpression
     others: ObjectSetExpression
+
 
 @nodedataclass()
 class min_dist_2d(ScalarExpression):
     objs: ObjectSetExpression
     others: ObjectSetExpression
 
+
 @nodedataclass()
 class rotational_asymmetry(ScalarExpression):
     objs: ObjectSetExpression
+
 
 @nodedataclass()
 class reflectional_asymmetry(ScalarExpression):
@@ -81,11 +92,13 @@ class reflectional_asymmetry(ScalarExpression):
     others: ObjectSetExpression
     use_long_plane: bool = True
 
+
 @ObjectSetExpression.register_postfix_func
 @nodedataclass()
 class volume(ScalarExpression):
     objs: ObjectSetExpression
     dims: int | tuple = 3
+
 
 @nodedataclass()
 class coplanarity_cost(ScalarExpression):

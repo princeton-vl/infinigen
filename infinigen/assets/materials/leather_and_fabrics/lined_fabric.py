@@ -8,9 +8,9 @@ import bpy
 import mathutils
 from numpy.random import uniform
 
+from infinigen.assets.materials import common
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.assets.materials import common
 
 
 def get_texture_params():
@@ -21,9 +21,7 @@ def get_texture_params():
     }
 
 
-def shader_lined_fur_base(
-    nw: NodeWrangler, _hue=0.3, _saturation=0.7, _line_density=10
-):
+def shader_lined_fur_base(nw: NodeWrangler, _hue=0.3, _saturation=0.7, _line_density=10):
     # Code generated using version 2.6.5 of the node_transpiler
 
     hue = nw.new_node(Nodes.Value)
@@ -43,9 +41,7 @@ def shader_lined_fur_base(
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
-    )
+    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -57,9 +53,7 @@ def shader_lined_fur_base(
         },
     )
 
-    color_ramp_1 = nw.new_node(
-        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]}
-    )
+    color_ramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]})
     color_ramp_1.color_ramp.elements[0].position = 0.0073
     color_ramp_1.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     color_ramp_1.color_ramp.elements[1].position = 0.2255
@@ -83,9 +77,7 @@ def shader_lined_fur_base(
         },
     )
 
-    color_ramp = nw.new_node(
-        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
-    )
+    color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
     color_ramp.color_ramp.elements[0].position = 0.3018
     color_ramp.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
     color_ramp.color_ramp.elements[1].position = 0.4691
@@ -120,9 +112,7 @@ def shader_lined_fur_base(
         attrs={"operation": "MULTIPLY"},
     )
 
-    mapping_2 = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
-    )
+    mapping_2 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
@@ -134,9 +124,7 @@ def shader_lined_fur_base(
         },
     )
 
-    color_ramp_2 = nw.new_node(
-        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
-    )
+    color_ramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
     color_ramp_2.color_ramp.elements[0].position = 0.3018
     color_ramp_2.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
     color_ramp_2.color_ramp.elements[1].position = 0.4691

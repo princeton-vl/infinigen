@@ -4,15 +4,25 @@
 # Authors: Lingjie Mei
 
 
-from .diff_growth import DiffGrowthBaseCoralFactory, TableBaseCoralFactory, LeatherBaseCoralFactory
-from .generate import CoralFactory, LeatherCoralFactory, TableCoralFactory, CauliflowerCoralFactory, \
-    BrainCoralFactory, HoneycombCoralFactory, BushCoralFactory, TwigCoralFactory, TubeCoralFactory, \
-    FanCoralFactory, ElkhornCoralFactory, StarCoralFactory
-from .laplacian import CauliflowerBaseCoralFactory
+from .diff_growth import DiffGrowthBaseCoralFactory, LeatherBaseCoralFactory, TableBaseCoralFactory
 from .elkhorn import ElkhornBaseCoralFactory
-from .reaction_diffusion import BrainBaseCoralFactory, HoneycombBaseCoralFactory, \
-    ReactionDiffusionBaseCoralFactory
+from .fan import FanBaseCoralFactory
+from .generate import (
+    BrainCoralFactory,
+    BushCoralFactory,
+    CauliflowerCoralFactory,
+    CoralFactory,
+    ElkhornCoralFactory,
+    FanCoralFactory,
+    HoneycombCoralFactory,
+    LeatherCoralFactory,
+    StarCoralFactory,
+    TableCoralFactory,
+    TubeCoralFactory,
+    TwigCoralFactory,
+)
+from .laplacian import CauliflowerBaseCoralFactory
+from .reaction_diffusion import BrainBaseCoralFactory, HoneycombBaseCoralFactory, ReactionDiffusionBaseCoralFactory
+from .star import StarBaseCoralFactory
 from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFactory
 from .tube import TubeBaseCoralFactory
-from .fan import FanBaseCoralFactory
-from .star import StarBaseCoralFactory

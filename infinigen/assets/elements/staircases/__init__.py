@@ -3,16 +3,23 @@
 
 # Authors: Lingjie Mei
 import numpy as np
+
+from .cantilever import CantileverStaircaseFactory
 from .curved import CurvedStaircaseFactory
+from .l_shaped import LShapedStaircaseFactory
 from .spiral import SpiralStaircaseFactory
 from .straight import StraightStaircaseFactory
-from .l_shaped import LShapedStaircaseFactory
 from .u_shaped import UShapedStaircaseFactory
-from .cantilever import CantileverStaircaseFactory
 
 
 def random_staircase_factory():
-    door_factories = [StraightStaircaseFactory, LShapedStaircaseFactory, UShapedStaircaseFactory,
-        SpiralStaircaseFactory, CurvedStaircaseFactory, CantileverStaircaseFactory]
-    door_probs = np.array([2, 2, 2, .5, 2, 2])
+    door_factories = [
+        StraightStaircaseFactory,
+        LShapedStaircaseFactory,
+        UShapedStaircaseFactory,
+        SpiralStaircaseFactory,
+        CurvedStaircaseFactory,
+        CantileverStaircaseFactory,
+    ]
+    door_probs = np.array([2, 2, 2, 0.5, 2, 2])
     return np.random.choice(door_factories, p=door_probs / door_probs.sum())

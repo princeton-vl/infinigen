@@ -44,6 +44,7 @@ def cleanup(folder, verbose=False, skip_coarse=False):
         for file_path in sorted(folder.rglob(file_name_to_del)):
             check_delete(file_path)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("folder", type=Path)

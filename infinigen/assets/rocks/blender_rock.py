@@ -5,20 +5,21 @@
 
 
 import bpy
-from mathutils import Vector
 import numpy as np
-from numpy.random import uniform as U, normal as N
+from mathutils import Vector
+from numpy.random import normal as N
+from numpy.random import uniform as U
 
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util import blender as butil
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_object, tag_nodegroup
 
-bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
+bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
+
 
 class BlenderRockFactory(AssetFactory):
-
     def __init__(self, factory_seed, detail=1):
         super(BlenderRockFactory, self).__init__(factory_seed)
         self.detail = detail
@@ -36,11 +37,14 @@ class BlenderRockFactory(AssetFactory):
                 kwargs = dict(
                     use_random_seed=False,
                     user_seed=seed,
-                    display_detail=self.detail, detail=self.detail,
-                    scale_Z=(zrand*zscale, zscale), scale_fac=(1, 1, 1),
-                    scale_X=(1.00, 1.01), scale_Y=(1.00, 1.01),  # Bug occurs otherwise, I think
-                    deform=U(2, 10),    
-                    rough=U(0.5, 1.0)  # Higher than 1.0 can cause self-intersection
+                    display_detail=self.detail,
+                    detail=self.detail,
+                    scale_Z=(zrand * zscale, zscale),
+                    scale_fac=(1, 1, 1),
+                    scale_X=(1.00, 1.01),
+                    scale_Y=(1.00, 1.01),  # Bug occurs otherwise, I think
+                    deform=U(2, 10),
+                    rough=U(0.5, 1.0),  # Higher than 1.0 can cause self-intersection
                 )
                 # The rock generator is poorly built.
                 # It uses a weibull distribution to sample from a list, which will fail w/ 1.111% probability.
@@ -56,6 +60,6 @@ class BlenderRockFactory(AssetFactory):
 
         butil.apply_modifiers(obj)
 
-        tag_object(obj, 'blender_rock')
+        tag_object(obj, "blender_rock")
 
         return obj

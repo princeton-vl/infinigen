@@ -3,6 +3,7 @@
 
 # Authors: Lingjie Mei
 from infinigen.assets.materials import leather_and_fabrics
+
 from .leather_and_fabrics import *
 
 

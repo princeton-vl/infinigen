@@ -5,18 +5,19 @@
 
 
 import os
-from random import random
-import numpy as np
-from pathlib import Path
-from collections import defaultdict
 import re
 import time
+from collections import defaultdict
 from itertools import chain
+from pathlib import Path
+from random import random
 
-CONFIG_FILE = Path(__file__).parent/'cfg.txt'
+import numpy as np
+
+CONFIG_FILE = Path(__file__).parent / "cfg.txt"
 assert CONFIG_FILE.exists(), CONFIG_FILE.resolve()
 
-STARTING_SYMBOL = 'Q'
+STARTING_SYMBOL = "Q"
 
 
 def create_pcfg():
@@ -27,22 +28,23 @@ def create_pcfg():
         regex = rule.fullmatch(line)
         if regex is not None and len(regex.groups()) == 3:
             LHS, prob, RHS = regex.groups()
-            PCFG[LHS]['a'].append(RHS)
-            PCFG[LHS]['p'].append(float(prob))
+            PCFG[LHS]["a"].append(RHS)
+            PCFG[LHS]["p"].append(float(prob))
 
     for k, v in PCFG.items():
-        assert abs(np.sum(v['p'])-1) < 1e-4, (k, v['p'])
+        assert abs(np.sum(v["p"]) - 1) < 1e-4, (k, v["p"])
     return dict(PCFG)
 
 
 def generate_string(max_len=10000):
-
     PCFG = create_pcfg()
-    # print(f"PCFG Keys: {' '.join(list(PCFG.keys()))}")
-    def expand(s): return list(np.random.choice(
-        **PCFG[s]).split()) if (s in PCFG) else s
 
-    def terminate_expand(s): return ['n'] if (s in PCFG) else s
+    # print(f"PCFG Keys: {' '.join(list(PCFG.keys()))}")
+    def expand(s):
+        return list(np.random.choice(**PCFG[s]).split()) if (s in PCFG) else s
+
+    def terminate_expand(s):
+        return ["n"] if (s in PCFG) else s
 
     symbols = [STARTING_SYMBOL]
     for steps in range(1000):
@@ -54,11 +56,11 @@ def generate_string(max_len=10000):
         if len(symbols) >= max_len:
             # print(f"Done making symbols. There are {len(symbols)}")
             symbols = list(chain(*map(terminate_expand, symbols)))
-            assert 'P' not in symbols, terminate_expand('P')
+            assert "P" not in symbols, terminate_expand("P")
             return symbols
 
     raise Exception("Too many steps")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(generate_string())

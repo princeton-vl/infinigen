@@ -9,12 +9,15 @@ from ctypes import POINTER, c_float, c_int32, c_size_t
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from infinigen.terrain.utils import ASFLOAT, ASINT, Vars, load_cdll, register_func
+
 from infinigen.core.util.organization import Materials
+from infinigen.terrain.utils import ASFLOAT, ASINT, Vars, load_cdll, register_func
+
 
 @gin.configurable
 class Element:
     called_time = {}
+
     def __init__(self, lib_name, material, transparency):
         if lib_name in Element.called_time:
             lib_name_X = f"{lib_name}_{Element.called_time[lib_name]}"
@@ -33,12 +36,27 @@ class Element:
                     self.attributes.append(aux_name)
             call_param_type.append(POINTER(c_float))
         register_func(self, dll, "call", call_param_type)
-        register_func(self, dll, "init", [
-            c_int32, c_int32,
-            c_size_t, POINTER(c_int32), c_size_t, POINTER(c_float),
-            c_size_t, POINTER(c_int32), c_size_t, POINTER(c_float),
-            c_size_t, POINTER(c_int32), c_size_t, POINTER(c_float),
-        ])
+        register_func(
+            self,
+            dll,
+            "init",
+            [
+                c_int32,
+                c_int32,
+                c_size_t,
+                POINTER(c_int32),
+                c_size_t,
+                POINTER(c_float),
+                c_size_t,
+                POINTER(c_int32),
+                c_size_t,
+                POINTER(c_float),
+                c_size_t,
+                POINTER(c_int32),
+                c_size_t,
+                POINTER(c_float),
+            ],
+        )
         register_func(self, dll, "cleanup")
 
         self.material = material
@@ -52,24 +70,39 @@ class Element:
                 meta_param2 = 0
         else:
             meta_param = meta_param2 = 0
-        if not hasattr(self, "int_params2"): self.int_params2 = np.zeros(0, dtype=np.int32)
-        if not hasattr(self, "float_params2"): self.float_params2 = np.zeros(0, dtype=np.float32)
-        if not hasattr(self, "int_params3"): self.int_params3 = np.zeros(0, dtype=np.int32)
-        if not hasattr(self, "float_params3"): self.float_params3 = np.zeros(0, dtype=np.float32)
+        if not hasattr(self, "int_params2"):
+            self.int_params2 = np.zeros(0, dtype=np.int32)
+        if not hasattr(self, "float_params2"):
+            self.float_params2 = np.zeros(0, dtype=np.float32)
+        if not hasattr(self, "int_params3"):
+            self.int_params3 = np.zeros(0, dtype=np.int32)
+        if not hasattr(self, "float_params3"):
+            self.float_params3 = np.zeros(0, dtype=np.float32)
         self.init(
-            meta_param, meta_param2,
-            len(self.int_params), ASINT(self.int_params), len(self.float_params), ASFLOAT(self.float_params),
-            len(self.int_params2), ASINT(self.int_params2), len(self.float_params2), ASFLOAT(self.float_params2),
-            len(self.int_params3), ASINT(self.int_params3), len(self.float_params3), ASFLOAT(self.float_params3),
+            meta_param,
+            meta_param2,
+            len(self.int_params),
+            ASINT(self.int_params),
+            len(self.float_params),
+            ASFLOAT(self.float_params),
+            len(self.int_params2),
+            ASINT(self.int_params2),
+            len(self.float_params2),
+            ASFLOAT(self.float_params2),
+            len(self.int_params3),
+            ASINT(self.int_params3),
+            len(self.float_params3),
+            ASFLOAT(self.float_params3),
         )
         self.displacement = []
         self.height_offset = 0
         self.whole_bbox = None
 
-
     def __call__(self, positions, sdf_only=False):
         if self.whole_bbox is not None:
-            mask = (positions >= self.whole_bbox[0].reshape((1, 3))).all(axis=-1) & (positions <= self.whole_bbox[1].reshape((1, 3))).all(axis=-1)
+            mask = (positions >= self.whole_bbox[0].reshape((1, 3))).all(axis=-1) & (
+                positions <= self.whole_bbox[1].reshape((1, 3))
+            ).all(axis=-1)
         positions[:, 2] += self.height_offset
         N = len(positions)
         sdf = AC(np.zeros(N, dtype=np.float32))
@@ -81,11 +114,16 @@ class Element:
                 auxs.append(AC(np.zeros(N * len(self.aux_names), dtype=np.float32)))
             else:
                 auxs.append(None)
-        self.call(N, ASFLOAT(AC(positions.astype(np.float32))), ASFLOAT(sdf), *[POINTER(c_float)() if x is None else ASFLOAT(x) for x in auxs])
+        self.call(
+            N,
+            ASFLOAT(AC(positions.astype(np.float32))),
+            ASFLOAT(sdf),
+            *[POINTER(c_float)() if x is None else ASFLOAT(x) for x in auxs],
+        )
 
         if self.whole_bbox is not None:
             sdf[mask] = 1e6
-            
+
         ret = {}
         ret[Vars.SDF] = sdf
 

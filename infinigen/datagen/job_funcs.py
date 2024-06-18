@@ -1,78 +1,79 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: 
+# Authors:
 # - Alex Raistrick: refactor, local rendering, video rendering
 # - Lahav Lipson: stereo version, local rendering
 # - David Yan: export integration
 # - Hei Law: initial version
 
 
+import logging
 import re
-import gin
+import sys
 from copy import copy
-from uuid import uuid4
 from functools import partial
 from pathlib import Path
-from shutil import  copytree
-import logging
-import sys
+from shutil import copytree
+from uuid import uuid4
 
-from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
-from infinigen.datagen.util import upload_util
-from infinigen.datagen.util.upload_util import upload_job_folder 
+import gin
+
+from infinigen.core.init import repo_root
 from infinigen.datagen.states import get_suffix
+from infinigen.datagen.util import upload_util
+from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
+from infinigen.datagen.util.upload_util import upload_job_folder
 
 from . import states
 
-from infinigen.core.init import repo_root
-
 logger = logging.getLogger(__name__)
+
 
 @gin.configurable
 def get_cmd(
-    seed, 
-    task, 
-    configs, 
-    taskname, 
-    output_folder, 
-    driver_script='infinigen_examples.generate_nature',  # replace with a regular path to a .py, or another installed module
-    input_folder=None, 
+    seed,
+    task,
+    configs,
+    taskname,
+    output_folder,
+    driver_script="infinigen_examples.generate_nature",  # replace with a regular path to a .py, or another installed module
+    input_folder=None,
     process_niceness=None,
 ):
-    
     if isinstance(task, list):
         task = " ".join(task)
 
-    cmd = ''
+    cmd = ""
     if process_niceness is not None:
-        cmd += f'nice -n {process_niceness} '
-    cmd += f'{sys.executable} '
+        cmd += f"nice -n {process_niceness} "
+    cmd += f"{sys.executable} "
 
-    if driver_script.endswith('.py'):
-        cmd += driver_script + ' '
+    if driver_script.endswith(".py"):
+        cmd += driver_script + " "
     else:
-        cmd += '-m ' + driver_script + ' '
+        cmd += "-m " + driver_script + " "
 
     # No longer supported using pip bpy
-    #if blender_thread_limit is not None:
+    # if blender_thread_limit is not None:
     #    cmd += f'--threads {blender_thread_limit} '
-    
-    cmd += '-- '
+
+    cmd += "-- "
 
     if input_folder is not None:
-        cmd += '--input_folder ' + str(input_folder) + ' '
+        cmd += "--input_folder " + str(input_folder) + " "
     if output_folder is not None:
-        cmd += '--output_folder ' + str(output_folder) + ' '
-    cmd += f'--seed {seed} --task {task} --task_uniqname {taskname} '
+        cmd += "--output_folder " + str(output_folder) + " "
+    cmd += f"--seed {seed} --task {task} --task_uniqname {taskname} "
     if len(configs) != 0:
-        cmd += f'-g {" ".join(configs)} ' 
-    cmd += '-p'
-    
+        cmd += f'-g {" ".join(configs)} '
+    cmd += "-p"
+
     return cmd.split()
 
+
 @gin.configurable
-def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method='rclone', seed=None, **kwargs):
+def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method="rclone", seed=None, **kwargs):
     func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
     res = submit_cmd((func, folder, taskname), folder, name, **kwargs)
     return res, None
@@ -88,26 +89,27 @@ def queue_export(
     taskname=None,
     exclude_gpus=[],
     overrides=[],
-    input_indices=None, output_indices=None,
-    **kwargs
+    input_indices=None,
+    output_indices=None,
+    **kwargs,
 ):
     input_suffix = get_suffix(input_indices)
-    input_folder=f'{folder}/coarse{input_suffix}'
+    input_folder = f"{folder}/coarse{input_suffix}"
 
-    cmd = get_cmd(seed, 'export', configs, taskname, output_folder=f'{folder}/frames', input_folder=input_folder)+ f'''
+    cmd = (
+        get_cmd(seed, "export", configs, taskname, output_folder=f"{folder}/frames", input_folder=input_folder)
+        + f"""
         LOG_DIR='{folder / "logs"}'
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
-        folder=folder,
-        name=name,
-        gpus=0,
-        **kwargs
-    )
+    res = submit_cmd(cmd, folder=folder, name=name, gpus=0, **kwargs)
     return res, folder
+
 
 @gin.configurable
 def queue_coarse(
@@ -119,8 +121,9 @@ def queue_coarse(
     taskname=None,
     exclude_gpus=[],
     overrides=[],
-    input_indices=None, output_indices=None,
-    **kwargs
+    input_indices=None,
+    output_indices=None,
+    **kwargs,
 ):
     """
     Generating the coarse scene
@@ -129,27 +132,26 @@ def queue_coarse(
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    output_folder = Path(f'{folder}/coarse{output_suffix}')
+    output_folder = Path(f"{folder}/coarse{output_suffix}")
 
-    cmd = get_cmd(seed, 'coarse', configs, taskname, output_folder=output_folder) + f'''
+    cmd = (
+        get_cmd(seed, "coarse", configs, taskname, output_folder=output_folder)
+        + f"""
         LOG_DIR='{folder / "logs"}'
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
     commit = upload_util.get_commit_hash()
 
-    with (folder / "run_pipeline.sh").open('w') as f:
+    with (folder / "run_pipeline.sh").open("w") as f:
         f.write(f"# git checkout {commit}\n\n")
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
     (folder / "run_pipeline.sh").chmod(0o774)
 
-    res = submit_cmd(cmd,
-        folder=folder,
-        name=name,
-        gpus=0,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus),
-        **kwargs
-    )
+    res = submit_cmd(cmd, folder=folder, name=name, gpus=0, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
     return res, output_folder
+
 
 @gin.configurable
 def queue_populate(
@@ -161,7 +163,8 @@ def queue_populate(
     taskname=None,
     input_prefix="fine",
     overrides=[],
-    input_indices=None, output_indices=None,
+    input_indices=None,
+    output_indices=None,
     **kwargs,
 ):
     """
@@ -171,25 +174,23 @@ def queue_populate(
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    input_folder = folder/f'{input_prefix}{input_suffix}'
+    input_folder = folder / f"{input_prefix}{input_suffix}"
     output_folder = input_folder
 
-    cmd = get_cmd(seed, 'populate', configs, taskname, 
-                  input_folder=input_folder, 
-                  output_folder=output_folder) + f'''
+    cmd = (
+        get_cmd(seed, "populate", configs, taskname, input_folder=input_folder, output_folder=output_folder)
+        + f"""
         LOG_DIR='{folder / "logs"}'
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
-        folder=folder,
-        name=name,
-        gpus=0,
-        **kwargs
-    )
+    res = submit_cmd(cmd, folder=folder, name=name, gpus=0, **kwargs)
     return res, output_folder
+
 
 @gin.configurable
 def queue_fine_terrain(
@@ -202,8 +203,9 @@ def queue_fine_terrain(
     taskname=None,
     exclude_gpus=[],
     overrides=[],
-    input_indices=None, output_indices=None,
-    **kwargs
+    input_indices=None,
+    output_indices=None,
+    **kwargs,
 ):
     """
     Generating the fine scene
@@ -212,27 +214,31 @@ def queue_fine_terrain(
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    output_folder = Path(f'{folder}/fine{output_suffix}')
+    output_folder = Path(f"{folder}/fine{output_suffix}")
 
     enable_gpu_in_terrain = "Terrain.device='cuda'" if gpus > 0 else ""
-    cmd = get_cmd(seed, 'fine_terrain', configs, taskname,
-                  input_folder=f'{folder}/coarse{input_suffix}',
-                  output_folder=output_folder) + f'''
+    cmd = (
+        get_cmd(
+            seed,
+            "fine_terrain",
+            configs,
+            taskname,
+            input_folder=f"{folder}/coarse{input_suffix}",
+            output_folder=output_folder,
+        )
+        + f"""
         LOG_DIR='{folder / "logs"}'
         {enable_gpu_in_terrain}
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
-        folder=folder,
-        name=name,
-        gpus=gpus,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus),
-        **kwargs
-    )
+    res = submit_cmd(cmd, folder=folder, name=name, gpus=gpus, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
     return res, output_folder
+
 
 @gin.configurable
 def queue_combined(
@@ -246,39 +252,43 @@ def queue_combined(
     gpus=0,
     overrides=[],
     include_coarse=True,
-    input_indices=None, output_indices=None,
-    **kwargs
+    input_indices=None,
+    output_indices=None,
+    **kwargs,
 ):
-    
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    tasks = 'populate fine_terrain'
+    tasks = "populate fine_terrain"
 
     if include_coarse:
-        tasks = 'coarse ' + tasks
+        tasks = "coarse " + tasks
 
-    output_folder = Path(f'{folder}/fine{output_suffix}')
+    output_folder = Path(f"{folder}/fine{output_suffix}")
 
     enable_gpu_in_terrain = "Terrain.device='cuda'" if gpus > 0 else ""
-    cmd = get_cmd(seed, tasks, configs, taskname, 
-                  input_folder=f'{folder}/coarse{input_suffix}' if not include_coarse else None,
-                  output_folder=output_folder) + f'''
+    cmd = (
+        get_cmd(
+            seed,
+            tasks,
+            configs,
+            taskname,
+            input_folder=f"{folder}/coarse{input_suffix}" if not include_coarse else None,
+            output_folder=output_folder,
+        )
+        + f"""
         LOG_DIR='{folder / "logs"}'
         {enable_gpu_in_terrain}
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
-        folder=folder,
-        name=name,
-        gpus=gpus,
-        slurm_exclude=nodes_with_gpus(*exclude_gpus),
-        **kwargs
-    )
+    res = submit_cmd(cmd, folder=folder, name=name, gpus=gpus, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
     return res, output_folder
+
 
 @gin.configurable
 def queue_render(
@@ -291,46 +301,45 @@ def queue_render(
     taskname=None,
     overrides=[],
     exclude_gpus=[],
-    input_indices=None, output_indices=None,
-    **submit_kwargs
+    input_indices=None,
+    output_indices=None,
+    **submit_kwargs,
 ):
-
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    output_folder = Path(f'{folder}/frames{output_suffix}')
+    output_folder = Path(f"{folder}/frames{output_suffix}")
 
-    input_folder_priority_options = [
-        f"fine{input_suffix}",
-        "fine",
-        f"coarse{input_suffix}",
-        "coarse"
-    ]
+    input_folder_priority_options = [f"fine{input_suffix}", "fine", f"coarse{input_suffix}", "coarse"]
 
     for option in input_folder_priority_options:
-        input_folder = f'{folder}/{option}'
-        if (Path(input_folder)/'scene.blend').exists():
+        input_folder = f"{folder}/{option}"
+        if (Path(input_folder) / "scene.blend").exists():
             break
     else:
-        raise ValueError(f'No scene.blend found in {input_folder} for any of {input_folder_priority_options}')
-    
-    cmd = get_cmd(seed, "render", configs, taskname,
-                  input_folder=input_folder,
-                  output_folder=f'{output_folder}') + f'''
+        raise ValueError(f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}")
+
+    cmd = (
+        get_cmd(seed, "render", configs, taskname, input_folder=input_folder, output_folder=f"{output_folder}")
+        + f"""
         render.render_image_func=@{render_type}/render_image
         LOG_DIR='{folder / "logs"}'
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
+    res = submit_cmd(
+        cmd,
         folder=folder,
         name=name,
         slurm_exclude=nodes_with_gpus(*exclude_gpus),
         **submit_kwargs,
     )
     return res, output_folder
+
 
 @gin.configurable
 def queue_mesh_save(
@@ -342,31 +351,41 @@ def queue_mesh_save(
     taskname=None,
     overrides=[],
     exclude_gpus=[],
-    input_indices=None, output_indices=None,
+    input_indices=None,
+    output_indices=None,
     reuse_subcams=True,
-    **submit_kwargs
+    **submit_kwargs,
 ):
-
-    if (output_indices['subcam'] > 0) and reuse_subcams:
+    if (output_indices["subcam"] > 0) and reuse_subcams:
         return states.JOB_OBJ_SUCCEEDED, None
 
     input_suffix = get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
-    output_folder = Path(f'{folder}/savemesh{output_suffix}')
+    output_folder = Path(f"{folder}/savemesh{output_suffix}")
 
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    cmd = get_cmd(seed, "mesh_save", configs, taskname,
-                  input_folder=f'{folder}/coarse{input_suffix}',
-                  output_folder=f'{folder}/savemesh{output_suffix}') + f'''
+    cmd = (
+        get_cmd(
+            seed,
+            "mesh_save",
+            configs,
+            taskname,
+            input_folder=f"{folder}/coarse{input_suffix}",
+            output_folder=f"{folder}/savemesh{output_suffix}",
+        )
+        + f"""
         LOG_DIR='{folder / "logs"}'
-    '''.split("\n") + overrides
+    """.split("\n")
+        + overrides
+    )
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd,
+    res = submit_cmd(
+        cmd,
         folder=folder,
         name=name,
         slurm_exclude=nodes_with_gpus(*exclude_gpus),
@@ -374,9 +393,11 @@ def queue_mesh_save(
     )
     return res, output_folder
 
-process_mesh_path = Path(__file__).parent/'customgt'/'build'/'customgt'
+
+process_mesh_path = Path(__file__).parent / "customgt" / "build" / "customgt"
 if not process_mesh_path.exists():
-    logger.warning(f'{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail')
+    logger.warning(f"{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail")
+
 
 @gin.configurable
 def queue_opengl(
@@ -388,58 +409,57 @@ def queue_opengl(
     taskname=None,
     overrides=[],
     exclude_gpus=[],
-    input_indices=None, output_indices=None,
+    input_indices=None,
+    output_indices=None,
     reuse_subcams=True,
     gt_testing=False,
-    **submit_kwargs
+    **submit_kwargs,
 ):
-
-    if (output_indices['subcam'] > 0) and reuse_subcams:
+    if (output_indices["subcam"] > 0) and reuse_subcams:
         return states.JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
-    
-    input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
-    if (gt_testing):
+
+    input_folder = (
+        Path(folder) / f"savemesh{output_suffix}"
+    )  # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
+    if gt_testing:
         copy_folder = Path(folder) / f"frames{output_suffix}"
-        output_folder  = Path(folder) / f"opengl_frames{output_suffix}"
+        output_folder = Path(folder) / f"opengl_frames{output_suffix}"
         copytree(copy_folder, output_folder, dirs_exist_ok=True)
-    else: 
+    else:
         output_folder = Path(folder) / f"frames{output_suffix}"
         output_folder.mkdir(exist_ok=True)
 
     assert input_folder.exists(), input_folder
-    assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
+    assert isinstance(overrides, list) and ("\n" not in " ".join(overrides))
 
     tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
     tmp_script.parent.mkdir(exist_ok=True)
-    start_frame, end_frame = output_indices['frame'], output_indices['last_cam_frame']
-    with tmp_script.open('w') as f:
-
+    start_frame, end_frame = output_indices["frame"], output_indices["last_cam_frame"]
+    with tmp_script.open("w") as f:
         lines = ["set -e"]
-        
+
         lines += [
-            f"{process_mesh_path} -in {input_folder} "
-            f"--frame {frame_idx} -out {output_folder}"
+            f"{process_mesh_path} -in {input_folder} " f"--frame {frame_idx} -out {output_folder}"
             for frame_idx in range(start_frame, end_frame + 1)
         ]
-            
-        
+
         lines.append(f"{sys.executable} {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
 
         lines.append(
-            f"{sys.executable} -c \"from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder; "
-            f"reorganize_old_framesfolder({repr(str(output_folder))})\""
+            f'{sys.executable} -c "from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder; '
+            f'reorganize_old_framesfolder({repr(str(output_folder))})"'
         )
         lines.append(f"touch {folder}/logs/FINISH_{taskname}")
 
         for line in lines:
             line = re.sub("( \([A-Za-z0-9]+\))", "", line)
-            f.write(line + '\n')
+            f.write(line + "\n")
 
     cmd = f"bash {tmp_script}".split()
 
-    with (folder / "run_pipeline.sh").open('a') as f:
+    with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
     res = submit_cmd(

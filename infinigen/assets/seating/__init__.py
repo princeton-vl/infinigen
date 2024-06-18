@@ -3,9 +3,9 @@
 
 # Authors: Lingjie Mei
 
-from .sofa import SofaFactory, ArmChairFactory
-from .bedframe import BedFrameFactory
-from .pillow import PillowFactory
-from .mattress import MattressFactory
 from .bed import BedFactory
+from .bedframe import BedFrameFactory
 from .chairs import *
+from .mattress import MattressFactory
+from .pillow import PillowFactory
+from .sofa import ArmChairFactory, SofaFactory

@@ -10,8 +10,8 @@ from infinigen.core.placement.factory import AssetFactory
 
 
 class BaseMolluskFactory(AssetFactory):
-    max_expected_radius = .5
-    noise_strength = .02
+    max_expected_radius = 0.5
+    noise_strength = 0.02
     ratio = 1
     x_scale = 2
     z_scale = 1

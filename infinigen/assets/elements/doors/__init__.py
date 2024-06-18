@@ -6,13 +6,14 @@ import bpy
 import numpy as np
 
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from .panel import PanelDoorFactory, GlassPanelDoorFactory
+
+from .casing import DoorCasingFactory
 from .lite import LiteDoorFactory
 from .louver import LouverDoorFactory
-from .casing import DoorCasingFactory
+from .panel import GlassPanelDoorFactory, PanelDoorFactory
 
-from infinigen.core.util import blender as butil
 
 def random_door_factory():
     door_factories = [PanelDoorFactory, GlassPanelDoorFactory, LouverDoorFactory, LiteDoorFactory]

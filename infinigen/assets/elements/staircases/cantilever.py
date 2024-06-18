@@ -5,16 +5,16 @@
 import numpy as np
 import shapely
 import shapely.affinity
+
 from infinigen.assets.elements.staircases.straight import StraightStaircaseFactory
 from infinigen.assets.utils.decorate import read_co
 from infinigen.assets.utils.object import join_objects
-
 from infinigen.core.util import blender as butil
 
 
 class CantileverStaircaseFactory(StraightStaircaseFactory):
-    support_types = 'wall'
-    handrail_types = 'weighted_choice', (2, 'horizontal-post'), (2, 'vertical-post')
+    support_types = "wall"
+    handrail_types = "weighted_choice", (2, "horizontal-post"), (2, "vertical-post")
 
     def valid_contour(self, offset, contour, doors, lower=True):
         valid = super().valid_contour(offset, contour, doors, lower)
@@ -25,8 +25,10 @@ class CantileverStaircaseFactory(StraightStaircaseFactory):
         butil.delete(obj)
         if self.mirror:
             co[:, 0] = -co[:, 0]
-        points = [shapely.affinity.translate(shapely.affinity.rotate(p, self.rot_z, (0, 0)), *offset) for p in
-            shapely.points(co)]
+        points = [
+            shapely.affinity.translate(shapely.affinity.rotate(p, self.rot_z, (0, 0)), *offset)
+            for p in shapely.points(co)
+        ]
         others = [shapely.ops.nearest_points(p, contour.boundary)[0] for p in points]
         distance = np.array([np.abs(p.x - o.x) + np.abs(p.y - o.y) for p, o in zip(points, others)])
-        return (distance < .1).sum() / len(distance) > .5
+        return (distance < 0.1).sum() / len(distance) > 0.5

@@ -1,9 +1,9 @@
-from .beetle import BeetleFactory, AntSwarmFactory
+from .beetle import AntSwarmFactory, BeetleFactory
 from .bird import BirdFactory, FlyingBirdFactory
 from .carnivore import CarnivoreFactory
+from .crustacean import CrabFactory, CrustaceanFactory, LobsterFactory, SpinyLobsterFactory
 from .fish import FishFactory, FishSchoolFactory
 from .herbivore import HerbivoreFactory
-from .crustacean import CrustaceanFactory, CrabFactory, LobsterFactory, SpinyLobsterFactory
-from .reptile import FrogFactory, LizardFactory, SnakeFactory
 from .insects.dragonfly import DragonflyFactory
 from .jellyfish import JellyfishFactory
+from .reptile import FrogFactory, LizardFactory, SnakeFactory

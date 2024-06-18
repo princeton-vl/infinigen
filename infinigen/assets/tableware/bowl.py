@@ -7,12 +7,12 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.tableware.base import TablewareFactory
-from infinigen.assets.utils.decorate import subsurf, set_shade_smooth
+from infinigen.assets.utils.decorate import set_shade_smooth, subsurf
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import new_bbox
-from infinigen.core.util.random import log_uniform
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform
 
 
 class BowlFactory(TablewareFactory):
@@ -21,15 +21,15 @@ class BowlFactory(TablewareFactory):
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.x_end = .5
-            self.z_length = log_uniform(.4, .8)
-            self.z_bottom = log_uniform(.02, .05)
-            self.x_bottom = uniform(.2, .3) * self.x_end
-            self.x_mid = uniform(.8, .95) * self.x_end
+            self.x_end = 0.5
+            self.z_length = log_uniform(0.4, 0.8)
+            self.z_bottom = log_uniform(0.02, 0.05)
+            self.x_bottom = uniform(0.2, 0.3) * self.x_end
+            self.x_mid = uniform(0.8, 0.95) * self.x_end
             self.has_guard = False
-            self.thickness = uniform(.01, .03)
-            self.has_inside = uniform(0, 1) < .5
-            self.scale = log_uniform(.15, .4)
+            self.thickness = uniform(0.01, 0.03)
+            self.has_inside = uniform(0, 1) < 0.5
+            self.scale = log_uniform(0.15, 0.4)
         self.edge_wear = None
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
@@ -43,7 +43,7 @@ class BowlFactory(TablewareFactory):
         obj = spin(anchors, [2, 3], 16, 64)
         subsurf(obj, 1)
         self.solidify_with_inside(obj, self.thickness)
-        butil.modify_mesh(obj, 'BEVEL', width=self.thickness / 2, segments=np.random.randint(2, 5))
+        butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=np.random.randint(2, 5))
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
         subsurf(obj, 1)

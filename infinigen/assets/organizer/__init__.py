@@ -6,4 +6,4 @@
 
 from .basket import BasketBaseFactory
 from .hook import HookBaseFactory, SpatulaOnHookBaseFactory
-from .plate_rack import PlateRackBaseFactory, PlateOnRackBaseFactory
+from .plate_rack import PlateOnRackBaseFactory, PlateRackBaseFactory

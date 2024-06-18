@@ -4,9 +4,14 @@
 # Authors: Lingjie Mei
 # Date: April 13 2023
 
-from .generate import CactusFactory, ColumnarCactusFactory, GlobularCactusFactory, PrickyPearCactusFactory, \
-    KalidiumCactusFactory
 from .columnar import ColumnarBaseCactusFactory
+from .generate import (
+    CactusFactory,
+    ColumnarCactusFactory,
+    GlobularCactusFactory,
+    KalidiumCactusFactory,
+    PrickyPearCactusFactory,
+)
 from .globular import GlobularBaseCactusFactory
-from .pricky_pear import PrickyPearBaseCactusFactory
 from .kalidium import KalidiumBaseCactusFactory
+from .pricky_pear import PrickyPearBaseCactusFactory

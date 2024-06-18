@@ -4,64 +4,48 @@
 
 # Authors: Alexander Raistrick, Karhan Kayan
 
-from infinigen.core.tags import Semantics, Negated
-from .types import Node
+from infinigen.core.tags import Negated, Semantics
 
 from .expression import (
-    Expression,
     ArithmethicExpression,
-    constant,
-    ScalarOperatorExpression,
-    BoolOperatorExpression,
-    ScalarExpression,
     BoolExpression,
+    BoolOperatorExpression,
+    Expression,
+    ScalarExpression,
+    ScalarOperatorExpression,
+    constant,
     hinge,
     max_expr,
     min_expr,
 )
-
-from .set_reasoning import (
-    scene,
-    tagged,
-    excludes,
-    count,
-    in_range,
-    related_to,
-)
+from .gather import ForAll, MeanOver, SumOver, all, item, mean, sum
 from .geometry import (
     ObjectSetExpression,
-    distance,
-    min_distance_internal,
-    focus_score,
+    accessibility_cost,
     angle_alignment_cost,
+    center_stable_surface_dist,
+    coplanarity_cost,
+    distance,
+    focus_score,
     freespace_2d,
     min_dist_2d,
-    rotational_asymmetry, 
-    center_stable_surface_dist, 
-    accessibility_cost,
+    min_distance_internal,
     reflectional_asymmetry,
-    volume, 
-    coplanarity_cost
+    rotational_asymmetry,
+    volume,
 )
-from .result import Problem
 from .relations import (
-    Relation,
-    NegatedRelation,
     AnyRelation,
     ConnectorType,
-    RoomNeighbour,
     CutFrom,
     GeometryRelation,
-    Touching,
+    NegatedRelation,
+    Relation,
+    RoomNeighbour,
+    StableAgainst,
     SupportedBy,
-    StableAgainst
+    Touching,
 )
-from .gather import (
-    sum,
-    mean,
-    all,
-    item,
-    ForAll,
-    SumOver,
-    MeanOver
-)
+from .result import Problem
+from .set_reasoning import count, excludes, in_range, related_to, scene, tagged
+from .types import Node

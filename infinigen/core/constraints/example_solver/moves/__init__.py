@@ -1,6 +1,6 @@
-from .moves import Move
 from .addition import Addition, Resample
 from .deletion import Deletion
-from .swap import Swap
+from .moves import Move
+from .pose import ReinitPoseMove, RotateMove, TranslateMove
 from .reassignment import RelationPlaneChange, RelationTargetChange
-from .pose import TranslateMove, RotateMove, ReinitPoseMove
+from .swap import Swap

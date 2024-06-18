@@ -7,14 +7,16 @@
 import bpy
 import gin
 import numpy as np
-from infinigen.core.placement.camera import get_camera
 from scipy.spatial.transform import Rotation as R
+
+from infinigen.core.placement.camera import get_camera
 
 
 def getK(fov, H, W):
     fx = W / 2 / np.tan(fov[1] / 2)
     fy = fx
     return np.array([[fx, 0, W / 2], [0, fy, H / 2], [0, 0, 1]])
+
 
 def pose_average(poses):
     translation = poses[:, :3, 3].mean(axis=0)
@@ -29,6 +31,7 @@ def pose_average(poses):
     res[:3, :3] = R.from_quat(quat).as_matrix()
     res[:3, 3] = translation
     return res
+
 
 def get_expanded_fov(cam_pose0, cam_poses, fov):
     rot0 = cam_pose0[:3, :3]
@@ -62,7 +65,7 @@ def get_caminfo(cameras, relax=1.05):
             cam_pose = np.array(c.matrix_world)
             cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
             cam_poses.append(cam_pose)
-            fov_rad  = c.data.angle
+            fov_rad = c.data.angle
             fov_rad *= relax
             H, W = bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x
             fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2

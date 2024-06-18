@@ -4,22 +4,20 @@
 import string
 from functools import update_wrapper, wraps
 
-# Authors: Lingjie Mei
-
-
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
 from infinigen.assets.utils.object import origin2lowest
+from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform  # imported by other files
-from infinigen.core.nodes import NodeWrangler, Nodes
+
+# Authors: Lingjie Mei
 
 
 class CountInstance:
-
     def __init__(self, name):
         self.name = name
 
@@ -66,8 +64,8 @@ def make_normalized_factory(cls):
     return CLS
 
 
-def build_color_ramp(nw: NodeWrangler, x, positions, colors, mode='HSV'):
-    cr = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': x})
+def build_color_ramp(nw: NodeWrangler, x, positions, colors, mode="HSV"):
+    cr = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": x})
     cr.color_ramp.color_mode = mode
     elements = cr.color_ramp.elements
     size = len(positions)
@@ -132,11 +130,16 @@ def assign_material(obj, material):
 
 character_set = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 character_set_weights = np.concatenate(
-    [1.5 * np.ones(len(string.ascii_lowercase)), 0.5 * np.ones(len(string.ascii_uppercase)),
-        0.5 * np.ones(len(string.digits))])
+    [
+        1.5 * np.ones(len(string.ascii_lowercase)),
+        0.5 * np.ones(len(string.ascii_uppercase)),
+        0.5 * np.ones(len(string.digits)),
+    ]
+)
 character_set_weights /= character_set_weights.sum()
 
 
 def generate_text():
-    return "".join(np.random.choice(character_set, size=int(clip_gaussian(3, 7, 2, 15)), replace=True,
-        p=character_set_weights))
+    return "".join(
+        np.random.choice(character_set, size=int(clip_gaussian(3, 7, 2, 15)), replace=True, p=character_set_weights)
+    )

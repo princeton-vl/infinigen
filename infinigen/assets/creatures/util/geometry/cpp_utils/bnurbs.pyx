@@ -1,8 +1,9 @@
-import numpy as np
 import cython
+import numpy as np
+
 cimport numpy as np
 
-import bpy 
+import bpy
 
 # IMPORTANT: The structs below are copied from DNA_curve_types.h of Blender 3.1.2 source  
 # May not work for versions of Blender

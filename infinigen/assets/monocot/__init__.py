@@ -1,8 +1,8 @@
 from .agave import AgaveMonocotFactory
-from .grasses import GrassesMonocotFactory, WheatMonocotFactory, WheatEarMonocotFactory, MaizeMonocotFactory
-from .tussock import TussockMonocotFactory
-from .pinecone import PineconeFactory
-from .generate import MonocotFactory
 from .banana import BananaMonocotFactory, TaroMonocotFactory
-from .veratrum import VeratrumMonocotFactory
+from .generate import MonocotFactory
+from .grasses import GrassesMonocotFactory, MaizeMonocotFactory, WheatEarMonocotFactory, WheatMonocotFactory
 from .kelp import KelpMonocotFactory
+from .pinecone import PineconeFactory
+from .tussock import TussockMonocotFactory
+from .veratrum import VeratrumMonocotFactory

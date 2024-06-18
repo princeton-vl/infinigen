@@ -11,23 +11,20 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 
 
 def shader_metal(nw: NodeWrangler, color=None, **kwargs):
-    position = nw.new_node(Nodes.TextureCoord).outputs['Object']
+    position = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     roughness = nw.build_float_curve(
-        nw.new_node(Nodes.NoiseTexture, [position], input_kwargs={'Scale': uniform(10, 25)}),
-        [(0, uniform(0, .2)), (1, uniform(.4, .7))]
+        nw.new_node(Nodes.NoiseTexture, [position], input_kwargs={"Scale": uniform(10, 25)}),
+        [(0, uniform(0, 0.2)), (1, uniform(0.4, 0.7))],
     )
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={
-            "Metallic": 1.,
-            'Specular': uniform(.5, 1.),
-            'Base Color': color,
-            'Roughness': roughness
-        }
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Metallic": 1.0, "Specular": uniform(0.5, 1.0), "Base Color": color, "Roughness": roughness},
     )
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf})
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 
 
 def apply(obj, selection=None, **kwargs):
     from infinigen.assets.materials.metal import sample_metal_color
+
     color = sample_metal_color(**kwargs)
     common.apply(obj, shader_metal, selection, color, **kwargs)

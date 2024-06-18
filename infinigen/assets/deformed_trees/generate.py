@@ -10,12 +10,11 @@ import numpy as np
 from infinigen.assets.deformed_trees import FallenTreeFactory, HollowTreeFactory, RottenTreeFactory
 from infinigen.assets.deformed_trees.truncated import TruncatedTreeFactory
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.tagging import tag_object, tag_nodegroup
 
 
 class DeformedTreeFactory(AssetFactory):
-
     def __init__(self, factory_seed, coarse=False):
         super(DeformedTreeFactory, self).__init__(factory_seed, coarse)
         self.maker_factories = [FallenTreeFactory, RottenTreeFactory, TruncatedTreeFactory, HollowTreeFactory]

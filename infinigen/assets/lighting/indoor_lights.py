@@ -5,49 +5,50 @@
 # Authors: Alexander Raistrick
 
 import bpy
-from mathutils import Vector
-
-from numpy.random import uniform as U, normal as N, randint, uniform
 import numpy as np
+from mathutils import Vector
+from numpy.random import normal as N
+from numpy.random import randint
+from numpy.random import uniform
+from numpy.random import uniform as U
 
-from infinigen.core.util.random import log_uniform
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement import placement
-from infinigen.core.placement.placement import placeholder_locs
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.placement import placeholder_locs
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import clip_gaussian
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import clip_gaussian, log_uniform
 
 
 def shader_blackbody_temp(nw, params):
-    blackbody = nw.new_node(Nodes.BlackBody, input_kwargs={'Temperature': params['Temperature']})
-    emission = nw.new_node(Nodes.Emission, input_kwargs={'Color': blackbody})
+    blackbody = nw.new_node(Nodes.BlackBody, input_kwargs={"Temperature": params["Temperature"]})
+    emission = nw.new_node(Nodes.Emission, input_kwargs={"Color": blackbody})
     nw.new_node(Nodes.LightOutput, [emission])
 
-class PointLampFactory(AssetFactory):
 
+class PointLampFactory(AssetFactory):
     def __init__(self, factory_seed):
         super().__init__(factory_seed)
         with FixedSeed(factory_seed):
             self.params = {
-                'Wattage': U(40, 100), 
-                'Radius': U(0.02, 0.03),
-                'Temperature': clip_gaussian(4700, 700, 3500, 6500)
+                "Wattage": U(40, 100),
+                "Radius": U(0.02, 0.03),
+                "Temperature": clip_gaussian(4700, 700, 3500, 6500),
             }
 
     def create_placeholder(self, **_):
         cube = butil.spawn_cube(size=2)
-        cube.scale = (self.params['Radius'],) * 3
+        cube.scale = (self.params["Radius"],) * 3
         butil.apply_transform(cube)
         return cube
 
     def create_asset(self, **_) -> bpy.types.Object:
-        bpy.ops.object.light_add(type='POINT')
+        bpy.ops.object.light_add(type="POINT")
         lamp = bpy.context.active_object
-        lamp.data.energy = self.params['Wattage']
-        lamp.data.shadow_soft_size = self.params['Radius']
+        lamp.data.energy = self.params["Wattage"]
+        lamp.data.shadow_soft_size = self.params["Radius"]
         lamp.data.use_nodes = True
 
         nw = NodeWrangler(lamp.data.node_tree)

@@ -3,20 +3,20 @@
 
 # Authors: Karhan Kayan
 
-import time
 import argparse
-import numpy as np
-import sys
-import os
-import gin
 import importlib
+import os
+import sys
+import time
 from pathlib import Path
+
+import gin
+import numpy as np
+
 sys.path.append(os.getcwd())
 
-from infinigen.core import init
-
 from infinigen.assets.fluid.asset_cache import FireCachingSystem
-from infinigen.core import surface
+from infinigen.core import init, surface
 
 if __name__ == "__main__":
     time.sleep(np.random.uniform(0, 3))
@@ -29,9 +29,9 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--resolution", type=int)
     parser.add_argument("--dissolve_speed", type=int, default=25)
     parser.add_argument("--dom_scale", type=float, default=1)
-    
+
     args = init.parse_args_blender(parser)
-    init.apply_gin_configs(configs=[], overrides=[], configs_folder='infinigen_examples/configs_nature')
+    init.apply_gin_configs(configs=[], overrides=[], configs_folder="infinigen_examples/configs_nature")
     surface.registry.initialize_from_gin()
 
     factory_name = args.asset
@@ -45,5 +45,5 @@ if __name__ == "__main__":
     if factory is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
 
-    cache_system = FireCachingSystem(asset_folder = args.asset_folder, create=True)
+    cache_system = FireCachingSystem(asset_folder=args.asset_folder, create=True)
     cache_system.create_cached_assets(factory, args)

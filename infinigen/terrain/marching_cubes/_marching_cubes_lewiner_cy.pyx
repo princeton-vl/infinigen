@@ -26,11 +26,14 @@ by Almar Klein in 2012. Adapted for scikit-image in 2016.
 
 # Cython specific imports
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
 # Enable low level memory management
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free, malloc
+
 
 # Define tiny winy number
 cdef cnp.float64_t FLT_EPSILON = np.spacing(1.0) #0.0000001

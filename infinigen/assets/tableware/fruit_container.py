@@ -16,28 +16,34 @@ from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.misc import make_normalized_factory, subclasses
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
-from infinigen.core.util import blender as butil
 
 class FruitCover:
     def __init__(self, factory_seed=0):
         with FixedSeed(factory_seed):
             fruit_factory_fns = list(subclasses(FruitFactoryGeneralFruit).difference([FruitFactoryGeneralFruit]))
             fruit_factory_fn = make_normalized_factory(np.random.choice(fruit_factory_fns))
-            self.col = make_asset_collection(fruit_factory_fn(np.random.randint(1e5)), name='fruit', n=5)
+            self.col = make_asset_collection(fruit_factory_fn(np.random.randint(1e5)), name="fruit", n=5)
             self.dimension = mean(mean(o.dimensions) for o in self.col.objects)
-            self.shrink_rate = max(self.dimension, 2.)
+            self.shrink_rate = max(self.dimension, 2.0)
 
     def apply(self, obj, selection=None):
         for obj in obj if isinstance(obj, Iterable) else [obj]:
-            scale = uniform(.06, .08) / self.shrink_rate
+            scale = uniform(0.06, 0.08) / self.shrink_rate
             scatter_instances(
-                base_obj=obj, collection=self.col, density=1e3,
-                min_spacing=scale * self.dimension * uniform(.5, .7), scale=scale,
-                scale_rand=uniform(0.1, 0.3), selection=selection,
-                ground_offset=self.dimension * .2 * scale, apply_geo=True, realize=True
-                )
+                base_obj=obj,
+                collection=self.col,
+                density=1e3,
+                min_spacing=scale * self.dimension * uniform(0.5, 0.7),
+                scale=scale,
+                scale_rand=uniform(0.1, 0.3),
+                selection=selection,
+                ground_offset=self.dimension * 0.2 * scale,
+                apply_geo=True,
+                realize=True,
+            )
 
 
 class FruitContainerFactory(AssetFactory):
@@ -57,8 +63,8 @@ class FruitContainerFactory(AssetFactory):
     def create_placeholder(self, **params):
         box = self.base_factory.create_placeholder(**params)
         co = read_co(box)
-        co[co[:, -1] > .02, -1] += .05
-        co[co[:, -1] < .02, -1] -= .01
+        co[co[:, -1] > 0.02, -1] += 0.05
+        co[co[:, -1] < 0.02, -1] -= 0.01
         write_co(box, co)
         butil.apply_transform(box)
         return box
@@ -68,4 +74,4 @@ class FruitContainerFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         self.base_factory.finalize_assets(assets)
-        self.cover.apply(assets, selection='lower_inside')
+        self.cover.apply(assets, selection="lower_inside")

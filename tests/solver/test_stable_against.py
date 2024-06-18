@@ -3,55 +3,53 @@
 
 # Authors: Karhan Kayan
 
-import bpy 
-from itertools import chain
+import os
+import sys
 from functools import partial
+from itertools import chain
+
+import bpy
 
 # import pytest
 import numpy as np
-import sys 
-import os
-
-from infinigen.core.constraints.example_solver.geometry import dof, parse_scene, planes, stability, validity
 from mathutils import Vector
 
-from infinigen.core.constraints import (
-    usage_lookup,
-    example_solver as solver,
-    constraint_language as cl
-)
-from infinigen.core import tagging, tags as t
+from infinigen.core import tagging
+from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints import example_solver as solver
+from infinigen.core.constraints import usage_lookup
+from infinigen.core.constraints.example_solver import state_def
+from infinigen.core.constraints.example_solver.geometry import dof, parse_scene, planes, stability, validity
 from infinigen.core.util import blender as butil
-from infinigen.core.constraints.example_solver import (
-    state_def
-)
+
 
 def make_scene(loc2):
     """Create a scene with a table and a cup, and return the state."""
     butil.clear_scene()
     objs = {}
 
-    table = butil.spawn_cube(scale=(5, 5, 1), name='table')
-    cup = butil.spawn_cube(scale=(1, 1, 1), name='cup', location=loc2)
+    table = butil.spawn_cube(scale=(5, 5, 1), name="table")
+    cup = butil.spawn_cube(scale=(1, 1, 1), name="cup", location=loc2)
 
     for o in [table, cup]:
         butil.apply_transform(o)
         parse_scene.preprocess_obj(o)
         tagging.tag_canonical_surfaces(o)
 
-    assert table.scale == Vector((1,1,1))
-    assert cup.location != Vector((0,0,0))
+    assert table.scale == Vector((1, 1, 1))
+    assert cup.location != Vector((0, 0, 0))
 
     bpy.context.view_layer.update()
 
-    objs['table'] = state_def.ObjectState(table)
-    objs['cup'] = state_def.ObjectState(cup)
-    objs['cup'].relations.append(
+    objs["table"] = state_def.ObjectState(table)
+    objs["cup"] = state_def.ObjectState(cup)
+    objs["cup"].relations.append(
         state_def.RelationState(
             cl.StableAgainst({t.Subpart.Bottom}, {t.Subpart.Top}),
-            target_name='table',
+            target_name="table",
             child_plane_idx=0,
-            parent_plane_idx=0
+            parent_plane_idx=0,
         )
     )
 
@@ -59,106 +57,104 @@ def make_scene(loc2):
 
     return state_def.State(objs=objs)
 
-def test_stable_against():
 
+def test_stable_against():
     # too low, intersects ground
-    assert not validity.check_post_move_validity(make_scene((0, 0, 0.5)), 'cup')
+    assert not validity.check_post_move_validity(make_scene((0, 0, 0.5)), "cup")
 
     # exactly touches surface
-    assert validity.check_post_move_validity(make_scene((0, 0, 1)), 'cup')
+    assert validity.check_post_move_validity(make_scene((0, 0, 1)), "cup")
 
     # underneath
-    assert not validity.check_post_move_validity(make_scene((0, 0, -3)), 'cup')
+    assert not validity.check_post_move_validity(make_scene((0, 0, -3)), "cup")
 
     # exactly at corner
-    assert validity.check_post_move_validity(make_scene((2, 2, 1)), 'cup')
+    assert validity.check_post_move_validity(make_scene((2, 2, 1)), "cup")
 
     # slightly over corner
-    assert not validity.check_post_move_validity(make_scene((2.1, 2.1, 1)), 'cup')
+    assert not validity.check_post_move_validity(make_scene((2.1, 2.1, 1)), "cup")
 
     # farr away
-    assert not validity.check_post_move_validity(make_scene((4, 4, 0.5)), 'cup')
+    assert not validity.check_post_move_validity(make_scene((4, 4, 0.5)), "cup")
+
 
 def test_horizontal_stability():
     butil.clear_scene()
     objs = {}
 
-    table = butil.spawn_cube(name='table') 
-    table.dimensions = (4,10,2)
+    table = butil.spawn_cube(name="table")
+    table.dimensions = (4, 10, 2)
 
-    chair1 = butil.spawn_cube(name='chair1')
-    chair1.dimensions = (2,2,3)
-    chair1.location = (3,3,0)
+    chair1 = butil.spawn_cube(name="chair1")
+    chair1.dimensions = (2, 2, 3)
+    chair1.location = (3, 3, 0)
 
-    chair2 = butil.spawn_cube(name='chair2')
-    chair2.dimensions = (2,2,3)
-    chair2.location = (3,-3,0)
+    chair2 = butil.spawn_cube(name="chair2")
+    chair2.dimensions = (2, 2, 3)
+    chair2.location = (3, -3, 0)
 
-    chair3 = butil.spawn_cube(name='chair3')
-    chair3.dimensions = (2,2,3)
-    chair3.location = (-3,3,0)
+    chair3 = butil.spawn_cube(name="chair3")
+    chair3.dimensions = (2, 2, 3)
+    chair3.location = (-3, 3, 0)
 
-    chair4 = butil.spawn_cube(name='chair4')
-    chair4.dimensions = (2,2,3)
-    chair4.location = (-3,-3,0)
+    chair4 = butil.spawn_cube(name="chair4")
+    chair4.dimensions = (2, 2, 3)
+    chair4.location = (-3, -3, 0)
     for o in [table, chair1, chair2, chair3, chair4]:
         butil.apply_transform(o)
         parse_scene.preprocess_obj(o)
         tagging.tag_canonical_surfaces(o)
     with butil.SelectObjects([table, chair1, chair2, chair3, chair4]):
         # rotate
-        bpy.ops.transform.rotate(value=np.pi/4, orient_axis='Z', orient_type='GLOBAL')
+        bpy.ops.transform.rotate(value=np.pi / 4, orient_axis="Z", orient_type="GLOBAL")
     # butil.save_blend('test.blend')
     bpy.context.view_layer.update()
 
-
-
-    objs['table'] = state_def.ObjectState(table)
-    objs['chair1'] = state_def.ObjectState(chair1)
-    objs['chair2'] = state_def.ObjectState(chair2)
-    objs['chair3'] = state_def.ObjectState(chair3)
-    objs['chair4'] = state_def.ObjectState(chair4)
-    objs['chair1'].relations.append(
+    objs["table"] = state_def.ObjectState(table)
+    objs["chair1"] = state_def.ObjectState(chair1)
+    objs["chair2"] = state_def.ObjectState(chair2)
+    objs["chair3"] = state_def.ObjectState(chair3)
+    objs["chair4"] = state_def.ObjectState(chair4)
+    objs["chair1"].relations.append(
         state_def.RelationState(
             cl.StableAgainst({t.Subpart.Back}, {t.Subpart.Front}, check_z=False),
-            target_name='table',
+            target_name="table",
             child_plane_idx=0,
-            parent_plane_idx=0
+            parent_plane_idx=0,
         )
     )
-    objs['chair2'].relations.append(
+    objs["chair2"].relations.append(
         state_def.RelationState(
             cl.StableAgainst({t.Subpart.Back}, {t.Subpart.Front}, check_z=False),
-            target_name='table',
+            target_name="table",
             child_plane_idx=0,
-            parent_plane_idx=0
+            parent_plane_idx=0,
         )
     )
-    objs['chair3'].relations.append(
+    objs["chair3"].relations.append(
         state_def.RelationState(
             cl.StableAgainst({t.Subpart.Front}, {t.Subpart.Back}, check_z=False),
-            target_name='table',
+            target_name="table",
             child_plane_idx=0,
-            parent_plane_idx=0
+            parent_plane_idx=0,
         )
     )
-    objs['chair4'].relations.append(
+    objs["chair4"].relations.append(
         state_def.RelationState(
             cl.StableAgainst({t.Subpart.Front}, {t.Subpart.Back}, check_z=False),
-            target_name='table',
+            target_name="table",
             child_plane_idx=0,
-            parent_plane_idx=0
+            parent_plane_idx=0,
         )
     )
     state = state_def.State(objs=objs)
-    assert validity.check_post_move_validity(state, 'chair1')
-    assert validity.check_post_move_validity(state, 'chair2')
-    assert validity.check_post_move_validity(state, 'chair3')
-    assert validity.check_post_move_validity(state, 'chair4')
+    assert validity.check_post_move_validity(state, "chair1")
+    assert validity.check_post_move_validity(state, "chair2")
+    assert validity.check_post_move_validity(state, "chair3")
+    assert validity.check_post_move_validity(state, "chair4")
 
     # butil.save_blend('test.blend')
 
-    
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_horizontal_stability()

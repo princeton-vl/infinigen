@@ -4,7 +4,15 @@
 # Authors: Lingjie Mei
 
 
-from .generate import MolluskFactory, NautilusFactory, ConchFactory, AugerFactory, VoluteFactory, \
-    ScallopFactory, ClamFactory, MusselFactory
-from .snail import SnailBaseFactory, NautilusBaseFactory, ConchBaseFactory, AugerBaseFactory, VoluteBaseFactory
-from .shell import ShellBaseFactory, ScallopBaseFactory, ClamBaseFactory, MusselBaseFactory
+from .generate import (
+    AugerFactory,
+    ClamFactory,
+    ConchFactory,
+    MolluskFactory,
+    MusselFactory,
+    NautilusFactory,
+    ScallopFactory,
+    VoluteFactory,
+)
+from .shell import ClamBaseFactory, MusselBaseFactory, ScallopBaseFactory, ShellBaseFactory
+from .snail import AugerBaseFactory, ConchBaseFactory, NautilusBaseFactory, SnailBaseFactory, VoluteBaseFactory

@@ -6,37 +6,37 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_cube
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
+from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
-from infinigen.assets.material_assignments import AssetList
 
 
 class HardwareFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(HardwareFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            self.attachment_radius = uniform(.02, .03)
-            self.attachment_depth = uniform(.01, .015)
-            self.radius = uniform(.01, .015)
-            self.depth = uniform(.06, .1)
-            self.is_circular = uniform() < .5
-            self.hardware_type = np.random.choice(['hook', 'holder', 'bar', 'ring'])
+            self.attachment_radius = uniform(0.02, 0.03)
+            self.attachment_depth = uniform(0.01, 0.015)
+            self.radius = uniform(0.01, 0.015)
+            self.depth = uniform(0.06, 0.1)
+            self.is_circular = uniform() < 0.5
+            self.hardware_type = np.random.choice(["hook", "holder", "bar", "ring"])
             self.hook_length = self.attachment_radius * uniform(2, 4)
-            self.holder_length = uniform(.15, .25)
-            self.bar_length = uniform(.4, .8)
+            self.holder_length = uniform(0.15, 0.25)
+            self.bar_length = uniform(0.4, 0.8)
             self.extension_length = self.attachment_radius * uniform(2, 3)
             self.ring_radius = log_uniform(2, 6) * self.attachment_radius
 
-            material_assignments = AssetList['HardwareFactory']()
-            self.surface = material_assignments['surface'].assign_material()
-            is_scratch = uniform() < material_assignments['wear_tear_prob'][0]
-            is_edge_wear = uniform() < material_assignments['wear_tear_prob'][1]
-            self.scratch = material_assignments['wear_tear'][0] if is_scratch else None
-            self.edge_wear = material_assignments['wear_tear'][1] if is_edge_wear else None
+            material_assignments = AssetList["HardwareFactory"]()
+            self.surface = material_assignments["surface"].assign_material()
+            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
+            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
+            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
+            self.edge_wear = material_assignments["wear_tear"][1] if is_edge_wear else None
 
     def make_attachment(self):
         base = new_base_cylinder() if self.is_circular else new_cube()
@@ -77,8 +77,7 @@ class HardwareFactory(AssetFactory):
 
     def make_ring(self):
         bpy.ops.mesh.primitive_torus_add(
-            major_segments=128, major_radius=self.ring_radius,
-            minor_radius=self.radius * uniform(.4, .7)
+            major_segments=128, major_radius=self.ring_radius, minor_radius=self.radius * uniform(0.4, 0.7)
         )
         obj = bpy.context.active_object
         obj.rotation_euler[0] = np.pi / 2
@@ -89,13 +88,13 @@ class HardwareFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         match self.hardware_type:
-            case 'hook':
+            case "hook":
                 extra = self.make_hook()
-            case 'holder':
+            case "holder":
                 extra = self.make_holder()
-            case 'bar':
+            case "bar":
                 extra = self.make_bar()
-            case 'ring':
+            case "ring":
                 extra = self.make_ring()
             case _:
                 return self.make_attachment()
@@ -103,7 +102,7 @@ class HardwareFactory(AssetFactory):
         extra.location[1] = -self.depth
         butil.apply_transform(extra, True)
         parts = [self.make_attachment(), extra]
-        if self.hardware_type == 'bar':
+        if self.hardware_type == "bar":
             attachment_ = self.make_attachment()
             attachment_.location[0] = self.bar_length
             butil.apply_transform(attachment_, True)
@@ -114,7 +113,7 @@ class HardwareFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets, metal_color='plain')
+        self.surface.apply(assets, metal_color="plain")
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

@@ -4,5 +4,5 @@
 # Authors: Zeyu Ma
 
 
-from .uniform_mesher import UniformMesher
 from .spherical_mesher import OpaqueSphericalMesher, TransparentSphericalMesher
+from .uniform_mesher import UniformMesher

@@ -4,98 +4,110 @@
 # Authors: Lingjie Mei
 
 
+import colorsys
 from functools import reduce
 
 import bpy
-import colorsys
 import numpy as np
-from numpy.random import uniform, normal as N
+from numpy.random import normal as N
+from numpy.random import uniform
 
+from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import assign_material
-from infinigen.core.util.color import hsv2rgba
+from infinigen.assets.utils.object import data2mesh
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core import surface
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
-from infinigen.assets.utils.object import data2mesh
-from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.tagging import tag_object, tag_nodegroup
+from infinigen.core.util.color import hsv2rgba
+from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+
 
 class LichenFactory(AssetFactory):
-
     def __init__(self, factory_seed):
         super(LichenFactory, self).__init__(factory_seed)
         self.max_polygon = 1e4
-        self.base_hue = uniform(.15, .3)
+        self.base_hue = uniform(0.15, 0.3)
 
     @staticmethod
     def build_lichen_circle_mesh(n):
         angles = polygon_angles(n)
-        z_jitter = N(0., .02, n)
-        r_jitter = np.exp(uniform(-.2, 0., n))
+        z_jitter = N(0.0, 0.02, n)
+        r_jitter = np.exp(uniform(-0.2, 0.0, n))
         vertices = np.concatenate(
-            [np.stack([np.cos(angles) * r_jitter, np.sin(angles) * r_jitter, z_jitter]).T, np.zeros((1, 3))], 0)
+            [np.stack([np.cos(angles) * r_jitter, np.sin(angles) * r_jitter, z_jitter]).T, np.zeros((1, 3))], 0
+        )
         faces = np.stack([np.arange(n), np.roll(np.arange(n), 1), np.full(n, n)]).T
-        mesh = data2mesh(vertices, [], faces, 'circle')
+        mesh = data2mesh(vertices, [], faces, "circle")
         return mesh
 
     @staticmethod
-    def shader_lichen(nw: NodeWrangler, base_hue=.2, **params):
-        h_perturb = uniform(-0.02, .02)
-        s_perturb = uniform(-.05, -.0)
-        v_perturb = uniform(1., 1.5)
+    def shader_lichen(nw: NodeWrangler, base_hue=0.2, **params):
+        h_perturb = uniform(-0.02, 0.02)
+        s_perturb = uniform(-0.05, -0.0)
+        v_perturb = uniform(1.0, 1.5)
 
         def map_perturb(h, s, v):
             return hsv2rgba(h + h_perturb, s + s_perturb, v / v_perturb)
 
-        subsurface_ratio = .02
-        roughness = 1.
+        subsurface_ratio = 0.02
+        roughness = 1.0
 
-        cr = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': nw.musgrave(5000)})
+        cr = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": nw.musgrave(5000)})
         elements = cr.color_ramp.elements
         elements.new(1)
-        elements[0].position = 0.
+        elements[0].position = 0.0
         elements[1].position = 0.5
         elements[2].position = 1.0
-        elements[0].color = map_perturb(base_hue, 1, .05)
-        elements[1].color = map_perturb((base_hue + .05) % 1, 1, .05)
-        elements[2].color = 0., 0., 0., 1.
+        elements[0].color = map_perturb(base_hue, 1, 0.05)
+        elements[1].color = map_perturb((base_hue + 0.05) % 1, 1, 0.05)
+        elements[2].color = 0.0, 0.0, 0.0, 1.0
 
-        background = map_perturb(base_hue, .5, .3)
-        mix_rgb = nw.new_node(Nodes.MixRGB,
-                              [nw.new_node(Nodes.ObjectInfo_Shader).outputs["Random"], cr.outputs["Color"],
-                                  background])
+        background = map_perturb(base_hue, 0.5, 0.3)
+        mix_rgb = nw.new_node(
+            Nodes.MixRGB, [nw.new_node(Nodes.ObjectInfo_Shader).outputs["Random"], cr.outputs["Color"], background]
+        )
 
-        principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={
-            'Base Color': mix_rgb,
-            'Subsurface': subsurface_ratio,
-            'Subsurface Radius': (.01, .01, .01),
-            'Subsurface Color': background,
-            'Roughness': roughness
-        })
+        principled_bsdf = nw.new_node(
+            Nodes.PrincipledBSDF,
+            input_kwargs={
+                "Base Color": mix_rgb,
+                "Subsurface": subsurface_ratio,
+                "Subsurface Radius": (0.01, 0.01, 0.01),
+                "Subsurface Color": background,
+                "Roughness": roughness,
+            },
+        )
 
         return principled_bsdf
 
     def create_asset(self, **kwargs):
         n = np.random.randint(4, 6)
         mesh = self.build_lichen_circle_mesh(n)
-        obj = bpy.data.objects.new('lichen', mesh)
+        obj = bpy.data.objects.new("lichen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         bpy.context.view_layer.objects.active = obj
 
-        boundary = obj.vertex_groups.new(name='Boundary')
-        boundary.add(list(range(n)), 1.0, 'REPLACE')
+        boundary = obj.vertex_groups.new(name="Boundary")
+        boundary.add(list(range(n)), 1.0, "REPLACE")
 
-        growth_scale = 1, 1, .5
-        build_diff_growth(obj, boundary.index, max_polygons=self.max_polygon * uniform(0.2, 1),
-                          growth_scale=growth_scale, inhibit_shell=4, repulsion_radius=2, dt=.25)
+        growth_scale = 1, 1, 0.5
+        build_diff_growth(
+            obj,
+            boundary.index,
+            max_polygons=self.max_polygon * uniform(0.2, 1),
+            growth_scale=growth_scale,
+            inhibit_shell=4,
+            repulsion_radius=2,
+            dt=0.25,
+        )
         obj.scale = [0.004] * 3
         butil.apply_transform(obj)
-        assign_material(obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen,
-                                                            (self.base_hue + uniform(-.04, .04)) % 1))
+        assign_material(
+            obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen, (self.base_hue + uniform(-0.04, 0.04)) % 1)
+        )
 
-        tag_object(obj, 'lichen')
+        tag_object(obj, "lichen")
         return obj

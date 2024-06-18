@@ -10,11 +10,11 @@ import numpy as np
 from numpy.random import uniform
 from shapely import Polygon, box
 
-from infinigen.core.constraints.example_solver.room.utils import unit_cast
-from infinigen.core.constraints.example_solver.room.types import RoomType
-from infinigen.core.constraints.example_solver.room.configs import TYPICAL_AREA_ROOM_TYPES
 from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.object import new_plane
+from infinigen.core.constraints.example_solver.room.configs import TYPICAL_AREA_ROOM_TYPES
+from infinigen.core.constraints.example_solver.room.types import RoomType
+from infinigen.core.constraints.example_solver.room.utils import unit_cast
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.random import log_uniform
@@ -22,7 +22,7 @@ from infinigen.core.util.random import log_uniform
 LARGE = 100
 
 
-@gin.configurable(denylist=['width', 'height'])
+@gin.configurable(denylist=["width", "height"])
 class ContourFactory:
     def __init__(self, width=17, height=9):
         self.width = width
@@ -49,22 +49,22 @@ class ContourFactory:
             while len(corners) > 0:
                 _, (x, y) = corners.popitem()
                 r = uniform(0, 1)
-                if r < .2:
+                if r < 0.2:
                     axes = []
-                    if nearest((self.width - x, y))[1] < .1:
+                    if nearest((self.width - x, y))[1] < 0.1:
                         axes.append(0)
-                    elif nearest((x, self.height - y))[1] < .1:
+                    elif nearest((x, self.height - y))[1] < 0.1:
                         axes.append(1)
                     if len(axes) > 0:
                         axis = np.random.choice(axes)
                         self.add_long_corner(obj, x, y, axis)
                         t = (self.width - x, y) if axis == 0 else (x, self.height - y)
                         corners.pop(nearest(t)[0])
-                elif r < .35:
+                elif r < 0.35:
                     self.add_round_corner(obj, x, y)
-                elif r < .5:
+                elif r < 0.5:
                     self.add_straight_corner(obj, x, y)
-                elif r < .65:
+                elif r < 0.65:
                     self.add_sharp_corner(obj, x, y)
 
             vertices = obj.data.polygons[0].vertices
@@ -73,43 +73,54 @@ class ContourFactory:
             return p
 
     def add_round_corner(self, obj, x, y):
-        vg = obj.vertex_groups.new(name='corner')
+        vg = obj.vertex_groups.new(name="corner")
         for i, v in enumerate(obj.data.vertices):
-            vg.add([i], v.co[0] == x and v.co[1] == y, 'REPLACE')
-        width = unit_cast(uniform(.2, .3) * min(self.width, self.height))
+            vg.add([i], v.co[0] == x and v.co[1] == y, "REPLACE")
+        width = unit_cast(uniform(0.2, 0.3) * min(self.width, self.height))
         try:
-            butil.modify_mesh(obj, 'BEVEL', affect='VERTICES', limit_method='VGROUP', vertex_group='corner',
-                              segments=np.random.randint(2, 5), width=width)
+            butil.modify_mesh(
+                obj,
+                "BEVEL",
+                affect="VERTICES",
+                limit_method="VGROUP",
+                vertex_group="corner",
+                segments=np.random.randint(2, 5),
+                width=width,
+            )
         except:
             pass
-        obj.vertex_groups.remove(obj.vertex_groups['corner'])
+        obj.vertex_groups.remove(obj.vertex_groups["corner"])
 
     def add_straight_corner(self, obj, x, y):
-        vg = obj.vertex_groups.new(name='corner')
+        vg = obj.vertex_groups.new(name="corner")
         for i, v in enumerate(obj.data.vertices):
-            vg.add([i], v.co[0] == x and v.co[1] == y, 'REPLACE')
-        width = unit_cast(uniform(.1, .3) * min(self.width, self.height))
+            vg.add([i], v.co[0] == x and v.co[1] == y, "REPLACE")
+        width = unit_cast(uniform(0.1, 0.3) * min(self.width, self.height))
         if width > 0:
-            butil.modify_mesh(obj, 'BEVEL', affect='VERTICES', limit_method='VGROUP', vertex_group='corner',
-                              segments=1, width=width)
-        obj.vertex_groups.remove(obj.vertex_groups['corner'])
+            butil.modify_mesh(
+                obj, "BEVEL", affect="VERTICES", limit_method="VGROUP", vertex_group="corner", segments=1, width=width
+            )
+        obj.vertex_groups.remove(obj.vertex_groups["corner"])
 
     def add_sharp_corner(self, obj, x, y):
         cutter = new_plane(size=LARGE)
-        butil.modify_mesh(cutter, 'SOLIDIFY', offset=0, thickness=1)
-        x_ratio, y_ratio = uniform(.1, .3, 2)
-        cutter.location = x + (LARGE / 2 - unit_cast(x_ratio * self.width)) * (-1) ** (x <= 0), y + (
-            LARGE / 2 - unit_cast(y_ratio * self.height)) * (-1) ** (y <= 0), 0
-        butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='DIFFERENCE')
+        butil.modify_mesh(cutter, "SOLIDIFY", offset=0, thickness=1)
+        x_ratio, y_ratio = uniform(0.1, 0.3, 2)
+        cutter.location = (
+            x + (LARGE / 2 - unit_cast(x_ratio * self.width)) * (-1) ** (x <= 0),
+            y + (LARGE / 2 - unit_cast(y_ratio * self.height)) * (-1) ** (y <= 0),
+            0,
+        )
+        butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
         butil.delete(cutter)
 
     def add_long_corner(self, obj, x, y, axis):
         x_, y_, z_ = read_co(obj).T
         i = np.nonzero((x_ == x) & (y_ == y))[0]
         if axis == 0:
-            y_[i] -= self.height * uniform(.1, .3) * (-1) ** (y_[i] <= 0)
+            y_[i] -= self.height * uniform(0.1, 0.3) * (-1) ** (y_[i] <= 0)
         else:
-            x_[i] -= self.width * uniform(.1, .3) * (-1) ** (x_[i] <= 0)
+            x_[i] -= self.width * uniform(0.1, 0.3) * (-1) ** (x_[i] <= 0)
         write_co(obj, np.stack([x_, y_, z_], -1))
 
     def add_staircase(self, contour):
@@ -118,15 +129,14 @@ class ContourFactory:
         y_, y__ = np.min(y), np.max(y)
         for _ in range(self.n_trials):
             area = TYPICAL_AREA_ROOM_TYPES[RoomType.Staircase] * uniform(1.4, 1.6)
-            skewness = log_uniform(.6, .8)
-            if uniform() < .5:
+            skewness = log_uniform(0.6, 0.8)
+            if uniform() < 0.5:
                 skewness = 1 / skewness
-            width, height = unit_cast(np.sqrt(area * skewness).item()), unit_cast(
-                np.sqrt(area / skewness).item())
+            width, height = unit_cast(np.sqrt(area * skewness).item()), unit_cast(np.sqrt(area / skewness).item())
             x = unit_cast(uniform(x_, x__ - width))
             y = unit_cast(uniform(y_, y__ - height))
             b = box(x, y, x + width, y + height)
             if contour.contains(b):
                 return b
         else:
-            raise ValueError('Invalid staircase')
+            raise ValueError("Invalid staircase")

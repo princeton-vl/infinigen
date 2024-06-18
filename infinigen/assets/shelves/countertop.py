@@ -7,44 +7,42 @@ import numpy as np
 import shapely
 from numpy.random import uniform
 
-from infinigen.assets.materials import marble, ceramic
+from infinigen.assets.materials import ceramic, marble
 from infinigen.assets.materials.woods import wood_tile
-from infinigen.assets.utils.decorate import read_normal, read_center, select_faces
+from infinigen.assets.utils.decorate import read_center, read_normal, select_faces
 from infinigen.assets.utils.mesh import separate_selected, snap_mesh
 from infinigen.assets.utils.object import join_objects
-from infinigen.assets.utils.shapes import obj2polygon, safe_polygon2obj, buffer, dissolve_limited
+from infinigen.assets.utils.shapes import buffer, dissolve_limited, obj2polygon, safe_polygon2obj
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import random_general as rg
 
-from infinigen.core.util import blender as butil
-
 
 class CountertopFactory(AssetFactory):
-    surfaces = 'weighted_choice', (5, marble), (2, ceramic), (2, wood_tile)
+    surfaces = "weighted_choice", (5, marble), (2, ceramic), (2, wood_tile)
 
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         self.surface = rg(self.surfaces)
-        self.thickness = uniform(.02, .06)
-        self.extrusion = 0 if uniform() < .4 else uniform(.02, .03)
-        self.h_snap = .5
-        self.v_snap = .5
-        self.v_merge = .1
-        self.z_range = .5, 1.5
+        self.thickness = uniform(0.02, 0.06)
+        self.extrusion = 0 if uniform() < 0.4 else uniform(0.02, 0.03)
+        self.h_snap = 0.5
+        self.v_snap = 0.5
+        self.v_merge = 0.1
+        self.z_range = 0.5, 1.5
         self.surface = rg(self.surfaces)
 
     @staticmethod
     def generate_shelves():
         from .kitchen_cabinet import KitchenCabinetFactory
         from .simple_desk import SimpleDeskFactory
+
         shelves = make_asset_collection(
-            [
-                KitchenCabinetFactory(np.random.randint(1e7)),
-                SimpleDeskFactory(np.random.randint(1e7))], 10
+            [KitchenCabinetFactory(np.random.randint(1e7)), SimpleDeskFactory(np.random.randint(1e7))], 10
         )
         for s in shelves.objects:
-            s.location = *uniform(-1, 1, 2), uniform(0, .5)
+            s.location = *uniform(-1, 1, 2), uniform(0, 0.5)
             s.rotation_euler[-1] = np.pi / 2 * np.random.randint(4)
         return shelves
 
@@ -59,7 +57,7 @@ class CountertopFactory(AssetFactory):
             t = deep_clone_obj(s)
             z = read_center(t)[:, -1]
             max_z = np.max(z[(self.z_range[0] < z) & (z < self.z_range[1])])
-            selection = (read_normal(t)[:, -1] > .5) & (z - 1e-2 < max_z) & (max_z < z + 1e-2)
+            selection = (read_normal(t)[:, -1] > 0.5) & (z - 1e-2 < max_z) & (max_z < z + 1e-2)
             select_faces(t, selection)
             r = separate_selected(t, True)
             r.location = s.location
@@ -97,8 +95,7 @@ class CountertopFactory(AssetFactory):
             n = len(group)
             geoms_ = [geoms[i] for i in group]
             zs_ = [zs[i] for i in group]
-            geom_unions = [self.rebuffer(shapely.union_all(geoms_[i:]), self.h_snap / 2) for i in
-                range(n)]
+            geom_unions = [self.rebuffer(shapely.union_all(geoms_[i:]), self.h_snap / 2) for i in range(n)]
             geom_unions.append(shapely.Point())
             shapes = [self.rebuffer(geom_unions[i].difference(geom_unions[i + 1]), -1e-4) for i in range(n)]
             for s, z in zip(shapes, zs_):
@@ -120,23 +117,21 @@ class CountertopFactory(AssetFactory):
                     o = safe_polygon2obj(s)
                     if o is None:
                         continue
-                    butil.modify_mesh(o, 'WELD', merge_threshold=5e-4)
+                    butil.modify_mesh(o, "WELD", merge_threshold=5e-4)
                     o.location[-1] = zs_[i]
-                    with butil.ViewportMode(o, 'EDIT'):
-                        bpy.ops.mesh.select_mode(type='EDGE')
-                        bpy.ops.mesh.select_all(action='SELECT')
-                        bpy.ops.mesh.extrude_edges_move(
-                            TRANSFORM_OT_translate={'value': (0, 0, zs_[j] - zs_[i])}
-                        )
+                    with butil.ViewportMode(o, "EDIT"):
+                        bpy.ops.mesh.select_mode(type="EDGE")
+                        bpy.ops.mesh.select_all(action="SELECT")
+                        bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, zs_[j] - zs_[i])})
                     objs.append(o)
         obj = join_objects(objs)
         snap_mesh(obj, 2e-2)
         dissolve_limited(obj)
-        with butil.ViewportMode(obj, 'EDIT'):
-            bpy.ops.mesh.select_all(action='SELECT')
+        with butil.ViewportMode(obj, "EDIT"):
+            bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.normals_make_consistent(inside=False)
         butil.modify_mesh(
-            obj, 'SOLIDIFY', thickness=self.thickness, use_even_offset=True, offset=1, use_quality_normals=True
+            obj, "SOLIDIFY", thickness=self.thickness, use_even_offset=True, offset=1, use_quality_normals=True
         )
 
         if shelves_generated:
@@ -146,8 +141,8 @@ class CountertopFactory(AssetFactory):
 
     @staticmethod
     def rebuffer(shape, distance):
-        return shape.buffer(distance, join_style='mitre', cap_style='flat').buffer(
-            -distance, join_style='mitre', cap_style='flat'
+        return shape.buffer(distance, join_style="mitre", cap_style="flat").buffer(
+            -distance, join_style="mitre", cap_style="flat"
         )
 
     def finalize_assets(self, assets):

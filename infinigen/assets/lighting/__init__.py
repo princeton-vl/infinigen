@@ -5,7 +5,7 @@
 
 from . import sky_lighting
 from .caustics_lamp import CausticsLampFactory
-from .ceiling_lights import CeilingLightFactory
 from .ceiling_classic_lamp import CeilingClassicLampFactory
+from .ceiling_lights import CeilingLightFactory
 from .indoor_lights import PointLampFactory
-from .lamp import LampFactory, DeskLampFactory, FloorLampFactory
+from .lamp import DeskLampFactory, FloorLampFactory, LampFactory

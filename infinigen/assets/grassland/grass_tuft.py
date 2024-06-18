@@ -5,24 +5,19 @@
 
 
 import bpy
-
 import numpy as np
-from numpy.random import uniform, normal
+from numpy.random import normal, uniform
 
 from infinigen.assets.creatures.util.geometry.curve import Curve
+from infinigen.assets.materials import grass_blade_texture
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 
-from infinigen.assets.materials import grass_blade_texture
-
-from infinigen.core.placement.factory import AssetFactory
-
-from infinigen.core.util import blender as butil
-from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class GrassTuftFactory(AssetFactory):
-
     def __init__(self, seed):
-
         super(GrassTuftFactory, self).__init__(seed)
 
         self.n_seg = 4
@@ -37,21 +32,20 @@ class GrassTuftFactory(AssetFactory):
         self.blade_width_var = uniform(0, 0.05)
 
         self.taper_var = uniform(0, 0.1)
-        self.taper_y = np.linspace(1, 0, self.n_seg) * normal(1, self.taper_var, self.n_seg) 
+        self.taper_y = np.linspace(1, 0, self.n_seg) * normal(1, self.taper_var, self.n_seg)
         self.taper_x = np.linspace(0, 1, self.n_seg)
         self.taper_points = np.stack([self.taper_x, self.taper_y], axis=-1)
 
-        self.base_spread = uniform(0, self.length_mean/4)
+        self.base_spread = uniform(0, self.length_mean / 4)
         self.base_angle_var = uniform(0, 15)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        
         n_blades = np.random.randint(30, 60)
-        
+
         blade_lengths = normal(self.length_mean, self.length_std, (n_blades, 1))
-        seg_lens = (blade_lengths / self.n_seg)
-        
-        seg_curls = normal(self.curl_mean, self.curl_std, (n_blades, self.n_seg)) 
+        seg_lens = blade_lengths / self.n_seg
+
+        seg_curls = normal(self.curl_mean, self.curl_std, (n_blades, self.n_seg))
         seg_curls *= np.power(np.linspace(0, 1, self.n_seg).reshape(1, self.n_seg), self.curl_power)
         seg_curls = np.deg2rad(seg_curls)
 
@@ -68,11 +62,11 @@ class GrassTuftFactory(AssetFactory):
         widths = blade_lengths.reshape(-1) * normal(self.blade_width_pct_mean, self.blade_width_var, n_blades)
         objs = []
         for i in range(n_blades):
-            obj = Curve(points[i], taper=taper).to_curve_obj(name=f'_blade_{i}', extrude=widths[i], resu=2)
+            obj = Curve(points[i], taper=taper).to_curve_obj(name=f"_blade_{i}", extrude=widths[i], resu=2)
             objs.append(obj)
 
         with butil.SelectObjects(objs):
-            bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.convert(target="MESH")
         butil.delete(taper)
 
         # Randomly pose and arrange the blades in a circle-ish cluster
@@ -81,7 +75,7 @@ class GrassTuftFactory(AssetFactory):
         facing_offsets = np.rad2deg(normal(0, self.base_angle_var, n_blades))
         for a, r, off, obj in zip(base_angles, base_rads, facing_offsets, objs):
             obj.location = (-r * np.cos(a), r * np.sin(a), -0.05 * self.length_mean)
-            obj.rotation_euler = (np.pi/2, -np.pi/2, -a + off)
+            obj.rotation_euler = (np.pi / 2, -np.pi / 2, -a + off)
 
         with butil.SelectObjects(objs):
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
@@ -91,8 +85,8 @@ class GrassTuftFactory(AssetFactory):
             bpy.ops.object.shade_flat()
             parent = objs[0]
 
-        tag_object(parent, 'grass_tuft')
-        
+        tag_object(parent, "grass_tuft")
+
         return parent
 
     def finalize_assets(self, assets):

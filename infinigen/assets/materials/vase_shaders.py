@@ -5,13 +5,13 @@
 
 
 import bpy
-import bpy
 import mathutils
-from numpy.random import uniform, normal, randint
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category, hsv2rgba
+from numpy.random import normal, randint, uniform
+
 from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import color_category, hsv2rgba
 
 
 def shader_ceramic(nw: NodeWrangler):
@@ -20,18 +20,36 @@ def shader_ceramic(nw: NodeWrangler):
 
     rgb = nw.new_node(Nodes.RGB)
     rgb.outputs[0].default_value = hsv2rgba(hsv)
-    
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': rgb, 'Subsurface': 0.3, 'Subsurface Radius': (0.002, 0.002, 0.002), 'Subsurface Color': rgb, 'Subsurface IOR': 1.4700, 'Subsurface Anisotropy': 0.2000, 'Specular': 0.2000, 'Roughness': 0.0500, 'Clearcoat': 0.5000, 'Clearcoat Roughness': 0.0500, 'IOR': 1.4700})
-    
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
+
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": rgb,
+            "Subsurface": 0.3,
+            "Subsurface Radius": (0.002, 0.002, 0.002),
+            "Subsurface Color": rgb,
+            "Subsurface IOR": 1.4700,
+            "Subsurface Anisotropy": 0.2000,
+            "Specular": 0.2000,
+            "Roughness": 0.0500,
+            "Clearcoat": 0.5000,
+            "Clearcoat Roughness": 0.0500,
+            "IOR": 1.4700,
+        },
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+    )
+
 
 def shader_glass(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     hsv = (uniform(0.0, 1.0), uniform(0.0, 0.2), 1.0)
 
-    glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={'Color': hsv2rgba(hsv), 'Roughness': uniform(0.05, 0.2)})
-    
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': glass_bsdf}, attrs={'is_active_output': True})
+    glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={"Color": hsv2rgba(hsv), "Roughness": uniform(0.05, 0.2)})
 
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": glass_bsdf}, attrs={"is_active_output": True}
+    )

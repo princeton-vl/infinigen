@@ -7,13 +7,16 @@
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from infinigen.core.util.organization import Materials, Transparency, ElementNames
+
+from infinigen.core.util.organization import ElementNames, Materials, Transparency
 
 from .core import Element
+
 
 @gin.configurable
 class Atmosphere(Element):
     name = ElementNames.Atmosphere
+
     def __init__(
         self,
         device,

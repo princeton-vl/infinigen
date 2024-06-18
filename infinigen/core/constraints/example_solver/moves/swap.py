@@ -4,20 +4,19 @@
 
 # Authors: Alexander Raistrick
 
-from dataclasses import dataclass
-import numpy as np
-import typing
 import logging
+import typing
+from dataclasses import dataclass
 
 import bpy
-from infinigen.core.constraints.example_solver.geometry import parse_scene
-from mathutils import Vector, Matrix
+import numpy as np
 import trimesh
+from mathutils import Matrix, Vector
 
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.util import blender as butil
-
+from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.moves import Move
+from infinigen.core.util import blender as butil
 
 from .reassignment import pose_backup, restore_pose_backup
 
@@ -35,7 +34,6 @@ class Swap(Move):
         raise NotImplementedError(f"{self.__class__.__name__} untested")
 
     def apply(self, state: state_def.State):
-
         target1, target2 = self.names
 
         o1 = state[target1].obj
@@ -49,7 +47,6 @@ class Swap(Move):
         o1.relation_assignments, o2.relation_assignments = o2.relation_assignments, o1.relation_assignments
 
     def revert(self, state: state_def.State):
-
         target1, target2 = self.names
         restore_pose_backup(state, target1, self._obj1_backup)
         restore_pose_backup(state, target2, self._obj2_backup)
@@ -58,5 +55,3 @@ class Swap(Move):
         o2 = state[target2].obj
 
         o1.relation_assignments, o2.relation_assignments = o2.relation_assignments, o1.relation_assignments
-
-        

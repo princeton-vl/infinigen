@@ -9,7 +9,17 @@ from ctypes import POINTER, c_float, c_int32, c_size_t
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.terrain.utils import KernelDataType, Vars, load_cdll, register_func, ASFLOAT, ASINT, KERNELDATATYPE_DIMS, KERNELDATATYPE_NPTYPE, Mesh
+from infinigen.terrain.utils import (
+    ASFLOAT,
+    ASINT,
+    KERNELDATATYPE_DIMS,
+    KERNELDATATYPE_NPTYPE,
+    KernelDataType,
+    Mesh,
+    Vars,
+    load_cdll,
+    register_func,
+)
 
 from .kernelizer import Kernelizer
 
@@ -30,7 +40,8 @@ class SurfaceKernel:
             call_param_type.append(POINTER(c_float))
         imp_values_of_type = {}
         for var in sorted(inputs.keys()):
-            if var in [Vars.Position, Vars.Normal]: continue
+            if var in [Vars.Position, Vars.Normal]:
+                continue
             dtype, value = inputs[var]
             if dtype in imp_values_of_type:
                 imp_values_of_type[dtype].append(value)
@@ -80,8 +91,10 @@ class SurfaceKernel:
         if isinstance(params, dict):
             normals = AC(np.concatenate((np.zeros((N, 2), dtype=np.float32), np.ones((N, 1), dtype=np.float32)), -1))
             pvalues = [N]
-            if self.use_position: pvalues.append(ASFLOAT(positions))
-            if self.use_normal: pvalues.append(ASFLOAT(normals))
+            if self.use_position:
+                pvalues.append(ASFLOAT(positions))
+            if self.use_normal:
+                pvalues.append(ASFLOAT(normals))
             values = pvalues + values
             self.call(*values)
 
@@ -95,8 +108,10 @@ class SurfaceKernel:
         elif isinstance(params, Mesh):
             normals = AC(params.vertex_normals.astype(np.float32))
             pvalues = [N]
-            if self.use_position: pvalues.append(ASFLOAT(positions))
-            if self.use_normal: pvalues.append(ASFLOAT(normals))
+            if self.use_position:
+                pvalues.append(ASFLOAT(positions))
+            if self.use_normal:
+                pvalues.append(ASFLOAT(normals))
             values = pvalues + values
             self.call(*values)
             for var in self.outputs:
@@ -107,4 +122,3 @@ class SurfaceKernel:
                     params.vertices += ret[var]
                 else:
                     params.vertex_attributes[var] = ret[var]
-                

@@ -12,11 +12,12 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
+
 class BaseCactusFactory(AssetFactory):
-    spike_distance = .025
-    cap_percentage = .1
-    noise_strength = .02
-    base_radius = .002
+    spike_distance = 0.025
+    cap_percentage = 0.1
+    noise_strength = 0.02
+    base_radius = 0.002
     density = 5e4
 
     def __init__(self, factory_seed, coarse=False):

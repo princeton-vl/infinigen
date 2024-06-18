@@ -4,15 +4,17 @@
 # Authors: Hei Law
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=lPAYX8z9i8M by CGCookie
 
-from infinigen.core.nodes.node_wrangler import Nodes
 import numpy as np
+
+from infinigen.core.nodes.node_wrangler import Nodes
+
 
 def cloud_geometry_func(
     points_only=False,
     resolution=256,
 ):
     def cloud_geometry_node(
-        nw, 
+        nw,
         density,
         noise_scale,
         noise_detail,
@@ -24,26 +26,26 @@ def cloud_geometry_func(
         **kwargs,
     ):
         scale = (1.5, 1.5, 2.0)
-        
+
         group_input = nw.new_node(Nodes.GroupInput)
-        position    = nw.new_node(Nodes.InputPosition)
+        position = nw.new_node(Nodes.InputPosition)
 
         vector_rotate = nw.new_node(
             Nodes.VectorRotate,
             input_kwargs={
-                'Vector': position,
-                'Angle': rotate_angle,
+                "Vector": position,
+                "Angle": rotate_angle,
             },
         )
 
         noise_texture_1 = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
-                'Vector': vector_rotate,
-                'Scale': 2.0000,
+                "Vector": vector_rotate,
+                "Scale": 2.0000,
             },
         )
-    
+
         subtract = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
@@ -51,21 +53,21 @@ def cloud_geometry_func(
                 1: (0.5000, 0.5000, 0.5000),
             },
             attrs={
-                'operation': 'SUBTRACT',
+                "operation": "SUBTRACT",
             },
         )
-        
+
         scale = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
                 0: subtract.outputs["Vector"],
-                'Scale': 0.1000,
+                "Scale": 0.1000,
             },
             attrs={
-                'operation': 'SCALE',
+                "operation": "SCALE",
             },
         )
-        
+
         multiply = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
@@ -73,18 +75,18 @@ def cloud_geometry_func(
                 1: (1.5000, 1.5000, 2.0000),
             },
             attrs={
-                'operation': 'MULTIPLY',
+                "operation": "MULTIPLY",
             },
         )
-        
+
         vector_curves = nw.new_node(
             Nodes.VectorCurve,
             input_kwargs={
-                'Vector': multiply.outputs["Vector"],
+                "Vector": multiply.outputs["Vector"],
             },
         )
         curve_func(vector_curves.mapping.curves)
-        
+
         add = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
@@ -92,16 +94,16 @@ def cloud_geometry_func(
                 1: vector_curves,
             },
         )
-        
+
         noise_texture = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
-                'Vector': vector_rotate,
-                'Scale': noise_scale,
-                'Detail': noise_detail,
+                "Vector": vector_rotate,
+                "Scale": noise_scale,
+                "Detail": noise_detail,
             },
         )
-        
+
         subtract_1 = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
@@ -109,21 +111,21 @@ def cloud_geometry_func(
                 1: (0.5000, 0.5000, 0.5000),
             },
             attrs={
-                'operation': 'SUBTRACT',
+                "operation": "SUBTRACT",
             },
         )
-        
+
         scale_1 = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
                 0: subtract_1.outputs["Vector"],
-                'Scale': 0.1000,
+                "Scale": 0.1000,
             },
             attrs={
-                'operation': 'SCALE',
+                "operation": "SCALE",
             },
         )
-        
+
         add_1 = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
@@ -131,33 +133,33 @@ def cloud_geometry_func(
                 1: scale_1.outputs["Vector"],
             },
         )
-        
+
         voronoi_texture = nw.new_node(
             Nodes.VoronoiTexture,
             input_kwargs={
-                'Vector': add_1.outputs["Vector"],
-                'Scale': voronoi_scale,
+                "Vector": add_1.outputs["Vector"],
+                "Scale": voronoi_scale,
             },
         )
-        
+
         noise_texture_2 = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
-                'Vector': vector_rotate,
-                'Detail': 5.0000,
+                "Vector": vector_rotate,
+                "Detail": 5.0000,
             },
         )
-        
+
         subtract_2 = nw.new_node(
             Nodes.Math,
             input_kwargs={
                 0: noise_texture_2.outputs["Fac"],
             },
             attrs={
-                'operation': 'SUBTRACT',
+                "operation": "SUBTRACT",
             },
         )
-        
+
         multiply_1 = nw.new_node(
             Nodes.Math,
             input_kwargs={
@@ -165,10 +167,10 @@ def cloud_geometry_func(
                 1: 0.1000,
             },
             attrs={
-                'operation': 'MULTIPLY',
+                "operation": "MULTIPLY",
             },
         )
-        
+
         add_2 = nw.new_node(
             Nodes.Math,
             input_kwargs={
@@ -176,38 +178,38 @@ def cloud_geometry_func(
                 1: multiply_1,
             },
         )
-        
+
         mix_1 = nw.new_node(
             Nodes.MixRGB,
             input_kwargs={
-                'Fac': mix_factor,
-                'Color1': add.outputs["Vector"],
-                'Color2': add_2,
+                "Fac": mix_factor,
+                "Color1": add.outputs["Vector"],
+                "Color2": add_2,
             },
             attrs={
-                'blend_type': 'OVERLAY',
+                "blend_type": "OVERLAY",
             },
         )
-        
+
         length = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={
                 0: mix_1,
             },
             attrs={
-                'operation': 'LENGTH',
+                "operation": "LENGTH",
             },
         )
-        
+
         noise_texture_3 = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
-                'Vector': vector_rotate,
-                'Scale': 2.0000,
-                'Detail': 5.0000,
+                "Vector": vector_rotate,
+                "Scale": 2.0000,
+                "Detail": 5.0000,
             },
         )
-        
+
         multiply_2 = nw.new_node(
             Nodes.Math,
             input_kwargs={
@@ -215,41 +217,42 @@ def cloud_geometry_func(
                 1: 2.0000,
             },
             attrs={
-                'operation': 'MULTIPLY',
+                "operation": "MULTIPLY",
             },
         )
-        
+
         noise_texture_4 = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
-                'Vector': vector_rotate,
-                'Scale': 1.5000,
-                'Detail': 5.0000,
+                "Vector": vector_rotate,
+                "Scale": 1.5000,
+                "Detail": 5.0000,
             },
         )
-        
+
         divide = nw.new_node(
             Nodes.Math,
             input_kwargs={
                 0: noise_texture_4.outputs["Fac"],
                 1: 100.0000,
-            }, attrs={
-                'operation': 'DIVIDE',
+            },
+            attrs={
+                "operation": "DIVIDE",
             },
         )
-        
+
         map_range = nw.new_node(
             Nodes.MapRange,
             input_kwargs={
-                'Value': length.outputs["Value"],
+                "Value": length.outputs["Value"],
                 3: multiply_2,
                 4: divide,
             },
             attrs={
-                'clamp': False,
+                "clamp": False,
             },
         )
-        
+
         multiply_3 = nw.new_node(
             Nodes.Math,
             input_kwargs={
@@ -257,10 +260,10 @@ def cloud_geometry_func(
                 1: density,
             },
             attrs={
-                'operation': 'MULTIPLY',
+                "operation": "MULTIPLY",
             },
         )
-        
+
         greater_than = nw.new_node(
             Nodes.Math,
             input_kwargs={
@@ -268,41 +271,42 @@ def cloud_geometry_func(
                 1: 0.01,
             },
             attrs={
-                'operation': 'GREATER_THAN',
+                "operation": "GREATER_THAN",
             },
         )
-        
+
         separate_geometry = nw.new_node(
             Nodes.SeparateGeometry,
             input_kwargs={
-                'Geometry': group_input.outputs["Geometry"],
-                'Selection': greater_than,
+                "Geometry": group_input.outputs["Geometry"],
+                "Selection": greater_than,
             },
         )
-        
+
         points_to_volume = nw.new_node(
             Nodes.PointsToVolume,
             input_kwargs={
-                'Points': separate_geometry.outputs["Selection"],
-                'Radius': 0.0150,
+                "Points": separate_geometry.outputs["Selection"],
+                "Radius": 0.0150,
             },
         )
-        
+
         volume_to_mesh = nw.new_node(
             Nodes.VolumeToMesh,
             input_kwargs={
-                'Volume': points_to_volume,
+                "Volume": points_to_volume,
             },
         )
-        
+
         set_material = nw.new_node(
             Nodes.SetMaterial,
             input_kwargs={
-                'Geometry': volume_to_mesh,
-                'Material': material,
+                "Geometry": volume_to_mesh,
+                "Material": material,
             },
         )
         return set_material
+
     return cloud_geometry_node
 
 
@@ -316,7 +320,7 @@ def geometry_func(
     )
 
     def geometry_nodes(
-        nw, 
+        nw,
         density,
         noise_scale,
         noise_detail,
@@ -328,7 +332,7 @@ def geometry_func(
         **kwargs,
     ):
         cloud_mesh = cloud_func(
-            nw, 
+            nw,
             density,
             noise_scale,
             noise_detail,
@@ -343,9 +347,10 @@ def geometry_func(
         group_output = nw.new_node(
             Nodes.GroupOutput,
             input_kwargs={
-                'Geometry': cloud_mesh,
+                "Geometry": cloud_mesh,
             },
         )
+
     return geometry_nodes
 
 
@@ -361,25 +366,25 @@ def shader_material(
     **kwargs,
 ):
     location = (0.0, 0.0, 0.0)
-    scale    = (0.9, 0.9, 0.9)
+    scale = (0.9, 0.9, 0.9)
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
-    
+
     mapping = nw.new_node(
         Nodes.Mapping,
         input_kwargs={
-            'Vector': texture_coordinate.outputs["Object"],
+            "Vector": texture_coordinate.outputs["Object"],
         },
     )
-    
+
     noise_texture_3 = nw.new_node(
         Nodes.NoiseTexture,
         input_kwargs={
-            'Vector': mapping,
-            'Scale': 2.0000,
+            "Vector": mapping,
+            "Scale": 2.0000,
         },
     )
-    
+
     subtract = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
@@ -387,21 +392,21 @@ def shader_material(
             1: (0.5000, 0.5000, 0.5000),
         },
         attrs={
-            'operation': 'SUBTRACT',
+            "operation": "SUBTRACT",
         },
     )
-    
+
     scale = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
             0: subtract.outputs["Vector"],
-            'Scale': 0.1000,
+            "Scale": 0.1000,
         },
         attrs={
-            'operation': 'SCALE',
+            "operation": "SCALE",
         },
     )
-    
+
     add = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
@@ -409,15 +414,16 @@ def shader_material(
             1: mapping,
         },
     )
-    
+
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
         input_kwargs={
-            'Vector': mapping,
-            'Scale': noise_scale,
-            'Detail': noise_detail,
-        })
-    
+            "Vector": mapping,
+            "Scale": noise_scale,
+            "Detail": noise_detail,
+        },
+    )
+
     subtract_1 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
@@ -425,54 +431,54 @@ def shader_material(
             1: (0.5000, 0.5000, 0.5000),
         },
         attrs={
-            'operation': 'SUBTRACT',
+            "operation": "SUBTRACT",
         },
     )
-    
+
     scale_1 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
             0: subtract_1.outputs["Vector"],
-            'Scale': 0.1000,
+            "Scale": 0.1000,
         },
         attrs={
-            'operation': 'SCALE',
+            "operation": "SCALE",
         },
     )
-    
+
     add_1 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
             1: scale_1.outputs["Vector"],
         },
     )
-    
+
     voronoi_texture_1 = nw.new_node(
         Nodes.VoronoiTexture,
         input_kwargs={
-            'Vector': add_1.outputs["Vector"],
-            'Scale': voronoi_scale,
+            "Vector": add_1.outputs["Vector"],
+            "Scale": voronoi_scale,
         },
     )
-    
+
     noise_texture_2 = nw.new_node(
         Nodes.NoiseTexture,
         input_kwargs={
-            'Scale': mapping,
-            'Detail': 5.0000,
+            "Scale": mapping,
+            "Detail": 5.0000,
         },
     )
-    
+
     subtract_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={
             0: noise_texture_2.outputs["Fac"],
         },
         attrs={
-            'operation': 'SUBTRACT',
+            "operation": "SUBTRACT",
         },
     )
-    
+
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -480,10 +486,10 @@ def shader_material(
             1: 0.1000,
         },
         attrs={
-            'operation': 'MULTIPLY',
+            "operation": "MULTIPLY",
         },
     )
-    
+
     add_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -491,38 +497,38 @@ def shader_material(
             1: multiply,
         },
     )
-    
+
     mix_1 = nw.new_node(
         Nodes.MixRGB,
         input_kwargs={
-            'Fac': 0.3,
-            'Color1': add.outputs["Vector"],
-            'Color2': add_2,
+            "Fac": 0.3,
+            "Color1": add.outputs["Vector"],
+            "Color2": add_2,
         },
         attrs={
-            'blend_type': 'OVERLAY',
+            "blend_type": "OVERLAY",
         },
     )
-    
+
     length = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
             0: mix_1,
         },
         attrs={
-            'operation': 'LENGTH',
+            "operation": "LENGTH",
         },
     )
-    
+
     noise_texture_4 = nw.new_node(
         Nodes.NoiseTexture,
         input_kwargs={
-            'Vector': mapping,
-            'Scale': 2.0000,
-            'Detail': 5.0000,
+            "Vector": mapping,
+            "Scale": 2.0000,
+            "Detail": 5.0000,
         },
     )
-    
+
     multiply_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -530,19 +536,19 @@ def shader_material(
             1: 2.0000,
         },
         attrs={
-            'operation': 'MULTIPLY',
+            "operation": "MULTIPLY",
         },
     )
-    
+
     noise_texture_5 = nw.new_node(
         Nodes.NoiseTexture,
         input_kwargs={
-            'Vector': mapping,
-            'Scale': 1.5000,
-            'Detail': 5.0000,
+            "Vector": mapping,
+            "Scale": 1.5000,
+            "Detail": 5.0000,
         },
     )
-    
+
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -550,22 +556,22 @@ def shader_material(
             1: 100.0000,
         },
         attrs={
-            'operation': 'DIVIDE',
+            "operation": "DIVIDE",
         },
     )
-    
+
     map_range_1 = nw.new_node(
         Nodes.MapRange,
         input_kwargs={
-            'Value': length.outputs["Value"],
+            "Value": length.outputs["Value"],
             3: multiply_1,
             4: divide,
         },
         attrs={
-            'clamp': False,
+            "clamp": False,
         },
     )
-    
+
     multiply_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -573,29 +579,29 @@ def shader_material(
             1: density,
         },
         attrs={
-            'operation': 'MULTIPLY',
+            "operation": "MULTIPLY",
         },
     )
-    
+
     principled_volume = nw.new_node(
         Nodes.PrincipledVolume,
         input_kwargs={
-            'Color': (1.0000, 1.0000, 1.0000, 1.0000),
-            'Density': multiply_2,
-            'Anisotropy': anisotropy,
-            'Absorption Color': (1.0000, 1.0000, 1.0000, 1.0000),
-            'Temperature': 0.0,
-            'Emission Strength': emission_strength,
+            "Color": (1.0000, 1.0000, 1.0000, 1.0000),
+            "Density": multiply_2,
+            "Anisotropy": anisotropy,
+            "Absorption Color": (1.0000, 1.0000, 1.0000, 1.0000),
+            "Temperature": 0.0,
+            "Emission Strength": emission_strength,
         },
     )
-    
+
     material_output = nw.new_node(
         Nodes.MaterialOutput,
         input_kwargs={
-            'Volume': principled_volume,
+            "Volume": principled_volume,
         },
         attrs={
-            'is_active_output': True,
+            "is_active_output": True,
         },
     )
 
@@ -610,7 +616,7 @@ def scatter_func(
     )
 
     def scatter_nodes(
-        nw, 
+        nw,
         densities,
         noise_scales,
         noise_details,
@@ -638,20 +644,21 @@ def scatter_func(
                 nw,
                 *param,
                 **kwargs,
-            ) for param in params
+            )
+            for param in params
         ]
 
         # Selection
         voronoi_texture_2 = nw.new_node(
             Nodes.VoronoiTexture,
             input_kwargs={
-                'Scale': scatter_params['voronoi_scale'],
+                "Scale": scatter_params["voronoi_scale"],
             },
         )
         map_range = nw.new_node(
             Nodes.MapRange,
             input_kwargs={
-                'Value': voronoi_texture_2.outputs["Distance"],
+                "Value": voronoi_texture_2.outputs["Distance"],
             },
         )
         greater_than = nw.new_node(
@@ -661,7 +668,7 @@ def scatter_func(
                 1: 0.6,
             },
             attrs={
-                'operation': 'GREATER_THAN',
+                "operation": "GREATER_THAN",
             },
         )
 
@@ -669,55 +676,55 @@ def scatter_func(
         grid = nw.new_node(
             Nodes.MeshGrid,
             input_kwargs={
-                'Size X': 2.0,
-                'Size Y': 2.0,
-                'Vertices X': scatter_params['vertices_x'],
-                'Vertices Y': scatter_params['vertices_y'],
+                "Size X": 2.0,
+                "Size Y": 2.0,
+                "Vertices X": scatter_params["vertices_x"],
+                "Vertices Y": scatter_params["vertices_y"],
             },
         )
         distribute_points_on_faces = nw.new_node(
             Nodes.DistributePointsOnFaces,
             input_kwargs={
-                'Mesh': grid,
-                'Distance Min': 0.3,
-                'Density Max': 64.0,
+                "Mesh": grid,
+                "Distance Min": 0.3,
+                "Density Max": 64.0,
             },
             attrs={
-                'distribute_method': 'POISSON',
+                "distribute_method": "POISSON",
             },
         )
 
         # Convert cloud geometry to instance
         geometry_to_instance = nw.new_node(
-            'GeometryNodeGeometryToInstance',
+            "GeometryNodeGeometryToInstance",
             input_kwargs={
-                'Geometry': cloud_meshes,
+                "Geometry": cloud_meshes,
             },
         )
 
         random_value_2 = nw.new_node(
             Nodes.RandomValue,
             attrs={
-                'data_type': 'INT',
+                "data_type": "INT",
             },
         )
         instance_on_points = nw.new_node(
             Nodes.InstanceOnPoints,
             input_kwargs={
-                'Points': distribute_points_on_faces,
-                'Instance': geometry_to_instance,
-                'Pick Instance': True,
-                'Instance Index': random_value_2.outputs[2],
+                "Points": distribute_points_on_faces,
+                "Instance": geometry_to_instance,
+                "Pick Instance": True,
+                "Instance Index": random_value_2.outputs[2],
             },
         )
         random_value = nw.new_node(
             Nodes.RandomValue,
             input_kwargs={
                 0: (0.5, 0.5, 0.5),
-                'Seed': np.random.randint(int(1e5)),
+                "Seed": np.random.randint(int(1e5)),
             },
             attrs={
-                'data_type': 'FLOAT_VECTOR',
+                "data_type": "FLOAT_VECTOR",
             },
         )
         random_value_4 = nw.new_node(
@@ -734,14 +741,14 @@ def scatter_func(
                 1: random_value_4.outputs[1],
             },
             attrs={
-                'operation': 'MULTIPLY',
+                "operation": "MULTIPLY",
             },
         )
         scale_instances = nw.new_node(
-            'GeometryNodeScaleInstances',
+            "GeometryNodeScaleInstances",
             input_kwargs={
-                'Instances': instance_on_points,
-                'Scale': multiply_4,
+                "Instances": instance_on_points,
+                "Scale": multiply_4,
             },
         )
         random_value_1 = nw.new_node(
@@ -757,46 +764,47 @@ def scatter_func(
                 0: random_value_1.outputs[1],
             },
             attrs={
-                'operation': 'RADIANS',
+                "operation": "RADIANS",
             },
         )
         combine_xyz = nw.new_node(
             Nodes.CombineXYZ,
             input_kwargs={
-                'Z': radians,
+                "Z": radians,
             },
         )
         rotate_instances = nw.new_node(
-            'GeometryNodeRotateInstances',
+            "GeometryNodeRotateInstances",
             input_kwargs={
-                'Instances': scale_instances,
-                'Rotation': combine_xyz,
+                "Instances": scale_instances,
+                "Rotation": combine_xyz,
             },
         )
         random_value_3 = nw.new_node(Nodes.RandomValue)
         combine_xyz_2 = nw.new_node(
             Nodes.CombineXYZ,
             input_kwargs={
-                'Z': random_value_3.outputs[1],
+                "Z": random_value_3.outputs[1],
             },
         )
         translate_instances = nw.new_node(
             Nodes.TranslateInstances,
             input_kwargs={
-                'Instances': rotate_instances,
-                'Translation': combine_xyz_2,
+                "Instances": rotate_instances,
+                "Translation": combine_xyz_2,
             },
         )
         realize_instances = nw.new_node(
             Nodes.RealizeInstances,
             input_kwargs={
-                'Geometry': translate_instances,
+                "Geometry": translate_instances,
             },
         )
         group_output_1 = nw.new_node(
             Nodes.GroupOutput,
             input_kwargs={
-                'Geometry': realize_instances,
+                "Geometry": realize_instances,
             },
         )
+
     return scatter_nodes

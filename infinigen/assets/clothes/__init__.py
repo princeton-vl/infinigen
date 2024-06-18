@@ -3,7 +3,6 @@
 
 # Authors: Lingjie Mei
 from .blanket import BlanketFactory
-from .shirt import ShirtFactory
 from .pants import PantsFactory
+from .shirt import ShirtFactory
 from .towel import TowelFactory
-

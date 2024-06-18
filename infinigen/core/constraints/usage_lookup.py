@@ -5,13 +5,14 @@
 # Authors: Alexander Raistrick
 
 from collections import defaultdict
+
 from infinigen.core import tags as t
 
 _factory_lookup: dict[type, set[t.Tag]] = None
 _tag_lookup: dict[t.Tag, set[type]] = None
 
-def initialize_from_dict(d):
 
+def initialize_from_dict(d):
     global _factory_lookup, _tag_lookup
     _factory_lookup = defaultdict(set)
     _tag_lookup = defaultdict(set)
@@ -22,8 +23,10 @@ def initialize_from_dict(d):
             _factory_lookup[fac].add(tag)
             _tag_lookup[tag].add(fac)
 
+
 def usages_of_factory(fac) -> set[t.Tag]:
     return _factory_lookup[fac].union({t.FromGenerator(fac)})
+
 
 def factories_for_usage(tags: set[t.Tag]):
     if not isinstance(tags, set):
@@ -36,11 +39,14 @@ def factories_for_usage(tags: set[t.Tag]):
         res.intersection_update(_tag_lookup[t])
     return res
 
+
 def all_usage_tags():
     return _tag_lookup.keys()
 
+
 def all_factories():
     return _factory_lookup.keys()
+
 
 def has_usage(fac, tag):
     assert fac in _factory_lookup.keys(), fac

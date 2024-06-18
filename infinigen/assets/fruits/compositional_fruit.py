@@ -7,41 +7,42 @@
 import bpy
 import mathutils
 import numpy as np
-from numpy.random import uniform, normal, randint
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core import surface
+from numpy.random import normal, randint, uniform
 
-from infinigen.core.util.math import FixedSeed
-from infinigen.core.util import blender as butil
-from infinigen.core.placement.factory import AssetFactory
-
-from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
 from infinigen.assets.fruits.apple import FruitFactoryApple
+from infinigen.assets.fruits.blackberry import FruitFactoryBlackberry
+from infinigen.assets.fruits.coconutgreen import FruitFactoryCoconutgreen
+from infinigen.assets.fruits.coconuthairy import FruitFactoryCoconuthairy
+from infinigen.assets.fruits.durian import FruitFactoryDurian
+from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
 from infinigen.assets.fruits.pineapple import FruitFactoryPineapple
 from infinigen.assets.fruits.starfruit import FruitFactoryStarfruit
 from infinigen.assets.fruits.strawberry import FruitFactoryStrawberry
-from infinigen.assets.fruits.blackberry import FruitFactoryBlackberry
-from infinigen.assets.fruits.coconuthairy import FruitFactoryCoconuthairy
-from infinigen.assets.fruits.coconutgreen import FruitFactoryCoconutgreen
-from infinigen.assets.fruits.durian import FruitFactoryDurian
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.math import FixedSeed
 
-fruit_names = {'Apple': FruitFactoryApple, 
-               'Pineapple': FruitFactoryPineapple,
-               'Starfruit': FruitFactoryStarfruit,
-               'Strawberry': FruitFactoryStrawberry,
-               'Blackberry': FruitFactoryBlackberry,
-               'Coconuthairy': FruitFactoryCoconuthairy,
-               'Coconutgreen': FruitFactoryCoconutgreen,
-               'Durian': FruitFactoryDurian,
-               }
+fruit_names = {
+    "Apple": FruitFactoryApple,
+    "Pineapple": FruitFactoryPineapple,
+    "Starfruit": FruitFactoryStarfruit,
+    "Strawberry": FruitFactoryStrawberry,
+    "Blackberry": FruitFactoryBlackberry,
+    "Coconuthairy": FruitFactoryCoconuthairy,
+    "Coconutgreen": FruitFactoryCoconutgreen,
+    "Durian": FruitFactoryDurian,
+}
+
 
 class FruitFactoryCompositional(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):
         super(FruitFactoryCompositional, self).__init__(factory_seed, scale=scale, coarse=coarse)
 
-        self.name = 'compositional'
+        self.name = "compositional"
         self.factories = {}
 
         for name, factory in fruit_names.items():
@@ -64,5 +65,3 @@ class FruitFactoryCompositional(FruitFactoryGeneralFruit):
 
     def sample_stem_params(self):
         return self.factories[self.stem_source].sample_stem_params()
-
-

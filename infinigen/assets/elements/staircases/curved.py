@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
-# Authors: 
+# Authors:
 # - Lingjie Mei
 # - Karhan Kayan: fix constants
 
@@ -11,15 +11,14 @@ import numpy as np
 from infinigen.assets.elements.staircases.straight import StraightStaircaseFactory
 from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.core.constraints.example_solver.room import constants
-from infinigen.core.util.random import log_uniform
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform
 
 
 class CurvedStaircaseFactory(StraightStaircaseFactory):
-    support_types = 'weighted_choice', (2, 'single-rail'), (2, 'double-rail'), (4, 'side'), (4, 'solid'), (
-        4, 'hole')
+    support_types = "weighted_choice", (2, "single-rail"), (2, "double-rail"), (4, "side"), (4, "solid"), (4, "hole")
 
-    handrail_types = 'weighted_choice', (2, 'horizontal-post'), (2, 'vertical-post')
+    handrail_types = "weighted_choice", (2, "horizontal-post"), (2, "vertical-post")
 
     def __init__(self, factory_seed, coarse=False):
         self.full_angle, self.radius, self.theta = 0, 0, 0
@@ -34,7 +33,7 @@ class CurvedStaircaseFactory(StraightStaircaseFactory):
             self.step_height = constants.WALL_HEIGHT / self.n
             self.theta = self.full_angle / self.n
             self.step_length = self.step_height * log_uniform(1, 1.5)
-            self.step_width = log_uniform(.9, 1.5)
+            self.step_width = log_uniform(0.9, 1.5)
             self.radius = self.step_length / self.theta
             if self.radius / self.step_width > 1.5:
                 break

@@ -8,48 +8,49 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from .veratrum import VeratrumMonocotFactory
-from .banana import BananaMonocotFactory, TaroMonocotFactory
+from infinigen.assets.utils.mesh import polygon_angles
+from infinigen.assets.utils.object import join_objects
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.util.math import FixedSeed
+
 from .agave import AgaveMonocotFactory
+from .banana import BananaMonocotFactory, TaroMonocotFactory
 from .grasses import GrassesMonocotFactory, MaizeMonocotFactory, WheatMonocotFactory
 from .growth import MonocotGrowthFactory
 from .tussock import TussockMonocotFactory
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.math import FixedSeed
-from infinigen.assets.utils.object import join_objects
-from infinigen.assets.utils.mesh import polygon_angles
-from infinigen.core.tagging import tag_object, tag_nodegroup
+from .veratrum import VeratrumMonocotFactory
+
 
 class MonocotFactory(AssetFactory):
     max_cluster = 10
 
     def create_asset(self, i, **params) -> bpy.types.Object:
-        params['decorate'] = True
+        params["decorate"] = True
         if self.factory.is_grass:
             n = np.random.randint(1, 6)
             angles = polygon_angles(n, np.pi / 4, np.pi * 2)
-            radius = uniform(.08, .16, n)
+            radius = uniform(0.08, 0.16, n)
             monocots = [self.factory.create_asset(**params, i=j + i * self.max_cluster) for j in range(n)]
             for m, a, r in zip(monocots, angles, radius):
                 m.location = r * np.cos(a), r * np.sin(a), 0
             obj = join_objects(monocots)
-            tag_object(obj, 'monocot')
+            tag_object(obj, "monocot")
             return obj
         else:
             m = self.factory.create_asset(**params)
-            tag_object(m, 'monocot')
+            tag_object(m, "monocot")
             return m
 
     def __init__(self, factory_seed, coarse=False, factory_method=None, grass=None):
         super(MonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            grass_factory = [TussockMonocotFactory, GrassesMonocotFactory, WheatMonocotFactory,
-                MaizeMonocotFactory]
-            nongrass_factory = [AgaveMonocotFactory, BananaMonocotFactory, TaroMonocotFactory,
-                VeratrumMonocotFactory]
+            grass_factory = [TussockMonocotFactory, GrassesMonocotFactory, WheatMonocotFactory, MaizeMonocotFactory]
+            nongrass_factory = [AgaveMonocotFactory, BananaMonocotFactory, TaroMonocotFactory, VeratrumMonocotFactory]
             # noinspection PyTypeChecker
-            self.factory_methods = grass_factory + nongrass_factory if grass is None else grass_factory if \
-                grass else nongrass_factory
+            self.factory_methods = (
+                grass_factory + nongrass_factory if grass is None else grass_factory if grass else nongrass_factory
+            )
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             if factory_method is None:

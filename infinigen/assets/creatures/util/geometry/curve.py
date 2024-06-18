@@ -8,14 +8,9 @@ import bpy
 
 from infinigen.core.util import blender as butil
 
-class Curve:
 
-    def __init__(
-        self, points,
-        profile=None, taper=None,
-        closed=False, sharp=None,
-        scale=None
-    ):
+class Curve:
+    def __init__(self, points, profile=None, taper=None, closed=False, sharp=None, scale=None):
         self.points = points
         self.profile = profile
         self.taper = taper
@@ -23,16 +18,14 @@ class Curve:
         self.sharp = sharp
         self.scale = scale
 
-    def to_curve_obj(self, name='curve',
-        resu=4, curvetype='NURBS', extrude=0, fill_caps = True,
-        to_mesh=False, cleanup=True
+    def to_curve_obj(
+        self, name="curve", resu=4, curvetype="NURBS", extrude=0, fill_caps=True, to_mesh=False, cleanup=True
     ):
-
-        curveData = bpy.data.curves.new(f'{name}_curve', type='CURVE')
-        curveData.dimensions = '3D'
+        curveData = bpy.data.curves.new(f"{name}_curve", type="CURVE")
+        curveData.dimensions = "3D"
         curveData.resolution_u = resu
         curveData.use_fill_caps = fill_caps
-        curveData.twist_mode = 'MINIMUM'
+        curveData.twist_mode = "MINIMUM"
         curveData.bevel_depth = extrude
 
         polyline = curveData.splines.new(curvetype)
@@ -44,7 +37,7 @@ class Curve:
                 x, y = p
                 z = 0
             else:
-                raise ValueError(f'Unrecognized point dim {len(p)} in Curve.to_curve_obj')
+                raise ValueError(f"Unrecognized point dim {len(p)} in Curve.to_curve_obj")
             return x, y, z, 1
 
         for i, p in enumerate(self.points):
@@ -59,7 +52,7 @@ class Curve:
                 polyline.points[-1].co = get_pos(p)
 
         if self.profile is not None:
-            curveData.bevel_mode = 'OBJECT'
+            curveData.bevel_mode = "OBJECT"
             curveData.bevel_object = self.profile
 
         if self.taper is not None:
@@ -69,7 +62,7 @@ class Curve:
         bpy.context.scene.collection.objects.link(obj)
 
         if self.closed:
-            with butil.ViewportMode(obj, mode='EDIT'):
+            with butil.ViewportMode(obj, mode="EDIT"):
                 bpy.ops.curve.select_all()
                 bpy.ops.curve.cyclic_toggle()
 
@@ -77,7 +70,6 @@ class Curve:
             obj.scale = self.scale
 
         if to_mesh:
-
             bevel = curveData.bevel_object
             taper = curveData.taper_object
 

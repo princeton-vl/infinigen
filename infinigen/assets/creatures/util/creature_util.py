@@ -4,44 +4,44 @@
 # Authors: Alexander Raistrick
 
 
-from dataclasses import dataclass
 import numbers
+from dataclasses import dataclass
 
 import bpy
 import mathutils
-from mathutils import Vector, Euler, Quaternion
-
 import numpy as np
+from mathutils import Euler, Quaternion, Vector
 
-from infinigen.core.util.math import lerp
 from infinigen.core.util import blender as butil
+from infinigen.core.util.math import lerp
+
 
 def euler(r, p, y):
     return mathutils.Euler(np.deg2rad([r, p, y])).to_quaternion()
 
-def interp_dict(a: dict, b: dict, t: float, keys='assert', fill=0, recurse=True, lerp=lerp):
 
-    '''
+def interp_dict(a: dict, b: dict, t: float, keys="assert", fill=0, recurse=True, lerp=lerp):
+    """
     keys: 'a', 'b', 'intersect', 'union', 'asset', 'switch'
-    '''
+    """
 
-    if keys == 'switch':
-        keys = 'b' if t > 0.5 else 'a'
+    if keys == "switch":
+        keys = "b" if t > 0.5 else "a"
 
-    if keys == 'assert':
+    if keys == "assert":
         if not a.keys() == b.keys():
-            raise ValueError(f'lerp_dict(..., {keys=}) recieved {a.keys()=}, {b.keys()}=')
+            raise ValueError(f"lerp_dict(..., {keys=}) recieved {a.keys()=}, {b.keys()}=")
         out_keys = a.keys()
-    elif keys == 'a':
+    elif keys == "a":
         out_keys = a.keys()
-    elif keys == 'b':
+    elif keys == "b":
         out_keys = b.keys()
-    elif keys == 'union':
+    elif keys == "union":
         out_keys = set(a.keys()).union(b.keys())
-    elif keys == 'intersect':
+    elif keys == "intersect":
         out_keys = set(a.keys()).intersection(b.keys())
     else:
-        raise ValueError(f'Unrecognized lerp_dict(..., {keys=})')
+        raise ValueError(f"Unrecognized lerp_dict(..., {keys=})")
 
     res = {}
     for k in out_keys:
@@ -54,12 +54,12 @@ def interp_dict(a: dict, b: dict, t: float, keys='assert', fill=0, recurse=True,
         elif isinstance(a[k], numbers.Number) or isinstance(a[k], np.ndarray):
             res[k] = lerp(a[k], b[k], t)
         else:
-            raise TypeError(f'interp_dict could not handle {type(a[k])=}')
+            raise TypeError(f"interp_dict could not handle {type(a[k])=}")
 
     return res
 
-def polar_skeleton(rads, eulers):
 
+def polar_skeleton(rads, eulers):
     assert len(rads.shape) == 1
 
     # if too few eulers are provided, we will assume the user only cares about the latter angles
@@ -83,8 +83,8 @@ def polar_skeleton(rads, eulers):
 
     return positions
 
+
 def offset_center(obj, x=True, z=True):
-    
     # find all bbox corners
     vs = []
     for ob in butil.iter_object_tree(obj):
@@ -97,4 +97,4 @@ def offset_center(obj, x=True, z=True):
     zoff = -vs[:, -1].min() if z else 0
     offset = mathutils.Vector((xoff, 0, zoff))
     for ob in obj.children:
-        ob.location += offset   
+        ob.location += offset

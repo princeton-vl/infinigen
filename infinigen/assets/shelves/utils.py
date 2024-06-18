@@ -5,45 +5,46 @@
 
 import bpy
 import numpy as np
-from infinigen.core.util import blender as butil
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler,  geometry_node_group_empty_new
-from infinigen.core.nodes import node_utils
-from infinigen.core import tagging, tags as t
 
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
+from infinigen.core import tagging
+from infinigen.core import tags as t
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, geometry_node_group_empty_new
+from infinigen.core.util import blender as butil
 
 
 def get_nodegroup_assets(func, params):
-    bpy.ops.mesh.primitive_plane_add(
-        size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    bpy.ops.mesh.primitive_plane_add(size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1))
     obj = bpy.context.active_object
 
     with butil.TemporaryObject(obj) as base_obj:
         node_group_func = func(**params)
-        geo_outputs = [o for o in node_group_func.outputs if o.bl_socket_idname == 'NodeSocketGeometry']
-        results = {o.name: extract_nodegroup_geo(base_obj, node_group_func, o.name,
-                                                 ng_params={}) for o in geo_outputs}
+        geo_outputs = [o for o in node_group_func.outputs if o.bl_socket_idname == "NodeSocketGeometry"]
+        results = {o.name: extract_nodegroup_geo(base_obj, node_group_func, o.name, ng_params={}) for o in geo_outputs}
 
     return results
 
-@node_utils.to_nodegroup('nodegroup_tagged_cube', singleton=False, type='GeometryNodeTree')
+
+@node_utils.to_nodegroup("nodegroup_tagged_cube", singleton=False, type="GeometryNodeTree")
 def nodegroup_tagged_cube(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketVectorTranslation', 'Size', (1.0000, 1.0000, 1.0000))])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketVectorTranslation", "Size", (1.0000, 1.0000, 1.0000))]
+    )
 
-    cube = nw.new_node(Nodes.MeshCube, input_kwargs={'Size': group_input.outputs["Size"]})
+    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": group_input.outputs["Size"]})
 
     index = nw.new_node(Nodes.Index)
 
-    equal = nw.new_node(Nodes.Compare, input_kwargs={2: index, 3: 2}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+    equal = nw.new_node(Nodes.Compare, input_kwargs={2: index, 3: 2}, attrs={"data_type": "INT", "operation": "EQUAL"})
 
     cube = tagging.tag_nodegroup(nw, cube, t.Subpart.SupportSurface, selection=equal)
 
-    #subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': cube, 'Level': 2})
+    # subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': cube, 'Level': 2})
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Mesh': cube}, attrs={'is_active_output': True})
-
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": cube}, attrs={"is_active_output": True})
 
 
 def blender_rotate(vec):

@@ -9,17 +9,16 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from .types import Node
 from .expression import BoolExpression, ScalarExpression, nodedataclass
+from .types import Node
+
 
 @nodedataclass()
 class Problem(Node):
-
     constraints: dict[str, BoolExpression]
-    score_terms: dict[str, ScalarExpression]    
+    score_terms: dict[str, ScalarExpression]
 
     def __post_init__(self):
-
         if isinstance(self.constraints, list):
             self.constraints = {i: c for i, c in enumerate(self.constraints)}
         if isinstance(self.score_terms, list):
@@ -27,6 +26,6 @@ class Problem(Node):
 
     def children(self):
         for i, v in enumerate(self.constraints.values()):
-            yield f'constraints[{i}]', v
+            yield f"constraints[{i}]", v
         for i, v in enumerate(self.score_terms.values()):
-            yield f'score_terms[{i}]', v
+            yield f"score_terms[{i}]", v

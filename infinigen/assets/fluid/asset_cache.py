@@ -4,29 +4,23 @@
 # Authors: Karhan Kayan
 
 import argparse
+import importlib
+import json
+import logging
 import os
 import sys
-from pathlib import Path
-from mathutils import Vector
-import importlib
+import time
 from collections import defaultdict
-
+from pathlib import Path
 
 import bpy
 import gin
 import numpy as np
-import json
+from mathutils import Vector
 
-from infinigen.assets.fluid.fluid import (
-    find_available_cache,
-    set_obj_on_fire,
-    fire_smoke_ground_truth,
-)
-
-import time
+from infinigen.assets.fluid.fluid import find_available_cache, fire_smoke_ground_truth, set_obj_on_fire
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +29,13 @@ ASSET_ENV_VAR = "ASSET_PATH"
 SPECIES_MAX = 20
 I_MAX = 20
 
+
 @gin.configurable
 class FireCachingSystem:
-    def __init__(self, asset_folder = None, create=False, max_fire_assets = 3, max_per_kind = 1) -> None:
+    def __init__(self, asset_folder=None, create=False, max_fire_assets=3, max_per_kind=1) -> None:
         if asset_folder == None:
             raise ValueError("asset_folder not set for Fire")
-        
+
         cache_folder = os.path.join(asset_folder, "Fire")
 
         if not os.path.exists(cache_folder):
@@ -150,9 +145,9 @@ class FireCachingSystem:
         for sim_folder in os.listdir(factory_dir):
             full_sim_folder = os.path.join(factory_dir, sim_folder)
             config_file = os.path.join(factory_dir, sim_folder, "config.json")
-            if (
-                not os.path.isfile(os.path.join(full_sim_folder, "simulation.blend"))
-            ) or (not os.path.isfile(config_file)):
+            if (not os.path.isfile(os.path.join(full_sim_folder, "simulation.blend"))) or (
+                not os.path.isfile(config_file)
+            ):
                 continue
             with open(config_file, "r") as f:
                 config = json.load(f)
@@ -191,9 +186,7 @@ class FireCachingSystem:
 
         config = self.read_config(full_sim_folder)
 
-        dom.location = (
-            obj.parent.location + Vector(config["dom_loc"]) - Vector(config["obj_loc"])
-        )
+        dom.location = obj.parent.location + Vector(config["dom_loc"]) - Vector(config["obj_loc"])
         dom.rotation_euler = obj.parent.rotation_euler
 
         ######should be used if no opengl gt########
@@ -207,5 +200,3 @@ class FireCachingSystem:
         self.n_placed[factory.__class__.__name__] += 1
 
         return dom
-
-

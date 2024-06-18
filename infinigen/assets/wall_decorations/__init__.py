@@ -3,6 +3,6 @@
 
 # Authors: Lingjie Mei
 from .balloon import BalloonFactory
-from .wall_art import WallArtFactory, MirrorFactory
-from .wall_shelf import WallShelfFactory
 from .range_hood import RangeHoodFactory
+from .wall_art import MirrorFactory, WallArtFactory
+from .wall_shelf import WallShelfFactory

@@ -5,9 +5,11 @@
 
 
 import numpy as np
-from infinigen.core.nodes.node_info import Nodes as oNodes
+
 from infinigen.core.nodes.node_info import NODE_ATTRS_AVAILABLE as o_NODE_ATTRS_AVAILABLE
+from infinigen.core.nodes.node_info import Nodes as oNodes
 from infinigen.core.surface import Registry
+
 
 class Vars:
     Position = "position"
@@ -15,23 +17,33 @@ class Vars:
     Offset = "offset"
     SDF = "sdf"
 
+
 class Nodes(oNodes):
     Group = "GeometryNodeGroup"
 
+
 NODE_ATTRS_AVAILABLE = o_NODE_ATTRS_AVAILABLE.copy()
 
-NODE_ATTRS_AVAILABLE.update({
-    Nodes.ColorRamp: ["color_ramp.elements", "color_ramp.color_mode", "color_ramp.interpolation", "color_ramp.hue_interpolation"],    
-    Nodes.MixRGB: ['use_clamp', 'blend_type'],
-    Nodes.Mix: ['data_type', 'blend_type', 'clamp_result', 'clamp_factor', 'factor_mode'],
-    Nodes.FloatCurve: ["mapping"],
-    Nodes.Value: [],
-    Nodes.Vector: [],
-    Nodes.InputColor: [],
-    Nodes.WaveTexture: ["wave_type", "bands_direction", "rings_direction", "wave_profile"],
-    Nodes.SeparateXYZ: [],
-    Nodes.Group: [],
-})
+NODE_ATTRS_AVAILABLE.update(
+    {
+        Nodes.ColorRamp: [
+            "color_ramp.elements",
+            "color_ramp.color_mode",
+            "color_ramp.interpolation",
+            "color_ramp.hue_interpolation",
+        ],
+        Nodes.MixRGB: ["use_clamp", "blend_type"],
+        Nodes.Mix: ["data_type", "blend_type", "clamp_result", "clamp_factor", "factor_mode"],
+        Nodes.FloatCurve: ["mapping"],
+        Nodes.Value: [],
+        Nodes.Vector: [],
+        Nodes.InputColor: [],
+        Nodes.WaveTexture: ["wave_type", "bands_direction", "rings_direction", "wave_profile"],
+        Nodes.SeparateXYZ: [],
+        Nodes.Group: [],
+    }
+)
+
 
 class SocketType:
     Boolean = "BOOLEAN"
@@ -42,6 +54,7 @@ class SocketType:
     RGBA = "RGBA"
     Image = "IMAGE"
 
+
 class AttributeType:
     Float = "FLOAT"
     Int = "INT"
@@ -49,11 +62,13 @@ class AttributeType:
     FloatColor = "FLOAT_COLOR"
     Boolean = "BOOLEAN"
 
+
 class FieldsType:
     Value = "value"
     Vector = "vector"
     Color = "color"
     Boolean = "boolean"
+
 
 ATTRTYPE_DIMS = {
     AttributeType.Float: 1,
@@ -91,12 +106,14 @@ NPTYPEDIM_ATTR = {
 #     Pointwise = "Pointwise"
 #     Constant = "Constant"
 
+
 class KernelDataType:
     float = "float"
     float2 = "float2_nonbuiltin"
     float3 = "float3_nonbuiltin"
     float4 = "float4_nonbuiltin"
     int = "int"
+
 
 KERNELDATATYPE_DIMS = {
     KernelDataType.float: [],
@@ -144,20 +161,25 @@ NODE_FUNCTIONS = {
 def special_sanitize_constant(node_name, x):
     positions = ",".join([str(x[i].position) for i in range(len(x))])
     colors = ",".join(
-        [f"float4_nonbuiltin({x[i].color[0]}, {x[i].color[1]}, {x[i].color[2]}, {x[i].color[3]})" for i in range(len(x))])
-    return f'''
+        [
+            f"float4_nonbuiltin({x[i].color[0]}, {x[i].color[1]}, {x[i].color[2]}, {x[i].color[3]})"
+            for i in range(len(x))
+        ]
+    )
+    return f"""
         float {node_name}_positions[{len(x)}]{{{positions}}};
         float4_nonbuiltin {node_name}_colors[{len(x)}]{{{colors}}};
-    '''
+    """
+
 
 def special_sanitize(node_name, x, node_tree_name):
     positions = ",".join([get_imp_var_name(node_tree_name, node_name) + f"_pos{i}" for i in range(len(x))])
-    colors = ",".join(
-        [get_imp_var_name(node_tree_name, node_name) + f"_color{i}" for i in range(len(x))])
-    return f'''
+    colors = ",".join([get_imp_var_name(node_tree_name, node_name) + f"_color{i}" for i in range(len(x))])
+    return f"""
         float {node_name}_positions[{len(x)}]{{{positions}}};
         float4_nonbuiltin {node_name}_colors[{len(x)}]{{{colors}}};
-    '''
+    """
+
 
 def get_imp_var_name(node_tree_name, node_name):
     return usable_name(node_name) + "_FROM_" + usable_name(node_tree_name)
@@ -169,13 +191,21 @@ def special_sanitize_float_curve(node_name, mapping, N=256):
     for p in positions:
         values.append(mapping.evaluate(mapping.curves[0], p))
     values = ",".join([str(v) for v in values])
-    return f'''
+    return f"""
         float {node_name}_values[{N}]{{{values}}};
         int {node_name}_table_size = {N};
-    '''
+    """
+
 
 def usable_name(x):
-    return x.replace(".", "_DOT_").replace(" ", "_SPACE_").replace("~", "_WAVE_").replace("(", "_LBR_").replace(")", "_RBR_").replace(",", "_COMMA_")
+    return (
+        x.replace(".", "_DOT_")
+        .replace(" ", "_SPACE_")
+        .replace("~", "_WAVE_")
+        .replace("(", "_LBR_")
+        .replace(")", "_RBR_")
+        .replace(",", "_COMMA_")
+    )
 
 
 def sanitize(x, node, param):
@@ -239,11 +269,13 @@ def sanitize(x, node, param):
     else:
         return x
 
+
 def concat_string(strs):
     ret = ""
     for s in strs:
         ret += s + ", "
     return ret
+
 
 def var_list(in_vars, imp_vars, out_vars, collective_style):
     code = []
@@ -253,7 +285,8 @@ def var_list(in_vars, imp_vars, out_vars, collective_style):
     if collective_style:
         imp_vars_of_type = {}
         for var in sorted(imp_vars.keys()):
-            if var in [Vars.Position, Vars.Normal]: continue
+            if var in [Vars.Position, Vars.Normal]:
+                continue
             dtype = imp_vars[var][0]
             if dtype in imp_vars_of_type:
                 imp_vars_of_type[dtype].append(var)
@@ -274,11 +307,13 @@ def var_list(in_vars, imp_vars, out_vars, collective_style):
         code.append(f"POINTER_OR_REFERENCE_ARG {dtype} *{var}")
     return ",".join(code)
 
+
 def collecting_vars(imp_vars):
     code = ""
     imp_vars_count = {}
     for var in sorted(imp_vars.keys()):
-        if var in [Vars.Position, Vars.Normal]: continue
+        if var in [Vars.Position, Vars.Normal]:
+            continue
         dtype = imp_vars[var][0]
         if dtype in imp_vars_count:
             imp_vars_count[dtype] += 1
@@ -286,6 +321,7 @@ def collecting_vars(imp_vars):
             imp_vars_count[dtype] = 0
         code += f"{dtype} {var} = {dtype}_vars[{imp_vars_count[dtype]}];\n"
     return code
+
 
 def value_string(value):
     if isinstance(value, float):

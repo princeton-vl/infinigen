@@ -4,15 +4,16 @@
 # Authors: Zeyu Ma, Lingjie Mei
 
 
-from google_images_search import GoogleImagesSearch
-from sklearn.mixture import GaussianMixture
 import argparse
-import numpy as np
+import colorsys
 import os
+from pathlib import Path
+
 import cv2
 import matplotlib.pyplot as plt
-import colorsys
-from pathlib import Path
+import numpy as np
+from google_images_search import GoogleImagesSearch
+from sklearn.mixture import GaussianMixture
 
 
 def make_palette(keyword, num_images, num_colors, overwrite=False):
@@ -22,13 +23,13 @@ def make_palette(keyword, num_images, num_colors, overwrite=False):
     #   - Multiselect is currently not feasible. Choose ONE option only
     #   - This param can also be omitted from _search_params if you do not wish to define any value
     _search_params = {
-        'q': keyword,
-        'num': num_images,
-        'fileType': 'jpg|png',
+        "q": keyword,
+        "num": num_images,
+        "fileType": "jpg|png",
     }
 
     # this will search and download:
-    folder = f'{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}'
+    folder = f"{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}"
     if os.path.exists(folder) and not overwrite:
         print("folder existing, skip")
     else:
@@ -38,7 +39,8 @@ def make_palette(keyword, num_images, num_colors, overwrite=False):
 
     colors = np.zeros((0, 3))
     for image_name in os.listdir(folder):
-        if image_name.endswith("svg"): continue
+        if image_name.endswith("svg"):
+            continue
         image = cv2.imread(f"{folder}/{image_name}")
         image = cv2.resize(image, (128, 128))
         image = image[:, :, :3]
@@ -77,12 +79,12 @@ def make_palette(keyword, num_images, num_colors, overwrite=False):
     diagrams = np.clip(diagrams * 256, a_min=0, a_max=255).astype(np.int32)
     diagrams = diagrams.reshape((2 * S, num_colors * S, 3))
 
-    Path(f'{os.path.split(os.path.abspath(__file__))[0]}/images').mkdir(parents=True, exist_ok=True)
-    Path(f'{os.path.split(os.path.abspath(__file__))[0]}/json').mkdir(parents=True, exist_ok=True)
+    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/images").mkdir(parents=True, exist_ok=True)
+    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/json").mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(20, 5))
     plt.imshow(diagrams)
-    plt.savefig(f'{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}.png')
+    plt.savefig(f"{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}.png")
 
     colors_rgb = np.clip(colors_rgb * 256, a_min=0, a_max=255).astype(np.int32)
     with open(f"{os.path.split(os.path.abspath(__file__))[0]}/json/{keyword}.json", "w") as f:
@@ -93,25 +95,25 @@ def make_palette(keyword, num_images, num_colors, overwrite=False):
         f.write("    },\n")
         f.write('    "hsv": [\n')
         for color_hsv in colors_hsv:
-            f.write(f'        [{color_hsv[0]}, {color_hsv[1]}, {color_hsv[2]}],\n')
+            f.write(f"        [{color_hsv[0]}, {color_hsv[1]}, {color_hsv[2]}],\n")
         f.write("    ],\n")
         f.write('    "std": [\n')
         for std in cov:
-            covs = ','.join([str(x) for x in std.reshape(-1)])
-            f.write(f'        [{covs}],\n')
+            covs = ",".join([str(x) for x in std.reshape(-1)])
+            f.write(f"        [{covs}],\n")
         f.write("    ],\n")
         f.write('    "prob": [\n')
         for i in range(num_colors):
-            f.write(f'        {weights[i]},\n')
+            f.write(f"        {weights[i]},\n")
         f.write("    ]\n")
         f.write("}\n")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--keyword', type=str)
-    parser.add_argument('-i', '--num_images', default=10)
-    parser.add_argument('-c', '--num_colors', default=10)
-    parser.add_argument('-o', '--overwrite', action='store_true')
+    parser.add_argument("-k", "--keyword", type=str)
+    parser.add_argument("-i", "--num_images", default=10)
+    parser.add_argument("-c", "--num_colors", default=10)
+    parser.add_argument("-o", "--overwrite", action="store_true")
     args = parser.parse_args()
     make_palette(args.keyword, args.num_images, args.num_colors, args.overwrite)

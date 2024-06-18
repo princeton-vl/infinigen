@@ -9,76 +9,83 @@ import numpy as np
 import trimesh
 from numpy.random import uniform
 
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
+
+from ...core import surface
+from ...core.util.blender import deep_clone_obj
 from ..scatters import clothes
-from . import BedFrameFactory, MattressFactory, PillowFactory
 from ..scatters.clothes import ClothesCover
 from ..utils.decorate import decimate, read_co, subsurf
 from ..utils.object import obj2trimesh
-from ...core import surface
-from infinigen.core.util import blender as butil
-from infinigen.core.util.random import random_general as rg, log_uniform
-from ...core.util.blender import deep_clone_obj
+from . import BedFrameFactory, MattressFactory, PillowFactory
 
 
 class BedFactory(BedFrameFactory):
-    mattress_types = 'weighted_choice', (1, 'coiled'), (3, 'wrapped')
-    sheet_types = 'weighted_choice', (4, 'quilt'), (4, 'comforter'), (4, 'box_comforter'), (1, 'none')
+    mattress_types = "weighted_choice", (1, "coiled"), (3, "wrapped")
+    sheet_types = "weighted_choice", (4, "quilt"), (4, "comforter"), (4, "box_comforter"), (1, "none")
 
     def __init__(self, factory_seed, coarse=False):
         super(BedFactory, self).__init__(factory_seed, coarse)
         self.sheet_type = rg(self.sheet_types)
-        self.sheet_folded = uniform() < .5
-        self.has_cover = uniform() < .5
-        self.clothes_scatter = ClothesCover((.3, .7, .3, .7)) if uniform() < 0.2 else surface.NoApply
+        self.sheet_folded = uniform() < 0.5
+        self.has_cover = uniform() < 0.5
+        self.clothes_scatter = ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.2 else surface.NoApply
 
     @cached_property
     def mattress_factory(self):
         factory = MattressFactory(self.factory_seed, self.coarse)
         factory.type = rg(self.mattress_types)
-        factory.width = self.width * uniform(.88, .96)
-        factory.size = self.size * uniform(.88, .96)
+        factory.width = self.width * uniform(0.88, 0.96)
+        factory.size = self.size * uniform(0.88, 0.96)
         return factory
 
     @cached_property
     def quilt_factory(self):
         from ..clothes.blanket import BlanketFactory
+
         factory = BlanketFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.6)
-        factory.size = self.mattress_factory.size * uniform(.9, 1.1)
+        factory.size = self.mattress_factory.size * uniform(0.9, 1.1)
         return factory
 
     @cached_property
     def comforter_factory(self):
         from ..clothes.blanket import ComforterFactory
+
         factory = ComforterFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.8)
-        factory.size = self.mattress_factory.size * uniform(.9, 1.2)
+        factory.size = self.mattress_factory.size * uniform(0.9, 1.2)
         return factory
 
     @cached_property
     def box_comforter_factory(self):
         from ..clothes.blanket import BoxComforterFactory
+
         factory = BoxComforterFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.8)
-        factory.size = self.mattress_factory.size * uniform(.9, 1.2)
+        factory.size = self.mattress_factory.size * uniform(0.9, 1.2)
         return factory
 
     @cached_property
     def cover_factory(self):
         from ..clothes.blanket import BlanketFactory
+
         factory = BlanketFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.6, 1.8)
-        factory.size = self.mattress_factory.size * uniform(.3, .4)
+        factory.size = self.mattress_factory.size * uniform(0.3, 0.4)
         return factory
 
     @cached_property
     def towel_factory(self):
         from ..clothes import TowelFactory
+
         return TowelFactory(self.factory_seed)
 
     @cached_property
     def cloth_scatter(self):
-        return ClothesCover((.3, .7, .3, .7)) if uniform() < 0.0 else surface.NoApply
+        return ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.0 else surface.NoApply
 
     @cached_property
     def pillow_factory(self):
@@ -99,11 +106,7 @@ class BedFactory(BedFrameFactory):
         else:
             pillows = []
         self.pillow_factory.finalize_assets(pillows)
-        points = np.stack(
-            [uniform(.1, .4, 10) * self.size,
-                uniform(-.3, .3, 10) * self.width,
-                np.full(10, 1)], -1
-        )
+        points = np.stack([uniform(0.1, 0.4, 10) * self.size, uniform(-0.3, 0.3, 10) * self.width, np.full(10, 1)], -1)
         self.scatter(pillows, points, [sheet, mattress])
 
         n_towels = np.random.randint(1, 2)
@@ -113,11 +116,7 @@ class BedFactory(BedFrameFactory):
         else:
             towels = []
         self.towel_factory.finalize_assets(towels)
-        points = np.stack(
-            [uniform(.5, .8, 10) * self.size,
-                uniform(-.3, .3, 10) * self.width,
-                np.full(10, 1)], -1
-        )
+        points = np.stack([uniform(0.5, 0.8, 10) * self.size, uniform(-0.3, 0.3, 10) * self.width, np.full(10, 1)], -1)
         self.scatter(towels, points, [sheet, mattress])
 
         for _ in [mattress, sheet, cover] + pillows + towels:
@@ -135,12 +134,12 @@ class BedFactory(BedFrameFactory):
 
     def make_sheet(self, i, mattress, obj):
         match self.sheet_type:
-            case 'quilt':
+            case "quilt":
                 factory = self.quilt_factory
                 pressure = 0
-            case 'comforter':
+            case "comforter":
                 factory = self.comforter_factory
-                pressure = uniform(1., 1.5)
+                pressure = uniform(1.0, 1.5)
             case _:
                 factory = self.box_comforter_factory
                 pressure = log_uniform(8, 15)
@@ -149,12 +148,18 @@ class BedFactory(BedFrameFactory):
             factory.fold(sheet)
         factory.finalize_assets(sheet)
         z_sheet = mattress.location[-1] + np.max(read_co(mattress)[:, -1])
-        sheet.location = factory.size / 2 + uniform(0, .15), 0, z_sheet
+        sheet.location = factory.size / 2 + uniform(0, 0.15), 0, z_sheet
         sheet.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(sheet, True)
         clothes.cloth_sim(
-            sheet, [mattress, obj], mass=.05, tension_stiffness=2, distance_min=5e-3, use_pressure=True,
-            uniform_pressure_force=pressure, use_self_collision=self.sheet_folded
+            sheet,
+            [mattress, obj],
+            mass=0.05,
+            tension_stiffness=2,
+            distance_min=5e-3,
+            use_pressure=True,
+            uniform_pressure_force=pressure,
+            use_self_collision=self.sheet_folded,
         )
         subsurf(sheet, 2)
         return sheet
@@ -163,12 +168,10 @@ class BedFactory(BedFrameFactory):
         cover = self.cover_factory(i)
         self.cover_factory.finalize_assets(cover)
         z_sheet = sheet.location[-1] + np.max(read_co(sheet)[:, -1])
-        cover.location = self.size / 2 + uniform(0, .3), 0, z_sheet
+        cover.location = self.size / 2 + uniform(0, 0.3), 0, z_sheet
         cover.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(cover, True)
-        clothes.cloth_sim(
-            cover, [sheet, mattress], 80, mass=.05, tension_stiffness=2, distance_min=5e-3
-        )
+        clothes.cloth_sim(cover, [sheet, mattress], 80, mass=0.05, tension_stiffness=2, distance_min=5e-3)
         subsurf(cover, 2)
         return cover
 
@@ -182,5 +185,5 @@ class BedFactory(BedFrameFactory):
         points += dir * lengths[:, np.newaxis]
         for a, loc in zip(pillows, decimate(points, len(pillows))):
             a.location = loc
-            a.location[-1] += .02 - np.min(read_co(a)[:, -1])
+            a.location[-1] += 0.02 - np.min(read_co(a)[:, -1])
             a.rotation_euler[-1] = uniform(0, np.pi)

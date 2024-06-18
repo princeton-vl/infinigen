@@ -10,12 +10,11 @@ from infinigen.core.placement.factory import AssetFactory
 
 
 class BaseCoralFactory(AssetFactory):
-    
-    tentacle_distance = .05
-    default_scale = [.8] * 3
-    noise_strength = .02
-    tentacle_prob = .5
-    bump_prob = .3
+    tentacle_distance = 0.05
+    default_scale = [0.8] * 3
+    noise_strength = 0.02
+    tentacle_prob = 0.5
+    bump_prob = 0.3
     density = 500
 
     def __init__(self, factory_seed, coarse=False):

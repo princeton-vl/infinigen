@@ -6,34 +6,26 @@
 
 import pdb
 
-import numpy as np
-
 import bpy
-from mathutils import Vector, Matrix
+import numpy as np
+from mathutils import Matrix, Vector
 
-from infinigen.assets.trees.utils import helper, mesh, materials
-
+from infinigen.assets.trees.utils import helper, materials, mesh
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.tagging import tag_object, tag_nodegroup
 
 C = bpy.context
 D = bpy.data
 
+
 class LeafFactory(AssetFactory):
-    
     scale = 0.3
 
-    def __init__(self, factory_seed, genome: dict=None, coarse=False):
+    def __init__(self, factory_seed, genome: dict = None, coarse=False):
         super(LeafFactory, self).__init__(factory_seed, coarse=coarse)
         self.genome = dict(
-            leaf_width=0.5,
-            alpha=0.3,
-            use_wave=True,
-            x_offset=0,
-            flip_leaf=False,
-            z_scaling=0,
-            width_rand=0.33
+            leaf_width=0.5, alpha=0.3, use_wave=True, x_offset=0, flip_leaf=False, z_scaling=0, width_rand=0.33
         )
         if genome:
             for k, g in genome.items():
@@ -41,15 +33,13 @@ class LeafFactory(AssetFactory):
                 self.genome[k] = g
 
     def create_asset(self, **params) -> bpy.types.Object:
-
         # bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align='WORLD',
-                                        location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1))
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.edge_face_add()
 
         obj = bpy.context.active_object
-        min_radius = .02
+        min_radius = 0.02
         radii_ref = [1]
         n = len(obj.data.vertices) // 2
 
@@ -58,23 +48,25 @@ class LeafFactory(AssetFactory):
         bpy.ops.mesh.subdivide()
 
         a = np.linspace(0, np.pi, n)
-        if self.genome['flip_leaf']:
+        if self.genome["flip_leaf"]:
             a = a[::-1]
-        x = np.sin(a) * (self.genome['leaf_width'] + np.random.randn() * self.genome['width_rand']) + self.genome['x_offset']
-        y = -np.cos(.9 * (a - self.genome['alpha']))
-        z = x ** 2 * self.genome['z_scaling']
+        x = (
+            np.sin(a) * (self.genome["leaf_width"] + np.random.randn() * self.genome["width_rand"])
+            + self.genome["x_offset"]
+        )
+        y = -np.cos(0.9 * (a - self.genome["alpha"]))
+        z = x**2 * self.genome["z_scaling"]
 
-        full_coords = np.concatenate([np.stack([x, y, z], 1),
-                                    np.stack([-x[::-1], y[::-1], z], 1),
-                                    np.array([[0, y[0], 0]])]).flatten()
-        bpy.ops.object.mode_set(mode='OBJECT')
-        obj.data.vertices.foreach_set('co', full_coords)
+        full_coords = np.concatenate(
+            [np.stack([x, y, z], 1), np.stack([-x[::-1], y[::-1], z], 1), np.array([[0, y[0], 0]])]
+        ).flatten()
+        bpy.ops.object.mode_set(mode="OBJECT")
+        obj.data.vertices.foreach_set("co", full_coords)
 
-        if self.genome['use_wave']:
-            bpy.ops.object.modifier_add(type='WAVE')
-            bpy.context.object.modifiers["Wave"].height = np.random.randn() * .3
-            bpy.context.object.modifiers["Wave"].width = 0.75 + \
-                np.random.randn() * .1
+        if self.genome["use_wave"]:
+            bpy.ops.object.modifier_add(type="WAVE")
+            bpy.context.object.modifiers["Wave"].height = np.random.randn() * 0.3
+            bpy.context.object.modifiers["Wave"].width = 0.75 + np.random.randn() * 0.1
             bpy.context.object.modifiers["Wave"].speed = np.random.rand()
 
         mesh.finalize_obj(obj)
@@ -88,7 +80,8 @@ class LeafFactory(AssetFactory):
 
         return obj
 
-'''
+
+"""
 class BerryFactory(AssetFactory):
 
     def __init__(self, factory_seed, genome, coarse=False):
@@ -117,9 +110,9 @@ class BerryFactory(AssetFactory):
         tag_object(obj, 'leaf')
 
         return obj
-'''
+"""
 
-'''
+"""
 def init_berries(n_leaves=5, im_mat=None, **leaf_kargs):
     # Initializing leaves
     leaves = [create_leaf(**leaf_kargs) for _ in range(n_leaves)]
@@ -154,4 +147,4 @@ def init_berries(n_leaves=5, im_mat=None, **leaf_kargs):
     c_name = helper.create_collection('Leaves', leaves)
 
     return leaves, c_name
-'''
+"""

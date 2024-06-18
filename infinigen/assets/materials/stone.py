@@ -9,19 +9,21 @@ import os
 
 import bpy
 import gin
-from infinigen.core.nodes.node_wrangler import Nodes
-from numpy.random import uniform, normal as N
-from infinigen.core import surface
+from numpy.random import normal as N
+from numpy.random import uniform
+
 from infinigen.assets.materials.utils.surface_utils import sample_color, sample_ratio
-from infinigen.core.util.organization import SurfaceTypes
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.organization import SurfaceTypes
 
 from .mountain import geo_MOUNTAIN_general
-
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_stone"
 name = "stone"
+
 
 def shader_stone(nw, random_seed=0):
     nw.force_input_consistency()
@@ -37,12 +39,13 @@ def shader_stone(nw, random_seed=0):
 
     return principled_bsdf
 
+
 @gin.configurable
 def geo_stone(nw, selection=None, random_seed=0, geometry=True):
     nw.force_input_consistency()
     if nw.node_group.type == "SHADER":
-        position = nw.new_node('ShaderNodeNewGeometry')
-        normal = (nw.new_node('ShaderNodeNewGeometry'), 1)
+        position = nw.new_node("ShaderNodeNewGeometry")
+        normal = (nw.new_node("ShaderNodeNewGeometry"), 1)
     else:
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
@@ -51,18 +54,22 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         # size of low frequency bumps, higher means smaller bumps
         size_bumps_lf = uniform(0, 30)
         # height of low frequency bumps
-        heig_bumps_lf = nw.new_value(uniform(.08, .15), "heig_bumps_lf")
+        heig_bumps_lf = nw.new_value(uniform(0.08, 0.15), "heig_bumps_lf")
         # density of cracks, lower means cracks are present in smaller area
         dens_crack = uniform(0, 0.1)
         # scale cracks
-        scal_crack = uniform(5, 10)/2
+        scal_crack = uniform(5, 10) / 2
         # width of the crack
         widt_crack = uniform(0.08, 0.12)
         scale = 0.5
 
         musgrave_texture = nw.new_node(
             Nodes.MusgraveTexture,
-            input_kwargs={"Vector": position, "Scale": nw.new_value(size_bumps_lf * scale, "size_bumps_lf"), "W": nw.new_value(uniform(0, 10), "musgrave_texture_w")},
+            input_kwargs={
+                "Vector": position,
+                "Scale": nw.new_value(size_bumps_lf * scale, "size_bumps_lf"),
+                "W": nw.new_value(uniform(0, 10), "musgrave_texture_w"),
+            },
             attrs={"musgrave_dimensions": "4D"},
         )
 
@@ -114,7 +121,11 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
 
         noise_texture_2 = nw.new_node(
             Nodes.NoiseTexture,
-            input_kwargs={"Vector": position, "Scale": 5.0 * scale, "W": nw.new_value(uniform(0, 10), "noise_texture_2_w")},
+            input_kwargs={
+                "Vector": position,
+                "Scale": 5.0 * scale,
+                "W": nw.new_value(uniform(0, 10), "noise_texture_2_w"),
+            },
             attrs={"noise_dimensions": "4D"},
         )
 
@@ -139,7 +150,12 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
 
         wave_texture = nw.new_node(
             Nodes.WaveTexture,
-            input_kwargs={"Vector": noise_texture_1.outputs["Color"], "Scale": nw.new_value(N(2, 0.5), "wave_texture_scale"), "Distortion": nw.new_value(N(6, 2), "wave_texture_distortion"), "Detail": nw.new_value(N(15, 5), "wave_texture_detail")},
+            input_kwargs={
+                "Vector": noise_texture_1.outputs["Color"],
+                "Scale": nw.new_value(N(2, 0.5), "wave_texture_scale"),
+                "Distortion": nw.new_value(N(6, 2), "wave_texture_distortion"),
+                "Detail": nw.new_value(N(15, 5), "wave_texture_detail"),
+            },
         )
 
         colorramp_1 = nw.new_node(
@@ -190,31 +206,44 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
             attrs={"operation": "MULTIPLY"},
         )
 
-        noise_texture_3 = nw.new_node(Nodes.NoiseTexture,
-            input_kwargs={'Vector': position, "W": nw.new_value(uniform(0, 10), "noise_texture_3_w"), 'Scale': nw.new_value(sample_ratio(5, 3/4, 4/3), "noise_texture_3_scale")},
-            attrs={"noise_dimensions": "4D"})
+        noise_texture_3 = nw.new_node(
+            Nodes.NoiseTexture,
+            input_kwargs={
+                "Vector": position,
+                "W": nw.new_value(uniform(0, 10), "noise_texture_3_w"),
+                "Scale": nw.new_value(sample_ratio(5, 3 / 4, 4 / 3), "noise_texture_3_scale"),
+            },
+            attrs={"noise_dimensions": "4D"},
+        )
 
-        subtract = nw.new_node(Nodes.Math,
-            input_kwargs={0: noise_texture_3.outputs["Fac"]},
-            attrs={'operation': 'SUBTRACT'})
+        subtract = nw.new_node(
+            Nodes.Math, input_kwargs={0: noise_texture_3.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+        )
 
-        multiply_8 = nw.new_node(Nodes.VectorMath,
-            input_kwargs={0: subtract, 1: normal},
-            attrs={'operation': 'MULTIPLY'})
+        multiply_8 = nw.new_node(
+            Nodes.VectorMath, input_kwargs={0: subtract, 1: normal}, attrs={"operation": "MULTIPLY"}
+        )
 
         value_5 = nw.new_node(Nodes.Value)
         value_5.outputs[0].default_value = 0.05
 
-        multiply_9 = nw.new_node(Nodes.VectorMath,
+        multiply_9 = nw.new_node(
+            Nodes.VectorMath,
             input_kwargs={0: multiply_8.outputs["Vector"], 1: value_5},
-            attrs={'operation': 'MULTIPLY'})
+            attrs={"operation": "MULTIPLY"},
+        )
 
-        noise_texture_4 = nw.new_node(Nodes.NoiseTexture,
-            input_kwargs={'Vector': position, 'Scale': nw.new_value(sample_ratio(20, 3/4, 4/3), "noise_texture_4_scale"), "W": nw.new_value(uniform(0, 10), "noise_texture_4_w")},
-            attrs={'noise_dimensions': '4D'})
+        noise_texture_4 = nw.new_node(
+            Nodes.NoiseTexture,
+            input_kwargs={
+                "Vector": position,
+                "Scale": nw.new_value(sample_ratio(20, 3 / 4, 4 / 3), "noise_texture_4_scale"),
+                "W": nw.new_value(uniform(0, 10), "noise_texture_4_w"),
+            },
+            attrs={"noise_dimensions": "4D"},
+        )
 
-        colorramp_5 = nw.new_node(Nodes.ColorRamp,
-            input_kwargs={'Fac': noise_texture_4.outputs["Fac"]})
+        colorramp_5 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]})
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements[0].position = 0.0
@@ -226,20 +255,22 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         colorramp_5.color_ramp.elements[3].position = 1.0
         colorramp_5.color_ramp.elements[3].color = (1.0, 1.0, 1.0, 1.0)
 
-        subtract_1 = nw.new_node(Nodes.Math,
-            input_kwargs={0: colorramp_5.outputs["Color"]},
-            attrs={'operation': 'SUBTRACT'})
+        subtract_1 = nw.new_node(
+            Nodes.Math, input_kwargs={0: colorramp_5.outputs["Color"]}, attrs={"operation": "SUBTRACT"}
+        )
 
-        multiply_10 = nw.new_node(Nodes.VectorMath,
-            input_kwargs={0: subtract_1, 1: normal},
-            attrs={'operation': 'MULTIPLY'})
+        multiply_10 = nw.new_node(
+            Nodes.VectorMath, input_kwargs={0: subtract_1, 1: normal}, attrs={"operation": "MULTIPLY"}
+        )
 
         value_6 = nw.new_node(Nodes.Value)
         value_6.outputs[0].default_value = 0.1
 
-        multiply_11 = nw.new_node(Nodes.VectorMath,
+        multiply_11 = nw.new_node(
+            Nodes.VectorMath,
             input_kwargs={0: multiply_10.outputs["Vector"], 1: value_6},
-            attrs={'operation': 'MULTIPLY'})
+            attrs={"operation": "MULTIPLY"},
+        )
 
         offset = nw.add(multiply_9, vector_math_8, multiply_11)
 
@@ -282,15 +313,19 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
 
     if geometry:
         groupinput = nw.new_node(Nodes.GroupInput)
-        noise_params = {"scale": ("uniform", 10, 20), "detail": 9, "roughness": 0.6, "zscale": ("log_uniform", 0.007, 0.013)}
+        noise_params = {
+            "scale": ("uniform", 10, 20),
+            "detail": 9,
+            "roughness": 0.6,
+            "zscale": ("log_uniform", 0.007, 0.013),
+        }
         offset = nw.add(offset, geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}))
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput,  "Offset": offset})
-        nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_position})
+        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return stone_base_color, stone_roughness
-
 
 
 def apply(obj, selection=None, **kwargs):
@@ -300,4 +335,3 @@ def apply(obj, selection=None, **kwargs):
         selection=selection,
     )
     surface.add_material(obj, shader_stone, selection=selection)
-

@@ -6,25 +6,22 @@
 
 import numpy as np
 
-from infinigen.core import tags as t
 from infinigen import assets as a
-from infinigen.core.constraints import (
-    constraint_language as cl,
-    example_solver,
-    usage_lookup
-)
+from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints import example_solver, usage_lookup
 
 room_types = {
-    t.Semantics.Kitchen, 
-    t.Semantics.Bedroom, 
-    t.Semantics.LivingRoom, 
-    t.Semantics.Closet, 
-    t.Semantics.Hallway, 
-    t.Semantics.Bathroom, 
-    t.Semantics.Garage, 
-    t.Semantics.Balcony, 
-    t.Semantics.DiningRoom, 
-    t.Semantics.Utility, 
+    t.Semantics.Kitchen,
+    t.Semantics.Bedroom,
+    t.Semantics.LivingRoom,
+    t.Semantics.Closet,
+    t.Semantics.Hallway,
+    t.Semantics.Bathroom,
+    t.Semantics.Garage,
+    t.Semantics.Balcony,
+    t.Semantics.DiningRoom,
+    t.Semantics.Utility,
     t.Semantics.Staircase,
 }
 
@@ -54,10 +51,10 @@ side_against_wall = cl.StableAgainst(side, walltags, margin=0.05)
 ontop = cl.StableAgainst(bottom, top)
 on = cl.StableAgainst(bottom, {t.Subpart.SupportSurface})
 
-front_against = cl.StableAgainst(front, side, margin=0.05, check_z=False) #check_z=False
+front_against = cl.StableAgainst(front, side, margin=0.05, check_z=False)  # check_z=False
 leftright_leftright = cl.StableAgainst(leftright, leftright, margin=0.05)
 side_by_side = cl.StableAgainst(side, side)
 back_to_back = cl.StableAgainst(back, back)
 
-variable_room = t.Variable('room')
-variable_obj = t.Variable('obj')
+variable_room = t.Variable("room")
+variable_obj = t.Variable("obj")

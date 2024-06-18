@@ -7,7 +7,8 @@
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
-from infinigen.core.util.organization import Materials, Transparency, ElementNames, ElementTag, Attributes
+
+from infinigen.core.util.organization import Attributes, ElementNames, ElementTag, Materials, Transparency
 
 from .core import Element
 
@@ -15,6 +16,7 @@ from .core import Element
 @gin.configurable
 class Waterbody(Element):
     name = ElementNames.Liquid
+
     def __init__(
         self,
         device,

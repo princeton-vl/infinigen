@@ -7,17 +7,24 @@ import numpy as np
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-from .straight import StraightStaircaseFactory
-from .l_shaped import LShapedStaircaseFactory
-from .u_shaped import UShapedStaircaseFactory
+
 from .cantilever import CantileverStaircaseFactory
-from .spiral import SpiralStaircaseFactory
 from .curved import CurvedStaircaseFactory
+from .l_shaped import LShapedStaircaseFactory
+from .spiral import SpiralStaircaseFactory
+from .straight import StraightStaircaseFactory
+from .u_shaped import UShapedStaircaseFactory
 
 
 class StaircaseFactory(AssetFactory):
-    factories = [StraightStaircaseFactory, LShapedStaircaseFactory, UShapedStaircaseFactory,
-        SpiralStaircaseFactory, CurvedStaircaseFactory, CantileverStaircaseFactory]
+    factories = [
+        StraightStaircaseFactory,
+        LShapedStaircaseFactory,
+        UShapedStaircaseFactory,
+        SpiralStaircaseFactory,
+        CurvedStaircaseFactory,
+        CantileverStaircaseFactory,
+    ]
     probs = np.array([4, 3, 3, 1, 2, 2])
 
     def __init__(self, factory_seed, coarse=False):

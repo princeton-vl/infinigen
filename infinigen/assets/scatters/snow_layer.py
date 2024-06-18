@@ -6,20 +6,19 @@
 
 import bpy
 import mathutils
+from numpy.random import normal, uniform
 
-from numpy.random import uniform, normal
-
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
-from infinigen.core.util import blender as butil
 from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.util import blender as butil
 
-from infinigen.core.tagging import tag_object, tag_nodegroup
 
 class Snowlayer:
     def __init__(self):
         pass
-    
+
     def apply(self, obj, **kwargs):
         bpy.context.scene.snow.height = 0.1
         with butil.SelectObjects(obj):

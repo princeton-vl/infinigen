@@ -5,7 +5,7 @@
 # Acknowledgement: This file draws inspiration from following sources:
 
 # https://www.youtube.com/watch?v=DfoMWLQ-BkM by 5 Minutes Blender
-# https://www.youtube.com/watch?v=tS_U3twxKKg by PIXXO 3D 
+# https://www.youtube.com/watch?v=tS_U3twxKKg by PIXXO 3D
 # https://www.youtube.com/watch?v=OCay8AsVD84 by Antonio Palladino
 # https://www.youtube.com/watch?v=5dS3N90wPkc by Dr Blender
 # https://www.youtube.com/watch?v=12c1J6LhK4Y by blenderian
@@ -16,15 +16,14 @@
 
 import bpy
 import mathutils
-from numpy.random import uniform, normal, choice
-
-from infinigen.assets.utils.uv import unwrap_faces
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
-from infinigen.core import surface
+from numpy.random import choice, normal, uniform
 
 from infinigen.assets.materials import common
+from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import color_category
 
 
 def get_texture_params():
@@ -32,9 +31,7 @@ def get_texture_params():
         "_pattern_mixer": choice([uniform(0.0, 0.75), uniform(0.75, 1.0)]),
         "_pattern_density": choice([uniform(0.1, 1.0), uniform(1.0, 10.0)]),
         "_color": uniform(0.0, 1.0, 3),
-        "_brick_knit": choice(
-            [uniform(0.0, 0.05), uniform(0.05, 0.95), uniform(0.95, 1.0)]
-        ),
+        "_brick_knit": choice([uniform(0.0, 0.05), uniform(0.05, 0.95), uniform(0.95, 1.0)]),
         "_knit_resolution": uniform(0.5, 3.0),
         "_brick_resolution": uniform(10.0, 30.0),
         "_crease_resolution": uniform(10.0, 80.0),
@@ -105,9 +102,7 @@ def shader_fabric_base(
         input_kwargs={"Vector": mapping_1, "Scale": brick_resolution},
     )
 
-    color_ramp_1 = nw.new_node(
-        Nodes.ColorRamp, input_kwargs={"Fac": brick_texture.outputs["Color"]}
-    )
+    color_ramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": brick_texture.outputs["Color"]})
     color_ramp_1.color_ramp.elements[0].position = 0.0000
     color_ramp_1.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
     color_ramp_1.color_ramp.elements[1].position = 1.0000
@@ -132,9 +127,7 @@ def shader_fabric_base(
         attrs={"feature": "F2"},
     )
 
-    color_ramp = nw.new_node(
-        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]}
-    )
+    color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]})
     color_ramp.color_ramp.elements[0].position = 0.1018
     color_ramp.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
     color_ramp.color_ramp.elements[1].position = 1.0000
@@ -207,9 +200,7 @@ def shader_fabric_base(
         attrs={"feature": "F2"},
     )
 
-    mapping_3 = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
-    )
+    mapping_3 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
@@ -249,9 +240,7 @@ def shader_fabric_base(
         input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]},
     )
 
-    vector_displacement = nw.new_node(
-        "ShaderNodeVectorDisplacement", input_kwargs={"Vector": add_1.outputs["Vector"]}
-    )
+    vector_displacement = nw.new_node("ShaderNodeVectorDisplacement", input_kwargs={"Vector": add_1.outputs["Vector"]})
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,

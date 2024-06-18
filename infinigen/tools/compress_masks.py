@@ -12,10 +12,11 @@ import numpy as np
 def show(x):
     return f"({x.shape} {x.dtype} {x.max()})"
 
+
 def compress(arr):
     H, W, *_ = arr.shape
     vals, indices = np.unique(np.squeeze(arr.reshape((H * W, -1))), return_inverse=True, axis=0)
-    max_ind = (vals.shape[0] - 1)
+    max_ind = vals.shape[0] - 1
     if max_ind < 2**8:
         indices = indices.astype(np.uint8)
     elif max_ind < 2**16:
@@ -24,8 +25,10 @@ def compress(arr):
         indices = indices.astype(np.uint32)
     return dict(vals=vals, indices=indices, shape=np.asarray(arr.shape))
 
+
 def recover(d):
-    return d['vals'][d['indices']].reshape(d['shape'])
+    return d["vals"][d["indices"]].reshape(d["shape"])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

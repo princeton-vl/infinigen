@@ -5,6 +5,6 @@
 
 
 from .dandelion import DandelionFactory, DandelionSeedFactory
+from .flower import FlowerFactory
 from .flowerplant import FlowerPlantFactory
 from .grass_tuft import GrassTuftFactory
-from .flower import FlowerFactory

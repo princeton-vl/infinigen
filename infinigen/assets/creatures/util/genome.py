@@ -4,29 +4,28 @@
 # Authors: Alexander Raistrick
 
 
-from dataclasses import dataclass, field
-import itertools
-import typing
-import pdb
 import copy
+import itertools
+import pdb
+import typing
+from dataclasses import dataclass, field
 
 import numpy as np
-from scipy.sparse.csgraph import maximum_bipartite_matching
 from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import maximum_bipartite_matching
 
-from infinigen.assets.creatures.util.tree import Tree
 from infinigen.assets.creatures.util.creature_util import interp_dict
-
+from infinigen.assets.creatures.util.tree import Tree
 from infinigen.core.util.math import lerp
 
 
 @dataclass
 class IKParams:
     name: str
-    chain_parts: int = 1 # how many parts up the hierarchy can this IK affect
+    chain_parts: int = 1  # how many parts up the hierarchy can this IK affect
     chain_length: int = None
     rotation_weight: float = 0
-    mode: str = 'iksolve'  # iksolve, pin
+    mode: str = "iksolve"  # iksolve, pin
     target_size: float = 0.2
 
 
@@ -56,7 +55,7 @@ class Attachment:
     joint: Joint = None
     bridge: str = None
     side: int = 1
-    rotation_basis: str = 'global'
+    rotation_basis: str = "global"
     bridge_rad: float = 0.0
     smooth_rad: float = 0.0
 
@@ -86,7 +85,7 @@ def compute_child_matching(a: list[Tree], b: list[Tree]):
     cost_matrix = cost_matrix.reshape(len(a), len(b))
     cost_matrix = csr_matrix(cost_matrix)
 
-    perm = maximum_bipartite_matching(-cost_matrix, perm_type='column')
+    perm = maximum_bipartite_matching(-cost_matrix, perm_type="column")
 
     res = []
     for ai, bi in enumerate(perm):
@@ -125,10 +124,10 @@ def interp_attachment(a: Attachment, b: Attachment, t: float):
 def interp_creature_node(a: CreatureNode, b: CreatureNode, t):
     s = b if t > 0.5 else a  # which of a,b should we take non-interpolatable things from
     fac = copy.copy(s.part_factory)
-    fac.params = interp_dict(a.part_factory.params, b.part_factory.params, t, keys='switch', lerp=lerp_any)
+    fac.params = interp_dict(a.part_factory.params, b.part_factory.params, t, keys="switch", lerp=lerp_any)
 
-    #att = interp_attachment(a.att, b.att, t)
-    att = a.att # TODO: Enable attachment interp later, debug symmetry
+    # att = interp_attachment(a.att, b.att, t)
+    att = a.att  # TODO: Enable attachment interp later, debug symmetry
 
     return CreatureNode(part_factory=fac, att=att)
 
@@ -158,25 +157,34 @@ def interp_genome(a: CreatureGenome, b: CreatureGenome, t: float) -> CreatureGen
         return a
     elif t == 1:
         return b
-    
-    #postprocess = interp_dict(a.postprocess_params, b.postprocess_params, t, recurse=True, keys='switch')
-    #TODO a.postprocess_params
+
+    # postprocess = interp_dict(a.postprocess_params, b.postprocess_params, t, recurse=True, keys='switch')
+    # TODO a.postprocess_params
     postprocess = a.postprocess_params
 
-    return CreatureGenome(parts=interp_part_tree(a.parts, b.parts, t),
-                          postprocess_params=postprocess)
+    return CreatureGenome(parts=interp_part_tree(a.parts, b.parts, t), postprocess_params=postprocess)
 
 
 ################
 # Syntactic sugar to make defining trees of part params less verbose
 ################
 
+
 def part(fac):
     return Tree(CreatureNode(fac, None))
 
 
-def attach(child: Tree, parent: Tree, coord=None, joint=None, bridge=None, side=1, rotation_basis='global',
-           bridge_rad=.0, smooth_rad=.0):
+def attach(
+    child: Tree,
+    parent: Tree,
+    coord=None,
+    joint=None,
+    bridge=None,
+    side=1,
+    rotation_basis="global",
+    bridge_rad=0.0,
+    smooth_rad=0.0,
+):
     assert child.item.att is None
     if coord is None:
         coord = np.array([0, 0, 0])

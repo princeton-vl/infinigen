@@ -1,15 +1,4 @@
-from . import particles, cloud
-from .cloud import (
-    CloudFactory, 
-    CumulonimbusFactory, 
-    CumulusFactory, 
-    AltocumulusFactory, 
-    StratocumulusFactory
-)
-from .particles import (
-    DustMoteFactory,
-    RaindropFactory,
-    SnowflakeFactory
-)
-
+from . import cloud, particles
+from .cloud import AltocumulusFactory, CloudFactory, CumulonimbusFactory, CumulusFactory, StratocumulusFactory
 from .kole_clouds import add_kole_clouds
+from .particles import DustMoteFactory, RaindropFactory, SnowflakeFactory

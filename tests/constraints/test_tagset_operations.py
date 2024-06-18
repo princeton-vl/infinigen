@@ -4,11 +4,11 @@
 
 # Authors: Alexander Raistrick
 
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+
 
 def test_tagset_operations():
-    
     example = {t.Subpart.Side, -t.Subpart.Bottom}
     assert t.implies(example, example)
     assert not t.contradiction(example)
@@ -40,4 +40,3 @@ def test_tagset_operations():
     assert not t.contradiction(example.union(intersect_neg))
 
     assert not t.implies({t.Subpart.Top, -t.Subpart.Bottom}, {t.Subpart.Top, t.Subpart.Bottom})
-    

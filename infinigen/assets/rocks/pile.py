@@ -5,26 +5,25 @@
 
 
 import bpy
-import tqdm
 import numpy as np
+import tqdm
 from numpy.random import uniform
 
+import infinigen.core.util.blender as butil
 from infinigen.assets.rocks.boulder import BoulderFactory
+from infinigen.assets.utils.decorate import multi_res
+from infinigen.assets.utils.draw import surface_from_func
+from infinigen.assets.utils.misc import toggle_hide
+from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.physics import free_fall
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
-import infinigen.core.util.blender as butil
-from infinigen.assets.utils.decorate import multi_res
-from infinigen.assets.utils.misc import toggle_hide
-from infinigen.assets.utils.object import join_objects
-from infinigen.assets.utils.draw import surface_from_func
-from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.tagging import tag_object
+from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 
 
 class BoulderPileFactory(AssetFactory):
-
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         self.factory = BoulderFactory(factory_seed, coarse)
@@ -39,7 +38,7 @@ class BoulderPileFactory(AssetFactory):
             return np.maximum(x, alpha * x)
 
         mesh = surface_from_func(floor_fn, 32, 32, 12, 12)
-        obj = bpy.data.objects.new('floor', mesh)
+        obj = bpy.data.objects.new("floor", mesh)
         bpy.context.scene.collection.objects.link(obj)
         return obj
 
@@ -51,12 +50,18 @@ class BoulderPileFactory(AssetFactory):
 
     def create_placeholder(self, **kwargs):
         n = np.random.randint(3, 5)
-        empty = butil.spawn_empty('placeholder', disp_type='CUBE', s=8)
+        empty = butil.spawn_empty("placeholder", disp_type="CUBE", s=8)
         objects = []
         for i in range(n):
-            empty_ = butil.spawn_empty('placeholder', disp_type='CUBE', s=8)
-            scale = [1, log_uniform(.4, .6), log_uniform(.2, .4), log_uniform(.2, .4), log_uniform(.2, .4),
-                log_uniform(.1, .2)]
+            empty_ = butil.spawn_empty("placeholder", disp_type="CUBE", s=8)
+            scale = [
+                1,
+                log_uniform(0.4, 0.6),
+                log_uniform(0.2, 0.4),
+                log_uniform(0.2, 0.4),
+                log_uniform(0.2, 0.4),
+                log_uniform(0.1, 0.2),
+            ]
             p = self.factory.create_placeholder()
             p.parent = empty_
             objects.append(p.children[0])
@@ -76,7 +81,7 @@ class BoulderPileFactory(AssetFactory):
 
     def create_asset(self, placeholder, face_size=0.01, **params) -> bpy.types.Object:
         objects = []
-        for c in tqdm.tqdm(placeholder.children, desc='Creating boulder assets'):
+        for c in tqdm.tqdm(placeholder.children, desc="Creating boulder assets"):
             p = c.children[0]
             a = self.factory.create_asset(placeholder=p)
             a.location = p.children[0].location
@@ -96,5 +101,5 @@ class BoulderPileFactory(AssetFactory):
             butil.delete(c)
         multi_res(obj)
         remesh_with_attrs(obj, face_size)
-        tag_object(obj, 'pile')
+        tag_object(obj, "pile")
         return obj
