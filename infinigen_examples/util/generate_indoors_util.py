@@ -30,6 +30,7 @@ from infinigen.assets.scatters import grass, pebbles
 from infinigen.core.placement import density, split_in_view
 from infinigen.core.util import (blender as butil, pipeline)
 from infinigen.core.util.camera import points_inview
+from infinigen.core import tags as t
 
 from . import constraint_util as cu
 
@@ -156,6 +157,7 @@ def hide_other_rooms(state, rooms_split, keep_rooms: list[str]):
     hide_cutters = [
         o 
         for k, os in state.objs.items()
+        if t.Semantics.Cutter in os.tags and not any(
             rel.target_name == roomname
             for rel in os.relations
             for roomname in keep_rooms
