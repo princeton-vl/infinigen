@@ -60,6 +60,10 @@ def create_outdoor_backdrop(
     all_vertices = np.concatenate(all_vertices)
     all_mask = within_bbox_2d(all_vertices, house_bbox)
 
+    if not all_mask.any():
+        height = 0
+    else:
+        height = all_vertices[all_mask, 2].max()
 
     extra_zoff = uniform(0, 4) # deliberately float above the terrain.
     height += extra_zoff
@@ -102,6 +106,7 @@ def create_outdoor_backdrop(
         return rock_col
 
     p.run_stage('rocks', add_rocks, terrain_inview)
+    return height
 
 def place_cam_overhead(cam: bpy.types.Object, bbox: tuple[np.array]):
 
