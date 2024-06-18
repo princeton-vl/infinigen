@@ -33,6 +33,7 @@ from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new
 from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
 from infinigen.core.constraints import constraint_language as cl
@@ -220,12 +221,15 @@ class BlueprintSolidifier:
                 -1) < WALL_THICKNESS * 4).any(-1).astype(int)
         else:
             exterior = np.zeros(len(obj.data.polygons), dtype=int)
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Exterior.value}', exterior, 'INT', 'FACE')
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Interior.value}', 1 - exterior, 'INT', 'FACE')
         
         assert len(obj.data.vertices) > 0
 
         obj.vertex_groups.new(name='visible_')
         butil.modify_mesh(obj, 'SOLIDIFY', thickness=WALL_THICKNESS / 2, offset=-1, use_even_offset=True,
                           shell_vertex_group='visible_', use_quality_normals=True)
+        write_attribute(obj, 'visible_', f'{PREFIX}{t.Subpart.Visible.value}', 'FACE', 'INT')
         obj.vertex_groups.remove(obj.vertex_groups['visible_'])
         tagging.tag_object(obj, t.Semantics.Room)
         return obj
@@ -324,6 +328,7 @@ class BlueprintSolidifier:
         cutter.rotation_euler[-1] = z_rot
         tagging.tag_object(cutter, t.Semantics.Door)
         self.tag(cutter)
+        cutter.name = t.Semantics.Door.value
         return cutter
 
     def make_entrance_cutter(self, ls):
@@ -339,6 +344,7 @@ class BlueprintSolidifier:
         cutter.rotation_euler = 0, 0, np.arctan2(y_ - y, x_ - x)
         self.tag(cutter)
         tagging.tag_object(cutter, t.Semantics.Entrance)
+        cutter.name = t.Semantics.Entrance.value
         return cutter
 
     def make_window_cutter(self, ls, is_panoramic):
@@ -362,6 +368,7 @@ class BlueprintSolidifier:
         cutter.rotation_euler = 0, 0, np.arctan2(y - y_, x - x_)
         self.tag(cutter)
         tagging.tag_object(cutter, t.Semantics.Window)
+        cutter.name = t.Semantics.Window.value
         return cutter
 
     def make_open_cutter(self, es):
@@ -404,6 +411,7 @@ class BlueprintSolidifier:
         butil.modify_mesh(cutter, 'SOLIDIFY', thickness=WALL_THICKNESS * 3, offset=0, use_even_offset=True)
         self.tag(cutter)
         tagging.tag_object(cutter, t.Semantics.Open)
+        cutter.name = t.Semantics.Open.value
         return cutter
 
     @staticmethod
@@ -412,7 +420,11 @@ class BlueprintSolidifier:
         ceiling = center[:, -1] > WALL_HEIGHT - WALL_THICKNESS / 2 - .1
         floor = center[:, -1] < WALL_THICKNESS / 2 + .1
         wall = ~(ceiling | floor)
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Ceiling.value}', ceiling, 'INT', 'FACE')
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.SupportSurface.value}', floor, 'INT', 'FACE')
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Wall.value}', wall, 'INT', 'FACE')
         write_attr_data(obj, 'segment_id', np.arange(len(center)), 'INT', 'FACE')
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Visible.value}',
                         np.ones_like(ceiling) if visible else np.zeros_like(ceiling), 'INT', 'FACE')
         write_attr_data(obj, f'{PREFIX}{t.Subpart.Invisible.value}',
                         np.zeros_like(ceiling) if visible else np.ones_like(ceiling), 'INT', 'FACE')
