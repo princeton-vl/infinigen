@@ -6,8 +6,10 @@ import argparse
 from pathlib import Path
 import logging
 from time import time
+from numpy import deg2rad
 import pprint
 import copy
+
 logging.basicConfig(
     format='[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s',
     datefmt='%H:%M:%S', 
@@ -21,6 +23,7 @@ import numpy as np
 import trimesh
 from numpy import deg2rad
 
+from infinigen.assets import (lighting)
 from infinigen.assets.utils.decorate import read_co
 from infinigen.terrain import Terrain
 from infinigen.assets.materials import invisible_to_camera
@@ -49,6 +52,7 @@ from infinigen.assets.utils.decorate import read_co
 
 from infinigen.core.placement import density, camera as cam_util, split_in_view
 
+from infinigen_examples.indoor_constraint_examples import home_constraints
 from infinigen.core import (
     execute_tasks, 
     surface, 
@@ -118,6 +122,7 @@ def default_greedy_stages():
     greedy_stages['obj_ontop_obj'] = nonside.with_relation(cu.ontop, all_obj).with_relation(-cu.on, all_obj)
     greedy_stages['obj_on_support'] = nonside.with_relation(cu.on, all_obj).with_relation(-cu.ontop, all_obj)
 
+
     return greedy_stages
 
 
@@ -133,6 +138,8 @@ all_vars = [cu.variable_room, cu.variable_obj]
             task='coarse',
             on_the_fly_asset_folder=output_folder / "assets"
         )
+        # placement.density.set_tag_dict(terrain.tag_dict)
+
     p.run_stage('sky_lighting', lighting.sky_lighting.add_lighting, use_chance=False)    
 
     consgraph = home_constraints()
@@ -265,8 +272,11 @@ all_vars = [cu.variable_room, cu.variable_obj]
     room_meshes = solver.get_bpy_objects(r.Domain({t.Semantics.Room}))
     p.run_stage('room_stairs', lambda: room_dec.room_stairs(state, room_meshes), use_chance=False)
     p.run_stage('skirting_floor', lambda: make_skirting_board(room_meshes, t.Subpart.SupportSurface))
+    p.run_stage('skirting_ceiling', lambda: make_skirting_board(room_meshes, t.Subpart.Ceiling))
 
     rooms_meshed = butil.get_collection('placeholders:room_meshes')
+
+    p.run_stage('room_pillars', room_dec.room_pillars, state, rooms_split['wall'].objects, use_chance=False)
 
     #state.print()
     state.to_json(output_folder / 'solve_state.json')
@@ -316,8 +326,33 @@ all_vars = [cu.variable_room, cu.variable_obj]
         rooms_split['ceiling'].hide_viewport = True
         rooms_split['exterior'].hide_render = True
         rooms_split['ceiling'].hide_render = True
+        for group in ['wall', 'floor']:
+            for wall in rooms_split[group].objects:
+                for mat in wall.data.materials:
+                    for n in mat.node_tree.nodes:
+                        if n.type == 'BSDF_PRINCIPLED':
+                            n.inputs['Alpha'].default_value = overrides.get('alpha_walls', 1.)
+        bbox = np.concatenate([read_co(r) + np.array(r.location)[np.newaxis, :] for r in rooms_meshed.objects])
+        camera = camera_rigs[0].children[0]
+        camera_rigs[0].location = 0, 0, 0
+        camera_rigs[0].rotation_euler = 0, 0, 0
+        rot_x = deg2rad(overrides.get('topview_rot_x', 0))
+        rot_z = deg2rad(overrides.get('topview_rot_z', 0))
+        camera.rotation_euler = rot_x, 0, rot_z
+        mean = np.mean(bbox, 0)
+        for cam_dist in np.exp(np.linspace(1., 5., 500)):
+            camera.location = mean[0] + cam_dist * np.sin(rot_x) * np.sin(rot_z), mean[1] - cam_dist * np.sin(
+                rot_x) * np.cos(rot_z), mean[2] - WALL_HEIGHT / 2 + cam_dist * np.cos(rot_x)
+            bpy.context.view_layer.update()
+            inview = points_inview(bbox, camera)
+            if inview.all():
+                    if area.type == 'VIEW_3D':
+                        area.spaces.active.region_3d.view_perspective = 'CAMERA'
+                        break
+                break
     
         "whole_bbox": house_bbox,
+
 def main(args):
     scene_seed = init.apply_scene_seed(args.seed)
     init.apply_gin_configs(
@@ -327,8 +362,11 @@ def main(args):
     )
     constants.initialize_constants()
 
+                       output_folder=args.output_folder, task=args.task, task_uniqname=args.task_uniqname,
+                       scene_seed=scene_seed)
 
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--output_folder', type=Path)
     parser.add_argument('--input_folder', type=Path, default=None)
