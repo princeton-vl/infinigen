@@ -3,6 +3,7 @@
 
 # Authors: Beining Han
 from numpy.random import uniform, normal, randint
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
@@ -78,6 +79,14 @@ class KitchenCabinetBaseFactory(AssetFactory):
     def sample_params(self):
         pass
 
+    def get_material_params(self):
+        with FixedSeed(self.factory_seed):
+            params = self.material_params.copy()
+            if params.get('frame_material', None) is None:
+                with FixedSeed(self.factory_seed):
+                    params['frame_material'] = np.random.choice(['white', 'black_wood', 'wood'], p=[0.4, 0.3, 0.3])
+            params['board_material'] = params['frame_material']
+            return self.get_material_func(params, randomness=True)
 
     def get_material_func(self, params, randomness=True):
         with FixedSeed(self.factory_seed):
@@ -185,6 +194,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
 
     def create_cabinet_components(self, i, drawer_only=False):
         # update material params
+        self.material_params = self.get_material_params()
 
         components = []
         for k, w in enumerate(self.cabinet_widths):
@@ -264,6 +274,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
 
             #butil.delete(c[:1])
         obj = butil.join_objects(join_objs)
+
         return obj
 
 
@@ -272,6 +283,7 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
         self.dimensions = dimensions
         super().__init__(factory_seed, params, coarse)
         self.drawer_only = drawer_only
+
     def sample_params(self):
         params = dict()
         if self.dimensions is None:
@@ -290,6 +302,7 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
 
         self.frame_params = params
 
+        n_cells= max(int(params['Dimensions'][1] / 0.45),1)
         intervals = np.random.uniform(0.55, 1.0, size=(n_cells,))
         intervals = intervals / intervals.sum() * params['Dimensions'][1]
         self.cabinet_widths = intervals.tolist()
