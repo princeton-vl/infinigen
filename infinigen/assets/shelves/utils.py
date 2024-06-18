@@ -9,6 +9,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler,  geometry_node_group_empty_new
 from infinigen.core.nodes import node_utils
 
+from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
+
 
 def get_nodegroup_assets(func, params):
     bpy.ops.mesh.primitive_plane_add(
@@ -27,13 +29,18 @@ def get_nodegroup_assets(func, params):
 def nodegroup_tagged_cube(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
+    group_input = nw.new_node(Nodes.GroupInput, expose_input=[('NodeSocketVectorTranslation', 'Size', (1.0000, 1.0000, 1.0000))])
 
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={'Size': group_input.outputs["Size"]})
 
+    index = nw.new_node(Nodes.Index)
+
+    equal = nw.new_node(Nodes.Compare, input_kwargs={2: index, 3: 2}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
 
 
+    #subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': cube, 'Level': 2})
 
-
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Mesh': cube}, attrs={'is_active_output': True})
 
 
 
