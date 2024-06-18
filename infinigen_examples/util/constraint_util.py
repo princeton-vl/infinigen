@@ -46,6 +46,7 @@ leftright = {-t.Subpart.Top, -t.Subpart.Bottom, -t.Subpart.Back, -t.Subpart.Fron
 
 on_floor = cl.StableAgainst(bottom, floortags, margin=0.01)
 flush_wall = cl.StableAgainst(back, walltags, margin=0.02)
+against_wall = cl.StableAgainst(back, walltags, margin=0.07)
 spaced_wall = cl.StableAgainst(back, walltags, margin=0.8)
 hanging = cl.StableAgainst(top, ceilingtags, margin=0.05)
 side_against_wall = cl.StableAgainst(side, walltags, margin=0.05)
