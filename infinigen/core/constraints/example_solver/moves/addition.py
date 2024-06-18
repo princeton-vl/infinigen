@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import typing
 import logging
+import gin
 
 from pprint import pprint
 
@@ -25,6 +26,9 @@ from infinigen.core.constraints import (
 )
 
 from infinigen.core.util import blender as butil
+from infinigen.core.constraints.constraint_language.util import (
+    delete_obj,
+    meshes_from_names
 )
 from infinigen.core.constraints.example_solver.geometry import(
     validity
@@ -37,6 +41,9 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.constraints.example_solver.geometry import dof, parse_scene
 from . import moves
 from .reassignment import pose_backup, restore_pose_backup
+from time import time
+# from line_profiler import LineProfiler
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +62,8 @@ def sample_rand_placeholder(gen_class: type[AssetFactory]):
 
     inst_seed = np.random.randint(1e7)
 
+        new_obj = gen.spawn_placeholder(inst_seed, loc=(0,0,0), rot=(0,0,0))
+        new_obj = gen.spawn_asset(inst_seed, loc=(0,0,0), rot=(0,0,0))
         new_obj = bbox_from_mesh.bbox_mesh_from_hipoly(gen, inst_seed, use_pholder=True)
     else:
         new_obj = bbox_from_mesh.bbox_mesh_from_hipoly(gen, inst_seed)
@@ -96,6 +105,7 @@ class Addition(moves.Move):
 
         self._new_obj, gen = sample_rand_placeholder(self.gen_class)
 
+        parse_scene.add_to_scene(state.trimesh_scene, self._new_obj, preprocess=True)
 
         tags = self.temp_force_tags.union(usage_lookup.usages_of_factory(gen.__class__))
 
@@ -109,8 +119,11 @@ class Addition(moves.Move):
 
         state.objs[target_name] = objstate
         success = dof.try_apply_relation_constraints(state, target_name)
+        logger.debug(f'{self} {success=}')
+        return success
 
     def revert(self, state: State):
+        to_delete = list(butil.iter_object_tree(self._new_obj))
         delete_obj(state.trimesh_scene, [a.name for a in to_delete])
 
         new_name, = self.names
@@ -149,7 +162,9 @@ class Resample(moves.Move):
             c_new = os.obj.bound_box[self.align_corner]
             raise NotImplementedError(f'{self.align_corner=}')
             
+        parse_scene.add_to_scene(state.trimesh_scene, os.obj, preprocess=True)        
         dof.apply_relations_surfacesample(state, target_name)
+        
         return validity.check_post_move_validity(state, target_name)
         
     def revert(self, state: State):
