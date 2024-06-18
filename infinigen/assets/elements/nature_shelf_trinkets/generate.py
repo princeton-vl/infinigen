@@ -60,6 +60,7 @@ class NatureShelfTrinketsFactory(AssetFactory):
         return placeholder
 
 
+    def create_asset(self, i, placeholder=None, **params):
         asset = self.base_factory.spawn_asset(
             np.random.randint(1e7), 
             distance=200, 
