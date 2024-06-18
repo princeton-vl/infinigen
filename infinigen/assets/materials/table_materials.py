@@ -46,8 +46,10 @@ def shader_marble(nw: NodeWrangler,**kwargs):
         attrs={'noise_dimensions': '4D'})
 
     noise_texture_3 = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={'Vector': noise_texture.outputs["Fac"], 'Scale': 8.0000, 'Detail': 15.0000})
 
     voronoi_texture = nw.new_node(Nodes.VoronoiTexture,
+        input_kwargs={'Vector': noise_texture_3.outputs["Fac"], 'W': 1.6400, 'Scale': 3.0000},
         attrs={'feature': 'DISTANCE_TO_EDGE', 'voronoi_dimensions': '4D'})
 
     colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': voronoi_texture.outputs["Distance"]})
@@ -61,9 +63,11 @@ def shader_marble(nw: NodeWrangler,**kwargs):
         attrs={'operation': 'MULTIPLY'})
 
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture,
+        input_kwargs={'Vector': noise_texture.outputs["Fac"], 'W': seed, 'Scale': 8.0000, 'Detail': 15.0000},
         attrs={'noise_dimensions': '4D'})
 
     mix_1 = nw.new_node(Nodes.Mix,
+        input_kwargs={0: 0.8000, 6: noise_texture.outputs["Fac"], 7: noise_texture_1.outputs["Fac"]},
         attrs={'data_type': 'RGBA'})
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': mix_1.outputs[2]})
@@ -79,6 +83,7 @@ def shader_marble(nw: NodeWrangler,**kwargs):
     bump = nw.new_node('ShaderNodeBump', input_kwargs={'Strength': 0.0200, 'Height': multiply})
 
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+        input_kwargs={'Base Color': mix_1.outputs[2], 'Specular': 0.6000, 'Roughness': 0.1000, 'Normal': bump})
 
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': principled_bsdf}, attrs={'is_active_output': True})
 
