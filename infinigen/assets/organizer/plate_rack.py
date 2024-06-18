@@ -15,6 +15,7 @@ from infinigen.core import tagging
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube
 from infinigen.assets.materials import shader_wood
+from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
 
 
 @node_utils.to_nodegroup('nodegroup_plate_rack_connect', singleton=False, type='GeometryNodeTree')
@@ -216,6 +217,7 @@ def plate_geometry_nodes(nw: NodeWrangler, **kwargs):
     triangulate = nw.new_node('GeometryNodeTriangulate', input_kwargs={'Mesh': transform_geometry})
 
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={'Geometry': triangulate,
+                                                                'Material': surface.shaderfunc_to_material(shader_rough_plastic)})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material},
                                attrs={'is_active_output': True})
