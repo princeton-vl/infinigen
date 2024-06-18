@@ -1,6 +1,9 @@
 infinigen.assets.materials.fabrics
 infinigen.assets.materials.leather
 infinigen.assets.materials.sofa_fabric
+infinigen.assets.materials.coarse_knit_fabric
+infinigen.assets.materials.fine_knit_fabric
+infinigen.assets.materials.lined_fabric
 infinigen.assets.materials.brushed_metal
 infinigen.assets.materials.galvanized_metal
 infinigen.assets.materials.grained_and_polished_metal
