@@ -23,6 +23,7 @@ from infinigen.assets.wall_decorations.range_hood import RangeHoodFactory
 from infinigen.core.util import blender as butil
 
 from infinigen.assets.tables.table_top import nodegroup_generate_table_top
+from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
 
 def nodegroup_tag_cube(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -117,6 +118,11 @@ class KitchenSpaceFactory(AssetFactory):
         with FixedSeed(factory_seed):
 
             if dimensions is None:
+                dimensions = Vector((
+                    uniform(0.7, 1),
+                    uniform(1.7, 5),
+                    uniform(2.3, WALL_HEIGHT - WALL_THICKNESS)
+                ))
 
             self.island = island
             if self.island:
