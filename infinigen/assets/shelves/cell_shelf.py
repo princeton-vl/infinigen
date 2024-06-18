@@ -14,8 +14,10 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.core.util import blender as butil, math as mu
+from infinigen.core import tagging, tags as t
 
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube
+from infinigen.assets.materials.shelf_shaders import (
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler,
