@@ -17,6 +17,7 @@ from infinigen.assets.materials import (metal, plastic, text, ceramic, woods, di
 from infinigen.assets.materials.plastics import plastic_rough
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
 from infinigen.assets.materials import (glass_volume, plaster, wood,
+                                        sofa_fabric, leather, rug, water, glass, velvet)
 from infinigen.assets.materials import (beverage_fridge_shaders, dishwasher_shaders, 
                                         ceiling_light_shaders,
                                         vase_shaders,
