@@ -4,6 +4,7 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
+from infinigen.assets.materials import common
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes import NodeWrangler, Nodes
 from infinigen.core.util.color import color_category
@@ -17,6 +18,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
 
     rgb = nw.new_node(Nodes.RGB)
     rgb.outputs[0].default_value = color_category('fabric')
+
     brightness_contrast = nw.new_node('ShaderNodeBrightContrast', input_kwargs={'Color': rgb, 'Bright': uniform(-0.1500, -0.05)})
 
     brick_texture = nw.new_node(Nodes.BrickTexture,
@@ -31,6 +33,8 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': principled_bsdf, 'Displacement': displacement},
         attrs={'is_active_output': True})
+
+def apply(obj, selection=None, **kwargs):
     unwrap_faces(obj, selection)
     common.apply(obj, shader_sofa_fabric, selection, **kwargs)
 
