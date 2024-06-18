@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: bug fixes
 
 import gin
 import numpy as np
@@ -26,6 +29,8 @@ UNIT, SEGMENT_MARGIN, WALL_THICKNESS, WALL_HEIGHT = make_np(global_params().valu
 
 
 @gin.configurable
+def door_params(door_width=('uniform', .85, 1), door_size=('uniform', 2., 2.4)):
+    door_width = rg(door_width)
     assert door_width > 0
     door_margin = (door_width + WALL_THICKNESS) / 2
     door_size = rg(door_size)
@@ -36,6 +41,11 @@ DOOR_WIDTH, DOOR_MARGIN, DOOR_SIZE = make_np(door_params().values())
 
 
 @gin.configurable
+def window_params(
+    max_window_length=('uniform', 6, 8), 
+    window_height=('uniform', .4, 1.2),
+    window_margin=('uniform', .2, .6)
+):
     max_window_length = rg(max_window_length)
     window_height = rg(window_height)
     window_margin = rg(window_margin)
@@ -72,3 +82,8 @@ STAIRCASE_SNAP = make_np(staircase_params().values())
     xs = MAX_WINDOW_LENGTH, WINDOW_HEIGHT, WINDOW_MARGIN, WINDOW_SIZE
     for x, y in zip(xs, ys):
         x.fill(y)
+
+def initialize_constants():
+    init_global_params()
+    init_door_params()
+    init_window_params()
