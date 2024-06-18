@@ -13,8 +13,10 @@ import logging
 import copy
 
 from infinigen.core.util import blender as butil
+from infinigen.core.constraints.constraint_language.util import (
     translate,
     rotate,
+    sync_trimesh
 )
 
 from infinigen.core.constraints.example_solver.geometry import validity
@@ -45,6 +47,7 @@ def restore_pose_backup(state, name, bak):
     if 'dof_rot' in bak:
         os.dof_rotation_axis = bak['dof_rot']
 
+    sync_trimesh(state.trimesh_scene, state.objs[name].obj.name)
 
 @dataclass
 class RelationPlaneChange(moves.Move):
@@ -68,6 +71,7 @@ class RelationPlaneChange(moves.Move):
         rels.parent_plane_idx = self.plane_idx
 
         success = dof.try_apply_relation_constraints(state, target_name)
+        return success
 
     def revert(self, state: State):
 
