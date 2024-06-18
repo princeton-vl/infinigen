@@ -13,6 +13,8 @@ from infinigen.assets.utils.uv import wrap_front_back
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.materials.art import ArtFabric
 
 class ShirtFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -29,6 +31,10 @@ class ShirtFactory(AssetFactory):
         self.sleeve_width = uniform(.14, .18)
         self.sleeve_angle = uniform(np.pi / 6, np.pi / 4)
         self.thickness = log_uniform(.02, .03)
+        materials = AssetList['ShirtFactory']()
+        self.surface = materials['surface'].assign_material()
+        if self.surface == ArtFabric:
+            self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = 0, self.width / 2, self.width / 2, self.width / 2 + self.sleeve_length * np.sin(
