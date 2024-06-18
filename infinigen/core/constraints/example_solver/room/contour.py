@@ -10,6 +10,9 @@ import numpy as np
 from numpy.random import uniform
 from shapely import Polygon, box
 
+from infinigen.core.constraints.example_solver.room.utils import unit_cast
+from infinigen.core.constraints.example_solver.room.types import RoomType
+from infinigen.core.constraints.example_solver.room.configs import TYPICAL_AREA_ROOM_TYPES
 from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.object import new_plane
 from infinigen.core.util import blender as butil
@@ -21,6 +24,7 @@ LARGE = 100
 
 @gin.configurable(denylist=['width', 'height'])
 class ContourFactory:
+    def __init__(self, width=17, height=9):
         self.width = width
         self.height = height
         self.n_trials = 1000
