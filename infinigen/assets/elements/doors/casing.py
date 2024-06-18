@@ -1,6 +1,9 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
 # Authors: Lingjie Mei
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -20,6 +23,7 @@ class DoorCasingFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(DoorCasingFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
+            self.margin = constants.DOOR_SIZE * uniform(.05, .1)
             self.extrude = uniform(.02, .08)
             self.bevel_all_sides = uniform() < .3
             self.surface = np.random.choice([metal, wood])
