@@ -20,6 +20,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
 
 
 class PlantPotFactory(PotFactory):
@@ -114,3 +115,9 @@ class LargePlantContainerFactory(PlantContainerFactory):
             self.base_factory.depth = log_uniform(1., 1.5)
             self.base_factory.scale = log_uniform(.15, .25)
             self.side_size = self.base_factory.scale * uniform(1.5, 2.) * self.base_factory.r_expand
+            self.top_size = uniform(1, 1.5)
+            # if WALL_HEIGHT - 2*WALL_THICKNESS < 3:
+            #     self.top_size = uniform(1.5, WALL_HEIGHT - 2*WALL_THICKNESS)
+            # else:
+            #     self.top_size = uniform(1.5, 3)
+            # print(f"{self.side_size=} {self.top_size=} {WALL_THICKNESS=} {WALL_HEIGHT=}")
