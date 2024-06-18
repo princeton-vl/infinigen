@@ -17,7 +17,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import rgb2hsv
 
+from infinigen.core.util.random import clip_gaussian
 from infinigen.assets.materials.bark_random import get_random_bark_params, hex_to_rgb
+
 
 
 @node_utils.to_nodegroup('nodegroup_tiling', singleton=False, type='ShaderNodeTree')
@@ -152,6 +154,7 @@ def shader_wood_tiled(nw: NodeWrangler, hscale=None, vscale=None, base_color=Non
     # Code generated using version 2.6.4 of the node_transpiler
 
     if hscale is None:
+        hscale = clip_gaussian(6, 4, 3, 9)
     if vscale is None:
         vscale = uniform(0.05, 0.2) * hscale
     if seed is None:
