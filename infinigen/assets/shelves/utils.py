@@ -8,6 +8,7 @@ import numpy as np
 from infinigen.core.util import blender as butil
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler,  geometry_node_group_empty_new
 from infinigen.core.nodes import node_utils
+from infinigen.core import tagging, tags as t
 
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 
@@ -37,6 +38,7 @@ def nodegroup_tagged_cube(nw: NodeWrangler):
 
     equal = nw.new_node(Nodes.Compare, input_kwargs={2: index, 3: 2}, attrs={'data_type': 'INT', 'operation': 'EQUAL'})
 
+    cube = tagging.tag_nodegroup(nw, cube, t.Subpart.SupportSurface, selection=equal)
 
     #subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': cube, 'Level': 2})
 
