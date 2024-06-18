@@ -2,6 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
+# Authors: 
+# - Lingjie Mei: primary author
 
 import bpy
 import gin
@@ -22,6 +24,8 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+
+from infinigen.assets.utils.autobevel import BevelSharp
 
 class BaseDoorFactory(AssetFactory):
 
