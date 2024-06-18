@@ -10,9 +10,11 @@ import numpy as np
 import networkx as nx
 from numpy.random import uniform
 
+from infinigen.core.constraints.example_solver.room.utils import unit_cast
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, random_general as rg
 
+from infinigen.core.constraints.example_solver.room.types import RoomGraph, RoomType, get_room_type
 from infinigen.core.constraints.example_solver.room.configs import (
     LOOP_ROOM_TYPES, ROOM_CHILDREN,
     ROOM_NUMBERS,
