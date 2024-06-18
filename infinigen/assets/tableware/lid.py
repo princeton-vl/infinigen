@@ -12,6 +12,7 @@ from infinigen.assets.utils.object import join_objects, new_cylinder, new_line
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.assets.material_assignments import AssetList
 
 
 class LidFactory(AssetFactory):
@@ -33,7 +34,18 @@ class LidFactory(AssetFactory):
             self.handle_width = self.x_length * uniform(.25, .3)
             self.handle_subsurf_level = np.random.randint(0, 3)
 
+            if self.is_glass:
+                material_assignments = AssetList['GlassLidFactory']()
+            else:
+                material_assignments = AssetList["LidFactory"]()
+            self.surface = material_assignments["surface"].assign_material()
+            self.rim_surface = material_assignments["rim_surface"].assign_material()
+            self.handle_surface = material_assignments["handle_surface"].assign_material()
 
+            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            self.scratch, self.edge_wear = material_assignments["wear_tear"]
+            self.scratch = None if uniform() > scratch_prob else self.scratch
+            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = 0, .01, self.x_length / 2, self.x_length
