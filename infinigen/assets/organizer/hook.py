@@ -14,6 +14,7 @@ from infinigen.core import tagging
 
 import bpy
 from infinigen.assets.materials import shader_rough_plastic, shader_brushed_metal
+from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
 
 
 def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
@@ -123,6 +124,7 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
                                        input_kwargs={'Geometry': cube.outputs["Mesh"], 'Translation': combine_xyz_3})
 
     set_material_1 = nw.new_node(Nodes.SetMaterial, input_kwargs={'Geometry': transform_geometry_1,
+                                                                  'Material': surface.shaderfunc_to_material(shader_rough_plastic)})
 
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, set_material_1]})
 
@@ -209,6 +211,7 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
     transform_geometry_2 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': triangulate, 'Translation': combine_xyz_2})
 
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={'Geometry': transform_geometry_2,
+                                                                  'Material': surface.shaderfunc_to_material(shader_rough_plastic)})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material},
                                attrs={'is_active_output': True})
