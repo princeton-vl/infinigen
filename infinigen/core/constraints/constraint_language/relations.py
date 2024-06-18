@@ -1,7 +1,9 @@
+# Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
 # Authors: Alexander Raistrick
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Relation(ABC):
+
     @abstractmethod
     def implies(self, other) -> bool:
         """
@@ -119,8 +122,13 @@ class NegatedRelation(Relation):
 
 class ConnectorType(Enum):
     Door = "door"
+    Open = "open"
+    Wall = "wall"
+
 @dataclass(frozen=True)
+class RoomNeighbour(Relation):
     connector_types: frozenset[ConnectorType] = field(default_factory=frozenset)
+
     def __post_init__(self):
         if self.connector_types is not None:
             object.__setattr__(self, 'connector_types', frozenset(self.connector_types))
@@ -377,6 +385,8 @@ class StableAgainst(GeometryRelation):
     __repr__ = no_frozenset_repr
 
 
+@dataclass(frozen=True)
+class CutFrom(Relation):
     
     def implies(self, other: Relation) -> bool:
         return (
