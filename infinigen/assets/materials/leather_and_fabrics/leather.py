@@ -9,6 +9,7 @@ import bpy
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint
+import functools
 
 from infinigen.assets.materials import common
 from infinigen.assets.utils.uv import unwrap_faces
@@ -16,6 +17,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core import surface
+from infinigen.assets.color_fits import real_color_distribution
 
 @node_utils.to_nodegroup('nodegroup_leather', singleton=False, type='ShaderNodeTree')
 def nodegroup_leather(nw: NodeWrangler):
@@ -87,6 +89,11 @@ def shader_leather(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kw
     # Code generated using version 2.6.4 of the node_transpiler
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
+    
+    # if base_color is None:
+    #     base_color = color_category('leather')
+    base_color = real_color_distribution('sofa_leather')
+    
     group = nw.new_node(nodegroup_leather().name,
         input_kwargs={'Seed': seed, 'Scale': scale, 'Base Color': base_color})
 
@@ -95,6 +102,7 @@ def shader_leather(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kw
     material_output = nw.new_node(Nodes.MaterialOutput,
         input_kwargs={'Surface': group.outputs["BSDF"], 'Displacement': displacement},
         attrs={'is_active_output': True})
+
 
 def apply(obj, selection=None, **kwargs):
     unwrap_faces(obj, selection)
