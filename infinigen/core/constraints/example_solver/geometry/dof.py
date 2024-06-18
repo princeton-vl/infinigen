@@ -10,6 +10,9 @@ import bpy
 import numpy as np
 from infinigen.core.constraints.example_solver.geometry import stability
 from mathutils import Vector
+import trimesh
+from shapely.geometry import Point, Polygon, MultiPolygon
+import matplotlib.pyplot as plt
 
 from infinigen.core import tags as t, tagging
 from infinigen.core.constraints import constraint_language as cl
@@ -22,6 +25,7 @@ import infinigen.core.util.blender as butil
 import infinigen.core.constraints.example_solver.geometry.validity as validity
 from infinigen.core.constraints.constraint_language.util import meshes_from_names ,delete_obj
 from infinigen.core.constraints.constraint_language import util as iu
+from infinigen.core import tagging, tags as t
 from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
 
 
@@ -328,10 +332,12 @@ def apply_relations_surfacesample(
 
         
         if all([p1_to_p1.buffer(1e-1).contains(Point(pt[0], pt[1])) for pt in projected]):
+            face_mask = tagging.tagged_face_mask(parent_obj2, parent_tags2)
             stability.move_obj_random_pt(state, obj_name, parent_obj2.name, face_mask, parent_plane2)
             stability.snap_against(state.trimesh_scene, obj_name, parent_obj2.name, obj_plane2, parent_plane2, margin=margin2)
             stability.snap_against(state.trimesh_scene, obj_name, parent_obj1.name, obj_plane1, parent_plane1, margin=margin1)
         else:
+            face_mask = tagging.tagged_face_mask(parent_obj1, parent_tags1)
             stability.move_obj_random_pt(state, obj_name, parent_obj1.name, face_mask, parent_plane1)
             stability.snap_against(state.trimesh_scene, obj_name, parent_obj1.name, obj_plane1, parent_plane1, margin=margin1)
             stability.snap_against(state.trimesh_scene, obj_name, parent_obj2.name, obj_plane2, parent_plane2, margin=margin2)
@@ -346,6 +352,7 @@ def apply_relations_surfacesample(
             if parent_plane is None:
                 continue
             iu.set_rotation(state.trimesh_scene, obj_name, (0, 0, 2*np.pi*np.random.randint(0, 4)/4))
+            face_mask = tagging.tagged_face_mask(parent_obj, relation_state.relation.parent_tags)
             stability.move_obj_random_pt(state, obj_name, parent_obj.name, face_mask, parent_plane)
             match relation_state.relation: 
                 case cl.StableAgainst(child_tags, parent_tags, margin):
