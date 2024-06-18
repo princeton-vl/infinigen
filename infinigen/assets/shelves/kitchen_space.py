@@ -1,6 +1,9 @@
+# Authors: Yiming Zuo, Stamatis Alexandropoulos
+
 import bpy
 import bpy
 import mathutils
+from mathutils import Vector
 from numpy.random import uniform, normal, randint, choice
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -102,8 +105,24 @@ def geometry_node_to_bbox(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform_geometry}, attrs={'is_active_output': True})
 
 class KitchenSpaceFactory(AssetFactory):
+    def __init__(
+        self, 
+        factory_seed, 
+        coarse=False, 
+        dimensions=None,
+        island=False
+    ):
         super(KitchenSpaceFactory, self).__init__(factory_seed, coarse=coarse)
 
+        with FixedSeed(factory_seed):
+
+            if dimensions is None:
+
+            self.island = island
+            if self.island:
+                dimensions.x *= uniform(1.5, 2)
+
+            self.dimensions = dimensions    
 
             self.params = self.sample_parameters(dimensions)
 
@@ -113,25 +132,74 @@ class KitchenSpaceFactory(AssetFactory):
         self.cabinet_top_height = uniform(0.8, 1.0)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        x, y, z = self.dimensions
+        surface.add_geomod(box, nodegroup_tag_cube, apply=True)
+
+        if not self.island:
+            box_top = new_bbox(-x/2, x*0.16, 0, y, z - self.cabinet_top_height - 0.1, z)
+            box = butil.join_objects([box, box_top])
 
         return box
 
     def create_asset(self, **params):
         x, y, z = self.dimensions
+        parts = []
+
+        
         cabinet_bottom_height = self.cabinet_bottom_height
         cabinet_top_height = self.cabinet_top_height
         
         cabinet_bottom_factory = KitchenCabinetFactory(self.factory_seed, dimensions=(x, y-0.15, cabinet_bottom_height), drawer_only=True)
         cabinet_bottom = cabinet_bottom_factory(i=0)
+        parts.append(cabinet_bottom)
 
         surface.add_geomod(cabinet_bottom, geometry_nodes_add_cabinet_top, apply=True)
 
+        if not self.island:
+            # top
+            top_mid_width = uniform(1.0, 1.3)
+            cabinet_top_width = (y - top_mid_width) / 2.0 - 0.05
 
+            cabinet_top_factory = KitchenCabinetFactory(self.factory_seed, dimensions=(x / 2.0, cabinet_top_width, cabinet_top_height), drawer_only=False)
+            cabinet_top_left = cabinet_top_factory(i=0)
+            cabinet_top_right = cabinet_top_factory(i=1)
 
+            cabinet_top_left.location = (-x/4.0, 0.0, z-cabinet_top_height)
+            cabinet_top_right.location = (-x/4.0, y - cabinet_top_width, z-cabinet_top_height)
 
+            # hood / cab
+            # mid_style = choice(['range_hood', 'cabinet'])
+            # mid_style = 'range_hood'
+            mid_style = choice(['cabinet'])
+            if mid_style == 'range_hood':
+                range_hood_factory = RangeHoodFactory(self.factory_seed, dimensions=(x*0.66, top_mid_width + 0.15, cabinet_top_height))
+                top_mid = range_hood_factory(i=0)
+                top_mid.location = (-x*0.5, y/2.0, z-cabinet_top_height+0.05)
 
+            elif mid_style == 'cabinet':
+                cabinet_top_mid_factory = KitchenCabinetFactory(self.factory_seed, dimensions=(x*0.66, top_mid_width, cabinet_top_height * 0.8), drawer_only=False)
+                top_mid = cabinet_top_mid_factory(i=0)
+                top_mid.location = (-x/6.0, y/2.0 - top_mid_width / 2.0, z-(cabinet_top_height * 0.8))
 
+            else:
+                raise NotImplementedError
+            
 
+        kitchen_space = butil.join_objects(parts)#[cabinet_bottom, sink, cabinet_top_left, cabinet_top_right, top_mid])
+        
+        if not self.island:
+            kitchen_space.dimensions = self.dimensions
         butil.apply_transform(kitchen_space)
 
+        tagging.tag_system.relabel_obj(kitchen_space)
+
         return kitchen_space
+
+class KitchenIslandFactory(KitchenSpaceFactory):
+
+    def __init__(self, factory_seed):
+
+        super(KitchenIslandFactory, self).__init__(
+            factory_seed=factory_seed,
+            island=True,
+        )
