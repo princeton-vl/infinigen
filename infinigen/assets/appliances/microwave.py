@@ -15,6 +15,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import delete
+from infinigen.core.util.bevelling import get_bevel_edges, add_bevel, complete_bevel, complete_no_bevel
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.assets.material_assignments import AssetList
@@ -81,7 +83,12 @@ class MicrowaveFactory(AssetFactory):
 
     def create_asset(self, **params):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_microwave_geometry(preprocess=True), ng_inputs=self.params, apply=True)
+        bevel_edges = get_bevel_edges(obj)
+        delete(obj)
+        obj = butil.spawn_cube()
         butil.modify_mesh(obj, 'NODES', node_group=nodegroup_microwave_geometry(), ng_inputs=self.params, apply=True)
+        obj = add_bevel(obj, bevel_edges)
                  
         return obj
 
@@ -205,6 +212,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_input = nw.new_node(Nodes.GroupInput,
         expose_input=[('NodeSocketVectorTranslation', 'Size', (0.1000, 10.0000, 4.0000)),
             ('NodeSocketVector', 'Pos', (0.0000, 0.0000, 0.0000)),
+            ('NodeSocketInt', 'Resolution', 10)])
 
     cube = nw.new_node(Nodes.MeshCube,
         input_kwargs={'Size': group_input.outputs["Size"], 'Vertices X': group_input.outputs["Resolution"], 'Vertices Y': group_input.outputs["Resolution"], 'Vertices Z': group_input.outputs["Resolution"]})
@@ -226,6 +234,8 @@ def nodegroup_cube(nw: NodeWrangler):
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform}, attrs={'is_active_output': True})
 
+@node_utils.to_nodegroup('nodegroup_microwave_geometry', singleton=False, type='GeometryNodeTree')
+def nodegroup_microwave_geometry(nw: NodeWrangler, preprocess: bool=False):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(Nodes.GroupInput,
@@ -237,9 +247,12 @@ def nodegroup_cube(nw: NodeWrangler):
             ('NodeSocketFloat', 'DoorThickness', 0.0000),
             ('NodeSocketFloat', 'DoorMargin', 0.0500),
             ('NodeSocketFloat', 'DoorRotation', 0.0000),
+            ('NodeSocketString', 'BrandName', 'BrandName'),
             ('NodeSocketMaterial', 'Surface', None),
             ('NodeSocketMaterial', 'Back', None),
             ('NodeSocketMaterial', 'BlackGlass', None),
+            ('NodeSocketMaterial', 'Glass', None),
+        ])
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["Depth"], 'Y': group_input.outputs["Width"], 'Z': group_input.outputs["Height"]})
@@ -265,6 +278,7 @@ def nodegroup_cube(nw: NodeWrangler):
     difference = nw.new_node(Nodes.MeshBoolean, input_kwargs={'Mesh 1': cube, 'Mesh 2': cube_1})
 
     cube_2 = nw.new_node(nodegroup_cube().name,
+        input_kwargs={'Size': (0.0300, 0.0300, 0.0100), 'Pos': (0.1000, 0.0000, 0.0500), 'Resolution': 2})
 
     geometry_to_instance_1 = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': cube_2})
 
@@ -305,6 +319,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': group_input.outputs["Depth"]})
 
+    cube_3 = nw.new_node(nodegroup_cube().name, input_kwargs={'Size': combine_xyz_2, 'Pos': combine_xyz_3, 'Resolution': 10})
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -326,6 +341,7 @@ def nodegroup_cube(nw: NodeWrangler):
 
     convex_hull = nw.new_node(Nodes.ConvexHull, input_kwargs={'Geometry': separate_geometry.outputs["Selection"]})
 
+    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': convex_hull, 'Level': 0})
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
@@ -357,11 +373,17 @@ def nodegroup_cube(nw: NodeWrangler):
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': add_1, 'Y': separate_xyz_3.outputs["Y"], 'Z': add_3})
 
     text = nw.new_node(nodegroup_text().name,
+        input_kwargs={'Translation': combine_xyz_5, 'String': group_input.outputs["BrandName"], 'Size': 0.0300, 'Offset Scale': 0.0020})
+
+    text = complete_no_bevel(nw, text, preprocess)
 
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material_2, text]})
 
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': join_geometry_1})
 
+    z = nw.scalar_multiply(group_input.outputs["DoorRotation"], 1 if not preprocess else 0)
+
+    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': z})
 
     rotate_instances = nw.new_node(Nodes.RotateInstances,
         input_kwargs={'Instances': geometry_to_instance, 'Rotation': combine_xyz_6, 'Pivot Point': combine_xyz_3})
@@ -379,6 +401,7 @@ def nodegroup_cube(nw: NodeWrangler):
     
     convex_hull_1 = nw.new_node(Nodes.ConvexHull, input_kwargs={'Geometry': separate_geometry.outputs["Inverted"]})
 
+    subdivide_mesh_1 = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': convex_hull_1, 'Level': 0})
 
     position_2 = nw.new_node(Nodes.InputPosition)
 
@@ -414,6 +437,9 @@ def nodegroup_cube(nw: NodeWrangler):
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'X': add_4, 'Y': separate_xyz_1.outputs["Y"], 'Z': add_6})
 
     text_1 = nw.new_node(nodegroup_text().name,
+        input_kwargs={'Translation': combine_xyz_4, 'String': '12:01', 'Offset Scale': 0.0050})
+
+    text_1 = complete_no_bevel(nw, text_1, preprocess)
 
     join_geometry = nw.new_node(Nodes.JoinGeometry,
         input_kwargs={'Geometry': [set_material_1, rotate_instances, set_material, set_material_5, text_1]})
