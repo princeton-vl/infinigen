@@ -43,4 +43,8 @@ class WineglassFactory(TablewareFactory):
         subsurf(obj, 1)
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
+
+        with butil.SelectObjects(obj):
+            bpy.ops.object.shade_smooth()
+
         return obj
