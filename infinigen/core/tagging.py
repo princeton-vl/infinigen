@@ -1,10 +1,18 @@
+# Copyright (c) Princeton University.
+
+
+
 import os
 import bpy
 import json
 import logging
 
 import numpy as np
+import infinigen.core.util.blender as butil
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
+
+from . import tags as t
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +181,8 @@ def print_segments_summary(obj: bpy.types.Object):
 
 def tag_object(obj, name=None, mask=None):
 
+    if name is not None:
+        name = t.to_string(name)
 
     for o in butil.iter_object_tree(obj):
         
@@ -220,7 +230,12 @@ def vert_mask_to_tri_mask(obj, vert_mask, require_all=True):
             vert_mask[face_vert_idxs[:, 1]] |
             vert_mask[face_vert_idxs[:, 2]] 
         )
+CANONICAL_TAGS = [t.Subpart.Back, t.Subpart.Front, t.Subpart.Top, t.Subpart.Bottom]
 CANONICAL_TAG_MEANINGS = {
+    t.Subpart.Back: (np.min, 0),
+    t.Subpart.Front: (np.max, 0),
+    t.Subpart.Bottom: (np.min, 2),
+    t.Subpart.Top: (np.max, 2),
 }
 def tag_canonical_surfaces(obj, rtol=0.01):
 
@@ -245,7 +260,9 @@ def tag_canonical_surfaces(obj, rtol=0.01):
 
         logger.debug(f'{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}')
         surface.write_attr_data(obj, PREFIX + tag.value, face_mask, type='BOOLEAN', domain='FACE')
+def tag_nodegroup(nw: NodeWrangler, input_node, name: t.Tag, selection=None):
     
+    name = PREFIX + t.to_string(name)
     sel = surface.eval_argument(nw, selection)
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
@@ -291,10 +308,12 @@ def _name_for_tagval(i: int) -> str | None:
 
     def try_convert(x):
         try:
+            return t.to_tag(x)
         except ValueError:
             return x
     return {try_convert(x) for x in res}
 
+def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarray:
 
     # ASSUMES: object is triangulated, no quads/polygons
 
@@ -329,8 +348,10 @@ def _name_for_tagval(i: int) -> str | None:
 
     return face_mask
 def extract_tagged_faces(obj: bpy.types.Object, tags: set, nonempty=False) -> bpy.types.Object:
+    
     if nonempty and not face_mask.any():
         raise ValueError(f'extract_tagged_faces({obj.name=}, {tags=}, {nonempty=}) got empty mask for {len(obj.data.polygons)}')
+
     return extract_mask(obj, face_mask, nonempty=nonempty)
 
 def extract_mask(
@@ -338,8 +359,12 @@ def extract_mask(
     face_mask: np.array,
     nonempty=False
 ) -> bpy.types.Object:
+
+    if not face_mask.any():
         if nonempty:
             raise ValueError(f'extract_mask({obj.name=}) got empty mask')
+        return butil.spawn_vert()
+
     orig_hide_viewport = obj.hide_viewport
     obj.hide_viewport = False
 
