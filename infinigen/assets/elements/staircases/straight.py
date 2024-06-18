@@ -32,6 +32,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, normalize
 from infinigen.core.util.random import log_uniform, random_general as rg
 
+from infinigen.core import tags as t
 
 
 class StraightStaircaseFactory(AssetFactory):
@@ -493,6 +494,10 @@ class StraightStaircaseFactory(AssetFactory):
         sharp_remesh_with_attrs(line, .05)
         zeros = np.zeros(len(line.data.polygons), dtype=int)
         ones = np.ones(len(line.data.polygons), dtype=int)
+        write_attr_data(line, f'{PREFIX}{t.Subpart.Ceiling.value}', zeros, 'INT', 'FACE')
+        write_attr_data(line, f'{PREFIX}{t.Subpart.SupportSurface.value}', zeros, 'INT', 'FACE')
+        write_attr_data(line, f'{PREFIX}{t.Subpart.Wall.value}', ones, 'INT', 'FACE')
+        write_attr_data(line, f'{PREFIX}{t.Subpart.Visible.value}', ones, 'INT', 'FACE')
         with butil.ViewportMode(line, 'EDIT'):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.normals_make_consistent(inside=False)
