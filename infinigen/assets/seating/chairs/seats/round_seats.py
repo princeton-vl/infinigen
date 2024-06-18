@@ -17,6 +17,7 @@ from infinigen.assets.tables.table_top import nodegroup_capped_cylinder
 from infinigen.assets.materials.leather_and_fabrics.leather import shader_leather
 
 @node_utils.to_nodegroup('generate_round_seats', singleton=False, type='GeometryNodeTree')
+def generate_round_seats(nw: NodeWrangler, thickness=None, radius=None, cap_radius=None, bevel_factor=None, seat_material=None):
     # Code generated using version 2.6.4 of the node_transpiler
     if thickness is None:
         thickness = uniform(0.05, 0.12)
@@ -35,5 +36,6 @@ from infinigen.assets.materials.leather_and_fabrics.leather import shader_leathe
         input_kwargs={'Thickness': multiply, 'Radius': radius, 'Cap Flatness': cap_radius, 'Fillet Radius Vertical': divide, 'Cap Relative Scale': 0.0140, 'Cap Relative Z Offset': -0.0020, 'Resolution': 128})
 
     seat = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cappedcylinder, 'Material': seat_material})
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': seat}, attrs={'is_active_output': True})
