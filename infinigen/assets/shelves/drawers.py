@@ -14,6 +14,7 @@ import numpy as np
 from infinigen.core.util import blender as butil
 
 import bpy
+from infinigen.assets.materials.shelf_shaders import (
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler,
