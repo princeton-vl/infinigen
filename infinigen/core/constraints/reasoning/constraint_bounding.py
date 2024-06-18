@@ -114,7 +114,34 @@ def _expression_map_bound_binop(
         case _:
             raise ValueError("Impossible")
 
+def evaluate_known_vars(node: cl.Node, known_vars) -> cl.constant:
+    if is_constant(node):
+        return None
+    match node:
         case cl.ScalarOperatorExpression(f, (lhs, rhs)) if f in int_inverse_op.keys() or f in int_inverse_op:
+            if is_constant(lhs):
+                rhs_eval = evaluate_known_vars(rhs, known_vars)
+                if is_constant(rhs_eval): return f(lhs, rhs_eval)
+                else: return None
+            else:
+                lhs_eval = evaluate_known_vars(lhs, known_vars)
+                if is_constant(lhs_eval): return f(lhs_eval, rhs)
+                else: return None
+        case cl.count(objs):
+            return evaluate_known_vars(objs, known_vars)
+        case cl.ObjectSetExpression() as objs:
+            domain = constraint_domain(objs)
+            vals = []
+            for known_domain, known_val in known_vars:
+                if domain == known_domain:
+                    vals.append(known_val)
+            if len(vals) == 0:
+                return None
+            else: 
+                return cl.constant(min(vals))
+        case _:
+            raise NotImplementedError(node)
+
 def expression_map_bound(node: cl.Node, bound: Bound) -> list[Bound]:
 
     match node:
@@ -133,6 +160,11 @@ def expression_map_bound(node: cl.Node, bound: Bound) -> list[Bound]:
             # distance & other hard constraints do not produce quantity-bounds
             return []
 
+def update_var(var, scene_state): 
+    if not is_constant(var) and not isinstance(var, int) and scene_state is not None:
+        var_eval = evaluate_known_vars(var, scene_state)
+        var = var_eval if is_constant(var_eval) else var
+    return var
 
 def constraint_bounds(
     node: cl.Node,
@@ -149,6 +181,9 @@ def constraint_bounds(
         case cl.in_range(val, low, high):
             low = update_var(low, state)
             high = update_var(high, state)
+            if is_constant(low) and is_constant(high):
+                low = low()
+                high = high() 
             bound = Bound(low=low, high=high)
             return expression_map_bound(val, bound)
         case cl.BoolOperatorExpression(f, (lhs, rhs)) if f in Bound._init_ops:
