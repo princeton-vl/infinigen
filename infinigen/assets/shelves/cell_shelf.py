@@ -6,6 +6,8 @@
 from numpy.random import uniform, normal, randint
 import numpy as np
 import bpy
+
+from infinigen.assets.materials import metal
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
@@ -747,6 +749,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 
     set_material_2 = nw.new_node(Nodes.SetMaterial,
                                  input_kwargs={'Geometry': realize_instances_2,
+                                               'Material': surface.shaderfunc_to_material(metal.get_shader())})
     merge_components.append(set_material_2)
 
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry,
