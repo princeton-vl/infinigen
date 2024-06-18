@@ -1,6 +1,7 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: Stamatis Alexandropulos
 
 import colorsys
 
@@ -43,6 +44,14 @@ class NatureShelfTrinketsFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             base_factory_fn = np.random.choice(self.factories, p=self.probs / self.probs.sum())
 
+            kwargs = {}
+            if base_factory_fn in [HerbivoreFactory, CarnivoreFactory]:
+                kwargs.update({
+                    'hair': False
+                })
+        
+            self.base_factory = base_factory_fn(self.factory_seed, **kwargs)
+
 
     def create_placeholder(self, **params) -> bpy.types.Object:
         size = np.random.uniform(0.1, 0.15)
@@ -51,8 +60,15 @@ class NatureShelfTrinketsFactory(AssetFactory):
         return placeholder
 
 
+        asset = self.base_factory.spawn_asset(
+            np.random.randint(1e7), 
+            distance=200, 
+            adaptive_resolution = False
+        )
+
         if (list(asset.children)):
             asset = join_objects(list(asset.children))
+
         # butil.modify_mesh(asset, 'DECIMATE')
         butil.apply_transform(asset,loc=True)
         butil.apply_modifiers(asset)
