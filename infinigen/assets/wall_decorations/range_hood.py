@@ -1,3 +1,6 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 # Authors: Yiming Zuo
 
 import bpy
@@ -27,10 +30,12 @@ class RangeHoodFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
+            self.surface, self.scratch, self.edge_wear = self.get_material_params()
             
             
     def get_material_params(self):
         material_assignments = AssetList['RangeHoodFactory']()
+        surface = material_assignments['surface'].assign_material()
         
         scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
         scratch, edge_wear = material_assignments['wear_tear']
@@ -43,6 +48,7 @@ class RangeHoodFactory(AssetFactory):
         if not is_edge_wear:
             edge_wear = None
         
+        return surface, scratch, edge_wear
                 
     @staticmethod
     def sample_parameters(dimensions):
@@ -80,9 +86,16 @@ class RangeHoodFactory(AssetFactory):
         butil.modify_mesh(obj, 'SOLIDIFY', apply=True, thickness=.002)
         butil.modify_mesh(obj, 'SUBSURF', apply=True, levels=1, render_levels=1)
 
+        return obj
+    
+    def finalize_assets(self, assets):
+        self.surface.apply(assets)
         if self.scratch:
+            self.scratch.apply(assets)
         if self.edge_wear:
+            self.edge_wear.apply(assets)
 
+    
 
 def geometry_generate_hood(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -172,6 +185,7 @@ def geometry_range_hood(nw: NodeWrangler):
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [delete_geometry, transform_geometry_5]})
     
     transform_geometry_6 = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': join_geometry_1, 'Rotation': (0.0, 0.0000, -np.pi/2)})
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform_geometry_6}, attrs={'is_active_output': True})
 
