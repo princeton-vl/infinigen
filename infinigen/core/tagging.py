@@ -1,5 +1,6 @@
 # Copyright (c) Princeton University.
 
+# Authors: Yihan Wang, Karhan Kayan: face based tagging, canonical surface tagging, mask extraction
 
 
 import os
@@ -13,6 +14,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core import surface
 
 from . import tags as t
+
+from typing import Union, Any
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +217,7 @@ def tag_object(obj, name=None, mask=None):
         tag_system.relabel_obj(obj)
 
 def vert_mask_to_tri_mask(obj, vert_mask, require_all=True):
+
     arr = np.zeros(len(obj.data.polygons) * 3)
     obj.data.polygons.foreach_get('vertices', arr)
     face_vert_idxs = arr.reshape(-1, 3).astype(int)
@@ -230,6 +234,7 @@ def vert_mask_to_tri_mask(obj, vert_mask, require_all=True):
             vert_mask[face_vert_idxs[:, 1]] |
             vert_mask[face_vert_idxs[:, 2]] 
         )
+
 CANONICAL_TAGS = [t.Subpart.Back, t.Subpart.Front, t.Subpart.Top, t.Subpart.Bottom]
 CANONICAL_TAG_MEANINGS = {
     t.Subpart.Back: (np.min, 0),
@@ -237,14 +242,18 @@ CANONICAL_TAG_MEANINGS = {
     t.Subpart.Bottom: (np.min, 2),
     t.Subpart.Top: (np.max, 2),
 }
+
 def tag_canonical_surfaces(obj, rtol=0.01):
 
     obj.update_from_editmode()
+
     n_vert = len(obj.data.vertices)
     n_poly = len(obj.data.polygons)
+
     verts = np.empty(n_vert * 3, dtype=float)
     obj.data.vertices.foreach_get('co', verts)
     verts = verts.reshape(n_vert, 3)
+
     for tag in CANONICAL_TAGS:
 
         gather_func, axis_idx = CANONICAL_TAG_MEANINGS[tag]
@@ -260,6 +269,9 @@ def tag_canonical_surfaces(obj, rtol=0.01):
 
         logger.debug(f'{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}')
         surface.write_attr_data(obj, PREFIX + tag.value, face_mask, type='BOOLEAN', domain='FACE')
+
+    tag_system.relabel_obj(obj)
+
 def tag_nodegroup(nw: NodeWrangler, input_node, name: t.Tag, selection=None):
     
     name = PREFIX + t.to_string(name)
@@ -347,8 +359,15 @@ def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarra
     logger.debug(f'{obj.name=} had {face_mask.mean()=:.2f} for {pos_tags=} {neg_tags=}')
 
     return face_mask
+
 def extract_tagged_faces(obj: bpy.types.Object, tags: set, nonempty=False) -> bpy.types.Object:
+    "extract the surface that satisfies all tags"
     
+    # Ensure we're dealing with a mesh object
+    if obj.type != 'MESH':
+        raise TypeError("Object is not a mesh!")
+    face_mask = tagged_face_mask(obj, tags)
+
     if nonempty and not face_mask.any():
         raise ValueError(f'extract_tagged_faces({obj.name=}, {tags=}, {nonempty=}) got empty mask for {len(obj.data.polygons)}')
 
