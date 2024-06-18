@@ -9,9 +9,12 @@ import logging
 import bpy
 import numpy as np
 import gin
+import trimesh
+
 
 import infinigen.core.util.blender as butil
 from infinigen.core import tagging, tags as t
+from infinigen.core.constraints.constraint_language.util import meshes_from_names, blender_objs_from_names
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +135,9 @@ class Planes:
 
         tags = t.to_tag_set(tags)
 
+        mask = tagging.tagged_face_mask(obj, tags)
         if not mask.any():
+            obj_tags = tagging.union_object_tags(obj)
             logger.warning(
                 f'Attempted to get_tagged_planes {obj.name=} {tags=} but mask was empty, {obj_tags=}'
             )
@@ -191,9 +196,11 @@ class Planes:
         if obj.type != 'MESH':
             raise TypeError("Object is not a mesh!")
 
+        face_mask = tagging.tagged_face_mask(obj, tags)
         mask = self.tagged_plane_mask(obj, face_mask, plane)
 
         if not mask.any():
+            obj_tags = tagging.union_object_tags(obj)
             logger.warning(
                 f'Attempted to extract_tagged_plane {obj.name=} {tags=} but mask was empty, {obj_tags=}'
             )
@@ -221,6 +228,7 @@ class Planes:
     
     def get_tagged_submesh(self, scene: trimesh.Scene, name:str, tags: set, plane: int):
         obj = blender_objs_from_names(name)[0]
+        face_mask = tagging.tagged_face_mask(obj, tags)
         mask = self.tagged_plane_mask(obj, face_mask, plane)
         tmesh = meshes_from_names(scene, name)[0]
         geom = tmesh.submesh(np.where(mask), append=True)
