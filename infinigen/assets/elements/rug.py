@@ -13,6 +13,7 @@ from infinigen.assets.utils.uv import wrap_sides
 from infinigen.core.nodes import NodeWrangler, Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform, clip_gaussian
 from infinigen.core.util import blender as butil
 from infinigen.assets.material_assignments import AssetList
 
