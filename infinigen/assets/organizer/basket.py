@@ -14,6 +14,7 @@ from infinigen.core import tagging
 
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube
+from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
 
 
 @node_utils.to_nodegroup('nodegroup_holes', singleton=False, type='GeometryNodeTree')
@@ -240,6 +241,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
                                      input_kwargs={'Geometry': realize_instances, 'Translation': combine_xyz_3})
 
     set_material = nw.new_node(Nodes.SetMaterial, input_kwargs={'Geometry': transform_geometry,
+                                                                'Material': surface.shaderfunc_to_material(shader_rough_plastic)})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': set_material},
                                attrs={'is_active_output': True})
