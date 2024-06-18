@@ -21,6 +21,7 @@ from infinigen.core.util.math import FixedSeed
 
 from infinigen.core.util.random import log_uniform, clip_gaussian
 
+from infinigen.assets.material_assignments import AssetList
 
 @node_utils.to_nodegroup('nodegroup_array_fill_line', singleton=False, type='GeometryNodeTree')
 def nodegroup_array_fill_line(nw: NodeWrangler):
@@ -700,6 +701,8 @@ class SofaFactory(AssetFactory):
             #from infinigen.assets.scatters.clothes import ClothesCover
             #self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(1, 1.5),
             #                                    size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
+            materials = AssetList['SofaFactory']()  
+            self.sofa_fabric = materials['sofa_fabric'].assign_material()
 
     def create_placeholder(self, **_):
         obj = butil.spawn_vert()
@@ -711,6 +714,7 @@ class SofaFactory(AssetFactory):
             apply=True
         )
         tagging.tag_system.relabel_obj(obj)
+        surface.add_material(obj, self.sofa_fabric)
         return obj
 
     def create_asset(self, i, placeholder, face_size, **_):
