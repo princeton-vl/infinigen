@@ -1,3 +1,11 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: 
+# - 
+# - Alexander Raistrick: add point light 
+
 import bpy
 import random
 import mathutils
@@ -5,10 +13,16 @@ import numpy as np
 from numpy.random import uniform as U, normal as N, randint as RI
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
+from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
+from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.placement.factory import AssetFactory
+
+from .indoor_lights import PointLampFactory
+from infinigen.assets.utils.autobevel import BevelSharp
+
 
 class CeilingLightFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.]):
@@ -38,13 +52,19 @@ class CeilingLightFactory(AssetFactory):
                 "Curvature": 0.4,
             }]
         with FixedSeed(factory_seed):
+            self.light_factory = PointLampFactory(factory_seed)
             self.params = self.sample_parameters(dimensions)
+        self.beveler = BevelSharp(mult=U(1, 3))
 
     def sample_parameters(self, dimensions, use_default=False):
         if use_default:
             return self.ceiling_light_default_params[RI(0, len(self.ceiling_light_default_params))]
         else:
+            Radius = clip_gaussian(0.12, 0.04, 0.1, 0.25)
             Thickness = U(0.005, 0.05)
+            InnerRadius = Radius * U(0.4, 0.9)
+            Height = 0.7 * clip_gaussian(0.09, 0.03, 0.07, 0.15)
+            InnerHeight = Height * U(0.5, 1.1)
             Curvature = U(0.1, 0.5)
             params = {
                 "Radius": Radius,
@@ -55,7 +75,22 @@ class CeilingLightFactory(AssetFactory):
                 "Curvature": Curvature,
             }
             return params
+        
+    def create_placeholder(self, i, **params):
         obj = butil.spawn_cube()
+        butil.modify_mesh(obj, 'NODES', node_group=nodegroup_ceiling_light_geometry(), ng_inputs=self.params, apply=True)
+        return obj
+            
+    def create_asset(self, i, placeholder, **params):
+        obj = butil.copy(placeholder, keep_materials=True)
+        self.beveler(obj)
+
+        lamp = self.light_factory.spawn_asset(i, loc=(0,0,0), rot=(0,0,0))
+        
+        butil.parent_to(lamp, obj, no_transform=True, no_inverse=True)
+        lamp.location.z -= 0.03
+        
+        return obj
 
 
 
