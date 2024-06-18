@@ -3,4 +3,5 @@
 
 # Authors: Lingjie Mei
 from .cocktail_table import TableCocktailFactory
+from .dining_table import TableDiningFactory, SideTableFactory, CoffeeTableFactory
 from .table_top import TableTopFactory
