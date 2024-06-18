@@ -7,3 +7,4 @@ from .doors import CabinetDoorBaseFactory
 from .single_cabinet import SingleCabinetFactory
 from .kitchen_cabinet import KitchenCabinetFactory
 from .kitchen_space import KitchenSpaceFactory, KitchenIslandFactory
+from .countertop import CountertopFactory
