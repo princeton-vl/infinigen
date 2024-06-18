@@ -1,3 +1,9 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Yiming Zuo
+# Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=jDEijCwz6to by Lachlan Sarv
+
 import numpy as np
 from numpy.random import uniform
 
