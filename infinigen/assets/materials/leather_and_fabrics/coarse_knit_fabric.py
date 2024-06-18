@@ -17,6 +17,8 @@
 import bpy
 import mathutils
 from numpy.random import uniform, normal, choice
+
+from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core.util.color import color_category
@@ -258,9 +260,11 @@ def shader_fabric_base(
     )
 
 
+def shader_fabric_random(nw: NodeWrangler, **kwargs):
     fabric_params = get_texture_params()
     return shader_fabric_base(nw, **fabric_params)
 
 
 def apply(obj, selection=None, **kwargs):
+    unwrap_faces(obj, selection)
     common.apply(obj, shader_fabric_random, selection, **kwargs)
