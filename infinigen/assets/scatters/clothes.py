@@ -2,6 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+
 from collections.abc import Iterable
 
 import bpy
@@ -41,12 +42,19 @@ def cloth_sim(clothes, obj=None, end_frame=50, **kwargs):
 
 
 class ClothesCover:
+    def __init__(self, bbox=(.3, .7, .3, .7), factory_fn=None, width=None, size=None):
         from infinigen.assets.clothes import blanket, pants, shirt
+        probs = np.array([2, 1, 1])
+        if factory_fn is None:
             factory_fn = np.random.choice(
                 [blanket.BlanketFactory, shirt.ShirtFactory, pants.PantsFactory],
                 p=probs / probs.sum()
             )
         self.factory = factory_fn(np.random.randint(1e5))
+        if width is not None:
+            self.factory.width = width
+        if size is not None:
+            self.factory.size = size
         self.col = make_asset_collection(self.factory, name='clothes', centered=True, n=3, verbose=False)
         self.bbox = bbox
         self.z_offset = .2
@@ -67,3 +75,4 @@ class ClothesCover:
 
 
 def apply(obj, selection=None, **kwargs):
+    ClothesCover().apply(obj, selection, **kwargs)
