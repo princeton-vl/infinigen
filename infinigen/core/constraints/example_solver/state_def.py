@@ -27,6 +27,7 @@ from infinigen.core.constraints import (
     reasoning as r
 )
 from .geometry import parse_scene
+import trimesh
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,9 @@ class ObjectState:
     dof_matrix_translation: np.array = None
     dof_rotation_axis: np.array = None
     _pose_affects_score = None
+
+    fcl_obj = None
+    col_obj = None
 
     # store whether this object is active for the current greedy stage
     # inactive objects arent returned by scene() and arent accessible through blender (for perf)
@@ -65,6 +69,8 @@ class State:
     objs: OrderedDict[str, ObjectState]
 
     trimesh_scene: trimesh.Scene = None
+    bvh_cache : dict = field(default_factory=dict)
+    planes: Planes = None
     
     def print(self):
 
@@ -132,6 +138,9 @@ class State:
     def __post_init__(self):
         bpy_objs = [o.obj for o in self.objs.values() if o.obj is not None]
         self.trimesh_scene = parse_scene.parse_scene(bpy_objs)
+        self.planes = Planes()
+
+    def save(self, filename: str):
         return
         # serialize objs and python modules
         for os in self.objs.values():
@@ -140,6 +149,7 @@ class State:
                 path = os.generator.__module__ + '.' + os.generator.__name__
                 os.generator = path
 
+        with open(filename, 'wb') as file:
             pickle.dump(self, file)
         for os in self.objs.values():
             os.obj = bpy.data.objects[os.obj]
@@ -148,6 +158,9 @@ class State:
                 *mod, name = os.generator.split('.')
                 mod = importlib.import_module('.'.join(mod))
                 os.generator = getattr(mod, name)
+    @classmethod
+    def load(cls, filename: str):
+        with open(filename, 'rb') as file:
             state = pickle.load(file)
 
         # all objs were serialized as strings, unpack them
@@ -160,6 +173,7 @@ class State:
                 )
             o.obj = bpy.data.objects[o.obj]
 
+
 def state_from_dummy_scene(col: bpy.types.Collection) -> State:
 
     objs = {}
@@ -168,5 +182,8 @@ def state_from_dummy_scene(col: bpy.types.Collection) -> State:
         tags.add(t.SpecificObject(obj.name))
         objs[obj.name] = ObjectState(
             obj=obj,
+            generator=None,
             tags=tags
         )
+    return State(objs=objs)
+
