@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 
 from collections import defaultdict
 
@@ -10,6 +13,7 @@ from shapely import LineString, union
 
 from infinigen.assets.utils.shapes import shared
     unit_cast, update_exterior_edges, update_shared_edges, update_staircase_occupancies
+import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.math import FixedSeed
 
@@ -38,6 +42,8 @@ class SegmentMaker:
             except:
                 pass
         exterior_edges = update_exterior_edges(segments, shared_edges)
+        neighbours_all = {k: set(compute_neighbours(se, constants.SEGMENT_MARGIN)) for k, se in shared_edges.items()}
+        exterior_neighbours = set(compute_neighbours(exterior_edges, constants.SEGMENT_MARGIN))
         staircase_occupancies = update_staircase_occupancies(segments, staircase)
         return {
             'segments': segments,
