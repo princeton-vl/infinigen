@@ -592,6 +592,7 @@ class LargeShelfBaseFactory(AssetFactory):
 
         if params.get('ret_params', False):
             return obj, obj_params
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
