@@ -14,6 +14,7 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
 
 
 class TablewareFactory(AssetFactory):
@@ -25,10 +26,18 @@ class TablewareFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.thickness = .01
             material_assignments = AssetList['TablewareFactory'](fragile=self.is_fragile,
+                                                        transparent=self.allow_transparent)
+
+            self.surface = material_assignments['surface'].assign_material()
             self.inside_surface = material_assignments['inside'].assign_material()
+            self.guard_surface = material_assignments['guard'].assign_material()
 
+            scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+            self.scratch, self.edge_wear = material_assignments['wear_tear']
 
+            self.scratch = None if uniform() > scratch_prob else self.scratch
             self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+
             self.guard_depth = self.thickness
             self.has_guard = False
             self.has_inside = False
@@ -82,6 +91,10 @@ class TablewareFactory(AssetFactory):
             self.inside_surface.apply(assets, selection='inside', clear=True, metal_color='bw+natural')
         if self.has_guard:
             self.guard_surface.apply(assets, selection='guard', metal_color=self.metal_color)
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
 
     def solidify_with_inside(self, obj, thickness):
         max_z = np.max(read_co(obj)[:, -1])
