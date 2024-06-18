@@ -20,6 +20,8 @@ from infinigen.assets.shelves.utils import nodegroup_tagged_cube
     shader_shelves_white_metallic, shader_shelves_white_metallic_sampler,
     shader_shelves_black_metallic, shader_shelves_black_metallic_sampler)
 
+from infinigen.assets.utils.object import new_bbox
+from infinigen.core.util.math import FixedSeed
 
 @node_utils.to_nodegroup('nodegroup_screw_head', singleton=False, type='GeometryNodeTree')
 def nodegroup_screw_head(nw: NodeWrangler):
@@ -762,6 +764,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 class CellShelfBaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(CellShelfBaseFactory, self).__init__(factory_seed, coarse=coarse)
+        with FixedSeed(factory_seed):
             self.params = self.sample_params()
             self.params = self.get_asset_params(self.params)
 
@@ -844,6 +847,7 @@ class CellShelfBaseFactory(AssetFactory):
             size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
+        obj_params = self.params
         surface.add_geomod(obj, geometry_nodes, attributes=[], input_kwargs=obj_params, apply=True)
         tagging.tag_system.relabel_obj(obj)
 
@@ -863,7 +867,12 @@ class CellShelfFactory(CellShelfBaseFactory):
         params['vertical_cell_num'] = max(int(params['Dimensions'][2] / params['cell_size']), 1)
         params['depth'] = params['Dimensions'][0]
         params['has_base_frame'] = False
+        params['Dimensions'] = list(params['Dimensions'])
+        params['Dimensions'][2] = params['vertical_cell_num'] * params['cell_size']
         return params
+
+    def create_placeholder(self, **kwargs) -> bpy.types.Object:
+        x,y,z = self.params['Dimensions'][0], self.params['Dimensions'][1], self.params['Dimensions'][2]
         return new_bbox(0, x, -y/2 * 1.1, y/2 * 1.1, 0, z + (self.params['vertical_cell_num'] - 1) * self.params['division_board_thickness'] + 2 * self.params['external_board_thickness'] )
     
 class TVStandFactory(CellShelfFactory):
