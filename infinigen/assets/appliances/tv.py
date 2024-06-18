@@ -16,6 +16,8 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
+from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.materials.text import Text
 
 
 class TVFactory(AssetFactory):
@@ -46,7 +48,26 @@ class TVFactory(AssetFactory):
             self.screen_surface = materials['screen_surface']
             self.support_surface = materials['support']
 
+    def get_material_params(self):
+        material_assignments = AssetList['TVFactory']()
+        surface = material_assignments['surface'].assign_material()
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
 
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+
+        args = (self.factory_seed, False)
+        kwargs = {'emission': 0.01 if uniform() < 0.1 else uniform(2, 3)}
+        screen_surface = material_assignments['screen_surface'].assign_material()
+        if screen_surface == Text:
+            screen_surface = screen_surface(*args, **kwargs)
+        support = material_assignments['support'].assign_material()
         return {
             'surface': surface, 'scratch': scratch, 'edge_wear': edge_wear, 'screen_surface': screen_surface,
             'support': support
