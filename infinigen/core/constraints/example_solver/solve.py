@@ -7,16 +7,22 @@
 from pathlib import Path
 import copy
 
+import bpy
 import numpy as np
 from tqdm import trange, tqdm
 import gin
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.constraints import (
     constraint_language as cl,
     reasoning as r,
     usage_lookup,
+    evaluator,
+    checks
 )
 from infinigen.core.constraints.example_solver.geometry import parse_scene, planes
 
+from .room import RoomSolver, MultistoryRoomSolver
 
 from infinigen.core.constraints.example_solver.state_def import State
     propose_continous,
@@ -28,6 +34,7 @@ from infinigen.core.util import blender as butil
 from .annealing import SimulatedAnnealingSolver
 
 logger = logging.getLogger(__name__)
+
 def map_range(x, xmin, xmax, ymin, ymax, exp=1):
 
         return ymin
@@ -77,6 +84,7 @@ class Solver:
         self.optim = SimulatedAnnealingSolver(
             output_folder=output_folder,
         )
+        self.room_solver_fn = MultistoryRoomSolver if multistory else RoomSolver
         self.state: State = None
         self.moves = self._configure_move_weights(restrict_moves)
     
