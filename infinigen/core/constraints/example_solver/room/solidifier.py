@@ -1,5 +1,9 @@
 # Copyright (c) Princeton University.
+# Authors: 
+# - Lingjie Mei: primary author
+# - Karhan Kayan: fix constants
 
+import logging
 from collections import defaultdict, deque
 from collections.abc import Iterable, Mapping, Sequence
 
@@ -11,6 +15,8 @@ from numpy.random import uniform
 from shapely import LineString, line_interpolate_point, remove_repeated_points, simplify
 from shapely.ops import linemerge
 from numpy.random import uniform
+
+from infinigen.core.constraints.example_solver.room.types import RoomGraph, RoomType, get_room_type
 from infinigen.core.constraints.example_solver.room.configs import (
     COMBINED_ROOM_TYPES, PANORAMIC_ROOM_TYPES,
     WINDOW_ROOM_TYPES, TYPICAL_AREA_ROOM_TYPES,
@@ -27,10 +33,16 @@ from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new
 from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
+from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
 from infinigen.core.constraints import constraint_language as cl
+
+from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core.util.logging import BadSeedError
 
+logger = logging.getLogger(__name__)
+
+_eps = 0.01
 
 @gin.configurable(denylist=['graph', 'level'])
 class BlueprintSolidifier:
@@ -41,6 +53,7 @@ class BlueprintSolidifier:
         self.has_ceiling = has_ceiling
         self.combined_room_types = combined_room_types
         self.panoramic_room_types = panoramic_room_types
+        self.beveler = BevelSharp(mult=10)
         self.enable_open = enable_open
 
     def get_entrance(self, names):
@@ -68,23 +81,51 @@ class BlueprintSolidifier:
         neighbours = info['neighbours']
         shared_edges = info['shared_edges']
         exterior_edges = info['exterior_edges']
+
         names = {k: self.graph.rooms[assignment.index(k)] for k in segments}
         rooms = {k: self.make_room(p, exterior_edges.get(k, None)) for k, p in segments.items()}
+        for k, o in rooms.items():
             o.name = f'{names[k]}-{self.level}'
            # if segments[k].area > 2.5 * TYPICAL_AREA_ROOM_TYPES[get_room_type(names[k])] + 5:
            #     raise BadSeedError()
            # 
+
         open_cutters, door_cutters = self.make_interior_cutters(neighbours, shared_edges, segments, names)
         exterior_cutters = self.make_exterior_cutters(exterior_edges, names)
+        
         for k, r in rooms.items():
             r.location[-1] += WALL_HEIGHT * self.level
         for cutters in [open_cutters, door_cutters, exterior_cutters]:
             for k, c in self.unroll(cutters):
+                c.location[-1] += WALL_HEIGHT * self.level
+        
+        butil.put_in_collection(rooms.values(), 'placeholders:room_shells')
+
+        state = self.convert_solver_state(
+            rooms, segments, shared_edges, open_cutters, door_cutters, exterior_cutters
+        )
+
+        def clone_as_meshed(o):
+            new = butil.copy(o)
+            new.name = o.name + '.meshed'
+            return new
+        rooms = {k: clone_as_meshed(r) for k, r in rooms.items()}
+
+        # Cut windows & doors from final room meshes
+        cutter_col = butil.get_collection('placeholders:portal_cutters')
+        for cutters in [open_cutters, door_cutters, exterior_cutters]:
+            for k, c in self.unroll(cutters):
                 for k_ in k:
+                    butil.put_in_collection(c, cutter_col)
+                    before = len(rooms[k_].data.polygons)
                     butil.modify_mesh(
                         rooms[k_], 'BOOLEAN', object=c, operation='DIFFERENCE', use_self=True,
                         use_hole_tolerant=True
                     )
+                    after = len(rooms[k_].data.polygons)
+                    logger.debug(f'Cutting {c.name} from {rooms[k_].name}, {before=} {after=}')
+        
+        for r in rooms.values():
             butil.modify_mesh(r, 'TRIANGULATE', min_vertices=3)
             remove_faces(r, read_area(r) < 5e-4)
             with butil.ViewportMode(r, 'EDIT'):
@@ -110,9 +151,22 @@ class BlueprintSolidifier:
             if not orthogonal.all():
                 raise BadSeedError('No orthogonal edges')
 
+        butil.group_in_collection(rooms.values(), 'placeholders:room_meshes')
+
+        return state, rooms
 
     def convert_solver_state(self, rooms, segments, shared_edges, open_cutters, door_cutters, exterior_cutters):
+        obj_states = {}
         for k, o in rooms.items():
+            
+            tags = {t.Semantics.Room, t.Semantics(o.name.split('_')[0])}
+            
+            tags.add(t.SpecificObject(o.name))
+            obj_states[o.name] = ObjectState(
+                obj=o, 
+                tags=tags,
+                contour=segments[k]
+            )
         for k, r in rooms.items():
             relations = obj_states[r.name].relations
             for other in shared_edges[k]:
@@ -122,9 +176,34 @@ class BlueprintSolidifier:
                     ct = cl.ConnectorType.Door
                 else:
                     ct = cl.ConnectorType.Wall
+                relations.append(RelationState(
+                    cl.RoomNeighbour({ct}), rooms[other].name)
+                )
+
         cut_state = lambda x: RelationState(cl.CutFrom(), rooms[x].name)
         for cutters in [door_cutters, open_cutters, exterior_cutters]:
             for k, c in self.unroll(cutters):
+
+                tags = set({t.Semantics.Cutter, t.SpecificObject(c.name)})
+
+                # TODO Lingjie - do not store whole-object window/door semantics in per-vertex attributes
+                meshtags = tagging.union_object_tags(c)
+                for tag in [t.Semantics.Door, t.Semantics.Window, t.Semantics.Entrance]:
+                    if tag.value in meshtags:
+                        tags.add(tag)
+
+                if t.Semantics.Door in meshtags:
+                    # include full possible swing extent of door in state to prevent objects blocking
+                    c.scale.x *= (DOOR_WIDTH + WALL_THICKNESS) / DOOR_WIDTH
+
+                obj_states[c.name] = ObjectState(
+                    obj=c, 
+                    tags=tags,
+                    relations=list(cut_state(k_) for k_ in k)
+                )
+
+        return State(objs=obj_states)
+
     def make_room(self, obj, exterior_edges=None):
         obj = polygon2obj(canonicalize(obj), True)
         butil.modify_mesh(obj, "WELD", merge_threshold=.2)
@@ -141,11 +220,16 @@ class BlueprintSolidifier:
                 -1) < WALL_THICKNESS * 4).any(-1).astype(int)
         else:
             exterior = np.zeros(len(obj.data.polygons), dtype=int)
+        
+        assert len(obj.data.vertices) > 0
 
         obj.vertex_groups.new(name='visible_')
         butil.modify_mesh(obj, 'SOLIDIFY', thickness=WALL_THICKNESS / 2, offset=-1, use_even_offset=True,
                           shell_vertex_group='visible_', use_quality_normals=True)
         obj.vertex_groups.remove(obj.vertex_groups['visible_'])
+        tagging.tag_object(obj, t.Semantics.Room)
+        return obj
+
     def make_interior_cutters(self, neighbours, shared_edges, segments, names):
         name_groups = {}
         for k, n in names.items():
@@ -184,6 +268,11 @@ class BlueprintSolidifier:
         entrance = self.get_entrance(names)
 
         for k, mls in exterior_edges.items():
+
+            room_type = get_room_type(names[k])
+            pano_chance = self.panoramic_room_types.get(room_type, 0)
+            is_panoramic = uniform() < pano_chance
+            
             lss = []
             for ls in mls.geoms:
                 coords = ls.coords[:]
@@ -219,8 +308,11 @@ class BlueprintSolidifier:
     def make_door_cutter(self, es, direction):
         lengths = [ls.length for ls in es.geoms]
         (x, y), (x_, y_) = es.geoms[np.argmax(lengths)].coords
+        
         cutter = new_cube()
         vertical = np.abs(x - x_) < .1
+        cutter.scale = DOOR_WIDTH / 2 * (1 - _eps), DOOR_WIDTH,  DOOR_SIZE / 2
+
         butil.apply_transform(cutter, True)
         if vertical:
             y = uniform(min(y, y_) + DOOR_MARGIN, max(y, y_) - DOOR_MARGIN)
@@ -230,6 +322,7 @@ class BlueprintSolidifier:
             z_rot = 0 if direction[-1] > 0 else np.pi
         cutter.location = x, y, DOOR_SIZE / 2 + WALL_THICKNESS / 2 + _eps
         cutter.rotation_euler[-1] = z_rot
+        tagging.tag_object(cutter, t.Semantics.Door)
         self.tag(cutter)
         return cutter
 
@@ -245,6 +338,7 @@ class BlueprintSolidifier:
             1 - lam) * y_, DOOR_SIZE / 2 + WALL_THICKNESS / 2 + _eps
         cutter.rotation_euler = 0, 0, np.arctan2(y_ - y, x_ - x)
         self.tag(cutter)
+        tagging.tag_object(cutter, t.Semantics.Entrance)
         return cutter
 
     def make_window_cutter(self, ls, is_panoramic):
@@ -267,6 +361,7 @@ class BlueprintSolidifier:
         cutter.location = lam * x + (1 - lam) * x_, lam * y + (1 - lam) * y_, z_loc
         cutter.rotation_euler = 0, 0, np.arctan2(y - y_, x - x_)
         self.tag(cutter)
+        tagging.tag_object(cutter, t.Semantics.Window)
         return cutter
 
     def make_open_cutter(self, es):
@@ -308,6 +403,7 @@ class BlueprintSolidifier:
         butil.apply_transform(cutter, True)
         butil.modify_mesh(cutter, 'SOLIDIFY', thickness=WALL_THICKNESS * 3, offset=0, use_even_offset=True)
         self.tag(cutter)
+        tagging.tag_object(cutter, t.Semantics.Open)
         return cutter
 
     @staticmethod
@@ -318,4 +414,7 @@ class BlueprintSolidifier:
         wall = ~(ceiling | floor)
         write_attr_data(obj, 'segment_id', np.arange(len(center)), 'INT', 'FACE')
                         np.ones_like(ceiling) if visible else np.zeros_like(ceiling), 'INT', 'FACE')
+        write_attr_data(obj, f'{PREFIX}{t.Subpart.Invisible.value}',
                         np.zeros_like(ceiling) if visible else np.ones_like(ceiling), 'INT', 'FACE')
+        parse_scene.preprocess_obj(obj)
+        tagging.tag_canonical_surfaces(obj)
