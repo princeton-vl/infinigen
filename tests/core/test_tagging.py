@@ -5,6 +5,7 @@
 # Authors: Alexander Raistrick
 
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, surface, tags as t
 
 import numpy as np
 import bpy
@@ -15,6 +16,9 @@ def test_tagging_basic():
     butil.clear_scene()
     
     cube = butil.spawn_cube()
+    tag = t.StringTag('cubey_tag')
+    tag_name = tag.desc
+    tagging.tag_object(cube, tag)
 
     assert len([n for n in cube.data.attributes.keys() if n.startswith(tagging.PREFIX)]) == 0
     assert list(tagging.tag_system.tag_dict.keys()) == [tag_name]
@@ -31,16 +35,24 @@ def test_tagging_basic():
     n_poly = len(cube.data.polygons)
     assert len(tagint_vals) == n_poly
     assert np.all(tagint_vals == cubey_tag_int)
+    assert tagging.tagged_face_mask(cube, tag).all()
 
+    halftag = t.StringTag('last_half')
     mask = np.arange(n_poly) >= (n_poly // 2)
+    tagging.tag_object(cube, halftag, mask)
 
+    combined_half_name = tag.desc + '.' + halftag.desc
     assert list(tagging.tag_system.tag_dict.keys()) == [tag_name, combined_half_name]
 
+    assert np.all(tagging.tagged_face_mask(cube, halftag) == mask)
+    assert np.all(tagging.tagged_face_mask(cube, {tag, halftag}) == mask)
+    assert np.all(tagging.tagged_face_mask(cube, tag) == np.ones(n_poly, dtype=bool))
 
     with butil.ViewportMode(cube, mode='EDIT'):
         butil.select(cube)
         bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
 
+    assert tagging.tagged_face_mask(cube, halftag).sum() == 2 * mask.sum()
 
 def get_canonical_tag_cube():
 
@@ -76,7 +88,10 @@ def test_tag_canonical_negated():
 
     assert len(cube.data.polygons) == 12
 
+    assert tagging.tagged_face_mask(cube, t.Subpart.Top).sum() == 2
 
+    all_but_top = tagging.tagged_face_mask(cube, -t.Subpart.Top)
     assert all_but_top.sum() == 10 # 4*2 side triangles, 2 bottom triangles
 
+    side = tagging.tagged_face_mask(cube, {-t.Subpart.Top, -t.Subpart.Bottom})
     assert side.sum() == 8 # 4 sides, 2 triangles 
