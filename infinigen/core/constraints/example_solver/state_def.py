@@ -111,6 +111,8 @@ class State:
             match x:
                 case np.ndarray():
                     return x.tolist()
+                case np.int64():
+                    return x.item()
                 case t.Tag():
                     return str(x)
                 case bpy.types.Object():
