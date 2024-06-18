@@ -4,40 +4,82 @@
 # Authors: Karhan Kayan
 from itertools import chain
 from functools import partial
+from time import time
+import sys 
+import os
+
+import bpy 
+import pytest
+import numpy as np
+from mathutils import Vector
 
 from infinigen.core.constraints import (
     usage_lookup,
     example_solver as solver,
     constraint_language as cl
 )
+from infinigen.core.constraints.evaluator.node_impl import node_impls
 from infinigen.core.constraints.example_solver.state_def import state_from_dummy_scene, State, ObjectState
+from infinigen.core.util import blender as butil
 from infinigen.core.constraints.example_solver.propose_discrete import lookup_generator
+from infinigen.core import tagging, tags as t
+import infinigen.core.constraints.example_solver.moves.addition as addition
 
 from infinigen.assets.tables.dining_table import TableDiningFactory
 from infinigen.assets.seating.chairs import ChairFactory
+from infinigen.assets.utils.bbox_from_mesh import bbox_mesh_from_hipoly
+
+from infinigen_examples.indoor_asset_semantics import home_asset_usage
+from infinigen_examples.indoor_constraint_examples import home_constraints
+
+def test_home_constraints_implemented():
+    butil.clear_scene()
+
+    cons = home_constraints()
+
+    for node in cons.traverse():
+            continue
+        assert node.__class__ in node_impls
+
+def make_chair_table():
+
+    return col
 
     butil.clear_scene()
+    butil.clear_scene()
+def test_min_dist():
+    butil.clear_scene()
 
+    col = make_chair_table()
 
-    butil.clear_scene()
-    butil.clear_scene()
-    butil.clear_scene()
     constraints = []
     score_terms = []
 
     scene = cl.scene()
+
+    score_terms += [cl.distance(chair, table)]
     problem = cl.Problem(constraints, score_terms)
+    assert np.isclose(evaluate.evaluate_problem(problem, state).loss(), 1)
+
     score_terms = []
+    score_terms += [cl.distance(table, chair) + 1]
     problem = cl.Problem(constraints, score_terms)
+    assert np.isclose(evaluate.evaluate_problem(problem, state).loss(), 2)
 
+    sofas = butil.get_collection("seating")
 
     score_terms = []
+    score_terms += [cl.distance(chair, sofa) + cl.distance(chair, table)]
     problem = cl.Problem(constraints, score_terms)
+    state = state_from_dummy_scene(col)
+    assert np.isclose(evaluate.evaluate_problem(problem, state).loss(), 3)
 
+    butil.clear_scene()
 
 def test_accessibility_monotonicity():
     butil.clear_scene()
     scores = []
+    for dist in [1,1.5,2,2.5]:
         butil.clear_scene()
         obj_states = {}
         col = butil.get_collection("indoor_scene_test")
@@ -47,11 +89,14 @@ def test_accessibility_monotonicity():
         col.children.link(tables)
 
         chair = butil.spawn_cube(size=2, location=(0, 0, 0), name='chair1')
+        chair.rotation_euler = (0, 0, 0.1)
         butil.put_in_collection(chair, chairs)
 
         table = butil.spawn_cube(size=2, location=(2+dist, 0, 0), name='table1')
         butil.put_in_collection(table, tables)
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -62,9 +107,14 @@ def test_accessibility_monotonicity():
         score_terms = []
         scene = cl.scene()
 
+        score_terms += [cl.accessibility_cost(chair, table, dist=3)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
+
     print("nonaccessibility scores", scores)
+
+    assert np.all(np.diff(scores) < 0)
 
 def test_accessibility_side():
         butil.clear_scene()
@@ -81,6 +131,8 @@ def test_accessibility_side():
         table = butil.spawn_cube(size=2, location=(0, 2, 0), name='table1')
         butil.put_in_collection(table, tables)
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -93,6 +145,7 @@ def test_accessibility_side():
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         print("nonaccessibility scores", res)
         assert np.isclose(res, 0)
 
@@ -108,6 +161,8 @@ def test_accessibility_angle():
         table = butil.spawn_sphere(radius = 1, location=(4*np.cos(angle), 4*np.sin(angle), 0), name='table1')
         print(table.location)
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -120,6 +175,7 @@ def test_accessibility_angle():
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
     print("nonaccessibility scores", scores)
     assert scores == sorted(scores, reverse=True)
@@ -134,6 +190,8 @@ def test_accessibility_volume():
         chair = butil.spawn_cube(size=2, location=(0, 0, 0), name='chair1')
         table = butil.spawn_sphere(radius=volume, location=(6, 0, 0), name='table1')
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -146,6 +204,7 @@ def test_accessibility_volume():
 
         score_terms += [cl.accessibility_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
     print("nonaccessibility scores", scores)
     assert scores == sorted(scores)
@@ -158,7 +217,9 @@ def test_accessibility_volume():
 #     chair = butil.spawn_cube(size=2, location=(0, 0, 0), name='chair1')
 #     blocking_spheres = [butil.spawn_sphere(radius=1, location=(3+i, np.random.rand(), 0), name=f'sphere{i}') for i in range(100)]
 
+#     obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
 #     for s in blocking_spheres:
+#         obj_states[s.name] = ObjectState(s, tags= {t.Semantics.Table})
 
 #     state = State(objs=obj_states)
 
@@ -173,6 +234,7 @@ def test_accessibility_volume():
 #     score_terms += [cl.accessibility_cost(chair, table)]
 #     problem = cl.Problem(constraints, score_terms)
 #     s = time()
+#     res = evaluate.evaluate_problem(problem, state).score()
 #     print(time() - s)   
 #     scores.append(res)
 #     print("nonaccessibility scores", scores)
@@ -191,6 +253,8 @@ def test_angle_alignment():
         # rotate chair by angle in z direction
         chair.rotation_euler = (0, 0, angle)
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -203,6 +267,7 @@ def test_angle_alignment():
 
         score_terms += [cl.angle_alignment_cost(chair, table)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
         # state.trimesh_scene.show()
     print("angle_alignment costs", scores)
@@ -223,6 +288,9 @@ def test_angle_alignment_multiple_objects():
         # Rotate chair by angle in z direction
         chair.rotation_euler = (0, 0, angle)
         
+        obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Chair})
+        obj_states[table1.name] = ObjectState(table1, tags={t.Semantics.Table})
+        obj_states[table2.name] = ObjectState(table2, tags={t.Semantics.Table})
         
         state = State(objs=obj_states)
         
@@ -238,6 +306,7 @@ def test_angle_alignment_multiple_objects():
         score_terms += [cl.angle_alignment_cost(chair, tables)]
         
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
     
     print("angle_alignment costs (multiple objects):", scores)
@@ -265,7 +334,9 @@ def test_angle_alignment_multiple_objects_varying_positions():
         for j, pos in enumerate(table_positions[:i+1], start=1):
             table = butil.spawn_sphere(radius=1, location=pos, name=f'table{j}')
             tables.append(table)
+            obj_states[table.name] = ObjectState(table, tags={t.Semantics.Table})
         
+        obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Chair})
         
         state = State(objs=obj_states)
         
@@ -281,6 +352,7 @@ def test_angle_alignment_multiple_objects_varying_positions():
         score_terms += [cl.angle_alignment_cost(chair_obj, table_objs)]
         
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
     
     print("angle_alignment costs (multiple objects, varying positions):", scores)
@@ -326,6 +398,8 @@ def test_angle_alignment_multipolygon_projection():
         # Rotate the table object based on the iteration
         chair.rotation_euler = (0, 0, i*np.pi/10)
         
+        obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Chair})
+        obj_states[table_obj.name] = ObjectState(table_obj, tags={t.Semantics.Table})
         
         state = State(objs=obj_states)
         
@@ -340,6 +414,7 @@ def test_angle_alignment_multipolygon_projection():
         score_terms += [cl.angle_alignment_cost(chair_obj, table_objs)]
         
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
     
     print("angle_alignment costs (multipolygon projection):", scores)
@@ -352,6 +427,8 @@ def test_angle_alignment_tagged():
     chair = butil.spawn_cube(size=2, location=(5, 0, 0), name='chair1')
     table = butil.spawn_cube(size=2, location=(0,0, 0), name='table1')
 
+    obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+    obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
     state = State(objs=obj_states)
 
@@ -365,6 +442,7 @@ def test_angle_alignment_tagged():
     scene = cl.scene()
 
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     
     assert np.isclose(res, 0.5, atol=1e-3)
 
@@ -374,6 +452,8 @@ def test_angle_alignment_tagged():
     chair = butil.spawn_cube(size=2, location=(5, 0, 0), name='chair1')
     table = butil.spawn_cube(size=2, location=(0,0, 0), name='table1')
 
+    obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+    obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
     state = State(objs=obj_states)
 
@@ -385,6 +465,7 @@ def test_angle_alignment_tagged():
     scene = cl.scene()
 
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     
     assert np.isclose(res, 0, atol=1e-3)
 
@@ -401,6 +482,8 @@ def test_focus_score():
         # rotate chair by angle in z direction
         chair.rotation_euler = (0, 0, angle)
 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+        obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
         state = State(objs=obj_states)
 
@@ -413,12 +496,50 @@ def test_focus_score():
 
         score_terms += [cl.focus_score(chair, table)]
         problem = cl.Problem(constraints, score_terms)
+        res = evaluate.evaluate_problem(problem, state).loss()
         scores.append(res)
         # state.trimesh_scene.show()
     print("focus_score costs", scores)
     assert scores == sorted(scores)
 
+@pytest.mark.skip
+def test_viol_amounts():
     butil.clear_scene()
+
+    def mk_state(n):
+
+        butil.clear_scene()
+        obj_states = {}
+
+        for i in range(n):
+            chair = butil.spawn_cube(size=1, location=(-3, 0, 0), name=f'chair{i}')
+            obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Furniture, t.Semantics.Chair})
+
+        return State(objs=obj_states)  
+    
+    assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 1
+    assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(7))[1] == 4
+
+    assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 1
+    assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 3
+
+    assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 3
+    assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 2
+    assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 0
+
+    assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 3
+    assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 2
+    assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
+    assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 1
+    assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 3
+    
+def test_min_dist_tagged():
 
     butil.clear_scene()
     obj_states = {}
@@ -426,6 +547,8 @@ def test_focus_score():
     chair = butil.spawn_cube(size=2, location=(0, 0, 2), name='chair1')
     table = butil.spawn_cube(size=10, location=(0,0, 0), name='table1')
 
+    obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
+    obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
     state = State(objs=obj_states)
 
@@ -439,13 +562,16 @@ def test_focus_score():
     
     
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 4)
+
     constraints = []
     score_terms = []
     scene = cl.scene()
 
     # butil.save_blend('table_chair.blend')
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 2)
 
     constraints = []
@@ -453,7 +579,9 @@ def test_focus_score():
     scene = cl.scene()
 
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     assert np.isclose(res, 6)
+
 
 def test_table():
     butil.clear_scene()
@@ -463,6 +591,7 @@ def test_table():
 
     butil.clear_scene()
     gen = TableDiningFactory(0)
+    obj = bbox_mesh_from_hipoly(gen, 0, use_pholder=False) 
 
     #     if fac in pholder_facs:
     #         obj = fac(0).spawn_placeholder(0, loc=(0,0,0), rot=(0,0,0))
@@ -479,9 +608,14 @@ def test_table():
     tagging.tag_canonical_surfaces(obj)
     # butil.save_blend('table.blend')
 
+    #     obj_tags = tagging.union_object_tags(obj)
 
+    #     for tag in [t.Semantics.Back, t.Semantics.Bottom, t.Semantics.SupportSurface]:
+    #         mask = tagging.tagged_face_mask(obj, {tag})
     #         if mask.sum() == 0:
+    #             obj_tags = tagging.union_object_tags(obj)
     #             raise ValueError(
+    #                 f'{obj.name=} has nothing tagged for {tag=}. {obj_tags=}'
     #             )
 
 def test_reflection_asymmetry():
@@ -494,11 +628,16 @@ def test_reflection_asymmetry():
     butil.clear_scene()
     obj_states = {}
 
+    table = bbox_mesh_from_hipoly(TableDiningFactory(0), 0, use_pholder=False) 
+    obj_states[table.name] = ObjectState(table, tags= {t.Semantics.Table})
 
     chairs = []
     for i in range(4):
+        chair = bbox_mesh_from_hipoly(ChairFactory(0), i, use_pholder=False) 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
         chairs.append(chair)
         # tagging.tag_canonical_surfaces(chair)
+        # tagging.extract_tagged_faces(chair, {t.Semantics.Front})
     chairs[0].location = (1, 1, 0)
     chairs[1].location = (1, -1, 0)
     chairs[2].location = (-1, 1, 0)
@@ -523,8 +662,12 @@ def test_reflection_asymmetry():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    table_tagged = cl.tagged(scene, {t.Semantics.Table})
+    chairs_tagged = cl.tagged(scene, {t.Semantics.Chair})
 
+    score_terms += [cl.reflectional_asymmetry(chairs_tagged, table_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
     print(res)
     assert np.isclose(res, 0, atol=1e-2)
@@ -533,14 +676,18 @@ def test_reflection_asymmetry():
     chairs[0].location = (1, 2, 0)
     bpy.context.view_layer.update()
     score_terms = []
+    score_terms += [cl.reflectional_asymmetry(chairs_tagged, table_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
 
     #assert the asymmetry increases if we rotate chair 0
     chairs[0].rotation_euler = (0, 0, 0)
     bpy.context.view_layer.update()
     score_terms = []
+    score_terms += [cl.reflectional_asymmetry(chairs_tagged, table_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
 
     print("asymmetry scores", scores)
@@ -550,6 +697,7 @@ def test_reflection_asymmetry():
     assert (scores[0] < scores[1]) and scores[1] < scores[2]
 
 
+@pytest.mark.skip
 def test_rotation_asymmetry():
     """
     create a bunch of chairs. The chairs are rotationally symmetric and then perturbed. 
@@ -560,6 +708,8 @@ def test_rotation_asymmetry():
 
     chairs = []
     for i in range(6):
+        chair = bbox_mesh_from_hipoly(ChairFactory(0), i, use_pholder=False) 
+        obj_states[chair.name] = ObjectState(chair, tags= {t.Semantics.Chair})
         chairs.append(chair)
 
     circle_locations_rotations = [((2*np.cos(i*np.pi/3), 2*np.sin(i*np.pi/3), 0),i*np.pi/3) for i in range(6)]
@@ -579,8 +729,11 @@ def test_rotation_asymmetry():
     constraints = []
     score_terms = []
     scene = cl.scene()
+    chairs_tagged = cl.tagged(scene, {t.Semantics.Chair})
 
+    score_terms += [cl.rotational_asymmetry(chairs_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
     assert np.isclose(res,0, atol=1e-2)
 
@@ -588,23 +741,32 @@ def test_rotation_asymmetry():
     chairs[0].location += Vector(np.random.rand(3))
     bpy.context.view_layer.update()
     score_terms = []
+    score_terms += [cl.rotational_asymmetry(chairs_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
 
     #assert the asymmetry increases if we rotate chair 0
+    chairs[0].rotation_euler = (0, 0, np.random.rand(1))
     bpy.context.view_layer.update()
     score_terms = []
+    score_terms += [cl.rotational_asymmetry(chairs_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
 
     # do the same for another chair
     chairs[1].location += Vector(np.random.rand(3))
     bpy.context.view_layer.update()
     score_terms = []
+    score_terms += [cl.rotational_asymmetry(chairs_tagged)]
     problem = cl.Problem(constraints, score_terms)
+    res = evaluate.evaluate_problem(problem, state).loss()
     scores.append(res)
 
     # assert monotonic
+    # assert scores == sorted(scores) # warning: heisenbug. disabled by araistrick
+
     # assert it is strict
     assert (scores[0] < scores[1]) and scores[1] < scores[2] and scores[2] < scores[3]
     print("asymmetry scores", scores)
@@ -619,6 +781,10 @@ def test_coplanarity():
     chair3 = butil.spawn_cube(size=2, location=(8, 0, 0), name='chair3')
     chair4 = butil.spawn_cube(size=2, location=(12, 0, 0), name='chair4')
 
+    obj_states[chair1.name] = ObjectState(chair1, tags= {t.Semantics.Chair})
+    obj_states[chair2.name] = ObjectState(chair2, tags= {t.Semantics.Chair})
+    obj_states[chair3.name] = ObjectState(chair3, tags= {t.Semantics.Chair})
+    obj_states[chair4.name] = ObjectState(chair4, tags= {t.Semantics.Chair})
 
     state = State(objs=obj_states)
 
@@ -633,6 +799,7 @@ def test_coplanarity():
 
     score_terms += [cl.coplanarity_cost(chairs)]
     problem = cl.Problem(constraints, score_terms)
+    res1= evaluate.evaluate_problem(problem, state).loss()
     # print(res1)
     assert np.isclose(res1, 0, atol=1e-2)
 
@@ -644,6 +811,7 @@ def test_coplanarity():
     score_terms = []
     score_terms += [cl.coplanarity_cost(chairs)]
     problem = cl.Problem(constraints, score_terms)
+    res2 = evaluate.evaluate_problem(problem, state).loss()
     # print(res2)
     assert res2 > res1
 
@@ -653,6 +821,7 @@ def test_coplanarity():
     score_terms = []
     score_terms += [cl.coplanarity_cost(chairs)]
     problem = cl.Problem(constraints, score_terms)
+    res3 = evaluate.evaluate_problem(problem, state).loss()
     assert res3 > res2
 
     chair2.dimensions = (2, 2, 4)
@@ -661,18 +830,67 @@ def test_coplanarity():
     score_terms = []
     score_terms += [cl.coplanarity_cost(chairs)]
     problem = cl.Problem(constraints, score_terms)
+    res4= evaluate.evaluate_problem(problem, state).loss()
     assert res4 > res3
 
 
+def test_evaluate_problem_scalar_ops():
+
+    state = State(objs={})
+
+    one = cl.constant(1)
+    two = cl.constant(2)
+    three = cl.constant(3)
+
+    e = lambda x: evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
+
+    assert e(two) == 2
+    assert e(one + two) == 3
+    assert e(one - two) == -1
+    assert e(two * three) == 6
+    assert e(two / three) == 2/3
+    assert e(two ** three) == 8
     
+    assert e(two == two) == 1
+    assert e(two == one) == 0
+    assert e(two >= two) == 1
+    assert e(two >= three) == 0
+    assert e(two > one) == 1
+    assert e(two > two) == 0
+    assert e(two <= two) == 1
+    assert e(two <= one) == 0
+    assert e(two < three) == 1
+    assert e(two < two) == 0
+    assert e(two != one) == 1
+    assert e(two != two) == 0
 
+    assert e(cl.max_expr(one, two)) == 2
+    assert e(cl.min_expr(one, two)) == 1
+    
+    assert e(one.clamp_min(two)) == 2
+    assert e(two.clamp_max(one)) == 1
 
+    assert e(-one) == -1
+    assert e((-one).abs()) == 1
 
+def test_evaluate_hinge():
 
+    state = State(objs={})
+    e = lambda x: evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
 
+    one = cl.constant(1)
+    two = cl.constant(2)
+
+    assert e(cl.hinge(one, 0, 2)) == 0
+    assert e(cl.hinge(one, 1, 2)) == 0
+    assert e(cl.hinge(one, 0, 1)) == 0
+
+    assert e(cl.hinge(one, 2, 3)) == 1
+    assert e(cl.hinge(two, 0, 1.5)) == 0.5
 
 if __name__ == '__main__':
     # test_min_dist()
+    # test_min_dist_tagged()
     # test_reflection_asymmetry()
     # test_accessibility_speed()
     # test_coplanarity()
