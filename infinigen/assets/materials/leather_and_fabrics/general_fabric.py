@@ -163,4 +163,8 @@ def shader_fabric(nw: NodeWrangler, weave_scale=500.0, color_scale=None, color_1
 
 
 def apply(obj, selection=None, **kwargs):
+    if not isinstance(obj, list):
+        obj = [obj]
+    for o in obj:
+        unwrap_faces(o, selection)
     common.apply(obj, shader_fabric, selection, **kwargs)
