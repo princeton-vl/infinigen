@@ -5,11 +5,14 @@ import numpy as np
 from numpy.random import uniform
 from shapely import Polygon
 from tqdm import tqdm, trange
+import gin
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general as rg
+from infinigen.core.util import blender as butil
 from .constants import WALL_HEIGHT
+
 from .graph import GraphMaker
 from .scorer import BlueprintScorer, JointBlueprintScorer
 from .contour import ContourFactory
@@ -19,9 +22,14 @@ from .solver import BlueprintSolver, BlueprintStaircaseSolver
 from .utils import polygon2obj, unit_cast
 from infinigen.core.constraints.example_solver.room import constants
 
+from infinigen.core.constraints.example_solver.state_def import State, ObjectState
 
+
+@gin.configurable
+class RoomSolver:
 
     def __init__(self, factory_seed, n_divide_trials=2500, iters_mult=150, ):
+        self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
             self.graph_maker = GraphMaker(factory_seed)
             self.graph = self.graph_maker.make_graph(np.random.randint(1e7))
@@ -36,8 +44,11 @@ from infinigen.core.constraints.example_solver.room import constants
             self.scorer = BlueprintScorer(self.graph)
             self.solidifier = BlueprintSolidifier(self.graph, 0)
 
+            self.n_divide_trials = n_divide_trials
+            self.iterations = iters_mult * n
             self.score_scale = 5
 
+    def simulated_anneal(self, assignment, info):
         score = self.scorer.find_score(assignment, info)
         with tqdm(total=self.iterations, desc='Sampling solutions') as pbar:
             while pbar.n < self.iterations:
@@ -50,8 +61,26 @@ from infinigen.core.constraints.example_solver.room import constants
                 scale = self.score_scale * pbar.n / self.iterations
                 if np.log(uniform()) < (score - score_) * scale:
                     assignment, info, score = assignment_, info_, score_
+                    pbar.set_description(f'loss={score:.4f}')
+
+        return assignment, info
 
     def solve(self):
+
+        assignment, info = [], {}
+        for i in range(self.n_divide_trials):
+            info = self.segment_maker.build_segments()
+            assignment = self.solver.find_assignment(info)
+            if assignment is not None:
+                break
+
+        if assignment is None:
+            raise ValueError(f'{self.__class__.__name__} got {assignment=} after {self.n_divide_trials=}')
+
+        assignment, info = self.simulated_anneal(assignment, info)
+
+        state, rooms_meshed = self.solidifier.solidify(assignment, info)
+
         return state, unique_roomtypes, dimensions
 
 
