@@ -19,6 +19,7 @@ import trimesh
 from infinigen.assets.utils import bbox_from_mesh
 
 from infinigen.core.constraints.example_solver.state_def import State, ObjectState
+from infinigen.core import tagging, tags as t
 
 from infinigen.core.constraints import (
     constraint_language as cl,
@@ -51,6 +52,7 @@ GLOBAL_GENERATOR_SINGLETON_CACHE = {}
 
 def sample_rand_placeholder(gen_class: type[AssetFactory]):
 
+    singleton_gen = usage_lookup.has_usage(gen_class, t.Semantics.SingleGenerator)
 
     if singleton_gen and gen_class in GLOBAL_GENERATOR_SINGLETON_CACHE:
         gen = GLOBAL_GENERATOR_SINGLETON_CACHE[gen_class]
@@ -62,8 +64,11 @@ def sample_rand_placeholder(gen_class: type[AssetFactory]):
 
     inst_seed = np.random.randint(1e7)
 
+    if usage_lookup.has_usage(gen_class, t.Semantics.RealPlaceholder):
         new_obj = gen.spawn_placeholder(inst_seed, loc=(0,0,0), rot=(0,0,0))
+    elif usage_lookup.has_usage(gen_class, t.Semantics.AssetAsPlaceholder):
         new_obj = gen.spawn_asset(inst_seed, loc=(0,0,0), rot=(0,0,0))
+    elif usage_lookup.has_usage(gen_class, t.Semantics.PlaceholderBBox):
         new_obj = bbox_from_mesh.bbox_mesh_from_hipoly(gen, inst_seed, use_pholder=True)
     else:
         new_obj = bbox_from_mesh.bbox_mesh_from_hipoly(gen, inst_seed)
