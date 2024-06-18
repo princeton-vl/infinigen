@@ -19,6 +19,7 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
+from infinigen.assets.material_assignments import AssetList
 
 
 class BedFrameFactory(ChairFactory):
@@ -48,7 +49,13 @@ class BedFrameFactory(ChairFactory):
             self.back_x_offset = 0
             self.back_y_offset = 0
 
+            materials = AssetList['BedFrameFactory']()
+            self.surface = materials['surface'].assign_material()
+            self.limb_surface = materials['limb_surface'].assign_material()
 
+            scratch_prob, edge_wear_prob = materials['wear_tear_prob']
+            self.scratch, self.edge_wear = materials['wear_tear']
+            self.scratch = None if uniform() > scratch_prob else self.scratch
             self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.clothes_scatter = surface.NoApply
