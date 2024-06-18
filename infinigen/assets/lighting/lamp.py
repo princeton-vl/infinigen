@@ -131,6 +131,11 @@ class LampFactory(AssetFactory):
             z3 = height
 
             x1, x2, x3 = 0, 0, 0
+            # if self.lamp_type == "FloorLamp" and U() < 0.5:
+            #     x2 = U(0.03, 0.1)
+            #     x3 = U(0.2, 0.4)
+            #     z2, z3 = z3, z2
+            #     reverse_lamp = False
 
             params = {
                 "StandRadius": stand_radius,
@@ -154,7 +159,11 @@ class LampFactory(AssetFactory):
         if np.random.uniform() < 0.6:
             bulb = self.bulb_fac(i)
             butil.parent_to(bulb, obj, no_inverse=True, no_transform=True)
+            bulb.location.z = obj.bound_box[-2][2] - self.params['ShadeHeight'] * 0.5
 
+        with butil.SelectObjects(obj):
+            bpy.ops.object.shade_flat()
+            
         return obj
 
     def finalize_assets(self, assets):
