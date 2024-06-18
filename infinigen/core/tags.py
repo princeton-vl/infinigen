@@ -150,6 +150,9 @@ class FromGenerator(Tag):
 class Negated(Tag):
     tag: Tag
     
+    def __str__(self):
+        return "-" + str(self.tag)
+
     def __repr__(self): 
         return f"-{repr(self.tag)}"
 
