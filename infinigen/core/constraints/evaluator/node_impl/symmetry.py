@@ -7,6 +7,7 @@
 
 import numpy as np
 from typing import Union, Any
+from infinigen.core.constraints.evaluator.indoor_util import blender_objs_from_names
 from mathutils import Vector, Quaternion, Matrix
 from scipy.optimize import linear_sum_assignment
 import matplotlib.pyplot as plt
