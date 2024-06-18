@@ -10,10 +10,12 @@ from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube, blender_rotate
 from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory, LargeShelfFactory, LargeShelfIkeaFactory
+from infinigen.assets.materials.shelf_shaders import get_shelf_material
 from infinigen.core.util.math import FixedSeed
 
 
