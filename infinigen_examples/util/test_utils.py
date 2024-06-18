@@ -20,6 +20,8 @@ def setup_gin(configs_folder, configs=None, overrides=None):
     gin.clear_config()
     init.apply_gin_configs(
         configs_folder=Path(configs_folder),
+        configs=configs,
+        overrides=overrides,
         skip_unknown=True,
         finalize_config=False
     )
