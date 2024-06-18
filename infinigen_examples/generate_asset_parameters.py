@@ -26,6 +26,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen_examples.asset_parameters import parameters
 from infinigen_examples.generate_individual_assets import make_args, setup_camera
+from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format='[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s',
