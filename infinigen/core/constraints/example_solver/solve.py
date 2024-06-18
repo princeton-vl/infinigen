@@ -43,9 +43,11 @@ logger = logging.getLogger(__name__)
 
 def map_range(x, xmin, xmax, ymin, ymax, exp=1):
 
+    if x < xmin:
         return ymin
     if x > xmax:
         return ymax
+
     t = (x - xmin) / (xmax - xmin)
     return ymin + (ymax - ymin) * t ** exp
 
@@ -62,6 +64,7 @@ class LinearDecaySchedule:
 
 @gin.configurable
 class Solver:
+
     def __init__(
         self,
         output_folder: Path,
@@ -92,6 +95,8 @@ class Solver:
         )
         self.room_solver_fn = MultistoryRoomSolver if multistory else RoomSolver
         self.state: State = None
+        self.all_roomtypes = None
+        self.dimensions = None
 
         self.moves = self._configure_move_weights(restrict_moves)
     
@@ -223,6 +228,7 @@ class Solver:
         for k, v in self.state.objs.items():
             greedy.set_active(self.state, k, True)
 
+        return self.state
     
     def get_bpy_objects(self, domain: r.Domain) -> list[bpy.types.Object]:
         objkeys = domain_contains.objkeys_in_dom(domain, self.state)
