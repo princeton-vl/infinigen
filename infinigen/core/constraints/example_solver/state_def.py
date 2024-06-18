@@ -1,9 +1,11 @@
+# Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
 # Authors: 
 # - Alexander Raistrick: state, print, to_json
 # - Karhan Kayan: add dof / trimesh
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 import typing
@@ -19,6 +21,7 @@ from collections.abc import Collection
 
 import numpy as np
 import bpy
+import shapely
 import trimesh
 from infinigen.core.constraints.example_solver.geometry.planes import Planes
 
@@ -47,8 +50,10 @@ class ObjectState:
     generator: typing.Optional[AssetFactory] = None
     tags: set = field(default_factory=set)
     relations: list[RelationState] = field(default_factory=list)
+
     dof_matrix_translation: np.array = None
     dof_rotation_axis: np.array = None
+    contour : shapely.Geometry = None
     _pose_affects_score = None
 
     fcl_obj = None
@@ -159,6 +164,7 @@ class State:
 
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
+
         for os in self.objs.values():
             os.obj = bpy.data.objects[os.obj]
 
@@ -166,6 +172,7 @@ class State:
                 *mod, name = os.generator.split('.')
                 mod = importlib.import_module('.'.join(mod))
                 os.generator = getattr(mod, name)
+
     @classmethod
     def load(cls, filename: str):
         with open(filename, 'rb') as file:
