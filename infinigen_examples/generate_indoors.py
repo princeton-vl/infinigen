@@ -402,6 +402,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_folder', type=Path, default=None)
     parser.add_argument('-s', '--seed', default=None, help="The seed used to generate the scene")
     parser.add_argument('-t', '--task', nargs='+', default=['coarse'],
+                        choices=['coarse', 'populate', 'fine_terrain', 'ground_truth', 'render', 'mesh_save', 'export'])
     parser.add_argument('-g', '--configs', nargs='+', default=['base'],
                         help='Set of config files for gin (separated by spaces) '
                              'e.g. --gin_config file1 file2 (exclude .gin from path)')
