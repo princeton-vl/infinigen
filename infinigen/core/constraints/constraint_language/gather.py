@@ -7,6 +7,7 @@
 import typing
 from dataclasses import dataclass, field
 
+from infinigen.core import tags as t
 from .relations import Relation
 from .expression import BoolExpression, ScalarExpression, nodedataclass
 from .geometry import ObjectSetExpression
