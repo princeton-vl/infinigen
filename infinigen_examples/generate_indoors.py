@@ -71,6 +71,8 @@ from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT
 from infinigen.core.util.camera import points_inview
 
 from infinigen_examples.generate_nature import compose_nature # so gin can find it
+from infinigen_examples.util import constraint_util as cu
+from infinigen_examples.util.generate_indoors_util import (
     create_outdoor_backdrop,
     place_cam_overhead,
     overhead_view,
@@ -376,6 +378,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         "height_offset": height,
         "whole_bbox": house_bbox,
     }
+    
 
 
 def main(args):
