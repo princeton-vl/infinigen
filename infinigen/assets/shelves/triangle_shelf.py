@@ -854,6 +854,8 @@ class TriangleShelfBaseFactory(AssetFactory):
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
+        surface.add_geomod(obj, geometry_nodes, attributes=[], input_kwargs=obj_params, apply=True)
+        tagging.tag_system.relabel_obj(obj)
 
         return obj
 
