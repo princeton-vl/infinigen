@@ -12,6 +12,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
 
+class LampFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.], lamp_type="FloorLamp"):
         super(LampFactory, self).__init__(factory_seed, coarse=coarse)
 
@@ -31,6 +32,7 @@ from infinigen.core.placement.factory import AssetFactory
             "CurvePoint1": (0.0, 0.0, 0.0),
             "CurvePoint2": (0.0, 0.0, 0.2),
             "CurvePoint3": (0.0, 0.0, 0.3)
+        },
         "FloorLamp1": {
             "StandRadius": 0.01,
             "StandHeight": 0.3,
@@ -81,11 +83,13 @@ from infinigen.core.placement.factory import AssetFactory
                 height = U(0.25, 0.4)
             else:
                 height = U(1, 1.5)
+
             z1 = U(base_height, height)
             z2 = U(z1, height)
             z3 = height
 
             x1, x2, x3 = 0, 0, 0
+
             params = {
                 "StandRadius": stand_radius,
                 "BaseRadius": base_radius,
@@ -100,45 +104,77 @@ from infinigen.core.placement.factory import AssetFactory
                 "CurvePoint3": (x3, 0.0, z3)
             }
             return params
+
         obj = butil.spawn_cube()
+        return obj
+
+    def finalize_assets(self, assets):
+            self.scratch.apply(assets)
+            self.edge_wear.apply(assets)
 
 
 @node_utils.to_nodegroup('nodegroup_bulb', singleton=False, type='GeometryNodeTree')
 def nodegroup_bulb(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
     curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={'Start': (0.0000, 0.0000, -0.2000), 'End': (0.0000, 0.0000, 0.0000)})
+
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.1500, 'Resolution': 100})
+
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': curve_line_1, 'Profile Curve': curve_circle_1.outputs["Curve"], 'Fill Caps': True})
+
     spiral = nw.new_node('GeometryNodeCurveSpiral',
         input_kwargs={'Rotations': 5.0000, 'Start Radius': 0.1500, 'End Radius': 0.1500, 'Height': 0.2000})
+
     transform = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': spiral, 'Translation': (0.0000, 0.0000, -0.2000)})
+
     curve_circle_2 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.0150, 'Resolution': 100})
+
     curve_to_mesh_2 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': transform, 'Profile Curve': curve_circle_2.outputs["Curve"], 'Fill Caps': True})
+
     curve_line_2 = nw.new_node(Nodes.CurveLine, input_kwargs={'Start': (0.0000, 0.0000, -0.2000), 'End': (0.0000, 0.0000, -0.3000)})
+
     resample_curve_1 = nw.new_node(Nodes.ResampleCurve, input_kwargs={'Curve': curve_line_2, 'Count': 100})
+
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
+
     float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': spline_parameter_1.outputs["Factor"]})
     node_utils.assign_curve(float_curve_1.mapping.curves[0], [(0.0000, 1.0000), (0.4432, 0.5500), (1.0000, 0.2750)], handles=['AUTO', 'VECTOR', 'AUTO'])
+
     set_curve_radius_1 = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': resample_curve_1, 'Radius': float_curve_1})
+
     curve_circle_3 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.1500, 'Resolution': 100})
+
     curve_to_mesh_3 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': set_curve_radius_1, 'Profile Curve': curve_circle_3.outputs["Curve"], 'Fill Caps': True})
+
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [curve_to_mesh_1, curve_to_mesh_2, curve_to_mesh_3]})
+
     set_material = nw.new_node(Nodes.SetMaterial,
+
     curve_line = nw.new_node(Nodes.CurveLine)
+
     resample_curve = nw.new_node(Nodes.ResampleCurve, input_kwargs={'Curve': curve_line, 'Count': 100})
+
     spline_parameter = nw.new_node(Nodes.SplineParameter)
+
     float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={'Value': spline_parameter.outputs["Factor"]})
     node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0000, 0.1500), (0.0500, 0.1700), (0.1500, 0.2000), (0.5500, 0.3800), (0.8000, 0.3500), (0.9568, 0.2200), (1.0000, 0.0000)])
+
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': resample_curve, 'Radius': float_curve})
+
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Resolution': 100})
+
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"]})
+
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, set_material_1]})
+
     transform_geometry = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': join_geometry, 'Translation': (0.0000, 0.0000, 0.3000)})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': transform_geometry}, attrs={'is_active_output': True})
 
 
@@ -154,43 +190,68 @@ def nodegroup_bulb_rack(nw: NodeWrangler):
             ('NodeSocketFloatDistance', 'OuterRadius', 1.0000),
             ('NodeSocketFloat', 'InnerHeight', 0.0000),
             ('NodeSocketFloat', 'OuterHeight', 0.0000)])
+
     curve_circle_2 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': amount.outputs["OuterRadius"], 'Resolution': 100})
+
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': amount.outputs["OuterHeight"]})
+
     transform = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': curve_circle_2.outputs["Curve"], 'Translation': combine_xyz})
+
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={'Start': (-1.0000, 0.0000, 0.0000), 'End': (1.0000, 0.0000, 0.0000)})
+
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': curve_line})
+
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={'Input': amount.outputs["Amount"]})
+
     duplicate_elements = nw.new_node(Nodes.DuplicateElements,
         input_kwargs={'Geometry': geometry_to_instance, 'Amount': reroute},
         attrs={'domain': 'INSTANCE'})
+
     realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': duplicate_elements.outputs["Geometry"]})
+
     endpoint_selection = nw.new_node(Nodes.EndpointSelection, input_kwargs={'Start Size': 0})
+
     divide = nw.new_node(Nodes.Math, input_kwargs={0: 1.0000, 1: reroute}, attrs={'operation': 'DIVIDE'})
+
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: duplicate_elements.outputs["Duplicate Index"], 1: divide},
         attrs={'operation': 'MULTIPLY'})
+
     sample_curve = nw.new_node(Nodes.SampleCurve,
         input_kwargs={'Curves': transform, 'Factor': multiply},
         attrs={'use_all_curves': True})
+
     set_position = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': realize_instances, 'Selection': endpoint_selection, 'Position': sample_curve.outputs["Position"]})
+
     endpoint_selection_1 = nw.new_node(Nodes.EndpointSelection, input_kwargs={'End Size': 0})
+
     multiply_add = nw.new_node(Nodes.Math,
         input_kwargs={0: amount.outputs["Thickness"], 2: amount.outputs["InnerRadius"]},
         attrs={'operation': 'MULTIPLY_ADD'})
+
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': multiply_add, 'Resolution': 100})
+
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': amount.outputs["InnerHeight"]})
+
     transform_1 = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': curve_circle.outputs["Curve"], 'Translation': combine_xyz_1})
+
     sample_curve_1 = nw.new_node(Nodes.SampleCurve,
+        input_kwargs={'Curves': transform_1, 'Factor': multiply},
         attrs={'use_all_curves': True})
+
     set_position_1 = nw.new_node(Nodes.SetPosition,
         input_kwargs={'Geometry': set_position, 'Selection': endpoint_selection_1, 'Position': sample_curve_1.outputs["Position"]})
+
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform, set_position_1, transform_1]})
+
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': amount.outputs["Thickness"], 'Resolution': 100})
+
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': join_geometry, 'Profile Curve': curve_circle_1.outputs["Curve"], 'Fill Caps': True})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': curve_to_mesh}, attrs={'is_active_output': True})
 
 @node_utils.to_nodegroup('nodegroup_reversiable_bulb', singleton=False, type='GeometryNodeTree')
@@ -201,15 +262,23 @@ def nodegroup_reversiable_bulb(nw: NodeWrangler):
         expose_input=[('NodeSocketFloat', 'Scale', 0.3000),
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["Scale"], 'Y': group_input.outputs["Scale"], 'Z': group_input.outputs["Scale"]})
+
     transform = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': bulb, 'Scale': combine_xyz_1})
+
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': transform})
+
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Reverse"], 1: 3.1415}, attrs={'operation': 'MULTIPLY'})
+
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Y': multiply})
+
     rotate_instances = nw.new_node(Nodes.RotateInstances, input_kwargs={'Instances': geometry_to_instance, 'Rotation': combine_xyz_2})
+
     multiply_add = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["Reverse"], 1: 2.0000, 2: -1.0000},
         attrs={'operation': 'MULTIPLY_ADD'})
+
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: -0.0150, 1: multiply_add}, attrs={'operation': 'MULTIPLY'})
+
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': rotate_instances, 'RackSupport': multiply_1},
         attrs={'is_active_output': True})
@@ -227,37 +296,59 @@ def nodegroup_lamp_head(nw: NodeWrangler):
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["TopRadius"], 1: 0.8000},
         attrs={'operation': 'MULTIPLY'})
+
     multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 0.1500}, attrs={'operation': 'MULTIPLY'})
+
     multiply_add = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["ReverseBulb"], 1: 2.0000, 2: -1.0000},
         attrs={'operation': 'MULTIPLY_ADD'})
+
     multiply_2 = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["RackHeight"], 1: multiply_add},
         attrs={'operation': 'MULTIPLY'})
+
     bulb_rack = nw.new_node(nodegroup_bulb_rack().name,
         input_kwargs={'Thickness': group_input.outputs["RackThickness"], 'InnerRadius': multiply_1, 'OuterRadius': group_input.outputs["TopRadius"], 'InnerHeight': reversiable_bulb.outputs["RackSupport"], 'OuterHeight': multiply_2})
+
     set_material = nw.new_node(Nodes.SetMaterial,
+
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_2})
+
     subtract = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["ShadeHeight"], 1: group_input.outputs["RackHeight"]},
         attrs={'operation': 'SUBTRACT'})
+
     multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_add, 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
+
     multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: multiply_3}, attrs={'operation': 'MULTIPLY'})
+
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_4})
+
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={'Start': combine_xyz_1, 'End': combine_xyz})
+
     spline_parameter = nw.new_node(Nodes.SplineParameter)
+
     map_range = nw.new_node(Nodes.MapRange,
         input_kwargs={'Value': spline_parameter.outputs["Factor"], 3: group_input.outputs["TopRadius"], 4: group_input.outputs["BotRadius"]})
+
     set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={'Curve': curve_line, 'Radius': map_range.outputs["Result"]})
+
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Resolution': 100})
+
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': set_curve_radius, 'Profile Curve': curve_circle.outputs["Curve"]})
+
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={'Mesh': curve_to_mesh})
+
     extrude_mesh = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={'Mesh': curve_to_mesh, 'Offset Scale': 0.0050, 'Individual': False})
+
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [flip_faces, extrude_mesh.outputs["Mesh"]]})
+
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+
     join_geometry = nw.new_node(Nodes.JoinGeometry,
         input_kwargs={'Geometry': [reversiable_bulb.outputs["Geometry"], set_material, set_material_1]})
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': join_geometry}, attrs={'is_active_output': True})
 
 @node_utils.to_nodegroup('nodegroup_lamp_geometry', singleton=False, type='GeometryNodeTree')
@@ -276,42 +367,65 @@ def nodegroup_lamp_geometry(nw: NodeWrangler):
             ('NodeSocketVectorTranslation', 'CurvePoint1', (0.0000, 0.0000, 0.0000)),
             ('NodeSocketVectorTranslation', 'CurvePoint2', (0.0000, 0.0000, 0.0000)),
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["BaseHeight"]})
+
     curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={'End': combine_xyz_1})
+
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': group_input.outputs["BaseRadius"], 'Resolution': 100})
+
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': curve_line_1, 'Profile Curve': curve_circle_1.outputs["Curve"], 'Fill Caps': True})
+
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': group_input.outputs["BaseHeight"]})
+
     bezier_segment = nw.new_node(Nodes.CurveBezierSegment,
         input_kwargs={'Start': combine_xyz, 'Start Handle': group_input.outputs["CurvePoint1"], 'End Handle': group_input.outputs["CurvePoint2"], 'End': group_input.outputs["CurvePoint3"], 'Resolution': 100})
+
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={'End': combine_xyz})
+
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [bezier_segment, curve_line]})
+
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': group_input.outputs["StandRadius"], 'Resolution': 100})
+
     curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': join_geometry_2, 'Profile Curve': curve_circle.outputs["Curve"], 'Fill Caps': True})
+
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [curve_to_mesh_1, curve_to_mesh]})
+
     set_material = nw.new_node(Nodes.SetMaterial,
+
     multiply = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["ShadeHeight"], 1: 0.4000},
         attrs={'operation': 'MULTIPLY'})
+
     multiply_1 = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["ShadeHeight"], 1: 0.2000},
         attrs={'operation': 'MULTIPLY'})
+
     multiply_add = nw.new_node(Nodes.Math,
         input_kwargs={0: multiply, 1: group_input.outputs["ReverseLamp"], 2: multiply_1},
         attrs={'operation': 'MULTIPLY_ADD'})
+
     lamp_head = nw.new_node(nodegroup_lamp_head().name,
     sample_curve = nw.new_node(Nodes.SampleCurve,
         input_kwargs={'Curves': bezier_segment, 'Factor': 1.0000},
         attrs={'use_all_curves': True})
+
     align_euler_to_vector = nw.new_node(Nodes.AlignEulerToVector, input_kwargs={'Vector': sample_curve.outputs["Tangent"]}, attrs={'axis': 'Z'})
+
     transform = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': lamp_head, 'Translation': sample_curve.outputs["Position"], 'Rotation': align_euler_to_vector})
+
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, transform]})
+
     bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={'Geometry': join_geometry_1})
+
     curve_line_2 = nw.new_node(Nodes.CurveLine, input_kwargs={'End': (0.0000, 0.0000, 0.1000)})
+
     transform_geometry = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': curve_line_2, 'Translation': sample_curve.outputs["Position"], 'Rotation': align_euler_to_vector})
+
     sample_curve_1 = nw.new_node(Nodes.SampleCurve, input_kwargs={'Curves': transform_geometry, 'Factor': 1.0000})
+
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Geometry': join_geometry_1, 'Bounding Box': bounding_box.outputs["Bounding Box"], 'LightPosition': sample_curve_1.outputs["Position"]},
         attrs={'is_active_output': True})
