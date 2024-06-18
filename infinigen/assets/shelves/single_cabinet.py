@@ -198,6 +198,7 @@ class SingleCabinetBaseFactory(AssetFactory):
 
         # create cabinet
         cabinet_params = self.get_cabinet_params(i=i)
+        surface.add_geomod(obj, geometry_cabinet_nodes, attributes=[], apply=True, input_kwargs={
             'door': [right_door, left_door],
             'shelf': shelf,
             'door_hinge_pos': cabinet_params['door_hinge_pos'],
@@ -207,6 +208,7 @@ class SingleCabinetBaseFactory(AssetFactory):
         butil.delete([left_door, right_door])
         obj = butil.join_objects([shelf, obj])
 
+        tagging.tag_system.relabel_obj(obj)
         return obj
 
 
@@ -229,3 +231,4 @@ class SingleCabinetFactory(SingleCabinetBaseFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         x,y,z = self.dims
+        return new_bbox(-x/2 * 1.2, x/2 * 1.2, -y/2 * 1.2, y/2 * 1.2, 0, (z + 0.083) * 1.02)
