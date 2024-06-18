@@ -1,10 +1,15 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
 
 import bpy
 import bpy
 import mathutils
 from numpy.random import uniform, normal, randint, choice
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
+from infinigen.core.surface import NoApply
 from infinigen.core.util.color import color_category
 from infinigen.core import surface
 
@@ -20,6 +25,7 @@ from infinigen.assets.tables.legs.wheeled import nodegroup_wheeled_leg
 
 from infinigen.assets.tables.strechers import nodegroup_strecher
 
+from infinigen.core.util.random import log_uniform
 
 @node_utils.to_nodegroup('geometry_create_legs', singleton=False, type='GeometryNodeTree')
 def geometry_create_legs(nw: NodeWrangler, **kwargs):
@@ -29,9 +35,14 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
 
     if kwargs['Leg Style'] == "single_stand":
         leg = nw.new_node(nodegroup_generate_single_stand(**kwargs).name,
+            input_kwargs={'Leg Height': kwargs['Leg Height'],
+                'Leg Diameter': kwargs['Leg Diameter'],
                 'Resolution': 64})
 
         leg = nw.new_node(nodegroup_create_legs_and_strechers().name,
+        input_kwargs={'Anchors': createanchors,
+            'Keep Legs': True,
+            'Leg Instance': leg,
             'Table Height': kwargs['Top Height'],
             'Leg Bottom Relative Scale': kwargs['Leg Placement Bottom Relative Scale'],
             'Align Leg X rot': True
@@ -39,6 +50,10 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
 
     elif kwargs['Leg Style'] == "straight":
         leg = nw.new_node(nodegroup_generate_leg_straight(**kwargs).name,
+            input_kwargs={'Leg Height': kwargs['Leg Height'],
+                'Leg Diameter': kwargs['Leg Diameter'],
+                'Resolution': 32,
+                'N-gon': kwargs['Leg NGon'],
                 'Fillet Ratio': 0.1})
 
         strecher = nw.new_node(nodegroup_strecher().name,
@@ -46,6 +61,9 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
 
         leg = nw.new_node(nodegroup_create_legs_and_strechers().name,
             input_kwargs={
+            'Anchors': createanchors,
+            'Keep Legs': True,
+            'Leg Instance': leg,
             'Table Height': kwargs['Top Height'],
             'Strecher Instance': strecher,
             'Strecher Index Increment': kwargs['Strecher Increament'],
@@ -57,6 +75,8 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
     elif kwargs['Leg Style'] == "wheeled":
         leg = nw.new_node(nodegroup_wheeled_leg(**kwargs).name,
             input_kwargs={
+                'Joint Height': kwargs['Leg Joint Height'],
+                'Leg Diameter': kwargs['Leg Diameter'],
                 'Top Height': kwargs['Top Height'],
                 'Wheel Width': kwargs['Leg Wheel Width'],
                 'Wheel Rotation': kwargs['Leg Wheel Rot'],
@@ -68,13 +88,20 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
         raise NotImplementedError
 
     leg = nw.new_node(Nodes.SetMaterial,
+
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': leg}, attrs={'is_active_output': True})
 
 def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
     generatetabletop = nw.new_node(nodegroup_generate_table_top().name,
+            'N-gon': kwargs['Top Profile N-gon'],
+            'Profile Width': kwargs['Top Profile Width'],
+            'Aspect Ratio': kwargs['Top Profile Aspect Ratio'],
             'Fillet Ratio': kwargs['Top Profile Fillet Ratio'],
+
+    tabletop_instance = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': generatetabletop,
         'Translation': (0.0000, 0.0000, kwargs['Top Height'])})
 
     tabletop_instance = nw.new_node(Nodes.SetMaterial,
@@ -82,6 +109,7 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
 
     join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [tabletop_instance, legs]})
+
 
 
 class TableCocktailFactory(AssetFactory):
@@ -92,6 +120,12 @@ class TableCocktailFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
+            from infinigen.assets.clothes import blanket
+            from infinigen.assets.scatters.clothes import ClothesCover
+            # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
+            #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
+            self.clothes_scatter = NoApply()
+
     @staticmethod
     def sample_parameters(dimensions):
         # all in meters
@@ -115,6 +149,7 @@ class TableCocktailFactory(AssetFactory):
             leg_number = 1
             leg_diameter = uniform(0.7*x, 0.9*x)
 
+            leg_curve_ctrl_pts = [(0.0, uniform(0.1, 0.2)),
                 (0.5, uniform(0.1, 0.2)), (0.9, uniform(0.2, 0.3)), (1.0, 1.0)]
 
         elif leg_style == "straight":
@@ -164,3 +199,5 @@ class TableCocktailFactory(AssetFactory):
 
         return obj
 
+    def finalize_assets(self, assets):
+        self.clothes_scatter.apply(assets)
