@@ -10,6 +10,8 @@ from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 from infinigen.core.util import blender as butil
 
+from infinigen.core.util.math import FixedSeed
+
 import bpy
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube, blender_rotate
 from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory, LargeShelfFactory
@@ -71,6 +73,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
         self.frame_fac = LargeShelfBaseFactory(factory_seed)
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
         self.drawer_fac = CabinetDrawerBaseFactory(factory_seed)
+        self.drawer_only = False
 
     def sample_params(self):
         pass
@@ -180,6 +183,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
             accum_w += thickness + w / 2. + 0.0005
         return x_translations
 
+    def create_cabinet_components(self, i, drawer_only=False):
         # update material params
 
         components = []
@@ -192,6 +196,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
             self.frame_params = frame_params
 
             # create attach
+            if drawer_only:
                 attach_type = np.random.choice(['drawer', 'door'], p=[0.5, 0.5])
             else:
                 attach_type = np.random.choice(['drawer', 'door', 'none'], p=[0.4, 0.4, 0.2])
@@ -226,6 +231,7 @@ class KitchenCabinetBaseFactory(AssetFactory):
         return components
 
     def create_asset(self, i=0, **params):
+        components = self.create_cabinet_components(i=i, drawer_only=self.drawer_only)
         cabinet_params = self.get_cabinet_params(i=i)
         join_objs = []
 
@@ -262,10 +268,20 @@ class KitchenCabinetBaseFactory(AssetFactory):
 
 
 class KitchenCabinetFactory(KitchenCabinetBaseFactory):
+    def __init__(self, factory_seed, params={}, coarse=False, dimensions=None, drawer_only=False):
+        self.dimensions = dimensions
+        super().__init__(factory_seed, params, coarse)
+        self.drawer_only = drawer_only
     def sample_params(self):
         params = dict()
+        if self.dimensions is None:
+            dimensions = (
             uniform(0.25, 0.35),
             uniform(1.0, 4.0),
+            uniform(0.5, 1.3))
+        else:
+            dimensions = self.dimensions
+        params['Dimensions'] = dimensions
 
         params['bottom_board_height'] = 0.06
         params['shelf_depth'] = params['Dimensions'][0] - 0.01
