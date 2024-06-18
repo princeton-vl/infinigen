@@ -16,6 +16,7 @@ import typing
 import numpy as np
 
 from infinigen.core.constraints import constraint_language as cl
+from infinigen.core import tags as t
 from .domain import Domain
 
 logger = logging.getLogger(__name__)
