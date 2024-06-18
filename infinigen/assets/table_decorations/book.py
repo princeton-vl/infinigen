@@ -10,6 +10,7 @@ import trimesh
 from numpy.random import uniform
 from trimesh import proximity
 
+from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube, obj2trimesh
 from infinigen.assets.utils.mesh import longest_ray
@@ -19,6 +20,7 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util import blender as butil
 
+from infinigen.assets.material_assignments import AssetList
 
 class BookFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -30,6 +32,18 @@ class BookFactory(AssetFactory):
         self.margin = uniform(.005, .01)
         self.offset = 0 if uniform() < .5 else log_uniform(.002, .008)
         self.thickness = uniform(.002, .003)
+
+        materials = AssetList['BookFactory']()
+        self.surface = materials['surface'].assign_material()
+        self.cover_surface = materials['cover_surface'].assign_material()
+        if self.cover_surface == text.Text:
+            self.cover_surface = self.cover_surface(self.factory_seed)
+
+        scratch_prob, edge_wear_prob = materials['wear_tear_prob']
+        self.scratch, self.edge_wear = materials['wear_tear']
+        self.scratch = None if uniform() > scratch_prob else self.scratch
+        self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+        
         self.texture_shared = uniform() < .2
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -39,10 +53,13 @@ class BookFactory(AssetFactory):
         fn = self.make_paperback if self.is_paperback else self.make_hardcover
         # noinspection PyArgumentList
         obj = fn(width, height, depth)
+                
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
     def make_paperback(self, width, height, depth):
