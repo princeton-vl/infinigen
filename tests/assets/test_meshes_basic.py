@@ -12,6 +12,7 @@ import gin
 from math import prod
 
 from infinigen.core.util import blender as butil
+from infinigen.core import tagging, tags as t
 
 from infinigen_examples.util.test_utils import (
     setup_gin, 
