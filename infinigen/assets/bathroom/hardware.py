@@ -12,6 +12,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.material_assignments import AssetList
 
 
 class HardwareFactory(AssetFactory):
@@ -29,6 +30,13 @@ class HardwareFactory(AssetFactory):
             self.bar_length = uniform(.4, .8)
             self.extension_length = self.attachment_radius * uniform(2, 3)
             self.ring_radius = log_uniform(2, 6) * self.attachment_radius
+
+            material_assignments = AssetList['HardwareFactory']()
+            self.surface = material_assignments['surface'].assign_material()
+            is_scratch = uniform() < material_assignments['wear_tear_prob'][0]
+            is_edge_wear = uniform() < material_assignments['wear_tear_prob'][1]
+            self.scratch = material_assignments['wear_tear'][0] if is_scratch else None
+            self.edge_wear = material_assignments['wear_tear'][1] if is_edge_wear else None
 
     def make_attachment(self):
         base = new_base_cylinder() if self.is_circular else new_cube()
@@ -107,4 +115,7 @@ class HardwareFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         self.surface.apply(assets, metal_color='plain')
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
