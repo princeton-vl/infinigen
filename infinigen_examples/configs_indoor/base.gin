@@ -25,6 +25,7 @@ camera.spawn_camera_rigs.camera_rig_config = [
     {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
     {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}
 ]
+walk_same_altitude.z_move_up = 0
 keep_cam_pose_proposal.min_terrain_distance = 0.7 # stuff will inevitably be closer to the camera indoors
 
 # animating the camera takes more search time when indoors
