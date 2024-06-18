@@ -1,4 +1,7 @@
 # Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 # Authors: 
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix constants
@@ -23,6 +26,7 @@ from infinigen.core.constraints.example_solver.room.configs import (
 )
 from infinigen.core.constraints.example_solver.room.constants import DOOR_MARGIN, DOOR_SIZE, DOOR_WIDTH, \
     MAX_WINDOW_LENGTH, SEGMENT_MARGIN, WALL_HEIGHT, WALL_THICKNESS, WINDOW_HEIGHT, WINDOW_SIZE
+
 from infinigen.core.constraints.example_solver.room.utils import SIMPLIFY_THRESH, WELD_THRESH, buffer, \
     canonicalize, polygon2obj
 from infinigen.assets.utils.decorate import (
