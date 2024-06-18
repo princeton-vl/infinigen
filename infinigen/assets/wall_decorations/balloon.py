@@ -16,6 +16,7 @@ from infinigen.core.placement.factory import AssetFactory
 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.assets.material_assignments import AssetList
 
 
 class BalloonFactory(AssetFactory):
@@ -25,6 +26,8 @@ class BalloonFactory(AssetFactory):
         super(BalloonFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.thickness = uniform(.06, .1)
+            material_assignments = AssetList['BalloonFactory']()
+            self.surface = material_assignments['surface'].assign_material()
             self.displace = uniform(.02, .04)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
