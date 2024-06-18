@@ -92,3 +92,6 @@ infinigen.assets.wall_decorations.BalloonFactory
 infinigen.assets.wall_decorations.MirrorFactory
 
 infinigen.assets.windows.WindowFactory
+infinigen.assets.organizer.basket.BasketBaseFactory
+
+
