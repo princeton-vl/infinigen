@@ -47,6 +47,7 @@ class WallArtFactory(AssetFactory):
     def create_placeholder(self, **params):
         return new_bbox(
             -0.01, 
+            0.15, 
             -self.width / 2 - self.thickness, 
             self.width / 2 + self.thickness,
             -self.height / 2 - self.thickness, 
