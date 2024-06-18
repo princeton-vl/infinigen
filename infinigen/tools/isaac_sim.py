@@ -10,6 +10,7 @@ import numpy as np
 from omni.isaac.kit import SimulationApp
 CONFIG = {"renderer": "RayTracedLighting", "headless": False}
 simulation_app = SimulationApp(launch_config=CONFIG)
+
 import omni
 import json
 from omni.isaac.core import World
@@ -33,16 +34,25 @@ class RobotController(BaseController):
     def forward(self):
         return ArticulationAction(joint_velocities=[2,2])
 
+class InfinigenIsaacScene(object):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.world = World(stage_units_in_meters=1.0, backend='numpy', physics_dt=1/400.)
         self.world._physics_context.set_gravity(-9.8)
         self.scene = self.world.scene
         self._support = None
         self.setup_scene()
 
     def setup_scene(self):
+        self._add_infinigen_scene()
         self._add_lighting()
         self._add_robot()
 
+    def _add_infinigen_scene(self):
         create_prim(prim_path="/World/Support",
+                    usd_path=self.cfg.scene_path,
+                    semantic_label='scene')
+        self._support = XFormPrim(prim_path="/World/Support", name="Support")
 
         stage = omni.usd.get_context().get_stage()
         
@@ -119,21 +129,43 @@ class RobotController(BaseController):
     def _add_robot(self):
         robot_path = get_assets_root_path() + "/Isaac/Robots/Jetbot/jetbot.usd"
         init_pos, _ = self._get_camera_loc()
+        init_pos[-1] += 0.3
         self.robot = self.scene.add(
             WheeledRobot(
+                prim_path="/World/Robot",
                 name="Robot",
                 wheel_dof_names=["left_wheel_joint", "right_wheel_joint"],
                 create_robot=True,
                 usd_path=robot_path,
+                position=init_pos
             )
         )
+        self.robot.set_local_scale(np.array([4, 4, 4]))
         self.controller = RobotController()
+        self.world.reset()
+
+    def apply_action(self):
         self.robot.apply_action(self.controller.forward())
 
+    def reset(self):
         self.world.reset()
+
+    def run(self):
+        self.world.reset()
+        while simulation_app.is_running():
+            self.apply_action()
             self.world.step(render=True)
 
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
     parser.add_argument('--scene-path', type=str)
     parser.add_argument('--json-path', type=str)
+    args = parser.parse_args()
 
+    scene = InfinigenIsaacScene(args)
+
+    scene.reset()
+    scene.run()
+    simulation_app.close()
 
