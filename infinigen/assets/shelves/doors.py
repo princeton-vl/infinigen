@@ -1,3 +1,7 @@
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Lingjie Mei
 
 from numpy.random import uniform, normal, randint
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -11,6 +15,7 @@ import bpy
     shader_shelves_white, shader_shelves_white_sampler,
     shader_shelves_black_wood, shader_shelves_black_wood_sampler,
     shader_shelves_wood, shader_shelves_wood_sampler,
+    shader_glass)
 
 @node_utils.to_nodegroup('nodegroup_node_group', singleton=False, type='GeometryNodeTree')
 def nodegroup_node_group(nw: NodeWrangler):
@@ -709,6 +714,7 @@ class CabinetDoorBaseFactory(AssetFactory):
                     mat = lambda x: shader_shelves_wood(x, z_axis_texture=True)
             elif mat == 'glass':
                 if randomness:
+                    mat = lambda x: shader_glass(x)
                 else:
                     mat = shader_glass
             materials.append(mat)
