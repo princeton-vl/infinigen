@@ -1,3 +1,5 @@
+# Copyright (c) Princeton University.
+
 # Authors: Mingzhe Wang, Lingjie Mei
 import math as ma
 
@@ -8,6 +10,7 @@ from infinigen.assets.materials.utils.surface_utils import clip, sample_range, s
 from numpy.random import uniform
 
 from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
 
