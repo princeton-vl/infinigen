@@ -22,6 +22,7 @@ from infinigen.core.placement.factory import AssetFactory
 
 from .indoor_lights import PointLampFactory
 from infinigen.assets.utils.autobevel import BevelSharp
+from infinigen.assets.material_assignments import AssetList
 
 
 class CeilingLightFactory(AssetFactory):
@@ -54,8 +55,34 @@ class CeilingLightFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.light_factory = PointLampFactory(factory_seed)
             self.params = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            
+        self.params.update(self.material_params)
         self.beveler = BevelSharp(mult=U(1, 3))
 
+    def get_material_params(self):
+        material_assignments = AssetList['CeilingLightFactory']()
+        black_material = material_assignments['black_material'].assign_material()
+        white_material = material_assignments['white_material'].assign_material()
+        
+        wrapped_params = {
+            'BlackMaterial': surface.shaderfunc_to_material(black_material),
+            'WhiteMaterial': surface.shaderfunc_to_material(white_material),
+        }
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
+    
+        
     def sample_parameters(self, dimensions, use_default=False):
         if use_default:
             return self.ceiling_light_default_params[RI(0, len(self.ceiling_light_default_params))]
@@ -92,6 +119,8 @@ class CeilingLightFactory(AssetFactory):
         
         return obj
 
+        if self.scratch:
+        if self.edge_wear:
 
 
 @node_utils.to_nodegroup('nodegroup_ceiling_light_geometry', singleton=True, type='GeometryNodeTree')
@@ -104,6 +133,9 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
             ('NodeSocketFloat', 'InnerRadius', 0.1800),
             ('NodeSocketFloat', 'Height', 0.1000),
             ('NodeSocketFloat', 'InnerHeight', 0.0300),
+            ('NodeSocketFloat', 'Curvature', 0.4000),
+            ('NodeSocketMaterial', 'BlackMaterial', None),
+            ('NodeSocketMaterial', 'WhiteMaterial', None)])
     
     multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
     
@@ -129,6 +161,7 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_shade_smooth, mesh_circle]})
     
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': join_geometry_1, 'Material': group_input.outputs["BlackMaterial"]})
     
     ico_sphere_1 = nw.new_node(Nodes.MeshIcoSphere, input_kwargs={'Radius': group_input.outputs["InnerRadius"], 'Subdivisions': 5})
     
@@ -167,6 +200,7 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [transform, curve_to_mesh_1]})
     
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': join_geometry_2, 'Material': group_input.outputs["WhiteMaterial"]})
     
     join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [set_material, set_material_1]})
     
