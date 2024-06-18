@@ -34,6 +34,7 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.constraints.example_solver.room.types import get_room_type
 from infinigen.core.util.random import random_general as rg
 
+from infinigen.core import tags as t, tagging
 
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.util import blender as butil
@@ -42,6 +43,12 @@ logger = logging.getLogger(__name__)
 
 def split_rooms(rooms_meshed: list[bpy.types.Object]):
     
+    extract_tags = {
+        'wall': {t.Subpart.Wall, t.Subpart.Visible},
+        'floor': {t.Subpart.SupportSurface, t.Subpart.Visible},
+        'ceiling': {t.Subpart.Ceiling, t.Subpart.Visible},
+    }
+
     meshes = {
         n: [
             tagging.extract_tagged_faces(r, tags) 
@@ -60,11 +67,21 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
         for m in m2delete:
             ms.remove(m)
 
+    meshes['exterior'] = [tagging.extract_mask(r, 1 - tagging.tagged_face_mask(r, t.Subpart.Visible)) for r in rooms_meshed]
+
+    for n, objs in meshes.items():
+        for o in objs:
+            o.name = o.name.split('.')[0] + f'.{n}'
         butil.origin_set(objs, 'ORIGIN_GEOMETRY', center='MEDIAN')
+
     meshes = {
         n: butil.put_in_collection(objs, 'unique_assets:room_' + n) 
         for n, objs in meshes.items()
     }
+
+    return meshes
+
+
 def room_walls(wall_objs: list[bpy.types.Object]):
     
     wall_fns = list(rg(ROOM_WALLS[get_room_type(r.name)]) for r in wall_objs)
@@ -86,16 +103,22 @@ def room_walls(wall_objs: list[bpy.types.Object]):
 
 def room_ceilings(ceilings: list[bpy.types.Object]):
     logger.debug(f'{room_ceilings.__name__} adding materials to {len(ceilings)=}')
+    plaster.apply(ceilings, t.Subpart.Ceiling)
 
 
 def room_floors(floors: list[bpy.types.Object]):
+    floor_fns = list(rg(ROOM_FLOORS[get_room_type(r.name)]) for r in floors)
     logger.debug(f'{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}')
     for floor_fn in set(floor_fns):
+        rooms_ = [o for o, f in zip(floors, floor_fns) if f == floor_fn]
+
         if floor_fn in [tile, plaster]:
             indices = np.random.randint(0, 3, len(rooms_))
             for i in range(3):
                 rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+                floor_fn.apply(rooms__)
         else:
+            floor_fn.apply(rooms_)
 
 
 def populate_doors(
@@ -277,6 +300,7 @@ def room_pillars(state: state_def.State, walls: list[bpy.types.Object]):
     for s in pillar_rooms:
         factory = PillarFactory(np.random.randint(1e7))
         mesh = next(m for m in walls if m.name.startswith(s.obj.name.split('.')[0]))
+        interior = tagging.extract_tagged_faces(mesh, {t.Subpart.Interior})
         remove_faces(interior, read_area(interior) < WALL_THICKNESS / 2 * WALL_HEIGHT)
         selection = (read_edge_length(interior) > WALL_HEIGHT / 2) & (
             np.abs(read_edge_direction(interior))[:, -1] > .9)
