@@ -20,6 +20,7 @@ from infinigen.core.util import blender as butil
 
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.assets.material_assignments import AssetList
 
 class OvenFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1., 1., 1.]):
@@ -28,8 +29,34 @@ class OvenFactory(AssetFactory):
         self.dimensions = dimensions
         with FixedSeed(factory_seed):
             self.params, self.geometry_node_params = self.sample_parameters(dimensions)
+            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
         self.geometry_node_params.update(self.material_params)
 
+    def get_material_params(self):
+        material_assignments = AssetList['OvenFactory']()
+        params = {
+            "Surface": material_assignments['surface'].assign_material(),
+            "Back": material_assignments['back'].assign_material(),
+            "WhiteMetal": material_assignments['white_metal'].assign_material(),
+            "SuperBlackGlass": material_assignments['black_glass'].assign_material(),
+            "Glass": material_assignments['glass'].assign_material(),
+        }
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
+        
+        scratch_prob, edge_wear_prob = material_assignments['wear_tear_prob']
+        scratch, edge_wear = material_assignments['wear_tear']
+        
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+        
+        return wrapped_params, scratch, edge_wear
 
     @staticmethod
     def sample_parameters(dimensions):
@@ -131,7 +158,9 @@ class OvenFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
+        if self.scratch:
             self.scratch.apply(assets)
+        if self.edge_wear:
             self.edge_wear.apply(assets)
 
 def gas_grates(width, depth, grate_width, grate_depth, height, thickness, grids, branches, center_ratio, middle_ratio):
@@ -414,6 +443,8 @@ def nodegroup_heater(nw: NodeWrangler):
         expose_input=[('NodeSocketFloat', 'width', 0.5000),
             ('NodeSocketFloat', 'depth', 0.0000),
             ('NodeSocketFloat', 'radius_ratio', 0.2000),
+            ('NodeSocketFloat', 'arrangement_ratio', 0.5000),
+            ('NodeSocketShader', 'SuperBlackGlass', None)])
 
     minimum = nw.new_node(Nodes.Math,
         input_kwargs={0: group_input.outputs["width"], 1: group_input.outputs["depth"]},
@@ -428,7 +459,9 @@ def nodegroup_heater(nw: NodeWrangler):
 
     curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh,
         input_kwargs={'Curve': curve_line_1, 'Profile Curve': curve_circle_1.outputs["Curve"], 'Fill Caps': True})
+    
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': curve_to_mesh_1, 'Material': group_input.outputs["SuperBlackGlass"]})
 
     geometry_to_instance = nw.new_node('GeometryNodeGeometryToInstance', input_kwargs={'Geometry': set_material})
 
@@ -746,6 +779,11 @@ def nodegroup_cube(nw: NodeWrangler):
             ('NodeSocketFloatDistance', 'BottonRadius', 0.0500),
             ('NodeSocketFloat', 'BottonThickness', 0.0300),
             ('NodeSocketFloat', 'HeaterRadiusRatio', 0.1500),
+            ('NodeSocketString', 'BrandName', 'BrandName'),
+            ('NodeSocketMaterial', 'Glass', None),
+            ('NodeSocketMaterial', 'Surface', None),
+            ('NodeSocketMaterial', 'WhiteMetal', None),
+            ('NodeSocketMaterial', 'SuperBlackGlass', None),
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ,
         input_kwargs={'X': group_input.outputs["DoorThickness"], 'Y': group_input.outputs["Width"], 'Z': group_input.outputs["Height"]})
@@ -759,8 +797,10 @@ def nodegroup_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': cube, 'Vector': position, 'MarginX': -1.0000, 'MarginY': 0.1000, 'MarginZ': 0.1500})
 
     set_material_2 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cube, 'Selection': center.outputs["In"], 'Material': group_input.outputs["Glass"]})
 
     set_material_3 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': set_material_2, 'Selection': center.outputs["Out"], 'Material': group_input.outputs["Surface"]})
 
     # set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_3})
 
@@ -789,6 +829,7 @@ def nodegroup_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': handle, 'Translation': combine_xyz_13, 'Rotation': (0.0000, 1.5708, 0.0000)})
 
     set_material_8 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': transform_1, 'Material': group_input.outputs["WhiteMetal"]})
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Depth"], 1: group_input.outputs["DoorThickness"]})
 
@@ -804,6 +845,7 @@ def nodegroup_cube(nw: NodeWrangler):
     text = complete_no_bevel(nw, text, preprocess)
 
     set_material_9 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': text, 'Material': group_input.outputs["WhiteMetal"]})
 
     set_material_8 = complete_bevel(nw, set_material_8, preprocess)
 
@@ -875,6 +917,7 @@ def nodegroup_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': duplicate_elements.outputs["Geometry"], 'Offset': combine_xyz_5})
 
     set_material = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': set_position, 'Material': group_input.outputs["Surface"]})
 
     set_material = nw.new_node(Nodes.RealizeInstances, [set_material])
     
@@ -897,6 +940,7 @@ def nodegroup_cube(nw: NodeWrangler):
     cube_1 = nw.new_node(nodegroup_cube().name, input_kwargs={'Size': combine_xyz_6, 'Pos': combine_xyz_7})
 
     set_material_5 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cube_1, 'Material': group_input.outputs["Back"]})
 
     # set_shade_smooth_1 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_5})
 
@@ -943,8 +987,10 @@ def nodegroup_cube(nw: NodeWrangler):
         input_kwargs={'Geometry': cube_2, 'Vector': position_1, 'MarginX': -1.0000, 'MarginY': 0.0500, 'MarginZ': 0.0500})
 
     set_material_4 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': cube_2, 'Selection': center_1.outputs["In"], 'Material': group_input.outputs["Back"]})
 
     set_material_7 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': set_material_4, 'Selection': center_1.outputs["Out"], 'Material': group_input.outputs["Surface"]})
 
     # set_shade_smooth_3 = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={'Geometry': set_material_7})
 
@@ -1096,6 +1142,7 @@ def nodegroup_cube(nw: NodeWrangler):
         attrs={'domain': 'INSTANCE'})
 
     set_material_6 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': delete_geometry, 'Material': group_input.outputs["WhiteMetal"]})
 
     botton = nw.new_node(Nodes.Reroute, input_kwargs={'Input': set_material_6}, label='botton')
 
@@ -1120,6 +1167,7 @@ def nodegroup_cube(nw: NodeWrangler):
         input_kwargs={'Size': combine_xyz, 'Thickness': group_input.outputs["DoorThickness"], 'Switch2': True, 'Switch4': True})
 
     set_material_1 = nw.new_node(Nodes.SetMaterial,
+        input_kwargs={'Geometry': hollowcube, 'Material': group_input.outputs["Surface"]})
 
     subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={'Mesh': set_material_1, 'Level': 0})
 
