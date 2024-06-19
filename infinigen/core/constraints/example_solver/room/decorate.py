@@ -41,9 +41,21 @@ from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.room.configs import PILLAR_ROOM_TYPES, ROOM_FLOORS, ROOM_WALLS
-from infinigen.core.constraints.example_solver.room.constants import DOOR_WIDTH, WALL_HEIGHT, WALL_THICKNESS
-from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_level, get_room_type
+from infinigen.core.constraints.example_solver.room.configs import (
+    PILLAR_ROOM_TYPES,
+    ROOM_FLOORS,
+    ROOM_WALLS,
+)
+from infinigen.core.constraints.example_solver.room.constants import (
+    DOOR_WIDTH,
+    WALL_HEIGHT,
+    WALL_THICKNESS,
+)
+from infinigen.core.constraints.example_solver.room.types import (
+    RoomType,
+    get_room_level,
+    get_room_type,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import random_general as rg
@@ -58,7 +70,10 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
         "ceiling": {t.Subpart.Ceiling, t.Subpart.Visible},
     }
 
-    meshes = {n: [tagging.extract_tagged_faces(r, tags) for r in rooms_meshed] for n, tags in extract_tags.items()}
+    meshes = {
+        n: [tagging.extract_tagged_faces(r, tags) for r in rooms_meshed]
+        for n, tags in extract_tags.items()
+    }
 
     for k, ms in meshes.items():
         m2delete = []
@@ -71,7 +86,8 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
             ms.remove(m)
 
     meshes["exterior"] = [
-        tagging.extract_mask(r, 1 - tagging.tagged_face_mask(r, t.Subpart.Visible)) for r in rooms_meshed
+        tagging.extract_mask(r, 1 - tagging.tagged_face_mask(r, t.Subpart.Visible))
+        for r in rooms_meshed
     ]
 
     for n, objs in meshes.items():
@@ -79,7 +95,10 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
             o.name = o.name.split(".")[0] + f".{n}"
         butil.origin_set(objs, "ORIGIN_GEOMETRY", center="MEDIAN")
 
-    meshes = {n: butil.put_in_collection(objs, "unique_assets:room_" + n) for n, objs in meshes.items()}
+    meshes = {
+        n: butil.put_in_collection(objs, "unique_assets:room_" + n)
+        for n, objs in meshes.items()
+    }
 
     return meshes
 
@@ -87,7 +106,9 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
 def room_walls(wall_objs: list[bpy.types.Object]):
     wall_fns = list(rg(ROOM_WALLS[get_room_type(r.name)]) for r in wall_objs)
 
-    logger.debug(f"{room_walls.__name__} adding materials to {len(wall_objs)=}, using {len(wall_fns)=}")
+    logger.debug(
+        f"{room_walls.__name__} adding materials to {len(wall_objs)=}, using {len(wall_fns)=}"
+    )
 
     for wall_fn in set(wall_fns):
         rooms_ = [o for o, w in zip(wall_objs, wall_fns) if w == wall_fn]
@@ -109,7 +130,9 @@ def room_ceilings(ceilings: list[bpy.types.Object]):
 
 def room_floors(floors: list[bpy.types.Object]):
     floor_fns = list(rg(ROOM_FLOORS[get_room_type(r.name)]) for r in floors)
-    logger.debug(f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}")
+    logger.debug(
+        f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
+    )
     for floor_fn in set(floor_fns):
         rooms_ = [o for o, f in zip(floors, floor_fns) if f == floor_fn]
 
@@ -123,10 +146,18 @@ def room_floors(floors: list[bpy.types.Object]):
 
 
 @gin.configurable
-def populate_doors(placeholders: list[bpy.types.Object], n_doors=3, door_chance=1, casing_chance=0.0, all_open=False):
+def populate_doors(
+    placeholders: list[bpy.types.Object],
+    n_doors=3,
+    door_chance=1,
+    casing_chance=0.0,
+    all_open=False,
+):
     factories = [random_door_factory()(np.random.randint(1e7)) for _ in range(3)]
 
-    logger.debug(f"{populate_doors.__name__} populating {len(placeholders)=} with {n_doors=} and {len(factories)=}")
+    logger.debug(
+        f"{populate_doors.__name__} populating {len(placeholders)=} with {n_doors=} and {len(factories)=}"
+    )
 
     indices = np.random.randint(0, len(factories), len(placeholders))
     col = butil.get_collection("unique_assets:doors")
@@ -153,7 +184,11 @@ def populate_doors(placeholders: list[bpy.types.Object], n_doors=3, door_chance=
 
             door = factory(int(j))
             door.parent = placeholders[j]
-            door.location = constants.DOOR_WIDTH / 2, constants.WALL_THICKNESS / 2, -constants.DOOR_SIZE / 2
+            door.location = (
+                constants.DOOR_WIDTH / 2,
+                constants.WALL_THICKNESS / 2,
+                -constants.DOOR_SIZE / 2,
+            )
             door.rotation_euler[-1] = -rot_z
             doors.append(door)
 
@@ -175,7 +210,9 @@ def populate_doors(placeholders: list[bpy.types.Object], n_doors=3, door_chance=
 def populate_windows(placeholders: list[bpy.types.Object], n_windows=1):
     factories = [WindowFactory(np.random.randint(1e5)) for _ in range(n_windows)]
 
-    logger.debug(f"{populate_windows.__name__} populating {len(placeholders)=} with {n_windows=} and {len(factories)=}")
+    logger.debug(
+        f"{populate_windows.__name__} populating {len(placeholders)=} with {n_windows=} and {len(factories)=}"
+    )
 
     indices = np.random.randint(0, len(factories), len(placeholders))
     col = butil.get_collection("unique_assets:windows")
@@ -195,19 +232,30 @@ def populate_windows(placeholders: list[bpy.types.Object], n_windows=1):
 
 def room_stairs(state, rooms_meshed):
     col = butil.get_collection("unique_assets:staircases")
-    states = list(s for k, s in state.objs.items() if get_room_type(k) == RoomType.Staircase)
+    states = list(
+        s for k, s in state.objs.items() if get_room_type(k) == RoomType.Staircase
+    )
     contours, doors = [], []
     for s in states:
         doors_ = [
             bpy.data.objects[k]
             for k, o in state.objs.items()
-            if any(r.relation == cl.CutFrom() and r.target_name == s.obj.name for r in o.relations)
+            if any(
+                r.relation == cl.CutFrom() and r.target_name == s.obj.name
+                for r in o.relations
+            )
             and k.startswith("door")
         ]
-        contour = shapely.simplify(s.contour.buffer(-WALL_THICKNESS / 2, join_style="mitre"), 0.1)
+        contour = shapely.simplify(
+            s.contour.buffer(-WALL_THICKNESS / 2, join_style="mitre"), 0.1
+        )
         for door in doors_:
-            box = shapely.box(-DOOR_WIDTH / 2, -DOOR_WIDTH * 2, DOOR_WIDTH / 2, DOOR_WIDTH * 2)
-            box = shapely.affinity.translate(shapely.affinity.rotate(box, door.rotation_euler[-1]), *door.location)
+            box = shapely.box(
+                -DOOR_WIDTH / 2, -DOOR_WIDTH * 2, DOOR_WIDTH / 2, DOOR_WIDTH * 2
+            )
+            box = shapely.affinity.translate(
+                shapely.affinity.rotate(box, door.rotation_euler[-1]), *door.location
+            )
             contour = contour.difference(box)
         doors.append(doors_)
         contours.append(contour)
@@ -215,7 +263,10 @@ def room_stairs(state, rooms_meshed):
     for c, c_ in zip(contours[:-1], contours[1:]):
         geom = c.intersection(c_)
         if not geom.geom_type == "Polygon":
-            geom = sorted(list(g for g in geom.geoms if g.geom_type == "Polygon"), key=lambda _: _.area)[-1]
+            geom = sorted(
+                list(g for g in geom.geoms if g.geom_type == "Polygon"),
+                key=lambda _: _.area,
+            )[-1]
         geoms.append(geom)
     placeholders, offsets, fns = [], [], []
     for _ in trange(100, desc="Generating staircases"):
@@ -250,27 +301,47 @@ def room_stairs(state, rooms_meshed):
                 y = uniform(p[1], p[3])
                 p = Point(x, y)
                 projected = nearest_points(mls, p)[0]
-                if max(np.abs(p.x - projected.x), np.abs(p.y - projected.y)) < constants.STAIRCASE_SNAP:
+                if (
+                    max(np.abs(p.x - projected.x), np.abs(p.y - projected.y))
+                    < constants.STAIRCASE_SNAP
+                ):
                     p = projected
                     coords = (
-                        mls.coords if mls.geom_type == "LineString" else np.concatenate([ls.coords for ls in mls.geoms])
+                        mls.coords
+                        if mls.geom_type == "LineString"
+                        else np.concatenate([ls.coords for ls in mls.geoms])
                     )
-                    projected = nearest_points(shapely.MultiPoint(coords), Point(x, y))[0]
-                    if max(np.abs(p.x - projected.x), np.abs(p.y - projected.y)) < constants.STAIRCASE_SNAP:
+                    projected = nearest_points(shapely.MultiPoint(coords), Point(x, y))[
+                        0
+                    ]
+                    if (
+                        max(np.abs(p.x - projected.x), np.abs(p.y - projected.y))
+                        < constants.STAIRCASE_SNAP
+                    ):
                         p = projected
                 x, y = p.x, p.y
                 placeholders[j].location = x, y, j * WALL_HEIGHT + WALL_THICKNESS / 2
-                contains_lower = shapely.contains_xy(contours[j], lower[j][0] + x, lower[j][1] + y).all()
-                contains_upper = shapely.contains_xy(contours[j + 1], upper[j][0] + x, upper[j][1] + y).all()
+                contains_lower = shapely.contains_xy(
+                    contours[j], lower[j][0] + x, lower[j][1] + y
+                ).all()
+                contains_upper = shapely.contains_xy(
+                    contours[j + 1], upper[j][0] + x, upper[j][1] + y
+                ).all()
                 lower_valid = fns[j].valid_contour((x, y), contours[j], doors[j])
-                upper_valid = fns[j].valid_contour((x, y), contours[j + 1], doors[j + 1], False)
-                if not (contains_lower and contains_upper and lower_valid and upper_valid):
+                upper_valid = fns[j].valid_contour(
+                    (x, y), contours[j + 1], doors[j + 1], False
+                )
+                if not (
+                    contains_lower and contains_upper and lower_valid and upper_valid
+                ):
                     break
                 offsets.append((x, y))
             if len(offsets) == len(geoms):
                 ts = list(
                     trimesh.convex.convex_hull(
-                        obj2trimesh(ph).apply_transform(translation_matrix([*o, WALL_HEIGHT * j]))
+                        obj2trimesh(ph).apply_transform(
+                            translation_matrix([*o, WALL_HEIGHT * j])
+                        )
                     )
                     for j, (ph, o) in enumerate(zip(placeholders, offsets))
                 )
@@ -291,7 +362,12 @@ def room_stairs(state, rooms_meshed):
                 level = get_room_level(mesh.name)
                 if level == j + 1:
                     butil.modify_mesh(
-                        mesh, "BOOLEAN", object=cutter, operation="DIFFERENCE", use_self=True, use_hole_tolerant=True
+                        mesh,
+                        "BOOLEAN",
+                        object=cutter,
+                        operation="DIFFERENCE",
+                        use_self=True,
+                        use_hole_tolerant=True,
                     )
                     butil.delete(cutter)
                     m = deep_clone_obj(mesh)
@@ -307,7 +383,9 @@ def room_stairs(state, rooms_meshed):
 def room_pillars(state: state_def.State, walls: list[bpy.types.Object]):
     col = butil.get_collection("pillars")
 
-    pillar_rooms = [s for k, s in state.objs.items() if get_room_type(k) in PILLAR_ROOM_TYPES]
+    pillar_rooms = [
+        s for k, s in state.objs.items() if get_room_type(k) in PILLAR_ROOM_TYPES
+    ]
 
     for s in pillar_rooms:
         factory = PillarFactory(np.random.randint(1e7))
@@ -317,7 +395,10 @@ def room_pillars(state: state_def.State, walls: list[bpy.types.Object]):
         selection = (read_edge_length(interior) > WALL_HEIGHT / 2) & (
             np.abs(read_edge_direction(interior))[:, -1] > 0.9
         )
-        selection_ = np.bincount(read_edges(interior)[selection].reshape(-1), minlength=len(interior.data.vertices))
+        selection_ = np.bincount(
+            read_edges(interior)[selection].reshape(-1),
+            minlength=len(interior.data.vertices),
+        )
         remove_vertices(interior, selection_ == 0)
         remove_vertices(interior, lambda x, y, z: z > WALL_THICKNESS)
         remove_edges(interior, read_edge_length(interior) < WALL_THICKNESS)
@@ -342,10 +423,17 @@ def room_pillars(state: state_def.State, walls: list[bpy.types.Object]):
         if len(staircases) == 0:
             return
 
-        staircases = np.concatenate([read_co(o) + np.array([o.location]) for o in staircases])
+        staircases = np.concatenate(
+            [read_co(o) + np.array([o.location]) for o in staircases]
+        )
         cos = read_co(interior)
         cos[:, -1] = mesh.location[-1] + WALL_THICKNESS / 2
-        cos = cos[np.min(np.linalg.norm(cos[:, np.newaxis] - staircases[np.newaxis], axis=-1), -1) > WALL_THICKNESS]
+        cos = cos[
+            np.min(
+                np.linalg.norm(cos[:, np.newaxis] - staircases[np.newaxis], axis=-1), -1
+            )
+            > WALL_THICKNESS
+        ]
         for co in cos:
             obj = factory(np.random.randint(1e7))
             obj.location = co

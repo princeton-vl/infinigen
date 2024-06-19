@@ -68,7 +68,9 @@ def calc_bbox_pts(min_pt, max_pt):
 # Deterministic, but probably slow. Good enough for visualization.
 def arr2color(e):
     s = np.random.RandomState(np.array(e, dtype=np.uint32))
-    return (np.asarray(colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)) * 255).astype(np.uint8)
+    return (
+        np.asarray(colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)) * 255
+    ).astype(np.uint8)
 
 
 if __name__ == "__main__":
@@ -79,17 +81,23 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, default=Path("testbed"))
     args = parser.parse_args()
 
-    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, "ObjectSegmentation_npz")))
+    object_segmentation_mask = recover(
+        np.load(get_frame_path(args.folder, 0, args.frame, "ObjectSegmentation_npz"))
+    )
     instance_segmentation_mask = recover(
         np.load(get_frame_path(args.folder, 0, args.frame, "InstanceSegmentation_npz"))
     )
     image = imread(get_frame_path(args.folder, 0, args.frame, "Image_png"))
-    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, "Objects_json").read_text())
+    object_json = json.loads(
+        get_frame_path(args.folder, 0, args.frame, "Objects_json").read_text()
+    )
     camview = np.load(get_frame_path(args.folder, 0, args.frame, "camview_npz"))
 
     # Identify objects visible in the image
     unique_object_idxs = set(np.unique(object_segmentation_mask))
-    present_objects = [obj for obj in object_json if (obj["object_index"] in unique_object_idxs)]
+    present_objects = [
+        obj for obj in object_json if (obj["object_index"] in unique_object_idxs)
+    ]
 
     # Complain if the query isn't valid/present
     unique_names = sorted({q["name"] for q in present_objects})
@@ -99,7 +107,9 @@ if __name__ == "__main__":
             print(f"- {qn}")
         sys.exit(0)
     elif not any((args.query.lower() in name.lower()) for name in unique_names):
-        print(f'"{args.query}" doesn\'t match any object names in this image. Choices are:')
+        print(
+            f'"{args.query}" doesn\'t match any object names in this image. Choices are:'
+        )
         for qn in unique_names:
             print(f"- {qn}")
         sys.exit(0)
@@ -109,7 +119,9 @@ if __name__ == "__main__":
     K = camview["K"]
 
     # Assign unique colors to each object instance
-    combined_mask, _ = pack([object_segmentation_mask, instance_segmentation_mask], "h w *")
+    combined_mask, _ = pack(
+        [object_segmentation_mask, instance_segmentation_mask], "h w *"
+    )
     combined_mask = rearrange(combined_mask, "h w d -> (h w) d")
     visible_instances = np.unique(combined_mask, axis=0)  # this line is a bottleneck
     visible_instances = {tuple(row) for row in visible_instances}
@@ -117,10 +129,17 @@ if __name__ == "__main__":
     boxes_to_draw = []
     for obj in tqdm(present_objects, desc="Identifying boxes to draw"):
         if args.query.lower() in obj["name"].lower():
-            for instance_id, model_mat in zip(obj["instance_ids"], np.asarray(obj["model_matrices"])):
+            for instance_id, model_mat in zip(
+                obj["instance_ids"], np.asarray(obj["model_matrices"])
+            ):
                 if ((obj["object_index"],) + tuple(instance_id)) in visible_instances:
                     boxes_to_draw.append(
-                        dict(model_mat=model_mat, min=obj["min"], max=obj["max"], color=arr2color(instance_id).tolist())
+                        dict(
+                            model_mat=model_mat,
+                            min=obj["min"],
+                            max=obj["max"],
+                            color=arr2color(instance_id).tolist(),
+                        )
                     )
 
     canvas = np.copy(image)
@@ -139,7 +158,8 @@ if __name__ == "__main__":
             continue
         points_in_faces_uv = bbox_points_uv[faces.flatten()].reshape((6, 4, 2))
         sign = np.cross(
-            points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0], points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0]
+            points_in_faces_uv[:, 1] - points_in_faces_uv[:, 0],
+            points_in_faces_uv[:, 2] - points_in_faces_uv[:, 0],
         )
         sign = sign * np.array([-1, 1, 1, -1, -1, 1])
 

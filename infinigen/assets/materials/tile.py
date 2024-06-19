@@ -19,7 +19,9 @@ from .utils.surface_utils import perturb_coordinates
 
 def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections):
     n = len(selections) + 1
-    seeds = np.random.randint(0, 1e7, n) if alternating else [np.random.randint(1e7)] * n
+    seeds = (
+        np.random.randint(0, 1e7, n) if alternating else [np.random.randint(1e7)] * n
+    )
     shaders, disps = [], []
     darken_factor = uniform(0.4, 1.0)
     for i, seed in enumerate(seeds):
@@ -49,7 +51,11 @@ def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selectio
                     color = bsdf.inputs[0].default_value
                 color = nw.new_node(
                     Nodes.MixRGB,
-                    input_kwargs={0: darken_factor, 6: color, 7: nw.scalar_sub(1, mortar)},
+                    input_kwargs={
+                        0: darken_factor,
+                        6: color,
+                        7: nw.scalar_sub(1, mortar),
+                    },
                     attrs={"blend_type": "MULTIPLY", "data_type": "RGBA"},
                 ).outputs[2]
                 nw.connect_input(color, bsdf.inputs[0])
@@ -57,7 +63,9 @@ def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selectio
                 case Nodes.GroupOutput:
                     shaders.append(nw.find_from(n.inputs[0])[0].from_socket)
                     disp_links = nw.find_from(n.inputs[1])
-                    disps.append(disp_links[0].from_socket if len(disp_links) > 0 else None)
+                    disps.append(
+                        disp_links[0].from_socket if len(disp_links) > 0 else None
+                    )
                     nw.nodes.remove(n)
                 case (
                     Nodes.PrincipledBSDF
@@ -73,15 +81,23 @@ def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selectio
                     n = nw.find(Nodes.MaterialOutput)[-1]
                     shaders.append(nw.find_from(n.inputs["Surface"])[0].from_socket)
                     disp_links = nw.find_from(n.inputs["Displacement"])
-                    disps.append(disp_links[0].from_socket if len(disp_links) > 0 else None)
+                    disps.append(
+                        disp_links[0].from_socket if len(disp_links) > 0 else None
+                    )
     shader = shaders[0]
     disp = disps[0]
     rotation = rotations[0]
     for sel, sh, dis, rot in zip(selections, shaders[1:], disps[1:], rotations[1:]):
         shader = nw.new_node(Nodes.MixShader, [sel, shader, sh])
-        disp = nw.new_node(Nodes.Mix, input_kwargs={"Factor": sel, "A": disp, "B": dis}, attrs={"data_type": "VECTOR"})
+        disp = nw.new_node(
+            Nodes.Mix,
+            input_kwargs={"Factor": sel, "A": disp, "B": dis},
+            attrs={"data_type": "VECTOR"},
+        )
         rotation = nw.new_node(
-            Nodes.Mix, input_kwargs={"Factor": sel, "A": rotation, "B": rot}, attrs={"data_type": "FLOAT"}
+            Nodes.Mix,
+            input_kwargs={"Factor": sel, "A": rotation, "B": rot},
+            attrs={"data_type": "FLOAT"},
         )
     for node in nw.find(Nodes.TextureCoord)[1:] + nw.find(Nodes.NewGeometry):
         perturb_coordinates(nw, node, offset, rotation)
@@ -89,23 +105,40 @@ def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selectio
         disp,
         nw.new_node(
             Nodes.Displacement,
-            input_kwargs={"Height": nw.scalar_multiply(mortar, -uniform(0.01, 0.02)), "Midlevel": 0.0},
+            input_kwargs={
+                "Height": nw.scalar_multiply(mortar, -uniform(0.01, 0.02)),
+                "Midlevel": 0.0,
+            },
         ),
     )
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": shader, "Displacement": disp})
+    nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": shader, "Displacement": disp}
+    )
 
 
-def shader_square_tile(nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs):
+def shader_square_tile(
+    nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs
+):
     if alternating is None:
         alternating = uniform() < 0.75
     size = log_uniform(0.2, 0.4)
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
     rotation = np.pi / 4 if uniform() < 0.3 else 0
     vec = nw.new_node(
-        Nodes.Mapping, [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4) + rotation), [scale] * 3]
+        Nodes.Mapping,
+        [
+            vec,
+            uniform(0, 1, 3),
+            (0, 0, np.pi / 2 * np.random.randint(4) + rotation),
+            [scale] * 3,
+        ],
     )
     vec = nw.combine(*nw.separate(vec)[:2], 0)
     offset, mortar = map(
@@ -123,22 +156,37 @@ def shader_square_tile(nw: NodeWrangler, base_shader, vertical=False, alternatin
         ).outputs.get,
         ["Color", "Fac"],
     )
-    selections = [nw.new_node(Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]).outputs[1]]
+    selections = [
+        nw.new_node(
+            Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]
+        ).outputs[1]
+    ]
     rotations = np.pi / 2 * np.arange(2)
     mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections)
 
 
-def shader_rectangle_tile(nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs):
+def shader_rectangle_tile(
+    nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs
+):
     if alternating is None:
         alternating = uniform() < 0.75
     size = log_uniform(0.2, 0.4)
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
     vec = nw.new_node(
         Nodes.Mapping,
-        [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4)), [scale, scale * log_uniform(1.3, 2), scale]],
+        [
+            vec,
+            uniform(0, 1, 3),
+            (0, 0, np.pi / 2 * np.random.randint(4)),
+            [scale, scale * log_uniform(1.3, 2), scale],
+        ],
     )
     vec = nw.combine(*nw.separate(vec)[:2], 0)
     offset, mortar = map(
@@ -156,22 +204,40 @@ def shader_rectangle_tile(nw: NodeWrangler, base_shader, vertical=False, alterna
         ).outputs.get,
         ["Color", "Fac"],
     )
-    selections = [nw.new_node(Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]).outputs[1]]
+    selections = [
+        nw.new_node(
+            Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]
+        ).outputs[1]
+    ]
     rotations = np.pi / 2 * np.arange(2)
     mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections)
 
 
-def shader_hexagon_tile(nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs):
+def shader_hexagon_tile(
+    nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs
+):
     if alternating is None:
         alternating = uniform() < 0.6
     size = log_uniform(0.15, 0.3)
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
-    vec = nw.new_node(Nodes.Mapping, [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4)), [scale] * 3])
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
+    vec = nw.new_node(
+        Nodes.Mapping,
+        [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4)), [scale] * 3],
+    )
     qs = []
-    for n in np.array([[1 / np.sqrt(3), -1 / 3, 0], [0, 2 / 3, 0], [-1 / np.sqrt(3), -1 / 3, 0]]) / size:
+    for n in (
+        np.array(
+            [[1 / np.sqrt(3), -1 / 3, 0], [0, 2 / 3, 0], [-1 / np.sqrt(3), -1 / 3, 0]]
+        )
+        / size
+    ):
         qs.append(nw.vector_math("DOT_PRODUCT", vec, n))
     qs_ = [nw.math("ROUND", q) for q in qs]
     qs_diff = [nw.math("ABSOLUTE", nw.scalar_sub(q, q_)) for q, q_ in zip(qs, qs_)]
@@ -193,11 +259,20 @@ def shader_hexagon_tile(nw: NodeWrangler, base_shader, vertical=False, alternati
         )
     offset = nw.combine(coords[0], coords[1], coords[2])
     i = np.random.randint(3)
-    fraction = nw.math("FRACT", nw.scalar_divide(nw.scalar_add(nw.scalar_sub(coords[i], coords[(i + 1) % 3]), 0.5), 3))
+    fraction = nw.math(
+        "FRACT",
+        nw.scalar_divide(
+            nw.scalar_add(nw.scalar_sub(coords[i], coords[(i + 1) % 3]), 0.5), 3
+        ),
+    )
     diffs = [nw.math("ABSOLUTE", nw.scalar_sub(q, c)) for q, c in zip(qs, coords)]
     max_dist = nw.math(
         "MAXIMUM",
-        nw.math("MAXIMUM", nw.scalar_add(diffs[0], diffs[1]), nw.scalar_add(diffs[1], diffs[2])),
+        nw.math(
+            "MAXIMUM",
+            nw.scalar_add(diffs[0], diffs[1]),
+            nw.scalar_add(diffs[1], diffs[2]),
+        ),
         nw.scalar_add(diffs[2], diffs[0]),
     )
     mortar = nw.math("GREATER_THAN", max_dist, 1 - uniform(0.005, 0.01) / size / 2)
@@ -217,7 +292,13 @@ def shader_hexagon_tile(nw: NodeWrangler, base_shader, vertical=False, alternati
 
 
 def shader_staggered_tile(
-    nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, vertical_scale=None, **kwargs
+    nw: NodeWrangler,
+    base_shader,
+    vertical=False,
+    alternating=None,
+    scale=1,
+    vertical_scale=None,
+    **kwargs,
 ):
     horizontal_scale = scale * log_uniform(2.0, 3.5)
     if vertical_scale is None:
@@ -226,7 +307,11 @@ def shader_staggered_tile(
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
     vec = nw.new_node(Nodes.Mapping, [vec, uniform(0, 1, 3)])
     vec = nw.add(vec, nw.combine(0, nw.scalar_divide(0.5, horizontal_scale), 0))
 
@@ -250,15 +335,32 @@ def shader_staggered_tile(
     mix_shader(nw, base_shader, offset, [0], mortar, alternating, [])
 
 
-def shader_crossed_tile(nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, n=None, **kwargs):
+def shader_crossed_tile(
+    nw: NodeWrangler,
+    base_shader,
+    vertical=False,
+    alternating=None,
+    scale=1,
+    n=None,
+    **kwargs,
+):
     n = np.random.randint(4, 8)
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
-    vec = nw.new_node(Nodes.Mapping, [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4)), [scale] * 3])
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
+    vec = nw.new_node(
+        Nodes.Mapping,
+        [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(4)), [scale] * 3],
+    )
     x, y, z = nw.separate(vec)
-    x_ = nw.scalar_sub(x, nw.scalar_divide(nw.math("FLOOR", nw.scalar_multiply(y, n)), n))
+    x_ = nw.scalar_sub(
+        x, nw.scalar_divide(nw.math("FLOOR", nw.scalar_multiply(y, n)), n)
+    )
     vec = nw.combine(x_, y, 0)
     offset, mortar = map(
         nw.new_node(
@@ -276,7 +378,12 @@ def shader_crossed_tile(nw: NodeWrangler, base_shader, vertical=False, alternati
         ["Color", "Fac"],
     )
     vec_ = nw.combine(
-        nw.scalar_sub(y, nw.scalar_divide(nw.scalar_add(nw.math("FLOOR", nw.scalar_multiply(x, n)), 1), n)),
+        nw.scalar_sub(
+            y,
+            nw.scalar_divide(
+                nw.scalar_add(nw.math("FLOOR", nw.scalar_multiply(x, n)), 1), n
+            ),
+        ),
         nw.scalar_sub(0, x),
         0,
     )
@@ -297,30 +404,53 @@ def shader_crossed_tile(nw: NodeWrangler, base_shader, vertical=False, alternati
         ["Color", "Fac"],
     )
     selection = nw.math(
-        "LESS_THAN", nw.scalar_sub(nw.scalar_divide(x_, 2), nw.math("FLOOR", nw.scalar_divide(x_, 2))), 0.5
+        "LESS_THAN",
+        nw.scalar_sub(
+            nw.scalar_divide(x_, 2), nw.math("FLOOR", nw.scalar_divide(x_, 2))
+        ),
+        0.5,
     )
     offset = nw.new_node(
-        Nodes.Mix, input_kwargs={"Factor": selection, "A": offset, "B": offset_}, attrs={"data_type": "FLOAT"}
+        Nodes.Mix,
+        input_kwargs={"Factor": selection, "A": offset, "B": offset_},
+        attrs={"data_type": "FLOAT"},
     )
     mortar = nw.new_node(
-        Nodes.Mix, input_kwargs={"Factor": selection, "A": mortar, "B": mortar_}, attrs={"data_type": "FLOAT"}
+        Nodes.Mix,
+        input_kwargs={"Factor": selection, "A": mortar, "B": mortar_},
+        attrs={"data_type": "FLOAT"},
     )
 
-    mix_shader(nw, base_shader, offset, [0, np.pi / 2], mortar, alternating, [selection])
+    mix_shader(
+        nw, base_shader, offset, [0, np.pi / 2], mortar, alternating, [selection]
+    )
 
 
-def shader_composite_tile(nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs):
+def shader_composite_tile(
+    nw: NodeWrangler, base_shader, vertical=False, alternating=None, scale=1, **kwargs
+):
     if alternating is None:
         alternating = uniform() < 0.75
     size = log_uniform(0.2, 0.4)
     vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
     normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
     if vertical:
-        vec = nw.combine(nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1], nw.separate(vec)[-1], 0)
-    vec = nw.new_node(Nodes.Mapping, [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(8)), [scale] * 3])
+        vec = nw.combine(
+            nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
+            nw.separate(vec)[-1],
+            0,
+        )
+    vec = nw.new_node(
+        Nodes.Mapping,
+        [vec, uniform(0, 1, 3), (0, 0, np.pi / 2 * np.random.randint(8)), [scale] * 3],
+    )
     vec = nw.combine(*nw.separate(vec)[:2], 0)
 
-    selections = [nw.new_node(Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]).outputs[1]]
+    selections = [
+        nw.new_node(
+            Nodes.CheckerTexture, [vec, (0, 0, 0, 1), (1, 1, 1, 1), 1 / size]
+        ).outputs[1]
+    ]
     rotations = np.pi / 2 * np.arange(2)
 
     mortar_size = uniform(0.002, 0.005)
@@ -358,10 +488,14 @@ def shader_composite_tile(nw: NodeWrangler, base_shader, vertical=False, alterna
         ["Color", "Fac"],
     )
     mortar = nw.new_node(
-        Nodes.Mix, input_kwargs={"Factor": selections[0], "A": mortar_h, "B": mortar_v}, attrs={"data_type": "FLOAT"}
+        Nodes.Mix,
+        input_kwargs={"Factor": selections[0], "A": mortar_h, "B": mortar_v},
+        attrs={"data_type": "FLOAT"},
     )
     offset = nw.new_node(
-        Nodes.Mix, input_kwargs={"Factor": selections[0], "A": offset_h, "B": offset_v}, attrs={"data_type": "VECTOR"}
+        Nodes.Mix,
+        input_kwargs={"Factor": selections[0], "A": offset_h, "B": offset_v},
+        attrs={"data_type": "VECTOR"},
     )
     mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections)
 
@@ -382,7 +516,16 @@ def get_shader_funcs():
     ]
 
 
-def apply(obj, selection=None, vertical=False, shader_func=None, scale=None, alternating=None, shape=None, **kwargs):
+def apply(
+    obj,
+    selection=None,
+    vertical=False,
+    shader_func=None,
+    scale=None,
+    alternating=None,
+    shape=None,
+    **kwargs,
+):
     funcs, weights = zip(*get_shader_funcs())
     weights = np.array(weights) / sum(weights)
     if shader_func is None:
@@ -395,7 +538,9 @@ def apply(obj, selection=None, vertical=False, shader_func=None, scale=None, alt
     if shader_func == ceramic.shader_ceramic:
         low = uniform(0.1, 0.3)
         high = uniform(0.6, 0.8)
-        shader_func = partial(ceramic.shader_ceramic, roughness_min=low, roughness_max=high)
+        shader_func = partial(
+            ceramic.shader_ceramic, roughness_min=low, roughness_max=high
+        )
     match shape:
         case "square":
             method = shader_square_tile

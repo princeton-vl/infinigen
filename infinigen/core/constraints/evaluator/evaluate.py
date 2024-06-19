@@ -8,7 +8,6 @@ import copy
 import logging
 import operator
 from dataclasses import dataclass
-from typing import Callable, Type
 
 import pandas as pd
 
@@ -21,14 +20,22 @@ logger = logging.getLogger(__name__)
 
 SPECIAL_CASE_NODES = [cl.ForAll, cl.SumOver, cl.MeanOver, cl.item, cl.Problem, cl.scene]
 
-gather_funcs = {cl.ForAll: all, cl.SumOver: sum, cl.MeanOver: lambda vs: (sum(vs) / len(vs)) if len(vs) else 0}
+gather_funcs = {
+    cl.ForAll: all,
+    cl.SumOver: sum,
+    cl.MeanOver: lambda vs: (sum(vs) / len(vs)) if len(vs) else 0,
+}
 
 
 def _compute_node_val(node: cl.Node, state: State, memo: dict):
     match node:
         case cl.scene():
             return set(k for k, v in state.objs.items() if v.active)
-        case cl.ForAll(objs, var, pred) | cl.SumOver(objs, var, pred) | cl.MeanOver(objs, var, pred):
+        case (
+            cl.ForAll(objs, var, pred)
+            | cl.SumOver(objs, var, pred)
+            | cl.MeanOver(objs, var, pred)
+        ):
             assert isinstance(var, str)
 
             loop_over_objs = evaluate_node(objs, state, memo)
@@ -43,16 +50,22 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
 
             return gather_funcs[node.__class__](results)
         case cl.item():
-            raise ValueError(f"_compute_node_val encountered undefined variable {node}. {memo.keys()}")
+            raise ValueError(
+                f"_compute_node_val encountered undefined variable {node}. {memo.keys()}"
+            )
         case cl.Node() if node.__class__ in node_impl.node_impls:
             impl_func = node_impl.node_impls.get(node.__class__)
-            child_vals = {name: evaluate_node(c, state, memo) for name, c in node.children()}
+            child_vals = {
+                name: evaluate_node(c, state, memo) for name, c in node.children()
+            }
             kwargs = {}
             if hasattr(node, "others_tags"):
                 kwargs["others_tags"] = getattr(node, "others_tags")
             return impl_func(node, state, child_vals, **kwargs)
         case cl.Problem():
-            raise TypeError(f"evaluate_node is invalid for {node}, please use evaluate_problem")
+            raise TypeError(
+                f"evaluate_node is invalid for {node}, please use evaluate_problem"
+            )
         case _:
             raise NotImplementedError(
                 f"Couldnt compute value for {type(node)}, please add it to "
@@ -71,7 +84,9 @@ def relevant(node: cl.Node, filter: r.Domain | None) -> bool:
     match node:
         case cl.ObjectSetExpression():
             d = r.constraint_domain(node, finalize_variables=True)
-            assert r.domain_finalized(d), f"{relevant.__name__} encountered unfinalized {d=}"
+            assert r.domain_finalized(
+                d
+            ), f"{relevant.__name__} encountered unfinalized {d=}"
             res = d.intersects(filter, require_satisfies_right=True)
             logger.debug(f"{relevant.__name__} got {res=} for {d=}\n {filter=}")
             return res
@@ -186,12 +201,19 @@ class EvalResult:
     def to_df(self) -> pd.DataFrame:
         keys = set(self.loss_vals.keys()).union(self.violations.keys())
         return pd.DataFrame.from_dict(
-            {k: dict(loss=self.loss_vals.get(k), viol_count=self.violations.get(k)) for k in keys}
+            {
+                k: dict(loss=self.loss_vals.get(k), viol_count=self.violations.get(k))
+                for k in keys
+            }
         )
 
 
-def evaluate_problem(problem: cl.Problem, state: State, filter: r.Domain = None, memo=None):
-    logger.debug(f"Evaluating problem {len(problem.constraints)=} {len(problem.score_terms)=}")
+def evaluate_problem(
+    problem: cl.Problem, state: State, filter: r.Domain = None, memo=None
+):
+    logger.debug(
+        f"Evaluating problem {len(problem.constraints)=} {len(problem.score_terms)=}"
+    )
 
     if memo is None:
         memo = {}

@@ -23,7 +23,11 @@ def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):
         xs = x_anchors(x_start, x_end)
         ys = y_anchors(y_start, y_end)
         obj = spin(
-            [np.array([xs[0], *xs, xs[-1]]) * x_length, np.array([0, *ys, 0]) * y_length, 0.0],
+            [
+                np.array([xs[0], *xs, xs[-1]]) * x_length,
+                np.array([0, *ys, 0]) * y_length,
+                0.0,
+            ],
             [1, len(xs)],
             axis=(1, 0, 0),
         )
@@ -34,7 +38,8 @@ def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):
             lambda x, y, z: (
                 0,
                 0,
-                -np.clip(z + y_base * params["bottom_cutoff"], None, 0) * (1 - params["bottom_shift"]),
+                -np.clip(z + y_base * params["bottom_cutoff"], None, 0)
+                * (1 - params["bottom_shift"]),
             ),
         )
         displace_vertices(
@@ -42,7 +47,12 @@ def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):
             lambda x, y, z: (
                 0,
                 0,
-                np.where(z > 0, np.clip(params["top_cutoff"] * y_base - np.abs(y), 0, None) * params["top_shift"], 0),
+                np.where(
+                    z > 0,
+                    np.clip(params["top_cutoff"] * y_base - np.abs(y), 0, None)
+                    * params["top_shift"],
+                    0,
+                ),
             ),
         )
 
@@ -55,13 +65,18 @@ def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):
 
 def decorate_segment(obj, params, x_start, x_end):
     def offset(nw: NodeWrangler, vector):
-        noise_texture = nw.new_node(Nodes.NoiseTexture, [vector], input_kwargs={"Scale": params["noise_scale"]})
+        noise_texture = nw.new_node(
+            Nodes.NoiseTexture, [vector], input_kwargs={"Scale": params["noise_scale"]}
+        )
         x = nw.separate(nw.new_node(Nodes.InputPosition))[0]
         ratio = nw.build_float_curve(
-            nw.scalar_divide(x, params["x_length"]), [(x_start, 1), (x_end - 0.01, 1), (x_end, 0), (x_end + 0.01, 0)]
+            nw.scalar_divide(x, params["x_length"]),
+            [(x_start, 1), (x_end - 0.01, 1), (x_end, 0), (x_end + 0.01, 0)],
         )
         return nw.scale(
-            nw.scalar_multiply(ratio, nw.scalar_multiply(noise_texture, params["noise_strength"])),
+            nw.scalar_multiply(
+                ratio, nw.scalar_multiply(noise_texture, params["noise_strength"])
+            ),
             nw.new_node(Nodes.InputNormal),
         )
 
@@ -70,7 +85,9 @@ def decorate_segment(obj, params, x_start, x_end):
 
 
 def geo_symmetric_texture(nw: NodeWrangler, offset, selection=None):
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     pos = nw.new_node(Nodes.InputPosition)
     x, y, z = nw.separate(pos)
     vector = nw.combine(x, nw.math("ABSOLUTE", y), z)

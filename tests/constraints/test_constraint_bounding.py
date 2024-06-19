@@ -6,11 +6,7 @@
 # - Alexander Raistrick: primary author
 # - David Yan: bounding for inequalities / expressions
 
-from functools import partial
-from itertools import chain
-from pprint import pprint
 
-import numpy as np
 import pytest
 
 from infinigen.core import tags as t
@@ -58,9 +54,14 @@ def test_bounds_compound():
 
     bounds = r.constraint_bounds(cons, scene_state)
 
-    assert bounds == [r.Bound(r.Domain({t.Semantics.Chair}), high=11), r.Bound(r.Domain({t.Semantics.Chair}), low=5)]
+    assert bounds == [
+        r.Bound(r.Domain({t.Semantics.Chair}), high=11),
+        r.Bound(r.Domain({t.Semantics.Chair}), low=5),
+    ]
 
-    bounds2 = r.constraint_bounds(cl.in_range(cl.count(chair), cl.count(table), cl.count(table) * 3), scene_state)
+    bounds2 = r.constraint_bounds(
+        cl.in_range(cl.count(chair), cl.count(table), cl.count(table) * 3), scene_state
+    )
     assert bounds2 == [r.Bound(r.Domain({t.Semantics.Chair}), 4, 12)]
 
 
@@ -82,7 +83,9 @@ def test_bounds_multilevel():
     sofa = cl.tagged(furniture, tags={t.Semantics.Seating})
     cons = cl.count(sofa) <= 3
 
-    assert r.constraint_bounds(cons) == [r.Bound(r.Domain({t.Semantics.Furniture, t.Semantics.Seating}), high=3)]
+    assert r.constraint_bounds(cons) == [
+        r.Bound(r.Domain({t.Semantics.Furniture, t.Semantics.Seating}), high=3)
+    ]
 
 
 def test_bounds_arithmetic():
@@ -99,7 +102,9 @@ def test_bounds_domain_AnyRelation():
     bedrooms = cl.scene().tagged({t.Semantics.Bedroom})
     beds = cl.scene().tagged({t.Semantics.Bed})
 
-    all_bedrooms_beds = bedrooms.all(lambda r: cl.related_to(beds, r, cl.SupportedBy()).count().in_range(1, 2))
+    all_bedrooms_beds = bedrooms.all(
+        lambda r: cl.related_to(beds, r, cl.SupportedBy()).count().in_range(1, 2)
+    )
 
     bd = r.Domain({t.Semantics.Bedroom})
     bed_in_room = r.Domain({t.Semantics.Bed}, relations=[(cl.SupportedBy(), bd)])
@@ -117,14 +122,20 @@ def test_bounds_forall():
     c = rooms.all(
         lambda room: (
             furniture.related_to(room, rel).count().in_range(1, 2)
-            * furniture.related_to(room, rel).all(lambda stor: small_obj.related_to(stor, rel).count().in_range(5, 10))
+            * furniture.related_to(room, rel).all(
+                lambda stor: small_obj.related_to(stor, rel).count().in_range(5, 10)
+            )
         )
     )
 
     bounds = r.constraint_bounds(c)
 
-    furn_room = r.Domain({t.Semantics.Furniture}, relations=[(rel, r.Domain({t.Semantics.Room}))])
-    item_furn_room = r.Domain({t.Semantics.OfficeShelfItem}, relations=[(rel, furn_room)])
+    furn_room = r.Domain(
+        {t.Semantics.Furniture}, relations=[(rel, r.Domain({t.Semantics.Room}))]
+    )
+    item_furn_room = r.Domain(
+        {t.Semantics.OfficeShelfItem}, relations=[(rel, furn_room)]
+    )
 
     assert bounds == [
         r.Bound(furn_room, 1, 2),
@@ -135,13 +146,17 @@ def test_bounds_forall():
 def test_bound_implied_rel():
     s = cl.scene()
     against = cl.StableAgainst(set(), set())
-    cons = s.related_to(s, cl.AnyRelation()).related_to(s, against).count().in_range(1, 3)
+    cons = (
+        s.related_to(s, cl.AnyRelation()).related_to(s, against).count().in_range(1, 3)
+    )
 
     bounds = r.constraint_bounds(cons)
 
     assert bounds == [r.Bound(r.Domain(set(), [(against, r.Domain())]), low=1, high=3)]
 
-    cons = s.related_to(s, against).related_to(s, cl.AnyRelation()).count().in_range(1, 3)
+    cons = (
+        s.related_to(s, against).related_to(s, cl.AnyRelation()).count().in_range(1, 3)
+    )
 
     bounds = r.constraint_bounds(cons)
 
@@ -162,4 +177,6 @@ def test_bound_implied_rel_forall():
 
     bounds = r.constraint_bounds(cons)
 
-    assert bounds[0].domain == r.Domain({t.Semantics.OfficeShelfItem}, [(rel, r.Domain())])
+    assert bounds[0].domain == r.Domain(
+        {t.Semantics.OfficeShelfItem}, [(rel, r.Domain())]
+    )

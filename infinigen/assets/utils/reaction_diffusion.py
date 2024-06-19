@@ -7,9 +7,7 @@
 import math
 
 import bmesh
-import bpy
 import numpy as np
-import tqdm
 from numpy.random import normal, uniform
 
 
@@ -79,7 +77,9 @@ def make_periodic_weight_fn(n_instances, stride=0.1):
     def periodic_weight_fn(coords):
         multiplier = uniform(20, 100, (1, n_instances))
         center = coords[np.random.randint(0, len(coords) - 1, n_instances)]
-        phi = (np.expand_dims(coords, 1) * np.expand_dims(center, 0)).sum(-1) * multiplier
+        phi = (np.expand_dims(coords, 1) * np.expand_dims(center, 0)).sum(
+            -1
+        ) * multiplier
         measure = np.cos(phi).sum(-1) / math.sqrt(n_instances)
         return (np.abs(measure) < stride).astype(float)
 

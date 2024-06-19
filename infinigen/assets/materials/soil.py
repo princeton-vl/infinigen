@@ -19,7 +19,9 @@ mod_name = "geometry_soil"
 name = "soil"
 
 
-@node_utils.to_nodegroup("nodegroup_displacement_to_offset", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_displacement_to_offset", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_displacement_to_offset(nw):
     # Code generated using version 2.3.1 of the node_transpiler
 
@@ -48,7 +50,9 @@ def nodegroup_displacement_to_offset(nw):
         attrs={"operation": "MULTIPLY"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": multiply_1.outputs["Vector"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vector": multiply_1.outputs["Vector"]}
+    )
 
 
 def nodegroup_pebble(nw):
@@ -85,7 +89,9 @@ def nodegroup_pebble(nw):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"], 1: position})
+    add = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"], 1: position}
+    )
 
     vornoi1_w = nw.new_node(Nodes.Value, label="vornoi1_w ~ U(0, 10)")
     vornoi1_w.outputs[0].default_value = uniform(0.0, 10.0)
@@ -123,14 +129,20 @@ def shader_soil(nw, random_seed=0):
     big_stone = geometry_soil(nw, random_seed=random_seed, geometry=False)
     # Code generated using version 2.3.1 of the node_transpiler
     darkness = 1.5
-    soil_col_1 = random_color_neighbour((0.28 / darkness, 0.11 / darkness, 0.042 / darkness, 1.0), 0.05, 0.1, 0.1)
-    soil_col_2 = random_color_neighbour((0.22 / darkness, 0.0906 / darkness, 0.035 / darkness, 1.0), 0.05, 0.1, 0.1)
+    soil_col_1 = random_color_neighbour(
+        (0.28 / darkness, 0.11 / darkness, 0.042 / darkness, 1.0), 0.05, 0.1, 0.1
+    )
+    soil_col_2 = random_color_neighbour(
+        (0.22 / darkness, 0.0906 / darkness, 0.035 / darkness, 1.0), 0.05, 0.1, 0.1
+    )
     peb_col_1 = random_color_neighbour((0.3813, 0.1714, 0.0782, 1.0), 0.1, 0.1, 0.1)
     peb_col_2 = random_color_neighbour((0.314, 0.1274, 0.0578, 1.0), 0.1, 0.1, 0.1)
 
     ambient_occlusion = nw.new_node(Nodes.AmbientOcclusion)
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": ambient_occlusion.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": ambient_occlusion.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.8
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = 1.0
@@ -219,18 +231,23 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
 
         peb1_size = nw.new_value(uniform(2.0, 5.0), "peb1_size ~ U(2, 5)")
         peb1_noise_mag = nw.new_value(
-            (1 / peb1_size.outputs[0].default_value) * uniform(1.5, 2), "peb1_noise_mag ~ U(0.1, 0.5)"
+            (1 / peb1_size.outputs[0].default_value) * uniform(1.5, 2),
+            "peb1_noise_mag ~ U(0.1, 0.5)",
         )
 
         group = nw.new_node(
-            nodegroup_pebble_geo().name if nw.node_group.type != "SHADER" else nodegroup_pebble_shader().name,
+            nodegroup_pebble_geo().name
+            if nw.node_group.type != "SHADER"
+            else nodegroup_pebble_shader().name,
             input_kwargs={"PebbleScale": peb1_size, "NoiseMag": peb1_noise_mag},
         )
 
         peb1_roundness = uniform(0.5, 1.0)
         peb1_amount = uniform(0.2, 0.5)
 
-        colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": group}, label="colorramp_VAR")
+        colorramp = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": group}, label="colorramp_VAR"
+        )
         colorramp.color_ramp.elements[0].position = 0.0
         colorramp.color_ramp.elements[0].color = (
             peb1_roundness,
@@ -251,17 +268,22 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
 
         peb2_size = nw.new_value(uniform(5, 9), "peb2_size ~ U(5, 9)")
         peb2_noise_scale = nw.new_value(
-            (1 / peb2_size.outputs[0].default_value) * uniform(1.5, 2), "peb2_noise_scale ~ U(0.05, 0.2)"
+            (1 / peb2_size.outputs[0].default_value) * uniform(1.5, 2),
+            "peb2_noise_scale ~ U(0.05, 0.2)",
         )
 
         group_3 = nw.new_node(
-            nodegroup_pebble_geo().name if nw.node_group.type != "SHADER" else nodegroup_pebble_shader().name,
+            nodegroup_pebble_geo().name
+            if nw.node_group.type != "SHADER"
+            else nodegroup_pebble_shader().name,
             input_kwargs={"PebbleScale": peb2_size, "NoiseMag": peb2_noise_scale},
         )
 
         peb2_roundness = uniform(0.3, 0.8)
         peb2_amount = uniform(0.2, 0.5)
-        colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": group_3}, label="colorramp_2_VAR")
+        colorramp_2 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": group_3}, label="colorramp_2_VAR"
+        )
         colorramp_2.color_ramp.elements[0].position = 0.0
         colorramp_2.color_ramp.elements[0].color = (
             peb2_roundness,
@@ -282,16 +304,23 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
 
         add = nw.new_node(
             Nodes.Math,
-            input_kwargs={0: colorramp.outputs["Color"], 1: colorramp_2.outputs["Color"]},
+            input_kwargs={
+                0: colorramp.outputs["Color"],
+                1: colorramp_2.outputs["Color"],
+            },
         )
 
         big_stone = colorramp
 
         peb3_size = nw.new_value(uniform(12.0, 18.0), "peb3_size ~ U(12, 18)")
-        peb3_noise_scale = nw.new_value(uniform(0.05, 0.35), "peb3_noise_scale ~ U(0.05, 0.35)")
+        peb3_noise_scale = nw.new_value(
+            uniform(0.05, 0.35), "peb3_noise_scale ~ U(0.05, 0.35)"
+        )
 
         group_2 = nw.new_node(
-            nodegroup_pebble_geo().name if nw.node_group.type != "SHADER" else nodegroup_pebble_shader().name,
+            nodegroup_pebble_geo().name
+            if nw.node_group.type != "SHADER"
+            else nodegroup_pebble_shader().name,
             input_kwargs={"PebbleScale": peb3_size, "NoiseMag": peb3_noise_scale},
         )
 
@@ -301,7 +330,9 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         colorramp_1.color_ramp.elements[1].position = 0.9
         colorramp_1.color_ramp.elements[1].color = (0.0, 0.0, 0.0, 1.0)
 
-        add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: colorramp_1.outputs["Color"]})
+        add_1 = nw.new_node(
+            Nodes.Math, input_kwargs={0: add, 1: colorramp_1.outputs["Color"]}
+        )
 
     if geometry:
         offset = nw.new_node(
@@ -311,7 +342,9 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         groupinput = nw.new_node(Nodes.GroupInput)
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        set_position = nw.new_node(
+            Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return big_stone

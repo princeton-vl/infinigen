@@ -15,7 +15,7 @@
 import logging
 from collections.abc import Iterable
 
-from numpy.random import choice, uniform
+from numpy.random import uniform
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
@@ -112,19 +112,35 @@ def scratch_shader(
         },
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: noise_texture_3.outputs["Fac"], 1: noise_texture_5.outputs["Fac"]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: noise_texture_3.outputs["Fac"],
+            1: noise_texture_5.outputs["Fac"],
+        },
+    )
 
     mapping_3 = nw.new_node(
         Nodes.Mapping,
-        input_kwargs={"Vector": texture_coordinate_1.outputs["Object"], "Rotation": (0.1588, -0.5742, 0.1920)},
+        input_kwargs={
+            "Vector": texture_coordinate_1.outputs["Object"],
+            "Rotation": (0.1588, -0.5742, 0.1920),
+        },
         attrs={"vector_type": "TEXTURE"},
     )
 
     noise_texture_6 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping_3, "Scale": n_scratch_mask_noise, "Detail": 1.0000}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping_3,
+            "Scale": n_scratch_mask_noise,
+            "Detail": 1.0000,
+        },
     )
 
-    color_ramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_6.outputs["Fac"]})
+    color_ramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_6.outputs["Fac"]}
+    )
     color_ramp_2.color_ramp.elements[0].position = 0.4109
     color_ramp_2.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     color_ramp_2.color_ramp.elements[1].position = 1.0000
@@ -136,9 +152,13 @@ def scratch_shader(
         attrs={"operation": "MULTIPLY"},
     )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: multiply}, attrs={"use_clamp": True})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: multiply}, attrs={"use_clamp": True}
+    )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": add_1, 1: 0.7000, 2: 0.7200, 4: 0.9000})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": add_1, 1: 0.7000, 2: 0.7200, 4: 0.9000}
+    )
     # scaled_scratch = nw.new_node(Nodes.Math, input_kwargs={0: n_scratch_depth, 1: map_range.outputs["Result"]}, attrs={'operation': 'MULTIPLY'})
 
     # material_output = nw.new_node(Nodes.MaterialOutput,
@@ -147,7 +167,13 @@ def scratch_shader(
 
     # return material_output
 
-    bump = nw.new_node(Nodes.Bump, input_kwargs={"Strength": n_scratch_depth, "Height": map_range.outputs["Result"]})
+    bump = nw.new_node(
+        Nodes.Bump,
+        input_kwargs={
+            "Strength": n_scratch_depth,
+            "Height": map_range.outputs["Result"],
+        },
+    )
     return {"Normal": bump}
 
 
@@ -167,7 +193,9 @@ def apply_over(obj, selection=None, **shader_kwargs):
     # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
     materials = obj.data.materials.items()
     if len(materials) == 0:
-        logging.warning(f"No material exist for {obj.name}! Scratches can only be applied over some existing material.")
+        logging.warning(
+            f"No material exist for {obj.name}! Scratches can only be applied over some existing material."
+        )
         return
 
     if len(shader_kwargs) == 0:

@@ -6,8 +6,6 @@
 from __future__ import annotations
 
 import logging
-from copy import copy
-from dataclasses import dataclass
 
 import bmesh
 import bpy
@@ -15,16 +13,13 @@ import gin
 import matplotlib.pyplot as plt
 import numpy as np
 import trimesh
-from mathutils import Quaternion, Vector
+from mathutils import Vector
 from shapely import MultiPolygon, Polygon
 from shapely.affinity import rotate
-from shapely.geometry import LineString, Point
-from shapely.ops import nearest_points, unary_union
+from shapely.geometry import Point
 
 from infinigen.core import tagging
-from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.constraint_language import util as iu
 from infinigen.core.constraints.example_solver import state_def
 
@@ -54,7 +49,10 @@ def project_and_align_z_with_x(polygons, z_direction):
     angle_deg = np.degrees(angle_rad)
 
     # Rotate polygons to align Z-direction with X-axis
-    rotated_polygons = [rotate(polygon, angle_deg, origin=(0, 0), use_radians=False) for polygon in polygons]
+    rotated_polygons = [
+        rotate(polygon, angle_deg, origin=(0, 0), use_radians=False)
+        for polygon in polygons
+    ]
 
     return rotated_polygons
 
@@ -82,7 +80,9 @@ def is_vertically_contained(poly_a, poly_b):
 
 def project_vector(vector, origin, normal):
     transform = trimesh.geometry.plane_transform(origin, normal)
-    transformed = trimesh.transformations.transform_points([np.array([0, 0, 0]), vector], transform)[:, :2]
+    transformed = trimesh.transformations.transform_points(
+        [np.array([0, 0, 0]), vector], transform
+    )[:, :2]
     transformed_vector = transformed[1] - transformed[0]
     return transformed_vector
 
@@ -120,7 +120,9 @@ def stable_against(
         logger.debug(f"stable against failed, not parallel {dot=}")
         return False
 
-    origin_b = iu.global_vertex_coordinates(b_blender_obj, b_blender_obj.data.vertices[poly_b.vertices[0]])
+    origin_b = iu.global_vertex_coordinates(
+        b_blender_obj, b_blender_obj.data.vertices[poly_b.vertices[0]]
+    )
 
     scene = state.trimesh_scene
     a_trimesh = iu.meshes_from_names(scene, sa.obj.name)[0]
@@ -134,7 +136,9 @@ def stable_against(
     # Project mesh A onto the plane of mesh B
     projected_a = trimesh.path.polygons.projected(a_trimesh, normal_b, origin_b)
     projected_b = trimesh.path.polygons.projected(b_trimesh_mask, normal_b, origin_b)
-    logger.debug(f"stable_against projecting along {normal_b} for parent_tags {relation.parent_tags}")
+    logger.debug(
+        f"stable_against projecting along {normal_b} for parent_tags {relation.parent_tags}"
+    )
 
     if projected_a is None or projected_b is None:
         raise ValueError(f"Invalid {projected_a=} {projected_b=}")
@@ -145,7 +149,9 @@ def stable_against(
         res = projected_a.within(projected_b.buffer(1e-2))
     else:
         z_proj = project_vector(np.array([0, 0, 1]), origin_b, normal_b)
-        projected_a_rotated, projected_b_rotated = project_and_align_z_with_x([projected_a, projected_b], z_proj)
+        projected_a_rotated, projected_b_rotated = project_and_align_z_with_x(
+            [projected_a, projected_b], z_proj
+        )
         res = is_vertically_contained(projected_a_rotated, projected_b_rotated)
 
     if visualize:
@@ -160,7 +166,9 @@ def stable_against(
         return False
 
     for vertex in poly_a.vertices:
-        vertex_global = iu.global_vertex_coordinates(a_blender_obj, a_blender_obj.data.vertices[vertex])
+        vertex_global = iu.global_vertex_coordinates(
+            a_blender_obj, a_blender_obj.data.vertices[vertex]
+        )
         distance = iu.distance_to_plane(vertex_global, origin_b, normal_b)
         if not np.isclose(distance, relation_state.relation.margin, atol=1e-2):
             logger.debug(f"stable against failed, not close to {distance=}")
@@ -182,9 +190,13 @@ def snap_against(scene, a, b, a_plane, b_plane, margin=0):
     a_poly = a_obj.data.polygons[a_poly_index]
     b_poly_index = b_plane[1]
     b_poly = b_obj.data.polygons[b_poly_index]
-    plane_point_a = iu.global_vertex_coordinates(a_obj, a_obj.data.vertices[a_poly.vertices[0]])
+    plane_point_a = iu.global_vertex_coordinates(
+        a_obj, a_obj.data.vertices[a_poly.vertices[0]]
+    )
     plane_normal_a = iu.global_polygon_normal(a_obj, a_poly)
-    plane_point_b = iu.global_vertex_coordinates(b_obj, b_obj.data.vertices[b_poly.vertices[0]])
+    plane_point_b = iu.global_vertex_coordinates(
+        b_obj, b_obj.data.vertices[b_poly.vertices[0]]
+    )
     plane_normal_b = iu.global_polygon_normal(b_obj, b_poly)
     plane_normal_b = -plane_normal_b
 
@@ -208,7 +220,9 @@ def snap_against(scene, a, b, a_plane, b_plane, margin=0):
     a_obj = bpy.data.objects[a]
     a_poly = a_obj.data.polygons[a_poly_index]
     # Recalculate vertex_a and normal_a after rotation
-    plane_point_a = iu.global_vertex_coordinates(a_obj, a_obj.data.vertices[a_poly.vertices[0]])
+    plane_point_a = iu.global_vertex_coordinates(
+        a_obj, a_obj.data.vertices[a_poly.vertices[0]]
+    )
     plane_normal_a = iu.global_polygon_normal(a_obj, a_poly)
 
     distance = (plane_point_a - plane_point_b).dot(plane_normal_b)
@@ -219,7 +233,10 @@ def snap_against(scene, a, b, a_plane, b_plane, margin=0):
 
 
 def random_sample_point(
-    state: state_def.State, obj: bpy.types.Object, face_mask: np.ndarray, plane: tuple[str, int]
+    state: state_def.State,
+    obj: bpy.types.Object,
+    face_mask: np.ndarray,
+    plane: tuple[str, int],
 ) -> Vector:
     """
     Given a plane, return a random point on the plane.
@@ -230,7 +247,9 @@ def random_sample_point(
 
     plane_mask = state.planes.tagged_plane_mask(obj, face_mask, plane)
     if not np.any(plane_mask):
-        logging.warning(f"No faces in object {obj.name} are coplanar with plane {plane}.")
+        logging.warning(
+            f"No faces in object {obj.name} are coplanar with plane {plane}."
+        )
 
     # Create a bmesh from the object mesh
     bm = bmesh.new()
@@ -255,7 +274,9 @@ def random_sample_point(
     # Random weights for each vertex
     weights = np.random.rand(3)
     weights /= np.sum(weights)
-    random_point_local = weights[0] * verts[0] + weights[1] * verts[1] + weights[2] * verts[2]
+    random_point_local = (
+        weights[0] * verts[0] + weights[1] * verts[1] + weights[2] * verts[2]
+    )
     random_point_global = obj.matrix_world @ Vector(random_point_local)
 
     bm.free()
@@ -263,7 +284,9 @@ def random_sample_point(
     return random_point_global
 
 
-def move_obj_random_pt(state: state_def.State, a, b, face_mask: np.ndarray, plane: tuple[str, int]):
+def move_obj_random_pt(
+    state: state_def.State, a, b, face_mask: np.ndarray, plane: tuple[str, int]
+):
     """
     move a to a random point on b
     """
@@ -324,8 +347,12 @@ def supported_by(scene, a, b, visualize=False):
                 ax.fill(x, y, alpha=0.5, fc="red", ec="black", label="Polygon b")
 
     for a_mesh, a_trimesh in zip(a_meshes, a_trimeshes):
-        cloned_a = butil.deep_clone_obj(a_mesh, keep_modifiers=True, keep_materials=False)
-        butil.modify_mesh(cloned_a, "BOOLEAN", apply=True, operation="INTERSECT", object=b_mesh)
+        cloned_a = butil.deep_clone_obj(
+            a_mesh, keep_modifiers=True, keep_materials=False
+        )
+        butil.modify_mesh(
+            cloned_a, "BOOLEAN", apply=True, operation="INTERSECT", object=b_mesh
+        )
         iu.preprocess_obj(cloned_a)
         intersection = iu.to_trimesh(cloned_a)
         intersection_poly = iu.project_to_xy_poly(intersection)
@@ -339,7 +366,9 @@ def supported_by(scene, a, b, visualize=False):
                 for sub_poly in intersection_poly.geoms:
                     x, y = sub_poly.exterior.xy
                     ax.fill(x, y, alpha=0.5, fc="blue", ec="black", label="Polygon a")
-            ax.plot(com_projected[0], com_projected[1], "o", color="black", label="COM of a")
+            ax.plot(
+                com_projected[0], com_projected[1], "o", color="black", label="COM of a"
+            )
 
         if not intersection_convex.contains(Point(com_projected)):
             if visualize:

@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -19,7 +17,7 @@ from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.surface import shaderfunc_to_material
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -35,11 +33,18 @@ class PineconeFactory(MonocotGrowthFactory):
             self.count = int(log_uniform(64, 96))
             self.stem_offset = uniform(0.2, 0.4)
             self.perturb = 0
-            self.scale_curve = [(0, 0.5), (0.5, uniform(0.6, 1.0)), (1, uniform(0.1, 0.2))]
+            self.scale_curve = [
+                (0, 0.5),
+                (0.5, uniform(0.6, 1.0)),
+                (1, uniform(0.1, 0.2)),
+            ]
             self.bright_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.01)
             self.dark_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.005)
             self.material = shaderfunc_to_material(
-                self.shader_monocot, self.dark_color, self.bright_color, self.use_distance
+                self.shader_monocot,
+                self.dark_color,
+                self.bright_color,
+                self.use_distance,
             )
 
     def build_leaf(self, face_size):
@@ -66,7 +71,9 @@ class PineconeFactory(MonocotGrowthFactory):
 
         texture = bpy.data.textures.new(name="pinecone", type="STUCCI")
         texture.noise_scale = log_uniform(0.002, 0.005)
-        butil.modify_mesh(obj, "DISPLACE", True, strength=0.001, mid_level=0, texture=texture)
+        butil.modify_mesh(
+            obj, "DISPLACE", True, strength=0.001, mid_level=0, texture=texture
+        )
 
         tag_object(obj, "pinecone")
         return obj
@@ -83,6 +90,11 @@ class PineconeFactory(MonocotGrowthFactory):
         noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 50})
         roughness = nw.build_float_curve(noise_texture, [(0, 0.5), (1, 0.8)])
         bsdf = nw.new_node(
-            Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness, "Specular": specular}
+            Nodes.PrincipledBSDF,
+            input_kwargs={
+                "Base Color": color,
+                "Roughness": roughness,
+                "Specular": specular,
+            },
         )
         return bsdf

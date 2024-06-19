@@ -1,1 +1,7 @@
-from .generate import AltocumulusFactory, CloudFactory, CumulonimbusFactory, CumulusFactory, StratocumulusFactory
+from .generate import (
+    AltocumulusFactory,
+    CloudFactory,
+    CumulonimbusFactory,
+    CumulusFactory,
+    StratocumulusFactory,
+)

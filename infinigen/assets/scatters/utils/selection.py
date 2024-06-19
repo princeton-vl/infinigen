@@ -9,14 +9,18 @@ from numpy.random import uniform
 
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.util.math import FixedSeed, int_hash
 
 
-def scatter_lower(nw: NodeWrangler, height_range=(0.5, 2), fill_range=(0.0, 0.8), noise_scale=0.4):
+def scatter_lower(
+    nw: NodeWrangler, height_range=(0.5, 2), fill_range=(0.0, 0.8), noise_scale=0.4
+):
     height = uniform(*height_range)
     middle = height * uniform(*fill_range)
     lower = nw.bernoulli(
-        nw.build_float_curve(nw.separate(nw.new_node(Nodes.InputPosition))[-1], [(0, 1), (middle, 1), (height, 0)])
+        nw.build_float_curve(
+            nw.separate(nw.new_node(Nodes.InputPosition))[-1],
+            [(0, 1), (middle, 1), (height, 0)],
+        )
     )
     compare = nw.compare(
         "GREATER_THAN",
@@ -26,9 +30,15 @@ def scatter_lower(nw: NodeWrangler, height_range=(0.5, 2), fill_range=(0.0, 0.8)
     return compare
 
 
-def scatter_upward(nw: NodeWrangler, normal_thresh=np.pi * 0.75, noise_scale=0.4, noise_thresh=0.3):
+def scatter_upward(
+    nw: NodeWrangler, normal_thresh=np.pi * 0.75, noise_scale=0.4, noise_thresh=0.3
+):
     compare = nw.compare(
-        "GREATER_THAN", nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": noise_scale}), noise_thresh
+        "GREATER_THAN",
+        nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": noise_scale}),
+        noise_thresh,
     )
-    upward = nw.compare_direction("LESS_THAN", nw.new_node(Nodes.InputNormal), (0, 0, 1), normal_thresh)
+    upward = nw.compare_direction(
+        "LESS_THAN", nw.new_node(Nodes.InputNormal), (0, 0, 1), normal_thresh
+    )
     return nw.boolean_math("AND", compare, upward)

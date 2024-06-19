@@ -5,17 +5,13 @@
 # Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=rd2jhGV6tqo by Ryan King Art
 
 
-import bpy
-import mathutils
-import numpy as np
-from numpy.random import choice, normal, randint, uniform
+from numpy.random import randint, uniform
 
 from infinigen.assets.materials import common
-from infinigen.assets.materials.bark_random import get_random_bark_params, hex_to_rgb
+from infinigen.assets.materials.bark_random import hex_to_rgb
 from infinigen.assets.materials.woods.wood import get_color
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import rgb2hsv
 from infinigen.core.util.random import clip_gaussian
 
 
@@ -35,10 +31,14 @@ def nodegroup_tiling(nw: NodeWrangler):
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0000, 1: group_input.outputs["Horizontal Scale"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: 1.0000, 1: group_input.outputs["Horizontal Scale"]},
+        attrs={"operation": "DIVIDE"},
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "MULTIPLY"}
+    )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply})
 
@@ -49,7 +49,9 @@ def nodegroup_tiling(nw: NodeWrangler):
     add = nw.new_node(Nodes.VectorMath, input_kwargs={0: vec, 1: combine_xyz})
 
     divide_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0000, 1: group_input.outputs["Vertical Scale"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: 1.0000, 1: group_input.outputs["Vertical Scale"]},
+        attrs={"operation": "DIVIDE"},
     )
 
     brick_texture = nw.new_node(
@@ -69,7 +71,11 @@ def nodegroup_tiling(nw: NodeWrangler):
 
     multiply_add = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: brick_texture.outputs["Color"], 1: 1000.0000, 2: group_input.outputs["Seed"]},
+        input_kwargs={
+            0: brick_texture.outputs["Color"],
+            1: 1000.0000,
+            2: group_input.outputs["Seed"],
+        },
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
@@ -92,7 +98,10 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
 
     mapping_2 = nw.new_node(
         Nodes.Mapping,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": (5.0000, 100.0000, 100.0000)},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": (5.0000, 100.0000, 100.0000),
+        },
     )
 
     group_input = nw.new_node(
@@ -126,9 +135,14 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
         attrs={"musgrave_dimensions": "4D"},
     )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": musgrave_texture_2, 3: 1.0000, 4: -1.0000})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": musgrave_texture_2, 3: 1.0000, 4: -1.0000},
+    )
 
-    mapping_1 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
+    mapping_1 = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
+    )
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
@@ -154,17 +168,32 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
         attrs={"musgrave_dimensions": "4D"},
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": musgrave_texture_1, 3: -1.4000, 4: 1.5000})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": musgrave_texture_1, 3: -1.4000, 4: 1.5000},
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": map_range.outputs["Result"], 3: 1.0000, 4: 0.5000})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": map_range.outputs["Result"], 3: 1.0000, 4: 0.5000},
+    )
 
     mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": (0.1500, 1.0000, 0.1500)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": (0.1500, 1.0000, 0.1500),
+        },
     )
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": mapping, "W": group.outputs["Seed"], "Detail": 5.0000, "Distortion": 1.0000},
+        input_kwargs={
+            "Vector": mapping,
+            "W": group.outputs["Seed"],
+            "Detail": 5.0000,
+            "Distortion": 1.0000,
+        },
         attrs={"noise_dimensions": "4D"},
     )
 
@@ -181,7 +210,9 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
     )
 
     mix = nw.new_node(
-        Nodes.Mix, input_kwargs={6: noise_texture.outputs["Fac"], 7: musgrave_texture}, attrs={"data_type": "RGBA"}
+        Nodes.Mix,
+        input_kwargs={6: noise_texture.outputs["Fac"], 7: musgrave_texture},
+        attrs={"data_type": "RGBA"},
     )
 
     mix_1 = nw.new_node(
@@ -198,12 +229,21 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
 
     hue_saturation_value = nw.new_node(
         "ShaderNodeHueSaturation",
-        input_kwargs={"Saturation": 0.8000, "Value": 0.2000, "Fac": 0.0, "Color": group_input.outputs["Main Color"]},
+        input_kwargs={
+            "Saturation": 0.8000,
+            "Value": 0.2000,
+            "Fac": 0.0,
+            "Color": group_input.outputs["Main Color"],
+        },
     )
 
     mix_3 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: mix_2.outputs[2], 6: hue_saturation_value, 7: group_input.outputs["Main Color"]},
+        input_kwargs={
+            0: mix_2.outputs[2],
+            6: hue_saturation_value,
+            7: group_input.outputs["Main Color"],
+        },
         attrs={"data_type": "RGBA"},
     )
 
@@ -214,14 +254,26 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
     )
 
     color = mix_4.outputs[2]
-    roughness = nw.build_float_curve(color, [(0, uniform(0.3, 0.5)), (1, uniform(0.8, 1.0))])
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness})
+    roughness = nw.build_float_curve(
+        color, [(0, uniform(0.3, 0.5)), (1, uniform(0.8, 1.0))]
+    )
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: mix_2.outputs[2], 1: 0.1000}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: mix_2.outputs[2], 1: 0.1000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group.outputs["Displacement"], 1: multiply})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group.outputs["Displacement"], 1: multiply}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 0.0100}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 0.0100}, attrs={"operation": "MULTIPLY"}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -230,7 +282,9 @@ def nodegroup_tiled_wood(nw: NodeWrangler):
     )
 
 
-def shader_wood_tiled(nw: NodeWrangler, hscale=None, vscale=None, base_color=None, seed=None, **kwargs):
+def shader_wood_tiled(
+    nw: NodeWrangler, hscale=None, vscale=None, base_color=None, seed=None, **kwargs
+):
     # Code generated using version 2.6.4 of the node_transpiler
 
     if hscale is None:
@@ -253,7 +307,8 @@ def shader_wood_tiled(nw: NodeWrangler, hscale=None, vscale=None, base_color=Non
     )
 
     displacement = nw.new_node(
-        "ShaderNodeDisplacement", input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000}
+        "ShaderNodeDisplacement",
+        input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000},
     )
 
     material_output = nw.new_node(

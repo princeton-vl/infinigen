@@ -4,25 +4,23 @@
 # Authors: Hongyu Wen
 
 
-from math import cos, exp, pi, sin
+from math import cos, pi, sin
 
 import bmesh
 import bpy
 import mathutils
 import numpy as np
 from numpy.random import normal as N
-from numpy.random import uniform as U
 
-from infinigen.assets.creatures.util import part_util
 from infinigen.assets.creatures.util.creature import Part, PartFactory
-from infinigen.assets.creatures.util.genome import IKParams, Joint
+from infinigen.assets.creatures.util.genome import IKParams
 from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
 from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
-from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube, nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube_v2
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
@@ -50,7 +48,10 @@ class Hoof:
     def get_shape(self):
         points = []
         r = self.r
-        N = lambda m, v: np.random.normal(m, v)
+
+        def N(m, v):
+            return np.random.normal(m, v)
+
         for i in range(self.m):
             theta = 2 * pi * i / (self.m)
             nx = N(0, 0.01)
@@ -151,12 +152,20 @@ def nodegroup_hoof(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVector", "length_rad1_rad2", (1.4299999999999999, 0.10000000000000001, 0.10000000000000001)),
+            (
+                "NodeSocketVector",
+                "length_rad1_rad2",
+                (1.4299999999999999, 0.10000000000000001, 0.10000000000000001),
+            ),
             ("NodeSocketVector", "angles_deg", (-20.0, 16.0, 9.1999999999999993)),
             ("NodeSocketFloat", "aspect", 1.0),
             ("NodeSocketVector", "Upper Rad1 Rad2 Fullness", (0.22, 0.0, 0.0)),
             ("NodeSocketVector", "Lower Rad1 Rad2 Fullness", (0.0, 0.0, 0.0)),
-            ("NodeSocketVector", "Height, Tilt1, Tilt2", (0.73999999999999999, 0.0, 0.0)),
+            (
+                "NodeSocketVector",
+                "Height, Tilt1, Tilt2",
+                (0.73999999999999999, 0.0, 0.0),
+            ),
         ],
     )
 
@@ -178,8 +187,12 @@ def nodegroup_hoof(nw: NodeWrangler):
             "Coord 0": (0.0, 0.0, 0.0),
             "Coord 1": (0.20000000000000001, 0.0, 0.0),
             "Coord 2": (0.55000000000000004, 0.0, 0.0),
-            "StartRad, EndRad, Fullness": group_input.outputs["Lower Rad1 Rad2 Fullness"],
-            "ProfileHeight, StartTilt, EndTilt": group_input.outputs["Height, Tilt1, Tilt2"],
+            "StartRad, EndRad, Fullness": group_input.outputs[
+                "Lower Rad1 Rad2 Fullness"
+            ],
+            "ProfileHeight, StartTilt, EndTilt": group_input.outputs[
+                "Height, Tilt1, Tilt2"
+            ],
         },
         label="Shoulder",
     )
@@ -192,19 +205,29 @@ def nodegroup_hoof(nw: NodeWrangler):
             "Coord 0": (1.0, 0.0, 0.0),
             "Coord 1": (0.20000000000000001, 0.0, 0.0),
             "Coord 2": (0.80000000000000004, 0.0, 0.0),
-            "StartRad, EndRad, Fullness": group_input.outputs["Upper Rad1 Rad2 Fullness"],
-            "ProfileHeight, StartTilt, EndTilt": group_input.outputs["Height, Tilt1, Tilt2"],
+            "StartRad, EndRad, Fullness": group_input.outputs[
+                "Upper Rad1 Rad2 Fullness"
+            ],
+            "ProfileHeight, StartTilt, EndTilt": group_input.outputs[
+                "Height, Tilt1, Tilt2"
+            ],
         },
         label="Shoulder",
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [shoulder, simple_tube_v2_001.outputs["Geometry"], shoulder_1]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [shoulder, simple_tube_v2_001.outputs["Geometry"], shoulder_1]
+        },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": join_geometry, "Skeleton Curve": simple_tube_v2_001.outputs["Skeleton Curve"]},
+        input_kwargs={
+            "Geometry": join_geometry,
+            "Skeleton Curve": simple_tube_v2_001.outputs["Skeleton Curve"],
+        },
     )
 
 
@@ -214,7 +237,11 @@ class HoofAnkle(PartFactory):
 
     def sample_params(self, var=1):
         ankle = {
-            "length_rad1_rad2": (0.45 * N(1, 0.05), 0.07 * N(1, 0.05), 0.1 * N(1, 0.05)),
+            "length_rad1_rad2": (
+                0.45 * N(1, 0.05),
+                0.07 * N(1, 0.05),
+                0.1 * N(1, 0.05),
+            ),
             "angles_deg": (-90.0 + N(0, 5), 40.0 + N(0, 5), N(0, 5)),
             "aspect": 1.0,
             "Upper Rad1 Rad2 Fullness": (0.2, 0.0, 4),
@@ -238,6 +265,8 @@ class HoofAnkle(PartFactory):
         butil.apply_transform(ankle, scale=True)
         tag_object(part.obj, "hoof_ankle")
 
-        part.iks = {1.0: IKParams("foot", rotation_weight=0.1, chain_parts=2, chain_length=-1)}
+        part.iks = {
+            1.0: IKParams("foot", rotation_weight=0.1, chain_parts=2, chain_length=-1)
+        }
 
         return part

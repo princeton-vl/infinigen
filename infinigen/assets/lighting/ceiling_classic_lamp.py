@@ -3,12 +3,11 @@
 
 # Authors: Stamatis Alexandropoulos
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import randint, uniform
 
-from infinigen.assets.materials.ceiling_light_shaders import shader_lamp_bulb_nonemissive
-from infinigen.assets.utils.autobevel import BevelSharp
+from infinigen.assets.materials.ceiling_light_shaders import (
+    shader_lamp_bulb_nonemissive,
+)
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -43,11 +42,14 @@ def shader_lamp_material(nw: NodeWrangler):
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Scale": 104.3000, "Randomness": 0.0000}, attrs={"feature": "SMOOTH_F1"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Scale": 104.3000, "Randomness": 0.0000},
+        attrs={"feature": "SMOOTH_F1"},
     )
 
     displacement = nw.new_node(
-        Nodes.Displacement, input_kwargs={"Height": voronoi_texture.outputs["Distance"], "Scale": 0.4000}
+        Nodes.Displacement,
+        input_kwargs={"Height": voronoi_texture.outputs["Distance"], "Scale": 0.4000},
     )
 
     material_output = nw.new_node(
@@ -62,11 +64,17 @@ def shader_inside_medal(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": (0.0018, 0.0015, 0.0000, 1.0000), "Metallic": 1.0000, "Roughness": 0.0682},
+        input_kwargs={
+            "Base Color": (0.0018, 0.0015, 0.0000, 1.0000),
+            "Metallic": 1.0000,
+            "Roughness": 0.0682,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -75,11 +83,17 @@ def shader_cable(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": (0.0000, 0.0000, 0.0000, 1.0000), "Metallic": 1.0000, "Roughness": 0.4273},
+        input_kwargs={
+            "Base Color": (0.0000, 0.0000, 0.0000, 1.0000),
+            "Metallic": 1.0000,
+            "Roughness": 0.4273,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -100,46 +114,73 @@ def geometry_nodes(nw: NodeWrangler):
         ],
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["cable_length"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["cable_length"]}
+    )
 
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz})
 
     curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": 87, "Radius": group_input.outputs["cable_radius"]}
+        Nodes.CurveCircle,
+        input_kwargs={"Resolution": 87, "Radius": group_input.outputs["cable_radius"]},
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": curve_line, "Profile Curve": curve_circle.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": curve_line,
+            "Profile Curve": curve_circle.outputs["Curve"],
+        },
     )
 
     transform_geometry = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh, "Scale": (1.0000, 1.0000, -1.0000)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": curve_to_mesh, "Scale": (1.0000, 1.0000, -1.0000)},
     )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": transform_geometry, "Material": surface.shaderfunc_to_material(shader_cable)},
+        input_kwargs={
+            "Geometry": transform_geometry,
+            "Material": surface.shaderfunc_to_material(shader_cable),
+        },
     )
 
-    curve_circle_3 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["top_radius"]})
+    curve_circle_3 = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["top_radius"]}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["height"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["height"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
     transform_geometry_4 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_circle_3.outputs["Curve"], "Translation": combine_xyz_4}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": curve_circle_3.outputs["Curve"],
+            "Translation": combine_xyz_4,
+        },
     )
 
     curve_line_3 = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": (-1.0000, 0.0000, 0.0000), "End": (1.0000, 0.0000, 0.0000)}
+        Nodes.CurveLine,
+        input_kwargs={
+            "Start": (-1.0000, 0.0000, 0.0000),
+            "End": (1.0000, 0.0000, 0.0000),
+        },
     )
 
-    geometry_to_instance = nw.new_node("GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line_3})
+    geometry_to_instance = nw.new_node(
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line_3}
+    )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Amount"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Amount"]}
+    )
 
     duplicate_elements = nw.new_node(
         Nodes.DuplicateElements,
@@ -148,12 +189,17 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     realize_instances_1 = nw.new_node(
-        Nodes.RealizeInstances, input_kwargs={"Geometry": duplicate_elements.outputs["Geometry"]}
+        Nodes.RealizeInstances,
+        input_kwargs={"Geometry": duplicate_elements.outputs["Geometry"]},
     )
 
-    endpoint_selection_1 = nw.new_node(Nodes.EndpointSelection, input_kwargs={"Start Size": 0})
+    endpoint_selection_1 = nw.new_node(
+        Nodes.EndpointSelection, input_kwargs={"Start Size": 0}
+    )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: 1.0000, 1: reroute}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math, input_kwargs={0: 1.0000, 1: reroute}, attrs={"operation": "DIVIDE"}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
@@ -176,15 +222,23 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    endpoint_selection_2 = nw.new_node(Nodes.EndpointSelection, input_kwargs={"End Size": 0})
-
-    multiply_add = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Thickness"], 2: 0.0000}, attrs={"operation": "MULTIPLY_ADD"}
+    endpoint_selection_2 = nw.new_node(
+        Nodes.EndpointSelection, input_kwargs={"End Size": 0}
     )
 
-    curve_circle_4 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": multiply_add})
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Thickness"], 2: 0.0000},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
 
-    transform_geometry_5 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": curve_circle_4.outputs["Curve"]})
+    curve_circle_4 = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Radius": multiply_add}
+    )
+
+    transform_geometry_5 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": curve_circle_4.outputs["Curve"]}
+    )
 
     sample_curve_1 = nw.new_node(
         Nodes.SampleCurve,
@@ -202,17 +256,28 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_geometry_4, set_position_1, transform_geometry_5]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [transform_geometry_4, set_position_1, transform_geometry_5]
+        },
     )
 
-    curve_circle_5 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["Thickness"]})
+    curve_circle_5 = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["Thickness"]}
+    )
 
     curve_to_mesh_3 = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": join_geometry_3, "Profile Curve": curve_circle_5.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": join_geometry_3,
+            "Profile Curve": curve_circle_5.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
-    transform_geometry_6 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh_3})
+    transform_geometry_6 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh_3}
+    )
 
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
@@ -222,21 +287,35 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: -1.5000, 1: -0.1000}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: -1.5000, 1: -0.1000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["height"], 1: 0.0000}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["height"], 1: 0.0000},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math, input_kwargs={1: -1.0000}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: multiply_3}, attrs={"operation": "MULTIPLY"})
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: multiply_3},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_4})
 
-    curve_line_2 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz_1, "End": combine_xyz_2})
+    curve_line_2 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz_1, "End": combine_xyz_2}
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
@@ -250,26 +329,39 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     set_curve_radius = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": curve_line_2, "Radius": map_range.outputs["Result"]}
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": curve_line_2, "Radius": map_range.outputs["Result"]},
     )
 
     curve_circle_2 = nw.new_node(Nodes.CurveCircle)
 
     curve_to_mesh_2 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle_2.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle_2.outputs["Curve"],
+        },
     )
 
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": curve_to_mesh_2})
 
     extrude_mesh = nw.new_node(
-        Nodes.ExtrudeMesh, input_kwargs={"Mesh": curve_to_mesh_2, "Offset Scale": 0.0050, "Individual": False}
+        Nodes.ExtrudeMesh,
+        input_kwargs={
+            "Mesh": curve_to_mesh_2,
+            "Offset Scale": 0.0050,
+            "Individual": False,
+        },
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [flip_faces, extrude_mesh.outputs["Mesh"]]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [flip_faces, extrude_mesh.outputs["Mesh"]]},
     )
 
-    transform_geometry_2 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": join_geometry})
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": join_geometry}
+    )
 
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
@@ -279,9 +371,13 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_1, set_material_2]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_1, set_material_2]}
+    )
 
-    ico_sphere = nw.new_node(Nodes.MeshIcoSphere, input_kwargs={"Radius": 0.0500, "Subdivisions": 4})
+    ico_sphere = nw.new_node(
+        Nodes.MeshIcoSphere, input_kwargs={"Radius": 0.0500, "Subdivisions": 4}
+    )
 
     set_material_3 = nw.new_node(
         Nodes.SetMaterial,
@@ -292,15 +388,22 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, join_geometry_1, set_material_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [set_material, join_geometry_1, set_material_3]},
     )
 
     transform_geometry_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": join_geometry_2, "Rotation": (0.0000, 3.1416, 0.0000)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": join_geometry_2,
+            "Rotation": (0.0000, 3.1416, 0.0000),
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_geometry_3}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_geometry_3},
+        attrs={"is_active_output": True},
     )
 
 
@@ -323,7 +426,9 @@ class CeilingClassicLampFactory(AssetFactory):
 
     def create_placeholder(self, **_):
         obj = butil.spawn_cube()
-        butil.modify_mesh(obj, "NODES", node_group=geometry_nodes(), ng_inputs=self.params, apply=True)
+        butil.modify_mesh(
+            obj, "NODES", node_group=geometry_nodes(), ng_inputs=self.params, apply=True
+        )
         tagging.tag_system.relabel_obj(obj)
         return obj
 

@@ -29,7 +29,9 @@ class Atmosphere(Element):
     ):
         self.device = device
         self.int_params = AC(np.array([], dtype=np.int32))
-        self.float_params = AC(np.array([height, spherical_radius, hacky_offset], dtype=np.float32))
+        self.float_params = AC(
+            np.array([height, spherical_radius, hacky_offset], dtype=np.float32)
+        )
         if waterbody is not None:
             self.int_params2 = waterbody.int_params
             self.float_params2 = waterbody.float_params

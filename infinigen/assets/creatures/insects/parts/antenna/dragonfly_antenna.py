@@ -4,18 +4,14 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_simple_tube_v2
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_dragonfly_antenna", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_dragonfly_antenna", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_dragonfly_antenna(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -39,7 +35,10 @@ def nodegroup_dragonfly_antenna(nw: NodeWrangler):
         },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": simple_tube_v2.outputs["Geometry"]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": simple_tube_v2.outputs["Geometry"]},
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,

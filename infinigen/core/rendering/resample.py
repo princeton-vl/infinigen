@@ -13,7 +13,7 @@ from infinigen.core.nodes.node_utils import resample_node_group
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
-from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.math import FixedSeed
 
 
 def resample_all(factory_class):
@@ -35,12 +35,18 @@ def resample_scene(scene_seed):
     with FixedSeed(scene_seed), Timer("Resample noise nodes in scatters"):
         for obj in bpy.data.objects:
             for modifier in obj.modifiers:
-                if not any(obj.name.startswith(s) for s in ["BlenderRockFactory", "CloudFactory"]):
+                if not any(
+                    obj.name.startswith(s)
+                    for s in ["BlenderRockFactory", "CloudFactory"]
+                ):
                     if modifier.type == "NODES":
                         nw = NodeWrangler(modifier.node_group)
                         resample_node_group(nw, scene_seed)
 
-    with FixedSeed(scene_seed), Timer("Resample all placeholders"):  # CloudFactory too expensive
+    with (
+        FixedSeed(scene_seed),
+        Timer("Resample all placeholders"),
+    ):  # CloudFactory too expensive
         resample_all(GlowingRocksFactory)
         resample_all(TreeFactory)
         resample_all(BushFactory)

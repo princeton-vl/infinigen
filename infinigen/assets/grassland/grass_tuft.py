@@ -11,9 +11,8 @@ from numpy.random import normal, uniform
 from infinigen.assets.creatures.util.geometry.curve import Curve
 from infinigen.assets.materials import grass_blade_texture
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import deep_clone_obj
 
 
 class GrassTuftFactory(AssetFactory):
@@ -32,7 +31,9 @@ class GrassTuftFactory(AssetFactory):
         self.blade_width_var = uniform(0, 0.05)
 
         self.taper_var = uniform(0, 0.1)
-        self.taper_y = np.linspace(1, 0, self.n_seg) * normal(1, self.taper_var, self.n_seg)
+        self.taper_y = np.linspace(1, 0, self.n_seg) * normal(
+            1, self.taper_var, self.n_seg
+        )
         self.taper_x = np.linspace(0, 1, self.n_seg)
         self.taper_points = np.stack([self.taper_x, self.taper_y], axis=-1)
 
@@ -46,7 +47,9 @@ class GrassTuftFactory(AssetFactory):
         seg_lens = blade_lengths / self.n_seg
 
         seg_curls = normal(self.curl_mean, self.curl_std, (n_blades, self.n_seg))
-        seg_curls *= np.power(np.linspace(0, 1, self.n_seg).reshape(1, self.n_seg), self.curl_power)
+        seg_curls *= np.power(
+            np.linspace(0, 1, self.n_seg).reshape(1, self.n_seg), self.curl_power
+        )
         seg_curls = np.deg2rad(seg_curls)
 
         point_rads = np.arange(self.n_seg).reshape(1, self.n_seg) * seg_lens
@@ -59,10 +62,14 @@ class GrassTuftFactory(AssetFactory):
 
         taper = Curve(self.taper_points).to_curve_obj()
 
-        widths = blade_lengths.reshape(-1) * normal(self.blade_width_pct_mean, self.blade_width_var, n_blades)
+        widths = blade_lengths.reshape(-1) * normal(
+            self.blade_width_pct_mean, self.blade_width_var, n_blades
+        )
         objs = []
         for i in range(n_blades):
-            obj = Curve(points[i], taper=taper).to_curve_obj(name=f"_blade_{i}", extrude=widths[i], resu=2)
+            obj = Curve(points[i], taper=taper).to_curve_obj(
+                name=f"_blade_{i}", extrude=widths[i], resu=2
+            )
             objs.append(obj)
 
         with butil.SelectObjects(objs):

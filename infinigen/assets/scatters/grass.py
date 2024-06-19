@@ -4,21 +4,15 @@
 # Authors: Alex Raistrick
 
 
-from math import prod
-
-import bpy
 import numpy as np
 from mathutils import Vector
 from numpy.random import uniform as U
 
 from infinigen.assets.grassland.grass_tuft import GrassTuftFactory
-from infinigen.assets.materials import grass_blade_texture, simple_greenery
 from infinigen.assets.scatters.utils.wind import wind
-from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.util import blender as butil
 
 
 def scale_grass(nw: NodeWrangler):

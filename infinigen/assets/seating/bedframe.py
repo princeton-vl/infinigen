@@ -13,7 +13,6 @@ from infinigen.assets.utils.decorate import (
     read_co,
     read_normal,
     remove_faces,
-    remove_vertices,
     select_faces,
     subdivide_edge_ring,
     write_attribute,
@@ -30,8 +29,21 @@ from infinigen.core.util.random import random_general as rg
 
 class BedFrameFactory(ChairFactory):
     scale = 1.0
-    leg_decor_types = "weighted_choice", (2, "coiled"), (2, "pad"), (1, "plain"), (2, "legs")
-    back_types = "weighted_choice", (3, "coiled"), (3, "pad"), (2, "whole"), (1, "horizontal-bar"), (1, "vertical-bar")
+    leg_decor_types = (
+        "weighted_choice",
+        (2, "coiled"),
+        (2, "pad"),
+        (1, "plain"),
+        (2, "legs"),
+    )
+    back_types = (
+        "weighted_choice",
+        (3, "coiled"),
+        (3, "pad"),
+        (2, "whole"),
+        (1, "horizontal-bar"),
+        (1, "vertical-bar"),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
@@ -73,16 +85,31 @@ class BedFrameFactory(ChairFactory):
             self.post_init()
 
     def make_seat(self):
-        obj = new_grid(x_subdivisions=self.seat_subdivisions_x, y_subdivisions=self.seat_subdivisions_y)
-        obj.scale = (self.width - self.leg_thickness) / 2, (self.size - self.leg_thickness) / 2, 1
+        obj = new_grid(
+            x_subdivisions=self.seat_subdivisions_x,
+            y_subdivisions=self.seat_subdivisions_y,
+        )
+        obj.scale = (
+            (self.width - self.leg_thickness) / 2,
+            (self.size - self.leg_thickness) / 2,
+            1,
+        )
         butil.apply_transform(obj, True)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.delete(type="ONLY_FACE")
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, self.thickness)})
-        butil.modify_mesh(obj, "SOLIDIFY", thickness=self.leg_thickness - 1e-3, offset=0, solidify_mode="NON_MANIFOLD")
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, self.thickness)}
+            )
+        butil.modify_mesh(
+            obj,
+            "SOLIDIFY",
+            thickness=self.leg_thickness - 1e-3,
+            offset=0,
+            solidify_mode="NON_MANIFOLD",
+        )
         obj.location = 0, -self.size / 2, -self.thickness / 2
         butil.apply_transform(obj, True)
         butil.modify_mesh(obj, "BEVEL", width=self.bevel_width, segments=8)
@@ -91,9 +118,9 @@ class BedFrameFactory(ChairFactory):
     def make_legs(self):
         legs = super().make_legs()
         if self.has_all_legs:
-            leg_starts = np.array([[-1, -0.5, 0], [0, -1, 0], [0, 0, 0], [1, -0.5, 0]]) * np.array(
-                [[self.width / 2, self.size, 0]]
-            )
+            leg_starts = np.array(
+                [[-1, -0.5, 0], [0, -1, 0], [0, 0, 0], [1, -0.5, 0]]
+            ) * np.array([[self.width / 2, self.size, 0]])
             leg_ends = leg_starts.copy()
             leg_ends[0, 0] -= self.leg_x_offset
             leg_ends[3, 0] += self.leg_x_offset
@@ -130,7 +157,11 @@ class BedFrameFactory(ChairFactory):
                 self.divide(obj, self.panel_distance)
                 with butil.ViewportMode(obj, "EDIT"):
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.inset(thickness=self.panel_margin, depth=self.panel_margin, use_individual=True)
+                    bpy.ops.mesh.inset(
+                        thickness=self.panel_margin,
+                        depth=self.panel_margin,
+                        use_individual=True,
+                    )
                 butil.modify_mesh(obj, "BEVEL", segments=4)
         write_attribute(obj, 1, "panel", "FACE")
         return [obj]
@@ -153,20 +184,32 @@ class BedFrameFactory(ChairFactory):
                 write_attribute(obj, 1, "panel", "FACE")
                 with butil.ViewportMode(decors[0], "EDIT"):
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.bisect(plane_co=(0, 0, self.back_height), plane_no=(0, 0, 1), clear_inner=True)
+                    bpy.ops.mesh.bisect(
+                        plane_co=(0, 0, self.back_height),
+                        plane_no=(0, 0, 1),
+                        clear_inner=True,
+                    )
                 return [obj] + decors
             case "pad":
                 obj = self.make_back(backs)
                 self.divide(obj, self.panel_distance)
                 with butil.ViewportMode(obj, "EDIT"):
                     select_faces(obj, np.abs(read_normal(obj)[:, 1]) > 0.5)
-                    bpy.ops.mesh.inset(thickness=self.panel_margin, depth=self.panel_margin, use_individual=True)
+                    bpy.ops.mesh.inset(
+                        thickness=self.panel_margin,
+                        depth=self.panel_margin,
+                        use_individual=True,
+                    )
                 butil.modify_mesh(obj, "BEVEL", segments=4)
                 write_attribute(obj, 1, "panel", "FACE")
                 obj.scale = (1 - 1e-3,) * 3
                 with butil.ViewportMode(decors[0], "EDIT"):
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.bisect(plane_co=(0, 0, self.back_height), plane_no=(0, 0, 1), clear_inner=True)
+                    bpy.ops.mesh.bisect(
+                        plane_co=(0, 0, self.back_height),
+                        plane_no=(0, 0, 1),
+                        clear_inner=True,
+                    )
                 return [obj] + decors
             case _:
                 return decors
@@ -176,7 +219,12 @@ class BedFrameFactory(ChairFactory):
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.convex_hull()
-        butil.modify_mesh(obj, "SOLIDIFY", thickness=np.minimum(self.thickness, self.leg_thickness), offset=0)
+        butil.modify_mesh(
+            obj,
+            "SOLIDIFY",
+            thickness=np.minimum(self.thickness, self.leg_thickness),
+            offset=0,
+        )
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.normals_make_consistent(inside=False)

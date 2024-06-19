@@ -41,7 +41,10 @@ def scene(
 
     with FixedSeed(int_hash([seed, "caves"])):
         if chance(caves_chance):
-            caves = Caves(on_the_fly_asset_folder / Assets.Caves, reused_asset_folder / Assets.Caves)
+            caves = Caves(
+                on_the_fly_asset_folder / Assets.Caves,
+                reused_asset_folder / Assets.Caves,
+            )
         else:
             caves = None
 
@@ -54,7 +57,9 @@ def scene(
 
     with FixedSeed(int_hash([seed, "landtiles"])):
         if chance(landtiles_chance):
-            elements[ElementNames.LandTiles] = LandTiles(device, caves, on_the_fly_asset_folder, reused_asset_folder)
+            elements[ElementNames.LandTiles] = LandTiles(
+                device, caves, on_the_fly_asset_folder, reused_asset_folder
+            )
             last_ground_element = elements[ElementNames.LandTiles]
 
     assert last_ground_element is not None
@@ -65,11 +70,15 @@ def scene(
 
     with FixedSeed(int_hash([seed, "voronoi_rocks"])):
         if chance(voronoi_rocks_chance):
-            elements[ElementNames.VoronoiRocks] = VoronoiRocks(device, last_ground_element, caves)
+            elements[ElementNames.VoronoiRocks] = VoronoiRocks(
+                device, last_ground_element, caves
+            )
 
     with FixedSeed(int_hash([seed, "voronoi_grains"])):
         if chance(voronoi_grains_chance):
-            elements[ElementNames.VoronoiGrains] = VoronoiGrains(device, last_ground_element, caves)
+            elements[ElementNames.VoronoiGrains] = VoronoiGrains(
+                device, last_ground_element, caves
+            )
 
     with FixedSeed(int_hash([seed, "upsidedown_mountains"])):
         if chance(upsidedown_mountains_chance):
@@ -81,11 +90,15 @@ def scene(
 
     with FixedSeed(int_hash([seed, "volcanos"])):
         if chance(volcanos_chance):
-            elements[ElementNames.Volcanos] = Volcanos(device, None, on_the_fly_asset_folder, reused_asset_folder)
+            elements[ElementNames.Volcanos] = Volcanos(
+                device, None, on_the_fly_asset_folder, reused_asset_folder
+            )
 
     with FixedSeed(int_hash([seed, "ground_ice"])):
         if chance(ground_ice_chance):
-            elements[ElementNames.FloatingIce] = FloatingIce(device, None, on_the_fly_asset_folder, reused_asset_folder)
+            elements[ElementNames.FloatingIce] = FloatingIce(
+                device, None, on_the_fly_asset_folder, reused_asset_folder
+            )
 
     scene_infos["water_plane"] = -1e5
     waterbody = None

@@ -6,14 +6,12 @@
 
 from math import cos, exp, pi, sin
 
-import bpy
 import numpy as np
 
 from infinigen.assets.creatures.util import part_util
 from infinigen.assets.creatures.util.creature import Part, PartFactory
-from infinigen.assets.creatures.util.genome import IKParams, Joint
 from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
@@ -25,16 +23,30 @@ class Beak:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         self.hook_x = lambda x, theta: self.hook(
-            self.hook_scale_x, self.hook_a, self.hook_b, self.hook_pos_x, self.hook_thickness_x, x, theta
+            self.hook_scale_x,
+            self.hook_a,
+            self.hook_b,
+            self.hook_pos_x,
+            self.hook_thickness_x,
+            x,
+            theta,
         )
         self.hook_z = lambda x, theta: self.hook(
-            self.hook_scale_z, self.hook_a, self.hook_b, self.hook_pos_z, self.hook_thickness_z, x, theta
+            self.hook_scale_z,
+            self.hook_a,
+            self.hook_b,
+            self.hook_pos_z,
+            self.hook_thickness_z,
+            x,
+            theta,
         )
 
         self.crown_z = lambda x, theta: self.crown(
             self.crown_scale_z, self.crown_a, self.crown_b, self.crown_pos_z, x, theta
         )
-        self.bump_z = lambda x, theta: self.bump(self.bump_scale_z, x, self.bump_l, self.bump_r) * max(sin(theta), 0)
+        self.bump_z = lambda x, theta: self.bump(
+            self.bump_scale_z, x, self.bump_l, self.bump_r
+        ) * max(sin(theta), 0)
 
     def cx(self, x):
         return x
@@ -87,7 +99,10 @@ class Beak:
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = self.sx * self.cx(p) + self.dx(p, theta)
                 ctrls[i][j][1] = self.sy * self.cy(p) * self.r * cos(theta) + self.dy(p)
-                ctrls[i][j][2] = self.reverse * (self.sz * self.cz(p) * self.r * max(sin(theta), 0) + self.dz(p, theta))
+                ctrls[i][j][2] = self.reverse * (
+                    self.sz * self.cz(p) * self.r * max(sin(theta), 0)
+                    + self.dz(p, theta)
+                )
 
         method = "blender" if False else "geomdl"
         return nurbs_util.nurbs(ctrls, method, face_size=0.02)
@@ -99,12 +114,18 @@ class BirdBeak(PartFactory):
     unit_scale = (0.5, 0.5, 0.5)
 
     def sample_params(self, select=None, var=1):
-        weights = part_util.random_convex_coord(self.param_templates.keys(), select=select)
+        weights = part_util.random_convex_coord(
+            self.param_templates.keys(), select=select
+        )
         params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
+
         # add additional noise to params
         for key in params["upper"]:
             if key in params["range"]:
@@ -116,7 +137,8 @@ class BirdBeak(PartFactory):
                 params["lower"][key] = max(min(params["lower"][key], r), l)
         params["lower"]["sx"] = min(
             params["lower"]["sx"],
-            params["upper"]["sx"] * (params["upper"]["hook_pos_x"] - params["upper"]["hook_thickness_x"] / 2),
+            params["upper"]["sx"]
+            * (params["upper"]["hook_pos_x"] - params["upper"]["hook_thickness_x"] / 2),
         )
 
         return params
@@ -370,7 +392,23 @@ short_lower = default_beak | {
     "hook_thickness_z": 0.0,
 }
 
-BirdBeak.param_templates["normal"] = {"upper": normal_upper, "lower": normal_lower, "range": scales}
-BirdBeak.param_templates["duck"] = {"upper": duck_upper, "lower": duck_lower, "range": scales}
-BirdBeak.param_templates["eagle"] = {"upper": eagle_upper, "lower": eagle_lower, "range": scales}
-BirdBeak.param_templates["short"] = {"upper": short_upper, "lower": short_lower, "range": scales}
+BirdBeak.param_templates["normal"] = {
+    "upper": normal_upper,
+    "lower": normal_lower,
+    "range": scales,
+}
+BirdBeak.param_templates["duck"] = {
+    "upper": duck_upper,
+    "lower": duck_lower,
+    "range": scales,
+}
+BirdBeak.param_templates["eagle"] = {
+    "upper": eagle_upper,
+    "lower": eagle_lower,
+    "range": scales,
+}
+BirdBeak.param_templates["short"] = {
+    "upper": short_upper,
+    "lower": short_lower,
+    "range": scales,
+}

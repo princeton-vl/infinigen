@@ -132,7 +132,9 @@ def lava_shader(nw):
     )
     drive_param(voronoi_texture.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]}
+    )
     colorramp_1.color_ramp.elements[0].position = vor_0_cr_0
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = vor_0_cr_1
@@ -151,7 +153,9 @@ def lava_shader(nw):
     )
     drive_param(voronoi_texture_1.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_1.outputs["Distance"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_1.outputs["Distance"]}
+    )
     colorramp_2.color_ramp.elements[0].position = vor_1_cr_0
     colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_2.color_ramp.elements[1].position = vor_1_cr_1
@@ -189,7 +193,9 @@ def lava_shader(nw):
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: mix, 1: lava_dir})
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 2.0}, attrs={"operation": "DIVIDE"}
+    )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": divide})
     colorramp.color_ramp.elements[0].position = 0.0
@@ -200,18 +206,29 @@ def lava_shader(nw):
     invert = nw.new_node("ShaderNodeInvert", input_kwargs={"Color": lava_dir})
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: invert, 1: max_lava_temp - min_lava_temp}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: invert, 1: max_lava_temp - min_lava_temp},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: min_lava_temp, 1: multiply})
 
-    blackbody_1 = nw.new_node("ShaderNodeBlackbody", input_kwargs={"Temperature": add_1})
+    blackbody_1 = nw.new_node(
+        "ShaderNodeBlackbody", input_kwargs={"Temperature": add_1}
+    )
 
-    noise_emission = nw.new_node(Nodes.NoiseTexture, input_kwargs={"W": uniform(0, 10), "Scale": 0.5})
+    noise_emission = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"W": uniform(0, 10), "Scale": 0.5}
+    )
 
-    strength_emission = nw.new_node(Nodes.Math, input_kwargs={0: noise_emission.outputs["Fac"], 1: lava_emi})
+    strength_emission = nw.new_node(
+        Nodes.Math, input_kwargs={0: noise_emission.outputs["Fac"], 1: lava_emi}
+    )
 
-    emission_1 = nw.new_node("ShaderNodeEmission", input_kwargs={"Color": blackbody_1, "Strength": strength_emission})
+    emission_1 = nw.new_node(
+        "ShaderNodeEmission",
+        input_kwargs={"Color": blackbody_1, "Strength": strength_emission},
+    )
 
     noise_bsdf = nw.new_node(
         Nodes.NoiseTexture,
@@ -219,7 +236,9 @@ def lava_shader(nw):
         attrs={"noise_dimensions": "4D"},
     )
 
-    color_bsdf = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_bsdf.outputs["Fac"]})
+    color_bsdf = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_bsdf.outputs["Fac"]}
+    )
 
     color_bsdf.color_ramp.elements[0].position = 0.0
     color_bsdf.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -263,7 +282,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         dir_x = nw.new_value(dir_x, "dir_x")
         # print(f"{wave_sca=} {dir_x=} {dir_y=}")
 
-        group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        group_input = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
 
         noise_texture_1 = nw.new_node(
             Nodes.NoiseTexture,
@@ -280,7 +301,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         group = nw.scalar_divide(nw.scalar_add(separate_xyz.outputs["Z"], 0), 20)
 
         group_2 = nw.new_node(
-            nodegroup_polynomial_geo().name if nw.node_group.type != "SHADER" else nodegroup_polynomial_shader().name,
+            nodegroup_polynomial_geo().name
+            if nw.node_group.type != "SHADER"
+            else nodegroup_polynomial_shader().name,
             input_kwargs={
                 "X": group_3,
                 "Y": group_4,
@@ -322,7 +345,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             attrs={"operation": "MULTIPLY"},
         )
 
-        add = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_1, 1: multiply.outputs["Vector"]})
+        add = nw.new_node(
+            Nodes.VectorMath, input_kwargs={0: group_1, 1: multiply.outputs["Vector"]}
+        )
 
         wave_texture = nw.new_node(
             Nodes.WaveTexture,
@@ -357,7 +382,11 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
 
         voronoi_texture = nw.new_node(
             Nodes.VoronoiTexture,
-            input_kwargs={"W": nw.new_value(uniform(0, 10), "voronoi_texture_w"), "Vector": position, "Scale": 1.0},
+            input_kwargs={
+                "W": nw.new_value(uniform(0, 10), "voronoi_texture_w"),
+                "Vector": position,
+                "Scale": 1.0,
+            },
             attrs={"voronoi_dimensions": "4D", "feature": "SMOOTH_F1"},
         )
 
@@ -383,7 +412,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         groupinput = nw.new_node(Nodes.GroupInput)
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        set_position = nw.new_node(
+            Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return lava_dir

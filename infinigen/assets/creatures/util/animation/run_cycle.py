@@ -5,21 +5,16 @@
 
 
 import logging
-import pdb
 import re
 from math import pi
 
 import bpy
-import bpy_types
-import mathutils
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-from infinigen.assets.creatures.util import creature
-from infinigen.assets.creatures.util import creature_util as cutil
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian, lerp, randomspacing
+from infinigen.core.util.math import clip_gaussian, lerp
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +63,15 @@ def body_path(length, height, upturn, down_stroke, curve_resolution=8):
     return obj
 
 
-def follow_path(target, path, duration: int, offset: float = 0, reset_rot=True, **kwargs):
+def follow_path(
+    target, path, duration: int, offset: float = 0, reset_rot=True, **kwargs
+):
     target.location = (0, 0, 0)
     if reset_rot:
         target.rotation_euler = (0, 0, 0)
-    c = butil.constrain_object(target, "FOLLOW_PATH", target=path, offset=offset, **kwargs)
+    c = butil.constrain_object(
+        target, "FOLLOW_PATH", target=path, offset=offset, **kwargs
+    )
 
     path.data.use_path = True
     path.data.path_duration = duration
@@ -108,7 +107,9 @@ def follow_body_path(targets, path_dims, period, offset, spread):
     return paths
 
 
-def animate_run(root, arma, targets, steps_per_sec=1, body=True, motion=True, squash_gait_pct=0.1):
+def animate_run(
+    root, arma, targets, steps_per_sec=1, body=True, motion=True, squash_gait_pct=0.1
+):
     """
     Animate creature by moving its IK targets
     """
@@ -125,7 +126,8 @@ def animate_run(root, arma, targets, steps_per_sec=1, body=True, motion=True, sq
 
     frame_period = int(bpy.context.scene.render.fps / steps_per_sec)
 
-    get_targets = lambda k: [t for t in targets if k in t.name]
+    def get_targets(k):
+        return [t for t in targets if k in t.name]
 
     feet_targets = get_targets("foot")
 
@@ -206,7 +208,9 @@ def animate_run(root, arma, targets, steps_per_sec=1, body=True, motion=True, sq
 
     for p in body_paths:
         if len(foot_paths):
-            p.location.z = (1 - squash_gait_pct) * p.location.z + squash_gait_pct * foot_paths[0].location.z
+            p.location.z = (
+                1 - squash_gait_pct
+            ) * p.location.z + squash_gait_pct * foot_paths[0].location.z
         p.parent = root
 
     all_paths = foot_paths + knee_paths + body_paths
@@ -217,7 +221,9 @@ def animate_run(root, arma, targets, steps_per_sec=1, body=True, motion=True, sq
     return all_paths
 
 
-def animate_wiggle_body_iks(root, arma, targets, compression_ratio=1.01, cycles_per_bodylen=1.5, fix_head=True):
+def animate_wiggle_body_iks(
+    root, arma, targets, compression_ratio=1.01, cycles_per_bodylen=1.5, fix_head=True
+):
     assert arma.type == "ARMATURE"
 
     logger.info("Starting animate_wiggle")
@@ -235,7 +241,9 @@ def animate_wiggle_body_iks(root, arma, targets, compression_ratio=1.01, cycles_
         offset = cycles_per_bodylen * (i / len(targets)) * frame_period
         w = lerp(start_percent * width, width, 1 - i / len(targets))
         dims = (w, 0, 0.0, 0.0)
-        body_paths += follow_gait_path(targets=[t], path_dims=dims, period=frame_period, offset=offset, spread=0)
+        body_paths += follow_gait_path(
+            targets=[t], path_dims=dims, period=frame_period, offset=offset, spread=0
+        )
 
     bstart = body_paths[0].location.x
 
@@ -256,7 +264,9 @@ def cosusoid_driver(driver, mag, freq, off):
     driver.expression = f"{mag:.4f}*cos(({freq:.4f}*frame+{off:.4f})/(2*pi))"
 
 
-def animate_wiggle_bones(arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True):
+def animate_wiggle_bones(
+    arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True
+):
     """
     mag_deg = sum of magnitudes across al bones
     freq = flaps per second
@@ -282,11 +292,15 @@ def animate_wiggle_bones(arma, bones, mag_deg, freq, off=0, wavelength=1, remove
         b.rotation_mode = "XYZ"
         sinusoid_driver(b.driver_add("rotation_euler")[0].driver, mag, freq, b_off)
         if not fixed_head and i == 0:  # move head
-            cosusoid_driver(b.driver_add("location")[2].driver, mag / (freq / (2 * pi)), freq, b_off)
+            cosusoid_driver(
+                b.driver_add("location")[2].driver, mag / (freq / (2 * pi)), freq, b_off
+            )
             # sinusoid_driver(b.driver_add('rotation_euler')[0].driver, -mag, freq, b_off)
 
 
-def animate_running_front_leg(arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True):
+def animate_running_front_leg(
+    arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True
+):
     """
     mag_deg = sum of magnitudes across al bones
     freq = flaps per second
@@ -327,7 +341,9 @@ def animate_running_front_leg(arma, bones, mag_deg, freq, off=0, wavelength=1, r
         # sinusoid_driver(b.driver_add('location')[2].driver, 0.1 * mag, freq, b_off)
 
 
-def animate_running_back_leg(arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True):
+def animate_running_back_leg(
+    arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True, fixed_head=True
+):
     """
     mag_deg = sum of magnitudes across al bones
     freq = flaps per second

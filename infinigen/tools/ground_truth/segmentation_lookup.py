@@ -64,7 +64,9 @@ def compute_boxes(indices, binary_tag_mask):
 # Deterministic, but probably slow. Good enough for visualization.
 def arr2color(e):
     s = np.random.RandomState(np.array(e, dtype=np.uint32))
-    return (np.asarray(colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)) * 255).astype(np.uint8)
+    return (
+        np.asarray(colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)) * 255
+    ).astype(np.uint8)
 
 
 if __name__ == "__main__":
@@ -77,18 +79,24 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load images & masks
-    object_segmentation_mask = recover(np.load(get_frame_path(args.folder, 0, args.frame, "ObjectSegmentation_npz")))
+    object_segmentation_mask = recover(
+        np.load(get_frame_path(args.folder, 0, args.frame, "ObjectSegmentation_npz"))
+    )
     instance_segmentation_mask = recover(
         np.load(get_frame_path(args.folder, 0, args.frame, "InstanceSegmentation_npz"))
     )
     image = imread(get_frame_path(args.folder, 0, args.frame, "Image_png"))
-    object_json = json.loads(get_frame_path(args.folder, 0, args.frame, "Objects_json").read_text())
+    object_json = json.loads(
+        get_frame_path(args.folder, 0, args.frame, "Objects_json").read_text()
+    )
     H, W = object_segmentation_mask.shape
     image = cv2.resize(image, dsize=(W, H), interpolation=cv2.INTER_LINEAR)
 
     # Identify objects visible in the image
     unique_object_idxs = set(np.unique(object_segmentation_mask))
-    present_objects = [obj for obj in object_json if (obj["object_index"] in unique_object_idxs)]
+    present_objects = [
+        obj for obj in object_json if (obj["object_index"] in unique_object_idxs)
+    ]
 
     # Complain if the query isn't valid/present
     unique_names = sorted({q["name"] for q in present_objects})
@@ -98,22 +106,31 @@ if __name__ == "__main__":
             print(f"- {qn}")
         sys.exit(0)
     elif not any((args.query.lower() in name.lower()) for name in unique_names):
-        print(f'"{args.query}" doesn\'t match any object names in this image. Choices are:')
+        print(
+            f'"{args.query}" doesn\'t match any object names in this image. Choices are:'
+        )
         for qn in unique_names:
             print(f"- {qn}")
         sys.exit(0)
 
     # Mask the pixels with any relevant object
-    objects_to_highlight = [obj for obj in present_objects if (args.query.lower() in obj["name"].lower())]
+    objects_to_highlight = [
+        obj for obj in present_objects if (args.query.lower() in obj["name"].lower())
+    ]
     highlighted_pixels = should_highlight_pixel(
-        object_segmentation_mask, np.array([o["object_index"] for o in objects_to_highlight])
+        object_segmentation_mask,
+        np.array([o["object_index"] for o in objects_to_highlight]),
     )
     assert highlighted_pixels.dtype == bool
 
     # Assign unique colors to each object instance
-    combined_mask, _ = pack([object_segmentation_mask, instance_segmentation_mask], "h w *")
+    combined_mask, _ = pack(
+        [object_segmentation_mask, instance_segmentation_mask], "h w *"
+    )
     combined_mask = rearrange(combined_mask, "h w d -> (h w) d")
-    uniq_instances, indices = np.unique(combined_mask, return_inverse=True, axis=0)  # this line is the bottleneck
+    uniq_instances, indices = np.unique(
+        combined_mask, return_inverse=True, axis=0
+    )  # this line is the bottleneck
     unique_colors = np.stack([arr2color(row) for row in uniq_instances])
 
     if args.boxes:
@@ -128,7 +145,13 @@ if __name__ == "__main__":
         ):
             points = [(x_min, y_min), (x_min, y_max), (x_max, y_max), (x_max, y_min)]
             for i in range(4):
-                canvas = cv2.line(canvas, points[i], points[(i + 1) % 4], color=color.tolist(), thickness=2)
+                canvas = cv2.line(
+                    canvas,
+                    points[i],
+                    points[(i + 1) % 4],
+                    color=color.tolist(),
+                    thickness=2,
+                )
     else:
         colors_for_instances = unique_colors[indices].reshape((H, W, 3))
         canvas = np.zeros((H, W, 3), dtype=np.uint8)

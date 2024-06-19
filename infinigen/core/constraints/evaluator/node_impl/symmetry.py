@@ -5,7 +5,7 @@
 # Acknowledgement: Rotational symmetry code draws inspiration from https://pubs.acs.org/doi/abs/10.1021/ja00046a033 by Zabrodsky et al.
 
 
-from typing import Any, Union
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +17,9 @@ from infinigen.core.constraints.evaluator.indoor_util import blender_objs_from_n
 
 def rotate_vector(vector, angle):
     """Rotate a 2D vector by a given angle."""
-    rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    rotation_matrix = np.array(
+        [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]
+    )
     return np.dot(vector, rotation_matrix.T)
 
 
@@ -168,7 +170,9 @@ def reflect_axis_angle(axis_angle, n):
     angle_reflected = -angle
 
     # Construct the reflected axis angle
-    axis_angle_reflected = Vector((angle_reflected, v_reflected.x, v_reflected.y, v_reflected.z))
+    axis_angle_reflected = Vector(
+        (angle_reflected, v_reflected.x, v_reflected.y, v_reflected.z)
+    )
 
     return axis_angle_reflected
 
@@ -177,7 +181,9 @@ def reflect(obj, plane_point, plane_normal):
     obj.rotation_mode = "AXIS_ANGLE"
     reflected_position = reflect_point(obj.location, plane_point, plane_normal)
     reflected_axis_angle = reflect_axis_angle(obj.rotation_axis_angle, plane_normal)
-    reflected_quaternion = Matrix.Rotation(reflected_axis_angle[0], 4, reflected_axis_angle[1:]).to_quaternion()
+    reflected_quaternion = Matrix.Rotation(
+        reflected_axis_angle[0], 4, reflected_axis_angle[1:]
+    ).to_quaternion()
     return reflected_position, reflected_quaternion
 
 
@@ -207,7 +213,14 @@ def weight(obj):
 
 
 def normalization_factor(objs):
-    avg_distance = np.mean([distance(obj1.location, obj2.location) for obj1 in objs for obj2 in objs if obj1 != obj2])
+    avg_distance = np.mean(
+        [
+            distance(obj1.location, obj2.location)
+            for obj1 in objs
+            for obj2 in objs
+            if obj1 != obj2
+        ]
+    )
     return avg_distance
 
 
@@ -218,7 +231,8 @@ def bipartite_matching(objs, reflected_objs_data):
     cost_matrix = np.array(
         [
             [
-                distance(obj.location, ref[0]) + angle_difference(obj.rotation_quaternion, ref[1])
+                distance(obj.location, ref[0])
+                + angle_difference(obj.rotation_quaternion, ref[1])
                 for ref in reflected_objs_data
             ]
             for obj in objs
@@ -233,7 +247,14 @@ def calculate_reflectional_asymmetry(objs, plane_point, plane_normal, visualize=
         fig, ax = plt.subplots()
         # plot plane point and plane normal
         ax.scatter(plane_point.x, plane_point.y, c="g", label="plane point")
-        ax.quiver(plane_point.x, plane_point.y, plane_normal.x, plane_normal.y, color="g", label="plane normal")
+        ax.quiver(
+            plane_point.x,
+            plane_point.y,
+            plane_normal.x,
+            plane_normal.y,
+            color="g",
+            label="plane normal",
+        )
 
     reflected_objs_data = [reflect(obj, plane_point, plane_normal) for obj in objs]
 
@@ -244,14 +265,22 @@ def calculate_reflectional_asymmetry(objs, plane_point, plane_normal, visualize=
     for original, reflected_data in pairings:
         positional_deviation = distance(original.location, reflected_data[0])
         original.rotation_mode = "QUATERNION"
-        angular_deviation = angle_difference(original.rotation_quaternion, reflected_data[1])
+        angular_deviation = angle_difference(
+            original.rotation_quaternion, reflected_data[1]
+        )
 
-        weighted_deviation = weight(original) * (positional_deviation + angular_deviation)
+        weighted_deviation = weight(original) * (
+            positional_deviation + angular_deviation
+        )
         total_deviation += weighted_deviation
         if visualize:
             # plot the point and the reflected point with different colors
-            ax.scatter(original.location.x, original.location.y, c="b", label="original point")
-            ax.scatter(reflected_data[0].x, reflected_data[0].y, c="r", label="reflected point")
+            ax.scatter(
+                original.location.x, original.location.y, c="b", label="original point"
+            )
+            ax.scatter(
+                reflected_data[0].x, reflected_data[0].y, c="r", label="reflected point"
+            )
 
     # Normalize based on scene scale or other criteria
     normalized_deviation = total_deviation / normalization_factor(objs)

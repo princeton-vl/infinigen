@@ -3,7 +3,6 @@
 
 # Authors: Zeyu Ma
 
-from pathlib import Path
 
 import bpy
 import gin
@@ -38,7 +37,9 @@ def test_terrain_runs():
     bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
     bpy.ops.preferences.addon_enable(module="ant_landscape")
 
-    terrain = Terrain(0, registry, task=Task.Coarse, on_the_fly_asset_folder="/tmp/terrain_tests")
+    terrain = Terrain(
+        0, registry, task=Task.Coarse, on_the_fly_asset_folder="/tmp/terrain_tests"
+    )
     terrain.coarse_terrain()
 
     gin.clear_config()

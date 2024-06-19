@@ -14,7 +14,6 @@
 # https://www.youtube.com/watch?v=umrARvXC_MI by Ryan King Art
 
 
-import bpy
 from numpy.random import uniform
 
 from infinigen.assets.materials import common
@@ -57,7 +56,9 @@ def shader_material(
     relative_density_y = nw.new_node(Nodes.Value, label="relative_density_y")
     relative_density_y.outputs[0].default_value = _relative_density_y
 
-    combine_color = nw.new_node(Nodes.CombineColor, input_kwargs={"Red": red, "Green": green, "Blue": blue})
+    combine_color = nw.new_node(
+        Nodes.CombineColor, input_kwargs={"Red": red, "Green": green, "Blue": blue}
+    )
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={"Base Color": combine_color, "Roughness": roughness},
@@ -65,7 +66,9 @@ def shader_material(
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": texture_coordinate.outputs[_map]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": texture_coordinate.outputs[_map]}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
@@ -108,21 +111,29 @@ def shader_material(
         },
     )
 
-    color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]})
+    color_ramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]}
+    )
     color_ramp.color_ramp.elements[0].position = 0.8109
     color_ramp.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     color_ramp.color_ramp.elements[1].position = 1.0000
     color_ramp.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
 
-    invert_color = nw.new_node(Nodes.Invert, input_kwargs={"Fac": 0.8400, "Color": color_ramp.outputs["Color"]})
+    invert_color = nw.new_node(
+        Nodes.Invert, input_kwargs={"Fac": 0.8400, "Color": color_ramp.outputs["Color"]}
+    )
 
-    color_ramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture_1.outputs["Color"]})
+    color_ramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture_1.outputs["Color"]}
+    )
     color_ramp_1.color_ramp.elements[0].position = 0.0727
     color_ramp_1.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     color_ramp_1.color_ramp.elements[1].position = 0.8655
     color_ramp_1.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: invert_color, 1: color_ramp_1.outputs["Color"]})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: invert_color, 1: color_ramp_1.outputs["Color"]}
+    )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,

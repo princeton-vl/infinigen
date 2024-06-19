@@ -67,11 +67,31 @@ class RoomGraph:
         return len(self.rooms)
 
     def __str__(self):
-        return {"neighbours": self.neighbours, "rooms": self.rooms, "entrance": self.entrance}
+        return {
+            "neighbours": self.neighbours,
+            "rooms": self.rooms,
+            "entrance": self.entrance,
+        }
 
 
 def make_demo_tree():
-    children = [[1, 2], [], [3, 4], [5, 6], [7], [8, 9], [10, 11], [], [], [12], [], [13], [], [14], []]
+    children = [
+        [1, 2],
+        [],
+        [3, 4],
+        [5, 6],
+        [7],
+        [8, 9],
+        [10, 11],
+        [],
+        [],
+        [12],
+        [],
+        [13],
+        [],
+        [14],
+        [],
+    ]
     rooms = [
         "hallway_0",
         "closet_0",

@@ -4,13 +4,10 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
-from infinigen.assets.materials.utils.surface_utils import clip, sample_color, sample_range, sample_ratio
+from infinigen.assets.materials.utils.surface_utils import sample_color
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import color_category
 
@@ -19,10 +16,15 @@ def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": texture_coordinate.outputs["Generated"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": texture_coordinate.outputs["Generated"]},
+    )
     if coord == "Y":
         math = nw.new_node(
-            Nodes.Math, input_kwargs={0: 1.0, 1: separate_xyz.outputs["Y"]}, attrs={"operation": "SUBTRACT"}
+            Nodes.Math,
+            input_kwargs={0: 1.0, 1: separate_xyz.outputs["Y"]},
+            attrs={"operation": "SUBTRACT"},
         )
         val = math
     else:
@@ -40,29 +42,51 @@ def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.6618
     colorramp.color_ramp.elements[0].color = (0.2403, 0.217, 0.1528, 1.0)
-    colorramp.color_ramp.elements[1].position = colorramp_1.color_ramp.elements[1].position
+    colorramp.color_ramp.elements[1].position = colorramp_1.color_ramp.elements[
+        1
+    ].position
     colorramp.color_ramp.elements[1].color = (0.4961, 0.8862, 0.1703, 1.0)
-    colorramp.color_ramp.elements[2].position = colorramp_1.color_ramp.elements[1].position + 0.01
+    colorramp.color_ramp.elements[2].position = (
+        colorramp_1.color_ramp.elements[1].position + 0.01
+    )
     colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
     if rand:
         sample_color(colorramp.color_ramp.elements[1].color)
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Metallic": 0.0, "Roughness": 0.03},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Metallic": 0.0,
+            "Roughness": 0.03,
+        },
     )
 
-    transparent_bsdf = nw.new_node(Nodes.TransparentBSDF, input_kwargs={"Color": (0.757, 0.757, 0.757, 1.0)})
+    transparent_bsdf = nw.new_node(
+        Nodes.TransparentBSDF, input_kwargs={"Color": (0.757, 0.757, 0.757, 1.0)}
+    )
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": (1.0, 1.0, 1.0, 1.0)})
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": (1.0, 1.0, 1.0, 1.0)}
+    )
 
-    mix_shader_1 = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.1, 1: transparent_bsdf, 2: translucent_bsdf})
+    mix_shader_1 = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.1, 1: transparent_bsdf, 2: translucent_bsdf},
+    )
 
     mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": colorramp_1.outputs["Color"], 1: principled_bsdf, 2: mix_shader_1}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": colorramp_1.outputs["Color"],
+            1: principled_bsdf,
+            2: mix_shader_1,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def shader_eyeball_old(nw: NodeWrangler):
@@ -70,9 +94,14 @@ def shader_eyeball_old(nw: NodeWrangler):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": texture_coordinate.outputs["Generated"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": texture_coordinate.outputs["Generated"]},
+    )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz.outputs["X"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz.outputs["X"]}
+    )
     colorramp.color_ramp.interpolation = "CONSTANT"
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.8982
@@ -83,10 +112,13 @@ def shader_eyeball_old(nw: NodeWrangler):
     colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": 0.0}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": 0.0},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, shader_kwargs={}, **kwargs):

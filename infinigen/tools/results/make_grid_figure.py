@@ -41,7 +41,12 @@ else:
     block_W = W + (margin + subfigure_W) * sublevel_layout[1] + margin
     block_H = H + margin
 
-canvas = np.zeros((block_H * level0_layout[0] - margin, block_W * level0_layout[1] - margin, 3)) + 255
+canvas = (
+    np.zeros(
+        (block_H * level0_layout[0] - margin, block_W * level0_layout[1] - margin, 3)
+    )
+    + 255
+)
 for i, scene_type, title in zip(range(len(scene_types)), scene_types, titles):
     y, x = i // level0_layout[1], i % level0_layout[1]
     for j in range(sublevel_layout[0] * sublevel_layout[1] + 1):
@@ -51,7 +56,9 @@ for i, scene_type, title in zip(range(len(scene_types)), scene_types, titles):
         if not os.path.exists(path):
             print(f"{path} did not exist")
             continue
-        image_path = [x for x in os.listdir(path) if x.startswith("Noisy") and x.endswith(".png")]
+        image_path = [
+            x for x in os.listdir(path) if x.startswith("Noisy") and x.endswith(".png")
+        ]
         if image_path == []:
             continue
         image_path = f"{path}/{image_path[0]}"

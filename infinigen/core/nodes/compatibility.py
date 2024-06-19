@@ -17,7 +17,9 @@ def map_dict_keys(d, m):
         if m_from not in d:
             continue
         if m_to in d:
-            raise ValueError(f"{m_from} would map to {m_to} but {d} already contains that key")
+            raise ValueError(
+                f"{m_from} would map to {m_to} but {d} already contains that key"
+            )
         d[m_to] = d.pop(m_from)
     return d
 
@@ -39,17 +41,30 @@ def make_virtual_mixrgb(nw, orig_type, input_args, attrs, input_kwargs):
     input_args = []
 
     return nw.new_node(
-        node_type=Nodes.Mix, input_args=input_args, attrs=attrs, input_kwargs=input_kwargs, compat_mode=False
+        node_type=Nodes.Mix,
+        input_args=input_args,
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
     )
 
 
 def make_virtual_transfer_attribute(nw, orig_type, input_args, attrs, input_kwargs):
     if attrs is None:
-        raise ValueError(f"{attrs=} in make_virtual_transfer_attribute, cannot infer correct node type mapping")
+        raise ValueError(
+            f"{attrs=} in make_virtual_transfer_attribute, cannot infer correct node type mapping"
+        )
 
     if attrs["mapping"] == "NEAREST_FACE_INTERPOLATED":
         mapped_type = Nodes.SampleNearestSurface
-        map_dict_keys(input_kwargs, {"Source": "Mesh", "Attribute": "Value", "Source Position": "Sample Position"})
+        map_dict_keys(
+            input_kwargs,
+            {
+                "Source": "Mesh",
+                "Attribute": "Value",
+                "Source Position": "Sample Position",
+            },
+        )
     elif attrs["mapping"] == "NEAREST":
         raise ValueError(
             "Compatibility mapping for mode='NEAREST' is not supported, please modify the code to resolve this outdated instance of TransferAttribute"
@@ -66,14 +81,22 @@ def make_virtual_transfer_attribute(nw, orig_type, input_args, attrs, input_kwar
     )
 
     return nw.new_node(
-        node_type=mapped_type, input_args=input_args, attrs=attrs, input_kwargs=input_kwargs, compat_mode=False
+        node_type=mapped_type,
+        input_args=input_args,
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
     )
 
 
 def compat_args_sample_curve(nw, orig_type, input_args, attrs, input_kwargs):
     map_dict_keys(input_kwargs, {"Curve": "Curves"})
     return nw.new_node(
-        node_type=orig_type, input_args=input_args, attrs=attrs, input_kwargs=input_kwargs, compat_mode=False
+        node_type=orig_type,
+        input_args=input_args,
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
     )
 
 

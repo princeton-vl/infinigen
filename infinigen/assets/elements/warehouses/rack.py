@@ -8,11 +8,23 @@ from numpy.random import uniform
 
 from infinigen.assets.elements.warehouses.pallet import PalletFactory
 from infinigen.assets.materials import metal
-from infinigen.assets.materials.metal import galvanized_metal
-from infinigen.assets.utils.decorate import read_co, remove_faces, solidify, write_attribute, write_co
+from infinigen.assets.utils.decorate import (
+    read_co,
+    remove_faces,
+    solidify,
+    write_attribute,
+    write_co,
+)
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_bbox, new_cube, new_line, new_plane
-from infinigen.core import surface, tagging
+from infinigen.assets.utils.object import (
+    join_objects,
+    new_base_cylinder,
+    new_bbox,
+    new_cube,
+    new_line,
+    new_plane,
+)
+from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -56,7 +68,13 @@ class RackFactory(AssetFactory):
             obj.scale = self.depth / 2, self.width / 2 - self.thickness, 1
             obj.location = -self.depth / 2, self.width / 2, self.height * i
             butil.apply_transform(obj, True)
-            write_attr_data(obj, f"{PREFIX}{t.Subpart.SupportSurface.value}", np.ones(1).astype(bool), "INT", "FACE")
+            write_attr_data(
+                obj,
+                f"{PREFIX}{t.Subpart.SupportSurface.value}",
+                np.ones(1).astype(bool),
+                "INT",
+                "FACE",
+            )
             objs.append(obj)
         obj = join_objects(objs)
         return obj
@@ -125,7 +143,9 @@ class RackFactory(AssetFactory):
         return stands
 
     def make_supports(self):
-        n = int(np.floor(self.height * self.steps / self.depth / np.tan(self.support_angle)))
+        n = int(
+            np.floor(self.height * self.steps / self.depth / np.tan(self.support_angle))
+        )
         obj = new_line(n, self.height * self.steps)
         obj.rotation_euler[1] = -np.pi / 2
         butil.apply_transform(obj, True)
@@ -133,7 +153,9 @@ class RackFactory(AssetFactory):
         co[1::2, 1] = self.depth
         write_co(obj, co)
         if self.is_support_round:
-            surface.add_geomod(obj, geo_radius, apply=True, input_args=[self.thickness / 2, 16])
+            surface.add_geomod(
+                obj, geo_radius, apply=True, input_args=[self.thickness / 2, 16]
+            )
         else:
             solidify(obj, 1, self.thickness)
         write_attribute(obj, 1, "support", "FACE")

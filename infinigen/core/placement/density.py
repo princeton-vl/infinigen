@@ -7,14 +7,12 @@
 
 
 import logging
-import pdb
 
-import bpy
 import mathutils
 import numpy as np
 
 from infinigen.core.nodes import node_utils as nu
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.surface import eval_argument
 
 logger = logging.getLogger(__name__)
@@ -30,7 +28,9 @@ def set_tag_dict(tag_dict_):
 def tag_mask(nw, tag):
     keys = list(tag_dict.keys())
     tag_parts = tag.split(",")
-    logger.debug(f"Parsing {tag=} into {len(tag_parts)=}, matching against {len(tag_dict)=}")
+    logger.debug(
+        f"Parsing {tag=} into {len(tag_parts)=}, matching against {len(tag_dict)=}"
+    )
     for part in tag_parts:
         if part.startswith("-"):
             keys = [k for k in keys if part[1:] not in k.split(".")]
@@ -68,10 +68,14 @@ def placement_mask(
 
         if select_thresh is not None:
             mininum_val = nw.new_node(Nodes.Value)
-            mininum_val.outputs[0].default_value = np.random.normal(select_thresh, 0.025)
+            mininum_val.outputs[0].default_value = np.random.normal(
+                select_thresh, 0.025
+            )
             noise_node = nu.noise(nw, scale)
             noise_mask = nw.new_node(
-                Nodes.Math, input_args=[noise_node, mininum_val], attrs={"operation": "GREATER_THAN"}
+                Nodes.Math,
+                input_args=[noise_node, mininum_val],
+                attrs={"operation": "GREATER_THAN"},
             )
             mask = nw.scalar_multiply(mask, noise_mask)
 
@@ -79,7 +83,9 @@ def placement_mask(
             facing_mask = nu.facing_mask(nw, normal_dir, thresh=normal_thresh)
             mask = nw.scalar_multiply(mask, facing_mask)
             if normal_thresh_high is not None:
-                facing_mask = nu.facing_mask(nw, -mathutils.Vector(normal_dir), thresh=-normal_thresh_high)
+                facing_mask = nu.facing_mask(
+                    nw, -mathutils.Vector(normal_dir), thresh=-normal_thresh_high
+                )
                 mask = nw.scalar_multiply(mask, facing_mask)
 
         if tag is not None:
@@ -90,9 +96,15 @@ def placement_mask(
             mask = nw.scalar_multiply(
                 mask,
                 nw.new_node(
-                    Nodes.Compare, attrs={"operation": "GREATER_THAN", "data_type": "FLOAT"}, input_args=[z, start]
+                    Nodes.Compare,
+                    attrs={"operation": "GREATER_THAN", "data_type": "FLOAT"},
+                    input_args=[z, start],
                 ),
-                nw.new_node(Nodes.Compare, attrs={"operation": "LESS_THAN", "data_type": "FLOAT"}, input_args=[z, end]),
+                nw.new_node(
+                    Nodes.Compare,
+                    attrs={"operation": "LESS_THAN", "data_type": "FLOAT"},
+                    input_args=[z, end],
+                ),
             )
         if (select_thresh is not None) and return_scalar:
             map_range = nw.new_node(

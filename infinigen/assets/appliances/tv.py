@@ -13,13 +13,31 @@ from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials.text import Text
-from infinigen.assets.utils.decorate import mirror, read_area, read_co, read_normal, write_attribute, write_co
+from infinigen.assets.utils.decorate import (
+    mirror,
+    read_area,
+    read_co,
+    read_normal,
+    write_attribute,
+    write_co,
+)
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_bbox, new_cube, new_plane
-from infinigen.assets.utils.uv import compute_uv_direction, face_corner2faces, unwrap_faces
+from infinigen.assets.utils.object import (
+    data2mesh,
+    join_objects,
+    mesh2obj,
+    new_bbox,
+    new_cube,
+    new_plane,
+)
+from infinigen.assets.utils.uv import (
+    compute_uv_direction,
+    face_corner2faces,
+    unwrap_faces,
+)
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.surface import read_attr_data, write_attr_data
+from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
@@ -98,7 +116,9 @@ class TVFactory(AssetFactory):
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         match self.leg_type:
             case "two-legged":
-                max_x = self.leg_length_y / 2 - (1 - self.leg_width) * self.depth_extrude
+                max_x = (
+                    self.leg_length_y / 2 - (1 - self.leg_width) * self.depth_extrude
+                )
             case _:
                 max_x = self.leg_length_y / 2 - self.depth_extrude / 2
         return new_bbox(
@@ -119,8 +139,8 @@ class TVFactory(AssetFactory):
                 legs = self.add_two_legs()
             case _:
                 legs = self.add_single_leg()
-        for l in legs:
-            write_attribute(l, 1, "leg", "FACE", "INT")
+        for leg_obj in legs:
+            write_attribute(leg_obj, 1, "leg", "FACE", "INT")
         parts.extend(legs)
         obj = join_objects(parts)
         obj.rotation_euler[2] = np.pi / 2
@@ -163,7 +183,10 @@ class TVFactory(AssetFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
-        height_min, height_max = self.total_height * uniform(0.1, 0.3), self.total_height * uniform(0.5, 0.7)
+        height_min, height_max = (
+            self.total_height * uniform(0.1, 0.3),
+            self.total_height * uniform(0.5, 0.7),
+        )
         width = self.total_width * uniform(0.3, 0.6)
         extra = new_plane()
         extra.scale = width / 2, (height_max - height_min) / 2, 1
@@ -172,30 +195,63 @@ class TVFactory(AssetFactory):
         obj = join_objects([obj, extra])
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
-            bpy.ops.mesh.bridge_edge_loops(number_cuts=32, profile_shape_factor=-uniform(0.0, 0.4))
+            bpy.ops.mesh.bridge_edge_loops(
+                number_cuts=32, profile_shape_factor=-uniform(0.0, 0.4)
+            )
         x, y, z = read_co(obj).T
-        z += (height_max + height_min - self.total_height) / 2 * np.clip(y - self.depth, 0, None) / self.depth_extrude
+        z += (
+            (height_max + height_min - self.total_height)
+            / 2
+            * np.clip(y - self.depth, 0, None)
+            / self.depth_extrude
+        )
         write_co(obj, np.stack([x, y, z], -1))
         return obj
 
     def add_two_legs(self):
         vertices = (
-            (-self.total_width / 2 * self.leg_width * uniform(0, 0.6), 0, self.total_height * uniform(0.3, 0.5)),
+            (
+                -self.total_width / 2 * self.leg_width * uniform(0, 0.6),
+                0,
+                self.total_height * uniform(0.3, 0.5),
+            ),
             (0, 0, -self.leg_length),
             (0, self.leg_length_y / 2, -self.leg_length),
             (0, -self.leg_length_y / 2, -self.leg_length),
         )
         edges = (0, 1), (1, 2), (1, 3)
         leg = mesh2obj(data2mesh(vertices, edges))
-        surface.add_geomod(leg, geo_radius, apply=True, input_args=[self.leg_radius, 16])
+        surface.add_geomod(
+            leg, geo_radius, apply=True, input_args=[self.leg_radius, 16]
+        )
         x, y, z = read_co(leg).T
-        write_co(leg, np.stack([x, y, np.maximum(z, -self.leg_length - self.leg_radius * uniform(0.0, 0.6))], -1))
+        write_co(
+            leg,
+            np.stack(
+                [
+                    x,
+                    y,
+                    np.maximum(
+                        z, -self.leg_length - self.leg_radius * uniform(0.0, 0.6)
+                    ),
+                ],
+                -1,
+            ),
+        )
         leg_ = deep_clone_obj(leg)
         butil.select_none()
-        leg.location = self.total_width / 2 * self.leg_width, (1 - self.leg_width) * self.depth_extrude, 0
+        leg.location = (
+            self.total_width / 2 * self.leg_width,
+            (1 - self.leg_width) * self.depth_extrude,
+            0,
+        )
         butil.apply_transform(leg, True)
         mirror(leg_)
-        leg_.location = -self.total_width / 2 * self.leg_width, (1 - self.leg_width) * self.depth_extrude, 0
+        leg_.location = (
+            -self.total_width / 2 * self.leg_width,
+            (1 - self.leg_width) * self.depth_extrude,
+            0,
+        )
         butil.apply_transform(leg_, True)
         return [leg, leg_]
 
@@ -213,14 +269,20 @@ class TVFactory(AssetFactory):
         butil.modify_mesh(leg, "BEVEL", width=self.leg_bevel_width, segments=8)
         base = new_cube()
         base.location = 0, self.depth_extrude / 2, -self.leg_length
-        base.scale = [self.total_width * uniform(0.15, 0.3), self.leg_length_y / 2, self.leg_radius]
+        base.scale = [
+            self.total_width * uniform(0.15, 0.3),
+            self.leg_length_y / 2,
+            self.leg_radius,
+        ]
         butil.apply_transform(base, True)
         butil.modify_mesh(base, "BEVEL", width=self.leg_bevel_width, segments=8)
         return [leg, base]
 
     def finalize_assets(self, assets):
         self.surface.apply(assets, selection="!screen", rough=True, metal_color="bw")
-        self.support_surface.apply(assets, selection="leg", rough=True, metal_color="bw")
+        self.support_surface.apply(
+            assets, selection="leg", rough=True, metal_color="bw"
+        )
 
 
 class MonitorFactory(TVFactory):

@@ -4,25 +4,12 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-from functools import reduce
-
-import bpy
 import numpy as np
 from numpy.random import normal as N
-from numpy.random import uniform
 
 from infinigen.assets.debris import LichenFactory
-from infinigen.assets.utils.mesh import polygon_angles
-from infinigen.assets.utils.misc import assign_material
-from infinigen.assets.utils.object import data2mesh
-from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.tagging import tag_nodegroup, tag_object
-from infinigen.core.util import blender as butil
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 
 
 class Lichen:

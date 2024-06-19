@@ -5,21 +5,20 @@
 
 
 import logging
-import pdb
 
 import bpy
 import mathutils
 import numpy as np
 from numpy.random import normal, uniform
-from tqdm import tqdm, trange
 
-from infinigen.assets.creatures.util.geometry.metaballs import plusx_cylinder_unwrap
-from infinigen.assets.materials import wood
 from infinigen.assets.trees.generate import GenericTreeFactory, random_species
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.detail import remesh_with_attrs, scatter_res_distance, target_face_size
+from infinigen.core.nodes.node_wrangler import Nodes
+from infinigen.core.placement.detail import (
+    remesh_with_attrs,
+    scatter_res_distance,
+    target_face_size,
+)
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import randomspacing, rotate_match_directions
@@ -39,12 +38,17 @@ def approx_settle_transform(obj, samples=200):
     # sample random planes and find the normal of the biggest one
     verts = np.empty((len(obj.data.vertices), 3))
     obj.data.vertices.foreach_get("co", verts.reshape(-1))
-    verts = np.stack([verts[np.random.choice(np.arange(len(verts)), samples)] for _ in range(3)], axis=0)
+    verts = np.stack(
+        [verts[np.random.choice(np.arange(len(verts)), samples)] for _ in range(3)],
+        axis=0,
+    )
     ups = np.cross(verts[0] - verts[1], verts[0] - verts[2], axis=-1)
     best = np.linalg.norm(ups, axis=-1).argmax()
 
     # rotate according to that axis
-    rot_mat = rotate_match_directions(ups[best].reshape(1, 3), np.array([0, 0, 1]).reshape(1, 3))[0]
+    rot_mat = rotate_match_directions(
+        ups[best].reshape(1, 3), np.array([0, 0, 1]).reshape(1, 3)
+    )[0]
     obj.rotation_euler = mathutils.Matrix(rot_mat).to_euler()
 
     with butil.SelectObjects(obj):
@@ -75,11 +79,15 @@ def chop_object(obj, n, cutter_size, max_tilt=15, thickness=0.03):
         else:
             # vertical chopper to break things up
             cut.location += mathutils.Vector(normal(0, 0.5, 3))
-            cut.rotation_euler = np.deg2rad((uniform([-max_tilt, 50, 0], [max_tilt, 80, 360])))
+            cut.rotation_euler = np.deg2rad(
+                (uniform([-max_tilt, 50, 0], [max_tilt, 80, 360]))
+            )
 
         return cut
 
-    cutters = [cutter(t) for t in randomspacing(0.05, 0.85, n, margin=uniform(0.1, 0.4))]
+    cutters = [
+        cutter(t) for t in randomspacing(0.05, 0.85, n, margin=uniform(0.1, 0.4))
+    ]
     chopped = butil.boolean([obj] + cutters, mode="DIFFERENCE", verbose=True)
     butil.delete(cutters)
 
@@ -113,8 +121,12 @@ def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
     attr_name = "original_surface"
     for t in trees:
         butil.delete(list(t.children))
-        remesh_with_attrs(t, face_size=boolean_res_mult * face_size)  # lower res for efficiency
-    surface.write_attribute(trees, lambda nw: 1, attr_name, data_type="FLOAT", apply=True)
+        remesh_with_attrs(
+            t, face_size=boolean_res_mult * face_size
+        )  # lower res for efficiency
+    surface.write_attribute(
+        trees, lambda nw: 1, attr_name, data_type="FLOAT", apply=True
+    )
 
     for i, tree in enumerate(trees):
         n_chops = np.random.randint(3, 6)
@@ -122,8 +134,14 @@ def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
         chopped = chop_object(tree, n=n_chops, cutter_size=cutter_size)
 
         for j, o in enumerate(chopped):
-            if len(o.data.vertices) < 10 or max(o.dimensions) < 0.1 or max(o.dimensions) > cutter_size * 0.8:
-                logger.debug(f"filtering {i, j} with {len(o.data.vertices)=}, {o.dimensions=}")
+            if (
+                len(o.data.vertices) < 10
+                or max(o.dimensions) < 0.1
+                or max(o.dimensions) > cutter_size * 0.8
+            ):
+                logger.debug(
+                    f"filtering {i, j} with {len(o.data.vertices)=}, {o.dimensions=}"
+                )
                 butil.delete(o)
                 chopped[j] = None
                 continue
@@ -134,8 +152,12 @@ def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
         chopped = [o for o in chopped if o is not None]
 
         def selection(nw):
-            orig = nw.new_node(Nodes.NamedAttribute, [attr_name], attrs=dict(data_type="FLOAT"))
-            return nw.compare("GREATER_THAN", orig, 0.9999)  # some interp will happen for some reason, clamp it
+            orig = nw.new_node(
+                Nodes.NamedAttribute, [attr_name], attrs=dict(data_type="FLOAT")
+            )
+            return nw.compare(
+                "GREATER_THAN", orig, 0.9999
+            )  # some interp will happen for some reason, clamp it
 
         bark.apply(chopped, selection=selection)
         for o in chopped:

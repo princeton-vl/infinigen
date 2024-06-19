@@ -4,19 +4,11 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
@@ -29,7 +21,9 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
 
         return {
             "cross_section_name": "coconut_cross_section",
-            "cross_section_func_args": {"control_points": [(0.0, rad_small), (0.1, rad_small), (1.0, 0.76)]},
+            "cross_section_func_args": {
+                "control_points": [(0.0, rad_small), (0.1, rad_small), (1.0, 0.76)]
+            },
             "cross_section_input_args": {
                 "random seed": uniform(-100, 100),
                 "radius": normal(1.8, 0.1),
@@ -37,7 +31,9 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
                 "noise amount": 0.02,
                 "Resolution": surface_resolution,
             },
-            "cross_section_output_args": {"crosssection_coordinate": "noderef-crosssection-curve parameters"},
+            "cross_section_output_args": {
+                "crosssection_coordinate": "noderef-crosssection-curve parameters"
+            },
         }
 
     def sample_shape_params(self, surface_resolution=256):
@@ -59,7 +55,9 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
                 "End": (0.0, 0.0, 1.0),
                 "Resolution": surface_resolution,
             },
-            "shape_output_args": {"shape_coordinate": "noderef-shapequadratic-spline parameter"},
+            "shape_output_args": {
+                "shape_coordinate": "noderef-shapequadratic-spline parameter"
+            },
         }
 
     def sample_surface_params(self):
@@ -77,7 +75,10 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
 
         return {
             "surface_name": "coconutgreen_surface",
-            "surface_func_args": {"basic_color": basic_color_rgba, "bottom_color": bottom_color_rgba},
+            "surface_func_args": {
+                "basic_color": basic_color_rgba,
+                "bottom_color": bottom_color_rgba,
+            },
             "surface_input_args": {
                 "Geometry": "noderef-shapequadratic-Mesh",
                 "spline parameter": "noderef-shapequadratic-spline parameter",
@@ -108,7 +109,10 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
 
         return {
             "stem_name": "coconut_stem",
-            "stem_func_args": {"basic_color": bottom_color_rgba, "edge_color": calyx_edge_color_rgba},
+            "stem_func_args": {
+                "basic_color": bottom_color_rgba,
+                "edge_color": calyx_edge_color_rgba,
+            },
             "stem_input_args": {
                 "Target": "noderef-fruitsurface-Geometry",
                 "radius": 0.001,

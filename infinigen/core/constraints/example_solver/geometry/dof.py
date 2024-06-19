@@ -7,11 +7,10 @@ import logging
 
 import bpy
 import gin
-import matplotlib.pyplot as plt
 import numpy as np
 import trimesh
 from mathutils import Vector
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import Point
 
 import infinigen.core.constraints.example_solver.geometry.validity as validity
 import infinigen.core.util.blender as butil
@@ -19,10 +18,12 @@ from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints.constraint_language import util as iu
-from infinigen.core.constraints.constraint_language.util import delete_obj, meshes_from_names
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry import stability
-from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
+from infinigen.core.constraints.example_solver.room.constants import (
+    WALL_HEIGHT,
+    WALL_THICKNESS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,10 @@ def combine_rotation_constraints(parent_planes, eps=0.01):
     If there are conflicting constraints, return None.
     """
 
-    normals = [bpy.data.objects[name].data.polygons[poly].normal for name, poly in parent_planes]
+    normals = [
+        bpy.data.objects[name].data.polygons[poly].normal
+        for name, poly in parent_planes
+    ]
 
     # Start with the first constraint
     combined_axis = rotation_constraint(normals[0])
@@ -106,11 +110,15 @@ def rotate_object_around_axis(obj, axis, std, angle=None):
     obj.rotation_axis_angle = Vector([angle] + list(normalized_axis))
 
 
-def check_init_valid(state: state_def.State, name: str, obj_planes: list, assigned_planes: list, margins):
+def check_init_valid(
+    state: state_def.State, name: str, obj_planes: list, assigned_planes: list, margins
+):
     if len(obj_planes) == 0:
         raise ValueError(f"{check_init_valid.__name__} for {name=} got {obj_planes=}")
     if len(obj_planes) > 3:
-        raise ValueError(f"{check_init_valid.__name__} for {name=} got {len(obj_planes)=}")
+        raise ValueError(
+            f"{check_init_valid.__name__} for {name=} got {len(obj_planes)=}"
+        )
 
     def get_rot(ind):
         try:
@@ -150,7 +158,9 @@ def check_init_valid(state: state_def.State, name: str, obj_planes: list, assign
         )
         if not res:
             dot = rotation_axis.dot(reference_normal)
-            logger.debug(f"{is_rotation_allowed.__name__} got {res=} with {rotation_axis=} {reference_normal=} {dot=}")
+            logger.debug(
+                f"{is_rotation_allowed.__name__} got {res=} with {rotation_axis=} {reference_normal=} {dot=}"
+            )
         return res
 
     a, b, rotation_axis, rotation_angle, plane_normal_b = get_rot(0)
@@ -174,7 +184,9 @@ def check_init_valid(state: state_def.State, name: str, obj_planes: list, assign
             dof_remaining = False  # No more degrees of freedom remaining
             logger.debug(f"rotated {a=} to satisfy assignment {i=}")
         else:
-            logger.debug(f"dofs failed for {i=} of {len(obj_planes)=}, {rot_allowed=} {dof_remaining=}")
+            logger.debug(
+                f"dofs failed for {i=} of {len(obj_planes)=}, {rot_allowed=} {dof_remaining=}"
+            )
             return False, None, None
 
     # Construct the system of linear equations for translation
@@ -192,8 +204,12 @@ def check_init_valid(state: state_def.State, name: str, obj_planes: list, assign
         b_poly = b_obj.data.polygons[b_poly_index]
 
         # Get global coordinates and normals
-        plane_point_a = iu.global_vertex_coordinates(a_obj, a_obj.data.vertices[a_poly.vertices[0]])
-        plane_point_b = iu.global_vertex_coordinates(b_obj, b_obj.data.vertices[b_poly.vertices[0]])
+        plane_point_a = iu.global_vertex_coordinates(
+            a_obj, a_obj.data.vertices[a_poly.vertices[0]]
+        )
+        plane_point_b = iu.global_vertex_coordinates(
+            b_obj, b_obj.data.vertices[b_poly.vertices[0]]
+        )
         plane_normal_b = iu.global_polygon_normal(b_obj, b_poly)
         plane_point_b += plane_normal_b * margin
 
@@ -251,14 +267,20 @@ def apply_relations_surfacesample(
     if len(obj_state.relations) == 0:
         raise ValueError(f"Object {name} has no relations")
     elif len(obj_state.relations) > 3:
-        raise ValueError(f"Object {name} has more than 2 relations, not supported. {obj_state.relations=}")
+        raise ValueError(
+            f"Object {name} has more than 2 relations, not supported. {obj_state.relations=}"
+        )
 
     for i, relation_state in enumerate(obj_state.relations):
         if isinstance(relation_state.relation, cl.AnyRelation):
-            raise ValueError(f"Got {relation_state.relation} for {name=} {relation_state.target_name=}")
+            raise ValueError(
+                f"Got {relation_state.relation} for {name=} {relation_state.target_name=}"
+            )
 
         parent_obj = state.objs[relation_state.target_name].obj
-        obj_plane, parent_plane = state.planes.get_rel_state_planes(state, name, relation_state)
+        obj_plane, parent_plane = state.planes.get_rel_state_planes(
+            state, name, relation_state
+        )
 
         if obj_plane is None:
             continue
@@ -312,50 +334,100 @@ def apply_relations_surfacesample(
         plane_normal_1 = iu.global_polygon_normal(parent_obj1, parent1_poly)
         pts = parent2_trimesh.vertices
         projected = project(pts, plane_normal_1)
-        p1_to_p1 = trimesh.path.polygons.projected(parent1_trimesh, plane_normal_1, (0, 0, 0))
+        p1_to_p1 = trimesh.path.polygons.projected(
+            parent1_trimesh, plane_normal_1, (0, 0, 0)
+        )
 
         if p1_to_p1 is None:
-            raise ValueError(f"Failed to project {parent1_trimesh=} {plane_normal_1=} for {name=}")
+            raise ValueError(
+                f"Failed to project {parent1_trimesh=} {plane_normal_1=} for {name=}"
+            )
 
-        if all([p1_to_p1.buffer(1e-1).contains(Point(pt[0], pt[1])) for pt in projected]):
+        if all(
+            [p1_to_p1.buffer(1e-1).contains(Point(pt[0], pt[1])) for pt in projected]
+        ):
             face_mask = tagging.tagged_face_mask(parent_obj2, parent_tags2)
-            stability.move_obj_random_pt(state, obj_name, parent_obj2.name, face_mask, parent_plane2)
-            stability.snap_against(
-                state.trimesh_scene, obj_name, parent_obj2.name, obj_plane2, parent_plane2, margin=margin2
+            stability.move_obj_random_pt(
+                state, obj_name, parent_obj2.name, face_mask, parent_plane2
             )
             stability.snap_against(
-                state.trimesh_scene, obj_name, parent_obj1.name, obj_plane1, parent_plane1, margin=margin1
+                state.trimesh_scene,
+                obj_name,
+                parent_obj2.name,
+                obj_plane2,
+                parent_plane2,
+                margin=margin2,
+            )
+            stability.snap_against(
+                state.trimesh_scene,
+                obj_name,
+                parent_obj1.name,
+                obj_plane1,
+                parent_plane1,
+                margin=margin1,
             )
         else:
             face_mask = tagging.tagged_face_mask(parent_obj1, parent_tags1)
-            stability.move_obj_random_pt(state, obj_name, parent_obj1.name, face_mask, parent_plane1)
-            stability.snap_against(
-                state.trimesh_scene, obj_name, parent_obj1.name, obj_plane1, parent_plane1, margin=margin1
+            stability.move_obj_random_pt(
+                state, obj_name, parent_obj1.name, face_mask, parent_plane1
             )
             stability.snap_against(
-                state.trimesh_scene, obj_name, parent_obj2.name, obj_plane2, parent_plane2, margin=margin2
+                state.trimesh_scene,
+                obj_name,
+                parent_obj1.name,
+                obj_plane1,
+                parent_plane1,
+                margin=margin1,
+            )
+            stability.snap_against(
+                state.trimesh_scene,
+                obj_name,
+                parent_obj2.name,
+                obj_plane2,
+                parent_plane2,
+                margin=margin2,
             )
 
     elif dof == 2:
         assert len(parent_planes) == 1, (name, len(parent_planes))
         for i, relation_state in enumerate(obj_state.relations):
             parent_obj = state.objs[relation_state.target_name].obj
-            obj_plane, parent_plane = state.planes.get_rel_state_planes(state, name, relation_state)
+            obj_plane, parent_plane = state.planes.get_rel_state_planes(
+                state, name, relation_state
+            )
             if obj_plane is None:
                 continue
             if parent_plane is None:
                 continue
-            iu.set_rotation(state.trimesh_scene, obj_name, (0, 0, 2 * np.pi * np.random.randint(0, 4) / 4))
-            face_mask = tagging.tagged_face_mask(parent_obj, relation_state.relation.parent_tags)
-            stability.move_obj_random_pt(state, obj_name, parent_obj.name, face_mask, parent_plane)
+            iu.set_rotation(
+                state.trimesh_scene,
+                obj_name,
+                (0, 0, 2 * np.pi * np.random.randint(0, 4) / 4),
+            )
+            face_mask = tagging.tagged_face_mask(
+                parent_obj, relation_state.relation.parent_tags
+            )
+            stability.move_obj_random_pt(
+                state, obj_name, parent_obj.name, face_mask, parent_plane
+            )
             match relation_state.relation:
                 case cl.StableAgainst(child_tags, parent_tags, margin):
                     stability.snap_against(
-                        state.trimesh_scene, obj_name, parent_obj.name, obj_plane, parent_plane, margin=margin
+                        state.trimesh_scene,
+                        obj_name,
+                        parent_obj.name,
+                        obj_plane,
+                        parent_plane,
+                        margin=margin,
                     )
                 case cl.SupportedBy(child_tags, parent_tags):
                     stability.snap_against(
-                        state.trimesh_scene, obj_name, parent_obj.name, obj_plane, parent_plane, margin=0
+                        state.trimesh_scene,
+                        obj_name,
+                        parent_obj.name,
+                        obj_plane,
+                        parent_plane,
+                        margin=0,
                     )
                 case _:
                     raise NotImplementedError
@@ -372,7 +444,9 @@ def validate_relations_feasible(state: state_def.State, name: str) -> bool:
 
 
 @gin.configurable
-def try_apply_relation_constraints(state: state_def.State, name: str, n_try_resolve=10, visualize=False):
+def try_apply_relation_constraints(
+    state: state_def.State, name: str, n_try_resolve=10, visualize=False
+):
     """
     name is in objs.name
     name has been recently reassigned or added or swapped
@@ -388,7 +462,10 @@ def try_apply_relation_constraints(state: state_def.State, name: str, n_try_reso
 
     for retry in range(n_try_resolve):
         obj_state = state.objs[name]
-        if iu.blender_objs_from_names(obj_state.obj.name)[0].dimensions[2] > WALL_HEIGHT - WALL_THICKNESS:
+        if (
+            iu.blender_objs_from_names(obj_state.obj.name)[0].dimensions[2]
+            > WALL_HEIGHT - WALL_THICKNESS
+        ):
             logger.warning(
                 f"Object {obj_state.obj.name} is too tall for the room: {obj_state.obj.dimensions[2]}, {WALL_HEIGHT=}, {WALL_THICKNESS=}"
             )

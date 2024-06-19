@@ -25,7 +25,13 @@ def set_active_obj(obj):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def config_rendering(resolution=(480, 640), renderer="cycles", render_samples=64, render_exr=False, thread_limit=8):
+def config_rendering(
+    resolution=(480, 640),
+    renderer="cycles",
+    render_samples=64,
+    render_exr=False,
+    thread_limit=8,
+):
     """Adjust rendering settings.
 
     Args:
@@ -81,7 +87,9 @@ def create_collection(name, objs):
         o.select_set(True)
 
     with Suppress():
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=name_)
+        bpy.ops.object.move_to_collection(
+            collection_index=0, is_new=True, new_collection_name=name_
+        )
 
     return name_
 
@@ -184,7 +192,9 @@ def reset_scene(add_camera=False, clear_materials=False, obj_to_keep_list=[]):
         camera_pitch = np.pi * 0.5
         camera_height = 3
 
-        bpy.ops.object.camera_add(location=(0, -6, camera_height), rotation=(camera_pitch, 0, 0))
+        bpy.ops.object.camera_add(
+            location=(0, -6, camera_height), rotation=(camera_pitch, 0, 0)
+        )
         cam = D.objects[0]
         C.scene.camera = cam
         cam.data.lens = 20

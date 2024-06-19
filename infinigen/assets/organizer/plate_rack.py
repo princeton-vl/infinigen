@@ -4,12 +4,10 @@
 # Authors: Beining Han
 
 import bpy
-import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import randint, uniform
 
 from infinigen.assets.materials import shader_wood
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
-from infinigen.assets.shelves.utils import nodegroup_tagged_cube
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -17,7 +15,9 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
 
-@node_utils.to_nodegroup("nodegroup_plate_rack_connect", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_plate_rack_connect", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_plate_rack_connect(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -37,12 +37,17 @@ def nodegroup_plate_rack_connect(nw: NodeWrangler):
     )
 
     cylinder = nw.new_node(
-        "GeometryNodeMeshCylinder", input_kwargs={"Radius": group_input.outputs["Radius"], "Depth": multiply_add}
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Radius": group_input.outputs["Radius"], "Depth": multiply_add},
     )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Name": "uv_map", 3: cylinder.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Name": "uv_map",
+            3: cylinder.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR", "domain": "CORNER"},
     )
 
@@ -63,12 +68,19 @@ def nodegroup_plate_rack_connect(nw: NodeWrangler):
         },
     )
 
-    transform_2 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform, "Scale": (-1.0000, 1.0000, 1.0000)})
+    transform_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform, "Scale": (-1.0000, 1.0000, 1.0000)},
+    )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_2, transform]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_2, transform]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_2}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_2},
+        attrs={"is_active_output": True},
     )
 
 
@@ -78,35 +90,54 @@ def nodegroup_rack_cyn(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketFloatDistance", "Radius", 1.0000), ("NodeSocketFloat", "Value", 0.5000)],
+        expose_input=[
+            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Value", 0.5000),
+        ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 0.0000}
+    )
 
     cylinder = nw.new_node(
-        "GeometryNodeMeshCylinder", input_kwargs={"Radius": group_input.outputs["Radius"], "Depth": add}
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Radius": group_input.outputs["Radius"], "Depth": add},
     )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Name": "uv_map", 3: cylinder.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Name": "uv_map",
+            3: cylinder.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR", "domain": "CORNER"},
     )
 
-    multiply_add = nw.new_node(Nodes.Math, input_kwargs={0: add, 2: 0.0010}, attrs={"operation": "MULTIPLY_ADD"})
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add, 2: 0.0010},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add})
 
     transform_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": store_named_attribute, "Translation": combine_xyz_4}
+        Nodes.Transform,
+        input_kwargs={"Geometry": store_named_attribute, "Translation": combine_xyz_4},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_2}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_2},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_rack_base", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_rack_base", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_rack_base(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -121,47 +152,79 @@ def nodegroup_rack_base(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value1"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Value1"], 1: 0.0000}
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value2"], 1: 0.0000})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Value2"], 1: 0.0000}
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add_1, "Z": add_1})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add_1, "Z": add_1}
+    )
 
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz})
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cube.outputs["Mesh"], "Name": "uv_map", 3: cube.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": cube.outputs["Mesh"],
+            "Name": "uv_map",
+            3: cube.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR", "domain": "CORNER"},
     )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value3"], 1: 0.0000})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Value3"], 1: 0.0000}
+    )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": add_2})
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": store_named_attribute, "Translation": combine_xyz_1}
+        Nodes.Transform,
+        input_kwargs={"Geometry": store_named_attribute, "Translation": combine_xyz_1},
     )
 
-    multiply_add = nw.new_node(Nodes.Math, input_kwargs={0: add, 2: -0.0150}, attrs={"operation": "MULTIPLY_ADD"})
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add, 2: -0.0150},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_add, "Y": add_2})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_add, "Y": add_2}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: multiply_add, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_add, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": add_2})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": add_2}
+    )
 
     mesh_line = nw.new_node(
         Nodes.MeshLine,
-        input_kwargs={"Count": group_input.outputs["Count"], "Start Location": combine_xyz_2, "Offset": combine_xyz_3},
+        input_kwargs={
+            "Count": group_input.outputs["Count"],
+            "Start Location": combine_xyz_2,
+            "Offset": combine_xyz_3,
+        },
         attrs={"mode": "END_POINTS"},
     )
 
     instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": mesh_line, "Instance": group_input.outputs["Instance"]}
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": mesh_line, "Instance": group_input.outputs["Instance"]},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -179,7 +242,10 @@ def rack_geometry_nodes(nw: NodeWrangler, **kwargs):
     rack_height = nw.new_node(Nodes.Value, label="rack_height")
     rack_height.outputs[0].default_value = kwargs["rack_height"]
 
-    rack_cyn = nw.new_node(nodegroup_rack_cyn().name, input_kwargs={"Radius": rack_radius, "Value": rack_height})
+    rack_cyn = nw.new_node(
+        nodegroup_rack_cyn().name,
+        input_kwargs={"Radius": rack_radius, "Value": rack_height},
+    )
 
     base_length = nw.new_node(Nodes.Value, label="base_length")
     base_length.outputs[0].default_value = kwargs["base_length"]
@@ -205,11 +271,15 @@ def rack_geometry_nodes(nw: NodeWrangler, **kwargs):
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [rack_base.outputs["Base"], rack_base.outputs["Racks"]]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [rack_base.outputs["Base"], rack_base.outputs["Racks"]]
+        },
     )
 
     transform_1 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": join_geometry, "Scale": (1.0000, -1.0000, 1.0000)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": join_geometry, "Scale": (1.0000, -1.0000, 1.0000)},
     )
 
     plate_rack_connect = nw.new_node(
@@ -218,26 +288,41 @@ def rack_geometry_nodes(nw: NodeWrangler, **kwargs):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_1, join_geometry, plate_rack_connect]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_1, join_geometry, plate_rack_connect]},
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: base_width}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: base_width}, attrs={"operation": "MULTIPLY"}
+    )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": join_geometry_1, "Translation": combine_xyz})
+    transform = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": join_geometry_1, "Translation": combine_xyz},
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": transform})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": transform}
+    )
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances}
+    )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": triangulate, "Material": surface.shaderfunc_to_material(shader_wood)},
+        input_kwargs={
+            "Geometry": triangulate,
+            "Material": surface.shaderfunc_to_material(shader_wood),
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_material},
+        attrs={"is_active_output": True},
     )
 
 
@@ -251,7 +336,8 @@ def plate_geometry_nodes(nw: NodeWrangler, **kwargs):
     thickness.outputs[0].default_value = kwargs["thickness"]
 
     cylinder = nw.new_node(
-        "GeometryNodeMeshCylinder", input_kwargs={"Vertices": 64, "Radius": radius, "Depth": thickness}
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Vertices": 64, "Radius": radius, "Depth": thickness},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": radius})
@@ -265,15 +351,22 @@ def plate_geometry_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": transform_geometry})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": transform_geometry}
+    )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": triangulate, "Material": surface.shaderfunc_to_material(shader_rough_plastic)},
+        input_kwargs={
+            "Geometry": triangulate,
+            "Material": surface.shaderfunc_to_material(shader_rough_plastic),
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_material},
+        attrs={"is_active_output": True},
     )
 
 
@@ -312,7 +405,9 @@ class PlateRackBaseFactory(AssetFactory):
         if params.get("rack_height", None) is None:
             params["rack_height"] = uniform(0.08, 0.15)
         if params.get("base_length", None) is None:
-            params["base_length"] = (params["num_rack"] - 1) * uniform(0.03, 0.06) + 0.03
+            params["base_length"] = (params["num_rack"] - 1) * uniform(
+                0.03, 0.06
+            ) + 0.03
         if params.get("base_gap", None) is None:
             params["base_gap"] = uniform(0.05, 0.08)
         if params.get("base_width", None) is None:
@@ -322,12 +417,18 @@ class PlateRackBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
-        surface.add_geomod(obj, rack_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params)
+        surface.add_geomod(
+            obj, rack_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params
+        )
         tagging.tag_system.relabel_obj(obj)
 
         place_points = self.get_place_points(obj_params)
@@ -354,12 +455,22 @@ class PlateBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
-        surface.add_geomod(obj, plate_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params)
+        surface.add_geomod(
+            obj,
+            plate_geometry_nodes,
+            attributes=[],
+            apply=True,
+            input_kwargs=obj_params,
+        )
         tagging.tag_system.relabel_obj(obj)
 
         return obj

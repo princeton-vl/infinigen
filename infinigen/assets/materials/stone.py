@@ -5,9 +5,6 @@
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=YKRK82JeBo8 by Ryan King Art
 
 
-import os
-
-import bpy
 import gin
 from numpy.random import normal as N
 from numpy.random import uniform
@@ -27,7 +24,9 @@ name = "stone"
 
 def shader_stone(nw, random_seed=0):
     nw.force_input_consistency()
-    stone_base_color, stone_roughness = geo_stone(nw, random_seed=random_seed, geometry=False)
+    stone_base_color, stone_roughness = geo_stone(
+        nw, random_seed=random_seed, geometry=False
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
@@ -130,7 +129,9 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         )
 
         colorramp_2 = nw.new_node(
-            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]}, label="colorramp_2_VAR"
+            Nodes.ColorRamp,
+            input_kwargs={"Fac": noise_texture_2.outputs["Fac"]},
+            label="colorramp_2_VAR",
         )
         colorramp_2.color_ramp.elements[0].position = 0.445 + (2 * dens_crack) - 0.1
         colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -159,7 +160,9 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         )
 
         colorramp_1 = nw.new_node(
-            Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Fac"]}, label="colorramp_1_VAR"
+            Nodes.ColorRamp,
+            input_kwargs={"Fac": wave_texture.outputs["Fac"]},
+            label="colorramp_1_VAR",
         )
         colorramp_1.color_ramp.elements[0].position = 0.0
         colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -211,17 +214,23 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
             input_kwargs={
                 "Vector": position,
                 "W": nw.new_value(uniform(0, 10), "noise_texture_3_w"),
-                "Scale": nw.new_value(sample_ratio(5, 3 / 4, 4 / 3), "noise_texture_3_scale"),
+                "Scale": nw.new_value(
+                    sample_ratio(5, 3 / 4, 4 / 3), "noise_texture_3_scale"
+                ),
             },
             attrs={"noise_dimensions": "4D"},
         )
 
         subtract = nw.new_node(
-            Nodes.Math, input_kwargs={0: noise_texture_3.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+            Nodes.Math,
+            input_kwargs={0: noise_texture_3.outputs["Fac"]},
+            attrs={"operation": "SUBTRACT"},
         )
 
         multiply_8 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: subtract, 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: subtract, 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value_5 = nw.new_node(Nodes.Value)
@@ -237,13 +246,17 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
             Nodes.NoiseTexture,
             input_kwargs={
                 "Vector": position,
-                "Scale": nw.new_value(sample_ratio(20, 3 / 4, 4 / 3), "noise_texture_4_scale"),
+                "Scale": nw.new_value(
+                    sample_ratio(20, 3 / 4, 4 / 3), "noise_texture_4_scale"
+                ),
                 "W": nw.new_value(uniform(0, 10), "noise_texture_4_w"),
             },
             attrs={"noise_dimensions": "4D"},
         )
 
-        colorramp_5 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]})
+        colorramp_5 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]}
+        )
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements[0].position = 0.0
@@ -256,11 +269,15 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         colorramp_5.color_ramp.elements[3].color = (1.0, 1.0, 1.0, 1.0)
 
         subtract_1 = nw.new_node(
-            Nodes.Math, input_kwargs={0: colorramp_5.outputs["Color"]}, attrs={"operation": "SUBTRACT"}
+            Nodes.Math,
+            input_kwargs={0: colorramp_5.outputs["Color"]},
+            attrs={"operation": "SUBTRACT"},
         )
 
         multiply_10 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: subtract_1, 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: subtract_1, 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value_6 = nw.new_node(Nodes.Value)
@@ -275,7 +292,9 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         offset = nw.add(multiply_9, vector_math_8, multiply_11)
 
         colorramp = nw.new_node(
-            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}, label="colorramp_1_VAR"
+            Nodes.ColorRamp,
+            input_kwargs={"Fac": noise_texture.outputs["Fac"]},
+            label="colorramp_1_VAR",
         )
         color1 = uniform(0, 0.05)
         color2 = uniform(0.05, 0.1)
@@ -302,12 +321,24 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         rough_min = uniform(0.6, 0.7)
         rough_max = uniform(0.7, 0.8)
         colorramp_3 = nw.new_node(
-            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}, label="colorramp_3_VAR"
+            Nodes.ColorRamp,
+            input_kwargs={"Fac": noise_texture.outputs["Fac"]},
+            label="colorramp_3_VAR",
         )
         colorramp_3.color_ramp.elements[0].position = 0.082
-        colorramp_3.color_ramp.elements[0].color = (rough_min, rough_min, rough_min, 1.0)
+        colorramp_3.color_ramp.elements[0].color = (
+            rough_min,
+            rough_min,
+            rough_min,
+            1.0,
+        )
         colorramp_3.color_ramp.elements[1].position = 0.768
-        colorramp_3.color_ramp.elements[1].color = (rough_max, rough_max, rough_max, 1.0)
+        colorramp_3.color_ramp.elements[1].color = (
+            rough_max,
+            rough_max,
+            rough_max,
+            1.0,
+        )
 
         stone_roughness = colorramp_3
 
@@ -322,7 +353,9 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         offset = nw.add(offset, geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}))
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        set_position = nw.new_node(
+            Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return stone_base_color, stone_roughness

@@ -109,13 +109,20 @@ def dissolve_limited(obj):
 
 def obj2polygon(obj):
     co = read_co(obj)[:, :2]
-    p = shapely.union_all([shapely.make_valid(orient(shapely.Polygon(co[p.vertices]))) for p in obj.data.polygons])
+    p = shapely.union_all(
+        [
+            shapely.make_valid(orient(shapely.Polygon(co[p.vertices])))
+            for p in obj.data.polygons
+        ]
+    )
     return shapely.make_valid(shapely.simplify(p, 1e-6))
 
 
 def buffer(p, distance):
     with np.errstate(invalid="ignore"):
-        return remove_repeated_points(simplify(p.buffer(distance, join_style="mitre", cap_style="flat"), 1e-6))
+        return remove_repeated_points(
+            simplify(p.buffer(distance, join_style="mitre", cap_style="flat"), 1e-6)
+        )
 
 
 def segment_filter(mls, margin):

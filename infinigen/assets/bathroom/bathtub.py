@@ -10,9 +10,22 @@ from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.utils.autobevel import BevelSharp
-from infinigen.assets.utils.decorate import read_center, read_co, read_normal, subsurf, write_attribute, write_co
+from infinigen.assets.utils.decorate import (
+    read_center,
+    read_co,
+    read_normal,
+    subsurf,
+    write_attribute,
+    write_co,
+)
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import join_objects, new_bbox, new_cube, new_cylinder, new_line
+from infinigen.assets.utils.object import (
+    join_objects,
+    new_bbox,
+    new_cube,
+    new_cylinder,
+    new_line,
+)
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -28,12 +41,18 @@ class BathtubFactory(AssetFactory):
             self.size = uniform(0.8, 1)
             self.depth = uniform(0.55, 0.7)
             prob = np.array([2, 2])
-            self.bathtub_type = np.random.choice(["alcove", "freestanding"], p=prob / prob.sum())  # , 'corner'
-            self.contour_fn = self.make_corner_contour if self.has_corner else self.make_box_contour
+            self.bathtub_type = np.random.choice(
+                ["alcove", "freestanding"], p=prob / prob.sum()
+            )  # , 'corner'
+            self.contour_fn = (
+                self.make_corner_contour if self.has_corner else self.make_box_contour
+            )
             self.has_curve = uniform() < 0.5
             self.has_legs = uniform() < 0.5
 
-            self.thickness = uniform(0.04, 0.08) if self.has_base else uniform(0.02, 0.04)
+            self.thickness = (
+                uniform(0.04, 0.08) if self.has_base else uniform(0.02, 0.04)
+            )
             self.disp_x = uniform(0, 0.2, 2)
             self.disp_y = uniform(0, 0.1)
 
@@ -61,7 +80,9 @@ class BathtubFactory(AssetFactory):
             is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
             is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
             self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
-            self.edge_wear = material_assignments["wear_tear"][1] if is_edge_wear else None
+            self.edge_wear = (
+                material_assignments["wear_tear"][1] if is_edge_wear else None
+            )
             # ////////////////////////////////////////////////////////
 
             self.beveler = BevelSharp(mult=5, segments=5)
@@ -113,12 +134,26 @@ class BathtubFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
             bpy.ops.mesh.extrude_edges_move()
-            bpy.ops.transform.resize(value=(1 + self.thickness * 2 / self.width, 1 + self.thickness / self.size, 1))
+            bpy.ops.transform.resize(
+                value=(
+                    1 + self.thickness * 2 / self.width,
+                    1 + self.thickness / self.size,
+                    1,
+                )
+            )
         obj.location[1] -= self.size / 2
         butil.apply_transform(obj, True)
-        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.taper_factor)
-        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="STRETCH", angle=self.taper_factor)
-        obj.location = 0, self.size / 2, -np.min(read_co(obj)[:, -1]) * uniform(0.5, 0.7)
+        butil.modify_mesh(
+            obj, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.taper_factor
+        )
+        butil.modify_mesh(
+            obj, "SIMPLE_DEFORM", deform_method="STRETCH", angle=self.taper_factor
+        )
+        obj.location = (
+            0,
+            self.size / 2,
+            -np.min(read_co(obj)[:, -1]) * uniform(0.5, 0.7),
+        )
         butil.apply_transform(obj, True)
         return obj
 
@@ -141,15 +176,23 @@ class BathtubFactory(AssetFactory):
                 i = np.argmax(metric)
                 p = co[i]
                 n = normal[i]
-                q = co[i] + self.leg_side * np.array([n[0], n[1] * self.leg_y_scale, n[2]])
+                q = co[i] + self.leg_side * np.array(
+                    [n[0], n[1] * self.leg_y_scale, n[2]]
+                )
                 r = np.array([q[0], q[1], 0])
                 leg = new_line(2)
                 write_co(leg, np.stack([p, q, r]))
                 subsurf(leg, self.leg_subsurf_level)
                 surface.add_geomod(
-                    leg, geo_radius, apply=True, input_args=[self.leg_radius, 32], input_kwargs={"to_align_tilt": False}
+                    leg,
+                    geo_radius,
+                    apply=True,
+                    input_args=[self.leg_radius, 32],
+                    input_kwargs={"to_align_tilt": False},
                 )
-                butil.modify_mesh(leg, "BEVEL", width=self.leg_radius * uniform(0.3, 0.7))
+                butil.modify_mesh(
+                    leg, "BEVEL", width=self.leg_radius * uniform(0.3, 0.7)
+                )
                 leg.location[-1] = self.leg_radius
                 butil.apply_transform(leg, True)
                 write_attribute(leg, 1, "leg", "FACE")
@@ -175,7 +218,9 @@ class BathtubFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="INVERT")
             bpy.ops.mesh.delete(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, -self.depth)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, -self.depth)}
+            )
         x, y, z = read_co(obj).T
         z = np.clip(z, 0, None)
         write_co(obj, np.stack([x, y, z], -1))
@@ -198,8 +243,14 @@ class BathtubFactory(AssetFactory):
         return [
             (t + self.disp_y * i, t + self.disp_y * i),
             (self.width - t - self.disp_x[1] * i, t + self.disp_y * i),
-            (self.width - t - self.disp_x[1] * i, self.size - (t + self.disp_y * i) / np.sqrt(2)),
-            (self.size - (t + self.disp_y * i) / np.sqrt(2), self.width - t - self.disp_x[0] * i),
+            (
+                self.width - t - self.disp_x[1] * i,
+                self.size - (t + self.disp_y * i) / np.sqrt(2),
+            ),
+            (
+                self.size - (t + self.disp_y * i) / np.sqrt(2),
+                self.width - t - self.disp_x[0] * i,
+            ),
             (t + self.disp_y * i, self.width - t - self.disp_x[0] * i),
         ]
 
@@ -207,7 +258,9 @@ class BathtubFactory(AssetFactory):
     def make_base(self):
         contour = self.contour_fn(0, 0)
         obj = new_cylinder(vertices=len(contour))
-        co = np.concatenate([np.array([[x, y, 0], [x, y, self.depth]]) for x, y in contour])
+        co = np.concatenate(
+            [np.array([[x, y, 0], [x, y, self.depth]]) for x, y in contour]
+        )
         write_co(obj, co)
         return obj
 
@@ -221,7 +274,10 @@ class BathtubFactory(AssetFactory):
             upper = self.contour_fn(0, 0)
         obj = new_cylinder(vertices=len(lower))
         co = np.concatenate(
-            [np.array([[x, y, 0], [z, w, self.depth * 2]]) for (x, y), (z, w) in zip(lower[::-1], upper[::-1])]
+            [
+                np.array([[x, y, 0], [z, w, self.depth * 2]])
+                for (x, y), (z, w) in zip(lower[::-1], upper[::-1])
+            ]
         )
         write_co(obj, co)
         subsurf(obj, self.alcove_levels, True)
@@ -240,7 +296,9 @@ class BathtubFactory(AssetFactory):
         obj = new_cylinder(vertices=len(lower))
         co = np.concatenate(
             [
-                np.array([[x, y, self.thickness], [z, w, self.depth * 2 - self.thickness]])
+                np.array(
+                    [[x, y, self.thickness], [z, w, self.depth * 2 - self.thickness]]
+                )
                 for (x, y), (z, w) in zip(lower[::-1], upper[::-1])
             ]
         )

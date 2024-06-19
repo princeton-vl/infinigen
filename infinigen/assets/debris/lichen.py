@@ -4,9 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-from functools import reduce
-
 import bpy
 import numpy as np
 from numpy.random import normal as N
@@ -17,9 +14,8 @@ from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.object import data2mesh
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
@@ -37,7 +33,13 @@ class LichenFactory(AssetFactory):
         z_jitter = N(0.0, 0.02, n)
         r_jitter = np.exp(uniform(-0.2, 0.0, n))
         vertices = np.concatenate(
-            [np.stack([np.cos(angles) * r_jitter, np.sin(angles) * r_jitter, z_jitter]).T, np.zeros((1, 3))], 0
+            [
+                np.stack(
+                    [np.cos(angles) * r_jitter, np.sin(angles) * r_jitter, z_jitter]
+                ).T,
+                np.zeros((1, 3)),
+            ],
+            0,
         )
         faces = np.stack([np.arange(n), np.roll(np.arange(n), 1), np.full(n, n)]).T
         mesh = data2mesh(vertices, [], faces, "circle")
@@ -67,7 +69,12 @@ class LichenFactory(AssetFactory):
 
         background = map_perturb(base_hue, 0.5, 0.3)
         mix_rgb = nw.new_node(
-            Nodes.MixRGB, [nw.new_node(Nodes.ObjectInfo_Shader).outputs["Random"], cr.outputs["Color"], background]
+            Nodes.MixRGB,
+            [
+                nw.new_node(Nodes.ObjectInfo_Shader).outputs["Random"],
+                cr.outputs["Color"],
+                background,
+            ],
         )
 
         principled_bsdf = nw.new_node(
@@ -106,7 +113,10 @@ class LichenFactory(AssetFactory):
         obj.scale = [0.004] * 3
         butil.apply_transform(obj)
         assign_material(
-            obj, surface.shaderfunc_to_material(LichenFactory.shader_lichen, (self.base_hue + uniform(-0.04, 0.04)) % 1)
+            obj,
+            surface.shaderfunc_to_material(
+                LichenFactory.shader_lichen, (self.base_hue + uniform(-0.04, 0.04)) % 1
+            ),
         )
 
         tag_object(obj, "lichen")

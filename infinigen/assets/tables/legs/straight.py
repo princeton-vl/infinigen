@@ -4,18 +4,17 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.assets.tables.table_utils import nodegroup_generate_radius_curve, nodegroup_n_gon_cylinder
-from infinigen.core import surface
+from infinigen.assets.tables.table_utils import (
+    nodegroup_generate_radius_curve,
+    nodegroup_n_gon_cylinder,
+)
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_generate_leg_straight", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_generate_leg_straight", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_generate_leg_straight(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -49,5 +48,7 @@ def nodegroup_generate_leg_straight(nw: NodeWrangler, **kwargs):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": ngoncylinder.outputs["Mesh"]}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": ngoncylinder.outputs["Mesh"]},
+        attrs={"is_active_output": True},
     )

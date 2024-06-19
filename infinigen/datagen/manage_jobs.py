@@ -22,10 +22,8 @@ from ast import literal_eval
 from collections import defaultdict
 from copy import copy
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from shutil import which
-from uuid import uuid4
 
 import gin
 import numpy as np
@@ -39,19 +37,14 @@ import infinigen.core.init
 
 BPY_SYS_PATH = list(sys.path)  # Make instance of `bpy`'s modified sys.path
 
-from infinigen.datagen import job_funcs
-from infinigen.datagen.job_funcs import (  # referenced by name via gin configs
-    queue_coarse,
-    queue_combined,
-    queue_fine_terrain,
-    queue_mesh_save,
-    queue_opengl,
-    queue_populate,
-    queue_render,
-    queue_upload,
-)
 from infinigen.datagen.monitor_tasks import iterate_scene_tasks, on_scene_termination
-from infinigen.datagen.states import CONCLUDED_JOBSTATES, JOB_OBJ_SUCCEEDED, JobState, SceneState, cancel_job
+from infinigen.datagen.states import (
+    CONCLUDED_JOBSTATES,
+    JOB_OBJ_SUCCEEDED,
+    JobState,
+    SceneState,
+    cancel_job,
+)
 from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.submitit_emulator import (
     ImmediateLocalExecutor,
@@ -75,7 +68,11 @@ def node_from_slurm_jobid(scene_id):
 
     try:
         node_of_scene, *rest = (
-            subprocess.check_output(f"{which('sacct')} -j {scene_id} --format Node --noheader".split()).decode().split()
+            subprocess.check_output(
+                f"{which('sacct')} -j {scene_id} --format Node --noheader".split()
+            )
+            .decode()
+            .split()
         )
         return node_of_scene
     except Exception as e:
@@ -133,7 +130,9 @@ def slurm_submit_cmd(
         if slurm_account == f"ENVVAR_{PARTITION_ENVVAR}":
             slurm_account = os.environ.get(PARTITION_ENVVAR)
             if slurm_account is None:
-                logger.warning(f"{PARTITION_ENVVAR=} was not set, using no slurm account")
+                logger.warning(
+                    f"{PARTITION_ENVVAR=} was not set, using no slurm account"
+                )
 
         if isinstance(slurm_account, list):
             slurm_account = np.random.choice(slurm_account)
@@ -190,7 +189,9 @@ def init_db_from_existing(output_folder: Path):
         if seed_folder.is_symlink() and not seed_folder.readlink().is_dir():
             return None
         if not (seed_folder / "logs").exists():
-            logger.warning(f'Skipping {seed_folder=} due to missing "logs" subdirectory')
+            logger.warning(
+                f'Skipping {seed_folder=} due to missing "logs" subdirectory'
+            )
             return None
 
         scene_dict = {
@@ -217,14 +218,20 @@ def init_db_from_existing(output_folder: Path):
     return [init_scene(seed_folder) for seed_folder in output_folder.iterdir()]
 
 
-def _sample_config_distribution(i: int, config_distribution: list[tuple[str, float]], config_sample_mode: str):
+def _sample_config_distribution(
+    i: int, config_distribution: list[tuple[str, float]], config_sample_mode: str
+):
     match config_sample_mode:
         case "random":
-            configs_options, weights = zip(*config_distribution)  # list of rows to list per column
+            configs_options, weights = zip(
+                *config_distribution
+            )  # list of rows to list per column
             ps = np.array(weights) / sum(weights)
             return np.random.choice(configs_options, p=ps)
         case "roundrobin":
-            configs_options, weights = zip(*config_distribution)  # list of rows to list per column
+            configs_options, weights = zip(
+                *config_distribution
+            )  # list of rows to list per column
             if not all(isinstance(w, int) for w in weights):
                 raise ValueError(
                     f"{config_sample_mode=} expects integer scene counts as weights but got {weights=} with non-integer values"
@@ -237,7 +244,11 @@ def _sample_config_distribution(i: int, config_distribution: list[tuple[str, flo
 
 @gin.configurable
 def sample_scene_spec(
-    args: argparse.Namespace, i: int, seed_range=None, config_distribution=None, config_sample_mode="random"
+    args: argparse.Namespace,
+    i: int,
+    seed_range=None,
+    config_distribution=None,
+    config_sample_mode="random",
 ):
     if seed_range is None:
         seed = seed_generator()
@@ -255,7 +266,9 @@ def sample_scene_spec(
     inter = conf_keys.intersection(arg_confs)
 
     if len(inter) == 0:
-        configs = _sample_config_distribution(i, config_distribution, config_sample_mode)
+        configs = _sample_config_distribution(
+            i, config_distribution, config_sample_mode
+        )
     elif len(inter) == 1:
         configs = list(inter)
     else:
@@ -274,7 +287,10 @@ def init_db(args):
     if args.use_existing:
         scenes = init_db_from_existing(args.output_folder)
     elif args.specific_seed is not None:
-        scenes = [{"seed": s, "configs": args.configs, "all_done": SceneState.NotDone} for s in args.specific_seed]
+        scenes = [
+            {"seed": s, "configs": args.configs, "all_done": SceneState.NotDone}
+            for s in args.specific_seed
+        ]
     else:
         scenes = [sample_scene_spec(args, i) for i in range(args.num_scenes)]
 
@@ -302,11 +318,16 @@ def update_symlink(scene_folder, scenes):
             os.unlink(to)
             os.unlink(scene_folder / "logs" / f"{new_name}.err")
         os.symlink(std_out.resolve(), to)
-        os.symlink(std_out.with_suffix(".err").resolve(), scene_folder / "logs" / f"{new_name}.err")
+        os.symlink(
+            std_out.with_suffix(".err").resolve(),
+            scene_folder / "logs" / f"{new_name}.err",
+        )
 
 
 def get_disk_usage(folder):
-    out = subprocess.check_output(f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()).decode()
+    out = subprocess.check_output(
+        f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()
+    ).decode()
     return int(re.compile("[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
 
 
@@ -347,7 +368,10 @@ def run_task(queue_func, scene_folder, scene_dict, taskname, dryrun=False):
         return
 
     job_obj, output_folder = queue_func(
-        seed=scene_dict["seed"], folder=scene_folder, name=stage_scene_name, taskname=taskname
+        seed=scene_dict["seed"],
+        folder=scene_folder,
+        name=stage_scene_name,
+        taskname=taskname,
     )
     scene_dict[f"{taskname}_job_obj"] = job_obj
     scene_dict[f"{taskname}_output_folder"] = output_folder
@@ -393,7 +417,9 @@ def infer_crash_reason(stdout_file, stderr_file: Path):
     ignore_messages = ["Not freed memory blocks"]
 
     matches = [
-        f"{m[0]}: {m[1]}" for m in matches if not (m[0] in ignore_errors or any(x in m[1] for x in ignore_messages))
+        f"{m[0]}: {m[1]}"
+        for m in matches
+        if not (m[0] in ignore_errors or any(x in m[1] for x in ignore_messages))
     ]
 
     if len(matches):
@@ -423,7 +449,10 @@ def record_crashed_seed(scene, taskname, f, fatal=True):
 
 
 def write_html_summary(all_scenes, output_folder, max_size=5000):
-    names = ["index" if (idx == 0) else f"index_{idx}" for idx in range(0, len(all_scenes), max_size)]
+    names = [
+        "index" if (idx == 0) else f"index_{idx}"
+        for idx in range(0, len(all_scenes), max_size)
+    ]
     for name, idx in zip(names, range(0, len(all_scenes), max_size)):
         html_path = output_folder / f"{name}.html"
         if not html_path.exists():
@@ -445,7 +474,9 @@ def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=False):
         scene["num_running"], scene["num_done"] = 0, 0
         any_fatal = False
 
-        for state, taskname, _, fatal in iterate_scene_tasks(scene, args, monitor_all=True):
+        for state, taskname, _, fatal in iterate_scene_tasks(
+            scene, args, monitor_all=True
+        ):
             if state == JobState.NotQueued:
                 continue
 
@@ -477,7 +508,11 @@ def monitor_existing_jobs(all_scenes, aggressive_cancel_on_crash=False):
                 scene[cancel_key] = True
                 cancel_job(scene[k])
 
-        if any_fatal and scene["num_running"] == 0 and scene["all_done"] == SceneState.NotDone:
+        if (
+            any_fatal
+            and scene["num_running"] == 0
+            and scene["all_done"] == SceneState.NotDone
+        ):
             logging.info(f"{seed} - processing scene termination due to fatal crash")
             on_scene_termination(args, scene, crashed=True)
 
@@ -510,7 +545,9 @@ def jobs_to_launch_next(
     max_stuck_at_task: int = None,
 ):
     def is_candidate_for_launch(scene):
-        return scene["all_done"] == SceneState.NotDone and not scene.get("any_fatal_crash", False)
+        return scene["all_done"] == SceneState.NotDone and not scene.get(
+            "any_fatal_crash", False
+        )
 
     scenes = [s for s in scenes if is_candidate_for_launch(s)]
 
@@ -533,12 +570,15 @@ def jobs_to_launch_next(
 
         started_if_launch = inflight(scene) + 1
         stuck_at_next = (
-            curr_per_started[started_uniq.index(started_if_launch)] if started_if_launch in started_uniq else 0
+            curr_per_started[started_uniq.index(started_if_launch)]
+            if started_if_launch in started_uniq
+            else 0
         )
 
         if max_stuck_at_task is not None and stuck_at_next >= max_stuck_at_task:
             logging.info(
-                f"{seed} - Not launching due to {stuck_at_next=} >" f" {max_stuck_at_task} for {started_if_launch=}"
+                f"{seed} - Not launching due to {stuck_at_next=} >"
+                f" {max_stuck_at_task} for {started_if_launch=}"
             )
             continue
 
@@ -551,10 +591,14 @@ def jobs_to_launch_next(
             queued_key = (JobState.Queued, taskname.split("_")[0])
             queued = state_counts.get(queued_key, 0)
             if max_queued_task is not None and queued >= max_queued_task:
-                logging.info(f"{seed} - Not launching due to {queued=} > {max_queued_task} for {taskname}")
+                logging.info(
+                    f"{seed} - Not launching due to {queued=} > {max_queued_task} for {taskname}"
+                )
                 continue
             if max_queued_total is not None and total_queued >= max_queued_total:
-                logging.info(f"{seed} - Not launching due to {total_queued=} > {max_queued_total} for {taskname}")
+                logging.info(
+                    f"{seed} - Not launching due to {total_queued=} > {max_queued_total} for {taskname}"
+                )
                 continue
 
             yield scene, taskname, queue_func
@@ -568,7 +612,9 @@ def compute_control_state(args, totals, elapsed, num_concurrent):
         num_concurrent = int(os.environ[NUM_CONCURRENT_ENVVAR])
 
     control_state = {}
-    control_state["n_in_flight"] = totals.get(JobState.Running, 0) + totals.get(JobState.Queued, 0)
+    control_state["n_in_flight"] = totals.get(JobState.Running, 0) + totals.get(
+        JobState.Queued, 0
+    )
     control_state["disk_usage"] = get_disk_usage(args.output_folder)
 
     warmup_pct = min(elapsed / args.warmup_sec, 1) if args.warmup_sec > 0 else 1
@@ -579,7 +625,9 @@ def compute_control_state(args, totals, elapsed, num_concurrent):
             f"manage_datagen_jobs observed {control_state['n_in_flight']=},"
             f" which exceeds allowed {control_state['curr_concurrent_max']=}"
         )
-    control_state["try_to_launch"] = max(control_state["curr_concurrent_max"] - control_state["n_in_flight"], 0)
+    control_state["try_to_launch"] = max(
+        control_state["curr_concurrent_max"] - control_state["n_in_flight"], 0
+    )
 
     return control_state
 
@@ -622,7 +670,11 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshol
         message = f"{args.output_folder} is full ({100*control_state['disk_usage']}%). Sleeping."
         print(message)
         if wandb is not None:
-            wandb.alert(title=f"{args.output_folder} full", text=message, wait_duration=3 * 60 * 60)
+            wandb.alert(
+                title=f"{args.output_folder} full",
+                text=message,
+                wait_duration=3 * 60 * 60,
+            )
         time.sleep(60)
         return
 
@@ -651,7 +703,12 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
         wandb = importlib.import_module("wandb")
 
     if wandb is not None:
-        wandb.init(name=scene_name, config=vars(args), project=wandb_project, mode=args.wandb_mode)
+        wandb.init(
+            name=scene_name,
+            config=vars(args),
+            project=wandb_project,
+            mode=args.wandb_mode,
+        )
 
     logging.basicConfig(
         filename=str(args.output_folder / "jobs.log"),
@@ -669,7 +726,9 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
     start_time = datetime.now()
     while any(j["all_done"] == SceneState.NotDone for j in all_scenes):
         now = datetime.now()
-        print(f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}')
+        print(
+            f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}'
+        )
         manage_datagen_jobs(all_scenes, elapsed=(now - start_time).total_seconds())
         time.sleep(2)
 
@@ -678,9 +737,16 @@ if __name__ == "__main__":
     os.umask(0o007)
 
     slurm_available = which("sbatch") is not None
-    parser = argparse.ArgumentParser()  # to guarantee that the render scenes finish, try render_image.time_limit=2000
+    parser = (
+        argparse.ArgumentParser()
+    )  # to guarantee that the render scenes finish, try render_image.time_limit=2000
     parser.add_argument("-o", "--output_folder", type=Path, required=True)
-    parser.add_argument("--num_scenes", type=int, default=1, help="Number of scenes to attempt before terminating")
+    parser.add_argument(
+        "--num_scenes",
+        type=int,
+        default=1,
+        help="Number of scenes to attempt before terminating",
+    )
     parser.add_argument(
         "--meta_seed",
         type=int,
@@ -720,7 +786,8 @@ if __name__ == "__main__":
         "--configs",
         nargs="*",
         default=[],
-        help="List of gin config names to pass through to all underlying " "scene generation jobs.",
+        help="List of gin config names to pass through to all underlying "
+        "scene generation jobs.",
     )
     parser.add_argument(
         "-p",
@@ -728,7 +795,8 @@ if __name__ == "__main__":
         nargs="+",
         type=str,
         default=[],
-        help="List of gin overrides to pass through to all underlying " "scene generation jobs",
+        help="List of gin overrides to pass through to all underlying "
+        "scene generation jobs",
     )
     parser.add_argument(
         "--wandb_mode",
@@ -741,7 +809,8 @@ if __name__ == "__main__":
         "--pipeline_configs",
         type=str,
         nargs="+",
-        help="List of gin config names from tools/pipeline_configs " "to configure this execution",
+        help="List of gin config names from tools/pipeline_configs "
+        "to configure this execution",
     )
     parser.add_argument(
         "--pipeline_overrides",
@@ -752,20 +821,28 @@ if __name__ == "__main__":
     )
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
-        "-d", "--debug", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO
+        "-d",
+        "--debug",
+        action="store_const",
+        dest="loglevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
     )
-    parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO)
+    parser.add_argument(
+        "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
+    )
     args = parser.parse_args()
 
     using_upload = any("upload" in x for x in args.pipeline_configs)
 
     if not using_upload and args.cleanup in ["except_logs", "except_crashed", "all"]:
         raise ValueError(
-            f"Pipeline is configured with {args.cleanup=}" " yet {args.upload=}! No output would be preserved!"
+            f"Pipeline is configured with {args.cleanup=}"
+            " yet {args.upload=}! No output would be preserved!"
         )
     if using_upload and args.cleanup == "none":
         logging.warning(
-            f"Upload performs some cleanup, so combining upload.gin with "
+            "Upload performs some cleanup, so combining upload.gin with "
             "--cleanup none will not result in ALL files being preserved"
         )
 
@@ -783,7 +860,10 @@ if __name__ == "__main__":
         random.seed(args.meta_seed)
         np.random.seed(args.meta_seed)
 
-    mandatory_exclusive = ["infinigen/datagen/configs/compute_platform", "infinigen/datagen/configs/data_schema"]
+    mandatory_exclusive = [
+        "infinigen/datagen/configs/compute_platform",
+        "infinigen/datagen/configs/data_schema",
+    ]
     infinigen.core.init.apply_gin_configs(
         configs_folder=Path("infinigen/datagen/configs"),
         configs=args.pipeline_configs,

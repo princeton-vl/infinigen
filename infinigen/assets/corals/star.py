@@ -17,7 +17,7 @@ from infinigen.assets.utils.object import join_objects, new_empty, new_icosphere
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.blender import deep_clone_obj
 
 
@@ -28,7 +28,10 @@ class StarBaseCoralFactory(BaseCoralFactory):
 
     @staticmethod
     def points_fn(nw: NodeWrangler, points):
-        points = nw.new_node(Nodes.SeparateGeometry, [points, nw.new_node(Nodes.NamedAttribute, ["outermost"])])
+        points = nw.new_node(
+            Nodes.SeparateGeometry,
+            [points, nw.new_node(Nodes.NamedAttribute, ["outermost"])],
+        )
         return points
 
     def __init__(self, factory_seed, coarse=False):
@@ -37,38 +40,63 @@ class StarBaseCoralFactory(BaseCoralFactory):
 
     @staticmethod
     def geo_dual_mesh(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         perturb = 0.05
-        geometry = nw.new_node(Nodes.SetPosition, [geometry, None, None, nw.uniform([-perturb] * 3, [perturb] * 3)])
+        geometry = nw.new_node(
+            Nodes.SetPosition,
+            [geometry, None, None, nw.uniform([-perturb] * 3, [perturb] * 3)],
+        )
 
         geometry = nw.new_node(Nodes.DualMesh, input_kwargs={"Mesh": geometry})
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     @staticmethod
     def geo_separate_faces(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-        selection = nw.compare("GREATER_THAN", nw.separate(nw.new_node(Nodes.InputPosition))[-1], 0)
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
+        selection = nw.compare(
+            "GREATER_THAN", nw.separate(nw.new_node(Nodes.InputPosition))[-1], 0
+        )
         geometry = nw.new_node(Nodes.SeparateGeometry, [geometry, selection])
         geometry = nw.new_node(Nodes.SplitEdges, [geometry])
         scale = nw.uniform(0.9, 1.2)
         geometry = nw.new_node(Nodes.ScaleElements, [geometry, None, scale])
         geometry = nw.new_node(
             Nodes.StoreNamedAttribute,
-            input_kwargs={"Geometry": geometry, "Name": "custom_normal", "Value": nw.new_node(Nodes.InputNormal)},
+            input_kwargs={
+                "Geometry": geometry,
+                "Name": "custom_normal",
+                "Value": nw.new_node(Nodes.InputNormal),
+            },
             attrs={"data_type": "FLOAT_VECTOR"},
         )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     @staticmethod
     def geo_flower(nw: NodeWrangler, size, resolution, anchor):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-        t = nw.scalar_divide(nw.math("FLOOR", nw.scalar_divide(nw.new_node(Nodes.Index), size)), resolution)
-        offset = nw.build_float_curve(t, [(0, 0), anchor, (1, 0)], "AUTO")
-        normal = nw.new_node(Nodes.NamedAttribute, ["custom_normal"], attrs={"data_type": "FLOAT_VECTOR"})
-        geometry = nw.new_node(Nodes.SetPosition, [geometry, None, None, nw.scale(offset, normal)])
-        outer = nw.boolean_math("AND", nw.compare("GREATER_THAN", t, 0.4), nw.compare("LESS_THAN", t, 0.6))
         geometry = nw.new_node(
-            Nodes.StoreNamedAttribute, input_kwargs={"Geometry": geometry, "Name": "outermost", "Value": outer}
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
+        t = nw.scalar_divide(
+            nw.math("FLOOR", nw.scalar_divide(nw.new_node(Nodes.Index), size)),
+            resolution,
+        )
+        offset = nw.build_float_curve(t, [(0, 0), anchor, (1, 0)], "AUTO")
+        normal = nw.new_node(
+            Nodes.NamedAttribute, ["custom_normal"], attrs={"data_type": "FLOAT_VECTOR"}
+        )
+        geometry = nw.new_node(
+            Nodes.SetPosition, [geometry, None, None, nw.scale(offset, normal)]
+        )
+        outer = nw.boolean_math(
+            "AND", nw.compare("GREATER_THAN", t, 0.4), nw.compare("LESS_THAN", t, 0.6)
+        )
+        geometry = nw.new_node(
+            Nodes.StoreNamedAttribute,
+            input_kwargs={"Geometry": geometry, "Name": "outermost", "Value": outer},
         )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
@@ -130,7 +158,9 @@ class StarBaseCoralFactory(BaseCoralFactory):
                 bpy.ops.mesh.bridge_edge_loops()
 
             anchor = uniform(0.4, 0.6), uniform(0.08, 0.15)
-            surface.add_geomod(ring, self.geo_flower, apply=True, input_args=[size, resolution, anchor])
+            surface.add_geomod(
+                ring, self.geo_flower, apply=True, input_args=[size, resolution, anchor]
+            )
             flowers.append(ring)
 
         obj = join_objects([obj, *flowers])

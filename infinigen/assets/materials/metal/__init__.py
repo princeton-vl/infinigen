@@ -13,7 +13,13 @@ from infinigen.core.util.random import random_general as rg
 
 from .. import common
 from ..bark_random import hex_to_rgb
-from . import brushed_metal, galvanized_metal, grained_and_polished_metal, hammered_metal, metal_basic
+from . import (
+    brushed_metal,
+    galvanized_metal,
+    grained_and_polished_metal,
+    hammered_metal,
+    metal_basic,
+)
 
 
 def apply(obj, selection=None, metal_color=None, **kwargs):
@@ -44,7 +50,14 @@ plain_colors = (
     (1, 0xA9ACB6),
     (1, 0xB6AFA9),
 )
-natural_colors = "weighted_choice", (1, 0xC0C0C0), (1, 0x8C7853), (1, 0xBDBAAE), (1, 0xA9ACB6), (1, 0xB6AFA9)
+natural_colors = (
+    "weighted_choice",
+    (1, 0xC0C0C0),
+    (1, 0x8C7853),
+    (1, 0xBDBAAE),
+    (1, 0xA9ACB6),
+    (1, 0xB6AFA9),
+)
 
 
 def sample_metal_color(metal_color=None, **kwargs):
@@ -53,14 +66,26 @@ def sample_metal_color(metal_color=None, **kwargs):
             return metal_color
         case "plain":
             h, s, v = rgb2hsv(hex_to_rgb(rg(plain_colors))[:-1])
-            return hsv2rgba(h + uniform(-0.1, 0.1), s + uniform(-0.1, 0.1), v * log_uniform(0.5, 0.2))
+            return hsv2rgba(
+                h + uniform(-0.1, 0.1),
+                s + uniform(-0.1, 0.1),
+                v * log_uniform(0.5, 0.2),
+            )
         case "natural":
             h, s, v = rgb2hsv(hex_to_rgb(rg(natural_colors))[:-1])
-            return hsv2rgba(h + uniform(-0.1, 0.1), s + uniform(-0.1, 0.1), v * log_uniform(0.5, 0.2))
+            return hsv2rgba(
+                h + uniform(-0.1, 0.1),
+                s + uniform(-0.1, 0.1),
+                v * log_uniform(0.5, 0.2),
+            )
         case "bw":
             return hsv2rgba(uniform(0, 1), uniform(0.0, 0.2), log_uniform(0.01, 0.2))
         case "bw+natural":
-            return sample_metal_color("bw") if uniform() < 0.5 else sample_metal_color("natural")
+            return (
+                sample_metal_color("bw")
+                if uniform() < 0.5
+                else sample_metal_color("natural")
+            )
         case _:
             if uniform() < 0.2:
                 return sample_metal_color("natural")

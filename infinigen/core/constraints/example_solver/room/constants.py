@@ -18,7 +18,10 @@ def make_np(xs):
 
 @gin.configurable
 def global_params(
-    unit=0.5, segment_margin=1.2, wall_thickness=("uniform", 0.2, 0.3), wall_height=("uniform", 2.7, 3.8)
+    unit=0.5,
+    segment_margin=1.2,
+    wall_thickness=("uniform", 0.2, 0.3),
+    wall_height=("uniform", 2.7, 3.8),
 ):
     wall_thickness = rg(wall_thickness)
     wall_height = rg(wall_height)
@@ -51,7 +54,9 @@ DOOR_WIDTH, DOOR_MARGIN, DOOR_SIZE = make_np(door_params().values())
 
 @gin.configurable
 def window_params(
-    max_window_length=("uniform", 6, 8), window_height=("uniform", 0.4, 1.2), window_margin=("uniform", 0.2, 0.6)
+    max_window_length=("uniform", 6, 8),
+    window_height=("uniform", 0.4, 1.2),
+    window_margin=("uniform", 0.2, 0.6),
 ):
     max_window_length = rg(max_window_length)
     window_height = rg(window_height)
@@ -66,7 +71,9 @@ def window_params(
     }
 
 
-MAX_WINDOW_LENGTH, WINDOW_HEIGHT, WINDOW_MARGIN, WINDOW_SIZE = make_np(window_params().values())
+MAX_WINDOW_LENGTH, WINDOW_HEIGHT, WINDOW_MARGIN, WINDOW_SIZE = make_np(
+    window_params().values()
+)
 
 
 @gin.configurable

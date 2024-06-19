@@ -3,15 +3,12 @@
 
 # Authors: Karhan Kayan
 
-import typing
-from dataclasses import dataclass, field
+from dataclasses import field
 
 import numpy as np
 
-from infinigen.core import tags as t
 
-from .expression import BoolExpression, Expression, ScalarExpression, nodedataclass
-from .relations import Relation
+from .expression import ScalarExpression, nodedataclass
 from .set_reasoning import ObjectSetExpression
 
 

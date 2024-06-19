@@ -10,13 +10,21 @@ import colorsys
 import inspect
 import io
 import logging
-import string
 
 import bpy
 import matplotlib.font_manager
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Arrow, BoxStyle, Circle, Ellipse, FancyBboxPatch, Rectangle, RegularPolygon, Wedge
+from matplotlib.patches import (
+    Arrow,
+    BoxStyle,
+    Circle,
+    Ellipse,
+    FancyBboxPatch,
+    Rectangle,
+    RegularPolygon,
+    Wedge,
+)
 from numpy.random import rand, uniform
 from PIL import Image
 
@@ -57,7 +65,11 @@ class Text:
         with FixedSeed(self.factory_seed):
             self.size = 4
             self.dpi = 100
-            self.colormap = self.build_sequential_colormap() if uniform() < 0.5 else self.build_diverging_colormap()
+            self.colormap = (
+                self.build_sequential_colormap()
+                if uniform() < 0.5
+                else self.build_diverging_colormap()
+            )
             self.white_chance = 0.03
             self.black_chance = 0.05
 
@@ -80,28 +92,45 @@ class Text:
         hue = (uniform() + np.linspace(0, 0.5, count)) % 1
         mid = uniform(0.6, 0.8)
         lightness = np.concatenate(
-            [np.linspace(uniform(0.1, 0.3), mid, count // 2), np.linspace(mid, uniform(0.1, 0.3), count // 2)]
+            [
+                np.linspace(uniform(0.1, 0.3), mid, count // 2),
+                np.linspace(mid, uniform(0.1, 0.3), count // 2),
+            ]
         )
-        saturation = np.concatenate([np.linspace(1, 0.5, count // 2), np.linspace(0.5, 1, count // 2)])
+        saturation = np.concatenate(
+            [np.linspace(1, 0.5, count // 2), np.linspace(0.5, 1, count // 2)]
+        )
 
         # TODO hack
         saturation *= uniform(0, 1)
         lightness *= uniform(0.5, 1)
 
-        return np.array([colorsys.hls_to_rgb(h, l, s) for h, l, s in zip(hue, lightness, saturation)])
+        return np.array(
+            [
+                colorsys.hls_to_rgb(h, l, s)
+                for h, l, s in zip(hue, lightness, saturation)
+            ]
+        )
 
     @staticmethod
     def build_sequential_colormap():
         count = 20
         hue = (uniform() + np.linspace(0, 0.5, count)) % 1
         lightness = np.linspace(uniform(0.0), uniform(0.6, 0.8), count)
-        saturation = np.concatenate([np.linspace(1, 0.5, count // 2), np.linspace(0.5, 1, count // 2)])
+        saturation = np.concatenate(
+            [np.linspace(1, 0.5, count // 2), np.linspace(0.5, 1, count // 2)]
+        )
 
         # TODO hack
         saturation *= uniform(0, 1)
         lightness *= uniform(0.5, 1)
 
-        return np.array([colorsys.hls_to_rgb(h, l, s) for h, l, s in zip(hue, lightness, saturation)])
+        return np.array(
+            [
+                colorsys.hls_to_rgb(h, l, s)
+                for h, l, s in zip(hue, lightness, saturation)
+            ]
+        )
 
     @property
     def random_color(self):
@@ -144,7 +173,9 @@ class Text:
     @staticmethod
     def loc_uniform(min_, max_, size=None):
         ratio = 0.1
-        return uniform(min_ + ratio * (max_ - min_), min_ + (1 - ratio) * (max_ - min_), size)
+        return uniform(
+            min_ + ratio * (max_ - min_), min_ + (1 - ratio) * (max_ - min_), size
+        )
 
     @staticmethod
     def scale_uniform(min_, max_):
@@ -152,7 +183,10 @@ class Text:
 
     def get_locs(self, bbox, n):
         m = 8 * n
-        x, y = self.loc_uniform(bbox[0], bbox[1], m), self.loc_uniform(bbox[2], bbox[3], m)
+        x, y = (
+            self.loc_uniform(bbox[0], bbox[1], m),
+            self.loc_uniform(bbox[2], bbox[3], m),
+        )
         return decimate(np.stack([x, y], -1), n)
 
     def add_divider(self, rs):
@@ -161,15 +195,30 @@ class Text:
         a = 0 if uniform() < 0.7 else uniform(5, 10)
         x, y = self.loc_uniform(rs[0], rs[1]), self.loc_uniform(rs[2], rs[3])
         if rs[0] == 0 or self.force_horizontal:
-            args_list = [[(0, y), 2, 2, a], [(0, y), 2, -2, -a], [(1, y), -2, -2, a], [(1, y), -2, 2, -a]]
+            args_list = [
+                [(0, y), 2, 2, a],
+                [(0, y), 2, -2, -a],
+                [(1, y), -2, -2, a],
+                [(1, y), -2, 2, -a],
+            ]
         else:
-            args_list = [[(x, 0), -2, 2, a], [(x, 0), 2, 2, -a], [(x, 1), 2, -2, a], [(x, 1), -2, -2, -a]]
+            args_list = [
+                [(x, 0), -2, 2, a],
+                [(x, 0), 2, 2, -a],
+                [(x, 1), 2, -2, a],
+                [(x, 1), -2, -2, -a],
+            ]
         args = args_list[np.random.randint(len(args_list))]
-        plt.gca().add_patch(Rectangle(*args[:-1], angle=args[-1], color=self.random_color))
+        plt.gca().add_patch(
+            Rectangle(*args[:-1], angle=args[-1], color=self.random_color)
+        )
 
     def add_patches(self, locs, bbox):
         for x, y in locs:
-            w, h = self.scale_uniform(bbox[0], bbox[1]), self.scale_uniform(bbox[2], bbox[3])
+            w, h = (
+                self.scale_uniform(bbox[0], bbox[1]),
+                self.scale_uniform(bbox[2], bbox[3]),
+            )
             x_, y_ = x - w / 2, y - h / 2
             r = min(w, h) / 2
             fn = rg(self.patch_fns)
@@ -179,13 +228,19 @@ class Text:
                 "angle": 0 if uniform() < 0.8 else uniform(-30, 30),
                 "orientation": uniform(0, np.pi * 2),
             }
-            kwargs = {k: kwargs[k] for k, v in inspect.signature(fn).parameters.items() if k in kwargs}
+            kwargs = {
+                k: kwargs[k]
+                for k, v in inspect.signature(fn).parameters.items()
+                if k in kwargs
+            }
             face_color, edge_color = self.random_colors
             kwargs.update(
                 {
                     "facecolor": face_color,
                     "edgecolor": edge_color,
-                    "hatch": np.random.choice(list(self.hatches)) if uniform() < 0.3 else "none",
+                    "hatch": np.random.choice(list(self.hatches))
+                    if uniform() < 0.3
+                    else "none",
                     "linewidth": uniform(2, 5),
                 }
             )
@@ -196,17 +251,38 @@ class Text:
                     patch = Rectangle((x_, y_), w, h, **kwargs)
                 case Wedge.__name__:
                     start = uniform(0, 360)
-                    patch = Wedge((x, y), r, start, start + uniform(0, 360), width=uniform(0.2, 0.8) * r, **kwargs)
+                    patch = Wedge(
+                        (x, y),
+                        r,
+                        start,
+                        start + uniform(0, 360),
+                        width=uniform(0.2, 0.8) * r,
+                        **kwargs,
+                    )
                 case RegularPolygon.__name__:
-                    patch = RegularPolygon((x, y), np.random.randint(3, 9), radius=r, **kwargs)
+                    patch = RegularPolygon(
+                        (x, y), np.random.randint(3, 9), radius=r, **kwargs
+                    )
                 case Ellipse.__name__:
                     patch = Ellipse((x, y), w, h, **kwargs)
                 case Arrow.__name__:
-                    w_, h_ = (w if uniform() < 0.5 else -w), (h if uniform() < 0.5 else -h)
-                    patch = Arrow(x - w_ / 2, y - h_ / 2, w, h, width=log_uniform(0.6, 1.5), **kwargs)
+                    w_, h_ = (
+                        (w if uniform() < 0.5 else -w),
+                        (h if uniform() < 0.5 else -h),
+                    )
+                    patch = Arrow(
+                        x - w_ / 2,
+                        y - h_ / 2,
+                        w,
+                        h,
+                        width=log_uniform(0.6, 1.5),
+                        **kwargs,
+                    )
                 case FancyBboxPatch.__name__:
                     pad = uniform(0.2, 0.4) * min(w, h)
-                    box_style = np.random.choice(list(BoxStyle.get_styles().values()))(pad=pad)
+                    box_style = np.random.choice(list(BoxStyle.get_styles().values()))(
+                        pad=pad
+                    )
                     patch = FancyBboxPatch(
                         (x_, y_),
                         w - pad,
@@ -221,7 +297,9 @@ class Text:
             try:
                 plt.gca().add_patch(patch)
             except MemoryError:
-                logger.warning(f"Failed to add patch {fn.__name__} at {x, y} with {w, h} due to MemoryError")
+                logger.warning(
+                    f"Failed to add patch {fn.__name__} at {x, y} with {w, h} due to MemoryError"
+                )
 
     def add_texts(self, locs):
         for x, y in locs:
@@ -234,7 +312,9 @@ class Text:
                 y,
                 text,
                 family=family,
-                size=log_uniform(0.75, 1) * self.dpi * clip_gaussian(0.3, 0.2, 0.2, 0.65),
+                size=log_uniform(0.75, 1)
+                * self.dpi
+                * clip_gaussian(0.3, 0.2, 0.2, 0.65),
                 ha="center",
                 va="center",
                 c=color,
@@ -253,7 +333,12 @@ class Text:
             w = h * self.barcode_aspect
             ax = fig.add_axes((x - w / 2, y - h / 2, w, h))
             ax.set_axis_off()
-            ax.imshow(code.reshape(1, -1), cmap="binary", aspect="auto", interpolation="nearest")
+            ax.imshow(
+                code.reshape(1, -1),
+                cmap="binary",
+                aspect="auto",
+                interpolation="nearest",
+            )
 
     def make_shader_func(self, bbox):
         assert bbox[1] - bbox[0] > 0.001 and bbox[3] - bbox[2] > 0.001
@@ -264,33 +349,52 @@ class Text:
 
             reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": uv_map})
 
-            voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={"Vector": reroute, "Scale": 60.0000})
+            voronoi_texture = nw.new_node(
+                Nodes.VoronoiTexture, input_kwargs={"Vector": reroute, "Scale": 60.0000}
+            )
 
-            voronoi_texture_1 = nw.new_node(Nodes.VoronoiTexture, input_kwargs={"Vector": reroute, "Scale": 60.0000})
+            voronoi_texture_1 = nw.new_node(
+                Nodes.VoronoiTexture, input_kwargs={"Vector": reroute, "Scale": 60.0000}
+            )
 
             mix = nw.new_node(
                 Nodes.Mix,
-                input_kwargs={6: voronoi_texture.outputs["Position"], 7: voronoi_texture_1.outputs["Position"]},
+                input_kwargs={
+                    6: voronoi_texture.outputs["Position"],
+                    7: voronoi_texture_1.outputs["Position"],
+                },
                 attrs={"data_type": "RGBA"},
             )
 
             musgrave_texture = nw.new_node(
-                Nodes.MusgraveTexture, input_kwargs={"Vector": reroute, "Detail": 5.6000, "Dimension": 1.4000}
+                Nodes.MusgraveTexture,
+                input_kwargs={"Vector": reroute, "Detail": 5.6000, "Dimension": 1.4000},
             )
 
             noise_texture_1 = nw.new_node(
                 Nodes.NoiseTexture,
-                input_kwargs={"Vector": reroute, "Scale": 35.4000, "Detail": 3.3000, "Roughness": 1.0000},
+                input_kwargs={
+                    "Vector": reroute,
+                    "Scale": 35.4000,
+                    "Detail": 3.3000,
+                    "Roughness": 1.0000,
+                },
             )
 
             mix_3 = nw.new_node(
                 Nodes.Mix,
-                input_kwargs={0: uniform(0.2, 1.0), 6: musgrave_texture, 7: noise_texture_1.outputs["Color"]},
+                input_kwargs={
+                    0: uniform(0.2, 1.0),
+                    6: musgrave_texture,
+                    7: noise_texture_1.outputs["Color"],
+                },
                 attrs={"data_type": "RGBA"},
             )
 
             mix_1 = nw.new_node(
-                Nodes.Mix, input_kwargs={0: 0.0417, 6: mix.outputs[2], 7: mix_3.outputs[2]}, attrs={"data_type": "RGBA"}
+                Nodes.Mix,
+                input_kwargs={0: 0.0417, 6: mix.outputs[2], 7: mix_3.outputs[2]},
+                attrs={"data_type": "RGBA"},
             )
 
             if rand() < 0.5:
@@ -301,10 +405,14 @@ class Text:
                 )
             else:
                 mix_2 = nw.new_node(
-                    Nodes.Mix, input_kwargs={0: 1.0, 6: mix_1.outputs[2], 7: uv_map}, attrs={"data_type": "RGBA"}
+                    Nodes.Mix,
+                    input_kwargs={0: 1.0, 6: mix_1.outputs[2], 7: uv_map},
+                    attrs={"data_type": "RGBA"},
                 )
             # mix_2 = nw.new_node(Nodes.Mix, input_kwargs={0: 0.7375, 6: uv, 7: mix_1.outputs[2]}, attrs={'data_type': 'RGBA'})
-            color = nw.new_node(Nodes.ShaderImageTexture, [mix_2], attrs={"image": image}).outputs[0]
+            color = nw.new_node(
+                Nodes.ShaderImageTexture, [mix_2], attrs={"image": image}
+            ).outputs[0]
             roughness = nw.new_node(Nodes.NoiseTexture)
             if self.emission > 0:
                 emission = color
@@ -331,8 +439,12 @@ class Text:
         common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
 
 
-def apply(obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs):
-    Text(np.random.randint(1e5), has_barcode, emission).apply(obj, selection, bbox, **kwargs)
+def apply(
+    obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs
+):
+    Text(np.random.randint(1e5), has_barcode, emission).apply(
+        obj, selection, bbox, **kwargs
+    )
 
 
 def make_sphere():

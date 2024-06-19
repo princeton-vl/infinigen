@@ -5,23 +5,27 @@
 # Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=pfOKB1GKJHM by Dr. Blender
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.leaves.leaf_maple import nodegroup_leaf_shader
-from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave, nodegroup_move_to_origin
+from infinigen.assets.leaves.leaf_v2 import (
+    nodegroup_apply_wave,
+    nodegroup_move_to_origin,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 
-@node_utils.to_nodegroup("nodegroup_random_mask_vein", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_random_mask_vein", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_random_mask_vein(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -37,14 +41,21 @@ def nodegroup_random_mask_vein(nw: NodeWrangler):
 
     vein = nw.new_node(
         Nodes.VoronoiTexture,
-        input_kwargs={"W": group_input.outputs["Coord"], "Scale": group_input.outputs["Density"], "Randomness": 0.2},
+        input_kwargs={
+            "W": group_input.outputs["Coord"],
+            "Scale": group_input.outputs["Density"],
+            "Randomness": 0.2,
+        },
         label="Vein",
         attrs={"voronoi_dimensions": "1D"},
     )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Density"], 1: group_input.outputs["Random Scale Seed"]},
+        input_kwargs={
+            0: group_input.outputs["Density"],
+            1: group_input.outputs["Random Scale Seed"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -59,22 +70,36 @@ def nodegroup_random_mask_vein(nw: NodeWrangler):
 
     round = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "ROUND"})
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: vein.outputs["Distance"], 1: round})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: vein.outputs["Distance"], 1: round}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": add_1, 2: 0.02, 3: 0.95, 4: 0.0})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": add_1, 2: 0.02, 3: 0.95, 4: 0.0}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Shape"], 1: map_range_1.outputs["Result"]},
+        input_kwargs={
+            0: group_input.outputs["Shape"],
+            1: map_range_1.outputs["Result"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": multiply_1, 1: 0.001, 2: 0.005, 3: 1.0, 4: 0.0})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": multiply_1, 1: 0.001, 2: 0.005, 3: 1.0, 4: 0.0},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range_2.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range_2.outputs["Result"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_vein_coord_001", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_vein_coord_001", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_vein_coord_001(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -89,35 +114,55 @@ def nodegroup_nodegroup_vein_coord_001(nw: NodeWrangler):
         ],
     )
 
-    sign = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["X Modulated"]}, attrs={"operation": "SIGN"})
+    sign = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X Modulated"]},
+        attrs={"operation": "SIGN"},
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Vein Asymmetry"], 1: sign}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Vein Asymmetry"], 1: sign},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -1.0})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -1.0}
+    )
 
     vein_shape = nw.new_node(
-        Nodes.FloatCurve, input_kwargs={"Value": group_input.outputs["X Modulated"]}, label="Vein Shape"
+        Nodes.FloatCurve,
+        input_kwargs={"Value": group_input.outputs["X Modulated"]},
+        label="Vein Shape",
     )
     node_utils.assign_curve(
-        vein_shape.mapping.curves[0], [(0.0, 0.0), (0.0182, 0.05), (0.3364, 0.2386), (0.7227, 0.75), (1.0, 1.0)]
+        vein_shape.mapping.curves[0],
+        [(0.0, 0.0), (0.0182, 0.05), (0.3364, 0.2386), (0.7227, 0.75), (1.0, 1.0)],
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": vein_shape, 4: 1.9})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": vein_shape, 4: 1.9}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_1.outputs["Result"], 1: group_input.outputs["Vein Angle"]},
+        input_kwargs={
+            0: map_range_1.outputs["Result"],
+            1: group_input.outputs["Vein Angle"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: multiply_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: multiply_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_2, 1: group_input.outputs["Y"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: group_input.outputs["Y"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: subtract})
@@ -125,7 +170,9 @@ def nodegroup_nodegroup_vein_coord_001(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vein Coord": add})
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_shape_with_jigsaw", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_shape_with_jigsaw", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_shape_with_jigsaw(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -140,26 +187,41 @@ def nodegroup_nodegroup_shape_with_jigsaw(nw: NodeWrangler):
         ],
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Midrib Value"], 3: 1.0, 4: 0.0})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Midrib Value"], 3: 1.0, 4: 0.0},
+    )
 
     jigsaw = nw.new_node(
         Nodes.VoronoiTexture,
-        input_kwargs={"W": group_input.outputs["Vein Coord"], "Scale": group_input.outputs["Jigsaw Scale"]},
+        input_kwargs={
+            "W": group_input.outputs["Vein Coord"],
+            "Scale": group_input.outputs["Jigsaw Scale"],
+        },
         label="Jigsaw",
         attrs={"voronoi_dimensions": "1D"},
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Jigsaw Depth"], 1: 0.05}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Jigsaw Depth"], 1: 0.05},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_add = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: jigsaw.outputs["Distance"], 1: multiply, 2: group_input.outputs["Leaf Shape"]},
+        input_kwargs={
+            0: jigsaw.outputs["Distance"],
+            1: multiply,
+            2: group_input.outputs["Leaf Shape"],
+        },
         attrs={"operation": "MULTIPLY_ADD", "use_clamp": True},
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": multiply_add, 1: 0.001, 2: 0.002, 3: 1.0, 4: 0.0})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": multiply_add, 1: 0.001, 2: 0.002, 3: 1.0, 4: 0.0},
+    )
 
     maximum = nw.new_node(
         Nodes.Math,
@@ -170,8 +232,12 @@ def nodegroup_nodegroup_shape_with_jigsaw(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": maximum})
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_vein_coord", singleton=False, type="GeometryNodeTree")
-def nodegroup_nodegroup_vein_coord(nw: NodeWrangler, vein_curve_control_points, vein_curve_control_handles):
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_vein_coord", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_nodegroup_vein_coord(
+    nw: NodeWrangler, vein_curve_control_points, vein_curve_control_handles
+):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -185,13 +251,21 @@ def nodegroup_nodegroup_vein_coord(nw: NodeWrangler, vein_curve_control_points, 
         ],
     )
 
-    sign = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["X Modulated"]}, attrs={"operation": "SIGN"})
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Vein Asymmetry"], 1: sign}, attrs={"operation": "MULTIPLY"}
+    sign = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X Modulated"]},
+        attrs={"operation": "SIGN"},
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -1.0})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Vein Asymmetry"], 1: sign},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -1.0}
+    )
 
     absolute = nw.new_node(
         Nodes.Math,
@@ -205,23 +279,38 @@ def nodegroup_nodegroup_vein_coord(nw: NodeWrangler, vein_curve_control_points, 
         attrs={"operation": "DIVIDE", "use_clamp": True},
     )
 
-    vein_shape = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": divide}, label="Vein Shape")
-    node_utils.assign_curve(vein_shape.mapping.curves[0], vein_curve_control_points, vein_curve_control_handles)
+    vein_shape = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": divide}, label="Vein Shape"
+    )
+    node_utils.assign_curve(
+        vein_shape.mapping.curves[0],
+        vein_curve_control_points,
+        vein_curve_control_handles,
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": vein_shape, 4: 1.9})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": vein_shape, 4: 1.9}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_1.outputs["Result"], 1: group_input.outputs["Vein Angle"]},
+        input_kwargs={
+            0: map_range_1.outputs["Result"],
+            1: group_input.outputs["Vein Angle"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: multiply_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: multiply_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_2, 1: group_input.outputs["Y"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: group_input.outputs["Y"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: subtract})
@@ -229,7 +318,9 @@ def nodegroup_nodegroup_vein_coord(nw: NodeWrangler, vein_curve_control_points, 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vein Coord": add})
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_shape", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_shape", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_shape(
     nw: NodeWrangler,
     shape_curve_control_points=[
@@ -245,36 +336,66 @@ def nodegroup_nodegroup_shape(
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "X Modulated", 0.0), ("NodeSocketFloat", "Y", 0.0)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketFloat", "X Modulated", 0.0),
+            ("NodeSocketFloat", "Y", 0.0),
+        ],
     )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["X Modulated"], "Y": group_input.outputs["Y"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["X Modulated"],
+            "Y": group_input.outputs["Y"],
+        },
     )
 
-    clamp = nw.new_node(Nodes.Clamp, input_kwargs={"Value": group_input.outputs["Y"], "Min": -0.6, "Max": 0.6})
+    clamp = nw.new_node(
+        Nodes.Clamp,
+        input_kwargs={"Value": group_input.outputs["Y"], "Min": -0.6, "Max": 0.6},
+    )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": clamp})
 
     subtract = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: combine_xyz_1}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz, 1: combine_xyz_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: subtract.outputs["Vector"]}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: subtract.outputs["Vector"]},
+        attrs={"operation": "LENGTH"},
+    )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -0.6, 2: 0.6})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Y"], 1: -0.6, 2: 0.6},
+    )
 
-    leaf_shape = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}, label="Leaf shape")
+    leaf_shape = nw.new_node(
+        Nodes.FloatCurve,
+        input_kwargs={"Value": map_range.outputs["Result"]},
+        label="Leaf shape",
+    )
     node_utils.assign_curve(leaf_shape.mapping.curves[0], shape_curve_control_points)
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: length.outputs["Value"], 1: leaf_shape}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: length.outputs["Value"], 1: leaf_shape},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Leaf Shape": subtract_1, "Value": leaf_shape})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Leaf Shape": subtract_1, "Value": leaf_shape}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_midrib", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_midrib", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_midrib(
     nw: NodeWrangler,
     midrib_curve_control_points=[
@@ -299,12 +420,21 @@ def nodegroup_nodegroup_midrib(
         ],
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Y"], 1: -0.6, 2: 0.6})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Y"], 1: -0.6, 2: 0.6},
+    )
 
-    stem_shape = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}, label="Stem shape")
+    stem_shape = nw.new_node(
+        Nodes.FloatCurve,
+        input_kwargs={"Value": map_range.outputs["Result"]},
+        label="Stem shape",
+    )
     node_utils.assign_curve(stem_shape.mapping.curves[0], midrib_curve_control_points)
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": stem_shape, 3: -1.0})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": stem_shape, 3: -1.0}
+    )
 
     subtract = nw.new_node(
         Nodes.Math,
@@ -314,10 +444,14 @@ def nodegroup_nodegroup_midrib(
 
     noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 20.0})
 
-    map_range_5 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 3: -1.0})
+    map_range_5 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 3: -1.0}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range_5.outputs["Result"], 1: 0.01}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range_5.outputs["Result"], 1: 0.01},
+        attrs={"operation": "MULTIPLY"},
     )
 
     map_range_2 = nw.new_node(
@@ -331,16 +465,32 @@ def nodegroup_nodegroup_midrib(
         },
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: map_range_2.outputs["Result"]})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: map_range_2.outputs["Result"]}
+    )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"}
+    )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: absolute}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: absolute}, attrs={"operation": "SUBTRACT"}
+    )
 
-    absolute_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Y"]}, attrs={"operation": "ABSOLUTE"})
+    absolute_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Y"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
     map_range_3 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": absolute_1, 2: group_input.outputs["Stem Length"], 3: 1.0, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": absolute_1,
+            2: group_input.outputs["Stem Length"],
+            3: 1.0,
+            4: 0.0,
+        },
     )
 
     smooth_min = nw.new_node(
@@ -350,17 +500,28 @@ def nodegroup_nodegroup_midrib(
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0, 1: smooth_min}, attrs={"operation": "DIVIDE", "use_clamp": True}
+        Nodes.Math,
+        input_kwargs={0: 1.0, 1: smooth_min},
+        attrs={"operation": "DIVIDE", "use_clamp": True},
     )
 
-    map_range_4 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": divide, 1: 0.001, 2: 0.03, 3: 1.0, 4: 0.0})
+    map_range_4 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": divide, 1: 0.001, 2: 0.03, 3: 1.0, 4: 0.0},
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"X Modulated": subtract, "Midrib Value": map_range_4.outputs["Result"]}
+        Nodes.GroupOutput,
+        input_kwargs={
+            "X Modulated": subtract,
+            "Midrib Value": map_range_4.outputs["Result"],
+        },
     )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_apply_vein_midrib", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_apply_vein_midrib", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_apply_vein_midrib(nw: NodeWrangler, random_scale_seed=1.08):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -377,7 +538,14 @@ def nodegroup_nodegroup_apply_vein_midrib(nw: NodeWrangler, random_scale_seed=1.
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Leaf Shape"], 1: -0.3, 2: 0.05, 3: 0.015, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": group_input.outputs["Leaf Shape"],
+            1: -0.3,
+            2: 0.05,
+            3: 0.015,
+            4: 0.0,
+        },
     )
 
     nodegroup = nw.new_node(
@@ -413,17 +581,27 @@ def nodegroup_nodegroup_apply_vein_midrib(nw: NodeWrangler, random_scale_seed=1.
 
     position = nw.new_node(Nodes.InputPosition)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 20.0})
-
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 3: -1.0})
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range_3.outputs["Result"], 1: 0.02}, attrs={"operation": "MULTIPLY"}
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 20.0}
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: vein.outputs["Distance"], 1: multiply})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 3: -1.0}
+    )
 
-    map_range_4 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": add, 2: 0.03, 3: 1.0, 4: 0.0})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range_3.outputs["Result"], 1: 0.02},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: vein.outputs["Distance"], 1: multiply}
+    )
+
+    map_range_4 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": add, 2: 0.03, 3: 1.0, 4: 0.0}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
@@ -431,13 +609,22 @@ def nodegroup_nodegroup_apply_vein_midrib(nw: NodeWrangler, random_scale_seed=1.
         attrs={"operation": "MULTIPLY"},
     )
 
-    map_range_5 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": multiply_1, 1: 0.001, 2: 0.01, 3: 1.0, 4: 0.0})
-
-    multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: nodegroup_1, 1: map_range_5.outputs["Result"]}, attrs={"operation": "MULTIPLY"}
+    map_range_5 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": multiply_1, 1: 0.001, 2: 0.01, 3: 1.0, 4: 0.0},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: nodegroup, 1: multiply_2}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: nodegroup_1, 1: map_range_5.outputs["Result"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: nodegroup, 1: multiply_2},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_4 = nw.new_node(
         Nodes.Math,
@@ -445,22 +632,35 @@ def nodegroup_nodegroup_apply_vein_midrib(nw: NodeWrangler, random_scale_seed=1.
         attrs={"operation": "MULTIPLY"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vein Value": multiply_4})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vein Value": multiply_4}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_sub_vein", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_sub_vein", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_sub_vein(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "X", 0.5), ("NodeSocketFloat", "Y", 0.0)]
+        Nodes.GroupInput,
+        expose_input=[("NodeSocketFloat", "X", 0.5), ("NodeSocketFloat", "Y", 0.0)],
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["X"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": absolute, "Y": group_input.outputs["Y"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": absolute, "Y": group_input.outputs["Y"]}
+    )
 
-    voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={"Vector": combine_xyz, "Scale": 30.0})
+    voronoi_texture = nw.new_node(
+        Nodes.VoronoiTexture, input_kwargs={"Vector": combine_xyz, "Scale": 30.0}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
@@ -474,20 +674,33 @@ def nodegroup_nodegroup_sub_vein(nw: NodeWrangler):
         attrs={"feature": "DISTANCE_TO_EDGE"},
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": voronoi_texture_1.outputs["Distance"], 2: 0.1})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": voronoi_texture_1.outputs["Distance"], 2: 0.1},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: map_range_1.outputs["Result"]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: map_range_1.outputs["Result"]},
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: -1.0}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: -1.0}, attrs={"operation": "MULTIPLY"}
+    )
 
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": map_range_1.outputs["Result"], 4: -1.0})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": map_range_1.outputs["Result"], 4: -1.0}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Value": multiply, "Color Value": map_range_3.outputs["Result"]}
+        Nodes.GroupOutput,
+        input_kwargs={"Value": multiply, "Color Value": map_range_3.outputs["Result"]},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_leaf_gen", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_leaf_gen", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -515,7 +728,9 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
     nodegroup_midrib = nw.new_node(
-        nodegroup_nodegroup_midrib(midrib_curve_control_points=kwargs["midrib_curve_control_points"]).name,
+        nodegroup_nodegroup_midrib(
+            midrib_curve_control_points=kwargs["midrib_curve_control_points"]
+        ).name,
         input_kwargs={
             "X": separate_xyz.outputs["X"],
             "Y": separate_xyz.outputs["Y"],
@@ -526,8 +741,13 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
     )
 
     nodegroup_shape = nw.new_node(
-        nodegroup_nodegroup_shape(shape_curve_control_points=kwargs["shape_curve_control_points"]).name,
-        input_kwargs={"X Modulated": nodegroup_midrib.outputs["X Modulated"], "Y": separate_xyz.outputs["Y"]},
+        nodegroup_nodegroup_shape(
+            shape_curve_control_points=kwargs["shape_curve_control_points"]
+        ).name,
+        input_kwargs={
+            "X Modulated": nodegroup_midrib.outputs["X Modulated"],
+            "Y": separate_xyz.outputs["Y"],
+        },
     )
 
     nodegroup_vein_coord = nw.new_node(
@@ -541,7 +761,15 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
                 (0.8273, 0.8437),
                 (1.0, 1.0),
             ],
-            vein_curve_control_handles=["AUTO", "AUTO", "AUTO", "VECTOR", "AUTO", "AUTO", "AUTO"],
+            vein_curve_control_handles=[
+                "AUTO",
+                "AUTO",
+                "AUTO",
+                "VECTOR",
+                "AUTO",
+                "AUTO",
+                "AUTO",
+            ],
         ).name,
         input_kwargs={
             "X Modulated": nodegroup_midrib.outputs["X Modulated"],
@@ -554,7 +782,13 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
 
     nodegroup_vein_coord_002 = nw.new_node(
         nodegroup_nodegroup_vein_coord(
-            vein_curve_control_points=[(0.0, 0.0), (0.0182, 0.05), (0.3364, 0.2386), (0.8091, 0.7312), (1.0, 0.9937)],
+            vein_curve_control_points=[
+                (0.0, 0.0),
+                (0.0182, 0.05),
+                (0.3364, 0.2386),
+                (0.8091, 0.7312),
+                (1.0, 0.9937),
+            ],
             vein_curve_control_handles=["AUTO", "AUTO", "AUTO", "AUTO", "AUTO"],
         ).name,
         input_kwargs={
@@ -576,7 +810,14 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
                 (0.7045, 0.3),
                 (1.0, 0.8562),
             ],
-            vein_curve_control_handles=["AUTO", "AUTO", "AUTO", "VECTOR", "AUTO", "AUTO"],
+            vein_curve_control_handles=[
+                "AUTO",
+                "AUTO",
+                "AUTO",
+                "VECTOR",
+                "AUTO",
+                "AUTO",
+            ],
         ).name,
         input_kwargs={
             "X Modulated": nodegroup_midrib.outputs["X Modulated"],
@@ -588,7 +829,9 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
     )
 
     nodegroup_apply_vein_midrib = nw.new_node(
-        nodegroup_nodegroup_apply_vein_midrib(random_scale_seed=kwargs["vein_mask_random_seed"]).name,
+        nodegroup_nodegroup_apply_vein_midrib(
+            random_scale_seed=kwargs["vein_mask_random_seed"]
+        ).name,
         input_kwargs={
             "Midrib Value": nodegroup_midrib.outputs["Midrib Value"],
             "Leaf Shape": nodegroup_shape.outputs["Leaf Shape"],
@@ -601,14 +844,18 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Displancement scale"], 1: nodegroup_apply_vein_midrib},
+        input_kwargs={
+            0: group_input.outputs["Displancement scale"],
+            1: nodegroup_apply_vein_midrib,
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Mesh"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": group_input.outputs["Mesh"], "Offset": combine_xyz},
     )
 
     nodegroup_shape_with_jigsaw = nw.new_node(
@@ -623,41 +870,70 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
     )
 
     less_than = nw.new_node(
-        Nodes.Compare, input_kwargs={0: nodegroup_shape_with_jigsaw, 1: 0.5}, attrs={"operation": "LESS_THAN"}
+        Nodes.Compare,
+        input_kwargs={0: nodegroup_shape_with_jigsaw, 1: 0.5},
+        attrs={"operation": "LESS_THAN"},
     )
 
-    delete_geometry = nw.new_node(Nodes.DeleteGeom, input_kwargs={"Geometry": set_position, "Selection": less_than})
+    delete_geometry = nw.new_node(
+        Nodes.DeleteGeom,
+        input_kwargs={"Geometry": set_position, "Selection": less_than},
+    )
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": delete_geometry, 2: nodegroup_apply_vein_midrib}
+        Nodes.CaptureAttribute,
+        input_kwargs={"Geometry": delete_geometry, 2: nodegroup_apply_vein_midrib},
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_1})
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz_1.outputs["Y"], 1: -0.6, 2: 0.6})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": separate_xyz_1.outputs["Y"], 1: -0.6, 2: 0.6},
+    )
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]})
-    node_utils.assign_curve(float_curve_1.mapping.curves[0], [(0.0, 0.0), (0.5182, 1.0), (1.0, 1.0)])
-
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": nodegroup_shape.outputs["Leaf Shape"], 2: -1.0})
-
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]})
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]}
+    )
     node_utils.assign_curve(
-        float_curve.mapping.curves[0], [(0.0045, 0.0063), (0.0409, 0.0375), (0.4182, 0.05), (1.0, 0.0)]
+        float_curve_1.mapping.curves[0], [(0.0, 0.0), (0.5182, 1.0), (1.0, 1.0)]
+    )
+
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": nodegroup_shape.outputs["Leaf Shape"], 2: -1.0},
+    )
+
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0],
+        [(0.0045, 0.0063), (0.0409, 0.0375), (0.4182, 0.05), (1.0, 0.0)],
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: float_curve_1, 1: float_curve}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: float_curve_1, 1: float_curve},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: 0.7}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: 0.7},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], "Offset": combine_xyz_1}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            "Offset": combine_xyz_1,
+        },
     )
 
     nodegroup_vein_coord_001 = nw.new_node(
@@ -694,22 +970,45 @@ def shader_material(nw: NodeWrangler, **kwargs):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 6.8, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 6.8,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": separate_rgb.outputs["G"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.52}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": separate_rgb.outputs["G"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.52,
+        },
     )
 
     map_range_2 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": separate_rgb.outputs["B"], 1: 0.4, 2: 0.7, 3: 0.8, 4: 1.2}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": separate_rgb.outputs["B"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.8,
+            4: 1.2,
+        },
     )
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "subvein offset"})
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": attribute.outputs["Color"], 2: -0.94})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": attribute.outputs["Color"], 2: -0.94}
+    )
 
     # rgb_1 = nw.new_node(Nodes.RGB)
     # rgb_1.outputs[0].default_value = (0.1878, 0.305, 0.0762, 1.0)
@@ -718,7 +1017,8 @@ def shader_material(nw: NodeWrangler, **kwargs):
     # rgb.outputs[0].default_value = (0.0762, 0.1441, 0.0529, 1.0)
 
     hue_saturation_value_1 = nw.new_node(
-        "ShaderNodeHueSaturation", input_kwargs={"Value": 2.0, "Color": kwargs["color_base"]}
+        "ShaderNodeHueSaturation",
+        input_kwargs={"Value": 2.0, "Color": kwargs["color_base"]},
     )
 
     mix = nw.new_node(
@@ -732,7 +1032,11 @@ def shader_material(nw: NodeWrangler, **kwargs):
 
     hue_saturation_value = nw.new_node(
         "ShaderNodeHueSaturation",
-        input_kwargs={"Hue": map_range_1.outputs["Result"], "Value": map_range_2.outputs["Result"], "Color": mix},
+        input_kwargs={
+            "Hue": map_range_1.outputs["Result"],
+            "Value": map_range_2.outputs["Result"],
+            "Color": mix,
+        },
     )
 
     mix_1 = nw.new_node(
@@ -744,18 +1048,25 @@ def shader_material(nw: NodeWrangler, **kwargs):
         },
     )
 
-    leaf_shader = nw.new_node(nodegroup_leaf_shader().name, input_kwargs={"Color": mix_1})
+    leaf_shader = nw.new_node(
+        nodegroup_leaf_shader().name, input_kwargs={"Color": mix_1}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": leaf_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": leaf_shader}
+    )
 
 
 def geo_leaf_broadleaf(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": group_input.outputs["Geometry"], "Level": 10}
+        Nodes.SubdivideMesh,
+        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Level": 10},
     )
 
     # subdivide_mesh_1 = nw.new_node(Nodes.SubdivideMesh,
@@ -787,31 +1098,48 @@ def geo_leaf_broadleaf(nw: NodeWrangler, **kwargs):
 
     nodegroup_sub_vein = nw.new_node(
         nodegroup_nodegroup_sub_vein().name,
-        input_kwargs={"X": nodegroup_leaf_gen.outputs["X Modulated"], "Y": nodegroup_leaf_gen.outputs["Vein Coord"]},
+        input_kwargs={
+            "X": nodegroup_leaf_gen.outputs["X Modulated"],
+            "Y": nodegroup_leaf_gen.outputs["Vein Coord"],
+        },
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: 0.0002}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: 0.0002},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": nodegroup_leaf_gen.outputs["Mesh"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": nodegroup_leaf_gen.outputs["Mesh"],
+            "Offset": combine_xyz,
+        },
     )
 
     capture_attribute_1 = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": set_position, 2: nodegroup_sub_vein.outputs["Color Value"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={
+            "Geometry": set_position,
+            2: nodegroup_sub_vein.outputs["Color Value"],
+        },
     )
 
     capture_attribute_2 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": capture_attribute_1.outputs["Geometry"], 2: nodegroup_leaf_gen.outputs["Vein Value"]},
+        input_kwargs={
+            "Geometry": capture_attribute_1.outputs["Geometry"],
+            2: nodegroup_leaf_gen.outputs["Vein Value"],
+        },
     )
 
     apply_wave = nw.new_node(
         nodegroup_apply_wave(
-            y_wave_control_points=kwargs["y_wave_control_points"], x_wave_control_points=kwargs["x_wave_control_points"]
+            y_wave_control_points=kwargs["y_wave_control_points"],
+            x_wave_control_points=kwargs["x_wave_control_points"],
         ).name,
         input_kwargs={
             "Geometry": capture_attribute_2.outputs["Geometry"],
@@ -821,7 +1149,9 @@ def geo_leaf_broadleaf(nw: NodeWrangler, **kwargs):
         },
     )
 
-    move_to_origin = nw.new_node(nodegroup_move_to_origin().name, input_kwargs={"Geometry": apply_wave})
+    move_to_origin = nw.new_node(
+        nodegroup_move_to_origin().name, input_kwargs={"Geometry": apply_wave}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -858,7 +1188,11 @@ class LeafFactoryBroadleaf(AssetFactory):
                 hsvcol_vein[2] = uniform(0.1, 0.5)
 
             elif season == "winter":
-                hsvcol_blade = [uniform(0.0, 0.10), uniform(0.2, 0.6), uniform(0.0, 0.1)]
+                hsvcol_blade = [
+                    uniform(0.0, 0.10),
+                    uniform(0.2, 0.6),
+                    uniform(0.0, 0.1),
+                ]
                 hsvcol_vein = [uniform(0.0, 0.10), uniform(0.2, 0.6), uniform(0.0, 0.1)]
 
             else:
@@ -892,19 +1226,33 @@ class LeafFactoryBroadleaf(AssetFactory):
             "jigsaw_scale": uniform(30.0, 70.0),
             "jigsaw_depth": uniform(0.0, 0.6),
             "vein_mask_random_seed": uniform(0.0, 100.0),
-            "midrib_curve_control_points": [(0.0, 0.5), (0.25, leaf_offset_1), (0.75, 1.0 - leaf_offset_1), (1.0, 0.5)],
+            "midrib_curve_control_points": [
+                (0.0, 0.5),
+                (0.25, leaf_offset_1),
+                (0.75, 1.0 - leaf_offset_1),
+                (1.0, 0.5),
+            ],
             "shape_curve_control_points": [
                 (0.0, 0.0),
                 (uniform(0.2, 0.4), leaf_width_1),
                 (uniform(0.6, 0.8), leaf_width_2),
                 (1.0, 0.0),
             ],
-            "vein_curve_control_points": [(0.0, 0.0), (0.25, uniform(0.1, 0.4)), (0.75, uniform(0.6, 0.9)), (1.0, 1.0)],
+            "vein_curve_control_points": [
+                (0.0, 0.0),
+                (0.25, uniform(0.1, 0.4)),
+                (0.75, uniform(0.6, 0.9)),
+                (1.0, 1.0),
+            ],
         }
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -915,18 +1263,32 @@ class LeafFactoryBroadleaf(AssetFactory):
 
         phenome = self.genome.copy()
 
-        phenome["y_wave_control_points"] = [(0.0, 0.5), (uniform(0.25, 0.75), uniform(0.50, 0.60)), (1.0, 0.5)]
+        phenome["y_wave_control_points"] = [
+            (0.0, 0.5),
+            (uniform(0.25, 0.75), uniform(0.50, 0.60)),
+            (1.0, 0.5),
+        ]
         x_wave_val = np.random.uniform(0.50, 0.58)
-        phenome["x_wave_control_points"] = [(0.0, 0.5), (0.4, x_wave_val), (0.5, 0.5), (0.6, x_wave_val), (1.0, 0.5)]
+        phenome["x_wave_control_points"] = [
+            (0.0, 0.5),
+            (0.4, x_wave_val),
+            (0.5, 0.5),
+            (0.6, x_wave_val),
+            (1.0, 0.5),
+        ]
 
         material_kwargs = phenome.copy()
-        material_kwargs["color_base"] = np.copy(self.blade_color)  # (0.2346, 0.4735, 0.0273, 1.0),
+        material_kwargs["color_base"] = np.copy(
+            self.blade_color
+        )  # (0.2346, 0.4735, 0.0273, 1.0),
         material_kwargs["color_base"][0] += np.random.normal(0.0, 0.02)
         material_kwargs["color_base"][1] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_base"][2] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_base"] = hsv2rgba(material_kwargs["color_base"])
 
-        material_kwargs["color_vein"] = np.copy(self.vein_color)  # (0.2346, 0.4735, 0.0273, 1.0),
+        material_kwargs["color_vein"] = np.copy(
+            self.vein_color
+        )  # (0.2346, 0.4735, 0.0273, 1.0),
         material_kwargs["color_vein"][0] += np.random.normal(0.0, 0.02)
         material_kwargs["color_vein"][1] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_vein"][2] += np.random.normal(0.0, self.color_randomness)
@@ -939,7 +1301,9 @@ class LeafFactoryBroadleaf(AssetFactory):
             attributes=["offset", "coordinate", "subvein offset", "vein value"],
             input_kwargs=phenome,
         )
-        surface.add_material(obj, shader_material, reuse=False, input_kwargs=material_kwargs)
+        surface.add_material(
+            obj, shader_material, reuse=False, input_kwargs=material_kwargs
+        )
 
         bpy.ops.object.convert(target="MESH")
 

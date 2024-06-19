@@ -10,14 +10,11 @@ from pprint import pprint
 
 import numpy as np
 
-from infinigen.core import tagging
-from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.evaluator.domain_contains import objkeys_in_dom
 
-from . import moves, state_def
-from .geometry import planes
+from . import state_def
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,9 @@ def minimize_redundant_relations(relations: list[tuple[cl.Relation, r.Domain]]):
     assert len(relations) > 0
 
     # TODO Hacky: moves AnyRelations to the back so _hopefully_ they get implied before we get to them
-    relations = sorted(relations, key=lambda r: isinstance(r[0], cl.AnyRelation), reverse=True)
+    relations = sorted(
+        relations, key=lambda r: isinstance(r[0], cl.AnyRelation), reverse=True
+    )
 
     (rel, dom), *rest = relations
 
@@ -45,13 +44,18 @@ def minimize_redundant_relations(relations: list[tuple[cl.Relation, r.Domain]]):
 
         if r.reldom_implies((rel, dom), (r_later, d_later)):
             # (rlater, dlater) is guaranteed true so long as we satisfied (rel, dom), we dont need to separately assign it
-            logger.debug(f"Discarding since rlater,dlater it is implied")
+            logger.debug("Discarding since rlater,dlater it is implied")
             continue
         else:
-            logger.debug(f"Keeping {r_later, d_later} since it is not implied by {rel, dom} ")
+            logger.debug(
+                f"Keeping {r_later, d_later} since it is not implied by {rel, dom} "
+            )
             remaining_relations.append((r_later, d_later))
 
-    implied = any(r.reldom_implies(reldom_later, (rel, dom)) for reldom_later in remaining_relations)
+    implied = any(
+        r.reldom_implies(reldom_later, (rel, dom))
+        for reldom_later in remaining_relations
+    )
 
     return (rel, dom), remaining_relations, implied
 
@@ -93,13 +97,17 @@ def find_assignments(
 
     if implied:
         logger.debug(f"Found remaining_relations implies {(rel, dom)=}, skipping it")
-        yield from find_assignments(curr, relations=remaining_relations, assignments=assignments)
+        yield from find_assignments(
+            curr, relations=remaining_relations, assignments=assignments
+        )
         return
 
     if isinstance(rel, cl.AnyRelation):
         pprint(relations)
         pprint([(rel, dom)] + remaining_relations)
-        raise ValueError(f"Got {rel} as first relation. Invalid! Maybe the program is underspecified?")
+        raise ValueError(
+            f"Got {rel} as first relation. Invalid! Maybe the program is underspecified?"
+        )
 
     candidates = objkeys_in_dom(dom, curr)
 
@@ -107,7 +115,9 @@ def find_assignments(
         logging.debug(f"{parent_candidate_name=}")
 
         parent_state = curr.objs[parent_candidate_name]
-        n_parent_planes = len(curr.planes.get_tagged_planes(parent_state.obj, rel.parent_tags))
+        n_parent_planes = len(
+            curr.planes.get_tagged_planes(parent_state.obj, rel.parent_tags)
+        )
 
         parent_order = np.arange(n_parent_planes)
         np.random.shuffle(parent_order)

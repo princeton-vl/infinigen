@@ -35,7 +35,11 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
     def make_line(self, alpha):
         obj = new_line(self.n + 4)
         x = np.concatenate(
-            [np.full(self.m + 2, alpha * self.step_width), [0], np.full(self.m + 2, -alpha * self.step_width)]
+            [
+                np.full(self.m + 2, alpha * self.step_width),
+                [0],
+                np.full(self.m + 2, -alpha * self.step_width),
+            ]
         )
         y = np.concatenate(
             [
@@ -44,7 +48,12 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
                 np.arange(self.m, -1, -1) * self.step_length,
             ]
         )
-        z = np.concatenate([np.arange(self.m + 1), [self.m] * 3, np.arange(self.m, self.n + 1)]) * self.step_height
+        z = (
+            np.concatenate(
+                [np.arange(self.m + 1), [self.m] * 3, np.arange(self.m, self.n + 1)]
+            )
+            * self.step_height
+        )
         write_co(obj, np.stack([x, y, z], -1))
         return obj
 
@@ -68,7 +77,12 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
         chunks = self.split(self.m - 1)
         chunks_ = self.split(self.m + 3, self.n + 4)
         mid = [self.m - 1, self.m, self.m + 1, self.m + 2, self.m + 3]
-        indices = list(c[0] for c in chunks) + mid + list(c[0] for c in chunks_) + [self.n + 3, self.n + 4]
+        indices = (
+            list(c[0] for c in chunks)
+            + mid
+            + list(c[0] for c in chunks_)
+            + [self.n + 3, self.n + 4]
+        )
         return cos[indices]
 
     def make_vertical_post_locs(self, alpha):
@@ -76,13 +90,17 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
         cos = read_co(temp)
         butil.delete(temp)
         chunks = self.split(self.m - 1)
-        chunks_ = np.array_split(np.arange(self.m + 3, self.n + 4), np.ceil((self.n - self.m) / self.post_k))
+        chunks_ = np.array_split(
+            np.arange(self.m + 3, self.n + 4), np.ceil((self.n - self.m) / self.post_k)
+        )
         indices = sum(list(c[1:].tolist() for c in chunks + chunks_), [])
         indices_ = sum(list(c[1:].tolist() for c in chunks_), [])
         mid_cos = []
         mid = [self.m - 1, self.m, self.m + 1, self.m + 2]
         for m in mid:
-            for r in np.linspace(0, 1, self.post_k + 1 if m >= self.m else self.post_k + 2)[1:-1]:
+            for r in np.linspace(
+                0, 1, self.post_k + 1 if m >= self.m else self.post_k + 2
+            )[1:-1]:
                 mid_cos.append(r * cos[m] + (1 - r) * cos[m + 1])
         return np.concatenate([cos[indices], np.stack(mid_cos), cos[indices_]], 0)
 
@@ -96,7 +114,11 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
         platform = new_cube(location=(0, 1, 1))
         butil.apply_transform(platform, loc=True)
         platform.location = 0, self.step_length * self.m, lowest
-        platform.scale = self.step_width, self.step_width / 2, (self.step_height * self.m - lowest) / 2
+        platform.scale = (
+            self.step_width,
+            self.step_width / 2,
+            (self.step_height * self.m - lowest) / 2,
+        )
         butil.apply_transform(platform, loc=True)
         write_attribute(platform, 1, "steps", "FACE")
         return objs + [platform]
@@ -149,7 +171,9 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
         with butil.ViewportMode(platform, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, -self.side_height)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, -self.side_height)}
+            )
         butil.modify_mesh(platform, "SOLIDIFY", thickness=self.side_thickness)
         write_attribute(platform, 1, "sides", "FACE")
         return objs + [platform]

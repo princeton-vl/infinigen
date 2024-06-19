@@ -79,27 +79,46 @@ def shader_edge_tear_free_node_group(
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
-
-    noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": scratch_mask_randomness, "Detail": 1.0000}
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
     )
 
-    color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": scratch_mask_randomness,
+            "Detail": 1.0000,
+        },
+    )
+
+    color_ramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     color_ramp.color_ramp.elements[0].position = 0.4436
     color_ramp.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     color_ramp.color_ramp.elements[1].position = 0.5345
     color_ramp.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
 
-    bevel = nw.new_node("ShaderNodeBevel", input_kwargs={"Radius": scratch_radius}, attrs={"samples": 20})
+    bevel = nw.new_node(
+        "ShaderNodeBevel",
+        input_kwargs={"Radius": scratch_radius},
+        attrs={"samples": 20},
+    )
 
     geometry = nw.new_node(Nodes.NewGeometry)
 
     subtract = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: bevel, 1: geometry.outputs["Normal"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: bevel, 1: geometry.outputs["Normal"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: subtract.outputs["Vector"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract.outputs["Vector"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
     color_ramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": absolute})
     color_ramp_1.color_ramp.elements[0].position = 0.0691
@@ -114,24 +133,41 @@ def shader_edge_tear_free_node_group(
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: scratch_opacity, 1: multiply}, attrs={"use_clamp": True, "operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: scratch_opacity, 1: multiply},
+        attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
-    bevel_1 = nw.new_node("ShaderNodeBevel", input_kwargs={"Radius": paint_worn_off_radius}, attrs={"samples": 20})
+    bevel_1 = nw.new_node(
+        "ShaderNodeBevel",
+        input_kwargs={"Radius": paint_worn_off_radius},
+        attrs={"samples": 20},
+    )
 
     subtract_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: bevel_1, 1: geometry.outputs["Normal"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: bevel_1, 1: geometry.outputs["Normal"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     absolute_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract_1.outputs["Vector"]}, attrs={"operation": "ABSOLUTE"}
+        Nodes.Math,
+        input_kwargs={0: subtract_1.outputs["Vector"]},
+        attrs={"operation": "ABSOLUTE"},
     )
 
     noise_texture_1 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": worn_off_mask_randomness, "Detail": 1.0000}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": worn_off_mask_randomness,
+            "Detail": 1.0000,
+        },
     )
 
-    color_ramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    color_ramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     color_ramp_2.color_ramp.elements[0].position = 0.0764
     color_ramp_2.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
     color_ramp_2.color_ramp.elements[1].position = 0.5709
@@ -163,7 +199,11 @@ def shader_edge_tear_free_node_group(
 
     mix = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: edge_base_color_whiteness, 6: combine_color, 7: (0.02, 0.02, 0.02, 1.0000)},
+        input_kwargs={
+            0: edge_base_color_whiteness,
+            6: combine_color,
+            7: (0.02, 0.02, 0.02, 1.0000),
+        },
         attrs={"clamp_result": True, "data_type": "RGBA", "clamp_factor": False},
     )
 
@@ -171,15 +211,29 @@ def shader_edge_tear_free_node_group(
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": reroute, "Metallic": 0.3745, "Specular": 0.0000, "Roughness": 0.1436},
+        input_kwargs={
+            "Base Color": reroute,
+            "Metallic": 0.3745,
+            "Specular": 0.0000,
+            "Roughness": 0.1436,
+        },
     )
 
     mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": color_ramp_3.outputs["Color"], 1: original_bsdf, 2: principled_bsdf}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": color_ramp_3.outputs["Color"],
+            1: original_bsdf,
+            2: principled_bsdf,
+        },
     )
 
     mapping_1 = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": (10.0000, 1.0000, 1.0000)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": (10.0000, 1.0000, 1.0000),
+        },
     )
 
     voronoi_texture = nw.new_node(
@@ -189,11 +243,17 @@ def shader_edge_tear_free_node_group(
     )
 
     mapping_2 = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": (1.0000, 10.0000, 1.0000)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": (1.0000, 10.0000, 1.0000),
+        },
     )
 
     scale = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: scratch_density, "Scale": 2.0000}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: scratch_density, "Scale": 2.0000},
+        attrs={"operation": "SCALE"},
     )
 
     voronoi_texture_1 = nw.new_node(
@@ -204,7 +264,10 @@ def shader_edge_tear_free_node_group(
 
     multiply_4 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"]},
+        input_kwargs={
+            0: voronoi_texture.outputs["Distance"],
+            1: voronoi_texture_1.outputs["Distance"],
+        },
         attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
@@ -216,24 +279,39 @@ def shader_edge_tear_free_node_group(
 
     multiply_5 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: color_ramp_1.outputs["Color"], 1: color_ramp_6.outputs["Color"]},
+        input_kwargs={
+            0: color_ramp_1.outputs["Color"],
+            1: color_ramp_6.outputs["Color"],
+        },
         attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
     multiply_6 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply, 1: multiply_5}, attrs={"use_clamp": True, "operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: multiply_5},
+        attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
     principled_bsdf_1 = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": reroute, "Metallic": 0.3855, "Specular": 0.0000, "Roughness": 0.0000},
+        input_kwargs={
+            "Base Color": reroute,
+            "Metallic": 0.3855,
+            "Specular": 0.0000,
+            "Roughness": 0.0000,
+        },
     )
 
-    mix_shader_1 = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": multiply_1, 1: mix_shader, 2: principled_bsdf_1})
+    mix_shader_1 = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": multiply_1, 1: mix_shader, 2: principled_bsdf_1},
+    )
 
     # add operation
     scale_multiply6 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: multiply_6, "Scale": 2.0000}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_6, "Scale": 2.0000},
+        attrs={"operation": "SCALE"},
     )
 
     if original_displacement is None:
@@ -256,7 +334,9 @@ def apply_over(obj, selection=None, **shader_kwargs):
     # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
     materials = obj.data.materials.items()
     if len(materials) == 0:
-        logging.warning(f"No material exist for {obj.name}! Scratches can only be applied over some existing material.")
+        logging.warning(
+            f"No material exist for {obj.name}! Scratches can only be applied over some existing material."
+        )
         return
 
     if len(shader_kwargs) == 0:
@@ -275,7 +355,9 @@ def apply_over(obj, selection=None, **shader_kwargs):
 
         result = nw.find("ShaderNodeOutputMaterial")
         if len(result) == 0:
-            logger.warning("No Material Output Node found in the object's materials! Returning")
+            logger.warning(
+                "No Material Output Node found in the object's materials! Returning"
+            )
             continue
 
         # get nodes and links connected to specific inputs
@@ -294,7 +376,9 @@ def apply_over(obj, selection=None, **shader_kwargs):
         # connecting nodes
         # https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
         material_node_tree.links.new(final_bsdf.outputs[0], result[0].inputs["Surface"])
-        material_node_tree.links.new(final_displacement.outputs[0], result[0].inputs["Displacement"])
+        material_node_tree.links.new(
+            final_displacement.outputs[0], result[0].inputs["Displacement"]
+        )
 
         final_bsdf.label = MARKER_LABEL
 

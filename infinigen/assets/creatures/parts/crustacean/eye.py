@@ -21,7 +21,9 @@ class CrustaceanEyeFactory(PartFactory):
     def make_part(self, params) -> Part:
         length = params["length"]
         sphere = new_icosphere(radius=params["radius"])
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.01, depth=length, location=(-length / 2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=0.01, depth=length, location=(-length / 2, 0, 0)
+        )
         cylinder = bpy.context.active_object
         cylinder.rotation_euler[1] = np.pi / 2
         obj = join_objects([sphere, cylinder])

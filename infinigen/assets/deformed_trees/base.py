@@ -9,7 +9,6 @@ import colorsys
 
 from numpy.random import uniform
 
-from infinigen.assets.trees import TreeFactory
 from infinigen.assets.trees.generate import GenericTreeFactory, random_species
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
@@ -27,26 +26,40 @@ class BaseDeformedTreeFactory(AssetFactory):
         with FixedSeed(factory_seed):
             (tree_params, _, _), _ = random_species()
             tree_params.skinning.update({"Scaling": 0.2})
-            self.base_factory = GenericTreeFactory(factory_seed, tree_params, None, NoApply, coarse)
+            self.base_factory = GenericTreeFactory(
+                factory_seed, tree_params, None, NoApply, coarse
+            )
             self.trunk_surface = surface.registry("bark")
             self.base_hue = uniform(0.02, 0.08)
-            self.material = surface.shaderfunc_to_material(self.shader_rings, self.base_hue)
+            self.material = surface.shaderfunc_to_material(
+                self.shader_rings, self.base_hue
+            )
 
     def build_tree(self, i, distance, **kwargs):
         return self.base_factory.spawn_asset(i=i, distance=distance)
 
     @staticmethod
     def geo_xyz(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-        for name, component in zip("xyz", nw.separate(nw.new_node(Nodes.InputPosition))):
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
+        for name, component in zip(
+            "xyz", nw.separate(nw.new_node(Nodes.InputPosition))
+        ):
             geometry = nw.new_node(
-                Nodes.StoreNamedAttribute, input_kwargs={"Geometry": geometry, "Name": name, "Value": component}
+                Nodes.StoreNamedAttribute,
+                input_kwargs={"Geometry": geometry, "Name": name, "Value": component},
             )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     @staticmethod
     def shader_rings(nw: NodeWrangler, base_hue):
-        position = nw.combine(*map(lambda n: nw.new_node(Nodes.Attribute, attrs={"attribute_name": n}), "xyz"))
+        position = nw.combine(
+            *map(
+                lambda n: nw.new_node(Nodes.Attribute, attrs={"attribute_name": n}),
+                "xyz",
+            )
+        )
         ratio = nw.new_node(
             Nodes.WaveTexture,
             [position],
@@ -55,11 +68,17 @@ class BaseDeformedTreeFactory(AssetFactory):
         )
         bright_color = hsv2rgba(base_hue, uniform(0.4, 0.8), log_uniform(0.2, 0.8))
         dark_color = (
-            *colorsys.hsv_to_rgb((base_hue + uniform(-0.02, 0.02)) % 1, uniform(0.4, 0.8), log_uniform(0.02, 0.05)),
+            *colorsys.hsv_to_rgb(
+                (base_hue + uniform(-0.02, 0.02)) % 1,
+                uniform(0.4, 0.8),
+                log_uniform(0.02, 0.05),
+            ),
             1.0,
         )
         color = nw.new_node(Nodes.MixRGB, [ratio, dark_color, bright_color])
-        principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": color})
+        principled_bsdf = nw.new_node(
+            Nodes.PrincipledBSDF, input_kwargs={"Base Color": color}
+        )
         return principled_bsdf
 
     def create_asset(self, face_size, **params):

@@ -3,14 +3,10 @@
 
 # Authors: Karhan Kayan
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import normal
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 from infinigen.core.util.random import random_color_neighbour
 
 
@@ -21,7 +17,9 @@ def new_whitewater(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (1.0000, 1.0000, 1.0000, 1.0000),
-            "Subsurface Color": random_color_neighbour((0.7147, 0.6062, 0.8000, 1.0000), 0.05, 0.05, 0.05),
+            "Subsurface Color": random_color_neighbour(
+                (0.7147, 0.6062, 0.8000, 1.0000), 0.05, 0.05, 0.05
+            ),
             "Specular": 0.0886 + 0.01 * normal(),
             "Roughness": 0.1500,
             "Sheen Tint": 0.0000,

@@ -15,7 +15,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.surface import write_attr_data
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 
@@ -27,10 +27,17 @@ class PrickyPearBaseCactusFactory(BaseCactusFactory):
     def geo_leaf(nw: NodeWrangler):
         resolution = 64
         profile_curve = nw.new_node(Nodes.CurveCircle)
-        curve = nw.new_node(Nodes.ResampleCurve, [nw.new_node(Nodes.CurveLine), None, resolution])
-        anchors = [(0, uniform(0.15, 0.2)), (uniform(0.4, 0.6), log_uniform(0.4, 0.5)), (1.0, 0.05)]
+        curve = nw.new_node(
+            Nodes.ResampleCurve, [nw.new_node(Nodes.CurveLine), None, resolution]
+        )
+        anchors = [
+            (0, uniform(0.15, 0.2)),
+            (uniform(0.4, 0.6), log_uniform(0.4, 0.5)),
+            (1.0, 0.05),
+        ]
         radius = nw.scalar_multiply(
-            nw.build_float_curve(nw.new_node(Nodes.SplineParameter), anchors, "AUTO"), log_uniform(0.5, 1.5)
+            nw.build_float_curve(nw.new_node(Nodes.SplineParameter), anchors, "AUTO"),
+            log_uniform(0.5, 1.5),
         )
         curve = nw.new_node(Nodes.SetCurveRadius, [curve, None, radius])
         geometry = nw.curve2mesh(curve, profile_curve)
@@ -39,7 +46,9 @@ class PrickyPearBaseCactusFactory(BaseCactusFactory):
     def build_leaf(self):
         obj = new_cube()
         surface.add_geomod(obj, self.geo_leaf, apply=True)
-        surface.add_geomod(obj, geo_extension, apply=True, input_kwargs={"musgrave_dimensions": "2D"})
+        surface.add_geomod(
+            obj, geo_extension, apply=True, input_kwargs={"musgrave_dimensions": "2D"}
+        )
         obj.scale = uniform(0.8, 1.2), uniform(0.2, 0.25), uniform(0.8, 1.2)
         butil.apply_transform(obj)
         return obj
@@ -51,7 +60,11 @@ class PrickyPearBaseCactusFactory(BaseCactusFactory):
         leaves = [self.build_leaves(level - 1) for _ in range(n)]
         base = self.build_leaf()
         angles = np.random.permutation(
-            [-uniform(np.pi / 3, np.pi / 2), uniform(-np.pi / 16, np.pi / 16), uniform(np.pi / 3, np.pi / 2)]
+            [
+                -uniform(np.pi / 3, np.pi / 2),
+                uniform(-np.pi / 16, np.pi / 16),
+                uniform(np.pi / 3, np.pi / 2),
+            ]
         )[:n]
         vectors = [[np.sin(a), 0, np.cos(a) + 0.5] for a in angles]
         locations = np.array([v.co for v in base.data.vertices])

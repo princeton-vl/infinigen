@@ -10,8 +10,13 @@ from infinigen.assets.cactus import CactusFactory
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.monocot import MonocotFactory
 from infinigen.assets.mushroom import MushroomFactory
-from infinigen.assets.small_plants import FernFactory, SnakePlantFactory, SpiderPlantFactory, SucculentFactory
-from infinigen.assets.tableware import PotFactory
+from infinigen.assets.small_plants import (
+    FernFactory,
+    SnakePlantFactory,
+    SpiderPlantFactory,
+    SucculentFactory,
+)
+from infinigen.assets.tableware.pot import PotFactory
 from infinigen.assets.utils.decorate import (
     read_edge_center,
     read_edge_direction,
@@ -19,8 +24,7 @@ from infinigen.assets.utils.decorate import (
     select_edges,
     subsurf,
 )
-from infinigen.assets.utils.object import center, join_objects, new_bbox, origin2lowest
-from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT, WALL_THICKNESS
+from infinigen.assets.utils.object import join_objects, new_bbox, origin2lowest
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -110,7 +114,8 @@ class PlantContainerFactory(AssetFactory):
         self.plant_factory.finalize_assets(plant)
 
         scale = np.min(
-            np.array([self.side_size, self.side_size, self.top_size]) / np.max(np.abs(np.array(plant.bound_box)), 0)
+            np.array([self.side_size, self.side_size, self.top_size])
+            / np.max(np.abs(np.array(plant.bound_box)), 0)
         )
         plant.scale = [scale] * 3
         plant.location[-1] = dirt_z
@@ -127,7 +132,9 @@ class LargePlantContainerFactory(PlantContainerFactory):
         with FixedSeed(self.factory_seed):
             self.base_factory.depth = log_uniform(1.0, 1.5)
             self.base_factory.scale = log_uniform(0.15, 0.25)
-            self.side_size = self.base_factory.scale * uniform(1.5, 2.0) * self.base_factory.r_expand
+            self.side_size = (
+                self.base_factory.scale * uniform(1.5, 2.0) * self.base_factory.r_expand
+            )
             self.top_size = uniform(1, 1.5)
             # if WALL_HEIGHT - 2*WALL_THICKNESS < 3:
             #     self.top_size = uniform(1.5, WALL_HEIGHT - 2*WALL_THICKNESS)

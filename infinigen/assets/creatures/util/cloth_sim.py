@@ -6,7 +6,6 @@
 
 
 import logging
-import pdb
 
 import bpy
 from numpy.random import normal, uniform
@@ -15,7 +14,6 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.surface import attribute_to_vertex_group
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
-from infinigen.core.util.math import dict_convex_comb
 
 logger = logging.getLogger(__name__)
 
@@ -33,20 +31,30 @@ def local_pos_rigity_mask(nw: NodeWrangler):
     )
 
     separate_xyz = nw.new_node(
-        Nodes.SeparateXYZ, input_kwargs={"Vector": nw.expose_input("Local Pos", attribute="local_pos")}
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": nw.expose_input("Local Pos", attribute="local_pos")},
     )
 
     clamp = nw.new_node(
         Nodes.Clamp,
-        input_kwargs={"Value": nw.expose_input("Radius", attribute="skeleton_rad"), "Min": 0.03, "Max": 0.49},
+        input_kwargs={
+            "Value": nw.expose_input("Radius", attribute="skeleton_rad"),
+            "Min": 0.03,
+            "Max": 0.49,
+        },
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: clamp, 1: -1.0}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: clamp, 1: -1.0}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: clamp, 1: 1.5}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: clamp, 1: 1.5}, attrs={"operation": "MULTIPLY"}
+    )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Z"], 1: multiply, 2: multiply_1}
+        Nodes.MapRange,
+        input_kwargs={"Value": separate_xyz.outputs["Z"], 1: multiply, 2: multiply_1},
     )
 
     musgrave_texture = nw.new_node(
@@ -56,7 +64,9 @@ def local_pos_rigity_mask(nw: NodeWrangler):
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: musgrave_texture, 1: normal(0.07, 0.007)}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: musgrave_texture, 1: normal(0.07, 0.007)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     musgrave_texture_1 = nw.new_node(
@@ -66,12 +76,16 @@ def local_pos_rigity_mask(nw: NodeWrangler):
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: musgrave_texture_1, 1: normal(0.12, 0.01)}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: musgrave_texture_1, 1: normal(0.12, 0.01)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: multiply_3})
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: add})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: add}
+    )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": add_1})
     colorramp.color_ramp.elements.new(1)
@@ -94,10 +108,14 @@ def local_pos_rigity_mask(nw: NodeWrangler):
     musgrave_texture_2 = nw.new_node(Nodes.MusgraveTexture)
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: musgrave_texture_2, 1: normal(0.1, 0.02)}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: musgrave_texture_2, 1: normal(0.1, 0.02)},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    return nw.new_node(Nodes.Math, input_kwargs={0: map_range_1.outputs["Result"], 1: multiply_4})
+    return nw.new_node(
+        Nodes.Math, input_kwargs={0: map_range_1.outputs["Result"], 1: multiply_4}
+    )
 
 
 def bake_cloth(obj, settings=None, attributes=None, frame_start=None, frame_end=None):
@@ -114,7 +132,9 @@ def bake_cloth(obj, settings=None, attributes=None, frame_start=None, frame_end=
 
     mod.settings.effector_weights.gravity = settings.pop("gravity", 1)
     mod.collision_settings.distance_min = settings.pop("distance_min", 0.015)
-    mod.collision_settings.use_self_collision = settings.pop("use_self_collision", False)
+    mod.collision_settings.use_self_collision = settings.pop(
+        "use_self_collision", False
+    )
 
     for k, v in settings.items():
         setattr(mod.settings, k, v)
@@ -126,8 +146,16 @@ def bake_cloth(obj, settings=None, attributes=None, frame_start=None, frame_end=
 
     mod.point_cache.frame_start = frame_start
     mod.point_cache.frame_end = frame_end
-    with butil.ViewportMode(obj, mode="OBJECT"), butil.SelectObjects(obj), Timer("Baking fish cloth"):
-        override = {"scene": bpy.context.scene, "active_object": obj, "point_cache": mod.point_cache}
+    with (
+        butil.ViewportMode(obj, mode="OBJECT"),
+        butil.SelectObjects(obj),
+        Timer("Baking fish cloth"),
+    ):
+        override = {
+            "scene": bpy.context.scene,
+            "active_object": obj,
+            "point_cache": mod.point_cache,
+        }
         bpy.ops.ptcache.bake(override, bake=True)
 
     return mod

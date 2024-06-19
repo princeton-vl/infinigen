@@ -81,7 +81,10 @@ class ForkFactory(TablewareFactory):
             self.make_cuts(obj)
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
         subsurf(obj, 1)
-        selection = lambda nw, x: nw.compare("LESS_THAN", x, -self.x_end)
+
+        def selection(nw, x):
+            return nw.compare("LESS_THAN", x, -self.x_end)
+
         if self.guard_type == "double":
             selection = self.make_double_sided(selection)
         self.add_guard(obj, selection)

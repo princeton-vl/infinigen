@@ -5,14 +5,11 @@
 
 import argparse
 import json
-import os
-import pdb
 import shutil
 import subprocess
 import tarfile
-from copy import copy, deepcopy
+from copy import deepcopy
 from functools import partial
-from itertools import product
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -21,7 +18,7 @@ import imageio
 import numpy as np
 from tqdm import tqdm
 
-from infinigen.datagen.states import get_suffix, parse_suffix
+from infinigen.tools.suffixes import get_suffix, parse_suffix
 from infinigen.datagen.util import smb_client
 
 from . import compress_masks, dataset_loader
@@ -70,13 +67,17 @@ def mapfunc(f, its, n_workers):
             return list(tqdm(p.imap(f, its), total=len(its)))
 
 
-def download_except_already_present(smb_path, local_path, min_date_str, n_workers=1, verbose=False):
+def download_except_already_present(
+    smb_path, local_path, min_date_str, n_workers=1, verbose=False
+):
     remote_paths = list(smb_client.listdir(smb_path))
     local_names = set(f.name for f in local_path.iterdir())
 
     to_download = [f for f in remote_paths if f.name not in local_names]
 
-    download_func = partial(smb_client.download, dest_folder=local_path, verbose=verbose)
+    download_func = partial(
+        smb_client.download, dest_folder=local_path, verbose=verbose
+    )
 
     mapfunc(download_func, to_download, n_workers=n_workers)
 
@@ -106,7 +107,9 @@ def fix_scene_structure(p, n_subcams):
         stem, ext = suffix.split(".")
         parts = stem.split("_")
         assert len(parts) == 3
-        return dict(frame=int(parts[0]), cam_rig=int(parts[1]), subcam=int(parts[2]), resample=0)
+        return dict(
+            frame=int(parts[0]), cam_rig=int(parts[1]), subcam=int(parts[2]), resample=0
+        )
 
     def move(a, b):
         assert b.parent.exists()
@@ -195,9 +198,13 @@ def resize_inplace(img_path, target_shape, interp_method, npz_prefix="NPZ_"):
 
     match interp_method:
         case "INTER_LINEAR" | "INTER_NEAREST":
-            img = cv2.resize(img, target_shape[::-1], interpolation=getattr(cv2, interp_method))
+            img = cv2.resize(
+                img, target_shape[::-1], interpolation=getattr(cv2, interp_method)
+            )
         case "MASK_POOL":
-            interp = cv2.resize((img.astype("float") / 255), target_shape[::-1], cv2.INTER_LINEAR)
+            interp = cv2.resize(
+                (img.astype("float") / 255), target_shape[::-1], cv2.INTER_LINEAR
+            )
             img = (255 * (interp > 0.01)).astype(img.dtype)
         case _:
             raise ValueError(f"Unrecognized {interp_method=}")
@@ -235,7 +242,9 @@ def optimize_groundtruth_filesize(scene_folder):
                 )
 
             for target_path in targets:
-                print(target_path.relative_to(scene_folder.parent), action, interp_method)
+                print(
+                    target_path.relative_to(scene_folder.parent), action, interp_method
+                )
                 match action:
                     case "SINGLE_RES":
                         resize_inplace(target_path, base_img_res, interp_method)
@@ -358,7 +367,9 @@ def retar_for_distribution(local_folder, distrib_path):
             exts = set(p.suffix for p in camera_folder.iterdir())
             for ext in exts:
                 tar_path = (
-                    distrib_path / seed / f"{seed}_{dtype_folder.name}_{ext.strip('.')}_{camera_folder.name}.tar.gz"
+                    distrib_path
+                    / seed
+                    / f"{seed}_{dtype_folder.name}_{ext.strip('.')}_{camera_folder.name}.tar.gz"
                 )
                 if tar_path.exists():
                     continue
@@ -416,7 +427,9 @@ def process_one_scene(p, args):
         return
 
     print(f"Validating {local_folder=}")
-    dset = dataset_loader.InfinigenSceneDataset(local_folder, data_types=dataset_loader.ALLOWED_IMAGE_TYPES)
+    dset = dataset_loader.InfinigenSceneDataset(
+        local_folder, data_types=dataset_loader.ALLOWED_IMAGE_TYPES
+    )
     dset.validate()
 
     if local_tar.exists():

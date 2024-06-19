@@ -4,18 +4,10 @@
 
 # Authors: Alexander Raistrick
 
-import importlib
-import logging
-from pathlib import Path
-from types import SimpleNamespace
 
-import bpy
-import gin
 import pytest
 
-from infinigen.core import execute_tasks, init
-from infinigen.core.placement import camera
-from infinigen_examples import generate_nature
+from infinigen.core import init
 from infinigen_examples.util.test_utils import setup_gin
 
 nature_folder = "infinigen_examples/configs_nature"

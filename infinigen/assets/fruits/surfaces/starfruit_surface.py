@@ -4,23 +4,25 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.assets.fruits.fruit_utils import nodegroup_add_dent, nodegroup_surface_bump
+from infinigen.assets.fruits.fruit_utils import (
+    nodegroup_add_dent,
+    nodegroup_surface_bump,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_starfruit_shader(nw: NodeWrangler, base_color, ridge_color):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "star parameters"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "star parameters"}
+    )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]}
+    )
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.0
@@ -32,22 +34,41 @@ def shader_starfruit_shader(nw: NodeWrangler, base_color, ridge_color):
     colorramp.color_ramp.elements[3].position = 1.0
     colorramp.color_ramp.elements[3].color = base_color
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": colorramp.outputs["Color"]})
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": colorramp.outputs["Color"]}
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Specular": 0.775, "Roughness": 0.2},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Specular": 0.775,
+            "Roughness": 0.2,
+        },
     )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.7, 1: translucent_bsdf, 2: principled_bsdf})
+    mix_shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.7, 1: translucent_bsdf, 2: principled_bsdf},
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_starfruit_surface", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_starfruit_surface", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_starfruit_surface(
     nw: NodeWrangler,
-    dent_control_points=[(0.0, 0.4219), (0.0977, 0.4469), (0.2273, 0.4844), (0.5568, 0.5125), (1.0, 0.5)],
+    dent_control_points=[
+        (0.0, 0.4219),
+        (0.0977, 0.4469),
+        (0.2273, 0.4844),
+        (0.5568, 0.5125),
+        (1.0, 0.5),
+    ],
     base_color=(0.7991, 0.6038, 0.0009, 1.0),
     ridge_color=(0.3712, 0.4179, 0.0006, 1.0),
 ):
@@ -75,15 +96,20 @@ def nodegroup_starfruit_surface(
     )
 
     surfacebump_002 = nw.new_node(
-        nodegroup_surface_bump().name, input_kwargs={"Geometry": adddent, "Displacement": 0.03, "Scale": 10.0}
+        nodegroup_surface_bump().name,
+        input_kwargs={"Geometry": adddent, "Displacement": 0.03, "Scale": 10.0},
     )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": surfacebump_002,
-            "Material": surface.shaderfunc_to_material(shader_starfruit_shader, base_color, ridge_color),
+            "Material": surface.shaderfunc_to_material(
+                shader_starfruit_shader, base_color, ridge_color
+            ),
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_material})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}
+    )

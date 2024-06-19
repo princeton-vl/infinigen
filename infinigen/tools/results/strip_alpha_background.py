@@ -5,7 +5,6 @@
 
 
 import argparse
-import pdb
 from pathlib import Path
 
 import imageio

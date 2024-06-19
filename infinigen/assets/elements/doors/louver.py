@@ -33,7 +33,11 @@ class LouverDoorFactory(PanelDoorFactory):
         cutter = new_cube(location=(1, 1, 1))
         butil.apply_transform(cutter, loc=True)
         write_attribute(cutter, 1, "louver", "FACE")
-        cutter.location = x_min - self.louver_margin, -self.louver_width, y_min - self.louver_margin
+        cutter.location = (
+            x_min - self.louver_margin,
+            -self.louver_width,
+            y_min - self.louver_margin,
+        )
         cutter.scale = [
             (x_max - x_min) / 2 + self.louver_margin,
             self.depth / 2 + self.louver_width,
@@ -46,7 +50,11 @@ class LouverDoorFactory(PanelDoorFactory):
         butil.apply_transform(hole, loc=True)
         write_attribute(hole, 1, "louver", "FACE")
         hole.location = x_min, -self.louver_width * 2, y_min
-        hole.scale = (x_max - x_min) / 2, self.depth / 2 + self.louver_width * 2, (y_max - y_min) / 2
+        hole.scale = (
+            (x_max - x_min) / 2,
+            self.depth / 2 + self.louver_width * 2,
+            (y_max - y_min) / 2,
+        )
         butil.apply_transform(hole, loc=True)
         butil.modify_mesh(cutter, "BOOLEAN", object=hole, operation="DIFFERENCE")
         butil.delete(hole)

@@ -7,7 +7,6 @@
 # sys.path.append(f"{os.path.split(os.path.abspath(__file__))[0]}/../..")
 import argparse
 import os
-import sys
 
 import bpy
 import numpy as np
@@ -41,9 +40,12 @@ if __name__ == "__main__":
         material = bpy.data.materials.new(name="preview_material")
         material.use_nodes = True
         nw = NodeWrangler(material.node_tree)
-        new_attribute_node = nw.new_node(Nodes.Attribute, [], {"attribute_name": "attribute"})
+        new_attribute_node = nw.new_node(
+            Nodes.Attribute, [], {"attribute_name": "attribute"}
+        )
         material.node_tree.links.new(
-            new_attribute_node.outputs["Color"], material.node_tree.nodes["Principled BSDF"].inputs["Base Color"]
+            new_attribute_node.outputs["Color"],
+            material.node_tree.nodes["Principled BSDF"].inputs["Base Color"],
         )
         obj.active_material = material
     if args.scene != "":

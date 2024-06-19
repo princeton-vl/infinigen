@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import read_co, subsurf, write_co
+from infinigen.assets.utils.decorate import subsurf, write_co
 from infinigen.assets.utils.object import new_grid
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -35,7 +35,13 @@ class KnifeFactory(TablewareFactory):
             self.has_tip = uniform(0, 1) < 0.7
             self.thickness = log_uniform(0.02, 0.03)
             y_off_rand = uniform(0, 1)
-            self.y_offset = 0.2 if y_off_rand < 1 / 8 else 0.5 if y_off_rand < 1 / 4 else uniform(0.2, 0.6)
+            self.y_offset = (
+                0.2
+                if y_off_rand < 1 / 8
+                else 0.5
+                if y_off_rand < 1 / 4
+                else uniform(0.2, 0.6)
+            )
             self.guard_type = "round" if uniform(0, 1) < 0.6 else "double"
             self.guard_depth = log_uniform(0.2, 1.0) * self.thickness
             self.scale = log_uniform(0.2, 0.3)
@@ -92,7 +98,12 @@ class KnifeFactory(TablewareFactory):
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
         self.make_knife_tip(obj)
         subsurf(obj, 1)
-        selection = lambda nw, x: nw.compare("LESS_THAN", x, -self.x_guard * self.x_length * self.x_end)
+
+        def selection(nw, x):
+            return nw.compare(
+                "LESS_THAN", x, -self.x_guard * self.x_length * self.x_end
+            )
+
         if self.guard_type == "double":
             selection = self.make_double_sided(selection)
         self.add_guard(obj, selection)
@@ -109,8 +120,13 @@ class KnifeFactory(TablewareFactory):
                 x0, y0, z0 = u.co
                 x1, y1, z1 = v.co
                 if x0 >= 0 and x1 >= 0 and abs(x0 - x1) < 2e-4:
-                    if y0 > self.y_offset * self.y_length and y1 > self.y_offset * self.y_length:
-                        bmesh.ops.pointmerge(bm, verts=[u, v], merge_co=(u.co + v.co) / 2)
+                    if (
+                        y0 > self.y_offset * self.y_length
+                        and y1 > self.y_offset * self.y_length
+                    ):
+                        bmesh.ops.pointmerge(
+                            bm, verts=[u, v], merge_co=(u.co + v.co) / 2
+                        )
             bmesh.update_edit_mesh(obj.data)
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_loose(extend=False)

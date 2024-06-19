@@ -6,10 +6,9 @@
 
 import bpy
 import numpy as np
-from numpy.random import normal, uniform
+from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.creatures.util.animation.driver_repeated import repeated_driver
 from infinigen.assets.mollusk.base import BaseMolluskFactory
 from infinigen.assets.utils.decorate import displace_vertices
 from infinigen.assets.utils.draw import shape_by_angles
@@ -17,7 +16,7 @@ from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
@@ -35,24 +34,33 @@ class ShellBaseFactory(BaseMolluskFactory):
         obj = new_circle(vertices=1024)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.fill_grid()
-        surface.add_geomod(obj, self.geo_shader_vector, apply=True, attributes=["vector"])
+        surface.add_geomod(
+            obj, self.geo_shader_vector, apply=True, attributes=["vector"]
+        )
         butil.apply_transform(obj, loc=True)
 
         def displace(x, y, z):
             r = np.sqrt((x - 1) ** 2 + y**2 + z**2)
             t = 1 - softness + softness * r**4
-            return ((1 - t)[:, np.newaxis] * (viewpoint[np.newaxis, :] - np.stack([x, y, z], -1))).T
+            return (
+                (1 - t)[:, np.newaxis]
+                * (viewpoint[np.newaxis, :] - np.stack([x, y, z], -1))
+            ).T
 
         displace_vertices(obj, displace)
         return obj
 
     @staticmethod
     def geo_shader_vector(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         pos = nw.new_node(Nodes.InputPosition)
         x, y, z = nw.separate(pos)
         vector = nw.combine(x, y, nw.vector_math("DISTANCE", pos, [1, 0, 0]))
-        nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry, "Vector": vector})
+        nw.new_node(
+            Nodes.GroupOutput, input_kwargs={"Geometry": geometry, "Vector": vector}
+        )
         return geometry
 
     def scallop_make(self):
@@ -76,7 +84,13 @@ class ShellBaseFactory(BaseMolluskFactory):
         obj.scale = 1, 1.2, 1
         butil.apply_transform(obj)
         s = uniform(0.6, 0.7)
-        angles = [-uniform(0.4, 0.5), -uniform(0.3, 0.35), uniform(-0.25, 0.25), uniform(0.3, 0.35), uniform(0.4, 0.5)]
+        angles = [
+            -uniform(0.4, 0.5),
+            -uniform(0.3, 0.35),
+            uniform(-0.25, 0.25),
+            uniform(0.3, 0.35),
+            uniform(0.4, 0.5),
+        ]
         scales = [0, s, 1, s, 0]
         shape_by_angles(obj, np.array(angles) * np.pi, scales)
         tag_object(obj, "clam")
@@ -111,10 +125,22 @@ class ShellBaseFactory(BaseMolluskFactory):
         length = 0.4
         width = 0.1
         x = uniform(0.8, 1.0)
-        vertices = [[0, -length, 0], [width, -length * x, 0], [width, length * x, 0], [0, length, 0]]
+        vertices = [
+            [0, -length, 0],
+            [width, -length * x, 0],
+            [width, length * x, 0],
+            [0, length, 0],
+        ]
         o = mesh2obj(data2mesh(vertices, [], [[0, 1, 2, 3]], "trap"))
-        butil.modify_mesh(o, "SUBSURF", render_levels=2, levels=2, subdivision_type="SIMPLE")
-        butil.modify_mesh(o, "DISPLACE", strength=0.2, texture=bpy.data.textures.new(name="hinge", type="STUCCI"))
+        butil.modify_mesh(
+            o, "SUBSURF", render_levels=2, levels=2, subdivision_type="SIMPLE"
+        )
+        butil.modify_mesh(
+            o,
+            "DISPLACE",
+            strength=0.2,
+            texture=bpy.data.textures.new(name="hinge", type="STUCCI"),
+        )
         obj = join_objects([obj, o])
         return obj
 

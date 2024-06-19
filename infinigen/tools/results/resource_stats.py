@@ -77,7 +77,9 @@ if __name__ == "__main__":
 
         for line in sacct:
             match = re.fullmatch(
-                f"(\d+) +(\S*{run_name}\S*) +" + "(\d{2}:\d{2}:\d{2}) +\S*cpu=(.*),mem=\S+ +COMPLETED *", line
+                f"(\d+) +(\S*{run_name}\S*) +"
+                + "(\d{2}:\d{2}:\d{2}) +\S*cpu=(.*),mem=\S+ +COMPLETED *",
+                line,
             )
             if match:
                 jobid, name, elapsed, tres = match.groups()
@@ -92,7 +94,9 @@ if __name__ == "__main__":
                 }
 
         for line in sacct:
-            memory_match = re.fullmatch("(\d+).0 +python +([\.\d]+[K|M|G]) .*COMPLETED *", line)
+            memory_match = re.fullmatch(
+                "(\d+).0 +python +([\.\d]+[K|M|G]) .*COMPLETED *", line
+            )
             if memory_match:
                 jobid, mem = memory_match.groups()
                 if jobid in relevant_jobs:
@@ -127,7 +131,9 @@ if __name__ == "__main__":
         all_elapsed.append(total_elapsed)
         cpu_hours = sum((j["elapsed"] * j["cpus"]) for j in jobs)
         all_cpu_hours.append(cpu_hours)
-        gpu_hours = sum((j["elapsed"] * int(j["gpus"][1])) for j in jobs if (j["gpus"] is not None))
+        gpu_hours = sum(
+            (j["elapsed"] * int(j["gpus"][1])) for j in jobs if (j["gpus"] is not None)
+        )
         all_gpu_hours.append(gpu_hours)
 
     make_plot(all_max_mems, 3, "plots/all_max_mems.png")

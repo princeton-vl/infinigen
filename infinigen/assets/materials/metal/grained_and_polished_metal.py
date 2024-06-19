@@ -3,17 +3,16 @@
 
 # Authors: Yiming Zuo
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_grained_metal", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_grained_metal", singleton=False, type="ShaderNodeTree"
+)
 def nodegroup_grained_metal(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -28,7 +27,8 @@ def nodegroup_grained_metal(nw: NodeWrangler):
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Roughness"], 3: 0.0500, 4: 0.2500}
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Roughness"], 3: 0.0500, 4: 0.2500},
     )
 
     principled_bsdf = nw.new_node(
@@ -44,7 +44,9 @@ def nodegroup_grained_metal(nw: NodeWrangler):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Scale"], 1: 2000.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Scale"], 1: 2000.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     noise_texture = nw.new_node(
@@ -60,14 +62,22 @@ def nodegroup_grained_metal(nw: NodeWrangler):
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: 0.4000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: 0.4000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"], 1: multiply_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: multiply_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: 0.010}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: 0.010},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -76,7 +86,9 @@ def nodegroup_grained_metal(nw: NodeWrangler):
     )
 
 
-def shader_grained_metal(nw: NodeWrangler, scale=1.0, base_color=None, roughness=None, seed=None, **kwargs):
+def shader_grained_metal(
+    nw: NodeWrangler, scale=1.0, base_color=None, roughness=None, seed=None, **kwargs
+):
     # Code generated using version 2.6.4 of the node_transpiler
     if roughness is None:
         roughness = uniform(0.0, 1.0)
@@ -98,7 +110,8 @@ def shader_grained_metal(nw: NodeWrangler, scale=1.0, base_color=None, roughness
     )
 
     displacement = nw.new_node(
-        "ShaderNodeDisplacement", input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000}
+        "ShaderNodeDisplacement",
+        input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000},
     )
 
     material_output = nw.new_node(
@@ -109,4 +122,6 @@ def shader_grained_metal(nw: NodeWrangler, scale=1.0, base_color=None, roughness
 
 
 def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_grained_metal, selection=selection, input_kwargs=kwargs)
+    surface.add_material(
+        obj, shader_grained_metal, selection=selection, input_kwargs=kwargs
+    )

@@ -11,13 +11,12 @@ import json
 import logging
 import os
 import time
-import warnings
 from pathlib import Path
 
 import bpy
 import gin
 import numpy as np
-from imageio import imread, imwrite
+from imageio import imwrite
 
 from infinigen.core import init, surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -34,7 +33,6 @@ from infinigen.core.rendering.post_render import (
     load_uniq_inst,
 )
 from infinigen.core.util import blender as butil
-from infinigen.core.util import exporting as exputil
 from infinigen.core.util.logging import Timer
 from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder
 from infinigen.tools.suffixes import get_suffix
@@ -57,7 +55,10 @@ def remove_translucency():
                 assert shader_2_soc.is_linked and len(shader_2_soc.links) == 1
                 shader_1_type = shader_1_soc.links[0].from_node.bl_idname
                 shader_2_type = shader_2_soc.links[0].from_node.bl_idname
-                assert not (shader_1_type in TRANSPARENT_SHADERS and shader_2_type in TRANSPARENT_SHADERS)
+                assert not (
+                    shader_1_type in TRANSPARENT_SHADERS
+                    and shader_2_type in TRANSPARENT_SHADERS
+                )
                 if shader_1_type in TRANSPARENT_SHADERS:
                     assert not fac_soc.is_linked
                     fac_soc.default_value = 1.0
@@ -106,18 +107,31 @@ def make_clay():
 
 @gin.configurable
 def compositor_postprocessing(
-    nw, source, show=True, autoexpose=False, autoexpose_level=-2, color_correct=True, distort=0, glare=False
+    nw,
+    source,
+    show=True,
+    autoexpose=False,
+    autoexpose_level=-2,
+    color_correct=True,
+    distort=0,
+    glare=False,
 ):
     if autoexpose:
         source = nw.new_node(
-            nodegroup_auto_exposure().name, input_kwargs={"Image": source, "EV Comp": autoexpose_level}
+            nodegroup_auto_exposure().name,
+            input_kwargs={"Image": source, "EV Comp": autoexpose_level},
         )
 
     if distort > 0:
-        source = nw.new_node(Nodes.LensDistortion, input_kwargs={"Image": source, "Dispersion": distort})
+        source = nw.new_node(
+            Nodes.LensDistortion, input_kwargs={"Image": source, "Dispersion": distort}
+        )
 
     if color_correct:
-        source = nw.new_node(Nodes.BrightContrast, input_kwargs={"Image": source, "Bright": 1.0, "Contrast": 4.0})
+        source = nw.new_node(
+            Nodes.BrightContrast,
+            input_kwargs={"Image": source, "Bright": 1.0, "Contrast": 4.0},
+        )
 
     if glare:
         source = nw.new_node(
@@ -161,7 +175,9 @@ def configure_compositor_output(
         render_socket = render_layers.outputs[socket_name]
         if viewlayer_pass == "vector":
             separate_color = nw.new_node(Nodes.CompSeparateColor, [render_socket])
-            comnbine_color = nw.new_node(Nodes.CompCombineColor, [0, (separate_color, 3), (separate_color, 2), 0])
+            comnbine_color = nw.new_node(
+                Nodes.CompCombineColor, [0, (separate_color, 3), (separate_color, 2), 0]
+            )
             nw.links.new(comnbine_color.outputs[0], slot_input)
         else:
             nw.links.new(render_socket, slot_input)
@@ -175,7 +191,11 @@ def configure_compositor_output(
     else:
         image_exr_output_node = nw.new_node(
             Nodes.OutputFile,
-            attrs={"base_path": str(frames_folder), "format.file_format": "OPEN_EXR", "format.color_mode": "RGB"},
+            attrs={
+                "base_path": str(frames_folder),
+                "format.file_format": "OPEN_EXR",
+                "format.color_mode": "RGB",
+            },
         )
         rgb_exr_slot_input = file_output_node.file_slots["Image"]
         nw.links.new(image, image_exr_output_node.inputs["Image"])
@@ -190,9 +210,14 @@ def shader_random(nw: NodeWrangler):
 
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
 
-    white_noise_texture = nw.new_node(Nodes.WhiteNoiseTexture, input_kwargs={"Vector": object_info.outputs["Random"]})
+    white_noise_texture = nw.new_node(
+        Nodes.WhiteNoiseTexture, input_kwargs={"Vector": object_info.outputs["Random"]}
+    )
 
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": white_noise_texture.outputs["Color"]})
+    nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": white_noise_texture.outputs["Color"]},
+    )
 
 
 def global_flat_shading():
@@ -239,35 +264,53 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     flow_dst_path = frames_folder / f"Vector{output_stem}.exr"
     flow_array = load_flow(flow_dst_path)
     np.save(flow_dst_path.with_name(f"Flow{output_stem}.npy"), flow_array)
-    imwrite(flow_dst_path.with_name(f"Flow{output_stem}.png"), colorize_flow(flow_array))
+    imwrite(
+        flow_dst_path.with_name(f"Flow{output_stem}.png"), colorize_flow(flow_array)
+    )
     flow_dst_path.unlink()
 
     # Save surface normal visualization
     normal_dst_path = frames_folder / f"Normal{output_stem}.exr"
     normal_array = load_normals(normal_dst_path)
     np.save(flow_dst_path.with_name(f"SurfaceNormal{output_stem}.npy"), normal_array)
-    imwrite(flow_dst_path.with_name(f"SurfaceNormal{output_stem}.png"), colorize_normals(normal_array))
+    imwrite(
+        flow_dst_path.with_name(f"SurfaceNormal{output_stem}.png"),
+        colorize_normals(normal_array),
+    )
     normal_dst_path.unlink()
 
     # Save depth visualization
     depth_dst_path = frames_folder / f"Depth{output_stem}.exr"
     depth_array = load_depth(depth_dst_path)
     np.save(flow_dst_path.with_name(f"Depth{output_stem}.npy"), depth_array)
-    imwrite(depth_dst_path.with_name(f"Depth{output_stem}.png"), colorize_depth(depth_array))
+    imwrite(
+        depth_dst_path.with_name(f"Depth{output_stem}.png"), colorize_depth(depth_array)
+    )
     depth_dst_path.unlink()
 
     # Save segmentation visualization
     seg_dst_path = frames_folder / f"IndexOB{output_stem}.exr"
     seg_mask_array = load_seg_mask(seg_dst_path)
-    np.save(flow_dst_path.with_name(f"ObjectSegmentation{output_stem}.npy"), seg_mask_array)
-    imwrite(seg_dst_path.with_name(f"ObjectSegmentation{output_stem}.png"), colorize_int_array(seg_mask_array))
+    np.save(
+        flow_dst_path.with_name(f"ObjectSegmentation{output_stem}.npy"), seg_mask_array
+    )
+    imwrite(
+        seg_dst_path.with_name(f"ObjectSegmentation{output_stem}.png"),
+        colorize_int_array(seg_mask_array),
+    )
     seg_dst_path.unlink()
 
     # Save unique instances visualization
     uniq_inst_path = frames_folder / f"UniqueInstances{output_stem}.exr"
     uniq_inst_array = load_uniq_inst(uniq_inst_path)
-    np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
-    imwrite(uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"), colorize_int_array(uniq_inst_array))
+    np.save(
+        flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"),
+        uniq_inst_array,
+    )
+    imwrite(
+        uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"),
+        colorize_int_array(uniq_inst_array),
+    )
     uniq_inst_path.unlink()
 
 
@@ -280,10 +323,14 @@ def configure_compositor(
     nw = NodeWrangler(compositor_node_tree)
 
     render_layers = nw.new_node(Nodes.RenderLayers)
-    final_image_denoised = compositor_postprocessing(nw, source=render_layers.outputs["Image"])
+    final_image_denoised = compositor_postprocessing(
+        nw, source=render_layers.outputs["Image"]
+    )
 
     final_image_noisy = (
-        compositor_postprocessing(nw, source=render_layers.outputs["Noisy Image"], show=False)
+        compositor_postprocessing(
+            nw, source=render_layers.outputs["Noisy Image"], show=False
+        )
         if bpy.context.scene.cycles.use_denoising
         else None
     )
@@ -327,7 +374,14 @@ def render_image(
             object_data = set_pass_indices()
             json_object = json.dumps(object_data, indent=4)
             first_frame = bpy.context.scene.frame_start
-            suffix = get_suffix(dict(cam_rig=camera_rig_id, resample=0, frame=first_frame, subcam=subcam_id))
+            suffix = get_suffix(
+                dict(
+                    cam_rig=camera_rig_id,
+                    resample=0,
+                    frame=first_frame,
+                    subcam=subcam_id,
+                )
+            )
             (frames_folder / f"Objects{suffix}.json").write_text(json_object)
 
         with Timer("Flat Shading"):
@@ -361,14 +415,18 @@ def render_image(
         bpy.ops.render.render(animation=True)
 
     with Timer("Post Processing"):
-        for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1):
+        for frame in range(
+            bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1
+        ):
             if flat_shading:
                 bpy.context.scene.frame_set(frame)
                 suffix = get_suffix(dict(frame=frame, **indices))
                 postprocess_blendergt_outputs(frames_folder, suffix)
             else:
                 cam_util.save_camera_parameters(
-                    camera_ids=cam_util.get_cameras_ids(), output_folder=frames_folder, frame=frame
+                    camera_ids=cam_util.get_cameras_ids(),
+                    output_folder=frames_folder,
+                    frame=frame,
                 )
 
     for file in tmp_dir.glob("*.png"):

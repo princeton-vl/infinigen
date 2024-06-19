@@ -20,7 +20,11 @@ from infinigen.core.constraints.example_solver.room.configs import (
     TYPICAL_AREA_ROOM_TYPES,
 )
 from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_type
-from infinigen.core.constraints.example_solver.room.utils import abs_distance, buffer, unit_cast
+from infinigen.core.constraints.example_solver.room.utils import (
+    abs_distance,
+    buffer,
+    unit_cast,
+)
 
 
 @gin.configurable(denylist=["graph"])
@@ -74,7 +78,10 @@ class BlueprintScorer:
         return sum(self.compute_scores(assignment, info).values())
 
     def compute_scores(self, assignment, info):
-        info["neighbours"] = {a: set(assignment[_] for _ in self.graph.neighbours[i]) for i, a in enumerate(assignment)}
+        info["neighbours"] = {
+            a: set(assignment[_] for _ in self.graph.neighbours[i])
+            for i, a in enumerate(assignment)
+        }
         scores = {}
         if self.shortest_path_weight > 0:
             score = self.shortest_path_weight * self.shortest_path(assignment, info)
@@ -116,7 +123,9 @@ class BlueprintScorer:
                 min_distance = np.full(100, 4)
                 for ls in se.geoms:
                     for c in ls.coords[:]:
-                        dist = abs_distance(centroids[k], c) + abs_distance(c, centroids[l])
+                        dist = abs_distance(centroids[k], c) + abs_distance(
+                            c, centroids[l]
+                        )
                         if np.sum(dist) <= np.sum(min_distance):
                             min_distance = dist
                 shortest_paths[k][l] = min_distance
@@ -139,7 +148,10 @@ class BlueprintScorer:
                             updated = True
             displacements = np.stack([d for k, d in displacement.items() if k != root])
             x, xx, y, yy = displacements.T
-            score = (1.0 / ((np.maximum(x, xx) + np.maximum(y, yy)) / displacements.sum(1)) - 1) ** 2
+            score = (
+                1.0 / ((np.maximum(x, xx) + np.maximum(y, yy)) / displacements.sum(1))
+                - 1
+            ) ** 2
             scores[root] = score.sum()
         return sum(s for s in scores.values())
 
@@ -147,11 +159,18 @@ class BlueprintScorer:
         total_typical_areas, total_face_areas = [], []
         for i, r in enumerate(self.graph.rooms):
             if get_room_type(r) in self.typical_area_room_types:
-                total_typical_areas.append(self.typical_area_room_types[get_room_type(r)])
+                total_typical_areas.append(
+                    self.typical_area_room_types[get_room_type(r)]
+                )
                 total_face_areas.append(info["segments"][assignment[i]].area)
         total_typical_areas = np.array(total_typical_areas)
         total_face_areas = np.array(total_face_areas)
-        scores = total_face_areas / np.sum(total_face_areas) / total_typical_areas * np.sum(total_typical_areas)
+        scores = (
+            total_face_areas
+            / np.sum(total_face_areas)
+            / total_typical_areas
+            * np.sum(total_typical_areas)
+        )
         scores = np.where(scores > 1, scores, 1 / scores) - 1
         return scores.sum()
 
@@ -175,7 +194,9 @@ class BlueprintScorer:
         return scores.sum()
 
     def conciseness(self, assignment, info):
-        conciseness = np.array([len(s.boundary.coords) - 1 for s in info["segments"].values()])
+        conciseness = np.array(
+            [len(s.boundary.coords) - 1 for s in info["segments"].values()]
+        )
         scores = (conciseness / self.conciseness_thresh - 1) ** 2
         return scores.sum()
 
@@ -233,7 +254,13 @@ class BlueprintScorer:
                     b = buffer(p, -length)
                     c = buffer(b, length)
                 scores.append(
-                    p.area - c.area + (self.narrow_passage_thresh**2 * 20 if not isinstance(b, Polygon) else 0)
+                    p.area
+                    - c.area
+                    + (
+                        self.narrow_passage_thresh**2 * 20
+                        if not isinstance(b, Polygon)
+                        else 0
+                    )
                 )
         scores = np.array(scores).sum()
         return scores
@@ -241,7 +268,14 @@ class BlueprintScorer:
 
 @gin.configurable(denylist=["graphs"])
 class JointBlueprintScorer:
-    def __init__(self, graphs, *args, staircase_occupancy_weight=1.0, staircase_iou_weight=0.5, **kwargs):
+    def __init__(
+        self,
+        graphs,
+        *args,
+        staircase_occupancy_weight=1.0,
+        staircase_iou_weight=0.5,
+        **kwargs,
+    ):
         self.scorers = []
         self.graphs = graphs
         for g in self.graphs:
@@ -256,10 +290,14 @@ class JointBlueprintScorer:
             scores.update({f"{k}_{i:01d}": v for k, v in floor_scores.items()})
         if len(self.graphs) > 1:
             if self.staircase_occupancy_weight > 0:
-                score = self.staircase_occupancy_weight * self.staircase_occupancy(assignments, infos)
+                score = self.staircase_occupancy_weight * self.staircase_occupancy(
+                    assignments, infos
+                )
                 scores["staircase_occupancy"] = score
             if self.staircase_iou_weight > 0:
-                score = self.staircase_iou_weight * self.staircase_iou(assignments, infos)
+                score = self.staircase_iou_weight * self.staircase_iou(
+                    assignments, infos
+                )
                 scores["staircase_iou"] = score
         return scores
 
@@ -280,6 +318,8 @@ class JointBlueprintScorer:
             for _ in graph[RoomType.Staircase]:
                 segment = info["segments"][assignment[_]]
                 staircase = info["staircase"]
-                scores.append(segment.intersection(staircase).area / segment.union(staircase).area)
+                scores.append(
+                    segment.intersection(staircase).area / segment.union(staircase).area
+                )
         scores = np.array(scores)
         return ((scores - 1) ** 2).sum() * sum(len(info["segments"]) for info in infos)

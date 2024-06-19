@@ -38,17 +38,29 @@ class CrustaceanTailFactory(PartFactory):
         x_cuts = [0, *x_cuts / x_cuts[-1]]
         y_cuts_scale = interp1d(
             [0, 1 / 3, 2 / 3, 1],
-            [1 / params["shell_ratio"], params["y_midpoint_first"], params["y_midpoint_second"], 0.1],
+            [
+                1 / params["shell_ratio"],
+                params["y_midpoint_first"],
+                params["y_midpoint_second"],
+                0.1,
+            ],
             fill_value="extrapolate",
         )
         y_cuts = y_cuts_scale(x_cuts)
-        x_anchors = lambda u, v: (u, (u + v) / 2, v)
-        y_anchors = lambda u, v: (u, np.sqrt(u * v), v * params["shell_ratio"])
+
+        def x_anchors(u, v):
+            return u, (u + v) / 2, v
+
+        def y_anchors(u, v):
+            return u, np.sqrt(u * v), v * params["shell_ratio"]
+
         segments = make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params)
         height = uniform(0.5, 1.0)
         for obj in segments:
             z = read_co(obj).T[-1]
-            write_attr_data(obj, "ratio", 1 + np.where(z > 0, 0, height * z / params["y_length"]))
+            write_attr_data(
+                obj, "ratio", 1 + np.where(z > 0, 0, height * z / params["y_length"])
+            )
         return segments, x_cuts
 
     def sample_params(self):

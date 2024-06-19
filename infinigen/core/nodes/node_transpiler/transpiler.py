@@ -9,12 +9,10 @@
 import importlib
 import keyword
 import logging
-import pdb
 import re
 from collections import OrderedDict
 
 import bpy
-import bpy_types
 import mathutils
 import numpy as np
 
@@ -119,10 +117,17 @@ def prefix(dependencies_used) -> str:
         "from infinigen.core import surface\n"
     )
 
-    deps_table = [(ng_name, name_used[0]) for ng_name, name_used in dependencies_used.items() if name_used[1]]
+    deps_table = [
+        (ng_name, name_used[0])
+        for ng_name, name_used in dependencies_used.items()
+        if name_used[1]
+    ]
     module_names = set(d[1] for d in deps_table)
     deps_by_module = {n: [d[0] for d in deps_table if d[1] == n] for n in module_names}
-    deps_prefix_lines = [f"from {name} import {', '.join(ngnames)}" for name, ngnames in deps_by_module.items()]
+    deps_prefix_lines = [
+        f"from {name} import {', '.join(ngnames)}"
+        for name, ngnames in deps_by_module.items()
+    ]
 
     return fixed_prefix + "\n" + "\n".join(deps_prefix_lines)
 
@@ -138,7 +143,9 @@ def postfix(funcnames, targets):
         elif idname == "ShaderNodeTree":
             body += f"surface.add_material(obj, {funcname}, selection=selection)\n"
         else:
-            raise ValueError(f"Postfix couldnt handle {idname=}, please contact the developer")
+            raise ValueError(
+                f"Postfix couldnt handle {idname=}, please contact the developer"
+            )
 
     return header + indent(body)
 
@@ -153,11 +160,16 @@ def represent_default_value(val, simple=True):
     code = ""
     new_transpiler_targets = {}
 
-    if isinstance(val, (str, int, bool, bpy.types.Object, bpy.types.Collection, set, bpy.types.Image)):
+    if isinstance(
+        val,
+        (str, int, bool, bpy.types.Object, bpy.types.Collection, set, bpy.types.Image),
+    ):
         code = repr(val)
     elif isinstance(val, (float)):
         code = f"{val:.4f}"
-    elif isinstance(val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)):
+    elif isinstance(
+        val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)
+    ):
         code = represent_tuple(tuple(val))
     elif isinstance(val, bpy.types.Collection):
         logger.warning(
@@ -173,7 +185,9 @@ def represent_default_value(val, simple=True):
             logger.warning(f"Encountered material {val} but it has use_nodes=False")
             code = repr(val)
     elif val is None:
-        logger.warning("Transpiler introduced a None into result script, this may not have been intended by the user")
+        logger.warning(
+            "Transpiler introduced a None into result script, this may not have been intended by the user"
+        )
         code = "None"
     else:
         raise ValueError(
@@ -216,12 +230,16 @@ def has_default_value_changed(node_tree, node, value):
         assert hasattr(value, "default_value")
 
         observed_val = value.default_value
-        default_socket = [i for i in temp_default_node.inputs if i.identifier == value.identifier][0]
+        default_socket = [
+            i for i in temp_default_node.inputs if i.identifier == value.identifier
+        ][0]
         default_val = default_socket.default_value
         has_changed = not compare(observed_val, default_val)
     elif isinstance(value, str):
         assert hasattr(node, value)
-        has_changed = not compare(getattr(node, value), getattr(temp_default_node, value))
+        has_changed = not compare(
+            getattr(node, value), getattr(temp_default_node, value)
+        )
     else:
         node_tree.nodes.remove(temp_default_node)
         raise ValueError(f"Unexpected input {value=} in has_default_value_changed")
@@ -248,7 +266,9 @@ def special_case_colorramp(node, varname):
 
     for i, ele in enumerate(cramp.elements):
         code += f"{varname}.color_ramp.elements[{i}].position = {ele.position:.4f}\n"
-        code += f"{varname}.color_ramp.elements[{i}].color = {represent_list(ele.color)}\n"
+        code += (
+            f"{varname}.color_ramp.elements[{i}].color = {represent_list(ele.color)}\n"
+        )
 
     return code
 
@@ -297,7 +317,9 @@ def represent_label_value_expression(expression):
             vals = arg.strip("[]").split(",")
             return [parse_arg(v) for v in vals]
         else:
-            raise ValueError(f"represent_label_value_expression had invalid argument {arg}")
+            raise ValueError(
+                f"represent_label_value_expression had invalid argument {arg}"
+            )
 
     matched_chars = {"'": "'", '"': '"', "[": "]"}
 
@@ -309,7 +331,11 @@ def represent_label_value_expression(expression):
             remaining = remaining.strip(", ")
 
             search_for = matched_chars.get(remaining[0], ",")
-            next_idx = remaining[1:].index(search_for) + 1 if search_for in remaining else len(remaining)
+            next_idx = (
+                remaining[1:].index(search_for) + 1
+                if search_for in remaining
+                else len(remaining)
+            )
             arg = remaining[: next_idx + 1]
             remaining = remaining[next_idx + 1 :]
 
@@ -328,7 +354,9 @@ def represent_label_value_expression(expression):
 
     if op in ["N", "normal", "U", "uniform", "R", "randint"]:
         if not len(args) == 2:
-            raise ValueError(f"In {expression=}, expected 2 arguments, got {len(args)} instead")
+            raise ValueError(
+                f"In {expression=}, expected 2 arguments, got {len(args)} instead"
+            )
         funcname = {
             "N": "normal",
             "normal": "normal",
@@ -342,10 +370,14 @@ def represent_label_value_expression(expression):
 
     elif op in ["color", "color_category"]:
         if not len(args) == 1:
-            raise ValueError(f"In {expression=}, expected 1 argument, got {len(args)} instead")
+            raise ValueError(
+                f"In {expression=}, expected 1 argument, got {len(args)} instead"
+            )
         return f"color_category({repr(args[0])})"
     else:
-        raise ValueError(f"Failed to represent_label_value_expression({expression=}), unrecognized {op=}")
+        raise ValueError(
+            f"Failed to represent_label_value_expression({expression=}), unrecognized {op=}"
+        )
 
 
 def special_case_value(node, varname):
@@ -365,7 +397,9 @@ def special_case_value(node, varname):
         elif node.bl_idname == Nodes.Integer:
             val = node.integer
         else:
-            raise ValueError(f"special_case_value called on unrecognized {node.bl_idname=}")
+            raise ValueError(
+                f"special_case_value called on unrecognized {node.bl_idname=}"
+            )
 
         value_expr = represent_default_value(val, simple=True)
 
@@ -401,7 +435,7 @@ def create_attrs_dict(node_tree, node):
     attr_names = node_attrs_available(node)
 
     for a in COMMON_ATTR_NAMES:
-        if hasattr(node, a) and not a in attr_names:
+        if hasattr(node, a) and a not in attr_names:
             raise ValueError(
                 f"{node.bl_idname=} has attr {repr(a)} but it is not listed in node_info.NODE_ATTRS_AVAILABLE, please add it to avoid incorrect behavior"
             )
@@ -416,9 +450,14 @@ def create_attrs_dict(node_tree, node):
 
     # Filter out the attrs which havent been changed from their default values -
     #    clearly we dont need to set these ones manually, so we can save code verbosity
-    attr_names = [a for a in attr_names if has_default_value_changed(node_tree, node, a)]
+    attr_names = [
+        a for a in attr_names if has_default_value_changed(node_tree, node, a)
+    ]
 
-    return {repr(k): represent_default_value(getattr(node, k), simple=True) for k in attr_names}
+    return {
+        repr(k): represent_default_value(getattr(node, k), simple=True)
+        for k in attr_names
+    }
 
 
 def create_inputs_dict(node_tree, node, memo):
@@ -434,7 +473,7 @@ def create_inputs_dict(node_tree, node, memo):
     def update_inputs(i, k, v):
         is_input_name_unique = [socket.name for socket in node.inputs].count(k) == 1
         k = repr(k) if is_input_name_unique else i
-        if not k in inputs_dict:
+        if k not in inputs_dict:
             inputs_dict[k] = v
         else:
             if not isinstance(inputs_dict[k], list):
@@ -449,20 +488,28 @@ def create_inputs_dict(node_tree, node, memo):
             if hasattr(input_socket, "default_value"):
                 if not has_default_value_changed(node_tree, node, input_socket):
                     continue
-                input_expression, targets = represent_default_value(input_socket.default_value, simple=False)
+                input_expression, targets = represent_default_value(
+                    input_socket.default_value, simple=False
+                )
                 new_transpile_targets.update(targets)
                 update_inputs(i, input_name, input_expression)
             continue
 
         for link in links:
             if not link.from_socket.enabled:
-                logger.warning(f"Transpiler encountered link from disabled socket {link.from_socket}, ignoring it")
+                logger.warning(
+                    f"Transpiler encountered link from disabled socket {link.from_socket}, ignoring it"
+                )
                 continue
             if not link.to_socket.enabled:
-                logger.warning(f"Transpiler encountered link to disabled socket {link.to_socket}, ignoring it")
+                logger.warning(
+                    f"Transpiler encountered link to disabled socket {link.to_socket}, ignoring it"
+                )
                 continue
 
-            input_varname, input_code, targets = create_node(node_tree, link.from_node, memo)
+            input_varname, input_code, targets = create_node(
+                node_tree, link.from_node, memo
+            )
             code += input_code
             new_transpile_targets.update(targets)
 
@@ -473,9 +520,14 @@ def create_inputs_dict(node_tree, node, memo):
                 input_expression = f'{input_varname}.outputs["{socket_name}"]'
 
                 # Catch shared socket output names
-                if link.from_node.outputs[socket_name].identifier != link.from_socket.identifier:
+                if (
+                    link.from_node.outputs[socket_name].identifier
+                    != link.from_socket.identifier
+                ):
                     from_idx = [
-                        i for i, o in enumerate(link.from_node.outputs) if o.identifier == link.from_socket.identifier
+                        i
+                        for i, o in enumerate(link.from_node.outputs)
+                        if o.identifier == link.from_socket.identifier
                     ][0]
                     input_expression = f"{input_varname}.outputs[{from_idx}]"
 
@@ -506,7 +558,9 @@ def represent_tuple(inputs, spacing=" "):
 
 
 def represent_dict(inputs_dict, spacing=" "):
-    vals = f",{spacing}".join(f"{k}: {repr_iter_val(v)}" for k, v in inputs_dict.items())
+    vals = f",{spacing}".join(
+        f"{k}: {repr_iter_val(v)}" for k, v in inputs_dict.items()
+    )
     return "{" + vals + "}"
 
 
@@ -517,7 +571,9 @@ def get_varname(node, taken):
     """
 
     if node.label:
-        name = node.label.split("~")[0].strip()  # remove any allowed postprocessor flags
+        name = node.label.split("~")[
+            0
+        ].strip()  # remove any allowed postprocessor flags
         name = snake_case(name)
     elif hasattr(node, "operation"):
         # name the math nodes after their operations, for readability
@@ -567,7 +623,8 @@ def get_nodetype_expression(node):
     else:
         node_name = node.name.split(".")[0].replace(" ", "")
         logger.warning(
-            f'Please add an alias for "{id}" in nodes.node_info.Nodes.' f"\n\t Suggestion: {node_name} = {repr(id)}"
+            f'Please add an alias for "{id}" in nodes.node_info.Nodes.'
+            f"\n\t Suggestion: {node_name} = {repr(id)}"
         )
         return repr(id)
 
@@ -616,7 +673,9 @@ def create_node(node_tree, node, memo):
                 else (None, {})
             )
             new_transpile_targets.update(targets)
-            all_inps.append(f"({repr(inp.bl_socket_idname)}, {repr(inp.name)}, {repr_val})")
+            all_inps.append(
+                f"({repr(inp.bl_socket_idname)}, {repr(inp.name)}, {repr_val})"
+            )
 
         args = represent_list(all_inps, spacing="\n" + 2 * indent_string)
         new_node_args.append(f"expose_input={args}")
@@ -661,7 +720,9 @@ def get_node_tree(target):
     elif isinstance(target, (bpy.types.Material, bpy.types.World, bpy.types.Scene)):
         return target.node_tree
     else:
-        raise ValueError(f"Couldnt infer node tree from {target=}, {type(target)=}, please contact the developer")
+        raise ValueError(
+            f"Couldnt infer node tree from {target=}, {type(target)=}, please contact the developer"
+        )
 
 
 def write_function_body(target):
@@ -676,10 +737,14 @@ def write_function_body(target):
         output_node = next(n for n in node_tree.nodes if n.bl_idname == output_node_id)
     except StopIteration:
         logging.info([n.bl_idname for n in node_tree.nodes])
-        raise ValueError(f"Couldnt find expected {output_node_id=} for node tree type {node_tree.bl_idname=}")
+        raise ValueError(
+            f"Couldnt find expected {output_node_id=} for node tree type {node_tree.bl_idname=}"
+        )
 
     memo = {}
-    final_varname, code, new_transpile_targets = create_node(node_tree, output_node, memo)
+    final_varname, code, new_transpile_targets = create_node(
+        node_tree, output_node, memo
+    )
     return code, new_transpile_targets
 
 
@@ -727,14 +792,18 @@ def transpile(orig_targets, module_dependencies=[]):
     available_dependencies = {}
     for module_name in module_dependencies:
         module = importlib.import_module(module_name)
-        available_dependencies.update({k: [module_name, False] for k in dir(module) if k.startswith("nodegroup_")})
+        available_dependencies.update(
+            {k: [module_name, False] for k in dir(module) if k.startswith("nodegroup_")}
+        )
     logging.info(f"{available_dependencies.keys()=}")
 
     while any(not v[1] for v in targets.values()):
         funcname, (target, _) = next((k, v) for k, v in targets.items() if not v[1])
 
         if funcname in orig_names:
-            logging.info(f"Transpiling initial target {orig_targets.index(target)} {repr(target)} as {funcname}()")
+            logging.info(
+                f"Transpiling initial target {orig_targets.index(target)} {repr(target)} as {funcname}()"
+            )
         else:
             logging.info(f"Transpiling dependency {repr(target)} as {funcname}()")
 
@@ -744,7 +813,10 @@ def transpile(orig_targets, module_dependencies=[]):
             new_code += f"@node_utils.to_nodegroup({repr(funcname)}, singleton=False, type={repr(get_node_tree(target).bl_idname)})\n"
         new_code += f"def {funcname}(nw: NodeWrangler):\n"
 
-        new_code += indent(f"# Code generated using version {VERSION} of the node_transpiler") + "\n\n"
+        new_code += (
+            indent(f"# Code generated using version {VERSION} of the node_transpiler")
+            + "\n\n"
+        )
 
         # prepend new function to running code body
         function_body, new_targets = write_function_body(target)
@@ -769,7 +841,9 @@ def transpile_object(obj, module_dependencies=[]):
     targets = []
     targets += [mod for mod in obj.modifiers if mod.type == "NODES"]
     targets += [slot.material for slot in obj.material_slots if slot.material.use_nodes]
-    logging.info(f"Found {len(targets)} initial transpile targets for object {repr(obj)}")
+    logging.info(
+        f"Found {len(targets)} initial transpile targets for object {repr(obj)}"
+    )
 
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
 

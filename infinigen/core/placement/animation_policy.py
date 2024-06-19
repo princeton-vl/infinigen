@@ -7,24 +7,23 @@
 
 
 import logging
-import math
 from copy import copy, deepcopy
 
 import bpy
 import gin
 import mathutils
 import numpy as np
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler, Vector
 from mathutils.bvhtree import BVHTree
 from numpy.random import normal as N
 from numpy.random import uniform as U
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 import infinigen.assets.utils.mesh
 from infinigen.assets.creatures.util.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian, lerp
+from infinigen.core.util.math import lerp
 from infinigen.core.util.random import random_general
 
 logger = logging.getLogger(__name__)
@@ -72,7 +71,9 @@ def walk_same_altitude(
         if curr_alt is None or new_alt is None:
             if curr_alt is None:
                 raise PolicyError()
-            logger.debug(f"walk_same_altitude failed {retry=} with {curr_alt=}, {new_alt=}")
+            logger.debug(
+                f"walk_same_altitude failed {retry=} with {curr_alt=}, {new_alt=}"
+            )
             continue
 
         fall_dist = new_alt - curr_alt
@@ -99,7 +100,10 @@ class AnimPolicyBrownian:
 
     def __call__(self, obj, frame_curr, bvh, retry_pct):
         speed = random_general(self.speed)
-        sampler = lambda: N(0, [self.pos_var, self.pos_var, 0.5])
+
+        def sampler():
+            return N(0, [self.pos_var, self.pos_var, 0.5])
+
         pos = walk_same_altitude(obj.location, sampler, bvh)
         time = np.linalg.norm(pos - obj.location) / speed
 
@@ -121,7 +125,9 @@ class AnimPolicyPan:
         def sampler():
             theta = U(0, 2 * np.pi)
             zoff = np.sin(np.deg2rad(N(-30, 30)))
-            off = random_general(self.dist) * np.array([np.sin(theta), np.cos(theta), zoff])
+            off = random_general(self.dist) * np.array(
+                [np.sin(theta), np.cos(theta), zoff]
+            )
             off = off * lerp(1, 0.2, 1 - retry_pct)
             return off
 
@@ -206,7 +212,9 @@ class AnimPolicyRandomWalkLookaround:
             self.motion_dir_euler = copy(orig_motion_dir_euler)
             self.motion_dir_euler[2] += np.deg2rad(random_general(self.yaw_sampler))
             step = random_general(self.step_range)
-            off = Euler(self.motion_dir_euler, "XYZ").to_matrix() @ Vector((0, 0, -step))
+            off = Euler(self.motion_dir_euler, "XYZ").to_matrix() @ Vector(
+                (0, 0, -step)
+            )
             off.z = 0
             return off
 
@@ -266,7 +274,9 @@ class AnimPolicyFollowObject:
         off = follow_loc - self.target_obj.location
         s = self.follow_size * random_general(self.follow_rad_mult)
         self.target_obj.location = follow_loc + off.normalized() * s
-        self.target_obj.location.z = follow_loc.z + self.follow_size * random_general(self.alt_mult)
+        self.target_obj.location.z = follow_loc.z + self.follow_size * random_general(
+            self.alt_mult
+        )
 
         alt = get_altitude(self.target_obj.location, self.bvh)
         if alt is None:
@@ -286,7 +296,10 @@ class AnimPolicyFollowObject:
                 for kp in fc.keyframe_points:
                     ts.append(int(kp.co[0]))
             frame_next = min(t for t in ts if t > frame_curr)
-        except (ValueError, AttributeError):  # no next frame, or no animation_data.action
+        except (
+            ValueError,
+            AttributeError,
+        ):  # no next frame, or no animation_data.action
             frame_next = frame_curr + bpy.context.scene.render.fps
 
         time = (frame_next - frame_curr) / bpy.context.scene.render.fps
@@ -368,7 +381,10 @@ def try_animate_trajectory(
             bpy.context.view_layer.update()
             try:
                 loc, rot, duration, interp = policy_func(
-                    obj, frame_curr=frame_curr, retry_pct=retry / max_step_tries, bvh=bvh
+                    obj,
+                    frame_curr=frame_curr,
+                    retry_pct=retry / max_step_tries,
+                    bvh=bvh,
                 )
             except PolicyError as e:
                 logger.debug(f"PolicyError on {retry=} {e=}")
@@ -379,8 +395,12 @@ def try_animate_trajectory(
 
             keyframe(obj, loc, rot, step_end_frame, interp="BEZIER")
 
-            if not validate_keyframe_range(obj, frame_curr, step_end_frame, bvh, validate_pose_func):
-                logger.debug(f"validate_keyframe_range failed on moving {obj.location} to {loc}")
+            if not validate_keyframe_range(
+                obj, frame_curr, step_end_frame, bvh, validate_pose_func
+            ):
+                logger.debug(
+                    f"validate_keyframe_range failed on moving {obj.location} to {loc}"
+                )
                 # clear out the candidate keyframes we just inserted, they were no good
                 for fc in obj.animation_data.action.fcurves:
                     if fc.data_path == "":
@@ -427,7 +447,10 @@ def try_animate_with_pathfinding(
             bpy.context.view_layer.update()
             try:
                 loc, rot, duration, interp = policy_func(
-                    obj, frame_curr=frame_curr, retry_pct=retry / max_step_tries, bvh=bvh
+                    obj,
+                    frame_curr=frame_curr,
+                    retry_pct=retry / max_step_tries,
+                    bvh=bvh,
                 )
             except PolicyError as e:
                 logger.debug(f"PolicyError on {retry=} {e=}")
@@ -452,22 +475,27 @@ def try_animate_with_pathfinding(
                 obj.keyframe_delete(data_path=fc.data_path, frame=frame_curr + 1)
 
             if not valid_target:
-                logger.debug(f"validate_pose_func at target pose failed, aborting path finding")
+                logger.debug(
+                    "validate_pose_func at target pose failed, aborting path finding"
+                )
                 continue
 
             bounded = True
             current_pose = (loc, rot)
             for i in range(3):
-                if current_pose[0][i] < bounding_box[0][i] or current_pose[0][i] >= bounding_box[1][i]:
+                if (
+                    current_pose[0][i] < bounding_box[0][i]
+                    or current_pose[0][i] >= bounding_box[1][i]
+                ):
                     bounded = False
             if not bounded:
-                logger.debug(f"target pose out of bound, aborting path finding")
+                logger.debug("target pose out of bound, aborting path finding")
                 continue
 
             poses = path_finding(bvh, bounding_box, last_pose, current_pose)
 
             if poses is None:
-                logger.debug(f"path not found, aborting")
+                logger.debug("path not found, aborting")
                 continue
 
             base_length = (last_pose[0] - current_pose[0]).length
@@ -482,12 +510,17 @@ def try_animate_with_pathfinding(
                 rotation_euler1 = poses[i + 1][2]
                 if (
                     abs(rotation_euler0.z - rotation_euler1.z)
-                    > turning_limit_degree / 180 * np.pi * step_frames * (poses[i + 1][0] - poses[i][0]) / poses[-1][0]
+                    > turning_limit_degree
+                    / 180
+                    * np.pi
+                    * step_frames
+                    * (poses[i + 1][0] - poses[i][0])
+                    / poses[-1][0]
                 ):
                     turning_too_fast = True
                     break
             if turning_too_fast:
-                logger.debug(f"path turns too fast, aborting")
+                logger.debug("path turns too fast, aborting")
                 continue
 
             for l, location, rotation_euler in poses:
@@ -521,7 +554,9 @@ def keyframe(obj, loc, rot, t, interp="BEZIER"):
         for fc in obj.animation_data.action.fcurves:
             for kp in fc.keyframe_points:
                 if kp.co > t:
-                    raise ValueError(f"Unexpected out-of-order keyframing {kp.co=}, {t=}")
+                    raise ValueError(
+                        f"Unexpected out-of-order keyframing {kp.co=}, {t=}"
+                    )
 
     if loc is not None:
         obj.location = loc
@@ -572,9 +607,20 @@ def animate_trajectory(
 
         keyframe(obj, obj.location, obj.rotation_euler, 0, interp="LINEAR")
         try_animate_trajectory_func = (
-            try_animate_trajectory if not path_finding_enabled else try_animate_with_pathfinding
+            try_animate_trajectory
+            if not path_finding_enabled
+            else try_animate_with_pathfinding
         )
-        args = [obj, bvh, policy_func, keyframe, duration_frames, validate_pose_func, max_step_tries, verbose]
+        args = [
+            obj,
+            bvh,
+            policy_func,
+            keyframe,
+            duration_frames,
+            validate_pose_func,
+            max_step_tries,
+            verbose,
+        ]
         if path_finding_enabled:
             args.append(bounding_box)
         if try_animate_trajectory_func(*args):
@@ -582,20 +628,36 @@ def animate_trajectory(
                 kf_locs = []
                 kf_rots = []
                 kf_ts = []
-                for j in range(len(obj.animation_data.action.fcurves[0].keyframe_points)):
-                    kf_ts.append(obj.animation_data.action.fcurves[0].keyframe_points[j].co.x)
+                for j in range(
+                    len(obj.animation_data.action.fcurves[0].keyframe_points)
+                ):
+                    kf_ts.append(
+                        obj.animation_data.action.fcurves[0].keyframe_points[j].co.x
+                    )
                     kf_locs.append(
                         (
-                            obj.animation_data.action.fcurves[0].keyframe_points[j].co.y,
-                            obj.animation_data.action.fcurves[1].keyframe_points[j].co.y,
-                            obj.animation_data.action.fcurves[2].keyframe_points[j].co.y,
+                            obj.animation_data.action.fcurves[0]
+                            .keyframe_points[j]
+                            .co.y,
+                            obj.animation_data.action.fcurves[1]
+                            .keyframe_points[j]
+                            .co.y,
+                            obj.animation_data.action.fcurves[2]
+                            .keyframe_points[j]
+                            .co.y,
                         )
                     )
                     kf_rots.append(
                         (
-                            obj.animation_data.action.fcurves[3].keyframe_points[j].co.y,
-                            obj.animation_data.action.fcurves[4].keyframe_points[j].co.y,
-                            obj.animation_data.action.fcurves[5].keyframe_points[j].co.y,
+                            obj.animation_data.action.fcurves[3]
+                            .keyframe_points[j]
+                            .co.y,
+                            obj.animation_data.action.fcurves[4]
+                            .keyframe_points[j]
+                            .co.y,
+                            obj.animation_data.action.fcurves[5]
+                            .keyframe_points[j]
+                            .co.y,
                         )
                     )
                 obj.animation_data_clear()
@@ -622,7 +684,9 @@ def animate_trajectory(
             return
 
 
-def policy_create_bezier_path(start_pose_obj, bvh, policy_func, to_mesh=False, eval_offset=(0, 0, 0), **kwargs):
+def policy_create_bezier_path(
+    start_pose_obj, bvh, policy_func, to_mesh=False, eval_offset=(0, 0, 0), **kwargs
+):
     eval_offset = Vector(eval_offset)
 
     # animate a dummy using the policy
@@ -634,7 +698,11 @@ def policy_create_bezier_path(start_pose_obj, bvh, policy_func, to_mesh=False, e
     # read off the keyframe locations
     positions = []
     if temp.animation_data is not None:
-        fc = next(fc for fc in temp.animation_data.action.fcurves if fc.data_path == "location")
+        fc = next(
+            fc
+            for fc in temp.animation_data.action.fcurves
+            if fc.data_path == "location"
+        )
         for p in fc.keyframe_points:
             f = int(p.co[0])
             bpy.context.scene.frame_set(f)

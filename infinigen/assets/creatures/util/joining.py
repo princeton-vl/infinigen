@@ -44,19 +44,31 @@ def compute_joining_effects(genome, parts):
         logger.debug(f"Computing joining geometry for {i=} with {br=} and {sr=}")
 
         try:
-            inter = join_smoothing.compute_intersection_curve(parent.obj, part.obj, parent.bvh(), part.bvh())
+            inter = join_smoothing.compute_intersection_curve(
+                parent.obj, part.obj, parent.bvh(), part.bvh()
+            )
             inter.name = "intersection_curve"
         except ValueError as e:
-            logger.warning(f"join_smoothing.compute_intersection_curve for threw {e}, skipping")
+            logger.warning(
+                f"join_smoothing.compute_intersection_curve for threw {e}, skipping"
+            )
             inter = None
 
         if inter is not None and len(inter.data.vertices) < 4:
-            logger.warning(f"join_smoothing.compute_intersection_curve found too few verts, skipping")
+            logger.warning(
+                "join_smoothing.compute_intersection_curve found too few verts, skipping"
+            )
             inter = None
 
         if br > 0 and inter is not None:
             b = join_smoothing.create_bevel_connection(
-                parent.obj, part.obj, parent.bvh(), part.bvh(), width=br, intersection_curve=inter, segments=5
+                parent.obj,
+                part.obj,
+                parent.bvh(),
+                part.bvh(),
+                width=br,
+                intersection_curve=inter,
+                segments=5,
             )
             b.name = part.obj.name + ".bevel_connector"
             b.parent = parent.obj
@@ -107,17 +119,25 @@ def join_and_rig_parts(
     **_,
 ):
     body_parts = [o for o in root.children if o.type == "MESH"]
-    extras = [o for o in butil.iter_object_tree(root) if not o in body_parts and o is not root]
+    extras = [
+        o for o in butil.iter_object_tree(root) if o not in body_parts and o is not root
+    ]
 
     if rigging:
-        logger.debug(f"Computing creature rig")
-        arma, ik_targets = creature_rigging.creature_rig(root, genome, parts, constraints=constraints, roll=roll)
+        logger.debug("Computing creature rig")
+        arma, ik_targets = creature_rigging.creature_rig(
+            root, genome, parts, constraints=constraints, roll=roll
+        )
         arma.show_in_front = True
 
     with butil.SelectObjects(extras):
         bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
 
-    with butil.SelectObjects(body_parts), butil.CursorLocation(root.location), Suppress():
+    with (
+        butil.SelectObjects(body_parts),
+        butil.CursorLocation(root.location),
+        Suppress(),
+    ):
         # must convert to all transforms applied & triangles only,
         # in case we want to do join_smoothing
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
@@ -148,7 +168,7 @@ def join_and_rig_parts(
         p.obj = None  # deleted by join, should not be referenced
 
     def rig():
-        with Timer(f"Computing creature rig weights"):
+        with Timer("Computing creature rig weights"):
             with butil.SelectObjects(body_parts + extras, active=-1), Suppress():
                 bpy.ops.object.mode_set(mode="EDIT")
                 bpy.ops.mesh.select_all(action="SELECT")
@@ -166,7 +186,12 @@ def join_and_rig_parts(
             butil.modify_mesh(joined, "SUBSURF", levels=1)
 
         logger.debug(f"Adapting {joined.name=}")
-        detail.adapt_mesh_resolution(joined, face_size=max(face_size, min_remesh_size), method=adapt_mode, apply=True)
+        detail.adapt_mesh_resolution(
+            joined,
+            face_size=max(face_size, min_remesh_size),
+            method=adapt_mode,
+            apply=True,
+        )
 
         # remeshing can create outlier islands that mess with rigging. Clear them out
         percent = select_large_component(joined, thresh=0.9)
@@ -206,11 +231,11 @@ def join_and_rig_parts(
             surface.smooth_attribute(joined, attr, iters=10)
 
     if materials:
-        logger.debug(f"Applying postprocess func")
+        logger.debug("Applying postprocess func")
         with butil.DisableModifiers(body_parts):
             postprocess_func(body_parts, extras, genome.postprocess_params)
 
-        logger.debug(f"Finalizing material geomods")
+        logger.debug("Finalizing material geomods")
         for o in body_parts:
             for m in o.modifiers:
                 if m.type == "NODES":

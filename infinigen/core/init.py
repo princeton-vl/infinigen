@@ -2,17 +2,11 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
-import argparse
 import ast
-import cProfile
 import logging
 import os
-import pprint
 import random
-import shutil
 import sys
-from collections import defaultdict
-from functools import partial
 from pathlib import Path
 
 import bpy
@@ -163,7 +157,9 @@ def apply_gin_configs(
     elif configs_folder.exists():
         gin.add_config_file_search_path(configs_folder)
     else:
-        raise FileNotFoundError(f"Couldnt find {configs_folder} or {configs_folder_rel}")
+        raise FileNotFoundError(
+            f"Couldnt find {configs_folder} or {configs_folder_rel}"
+        )
 
     search_paths = [configs_folder, root, Path(".")]
 
@@ -173,7 +169,9 @@ def apply_gin_configs(
             for file in folder.glob("**/*.gin"):
                 if file.stem == p.stem:
                     return file
-        raise FileNotFoundError(f"Could not find {p} or {p.stem} in any of {search_paths}")
+        raise FileNotFoundError(
+            f"Could not find {p} or {p.stem} in any of {search_paths}"
+        )
 
     configs = [find_config(g) for g in ["base.gin"] + configs]
     overrides = [sanitize_override(o) for o in overrides]
@@ -197,7 +195,10 @@ def apply_gin_configs(
 
     with LogLevel(logger=logging.getLogger(), level=logging.WARNING):
         gin.parse_config_files_and_bindings(
-            configs, bindings=overrides, skip_unknown=skip_unknown, finalize_config=finalize_config
+            configs,
+            bindings=overrides,
+            skip_unknown=skip_unknown,
+            finalize_config=finalize_config,
         )
 
 
@@ -232,7 +233,9 @@ def configure_render_cycles(
 
     bpy.context.scene.cycles.samples = num_samples  # i.e. infinity
     bpy.context.scene.cycles.adaptive_min_samples = min_samples
-    bpy.context.scene.cycles.adaptive_threshold = adaptive_threshold  # i.e. noise threshold
+    bpy.context.scene.cycles.adaptive_threshold = (
+        adaptive_threshold  # i.e. noise threshold
+    )
     bpy.context.scene.cycles.time_limit = time_limit
     bpy.context.scene.cycles.film_exposure = exposure
     bpy.context.scene.cycles.volume_step_rate = 0.1
@@ -269,7 +272,9 @@ def configure_cycles_devices(use_gpu=True):
         bpy.context.scene.cycles.device = "CPU"
         return
 
-    bpy.context.preferences.addons["cycles"].preferences.compute_device_type = use_device_type
+    bpy.context.preferences.addons[
+        "cycles"
+    ].preferences.compute_device_type = use_device_type
     use_devices = [d for d in prefs.devices if d.type == use_device_type]
 
     logger.info(f"Cycles will use {use_device_type=}, {len(use_devices)=}")

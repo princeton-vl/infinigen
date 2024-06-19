@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.utils.decorate import read_co, subsurf, write_attribute
+from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -59,16 +59,25 @@ class JarFactory(AssetFactory):
         obj = join_objects([obj, top])
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
-            bpy.ops.mesh.bridge_edge_loops(number_cuts=5, profile_shape_factor=uniform(0, 0.1))
+            bpy.ops.mesh.bridge_edge_loops(
+                number_cuts=5, profile_shape_factor=uniform(0, 0.1)
+            )
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, self.z_cap * self.z_length)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, self.z_cap * self.z_length)}
+            )
         subsurf(obj, 1)
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
 
         cap = new_cylinder(vertices=64)
-        cap.scale = *([self.x_cap * self.x_length + 1e-3] * 2), self.z_cap * self.z_length
-        cap.location[-1] = (1 + self.z_neck + self.z_cap * uniform(0.5, 0.8)) * self.z_length
+        cap.scale = (
+            *([self.x_cap * self.x_length + 1e-3] * 2),
+            self.z_cap * self.z_length,
+        )
+        cap.location[-1] = (
+            1 + self.z_neck + self.z_cap * uniform(0.5, 0.8)
+        ) * self.z_length
         butil.apply_transform(cap, True)
         subsurf(obj, 1, self.cap_subsurf)
         write_attribute(cap, 1, "cap", "FACE")

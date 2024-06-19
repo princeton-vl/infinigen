@@ -18,7 +18,7 @@ from infinigen.assets import (
     wall_decorations,
     windows,
 )
-from infinigen.core.tags import FromGenerator, Semantics, Subpart
+from infinigen.core.tags import Semantics
 
 
 def home_asset_usage():
@@ -124,7 +124,10 @@ def home_asset_usage():
         shelves.SingleCabinetFactory,
     }
 
-    used_as[Semantics.SideTable] = {shelves.SidetableDeskFactory, tables.SideTableFactory}
+    used_as[Semantics.SideTable] = {
+        shelves.SidetableDeskFactory,
+        tables.SideTableFactory,
+    }
 
     used_as[Semantics.Table] = set.union(
         used_as[Semantics.SideTable],
@@ -136,7 +139,11 @@ def home_asset_usage():
         },
     )
 
-    used_as[Semantics.Chair] = {seating.BarChairFactory, seating.ChairFactory, seating.OfficeChairFactory}
+    used_as[Semantics.Chair] = {
+        seating.BarChairFactory,
+        seating.ChairFactory,
+        seating.OfficeChairFactory,
+    }
 
     used_as[Semantics.LoungeSeating] = {
         seating.SofaFactory,

@@ -8,7 +8,13 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.core.util.organization import Attributes, ElementNames, ElementTag, Materials, Transparency
+from infinigen.core.util.organization import (
+    Attributes,
+    ElementNames,
+    ElementTag,
+    Materials,
+    Transparency,
+)
 
 from .core import Element
 

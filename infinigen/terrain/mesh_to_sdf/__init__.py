@@ -7,7 +7,12 @@ import trimesh
 
 from . import surface_point_cloud
 from .surface_point_cloud import BadMeshException
-from .utils import check_voxels, get_raster_points, scale_to_unit_cube, scale_to_unit_sphere
+from .utils import (
+    check_voxels,
+    get_raster_points,
+    scale_to_unit_cube,
+    scale_to_unit_sphere,
+)
 
 
 def get_surface_point_cloud(
@@ -37,10 +42,14 @@ def get_surface_point_cloud(
         )
     elif surface_point_method == "sample":
         return surface_point_cloud.sample_from_mesh(
-            mesh, sample_point_count=sample_point_count, calculate_normals=calculate_normals
+            mesh,
+            sample_point_count=sample_point_count,
+            calculate_normals=calculate_normals,
         )
     else:
-        raise ValueError("Unknown surface point sampling method: {:s}".format(surface_point_method))
+        raise ValueError(
+            "Unknown surface point sampling method: {:s}".format(surface_point_method)
+        )
 
 
 def mesh_to_sdf(
@@ -60,7 +69,9 @@ def mesh_to_sdf(
         raise ValueError("query_points must be of shape N ✕ 3.")
 
     if surface_point_method == "sample" and sign_method == "depth":
-        print("Incompatible methods for sampling points and determining sign, using sign_method='normal' instead.")
+        print(
+            "Incompatible methods for sampling points and determining sign, using sign_method='normal' instead."
+        )
         sign_method = "normal"
 
     point_cloud = get_surface_point_cloud(
@@ -76,7 +87,9 @@ def mesh_to_sdf(
     if sign_method == "normal":
         return point_cloud.get_sdf_in_batches(query_points, use_depth_buffer=False)
     elif sign_method == "depth":
-        return point_cloud.get_sdf_in_batches(query_points, use_depth_buffer=True, sample_count=sample_point_count)
+        return point_cloud.get_sdf_in_batches(
+            query_points, use_depth_buffer=True, sample_count=sample_point_count
+        )
     else:
         raise ValueError("Unknown sign determination method: {:s}".format(sign_method))
 
@@ -97,11 +110,22 @@ def mesh_to_voxels(
     mesh = scale_to_unit_cube(mesh)
 
     surface_point_cloud = get_surface_point_cloud(
-        mesh, surface_point_method, 3**0.5, scan_count, scan_resolution, sample_point_count, sign_method == "normal"
+        mesh,
+        surface_point_method,
+        3**0.5,
+        scan_count,
+        scan_resolution,
+        sample_point_count,
+        sign_method == "normal",
     )
 
     return surface_point_cloud.get_voxels(
-        voxel_resolution, sign_method == "depth", normal_sample_count, pad, check_result, return_gradients
+        voxel_resolution,
+        sign_method == "depth",
+        normal_sample_count,
+        pad,
+        check_result,
+        return_gradients,
     )
 
 
@@ -121,7 +145,9 @@ def sample_sdf_near_surface(
     mesh = scale_to_unit_sphere(mesh)
 
     if surface_point_method == "sample" and sign_method == "depth":
-        print("Incompatible methods for sampling points and determining sign, using sign_method='normal' instead.")
+        print(
+            "Incompatible methods for sampling points and determining sign, using sign_method='normal' instead."
+        )
         sign_method = "normal"
 
     surface_point_cloud = get_surface_point_cloud(
@@ -135,5 +161,10 @@ def sample_sdf_near_surface(
     )
 
     return surface_point_cloud.sample_sdf_near_surface(
-        number_of_points, surface_point_method == "scan", sign_method, normal_sample_count, min_size, return_gradients
+        number_of_points,
+        surface_point_method == "scan",
+        sign_method,
+        normal_sample_count,
+        min_size,
+        return_gradients,
     )

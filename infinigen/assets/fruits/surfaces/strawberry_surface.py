@@ -4,10 +4,6 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.fruits.fruit_utils import (
     nodegroup_add_crater,
     nodegroup_add_noise_scalar,
@@ -20,7 +16,6 @@ from infinigen.assets.fruits.seed_lib import nodegroup_strawberry_seed
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
@@ -29,12 +24,17 @@ def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 0.5}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 0.5},
     )
 
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "strawberry seed height"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "strawberry seed height"}
+    )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements.new(0)
     colorramp_1.color_ramp.elements[0].position = 0.0
     colorramp_1.color_ramp.elements[0].color = main_color
@@ -45,7 +45,13 @@ def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
 
     hue_saturation_value = nw.new_node(
         "ShaderNodeHueSaturation",
-        input_kwargs={"Hue": 0.55, "Saturation": 1.5, "Value": 0.2, "Fac": 0.3, "Color": colorramp_1.outputs["Color"]},
+        input_kwargs={
+            "Hue": 0.55,
+            "Saturation": 1.5,
+            "Value": 0.2,
+            "Fac": 0.3,
+            "Color": colorramp_1.outputs["Color"],
+        },
     )
 
     mix = nw.new_node(
@@ -60,17 +66,28 @@ def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": mix})
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Specular": 1.0, "Roughness": 0.15}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": mix, "Specular": 1.0, "Roughness": 0.15},
     )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.8, 1: translucent_bsdf, 2: principled_bsdf})
+    mix_shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.8, 1: translucent_bsdf, 2: principled_bsdf},
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_strawberry_surface", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_strawberry_surface", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_strawberry_surface(
-    nw: NodeWrangler, top_pos=0.9, main_color=(0.8879, 0.0097, 0.0319, 1.0), top_color=(0.8148, 0.6105, 0.1746, 1.0)
+    nw: NodeWrangler,
+    top_pos=0.9,
+    main_color=(0.8879, 0.0097, 0.0319, 1.0),
+    top_color=(0.8148, 0.6105, 0.1746, 1.0),
 ):
     # Code generated using version 2.4.3 of the node_transpiler
     strawberryseed = nw.new_node(nodegroup_strawberry_seed().name)
@@ -88,7 +105,11 @@ def nodegroup_strawberry_surface(
 
     surfacebump = nw.new_node(
         nodegroup_surface_bump().name,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Displacement": 0.4, "Scale": 0.5},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Displacement": 0.4,
+            "Scale": 0.5,
+        },
     )
 
     addnoisescalar = nw.new_node(
@@ -122,19 +143,23 @@ def nodegroup_strawberry_surface(
     )
 
     surfacebump_1 = nw.new_node(
-        nodegroup_surface_bump().name, input_kwargs={"Geometry": addcrater, "Displacement": 0.03, "Scale": 20.0}
+        nodegroup_surface_bump().name,
+        input_kwargs={"Geometry": addcrater, "Displacement": 0.03, "Scale": 20.0},
     )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": surfacebump_1,
-            "Material": surface.shaderfunc_to_material(shader_strawberry_shader, top_pos, main_color, top_color),
+            "Material": surface.shaderfunc_to_material(
+                shader_strawberry_shader, top_pos, main_color, top_color
+            ),
         },
     )
 
     randomrotationscale = nw.new_node(
-        nodegroup_random_rotation_scale().name, input_kwargs={"rot mean": (-1.571, 0.0, 0.0), "scale mean": 0.08}
+        nodegroup_random_rotation_scale().name,
+        input_kwargs={"rot mean": (-1.571, 0.0, 0.0), "scale mean": 0.08},
     )
 
     instanceonpoints = nw.new_node(
@@ -149,10 +174,18 @@ def nodegroup_strawberry_surface(
         },
     )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, instanceonpoints]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, instanceonpoints]}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances, "curve parameters": addnoisescalar}
+        Nodes.GroupOutput,
+        input_kwargs={
+            "Geometry": realize_instances,
+            "curve parameters": addnoisescalar,
+        },
     )

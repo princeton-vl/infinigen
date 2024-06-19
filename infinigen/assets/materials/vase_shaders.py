@@ -4,14 +4,10 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 
 
 def shader_ceramic(nw: NodeWrangler):
@@ -39,7 +35,9 @@ def shader_ceramic(nw: NodeWrangler):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -48,8 +46,13 @@ def shader_glass(nw: NodeWrangler):
 
     hsv = (uniform(0.0, 1.0), uniform(0.0, 0.2), 1.0)
 
-    glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={"Color": hsv2rgba(hsv), "Roughness": uniform(0.05, 0.2)})
+    glass_bsdf = nw.new_node(
+        Nodes.GlassBSDF,
+        input_kwargs={"Color": hsv2rgba(hsv), "Roughness": uniform(0.05, 0.2)},
+    )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": glass_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": glass_bsdf},
+        attrs={"is_active_output": True},
     )

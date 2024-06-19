@@ -4,17 +4,13 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
 import numpy as np
-from mathutils import Vector
 from numpy.random import uniform as U
 
 from infinigen.assets.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.util import blender as butil
 
 
 def apply(obj, n=5, detail=3, selection=None, **kwargs):

@@ -12,7 +12,6 @@ from mathutils import Vector
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.utils.decorate import read_co
-from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import select_none
 
 
@@ -168,7 +167,12 @@ def new_grid(**kwargs):
 
 def new_line(subdivisions=1, scale=1.0):
     vertices = np.stack(
-        [np.linspace(0, scale, subdivisions + 1), np.zeros(subdivisions + 1), np.zeros(subdivisions + 1)], -1
+        [
+            np.linspace(0, scale, subdivisions + 1),
+            np.zeros(subdivisions + 1),
+            np.zeros(subdivisions + 1),
+        ],
+        -1,
     )
     edges = np.stack([np.arange(subdivisions), np.arange(1, subdivisions + 1)], -1)
     obj = mesh2obj(data2mesh(vertices, edges))

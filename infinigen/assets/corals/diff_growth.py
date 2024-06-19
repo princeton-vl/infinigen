@@ -9,12 +9,15 @@ from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.corals.base import BaseCoralFactory
-from infinigen.assets.corals.tentacles import make_radius_points_fn, make_upward_points_fn
+from infinigen.assets.corals.tentacles import (
+    make_radius_points_fn,
+    make_upward_points_fn,
+)
 from infinigen.assets.utils.decorate import geo_extension, read_co
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.object import data2mesh, mesh2obj
 from infinigen.core import surface
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 
@@ -41,18 +44,27 @@ class DiffGrowthBaseCoralFactory(BaseCoralFactory):
         stride = 2
         if n_colonies > 1:
             angles = polygon_angles(np.random.randint(2, 6))
-            colony_offsets = np.stack([np.cos(angles), np.sin(angles), np.zeros_like(angles)]).T * stride
+            colony_offsets = (
+                np.stack([np.cos(angles), np.sin(angles), np.zeros_like(angles)]).T
+                * stride
+            )
         else:
             colony_offsets = np.zeros((1, 3))
 
         vertices_all, faces_all = [], []
         for i, offset in enumerate(colony_offsets):
             angles = polygon_angles(n_base)
-            vertices = np.block([[np.cos(angles), 0], [np.sin(angles), 0], [np.zeros(n_base + 1)]]).T + np.expand_dims(
-                offset, 0
-            )
+            vertices = np.block(
+                [[np.cos(angles), 0], [np.sin(angles), 0], [np.zeros(n_base + 1)]]
+            ).T + np.expand_dims(offset, 0)
             faces = (
-                np.stack([np.arange(n_base), np.roll(np.arange(n_base), 1), np.full(n_base, n_base)]).T
+                np.stack(
+                    [
+                        np.arange(n_base),
+                        np.roll(np.arange(n_base), 1),
+                        np.full(n_base, n_base),
+                    ]
+                ).T
                 + (n_base + 1) * i
             )
             vertices_all.append(vertices)
@@ -72,7 +84,9 @@ class DiffGrowthBaseCoralFactory(BaseCoralFactory):
     @staticmethod
     def leather_make():
         prob_multiple_colonies = 0.5
-        n_colonies = np.random.randint(2, 3) if uniform() < prob_multiple_colonies else 1
+        n_colonies = (
+            np.random.randint(2, 3) if uniform() < prob_multiple_colonies else 1
+        )
         growth_vec = 0, 0, uniform(0.8, 1.2)
         growth_scale = 1, 1, uniform(0.5, 0.7)
         obj = DiffGrowthBaseCoralFactory.diff_growth_make(
@@ -90,7 +104,11 @@ class DiffGrowthBaseCoralFactory(BaseCoralFactory):
     def flat_make():
         n_colonies = 1
         obj = DiffGrowthBaseCoralFactory.diff_growth_make(
-            "flat_coral", n_colonies, max_polygons=4e2 * n_colonies, repulsion_radius=2, inhibit_shell=1
+            "flat_coral",
+            n_colonies,
+            max_polygons=4e2 * n_colonies,
+            repulsion_radius=2,
+            inhibit_shell=1,
         )
         obj.scale = 1, 1, uniform(1, 2)
         butil.apply_transform(obj)

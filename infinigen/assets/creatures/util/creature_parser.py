@@ -4,13 +4,12 @@
 # Authors: Alexander Raistrick
 
 
-import pdb
 from pathlib import Path
 
 import numpy as np
 
 from infinigen.assets.creatures.util.geometry import lofting
-from infinigen.core.nodes.node_transpiler.transpiler import indent, transpile
+from infinigen.core.nodes.node_transpiler.transpiler import indent
 from infinigen.core.util import blender as butil
 
 
@@ -53,7 +52,9 @@ def parse_part(nurbs_part, mesh_part, profiles_folder):
 
     part_genome_kwargs = {}
     handles = parse_nurbs_data(nurbs_part)
-    skeleton, ts, rads, profiles_norm = lofting.factorize_nurbs_handles(handles[..., :-1])
+    skeleton, ts, rads, profiles_norm = lofting.factorize_nurbs_handles(
+        handles[..., :-1]
+    )
 
     part_genome_kwargs["skeleton"] = repr_np_array(skeleton)
     part_genome_kwargs["rads"] = repr_np_array(rads.reshape(-1))
@@ -72,7 +73,9 @@ def find_approx_uvr_coord(child, parent_mesh, parent_nurbs):
     assert parent_mesh.type == "MESH"
 
     loc = np.array(child.matrix_world.translation)
-    verts = np.array([parent_mesh.matrix_world @ v.co for v in parent_mesh.data.vertices])
+    verts = np.array(
+        [parent_mesh.matrix_world @ v.co for v in parent_mesh.data.vertices]
+    )
 
     dists = np.linalg.norm(verts - loc, axis=-1)
     i = dists.argmin()
@@ -132,7 +135,9 @@ def parse_creature(nurbs_root, mesh_root, profiles_folder):
         code += new_code + "\n\n"
 
         if mesh_part.parent is not None:
-            atts[name] = parse_attachment(mesh_part, mesh_part.parent, nurbs_part.parent)
+            atts[name] = parse_attachment(
+                mesh_part, mesh_part.parent, nurbs_part.parent
+            )
 
     joiningome_args = {
         "parts": repr_function_call("dict", {name: f"{name}()" for name in names}),

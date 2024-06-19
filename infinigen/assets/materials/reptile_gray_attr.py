@@ -4,27 +4,9 @@
 # Authors: Mingzhe Wang
 
 
-import math as ma
-import os
-import sys
-
-import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.creatures.util.nodegroups.shader import nodegroup_color_mask
-from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
-    sample_color,
-    sample_range,
-    sample_ratio,
-)
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_gray(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -43,10 +25,13 @@ def shader_gray(nw: NodeWrangler, rand=True, **input_kwargs):
     attribute_1 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "index"})
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": attribute_1.outputs["Color"], "Scale": 10.0}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": attribute_1.outputs["Color"], "Scale": 10.0},
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Color"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Color"]}
+    )
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.1
@@ -61,10 +46,16 @@ def shader_gray(nw: NodeWrangler, rand=True, **input_kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     noise_texture_1 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": texture_coordinate.outputs["Generated"], "Scale": 200.0}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Generated"],
+            "Scale": 200.0,
+        },
     )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.0
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = 1.0
@@ -81,17 +72,29 @@ def shader_gray(nw: NodeWrangler, rand=True, **input_kwargs):
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": attribute.outputs["Color"], "Color1": (0.033, 0.033, 0.033, 1.0), "Color2": mix},
+        input_kwargs={
+            "Fac": attribute.outputs["Color"],
+            "Color1": (0.033, 0.033, 0.033, 1.0),
+            "Color2": mix,
+        },
     )
 
     mix_2 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": colorramp_2.outputs["Color"], "Color1": mix_1, "Color2": (1.0, 1.0, 1.0, 1.0)},
+        input_kwargs={
+            "Fac": colorramp_2.outputs["Color"],
+            "Color1": mix_1,
+            "Color2": (1.0, 1.0, 1.0, 1.0),
+        },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix_2, "Roughness": 1.0})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix_2, "Roughness": 1.0}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def geometry_reptile_vor(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -99,51 +102,80 @@ def geometry_reptile_vor(nw: NodeWrangler, rand=True, **input_kwargs):
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketGeometry", "Geometry", None), ("NodeSocketVector", "value", (0.0, 0.0, 0.0))],
+        expose_input=[
+            ("NodeSocketGeometry", "Geometry", None),
+            ("NodeSocketVector", "value", (0.0, 0.0, 0.0)),
+        ],
     )
 
     normal = nw.new_node(Nodes.InputNormal)
 
     multiply = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: group_input.outputs["value"], 1: normal}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["value"], 1: normal},
+        attrs={"operation": "MULTIPLY"},
     )
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.003
 
     multiply_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"], 1: value}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: multiply.outputs["Vector"], 1: value},
+        attrs={"operation": "MULTIPLY"},
     )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": multiply_1.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": multiply_1.outputs["Vector"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"]})
+    set_position = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"]}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 1.0
 
-    multiply = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: value}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: value},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": multiply.outputs["Vector"], "Scale": 6.0, "Detail": 15.0}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": multiply.outputs["Vector"],
+            "Scale": 6.0,
+            "Detail": 15.0,
+        },
     )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.1, "Color1": multiply.outputs["Vector"], "Color2": noise_texture.outputs["Fac"]},
+        input_kwargs={
+            "Fac": 0.1,
+            "Color1": multiply.outputs["Vector"],
+            "Color2": noise_texture.outputs["Fac"],
+        },
         attrs={"blend_type": "ADD"},
     )
 
@@ -159,17 +191,22 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
         attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Distance"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.02
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.2
     colorramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
     noise_texture_1 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": multiply.outputs["Vector"], "Scale": 100.0}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": multiply.outputs["Vector"], "Scale": 100.0},
     )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.1
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = 0.4
@@ -185,7 +222,9 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": set_position, 1: mix_1}, attrs={"data_type": "FLOAT_VECTOR"}
+        Nodes.CaptureAttribute,
+        input_kwargs={"Geometry": set_position, 1: mix_1},
+        attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     voronoi_texture_1 = nw.new_node(
@@ -196,7 +235,10 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
 
     capture_attribute_1 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], 1: voronoi_texture_1.outputs["Position"]},
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            1: voronoi_texture_1.outputs["Position"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
@@ -211,6 +253,13 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
 
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(obj, geometry_reptile_vor_attr, input_kwargs=geo_kwargs, attributes=["value", "index"])
-    surface.add_geomod(obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[])
+    surface.add_geomod(
+        obj,
+        geometry_reptile_vor_attr,
+        input_kwargs=geo_kwargs,
+        attributes=["value", "index"],
+    )
+    surface.add_geomod(
+        obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[]
+    )
     surface.add_material(obj, shader_gray, input_kwargs=shader_kwargs)

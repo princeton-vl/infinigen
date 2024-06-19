@@ -5,8 +5,6 @@
 
 
 import colorsys
-import os
-import sys
 
 import bpy
 import numpy as np
@@ -85,8 +83,12 @@ def uv_smart_project(obj):
 
 
 def new_link(nt, node1, field1, node2, field2):
-    node_out = node1.outputs[field1] if isinstance(field1, int) else node1.outputs.get(field1)
-    node_inp = node2.inputs[field2] if isinstance(field2, int) else node2.inputs.get(field2)
+    node_out = (
+        node1.outputs[field1] if isinstance(field1, int) else node1.outputs.get(field1)
+    )
+    node_inp = (
+        node2.inputs[field2] if isinstance(field2, int) else node2.inputs.get(field2)
+    )
     nt.links.new(node_out, node_inp)
 
 
@@ -99,7 +101,10 @@ def create_leaf_material(src_hue, glow=False):
         nt.nodes.new("ShaderNodeEmission")
         em = nt.nodes.get("Emission")
         em.inputs.get("Strength").default_value = 1
-        em.inputs.get("Color").default_value = (*colorsys.hsv_to_rgb(src_hue + np.random.randn() * 0.1, 1, 1), 1)
+        em.inputs.get("Color").default_value = (
+            *colorsys.hsv_to_rgb(src_hue + np.random.randn() * 0.1, 1, 1),
+            1,
+        )
         new_link(nt, em, "Emission", out_node, "Surface")
 
     else:
@@ -124,7 +129,11 @@ def create_leaf_material(src_hue, glow=False):
         # add2_node.inputs[1].default_value = [.22,.9,.1]
         # loc_mult_node.inputs[1].default_value = 0
         mult_node.inputs[1].default_value = [0.05, 0.4, 0.4]
-        add2_node.inputs[1].default_value = [src_hue + np.random.randn() * 0.05, 0.6, 0.1]
+        add2_node.inputs[1].default_value = [
+            src_hue + np.random.randn() * 0.05,
+            0.6,
+            0.1,
+        ]
         loc_mult_node.inputs[1].default_value = 0  # -.01
         # add2_node.inputs[1].default_value += np.random.randn(3) * .1
 
@@ -171,9 +180,15 @@ def get_tex_nodes(m):
 
         # Link to main node
         bsdf_node = nt.nodes.get("Principled BSDF")
-        nt.links.new(diff_img_node.outputs.get("Color"), bsdf_node.inputs.get("Base Color"))
-        nt.links.new(rough_img_node.outputs.get("Color"), rough_scaling_node.inputs.get("Value"))
-        nt.links.new(rough_scaling_node.outputs.get("Result"), bsdf_node.inputs.get("Roughness"))
+        nt.links.new(
+            diff_img_node.outputs.get("Color"), bsdf_node.inputs.get("Base Color")
+        )
+        nt.links.new(
+            rough_img_node.outputs.get("Color"), rough_scaling_node.inputs.get("Value")
+        )
+        nt.links.new(
+            rough_scaling_node.outputs.get("Result"), bsdf_node.inputs.get("Roughness")
+        )
 
         # Set up nodes for mixing in color
         disp_node = nt.nodes.new("ShaderNodeDisplacement")
@@ -181,7 +196,9 @@ def get_tex_nodes(m):
         disp_node.inputs.get("Scale").default_value = 0.05
         out_node = nt.nodes.get("Material Output")
         nt.links.new(disp_img_node.outputs.get("Color"), disp_node.inputs.get("Height"))
-        nt.links.new(disp_node.outputs.get("Displacement"), out_node.inputs.get("Displacement"))
+        nt.links.new(
+            disp_node.outputs.get("Displacement"), out_node.inputs.get("Displacement")
+        )
 
     return diff_img_node, rough_img_node, disp_img_node
 
@@ -192,7 +209,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
     # Load any images that haven't been loaded already
     img_ref = [tpath.split("/")[-1] for tpath in txt_paths]
     for img_idx, img in enumerate(img_ref):
-        if not img in D.images:
+        if img not in D.images:
             try:
                 D.images.load(txt_paths[img_idx])
             except:
@@ -237,7 +254,10 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
 
         em = nt.nodes.get("Emission")
         em.inputs.get("Strength").default_value = 5
-        em.inputs.get("Color").default_value = (*colorsys.hsv_to_rgb(np.random.rand(), 1, 1), 1)
+        em.inputs.get("Color").default_value = (
+            *colorsys.hsv_to_rgb(np.random.rand(), 1, 1),
+            1,
+        )
 
         noise = nt.nodes.get("Noise Texture")
         noise.inputs.get("Scale").default_value = np.random.uniform(1, 10)

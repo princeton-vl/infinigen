@@ -5,7 +5,6 @@
 # Authors: Alexander Raistrick
 
 import copy
-from pprint import pprint
 
 import pytest
 from test_greedy_substitutions import make_dummy_state
@@ -15,7 +14,11 @@ from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import evaluator
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.example_solver import greedy, propose_discrete, state_def
+from infinigen.core.constraints.example_solver import (
+    greedy,
+    propose_discrete,
+    state_def,
+)
 from infinigen_examples import generate_indoors
 from infinigen_examples import indoor_constraint_examples as ex
 from infinigen_examples.util import constraint_util as cu
@@ -35,12 +38,16 @@ def test_basecase_relevant():
 
 
 def test_partition_collapse_binop():
-    cons = cl.scene()[t.Semantics.Furniture].count().in_range(0, 1) * cl.scene()[t.Semantics.Room].count().in_range(
-        0, 1
-    )
+    cons = cl.scene()[t.Semantics.Furniture].count().in_range(0, 1) * cl.scene()[
+        t.Semantics.Room
+    ].count().in_range(0, 1)
 
-    assert not greedy.filter_constraints(cons.operands[0], r.Domain({t.Semantics.Room}, []))[1]
-    assert greedy.filter_constraints(cons.operands[1], r.Domain({t.Semantics.Room}, []))[1]
+    assert not greedy.filter_constraints(
+        cons.operands[0], r.Domain({t.Semantics.Room}, [])
+    )[1]
+    assert greedy.filter_constraints(
+        cons.operands[1], r.Domain({t.Semantics.Room}, [])
+    )[1]
 
     res, relevant = greedy.filter_constraints(cons, r.Domain({t.Semantics.Room}, []))
     assert relevant
@@ -55,11 +62,18 @@ def test_partition_eliminate_irrelevant():
     scene = cl.scene()
     firstpart = scene[t.Semantics.Furniture].count().in_range(0, 1)
     secondpart = scene[t.Semantics.Furniture].all(
-        lambda f: (scene[t.Semantics.Chair].related_to(f, cl.AnyRelation()).count().in_range(0, 1))
+        lambda f: (
+            scene[t.Semantics.Chair]
+            .related_to(f, cl.AnyRelation())
+            .count()
+            .in_range(0, 1)
+        )
     )
     cons = firstpart * secondpart
 
-    assert not greedy.filter_constraints(secondpart, r.Domain({t.Semantics.Furniture}, []))[1]
+    assert not greedy.filter_constraints(
+        secondpart, r.Domain({t.Semantics.Furniture}, [])
+    )[1]
 
     res, relevant = greedy.filter_constraints(cons, r.Domain({t.Semantics.Furniture}))
     assert relevant
@@ -77,7 +91,9 @@ def test_greedy_partition_bathroom():
     on_floor_any = r.domain_tag_substitute(on_floor, cu.variable_room, r.Domain())
     assert greedy.filter_constraints(bath_cons, on_floor_any)[1]
 
-    on_bathroom = r.domain_tag_substitute(on_floor, cu.variable_room, r.Domain({t.Semantics.Bathroom}))
+    on_bathroom = r.domain_tag_substitute(
+        on_floor, cu.variable_room, r.Domain({t.Semantics.Bathroom})
+    )
     assert greedy.filter_constraints(bath_cons, on_bathroom)[1]
 
 
@@ -86,20 +102,31 @@ def test_greedy_partition_multilevel():
     prob = ex.home_constraints()
     stages = generate_indoors.default_greedy_stages()
 
-    bathroom = cl.scene()[{t.Semantics.Room, t.Semantics.Bathroom}].excludes(cu.room_types)
+    bathroom = cl.scene()[{t.Semantics.Room, t.Semantics.Bathroom}].excludes(
+        cu.room_types
+    )
     storage = cl.scene()[t.Semantics.Storage]
 
     bath_cons_1 = storage.related_to(bathroom, cu.on_floor).count().in_range(0, 1)
 
-    on_hallway = r.domain_tag_substitute(stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Hallway}))
+    on_hallway = r.domain_tag_substitute(
+        stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Hallway})
+    )
     assert not greedy.filter_constraints(bath_cons_1, on_hallway)[1]
 
-    bath_cons_2 = bathroom.all(lambda r: storage.related_to(r, cu.on_floor).count().in_range(0, 1))
+    bath_cons_2 = bathroom.all(
+        lambda r: storage.related_to(r, cu.on_floor).count().in_range(0, 1)
+    )
     assert not greedy.filter_constraints(bath_cons_2, on_hallway)[1]
 
     bath_cons_3 = bathroom.all(
         lambda r: (
-            storage.related_to(r).all(lambda s: cl.scene()[t.Semantics.Object].related_to(s).count().in_range(0, 1))
+            storage.related_to(r).all(
+                lambda s: cl.scene()[t.Semantics.Object]
+                .related_to(s)
+                .count()
+                .in_range(0, 1)
+            )
         )
     )
     assert not greedy.filter_constraints(bath_cons_3, on_hallway)[1]
@@ -112,7 +139,9 @@ def test_greedy_partition_bathroom_nofalsepositive():
 
     bath_cons = prob.constraints["bathroom"]
 
-    on_hallway = r.domain_tag_substitute(stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Hallway}))
+    on_hallway = r.domain_tag_substitute(
+        stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Hallway})
+    )
     assert not greedy.filter_constraints(bath_cons, on_hallway)[1]
 
 
@@ -127,7 +156,9 @@ def test_greedy_partition_plants():
     on_floor_any = r.domain_tag_substitute(on_floor, cu.variable_room, r.Domain())
     assert greedy.filter_constraints(plant_cons, on_floor_any)[1]
 
-    on_bathroom = r.domain_tag_substitute(on_floor, cu.variable_room, r.Domain({t.Semantics.Bathroom}))
+    on_bathroom = r.domain_tag_substitute(
+        on_floor, cu.variable_room, r.Domain({t.Semantics.Bathroom})
+    )
     assert greedy.filter_constraints(plant_cons, on_bathroom)[1]
 
 
@@ -139,7 +170,9 @@ def test_objects_on_generic_obj():
     on_obj = stages["on_obj"]
     on_obj = r.domain_tag_substitute(on_obj, cu.variable_room, r.Domain())
     on_obj = r.domain_tag_substitute(
-        on_obj, cu.variable_obj, r.Domain({t.SpecificObject("thatchair"), t.Semantics.Chair})
+        on_obj,
+        cu.variable_obj,
+        r.Domain({t.SpecificObject("thatchair"), t.Semantics.Chair}),
     )
     print("ON_OBJ_FILTER", on_obj)
 
@@ -147,7 +180,9 @@ def test_objects_on_generic_obj():
     storage = cl.scene()[t.Semantics.Object, t.Semantics.Storage]
     prob = bathroom.all(
         lambda r: storage.related_to(r).all(
-            lambda s: (cl.scene()[t.Semantics.Object].related_to(s).count().in_range(0, 1))
+            lambda s: (
+                cl.scene()[t.Semantics.Object].related_to(s).count().in_range(0, 1)
+            )
         )
     )
 
@@ -161,14 +196,22 @@ def test_on_obj_coverage():
         lambda r: (
             cl.scene()[t.Semantics.Storage]
             .related_to(r)
-            .all(lambda s: (cl.scene()[t.Semantics.Object].related_to(s).count().in_range(0, 1)))
+            .all(
+                lambda s: (
+                    cl.scene()[t.Semantics.Object].related_to(s).count().in_range(0, 1)
+                )
+            )
         )
     )
 
     obj_in_bathroom = r.domain_tag_substitute(
-        generate_indoors.default_greedy_stages()["on_obj"], cu.variable_room, r.Domain({t.Semantics.Bathroom})
+        generate_indoors.default_greedy_stages()["on_obj"],
+        cu.variable_room,
+        r.Domain({t.Semantics.Bathroom}),
     )
-    obj_in_bathroom = r.domain_tag_substitute(obj_in_bathroom, cu.variable_obj, r.Domain({t.Semantics.Storage}))
+    obj_in_bathroom = r.domain_tag_substitute(
+        obj_in_bathroom, cu.variable_obj, r.Domain({t.Semantics.Storage})
+    )
 
     res, relevant = greedy.filter_constraints(cons, obj_in_bathroom)
     assert relevant
@@ -182,13 +225,19 @@ def test_only_bathcons_coverage():
 
     bath_cons = prob.constraints["bathroom"]
 
-    dom = r.domain_tag_substitute(stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Bathroom}))
+    dom = r.domain_tag_substitute(
+        stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.Bathroom})
+    )
     assert greedy.filter_constraints(bath_cons, dom)[1]
 
-    dom = r.domain_tag_substitute(stages["on_wall"], cu.variable_room, r.Domain({t.Semantics.Bathroom}))
+    dom = r.domain_tag_substitute(
+        stages["on_wall"], cu.variable_room, r.Domain({t.Semantics.Bathroom})
+    )
     assert greedy.filter_constraints(bath_cons, dom)[1]
 
-    dom = r.domain_tag_substitute(stages["on_obj"], cu.variable_room, r.Domain({t.Semantics.Bathroom}))
+    dom = r.domain_tag_substitute(
+        stages["on_obj"], cu.variable_room, r.Domain({t.Semantics.Bathroom})
+    )
     dom = r.domain_tag_substitute(dom, cu.variable_obj, r.Domain({t.Semantics.Storage}))
     assert greedy.filter_constraints(bath_cons, dom)[1]
 
@@ -204,10 +253,14 @@ def precompute_all_coverage():
 
     for k, filter in stages.items():
         for roomtype in cu.room_types:
-            room_filter = r.domain_tag_substitute(copy.deepcopy(filter), cu.variable_room, r.Domain({roomtype}))
+            room_filter = r.domain_tag_substitute(
+                copy.deepcopy(filter), cu.variable_room, r.Domain({roomtype})
+            )
 
             # eliminate the var, assume any object is fine, most generous possible assumption
-            room_filter = r.domain_tag_substitute(room_filter, cu.variable_obj, r.Domain())
+            room_filter = r.domain_tag_substitute(
+                room_filter, cu.variable_obj, r.Domain()
+            )
             for name, cons in prob.constraints.items():
                 if greedy.filter_constraints(cons, room_filter)[1]:
                     cons_coverage[name].add((k, roomtype))
@@ -257,7 +310,9 @@ def get_on_diningroom_stage():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
     stages = generate_indoors.default_greedy_stages()
     on_diningroom = r.domain_tag_substitute(
-        stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.DiningRoom, t.Semantics.Room})
+        stages["on_floor"],
+        cu.variable_room,
+        r.Domain({t.Semantics.DiningRoom, t.Semantics.Room}),
     )
     return on_diningroom
 
@@ -286,13 +341,17 @@ def test_greedy_partition_diningroom():
 def test_diningroom_bounds_active():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
     stages = generate_indoors.default_greedy_stages()
-    on_diningroom = r.domain_tag_substitute(stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.DiningRoom}))
+    on_diningroom = r.domain_tag_substitute(
+        stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.DiningRoom})
+    )
 
     prob = ex.home_constraints()
     diningroom = prob.constraints["diningroom"]
 
     bounds_before_preproc = r.constraint_bounds(diningroom)
-    bounds = propose_discrete.preproc_bounds(bounds_before_preproc, state_def.State({}), on_diningroom)
+    bounds = propose_discrete.preproc_bounds(
+        bounds_before_preproc, state_def.State({}), on_diningroom
+    )
 
     assert len(bounds) > 0
 
@@ -312,7 +371,10 @@ def test_multiroom_viol():
     state.objs["room_0"].tags.add(t.Semantics.DiningRoom)
 
     cons = cl.scene()[t.Semantics.Room].all(
-        lambda r: cl.scene()[{t.Semantics.Object, t.Semantics.Storage}].related_to(r, cu.on_floor).count() == 1
+        lambda r: cl.scene()[{t.Semantics.Object, t.Semantics.Storage}]
+        .related_to(r, cu.on_floor)
+        .count()
+        == 1
     )
     prob = cl.Problem({"storage": cons}, {})
 
@@ -324,13 +386,17 @@ def test_multiroom_viol():
     print("OBJS", prob.constraints["storage"].objs)
 
     result = evaluator.evaluate_problem(prob, state)
-    assert result.viol_count() == 1  # only one room is relevant, so only one violation applies for this stage
+    assert (
+        result.viol_count() == 1
+    )  # only one room is relevant, so only one violation applies for this stage
 
     state.objs["stor_1"] = state_def.ObjectState(
         obj=None,
         generator=None,
         tags={t.Semantics.Storage},
-        relations=[state_def.RelationState(relation=cl.StableAgainst(), target_name="room_0")],
+        relations=[
+            state_def.RelationState(relation=cl.StableAgainst(), target_name="room_0")
+        ],
     )
 
     result = evaluator.evaluate_problem(prob, state)
@@ -400,7 +466,9 @@ def test_forall_narrow_loopvar():
     furn_room = furn.with_relation(cl.AnyRelation(), droom)
     furn_no_room = furn.with_relation(-cl.AnyRelation(), droom)
 
-    cons_narrow = r.FilterByDomain(rooms, droom).all(lambda r: furniture.related_to(r).count().in_range(0, 1))
+    cons_narrow = r.FilterByDomain(rooms, droom).all(
+        lambda r: furniture.related_to(r).count().in_range(0, 1)
+    )
 
     res, rel = greedy.filter_constraints(cons, furn)
     print(res)

@@ -5,7 +5,6 @@
 
 
 import bpy
-import mathutils
 import numpy as np
 from numpy.random import normal, randint, uniform
 
@@ -20,7 +19,9 @@ from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 
 
-@node_utils.to_nodegroup("nodegroup_leafon_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_leafon_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_leaf_on_stem(
     nw: NodeWrangler,
     z_rotation=(
@@ -33,16 +34,22 @@ def nodegroup_leaf_on_stem(
 ):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Points", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Points", None)]
+    )
 
-    endpoint_selection = nw.new_node("GeometryNodeCurveEndpointSelection", input_kwargs={"Start Size": 0})
+    endpoint_selection = nw.new_node(
+        "GeometryNodeCurveEndpointSelection", input_kwargs={"Start Size": 0}
+    )
 
     object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": leaf})
 
     curve_tangent = nw.new_node(Nodes.CurveTangent)
 
     align_euler_to_vector = nw.new_node(
-        Nodes.AlignEulerToVector, input_kwargs={"Vector": curve_tangent}, attrs={"axis": "Z"}
+        Nodes.AlignEulerToVector,
+        input_kwargs={"Vector": curve_tangent},
+        attrs={"axis": "Z"},
     )
 
     value = nw.new_node(Nodes.Value)
@@ -63,35 +70,57 @@ def nodegroup_leaf_on_stem(
     vector_1.vector = z_rotation
 
     rotate_instances = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": instance_on_points, "Rotation": vector_1}
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": instance_on_points, "Rotation": vector_1},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Instances": rotate_instances})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Instances": rotate_instances}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_stem_geometry", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_stem_geometry", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_stem_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Curve", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Curve", None)]
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: 1.0, 4: 0.4})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: 1.0, 4: 0.4},
+    )
 
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": group_input.outputs["Curve"], "Radius": map_range.outputs["Result"]},
+        input_kwargs={
+            "Curve": group_input.outputs["Curve"],
+            "Radius": map_range.outputs["Result"],
+        },
     )
 
-    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": 12, "Radius": 0.03})
+    curve_circle = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Resolution": 12, "Radius": 0.03}
+    )
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": tag_nodegroup(nw, curve_to_mesh, "stem")})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Mesh": tag_nodegroup(nw, curve_to_mesh, "stem")},
+    )
 
 
 def geo_face_colors(nw: NodeWrangler, **kwargs):
@@ -113,26 +142,45 @@ def geo_face_colors(nw: NodeWrangler, **kwargs):
 
     quadratic_bezier = nw.new_node(
         Nodes.QuadraticBezier,
-        input_kwargs={"Resolution": 25, "Start": (0.0, 0.0, 0.0), "Middle": vector_2, "End": vector},
+        input_kwargs={
+            "Resolution": 25,
+            "Start": (0.0, 0.0, 0.0),
+            "Middle": vector_2,
+            "End": vector,
+        },
     )
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 1.0, "Roughness": 0.2})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Scale": 1.0, "Roughness": 0.2}
+    )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: noise_texture.outputs["Fac"], 1: (-0.5, -0.5, -0.5)})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: (-0.5, -0.5, -0.5)},
+    )
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
 
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: add.outputs["Vector"], 1: spline_parameter_1.outputs["Factor"]},
+        input_kwargs={
+            0: add.outputs["Vector"],
+            1: spline_parameter_1.outputs["Factor"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": quadratic_bezier, "Offset": multiply.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": quadratic_bezier,
+            "Offset": multiply.outputs["Vector"],
+        },
     )
 
-    stemgeometry = nw.new_node(nodegroup_stem_geometry().name, input_kwargs={"Curve": set_position})
+    stemgeometry = nw.new_node(
+        nodegroup_stem_geometry().name, input_kwargs={"Curve": set_position}
+    )
 
     leaf_scale = uniform(0.15, 0.35, size=(1,))[0] * kwargs["leaf_scale"]
     leaves = []
@@ -140,21 +188,29 @@ def geo_face_colors(nw: NodeWrangler, **kwargs):
     for _ in range(leaf_num):
         leaves.append(
             nw.new_node(
-                nodegroup_leaf_on_stem(z_rotation=(0, 0, rotation), leaf_scale=leaf_scale, leaf=leaf).name,
+                nodegroup_leaf_on_stem(
+                    z_rotation=(0, 0, rotation), leaf_scale=leaf_scale, leaf=leaf
+                ).name,
                 input_kwargs={"Points": set_position},
             )
         )
         rotation += 6.28 / leaf_num
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": leaves + [stemgeometry]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": leaves + [stemgeometry]}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry}
+    )
 
     colored = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": realize_instances,
-            "Material": surface.shaderfunc_to_material(simple_greenery.shader_simple_greenery),
+            "Material": surface.shaderfunc_to_material(
+                simple_greenery.shader_simple_greenery
+            ),
         },
     )
 
@@ -169,7 +225,11 @@ class NumLeafGrassFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -178,19 +238,22 @@ class NumLeafGrassFactory(AssetFactory):
         z_offset = normal(0, 0.05, size=(1,))[0]
         if leaf_num == 2:
             leaf_model = LeafFactory(
-                genome={"leaf_width": 0.95, "width_rand": 0.1, "z_scaling": z_offset}, factory_seed=lf_seed
+                genome={"leaf_width": 0.95, "width_rand": 0.1, "z_scaling": z_offset},
+                factory_seed=lf_seed,
             )
             leaf = leaf_model.create_asset()
             params["leaf_scale"] = 2.0
         elif leaf_num == 3:
             leaf_model = LeafHeartFactory(
-                genome={"leaf_width": 1.1, "width_rand": 0.05, "z_scaling": z_offset}, factory_seed=lf_seed
+                genome={"leaf_width": 1.1, "width_rand": 0.05, "z_scaling": z_offset},
+                factory_seed=lf_seed,
             )
             leaf = leaf_model.create_asset()
             params["leaf_scale"] = 1.0
         else:
             leaf_model = LeafHeartFactory(
-                genome={"leaf_width": 0.85, "width_rand": 0.05, "z_scaling": z_offset}, factory_seed=lf_seed
+                genome={"leaf_width": 0.85, "width_rand": 0.05, "z_scaling": z_offset},
+                factory_seed=lf_seed,
             )
             leaf = leaf_model.create_asset()
             params["leaf_scale"] = 1.0
@@ -199,7 +262,9 @@ class NumLeafGrassFactory(AssetFactory):
         params["leaf_num"] = leaf_num
         params["stem_rotation"] = 0.15
 
-        surface.add_geomod(obj, geo_face_colors, apply=True, attributes=[], input_kwargs=params)
+        surface.add_geomod(
+            obj, geo_face_colors, apply=True, attributes=[], input_kwargs=params
+        )
         butil.delete([leaf])
         with butil.SelectObjects(obj):
             bpy.ops.object.material_slot_remove()

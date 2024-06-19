@@ -4,7 +4,6 @@
 # Authors: Lingjie Mei
 
 import bmesh
-import bpy
 import numpy as np
 from numpy.random import uniform
 
@@ -14,7 +13,7 @@ from infinigen.assets.utils.draw import bezier_curve, leaf
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import join_objects, origin2lowest
 from infinigen.core import surface
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -51,8 +50,12 @@ class BananaMonocotFactory(MonocotGrowthFactory):
         positive_coords = positive_coords[np.argsort(positive_coords[:, 0])]
         negative_coords = coords[coords.T[1] < 0]
         negative_coords = negative_coords[np.argsort(negative_coords[:, 0])]
-        positive_coords = positive_coords[np.random.choice(len(positive_coords), self.n_cuts, replace=False)]
-        negative_coords = negative_coords[np.random.choice(len(negative_coords), self.n_cuts, replace=False)]
+        positive_coords = positive_coords[
+            np.random.choice(len(positive_coords), self.n_cuts, replace=False)
+        ]
+        negative_coords = negative_coords[
+            np.random.choice(len(negative_coords), self.n_cuts, replace=False)
+        ]
 
         for (x1, y1, _), (x2, y2, _) in zip(
             np.concatenate([positive_coords[:-1], negative_coords[:-1]], 0),
@@ -66,8 +69,18 @@ class BananaMonocotFactory(MonocotGrowthFactory):
                 m1 = x1 * np.sin(self.cut_angle) - y1 * np.cos(self.cut_angle) * coeff
                 m2 = x2 * np.sin(self.cut_angle) - y2 * np.cos(self.cut_angle) * coeff
                 m = x * np.sin(self.cut_angle) - y * np.cos(self.cut_angle) * coeff
-                dist = ((x - x1) * (y1 - y2) + (y - y1) * (x1 - x2)) / np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + 0.1)
-                return 0, 0, np.where((m1 < m) & (m < m2) & (dist * coeff < 0), ratio * np.abs(dist) ** exponent, 0)
+                dist = ((x - x1) * (y1 - y2) + (y - y1) * (x1 - x2)) / np.sqrt(
+                    (x1 - x2) ** 2 + (y1 - y2) ** 2 + 0.1
+                )
+                return (
+                    0,
+                    0,
+                    np.where(
+                        (m1 < m) & (m < m2) & (dist * coeff < 0),
+                        ratio * np.abs(dist) ** exponent,
+                        0,
+                    ),
+                )
 
             displace_vertices(obj, cut)
         with butil.ViewportMode(obj, "EDIT"):
@@ -89,14 +102,21 @@ class BananaMonocotFactory(MonocotGrowthFactory):
     def displace_veins(self, obj):
         vg = obj.vertex_groups.new(name="distance")
         x, y, z = read_co(obj).T
-        branch = np.cos((np.abs(y) * np.cos(self.cut_angle) - x * np.sin(self.cut_angle)) * self.freq) > uniform(
-            0.85, 0.9, len(x)
-        )
+        branch = np.cos(
+            (np.abs(y) * np.cos(self.cut_angle) - x * np.sin(self.cut_angle))
+            * self.freq
+        ) > uniform(0.85, 0.9, len(x))
         leaf = np.abs(y) < uniform(0.002, 0.008, len(x))
         weights = branch | leaf
         for i, l in enumerate(weights):
             vg.add([i], l, "REPLACE")
-        butil.modify_mesh(obj, "DISPLACE", strength=-uniform(5e-3, 8e-3), mid_level=0, vertex_group="distance")
+        butil.modify_mesh(
+            obj,
+            "DISPLACE",
+            strength=-uniform(5e-3, 8e-3),
+            mid_level=0,
+            vertex_group="distance",
+        )
 
 
 class TaroMonocotFactory(BananaMonocotFactory):
@@ -118,16 +138,30 @@ class TaroMonocotFactory(BananaMonocotFactory):
         x, y, z = read_co(obj).T
         branch = np.cos(
             uniform(0, np.pi * 2)
-            + np.arctan2(y - np.where(y > 0, -1, 1) * uniform(0.1, 0.2), x - uniform(0.1, 0.4)) * self.freq
+            + np.arctan2(
+                y - np.where(y > 0, -1, 1) * uniform(0.1, 0.2), x - uniform(0.1, 0.4)
+            )
+            * self.freq
         ) > uniform(0.98, 0.99, len(x))
         leaf = np.abs(y) < uniform(0.002, 0.008, len(x))
         weights = branch | leaf
         for i, l in enumerate(weights):
             vg.add([i], l, "REPLACE")
-        butil.modify_mesh(obj, "DISPLACE", strength=-uniform(5e-3, 8e-3), mid_level=0, vertex_group="distance")
+        butil.modify_mesh(
+            obj,
+            "DISPLACE",
+            strength=-uniform(5e-3, 8e-3),
+            mid_level=0,
+            vertex_group="distance",
+        )
 
     def build_leaf(self, face_size):
-        x_anchors = 0, 0.2 * np.cos(self.bud_angle), uniform(0.4, 1.0), uniform(0.8, 1.0)
+        x_anchors = (
+            0,
+            0.2 * np.cos(self.bud_angle),
+            uniform(0.4, 1.0),
+            uniform(0.8, 1.0),
+        )
         y_anchors = 0, 0.2 * np.sin(self.bud_angle), uniform(0.25, 0.3), 0
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
         self.cut_leaf(obj)
@@ -145,7 +179,9 @@ class TaroMonocotFactory(BananaMonocotFactory):
         x_anchors = 0, -0.05, -offset - uniform(0.01, 0.02), -offset
         z_anchors = 0, 0, -length + 0.1, -length
         bezier = bezier_curve([x_anchors, 0, z_anchors])
-        surface.add_geomod(bezier, geo_radius, apply=True, input_args=[uniform(0.02, 0.03), 32])
+        surface.add_geomod(
+            bezier, geo_radius, apply=True, input_args=[uniform(0.02, 0.03), 32]
+        )
         return bezier
 
     def build_instance(self, i, face_size):

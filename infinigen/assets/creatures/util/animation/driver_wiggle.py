@@ -5,19 +5,11 @@
 
 
 import logging
-import pdb
 
 import bpy
-import bpy_types
-import mathutils
 import numpy as np
-from numpy.random import normal as N
-from numpy.random import uniform as U
 
-from infinigen.assets.creatures.util import creature
-from infinigen.assets.creatures.util import creature_util as cutil
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian, lerp, randomspacing
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +27,9 @@ def remove_ik_constraints(bones):
             b.constraints.remove(c)
 
 
-def animate_wiggle_bones(arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True):
+def animate_wiggle_bones(
+    arma, bones, mag_deg, freq, off=0, wavelength=1, remove_iks=True
+):
     """
     mag_deg = sum of magnitudes across al bones
     freq = flaps per second

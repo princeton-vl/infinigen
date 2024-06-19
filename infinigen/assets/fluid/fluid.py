@@ -5,23 +5,31 @@
 
 import logging
 import os
-import sys
-from itertools import chain
 from pathlib import Path
 
 import bpy
 import gin
 import numpy as np
 from mathutils import Vector
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets.fluid import duplication_geomod
-from infinigen.assets.materials import blackbody_shader, lava, smoke_material, water, waterfall_material
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, infer_input_socket, infer_output_socket
+from infinigen.assets.materials import (
+    blackbody_shader,
+    lava,
+    smoke_material,
+    water,
+    waterfall_material,
+)
+from infinigen.core.nodes.node_wrangler import (
+    Nodes,
+    NodeWrangler,
+    infer_input_socket,
+    infer_output_socket,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.logging import Timer
-from infinigen.core.util.math import clip_gaussian
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +72,9 @@ def create_spray_particles(num_particles=7):
 
         mean_size = 0.13
         size = np.random.uniform(mean_size - 0.05, mean_size + 0.05)
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, scale=(size, size, size), rotation=rot, location=loc)
+        bpy.ops.mesh.primitive_ico_sphere_add(
+            subdivisions=1, scale=(size, size, size), rotation=rot, location=loc
+        )
         objs.append(bpy.context.object)
 
     return butil.group_in_collection(objs, "spray_particles")
@@ -98,10 +108,14 @@ def create_liquid_domain(
     settings.use_diffusion = True
     if output_folder:
         cache_folder = os.path.join(output_folder, "cache")
-        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        settings.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
     else:
         cache_folder = os.path.join(os.getcwd(), "cache")
-        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        settings.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
     settings.cache_frame_end = start_frame + simulation_duration
     settings.cache_frame_start = start_frame
 
@@ -283,10 +297,14 @@ def set_gas_domain_settings(
     settings.cache_frame_start = start_frame
     if output_folder:
         cache_folder = os.path.join(output_folder, "cache")
-        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        settings.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
     else:
         cache_folder = os.path.join(os.getcwd(), "cache")
-        settings.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        settings.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
 
     settings.use_collision_border_back = False
     settings.use_collision_border_bottom = False
@@ -433,7 +451,9 @@ def decimate_and_realize_instances(instance_obj, parent_col):
         # crashes the normal way of writing this, no idea why
         for i in range(len(objs_to_copy)):
             obj = objs_to_copy[i]
-            copied_objs.append(deep_clone_obj(obj, keep_modifiers=True, keep_materials=True))
+            copied_objs.append(
+                deep_clone_obj(obj, keep_modifiers=True, keep_materials=True)
+            )
 
         parent_col_copy = butil.group_in_collection(copied_objs, "cloned_parent_col")
 
@@ -452,7 +472,9 @@ def decimate_and_realize_instances(instance_obj, parent_col):
 
     with Timer("Copying Instance"):
         # copy instance
-        instance_obj_clone = deep_clone_obj(instance_obj, keep_modifiers=True, keep_materials=True)
+        instance_obj_clone = deep_clone_obj(
+            instance_obj, keep_modifiers=True, keep_materials=True
+        )
         bpy.context.collection.objects.unlink(instance_obj_clone)
         bpy.data.scenes["Scene"].collection.objects.link(instance_obj_clone)
         # not very general, works on trees
@@ -677,7 +699,9 @@ def generate_waterfall(
 
     make_liquid_effector(terrain)
 
-    obj = create_liquid_flow(location=(0, 2.4, 6.5), fluid_type=fluid_type, size=0.5, flow_behavior="INFLOW")
+    obj = create_liquid_flow(
+        location=(0, 2.4, 6.5), fluid_type=fluid_type, size=0.5, flow_behavior="INFLOW"
+    )
     dom = create_liquid_domain(
         location=(0, 0, 4),
         fluid_type=fluid_type,
@@ -686,7 +710,9 @@ def generate_waterfall(
         cache_frame_end=simulation_duration,
     )
     if fluid_type == "lava":
-        set_fluid_to_smoke(dom, start_frame, resolution=300, simulation_duration=simulation_duration)
+        set_fluid_to_smoke(
+            dom, start_frame, resolution=300, simulation_duration=simulation_duration
+        )
 
     bpy.ops.fluid.bake_all()
     bpy.ops.wm.save_mainfile(filepath=output_folder)
@@ -734,7 +760,9 @@ def find_root(node):
 
 
 @gin.configurable
-def set_fire_to_assets(assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1):
+def set_fire_to_assets(
+    assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1
+):
     check_initalize_fluids()
 
     if len(assets) == 0:
@@ -806,7 +834,9 @@ def estimate_smoke_domain(obj, start_frame, simulation_duration):
 
 
 @gin.configurable
-def estimate_liquid_domain(location, start_frame, simulation_duration, fluid_type="water"):
+def estimate_liquid_domain(
+    location, start_frame, simulation_duration, fluid_type="water"
+):
     check_initalize_fluids()
 
     source = create_liquid_flow(
@@ -862,7 +892,9 @@ def fire_smoke_ground_truth(domain):
     bpy.context.view_layer.update()
     translation = domain.matrix_world @ Vector(domain.bound_box[0])
     # assumes modifier name
-    cache_dir = bpy.path.abspath(domain.modifiers["Fluid"].domain_settings.cache_directory)
+    cache_dir = bpy.path.abspath(
+        domain.modifiers["Fluid"].domain_settings.cache_directory
+    )
     data_dir = os.path.join(cache_dir, "data")
     contents = [f for f in os.listdir(data_dir)]
     filepath = os.path.join(data_dir, contents[0])

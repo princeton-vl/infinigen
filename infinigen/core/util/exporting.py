@@ -51,7 +51,9 @@ def get_curve_data(obj):
     points_length = np.full(len(curves), -1, dtype=np.int32)
     curves.foreach_get("points_length", points_length)
     points_length = np.unique(points_length)
-    assert (points_length.size == 0) or (points_length.size == 1 and points_length[0] == 5), np.unique(points_length)
+    assert (points_length.size == 0) or (
+        points_length.size == 1 and points_length[0] == 5
+    ), np.unique(points_length)
     vertices = np.full((len(points) * 3), np.nan, dtype=np.float32)
     points.foreach_get("position", vertices)
     vertices = vertices.reshape(-1, 3)
@@ -62,7 +64,8 @@ def get_curve_data(obj):
     return vertices, radii
 
 
-valid_int32 = lambda x: (-(2**31) <= x < 2**31)
+def valid_int32(x):
+    return -(2**31) <= x < 2**31
 
 
 # See https://projects.blender.org/blender/blender/issues/60881 for logic
@@ -103,7 +106,9 @@ def get_all_instances():
                 )
             vertex_info[obj.data]["matrices"].append(mat)
             vertex_info[obj.data]["instance_ids"].append(get_id(deps_instance))
-    return chain.from_iterable(((v["vertex_lookup"].shape[0], v["name"]), v) for v in vertex_info.values())
+    return chain.from_iterable(
+        ((v["vertex_lookup"].shape[0], v["name"]), v) for v in vertex_info.values()
+    )
 
 
 def get_all_non_instances():
@@ -113,7 +118,9 @@ def get_all_non_instances():
         pbar.set_description(f"Finding Non-Instances: {obj.name[:20].ljust(20)}")
         mat = np.asarray(deps_instance.matrix_world, dtype=np.float32).copy()[None]
         if obj.type == "MESH":
-            if (not deps_instance.is_instance) and ("PARTICLE_SYSTEM" not in {m.type for m in obj.modifiers}):
+            if (not deps_instance.is_instance) and (
+                "PARTICLE_SYSTEM" not in {m.type for m in obj.modifiers}
+            ):
                 yield (len(obj.data.vertices), obj.name)
                 vert_lookup, indices, loop_totals, masktag = get_mesh_data(obj)
                 yield dict(
@@ -184,7 +191,9 @@ def get_mesh_id_if_cached(name, num_verts, current_ids, previous_frame_mapping):
 
 
 @gin.configurable
-def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping):
+def save_obj_and_instances(
+    output_folder, previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping
+):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
     for atm_name in ["atmosphere", "atmosphere_fine", "KoleClouds"]:
@@ -208,12 +217,16 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
     object_names_mapping = {}
     for item in chain(instance_mesh_data, singleton_mesh_data):
         if isinstance(item, tuple):
-            current_obj_num_verts, object_name = item  # Sometimes current_obj_num_verts will be 0. This is fine.
+            current_obj_num_verts, object_name = (
+                item  # Sometimes current_obj_num_verts will be 0. This is fine.
+            )
             if object_name not in object_names_mapping:
                 object_names_mapping[object_name] = len(object_names_mapping) + 1
 
             # Flush the .npz to avoid OOM
-            if (len(npz_data) > 0) and ((running_total_verts + current_obj_num_verts) >= MAX_NUM_VERTS):
+            if (len(npz_data) > 0) and (
+                (running_total_verts + current_obj_num_verts) >= MAX_NUM_VERTS
+            ):
                 np.savez(filename, **npz_data)
                 print(f"Saving to {filename}")
                 npz_data.clear()
@@ -222,18 +235,25 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
                 filename = output_folder / f"saved_mesh_{npz_number:04d}.npz"
 
             if current_obj_num_verts > MAX_NUM_VERTS:
-                print(f"WARNING: Object {object_name} is very large, with {current_obj_num_verts} vertices.")
+                print(
+                    f"WARNING: Object {object_name} is very large, with {current_obj_num_verts} vertices."
+                )
 
         else:
             is_instance = item["is_instance"]
             if is_instance:
                 instance_ids_set = frozenset(item["instance_ids"])
                 mesh_id = get_mesh_id_if_cached(
-                    object_name, current_obj_num_verts, instance_ids_set, previous_frame_mesh_id_mapping
+                    object_name,
+                    current_obj_num_verts,
+                    instance_ids_set,
+                    previous_frame_mesh_id_mapping,
                 )
                 if mesh_id is None:
                     mesh_id = uuid4().hex[:12]
-                current_frame_mesh_id_mapping[object_name][(current_obj_num_verts, instance_ids_set)] = mesh_id
+                current_frame_mesh_id_mapping[object_name][
+                    (current_obj_num_verts, instance_ids_set)
+                ] = mesh_id
             else:
                 mesh_id = str(hex(int_hash(object_name)))[:12]
 
@@ -248,7 +268,9 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             matrices = np.asarray(item["matrices"], dtype=np.float32)
             npz_data[f"{mesh_id}_transformations"] = matrices
             instance_ids_array = np.asarray(item["instance_ids"], dtype=np.int32)
-            assert np.unique(instance_ids_array, axis=0).shape == instance_ids_array.shape
+            assert (
+                np.unique(instance_ids_array, axis=0).shape == instance_ids_array.shape
+            )
             assert instance_ids_array.shape[1] == 3
             npz_data[f"{mesh_id}_instance_ids"] = instance_ids_array
             obj = bpy.data.objects[object_name]
@@ -269,13 +291,21 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
                 json_val["unapplied_modifiers"] = obj.modifiers.keys()
             if not is_instance:
                 non_aa_bbox = np.asarray(
-                    [(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box], dtype=np.float32
+                    [(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box],
+                    dtype=np.float32,
                 )
                 json_val["instance_bbox"] = calc_aa_bbox(non_aa_bbox).tolist()
                 # Todo add chain up parents
             else:
-                combined_bbox, instance_bbox = calc_instance_bbox(matrices, item["vertex_lookup"])
-                json_val.update({"bbox": combined_bbox.tolist(), "instance_bbox": instance_bbox.tolist()})
+                combined_bbox, instance_bbox = calc_instance_bbox(
+                    matrices, item["vertex_lookup"]
+                )
+                json_val.update(
+                    {
+                        "bbox": combined_bbox.tolist(),
+                        "instance_bbox": instance_bbox.tolist(),
+                    }
+                )
             for child_obj in obj.children:
                 if child_obj.name not in object_names_mapping:
                     object_names_mapping[child_obj.name] = len(object_names_mapping) + 1
@@ -292,7 +322,9 @@ def save_obj_and_instances(output_folder, previous_frame_mesh_id_mapping, curren
             object_name = obj.name
             if object_name not in object_names_mapping:
                 object_names_mapping[object_name] = len(object_names_mapping) + 1
-            non_aa_bbox = np.asarray([(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box])
+            non_aa_bbox = np.asarray(
+                [(obj.matrix_world @ mathutils.Vector(v)) for v in obj.bound_box]
+            )
             json_val = {
                 "object_name": object_name,
                 "object_type": obj.type,

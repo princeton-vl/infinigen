@@ -3,12 +3,10 @@
 
 # Authors: Alexander Raistrick, Stamatis Alexandropolous, Yiming Zuo
 
-import random
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import choice, normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.core import surface, tagging
@@ -18,10 +16,12 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import clip_gaussian, log_uniform
+from infinigen.core.util.random import clip_gaussian
 
 
-@node_utils.to_nodegroup("nodegroup_array_fill_line", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_array_fill_line", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_array_fill_line(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -38,17 +38,27 @@ def nodegroup_array_fill_line(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Instance Dimensions"], 1: (0.0000, -0.5000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Instance Dimensions"],
+            1: (0.0000, -0.5000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: group_input.outputs["Line End"], 1: multiply.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: group_input.outputs["Line End"],
+            1: multiply.outputs["Vector"],
+        },
     )
 
     subtract = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Line Start"], 1: multiply.outputs["Vector"]},
+        input_kwargs={
+            0: group_input.outputs["Line Start"],
+            1: multiply.outputs["Vector"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -63,17 +73,24 @@ def nodegroup_array_fill_line(nw: NodeWrangler):
     )
 
     instance_on_points_1 = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": mesh_line, "Instance": group_input.outputs["Instance"]}
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": mesh_line, "Instance": group_input.outputs["Instance"]},
     )
 
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances_1}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": realize_instances_1},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_corner_cube", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_corner_cube", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_corner_cube(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -121,17 +138,27 @@ def nodegroup_corner_cube(nw: NodeWrangler):
     )
 
     transform_geometry = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": multiply_add.outputs["Vector"]}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cube.outputs["Mesh"],
+            "Translation": multiply_add.outputs["Vector"],
+        },
     )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry, "Name": "UVMap", 3: cube.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": transform_geometry,
+            "Name": "UVMap",
+            3: cube.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": store_named_attribute},
+        attrs={"is_active_output": True},
     )
 
 
@@ -140,7 +167,9 @@ ARM_TYPE_ROUND = 1
 ARM_TYPE_ANGULAR = 2
 
 
-@node_utils.to_nodegroup("nodegroup_sofa_geometry", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_sofa_geometry", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_sofa_geometry(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -175,11 +204,16 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Dimensions"], 1: (0.0000, 0.5000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Dimensions"],
+            1: (0.0000, 0.5000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Arm Dimensions"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Arm Dimensions"]}
+    )
 
     arm_cube = nw.new_node(
         nodegroup_corner_cube().name,
@@ -213,14 +247,25 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     float_curve = nw.new_node(
         Nodes.FloatCurve,
-        input_kwargs={"Factor": group_input.outputs["arm_width"], "Value": map_range.outputs["Result"]},
+        input_kwargs={
+            "Factor": group_input.outputs["arm_width"],
+            "Value": map_range.outputs["Result"],
+        },
     )
     node_utils.assign_curve(
         float_curve.mapping.curves[0],
-        [(0.0092, 0.7688), (0.1011, 0.5937), (0.1494, 0.4062), (0.3954, 0.0781), (1.0000, 0.2187)],
+        [
+            (0.0092, 0.7688),
+            (0.1011, 0.5937),
+            (0.1494, 0.4062),
+            (0.3954, 0.0781),
+            (1.0000, 0.2187),
+        ],
     )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]}
+    )
 
     subtract = nw.new_node(
         Nodes.Math,
@@ -228,26 +273,44 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: subtract}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: subtract},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
-    separate_xyz_14 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_1})
+    separate_xyz_14 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": position_1}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_xyz_14.outputs["X"], 1: -1.0000, 2: 0.6000, 3: 2.1000, 4: -1.1000},
+        input_kwargs={
+            "Value": separate_xyz_14.outputs["X"],
+            1: -1.0000,
+            2: 0.6000,
+            3: 2.1000,
+            4: -1.1000,
+        },
     )
 
     float_curve_1 = nw.new_node(
         Nodes.FloatCurve,
-        input_kwargs={"Factor": group_input.outputs["Arm_height"], "Value": map_range_1.outputs["Result"]},
+        input_kwargs={
+            "Factor": group_input.outputs["Arm_height"],
+            "Value": map_range_1.outputs["Result"],
+        },
     )
     node_utils.assign_curve(
-        float_curve_1.mapping.curves[0], [(0.1341, 0.2094), (0.7386, 1.0000), (0.9682, 0.0781), (1.0000, 0.0000)]
+        float_curve_1.mapping.curves[0],
+        [(0.1341, 0.2094), (0.7386, 1.0000), (0.9682, 0.0781), (1.0000, 0.0000)],
     )
 
-    separate_xyz_15 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": (-2.9000, 3.3000, 0.0000)})
+    separate_xyz_15 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": (-2.9000, 3.3000, 0.0000)}
+    )
 
     subtract_1 = nw.new_node(
         Nodes.Math,
@@ -256,10 +319,14 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: float_curve_1, 1: subtract_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: float_curve_1, 1: subtract_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_1, "Z": multiply_2})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_1, "Z": multiply_2}
+    )
 
     vector_rotate = nw.new_node(
         Nodes.VectorRotate,
@@ -270,15 +337,23 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": reroute_1, "Offset": vector_rotate})
+    set_position = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": reroute_1, "Offset": vector_rotate}
+    )
 
     multiply_3 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Dimensions"], 1: (0.0000, 0.5000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Dimensions"],
+            1: (0.0000, 0.5000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Arm Dimensions"]})
+    separate_xyz_3 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Arm Dimensions"]},
+    )
 
     subtract_2 = nw.new_node(
         Nodes.Math,
@@ -288,7 +363,11 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     combine_xyz_1 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": separate_xyz_3.outputs["X"], "Y": separate_xyz_3.outputs["Y"], "Z": subtract_2},
+        input_kwargs={
+            "X": separate_xyz_3.outputs["X"],
+            "Y": separate_xyz_3.outputs["Y"],
+            "Z": subtract_2,
+        },
     )
 
     reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_1})
@@ -306,42 +385,71 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     separate_xyz_4 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": reroute_2})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_4.outputs["X"], 1: 1.0001}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_4.outputs["X"], 1: 1.0001},
+        attrs={"operation": "MULTIPLY"},
     )
 
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_4})
 
     arm_cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Side Segments": 4, "Radius": separate_xyz_4.outputs["Y"], "Depth": reroute_3},
+        input_kwargs={
+            "Side Segments": 4,
+            "Radius": separate_xyz_4.outputs["Y"],
+            "Depth": reroute_3,
+        },
         attrs={"fill_type": "TRIANGLE_FAN"},
     )
 
     arm_cylinder = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": arm_cylinder.outputs["Mesh"], "Name": "UVMap", 3: arm_cylinder.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": arm_cylinder.outputs["Mesh"],
+            "Name": "UVMap",
+            3: arm_cylinder.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: reroute_3, 1: 2.0000}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_3, 1: 2.0000},
+        attrs={"operation": "DIVIDE"},
+    )
 
-    separate_xyz_5 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_3.outputs["Vector"]})
+    separate_xyz_5 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_3.outputs["Vector"]}
+    )
 
     combine_xyz_2 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": divide, "Y": separate_xyz_5.outputs["Y"], "Z": separate_xyz_4.outputs["Z"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": divide,
+            "Y": separate_xyz_5.outputs["Y"],
+            "Z": separate_xyz_4.outputs["Z"],
+        },
     )
 
     arm_cylinder = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": arm_cylinder, "Translation": combine_xyz_2, "Rotation": (0.0000, 1.5708, 0.0000)},
+        input_kwargs={
+            "Geometry": arm_cylinder,
+            "Translation": combine_xyz_2,
+            "Rotation": (0.0000, 1.5708, 0.0000),
+        },
     )
 
-    roundtop = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [arm_cube_1, arm_cylinder]})
+    roundtop = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [arm_cube_1, arm_cylinder]}
+    )
 
     square_or_round = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": nw.compare("EQUAL", group_input.outputs["Arm Type"], ARM_TYPE_SQUARE),
+            "Switch": nw.compare(
+                "EQUAL", group_input.outputs["Arm Type"], ARM_TYPE_SQUARE
+            ),
             "False": roundtop,
             "True": arm_cube_1,
         },
@@ -350,35 +458,62 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     angular_or_squareround = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": nw.compare("EQUAL", group_input.outputs["Arm Type"], ARM_TYPE_ANGULAR),
+            "Switch": nw.compare(
+                "EQUAL", group_input.outputs["Arm Type"], ARM_TYPE_ANGULAR
+            ),
             "False": square_or_round,
             "True": set_position,
         },
     )
 
     transform_geometry_1 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": angular_or_squareround, "Scale": (1.0000, -1.0000, 1.0000)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": angular_or_squareround,
+            "Scale": (1.0000, -1.0000, 1.0000),
+        },
     )
 
-    flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": transform_geometry_1})
+    flip_faces = nw.new_node(
+        Nodes.FlipFaces, input_kwargs={"Mesh": transform_geometry_1}
+    )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [flip_faces, angular_or_squareround]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [flip_faces, angular_or_squareround]},
+    )
 
-    separate_xyz_6 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Back Dimensions"]})
+    separate_xyz_6 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Back Dimensions"]},
+    )
 
-    separate_xyz_7 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Arm Dimensions"]})
+    separate_xyz_7 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Arm Dimensions"]},
+    )
 
-    separate_xyz_8 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Dimensions"]})
+    separate_xyz_8 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Dimensions"]}
+    )
 
     multiply_add = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: separate_xyz_7.outputs["Y"], 1: -2.0000, 2: separate_xyz_8.outputs["Y"]},
+        input_kwargs={
+            0: separate_xyz_7.outputs["Y"],
+            1: -2.0000,
+            2: separate_xyz_8.outputs["Y"],
+        },
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
     combine_xyz_3 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": separate_xyz_6.outputs["X"], "Y": multiply_add, "Z": separate_xyz_6.outputs["Z"]},
+        input_kwargs={
+            "X": separate_xyz_6.outputs["X"],
+            "Y": multiply_add,
+            "Z": separate_xyz_6.outputs["Z"],
+        },
     )
 
     back_board = nw.new_node(
@@ -393,10 +528,14 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         label="BackBoard",
     )
 
-    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_2, back_board]})
+    join_geometry_3 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_2, back_board]}
+    )
 
     multiply_5 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz_3, 1: (1.0000, 0.0000, 0.0000)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_3, 1: (1.0000, 0.0000, 0.0000)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_add_1 = nw.new_node(
@@ -419,7 +558,9 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    separate_xyz_9 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_add_2.outputs["Vector"]})
+    separate_xyz_9 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_add_2.outputs["Vector"]}
+    )
 
     combine_xyz_4 = nw.new_node(
         Nodes.CombineXYZ,
@@ -443,29 +584,48 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         label="BaseBoard",
     )
 
-    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Count"]})
+    reroute_13 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Count"]}
+    )
 
     equal = nw.new_node(
-        Nodes.Compare, input_kwargs={2: reroute_13, 3: 4}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={2: reroute_13, 3: 4},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": separate_xyz_9.outputs["Y"]})
+    reroute_5 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": separate_xyz_9.outputs["Y"]}
+    )
 
-    separate_xyz_10 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Seat Dimensions"]})
+    separate_xyz_10 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Seat Dimensions"]},
+    )
 
     divide_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: reroute_5, 1: separate_xyz_10.outputs["Y"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: reroute_5, 1: separate_xyz_10.outputs["Y"]},
+        attrs={"operation": "DIVIDE"},
     )
 
-    ceil = nw.new_node(Nodes.Math, input_kwargs={0: divide_1}, attrs={"operation": "CEIL"})
+    ceil = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_1}, attrs={"operation": "CEIL"}
+    )
 
-    combine_xyz_14 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": ceil, "Z": 1.0000})
+    combine_xyz_14 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": ceil, "Z": 1.0000}
+    )
 
     divide_2 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz_4, 1: combine_xyz_14}, attrs={"operation": "DIVIDE"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_4, 1: combine_xyz_14},
+        attrs={"operation": "DIVIDE"},
     )
 
-    reroute_12 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": divide_2.outputs["Vector"]})
+    reroute_12 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": divide_2.outputs["Vector"]}
+    )
 
     base_board_1 = nw.new_node(
         nodegroup_corner_cube().name,
@@ -481,7 +641,9 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     equal_1 = nw.new_node(
-        Nodes.Compare, input_kwargs={0: 4.0000, 2: reroute_13, 3: 4}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={0: 4.0000, 2: reroute_13, 3: 4},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
     switch_8 = nw.new_node(
@@ -490,30 +652,49 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         attrs={"input_type": "VECTOR"},
     )
 
-    separate_xyz_16 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": switch_8.outputs[3]})
-
-    multiply_6 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_16.outputs["Y"], 1: 0.7000}, attrs={"operation": "MULTIPLY"}
+    separate_xyz_16 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": switch_8.outputs[3]}
     )
 
-    grid_1 = nw.new_node(Nodes.MeshGrid, input_kwargs={"Size Y": multiply_6, "Vertices X": 1, "Vertices Y": 2})
+    multiply_6 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_16.outputs["Y"], 1: 0.7000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    grid_1 = nw.new_node(
+        Nodes.MeshGrid,
+        input_kwargs={"Size Y": multiply_6, "Vertices X": 1, "Vertices Y": 2},
+    )
 
     combine_xyz_18 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": 0.1000, "Y": separate_xyz_16.outputs["Y"], "Z": separate_xyz_16.outputs["Z"]},
+        input_kwargs={
+            "X": 0.1000,
+            "Y": separate_xyz_16.outputs["Y"],
+            "Z": separate_xyz_16.outputs["Z"],
+        },
     )
 
     subtract_3 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: switch_8.outputs[3], 1: combine_xyz_18}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: switch_8.outputs[3], 1: combine_xyz_18},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply_7 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Back Dimensions"], 1: (1.0000, 0.0000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Back Dimensions"],
+            1: (1.0000, 0.0000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: subtract_3.outputs["Vector"], 1: multiply_7.outputs["Vector"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: subtract_3.outputs["Vector"], 1: multiply_7.outputs["Vector"]},
+    )
 
     transform_geometry_10 = nw.new_node(
         Nodes.Transform,
@@ -535,10 +716,17 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["leg_dimensions"]})
+    reroute_9 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["leg_dimensions"]}
+    )
 
     combine_xyz_17 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": reroute_9, "Y": reroute_9, "Z": group_input.outputs["leg_z"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": reroute_9,
+            "Y": reroute_9,
+            "Z": group_input.outputs["leg_z"],
+        },
     )
 
     transform_geometry_9 = nw.new_node(
@@ -553,20 +741,30 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     foot_cube = nw.new_node(
         nodegroup_corner_cube().name,
-        input_kwargs={"CenteringLoc": (0.5000, 0.5000, 0.9000), "Dimensions": group_input.outputs["Foot Dimensions"]},
+        input_kwargs={
+            "CenteringLoc": (0.5000, 0.5000, 0.9000),
+            "Dimensions": group_input.outputs["Foot Dimensions"],
+        },
         label="FootCube",
     )
 
     transform_geometry_12 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": foot_cube, "Scale": (0.5000, 0.8000, 0.8000)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": foot_cube, "Scale": (0.5000, 0.8000, 0.8000)},
     )
 
     switch_6 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["leg_type"], 14: transform_geometry_9, 15: transform_geometry_12},
+        input_kwargs={
+            1: group_input.outputs["leg_type"],
+            14: transform_geometry_9,
+            15: transform_geometry_12,
+        },
     )
 
-    transform_geometry_8 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": switch_6.outputs[6]})
+    transform_geometry_8 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": switch_6.outputs[6]}
+    )
 
     instance_on_points_1 = nw.new_node(
         Nodes.InstanceOnPoints,
@@ -577,12 +775,19 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1}
+    )
 
-    join_geometry_10 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [base_board_1, realize_instances_1]})
+    join_geometry_10 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [base_board_1, realize_instances_1]},
+    )
 
     subtract_4 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz_14, 1: (1.0000, 1.0000, 1.0000)}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_14, 1: (1.0000, 1.0000, 1.0000)},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply_8 = nw.new_node(
@@ -598,7 +803,8 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     combine_xyz_16 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": group_input.outputs["Reflection"], "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": 1.0000, "Y": group_input.outputs["Reflection"], "Z": 1.0000},
     )
 
     multiply_10 = nw.new_node(
@@ -608,7 +814,12 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     combine_xyz_12 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["Scaling footrest"], "Y": 1.0000, "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["Scaling footrest"],
+            "Y": 1.0000,
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_5 = nw.new_node(
@@ -620,14 +831,23 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    switch_2 = nw.new_node(Nodes.Switch, input_kwargs={1: group_input.outputs["Footrest"], 15: transform_geometry_5})
+    switch_2 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: group_input.outputs["Footrest"], 15: transform_geometry_5},
+    )
 
     combine_xyz_19 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["Scaling footrest"], "Y": 1.3000, "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["Scaling footrest"],
+            "Y": 1.3000,
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_11 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": realize_instances_1, "Scale": combine_xyz_19}
+        Nodes.Transform,
+        input_kwargs={"Geometry": realize_instances_1, "Scale": combine_xyz_19},
     )
 
     base_board_2 = nw.new_node(
@@ -644,48 +864,74 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     combine_xyz_13 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["Scaling footrest"], "Y": 1.0000, "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["Scaling footrest"],
+            "Y": 1.0000,
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_6 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": base_board_2, "Scale": combine_xyz_13}
+        Nodes.Transform,
+        input_kwargs={"Geometry": base_board_2, "Scale": combine_xyz_13},
     )
 
     join_geometry_11 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_geometry_11, transform_geometry_6]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry_11, transform_geometry_6]},
     )
 
-    switch_4 = nw.new_node(Nodes.Switch, input_kwargs={1: group_input.outputs["Footrest"], 15: join_geometry_11})
+    switch_4 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: group_input.outputs["Footrest"], 15: join_geometry_11},
+    )
 
-    switch_5 = nw.new_node(Nodes.Switch, input_kwargs={1: equal, 14: switch_2.outputs[6], 15: switch_4.outputs[6]})
+    switch_5 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: equal, 14: switch_2.outputs[6], 15: switch_4.outputs[6]},
+    )
 
     join_geometry_4 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_3, base_board, switch_5.outputs[6]]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [join_geometry_3, base_board, switch_5.outputs[6]]},
     )
 
     grid = nw.new_node(Nodes.MeshGrid, input_kwargs={"Vertices X": 2, "Vertices Y": 2})
 
     multiply_11 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Dimensions"], 1: (0.5000, 0.0000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Dimensions"],
+            1: (0.5000, 0.0000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_12 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Dimensions"], 1: (1.0000, 1.0000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Dimensions"],
+            1: (1.0000, 1.0000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_13 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Foot Dimensions"], 1: (2.5000, 2.5000, 0.0000)},
+        input_kwargs={
+            0: group_input.outputs["Foot Dimensions"],
+            1: (2.5000, 2.5000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     subtract_5 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: multiply_12.outputs["Vector"], 1: multiply_13.outputs["Vector"]},
+        input_kwargs={
+            0: multiply_12.outputs["Vector"],
+            1: multiply_13.outputs["Vector"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -699,38 +945,63 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": transform_geometry_2, "Instance": transform_geometry_8}
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": transform_geometry_2, "Instance": transform_geometry_8},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
 
-    join_geometry_5 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_4, realize_instances]})
+    join_geometry_5 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [join_geometry_4, realize_instances]},
+    )
 
-    reroute_10 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Count"]})
+    reroute_10 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Count"]}
+    )
 
     equal_2 = nw.new_node(
-        Nodes.Compare, input_kwargs={1: 4.0000, 2: reroute_10, 3: 4}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
     reroute_4 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_4})
 
     multiply_14 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: reroute_4, 1: (0.0000, -0.5000, 1.0000)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: reroute_4, 1: (0.0000, -0.5000, 1.0000)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_15 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: reroute_4, 1: (0.0000, 0.5000, 1.0000)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: reroute_4, 1: (0.0000, 0.5000, 1.0000)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     equal_3 = nw.new_node(
-        Nodes.Compare, input_kwargs={1: 4.0000, 2: reroute_10, 3: 4}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Reflection"]})
+    reroute_11 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Reflection"]}
+    )
 
-    switch_7 = nw.new_node(Nodes.Switch, input_kwargs={0: equal_3, 4: reroute_11, 5: 1}, attrs={"input_type": "INT"})
+    switch_7 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={0: equal_3, 4: reroute_11, 5: 1},
+        attrs={"input_type": "INT"},
+    )
 
-    combine_xyz_15 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": switch_7.outputs[1], "Z": 1.1000})
+    combine_xyz_15 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": 1.0000, "Y": switch_7.outputs[1], "Z": 1.1000},
+    )
 
     multiply_16 = nw.new_node(
         Nodes.VectorMath,
@@ -738,21 +1009,31 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    divide_3 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_5, 1: ceil}, attrs={"operation": "DIVIDE"})
+    divide_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: reroute_5, 1: ceil}, attrs={"operation": "DIVIDE"}
+    )
 
     combine_xyz_5 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": separate_xyz_10.outputs["X"], "Y": divide_3, "Z": separate_xyz_10.outputs["Z"]},
+        input_kwargs={
+            "X": separate_xyz_10.outputs["X"],
+            "Y": divide_3,
+            "Z": separate_xyz_10.outputs["Z"],
+        },
     )
 
     reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_5})
 
     multiply_17 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: reroute_6, 1: combine_xyz_15}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: reroute_6, 1: combine_xyz_15},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_18 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz_5, 1: (1.0000, 1.0300, 1.0000)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_5, 1: (1.0000, 1.0300, 1.0000)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     seat_cushion = nw.new_node(
@@ -772,17 +1053,26 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         input_kwargs={"A": nw.new_node(Nodes.Index), "B": 2},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
-    seat_cushion = tagging.tag_nodegroup(nw, seat_cushion, t.Subpart.SupportSurface, selection=upwards_part)
+    seat_cushion = tagging.tag_nodegroup(
+        nw, seat_cushion, t.Subpart.SupportSurface, selection=upwards_part
+    )
 
     index = nw.new_node(Nodes.Index)
 
     equal_4 = nw.new_node(
-        Nodes.Compare, input_kwargs={2: index, 3: 1}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={2: index, 3: 1},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
     store_named_attribute_1 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": seat_cushion, "Selection": equal_4, "Name": "TAG_support", 6: True},
+        input_kwargs={
+            "Geometry": seat_cushion,
+            "Selection": equal_4,
+            "Name": "TAG_support",
+            6: True,
+        },
         attrs={"data_type": "BOOLEAN", "domain": "FACE"},
     )
 
@@ -791,25 +1081,41 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     store_named_attribute_2 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": store_named_attribute_1, "Selection": value, "Name": "TAG_cushion", 6: True},
+        input_kwargs={
+            "Geometry": store_named_attribute_1,
+            "Selection": value,
+            "Name": "TAG_cushion",
+            6: True,
+        },
         attrs={"data_type": "BOOLEAN", "domain": "FACE"},
     )
 
     combine_xyz_6 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": group_input.outputs["Seat Margin"], "Y": group_input.outputs["Seat Margin"], "Z": 1.0000},
+        input_kwargs={
+            "X": group_input.outputs["Seat Margin"],
+            "Y": group_input.outputs["Seat Margin"],
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": store_named_attribute_2, "Scale": combine_xyz_6}
+        Nodes.Transform,
+        input_kwargs={"Geometry": store_named_attribute_2, "Scale": combine_xyz_6},
     )
 
     combine_xyz_11 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["Scaling footrest"], "Y": 1.0000, "Z": 1.1000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["Scaling footrest"],
+            "Y": 1.0000,
+            "Z": 1.1000,
+        },
     )
 
     transform_geometry_7 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform_geometry_3, "Scale": combine_xyz_11}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_geometry_3, "Scale": combine_xyz_11},
     )
 
     nodegroup_array_fill_line_002 = nw.new_node(
@@ -823,28 +1129,47 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    separate_xyz_17 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_16.outputs["Vector"]})
+    separate_xyz_17 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_16.outputs["Vector"]}
+    )
 
-    combine_xyz_21 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": separate_xyz_17.outputs["Z"]})
+    combine_xyz_21 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": separate_xyz_17.outputs["Z"]}
+    )
 
     reroute_14 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": ceil})
 
-    combine_xyz_20 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": reroute_14, "Z": 1.0000})
+    combine_xyz_20 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": reroute_14, "Z": 1.0000}
+    )
 
     transform_geometry_13 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform_geometry_7, "Scale": combine_xyz_20}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_geometry_7, "Scale": combine_xyz_20},
     )
 
     nodegroup_array_fill_line_002_1 = nw.new_node(
         nodegroup_array_fill_line().name,
-        input_kwargs={"Line End": combine_xyz_21, "Count": 1, "Instance": transform_geometry_13},
+        input_kwargs={
+            "Line End": combine_xyz_21,
+            "Count": 1,
+            "Instance": transform_geometry_13,
+        },
     )
 
     switch_9 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: equal_2, 14: nodegroup_array_fill_line_002, 15: nodegroup_array_fill_line_002_1}
+        Nodes.Switch,
+        input_kwargs={
+            1: equal_2,
+            14: nodegroup_array_fill_line_002,
+            15: nodegroup_array_fill_line_002_1,
+        },
     )
 
-    switch_3 = nw.new_node(Nodes.Switch, input_kwargs={1: group_input.outputs["Footrest"], 15: switch_9.outputs[6]})
+    switch_3 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: group_input.outputs["Footrest"], 15: switch_9.outputs[6]},
+    )
 
     nodegroup_array_fill_line_002_2 = nw.new_node(
         nodegroup_array_fill_line().name,
@@ -858,22 +1183,42 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     join_geometry_9 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [switch_3.outputs[6], nodegroup_array_fill_line_002_2]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [switch_3.outputs[6], nodegroup_array_fill_line_002_2]
+        },
     )
 
-    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={"Mesh": join_geometry_9, "Level": 2})
+    subdivide_mesh = nw.new_node(
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": join_geometry_9, "Level": 2}
+    )
 
-    separate_xyz_11 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Seat Dimensions"]})
+    separate_xyz_11 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Seat Dimensions"]},
+    )
 
     combine_xyz_7 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["Backrest Width"], "Z": separate_xyz_11.outputs["Z"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["Backrest Width"],
+            "Z": separate_xyz_11.outputs["Z"],
+        },
     )
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_14.outputs["Vector"], 1: combine_xyz_7})
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_14.outputs["Vector"], 1: combine_xyz_7},
+    )
 
-    add_2 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_15.outputs["Vector"], 1: combine_xyz_7})
+    add_2 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_15.outputs["Vector"], 1: combine_xyz_7},
+    )
 
-    separate_xyz_12 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Dimensions"]})
+    separate_xyz_12 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Dimensions"]}
+    )
 
     subtract_6 = nw.new_node(
         Nodes.Math,
@@ -888,7 +1233,12 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     combine_xyz_8 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": subtract_7, "Y": divide_3, "Z": group_input.outputs["Backrest Width"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": subtract_7,
+            "Y": divide_3,
+            "Z": group_input.outputs["Backrest Width"],
+        },
     )
 
     seat_cushion_1 = nw.new_node(
@@ -903,7 +1253,9 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         label="SeatCushion",
     )
 
-    extrude_mesh = nw.new_node(Nodes.ExtrudeMesh, input_kwargs={"Mesh": seat_cushion_1, "Offset Scale": 0.0300})
+    extrude_mesh = nw.new_node(
+        Nodes.ExtrudeMesh, input_kwargs={"Mesh": seat_cushion_1, "Offset Scale": 0.0300}
+    )
 
     scale_elements = nw.new_node(
         Nodes.ScaleElements,
@@ -914,29 +1266,44 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
         },
     )
 
-    subdivision_surface_1 = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": scale_elements})
+    subdivision_surface_1 = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": scale_elements}
+    )
 
     random_value = nw.new_node(Nodes.RandomValue, attrs={"data_type": "FLOAT_VECTOR"})
 
     store_named_attribute_3 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": subdivision_surface_1, "Name": "UVMap", 3: random_value.outputs["Value"]},
+        input_kwargs={
+            "Geometry": subdivision_surface_1,
+            "Name": "UVMap",
+            3: random_value.outputs["Value"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     multiply_19 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Backrest Width"], 1: -1.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Backrest Width"], 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    separate_xyz_13 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Back Dimensions"]})
+    separate_xyz_13 = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Back Dimensions"]},
+    )
 
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_13.outputs["X"], 1: 0.1000})
+    add_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: separate_xyz_13.outputs["X"], 1: 0.1000}
+    )
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_19, 1: add_3})
 
     combine_xyz_9 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add_4})
 
-    add_5 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Backrest Angle"], 1: -1.5708})
+    add_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Backrest Angle"], 1: -1.5708}
+    )
 
     combine_xyz_10 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": add_5})
 
@@ -962,24 +1329,43 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     )
 
     join_geometry_6 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [subdivide_mesh, nodegroup_array_fill_line_003]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [subdivide_mesh, nodegroup_array_fill_line_003]},
     )
 
     join_geometry_7 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_5, realize_instances, join_geometry_6]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [join_geometry_5, realize_instances, join_geometry_6]
+        },
     )
 
-    subdivide_mesh_1 = nw.new_node(Nodes.SubdivideMesh, input_kwargs={"Mesh": join_geometry_5, "Level": 2})
+    subdivide_mesh_1 = nw.new_node(
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": join_geometry_5, "Level": 2}
+    )
 
     join_geometry_8 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [subdivide_mesh_1, realize_instances, join_geometry_6]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [subdivide_mesh_1, realize_instances, join_geometry_6]
+        },
     )
 
-    subdivision_surface_2 = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": join_geometry_8, "Level": 1})
+    subdivision_surface_2 = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": join_geometry_8, "Level": 1}
+    )
 
-    switch_1 = nw.new_node(Nodes.Switch, input_kwargs={1: True, 14: join_geometry_7, 15: subdivision_surface_2})
+    switch_1 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: True, 14: join_geometry_7, 15: subdivision_surface_2},
+    )
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Subdivide"], 14: join_geometry_7, 15: subdivision_surface_2}
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input.outputs["Subdivide"],
+            14: join_geometry_7,
+            15: subdivision_surface_2,
+        },
     )
 
     bounding_box = nw.new_node(
@@ -1007,7 +1393,11 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
 def sofa_parameter_distribution(dimensions=None):
     if dimensions is None:
-        dimensions = (uniform(0.95, 1.1), clip_gaussian(1.75, 0.75, 0.9, 3), uniform(0.69, 0.97))
+        dimensions = (
+            uniform(0.95, 1.1),
+            clip_gaussian(1.75, 0.75, 0.9, 3),
+            uniform(0.69, 0.97),
+        )
 
     return {
         "Dimensions": dimensions,
@@ -1023,7 +1413,9 @@ def sofa_parameter_distribution(dimensions=None):
         "Backrest Width": uniform(0.1, 0.2),
         "Seat Margin": uniform(0.9700, 1),
         "Backrest Angle": uniform(-0.15, -0.5),
-        "Arm Type": np.random.choice([ARM_TYPE_SQUARE, ARM_TYPE_ROUND, ARM_TYPE_ANGULAR], p=[0.4, 0.2, 0.4]),
+        "Arm Type": np.random.choice(
+            [ARM_TYPE_SQUARE, ARM_TYPE_ROUND, ARM_TYPE_ANGULAR], p=[0.4, 0.2, 0.4]
+        ),
         "arm_width": uniform(0.6, 0.9),
         "Arm_height": uniform(0.7, 1.0),
         "arms_angle": uniform(0.0, 1.08),
@@ -1040,8 +1432,6 @@ def sofa_parameter_distribution(dimensions=None):
 
 class SofaFactory(AssetFactory):
     def __init__(self, factory_seed):
-        from infinigen.assets.clothes import blanket
-
         super().__init__(factory_seed)
         with FixedSeed(factory_seed):
             self.params = sofa_parameter_distribution()

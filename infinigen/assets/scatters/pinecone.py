@@ -9,15 +9,16 @@ from numpy.random import uniform as U
 
 from infinigen.assets.monocot.pinecone import PineconeFactory
 from infinigen.assets.scatters.chopped_trees import approx_settle_transform
-from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 
 def apply(obj, n=5, selection=None):
     n_species = np.random.randint(2, 3)
     factories = [PineconeFactory(np.random.randint(1e5)) for i in range(n_species)]
-    pinecones = make_asset_collection(factories, n=n, verbose=True, weights=np.random.uniform(0.5, 1, len(factories)))
+    pinecones = make_asset_collection(
+        factories, n=n, verbose=True, weights=np.random.uniform(0.5, 1, len(factories))
+    )
 
     for o in pinecones.objects:
         approx_settle_transform(o, samples=30)

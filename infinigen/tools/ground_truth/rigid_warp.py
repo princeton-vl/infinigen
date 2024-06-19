@@ -66,11 +66,15 @@ if __name__ == "__main__":
     K2 = np.load(camview2_path)["K"]
 
     H, W, _ = image1.shape
-    depth1 = cv2.resize(np.load(depth_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR)
+    depth1 = cv2.resize(
+        np.load(depth_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR
+    )
 
     img2_coords = reproject(depth1, pose1, pose2, K1, K2)
 
-    warped_image = cv2.remap(image2, img2_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR)
+    warped_image = cv2.remap(
+        image2, img2_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR
+    )
 
     args.output.mkdir(exist_ok=True)
     imwrite(args.output / "A.png", image1)

@@ -4,7 +4,7 @@
 # Authors: Lingjie Mei
 import numpy as np
 
-from .text import Text, make_sphere
+from .text import Text
 
 
 def apply(obj, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):

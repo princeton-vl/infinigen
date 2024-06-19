@@ -12,7 +12,12 @@ from infinigen.assets.bathroom import BathtubFactory
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.table_decorations import TapFactory
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsurf
-from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_bbox, new_cube, origin2lowest
+from infinigen.assets.utils.object import (
+    join_objects,
+    new_base_cylinder,
+    new_bbox,
+    new_cube,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -46,7 +51,11 @@ class BathroomSinkFactory(BathtubFactory):
             self.size_extrude = uniform(0.2, 0.35)
             self.tap_offset = uniform(0.0, 0.05)
             self.stand_radius = self.width / 2 * log_uniform(0.15, 0.2)
-            self.stand_bottom = self.width * log_uniform(0.2, 0.3) if uniform() < 0.6 else self.stand_radius
+            self.stand_bottom = (
+                self.width * log_uniform(0.2, 0.3)
+                if uniform() < 0.6
+                else self.stand_radius
+            )
             self.stand_height = uniform(0.7, 0.9) - self.depth
             self.is_stand_circular = uniform() < 0.5
             self.is_hole_centered = True
@@ -76,7 +85,9 @@ class BathroomSinkFactory(BathtubFactory):
             subsurf(obj, self.side_levels)
         obj.location = np.array(obj.location) - np.min(read_co(obj), 0)
         butil.apply_transform(obj, True)
-        obj.scale = np.array([self.width, self.size, self.depth]) / np.array(obj.dimensions)
+        obj.scale = np.array([self.width, self.size, self.depth]) / np.array(
+            obj.dimensions
+        )
         butil.apply_transform(obj, True)
         if self.has_extrude:
             self.extrude_back(obj)
@@ -90,7 +101,11 @@ class BathroomSinkFactory(BathtubFactory):
         if self.has_extrude:
             tap = self.tap_factory(np.random.randint(1e7))
             min_x = np.min(read_co(tap)[:, 0])
-            tap.location = (-1 - self.size_extrude + self.tap_offset) * self.size - min_x, self.width / 2, self.depth
+            tap.location = (
+                (-1 - self.size_extrude + self.tap_offset) * self.size - min_x,
+                self.width / 2,
+                self.depth,
+            )
             butil.apply_transform(tap, True)
             obj = join_objects([obj, tap])
         return obj
@@ -101,10 +116,14 @@ class BathroomSinkFactory(BathtubFactory):
             bpy.ops.mesh.select_all(action="DESELECT")
             bm = bmesh.from_edit_mesh(obj.data)
             for f in bm.faces:
-                f.select_set(f.calc_center_median()[1] > self.size / 2 and f.normal[1] > 0.1)
+                f.select_set(
+                    f.calc_center_median()[1] > self.size / 2 and f.normal[1] > 0.1
+                )
             bm.select_flush(False)
             bmesh.update_edit_mesh(obj.data)
-            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, self.size_extrude * self.size, 0)})
+            bpy.ops.mesh.extrude_region_move(
+                TRANSFORM_OT_translate={"value": (0, self.size_extrude * self.size, 0)}
+            )
 
     def add_stand(self, obj):
         if self.is_stand_circular:
@@ -123,7 +142,11 @@ class BathroomSinkFactory(BathtubFactory):
             bm.select_flush(False)
             bmesh.update_edit_mesh(stand.data)
             bpy.ops.transform.resize(
-                value=(self.stand_bottom / self.stand_radius, self.stand_bottom / self.stand_radius, 1)
+                value=(
+                    self.stand_bottom / self.stand_radius,
+                    self.stand_bottom / self.stand_radius,
+                    1,
+                )
             )
         subsurf(stand, 2, True)
         subsurf(stand, 1)

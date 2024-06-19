@@ -8,10 +8,7 @@
 
 import copy
 import logging
-import pdb
-import typing
 from itertools import product
-from pprint import pformat, pprint
 
 import gin
 import numpy as np
@@ -20,12 +17,11 @@ from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.evaluator.domain_contains import domain_contains, objkeys_in_dom
+from infinigen.core.constraints.evaluator.domain_contains import objkeys_in_dom
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
 from . import moves, propose_relations, state_def
-from .geometry import planes
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +82,19 @@ def propose_addition_bound_gen(
     """
 
     goal_bound = bounds[goal_bound_idx]
-    logger.debug(f"attempt propose_addition for {gen_class.__name__} rels={len(goal_bound.domain.relations)}")
+    logger.debug(
+        f"attempt propose_addition for {gen_class.__name__} rels={len(goal_bound.domain.relations)}"
+    )
 
     assert r.domain_finalized(goal_bound.domain), goal_bound
     if not active_for_stage(goal_bound.domain, filter_domain):
-        raise ValueError(f"Attempted to propose {goal_bound} but it should not be active for {filter_domain=}")
+        raise ValueError(
+            f"Attempted to propose {goal_bound} but it should not be active for {filter_domain=}"
+        )
     if len(goal_bound.domain.relations) == 0:
-        raise ValueError(f"Attempted to propose unconstrained {gen_class.__name__} with no relations")
+        raise ValueError(
+            f"Attempted to propose unconstrained {gen_class.__name__} with no relations"
+        )
 
     found_tags = usage_lookup.usages_of_factory(gen_class)
     goal_pos, *_ = t.decompose_tags(goal_bound.domain.tags)
@@ -112,14 +114,20 @@ def propose_addition_bound_gen(
 
     assert active_for_stage(prop_dom, filter_domain)
 
-    search_rels = [rd for rd in prop_dom.relations if not isinstance(rd[0], cl.NegatedRelation)]
+    search_rels = [
+        rd for rd in prop_dom.relations if not isinstance(rd[0], cl.NegatedRelation)
+    ]
 
     i = None
-    for i, assignments in enumerate(propose_relations.find_assignments(curr, search_rels)):
-        logger.debug(f"Found assignments %d %s %s", i, len(assignments), assignments)
+    for i, assignments in enumerate(
+        propose_relations.find_assignments(curr, search_rels)
+    ):
+        logger.debug("Found assignments %d %s %s", i, len(assignments), assignments)
 
         yield moves.Addition(
-            names=[f"{np.random.randint(1e6):04d}_{gen_class.__name__}"],  # decided later
+            names=[
+                f"{np.random.randint(1e6):04d}_{gen_class.__name__}"
+            ],  # decided later
             gen_class=gen_class,
             relation_assignments=assignments,
             temp_force_tags=prop_dom.tags,
@@ -139,18 +147,29 @@ def active_for_stage(prop_dom: r.Domain, filter_dom: r.Domain):
 
 @gin.configurable
 def preproc_bounds(
-    bounds: list[r.Bound], state: state_def.State, filter: r.Domain, reverse=False, shuffle=True, print_bounds=False
+    bounds: list[r.Bound],
+    state: state_def.State,
+    filter: r.Domain,
+    reverse=False,
+    shuffle=True,
+    print_bounds=False,
 ):
     if print_bounds:
-        print(f"{preproc_bounds.__name__} for {filter.get_objs_named()} (total {len(bounds)}):")
+        print(
+            f"{preproc_bounds.__name__} for {filter.get_objs_named()} (total {len(bounds)}):"
+        )
         for b in bounds:
             res = active_for_stage(b.domain, filter)
             if res:
-                print("BOUND", res, b.domain.intersection(filter).repr(abbrv=True), "\n")
+                print(
+                    "BOUND", res, b.domain.intersection(filter).repr(abbrv=True), "\n"
+                )
 
     for b in bounds:
         if not r.domain_finalized(b.domain, check_anyrel=False, check_variable=True):
-            raise ValueError(f"{preproc_bounds.__name__} found non-finalized {b.domain=}")
+            raise ValueError(
+                f"{preproc_bounds.__name__} found non-finalized {b.domain=}"
+            )
 
     bounds = [b for b in bounds if active_for_stage(b.domain, filter)]
 
@@ -202,7 +221,9 @@ def propose_addition(
             raise ValueError(f"Found no generators for {bound}")
 
         for gen_class in fac_options:
-            yield from propose_addition_bound_gen(cons, curr, bounds, i, gen_class, filter_domain)
+            yield from propose_addition_bound_gen(
+                cons, curr, bounds, i, gen_class, filter_domain
+            )
 
     logger.debug(f"propose_addition found no candidate moves for {bound}")
 
@@ -248,7 +269,9 @@ def propose_relation_plane_change(
                 continue
 
             target_obj = curr.objs[rels.target_name].obj
-            n_planes = len(curr.planes.get_tagged_planes(target_obj, rels.relation.parent_tags))
+            n_planes = len(
+                curr.planes.get_tagged_planes(target_obj, rels.relation.parent_tags)
+            )
             if n_planes <= 1:
                 continue
 
@@ -257,7 +280,9 @@ def propose_relation_plane_change(
             for plane_idx in order:
                 if plane_idx == rels.parent_plane_idx:
                     continue
-                yield moves.RelationPlaneChange(names=[cand], relation_idx=i, plane_idx=plane_idx)
+                yield moves.RelationPlaneChange(
+                    names=[cand], relation_idx=i, plane_idx=plane_idx
+                )
 
 
 def propose_resample(

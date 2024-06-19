@@ -41,9 +41,13 @@ class DarkArt(Art):
             art_shader_func(nw)
             art_bsdf = nw.find(Nodes.PrincipledBSDF)[0]
             art_color = nw.find_from(art_bsdf.inputs[0])[0].from_socket
-            dark_color = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": self.darken_scale}).outputs[0]
+            dark_color = nw.new_node(
+                Nodes.NoiseTexture, input_kwargs={"Scale": self.darken_scale}
+            ).outputs[0]
             art_color = nw.new_node(
-                Nodes.MixRGB, [self.darken_ratio, art_color, dark_color], attrs={"blend_type": "DARKEN"}
+                Nodes.MixRGB,
+                [self.darken_ratio, art_color, dark_color],
+                attrs={"blend_type": "DARKEN"},
             ).outputs[2]
             nw.connect_input(art_color, art_bsdf.inputs[0])
 
@@ -66,7 +70,10 @@ class ArtComposite(DarkArt):
             art_color = nw_.find_from(art_bsdf.inputs[0])[0].from_socket
             nw_.nodes.remove(art_bsdf)
             nw_.connect_input(art_color, base_bsdf.inputs[0])
-            nw_.connect_input(base_bsdf.outputs[0], nw_.find(Nodes.MaterialOutput)[0].inputs["Surface"])
+            nw_.connect_input(
+                base_bsdf.outputs[0],
+                nw_.find(Nodes.MaterialOutput)[0].inputs["Surface"],
+            )
 
         return shader_art_composite
 

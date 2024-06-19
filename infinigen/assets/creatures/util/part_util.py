@@ -5,20 +5,19 @@
 
 
 import logging
-import pdb
-from pathlib import Path
 
 import bpy
 import numpy as np
 
-from infinigen.assets.creatures.util.creature import Part, PartFactory, infer_skeleton_from_mesh
+from infinigen.assets.creatures.util.creature import Part, infer_skeleton_from_mesh
 from infinigen.assets.creatures.util.geometry import nurbs
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 
 
-def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False):
+def nodegroup_to_part(
+    nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False
+):
     if base_obj is None:
         base_obj = butil.spawn_vert("temp")
 
@@ -27,8 +26,13 @@ def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_
             ng = nodegroup_func(**kwargs)
         else:
             ng = nodegroup_func()
-        geo_outputs = [o for o in ng.outputs if o.bl_socket_idname == "NodeSocketGeometry"]
-        objs = {o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params) for o in geo_outputs}
+        geo_outputs = [
+            o for o in ng.outputs if o.bl_socket_idname == "NodeSocketGeometry"
+        ]
+        objs = {
+            o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params)
+            for o in geo_outputs
+        }
 
     skin_obj = objs.pop("Geometry", None)
     if skin_obj is None:
@@ -40,7 +44,9 @@ def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_
         skeleton_obj = objs.pop("Skeleton Curve")
         skeleton = np.array([v.co for v in skeleton_obj.data.vertices])
         if len(skeleton) == 0:
-            raise ValueError(f"Skeleton export failed for {nodegroup_func}, {skeleton_obj}, got {skeleton.shape=}")
+            raise ValueError(
+                f"Skeleton export failed for {nodegroup_func}, {skeleton_obj}, got {skeleton.shape=}"
+            )
         butil.delete(skeleton_obj)
     else:
         skeleton = infer_skeleton_from_mesh(skin_obj)
@@ -49,7 +55,9 @@ def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_
     for k, o in objs.items():
         if split_extras:
             for i, piece in enumerate(butil.split_object(o)):
-                logging.debug(f"Processing piece {i} for split_extras on {nodegroup_func}")
+                logging.debug(
+                    f"Processing piece {i} for split_extras on {nodegroup_func}"
+                )
                 with butil.SelectObjects(piece):
                     bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY")
                 piece.name = f"{k}_{i}"
@@ -58,7 +66,9 @@ def nodegroup_to_part(nodegroup_func, params, kwargs=None, base_obj=None, split_
             o.parent = skin_obj
             o.name = k
 
-    return Part(skeleton, obj=skin_obj, attach_basemesh=attach_basemesh, joints=None, iks=None)
+    return Part(
+        skeleton, obj=skin_obj, attach_basemesh=attach_basemesh, joints=None, iks=None
+    )
 
 
 def nurbs_to_part(handles, face_size=0.07):
@@ -158,13 +168,17 @@ def random_convex_coord(names, select=None, temp=1):
         raise ValueError(f"Unrecognized {temp=}")
 
     if isinstance(select, str):
-        if not select in names:
-            raise ValueError(f"Attempted to random_convex_comb({names=}, {select=}) but select is invalid")
+        if select not in names:
+            raise ValueError(
+                f"Attempted to random_convex_comb({names=}, {select=}) but select is invalid"
+            )
         return {n: 1 if n == select else 0 for n in names}
 
     if isinstance(select, dict):
         if any(k not in names for k in select):
-            raise ValueError(f"Attempted to random_convex_comb({names=}, {select.keys()=}) but select is invalid")
+            raise ValueError(
+                f"Attempted to random_convex_comb({names=}, {select.keys()=}) but select is invalid"
+            )
         weights = select
         norm = sum(weights.values())
         for k, v in weights.items():

@@ -11,13 +11,17 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
 
-def shader_ceramic(nw: NodeWrangler, clear=False, roughness_min=0, roughness_max=0.8, **kwargs):
+def shader_ceramic(
+    nw: NodeWrangler, clear=False, roughness_min=0, roughness_max=0.8, **kwargs
+):
     if uniform(0, 1) < 0.8 and not clear:
         color = hsv2rgba(uniform(0, 1), uniform(0.2, 0.4), log_uniform(0.3, 0.6))
     else:
         color = hsv2rgba(0, 0, log_uniform(0.3, 0.6))
 
-    roughness = nw.build_float_curve(nw.musgrave(log_uniform(20, 40)), [(0, roughness_min), (1, roughness_max)])
+    roughness = nw.build_float_curve(
+        nw.musgrave(log_uniform(20, 40)), [(0, roughness_min), (1, roughness_max)]
+    )
     clearcoat_roughness = nw.build_float_curve(
         nw.musgrave(log_uniform(20, 40)), [(0, roughness_min), (1, roughness_max)]
     )
@@ -39,13 +43,19 @@ def shader_ceramic(nw: NodeWrangler, clear=False, roughness_min=0, roughness_max
         "ShaderNodeDisplacement",
         input_kwargs={
             "Height": nw.scalar_multiply(
-                log_uniform(0.001, 0.005), nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": log_uniform(20, 40)})
+                log_uniform(0.001, 0.005),
+                nw.new_node(
+                    Nodes.NoiseTexture, input_kwargs={"Scale": log_uniform(20, 40)}
+                ),
             ),
             "Midlevel": 0.0000,
         },
     )
 
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf, "Displacement": displacement})
+    nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
+    )
 
 
 def apply(obj, selection=None, clear=False, **kwargs):

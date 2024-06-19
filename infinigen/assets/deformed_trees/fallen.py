@@ -5,7 +5,6 @@
 # Authors: Lingjie Mei
 
 
-import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -18,7 +17,7 @@ from infinigen.assets.utils.object import join_objects, separate_loose
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 
@@ -26,15 +25,23 @@ from infinigen.core.util.blender import deep_clone_obj
 class FallenTreeFactory(BaseDeformedTreeFactory):
     @staticmethod
     def geo_cutter(nw: NodeWrangler, strength, scale, radius, metric_fn):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
-        selection = nw.compare("LESS_THAN", nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 1)
+        selection = nw.compare(
+            "LESS_THAN", nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 1
+        )
         offset = nw.scalar_multiply(
             nw.new_node(
                 Nodes.Clamp,
                 [
                     nw.new_node(
-                        Nodes.NoiseTexture, input_kwargs={"Vector": nw.new_node(Nodes.InputPosition), "Scale": scale}
+                        Nodes.NoiseTexture,
+                        input_kwargs={
+                            "Vector": nw.new_node(Nodes.InputPosition),
+                            "Scale": scale,
+                        },
                     ),
                     0.3,
                     0.7,
@@ -42,13 +49,28 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
             ),
             strength,
         )
-        offset = nw.scalar_multiply(offset, nw.build_float_curve(x, [(-radius, 1), (radius, 0)]))
+        offset = nw.scalar_multiply(
+            offset, nw.build_float_curve(x, [(-radius, 1), (radius, 0)])
+        )
         anchors = (-1, 0), (-0.5, 0), (0, -1), (0.5, 0), (1, 0)
-        offset = nw.scalar_multiply(offset, nw.build_float_curve(surface.eval_argument(nw, metric_fn), anchors))
-        geometry = nw.new_node(Nodes.SetPosition, [geometry, selection, None, nw.combine(0, 0, offset)])
+        offset = nw.scalar_multiply(
+            offset, nw.build_float_curve(surface.eval_argument(nw, metric_fn), anchors)
+        )
+        geometry = nw.new_node(
+            Nodes.SetPosition, [geometry, selection, None, nw.combine(0, 0, offset)]
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
-    def build_half(self, obj, cut_center, cut_normal, noise_strength, noise_scale, radius, is_up=True):
+    def build_half(
+        self,
+        obj,
+        cut_center,
+        cut_normal,
+        noise_strength,
+        noise_scale,
+        radius,
+        is_up=True,
+    ):
         obj, cut = cut_plane(obj, cut_center, cut_normal, not is_up)
         assign_material(cut, self.material)
         obj = join_objects([obj, cut])
@@ -59,9 +81,17 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.fill_holes()
-        metric_fn = lambda nw: nw.dot(nw.sub(nw.new_node(Nodes.InputPosition), cut_center), cut_normal)
+
+        def metric_fn(nw):
+            return nw.dot(
+                nw.sub(nw.new_node(Nodes.InputPosition), cut_center), cut_normal
+            )
+
         surface.add_geomod(
-            obj, self.geo_cutter, apply=True, input_args=[noise_strength, noise_scale, radius, metric_fn]
+            obj,
+            self.geo_cutter,
+            apply=True,
+            input_args=[noise_strength, noise_scale, radius, metric_fn],
         )
         obj = separate_loose(obj)
         surface.add_geomod(obj, self.geo_xyz, apply=True)
@@ -69,7 +99,13 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
 
     def create_asset(self, i, distance=0, **params):
         upper = self.build_tree(i, distance, **params)
-        radius = max([np.sqrt(v.co[0] ** 2 + v.co[1] ** 2) for v in upper.data.vertices if v.co[-1] < 0.1])
+        radius = max(
+            [
+                np.sqrt(v.co[0] ** 2 + v.co[1] ** 2)
+                for v in upper.data.vertices
+                if v.co[-1] < 0.1
+            ]
+        )
         self.trunk_surface.apply(upper)
         butil.apply_modifiers(upper)
         lower = deep_clone_obj(upper, keep_materials=True)
@@ -77,19 +113,29 @@ class FallenTreeFactory(BaseDeformedTreeFactory):
         cut_normal = np.array([uniform(0.1, 0.2), 0, 1])
         noise_strength = uniform(0.3, 0.5)
         noise_scale = uniform(10, 15)
-        upper = self.build_half(upper, cut_center, cut_normal, noise_strength, noise_scale, radius, True)
-        lower = self.build_half(lower, cut_center, cut_normal, noise_strength, noise_scale, radius, False)
+        upper = self.build_half(
+            upper, cut_center, cut_normal, noise_strength, noise_scale, radius, True
+        )
+        lower = self.build_half(
+            lower, cut_center, cut_normal, noise_strength, noise_scale, radius, False
+        )
 
         ortho = np.array([-cut_normal[0], 0, 1])
         locations = np.array([v.co for v in lower.data.vertices])
-        highest = locations[np.argmax(locations @ ortho)] + np.array([-uniform(0.05, 0.15), 0, -uniform(0.05, 0.15)])
+        highest = locations[np.argmax(locations @ ortho)] + np.array(
+            [-uniform(0.05, 0.15), 0, -uniform(0.05, 0.15)]
+        )
         upper.location = -highest
         butil.apply_transform(upper, loc=True)
 
         x, _, z = np.mean(np.stack([v.co for v in upper.data.vertices]), 0)
         r = np.sqrt(x * x + z * z)
         if r > 0:
-            upper.rotation_euler[1] = np.pi / 2 + np.arcsin((highest[-1] - uniform(0, 0.2)) / r) - np.arctan(x / z)
+            upper.rotation_euler[1] = (
+                np.pi / 2
+                + np.arcsin((highest[-1] - uniform(0, 0.2)) / r)
+                - np.arctan(x / z)
+            )
         upper.location = highest
         butil.apply_transform(upper, loc=True)
         remove_vertices(upper, lambda x, y, z: z < -0.5)

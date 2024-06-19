@@ -9,9 +9,8 @@
 from __future__ import annotations
 
 import logging
-from copy import copy
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Union
 
 import bpy
 import gin
@@ -19,12 +18,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import trimesh
-from mathutils import Quaternion, Vector
+from mathutils import Vector
 from scipy.optimize import linear_sum_assignment
 from shapely import MultiPolygon, Polygon
 from shapely.geometry import LineString, Point
 from shapely.ops import nearest_points, unary_union
-from trimesh import Scene, Trimesh
+from trimesh import Scene
 
 import infinigen.core.constraints.constraint_language.util as iu
 import infinigen.core.constraints.evaluator.node_impl.symmetry as symmetry
@@ -34,7 +33,6 @@ from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
 
 # from infinigen.core.util import blender as butil
-from infinigen.core.util import blender as butil
 
 # import fcl
 
@@ -71,17 +69,24 @@ def get_cardinal_planes_bbox(vertices: np.ndarray):
 
     longer_plane_normal /= np.linalg.norm(longer_plane_normal)
     shorter_plane_normal /= np.linalg.norm(shorter_plane_normal)
-    return [[Vector(centroid), Vector(longer_plane_normal)], [Vector(centroid), Vector(shorter_plane_normal)]]
+    return [
+        [Vector(centroid), Vector(longer_plane_normal)],
+        [Vector(centroid), Vector(shorter_plane_normal)],
+    ]
 
 
 def get_axis(state: state_def.State, obj: bpy.types.Object, tag=t.Subpart.Front):
     a_front_planes = state.planes.get_tagged_planes(obj, tag)
     if len(a_front_planes) > 1:
-        logging.warning(f"{obj.name=} had too many front planes ({len(a_front_planes)})")
+        logging.warning(
+            f"{obj.name=} had too many front planes ({len(a_front_planes)})"
+        )
     a_front_plane = a_front_planes[0]
     a_front_plane_ind = a_front_plane[1]
     a_poly = obj.data.polygons[a_front_plane_ind]
-    front_plane_pt = iu.global_vertex_coordinates(obj, obj.data.vertices[a_poly.vertices[0]])
+    front_plane_pt = iu.global_vertex_coordinates(
+        obj, obj.data.vertices[a_poly.vertices[0]]
+    )
     front_plane_normal = iu.global_polygon_normal(obj, a_poly)
     return front_plane_pt, front_plane_normal
 
@@ -133,7 +138,12 @@ class ContactResult:
 
 
 def any_touching(
-    scene: Scene, a: Union[str, list[str]], b: Union[str, list[str]] = None, a_tags=None, b_tags=None, bvh_cache=None
+    scene: Scene,
+    a: Union[str, list[str]],
+    b: Union[str, list[str]] = None,
+    a_tags=None,
+    b_tags=None,
+    bvh_cache=None,
 ):
     """
     Computes one-to-one, many-to-one, one-to-many or many-to-many collisions
@@ -148,7 +158,9 @@ def any_touching(
         # query makes no sense, asking for intra-set collision on one element
         hit, names, contacts = None, (a, b), []
     elif b is None:
-        hit, names, contacts = col.in_collision_internal(return_data=True, return_names=True)
+        hit, names, contacts = col.in_collision_internal(
+            return_data=True, return_names=True
+        )
     elif isinstance(b, str):
         T, g = scene.graph[b]
         hit, names, contacts = col.in_collision_single(
@@ -156,7 +168,9 @@ def any_touching(
         )
     elif isinstance(b, list):
         col2 = iu.col_from_subset(scene, b, b_tags, bvh_cache)
-        hit, names, contacts = col.in_collision_other(col2, return_names=True, return_data=True)
+        hit, names, contacts = col.in_collision_other(
+            col2, return_names=True, return_data=True
+        )
     else:
         raise ValueError(f"Unhandled case {a=} {b=}")
 
@@ -228,7 +242,9 @@ def min_dist(
     if data is not None:
         assert "__external" not in data.names
 
-    return DistanceResult(dist=dist, names=list(data.names) if data is not None else None, data=data)
+    return DistanceResult(
+        dist=dist, names=list(data.names) if data is not None else None, data=data
+    )
 
 
 def contains(scene: Scene, a: str, b: str, tol=1e-6) -> bool:
@@ -243,7 +259,9 @@ def contains(scene: Scene, a: str, b: str, tol=1e-6) -> bool:
     return abs(difference.volume - mesh_a.volume) < tol
 
 
-def contains_all(scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]) -> bool:
+def contains_all(
+    scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]
+) -> bool:
     """
     Check if all objects in list 'a' contain all objects in list 'b' within the given scene.
 
@@ -268,7 +286,9 @@ def contains_all(scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, l
     return True
 
 
-def contains_any(scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]) -> bool:
+def contains_any(
+    scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]
+) -> bool:
     """
     Check if any object in list 'a' contains any object in list 'b' within the given scene.
 
@@ -294,7 +314,10 @@ def contains_any(scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, l
 
 
 def has_line_of_sight(
-    scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]], num_samples: int = 100
+    scene: trimesh.Scene,
+    a: Union[str, list[str]],
+    b: Union[str, list[str]],
+    num_samples: int = 100,
 ) -> bool:
     """
     Check if any object in list 'a' in the scene has a line of sight to any object in list 'b'.
@@ -323,7 +346,9 @@ def has_line_of_sight(
         # Sample points from the surface of object 'a'
         points_a = obj_a.sample(num_samples)
 
-        combined_mesh = trimesh.util.concatenate([mesh for name, mesh in scene.geometry.items() if mesh != obj_a])
+        combined_mesh = trimesh.util.concatenate(
+            [mesh for name, mesh in scene.geometry.items() if mesh != obj_a]
+        )
 
         for obj_b in b:
             # Sample points from the surface of object 'b'
@@ -335,8 +360,10 @@ def has_line_of_sight(
             ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, None]
 
             # Check for intersections with the combined mesh
-            locations, index_ray, index_tri = combined_mesh.ray_pyembree.intersects_location(
-                ray_origins, ray_directions, multiple_hits=False
+            locations, index_ray, index_tri = (
+                combined_mesh.ray_pyembree.intersects_location(
+                    ray_origins, ray_directions, multiple_hits=False
+                )
             )
 
             # Check if point is reached
@@ -351,7 +378,9 @@ def has_line_of_sight(
     return False
 
 
-def freespace_2d(scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]) -> float:
+def freespace_2d(
+    scene: trimesh.Scene, a: Union[str, list[str]], b: Union[str, list[str]]
+) -> float:
     if isinstance(a, str):
         a = [a]
     if isinstance(b, str):
@@ -469,15 +498,26 @@ def rasterize_space_with_obstacles(
     # Connect each node to its neighboring nodes
     for node in graph.nodes():
         x, y = node
-        neighbors = [(x + cell_size, y), (x - cell_size, y), (x, y + cell_size), (x, y - cell_size)]
+        neighbors = [
+            (x + cell_size, y),
+            (x - cell_size, y),
+            (x, y + cell_size),
+            (x, y - cell_size),
+        ]
         for neighbor in neighbors:
             closest_node = is_close_to_any_node(neighbor, graph)
             if closest_node is not None:
                 graph.add_edge(node, closest_node)
 
     # Find the closest nodes to the start and end locations
-    start_node = min(graph.nodes(), key=lambda node: np.linalg.norm(np.array(node) - np.array(start_location)))
-    end_node = min(graph.nodes(), key=lambda node: np.linalg.norm(np.array(node) - np.array(end_location)))
+    start_node = min(
+        graph.nodes(),
+        key=lambda node: np.linalg.norm(np.array(node) - np.array(start_location)),
+    )
+    end_node = min(
+        graph.nodes(),
+        key=lambda node: np.linalg.norm(np.array(node) - np.array(end_location)),
+    )
 
     # Calculate the shortest path using Dijkstra's algorithm
     path = nx.shortest_path(graph, source=start_node, target=end_node, weight="weight")
@@ -487,7 +527,13 @@ def rasterize_space_with_obstacles(
         path_x = [x for x, y in path]
         path_y = [y for x, y in path]
         ax.plot(path_x, path_y, c="red", linewidth=2, label="Shortest Path")
-        ax.scatter([start_node[0], end_node[0]], [start_node[1], end_node[1]], c="green", s=100, label="Start & End")
+        ax.scatter(
+            [start_node[0], end_node[0]],
+            [start_node[1], end_node[1]],
+            c="green",
+            s=100,
+            label="Start & End",
+        )
         plt.legend()
         plt.title("Shortest Path from Start to End")
         plt.show()
@@ -496,7 +542,11 @@ def rasterize_space_with_obstacles(
 
 
 def angle_alignment_cost_tagged(
-    state: state_def.State, a: Union[str, list[str]], b: Union[str, list[str]], b_tags=None, visualize=False
+    state: state_def.State,
+    a: Union[str, list[str]],
+    b: Union[str, list[str]],
+    b_tags=None,
+    visualize=False,
 ):
     """
     Return the dot product between the axes of a and the normal of the closest edge of b
@@ -524,7 +574,10 @@ def angle_alignment_cost_tagged(
 
 
 def angle_alignment_cost_base(
-    state: state_def.State, a: Union[str, list[str]], b: Union[str, list[str]], visualize=False
+    state: state_def.State,
+    a: Union[str, list[str]],
+    b: Union[str, list[str]],
+    visualize=False,
 ):
     """
     Return the dot product between the axes of a and the normal of the closest edge of b
@@ -613,7 +666,9 @@ def angle_alignment_cost_base(
                 elif isinstance(a_poly, MultiPolygon):
                     for sub_poly in a_poly.geoms:
                         x, y = sub_poly.exterior.xy
-                        ax.fill(x, y, alpha=0.5, fc="blue", ec="black", label="Polygon a")
+                        ax.fill(
+                            x, y, alpha=0.5, fc="blue", ec="black", label="Polygon a"
+                        )
             else:
                 x, y = a_mesh.vertices[:, 0], a_mesh.vertices[:, 1]
                 ax.scatter(x, y, color="blue", label="Vertices a")
@@ -631,7 +686,9 @@ def angle_alignment_cost_base(
             )
             x, y = closest_line.xy
             ax.plot(x, y, color="green", linewidth=2.5, label="Closest Edge")
-            ax.plot(a_centroid.x, a_centroid.y, "o", color="black", label="Centroid of a")
+            ax.plot(
+                a_centroid.x, a_centroid.y, "o", color="black", label="Centroid of a"
+            )
             mid_point = closest_line.interpolate(0.5, normalized=True)
             ax.arrow(
                 mid_point.x,
@@ -666,14 +723,20 @@ def angle_alignment_cost_base(
 
 
 def angle_alignment_cost(
-    state: state_def.State, a: Union[str, list[str]], b: Union[str, list[str]], b_tags=None, visualize=False
+    state: state_def.State,
+    a: Union[str, list[str]],
+    b: Union[str, list[str]],
+    b_tags=None,
+    visualize=False,
 ):
     if b_tags is not None:
         return angle_alignment_cost_tagged(state, a, b, b_tags, visualize)
     return angle_alignment_cost_base(state, a, b, visualize)
 
 
-def focus_score(state: state_def.State, a: Union[str, list[str]], b: str, visualize=False):
+def focus_score(
+    state: state_def.State, a: Union[str, list[str]], b: str, visualize=False
+):
     """
     The how much objects in a focus on b
     """
@@ -736,7 +799,9 @@ def focus_score(state: state_def.State, a: Union[str, list[str]], b: str, visual
             )
 
             # Highlight centroid of a
-            ax.plot(a_centroid[0], a_centroid[1], "o", color="black", label="Centroid of a")
+            ax.plot(
+                a_centroid[0], a_centroid[1], "o", color="black", label="Centroid of a"
+            )
 
             # Plot the outward normal vector
             ax.arrow(
@@ -786,7 +851,10 @@ def min_dist_2d(scene, a: Union[str, list[str]], b, visualize=False):
 
     a_meshes = iu.meshes_from_names(scene, a)
 
-    a_projections = [trimesh.path.polygons.projected(mesh, plane_normal, plane_origin) for mesh in a_meshes]
+    a_projections = [
+        trimesh.path.polygons.projected(mesh, plane_normal, plane_origin)
+        for mesh in a_meshes
+    ]
     # Measure the distance
     for a_proj in a_projections:
         source_geom = a_proj
@@ -939,8 +1007,13 @@ def accessibility_cost_cuboid_penetration(
     a_free_col = trimesh.collision.CollisionManager()
 
     # find which of +X, -X +Y, -Y, +Z, -Z is the normal_dir. Only these values are supported
-    if not np.isclose(np.linalg.norm(normal_dir), 1) or np.isclose(normal_dir, 0).sum() != 2:
-        raise ValueError(f"Invalid normal_dir {normal_dir=}, expected +X, -X, +Y, -Y, +Z, -Z")
+    if (
+        not np.isclose(np.linalg.norm(normal_dir), 1)
+        or np.isclose(normal_dir, 0).sum() != 2
+    ):
+        raise ValueError(
+            f"Invalid normal_dir {normal_dir=}, expected +X, -X, +Y, -Y, +Z, -Z"
+        )
     normal_axis = np.argmax(np.abs(normal_dir))
     normal_sign = np.sign(normal_dir[normal_axis])
 
@@ -960,12 +1033,14 @@ def accessibility_cost_cuboid_penetration(
         origin_to_bbox_center = bbox.mean(axis=0)
         extent_from_real_origin = bbox[0 if normal_sign < 0 else -1][normal_axis]
 
-        offset_vec = normal_dir * (dist / 2 + extent_from_real_origin - origin_to_bbox_center[normal_axis])
+        offset_vec = normal_dir * (
+            dist / 2 + extent_from_real_origin - origin_to_bbox_center[normal_axis]
+        )
         total_offset_vec = origin_to_bbox_center + offset_vec
 
-        freespace_box_transform = np.array(bpy_obj.matrix_world) @ trimesh.transformations.translation_matrix(
-            total_offset_vec
-        )
+        freespace_box_transform = np.array(
+            bpy_obj.matrix_world
+        ) @ trimesh.transformations.translation_matrix(total_offset_vec)
 
         a_free_col.add_object(name, freespace_box, freespace_box_transform)
 
@@ -978,7 +1053,9 @@ def accessibility_cost_cuboid_penetration(
 
     if vis:
         bobjs = iu.meshes_from_names(scene, b)
-        print(f"{np.round(origin_to_bbox_center, 3)=} {extent_from_real_origin} {bpy_obj.dimensions}")
+        print(
+            f"{np.round(origin_to_bbox_center, 3)=} {extent_from_real_origin} {bpy_obj.dimensions}"
+        )
         if not all(name in _accessibility_vis_seen_objs for name in a + b):
             trimesh.Scene(visobjs + bobjs).show()
         _accessibility_vis_seen_objs.update(a + b)
@@ -1020,7 +1097,11 @@ def accessibility_cost(scene, a, b, normal, visualize=False, fast=True):
         front_plane_pt = a_centroid
         front_plane_normal = np.array(a_obj.matrix_world.to_3x3() @ Vector(normal))
 
-        a_centroid_proj = a_centroid - np.dot(a_centroid - front_plane_pt, front_plane_normal) * front_plane_normal
+        a_centroid_proj = (
+            a_centroid
+            - np.dot(a_centroid - front_plane_pt, front_plane_normal)
+            * front_plane_normal
+        )
 
         if fast:
             # get the closest centroid in b and the mesh that it belongs to
@@ -1045,14 +1126,24 @@ def accessibility_cost(scene, a, b, normal, visualize=False, fast=True):
         # cos theta/dist
         score += (np.dot(centroid_to_b, front_plane_normal) / dist**2) * diag_length
         if visualize:
-            ax.plot([a_centroid_proj[0], b_closest_pt[0]], [a_centroid_proj[1], b_closest_pt[1]], color="red")
+            ax.plot(
+                [a_centroid_proj[0], b_closest_pt[0]],
+                [a_centroid_proj[1], b_closest_pt[1]],
+                color="red",
+            )
             # plot source and target geoms
             iu.plot_geometry(ax, a_trimesh, "blue")
             iu.plot_geometry(ax, iu.meshes_from_names(scene, b_chosen)[0], "green")
             # plot front plane
             # plot_geometry(ax, planes.extract_tagged_plane(a_obj, a_tag, a_front_plane), 'black')
             # plot centroid
-            ax.plot(a_centroid_proj[0], a_centroid_proj[1], "o", color="black", label="Centroid of a")
+            ax.plot(
+                a_centroid_proj[0],
+                a_centroid_proj[1],
+                "o",
+                color="black",
+                label="Centroid of a",
+            )
 
     if visualize:
         plt.show()
@@ -1088,11 +1179,17 @@ def center_stable_surface(scene, a, state):
                 )
                 return False
             if relation_state.child_plane_idx >= len(obj_all_planes):
-                logging.warning(f"{obj.name=} had too few planes ({len(obj_all_planes)}) for {relation_state}")
+                logging.warning(
+                    f"{obj.name=} had too few planes ({len(obj_all_planes)}) for {relation_state}"
+                )
                 return False
 
-            splitted_parent = state.planes.extract_tagged_plane(parent_obj, parent_tags, parent_plane)
-            parent_trimesh = add_to_scene(state.trimesh_scene, splitted_parent, preprocess=True)
+            splitted_parent = state.planes.extract_tagged_plane(
+                parent_obj, parent_tags, parent_plane
+            )
+            parent_trimesh = add_to_scene(
+                state.trimesh_scene, splitted_parent, preprocess=True
+            )
             # splitted_obj = planes.extract_tagged_plane(obj, obj_tags, obj_plane)
             # add_to_scene(state.trimesh_scene, splitted_obj, preprocess=True)
             obj_centroid = mesh.centroid
@@ -1104,7 +1201,9 @@ def center_stable_surface(scene, a, state):
     return score
 
 
-def reflectional_asymmetry_score(scene, a: Union[str, list[str]], b: str, use_long_plane=True):
+def reflectional_asymmetry_score(
+    scene, a: Union[str, list[str]], b: str, use_long_plane=True
+):
     """
     Computes the reflectional asymmetry score between a and b
     """
@@ -1157,12 +1256,16 @@ def coplanarity_cost_pair(scene, a: str, b: str):
     for i in range(len(a_trimesh_bbox.faces)):
         normal = a_trimesh_bbox.face_normals[i]
         if is_normal_new(normal, [n for _, n in object1_planes]):
-            object1_planes.append((a_trimesh_bbox.vertices[a_trimesh_bbox.faces[i]][0], normal))
+            object1_planes.append(
+                (a_trimesh_bbox.vertices[a_trimesh_bbox.faces[i]][0], normal)
+            )
 
     for i in range(len(b_trimesh_bbox.faces)):
         normal = b_trimesh_bbox.face_normals[i]
         if is_normal_new(normal, [n for _, n in object2_planes]):
-            object2_planes.append((b_trimesh_bbox.vertices[b_trimesh_bbox.faces[i]][0], normal))
+            object2_planes.append(
+                (b_trimesh_bbox.vertices[b_trimesh_bbox.faces[i]][0], normal)
+            )
 
     # Calculate angle cost matrix for bipartite matching
     angle_cost_matrix = np.zeros((len(object1_planes), len(object2_planes)))
@@ -1177,8 +1280,12 @@ def coplanarity_cost_pair(scene, a: str, b: str):
     # Calculate total costs (angle + distance) for the optimal matching
     total_costs = []
     for r, c in zip(row_ind, col_ind):
-        distance_cost = iu.distance_to_plane(object1_planes[r][0], object2_planes[c][0], object2_planes[c][1])
-        total_cost = angle_cost_matrix[r, c] + distance_cost  # Sum angle and distance costs
+        distance_cost = iu.distance_to_plane(
+            object1_planes[r][0], object2_planes[c][0], object2_planes[c][1]
+        )
+        total_cost = (
+            angle_cost_matrix[r, c] + distance_cost
+        )  # Sum angle and distance costs
         total_costs.append(total_cost)
     total_costs = sorted(total_costs)
 
@@ -1202,7 +1309,11 @@ def coplanarity_cost(scene, a: Union[str, list[str]]):
 
     # Iterate over pairs of consecutive objects
     for i in range(len(ordered_objects) - 1):
-        all_total_costs.append(coplanarity_cost_pair(scene, ordered_objects[i].name, ordered_objects[i + 1].name))
+        all_total_costs.append(
+            coplanarity_cost_pair(
+                scene, ordered_objects[i].name, ordered_objects[i + 1].name
+            )
+        )
 
     # Calculate the final cost as the sum of the remaining costs
     final_cost = sum(all_total_costs) / len(a_objs)

@@ -10,14 +10,18 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.deformed_trees.base import BaseDeformedTreeFactory
-from infinigen.assets.utils.decorate import read_co, read_material_index, write_material_index
+from infinigen.assets.utils.decorate import (
+    read_co,
+    read_material_index,
+    write_material_index,
+)
 from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.nodegroup import geo_selection
-from infinigen.assets.utils.object import join_objects, separate_loose
+from infinigen.assets.utils.object import join_objects
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj, select_none
 
@@ -25,10 +29,15 @@ from infinigen.core.util.blender import deep_clone_obj, select_none
 class HollowTreeFactory(BaseDeformedTreeFactory):
     @staticmethod
     def geo_texture(nw: NodeWrangler, material_index):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-        selection = nw.compare("EQUAL", nw.new_node(Nodes.MaterialIndex), material_index)
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
+        selection = nw.compare(
+            "EQUAL", nw.new_node(Nodes.MaterialIndex), material_index
+        )
         offset = nw.scale(
-            nw.scalar_multiply(nw.musgrave(uniform(10, 20)), -uniform(0.03, 0.06)), nw.new_node(Nodes.InputNormal)
+            nw.scalar_multiply(nw.musgrave(uniform(10, 20)), -uniform(0.03, 0.06)),
+            nw.new_node(Nodes.InputNormal),
         )
         geometry = nw.new_node(Nodes.SetPosition, [geometry, selection, None, offset])
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
@@ -51,21 +60,41 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
         def selection(nw: NodeWrangler):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
             radius = nw.power(nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 0.5)
-            vector = nw.combine(nw.scalar_divide(x, radius), nw.scalar_divide(y, radius), z)
-            noise = nw.compare(
-                "GREATER_THAN", nw.new_node(Nodes.NoiseTexture, [vector], input_kwargs={"Scale": scale}), threshold
+            vector = nw.combine(
+                nw.scalar_divide(x, radius), nw.scalar_divide(y, radius), z
             )
-            r_outside = nw.compare("GREATER_THAN", nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 1)
+            noise = nw.compare(
+                "GREATER_THAN",
+                nw.new_node(
+                    Nodes.NoiseTexture, [vector], input_kwargs={"Scale": scale}
+                ),
+                threshold,
+            )
+            r_outside = nw.compare(
+                "GREATER_THAN", nw.scalar_add(nw.power(x, 2), nw.power(y, 2)), 1
+            )
             z_lower = nw.scalar_add(
-                0.1, nw.scale(nw.new_node(Nodes.NoiseTexture, attrs={"noise_dimensions": "2D"}), 0.4)
+                0.1,
+                nw.scale(
+                    nw.new_node(Nodes.NoiseTexture, attrs={"noise_dimensions": "2D"}),
+                    0.4,
+                ),
             )
             z_upper = nw.scalar_sub(
-                3.5, nw.scale(nw.new_node(Nodes.NoiseTexture, attrs={"noise_dimensions": "2D"}), 0.4)
+                3.5,
+                nw.scale(
+                    nw.new_node(Nodes.NoiseTexture, attrs={"noise_dimensions": "2D"}),
+                    0.4,
+                ),
             )
             z_outside = nw.boolean_math(
-                "OR", nw.compare("LESS_THAN", z, z_lower), nw.compare("GREATER_THAN", z, z_upper)
+                "OR",
+                nw.compare("LESS_THAN", z, z_lower),
+                nw.compare("GREATER_THAN", z, z_upper),
             )
-            return nw.boolean_math("OR", nw.boolean_math("OR", z_outside, noise), r_outside)
+            return nw.boolean_math(
+                "OR", nw.boolean_math("OR", z_outside, noise), r_outside
+            )
 
         surface.add_geomod(obj, geo_selection, apply=True, input_args=[selection])
         hollow = deep_clone_obj(obj)
@@ -78,16 +107,24 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
-            bpy.ops.mesh.bridge_edge_loops(type="PAIRS", number_cuts=10, interpolation="LINEAR")
+            bpy.ops.mesh.bridge_edge_loops(
+                type="PAIRS", number_cuts=10, interpolation="LINEAR"
+            )
 
-        ring_material_index = list(obj.data.materials).index(obj.data.materials["shader_rings"])
-        surface.add_geomod(obj, self.geo_texture, apply=True, input_args=[ring_material_index])
+        ring_material_index = list(obj.data.materials).index(
+            obj.data.materials["shader_rings"]
+        )
+        surface.add_geomod(
+            obj, self.geo_texture, apply=True, input_args=[ring_material_index]
+        )
 
         material_indices = read_material_index(obj)
-        null_indices = np.array([i for i, m in enumerate(obj.data.materials) if not hasattr(m, "name")])
-        material_indices[np.any(material_indices[:, np.newaxis] == null_indices[np.newaxis, :], -1)] = (
-            ring_material_index
+        null_indices = np.array(
+            [i for i, m in enumerate(obj.data.materials) if not hasattr(m, "name")]
         )
+        material_indices[
+            np.any(material_indices[:, np.newaxis] == null_indices[np.newaxis, :], -1)
+        ] = ring_material_index
         write_material_index(obj, material_indices)
         tag_object(obj, "hollow_tree")
         return obj

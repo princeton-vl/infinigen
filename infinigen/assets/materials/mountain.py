@@ -21,7 +21,13 @@ name = "mountain"
 
 
 def geo_MOUNTAIN_general(
-    nw: NodeWrangler, n_noise, noise_params, n_crack, crack_params, crack_modulation_params, selection=None
+    nw: NodeWrangler,
+    n_noise,
+    noise_params,
+    n_crack,
+    crack_params,
+    crack_modulation_params,
+    selection=None,
 ):
     position = nw.new_node("GeometryNodeInputPosition", [])
     normal = nw.new_node("GeometryNodeInputNormal", [])
@@ -66,7 +72,9 @@ def geo_MOUNTAIN_general(
             detail = nw.new_node(Nodes.Value, label=f"crack_modulation_detail{i}")
             detail.outputs[0].default_value = rg(crack_modulation_params["detail"])
             roughness = nw.new_node(Nodes.Value, label=f"crack_modulation_roughness{i}")
-            roughness.outputs[0].default_value = rg(crack_modulation_params["roughness"])
+            roughness.outputs[0].default_value = rg(
+                crack_modulation_params["roughness"]
+            )
 
             position_shift = nw.new_node(Nodes.Vector, label=f"position_shift_mask{i}")
             position_shift.vector = nw.get_position_translation_seed(f"mask{i}")
@@ -81,8 +89,12 @@ def geo_MOUNTAIN_general(
                 },
             )
 
-            position_shift = nw.new_node(Nodes.Vector, label=f"position_shift_slope_modulation{i}")
-            position_shift.vector = nw.get_position_translation_seed(f"slope_modulation{i}")
+            position_shift = nw.new_node(
+                Nodes.Vector, label=f"position_shift_slope_modulation{i}"
+            )
+            position_shift.vector = nw.get_position_translation_seed(
+                f"slope_modulation{i}"
+            )
 
             slope_modulation = nw.new_node(
                 Nodes.MapRange,
@@ -130,7 +142,8 @@ def geo_MOUNTAIN_general(
                 ),
             )
             slope_modulation = nw.scalar_multiply(
-                nw.scalar_divide(1.0, slope_scale), nw.power(nw.scalar_divide(1.0, slope_base), slope_modulation)
+                nw.scalar_divide(1.0, slope_scale),
+                nw.power(nw.scalar_divide(1.0, slope_base), slope_modulation),
             )
             position_shift = nw.new_node(Nodes.Vector, label=f"position_shift_crack{i}")
             position_shift.vector = nw.get_position_translation_seed(f"crack{i}")
@@ -141,7 +154,10 @@ def geo_MOUNTAIN_general(
                     input_kwargs={
                         "Value": nw.new_node(
                             Nodes.VoronoiTexture,
-                            input_kwargs={"Vector": nw.add(position, position_shift), "Scale": scale},
+                            input_kwargs={
+                                "Vector": nw.add(position, position_shift),
+                                "Scale": scale,
+                            },
                             attrs={"feature": "DISTANCE_TO_EDGE"},
                         ),
                         "From Max": slope_modulation,
@@ -164,7 +180,12 @@ def geo_MOUNTAIN_general(
 def geo_MOUNTAIN(
     nw: NodeWrangler,
     n_noise=3,
-    noise_params={"scale": ("uniform", 1, 5), "detail": 8, "roughness": 0.7, "zscale": ("power_uniform", -1, -0.5)},
+    noise_params={
+        "scale": ("uniform", 1, 5),
+        "detail": 8,
+        "roughness": 0.7,
+        "zscale": ("power_uniform", -1, -0.5),
+    },
     n_crack=8,
     crack_params={
         "scale": ("uniform", 1, 5),
@@ -179,10 +200,14 @@ def geo_MOUNTAIN(
 ):
     nw.force_input_consistency()
     groupinput = nw.new_node(Nodes.GroupInput)
-    offset = geo_MOUNTAIN_general(nw, n_noise, noise_params, n_crack, crack_params, crack_modulation_params)
+    offset = geo_MOUNTAIN_general(
+        nw, n_noise, noise_params, n_crack, crack_params, crack_modulation_params
+    )
     if selection is not None:
         offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+    set_position = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+    )
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
 
 
@@ -219,7 +244,9 @@ def shader_MOUNTAIN(
         if layered_mountain:
             tex_coor = nw.new_node("ShaderNodeNewGeometry", [])
             if spherical:
-                z = nw.new_node(Nodes.VectorMath, [(tex_coor, 0)], attrs={"operation": "LENGTH"})
+                z = nw.new_node(
+                    Nodes.VectorMath, [(tex_coor, 0)], attrs={"operation": "LENGTH"}
+                )
                 z = nw.new_node("ShaderNodeMapRange", [z])
             else:
                 z = nw.new_node("ShaderNodeSeparateXYZ", [(tex_coor, 0)])
@@ -270,7 +297,9 @@ def shader_MOUNTAIN(
 
                 element = elements.new(cur_loc)
                 if color is None:
-                    cur_color = random_color_neighbour(cur_color, sat_diff=None, val_diff=None, hue_diff=hue_diff)
+                    cur_color = random_color_neighbour(
+                        cur_color, sat_diff=None, val_diff=None, hue_diff=hue_diff
+                    )
                     cur_color = clip_hsv(cur_color, max_s=max_sat, max_v=max_val)
                 else:
                     cur_color = rg(color)
@@ -278,7 +307,9 @@ def shader_MOUNTAIN(
 
             # ambient occlusion
             amb_occl = nw.new_node("ShaderNodeAmbientOcclusion", [])
-            ramp = nw.new_node("ShaderNodeMixRGB", [amb_occl, (0.0, 0.0, 0.0, 1.0), ramp])
+            ramp = nw.new_node(
+                "ShaderNodeMixRGB", [amb_occl, (0.0, 0.0, 0.0, 1.0), ramp]
+            )
 
         else:
             if color is None:
@@ -297,7 +328,10 @@ def shader_MOUNTAIN(
                             [
                                 nw.new_node(
                                     Nodes.VectorMath,
-                                    [(0.0, 0.0, 1.0), (nw.new_node("ShaderNodeNewGeometry", []), 1)],
+                                    [
+                                        (0.0, 0.0, 1.0),
+                                        (nw.new_node("ShaderNodeNewGeometry", []), 1),
+                                    ],
                                     attrs={"operation": "DOT_PRODUCT"},
                                 )
                             ],
@@ -317,19 +351,29 @@ def shader_MOUNTAIN(
             normal = (nw.new_node("ShaderNodeNewGeometry"), 1)
             weights = [0]
             for normal_preference, (th0, th1) in normal_params:
-                disturb = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 0.1, "Detail": 9})
+                disturb = nw.new_node(
+                    Nodes.NoiseTexture, input_kwargs={"Scale": 0.1, "Detail": 9}
+                )
                 th0 = nw.scalar_add(disturb, th0 - 0.5)
                 th1 = nw.scalar_add(disturb, th1 - 0.5)
                 map_range = nw.new_node(
-                    Nodes.MapRange, input_kwargs={"Value": nw.dot(normal, normal_preference), 1: th0, 2: th1}
+                    Nodes.MapRange,
+                    input_kwargs={
+                        "Value": nw.dot(normal, normal_preference),
+                        1: th0,
+                        2: th1,
+                    },
                 )
                 weights.append(map_range)
             weights = nw.scalar_add(*weights)
             weights.use_clamp = 1
-            color_ = nw.new_node("ShaderNodeMixRGB", [weights, color_, [0.904] * 3 + [1]])
+            color_ = nw.new_node(
+                "ShaderNodeMixRGB", [weights, color_, [0.904] * 3 + [1]]
+            )
 
         bsdf_mountain = nw.new_node(
-            "ShaderNodeBsdfPrincipled", [color_, None, None, None, None, None, None, None, None, shader_roughness]
+            "ShaderNodeBsdfPrincipled",
+            [color_, None, None, None, None, None, None, None, None, shader_roughness],
         )
 
     return bsdf_mountain

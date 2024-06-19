@@ -4,10 +4,6 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.fruits.cross_section_lib import nodegroup_cylax_cross_section
 from infinigen.assets.fruits.fruit_utils import (
     nodegroup_add_noise_scalar,
@@ -18,10 +14,11 @@ from infinigen.assets.fruits.fruit_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_empty_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_empty_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_empty_stem(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -37,14 +34,27 @@ def shader_basic_stem_shader(nw: NodeWrangler, stem_color):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 0.8, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 0.8,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -64,13 +74,22 @@ def shader_basic_stem_shader(nw: NodeWrangler, stem_color):
     )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value, "Specular": 0.1205, "Roughness": 0.5068}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": hue_saturation_value,
+            "Specular": 0.1205,
+            "Roughness": 0.5068,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_basic_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_basic_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_basic_stem(nw: NodeWrangler, stem_color=(0.179, 0.836, 0.318, 1.0)):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -100,19 +119,30 @@ def nodegroup_basic_stem(nw: NodeWrangler, stem_color=(0.179, 0.836, 0.318, 1.0)
 
     curve_circle_2 = nw.new_node(
         Nodes.CurveCircle,
-        input_kwargs={"Resolution": group_input.outputs["cross_res"], "Radius": group_input.outputs["cross_radius"]},
+        input_kwargs={
+            "Resolution": group_input.outputs["cross_res"],
+            "Radius": group_input.outputs["cross_radius"],
+        },
     )
 
     curve_to_mesh_2 = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": quadratic_bezier_2, "Profile Curve": curve_circle_2.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": quadratic_bezier_2,
+            "Profile Curve": curve_circle_2.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     surfacebump = nw.new_node(
-        nodegroup_surface_bump().name, input_kwargs={"Geometry": curve_to_mesh_2, "Displacement": 0.01, "Scale": 2.9}
+        nodegroup_surface_bump().name,
+        input_kwargs={"Geometry": curve_to_mesh_2, "Displacement": 0.01, "Scale": 2.9},
     )
 
-    surfacebump_1 = nw.new_node(nodegroup_surface_bump().name, input_kwargs={"Geometry": surfacebump, "Scale": 20.0})
+    surfacebump_1 = nw.new_node(
+        nodegroup_surface_bump().name,
+        input_kwargs={"Geometry": surfacebump, "Scale": 20.0},
+    )
 
     transform_3 = nw.new_node(
         Nodes.Transform,
@@ -127,23 +157,38 @@ def nodegroup_basic_stem(nw: NodeWrangler, stem_color=(0.179, 0.836, 0.318, 1.0)
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": transform_3,
-            "Material": surface.shaderfunc_to_material(shader_basic_stem_shader, stem_color),
+            "Material": surface.shaderfunc_to_material(
+                shader_basic_stem_shader, stem_color
+            ),
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_material})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}
+    )
 
 
 def shader_calyx_shader(nw: NodeWrangler, stem_color):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 2.8, "Detail": 10.0, "Roughness": 0.7})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 2.8, "Detail": 10.0, "Roughness": 0.7},
+    )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture_1.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture_1.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -162,19 +207,33 @@ def shader_calyx_shader(nw: NodeWrangler, stem_color):
         },
     )
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": hue_saturation_value})
-
-    principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value, "Specular": 0.5136, "Roughness": 0.7614}
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": hue_saturation_value}
     )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.5083, 1: translucent_bsdf, 2: principled_bsdf})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": hue_saturation_value,
+            "Specular": 0.5136,
+            "Roughness": 0.7614,
+        },
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    mix_shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.5083, 1: translucent_bsdf, 2: principled_bsdf},
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 ### straberry calyx ###
-@node_utils.to_nodegroup("nodegroup_calyx_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_calyx_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1.0)):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -209,9 +268,13 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
 
     fill_curve = nw.new_node(Nodes.FillCurve, input_kwargs={"Curve": cylaxcrosssection})
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": fill_curve})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": fill_curve}
+    )
 
-    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={"Mesh": triangulate, "Level": 3})
+    subdivide_mesh = nw.new_node(
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": triangulate, "Level": 3}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -227,17 +290,29 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
         },
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: position}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: position}, attrs={"operation": "LENGTH"}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: addnoisescalar, 1: length.outputs["Value"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: addnoisescalar, 1: length.outputs["Value"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": separate_xyz.outputs["X"], "Y": separate_xyz.outputs["Y"], "Z": multiply}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": separate_xyz.outputs["X"],
+            "Y": separate_xyz.outputs["Y"],
+            "Z": multiply,
+        },
     )
 
-    set_position_1 = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": subdivide_mesh, "Position": combine_xyz})
+    set_position_1 = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": subdivide_mesh, "Position": combine_xyz},
+    )
 
     basicstem = nw.new_node(
         nodegroup_basic_stem().name,
@@ -252,7 +327,9 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
         },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_position_1, basicstem]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_position_1, basicstem]}
+    )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
@@ -282,7 +359,9 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": attachtonearest})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": attachtonearest}
+    )
 
 
 ### coconutgreen ###
@@ -303,12 +382,17 @@ def nodegroup_jigsaw(nw: NodeWrangler):
         ],
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={1: group_input.outputs["Value"]}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={1: group_input.outputs["Value"]},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"]})
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": spline_parameter.outputs["Factor"], 1: subtract, 2: add}
+        Nodes.MapRange,
+        input_kwargs={"Value": spline_parameter.outputs["Factor"], 1: subtract, 2: add},
     )
 
     voronoi_texture = nw.new_node(
@@ -330,7 +414,9 @@ def nodegroup_jigsaw(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range.outputs["Result"]}
+    )
 
 
 def shader_coconut_calyx_shader(nw: NodeWrangler, basic_color, edge_color):
@@ -340,14 +426,27 @@ def shader_coconut_calyx_shader(nw: NodeWrangler, basic_color, edge_color):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 10.0, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 10.0,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.45, 4: 0.52},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.45,
+            4: 0.52,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -357,17 +456,25 @@ def shader_coconut_calyx_shader(nw: NodeWrangler, basic_color, edge_color):
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "distance to edge"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "distance to edge"}
+    )
 
     noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 3.0})
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture_1.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture_1.outputs["Fac"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: 0.1}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract, 1: 0.1}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: attribute.outputs["Fac"], 1: multiply})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: attribute.outputs["Fac"], 1: multiply}
+    )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": add})
     colorramp.color_ramp.elements.new(0)
@@ -388,13 +495,18 @@ def shader_coconut_calyx_shader(nw: NodeWrangler, basic_color, edge_color):
     )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value, "Roughness": 0.90}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": hue_saturation_value, "Roughness": 0.90},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_coconut_calyx", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_coconut_calyx", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_coconut_calyx(nw: NodeWrangler, basic_color, edge_color):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -412,11 +524,15 @@ def nodegroup_coconut_calyx(nw: NodeWrangler, basic_color, edge_color):
 
     curve_circle = nw.new_node(
         Nodes.CurveCircle,
-        input_kwargs={"Resolution": group_input.outputs["resolution"], "Radius": group_input.outputs["radius"]},
+        input_kwargs={
+            "Resolution": group_input.outputs["resolution"],
+            "Radius": group_input.outputs["radius"],
+        },
     )
 
     jigsaw = nw.new_node(
-        nodegroup_jigsaw().name, input_kwargs={"Value": group_input.outputs["width"], "noise scale": 30.22}
+        nodegroup_jigsaw().name,
+        input_kwargs={"Value": group_input.outputs["width"], "noise scale": 30.22},
     )
 
     scale_mesh = nw.new_node(
@@ -431,26 +547,41 @@ def nodegroup_coconut_calyx(nw: NodeWrangler, basic_color, edge_color):
     value.outputs[0].default_value = 0.5
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: spline_parameter_1.outputs["Factor"], 1: value}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: spline_parameter_1.outputs["Factor"], 1: value},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"}
+    )
 
     map_range_2 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": absolute, 1: value, 2: group_input.outputs["width"]}
+        Nodes.MapRange,
+        input_kwargs={"Value": absolute, 1: value, 2: group_input.outputs["width"]},
     )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.2409, 0.0), (0.7068, 0.275), (1.0, 0.9781)])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0],
+        [(0.0, 0.0), (0.2409, 0.0), (0.7068, 0.275), (1.0, 0.9781)],
+    )
 
     scale_mesh_1 = nw.new_node(
-        nodegroup_scale_mesh().name, input_kwargs={"Geometry": scale_mesh, "Scale": float_curve}, label="ScaleMesh"
+        nodegroup_scale_mesh().name,
+        input_kwargs={"Geometry": scale_mesh, "Scale": float_curve},
+        label="ScaleMesh",
     )
 
-    fill_curve = nw.new_node(Nodes.FillCurve, input_kwargs={"Curve": scale_mesh_1}, attrs={"mode": "NGONS"})
+    fill_curve = nw.new_node(
+        Nodes.FillCurve, input_kwargs={"Curve": scale_mesh_1}, attrs={"mode": "NGONS"}
+    )
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": fill_curve, "Level": group_input.outputs["subdivision"]}
+        Nodes.SubdivideMesh,
+        input_kwargs={"Mesh": fill_curve, "Level": group_input.outputs["subdivision"]},
     )
 
     surfacebump = nw.new_node(
@@ -466,23 +597,34 @@ def nodegroup_coconut_calyx(nw: NodeWrangler, basic_color, edge_color):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": surfacebump,
-            "Material": surface.shaderfunc_to_material(shader_coconut_calyx_shader, basic_color, edge_color),
+            "Material": surface.shaderfunc_to_material(
+                shader_coconut_calyx_shader, basic_color, edge_color
+            ),
         },
     )
 
     geometry_proximity = nw.new_node(
-        Nodes.Proximity, input_kwargs={"Target": fill_curve}, attrs={"target_element": "EDGES"}
+        Nodes.Proximity,
+        input_kwargs={"Target": fill_curve},
+        attrs={"target_element": "EDGES"},
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": set_material, "distance to edge": geometry_proximity.outputs["Distance"]},
+        input_kwargs={
+            "Geometry": set_material,
+            "distance to edge": geometry_proximity.outputs["Distance"],
+        },
     )
 
 
-@node_utils.to_nodegroup("nodegroup_coconut_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_coconut_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_coconut_stem(
-    nw: NodeWrangler, basic_color=(0.1119, 0.2122, 0.008, 1.0), edge_color=(0.0369, 0.0086, 0.0, 1.0)
+    nw: NodeWrangler,
+    basic_color=(0.1119, 0.2122, 0.008, 1.0),
+    edge_color=(0.0369, 0.0086, 0.0, 1.0),
 ):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -511,7 +653,10 @@ def nodegroup_coconut_stem(
 
     capture_attribute_1 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": coconutcalyx.outputs["Geometry"], 2: coconutcalyx.outputs["distance to edge"]},
+        input_kwargs={
+            "Geometry": coconutcalyx.outputs["Geometry"],
+            2: coconutcalyx.outputs["distance to edge"],
+        },
     )
 
     spiral = nw.new_node(
@@ -527,7 +672,8 @@ def nodegroup_coconut_stem(
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": spiral, 2: spline_parameter.outputs["Factor"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={"Geometry": spiral, 2: spline_parameter.outputs["Factor"]},
     )
 
     transform = nw.new_node(
@@ -539,11 +685,14 @@ def nodegroup_coconut_stem(
     )
 
     curve_to_points = nw.new_node(
-        Nodes.CurveToPoints, input_kwargs={"Curve": transform, "Count": group_input.outputs["Count"]}
+        Nodes.CurveToPoints,
+        input_kwargs={"Curve": transform, "Count": group_input.outputs["Count"]},
     )
 
     align_euler_to_vector = nw.new_node(
-        Nodes.AlignEulerToVector, input_kwargs={"Rotation": curve_to_points.outputs["Rotation"]}, attrs={"axis": "Z"}
+        Nodes.AlignEulerToVector,
+        input_kwargs={"Rotation": curve_to_points.outputs["Rotation"]},
+        attrs={"axis": "Z"},
     )
 
     map_range_2 = nw.new_node(
@@ -566,11 +715,17 @@ def nodegroup_coconut_stem(
         },
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[2], 4: 0.01})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[2], 4: 0.01}
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": map_range_1.outputs["Result"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": map_range_1.outputs["Result"]}
+    )
 
     attachtonearest = nw.new_node(
         nodegroup_attach_to_nearest().name,
@@ -594,10 +749,16 @@ def nodegroup_coconut_stem(
         },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [basicstem, attachtonearest]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [basicstem, attachtonearest]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry, "distance to edge": capture_attribute_1.outputs[2]}
+        Nodes.GroupOutput,
+        input_kwargs={
+            "Geometry": join_geometry,
+            "distance to edge": capture_attribute_1.outputs[2],
+        },
     )
 
 
@@ -617,23 +778,43 @@ def shader_leaf(nw: NodeWrangler, basic_color):
         },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture_1.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture_1.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
     map_range_3 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Red"], 1: 0.52, 2: 0.48, 3: 0.32, 4: 0.74},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Red"],
+            1: 0.52,
+            2: 0.48,
+            3: 0.32,
+            4: 0.74,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
     map_range_2 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Blue"], 1: 0.4, 2: 0.7, 3: 0.94, 4: 1.1},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Blue"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.94,
+            4: 1.1,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -648,13 +829,22 @@ def shader_leaf(nw: NodeWrangler, basic_color):
     )  # (0.0545, 0.1981, 0.0409, 1.0)
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value, "Specular": 0.5955, "Roughness": 1.0}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": hue_saturation_value,
+            "Specular": 0.5955,
+            "Roughness": 1.0,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_pineapple_leaf", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_pineapple_leaf", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_pineapple_leaf(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -680,45 +870,80 @@ def nodegroup_pineapple_leaf(nw: NodeWrangler):
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]})
-    node_utils.assign_curve(float_curve_1.mapping.curves[0], [(0.0, 1.0), (0.6818, 0.5063), (1.0, 0.0)])
-
-    set_curve_radius_1 = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": quadratic_bezier_1, "Radius": float_curve_1}
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve_1.mapping.curves[0], [(0.0, 1.0), (0.6818, 0.5063), (1.0, 0.0)]
     )
 
-    curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["Resolution"]})
+    set_curve_radius_1 = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": quadratic_bezier_1, "Radius": float_curve_1},
+    )
+
+    curve_circle_1 = nw.new_node(
+        Nodes.CurveCircle,
+        input_kwargs={"Resolution": group_input.outputs["Resolution"]},
+    )
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_circle_1.outputs["Curve"], "Scale": (0.5, 0.1, 1.0)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": curve_circle_1.outputs["Curve"],
+            "Scale": (0.5, 0.1, 1.0),
+        },
     )
 
     position = nw.new_node(Nodes.InputPosition)
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["X"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: absolute}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: absolute}, attrs={"operation": "MULTIPLY"}
+    )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply})
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": transform, "Offset": combine_xyz})
-
-    curve_to_mesh_1 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius_1, "Profile Curve": set_position, "Fill Caps": True}
+    set_position = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": transform, "Offset": combine_xyz}
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": curve_to_mesh_1})
+    curve_to_mesh_1 = nw.new_node(
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius_1,
+            "Profile Curve": set_position,
+            "Fill Caps": True,
+        },
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": curve_to_mesh_1}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_pineapple_crown", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_pineapple_crown", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_pineapple_crown(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     spiral_1 = nw.new_node(
         "GeometryNodeCurveSpiral",
-        input_kwargs={"Resolution": 10, "Rotations": 5.0, "Start Radius": 0.01, "End Radius": 0.01, "Height": 0.0},
+        input_kwargs={
+            "Resolution": 10,
+            "Rotations": 5.0,
+            "Start Radius": 0.01,
+            "End Radius": 0.01,
+            "Height": 0.0,
+        },
     )
 
     group_input = nw.new_node(
@@ -739,11 +964,19 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
     )
 
     transform_4 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": spiral_1, "Translation": group_input.outputs["translation"]}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": spiral_1,
+            "Translation": group_input.outputs["translation"],
+        },
     )
 
     resample_curve_1 = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": transform_4, "Count": group_input.outputs["number of leaves"]}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": transform_4,
+            "Count": group_input.outputs["number of leaves"],
+        },
     )
 
     surfacebump = nw.new_node(
@@ -757,11 +990,16 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
 
     curve_tangent_1 = nw.new_node(Nodes.CurveTangent)
 
-    align_euler_to_vector_1 = nw.new_node(Nodes.AlignEulerToVector, input_kwargs={"Vector": curve_tangent_1})
+    align_euler_to_vector_1 = nw.new_node(
+        Nodes.AlignEulerToVector, input_kwargs={"Vector": curve_tangent_1}
+    )
 
     rotate_euler_3 = nw.new_node(
         Nodes.RotateEuler,
-        input_kwargs={"Rotation": align_euler_to_vector_1, "Rotate By": group_input.outputs["rotation base"]},
+        input_kwargs={
+            "Rotation": align_euler_to_vector_1,
+            "Rotate By": group_input.outputs["rotation base"],
+        },
         attrs={"space": "LOCAL"},
     )
 
@@ -769,7 +1007,13 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
 
     random_value = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1, 3: 0.1})
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: spline_parameter_2.outputs["Factor"], 1: random_value.outputs[1]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: spline_parameter_2.outputs["Factor"],
+            1: random_value.outputs[1],
+        },
+    )
 
     map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": add, 3: 0.2})
 
@@ -782,7 +1026,9 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
         },
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": map_range_1.outputs["Result"]})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": map_range_1.outputs["Result"]}
+    )
 
     rotate_euler_2 = nw.new_node(
         Nodes.RotateEuler,
@@ -819,10 +1065,14 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": instance_on_points_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": instance_on_points_2}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_pineapple_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_pineapple_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_pineapple_stem(nw: NodeWrangler, basic_color):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -858,7 +1108,10 @@ def nodegroup_pineapple_stem(nw: NodeWrangler, basic_color):
 
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": pineappleleaf, "Material": surface.shaderfunc_to_material(shader_leaf, basic_color)},
+        input_kwargs={
+            "Geometry": pineappleleaf,
+            "Material": surface.shaderfunc_to_material(shader_leaf, basic_color),
+        },
     )
 
     pineapplecrown = nw.new_node(
@@ -878,4 +1131,6 @@ def nodegroup_pineapple_stem(nw: NodeWrangler, basic_color):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": pineapplecrown})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": pineapplecrown}
+    )

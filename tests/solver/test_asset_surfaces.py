@@ -5,13 +5,10 @@
 # Authors: Alexander Raistrick
 
 import bpy
-import pytest
 
 from infinigen.core import tagging
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.example_solver.geometry import dof
 from infinigen.core.util import blender as butil
 from infinigen_examples.indoor_constraint_examples import home_asset_usage
 
@@ -43,7 +40,9 @@ def test_canonical_planes_real_placeholders():
         with butil.ViewportMode(obj, mode="EDIT"):
             butil.select(obj)
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
 
         tagging.tag_canonical_surfaces(obj)
 
@@ -53,4 +52,6 @@ def test_canonical_planes_real_placeholders():
             mask = tagging.tagged_face_mask(obj, {tag})
             if mask.sum() == 0:
                 obj_tags = tagging.union_object_tags(obj)
-                raise ValueError(f"{obj.name=} has nothing tagged for {tag=}. {obj_tags=}")
+                raise ValueError(
+                    f"{obj.name=} has nothing tagged for {tag=}. {obj_tags=}"
+                )

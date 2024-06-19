@@ -5,18 +5,19 @@
 
 import logging
 import re
-from collections import defaultdict
 
 import bpy
 import gin
 import mathutils
 import numpy as np
-from mathutils.bvhtree import BVHTree
-from numpy.random import uniform as U
 from tqdm import tqdm
 
 from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, geometry_node_group_empty_new
+from infinigen.core.nodes.node_wrangler import (
+    Nodes,
+    NodeWrangler,
+    geometry_node_group_empty_new,
+)
 from infinigen.core.placement import detail
 from infinigen.core.util import blender as butil
 from infinigen.core.util import camera as camera_util
@@ -32,7 +33,9 @@ def objects_to_grid(objects, spacing):
         o.location += spacing * mathutils.Vector((i % rowsize, i // rowsize, 0))
 
 
-def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None):
+def placeholder_locs(
+    terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None
+):
     temp_vert = butil.spawn_vert("compute_placeholder_locations")
     geo = temp_vert.modifiers.new(name="GEOMETRY", type="NODES")
     if geo.node_group is None:
@@ -54,13 +57,17 @@ def placeholder_locs(terrain, overall_density, selection, distance_min=0, altitu
         },
     )
     verts = nw.new_node(Nodes.PointsToVertices, input_kwargs={"Points": points})
-    verts = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": verts, "Offset": (0, 0, altitude)})
+    verts = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": verts, "Offset": (0, 0, altitude)}
+    )
 
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": verts})
 
     # dump the point locations out as vertices
     butil.apply_modifiers(temp_vert, geo)
-    locations = np.array([temp_vert.matrix_world @ v.co for v in temp_vert.data.vertices])
+    locations = np.array(
+        [temp_vert.matrix_world @ v.co for v in temp_vert.data.vertices]
+    )
 
     butil.delete(temp_vert)
 
@@ -88,9 +95,17 @@ def points_near_camera(cam, scene_bvh, n, alt, dist_range):
 
 
 def scatter_placeholders_mesh(
-    base_mesh, factory: AssetFactory, overall_density, selection=None, distance_min=0, num_placeholders=None, **kwargs
+    base_mesh,
+    factory: AssetFactory,
+    overall_density,
+    selection=None,
+    distance_min=0,
+    num_placeholders=None,
+    **kwargs,
 ):
-    locations = placeholder_locs(base_mesh, overall_density, selection, distance_min=distance_min, **kwargs)
+    locations = placeholder_locs(
+        base_mesh, overall_density, selection, distance_min=distance_min, **kwargs
+    )
     if num_placeholders is not None:
         np.random.shuffle(locations)
         if len(locations) < num_placeholders:
@@ -168,13 +183,19 @@ def populate_collection(
             vis_dist_list = []
             for i, camera in enumerate(cameras):
                 points = get_placeholder_points(p)
-                dists, vis_dists = camera_util.min_dists_from_cam_trajectory(points, camera)
+                dists, vis_dists = camera_util.min_dists_from_cam_trajectory(
+                    points, camera
+                )
                 dist, vis_dist = dists.min(), vis_dists.min()
                 if dist_cull is not None and dist > dist_cull:
-                    logger.debug(f"{p.name=} temporarily culled in camera {i} due to {dist=:.2f} > {dist_cull=}")
+                    logger.debug(
+                        f"{p.name=} temporarily culled in camera {i} due to {dist=:.2f} > {dist_cull=}"
+                    )
                     continue
                 if vis_cull is not None and vis_dist > vis_cull:
-                    logger.debug(f"{p.name=} temporarily culled in camera {i} due to {vis_dist=:.2f} > {vis_cull=}")
+                    logger.debug(
+                        f"{p.name=} temporarily culled in camera {i} due to {vis_dist=:.2f} > {vis_cull=}"
+                    )
                     continue
                 populate = True
                 dist_list.append(dist)
@@ -192,17 +213,22 @@ def populate_collection(
         if cache_system:
             if (
                 sum(cache_system.n_placed.values()) < cache_system.max_fire_assets
-                and cache_system.n_placed[factory.__class__.__name__] < cache_system.max_per_kind
+                and cache_system.n_placed[factory.__class__.__name__]
+                < cache_system.max_per_kind
             ):
                 i_list = cache_system.find_i_list(factory)
                 ind = np.random.choice(len(i_list))
                 i_chosen, full_sim_folder, sim_folder = i_list[ind]
-                obj = factory.spawn_asset(int(i_chosen), placeholder=p, distance=dist, vis_distance=vis_dist)
+                obj = factory.spawn_asset(
+                    int(i_chosen), placeholder=p, distance=dist, vis_distance=vis_dist
+                )
                 dom = cache_system.link_fire(full_sim_folder, sim_folder, obj, factory)
             else:
                 break
         else:
-            obj = factory.spawn_asset(i, placeholder=p, distance=dist, vis_distance=vis_dist, **asset_kwargs)
+            obj = factory.spawn_asset(
+                i, placeholder=p, distance=dist, vis_distance=vis_dist, **asset_kwargs
+            )
 
         if p is not obj:
             p.hide_render = True
@@ -224,7 +250,9 @@ def populate_collection(
 
 
 @gin.configurable
-def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, cache_system=None, **kwargs):
+def populate_all(
+    factory_class, camera, dist_cull=200, vis_cull=0, cache_system=None, **kwargs
+):
     """
     Find all collections that may have been produced by factory_class, and update them
 
@@ -246,7 +274,9 @@ def populate_all(factory_class, camera, dist_cull=200, vis_cull=0, cache_system=
         asset_target_col.hide_viewport = False
 
         if len(asset_target_col.objects) > 0:
-            logger.info(f"Skipping populating {col.name=} since {asset_target_col.name=} is already populated")
+            logger.info(
+                f"Skipping populating {col.name=} since {asset_target_col.name=} is already populated"
+            )
             continue
 
         new_assets, pholders = populate_collection(
@@ -269,7 +299,10 @@ def make_placeholders_float(placeholder_col, scene_bvh, water):
     up = mathutils.Vector((0, 0, 1))
     margin = mathutils.Vector((0, 0, 1e-3))
 
-    for p in tqdm(placeholder_col.objects, desc=f"Computing fluid-floating locations for {placeholder_col.name=}"):
+    for p in tqdm(
+        placeholder_col.objects,
+        desc=f"Computing fluid-floating locations for {placeholder_col.name=}",
+    ):
         w_up, *_ = water_bvh.ray_cast(p.location + margin, up)
         if w_up is not None:
             t_up, *_ = scene_bvh.ray_cast(p.location + margin, up)

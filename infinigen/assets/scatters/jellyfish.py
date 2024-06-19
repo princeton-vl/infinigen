@@ -9,7 +9,7 @@ from numpy.random import uniform as U
 
 from infinigen.assets.creatures.jellyfish import JellyfishFactory
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 
@@ -17,7 +17,11 @@ def apply(obj, scale=1, density=1.0, n=6, selection=None):
     n_species = np.random.randint(2, 3)
     factories = list(JellyfishFactory(np.random.randint(1e5)) for i in range(n_species))
     jellyfish = make_asset_collection(
-        factories, name="jellyfish", weights=np.random.uniform(0.5, 1, len(factories)), n=n, verbose=True
+        factories,
+        name="jellyfish",
+        weights=np.random.uniform(0.5, 1, len(factories)),
+        n=n,
+        verbose=True,
     )
 
     def ground_offset(nw: NodeWrangler):

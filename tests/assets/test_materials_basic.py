@@ -4,11 +4,8 @@
 
 # Authors: Alexander Raistrick
 
-import importlib
-from pathlib import Path
 
 import bpy
-import gin
 import pytest
 
 from infinigen.core.util import blender as butil
@@ -32,13 +29,17 @@ def check_material_runs(pathspec):
 
 
 @pytest.mark.nature
-@pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_nature_materials.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list("tests/assets/list_nature_materials.txt")
+)
 def test_nature_material_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_nature")
     check_material_runs(pathspec)
 
 
-@pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_indoor_materials.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list("tests/assets/list_indoor_materials.txt")
+)
 def test_indoor_material_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_indoor")
     check_material_runs(pathspec)

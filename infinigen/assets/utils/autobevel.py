@@ -9,7 +9,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import random_general as rg
 
 
 class BevelSharp:
@@ -41,5 +40,8 @@ class BevelSharp:
             bpy.ops.mesh.edges_select_sharp(sharpness=angle)
 
             bpy.ops.mesh.bevel(
-                offset=self.amount * self.mult, segments=self.segments, affect="EDGES", offset_type="WIDTH"
+                offset=self.amount * self.mult,
+                segments=self.segments,
+                affect="EDGES",
+                offset_type="WIDTH",
             )

@@ -17,7 +17,9 @@ from shapely import LineString, Polygon, union
 from shapely.ops import shared_paths
 
 import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.core.constraints.example_solver.room.configs import EXTERIOR_CONNECTED_ROOM_TYPES
+from infinigen.core.constraints.example_solver.room.configs import (
+    EXTERIOR_CONNECTED_ROOM_TYPES,
+)
 from infinigen.core.constraints.example_solver.room.constants import SEGMENT_MARGIN
 from infinigen.core.constraints.example_solver.room.types import RoomType, get_room_type
 from infinigen.core.constraints.example_solver.room.utils import (
@@ -61,7 +63,9 @@ class BlueprintSolver:
         self.staircase_occupancy_thresh = staircase_occupancy_thresh
         self.exterior_connected_room_types = exterior_connected_room_types
         self.exterior_connected_rooms = set(
-            i for i, r in enumerate(self.graph.rooms) if get_room_type(r) in self.exterior_connected_room_types
+            i
+            for i, r in enumerate(self.graph.rooms)
+            if get_room_type(r) in self.exterior_connected_room_types
         )
         if self.graph.entrance is not None:
             self.exterior_connected_rooms.add(self.graph.entrance)
@@ -75,7 +79,11 @@ class BlueprintSolver:
         staircase_occupancies = info["staircase_occupancies"]
         if info["staircase"] is not None:
             staircase_candidates = list(
-                (k for k, v in staircase_occupancies.items() if v > self.staircase_occupancy_thresh)
+                (
+                    k
+                    for k, v in staircase_occupancies.items()
+                    if v > self.staircase_occupancy_thresh
+                )
             )
             if len(staircase_candidates) == 0:
                 return None
@@ -93,7 +101,9 @@ class BlueprintSolver:
             else:
                 candidates = unassigned.copy()
             n_unassigned = len(list(j for j in self.graph.neighbours[i] if j > i))
-            assigned_neighbours = set(assignment[j] for j in self.graph.neighbours[i] if j < i)
+            assigned_neighbours = set(
+                assignment[j] for j in self.graph.neighbours[i] if j < i
+            )
             for n in candidates:
                 if assigned_neighbours.issubset(neighbours_all[n]):
                     if len(neighbours_all[n].intersection(unassigned)) >= n_unassigned:
@@ -118,7 +128,10 @@ class BlueprintSolver:
                 if assignment[k] not in exterior_neighbours:
                     return RoomSolverMsg("exterior neighbours unsatisfied", [k])
             if get_room_type(self.graph.rooms[k]) == RoomType.Staircase:
-                if staircase_occupancies[assignment[k]] < self.staircase_occupancy_thresh:
+                if (
+                    staircase_occupancies[assignment[k]]
+                    < self.staircase_occupancy_thresh
+                ):
                     return RoomSolverMsg("staircase occupancy unsatisfied", [k])
         return RoomSolverMsg("success")
 
@@ -147,14 +160,24 @@ class BlueprintSolver:
         try:
             for c in resp.index_changed:
                 update_shared_edges(info["segments"], info["shared_edges"], c)
-                update_exterior_edges(info["segments"], info["shared_edges"], info["exterior_edges"], c)
-                update_staircase_occupancies(info["segments"], info["staircase"], info["staircase_occupancies"], c)
+                update_exterior_edges(
+                    info["segments"], info["shared_edges"], info["exterior_edges"], c
+                )
+                update_staircase_occupancies(
+                    info["segments"],
+                    info["staircase"],
+                    info["staircase_occupancies"],
+                    c,
+                )
         except:
             return RoomSolverMsg("Exception")
         info["neighbours_all"] = {
-            k: set(compute_neighbours(se, SEGMENT_MARGIN)) for k, se in info["shared_edges"].items()
+            k: set(compute_neighbours(se, SEGMENT_MARGIN))
+            for k, se in info["shared_edges"].items()
         }
-        info["exterior_neighbours"] = set(compute_neighbours(info["exterior_edges"], SEGMENT_MARGIN))
+        info["exterior_neighbours"] = set(
+            compute_neighbours(info["exterior_edges"], SEGMENT_MARGIN)
+        )
         for k, s in info["segments"].items():
             x, y = np.array(s.boundary.coords).T
             if np.any((x < -1.0) | (y < -1.0) | (x > 40.0) | (y > 40.0)):
@@ -183,11 +206,17 @@ class BlueprintSolver:
         if is_vertical:
             new_x = x + stride if (y_ < y) ^ out else x - stride
             new_first = new_x, linear_extend_x(coords[(k - 1) % mod], coords[k], new_x)
-            new_second = new_x, linear_extend_x(coords[(k + 2) % mod], coords[k + 1], new_x)
+            new_second = (
+                new_x,
+                linear_extend_x(coords[(k + 2) % mod], coords[k + 1], new_x),
+            )
         else:
             new_y = y + stride if (x_ > x) ^ out else y - stride
             new_first = linear_extend_y(coords[(k - 1) % mod], coords[k], new_y), new_y
-            new_second = linear_extend_y(coords[(k + 2) % mod], coords[k + 1], new_y), new_y
+            new_second = (
+                linear_extend_y(coords[(k + 2) % mod], coords[k + 1], new_y),
+                new_y,
+            )
         coords[k % mod] = new_first
         coords[(k + 1) % mod] = new_second
         coords[-1] = coords[0]
@@ -203,7 +232,11 @@ class BlueprintSolver:
         if not is_valid_polygon(cutter):
             return RoomSolverMsg("extrude_room_out_invalid", [i])
         cutter = canonicalize(cutter)
-        shared = list(k for k in info["shared_edges"][i].keys() if segments[k].intersection(cutter).area > 0.1)
+        shared = list(
+            k
+            for k in info["shared_edges"][i].keys()
+            if segments[k].intersection(cutter).area > 0.1
+        )
         index_changed = [i, *shared]
         total_pre_area = sum([segments[i].area for i in index_changed])
         for l in shared:
@@ -280,7 +313,12 @@ class BlueprintStaircaseSolver:
             return resp
         for info in infos:
             for k in info["segments"]:
-                update_staircase_occupancies(info["segments"], info["staircase"], info["staircase_occupancies"], k)
+                update_staircase_occupancies(
+                    info["segments"],
+                    info["staircase"],
+                    info["staircase_occupancies"],
+                    k,
+                )
         return resp
 
     def move_staircase(self, infos):
@@ -291,7 +329,10 @@ class BlueprintStaircaseSolver:
         for i in range(self.n_trials):
             stride = constants.UNIT * (np.random.randint(self.max_stride) + 1)
             x, y = directions[np.random.randint(4)]
-            coords = list((x_ + x * stride, y_ + y * stride) for x_, y_ in staircase.boundary.coords[:])
+            coords = list(
+                (x_ + x * stride, y_ + y * stride)
+                for x_, y_ in staircase.boundary.coords[:]
+            )
             p = Polygon(LineString(coords))
             if self.contours[-1].contains(p):
                 for info in infos:

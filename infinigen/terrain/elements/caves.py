@@ -85,15 +85,26 @@ class Caves(Element):
         asset_paths = []
         if on_the_fly_instances > 0:
             for i in range(on_the_fly_instances):
-                if not (self.on_the_fly_asset_folder / str(i) / AssetFile.Finish).exists():
+                if not (
+                    self.on_the_fly_asset_folder / str(i) / AssetFile.Finish
+                ).exists():
                     with FixedSeed(int_hash(("Caves", self.assets_seed, i))):
                         caves_asset(self.on_the_fly_asset_folder / f"{i}")
         for i in range(on_the_fly_instances):
             asset_paths.append(self.on_the_fly_asset_folder / f"{i}")
         if reused_instances > 0:
-            assert self.reused_asset_folder is not None and self.reused_asset_folder.exists()
-            all_instances = len([x for x in os.listdir(str(self.reused_asset_folder)) if x[0] != "."])
-            sample = np.random.choice(all_instances, reused_instances, replace=reused_instances > all_instances)
+            assert (
+                self.reused_asset_folder is not None
+                and self.reused_asset_folder.exists()
+            )
+            all_instances = len(
+                [x for x in os.listdir(str(self.reused_asset_folder)) if x[0] != "."]
+            )
+            sample = np.random.choice(
+                all_instances,
+                reused_instances,
+                replace=reused_instances > all_instances,
+            )
             for i in range(reused_instances):
                 asset_paths.append(self.reused_asset_folder / f"{sample[i]}")
 
@@ -107,5 +118,7 @@ class Caves(Element):
                     datas[key] = [data[key]]
         for key in datas:
             datas[key] = np.concatenate(datas[key])
-        float_params = np.concatenate((datas["bounding_box"], datas["occupancy"])).astype(np.float32)
+        float_params = np.concatenate(
+            (datas["bounding_box"], datas["occupancy"])
+        ).astype(np.float32)
         return on_the_fly_instances + reused_instances, N, float_params

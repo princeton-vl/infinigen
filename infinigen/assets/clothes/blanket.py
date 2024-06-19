@@ -7,7 +7,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import art, fabrics
 from infinigen.assets.materials.art import ArtFabric
 from infinigen.assets.utils.decorate import read_co, select_vertices, write_co
 from infinigen.assets.utils.object import new_grid
@@ -30,7 +29,9 @@ class BlanketFactory(AssetFactory):
             self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        obj = new_grid(x_subdivisions=64, y_subdivisions=int(self.size / self.width * 64))
+        obj = new_grid(
+            x_subdivisions=64, y_subdivisions=int(self.size / self.width * 64)
+        )
         obj.scale = self.width / 2, self.size / 2, 1
         butil.apply_transform(obj)
         unwrap_faces(obj)
@@ -70,8 +71,14 @@ class BoxComforterFactory(ComforterFactory):
     def create_asset(self, **params) -> bpy.types.Object:
         obj = super().create_asset(**params)
         x, y, _ = read_co(obj).T
-        _x = np.abs(x / self.margin - np.round(x / self.margin)) * self.margin < self.width / 64 / 2
-        _y = np.abs(y / self.margin - np.round(y / self.margin)) * self.margin < self.width / 64 / 2
+        _x = (
+            np.abs(x / self.margin - np.round(x / self.margin)) * self.margin
+            < self.width / 64 / 2
+        )
+        _y = (
+            np.abs(y / self.margin - np.round(y / self.margin)) * self.margin
+            < self.width / 64 / 2
+        )
         with butil.ViewportMode(obj, "EDIT"):
             select_vertices(obj, _x | _y)
             bpy.ops.mesh.remove_doubles(threshold=0.02)

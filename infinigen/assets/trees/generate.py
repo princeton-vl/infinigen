@@ -5,27 +5,37 @@
 
 
 import logging
-import pdb
 
 import bpy
 import gin
 import numpy as np
-from numpy.random import normal, uniform
+from numpy.random import uniform
 
-from infinigen.assets.fruits import apple, blackberry, coconutgreen, compositional_fruit, durian, starfruit, strawberry
-from infinigen.assets.leaves import leaf, leaf_broadleaf, leaf_ginko, leaf_maple, leaf_pine, leaf_v2
+from infinigen.assets.fruits import (
+    apple,
+    blackberry,
+    coconutgreen,
+    compositional_fruit,
+    durian,
+    starfruit,
+    strawberry,
+)
+from infinigen.assets.leaves import (
+    leaf,
+    leaf_broadleaf,
+    leaf_ginko,
+    leaf_maple,
+    leaf_pine,
+    leaf_v2,
+)
 from infinigen.assets.trees import branch, tree, treeconfigs
-from infinigen.assets.utils.decorate import write_attribute
 from infinigen.assets.weather.cloud.generate import CloudFactory
 from infinigen.core import surface
-from infinigen.core.nodes.node_info import Nodes
-from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement import detail
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.placement.split_in_view import split_inview
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util import camera as camera_util
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 
@@ -37,7 +47,9 @@ logger = logging.getLogger(__name__)
 
 @gin.configurable
 class GenericTreeFactory(AssetFactory):
-    scale = 0.35  # trees are defined in weird units currently, need converting to meters
+    scale = (
+        0.35  # trees are defined in weird units currently, need converting to meters
+    )
 
     def __init__(
         self,
@@ -70,7 +82,7 @@ class GenericTreeFactory(AssetFactory):
         self.min_dist = min_dist
 
     def create_placeholder(self, i, loc, rot):
-        logger.debug(f"generating tree skeleton")
+        logger.debug("generating tree skeleton")
         skeleton_obj = tree.tree_skeleton(
             self.genome.skeleton,
             self.genome.trunk_spacecol,
@@ -90,11 +102,19 @@ class GenericTreeFactory(AssetFactory):
     def _create_coarse_mesh(self, skeleton_obj):
         logger.debug("generating skinned mesh")
         coarse_mesh = deep_clone_obj(skeleton_obj)
-        surface.add_geomod(coarse_mesh, tree.skin_tree, input_kwargs={"params": self.genome.skinning}, apply=True)
+        surface.add_geomod(
+            coarse_mesh,
+            tree.skin_tree,
+            input_kwargs={"params": self.genome.skinning},
+            apply=True,
+        )
 
         if self.decimate_placeholder_levels > 0:
             butil.modify_mesh(
-                coarse_mesh, "DECIMATE", decimate_type="UNSUBDIV", iterations=self.decimate_placeholder_levels
+                coarse_mesh,
+                "DECIMATE",
+                decimate_type="UNSUBDIV",
+                iterations=self.decimate_placeholder_levels,
             )
 
         return coarse_mesh
@@ -108,11 +128,15 @@ class GenericTreeFactory(AssetFactory):
 
     def asset_parameters(self, distance: float, vis_distance: float) -> dict:
         if self.min_dist is not None and distance < self.min_dist:
-            logger.warn(f"{self} recieved {distance=} which violates {self.min_dist=}. Ignoring")
+            logger.warn(
+                f"{self} recieved {distance=} which violates {self.min_dist=}. Ignoring"
+            )
             distance = self.min_dist
         return dict(face_size=detail.target_face_size(distance), distance=distance)
 
-    def create_asset(self, placeholder, face_size, distance, **kwargs) -> bpy.types.Object:
+    def create_asset(
+        self, placeholder, face_size, distance, **kwargs
+    ) -> bpy.types.Object:
         skeleton_obj = placeholder.children[0]
 
         if not self.coarse_mesh_placeholder:
@@ -126,7 +150,9 @@ class GenericTreeFactory(AssetFactory):
             assert self.genome.child_placement is not None
 
             max_needed_child_fs = (
-                detail.target_face_size(self.min_dist, global_multiplier=1) if self.min_dist is not None else None
+                detail.target_face_size(self.min_dist, global_multiplier=1)
+                if self.min_dist is not None
+                else None
             )
 
             logger.debug(f"adding tree children using {self.child_col=}")
@@ -146,7 +172,9 @@ class GenericTreeFactory(AssetFactory):
             assert self.adapt_mesh_method != "remesh"
 
             skin_obj_cleanup = skin_obj
-            skin_obj, outofview, vert_dists, _ = split_inview(skin_obj, cam=self.camera, vis_margin=0.15)
+            skin_obj, outofview, vert_dists, _ = split_inview(
+                skin_obj, cam=self.camera, vis_margin=0.15
+            )
             butil.parent_to(outofview, skin_obj, no_inverse=True, no_transform=True)
 
             butil.delete(skin_obj_cleanup)
@@ -160,12 +188,14 @@ class GenericTreeFactory(AssetFactory):
             )  # one extra level to smooth things out or remesh is jaggedy
 
         with butil.DisableModifiers(skin_obj):
-            detail.adapt_mesh_resolution(skin_obj, face_size, method=self.adapt_mesh_method, apply=True)
+            detail.adapt_mesh_resolution(
+                skin_obj, face_size, method=self.adapt_mesh_method, apply=True
+            )
 
         butil.parent_to(skin_obj, placeholder, no_inverse=True, no_transform=True)
 
         if self.realize:
-            logger.debug(f"realizing tree children")
+            logger.debug("realizing tree children")
             butil.apply_modifiers(skin_obj)
             butil.apply_modifiers(skeleton_obj)
 
@@ -217,7 +247,9 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
     if leaf_type is None:
         return None, None
     elif leaf_type == "leaf":
-        return leaf.LeafFactory(seed, leaf_params, **kwargs), surface.registry("greenery")
+        return leaf.LeafFactory(seed, leaf_params, **kwargs), surface.registry(
+            "greenery"
+        )
     elif leaf_type == "leaf_pine":
         return leaf_pine.LeafFactoryPine(seed, season, **kwargs), None
     elif leaf_type == "leaf_ginko":
@@ -233,26 +265,38 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
     elif leaf_type == "apple":
         return apple.FruitFactoryApple(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "blackberry":
-        return blackberry.FruitFactoryBlackberry(seed, scale=fruit_scale, **kwargs), None
+        return blackberry.FruitFactoryBlackberry(
+            seed, scale=fruit_scale, **kwargs
+        ), None
     elif leaf_type == "coconutgreen":
-        return coconutgreen.FruitFactoryCoconutgreen(seed, scale=fruit_scale, **kwargs), None
+        return coconutgreen.FruitFactoryCoconutgreen(
+            seed, scale=fruit_scale, **kwargs
+        ), None
     elif leaf_type == "durian":
         return durian.FruitFactoryDurian(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "starfruit":
         return starfruit.FruitFactoryStarfruit(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "strawberry":
-        return strawberry.FruitFactoryStrawberry(seed, scale=fruit_scale, **kwargs), None
+        return strawberry.FruitFactoryStrawberry(
+            seed, scale=fruit_scale, **kwargs
+        ), None
     elif leaf_type == "compositional_fruit":
-        return compositional_fruit.FruitFactoryCompositional(seed, scale=fruit_scale, **kwargs), None
+        return compositional_fruit.FruitFactoryCompositional(
+            seed, scale=fruit_scale, **kwargs
+        ), None
     elif leaf_type == "flower":
-        return tree_flower.TreeFlowerFactory(seed, rad=uniform(0.15, 0.25), **kwargs), None
+        return tree_flower.TreeFlowerFactory(
+            seed, rad=uniform(0.15, 0.25), **kwargs
+        ), None
     elif leaf_type == "cloud":
         return CloudFactory(seed), None
     else:
         raise ValueError(f"Unrecognized {leaf_type=}")
 
 
-def make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, decimate_rate=0.0, season=None):
+def make_leaf_collection(
+    seed, leaf_params, n_leaf, leaf_types, decimate_rate=0.0, season=None
+):
     logger.debug(f"Starting make_leaf_collection({seed=}, {n_leaf=} ...)")
 
     if season is None:
@@ -266,7 +310,9 @@ def make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, decimate_rate=0.
     child_factories = []
     for leaf_type in leaf_types:
         if leaf_type is not None:
-            leaf_factory, _ = random_tree_child_factory(seed, leaf_params, leaf_type=leaf_type, season=season)
+            leaf_factory, _ = random_tree_child_factory(
+                seed, leaf_params, leaf_type=leaf_type, season=season
+            )
             child_factories.append(leaf_factory)
             weights.append(1.0)
 
@@ -289,12 +335,24 @@ def make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, decimate_rate=0.
 def random_leaf_collection(season, n=5):
     (_, _, leaf_params), leaf_type = random_species(season=season)
     return make_leaf_collection(
-        np.random.randint(1e5), leaf_params, n_leaf=n, leaf_types=leaf_type or "leaf_v2", decimate_rate=0.97
+        np.random.randint(1e5),
+        leaf_params,
+        n_leaf=n,
+        leaf_types=leaf_type or "leaf_v2",
+        decimate_rate=0.97,
     )
 
 
 def make_twig_collection(
-    seed, twig_params, leaf_params, trunk_surface, n_leaf, n_twig, leaf_types, season=None, twig_valid_dist=6
+    seed,
+    twig_params,
+    leaf_params,
+    trunk_surface,
+    n_leaf,
+    n_twig,
+    leaf_types,
+    season=None,
+    twig_valid_dist=6,
 ):
     logger.debug(f"Starting make_twig_collection({seed=}, {n_leaf=}, {n_twig=}...)")
 
@@ -302,12 +360,18 @@ def make_twig_collection(
         season = random_season()
 
     if leaf_types is not None:
-        child_col = make_leaf_collection(seed, leaf_params, n_leaf, leaf_types, season=season, decimate_rate=0.97)
+        child_col = make_leaf_collection(
+            seed, leaf_params, n_leaf, leaf_types, season=season, decimate_rate=0.97
+        )
     else:
         child_col = None
 
-    twig_factory = GenericTreeFactory(seed, twig_params, child_col, trunk_surface=trunk_surface, realize=True)
-    col = make_asset_collection(twig_factory, n_twig, verbose=False, distance=twig_valid_dist)
+    twig_factory = GenericTreeFactory(
+        seed, twig_params, child_col, trunk_surface=trunk_surface, realize=True
+    )
+    col = make_asset_collection(
+        twig_factory, n_twig, verbose=False, distance=twig_valid_dist
+    )
 
     if child_col is not None:
         child_col.hide_viewport = False
@@ -318,7 +382,9 @@ def make_twig_collection(
 def make_branch_collection(seed, twig_col, fruit_col, n_branch, coarse=False):
     logger.debug(f"Starting make_branch_collection({seed=}, ...)")
 
-    branch_factory = branch.BranchFactory(seed, twig_col=twig_col, fruit_col=fruit_col, coarse=coarse)
+    branch_factory = branch.BranchFactory(
+        seed, twig_col=twig_col, fruit_col=fruit_col, coarse=coarse
+    )
     col = make_asset_collection(branch_factory, n_branch, verbose=False)
 
     return col
@@ -335,7 +401,8 @@ class TreeFactory(GenericTreeFactory):
         # return
         # return 'leaf_maple'
         leaf_type = np.random.choice(
-            ["leaf", "leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"], p=[0, 0.0, 0.70, 0.15, 0.15]
+            ["leaf", "leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
+            p=[0, 0.0, 0.70, 0.15, 0.15],
         )
         flower_type = np.random.choice(["flower", "berry", None], p=[1.0, 0.0, 0.0])
         if season == "spring":
@@ -351,7 +418,15 @@ class TreeFactory(GenericTreeFactory):
         # return
         # return 'leaf_maple'
         fruit_type = np.random.choice(
-            ["apple", "blackberry", "coconutgreen", "durian", "starfruit", "strawberry", "compositional_fruit"],
+            [
+                "apple",
+                "blackberry",
+                "coconutgreen",
+                "durian",
+                "starfruit",
+                "strawberry",
+                "compositional_fruit",
+            ],
             p=[0.2, 0.0, 0.2, 0.2, 0.2, 0.0, 0.2],
         )
 
@@ -377,7 +452,12 @@ class TreeFactory(GenericTreeFactory):
                 fruit_type = None
 
         super(TreeFactory, self).__init__(
-            seed, tree_params, child_col=None, trunk_surface=trunk_surface, coarse=coarse, **kwargs
+            seed,
+            tree_params,
+            child_col=None,
+            trunk_surface=trunk_surface,
+            coarse=coarse,
+            **kwargs,
         )
 
         with FixedSeed(seed):
@@ -390,19 +470,35 @@ class TreeFactory(GenericTreeFactory):
 
             if colname not in bpy.data.collections:
                 twig_col = make_twig_collection(
-                    seed, twig_params, leaf_params, trunk_surface, self.n_leaf, self.n_twig, leaf_type, season=season
+                    seed,
+                    twig_params,
+                    leaf_params,
+                    trunk_surface,
+                    self.n_leaf,
+                    self.n_twig,
+                    leaf_type,
+                    season=season,
                 )
                 if fruit_type is not None:
                     fruit_col = make_leaf_collection(
-                        seed, leaf_params, self.n_leaf, fruit_type, season=season, decimate_rate=0.0
+                        seed,
+                        leaf_params,
+                        self.n_leaf,
+                        fruit_type,
+                        season=season,
+                        decimate_rate=0.0,
                     )
                 else:
                     fruit_col = butil.get_collection("Empty", reuse=True)
 
-                self.child_col = make_branch_collection(seed, twig_col, fruit_col, n_branch=self.n_twig)
+                self.child_col = make_branch_collection(
+                    seed, twig_col, fruit_col, n_branch=self.n_twig
+                )
                 self.child_col.name = colname
 
-                assert self.child_col.name == colname, f"Blender truncated {colname} to {self.child_col.name}"
+                assert (
+                    self.child_col.name == colname
+                ), f"Blender truncated {colname} to {self.child_col.name}"
             else:
                 self.child_col = bpy.data.collections[colname]
 
@@ -417,14 +513,23 @@ class BushFactory(GenericTreeFactory):
         with FixedSeed(seed):
             shrub_shape = np.random.randint(2)
             trunk_surface = surface.registry("bark")
-            tree_params, twig_params, leaf_params = treeconfigs.shrub(shrub_shape=shrub_shape)
+            tree_params, twig_params, leaf_params = treeconfigs.shrub(
+                shrub_shape=shrub_shape
+            )
 
         super(BushFactory, self).__init__(
-            seed, tree_params, child_col=None, trunk_surface=trunk_surface, coarse=coarse, **kwargs
+            seed,
+            tree_params,
+            child_col=None,
+            trunk_surface=trunk_surface,
+            coarse=coarse,
+            **kwargs,
         )
 
         with FixedSeed(seed):
-            leaf_type = np.random.choice(["leaf", "leaf_v2", "flower", "berry"], p=[0.1, 0.4, 0.5, 0])
+            leaf_type = np.random.choice(
+                ["leaf", "leaf_v2", "flower", "berry"], p=[0.1, 0.4, 0.5, 0]
+            )
 
             colname = f"assets:{self}.twigs"
             use_cached = colname in bpy.data.collections
@@ -435,9 +540,17 @@ class BushFactory(GenericTreeFactory):
 
             if colname not in bpy.data.collections:
                 self.child_col = make_twig_collection(
-                    seed, twig_params, leaf_params, trunk_surface, self.n_leaf, self.n_twig, leaf_type
+                    seed,
+                    twig_params,
+                    leaf_params,
+                    trunk_surface,
+                    self.n_leaf,
+                    self.n_twig,
+                    leaf_type,
                 )
                 self.child_col.name = colname
-                assert self.child_col.name == colname, f"Blender truncated {colname} to {self.child_col.name}"
+                assert (
+                    self.child_col.name == colname
+                ), f"Blender truncated {colname} to {self.child_col.name}"
             else:
                 self.child_col = bpy.data.collections[colname]

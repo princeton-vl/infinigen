@@ -4,19 +4,11 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 class FruitFactoryStrawberry(FruitFactoryGeneralFruit):
@@ -86,7 +78,9 @@ class FruitFactoryStrawberry(FruitFactoryGeneralFruit):
                 "Strength": 1.5,
                 "noise random seed": uniform(-100, 100),
             },
-            "surface_output_args": {"strawberry seed height": "noderef-fruitsurface-curve parameters"},
+            "surface_output_args": {
+                "strawberry seed height": "noderef-fruitsurface-curve parameters"
+            },
             "surface_resolution": 64,
             "scale_multiplier": 0.5,
         }
@@ -112,7 +106,11 @@ class FruitFactoryStrawberry(FruitFactoryGeneralFruit):
                 "fork number": randint(8, 13),
                 "outer radius": uniform(0.7, 0.9),
                 "noise random seed": uniform(-100, 100),
-                "quad_mid": (uniform(-0.1, 0.1), uniform(-0.1, 0.1), uniform(0.15, 0.2)),
+                "quad_mid": (
+                    uniform(-0.1, 0.1),
+                    uniform(-0.1, 0.1),
+                    uniform(0.15, 0.2),
+                ),
                 "quad_end": (uniform(-0.2, 0.2), uniform(-0.2, 0.2), uniform(0.3, 0.4)),
                 "cross_radius": uniform(0.035, 0.045),
                 "Translation": (0.0, 0.0, 0.97),

@@ -13,12 +13,16 @@ from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf
-from infinigen.assets.utils.object import join_objects, new_base_circle, new_base_cylinder, origin2lowest
+from infinigen.assets.utils.object import (
+    join_objects,
+    new_base_circle,
+    new_base_cylinder,
+    origin2lowest,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
-from ..utils.misc import assign_material
 from .base import TablewareFactory
 
 
@@ -31,7 +35,9 @@ class PanFactory(TablewareFactory):
             if self.r_expand == 1:
                 self.r_mid = log_uniform(1.0, 1.3)
             else:
-                self.r_mid = 1 + (self.r_expand - 1) * (uniform(0.5, 0.85) if uniform(0, 1) < 0.5 else 0.5)
+                self.r_mid = 1 + (self.r_expand - 1) * (
+                    uniform(0.5, 0.85) if uniform(0, 1) < 0.5 else 0.5
+                )
             self.has_handle = True
             self.has_handle_hole = uniform() < 0.6
             self.pre_level = 2
@@ -83,14 +89,21 @@ class PanFactory(TablewareFactory):
             bm.select_flush(False)
             bmesh.update_edit_mesh(obj.data)
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.fill_grid(use_interp_simple=True, offset=np.random.randint(n // 4))
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
+            bpy.ops.mesh.fill_grid(
+                use_interp_simple=True, offset=np.random.randint(n // 4)
+            )
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
         obj.rotation_euler[-1] = np.pi / n
         butil.apply_transform(obj)
         if self.has_handle:
             self.add_handle(obj)
         self.solidify_with_inside(obj, self.thickness)
-        selection = lambda nw, x: nw.compare("GREATER_THAN", x, self.x_guard)
+
+        def selection(nw, x):
+            return nw.compare("GREATER_THAN", x, self.x_guard)
+
         self.add_guard(obj, selection)
         subsurf(obj, 1, True)
         subsurf(obj, 3)
@@ -114,13 +127,23 @@ class PanFactory(TablewareFactory):
             bmesh.update_edit_mesh(obj.data)
 
             bpy.ops.mesh.extrude_edges_move(
-                TRANSFORM_OT_translate={"value": (self.x_handle * 0.5, 0, self.z_handle_mid)}
+                TRANSFORM_OT_translate={
+                    "value": (self.x_handle * 0.5, 0, self.z_handle_mid)
+                }
             )
             bpy.ops.mesh.extrude_edges_move(
-                TRANSFORM_OT_translate={"value": (self.x_handle * 0.5, 0, (self.z_handle - self.z_handle_mid))}
+                TRANSFORM_OT_translate={
+                    "value": (
+                        self.x_handle * 0.5,
+                        0,
+                        (self.z_handle - self.z_handle_mid),
+                    )
+                }
             )
             bpy.ops.transform.resize(value=[self.s_handle] * 3)
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (1e-3, 0, 0)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (1e-3, 0, 0)}
+            )
 
     def add_handle_hole(self, obj):
         cutter = new_base_cylinder()

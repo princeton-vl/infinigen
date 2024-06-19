@@ -8,24 +8,20 @@
 # - Alex Raistrick
 # - Karhan Kayan - add fire option
 
-import argparse
 import importlib
 import logging
-import math
 import os
-import random
-import re
-import subprocess
-import traceback
-from itertools import product
 from pathlib import Path
 
 from numpy.random import uniform
 from tqdm import tqdm
 
-from infinigen.assets.materials import metal_shader_list
 from infinigen.assets.materials.woods import tiled_wood
-from infinigen_examples.generate_individual_assets import adjust_cam_distance, make_args, parent, setup_camera
+from infinigen_examples.generate_individual_assets import (
+    adjust_cam_distance,
+    make_args,
+    setup_camera,
+)
 from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
@@ -37,20 +33,21 @@ logging.basicConfig(
 import bpy
 import gin
 import numpy as np
-from PIL import Image
 
-from infinigen.assets.fluid.fluid import set_obj_on_fire
-from infinigen.assets.lighting import hdri_lighting, holdout_lighting, sky_lighting, three_point_lighting
-from infinigen.assets.utils.decorate import read_base_co, read_co
-from infinigen.assets.utils.misc import assign_material, subclasses
+from infinigen.assets.lighting import (
+    hdri_lighting,
+    holdout_lighting,
+    sky_lighting,
+    three_point_lighting,
+)
+from infinigen.assets.utils.decorate import read_base_co
+from infinigen.assets.utils.misc import subclasses
 from infinigen.core import init, surface
-from infinigen.core.placement import density, factory
+from infinigen.core.placement import factory
 from infinigen.core.rendering.render import enable_gpu
-from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
-from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
 
 
@@ -58,11 +55,15 @@ def build_scene_surface(factory_name, idx):
     try:
         with gin.unlock_config():
             try:
-                template = importlib.import_module(f"infinigen.assets.materials.{factory_name}")
+                template = importlib.import_module(
+                    f"infinigen.assets.materials.{factory_name}"
+                )
             except:
                 for subdir in os.listdir("infinigen/assets/materials"):
                     with gin.unlock_config():
-                        module = importlib.import_module(f'infinigen.assets.materials.{subdir.split(".")[0]}')
+                        module = importlib.import_module(
+                            f'infinigen.assets.materials.{subdir.split(".")[0]}'
+                        )
                     if hasattr(module, factory_name):
                         template = getattr(module, factory_name)
                         break
@@ -93,13 +94,17 @@ def build_scene_surface(factory_name, idx):
 def build_scene(path, factory_names, args):
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.render.resolution_x, scene.render.resolution_y = map(int, args.resolution.split("x"))
+    scene.render.resolution_x, scene.render.resolution_y = map(
+        int, args.resolution.split("x")
+    )
     scene.cycles.samples = args.samples
     butil.clear_scene()
 
     if not args.fire:
         bpy.context.scene.render.film_transparent = args.film_transparent
-        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[-1] = 0
+        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[
+            -1
+        ] = 0
     camera, center = setup_camera(args)
 
     scale = 0.3
@@ -137,7 +142,9 @@ def build_scene(path, factory_names, args):
             sky_texture.sun_rotation = np.pi * 0.75
 
     if args.scale_reference:
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2))
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2)
+        )
 
     if args.cam_center > 0 and asset:
         co = read_base_co(asset) + asset.location
@@ -191,7 +198,9 @@ def main(args):
         factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
         factories.remove("ALL_MATERIALS")
     if ".txt" in factories[0]:
-        factories = [f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)]
+        factories = [
+            f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
+        ]
 
     try:
         build_scene(path, factories, args)

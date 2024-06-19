@@ -5,17 +5,14 @@
 
 
 import logging
-from functools import partial
 
 import bpy
 import numpy as np
 from numpy.random import normal as N
-from numpy.random import uniform as U
 
 from infinigen.core.placement import animation_policy, particles
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general
 
 logger = logging.getLogger(__name__)
@@ -41,7 +38,16 @@ def creature_col_to_particle_col(col, name, prefix="particleassets"):
 
 
 class BoidSwarmFactory(AssetFactory):
-    def __init__(self, factory_seed, child_col, settings, bvh, collider_col, volume=0.1, coarse=False):
+    def __init__(
+        self,
+        factory_seed,
+        child_col,
+        settings,
+        bvh,
+        collider_col,
+        volume=0.1,
+        coarse=False,
+    ):
         super().__init__(factory_seed, coarse)
 
         self.collider_col = collider_col
@@ -60,9 +66,14 @@ class BoidSwarmFactory(AssetFactory):
         speed = max(self.settings["boids_settings"].get(k, 0) for k in speed_keys)
         step_size_range = speed * 3 * N(1, 0.1) * np.array([0.5, 1.5])
         policy = animation_policy.AnimPolicyRandomForwardWalk(
-            forward_vec=(1, 0, 0), speed=speed * N(1, 0.1), step_range=step_size_range, yaw_dist=("normal", 0, 70)
+            forward_vec=(1, 0, 0),
+            speed=speed * N(1, 0.1),
+            step_range=step_size_range,
+            yaw_dist=("normal", 0, 70),
         )
-        animation_policy.animate_trajectory(p, self.bvh, policy, retry_rotation=True, max_full_retries=20)
+        animation_policy.animate_trajectory(
+            p, self.bvh, policy, retry_rotation=True, max_full_retries=20
+        )
 
         return p
 
@@ -73,11 +84,16 @@ class BoidSwarmFactory(AssetFactory):
         size_random = self.settings["size_random"]
         avg_size = (size + size_random * size) / 2
         child_vol = butil.avg_approx_vol(self.col.objects)
-        count = random_general(self.target_child_volume) / float(avg_size**3 * child_vol)
+        count = random_general(self.target_child_volume) / float(
+            avg_size**3 * child_vol
+        )
         self.settings["count"] = int(count)
 
         emitter, system = particles.particle_system(
-            emitter=placeholder, subject=self.col, collision_collection=self.collider_col, settings=self.settings
+            emitter=placeholder,
+            subject=self.col,
+            collision_collection=self.collider_col,
+            settings=self.settings,
         )
 
         for r in system.settings.boids.states[0].rules:

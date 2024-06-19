@@ -7,7 +7,6 @@
 
 
 import logging
-import pdb
 
 import bpy
 import gin
@@ -25,9 +24,8 @@ from infinigen.assets.creatures.util import animation as creature_animation
 from infinigen.assets.creatures.util import creature, genome, joining
 from infinigen.assets.creatures.util.animation import curve_slither
 from infinigen.assets.creatures.util.animation.run_cycle import follow_path
-from infinigen.assets.creatures.util.creature_util import euler
 from infinigen.assets.creatures.util.genome import Joint
-from infinigen.assets.materials import bone, eyeball, horn, nose, tongue
+from infinigen.assets.materials import bone, eyeball, nose, tongue
 from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
@@ -178,7 +176,10 @@ def snake_genome():
     h_mod = N(1, 0.05)
 
     body_fac = parts.reptile_detail.ReptileBody(
-        type="snake", n_bones=15, shoulder_ik_ts=[0.0, 0.3, 0.6, 1.0], mod=(1, w_mod, h_mod)
+        type="snake",
+        n_bones=15,
+        shoulder_ik_ts=[0.0, 0.3, 0.6, 1.0],
+        mod=(1, w_mod, h_mod),
     )
 
     body = genome.part(body_fac)
@@ -206,7 +207,14 @@ def snake_genome():
     rot = np.array([0, 0, 90]) * N(1, 0.1, 3)
     for side in [-1, 1]:
         eye = genome.part(eye_fac)
-        genome.attach(eye, head, coord=(t, splay, r), joint=Joint(rest=(0, 0, 0)), rotation_basis="normal", side=side)
+        genome.attach(
+            eye,
+            head,
+            coord=(t, splay, r),
+            joint=Joint(rest=(0, 0, 0)),
+            rotation_basis="normal",
+            side=side,
+        )
 
     # teeth
     horn_fac = parts.horn.Horn(
@@ -223,7 +231,12 @@ def snake_genome():
     for side in [-1, 1]:
         horn = genome.part(horn_fac)
         genome.attach(
-            horn, head, coord=(t, splay, 0.8), joint=Joint(rest=(30, 130, -20)), rotation_basis="global", side=side
+            horn,
+            head,
+            coord=(t, splay, 0.8),
+            joint=Joint(rest=(30, 130, -20)),
+            rotation_basis="global",
+            side=side,
         )
 
     jaw_fac = parts.reptile_detail.ReptileLowerHead(head_size, mod=(1, w_mod, h_mod))
@@ -427,7 +440,9 @@ def animate_lizard_run(root, arma, params, ik_targets):
 
 
 def reptile_postprocessing(body_parts, extras, params):
-    get_extras = lambda k: [o for o in extras if k in o.name]
+    def get_extras(k):
+        return [o for o in extras if k in o.name]
+
     main_template = surface.registry.sample_registry(params["surface_registry"])
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
@@ -439,7 +454,9 @@ def reptile_postprocessing(body_parts, extras, params):
 
 
 def chameleon_postprocessing(body_parts, extras, params):
-    get_extras = lambda k: [o for o in extras if k in o.name]
+    def get_extras(k):
+        return [o for o in extras if k in o.name]
+
     main_template = surface.registry.sample_registry(params["surface_registry"])
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
@@ -457,10 +474,18 @@ class LizardFactory(AssetFactory):
 
     def create_asset(self, i, animate=False, rigging=False, cloth=False, **kwargs):
         genome = lizard_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"lizard({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"lizard({self.factory_seed}, {i})"
+        )
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
-            root, parts, genome, postprocess_func=reptile_postprocessing, adapt_mode="remesh", rigging=rigging, **kwargs
+            root,
+            parts,
+            genome,
+            postprocess_func=reptile_postprocessing,
+            adapt_mode="remesh",
+            rigging=rigging,
+            **kwargs,
         )
         if animate and arma is not None:
             pass
@@ -482,10 +507,18 @@ class FrogFactory(AssetFactory):
 
     def create_asset(self, i, animate=False, rigging=False, simulate=False, **kwargs):
         genome = frog_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"frog({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"frog({self.factory_seed}, {i})"
+        )
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
-            root, parts, genome, postprocess_func=reptile_postprocessing, adapt_mode="remesh", rigging=rigging, **kwargs
+            root,
+            parts,
+            genome,
+            postprocess_func=reptile_postprocessing,
+            adapt_mode="remesh",
+            rigging=rigging,
+            **kwargs,
         )
         if animate and arma is not None:
             pass
@@ -501,7 +534,14 @@ class FrogFactory(AssetFactory):
 class SnakeFactory(AssetFactory):
     max_distance = 40
 
-    def __init__(self, factory_seed, bvh=None, coarse=False, snake_length=("uniform", 0.5, 3), **kwargs):
+    def __init__(
+        self,
+        factory_seed,
+        bvh=None,
+        coarse=False,
+        snake_length=("uniform", 0.5, 3),
+        **kwargs,
+    ):
         super().__init__(factory_seed, coarse)
         self.bvh = bvh
         with FixedSeed(factory_seed):
@@ -530,7 +570,9 @@ class SnakeFactory(AssetFactory):
         curve_slither.add_curve_slithers(slither_curve, snake_length=self.snake_length)
 
         if slither_curve.type != "CURVE":
-            logging.warning(f"{self.__class__.__name__} created invalid path {curve.name} with {curve.type=}")
+            logging.warning(
+                f"{self.__class__.__name__} created invalid path {curve.name} with {curve.type=}"
+            )
             return p
 
         curve_slither.snap_curve_to_floor(slither_curve, self.bvh)
@@ -550,7 +592,9 @@ class SnakeFactory(AssetFactory):
 
     def create_asset(self, i, placeholder, **kwargs):
         genome = snake_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"snake({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"snake({self.factory_seed}, {i})"
+        )
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root,
@@ -564,18 +608,25 @@ class SnakeFactory(AssetFactory):
 
         joined = butil.join_objects([joined] + extras)
 
-        s = self.snake_length / 20  # convert to real units. existing code averages 20m length
+        s = (
+            self.snake_length / 20
+        )  # convert to real units. existing code averages 20m length
         joined.scale = (s, s, s)
         butil.apply_transform(joined, scale=True)
 
-        if len(placeholder.constraints) and placeholder.constraints[0].type == "FOLLOW_PATH":
+        if (
+            len(placeholder.constraints)
+            and placeholder.constraints[0].type == "FOLLOW_PATH"
+        ):
             curve = placeholder.constraints[0].target.parent
             assert curve.type == "CURVE", curve.type
             if len(curve.data.splines[0].points) > 3:
                 orig_len = curve.data.splines[0].calc_length()
 
                 joined.parent = None
-                curve_slither.slither_along_path(joined, curve, speed=self.policy.speed, orig_len=orig_len)
+                curve_slither.slither_along_path(
+                    joined, curve, speed=self.policy.speed, orig_len=orig_len
+                )
 
                 root.parent = butil.spawn_empty(
                     "snake_parent_temp"
@@ -604,7 +655,9 @@ class ChameleonFactory(AssetFactory):
 
     def create_asset(self, i, placeholder, **kwargs):
         genome = chameleon_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"snake({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"snake({self.factory_seed}, {i})"
+        )
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root,

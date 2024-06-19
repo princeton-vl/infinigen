@@ -41,10 +41,18 @@ class SurfacePointCloud:
             indices = np.random.choice(self.points.shape[0], count)
             return self.points[indices, :]
         else:
-            samples, index = trimesh.sample.sample_surface(mesh=self.mesh, count=count, face_weight=None, seed=0)
+            samples, index = trimesh.sample.sample_surface(
+                mesh=self.mesh, count=count, face_weight=None, seed=0
+            )
             return samples
 
-    def get_sdf(self, query_points, use_depth_buffer=False, sample_count=11, return_gradients=False):
+    def get_sdf(
+        self,
+        query_points,
+        use_depth_buffer=False,
+        sample_count=11,
+        return_gradients=False,
+    ):
         if use_depth_buffer:
             distances, indices = self.kd_tree.query(query_points)
             distances = distances.astype(np.float32).reshape(-1)
@@ -61,7 +69,10 @@ class SurfacePointCloud:
 
             closest_points = self.points[indices]
             direction_from_surface = query_points[:, np.newaxis, :] - closest_points
-            inside = np.einsum("ijk,ijk->ij", direction_from_surface, self.normals[indices]) < 0
+            inside = (
+                np.einsum("ijk,ijk->ij", direction_from_surface, self.normals[indices])
+                < 0
+            )
             inside = np.sum(inside, axis=1) > sample_count * 0.5
             distances = distances[:, 0]
             distances[inside] *= -1
@@ -71,15 +82,24 @@ class SurfacePointCloud:
                 gradients[inside] *= -1
 
         if return_gradients:
-            near_surface = np.abs(distances) < math.sqrt(0.0025**2 * 3) * 3  # 3D 2-norm stdev * 3
-            gradients = np.where(near_surface[:, np.newaxis], self.normals[indices[:, 0]], gradients)
+            near_surface = (
+                np.abs(distances) < math.sqrt(0.0025**2 * 3) * 3
+            )  # 3D 2-norm stdev * 3
+            gradients = np.where(
+                near_surface[:, np.newaxis], self.normals[indices[:, 0]], gradients
+            )
             gradients /= np.linalg.norm(gradients, axis=1)[:, np.newaxis]
             return distances, gradients
         else:
             return distances
 
     def get_sdf_in_batches(
-        self, query_points, use_depth_buffer=False, sample_count=11, batch_size=1000000, return_gradients=False
+        self,
+        query_points,
+        use_depth_buffer=False,
+        sample_count=11,
+        batch_size=1000000,
+        return_gradients=False,
     ):
         if query_points.shape[0] <= batch_size:
             return self.get_sdf(
@@ -92,7 +112,10 @@ class SurfacePointCloud:
         n_batches = int(math.ceil(query_points.shape[0] / batch_size))
         batches = [
             self.get_sdf(
-                points, use_depth_buffer=use_depth_buffer, sample_count=sample_count, return_gradients=return_gradients
+                points,
+                use_depth_buffer=use_depth_buffer,
+                sample_count=sample_count,
+                return_gradients=return_gradients,
             )
             for points in np.array_split(query_points, n_batches)
         ]
@@ -113,13 +136,18 @@ class SurfacePointCloud:
         return_gradients=False,
     ):
         result = self.get_sdf_in_batches(
-            get_raster_points(voxel_resolution), use_depth_buffer, sample_count, return_gradients=return_gradients
+            get_raster_points(voxel_resolution),
+            use_depth_buffer,
+            sample_count,
+            return_gradients=return_gradients,
         )
         if not return_gradients:
             sdf = result
         else:
             sdf, gradients = result
-            voxel_gradients = np.reshape(gradients, (voxel_resolution, voxel_resolution, voxel_resolution, 3))
+            voxel_gradients = np.reshape(
+                gradients, (voxel_resolution, voxel_resolution, voxel_resolution, 3)
+            )
 
         voxels = sdf.reshape((voxel_resolution, voxel_resolution, voxel_resolution))
 
@@ -131,7 +159,9 @@ class SurfacePointCloud:
 
         if return_gradients:
             if pad:
-                voxel_gradients = np.pad(voxel_gradients, ((1, 1), (1, 1), (1, 1), (0, 0)), mode="edge")
+                voxel_gradients = np.pad(
+                    voxel_gradients, ((1, 1), (1, 1), (1, 1), (0, 0)), mode="edge"
+                )
             return voxels, voxel_gradients
         else:
             return voxels
@@ -147,12 +177,22 @@ class SurfacePointCloud:
     ):
         query_points = []
         surface_sample_count = int(number_of_points * 47 / 50) // 2
-        surface_points = self.get_random_surface_points(surface_sample_count, use_scans=use_scans)
-        query_points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
-        query_points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
+        surface_points = self.get_random_surface_points(
+            surface_sample_count, use_scans=use_scans
+        )
+        query_points.append(
+            surface_points
+            + np.random.normal(scale=0.0025, size=(surface_sample_count, 3))
+        )
+        query_points.append(
+            surface_points
+            + np.random.normal(scale=0.00025, size=(surface_sample_count, 3))
+        )
 
         unit_sphere_sample_count = number_of_points - surface_points.shape[0] * 2
-        unit_sphere_points = sample_uniform_points_in_unit_sphere(unit_sphere_sample_count)
+        unit_sphere_points = sample_uniform_points_in_unit_sphere(
+            unit_sphere_sample_count
+        )
         query_points.append(unit_sphere_points)
         query_points = np.concatenate(query_points).astype(np.float32)
 
@@ -164,14 +204,21 @@ class SurfacePointCloud:
                 return_gradients=return_gradients,
             )
         elif sign_method == "depth":
-            sdf = self.get_sdf_in_batches(query_points, use_depth_buffer=True, return_gradients=return_gradients)
+            sdf = self.get_sdf_in_batches(
+                query_points, use_depth_buffer=True, return_gradients=return_gradients
+            )
         else:
-            raise ValueError("Unknown sign determination method: {:s}".format(sign_method))
+            raise ValueError(
+                "Unknown sign determination method: {:s}".format(sign_method)
+            )
         if return_gradients:
             sdf, gradients = sdf
 
         if min_size > 0:
-            model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
+            model_size = (
+                np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0)
+                / unit_sphere_sample_count
+            )
             if model_size < min_size:
                 raise BadMeshException()
 
@@ -203,11 +250,15 @@ def get_equidistant_camera_angles(count):
         yield phi, theta
 
 
-def create_from_scans(mesh, bounding_radius=1, scan_count=100, scan_resolution=400, calculate_normals=True):
+def create_from_scans(
+    mesh, bounding_radius=1, scan_count=100, scan_resolution=400, calculate_normals=True
+):
     scans = []
 
     for phi, theta in get_equidistant_camera_angles(scan_count):
-        camera_transform = get_camera_transform_looking_at_origin(phi, theta, camera_distance=2 * bounding_radius)
+        camera_transform = get_camera_transform_looking_at_origin(
+            phi, theta, camera_distance=2 * bounding_radius
+        )
         scans.append(
             Scan(
                 mesh,
@@ -223,14 +274,20 @@ def create_from_scans(mesh, bounding_radius=1, scan_count=100, scan_resolution=4
     return SurfacePointCloud(
         mesh,
         points=np.concatenate([scan.points for scan in scans], axis=0),
-        normals=np.concatenate([scan.normals for scan in scans], axis=0) if calculate_normals else None,
+        normals=np.concatenate([scan.normals for scan in scans], axis=0)
+        if calculate_normals
+        else None,
         scans=scans,
     )
 
 
 def sample_from_mesh(mesh, sample_point_count=10000000, calculate_normals=True):
-    points, face_indices = trimesh.sample.sample_surface(mesh=mesh, count=sample_point_count, face_weight=None, seed=0)
+    points, face_indices = trimesh.sample.sample_surface(
+        mesh=mesh, count=sample_point_count, face_weight=None, seed=0
+    )
     if calculate_normals:
         normals = mesh.face_normals[face_indices]
 
-    return SurfacePointCloud(mesh, points=points, normals=normals if calculate_normals else None, scans=None)
+    return SurfacePointCloud(
+        mesh, points=points, normals=normals if calculate_normals else None, scans=None
+    )

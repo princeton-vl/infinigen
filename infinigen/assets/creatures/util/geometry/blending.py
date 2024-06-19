@@ -11,17 +11,18 @@ See exmaple_use() for an example
 
 from __future__ import annotations
 
-from multiprocessing.sharedctypes import Value
-from typing import Callable, Iterable, Literal, Tuple
+from typing import Callable, Iterable, Tuple
 
 import bpy
 import mathutils
 import numpy as np
 from geomdl import NURBS
-from networkx.classes import ordered
 
 from infinigen.assets.creatures.util.geometry import lofting, nurbs, skin_ops
-from infinigen.assets.creatures.util.geometry.nurbs import blender_mesh_from_pydata, compute_cylinder_topology
+from infinigen.assets.creatures.util.geometry.nurbs import (
+    blender_mesh_from_pydata,
+    compute_cylinder_topology,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import (
     FixedSeed,
@@ -33,7 +34,9 @@ from infinigen.core.util.math import (
     wrap_around_cyclic_coord,
 )
 
-raise NotImplementedError("blending.py not currently used, please re-add shapely as a dependency and delete this line")
+raise NotImplementedError(
+    "blending.py not currently used, please re-add shapely as a dependency and delete this line"
+)
 
 import rtree
 import shapely
@@ -41,7 +44,12 @@ from shapely.geometry import LineString, Point, Polygon
 
 
 class CurveND:
-    def __init__(self, eval_fn: Callable[[np.array], Tuple[np.array, np.array]], dim, domain=(0, 1)):
+    def __init__(
+        self,
+        eval_fn: Callable[[np.array], Tuple[np.array, np.array]],
+        dim,
+        domain=(0, 1),
+    ):
         self._eval_fn = eval_fn
         if domain[1] <= domain[0]:
             raise ValueError("invalid domain")
@@ -60,7 +68,9 @@ class CurveND:
     def dim(self):
         return self._dim
 
-    def evaluate_points_and_derivatives_at_t(self, t: np.array) -> Tuple[np.array, np.array]:
+    def evaluate_points_and_derivatives_at_t(
+        self, t: np.array
+    ) -> Tuple[np.array, np.array]:
         if (t < self.domain[0]).any() or (t > self.domain[1]).any():
             raise ValueError("out of domain t value")
 
@@ -73,7 +83,9 @@ class CurveND:
 
         return (points, derivatives)
 
-    def evaluate_points_and_derivatives(self, resolution: int) -> Tuple[np.array, np.array]:
+    def evaluate_points_and_derivatives(
+        self, resolution: int
+    ) -> Tuple[np.array, np.array]:
         t = np.linspace(self.domain[0], self.domain[1], resolution)
         return self.eval_points_and_derivatives_at_t(t)
 
@@ -107,7 +119,9 @@ class Curve2DFactory:
         center = np.array(center)
         start_pos = np.array(start_pos)
         if center.shape != (2,) or start_pos.shape != (2,):
-            raise ValueError(f"wrong shapes for center {center.shape} or start_pos {start_pos.shape}")
+            raise ValueError(
+                f"wrong shapes for center {center.shape} or start_pos {start_pos.shape}"
+            )
         r = start_pos - center
         rad = np.linalg.norm(r)
         start_angle = np.arccos(r[0] / rad)
@@ -125,7 +139,13 @@ class Curve2DFactory:
             duvdt = (
                 rad
                 * arc_angle
-                * np.stack([-np.sin(t * arc_angle + start_angle), np.cos(t * arc_angle + start_angle)], axis=-1)
+                * np.stack(
+                    [
+                        -np.sin(t * arc_angle + start_angle),
+                        np.cos(t * arc_angle + start_angle),
+                    ],
+                    axis=-1,
+                )
             )
             return (uv, duvdt)
 
@@ -133,7 +153,11 @@ class Curve2DFactory:
 
     @staticmethod
     def nurbs(
-        ctrlpts: np.array, degree=3, knots: np.array = None, weights: np.array = None, make_cyclic=False
+        ctrlpts: np.array,
+        degree=3,
+        knots: np.array = None,
+        weights: np.array = None,
+        make_cyclic=False,
     ) -> CurveND:
         """returns a 2D curve. extra dimensions in ctrlpts are ignored
         If make_cyclic is True, will create new control points and knots to wrap around
@@ -176,7 +200,9 @@ class Curve2DFactory:
 
 
 class UVMesh:
-    def __init__(self, uvpoints, edges, faces, cyclic_v=False, pos_cross_edges=None, domain=None):
+    def __init__(
+        self, uvpoints, edges, faces, cyclic_v=False, pos_cross_edges=None, domain=None
+    ):
         if uvpoints.shape[-1] != 2:
             raise ValueError("wrong shape of uvpoints")
 
@@ -192,7 +218,11 @@ class UVMesh:
         self._faces = [list(f) for f in faces]
         self._faces_deleted = [False] * len(faces)
 
-        self._face_of_edge = {(f[j - 1], f[j]): i for i, f in enumerate(self._faces) for j in range(0, len(f))}
+        self._face_of_edge = {
+            (f[j - 1], f[j]): i
+            for i, f in enumerate(self._faces)
+            for j in range(0, len(f))
+        }
 
         self._cyclic_v = cyclic_v
         self._pos_cross_edges = set(((e[0], e[1]) for e in pos_cross_edges))
@@ -200,22 +230,34 @@ class UVMesh:
 
         self._vspan = domain[1][1] - domain[1][0]
         voffsets = [
-            np.cumsum([0] + [self._cross_edge_dir((f[i - 1], f[i])) for i in range(1, len(f))]) for f in self._faces
+            np.cumsum(
+                [0] + [self._cross_edge_dir((f[i - 1], f[i])) for i in range(1, len(f))]
+            )
+            for f in self._faces
         ]
 
         self._faces_cross_direction = [vs[np.argmax(vs != 0)] for vs in voffsets]
 
         self._polygons = [
-            Polygon([self._uvpoints[p] + np.array([0, c * self._vspan]) for c, p in zip(cs, f)])
+            Polygon(
+                [
+                    self._uvpoints[p] + np.array([0, c * self._vspan])
+                    for c, p in zip(cs, f)
+                ]
+            )
             for cs, f in zip(voffsets, faces)
         ]
 
         self._polygons_rshift = [
-            shapely.affinity.translate(p, yoff=self._vspan) if self._faces_cross_direction[i] < 0 else None
+            shapely.affinity.translate(p, yoff=self._vspan)
+            if self._faces_cross_direction[i] < 0
+            else None
             for i, p in enumerate(self._polygons)
         ]
         self._polygons_lshift = [
-            shapely.affinity.translate(p, yoff=-self._vspan) if self._faces_cross_direction[i] > 0 else None
+            shapely.affinity.translate(p, yoff=-self._vspan)
+            if self._faces_cross_direction[i] > 0
+            else None
             for i, p in enumerate(self._polygons)
         ]
 
@@ -240,12 +282,16 @@ class UVMesh:
             if not self._uvpoints_deleted[pt1] and not self._uvpoints_deleted[pt2]
         ]
         faces = [
-            [new_ids[pt] for pt in f_pts] for f_id, f_pts in enumerate(self._faces) if not self._faces_deleted[f_id]
+            [new_ids[pt] for pt in f_pts]
+            for f_id, f_pts in enumerate(self._faces)
+            if not self._faces_deleted[f_id]
         ]
         return (uvpoints, edges, faces)
 
     @staticmethod
-    def from_meshgrid(resolution_u: int, resolution_v: int, domain=((0, 1), (0, 1)), cyclic_v=False) -> UVMesh:
+    def from_meshgrid(
+        resolution_u: int, resolution_v: int, domain=((0, 1), (0, 1)), cyclic_v=False
+    ) -> UVMesh:
         if cyclic_v and resolution_v <= 3:
             raise ValueError("resoultion v is too low")
 
@@ -257,10 +303,17 @@ class UVMesh:
         # drop the duplicates
         if cyclic_v:
             uv = uv[:, :-1, :]
-        edges, faces = compute_cylinder_topology(resolution_u, resolution_v - cyclic_v, cyclic_v)
+        edges, faces = compute_cylinder_topology(
+            resolution_u, resolution_v - cyclic_v, cyclic_v
+        )
 
         cross_edges = (
-            [e for e in edges if e[0] % (resolution_v - 1) == resolution_v - 2 and e[1] % (resolution_v - 1) == 0]
+            [
+                e
+                for e in edges
+                if e[0] % (resolution_v - 1) == resolution_v - 2
+                and e[1] % (resolution_v - 1) == 0
+            ]
             if cyclic_v
             else []
         )
@@ -269,7 +322,11 @@ class UVMesh:
 
     def _enclosing_polygon(self, face_id, pt_coords):
         point = Point(pt_coords)
-        for poly in [self._polygons[face_id], self._polygons_lshift[face_id], self._polygons_rshift[face_id]]:
+        for poly in [
+            self._polygons[face_id],
+            self._polygons_lshift[face_id],
+            self._polygons_rshift[face_id],
+        ]:
             if poly is not None and poly.covers(point):
                 return poly
         return None
@@ -278,7 +335,11 @@ class UVMesh:
         if line is None:
             return []
         res = []
-        for poly in [self._polygons[face_id], self._polygons_lshift[face_id], self._polygons_rshift[face_id]]:
+        for poly in [
+            self._polygons[face_id],
+            self._polygons_lshift[face_id],
+            self._polygons_rshift[face_id],
+        ]:
             if poly is not None and poly.covers(line):
                 res.append(poly)
         return res
@@ -289,15 +350,23 @@ class UVMesh:
         if not self._within_domain(coords):
             raise ValueError("coords must be within domain")
         candidate_faces = self._rtree_idx.intersection(coords)
-        e_faces_polys = [(i, self._enclosing_polygon(i, coords)) for i in candidate_faces if not self._faces_deleted[i]]
+        e_faces_polys = [
+            (i, self._enclosing_polygon(i, coords))
+            for i in candidate_faces
+            if not self._faces_deleted[i]
+        ]
         e_faces_polys = [(i, p) for i, p in e_faces_polys if p is not None]
         e_edges = [
             (self._faces[f][i], self._faces[f][(i + 1) % len(self._faces[f])])
             for f, po in e_faces_polys
             for i in range(len(self._faces[f]))
-            if shapely.geometry.LineString([po.exterior.coords[i], po.exterior.coords[i + 1]]).contains(Point(coords))
+            if shapely.geometry.LineString(
+                [po.exterior.coords[i], po.exterior.coords[i + 1]]
+            ).contains(Point(coords))
         ]
-        e_edges = list(set(((e[0], e[1]) if e[0] < e[1] else ((e[1], e[0])) for e in e_edges)))
+        e_edges = list(
+            set(((e[0], e[1]) if e[0] < e[1] else ((e[1], e[0])) for e in e_edges))
+        )
         e_verts = [
             pt
             for f, _ in e_faces_polys
@@ -313,7 +382,13 @@ class UVMesh:
 
     def _print_all(self):
         print("points")
-        print([(i, p[0]) for i, p in enumerate(zip(self._uvpoints, self._uvpoints_deleted)) if not p[1]])
+        print(
+            [
+                (i, p[0])
+                for i, p in enumerate(zip(self._uvpoints, self._uvpoints_deleted))
+                if not p[1]
+            ]
+        )
 
         print("edges")
         print(sorted(self._edges_of_point.items()))
@@ -322,7 +397,13 @@ class UVMesh:
         print(sorted(self._pos_cross_edges))
 
         print("faces")
-        print([(i, fd[0]) for i, fd in enumerate(zip(self._faces, self._faces_deleted)) if not fd[1]])
+        print(
+            [
+                (i, fd[0])
+                for i, fd in enumerate(zip(self._faces, self._faces_deleted))
+                if not fd[1]
+            ]
+        )
 
         print("face_of_edge")
         print(sorted(self._face_of_edge.items()))
@@ -360,16 +441,32 @@ class UVMesh:
         self._faces_deleted.append(False)
         self._face_of_edge.update(((pts[i - 1], pts[i]), f_id) for i in range(len(pts)))
 
-        vs = np.cumsum([0] + [self._cross_edge_dir((pts[i - 1], pts[i])) for i in range(1, len(pts))])
+        vs = np.cumsum(
+            [0]
+            + [self._cross_edge_dir((pts[i - 1], pts[i])) for i in range(1, len(pts))]
+        )
 
         cross_dir = vs[np.argmax(vs != 0)]
         self._faces_cross_direction.append(cross_dir)
 
-        poly = Polygon([self._uvpoints[p] + np.array([0, c * self._vspan]) for c, p in zip(vs, pts)])
+        poly = Polygon(
+            [
+                self._uvpoints[p] + np.array([0, c * self._vspan])
+                for c, p in zip(vs, pts)
+            ]
+        )
         self._polygons.append(poly)
 
-        poly_r = shapely.affinity.translate(poly, yoff=self._vspan) if cross_dir < 0 else None
-        poly_l = shapely.affinity.translate(poly, yoff=-self._vspan) if cross_dir > 0 else None
+        poly_r = (
+            shapely.affinity.translate(poly, yoff=self._vspan)
+            if cross_dir < 0
+            else None
+        )
+        poly_l = (
+            shapely.affinity.translate(poly, yoff=-self._vspan)
+            if cross_dir > 0
+            else None
+        )
         self._polygons_rshift.append(poly_r)
         self._polygons_lshift.append(poly_l)
 
@@ -406,7 +503,11 @@ class UVMesh:
         pt_idx = self._faces[enclosing_face].index(pt)
         pt = p_e.exterior.coords[pt_idx]
         pt_poly_co = p_e.exterior.coords[pt_idx]
-        cross_dir = 1 if pt_poly_co[1] < self._domain[1][0] else (-1 if pt_poly_co[1] >= self._domain[1][1] else 0)
+        cross_dir = (
+            1
+            if pt_poly_co[1] < self._domain[1][0]
+            else (-1 if pt_poly_co[1] >= self._domain[1][1] else 0)
+        )
         return cross_dir
 
     def _delete_edge_and_merge_faces(self, pt1, pt2):
@@ -480,7 +581,12 @@ class UVMesh:
         if r_pt2_idx == 1:
             raise ValueError("(pt1, pt2) is already an edge")
 
-        cross_dir = np.cumsum([self._cross_edge_dir((r_pts[i - 1], r_pts[i])) for i in range(1, r_pt2_idx + 1)])[-1]
+        cross_dir = np.cumsum(
+            [
+                self._cross_edge_dir((r_pts[i - 1], r_pts[i]))
+                for i in range(1, r_pt2_idx + 1)
+            ]
+        )[-1]
 
         self._add_edge(pt1, pt2, cross_dir)
         f1 = self._add_face(r_pts[: r_pt2_idx + 1])
@@ -537,14 +643,18 @@ class UVMesh:
         for i, pt1 in enumerate(f_pts):
             for j, pt2 in enumerate(f_pts):
                 if i != j and pt2 not in self._edges_of_point[pt1]:
-                    line = LineString([poly.exterior.coords[i], poly.exterior.coords[j]])
+                    line = LineString(
+                        [poly.exterior.coords[i], poly.exterior.coords[j]]
+                    )
                     if poly.covers(line) and not poly.exterior.covers(line):
                         f1, f2 = self._split_face_with_new_edge(face_id, pt1, pt2)
                         self._triangulate_face(f1)
                         self._triangulate_face(f2)
                         return
 
-    def _split_edge_with_new_point(self, pt1, pt2, pt_coords, enclosing_face=None, enclosing_polygon=None):
+    def _split_edge_with_new_point(
+        self, pt1, pt2, pt_coords, enclosing_face=None, enclosing_polygon=None
+    ):
         new_pt = self._add_point(pt_coords)
 
         f1 = self._face_of_edge.pop((pt1, pt2), None)
@@ -554,12 +664,16 @@ class UVMesh:
             self._faces_deleted[f1] = True
             if enclosing_face is None:
                 enclosing_face = f1
-                enclosing_polygon = self._get_enclosing_polygon(pt_coords, enclosing_face)
+                enclosing_polygon = self._get_enclosing_polygon(
+                    pt_coords, enclosing_face
+                )
         if f2 is not None:
             self._faces_deleted[f2] = True
             if enclosing_face is None:
                 enclosing_face = f2
-                enclosing_polygon = self._get_enclosing_polygon(pt_coords, enclosing_face)
+                enclosing_polygon = self._get_enclosing_polygon(
+                    pt_coords, enclosing_face
+                )
 
         self._delete_edge(pt1, pt2)
 
@@ -601,11 +715,21 @@ class UVMesh:
         return [(f[i - 1], f[i]) for i in range(len(self._faces[f]))]
 
     def _faces_of_point(self, pt):
-        return [self._face_of_edge[(pt, j)] for j in self._edges_of_point[pt] if (pt, j) in self._face_of_edge]
+        return [
+            self._face_of_edge[(pt, j)]
+            for j in self._edges_of_point[pt]
+            if (pt, j) in self._face_of_edge
+        ]
 
     def _poly_of_point_on_face(self, face_id, pt):
-        for poly in [self._polygons[face_id], self._polygons_lshift[face_id], self._polygons_rshift[face_id]]:
-            if poly is not None and self._within_domain(np.array(poly.exterior.coords[self._faces[face_id].index(pt)])):
+        for poly in [
+            self._polygons[face_id],
+            self._polygons_lshift[face_id],
+            self._polygons_rshift[face_id],
+        ]:
+            if poly is not None and self._within_domain(
+                np.array(poly.exterior.coords[self._faces[face_id].index(pt)])
+            ):
                 return poly
 
     def add_edge_and_remesh(self, pt1, pt2, cross_dir=0):
@@ -618,7 +742,9 @@ class UVMesh:
                 self._triangulate_face(self._face_of_edge[(pt2, pt1)])
             return
 
-        shared_f = set(self._faces_of_point(pt1)).intersection(set(self._faces_of_point(pt2)))
+        shared_f = set(self._faces_of_point(pt1)).intersection(
+            set(self._faces_of_point(pt2))
+        )
         if len(shared_f) > 0:
             if len(shared_f) > 1:
                 raise ValueError("non-convex faces or redudant points")
@@ -670,7 +796,9 @@ class UVMesh:
         pt_coords = np.array(pt_coords)
         if not self._within_domain(pt_coords):
             raise ValueError("pt_coords must be within domain")
-        e_faces_polys, e_edges, e_verts = self._enclosing_faces_polys_edges_verts_of_point(pt_coords)
+        e_faces_polys, e_edges, e_verts = (
+            self._enclosing_faces_polys_edges_verts_of_point(pt_coords)
+        )
 
         new_pt = None
         if len(e_verts) > 0:
@@ -702,7 +830,9 @@ class UVMesh:
         self.add_edge_and_remesh(pt1, pt2, cross_dir)
         return (pt1, pt2)
 
-    def add_poly_curve_and_remesh(self, uvpoints: np.array, cyclic_curve=False, vloop=False):
+    def add_poly_curve_and_remesh(
+        self, uvpoints: np.array, cyclic_curve=False, vloop=False
+    ):
         if uvpoints.shape[-1] != 2:
             raise ValueError("wrong shape of curve")
         uvpoints = uvpoints.reshape(-1, 2)
@@ -724,7 +854,13 @@ class UVMesh:
         return pts
 
     def add_curve_and_remesh(
-        self, curve: CurveND, resolution: int, cyclic_curve=False, vloop=False, cut_inside=False, cut_outside=False
+        self,
+        curve: CurveND,
+        resolution: int,
+        cyclic_curve=False,
+        vloop=False,
+        cut_inside=False,
+        cut_outside=False,
     ) -> Iterable[int]:
         t = np.linspace(*curve.domain, resolution)
         if cyclic_curve:
@@ -752,7 +888,11 @@ class UVMesh:
                 pt_coords1[1] += self._vspan
                 pt_coords2 = pt_coords.copy()
                 pt_coords2[1] -= self._vspan
-                if poly.covers(Point(pt_coords)) or poly.covers(Point(pt_coords1)) or poly.covers(Point(pt_coords2)):
+                if (
+                    poly.covers(Point(pt_coords))
+                    or poly.covers(Point(pt_coords1))
+                    or poly.covers(Point(pt_coords2))
+                ):
                     if cut_inside:
                         self.remove_points(comp)
                 else:
@@ -760,7 +900,9 @@ class UVMesh:
                         self.remove_points(comp)
         return pts
 
-    def connected_components(self, boundary_pts: Iterable[int]) -> Iterable[Iterable[int]]:
+    def connected_components(
+        self, boundary_pts: Iterable[int]
+    ) -> Iterable[Iterable[int]]:
         color_of_pts = -np.ones(len(self._uvpoints))
         color_of_pts[boundary_pts] = -2
         color_of_pts[self._uvpoints_deleted] = -2
@@ -775,7 +917,10 @@ class UVMesh:
                         if color_of_pts[pt2] == -1:
                             stack.append(pt2)
                 cur_color += 1
-        res = [[i for i, c in enumerate(color_of_pts) if c == color] for color in range(cur_color)]
+        res = [
+            [i for i, c in enumerate(color_of_pts) if c == color]
+            for color in range(cur_color)
+        ]
         return res
 
     def remove_points(self, pts: Iterable[int]):
@@ -853,7 +998,9 @@ class Surface:
     def create_mesh(self, resolution_u: int, resolution_v: int):
         points, _, _ = self.evaluate_points_and_derivatives(resolution_u, resolution_v)
         points = points.reshape(-1, 3)
-        edges, faces = compute_cylinder_topology(resolution_u, resolution_v, self.cyclic_v)
+        edges, faces = compute_cylinder_topology(
+            resolution_u, resolution_v, self.cyclic_v
+        )
         return blender_mesh_from_pydata(points, edges, faces)
 
     def create_mesh_from_uvmesh(self, uvmesh: UVMesh):
@@ -861,7 +1008,9 @@ class Surface:
         points, _, _ = self.evaluate_points_and_derivatives_at_uv(uvpoints)
         return blender_mesh_from_pydata(points, edges, faces)
 
-    def evaluate_points_and_derivatives_at_uv(self, uv: np.array) -> Tuple[np.array, np.array, np.array]:
+    def evaluate_points_and_derivatives_at_uv(
+        self, uv: np.array
+    ) -> Tuple[np.array, np.array, np.array]:
         if uv.shape[-1] != 2:
             raise ValueError("wrong uv shape")
 
@@ -910,7 +1059,9 @@ class RailCurve:
         self._surf = surf
         self._curve_uv = curve_uv.affine_new_domain((0, 1))
 
-    def evaluate_points_derivatives_normals(self, t: np.array) -> Tuple[np.array, np.array]:
+    def evaluate_points_derivatives_normals(
+        self, t: np.array
+    ) -> Tuple[np.array, np.array]:
         uv, duvdt = self._curve_uv.evaluate_points_and_derivatives_at_t(t)
         points, dsdu, dsdv = self._surf.evaluate_points_and_derivatives_at_uv(uv)
         dcdt = dsdu * duvdt[..., 0, None] + dsdv * duvdt[..., 1, None]
@@ -932,7 +1083,12 @@ class SurfaceFactory:
             dsdv = d_tmp[..., 0, 1, :]
             return (points, dsdu, dsdv)
 
-        return Surface(eval_fn, domain=surf.domain, cyclic_u=s.use_cyclic_u, cyclic_v=s.use_cyclic_v)
+        return Surface(
+            eval_fn,
+            domain=surf.domain,
+            cyclic_u=s.use_cyclic_u,
+            cyclic_v=s.use_cyclic_v,
+        )
 
     @staticmethod
     def plane(center, normal, domain=((-1, 1), (-1, 1))) -> Surface:
@@ -956,7 +1112,13 @@ class SurfaceFactory:
         return Surface(eval_fn, domain)
 
     @staticmethod
-    def blending(r1: RailCurve, r2: RailCurve, alpha=(0, 0), w=(0.1, 0.1), sweep_left=(False, False)) -> Surface:
+    def blending(
+        r1: RailCurve,
+        r2: RailCurve,
+        alpha=(0, 0),
+        w=(0.1, 0.1),
+        sweep_left=(False, False),
+    ) -> Surface:
         """
         Constructs a blending surface B(s,t) that spans two rail curves r1(t) and r2(t), where s,t in [0,1],
         such that r1(t) = B(0,t) and r2(t) = s(1,t) for all t in [0,1], and that B(s,t) smoothly blends.
@@ -1011,7 +1173,12 @@ class SurfaceFactory:
             H3 = s * np.square(s - 1)
             H4 = s * s * (s - 1)
 
-            points = H1[..., None] * c1 + H2[..., None] * c2 + H3[..., None] * T1 + H4[..., None] * T2
+            points = (
+                H1[..., None] * c1
+                + H2[..., None] * c2
+                + H3[..., None] * T1
+                + H4[..., None] * T2
+            )
             return (points, None, None)
 
         return Surface(eval_fn)
@@ -1026,9 +1193,13 @@ def example_use():
 
         def make_object():
             skin = skin_ops.random_skin(1, n, m)
-            skeleton = np.hstack((np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1)))
+            skeleton = np.hstack(
+                (np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1))
+            )
             method = "blender"
-            obj = lofting.loft(skeleton, skin, method=method, face_size=0.1, cyclic_v=True)
+            obj = lofting.loft(
+                skeleton, skin, method=method, face_size=0.1, cyclic_v=True
+            )
             return obj
 
         obj1 = make_object()
@@ -1040,14 +1211,20 @@ def example_use():
 
         # base surface 1, with domain normalized to ((0,1), (0,1))
         # domain normalization isn't required, but may be convenient for specifying the curve in uv space
-        surf1 = SurfaceFactory.from_blender_nurbs(obj1.data.splines[0]).affine_new_domain(((0, 1), (0, 1)))
+        surf1 = SurfaceFactory.from_blender_nurbs(
+            obj1.data.splines[0]
+        ).affine_new_domain(((0, 1), (0, 1)))
         r1 = RailCurve(surf1, Curve2DFactory.circle([0.5, 0.8], [0.5, 0.6]))
 
         # base surface 2, with domain normalized to ((0,1), (0,1)), but with a flipped u axis
-        surf2 = SurfaceFactory.from_blender_nurbs(obj2.data.splines[0]).affine_new_domain(((1, 0), (0, 1)))
+        surf2 = SurfaceFactory.from_blender_nurbs(
+            obj2.data.splines[0]
+        ).affine_new_domain(((1, 0), (0, 1)))
         r2 = RailCurve(surf2, Curve2DFactory.circle([0.5, 0.3], [0.5, 0.5]))
 
-        b = SurfaceFactory.blending(r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False))
+        b = SurfaceFactory.blending(
+            r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False)
+        )
         b.create_mesh(resolution_s, resolution_t)
 
 
@@ -1060,9 +1237,13 @@ def example_use2():
 
         def make_object():
             skin = skin_ops.random_skin(1, n, m)
-            skeleton = np.hstack((np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1)))
+            skeleton = np.hstack(
+                (np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1))
+            )
             method = "blender"
-            obj = lofting.loft(skeleton, skin, method=method, face_size=0.1, cyclic_v=True)
+            obj = lofting.loft(
+                skeleton, skin, method=method, face_size=0.1, cyclic_v=True
+            )
             return obj
 
         obj1 = make_object()
@@ -1074,9 +1255,13 @@ def example_use2():
 
         # base surface 1, with domain normalized to ((0,1), (0,1))
         # domain normalization isn't required, but may be convenient for specifying the curve in uv space
-        surf1 = SurfaceFactory.from_blender_nurbs(obj1.data.splines[0]).affine_new_domain(((0, 1), (0, 1)))
+        surf1 = SurfaceFactory.from_blender_nurbs(
+            obj1.data.splines[0]
+        ).affine_new_domain(((0, 1), (0, 1)))
         ctrlpts = (
-            np.array([[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]])
+            np.array(
+                [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+            )
             * np.array([-1, -1])[None]
             * 0.2
             + np.array([0.5, 0.8])[None]
@@ -1084,10 +1269,14 @@ def example_use2():
         r1 = RailCurve(surf1, Curve2DFactory.nurbs(ctrlpts, make_cyclic=True))
 
         # base surface 2, with domain normalized to ((0,1), (0,1)), but with a flipped u axis
-        surf2 = SurfaceFactory.from_blender_nurbs(obj2.data.splines[0]).affine_new_domain(((1, 0), (0, 1)))
+        surf2 = SurfaceFactory.from_blender_nurbs(
+            obj2.data.splines[0]
+        ).affine_new_domain(((1, 0), (0, 1)))
         r2 = RailCurve(surf2, Curve2DFactory.circle([0.5, 0.3], [0.5, 0.5]))
 
-        b = SurfaceFactory.blending(r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False))
+        b = SurfaceFactory.blending(
+            r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False)
+        )
         b.create_mesh(resolution_s, resolution_t)
 
 
@@ -1101,9 +1290,13 @@ def example_use3():
 
         def make_object():
             skin = skin_ops.random_skin(1, n, m)
-            skeleton = np.hstack((np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1)))
+            skeleton = np.hstack(
+                (np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1))
+            )
             method = "blender"
-            obj = lofting.loft(skeleton, skin, method=method, face_size=0.1, cyclic_v=True)
+            obj = lofting.loft(
+                skeleton, skin, method=method, face_size=0.1, cyclic_v=True
+            )
             return obj
 
         obj1 = make_object()
@@ -1115,7 +1308,9 @@ def example_use3():
         ):
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
-        surf1 = SurfaceFactory.from_blender_nurbs(obj1.data.splines[0]).affine_new_domain(((0, 1), (0, 1)))
+        surf1 = SurfaceFactory.from_blender_nurbs(
+            obj1.data.splines[0]
+        ).affine_new_domain(((0, 1), (0, 1)))
         butil.delete(
             [
                 obj1,
@@ -1129,11 +1324,21 @@ def example_use3():
         comps0 = uv_mesh.connected_components([])
         if False:
             uv_mesh.add_curve_and_remesh(
-                curve2, resolution_c, cyclic_curve=True, vloop=True, cut_inside=True, cut_outside=False
+                curve2,
+                resolution_c,
+                cyclic_curve=True,
+                vloop=True,
+                cut_inside=True,
+                cut_outside=False,
             )
         else:
             uv_mesh.add_curve_and_remesh(
-                curve1, resolution_c, cyclic_curve=True, vloop=False, cut_inside=True, cut_outside=False
+                curve1,
+                resolution_c,
+                cyclic_curve=True,
+                vloop=False,
+                cut_inside=True,
+                cut_outside=False,
             )
         obj2 = surf1.create_mesh_from_uvmesh(uv_mesh)
 
@@ -1147,9 +1352,13 @@ def example_use4():
 
         def make_object():
             skin = skin_ops.random_skin(1, n, m)
-            skeleton = np.hstack((np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1)))
+            skeleton = np.hstack(
+                (np.random.normal(0, 0.2, [5, 2]), np.linspace(0, 5, 5).reshape(-1, 1))
+            )
             method = "blender"
-            obj = lofting.loft(skeleton, skin, method=method, face_size=0.1, cyclic_v=True)
+            obj = lofting.loft(
+                skeleton, skin, method=method, face_size=0.1, cyclic_v=True
+            )
             return obj
 
         obj1 = make_object()
@@ -1161,9 +1370,13 @@ def example_use4():
 
         # base surface 1, with domain normalized to ((0,1), (0,1))
         # domain normalization isn't required, but may be convenient for specifying the curve in uv space
-        surf1 = SurfaceFactory.from_blender_nurbs(obj1.data.splines[0]).affine_new_domain(((0, 1), (0, 1)))
+        surf1 = SurfaceFactory.from_blender_nurbs(
+            obj1.data.splines[0]
+        ).affine_new_domain(((0, 1), (0, 1)))
         ctrlpts = (
-            np.array([[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]])
+            np.array(
+                [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+            )
             * np.array([-1, -1])[None]
             * 0.2
             + np.array([0.5, 0.8])[None]
@@ -1172,19 +1385,27 @@ def example_use4():
         r1 = RailCurve(surf1, curve1)
 
         # base surface 2, with domain normalized to ((0,1), (0,1)), but with a flipped u axis
-        surf2 = SurfaceFactory.from_blender_nurbs(obj2.data.splines[0]).affine_new_domain(((1, 0), (0, 1)))
+        surf2 = SurfaceFactory.from_blender_nurbs(
+            obj2.data.splines[0]
+        ).affine_new_domain(((1, 0), (0, 1)))
         curve2 = Curve2DFactory.circle([0.5, 0.3], [0.5, 0.5])
         r2 = RailCurve(surf2, curve2)
 
-        b = SurfaceFactory.blending(r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False))
+        b = SurfaceFactory.blending(
+            r1, r2, alpha=(0, 0), w=(0.5, 0.5), sweep_left=(True, False)
+        )
         b.create_mesh(resolution_s, resolution_t)
 
         # replace obj1, obj2 with custom mesh
         butil.delete([obj1, obj2])
         uv_mesh1 = UVMesh.from_meshgrid(resolution_s, resolution_t)
-        uv_mesh1.add_curve_and_remesh(curve1, resolution_t, cyclic_curve=True, cut_inside=True)
+        uv_mesh1.add_curve_and_remesh(
+            curve1, resolution_t, cyclic_curve=True, cut_inside=True
+        )
         uv_mesh2 = UVMesh.from_meshgrid(resolution_s, resolution_t)
-        uv_mesh2.add_curve_and_remesh(curve2, resolution_t, cyclic_curve=True, cut_inside=True)
+        uv_mesh2.add_curve_and_remesh(
+            curve2, resolution_t, cyclic_curve=True, cut_inside=True
+        )
 
         obj1 = surf1.create_mesh_from_uvmesh(uv_mesh1)
         obj2 = surf2.create_mesh_from_uvmesh(uv_mesh2)

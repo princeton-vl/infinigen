@@ -23,7 +23,6 @@ from infinigen.core.constraints.example_solver.room.utils import (
     is_valid_polygon,
     unit_cast,
     update_exterior_edges,
-    update_shared_edges,
     update_staircase_occupancies,
 )
 from infinigen.core.util.math import FixedSeed
@@ -54,8 +53,13 @@ class SegmentMaker:
             except:
                 pass
         exterior_edges = update_exterior_edges(segments, shared_edges)
-        neighbours_all = {k: set(compute_neighbours(se, constants.SEGMENT_MARGIN)) for k, se in shared_edges.items()}
-        exterior_neighbours = set(compute_neighbours(exterior_edges, constants.SEGMENT_MARGIN))
+        neighbours_all = {
+            k: set(compute_neighbours(se, constants.SEGMENT_MARGIN))
+            for k, se in shared_edges.items()
+        }
+        exterior_neighbours = set(
+            compute_neighbours(exterior_edges, constants.SEGMENT_MARGIN)
+        )
         staircase_occupancies = update_staircase_occupancies(segments, staircase)
         return {
             "segments": segments,
@@ -93,7 +97,10 @@ class SegmentMaker:
                     s, t = cut_polygon_by_line(segments[k], line)
                     s_ = canonicalize(s)
                     t_ = canonicalize(t)
-                    if np.abs(s.area - s_.area) < 1e-3 and np.abs(t.area - t_.area) < 1e-3:
+                    if (
+                        np.abs(s.area - s_.area) < 1e-3
+                        and np.abs(t.area - t_.area) < 1e-3
+                    ):
                         segments[k], segments[i + 1] = s_, t_
                         break
         return {k: v for k, v in segments.items()}
@@ -139,8 +146,15 @@ class SegmentMaker:
         while len(segments) > self.n:
             prob = np.array([1 / (len(attached[c]) + 1) for c in shared_edges.keys()])
             k = np.random.choice(list(shared_edges.keys()), p=prob / prob.sum())
-            candidates = list(k for k, se in shared_edges[k].items() if se.length >= 1e-6)
-            prob = np.array([len(attached[c].difference(attached[k])) ** 2 + 0.5 for c in candidates])
+            candidates = list(
+                k for k, se in shared_edges[k].items() if se.length >= 1e-6
+            )
+            prob = np.array(
+                [
+                    len(attached[c].difference(attached[k])) ** 2 + 0.5
+                    for c in candidates
+                ]
+            )
             n = np.random.choice(candidates, p=prob / prob.sum())
             self.merge_segment(segments, shared_edges, attached, k, n)
         return segments, shared_edges

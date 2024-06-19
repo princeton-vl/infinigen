@@ -4,14 +4,10 @@
 # Authors: Yihan Wang
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import randint, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def orange():
@@ -39,17 +35,27 @@ def shader_beak(nw: NodeWrangler):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": texture_coordinate.outputs["UV"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": texture_coordinate.outputs["UV"]}
+    )
 
     noise_texture_1 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Scale": 4.3 + uniform(0, 2), "Roughness": 0.4167 + uniform(0, 0.2)}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Scale": 4.3 + uniform(0, 2),
+            "Roughness": 0.4167 + uniform(0, 0.2),
+        },
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture_1.outputs["Fac"], 1: 0.2}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture_1.outputs["Fac"], 1: 0.2},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: multiply})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: multiply}
+    )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": add})
     colorramp.color_ramp.interpolation = "EASE"
@@ -61,16 +67,26 @@ def shader_beak(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": 0.2434 + uniform(0, 0.1)},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Roughness": 0.2434 + uniform(0, 0.1),
+        },
     )
 
     glass_bsdf = nw.new_node("ShaderNodeBsdfGlass")
 
     mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": 0.5667 + uniform(0, 0.05), 1: principled_bsdf, 2: glass_bsdf}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": 0.5667 + uniform(0, 0.05),
+            1: principled_bsdf,
+            2: glass_bsdf,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

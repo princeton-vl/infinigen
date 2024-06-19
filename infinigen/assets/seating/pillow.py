@@ -9,8 +9,19 @@ from numpy.random import uniform
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials import art, fabrics
 from infinigen.assets.scatters import clothes
-from infinigen.assets.utils.decorate import read_normal, read_selected, select_faces, set_shade_smooth, subsurf
-from infinigen.assets.utils.object import center, join_objects, new_base_circle, new_grid
+from infinigen.assets.utils.decorate import (
+    read_normal,
+    read_selected,
+    select_faces,
+    set_shade_smooth,
+    subsurf,
+)
+from infinigen.assets.utils.object import (
+    center,
+    join_objects,
+    new_base_circle,
+    new_grid,
+)
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -19,7 +30,13 @@ from infinigen.core.util.random import random_general as rg
 
 
 class PillowFactory(AssetFactory):
-    shapes = "weighted_choice", (4, "square"), (4, "rectangle"), (1, "circle"), (1, "torus")
+    shapes = (
+        "weighted_choice",
+        (4, "square"),
+        (4, "rectangle"),
+        (1, "circle"),
+        (1, "torus"),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super(PillowFactory, self).__init__(factory_seed, coarse)
@@ -32,7 +49,9 @@ class PillowFactory(AssetFactory):
                 self.size = self.width * log_uniform(0.6, 0.8)
         self.bevel_width = uniform(0.02, 0.05)
         self.thickness = log_uniform(0.006, 0.008)
-        self.extrude_thickness = self.thickness * log_uniform(1, 8) if uniform() < 0.5 else 0
+        self.extrude_thickness = (
+            self.thickness * log_uniform(1, 8) if uniform() < 0.5 else 0
+        )
         self.surface = np.random.choice([art.ArtFabric(self.factory_seed), fabrics])
         self.has_seam = uniform() < 0.3 and not self.shape == "torus"
         self.seam_radius = uniform(0.01, 0.02)
@@ -54,7 +73,9 @@ class PillowFactory(AssetFactory):
                 obj = join_objects([obj, inner])
                 with butil.ViewportMode(obj, "EDIT"):
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.bridge_edge_loops(number_cuts=12, interpolation="LINEAR")
+                    bpy.ops.mesh.bridge_edge_loops(
+                        number_cuts=12, interpolation="LINEAR"
+                    )
                 obj = bpy.context.active_object
             case _:
                 obj = new_grid(x_subdivisions=32, y_subdivisions=32)
@@ -68,7 +89,9 @@ class PillowFactory(AssetFactory):
         if self.has_seam:
             with butil.ViewportMode(obj, "EDIT"):
                 bpy.ops.mesh.select_mode(type="FACE")
-                select_faces(obj, lambda x, y, z: (x**2 + y**2 < self.seam_radius**2) & (z > 0))
+                select_faces(
+                    obj, lambda x, y, z: (x**2 + y**2 < self.seam_radius**2) & (z > 0)
+                )
                 bpy.ops.mesh.region_to_loop()
                 bpy.ops.mesh.select_mode(type="VERT")
             selection = read_selected(obj)
@@ -90,7 +113,9 @@ class PillowFactory(AssetFactory):
         )
         if self.extrude_thickness > 0:
             with butil.ViewportMode(obj, "EDIT"):
-                bpy.ops.mesh.extrude_region_shrink_fatten(TRANSFORM_OT_shrink_fatten={"value": self.extrude_thickness})
+                bpy.ops.mesh.extrude_region_shrink_fatten(
+                    TRANSFORM_OT_shrink_fatten={"value": self.extrude_thickness}
+                )
         obj.location = -center(obj)
         butil.apply_transform(obj, True)
         subsurf(obj, 2)
@@ -108,7 +133,11 @@ class PillowFactory(AssetFactory):
     def make_gird(self):
         obj = new_grid(x_subdivisions=64, y_subdivisions=64)
         with butil.ViewportMode(obj, "EDIT"):
-            select_faces(obj, lambda x, y, z: (np.abs(x) < self.seam_radius) & (np.abs(y) < self.seam_radius))
+            select_faces(
+                obj,
+                lambda x, y, z: (np.abs(x) < self.seam_radius)
+                & (np.abs(y) < self.seam_radius),
+            )
             bpy.ops.mesh.region_to_loop()
         return obj
 

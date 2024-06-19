@@ -34,7 +34,9 @@ class LiteDoorFactory(PanelDoorFactory):
             self.x_min, self.x_max, self.y_min, self.y_max = dimension
             if subdivide_glass:
                 self.x_subdivisions = np.random.choice([1, 3])
-                self.y_subdivisions = int(self.height / self.width * self.x_subdivisions) + np.random.randint(-1, 2)
+                self.y_subdivisions = int(
+                    self.height / self.width * self.x_subdivisions
+                ) + np.random.randint(-1, 2)
             else:
                 self.x_subdivisions = 1
                 self.y_subdivisions = 1
@@ -42,17 +44,23 @@ class LiteDoorFactory(PanelDoorFactory):
 
     def make_panels(self):
         x_range = (
-            np.linspace(self.x_min, self.x_max, self.x_subdivisions + 1) * (self.width - self.panel_margin * 2)
+            np.linspace(self.x_min, self.x_max, self.x_subdivisions + 1)
+            * (self.width - self.panel_margin * 2)
             + self.panel_margin
         )
         y_range = (
-            np.linspace(self.y_min, self.y_max, self.y_subdivisions + 1) * (self.height - self.panel_margin * 2)
+            np.linspace(self.y_min, self.y_max, self.y_subdivisions + 1)
+            * (self.height - self.panel_margin * 2)
             + self.panel_margin
         )
         panels = []
         for x_min, x_max in zip(x_range[:-1], x_range[1:]):
             for y_min, y_max in zip(y_range[:-1], y_range[1:]):
                 panels.append(
-                    {"dimension": (x_min, x_max, y_min, y_max), "func": self.bevel, "attribute_name": "glass"}
+                    {
+                        "dimension": (x_min, x_max, y_min, y_max),
+                        "func": self.bevel,
+                        "attribute_name": "glass",
+                    }
                 )
         return panels

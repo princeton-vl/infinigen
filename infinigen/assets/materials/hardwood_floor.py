@@ -16,7 +16,9 @@ from .utils.surface_utils import perturb_coordinates
 
 def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
     vec = nw.new_node(
-        Nodes.Mapping, [nw.new_node(Nodes.TextureCoord).outputs["Object"]], input_kwargs={"Rotation": rotation}
+        Nodes.Mapping,
+        [nw.new_node(Nodes.TextureCoord).outputs["Object"]],
+        input_kwargs={"Rotation": rotation},
     )
     color, mortar = map(
         nw.new_node(

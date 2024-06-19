@@ -69,7 +69,9 @@ class SurfaceKernel:
         ret = {}
         values = []
         for dtype in sorted(self.imp_values_of_type.keys()):
-            M = len(self.imp_values_of_type[dtype]) // int(np.product(KERNELDATATYPE_DIMS[dtype]))
+            M = len(self.imp_values_of_type[dtype]) // int(
+                np.product(KERNELDATATYPE_DIMS[dtype])
+            )
             values.append(M)
             if dtype != KernelDataType.int:
                 values.append(ASFLOAT(self.imp_values_of_type[dtype]))
@@ -83,13 +85,25 @@ class SurfaceKernel:
             N = len(positions)
         for var in self.outputs:
             dtype = self.outputs[var]
-            ret[var] = AC(np.zeros((N, *KERNELDATATYPE_DIMS[dtype]), dtype=KERNELDATATYPE_NPTYPE[dtype]))
+            ret[var] = AC(
+                np.zeros(
+                    (N, *KERNELDATATYPE_DIMS[dtype]), dtype=KERNELDATATYPE_NPTYPE[dtype]
+                )
+            )
             if dtype != KernelDataType.int:
                 values.append(ASFLOAT(ret[var]))
             else:
                 values.append(ASINT(ret[var]))
         if isinstance(params, dict):
-            normals = AC(np.concatenate((np.zeros((N, 2), dtype=np.float32), np.ones((N, 1), dtype=np.float32)), -1))
+            normals = AC(
+                np.concatenate(
+                    (
+                        np.zeros((N, 2), dtype=np.float32),
+                        np.ones((N, 1), dtype=np.float32),
+                    ),
+                    -1,
+                )
+            )
             pvalues = [N]
             if self.use_position:
                 pvalues.append(ASFLOAT(positions))
@@ -117,7 +131,9 @@ class SurfaceKernel:
             for var in self.outputs:
                 dtype = self.outputs[var]
                 shape = [1] * len(KERNELDATATYPE_DIMS[dtype])
-                ret[var] *= params.vertex_attributes[self.attribute].reshape((N, *shape))
+                ret[var] *= params.vertex_attributes[self.attribute].reshape(
+                    (N, *shape)
+                )
                 if var == Vars.Offset:
                     params.vertices += ret[var]
                 else:

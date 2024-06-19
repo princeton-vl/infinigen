@@ -4,10 +4,8 @@
 # Authors: Zeyu Ma
 # Acknowledgement: This file draws inspiration from https://physbam.stanford.edu/cs448x/old/Procedural_Noise(2f)Perlin_Noise.html
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -19,7 +17,11 @@ def shader_material_001(nw: NodeWrangler):
     geometry = nw.new_node(Nodes.NewGeometry)
 
     mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": geometry.outputs["Position"], "Scale": (20.0000, 20.0000, 20.0000)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": geometry.outputs["Position"],
+            "Scale": (20.0000, 20.0000, 20.0000),
+        },
     )
 
     roughness = nw.new_node(Nodes.Value, label="roughness ~ U(0.7,0.9)")
@@ -37,18 +39,25 @@ def shader_material_001(nw: NodeWrangler):
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"], 1: 20.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: 20.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     random_plane_angle = uniform(0, 2 * np.pi)
 
     dot_product = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: mapping, 1: (np.cos(random_plane_angle), np.sin(random_plane_angle), 0.0000)},
+        input_kwargs={
+            0: mapping,
+            1: (np.cos(random_plane_angle), np.sin(random_plane_angle), 0.0000),
+        },
         attrs={"operation": "DOT_PRODUCT"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: dot_product.outputs["Value"]})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: dot_product.outputs["Value"]}
+    )
 
     sine = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "SINE"})
 
@@ -57,16 +66,24 @@ def shader_material_001(nw: NodeWrangler):
     darkness = nw.new_node(Nodes.Value, label="darkness ~ U(0,1)")
     darkness.outputs[0].default_value = uniform(0.0, 1.0)
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": darkness, 3: 0.2000, 4: 0.3000})
-
-    power = nw.new_node(
-        Nodes.Math, input_kwargs={0: add_1, 1: map_range.outputs["Result"]}, attrs={"operation": "POWER"}
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": darkness, 3: 0.2000, 4: 0.3000}
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": power})
+    power = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_1, 1: map_range.outputs["Result"]},
+        attrs={"operation": "POWER"},
+    )
+
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": power}
+    )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 

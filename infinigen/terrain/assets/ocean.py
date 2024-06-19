@@ -36,7 +36,10 @@ def ocean_asset(
     link_folder=None,
 ):
     tmp_start, tmp_end = bpy.context.scene.frame_start, bpy.context.scene.frame_end
-    bpy.context.scene.frame_start, bpy.context.scene.frame_end = frame_start, frame_end + buffered_frames
+    bpy.context.scene.frame_start, bpy.context.scene.frame_end = (
+        frame_start,
+        frame_end + buffered_frames,
+    )
     spectrum = rg(spectrum)
     params = {
         "random_seed": max(0, random_int()),
@@ -62,7 +65,9 @@ def ocean_asset(
         obj.name = "ocean"
         with ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
             bpy.ops.mesh.subdivide(number_cuts=256)
             bpy.ops.mesh.subdivide(number_cuts=16)
         mod = obj.modifiers.new(name="ocean", type="OCEAN")

@@ -5,13 +5,8 @@
 # Authors: Alexander Raistrick
 
 import logging
-import typing
 from dataclasses import dataclass
 
-import bpy
-import numpy as np
-import trimesh
-from mathutils import Matrix, Vector
 
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry import parse_scene
@@ -46,4 +41,6 @@ class Deletion(Move):
     def revert(self, state):
         (target_name,) = self.names
         state.objs[target_name] = self._backup_state
-        parse_scene.add_to_scene(state.trimesh_scene, self._backup_state.obj, preprocess=True)
+        parse_scene.add_to_scene(
+            state.trimesh_scene, self._backup_state.obj, preprocess=True
+        )

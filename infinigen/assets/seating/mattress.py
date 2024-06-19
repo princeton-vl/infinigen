@@ -40,8 +40,12 @@ def make_coiled(obj, dot_distance, dot_depth, dot_size):
         bmesh.update_edit_mesh(obj.data)
         radius = dot_distance * uniform(0.06, 0.08)
         bpy.ops.mesh.bevel(offset=radius, affect="VERTICES")
-        bpy.ops.mesh.extrude_region_shrink_fatten(TRANSFORM_OT_shrink_fatten={"value": -dot_depth})
-        bpy.ops.mesh.extrude_region_shrink_fatten(TRANSFORM_OT_shrink_fatten={"value": dot_depth})
+        bpy.ops.mesh.extrude_region_shrink_fatten(
+            TRANSFORM_OT_shrink_fatten={"value": -dot_depth}
+        )
+        bpy.ops.mesh.extrude_region_shrink_fatten(
+            TRANSFORM_OT_shrink_fatten={"value": dot_depth}
+        )
         bpy.ops.mesh.select_more()
         bpy.ops.mesh.select_more()
     write_attr_data(obj, "tip", np.zeros(len(obj.data.polygons)), domain="FACE")
@@ -50,9 +54,14 @@ def make_coiled(obj, dot_distance, dot_depth, dot_size):
         bpy.ops.mesh.attribute_set(value_float=1)
 
     def geo_scale(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         selection = nw.new_node(Nodes.NamedAttribute, ["tip"])
-        geometry = nw.new_node(Nodes.ScaleElements, [geometry, selection, nw.combine(*([dot_size / radius] * 3))])
+        geometry = nw.new_node(
+            Nodes.ScaleElements,
+            [geometry, selection, nw.combine(*([dot_size / radius] * 3))],
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     surface.add_geomod(obj, geo_scale, apply=True)
@@ -80,7 +89,12 @@ class MattressFactory(AssetFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
-            -self.width / 2, self.width / 2, -self.size / 2, self.size / 2, -self.thickness / 2, self.thickness / 2
+            -self.width / 2,
+            self.width / 2,
+            -self.size / 2,
+            self.size / 2,
+            -self.thickness / 2,
+            self.thickness / 2,
         )
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -108,9 +122,17 @@ class MattressFactory(AssetFactory):
             subdivide_edge_ring(obj, int(np.ceil(size / self.wrap_distance)), axis)
         butil.modify_mesh(obj, "BEVEL", width=self.wrap_distance / 3, segments=2)
         vg = obj.vertex_groups.new(name="pin")
-        vg.add(np.nonzero((read_co(obj)[:, -1] < 1e-1 - self.thickness / 2))[0].tolist(), 1, "REPLACE")
+        vg.add(
+            np.nonzero((read_co(obj)[:, -1] < 1e-1 - self.thickness / 2))[0].tolist(),
+            1,
+            "REPLACE",
+        )
         clothes.cloth_sim(
-            obj, gravity=0, use_pressure=True, uniform_pressure_force=uniform(0.1, 0.2), vertex_group_mass="pin"
+            obj,
+            gravity=0,
+            use_pressure=True,
+            uniform_pressure_force=uniform(0.1, 0.2),
+            vertex_group_mass="pin",
         )
 
     def finalize_assets(self, assets):

@@ -4,23 +4,19 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
 from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_nose(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     musgrave_texture = nw.new_node(
-        Nodes.MusgraveTexture, input_kwargs={"Scale": U(2, 6), "Detail": 14.699999999999999, "Dimension": 1.5}
+        Nodes.MusgraveTexture,
+        input_kwargs={"Scale": U(2, 6), "Detail": 14.699999999999999, "Dimension": 1.5},
     )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": musgrave_texture})
@@ -29,16 +25,26 @@ def shader_nose(nw: NodeWrangler):
     colorramp.color_ramp.elements[1].position = 1.0
     colorramp.color_ramp.elements[1].color = (0.7068, 0.436, 0.35, 1.0)
 
-    musgrave_texture_1 = nw.new_node(Nodes.MusgraveTexture, input_kwargs={"Scale": 10.0})
+    musgrave_texture_1 = nw.new_node(
+        Nodes.MusgraveTexture, input_kwargs={"Scale": 10.0}
+    )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": musgrave_texture_1, 3: N(0.4, 0.1), 4: N(0.7, 0.15)})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": musgrave_texture_1, 3: N(0.4, 0.1), 4: N(0.7, 0.15)},
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": map_range.outputs["Result"]},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Roughness": map_range.outputs["Result"],
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

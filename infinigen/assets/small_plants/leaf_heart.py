@@ -13,7 +13,7 @@ from infinigen.core.util import blender as butil
 
 C = bpy.context
 D = bpy.data
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 class LeafHeartFactory(AssetFactory):
@@ -29,7 +29,9 @@ class LeafHeartFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         # bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.mesh.primitive_circle_add(
+            enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+        )
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.edge_face_add()
 
@@ -44,14 +46,25 @@ class LeafHeartFactory(AssetFactory):
         x = (
             16.0
             * (np.sin(a - np.pi) ** 3)
-            * (self.genome["leaf_width"] + np.random.randn() * self.genome["width_rand"])
+            * (
+                self.genome["leaf_width"]
+                + np.random.randn() * self.genome["width_rand"]
+            )
         )
-        y = 13.0 * np.cos(a - np.pi) - 5 * np.cos(2 * (a - np.pi)) - 2 * np.cos(3 * (a - np.pi))
+        y = (
+            13.0 * np.cos(a - np.pi)
+            - 5 * np.cos(2 * (a - np.pi))
+            - 2 * np.cos(3 * (a - np.pi))
+        )
         x, y = x * 0.3, y * 0.3
         z = x**2 * self.genome["z_scaling"]
 
         full_coords = np.concatenate(
-            [np.stack([x, y, z], 1), np.stack([-x[::-1], y[::-1], z], 1), np.array([[0, y[0], 0]])]
+            [
+                np.stack([x, y, z], 1),
+                np.stack([-x[::-1], y[::-1], z], 1),
+                np.array([[0, y[0], 0]]),
+            ]
         ).flatten()
         bpy.ops.object.mode_set(mode="OBJECT")
         obj.data.vertices.foreach_set("co", full_coords)

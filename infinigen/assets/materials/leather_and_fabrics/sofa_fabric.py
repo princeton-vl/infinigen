@@ -14,13 +14,16 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "UVMap"})
-    attribute = nw.new_node(Nodes.Mapping, [attribute], input_kwargs={"Scale": [scale] * 3})
+    attribute = nw.new_node(
+        Nodes.Mapping, [attribute], input_kwargs={"Scale": [scale] * 3}
+    )
 
     rgb = nw.new_node(Nodes.RGB)
     rgb.outputs[0].default_value = color_category("fabric")
 
     brightness_contrast = nw.new_node(
-        "ShaderNodeBrightContrast", input_kwargs={"Color": rgb, "Bright": uniform(-0.1500, -0.05)}
+        "ShaderNodeBrightContrast",
+        input_kwargs={"Color": rgb, "Bright": uniform(-0.1500, -0.05)},
     )
 
     brick_texture = nw.new_node(
@@ -40,10 +43,16 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": brick_texture.outputs["Color"], "Roughness": 0.8624, "Sheen": 1.0000},
+        input_kwargs={
+            "Base Color": brick_texture.outputs["Color"],
+            "Roughness": 0.8624,
+            "Sheen": 1.0000,
+        },
     )
 
-    displacement = nw.new_node(Nodes.Displacement, input_kwargs={"Height": brick_texture.outputs["Fac"]})
+    displacement = nw.new_node(
+        Nodes.Displacement, input_kwargs={"Height": brick_texture.outputs["Fac"]}
+    )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,

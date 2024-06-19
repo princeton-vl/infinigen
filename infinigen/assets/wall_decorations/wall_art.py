@@ -70,7 +70,12 @@ class WallArtFactory(AssetFactory):
             bpy.ops.mesh.bridge_edge_loops()
         butil.modify_mesh(frame, "SOLIDIFY", thickness=self.depth, offset=1)
         if self.frame_bevel_segments > 0:
-            butil.modify_mesh(frame, "BEVEL", width=self.frame_bevel_width, segments=self.frame_bevel_segments)
+            butil.modify_mesh(
+                frame,
+                "BEVEL",
+                width=self.frame_bevel_width,
+                segments=self.frame_bevel_segments,
+            )
         self.frame_surface.apply(frame)
         obj = join_objects([obj, frame])
         return obj

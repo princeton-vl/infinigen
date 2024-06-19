@@ -3,22 +3,21 @@
 
 # Authors: Yiming Zuo
 
-import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, randint, uniform
 
-from infinigen.assets.table_decorations.utils import nodegroup_lofting, nodegroup_warp_around_curve
+from infinigen.assets.table_decorations.utils import (
+    nodegroup_lofting,
+    nodegroup_warp_around_curve,
+)
 from infinigen.assets.tables.table_utils import nodegroup_bent
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 # TODO: set material automatically
 
 
-@node_utils.to_nodegroup("generate_curvy_seats", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "generate_curvy_seats", singleton=False, type="GeometryNodeTree"
+)
 def generate_curvy_seats(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -45,12 +44,20 @@ def generate_curvy_seats(nw: NodeWrangler):
     )
 
     curve_circle_1 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": group_input.outputs["Width"], "Y": group_input.outputs["Thickness"], "Z": 1.0000},
+        input_kwargs={
+            "X": group_input.outputs["Width"],
+            "Y": group_input.outputs["Thickness"],
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_1 = nw.new_node(
@@ -64,21 +71,36 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     bent = nw.new_node(
         nodegroup_bent().name,
-        input_kwargs={"Geometry": transform_geometry_1, "Amount": group_input.outputs["Seat Bent"]},
+        input_kwargs={
+            "Geometry": transform_geometry_1,
+            "Amount": group_input.outputs["Seat Bent"],
+        },
     )
 
     curve_circle_2 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["Mid Relative Width"]},
+        input_kwargs={
+            0: group_input.outputs["Width"],
+            1: group_input.outputs["Mid Relative Width"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_2 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": group_input.outputs["Thickness"], "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": multiply,
+            "Y": group_input.outputs["Thickness"],
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_2 = nw.new_node(
@@ -92,28 +114,48 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     bent_1 = nw.new_node(
         nodegroup_bent().name,
-        input_kwargs={"Geometry": transform_geometry_2, "Amount": group_input.outputs["Mid Bent"]},
+        input_kwargs={
+            "Geometry": transform_geometry_2,
+            "Amount": group_input.outputs["Mid Bent"],
+        },
     )
 
     curve_circle_3 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     transform_geometry_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_circle_3.outputs["Curve"], "Scale": (0.0000, 0.0050, 1.0000)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": curve_circle_3.outputs["Curve"],
+            "Scale": (0.0000, 0.0050, 1.0000),
+        },
     )
 
     curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["Front Relative Width"]},
+        input_kwargs={
+            0: group_input.outputs["Width"],
+            1: group_input.outputs["Front Relative Width"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_1, "Y": 0.0050, "Z": 1.0000})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_1, "Y": 0.0050, "Z": 1.0000}
+    )
 
     transform_geometry = nw.new_node(
         Nodes.Transform,
@@ -126,25 +168,41 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     bent_2 = nw.new_node(
         nodegroup_bent().name,
-        input_kwargs={"Geometry": transform_geometry, "Amount": group_input.outputs["Front Bent"]},
+        input_kwargs={
+            "Geometry": transform_geometry,
+            "Amount": group_input.outputs["Front Bent"],
+        },
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [bent_1, bent, bent_2, transform_geometry_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [bent_1, bent, bent_2, transform_geometry_3]},
     )
 
     curve_circle_4 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     multiply_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["Back Relative Width"]},
+        input_kwargs={
+            0: group_input.outputs["Width"],
+            1: group_input.outputs["Back Relative Width"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_3 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Y": group_input.outputs["Thickness"], "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": multiply_2,
+            "Y": group_input.outputs["Thickness"],
+            "Z": 1.0000,
+        },
     )
 
     transform_geometry_4 = nw.new_node(
@@ -158,20 +216,32 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     bent_3 = nw.new_node(
         nodegroup_bent().name,
-        input_kwargs={"Geometry": transform_geometry_4, "Amount": group_input.outputs["Back Bent"]},
+        input_kwargs={
+            "Geometry": transform_geometry_4,
+            "Amount": group_input.outputs["Back Bent"],
+        },
     )
 
     curve_circle_5 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     multiply_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["Top Relative Width"]},
+        input_kwargs={
+            0: group_input.outputs["Width"],
+            1: group_input.outputs["Top Relative Width"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": 0.0050, "Z": 1.0000})
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": 0.0050, "Z": 1.0000}
+    )
 
     transform_geometry_5 = nw.new_node(
         Nodes.Transform,
@@ -184,11 +254,18 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     bent_4 = nw.new_node(
         nodegroup_bent().name,
-        input_kwargs={"Geometry": transform_geometry_5, "Amount": group_input.outputs["Top Bent"]},
+        input_kwargs={
+            "Geometry": transform_geometry_5,
+            "Amount": group_input.outputs["Top Bent"],
+        },
     )
 
     curve_circle_6 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["U Resolution"], "Radius": 0.5000}
+        Nodes.CurveCircle,
+        input_kwargs={
+            "Resolution": group_input.outputs["U Resolution"],
+            "Radius": 0.5000,
+        },
     )
 
     transform_geometry_6 = nw.new_node(
@@ -200,9 +277,14 @@ def generate_curvy_seats(nw: NodeWrangler):
         },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_geometry_6, bent_4, bent_3]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry_6, bent_4, bent_3]},
+    )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_2, join_geometry]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_2, join_geometry]}
+    )
 
     lofting_001 = nw.new_node(
         nodegroup_lofting().name,
@@ -214,19 +296,29 @@ def generate_curvy_seats(nw: NodeWrangler):
     )
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4, "Z": 0.0300})
+    combine_xyz_6 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_4, "Z": 0.0300}
+    )
 
-    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": group_input.outputs["Mid Pos"], "Z": -0.0500})
+    combine_xyz_7 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"Y": group_input.outputs["Mid Pos"], "Z": -0.0500},
+    )
 
     multiply_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Width"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_5 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"Y": multiply_5, "Z": group_input.outputs["Seat Height"]}
+        Nodes.CombineXYZ,
+        input_kwargs={"Y": multiply_5, "Z": group_input.outputs["Seat Height"]},
     )
 
     bezier_segment = nw.new_node(
@@ -242,15 +334,23 @@ def generate_curvy_seats(nw: NodeWrangler):
 
     warparoundcurvealt = nw.new_node(
         nodegroup_warp_around_curve().name,
-        input_kwargs={"Geometry": lofting_001.outputs["Geometry"], "Curve": bezier_segment},
+        input_kwargs={
+            "Geometry": lofting_001.outputs["Geometry"],
+            "Curve": bezier_segment,
+        },
     )
 
     # material_func =np.random.choice([plastic.shader_rough_plastic, metal.get_shader(), wood_new.shader_wood, leather.shader_leather])
 
     warparoundcurvealt = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": warparoundcurvealt, "Material": group_input.outputs["SeatMaterial"]},
+        input_kwargs={
+            "Geometry": warparoundcurvealt,
+            "Material": group_input.outputs["SeatMaterial"],
+        },
     )
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": warparoundcurvealt}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": warparoundcurvealt},
+        attrs={"is_active_output": True},
     )

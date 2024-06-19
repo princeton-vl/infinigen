@@ -11,7 +11,7 @@ from numpy.random import uniform
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 
 from .agave import AgaveMonocotFactory
@@ -31,7 +31,10 @@ class MonocotFactory(AssetFactory):
             n = np.random.randint(1, 6)
             angles = polygon_angles(n, np.pi / 4, np.pi * 2)
             radius = uniform(0.08, 0.16, n)
-            monocots = [self.factory.create_asset(**params, i=j + i * self.max_cluster) for j in range(n)]
+            monocots = [
+                self.factory.create_asset(**params, i=j + i * self.max_cluster)
+                for j in range(n)
+            ]
             for m, a, r in zip(monocots, angles, radius):
                 m.location = r * np.cos(a), r * np.sin(a), 0
             obj = join_objects(monocots)
@@ -45,15 +48,31 @@ class MonocotFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None, grass=None):
         super(MonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            grass_factory = [TussockMonocotFactory, GrassesMonocotFactory, WheatMonocotFactory, MaizeMonocotFactory]
-            nongrass_factory = [AgaveMonocotFactory, BananaMonocotFactory, TaroMonocotFactory, VeratrumMonocotFactory]
+            grass_factory = [
+                TussockMonocotFactory,
+                GrassesMonocotFactory,
+                WheatMonocotFactory,
+                MaizeMonocotFactory,
+            ]
+            nongrass_factory = [
+                AgaveMonocotFactory,
+                BananaMonocotFactory,
+                TaroMonocotFactory,
+                VeratrumMonocotFactory,
+            ]
             # noinspection PyTypeChecker
             self.factory_methods = (
-                grass_factory + nongrass_factory if grass is None else grass_factory if grass else nongrass_factory
+                grass_factory + nongrass_factory
+                if grass is None
+                else grass_factory
+                if grass
+                else nongrass_factory
             )
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             if factory_method is None:
                 with FixedSeed(self.factory_seed):
-                    factory_method = np.random.choice(self.factory_methods, p=self.weights)
+                    factory_method = np.random.choice(
+                        self.factory_methods, p=self.weights
+                    )
             self.factory: MonocotGrowthFactory = factory_method(factory_seed, coarse)

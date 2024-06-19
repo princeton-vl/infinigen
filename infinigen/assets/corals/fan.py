@@ -11,7 +11,12 @@ from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.corals.base import BaseCoralFactory
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, subsurface2face_size
+from infinigen.assets.utils.decorate import (
+    displace_vertices,
+    geo_extension,
+    read_co,
+    subsurface2face_size,
+)
 from infinigen.assets.utils.draw import shape_by_angles
 from infinigen.assets.utils.mesh import treeify
 from infinigen.assets.utils.nodegroup import geo_radius
@@ -20,7 +25,7 @@ from infinigen.assets.utils.shortest_path import geo_shortest_path
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 class FanBaseCoralFactory(BaseCoralFactory):
@@ -39,20 +44,36 @@ class FanBaseCoralFactory(BaseCoralFactory):
             bpy.ops.mesh.fill_grid()
         displace_vertices(obj, lambda x, y, z: uniform(-0.005, 0.005, (3, len(x))))
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
-        shape_by_angles(obj, np.array([-np.pi / 2, 0, np.pi / 2]), np.array([uniform(0.2, 0.8), 1, uniform(0.2, 0.8)]))
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
+        shape_by_angles(
+            obj,
+            np.array([-np.pi / 2, 0, np.pi / 2]),
+            np.array([uniform(0.2, 0.8), 1, uniform(0.2, 0.8)]),
+        )
         obj.rotation_euler = np.pi / 2, -np.pi / 2, 0
         butil.apply_transform(obj)
 
         end_indices = np.nonzero(read_co(obj)[:, -1] < 1e-2)[0]
-        end_index = lambda nw: nw.build_index_case(np.random.choice(end_indices, 5))
+
+        def end_index(nw):
+            return nw.build_index_case(np.random.choice(end_indices, 5))
+
         texture = bpy.data.textures.new(name="fan", type="STUCCI")
         texture.noise_scale = uniform(0.5, 1)
-        butil.modify_mesh(obj, "DISPLACE", texture=texture, strength=uniform(0.5, 1.0), direction="Y")
+        butil.modify_mesh(
+            obj, "DISPLACE", texture=texture, strength=uniform(0.5, 1.0), direction="Y"
+        )
         surface.add_geomod(obj, geo_extension, apply=True)
         obj.scale = uniform(0.6, 1.2), 1, 1
         butil.apply_transform(obj)
-        surface.add_geomod(obj, geo_shortest_path, input_args=[end_index, self.weight, 0.05], apply=True)
+        surface.add_geomod(
+            obj,
+            geo_shortest_path,
+            input_args=[end_index, self.weight, 0.05],
+            apply=True,
+        )
         obj = self.add_radius(obj)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=["radius", 32])
         butil.modify_mesh(obj, "WELD", merge_threshold=0.001)

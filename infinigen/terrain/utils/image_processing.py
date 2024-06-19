@@ -34,8 +34,14 @@ def smooth(arr, k):
 
 def read(input_heightmap_path):
     input_heightmap_path = str(input_heightmap_path)
-    assert os.path.exists(input_heightmap_path), f"{input_heightmap_path} does not exists"
-    heightmap = cv2.imread(input_heightmap_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).copy().astype(float)
+    assert os.path.exists(
+        input_heightmap_path
+    ), f"{input_heightmap_path} does not exists"
+    heightmap = (
+        cv2.imread(input_heightmap_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+        .copy()
+        .astype(float)
+    )
     return heightmap
 
 
@@ -54,7 +60,9 @@ def grid_distance(source, downsample):
     for i in range(N):
         for j in range(N):
             if boundary[i, j]:
-                dist = np.minimum(dist, (((I - i) / N) ** 2 + ((J - j) / N) ** 2) ** 0.5)
+                dist = np.minimum(
+                    dist, (((I - i) / N) ** 2 + ((J - j) / N) ** 2) ** 0.5
+                )
     dist[source] = 0
     dist = cv2.resize(dist, (M, M))
     return dist

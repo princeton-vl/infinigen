@@ -4,20 +4,12 @@
 # Authors: Alexander Raistrick
 
 
-from random import random
-
-import bpy
 import numpy as np
-from mathutils import Vector
 from numpy.random import uniform as U
 
 from infinigen.assets.trees.generate import make_twig_collection, random_species
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import deep_clone_obj
 
 from ..utils.misc import toggle_hide, toggle_show
 from .chopped_trees import approx_settle_transform

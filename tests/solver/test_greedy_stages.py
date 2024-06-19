@@ -4,7 +4,6 @@
 
 # Authors: Alexander Raistrick
 
-import logging
 from pprint import pprint
 
 import pytest
@@ -16,7 +15,11 @@ from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import evaluator
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.example_solver import greedy, propose_discrete, state_def
+from infinigen.core.constraints.example_solver import (
+    greedy,
+    propose_discrete,
+    state_def,
+)
 from infinigen.core.util import blender as butil
 from infinigen_examples import generate_indoors
 from infinigen_examples import indoor_constraint_examples as ex
@@ -33,7 +36,9 @@ def test_stages_relations(key):
 
     if len(v.relations) != 0:
         if all(isinstance(r, cl.NegatedRelation) for r, _ in v.relations):
-            raise ValueError(f"Stage {key} has no positive relation, {[r for r, _ in v.relations]}")
+            raise ValueError(
+                f"Stage {key} has no positive relation, {[r for r, _ in v.relations]}"
+            )
         # if any(isinstance(r, cl.AnyRelation) for r, _ in v.relations):
         #    raise ValueError(f"Stage {key} has an AnyRelation which is underspecified, {v}")
 
@@ -79,7 +84,12 @@ def test_validate_stages():
 def test_example_intersects():
     on_wall_complex = cl.StableAgainst(
         {-t.Subpart.Top, t.Subpart.Back, -t.Subpart.Front},
-        {t.Subpart.Wall, t.Subpart.Visible, -t.Subpart.Ceiling, -t.Subpart.SupportSurface},
+        {
+            t.Subpart.Wall,
+            t.Subpart.Visible,
+            -t.Subpart.Ceiling,
+            -t.Subpart.SupportSurface,
+        },
     )
     on_wall_simple = cl.StableAgainst({}, {t.Subpart.Wall})
     assert on_wall_simple.intersects(on_wall_complex)
@@ -95,7 +105,10 @@ def test_example_intersects():
 
 def test_contradiction_fail():
     prob = cl.Problem(
-        constraints=[cl.scene()[{t.Semantics.Object, -t.Semantics.Object}].count().in_range(1, 3)], score_terms=[]
+        constraints=[
+            cl.scene()[{t.Semantics.Object, -t.Semantics.Object}].count().in_range(1, 3)
+        ],
+        score_terms=[],
     )
     with pytest.raises(ValueError):
         checks.check_contradictory_domains(prob)
@@ -108,7 +121,12 @@ def get_walldec():
             (
                 cl.StableAgainst(
                     {-t.Subpart.Front, -t.Subpart.Top, t.Subpart.Back},
-                    {-t.Subpart.SupportSurface, -t.Subpart.Ceiling, t.Subpart.Visible, t.Subpart.Wall},
+                    {
+                        -t.Subpart.SupportSurface,
+                        -t.Subpart.Ceiling,
+                        t.Subpart.Visible,
+                        t.Subpart.Wall,
+                    },
                 ),
                 r.Domain({t.Semantics.Room, -t.Semantics.Object}, []),
             )
@@ -132,16 +150,31 @@ def test_example_walldec():
 def test_example_floorwall():
     on = cl.StableAgainst(
         {t.Subpart.Bottom, -t.Subpart.Front, -t.Subpart.Top, -t.Subpart.Back},
-        {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Wall, -t.Subpart.Ceiling},
+        {
+            t.Subpart.SupportSurface,
+            t.Subpart.Visible,
+            -t.Subpart.Wall,
+            -t.Subpart.Ceiling,
+        },
     )
 
     against = cl.StableAgainst(
         {t.Subpart.Back, -t.Subpart.Top, -t.Subpart.Front},
-        {t.Subpart.Visible, t.Subpart.Wall, -t.Subpart.SupportSurface, -t.Subpart.Ceiling},
+        {
+            t.Subpart.Visible,
+            t.Subpart.Wall,
+            -t.Subpart.SupportSurface,
+            -t.Subpart.Ceiling,
+        },
     )
 
     dom = r.Domain(
-        {t.Semantics.Storage, t.Semantics.Furniture, t.Semantics.Object, -t.Semantics.Room},
+        {
+            t.Semantics.Storage,
+            t.Semantics.Furniture,
+            t.Semantics.Object,
+            -t.Semantics.Room,
+        },
         [
             (on, r.Domain({t.Semantics.Room, -t.Semantics.Object}, [])),
             (against, r.Domain({t.Semantics.Room, -t.Semantics.Object}, [])),
@@ -175,7 +208,10 @@ def test_example_secondary():
 def test_example_sideobj():
     anyroom = r.Domain({t.Semantics.Room, -t.Semantics.Object}, [])
 
-    objonroom = r.Domain({t.Semantics.Object, t.Semantics.Table, -t.Semantics.Room}, [(cu.on_floor, anyroom)])
+    objonroom = r.Domain(
+        {t.Semantics.Object, t.Semantics.Table, -t.Semantics.Room},
+        [(cu.on_floor, anyroom)],
+    )
 
     dom = r.Domain(
         {t.Semantics.Object, t.Semantics.Chair, -t.Semantics.Room},
@@ -225,26 +261,50 @@ def test_example_on_obj():
     bedroom_storage = r.Domain(
         {t.Semantics.Object, t.Semantics.Furniture, t.Semantics.Storage},
         [
-            (cu.on_floor, r.Domain({t.Semantics.Bedroom, t.Semantics.Room}.union(not_others), [])),
-            (cu.against_wall, r.Domain({t.Semantics.Bedroom, t.Semantics.Room}.union(not_others), [])),
+            (
+                cu.on_floor,
+                r.Domain({t.Semantics.Bedroom, t.Semantics.Room}.union(not_others), []),
+            ),
+            (
+                cu.against_wall,
+                r.Domain({t.Semantics.Bedroom, t.Semantics.Room}.union(not_others), []),
+            ),
         ],
     )
 
-    obj = r.Domain({t.Semantics.OfficeShelfItem, t.Semantics.Object}, [(cu.on, bedroom_storage)])
+    obj = r.Domain(
+        {t.Semantics.OfficeShelfItem, t.Semantics.Object}, [(cu.on, bedroom_storage)]
+    )
 
     onfloor = generate_indoors.default_greedy_stages()["on_floor"]
-    dining = r.domain_tag_substitute(onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom}))
+    dining = r.domain_tag_substitute(
+        onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom})
+    )
 
     assert not propose_discrete.active_for_stage(obj, dining)
 
 
 def test_active_incorrect_room():
     onfloor = generate_indoors.default_greedy_stages()["on_floor"]
-    dining = r.domain_tag_substitute(onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom}))
+    dining = r.domain_tag_substitute(
+        onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom})
+    )
 
     sofa = r.Domain(
         {t.Semantics.Object, t.Semantics.Seating, -t.Semantics.Room},
-        [(cu.on_floor, r.Domain({t.Semantics.LivingRoom, -t.Semantics.DiningRoom, -t.Semantics.Object}, []))],
+        [
+            (
+                cu.on_floor,
+                r.Domain(
+                    {
+                        t.Semantics.LivingRoom,
+                        -t.Semantics.DiningRoom,
+                        -t.Semantics.Object,
+                    },
+                    [],
+                ),
+            )
+        ],
     )
 
     assert not propose_discrete.active_for_stage(sofa, dining)
@@ -253,11 +313,18 @@ def test_active_incorrect_room():
 def test_stage_intersect_table():
     onfloor = generate_indoors.default_greedy_stages()["on_floor"]
     onfloor_dining = r.domain_tag_substitute(
-        onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom, t.SpecificObject("diningroom01")})
+        onfloor,
+        cu.variable_room,
+        r.Domain({t.Semantics.DiningRoom, t.SpecificObject("diningroom01")}),
     )
 
-    dining = r.Domain({t.Semantics.Room, t.Semantics.DiningRoom, -t.Semantics.Object}, [])
-    table = r.Domain({t.Semantics.Object, t.Semantics.Table, -t.Semantics.Room}, [(cu.on_floor, dining)])
+    dining = r.Domain(
+        {t.Semantics.Room, t.Semantics.DiningRoom, -t.Semantics.Object}, []
+    )
+    table = r.Domain(
+        {t.Semantics.Object, t.Semantics.Table, -t.Semantics.Room},
+        [(cu.on_floor, dining)],
+    )
 
     inter = onfloor_dining.intersection(table)
     assert len(inter.relations) == 2
@@ -273,7 +340,9 @@ def test_obj_on_ceilinglight():
         [(cu.hanging, r.Domain({t.Semantics.Room, -t.Semantics.Object}, []))],
     )
 
-    active_bounds = [b for b in bounds if propose_discrete.active_for_stage(ceilinglight, b.domain)]
+    active_bounds = [
+        b for b in bounds if propose_discrete.active_for_stage(ceilinglight, b.domain)
+    ]
 
     assert active_bounds == []
 
@@ -297,7 +366,10 @@ def test_room_has_viols_at_init(rtype):
     state = state_def.State(
         {
             ostate_name: state_def.ObjectState(
-                obj=butil.spawn_cube(), generator=None, tags={rtype, t.Semantics.Room}, relations=[]
+                obj=butil.spawn_cube(),
+                generator=None,
+                tags={rtype, t.Semantics.Room},
+                relations=[],
             )
         }
     )
@@ -307,7 +379,9 @@ def test_room_has_viols_at_init(rtype):
     assert active_count > 0
 
     filter = generate_indoors.default_greedy_stages()["on_floor"]
-    filter = r.domain_tag_substitute(filter, cu.variable_room, r.Domain({rtype, t.Semantics.Room}))
+    filter = r.domain_tag_substitute(
+        filter, cu.variable_room, r.Domain({rtype, t.Semantics.Room})
+    )
 
     result = evaluator.evaluate_problem(prob, state, filter)
 

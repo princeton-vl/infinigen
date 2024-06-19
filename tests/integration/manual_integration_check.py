@@ -9,8 +9,6 @@ import json
 import math
 import os
 import re
-import shutil
-import statistics
 import subprocess
 import sys
 from collections import defaultdict
@@ -21,7 +19,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pandas as pd
-from scipy.signal import convolve2d
 from skimage.metrics import structural_similarity
 from skimage.restoration import estimate_sigma
 from tabulate import tabulate
@@ -53,7 +50,9 @@ class Job:
             return f"{self.job_id}     {self.name.ljust(60+73)}     {self.current_status.ljust(10)}"
 
 
-sacct_line_regex = re.compile(r"([0-9]+) +(\S+) +(\S+) +([0-9]+) +([A-Z_]+) +(node[0-9]+) +(\S+).*").fullmatch
+sacct_line_regex = re.compile(
+    r"([0-9]+) +(\S+) +(\S+) +([0-9]+) +([A-Z_]+) +(node[0-9]+) +(\S+).*"
+).fullmatch
 MEM_FACTOR = {"G": 1, "M": 1e3, "K": 1e6}
 
 pd.set_option("display.max_rows", None)
@@ -100,7 +99,9 @@ def td_to_str(td):
 def parse_sacct_line(line):
     if sacct_line_regex(line) is None:
         return
-    job_id, job_name, resources, elapsed_raw, current_status, node, start_time = sacct_line_regex(line).groups()
+    job_id, job_name, resources, elapsed_raw, current_status, node, start_time = (
+        sacct_line_regex(line).groups()
+    )
     request = dict(e.split("=") for e in resources.split(","))
     start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
     elapsed = timedelta(seconds=int(elapsed_raw))
@@ -118,7 +119,13 @@ def parse_sacct_line(line):
 
 
 def parse_scene_log(
-    scene_path, step_times, asset_time_data, poly_data, asset_mem_data, obj_created_data, instance_created_data
+    scene_path,
+    step_times,
+    asset_time_data,
+    poly_data,
+    asset_mem_data,
+    obj_created_data,
+    instance_created_data,
 ):
     log_folder = os.path.join(scene_path, "logs")
     coarse_folder = os.path.join(scene_path, "coarse")
@@ -138,23 +145,32 @@ def parse_scene_log(
             text = errFile.read()
             if "[MAIN TOTAL] finished in" not in text:
                 continue
-            search = re.search(r"\[MAIN TOTAL\] finished in ([0-9]+):([0-9]+):([0-9]+)", text)
+            search = re.search(
+                r"\[MAIN TOTAL\] finished in ([0-9]+):([0-9]+):([0-9]+)", text
+            )
             d = None
             if search is None:
-                search = re.search(r"\[MAIN TOTAL\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)", text)
+                search = re.search(
+                    r"\[MAIN TOTAL\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)",
+                    text,
+                )
                 d, h, m, s = search.group(1, 2, 3, 4)
             else:
                 h, m, s = search.group(1, 2, 3)
             if d is None:
                 step_timedelta = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
             else:
-                step_timedelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
+                step_timedelta = timedelta(
+                    days=int(d), hours=int(h), minutes=int(m), seconds=int(s)
+                )
             step_times[step].append(step_timedelta)
             scene_times.append(step_timedelta)
             all_data[seed]["[" + step + "] Step Time"] = step_timedelta
 
             # parse times < 1 day
-            for name, h, m, s in re.findall(r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", text):
+            for name, h, m, s in re.findall(
+                r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", text
+            ):
                 timedelta_obj = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
                 if name == "MAIN TOTAL":
                     continue
@@ -164,7 +180,9 @@ def parse_scene_log(
                     instance_dict = {}
                     instance_dict["stage_timedelta"] = timedelta_obj
                     instance_dict["step_timedelta"] = step_timedelta
-                    instance_dict["step_name"] = stepName  # should be same for every instance of a given stage
+                    instance_dict["step_name"] = (
+                        stepName  # should be same for every instance of a given stage
+                    )
                     instance_dict["seed"] = seed
                     stage_key = "[" + stepName + "] " + name
                     asset_time_data[stage_key].append(instance_dict)
@@ -175,9 +193,12 @@ def parse_scene_log(
 
             # parse times > 1 day
             for name, d, h, m, s in re.findall(
-                r"\[INFO\] \| \[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)", text
+                r"\[INFO\] \| \[(.*?)\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)",
+                text,
             ):
-                timedelta_obj = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
+                timedelta_obj = timedelta(
+                    days=int(d), hours=int(h), minutes=int(m), seconds=int(s)
+                )
                 if name == "MAIN TOTAL":
                     continue
                 else:
@@ -186,7 +207,9 @@ def parse_scene_log(
                     instance_dict = {}
                     instance_dict["stage_timedelta"] = timedelta_obj
                     instance_dict["step_timedelta"] = step_timedelta
-                    instance_dict["step_name"] = stepName  # should be same for every instance of a given stage
+                    instance_dict["step_name"] = (
+                        stepName  # should be same for every instance of a given stage
+                    )
                     instance_dict["seed"] = seed
                     stage_key = "[" + stepName + "] " + name
                     asset_time_data[stage_key].append(instance_dict)
@@ -221,32 +244,58 @@ def parse_scene_log(
             all_data[seed]["[Polys] [Fine] Tris"] = int(tris)
 
     coarse_stage_df = pd.read_csv(os.path.join(coarse_folder, "pipeline_coarse.csv"))
-    coarse_stage_df["mem_delta"] = coarse_stage_df[coarse_stage_df["ran"] == True]["mem_at_finish"].diff()
-    coarse_stage_df["obj_delta"] = coarse_stage_df[coarse_stage_df["ran"] == True]["obj_count"].diff()
-    coarse_stage_df["instance_delta"] = coarse_stage_df[coarse_stage_df["ran"] == True]["instance_count"].diff()
+    coarse_stage_df["mem_delta"] = coarse_stage_df[coarse_stage_df["ran"] is True][
+        "mem_at_finish"
+    ].diff()
+    coarse_stage_df["obj_delta"] = coarse_stage_df[coarse_stage_df["ran"] is True][
+        "obj_count"
+    ].diff()
+    coarse_stage_df["instance_delta"] = coarse_stage_df[coarse_stage_df["ran"] is True][
+        "instance_count"
+    ].diff()
     for index, row in coarse_stage_df.iterrows():
-        if row["mem_delta"] == 0 or math.isnan(float(row["mem_delta"])) or row["ran"] == False:
+        if (
+            row["mem_delta"] == 0
+            or math.isnan(float(row["mem_delta"]))
+            or row["ran"] is False
+        ):
             continue
         asset_mem_data["[Coarse] " + row["name"]].append(row["mem_delta"])
         obj_created_data["[Coarse] " + row["name"]].append(row["obj_delta"])
         instance_created_data["[Coarse] " + row["name"]].append(row["instance_delta"])
-        all_data[seed]["[Memory] [Coarse] " + row["name"]] = sizeof_fmt(row["mem_delta"])
+        all_data[seed]["[Memory] [Coarse] " + row["name"]] = sizeof_fmt(
+            row["mem_delta"]
+        )
         all_data[seed]["[Objects Generated] [Coarse] " + row["name"]] = row["obj_delta"]
-        all_data[seed]["[Instances Generated] [Coarse] " + row["name"]] = row["instance_delta"]
+        all_data[seed]["[Instances Generated] [Coarse] " + row["name"]] = row[
+            "instance_delta"
+        ]
 
-    fine_stage_df = pd.read_csv(os.path.join(fine_folder, "pipeline_fine.csv"))  # this is supposed to be coarse folder
-    fine_stage_df["mem_delta"] = fine_stage_df[fine_stage_df["ran"]]["mem_at_finish"].diff()
+    fine_stage_df = pd.read_csv(
+        os.path.join(fine_folder, "pipeline_fine.csv")
+    )  # this is supposed to be coarse folder
+    fine_stage_df["mem_delta"] = fine_stage_df[fine_stage_df["ran"]][
+        "mem_at_finish"
+    ].diff()
     fine_stage_df["obj_delta"] = fine_stage_df[fine_stage_df["ran"]]["obj_count"].diff()
-    fine_stage_df["instance_delta"] = fine_stage_df[fine_stage_df["ran"]]["instance_count"].diff()
+    fine_stage_df["instance_delta"] = fine_stage_df[fine_stage_df["ran"]][
+        "instance_count"
+    ].diff()
     for index, row in fine_stage_df.iterrows():
-        if row["mem_delta"] == 0 or math.isnan(float(row["mem_delta"])) or row["ran"] == False:
+        if (
+            row["mem_delta"] == 0
+            or math.isnan(float(row["mem_delta"]))
+            or row["ran"] is False
+        ):
             continue
         asset_mem_data["[Fine] " + row["name"]].append(row["mem_delta"])
         obj_created_data["[Fine] " + row["name"]].append(row["obj_delta"])
         instance_created_data["[Fine] " + row["name"]].append(row["instance_delta"])
         all_data[seed]["[Memory] [Fine] " + row["name"]] = sizeof_fmt(row["mem_delta"])
         all_data[seed]["[Objects Generated] [Fine] " + row["name"]] = row["obj_delta"]
-        all_data[seed]["[Instances Generated] [Fine] " + row["name"]] = row["instance_delta"]
+        all_data[seed]["[Instances Generated] [Fine] " + row["name"]] = row[
+            "instance_delta"
+        ]
 
 
 def test_generation(dir):
@@ -276,8 +325,19 @@ def test_logs(dir):
     obj_created_data = defaultdict(list)
     instance_created_data = defaultdict(list)
 
-    step_times = {"fineterrain": [], "coarse": [], "populate": [], "rendershort": [], "blendergt": []}
-    poly_data = {"[Coarse] Faces": [], "[Coarse] Tris": [], "[Fine] Faces": [], "[Fine] Tris": []}
+    step_times = {
+        "fineterrain": [],
+        "coarse": [],
+        "populate": [],
+        "rendershort": [],
+        "blendergt": [],
+    }
+    poly_data = {
+        "[Coarse] Faces": [],
+        "[Coarse] Tris": [],
+        "[Fine] Faces": [],
+        "[Fine] Tris": [],
+    }
     completed_seeds = os.path.join(dir, "finished_seeds.txt")
     num_lines = sum(1 for _ in open(completed_seeds))
     for scene in os.listdir(dir):
@@ -285,22 +345,36 @@ def test_logs(dir):
             continue
         scene_path = os.path.join(dir, scene)
         parse_scene_log(
-            scene_path, step_times, asset_time_data, poly_data, asset_mem_data, obj_created_data, instance_created_data
+            scene_path,
+            step_times,
+            asset_time_data,
+            poly_data,
+            asset_mem_data,
+            obj_created_data,
+            instance_created_data,
         )
 
     step_df = pd.DataFrame.from_dict(step_times, orient="index")
     step_stats = make_stats(step_df)
     for column in step_stats:
-        step_stats[column] = step_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        step_stats[column] = (
+            step_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        )
     print("Time Logs by Step")
     print(tabulate(step_stats, headers="keys", tablefmt="fancy_grid"))
 
     asset_stats = defaultdict(list)
     for asset_name in asset_time_data:
-        asset_times = pd.Series(instance["stage_timedelta"] for instance in asset_time_data[asset_name])
+        asset_times = pd.Series(
+            instance["stage_timedelta"] for instance in asset_time_data[asset_name]
+        )
         chance = float(len(asset_time_data[asset_name])) / float(num_lines)
-        step_times = pd.Series(instance["step_timedelta"] for instance in asset_time_data[asset_name])
-        scene_times = pd.Series(instance["scene_time"] for instance in asset_time_data[asset_name])
+        step_times = pd.Series(
+            instance["step_timedelta"] for instance in asset_time_data[asset_name]
+        )
+        scene_times = pd.Series(
+            instance["scene_time"] for instance in asset_time_data[asset_name]
+        )
         step_percent = asset_times.sum() / step_times.sum() * 100
         scene_percent = asset_times.sum() / scene_times.sum() * 100
         asset_stats[asset_name] = [
@@ -335,13 +409,25 @@ def test_logs(dir):
             asset_stats[column] = asset_stats[column].apply(td_to_str)
 
     print("\nTime Logs by Asset Stage")
-    print(tabulate(asset_stats.sort_values("% of scene time", ascending=False), headers="keys", tablefmt="fancy_grid"))
+    print(
+        tabulate(
+            asset_stats.sort_values("% of scene time", ascending=False),
+            headers="keys",
+            tablefmt="fancy_grid",
+        )
+    )
 
     assset_mem_df = pd.DataFrame.from_dict(asset_mem_data, orient="index")
     assset_mem_stats = make_stats(assset_mem_df)
     assset_mem_stats = assset_mem_stats.sort_values("mean", ascending=False)
     print("\nMemory Usage by Asset Stage")
-    print(tabulate(assset_mem_stats.applymap(lambda x: sizeof_fmt(x)), headers="keys", tablefmt="fancy_grid"))
+    print(
+        tabulate(
+            assset_mem_stats.applymap(lambda x: sizeof_fmt(x)),
+            headers="keys",
+            tablefmt="fancy_grid",
+        )
+    )
 
     obj_created_df = pd.DataFrame.from_dict(obj_created_data, orient="index")
     obj_created_stats = make_stats(obj_created_df)
@@ -363,7 +449,9 @@ def test_logs(dir):
 
 def test_step_memory(dir, days):
     days_since = int(days)
-    sacct_start_date = (datetime.now() - timedelta(days=days_since)).strftime("%Y-%m-%d")
+    sacct_start_date = (datetime.now() - timedelta(days=days_since)).strftime(
+        "%Y-%m-%d"
+    )
     sacct_command = f"sacct --starttime {sacct_start_date} -u {os.environ['USER']} --noheader -o jobid,jobname%80,AllocTRES%80,ElapsedRaw,stat%30,NodeList,Start,MaxRSS"
     print(f"Running + {sacct_command}")
     sacct_output = subprocess.check_output(sacct_command.split()).decode()
@@ -381,10 +469,18 @@ def test_step_memory(dir, days):
             if name in seeds:
                 if parsed_job.job_id in mem_dict:
                     max_memory = mem_dict[parsed_job.job_id]
-                    parsed_job.max_memory_gb = float(max_memory[:-1]) / MEM_FACTOR[max_memory[-1]]
+                    parsed_job.max_memory_gb = (
+                        float(max_memory[:-1]) / MEM_FACTOR[max_memory[-1]]
+                    )
                 relevant_started_jobs.append(parsed_job)
 
-    step_mem = {"fineterrain": [], "coarse": [], "populate": [], "rendershort": [], "blendergt": []}
+    step_mem = {
+        "fineterrain": [],
+        "coarse": [],
+        "populate": [],
+        "rendershort": [],
+        "blendergt": [],
+    }
 
     for job in relevant_started_jobs:
         for step in step_mem:
@@ -404,7 +500,9 @@ def test_brightness(dir):
     numDark = 0
     for scene in os.listdir(dir):
         for filepath in Path(os.path.join(dir, scene)).rglob("Image*.png"):
-            im = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)  # https://stackoverflow.com/a/52514730
+            im = cv2.imread(
+                str(filepath), cv2.IMREAD_GRAYSCALE
+            )  # https://stackoverflow.com/a/52514730
             meanPercent = np.mean(im) * 100 / 255
             if meanPercent < 5:
                 numDark += 1
@@ -429,7 +527,13 @@ def test_noise(dir):
     noise_df = pd.DataFrame.from_dict(noise_dict, orient="index")
     noise_df.columns = ["Noise Estimate"]
     print("\nNoise in Rendered Images")
-    print(tabulate(noise_df.sort_values("Noise Estimate", ascending=False), headers="keys", tablefmt="fancy_grid"))
+    print(
+        tabulate(
+            noise_df.sort_values("Noise Estimate", ascending=False),
+            headers="keys",
+            tablefmt="fancy_grid",
+        )
+    )
 
 
 def test_gt(dir):
@@ -455,7 +559,9 @@ def test_gt(dir):
         if not blender_gt_search or not opengl_gt_search:
             continue
 
-        blender_gt_folder = blender_gt_search[0]  # should only be one occurrence of each
+        blender_gt_folder = blender_gt_search[
+            0
+        ]  # should only be one occurrence of each
         opengl_gt_folder = opengl_gt_search[0]
 
         blender_depth_search = list(Path(blender_gt_folder).glob("Depth*.npy"))
@@ -466,7 +572,9 @@ def test_gt(dir):
             opengl_depth = np.load(opengl_depth_search[0])
 
             opengl_depth[opengl_depth == np.inf] = 10 * 10
-            opengl_depth = cv2.resize(opengl_depth, dsize=(blender_depth.shape[1], blender_depth.shape[0]))
+            opengl_depth = cv2.resize(
+                opengl_depth, dsize=(blender_depth.shape[1], blender_depth.shape[0])
+            )
 
             score, diff = structural_similarity(blender_depth, opengl_depth, full=True)
             similarity[scene] = score * 100
@@ -487,7 +595,9 @@ def test_gt(dir):
                 else:
                     tag_seg_data[tag].append(tag_seg_dict[tags[tag]])
                     all_data[scene]["[Tag Seg. Percent] " + tag] = (
-                        float(tag_seg_dict[tags[tag]]) / float(tag_seg.shape[0] * tag_seg.shape[1]) * 100
+                        float(tag_seg_dict[tags[tag]])
+                        / float(tag_seg.shape[0] * tag_seg.shape[1])
+                        * 100
                     )
 
         obj_json_search = list((blender_gt_folder).glob("Objects*.json"))
@@ -521,25 +631,49 @@ def test_gt(dir):
 
     tag_seg_data_df = pd.DataFrame.from_dict(tag_seg_data, orient="index")
     tag_seg_stats = pd.DataFrame()
-    tag_seg_stats["Percent of Pixels"] = tag_seg_data_df.sum(axis=1).map(lambda x: float(x) / float(pix_sum_seg) * 100)
+    tag_seg_stats["Percent of Pixels"] = tag_seg_data_df.sum(axis=1).map(
+        lambda x: float(x) / float(pix_sum_seg) * 100
+    )
 
     print("\nTag Segmentation Pixel Sources")
-    print("Percent of untagged pixels: " + str(100 - tag_seg_stats["Percent of Pixels"].sum()))
     print(
-        tabulate(tag_seg_stats.sort_values("Percent of Pixels", ascending=False), headers="keys", tablefmt="fancy_grid")
+        "Percent of untagged pixels: "
+        + str(100 - tag_seg_stats["Percent of Pixels"].sum())
+    )
+    print(
+        tabulate(
+            tag_seg_stats.sort_values("Percent of Pixels", ascending=False),
+            headers="keys",
+            tablefmt="fancy_grid",
+        )
     )
 
     obj_seg_data_df = pd.DataFrame.from_dict(obj_seg_data, orient="index")
     obj_seg_stats = pd.DataFrame()
-    obj_seg_stats["Percent of Pixels"] = obj_seg_data_df.sum(axis=1).map(lambda x: float(x) / float(pix_sum_obj) * 100)
-    obj_seg_stats = obj_seg_stats.groupby(obj_seg_stats.index.str.split("(").str[0]).sum()
-    obj_seg_stats = obj_seg_stats.groupby(obj_seg_stats.index.str.split(":").str[-1]).sum()
-    obj_seg_stats = obj_seg_stats.groupby(obj_seg_stats.index.str.split(".").str[0]).sum()
+    obj_seg_stats["Percent of Pixels"] = obj_seg_data_df.sum(axis=1).map(
+        lambda x: float(x) / float(pix_sum_obj) * 100
+    )
+    obj_seg_stats = obj_seg_stats.groupby(
+        obj_seg_stats.index.str.split("(").str[0]
+    ).sum()
+    obj_seg_stats = obj_seg_stats.groupby(
+        obj_seg_stats.index.str.split(":").str[-1]
+    ).sum()
+    obj_seg_stats = obj_seg_stats.groupby(
+        obj_seg_stats.index.str.split(".").str[0]
+    ).sum()
 
     print("\nObject Segmentation Pixel Sources")
-    print("Percent of untagged pixels: " + str(100 - obj_seg_stats["Percent of Pixels"].sum()))
     print(
-        tabulate(obj_seg_stats.sort_values("Percent of Pixels", ascending=False), headers="keys", tablefmt="fancy_grid")
+        "Percent of untagged pixels: "
+        + str(100 - obj_seg_stats["Percent of Pixels"].sum())
+    )
+    print(
+        tabulate(
+            obj_seg_stats.sort_values("Percent of Pixels", ascending=False),
+            headers="keys",
+            tablefmt="fancy_grid",
+        )
     )
 
 

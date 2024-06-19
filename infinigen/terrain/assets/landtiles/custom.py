@@ -113,9 +113,13 @@ def coast_heightmapping(heightmap):
     seafloor_loc = beach_size / 2 + steep_slope_size
     mapped[(heightmap > -beach_size / 2) & (heightmap < beach_size / 2)] *= beach_slope
     mapped[heightmap > beach_size / 2] = beach_size / 2 * beach_slope
-    steep_slope = (sea_depth - beach_size / 2 * beach_slope) / (seafloor_loc - beach_size / 2)
+    steep_slope = (sea_depth - beach_size / 2 * beach_slope) / (
+        seafloor_loc - beach_size / 2
+    )
     steep_mask = (heightmap < -beach_size / 2) & (heightmap > -seafloor_loc)
-    mapped[steep_mask] = (-beach_size / 2 * beach_slope - (-beach_size / 2 - heightmap) * steep_slope)[steep_mask]
+    mapped[steep_mask] = (
+        -beach_size / 2 * beach_slope - (-beach_size / 2 - heightmap) * steep_slope
+    )[steep_mask]
     mapped[heightmap < -seafloor_loc] = -sea_depth
     return mapped
 
@@ -185,7 +189,9 @@ def coast_asset(
     Element.called_time.pop("mountains")
 
     params2 = coast_params()
-    positions = np.stack((X.reshape(-1), Y.reshape(-1), np.zeros(resolution * resolution)), -1)
+    positions = np.stack(
+        (X.reshape(-1), Y.reshape(-1), np.zeros(resolution * resolution)), -1
+    )
     coast_mask = (
         perlin_noise(
             device=device,
@@ -197,17 +203,31 @@ def coast_asset(
         > 0
     )
     coast_distance = (
-        grid_distance(~coast_mask, downsample=512) - grid_distance(coast_mask, downsample=512)
+        grid_distance(~coast_mask, downsample=512)
+        - grid_distance(coast_mask, downsample=512)
     ) * tile_size
-    mask = np.clip((coast_distance - 0.2 * params2["beach_size"]) / (0.4 * params2["beach_size"]), a_min=0, a_max=1)
+    mask = np.clip(
+        (coast_distance - 0.2 * params2["beach_size"]) / (0.4 * params2["beach_size"]),
+        a_min=0,
+        a_max=1,
+    )
     coast_heightmap = coast_heightmapping(coast_distance)
     heightmap = (coast_heightmap + heightmap * mask).astype(np.float32)
     cv2.imwrite(str(folder / f"{AssetFile.Heightmap}.exr"), heightmap)
     with open(folder / f"{AssetFile.TileSize}.txt", "w") as f:
         f.write(f"{tile_size}\n")
     with open(folder / f"{AssetFile.Params}.txt", "w") as f:
-        json.dump({"multi_mountains_params": multi_mountains_params(raw=1), "coast_params": coast_params(raw=1)}, f)
+        json.dump(
+            {
+                "multi_mountains_params": multi_mountains_params(raw=1),
+                "coast_params": coast_params(raw=1),
+            },
+            f,
+        )
     if erosion:
-        run_erosion(folder, mask_height_range=(0, 0.1 * params2["beach_size"] * params2["beach_slope"]))
+        run_erosion(
+            folder,
+            mask_height_range=(0, 0.1 * params2["beach_size"] * params2["beach_slope"]),
+        )
     if snowfall:
         run_snowfall(folder)

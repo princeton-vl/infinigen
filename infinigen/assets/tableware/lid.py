@@ -40,7 +40,9 @@ class LidFactory(AssetFactory):
                 material_assignments = AssetList["LidFactory"]()
             self.surface = material_assignments["surface"].assign_material()
             self.rim_surface = material_assignments["rim_surface"].assign_material()
-            self.handle_surface = material_assignments["handle_surface"].assign_material()
+            self.handle_surface = material_assignments[
+                "handle_surface"
+            ].assign_material()
 
             scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
             self.scratch, self.edge_wear = material_assignments["wear_tear"]
@@ -53,7 +55,9 @@ class LidFactory(AssetFactory):
         obj = spin((x_anchors, 0, z_anchors))
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness, offset=0)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
-        self.surface.apply(obj, clear=True if self.is_glass else None, metal_color="bw+natural")
+        self.surface.apply(
+            obj, clear=True if self.is_glass else None, metal_color="bw+natural"
+        )
         parts = [obj]
         if self.is_glass:
             parts.append(self.add_rim())
@@ -68,7 +72,9 @@ class LidFactory(AssetFactory):
     def add_rim(self):
         butil.select_none()
         bpy.ops.mesh.primitive_torus_add(
-            major_radius=self.x_length, minor_radius=self.thickness / 2, major_segments=128
+            major_radius=self.x_length,
+            minor_radius=self.thickness / 2,
+            major_segments=128,
         )
         obj = bpy.context.active_object
         obj.scale[-1] = self.rim_height / self.thickness
@@ -78,7 +84,11 @@ class LidFactory(AssetFactory):
 
     def add_handle(self, obj):
         center = read_center(obj)
-        i = np.argmin(np.abs(center[:, :2] - np.array([self.handle_width, 0])[np.newaxis, :]).sum(-1))
+        i = np.argmin(
+            np.abs(center[:, :2] - np.array([self.handle_width, 0])[np.newaxis, :]).sum(
+                -1
+            )
+        )
         z_offset = center[i, -1]
         obj = new_line(3)
         write_co(
@@ -97,7 +107,9 @@ class LidFactory(AssetFactory):
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, self.thickness * 2, 0)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, self.thickness * 2, 0)}
+            )
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness, offset=0)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
         obj.location = 0, -self.thickness, z_offset
@@ -112,7 +124,11 @@ class LidFactory(AssetFactory):
         butil.apply_transform(obj, True)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
         top = new_cylinder()
-        top.scale = self.handle_radius, self.handle_radius, self.thickness * uniform(1, 2)
+        top.scale = (
+            self.handle_radius,
+            self.handle_radius,
+            self.thickness * uniform(1, 2),
+        )
         top.location[-1] = self.z_height + self.handle_height
         butil.apply_transform(top, True)
         butil.modify_mesh(top, "BEVEL", width=self.thickness / 2, segments=4)

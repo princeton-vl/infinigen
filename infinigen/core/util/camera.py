@@ -8,7 +8,6 @@ import bpy
 import bpy_extras
 import numpy as np
 from mathutils import Matrix, Vector
-from mathutils.bvhtree import BVHTree
 from tqdm import trange
 
 from infinigen.core.util import blender as butil
@@ -42,7 +41,9 @@ def get_calibration_matrix_K_from_blender(camd):
     if camd.sensor_fit == "VERTICAL":
         # the sensor height is fixed (sensor fit is horizontal),
         # the sensor width is effectively changed with the pixel aspect ratio
-        s_u = resolution_x_in_px * scale / sensor_width_in_mm / pixel_aspect_ratio  # pixels per milimeter
+        s_u = (
+            resolution_x_in_px * scale / sensor_width_in_mm / pixel_aspect_ratio
+        )  # pixels per milimeter
         s_v = resolution_y_in_px * scale / sensor_height_in_mm
     else:  # 'HORIZONTAL' and 'AUTO'
         # the sensor width is fixed (sensor fit is horizontal),
@@ -102,7 +103,11 @@ def get_3x4_RT_matrix_from_blender(cam):
 
     # put into 3x4 matrix
     RT = Matrix(
-        (R_world2cv[0][:] + (T_world2cv[0],), R_world2cv[1][:] + (T_world2cv[1],), R_world2cv[2][:] + (T_world2cv[2],))
+        (
+            R_world2cv[0][:] + (T_world2cv[0],),
+            R_world2cv[1][:] + (T_world2cv[1],),
+            R_world2cv[2][:] + (T_world2cv[2],),
+        )
     )
     return RT
 
@@ -137,7 +142,10 @@ def compute_vis_dists(points, cam):
     clamped_d = np.maximum(d, 0)
 
     RT_4x4_inv = np.array(Matrix(RT).to_4x4().inverted())
-    clipped_pos = homogenize((homogenize(clamped_uv) * clamped_d[:, None]) @ np.linalg.inv(K).T) @ RT_4x4_inv.T
+    clipped_pos = (
+        homogenize((homogenize(clamped_uv) * clamped_d[:, None]) @ np.linalg.inv(K).T)
+        @ RT_4x4_inv.T
+    )
 
     vis_dist = np.linalg.norm(points[:, :-1] - clipped_pos[:, :-1], axis=-1)
 
@@ -171,5 +179,11 @@ def points_inview(bbox, camera):
     proj = np.array(get_3x4_P_matrix_from_blender(camera)[0])
     x, y, z = proj @ np.concatenate([bbox, np.ones((len(bbox), 1))], -1).T
     render = bpy.context.scene.render
-    inview = (z > 0) & (x >= 0) & (y >= 0) & (x / z < render.resolution_x) & (y / z < render.resolution_y)
+    inview = (
+        (z > 0)
+        & (x >= 0)
+        & (y >= 0)
+        & (x / z < render.resolution_x)
+        & (y / z < render.resolution_y)
+    )
     return inview

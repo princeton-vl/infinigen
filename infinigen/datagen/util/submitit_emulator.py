@@ -11,21 +11,16 @@ import copy
 import itertools
 import logging
 import os
-import random
 import re
 import subprocess
 import sys
-import threading
-import time
 from dataclasses import dataclass
-from functools import partial
 from multiprocessing import Process
 from pathlib import Path
 from shutil import which
 
 import gin
 import numpy as np
-import submitit
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +65,14 @@ def get_fake_job_id():
     return np.random.randint(int(1e10), int(1e11))
 
 
-def job_wrapper(func, inner_args, inner_kwargs, stdout_file: Path, stderr_file: Path, cuda_devices=None):
+def job_wrapper(
+    func,
+    inner_args,
+    inner_kwargs,
+    stdout_file: Path,
+    stderr_file: Path,
+    cuda_devices=None,
+):
     with stdout_file.open("w") as stdout, stderr_file.open("w") as stderr:
         sys.stdout = stdout
         sys.stderr = stderr
@@ -113,7 +115,9 @@ class ImmediateLocalExecutor:
     def submit(self, func, *args, **kwargs):
         job_id = get_fake_job_id()
         name = self.parameters.get("name", None)
-        proc = launch_local(func, args, kwargs, job_id, log_folder=self.log_folder, name=name)
+        proc = launch_local(
+            func, args, kwargs, job_id, log_folder=self.log_folder, name=name
+        )
         return LocalJob(job_id=job_id, process=proc)
 
 
@@ -135,7 +139,13 @@ class LocalScheduleHandler:
     def enqueue(self, func, args, kwargs, params, log_folder):
         job = LocalJob(job_id=get_fake_job_id(), process=None)
         job_rec = dict(
-            func=func, args=args, kwargs=kwargs, params=params, job=job, log_folder=log_folder, gpu_assignment=None
+            func=func,
+            args=args,
+            kwargs=kwargs,
+            params=params,
+            job=job,
+            log_folder=log_folder,
+            gpu_assignment=None,
         )
 
         self.queue.append(job_rec)
@@ -147,7 +157,9 @@ class LocalScheduleHandler:
 
         if self.use_gpu:
             if which(NVIDIA_SMI_PATH) is None:
-                raise ValueError(f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}")
+                raise ValueError(
+                    f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}"
+                )
 
             result = subprocess.check_output(f"{NVIDIA_SMI_PATH} -L".split()).decode()
             gpus_uuids = set(i for i in range(len(result.splitlines())))
@@ -155,9 +167,13 @@ class LocalScheduleHandler:
             if CUDA_VARNAME in os.environ:
                 visible = [int(s.strip()) for s in os.environ[CUDA_VARNAME].split(",")]
                 gpus_uuids = gpus_uuids.intersection(visible)
-                logger.debug(f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting")
+                logger.debug(
+                    f"Restricting to {gpus_uuids=} due to toplevel {CUDA_VARNAME} setting"
+                )
 
-            resources["gpus"] = set(itertools.product(gpus_uuids, range(self.jobs_per_gpu)))
+            resources["gpus"] = set(
+                itertools.product(gpus_uuids, range(self.jobs_per_gpu))
+            )
 
         return resources
 

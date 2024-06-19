@@ -16,14 +16,8 @@ type = SurfaceTypes.SDFPerturb
 mod_name = "geo_ice"
 name = "ice"
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
 
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 
 
 def shader_ice(nw: NodeWrangler):
@@ -34,11 +28,18 @@ def shader_ice(nw: NodeWrangler):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": geometry.outputs["Position"], "W": noise_value, "Scale": 4.0000, "Detail": 15.0000},
+        input_kwargs={
+            "Vector": geometry.outputs["Position"],
+            "W": noise_value,
+            "Scale": 4.0000,
+            "Detail": 15.0000,
+        },
         attrs={"noise_dimensions": "4D"},
     )
 
-    color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    color_ramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     color_ramp.color_ramp.elements[0].position = 0.5000
     color_ramp.color_ramp.elements[0].color = [0.0844, 0.0844, 0.0844, 1.0000]
     color_ramp.color_ramp.elements[1].position = 0.7500
@@ -57,7 +58,9 @@ def shader_ice(nw: NodeWrangler):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
     return principled_bsdf
 
@@ -66,7 +69,9 @@ def shader_ice(nw: NodeWrangler):
 def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
     # Code generated using version 2.6.4 of the node_transpiler
     with FixedSeed(random_seed):
-        group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        group_input = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
 
         normal_1 = nw.new_node(Nodes.InputNormal)
 
@@ -84,7 +89,9 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
             attrs={"noise_dimensions": "4D"},
         )
 
-        colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]})
+        colorramp = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]}
+        )
         colorramp.color_ramp.elements[0].position = 0.5000
         colorramp.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
         colorramp.color_ramp.elements[1].position = 1.0000
@@ -127,7 +134,11 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
 
         multiply_add = nw.new_node(
             Nodes.VectorMath,
-            input_kwargs={0: normal_1, 1: scale.outputs["Vector"], 2: scale_1.outputs["Vector"]},
+            input_kwargs={
+                0: normal_1,
+                1: scale.outputs["Vector"],
+                2: scale_1.outputs["Vector"],
+            },
             attrs={"operation": "MULTIPLY_ADD"},
         )
 
@@ -136,11 +147,17 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
 
         set_position_1 = nw.new_node(
-            Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": offset}
+            Nodes.SetPosition,
+            input_kwargs={
+                "Geometry": group_input.outputs["Geometry"],
+                "Offset": offset,
+            },
         )
 
         group_output = nw.new_node(
-            Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1}, attrs={"is_active_output": True}
+            Nodes.GroupOutput,
+            input_kwargs={"Geometry": set_position_1},
+            attrs={"is_active_output": True},
         )
 
 

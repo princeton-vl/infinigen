@@ -7,9 +7,6 @@
 import bpy
 
 from infinigen.assets.cactus.spike import make_default_selections
-from infinigen.assets.utils.decorate import write_attribute
-from infinigen.core.nodes.node_info import Nodes
-from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
 
@@ -22,7 +19,9 @@ class BaseCactusFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(BaseCactusFactory, self).__init__(factory_seed, coarse)
-        self.points_fn = make_default_selections(self.spike_distance, self.cap_percentage, self.density)
+        self.points_fn = make_default_selections(
+            self.spike_distance, self.cap_percentage, self.density
+        )
 
     def create_asset(self, **params) -> bpy.types.Object:
-        raise NotImplemented
+        raise NotImplementedError()

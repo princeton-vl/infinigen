@@ -5,21 +5,23 @@
 
 
 import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
 
-from infinigen.assets.tables.table_utils import nodegroup_create_cap, nodegroup_n_gon_cylinder
+from infinigen.assets.tables.table_utils import (
+    nodegroup_create_cap,
+    nodegroup_n_gon_cylinder,
+)
 from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
-@node_utils.to_nodegroup("nodegroup_capped_cylinder", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_capped_cylinder", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_capped_cylinder(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -38,30 +40,50 @@ def nodegroup_capped_cylinder(nw: NodeWrangler):
 
     create_cap = nw.new_node(
         nodegroup_create_cap().name,
-        input_kwargs={"Radius": group_input.outputs["Cap Flatness"], "Resolution": group_input.outputs["Resolution"]},
+        input_kwargs={
+            "Radius": group_input.outputs["Cap Flatness"],
+            "Resolution": group_input.outputs["Resolution"],
+        },
         label="CreateCap",
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Thickness"], 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Thickness"], 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["Cap Relative Z Offset"]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: group_input.outputs["Cap Relative Z Offset"]},
+    )
 
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": add})
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Radius"], 1: 0.5}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Radius"], 1: 0.5},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: group_input.outputs["Cap Relative Scale"]})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: group_input.outputs["Cap Relative Scale"]},
+    )
 
     transform_5 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": create_cap, "Translation": combine_xyz_5, "Scale": add_1}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": create_cap,
+            "Translation": combine_xyz_5,
+            "Scale": add_1,
+        },
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Radius"], 1: 1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Radius"], 1: 1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
     generatetabletop = nw.new_node(
@@ -76,19 +98,29 @@ def nodegroup_capped_cylinder(nw: NodeWrangler):
         },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_5, generatetabletop]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_5, generatetabletop]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_2}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_2},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_generate_table_top", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_generate_table_top", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_generate_table_top(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     curve_line = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": (1.0000, 0.0000, 1.0000), "End": (1.0000, 0.0000, -1.0000)}
+        Nodes.CurveLine,
+        input_kwargs={
+            "Start": (1.0000, 0.0000, 1.0000),
+            "End": (1.0000, 0.0000, -1.0000),
+        },
     )
 
     group_input = nw.new_node(
@@ -117,25 +149,41 @@ def nodegroup_generate_table_top(nw: NodeWrangler):
         },
     )
 
-    arc = nw.new_node("GeometryNodeCurveArc", input_kwargs={"Resolution": 4, "Radius": 0.7071, "Sweep Angle": 4.7124})
+    arc = nw.new_node(
+        "GeometryNodeCurveArc",
+        input_kwargs={"Resolution": 4, "Radius": 0.7071, "Sweep Angle": 4.7124},
+    )
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": arc.outputs["Curve"], "Rotation": (0.0000, 0.0000, -0.7854)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": arc.outputs["Curve"],
+            "Rotation": (0.0000, 0.0000, -0.7854),
+        },
     )
 
     transform_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform, "Rotation": (0.0000, 1.5708, 0.0000)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform, "Rotation": (0.0000, 1.5708, 0.0000)},
     )
 
     transform_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform_2, "Translation": (0.0000, 0.5000, 0.0000)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_2, "Translation": (0.0000, 0.5000, 0.0000)},
     )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": group_input.outputs["Fillet Radius Vertical"], "Z": 1.0000}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": 1.0000,
+            "Y": group_input.outputs["Fillet Radius Vertical"],
+            "Z": 1.0000,
+        },
     )
 
-    transform_4 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform_3, "Scale": combine_xyz})
+    transform_4 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": transform_3, "Scale": combine_xyz}
+    )
 
     fillet_curve = nw.new_node(
         "GeometryNodeFilletCurve",
@@ -158,32 +206,52 @@ def nodegroup_generate_table_top(nw: NodeWrangler):
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": ngoncylinder.outputs["Profile Curve"], "Profile Curve": transform_6}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": ngoncylinder.outputs["Profile Curve"],
+            "Profile Curve": transform_6,
+        },
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Thickness"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Thickness"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
-    transform_5 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh, "Translation": combine_xyz_1})
+    transform_5 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": curve_to_mesh, "Translation": combine_xyz_1},
+    )
 
     index = nw.new_node(Nodes.Index)
 
     equal = nw.new_node(
-        Nodes.Compare, input_kwargs={"A": index, "B": 0}, attrs={"data_type": "INT", "operation": "EQUAL"}
+        Nodes.Compare,
+        input_kwargs={"A": index, "B": 0},
+        attrs={"data_type": "INT", "operation": "EQUAL"},
     )
 
-    cap = tag_nodegroup(nw, ngoncylinder.outputs["Caps"], t.Subpart.SupportSurface, selection=equal)
+    cap = tag_nodegroup(
+        nw, ngoncylinder.outputs["Caps"], t.Subpart.SupportSurface, selection=equal
+    )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_5, cap]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_5, cap]}
+    )
 
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": join_geometry})
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Thickness"]})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Thickness"]}
+    )
 
-    transform_1 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": flip_faces, "Translation": combine_xyz_2})
+    transform_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": flip_faces, "Translation": combine_xyz_2},
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -205,7 +273,11 @@ def geometry_generate_table_top_wrapper(nw: NodeWrangler, **kwargs):
             ("NodeSocketFloat", "Profile Aspect Ratio", kwargs["Profile Aspect Ratio"]),
             ("NodeSocketFloat", "Profile Fillet Ratio", kwargs["Profile Fillet Ratio"]),
             ("NodeSocketFloat", "Thickness", kwargs["Thickness"]),
-            ("NodeSocketFloat", "Vertical Fillet Ratio", kwargs["Vertical Fillet Ratio"]),
+            (
+                "NodeSocketFloat",
+                "Vertical Fillet Ratio",
+                kwargs["Vertical Fillet Ratio"],
+            ),
         ],
     )
 
@@ -222,7 +294,9 @@ def geometry_generate_table_top_wrapper(nw: NodeWrangler, **kwargs):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": generatetabletop}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": generatetabletop},
+        attrs={"is_active_output": True},
     )
 
 
@@ -247,10 +321,19 @@ class TableTopFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
-        surface.add_geomod(obj, geometry_generate_table_top_wrapper, apply=False, input_kwargs=self.params)
+        surface.add_geomod(
+            obj,
+            geometry_generate_table_top_wrapper,
+            apply=False,
+            input_kwargs=self.params,
+        )
 
         return obj

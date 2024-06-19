@@ -7,7 +7,6 @@
 import hashlib
 import math
 import random
-import sys
 import warnings
 
 import cv2
@@ -66,18 +65,29 @@ class BBox:
         return np.all((self.mins <= p) * (self.maxs >= p))
 
     def uniform(self):
-        return np.random.uniform(0, 1, len(self.mins)) * (self.maxs - self.mins) + self.mins
+        return (
+            np.random.uniform(0, 1, len(self.mins)) * (self.maxs - self.mins)
+            + self.mins
+        )
 
     def union(self, other):
         if isinstance(other, BBox):
-            return BBox(mins=np.minimum(self.mins, other.mins), maxs=np.maximum(self.maxs, other.maxs))
+            return BBox(
+                mins=np.minimum(self.mins, other.mins),
+                maxs=np.maximum(self.maxs, other.maxs),
+            )
         elif isinstance(other, np.ndarray) and other.shape[-1] == len(self.mins):
-            return BBox(mins=np.minimum(self.mins, other), maxs=np.maximum(self.maxs, other))
+            return BBox(
+                mins=np.minimum(self.mins, other), maxs=np.maximum(self.maxs, other)
+            )
         else:
             raise ValueError(f"Unrecognized arg {other} in BBox.union")
 
     def intersect(self, other):
-        return BBox(mins=np.maximum(self.mins, other.mins), maxs=np.minimum(self.maxs, other.maxs))
+        return BBox(
+            mins=np.maximum(self.mins, other.mins),
+            maxs=np.minimum(self.maxs, other.maxs),
+        )
 
     def empty(self):
         return np.any(self.mins >= self.maxs)
@@ -88,7 +98,9 @@ class BBox:
     def linspace(self, n):
         if isinstance(n, int):
             n = [n] * len(self.mins)
-        lins = [np.linspace(self.mins[i], self.maxs[i], n[i]) for i in range(len(self.mins))]
+        lins = [
+            np.linspace(self.mins[i], self.maxs[i], n[i]) for i in range(len(self.mins))
+        ]
         return np.meshgrid(*lins)
 
     def to_local_coords(self, p):
@@ -130,11 +142,16 @@ class BBox:
 
     @classmethod
     def from_bpy_box(cls, bpy_obj):
-        if not (hasattr(bpy_obj, "empty_display_type") and bpy_obj.empty_display_type == "CUBE"):
-            raise ValueError(f"BBox.from_bpy_box expected a CUBE type blender empty")
+        if not (
+            hasattr(bpy_obj, "empty_display_type")
+            and bpy_obj.empty_display_type == "CUBE"
+        ):
+            raise ValueError("BBox.from_bpy_box expected a CUBE type blender empty")
 
         center = bpy_obj.location
-        dims = bpy_obj.scale * bpy_obj.empty_display_size / 2  # default has a RADIUS of 1
+        dims = (
+            bpy_obj.scale * bpy_obj.empty_display_size / 2
+        )  # default has a RADIUS of 1
 
         return cls.from_center_dims(center, dims)
 
@@ -304,7 +321,9 @@ def clip_gaussian(mean, std, min, max, max_tries=20):
             return val
 
         if i == max_tries:
-            warnings.warn(f"clip_gaussian({mean=}, {std=}, {min=}, {max=}) reached {max_tries=}")
+            warnings.warn(
+                f"clip_gaussian({mean=}, {std=}, {min=}, {max=}) reached {max_tries=}"
+            )
             return np.clip(val, min, max)
 
         i += 1

@@ -4,22 +4,14 @@
 # Authors: Alex Raistrick, Zeyu Ma, Lahav Lipson, Hei Law, Lingjie Mei, Karhan Kayan
 
 
-import json
 import logging
-import os
-import pdb
-import re
-from collections import defaultdict
 from contextlib import nullcontext
-from itertools import chain, product
+from itertools import chain
 from math import prod
 from pathlib import Path
-from uuid import uuid4
 
 import bmesh
 import bpy
-import cv2
-import gin
 import mathutils
 import numpy as np
 import trimesh
@@ -29,7 +21,6 @@ from infinigen.core.nodes.node_info import DATATYPE_DIMS, DATATYPE_FIELDS
 
 from . import math as mutil
 from .logging import Suppress
-from .math import lerp  # for other people to import from this file
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +102,9 @@ class SelectObjects:
 
         hidden = [o for o in self.objects if o.hide_viewport]
         if len(hidden) > 0:
-            raise ValueError(f"{SelectObjects.__name__} had objects {hidden=} which are hidden and cannot be selected")
+            raise ValueError(
+                f"{SelectObjects.__name__} had objects {hidden=} which are hidden and cannot be selected"
+            )
 
     def _get_intended_active(self):
         if isinstance(self.active, int):
@@ -170,7 +163,9 @@ class SelectObjects:
         select_none()
         select(self.saved_objects)
         if self.saved_active is not None:
-            bpy.context.view_layer.objects.active = enforce_not_deleted(self.saved_active)
+            bpy.context.view_layer.objects.active = enforce_not_deleted(
+                self.saved_active
+            )
 
 
 class DisableModifiers:
@@ -199,8 +194,12 @@ class EnableParentCollections:
         self.target_value = target_value
 
     def __enter__(self):
-        self.enable_cols = set(chain.from_iterable([o.users_collection for o in self.objs]))
-        self.enable_cols_startstate = [getattr(c, self.target_key) for c in self.enable_cols]
+        self.enable_cols = set(
+            chain.from_iterable([o.users_collection for o in self.objs])
+        )
+        self.enable_cols_startstate = [
+            getattr(c, self.target_key) for c in self.enable_cols
+        ]
 
         for c in self.enable_cols:
             setattr(c, self.target_key, self.target_value)
@@ -250,7 +249,12 @@ class GarbageCollect:
         self.names = [set(o.name for o in t) for t in self.targets]
 
     def __exit__(self, *_):
-        garbage_collect(self.targets, keep_in_use=self.keep_in_use, keep_names=self.names, verbose=self.verbose)
+        garbage_collect(
+            self.targets,
+            keep_in_use=self.keep_in_use,
+            keep_names=self.names,
+            verbose=self.verbose,
+        )
 
 
 def select_none():
@@ -353,17 +357,23 @@ def group_in_collection(objs, name: str, reuse=True, **kwargs):
         if not isinstance(obj, list):
             obj = [obj]
         for child in obj:
-            traverse_children(child, lambda obj: put_in_collection(obj, collection, **kwargs))
+            traverse_children(
+                child, lambda obj: put_in_collection(obj, collection, **kwargs)
+            )
 
     return collection
 
 
-def group_toplevel_collections(keyword, hide_viewport=False, hide_render=False, reuse=True):
+def group_toplevel_collections(
+    keyword, hide_viewport=False, hide_render=False, reuse=True
+):
     scenecol = bpy.context.scene.collection
-    matches = [c for c in scenecol.children if c.name.startswith(keyword) and keyword != c.name]
+    matches = [
+        c for c in scenecol.children if c.name.startswith(keyword) and keyword != c.name
+    ]
 
     parent = get_collection(keyword, reuse=reuse)
-    if not parent.name in scenecol.children:
+    if parent.name not in scenecol.children:
         scenecol.children.link(parent)
 
     for c in matches:
@@ -426,7 +436,9 @@ def spawn_cube(size=1, location=(0, 0, 0), scale=(1, 1, 1), name=None):
     return obj
 
 
-def spawn_cylinder(radius=1.0, depth=2.0, location=(0, 0, 0), scale=(1, 1, 1), name=None):
+def spawn_cylinder(
+    radius=1.0, depth=2.0, location=(0, 0, 0), scale=(1, 1, 1), name=None
+):
     bpy.ops.mesh.primitive_cylinder_add(
         radius=radius,
         depth=depth,
@@ -529,7 +541,10 @@ def to_mesh(object, context=bpy.context):
 
 
 def get_camera_res():
-    d = np.array([bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y], dtype=np.float32)
+    d = np.array(
+        [bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y],
+        dtype=np.float32,
+    )
     d *= bpy.context.scene.render.resolution_percentage / 100.0
     return d
 
@@ -544,7 +559,9 @@ def set_geomod_inputs(mod, inputs: dict):
 
         if not hasattr(soc, "default_value"):
             if v is not None:
-                raise ValueError(f"Got non-None value {v=} for {soc.identifier=} which has no default value")
+                raise ValueError(
+                    f"Got non-None value {v=} for {soc.identifier=} which has no default value"
+                )
             continue
         elif v is None:
             continue
@@ -555,12 +572,21 @@ def set_geomod_inputs(mod, inputs: dict):
         try:
             mod[soc.identifier] = v
         except TypeError as e:
-            print(f"Error incurred while assigning {v} with {type(v)=} to {soc.identifier=} of {mod.name=}")
+            print(
+                f"Error incurred while assigning {v} with {type(v)=} to {soc.identifier=} of {mod.name=}"
+            )
             raise e
 
 
 def modify_mesh(
-    obj, type, apply=True, name=None, return_mod=False, ng_inputs=None, show_viewport=None, **kwargs
+    obj,
+    type,
+    apply=True,
+    name=None,
+    return_mod=False,
+    ng_inputs=None,
+    show_viewport=None,
+    **kwargs,
 ) -> bpy.types.Object:
     if name is None:
         name = f"modify_mesh({type}, **{kwargs})"
@@ -571,7 +597,9 @@ def modify_mesh(
     mod.show_viewport = show_viewport
 
     if mod is None:
-        raise ValueError(f"modifer.new() returned None, ensure {obj.type=} is valid for modifier {type=}")
+        raise ValueError(
+            f"modifer.new() returned None, ensure {obj.type=} is valid for modifier {type=}"
+        )
 
     for k, v in kwargs.items():
         setattr(mod, k, v)
@@ -616,7 +644,9 @@ def import_mesh(path, **kwargs):
     }
 
     if ext not in funcs:
-        raise ValueError(f"butil.import_mesh does not yet support extension {ext}, please contact the developer")
+        raise ValueError(
+            f"butil.import_mesh does not yet support extension {ext}, please contact the developer"
+        )
 
     select_none()
     with Suppress():
@@ -639,7 +669,9 @@ def boolean(objs, mode="UNION", verbose=False):
     with SelectObjects(keep):
         for target in rest:
             if len(target.modifiers) != 0:
-                raise ValueError(f"Attempted to boolean() with {target=} which still has {len(target.modifiers)=}")
+                raise ValueError(
+                    f"Attempted to boolean() with {target=} which still has {len(target.modifiers)=}"
+                )
 
             mod = keep.modifiers.new(type="BOOLEAN", name="butil.boolean()")
             mod.operation = mode
@@ -784,7 +816,9 @@ def objectdata_from_VF(vertices, faces):
     new_mesh.polygons.add(len(faces))
     new_mesh.loops.add(len(faces) * 3)
     new_mesh.polygons.foreach_set("loop_total", np.ones(len(faces), np.int32) * 3)
-    new_mesh.polygons.foreach_set("loop_start", np.arange(len(faces), dtype=np.int32) * 3)
+    new_mesh.polygons.foreach_set(
+        "loop_start", np.arange(len(faces), dtype=np.int32) * 3
+    )
     new_mesh.polygons.foreach_set("vertices", faces.reshape(-1).astype(np.int32))
     new_mesh.update(calc_edges=True)
     return new_mesh
@@ -804,17 +838,23 @@ def object_from_trimesh(mesh, name, material=None):
     new_object = object_from_VF(mesh.vertices, mesh.faces, name)
     for attr_name in mesh.vertex_attributes:
         attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
-        if mesh.vertex_attributes[attr_name].ndim == 1 or mesh.vertex_attributes[attr_name].shape[1] == 1:
+        if (
+            mesh.vertex_attributes[attr_name].ndim == 1
+            or mesh.vertex_attributes[attr_name].shape[1] == 1
+        ):
             type_key = "FLOAT"
         elif mesh.vertex_attributes[attr_name].shape[1] == 3:
             type_key = "FLOAT_VECTOR"
         elif mesh.vertex_attributes[attr_name].shape[1] == 4:
             type_key = "FLOAT_COLOR"
         else:
-            raise Exception(f"attribute of shape {mesh.vertex_attributes[attr_name].shape} not supported")
+            raise Exception(
+                f"attribute of shape {mesh.vertex_attributes[attr_name].shape} not supported"
+            )
         new_object.data.attributes.new(name=attr_name_ls, type=type_key, domain="POINT")
         new_object.data.attributes[attr_name_ls].data.foreach_set(
-            DATATYPE_FIELDS[type_key], mesh.vertex_attributes[attr_name].reshape(-1).astype(np.float32)
+            DATATYPE_FIELDS[type_key],
+            mesh.vertex_attributes[attr_name].reshape(-1).astype(np.float32),
         )
     if material is not None:
         new_object.data.materials.append(material)
@@ -825,7 +865,9 @@ def object_to_vertex_attributes(obj):
     vertex_attributes = {}
     for attr in obj.data.attributes.keys():
         type_key = obj.data.attributes[attr].data_type
-        tmp = np.zeros(len(obj.data.vertices) * DATATYPE_DIMS[type_key], dtype=np.float32)
+        tmp = np.zeros(
+            len(obj.data.vertices) * DATATYPE_DIMS[type_key], dtype=np.float32
+        )
         obj.data.attributes[attr].data.foreach_get(DATATYPE_FIELDS[type_key], tmp)
         vertex_attributes[attr] = tmp.reshape((len(obj.data.vertices), -1))
     return vertex_attributes
@@ -879,7 +921,9 @@ def avg_approx_vol(objects):
     return np.mean([prod(list(o.dimensions)) for o in objects])
 
 
-def parent_to(a, b, type="OBJECT", keep_transform=False, no_inverse=False, no_transform=False):
+def parent_to(
+    a, b, type="OBJECT", keep_transform=False, no_inverse=False, no_transform=False
+):
     if a.name == b.name:
         raise ValueError(f"parent_to expects two distinct objects, got {a=} {b=}")
 
@@ -895,7 +939,9 @@ def parent_to(a, b, type="OBJECT", keep_transform=False, no_inverse=False, no_tr
         a.rotation_euler = (0, 0, 0)
 
     if a.parent is not b:
-        raise ValueError(f"parent_to({a=}, {b=}) failed, after execution we saw {a.parent=}")
+        raise ValueError(
+            f"parent_to({a=}, {b=}) failed, after execution we saw {a.parent=}"
+        )
 
 
 def apply_matrix_world(obj, verts: np.array):
@@ -922,7 +968,9 @@ def approve_all_drivers():
             d.driver.expression = d.driver.expression
             n += 1
 
-    logging.warning(f"Re-initialized {n} as trusted. Do not run infinigen on untrusted blend files. ")
+    logging.warning(
+        f"Re-initialized {n} as trusted. Do not run infinigen on untrusted blend files. "
+    )
 
 
 def count_objects():

@@ -57,7 +57,9 @@ def run_snowfall(
         mg.set_closed_boundaries_at_grid_edges(False, False, False, False)
         _ = mg.add_field("topographic__elevation", snow, at="node")
         fdir = FlowDirectorSteepest(mg)
-        tl_diff = TransportLengthHillslopeDiffuser(mg, erodibility=0.001, slope_crit=0.6)
+        tl_diff = TransportLengthHillslopeDiffuser(
+            mg, erodibility=0.001, slope_crit=0.6
+        )
         if verbose:
             range_t = tqdm(range(n_iters))
         else:
@@ -78,16 +80,34 @@ def run_snowfall(
             normal_map = get_normal(reference_snow, tile_size / snows.shape[0])
             mask_sharpening = 1 / (th1 - th0)
             mask += np.clip(
-                ((normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(axis=-1) - th0) * mask_sharpening,
+                (
+                    (normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(
+                        axis=-1
+                    )
+                    - th0
+                )
+                * mask_sharpening,
                 a_min=0,
                 a_max=1,
             )
             mask -= np.clip(
-                ((-normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(axis=-1) - th0) * mask_sharpening,
+                (
+                    (-normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(
+                        axis=-1
+                    )
+                    - th0
+                )
+                * mask_sharpening,
                 a_min=0,
                 a_max=1,
             )
             mask = np.clip(mask, a_min=0, a_max=1)
     heightmap = snows * mask + rocks * (1 - mask)
-    cv2.imwrite(str(folder / f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"), heightmap.astype(np.float32))
-    cv2.imwrite(str(folder / f"{Process.Snowfall}.{AssetFile.Mask}.exr"), mask.astype(np.float32))
+    cv2.imwrite(
+        str(folder / f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"),
+        heightmap.astype(np.float32),
+    )
+    cv2.imwrite(
+        str(folder / f"{Process.Snowfall}.{AssetFile.Mask}.exr"),
+        mask.astype(np.float32),
+    )

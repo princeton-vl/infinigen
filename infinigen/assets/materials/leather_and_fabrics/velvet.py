@@ -4,13 +4,9 @@
 # Authors: Stamatis Alexandropoulos
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=55MMAnTYhWI by Dikko
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets.materials import common
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import color_category
 
@@ -20,29 +16,49 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": texture_coordinate.outputs["Object"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": texture_coordinate.outputs["Object"]}
+    )
 
     mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": reroute})
 
-    voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={"Vector": mapping, "Scale": 1.0000})
+    voronoi_texture = nw.new_node(
+        Nodes.VoronoiTexture, input_kwargs={"Vector": mapping, "Scale": 1.0000}
+    )
 
     mix_6 = nw.new_node(
-        Nodes.Mix, input_kwargs={0: 0.1125, 6: voronoi_texture.outputs["Color"]}, attrs={"data_type": "RGBA"}
+        Nodes.Mix,
+        input_kwargs={0: 0.1125, 6: voronoi_texture.outputs["Color"]},
+        attrs={"data_type": "RGBA"},
     )
 
     musgrave_texture = nw.new_node(
         Nodes.MusgraveTexture,
-        input_kwargs={"Vector": mapping, "Scale": 9.6000, "Detail": 11.4000, "Dimension": 0.1000, "Lacunarity": 1.9000},
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 9.6000,
+            "Detail": 11.4000,
+            "Dimension": 0.1000,
+            "Lacunarity": 1.9000,
+        },
         attrs={"musgrave_type": "MULTIFRACTAL"},
     )
 
     mix = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: uniform(0, 0.8), 6: musgrave_texture, 7: (0.6044, 0.6044, 0.6044, 1.0000)},
+        input_kwargs={
+            0: uniform(0, 0.8),
+            6: musgrave_texture,
+            7: (0.6044, 0.6044, 0.6044, 1.0000),
+        },
         attrs={"data_type": "RGBA", "blend_type": "MULTIPLY"},
     )
 
-    mix_1 = nw.new_node(Nodes.Mix, input_kwargs={6: mix_6.outputs[2], 7: mix.outputs[2]}, attrs={"data_type": "RGBA"})
+    mix_1 = nw.new_node(
+        Nodes.Mix,
+        input_kwargs={6: mix_6.outputs[2], 7: mix.outputs[2]},
+        attrs={"data_type": "RGBA"},
+    )
 
     color_ramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_1.outputs[2]})
     color_ramp.color_ramp.elements[0].position = 0.0000
@@ -54,7 +70,9 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
     rgb.outputs[0].default_value = color_category("textile")
     # (0.3547, 0.3018, 0.3087, 1.0000)
 
-    brightness_contrast = nw.new_node("ShaderNodeBrightContrast", input_kwargs={"Color": rgb, "Bright": 0.0500})
+    brightness_contrast = nw.new_node(
+        "ShaderNodeBrightContrast", input_kwargs={"Color": rgb, "Bright": 0.0500}
+    )
 
     mix_2 = nw.new_node(
         Nodes.Mix,
@@ -77,7 +95,11 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
 
     mapping_1 = nw.new_node(
         Nodes.Mapping,
-        input_kwargs={"Vector": reroute, "Rotation": (0.0000, 0.0000, 1.0157), "Scale": (2.2000, 2.2000, 2.2000)},
+        input_kwargs={
+            "Vector": reroute,
+            "Rotation": (0.0000, 0.0000, 1.0157),
+            "Scale": (2.2000, 2.2000, 2.2000),
+        },
     )
 
     wave_texture_1 = nw.new_node(
@@ -106,7 +128,8 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
     )
 
     displacement = nw.new_node(
-        Nodes.Displacement, input_kwargs={"Height": mix_4.outputs[2], "Midlevel": 0.0000, "Scale": 0.0150}
+        Nodes.Displacement,
+        input_kwargs={"Height": mix_4.outputs[2], "Midlevel": 0.0000, "Scale": 0.0150},
     )
 
     material_output = nw.new_node(

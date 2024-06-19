@@ -7,15 +7,11 @@
 # - Karhan Kayan: sync with trimesh fix
 
 import copy
-import logging
-import typing
 from dataclasses import dataclass
 
-import numpy as np
 
-from infinigen.core.constraints.constraint_language.util import rotate, sync_trimesh, translate
-from infinigen.core.constraints.example_solver.geometry import dof, validity
-from infinigen.core.util import blender as butil
+from infinigen.core.constraints.constraint_language.util import sync_trimesh
+from infinigen.core.constraints.example_solver.geometry import dof
 
 from ..state_def import ObjectState, State
 from . import moves

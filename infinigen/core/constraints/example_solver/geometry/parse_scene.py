@@ -3,19 +3,15 @@
 
 # Authors: Karhan Kayan
 
-from typing import Union
 
 import bpy
 import fcl
 import numpy as np
 import trimesh
-from mathutils import Matrix, Vector
-from shapely import LineString, Point
-from trimesh import Scene, Trimesh
+from mathutils import Matrix
 
 from infinigen.core import tagging
-from infinigen.core import tags as t
-from infinigen.core.constraints.constraint_language.util import rotate, sync_trimesh, translate
+from infinigen.core.constraints.constraint_language.util import sync_trimesh
 from infinigen.core.util import blender as butil
 
 

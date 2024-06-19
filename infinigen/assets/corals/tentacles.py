@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import numpy as np
 from numpy.random import uniform
 
@@ -16,7 +14,7 @@ from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import make_asset_collection
-from infinigen.core.tagging import COMBINED_ATTR_NAME, tag_nodegroup, tag_object
+from infinigen.core.tagging import COMBINED_ATTR_NAME
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.color import hsv2rgba
 
@@ -26,7 +24,12 @@ def build_tentacles(**kwargs):
     n_major = 8
     branch_config = {
         "n": n_branch,
-        "path_kargs": lambda idx: {"n_pts": n_major, "std": 0.5, "momentum": 0.5, "sz": 0.008},
+        "path_kargs": lambda idx: {
+            "n_pts": n_major,
+            "std": 0.5,
+            "momentum": 0.5,
+            "sz": 0.008,
+        },
         "spawn_kargs": lambda idx: {"init_vec": sample_direction(0.6)},
     }
 
@@ -37,7 +40,10 @@ def build_tentacles(**kwargs):
 
 def make_min_distance_points_fn(min_distance):
     def points_fn(nw: NodeWrangler, points):
-        return nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": points, "Distance": min_distance})
+        return nw.new_node(
+            Nodes.MergeByDistance,
+            input_kwargs={"Geometry": points, "Distance": min_distance},
+        )
 
     return points_fn
 
@@ -53,8 +59,14 @@ def make_radius_points_fn(min_distance, radius_threshold):
                 "Distance": min_distance * 2,
             },
         )
-        points = nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": points, "Distance": min_distance})
-        points = nw.new_node(Nodes.SeparateGeometry, [points, nw.compare("GREATER_THAN", radius, radius_threshold)])
+        points = nw.new_node(
+            Nodes.MergeByDistance,
+            input_kwargs={"Geometry": points, "Distance": min_distance},
+        )
+        points = nw.new_node(
+            Nodes.SeparateGeometry,
+            [points, nw.compare("GREATER_THAN", radius, radius_threshold)],
+        )
         return points
 
     return points_fn
@@ -63,19 +75,28 @@ def make_radius_points_fn(min_distance, radius_threshold):
 def make_upward_points_fn(min_distance, max_angle):
     def points_fn(nw: NodeWrangler, points, normal):
         points = nw.new_node(
-            Nodes.SeparateGeometry, [points, nw.compare_direction("LESS_THAN", normal, [0, 0, 1], max_angle)]
+            Nodes.SeparateGeometry,
+            [points, nw.compare_direction("LESS_THAN", normal, [0, 0, 1], max_angle)],
         )
-        return nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": points, "Distance": min_distance})
+        return nw.new_node(
+            Nodes.MergeByDistance,
+            input_kwargs={"Geometry": points, "Distance": min_distance},
+        )
 
     return points_fn
 
 
-def geo_tentacles(nw: NodeWrangler, tentacles, points_fn=None, density=500, realize=True):
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+def geo_tentacles(
+    nw: NodeWrangler, tentacles, points_fn=None, density=500, realize=True
+):
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     tentacles = nw.new_node(Nodes.CollectionInfo, [tentacles, True, True])
 
     points, normal, rotation = nw.new_node(
-        Nodes.DistributePointsOnFaces, input_kwargs={"Mesh": geometry, "Density": density}
+        Nodes.DistributePointsOnFaces,
+        input_kwargs={"Mesh": geometry, "Density": density},
     ).outputs
     rotation = nw.new_node(
         Nodes.RotateEuler,
@@ -95,11 +116,15 @@ def geo_tentacles(nw: NodeWrangler, tentacles, points_fn=None, density=500, real
         },
     )
     if realize:
-        realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": tentacles})
+        realize_instances = nw.new_node(
+            Nodes.RealizeInstances, input_kwargs={"Geometry": tentacles}
+        )
     else:
         realize_instances = tentacles
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances}
+    )
 
 
 def shader_tentacles(nw: NodeWrangler, base_hue=0.3):
@@ -108,11 +133,18 @@ def shader_tentacles(nw: NodeWrangler, base_hue=0.3):
     color = hsv2rgba((base_hue + uniform(-0.1, 0.1)) % 1, uniform(0.4, 0.6), 0.5)
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": color, "Roughness": roughness, "Specular": specular, "Subsurface": 0.01},
+        input_kwargs={
+            "Base Color": color,
+            "Roughness": roughness,
+            "Specular": specular,
+            "Subsurface": 0.01,
+        },
     )
     fresnel_color = hsv2rgba(uniform(0, 1), 0.6, 0.6)
     fresnel_bdsf = nw.new_node(Nodes.PrincipledBSDF, [fresnel_color])
-    mixed_shader = nw.new_node(Nodes.MixShader, [nw.new_node(Nodes.Fresnel), principled_bsdf, fresnel_bdsf])
+    mixed_shader = nw.new_node(
+        Nodes.MixShader, [nw.new_node(Nodes.Fresnel), principled_bsdf, fresnel_bdsf]
+    )
     return mixed_shader
 
 
@@ -122,8 +154,15 @@ def apply(obj, points_fn, density, realize=True, base_hue=0.3):
         tentacles.data.attributes.remove(tentacles.data.attributes[COMBINED_ATTR_NAME])
 
     instances = make_asset_collection(build_tentacles, 5, "spikes", verbose=False)
-    surface.add_geomod(tentacles, geo_tentacles, apply=realize, input_args=[instances, points_fn, density, realize])
+    surface.add_geomod(
+        tentacles,
+        geo_tentacles,
+        apply=realize,
+        input_args=[instances, points_fn, density, realize],
+    )
 
     butil.delete_collection(instances)
-    assign_material(tentacles, surface.shaderfunc_to_material(shader_tentacles, base_hue))
+    assign_material(
+        tentacles, surface.shaderfunc_to_material(shader_tentacles, base_hue)
+    )
     return tentacles

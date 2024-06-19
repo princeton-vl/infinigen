@@ -4,14 +4,14 @@
 
 # Authors: Mingzhe Wang, Lingjie Mei
 
-import colorsys
 
 from numpy.random import uniform
 
 from infinigen.assets.materials import common
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
-from infinigen.assets.materials.plastics.plastic_translucent import shader_translucent_plastic
-from infinigen.core.util.color import hsv2rgba
+from infinigen.assets.materials.plastics.plastic_translucent import (
+    shader_translucent_plastic,
+)
 
 
 def apply(obj, selection=None, clear=None, **kwargs):
@@ -19,5 +19,9 @@ def apply(obj, selection=None, clear=None, **kwargs):
     is_translucent = kwargs.get("translucent", uniform(0, 1))
     if clear is None:
         clear = uniform() < 0.2
-    shader_func = shader_rough_plastic if is_rough > is_translucent else shader_translucent_plastic
+    shader_func = (
+        shader_rough_plastic
+        if is_rough > is_translucent
+        else shader_translucent_plastic
+    )
     common.apply(obj, shader_func, selection, clear=clear, **kwargs)

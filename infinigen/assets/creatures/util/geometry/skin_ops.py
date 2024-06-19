@@ -6,7 +6,6 @@
 
 from copy import copy
 
-import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
@@ -17,11 +16,17 @@ from infinigen.core.util.math import lerp, randomspacing
 
 def extend_cap(skin: Skin, r=1, margin=0):
     res = copy(skin)
-    res.ts = np.concatenate([np.array([margin]), skin.ts, np.array([1 - margin])], axis=0)
-    res.profiles = np.concatenate([skin.profiles[[0]] * r, skin.profiles, skin.profiles[[-1]] * r])
+    res.ts = np.concatenate(
+        [np.array([margin]), skin.ts, np.array([1 - margin])], axis=0
+    )
+    res.profiles = np.concatenate(
+        [skin.profiles[[0]] * r, skin.profiles, skin.profiles[[-1]] * r]
+    )
 
     if res.surface_params is not None:
-        res.surface_params = np.concatenate([skin.surface_params[[0]], skin.surface_params, skin.surface_params[[-1]]])
+        res.surface_params = np.concatenate(
+            [skin.surface_params[[0]], skin.surface_params, skin.surface_params[[-1]]]
+        )
 
     return res
 
@@ -56,7 +61,9 @@ def symmetrize(s: Skin, fac):
     res.profiles = lerp(s.profiles, (s.profiles + s.profiles[:, ::-1]) / 2, fac)
 
     if s.surface_params is not None:
-        res.surface_params = lerp(s.surface_params, (s.surface_params + s.surface_params[:, ::-1]) / 2, fac)
+        res.surface_params = lerp(
+            s.surface_params, (s.surface_params + s.surface_params[:, ::-1]) / 2, fac
+        )
     return res
 
 
@@ -84,7 +91,9 @@ def random_skin(rad, n, m, n_params=1):
 
     sigmas = np.array([0.07, 0.4, 0.25])
     o_n, o_m, o_ind = np.clip(normal(sigmas, sigmas / 4, 3), 0, 1)
-    profiles = radius_func * (normal(1, o_n, (n, 1)) * normal(1, o_m, (1, m)) * normal(1, o_ind, (n, m)))
+    profiles = radius_func * (
+        normal(1, o_n, (n, 1)) * normal(1, o_m, (1, m)) * normal(1, o_ind, (n, m))
+    )
     profiles = np.clip(profiles, 0, 2 * rad)
 
     sym = 1
@@ -93,7 +102,9 @@ def random_skin(rad, n, m, n_params=1):
         ring_creases = np.power(uniform(0, 1, (n, 1)), 3)
         row_creases = np.power(uniform(0, 1, (1, m)), 3)
 
-        params = np.stack([ring_creases * np.ones((1, m)), row_creases * np.ones((n, 1))], axis=-1)
+        params = np.stack(
+            [ring_creases * np.ones((1, m)), row_creases * np.ones((n, 1))], axis=-1
+        )
     else:
         params = uniform(0.1, 10, (n, m, 1))
 

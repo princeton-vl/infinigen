@@ -8,7 +8,6 @@
 # - Alex Raistrick
 # - Karhan Kayan - add fire option
 
-import importlib
 import logging
 import math
 import os
@@ -35,11 +34,9 @@ logging.basicConfig(
 )
 
 import bpy
-import gin
 import numpy as np
 from PIL import Image
 
-from infinigen.assets.fluid.fluid import set_obj_on_fire
 from infinigen.assets.lighting import (
     CeilingLightFactory,
     hdri_lighting,
@@ -71,7 +68,11 @@ def build_scene_asset(args, factory_name, idx):
             setattr(
                 factory,
                 k,
-                v() if isinstance(v, Callable) and hasattr(v, "__name__") and v.__name__ == "<lambda>" else v,
+                v()
+                if isinstance(v, Callable)
+                and hasattr(v, "__name__")
+                and v.__name__ == "<lambda>"
+                else v,
             )
         with FixedSeed(idx):
             if hasattr(factory, "post_init"):
@@ -125,7 +126,9 @@ def build_scene_asset(args, factory_name, idx):
                 wood_tile.apply(plane, selection="ground")
                 non_wood_tile.apply(plane, selection="!ground", vertical=True)
                 factory = CeilingLightFactory(0)
-                factory.light_factory.params["Wattage"] = factory.light_factory.params["Wattage"] * 20
+                factory.light_factory.params["Wattage"] = (
+                    factory.light_factory.params["Wattage"] * 20
+                )
                 light = factory.spawn_asset(0)
                 light.location[-1] = np.min(co[:, -1]) + 5 - 0.5
 
@@ -135,14 +138,22 @@ def build_scene_asset(args, factory_name, idx):
 def build_scene(path, idx, factory_name, args):
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.render.resolution_x, scene.render.resolution_y = map(int, args.resolution.split("x"))
+    scene.render.resolution_x, scene.render.resolution_y = map(
+        int, args.resolution.split("x")
+    )
     scene.cycles.samples = args.samples
     configure_cycles_devices(True)
     t = idx / (args.frame_end / args.cycles)
-    args.cam_angle = args.cam_angle[0], args.cam_angle[1], (np.abs(t - np.round(t)) * 2) * 180
+    args.cam_angle = (
+        args.cam_angle[0],
+        args.cam_angle[1],
+        (np.abs(t - np.round(t)) * 2) * 180,
+    )
     if not args.fire:
         bpy.context.scene.render.film_transparent = args.film_transparent
-        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[-1] = 0
+        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[
+            -1
+        ] = 0
 
     if idx % parameters[factory_name]["repeat"] == 0:
         butil.clear_scene()
@@ -164,10 +175,14 @@ def build_scene(path, idx, factory_name, args):
 
     else:
         camera, center = setup_camera(args)
-        asset = list(o for o in bpy.data.objects if "Factory" in o.name and o.parent is None)[0]
+        asset = list(
+            o for o in bpy.data.objects if "Factory" in o.name and o.parent is None
+        )[0]
 
     if args.scale_reference:
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2))
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2)
+        )
 
     if args.cam_center > 0 and asset:
         co = read_base_co(asset) + asset.location
@@ -190,7 +205,9 @@ def build_scene(path, idx, factory_name, args):
         tag_system.save_tag(f"{path}/MaskTag.json")
 
     if args.fire:
-        bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
+        bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[
+            1
+        ].default_value = 0.04
         bpy.context.scene.view_settings.exposure = -2
 
     if args.render == "image":
@@ -201,7 +218,9 @@ def build_scene(path, idx, factory_name, args):
     elif args.render == "video":
         bpy.context.scene.frame_end = args.frame_end
         t = f"frame / {args.frame_end / args.cycles}"
-        parent(asset).driver_add("rotation_euler")[-1].driver.expression = f"(abs({t}-round({t}))*2-.5)*{np.pi}"
+        parent(asset).driver_add("rotation_euler")[
+            -1
+        ].driver.expression = f"(abs({t}-round({t}))*2-.5)*{np.pi}"
         (path / "frames" / f"scene_{idx:03d}").mkdir(parents=True, exist_ok=True)
         imgpath = path / f"frames/scene_{idx:03d}/frame_###.png"
         scene.render.filepath = str(imgpath)
@@ -252,10 +271,18 @@ def make_grid(args, path, n):
                 img.paste(i, (0, 0))
             for idx in range(sz**2):
                 with Image.open(files[min(idx + 1, len(files) - 1)]) as i:
-                    img.paste(i.resize((x // sz, y // sz)), (x + (idx % sz) * (x // sz), idx // sz * (y // sz)))
+                    img.paste(
+                        i.resize((x // sz, y // sz)),
+                        (x + (idx % sz) * (x // sz), idx // sz * (y // sz)),
+                    )
             img.save(f"{path}/{name}.png")
         else:
-            sz_x = list(sorted(range(1, n + 1), key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio)))[0]
+            sz_x = list(
+                sorted(
+                    range(1, n + 1),
+                    key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio),
+                )
+            )[0]
             sz_y = math.ceil(n / sz_x)
             img = Image.new("RGBA", (sz_x * x, sz_y * y))
             if i > 0:
@@ -298,7 +325,9 @@ def main(args):
         factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
         factories.remove("ALL_MATERIALS")
     if ".txt" in factories[0]:
-        factories = [f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)]
+        factories = [
+            f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
+        ]
 
     for fac in factories:
         fac_path = path / fac
@@ -329,6 +358,9 @@ if __name__ == "__main__":
     args = make_args()
     args.no_mod = args.no_mod or args.fire
     args.film_transparent = args.film_transparent and not args.hdri
-    args.n_images = len(parameters[args.factories[0]]["factories"]) * parameters[args.factories[0]]["repeat"]
+    args.n_images = (
+        len(parameters[args.factories[0]]["factories"])
+        * parameters[args.factories[0]]["repeat"]
+    )
     with FixedSeed(1):
         main(args)

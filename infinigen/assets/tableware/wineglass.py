@@ -33,7 +33,14 @@ class WineglassFactory(TablewareFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         z_bottom = self.z_length * log_uniform(0.01, 0.05)
-        x_anchors = self.x_end, self.x_end / 2, self.x_neck, self.x_neck, self.x_mid, self.x_top
+        x_anchors = (
+            self.x_end,
+            self.x_end / 2,
+            self.x_neck,
+            self.x_neck,
+            self.x_mid,
+            self.x_top,
+        )
         z_anchors = 0, z_bottom / 2, z_bottom, self.z_cup, self.z_mid, self.z_length
         anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
         obj = spin(anchors, [0, 1, 2, 3], 4, 16)

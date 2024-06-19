@@ -428,7 +428,11 @@ def ant_landscape_asset(
     mverts_co = np.zeros((len(obj.data.vertices) * 3), dtype=float)
     obj.data.vertices.foreach_get("co", mverts_co)
     mverts_co = mverts_co.reshape((N, N, 3))
-    heightmap = cv2.resize(np.float32(mverts_co[..., -1]), (resolution, resolution)) * tile_size / 2
+    heightmap = (
+        cv2.resize(np.float32(mverts_co[..., -1]), (resolution, resolution))
+        * tile_size
+        / 2
+    )
     if preset_name == LandTile.Mesa:
         heightmap *= 2
     heightmap = smooth(heightmap, 3)

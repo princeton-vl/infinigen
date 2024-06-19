@@ -9,7 +9,12 @@ from numpy.random import uniform
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.tableware.base import TablewareFactory
-from infinigen.assets.utils.decorate import read_co, remove_vertices, subsurf, write_attribute
+from infinigen.assets.utils.decorate import (
+    read_co,
+    remove_vertices,
+    subsurf,
+    write_attribute,
+)
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.uv import wrap_sides
@@ -77,19 +82,32 @@ class CupFactory(TablewareFactory):
         anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
         obj = spin(anchors, [1], 16)
         subsurf(obj, 1)
-        butil.modify_mesh(obj, "BEVEL", True, offset_type="PERCENT", width_pct=uniform(10, 50), segments=8)
+        butil.modify_mesh(
+            obj,
+            "BEVEL",
+            True,
+            offset_type="PERCENT",
+            width_pct=uniform(10, 50),
+            segments=8,
+        )
         if self.has_wrap:
             wrap = self.make_wrap(obj)
         else:
             wrap = None
         self.solidify_with_inside(obj, self.thickness)
         handle_location = (
-            x_anchors[-2] * (1 - self.handle_location) + x_anchors[-1] * self.handle_location,
+            x_anchors[-2] * (1 - self.handle_location)
+            + x_anchors[-1] * self.handle_location,
             0,
-            z_anchors[-2] * (1 - self.handle_location) + z_anchors[-1] * self.handle_location,
+            z_anchors[-2] * (1 - self.handle_location)
+            + z_anchors[-1] * self.handle_location,
         )
-        angle_low = np.arctan((x_anchors[-1] - x_anchors[-2]) / (z_anchors[-1] - z_anchors[-2]))
-        angle_height = np.arctan((x_anchors[2] - x_anchors[1]) / (z_anchors[2] - z_anchors[1]))
+        angle_low = np.arctan(
+            (x_anchors[-1] - x_anchors[-2]) / (z_anchors[-1] - z_anchors[-2])
+        )
+        angle_height = np.arctan(
+            (x_anchors[2] - x_anchors[1]) / (z_anchors[2] - z_anchors[1])
+        )
         handle_angle = uniform(angle_low, angle_height + 1e-3)
         if self.has_guard:
             obj = self.add_handle(obj, handle_location, handle_angle)
@@ -102,12 +120,26 @@ class CupFactory(TablewareFactory):
 
     def add_handle(self, obj, handle_location, handle_angle):
         bpy.ops.mesh.primitive_torus_add(
-            location=handle_location, major_radius=self.handle_radius, minor_radius=self.handle_inner_radius
+            location=handle_location,
+            major_radius=self.handle_radius,
+            minor_radius=self.handle_inner_radius,
         )
         handle = bpy.context.active_object
         handle.rotation_euler = np.pi / 2, handle_angle, 0
-        butil.modify_mesh(handle, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.handle_taper_x, deform_axis="X")
-        butil.modify_mesh(handle, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.handle_taper_y, deform_axis="Y")
+        butil.modify_mesh(
+            handle,
+            "SIMPLE_DEFORM",
+            deform_method="TAPER",
+            angle=self.handle_taper_x,
+            deform_axis="X",
+        )
+        butil.modify_mesh(
+            handle,
+            "SIMPLE_DEFORM",
+            deform_method="TAPER",
+            angle=self.handle_taper_y,
+            deform_axis="Y",
+        )
         butil.modify_mesh(handle, "BOOLEAN", object=obj, operation="DIFFERENCE")
         butil.select_none()
         objs = butil.split_object(handle)

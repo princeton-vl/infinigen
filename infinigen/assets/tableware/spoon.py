@@ -56,7 +56,15 @@ class SpoonFactory(TablewareFactory):
             ]
         )
         z_anchors = np.array(
-            [0, 0, 0, 0, self.z_offset, self.z_offset + uniform(-0.02, 0.04), self.z_offset + uniform(-0.02, 0)]
+            [
+                0,
+                0,
+                0,
+                0,
+                self.z_offset,
+                self.z_offset + uniform(-0.02, 0.04),
+                self.z_offset + uniform(-0.02, 0),
+            ]
         )
         obj = new_grid(x_subdivisions=len(x_anchors) - 1, y_subdivisions=2)
         x = np.concatenate([x_anchors] * 3)
@@ -67,7 +75,10 @@ class SpoonFactory(TablewareFactory):
         write_co(obj, np.stack([x, y, z], -1))
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
         subsurf(obj, 1)
-        selection = lambda nw, x: nw.compare("LESS_THAN", x, -self.x_end)
+
+        def selection(nw, x):
+            return nw.compare("LESS_THAN", x, -self.x_end)
+
         if self.guard_type == "double":
             selection = self.make_double_sided(selection)
         self.add_guard(obj, selection)

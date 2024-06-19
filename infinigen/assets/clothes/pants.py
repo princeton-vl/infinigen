@@ -7,12 +7,17 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import art, fabrics
 from infinigen.assets.materials.art import ArtFabric
-from infinigen.assets.utils.decorate import distance2boundary, read_normal, remove_faces, subsurf, write_co
+from infinigen.assets.utils.decorate import (
+    distance2boundary,
+    read_normal,
+    remove_faces,
+    subsurf,
+    write_co,
+)
 from infinigen.assets.utils.draw import remesh_fill
 from infinigen.assets.utils.object import new_circle
-from infinigen.assets.utils.uv import unwrap_faces, wrap_front_back, wrap_top_bottom
+from infinigen.assets.utils.uv import wrap_top_bottom
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
@@ -39,7 +44,13 @@ class PantsFactory(AssetFactory):
             self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        x_anchors = 0, self.width / 2, self.width / 2 * (1 + self.neck_shrink), self.width / 2 * self.neck_shrink * 2, 0
+        x_anchors = (
+            0,
+            self.width / 2,
+            self.width / 2 * (1 + self.neck_shrink),
+            self.width / 2 * self.neck_shrink * 2,
+            0,
+        )
         y_anchors = 0, 0, -self.length, -self.length, -self.size
 
         obj = new_circle(vertices=len(x_anchors))

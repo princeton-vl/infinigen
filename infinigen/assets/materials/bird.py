@@ -4,27 +4,18 @@
 # Authors: Mingzhe Wang
 
 
-import math as ma
 import os
 import random
-import sys
 
 import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
     sample_color,
     sample_range,
-    sample_ratio,
 )
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 @node_utils.to_nodegroup("nodegroup_l_inear", singleton=False, type="ShaderNodeTree")
@@ -40,7 +31,9 @@ def nodegroup_l_inear(nw: NodeWrangler):
         ],
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
@@ -67,12 +60,19 @@ def nodegroup_head_neck(nw: NodeWrangler, rand=True, kind="duck"):
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketColor", "Color1", (0.046, 0.5, 0.0, 1.0)), ("NodeSocketFloat", "W", 6.0)],
+        expose_input=[
+            ("NodeSocketColor", "Color1", (0.046, 0.5, 0.0, 1.0)),
+            ("NodeSocketFloat", "W", 6.0),
+        ],
     )
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Generated"], "W": group_input.outputs["W"], "Scale": 2.0},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Generated"],
+            "W": group_input.outputs["W"],
+            "Scale": 2.0,
+        },
         attrs={"noise_dimensions": "4D"},
     )
     if rand:
@@ -119,7 +119,10 @@ def nodegroup_head_neck(nw: NodeWrangler, rand=True, kind="duck"):
 
     attribute_2 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "tag_head"})
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: colorramp_3.outputs["Color"], 1: attribute_2.outputs["Color"]})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: colorramp_3.outputs["Color"], 1: attribute_2.outputs["Color"]},
+    )
 
     colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": add_1})
     colorramp_1.color_ramp.elements[0].position = 0.4545
@@ -128,10 +131,14 @@ def nodegroup_head_neck(nw: NodeWrangler, rand=True, kind="duck"):
     colorramp_1.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"W": 1.7, "Scale": 3.0}, attrs={"noise_dimensions": "4D"}
+        Nodes.NoiseTexture,
+        input_kwargs={"W": 1.7, "Scale": 3.0},
+        attrs={"noise_dimensions": "4D"},
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.5077
     colorramp.color_ramp.elements[0].color = (0.0063, 0.017, 0.005, 1.0)
     colorramp.color_ramp.elements[1].position = 1.0
@@ -140,7 +147,9 @@ def nodegroup_head_neck(nw: NodeWrangler, rand=True, kind="duck"):
         if kind == "duck":
             sample_color(colorramp.color_ramp.elements[0].color, keep_sum=True)
             for i in range(3):
-                colorramp.color_ramp.elements[1].color[i] = colorramp.color_ramp.elements[0].color[i] + 0.005
+                colorramp.color_ramp.elements[1].color[i] = (
+                    colorramp.color_ramp.elements[0].color[i] + 0.005
+                )
         elif kind == "eagle":
             colorramp.color_ramp.elements[0].color = (0.265, 0.265, 0.265, 1.0)
             sample_color(colorramp.color_ramp.elements[0].color, offset=0.05)
@@ -181,13 +190,18 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
 
     mix_8 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": attribute_6.outputs["Color"], "Color1": mix_3, "Color2": (0.008, 0.008, 0.008, 1.0)},
+        input_kwargs={
+            "Fac": attribute_6.outputs["Color"],
+            "Color1": mix_3,
+            "Color2": (0.008, 0.008, 0.008, 1.0),
+        },
     )
 
     texture_coordinate_2 = nw.new_node(Nodes.TextureCoord)
 
     noise_texture_2 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": texture_coordinate_2.outputs["Generated"]}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": texture_coordinate_2.outputs["Generated"]},
     )
 
     mix_6 = nw.new_node(
@@ -199,7 +213,10 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
         },
     )
 
-    group_2 = nw.new_node(nodegroup_l_inear().name, input_kwargs={"Vector": mix_6, "CoffX": 0.1, "CoffZ": 1.0})
+    group_2 = nw.new_node(
+        nodegroup_l_inear().name,
+        input_kwargs={"Vector": mix_6, "CoffX": 0.1, "CoffZ": 1.0},
+    )
     if rand:
         if random.random() < 0.5:
             group_2.inputs["CoffX"].default_value = sample_range(-0.1, 0.1)
@@ -216,7 +233,9 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
 
     noise_texture_4 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 20.0})
 
-    colorramp_5 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]})
+    colorramp_5 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]}
+    )
     colorramp_5.color_ramp.elements[0].position = 0.3341
     colorramp_5.color_ramp.elements[0].color = (0.0079, 0.0062, 0.0063, 1.0)
     colorramp_5.color_ramp.elements[1].position = 0.9932
@@ -232,7 +251,11 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
                 colorramp_5.color_ramp.elements[0].position = sample_range(0.5, 0.6)
                 colorramp_5.color_ramp.elements[1].color[i] = sample_range(0, 0.1)
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 10.0}, attrs={"noise_dimensions": "4D"})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 10.0},
+        attrs={"noise_dimensions": "4D"},
+    )
     if rand:
         noise_texture_1.inputs["W"].default_value = sample_range(-2, 2)
         x = random.random()
@@ -241,7 +264,9 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
         if x > 0.7:
             noise_texture_1.inputs["Scale"].default_value = 50
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.4614
     colorramp_1.color_ramp.elements[0].color = (0.1, 0.1, 0.1, 1.0)
     colorramp_1.color_ramp.elements[1].position = 1.0
@@ -263,12 +288,20 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
     )
 
     mix_7 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": attribute_5.outputs["Color"], "Color1": mix_8, "Color2": mix_5}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": attribute_5.outputs["Color"],
+            "Color1": mix_8,
+            "Color2": mix_5,
+        },
     )
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": texture_coordinate.outputs["Generated"]})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": texture_coordinate.outputs["Generated"]},
+    )
 
     mix = nw.new_node(
         Nodes.MixRGB,
@@ -279,10 +312,14 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
         },
     )
 
-    group_1 = nw.new_node(nodegroup_l_inear().name, input_kwargs={"Vector": mix, "CoffX": 0.6})
+    group_1 = nw.new_node(
+        nodegroup_l_inear().name, input_kwargs={"Vector": mix, "CoffX": 0.6}
+    )
     if rand:
         group_1.inputs["CoffX"].default_value = sample_range(0, 0.08)
-        group_1.inputs["CoffZ"].default_value = 1.1 - group_1.inputs["CoffX"].default_value
+        group_1.inputs["CoffZ"].default_value = (
+            1.1 - group_1.inputs["CoffX"].default_value
+        )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_1, 1: -0.02})
     if rand:
@@ -294,11 +331,17 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
     colorramp.color_ramp.elements[1].position = 0.7068
     colorramp.color_ramp.elements[1].color = (0.0, 0.0, 0.0, 1.0)
 
-    noise_texture_3 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 20.0}, attrs={"noise_dimensions": "4D"})
+    noise_texture_3 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 20.0},
+        attrs={"noise_dimensions": "4D"},
+    )
     if rand:
         noise_texture_3.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]})
+    colorramp_4 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]}
+    )
     colorramp_4.color_ramp.elements[0].position = 0.4636
     colorramp_4.color_ramp.elements[0].color = (0.0112, 0.0053, 0.0047, 1.0)
     colorramp_4.color_ramp.elements[1].position = 1.0
@@ -316,37 +359,67 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": colorramp.outputs["Color"], "Color1": colorramp_4.outputs["Color"], "Color2": mix_5},
+        input_kwargs={
+            "Fac": colorramp.outputs["Color"],
+            "Color1": colorramp_4.outputs["Color"],
+            "Color2": mix_5,
+        },
     )
 
     mix_2 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": attribute_3.outputs["Color"], "Color1": mix_7, "Color2": mix_1}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": attribute_3.outputs["Color"],
+            "Color1": mix_7,
+            "Color2": mix_1,
+        },
     )
 
     mix_4 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": attribute.outputs["Color"], "Color1": mix_2, "Color2": (0.0, 0.0, 0.0, 1.0)}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": attribute.outputs["Color"],
+            "Color1": mix_2,
+            "Color2": (0.0, 0.0, 0.0, 1.0),
+        },
     )
 
-    group = nw.new_node(nodegroup_head_neck(rand=rand, kind=kind).name, input_kwargs={"Color1": mix_4, "W": 0.5})
+    group = nw.new_node(
+        nodegroup_head_neck(rand=rand, kind=kind).name,
+        input_kwargs={"Color1": mix_4, "W": 0.5},
+    )
     if rand:
         group.inputs["W"].default_value = sample_range(-2, 2)
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": group, "Subsurface IOR": 0.0, "Specular": 0.0, "Roughness": 1.0},
+        input_kwargs={
+            "Base Color": group,
+            "Subsurface IOR": 0.0,
+            "Specular": 0.0,
+            "Roughness": 1.0,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-def shader_bird_feather(nw: NodeWrangler, rand=True, kind="duck", tail=False, **input_kwargs):
+def shader_bird_feather(
+    nw: NodeWrangler, rand=True, kind="duck", tail=False, **input_kwargs
+):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"W": 1.6}, attrs={"noise_dimensions": "4D"})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"W": 1.6}, attrs={"noise_dimensions": "4D"}
+    )
     if rand:
         noise_texture.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.377
     colorramp.color_ramp.elements[0].color = (0.02, 0.02, 0.02, 1.0)
     colorramp.color_ramp.elements[1].position = 1.0
@@ -362,15 +435,27 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind="duck", tail=False, **
                 sample_color(colorramp.color_ramp.elements[0].color, offset=0.05)
                 colorramp.color_ramp.elements[1].color = (0.007, 0.007, 0.007, 1.0)
             else:
-                colorramp.color_ramp.elements[0].color = (0.012861, 0.006847, 0.004, 1.0)
+                colorramp.color_ramp.elements[0].color = (
+                    0.012861,
+                    0.006847,
+                    0.004,
+                    1.0,
+                )
                 sample_color(colorramp.color_ramp.elements[0].color, offset=0.003)
-                colorramp.color_ramp.elements[1].color = (0.154963, 0.081816, 0.042745, 1.0)
+                colorramp.color_ramp.elements[1].color = (
+                    0.154963,
+                    0.081816,
+                    0.042745,
+                    1.0,
+                )
                 sample_color(colorramp.color_ramp.elements[1].color, offset=0.005)
                 colorramp.color_ramp.elements[0].position = sample_range(0.56, 0.62)
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -383,7 +468,9 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind="duck", tail=False, **
         },
     )
 
-    colorramp2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]})
+    colorramp2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]}
+    )
     colorramp2.color_ramp.elements[0].position = 0.0955
     colorramp2.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     colorramp2.color_ramp.elements[1].position = 0.6364
@@ -404,7 +491,9 @@ def shader_bird_feather(nw: NodeWrangler, rand=True, kind="duck", tail=False, **
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_wave_feather(nw: NodeWrangler, **input_kwargs):
@@ -412,7 +501,9 @@ def shader_wave_feather(nw: NodeWrangler, **input_kwargs):
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -425,15 +516,21 @@ def shader_wave_feather(nw: NodeWrangler, **input_kwargs):
         },
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Color"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0955
     colorramp.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     colorramp.color_ramp.elements[1].position = 0.6364
     colorramp.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp.outputs["Color"]})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp.outputs["Color"]}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_bird_beak(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -447,7 +544,9 @@ def shader_bird_beak(nw: NodeWrangler, rand=True, **input_kwargs):
     if rand:
         noise_texture.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp.color_ramp.interpolation = "EASE"
     colorramp.color_ramp.elements[0].position = 0.3815
     colorramp.color_ramp.elements[0].color = (0.2773, 0.271, 0.047, 1.0)
@@ -458,10 +557,13 @@ def shader_bird_beak(nw: NodeWrangler, rand=True, **input_kwargs):
         sample_color(colorramp.color_ramp.elements[1].color, keep_sum=True)
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": 0.3408}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": 0.3408},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_bird_eyeball(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -487,10 +589,13 @@ def shader_bird_eyeball(nw: NodeWrangler, rand=True, **input_kwargs):
     colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
     """
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.0, 0.0, 0.0, 1.0), "Roughness": 0.0}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.0, 0.0, 0.0, 1.0), "Roughness": 0.0},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -498,10 +603,16 @@ def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": (0.0091, 0.0091, 0.0091, 1.0), "Specular": 0.0, "Roughness": 0.4409},
+        input_kwargs={
+            "Base Color": (0.0091, 0.0091, 0.0091, 1.0),
+            "Specular": 0.0,
+            "Roughness": 0.4409,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(objs, shader_kwargs={}, **kwargs):

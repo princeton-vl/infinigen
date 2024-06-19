@@ -6,26 +6,22 @@
 
 import logging
 import typing
-from dataclasses import dataclass, field
-from pprint import pprint
-from time import time
+from dataclasses import dataclass
 
 import bpy
-import gin
 import numpy as np
-import trimesh
-from mathutils import Matrix, Vector
 
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.core import tagging
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.constraint_language.util import delete_obj, meshes_from_names
-from infinigen.core.constraints.example_solver.geometry import dof, parse_scene, validity
+from infinigen.core.constraints.constraint_language.util import delete_obj
+from infinigen.core.constraints.example_solver.geometry import (
+    dof,
+    parse_scene,
+    validity,
+)
 from infinigen.core.constraints.example_solver.state_def import ObjectState, State
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
@@ -67,7 +63,9 @@ def sample_rand_placeholder(gen_class: type[AssetFactory]):
     if len(new_obj.data.polygons) == 0:
         raise ValueError(f"Addition created {new_obj.name=} with 0 faces")
 
-    butil.put_in_collection(list(butil.iter_object_tree(new_obj)), butil.get_collection(f"placeholders"))
+    butil.put_in_collection(
+        list(butil.iter_object_tree(new_obj)), butil.get_collection("placeholders")
+    )
     parse_scene.preprocess_obj(new_obj)
     tagging.tag_canonical_surfaces(new_obj)
 
@@ -98,7 +96,12 @@ class Addition(moves.Move):
         tags = self.temp_force_tags.union(usage_lookup.usages_of_factory(gen.__class__))
 
         assert isinstance(self._new_obj, bpy.types.Object)
-        objstate = ObjectState(obj=self._new_obj, generator=gen, tags=tags, relations=self.relation_assignments)
+        objstate = ObjectState(
+            obj=self._new_obj,
+            generator=gen,
+            tags=tags,
+            relations=self.relation_assignments,
+        )
 
         state.objs[target_name] = objstate
         success = dof.try_apply_relation_constraints(state, target_name)

@@ -4,18 +4,16 @@
 # Authors: Yiming Zuo
 # Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=ECl2pQ1jQm8 by Ryan King Art
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets.materials import common
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_galvanized_metal", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_galvanized_metal", singleton=False, type="ShaderNodeTree"
+)
 def nodegroup_galvanized_metal(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -31,7 +29,9 @@ def nodegroup_galvanized_metal(nw: NodeWrangler):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Scale"], 1: 5.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Scale"], 1: 5.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     noise_texture = nw.new_node(
@@ -49,22 +49,33 @@ def nodegroup_galvanized_metal(nw: NodeWrangler):
 
     mix = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.0500, 6: texture_coordinate.outputs["Object"], 7: noise_texture.outputs["Color"]},
+        input_kwargs={
+            0: 0.0500,
+            6: texture_coordinate.outputs["Object"],
+            7: noise_texture.outputs["Color"],
+        },
         attrs={"clamp_factor": False, "data_type": "RGBA"},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Scale"], 1: 500.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Scale"], 1: 500.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     voronoi_texture = nw.new_node(
         Nodes.VoronoiTexture,
-        input_kwargs={"Vector": mix.outputs[2], "W": group_input.outputs["Seed"], "Scale": multiply_1},
+        input_kwargs={
+            "Vector": mix.outputs[2],
+            "W": group_input.outputs["Seed"],
+            "Scale": multiply_1,
+        },
         attrs={"distance": "MINKOWSKI", "voronoi_dimensions": "4D"},
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": voronoi_texture.outputs["Color"], 3: 0.1000, 4: 0.5000}
+        Nodes.MapRange,
+        input_kwargs={"Value": voronoi_texture.outputs["Color"], 3: 0.1000, 4: 0.5000},
     )
 
     principled_bsdf = nw.new_node(
@@ -78,11 +89,15 @@ def nodegroup_galvanized_metal(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"BSDF": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"BSDF": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
-def shader_galvanized_metal(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kwargs):
+def shader_galvanized_metal(
+    nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kwargs
+):
     # Code generated using version 2.6.4 of the node_transpiler
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
@@ -92,11 +107,14 @@ def shader_galvanized_metal(nw: NodeWrangler, scale=1.0, base_color=None, seed=N
         base_color = sample_metal_color(**kwargs)
 
     group = nw.new_node(
-        nodegroup_galvanized_metal().name, input_kwargs={"Base Color": base_color, "Scale": scale, "Seed": seed}
+        nodegroup_galvanized_metal().name,
+        input_kwargs={"Base Color": base_color, "Scale": scale, "Seed": seed},
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": group}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": group},
+        attrs={"is_active_output": True},
     )
 
 

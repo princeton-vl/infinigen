@@ -4,19 +4,11 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 class FruitFactoryApple(FruitFactoryGeneralFruit):
@@ -40,7 +32,13 @@ class FruitFactoryApple(FruitFactoryGeneralFruit):
         return {
             "shape_name": "shape_quadratic",
             "shape_func_args": {
-                "radius_control_points": [(0.0, 0.0), (0.1227, 0.4281), (0.4705, 0.6625), (0.8886, 0.4156), (1.0, 0.0)],
+                "radius_control_points": [
+                    (0.0, 0.0),
+                    (0.1227, 0.4281),
+                    (0.4705, 0.6625),
+                    (0.8886, 0.4156),
+                    (1.0, 0.0),
+                ],
             },
             "shape_input_args": {
                 "Profile Curve": "noderef-crosssection-Geometry",
@@ -95,7 +93,11 @@ class FruitFactoryApple(FruitFactoryGeneralFruit):
             "stem_name": "basic_stem",
             "stem_func_args": {"stem_color": stem_color_rgba},
             "stem_input_args": {
-                "quad_mid": (uniform(-0.1, 0.1), uniform(-0.1, 0.1), uniform(0.15, 0.2)),
+                "quad_mid": (
+                    uniform(-0.1, 0.1),
+                    uniform(-0.1, 0.1),
+                    uniform(0.15, 0.2),
+                ),
                 "quad_end": (uniform(-0.2, 0.2), uniform(-0.2, 0.2), uniform(0.3, 0.4)),
                 "quad_res": 32,
                 "cross_radius": uniform(0.025, 0.035),

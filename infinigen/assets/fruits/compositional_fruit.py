@@ -4,10 +4,7 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
 
 from infinigen.assets.fruits.apple import FruitFactoryApple
 from infinigen.assets.fruits.blackberry import FruitFactoryBlackberry
@@ -18,12 +15,6 @@ from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
 from infinigen.assets.fruits.pineapple import FruitFactoryPineapple
 from infinigen.assets.fruits.starfruit import FruitFactoryStarfruit
 from infinigen.assets.fruits.strawberry import FruitFactoryStrawberry
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 fruit_names = {
@@ -40,7 +31,9 @@ fruit_names = {
 
 class FruitFactoryCompositional(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):
-        super(FruitFactoryCompositional, self).__init__(factory_seed, scale=scale, coarse=coarse)
+        super(FruitFactoryCompositional, self).__init__(
+            factory_seed, scale=scale, coarse=coarse
+        )
 
         self.name = "compositional"
         self.factories = {}
@@ -55,7 +48,9 @@ class FruitFactoryCompositional(FruitFactoryGeneralFruit):
             self.stem_source = np.random.choice(list(fruit_names.keys()))
 
     def sample_cross_section_params(self, surface_resolution=256):
-        return self.factories[self.cross_section_source].sample_cross_section_params(surface_resolution)
+        return self.factories[self.cross_section_source].sample_cross_section_params(
+            surface_resolution
+        )
 
     def sample_shape_params(self, surface_resolution=256):
         return self.factories[self.shape_source].sample_shape_params(surface_resolution)

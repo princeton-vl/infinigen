@@ -4,14 +4,8 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_material(nw: NodeWrangler):
@@ -19,15 +13,21 @@ def shader_material(nw: NodeWrangler):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "col"})
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": attribute.outputs["Color"]})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": attribute.outputs["Color"]}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def geo_face_colors(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     random_value = nw.new_node(Nodes.RandomValue, attrs={"data_type": "FLOAT_VECTOR"})
 
@@ -41,7 +41,9 @@ def geo_face_colors(nw: NodeWrangler):
         attrs={"data_type": "FLOAT_VECTOR", "domain": "FACE"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

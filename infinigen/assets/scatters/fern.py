@@ -8,13 +8,15 @@ import numpy as np
 
 from infinigen.assets.scatters.utils.wind import wind
 from infinigen.assets.small_plants.fern import FernFactory
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import random_general as rg
 
 
 def apply(obj, selection=None, density=("uniform", 1, 6), **kwargs):
-    fern_col = make_asset_collection(FernFactory(np.random.randint(1e5)), n=2, verbose=True)
+    fern_col = make_asset_collection(
+        FernFactory(np.random.randint(1e5)), n=2, verbose=True
+    )
     scatter_obj = scatter_instances(
         base_obj=obj,
         collection=fern_col,

@@ -46,7 +46,9 @@ class SpiralStaircaseFactory(CurvedStaircaseFactory):
         obj = new_line(self.n, self.step_height * self.n + self.post_height)
         obj.rotation_euler[1] = -np.pi / 2
         butil.apply_transform(obj)
-        surface.add_geomod(obj, geo_radius, apply=True, input_args=[self.column_radius, 16])
+        surface.add_geomod(
+            obj, geo_radius, apply=True, input_args=[self.column_radius, 16]
+        )
         write_attribute(obj, 1, "steps", "FACE")
         return obj
 

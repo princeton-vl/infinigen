@@ -11,11 +11,9 @@ import numpy as np
 from mathutils.bvhtree import BVHTree
 from tqdm import trange
 
-from infinigen.core import surface
 from infinigen.core.placement.camera import get_sensor_coords
 from infinigen.core.util import blender as butil
 from infinigen.core.util import camera as cam_util
-from infinigen.core.util import math
 from infinigen.core.util.logging import Suppress
 
 
@@ -34,9 +32,13 @@ def raycast_visiblity_mask(obj, cam, start=None, end=None, verbose=True):
         invworld = obj.matrix_world.inverted()
         sensor_coords, pix_it = get_sensor_coords(cam)
         for x, y in pix_it:
-            direction = (sensor_coords[y, x] - cam.matrix_world.translation).normalized()
+            direction = (
+                sensor_coords[y, x] - cam.matrix_world.translation
+            ).normalized()
             origin = cam.matrix_world.translation
-            _, _, index, dist = bvh.ray_cast(invworld @ origin, invworld.to_3x3() @ direction)
+            _, _, index, dist = bvh.ray_cast(
+                invworld @ origin, invworld.to_3x3() @ direction
+            )
             if dist is None:
                 continue
             for vi in obj.data.polygons[index].vertices:
@@ -94,13 +96,17 @@ def split_inview(
     obj.data.vertices.foreach_get("co", verts.reshape(-1))
     verts = butil.apply_matrix_world(obj, verts)
 
-    dists, vis_dists = cam_util.min_dists_from_cam_trajectory(verts, cam, verbose=verbose, **kwargs)
+    dists, vis_dists = cam_util.min_dists_from_cam_trajectory(
+        verts, cam, verbose=verbose, **kwargs
+    )
 
     vis_mask = vis_dists < vis_margin
     dist_mask = dists < dist_max
     mask = vis_mask * dist_mask
 
-    logging.debug(f"split_inview {vis_mask.mean()=:.2f} {dist_mask.mean()=:.2f} {mask.mean()=:.2f}")
+    logging.debug(
+        f"split_inview {vis_mask.mean()=:.2f} {dist_mask.mean()=:.2f} {mask.mean()=:.2f}"
+    )
 
     if raycast:
         mask *= raycast_visiblity_mask(obj, cam)
@@ -115,7 +121,9 @@ def split_inview(
     if print_areas:
         sa_in = butil.surface_area(inview)
         sa_out = butil.surface_area(outview)
-        print(f"split {obj.name=} into inview area {sa_in:.2f} and outofview area {sa_out:.2f}")
+        print(
+            f"split {obj.name=} into inview area {sa_in:.2f} and outofview area {sa_out:.2f}"
+        )
 
     inview.name = obj.name + ".inview"
     outview.name = obj.name + ".outofview"

@@ -7,21 +7,12 @@
 
 import random
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
     sample_color,
-    sample_range,
-    sample_ratio,
 )
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_black_white_snake(nw: NodeWrangler, rand=True):
@@ -33,24 +24,44 @@ def shader_black_white_snake(nw: NodeWrangler, rand=True):
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
-        input_kwargs={"Vector": mapping, "Scale": 10.0, "Distortion": 1.5, "Detail": 5.0, "Detail Roughness": 0.8},
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 10.0,
+            "Distortion": 1.5,
+            "Detail": 5.0,
+            "Detail Roughness": 0.8,
+        },
     )
 
     mapping_1 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute})
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0},
+    )
 
     mix = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": 0.8, "Color1": noise_texture.outputs["Color"], "Color2": mapping_1}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": 0.8,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": mapping_1,
+        },
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 8.0}, attrs={"feature": "DISTANCE_TO_EDGE"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix, "Scale": 8.0},
+        attrs={"feature": "DISTANCE_TO_EDGE"},
     )
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.2, "Color1": wave_texture.outputs["Fac"], "Color2": voronoi_texture.outputs["Distance"]},
+        input_kwargs={
+            "Fac": 0.2,
+            "Color1": wave_texture.outputs["Fac"],
+            "Color2": voronoi_texture.outputs["Distance"],
+        },
     )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_1})
@@ -64,11 +75,18 @@ def shader_black_white_snake(nw: NodeWrangler, rand=True):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Metallic": 0.6, "Specular": 0.2, "Roughness": 0.4},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Metallic": 0.6,
+            "Specular": 0.2,
+            "Roughness": 0.4,
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_brown(nw: NodeWrangler, rand=False):
@@ -76,14 +94,24 @@ def shader_brown(nw: NodeWrangler, rand=False):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Position"})
 
-    mapping_2 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)})
+    mapping_2 = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)}
+    )
 
     noise_texture_2 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": mapping_2, "Scale": 10.0, "Detail": 20.0, "Roughness": 0.4, "Distortion": 0.1},
+        input_kwargs={
+            "Vector": mapping_2,
+            "Scale": 10.0,
+            "Detail": 20.0,
+            "Roughness": 0.4,
+            "Distortion": 0.1,
+        },
     )
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]}
+    )
     colorramp_2.color_ramp.elements[0].position = 0.4045
     colorramp_2.color_ramp.elements[0].color = (0.013, 0.0011, 0.0027, 1.0)
     colorramp_2.color_ramp.elements[1].position = 0.4568
@@ -94,33 +122,51 @@ def shader_brown(nw: NodeWrangler, rand=False):
 
     principled_bsdf_1 = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp_2.outputs["Color"], "Metallic": 0.4, "Specular": 0.3, "Roughness": 1},
+        input_kwargs={
+            "Base Color": colorramp_2.outputs["Color"],
+            "Metallic": 0.4,
+            "Specular": 0.3,
+            "Roughness": 1,
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": attribute, "Scale": 0.4, "Detail": 15.0})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": attribute, "Scale": 0.4, "Detail": 15.0},
+    )
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.95, "Color1": noise_texture_1.outputs["Fac"], "Color2": attribute},
+        input_kwargs={
+            "Fac": 0.95,
+            "Color1": noise_texture_1.outputs["Fac"],
+            "Color2": attribute,
+        },
         attrs={"blend_type": "LINEAR_LIGHT"},
     )
 
     voronoi_texture_1 = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix_1, "Scale": 4.0, "Randomness": 3.0}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix_1, "Scale": 4.0, "Randomness": 3.0},
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_1.outputs["Distance"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_1.outputs["Distance"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.1614
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.3068
     colorramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
     voronoi_texture_2 = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix_1, "Scale": 10.0, "Randomness": 3.0}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix_1, "Scale": 10.0, "Randomness": 3.0},
     )
 
-    colorramp_3 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_2.outputs["Distance"]})
+    colorramp_3 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture_2.outputs["Distance"]}
+    )
     colorramp_3.color_ramp.elements[0].position = 0.1682
     colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_3.color_ramp.elements[1].position = 0.2864
@@ -128,7 +174,11 @@ def shader_brown(nw: NodeWrangler, rand=False):
 
     mix_2 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.0, "Color1": colorramp.outputs["Color"], "Color2": colorramp_3.outputs["Color"]},
+        input_kwargs={
+            "Fac": 0.0,
+            "Color1": colorramp.outputs["Color"],
+            "Color2": colorramp_3.outputs["Color"],
+        },
     )
 
     colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_2})
@@ -148,20 +198,31 @@ def shader_brown(nw: NodeWrangler, rand=False):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp_4.outputs["Color"], "Metallic": 0.4, "Roughness": 0.5},
+        input_kwargs={
+            "Base Color": colorramp_4.outputs["Color"],
+            "Metallic": 0.4,
+            "Roughness": 0.5,
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.3, 1: principled_bsdf_1, 2: principled_bsdf})
+    mix_shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.3, 1: principled_bsdf_1, 2: principled_bsdf},
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def shader_golden(nw: NodeWrangler, rand=False):
     # Code generated using version 2.4.3 of the node_transpiler
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Position"})
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)}
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -176,19 +237,34 @@ def shader_golden(nw: NodeWrangler, rand=False):
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": wave_texture.outputs["Color"], "Scale": 1.5, "Detail": 5.0, "Roughness": 0.4},
+        input_kwargs={
+            "Vector": wave_texture.outputs["Color"],
+            "Scale": 1.5,
+            "Detail": 5.0,
+            "Roughness": 0.4,
+        },
     )
 
     mapping_1 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute})
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0},
+    )
 
     mix = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": 0.8, "Color1": noise_texture.outputs["Color"], "Color2": mapping_1}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": 0.8,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": mapping_1,
+        },
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 8.0}, attrs={"feature": "DISTANCE_TO_EDGE"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix, "Scale": 8.0},
+        attrs={"feature": "DISTANCE_TO_EDGE"},
     )
 
     mix_1 = nw.new_node(
@@ -211,11 +287,18 @@ def shader_golden(nw: NodeWrangler, rand=False):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Metallic": 0.4, "Specular": 0.2, "Roughness": 0.4},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Metallic": 0.4,
+            "Specular": 0.2,
+            "Roughness": 0.4,
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_green(nw: NodeWrangler, rand=True):
@@ -227,13 +310,17 @@ def shader_green(nw: NodeWrangler, rand=True):
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": mapping_3})
 
-    colorramp_3 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz.outputs["Z"]})
+    colorramp_3 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz.outputs["Z"]}
+    )
     colorramp_3.color_ramp.elements[0].position = 0.3864
     colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_3.color_ramp.elements[1].position = 0.6682
     colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    mapping_2 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)})
+    mapping_2 = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)}
+    )
 
     noise_texture_2 = nw.new_node(
         Nodes.NoiseTexture,
@@ -246,12 +333,24 @@ def shader_green(nw: NodeWrangler, rand=True):
         },
     )
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]}
+    )
     colorramp_2.color_ramp.elements.new(0)
     colorramp_2.color_ramp.elements[0].position = 0.2318
-    colorramp_2.color_ramp.elements[0].color = (0.64449999999999996, 0.52710000000000001, 0.0011999999999999999, 1.0)
+    colorramp_2.color_ramp.elements[0].color = (
+        0.64449999999999996,
+        0.52710000000000001,
+        0.0011999999999999999,
+        1.0,
+    )
     colorramp_2.color_ramp.elements[1].position = 0.375
-    colorramp_2.color_ramp.elements[1].color = (0.050299999999999997, 0.033799999999999997, 0.0071999999999999998, 1.0)
+    colorramp_2.color_ramp.elements[1].color = (
+        0.050299999999999997,
+        0.033799999999999997,
+        0.0071999999999999998,
+        1.0,
+    )
     colorramp_2.color_ramp.elements[2].position = 0.45
     colorramp_2.color_ramp.elements[2].color = (0.0172, 0.040599999999999997, 0.0, 1.0)
     if rand:
@@ -268,7 +367,9 @@ def shader_green(nw: NodeWrangler, rand=True):
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": attribute, "Scale": (0.5, 1.0, 1.0)}
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -293,15 +394,24 @@ def shader_green(nw: NodeWrangler, rand=True):
 
     mapping_1 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": attribute})
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": mapping_1, "Scale": 3.0, "Detail": 5.0},
+    )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.80000000000000004, "Color1": noise_texture.outputs["Color"], "Color2": mapping_1},
+        input_kwargs={
+            "Fac": 0.80000000000000004,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": mapping_1,
+        },
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 8.0}, attrs={"feature": "DISTANCE_TO_EDGE"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix, "Scale": 8.0},
+        attrs={"feature": "DISTANCE_TO_EDGE"},
     )
 
     mix_1 = nw.new_node(
@@ -317,9 +427,19 @@ def shader_green(nw: NodeWrangler, rand=True):
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.2818
-    colorramp.color_ramp.elements[0].color = (0.76819999999999999, 0.78349999999999997, 0.76049999999999995, 1.0)
+    colorramp.color_ramp.elements[0].color = (
+        0.76819999999999999,
+        0.78349999999999997,
+        0.76049999999999995,
+        1.0,
+    )
     colorramp.color_ramp.elements[1].position = 0.4295
-    colorramp.color_ramp.elements[1].color = (0.0012999999999999999, 0.0012999999999999999, 0.0012999999999999999, 1.0)
+    colorramp.color_ramp.elements[1].color = (
+        0.0012999999999999999,
+        0.0012999999999999999,
+        0.0012999999999999999,
+        1.0,
+    )
     colorramp.color_ramp.elements[2].position = 0.5068
     colorramp.color_ramp.elements[2].color = (0.0095999999999999992, 0.0149, 0.0, 1.0)
     colorramp.color_ramp.elements[3].position = 0.6727
@@ -339,10 +459,17 @@ def shader_green(nw: NodeWrangler, rand=True):
     )
 
     mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": colorramp_3.outputs["Color"], 1: principled_bsdf_1, 2: principled_bsdf}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": colorramp_3.outputs["Color"],
+            1: principled_bsdf_1,
+            2: principled_bsdf,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def shader_shining_golden(nw: NodeWrangler, rand=True):
@@ -357,12 +484,19 @@ def shader_shining_golden(nw: NodeWrangler, rand=True):
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 class shaders:
     def choose():
-        choices = [shader_black_white_snake, shader_shining_golden, shader_golden, shader_green]
+        choices = [
+            shader_black_white_snake,
+            shader_shining_golden,
+            shader_golden,
+            shader_green,
+        ]
         # choices = [shader_green]
         return random.choice(choices)
 

@@ -5,18 +5,11 @@
 # Authors: Alexander Raistrick
 
 import logging
-import typing
 from dataclasses import dataclass
 
-import bpy
-import numpy as np
-import trimesh
-from mathutils import Matrix, Vector
 
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.moves import Move
-from infinigen.core.util import blender as butil
 
 from .reassignment import pose_backup, restore_pose_backup
 
@@ -43,8 +36,14 @@ class Swap(Move):
         self._obj2_backup = pose_backup(o2, dof=False)
 
         o1.loc, o2.loc = o2.loc, o1.loc
-        o1.rotation_axis_angle, o2.rotation_axis_angle = o2.rotation_axis_angle, o1.rotation_axis_angle
-        o1.relation_assignments, o2.relation_assignments = o2.relation_assignments, o1.relation_assignments
+        o1.rotation_axis_angle, o2.rotation_axis_angle = (
+            o2.rotation_axis_angle,
+            o1.rotation_axis_angle,
+        )
+        o1.relation_assignments, o2.relation_assignments = (
+            o2.relation_assignments,
+            o1.relation_assignments,
+        )
 
     def revert(self, state: state_def.State):
         target1, target2 = self.names
@@ -54,4 +53,7 @@ class Swap(Move):
         o1 = state[target1].obj
         o2 = state[target2].obj
 
-        o1.relation_assignments, o2.relation_assignments = o2.relation_assignments, o1.relation_assignments
+        o1.relation_assignments, o2.relation_assignments = (
+            o2.relation_assignments,
+            o1.relation_assignments,
+        )

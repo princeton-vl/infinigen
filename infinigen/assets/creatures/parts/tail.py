@@ -9,12 +9,11 @@ from numpy.random import normal as N
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.genome import IKParams, Joint
-from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
 from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube_v2
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 @node_utils.to_nodegroup("nodegroup_tail", singleton=False, type="GeometryNodeTree")
@@ -61,7 +60,8 @@ class Tail(PartFactory):
     def make_part(self, params):
         part = nodegroup_to_part(nodegroup_tail, params)
         part.joints = {
-            i: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [30, 0, 30]])) for i in np.linspace(0, 1, 6)
+            i: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [30, 0, 30]]))
+            for i in np.linspace(0, 1, 6)
         }
         part.iks = {1.0: IKParams(name="tail", chain_parts=1)}
         tag_object(part.obj, "tail")

@@ -22,4 +22,4 @@ class BaseCoralFactory(AssetFactory):
         self.points_fn = lambda nw, points: points
 
     def create_asset(self, **params) -> bpy.types.Object:
-        raise NotImplemented
+        raise NotImplementedError

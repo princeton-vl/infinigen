@@ -5,11 +5,7 @@
 
 
 import argparse
-import importlib
-import math
 import os
-import sys
-from pathlib import Path
 
 import bpy
 import gin
@@ -18,11 +14,9 @@ import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.materials import dirt, mud, sand
+from infinigen.assets.materials import dirt, mud
 from infinigen.assets.scatters import (
     chopped_trees,
-    fern,
-    flowerplant,
     grass,
     pine_needle,
     pinecone,
@@ -60,7 +54,9 @@ def apply_scatters(obj, mode, index):
 
     if mode == "grass":
         mud.apply(obj)
-        selection = density.placement_mask(normal_dir=(0, 0, 1), scale=3, return_scalar=True, select_thresh=U(0, 0.2))
+        selection = density.placement_mask(
+            normal_dir=(0, 0, 1), scale=3, return_scalar=True, select_thresh=U(0, 0.2)
+        )
         go, _ = grass.apply(obj, selection=selection, density=15)
         all_objects.append(go)
         # if U() < 0.3:
@@ -88,7 +84,9 @@ def apply_scatters(obj, mode, index):
         )
         so, _ = seaweed.apply(
             obj,
-            selection=density.placement_mask(scale=U(1, 3), select_thresh=U(0.8, 1.2), normal_thresh=0.4),
+            selection=density.placement_mask(
+                scale=U(1, 3), select_thresh=U(0.8, 1.2), normal_thresh=0.4
+            ),
             density=U(1, 2),
             n=int(U(3, 10)),
         )
@@ -98,13 +96,21 @@ def apply_scatters(obj, mode, index):
     elif mode == "fallen_trees":
         po, _ = pine_needle.apply(
             obj,
-            selection=density.placement_mask(scale=U(0.2, 1), select_thresh=U(0.4, 0.6), return_scalar=True),
+            selection=density.placement_mask(
+                scale=U(0.2, 1), select_thresh=U(0.4, 0.6), return_scalar=True
+            ),
             density=U(1000, 3000),
         )
         pio, _ = pinecone.apply(
-            obj, selection=density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6)), density=U(0.4, 0.6)
+            obj,
+            selection=density.placement_mask(
+                scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6)
+            ),
+            density=U(0.4, 0.6),
         )
-        selection = density.placement_mask(scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6), density=U(0.4, 0.6))
+        selection = density.placement_mask(
+            scale=U(0.1, 0.4), select_thresh=U(0.4, 0.6), density=U(0.4, 0.6)
+        )
         co, _ = chopped_trees.apply(obj, selection=selection)
         all_objects.append(po)
         all_objects.append(pio)
@@ -131,7 +137,8 @@ sky_lighting.add_lighting()
 
 
 bpy.ops.object.camera_add(
-    location=mathutils.Vector(args.view * np.array([-10, -10, 10])), rotation=(np.deg2rad(70), 0, np.deg2rad(-45))
+    location=mathutils.Vector(args.view * np.array([-10, -10, 10])),
+    rotation=(np.deg2rad(70), 0, np.deg2rad(-45)),
 )
 cam = bpy.context.active_object
 bpy.context.scene.camera = cam
@@ -191,7 +198,9 @@ y = args.index_y
 np.random.seed(x * prime1 + y + prime2)
 # x, y = i // rowsize, i % rowsize
 pos = (s + margin) * mathutils.Vector((x, y, 0))
-bpy.ops.mesh.primitive_grid_add(size=s, location=pos, x_subdivisions=planeres, y_subdivisions=planeres)
+bpy.ops.mesh.primitive_grid_add(
+    size=s, location=pos, x_subdivisions=planeres, y_subdivisions=planeres
+)
 plane = bpy.context.active_object
 apply_scatters(plane, mode=mode, index=(x, y))
 # butil.delete(plane)

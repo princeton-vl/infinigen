@@ -5,27 +5,21 @@
 
 
 import logging
-import pdb
 
 import bpy
-import bpy_types
-import mathutils
 import numpy as np
 from mathutils import Vector
-from numpy.random import normal
 from numpy.random import normal as N
-from numpy.random import randint
-from numpy.random import uniform
 from numpy.random import uniform as U
 
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_add_wiggles", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_add_wiggles", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_add_wiggles(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler
 
@@ -49,26 +43,41 @@ def nodegroup_add_wiggles(nw: NodeWrangler):
 
     index = nw.new_node(Nodes.Index)
 
-    modulo = nw.new_node(Nodes.Math, input_kwargs={0: index, 1: 4.0000}, attrs={"operation": "MODULO"})
+    modulo = nw.new_node(
+        Nodes.Math, input_kwargs={0: index, 1: 4.0000}, attrs={"operation": "MODULO"}
+    )
 
-    less_than = nw.new_node(Nodes.Math, input_kwargs={0: modulo, 1: 2.0000}, attrs={"operation": "LESS_THAN"})
+    less_than = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: modulo, 1: 2.0000},
+        attrs={"operation": "LESS_THAN"},
+    )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": less_than, 3: -1.0000})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": less_than, 3: -1.0000}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range.outputs["Result"], 1: group_input.outputs["Magnitude"]},
+        input_kwargs={
+            0: map_range.outputs["Result"],
+            1: group_input.outputs["Magnitude"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0000, 1: group_input.outputs["MagRandom"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: 1.0000, 1: group_input.outputs["MagRandom"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     random_value = nw.new_node(Nodes.RandomValue, input_kwargs={2: subtract})
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply, 1: random_value.outputs[1]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: random_value.outputs[1]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     scale = nw.new_node(
@@ -78,15 +87,23 @@ def nodegroup_add_wiggles(nw: NodeWrangler):
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": scale.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": scale.outputs["Vector"],
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_position},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_add_loopbacks", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_add_loopbacks", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_add_loopbacks(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler
 
@@ -104,26 +121,41 @@ def nodegroup_add_loopbacks(nw: NodeWrangler):
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: index_1, 1: 1.0000})
 
-    modulo = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MODULO"})
+    modulo = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MODULO"}
+    )
 
-    less_than = nw.new_node(Nodes.Math, input_kwargs={0: modulo}, attrs={"operation": "LESS_THAN"})
+    less_than = nw.new_node(
+        Nodes.Math, input_kwargs={0: modulo}, attrs={"operation": "LESS_THAN"}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": less_than, 3: -1.0000})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": less_than, 3: -1.0000}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_1.outputs["Result"], 1: group_input.outputs["Amount"]},
+        input_kwargs={
+            0: map_range_1.outputs["Result"],
+            1: group_input.outputs["Amount"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0000, 1: group_input.outputs["Randomness"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: 1.0000, 1: group_input.outputs["Randomness"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    random_value = nw.new_node(Nodes.RandomValue, input_kwargs={2: subtract, "ID": index_1})
+    random_value = nw.new_node(
+        Nodes.RandomValue, input_kwargs={2: subtract, "ID": index_1}
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply, 1: random_value.outputs[1]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: random_value.outputs[1]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     scale = nw.new_node(
@@ -133,11 +165,17 @@ def nodegroup_add_loopbacks(nw: NodeWrangler):
     )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": scale.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": scale.outputs["Vector"],
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_position_1},
+        attrs={"is_active_output": True},
     )
 
 
@@ -168,7 +206,9 @@ def nodegroup_wiggles(nw: NodeWrangler):
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Wavelength"], 1: 4.0000}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Wavelength"], 1: 4.0000},
+        attrs={"operation": "DIVIDE"},
     )
 
     resample_curve = nw.new_node(
@@ -197,16 +237,30 @@ def nodegroup_wiggles(nw: NodeWrangler):
         },
     )
 
-    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": addloopbacks, "Fill Caps": True})
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh, input_kwargs={"Curve": addloopbacks, "Fill Caps": True}
+    )
 
-    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": curve_to_mesh, "Level": 3})
+    subdivision_surface = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": curve_to_mesh, "Level": 3}
+    )
 
-    mesh_to_curve = nw.new_node(Nodes.MeshToCurve, input_kwargs={"Mesh": subdivision_surface})
+    mesh_to_curve = nw.new_node(
+        Nodes.MeshToCurve, input_kwargs={"Mesh": subdivision_surface}
+    )
 
-    off = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["AltitudeOffset"]})
-    result = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": mesh_to_curve, "Offset": off})
+    off = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["AltitudeOffset"]}
+    )
+    result = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": mesh_to_curve, "Offset": off}
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": result}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": result},
+        attrs={"is_active_output": True},
+    )
 
 
 def add_curve_slithers(curve, snake_length):
@@ -218,7 +272,14 @@ def add_curve_slithers(curve, snake_length):
         "LoopRandom": 0,
         "AltitudeOffset": 0.02,
     }
-    butil.modify_mesh(curve, "NODES", node_group=nodegroup_wiggles(), ng_inputs=params, apply=False, show_viewport=True)
+    butil.modify_mesh(
+        curve,
+        "NODES",
+        node_group=nodegroup_wiggles(),
+        ng_inputs=params,
+        apply=False,
+        show_viewport=True,
+    )
     with butil.SelectObjects(curve):
         bpy.ops.object.convert(target="MESH")
         bpy.ops.object.convert(target="CURVE")

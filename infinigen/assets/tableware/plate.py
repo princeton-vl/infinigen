@@ -36,7 +36,9 @@ class PlateFactory(TablewareFactory):
         z_anchors = 0, 0, self.z_mid, self.z_length
         anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
         obj = spin(anchors, [1, 2], 4, 16)
-        butil.modify_mesh(obj, "SUBSURF", render_levels=self.pre_level, levels=self.pre_level)
+        butil.modify_mesh(
+            obj, "SUBSURF", render_levels=self.pre_level, levels=self.pre_level
+        )
         self.solidify_with_inside(obj, self.thickness)
         subsurf(obj, 2)
         obj.scale = [self.scale] * 3

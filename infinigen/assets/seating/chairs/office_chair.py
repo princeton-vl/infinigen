@@ -11,11 +11,9 @@ from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.seating.chairs.seats.curvy_seats import generate_curvy_seats
 from infinigen.assets.tables.cocktail_table import geometry_create_legs
 from infinigen.core import surface, tagging
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
@@ -39,19 +37,28 @@ def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     )
 
     seat_instance = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": generateseat, "Translation": (0.0000, 0.0000, kwargs["Top Height"])}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": generateseat,
+            "Translation": (0.0000, 0.0000, kwargs["Top Height"]),
+        },
     )
 
     seat_instance = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": seat_instance, "Material": kwargs["TopMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": seat_instance, "Material": kwargs["TopMaterial"]},
     )
 
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [seat_instance, legs]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [seat_instance, legs]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry},
+        attrs={"is_active_output": True},
     )
 
 
@@ -63,7 +70,9 @@ class OfficeChairFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params, leg_style = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = self.get_material_params(leg_style)
+            self.material_params, self.scratch, self.edge_wear = (
+                self.get_material_params(leg_style)
+            )
         self.params.update(self.material_params)
 
     def get_material_params(self, leg_style):
@@ -72,7 +81,9 @@ class OfficeChairFactory(AssetFactory):
             "TopMaterial": material_assignments["top"].assign_material(),
             "LegMaterial": material_assignments["leg"].assign_material(),
         }
-        wrapped_params = {k: surface.shaderfunc_to_material(v) for k, v in params.items()}
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
 
         scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
         scratch, edge_wear = material_assignments["wear_tear"]
@@ -150,7 +161,11 @@ class OfficeChairFactory(AssetFactory):
             leg_diameter = uniform(0.04, 0.06)
             leg_number = 4
 
-            leg_curve_ctrl_pts = [(0.0, 1.0), (0.4, uniform(0.85, 0.95)), (1.0, uniform(0.4, 0.6))]
+            leg_curve_ctrl_pts = [
+                (0.0, 1.0),
+                (0.4, uniform(0.85, 0.95)),
+                (1.0, uniform(0.4, 0.6)),
+            ]
 
             parameters.update(
                 {
@@ -194,11 +209,17 @@ class OfficeChairFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
-        surface.add_geomod(obj, geometry_assemble_chair, apply=True, input_kwargs=self.params)
+        surface.add_geomod(
+            obj, geometry_assemble_chair, apply=True, input_kwargs=self.params
+        )
         tagging.tag_system.relabel_obj(obj)
 
         obj.rotation_euler.z += np.pi / 2

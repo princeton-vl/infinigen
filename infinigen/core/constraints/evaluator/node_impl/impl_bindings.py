@@ -8,11 +8,9 @@
 # - Lingjie Mei: bugfix
 
 import functools
-import inspect
 import logging
 import math
 
-import gin
 import numpy as np
 
 from infinigen.core import tags as t
@@ -52,7 +50,9 @@ def constant_impl(cons: cl.Node, state: state_def.State, child_vals: dict):
 @register_node_impl(cl.ScalarOperatorExpression)
 @register_node_impl(cl.BoolOperatorExpression)
 def operator_impl(
-    cons: cl.ScalarOperatorExpression | cl.BoolOperatorExpression, state: state_def.State, child_vals: dict
+    cons: cl.ScalarOperatorExpression | cl.BoolOperatorExpression,
+    state: state_def.State,
+    child_vals: dict,
 ):
     operands = [child_vals[f"operands[{i}]"] for i in range(len(cons.operands))]
 
@@ -66,14 +66,19 @@ def operator_impl(
 
 
 @register_node_impl(cl.center_stable_surface_dist)
-def center_stable_surface_impl(cons: cl.center_stable_surface_dist, state: state_def.State, child_vals: dict):
+def center_stable_surface_impl(
+    cons: cl.center_stable_surface_dist, state: state_def.State, child_vals: dict
+):
     objs = child_vals["objs"]
     return trimesh_geometry.center_stable_surface(state.trimesh_scene, objs, state)
 
 
 @register_node_impl(cl.accessibility_cost)
 def accessibility_impl(
-    cons: cl.accessibility_cost, state: state_def.State, child_vals: dict, use_collision_impl: bool = True
+    cons: cl.accessibility_cost,
+    state: state_def.State,
+    child_vals: dict,
+    use_collision_impl: bool = True,
 ):
     objs = statenames_to_blnames(state, child_vals["objs"])
     others = statenames_to_blnames(state, child_vals["others"])
@@ -82,15 +87,24 @@ def accessibility_impl(
 
     if use_collision_impl:
         res = trimesh_geometry.accessibility_cost_cuboid_penetration(
-            state.trimesh_scene, objs, others, cons.normal, cons.dist, bvh_cache=state.bvh_cache
+            state.trimesh_scene,
+            objs,
+            others,
+            cons.normal,
+            cons.dist,
+            bvh_cache=state.bvh_cache,
         )
     else:
-        res = trimesh_geometry.accessibility_cost(state.trimesh_scene, objs, others, cons.normal)
+        res = trimesh_geometry.accessibility_cost(
+            state.trimesh_scene, objs, others, cons.normal
+        )
     return res
 
 
 @register_node_impl(cl.distance)
-def min_distance_impl(cons: cl.Node, state: state_def.State, child_vals: dict, others_tags: set = None):
+def min_distance_impl(
+    cons: cl.Node, state: state_def.State, child_vals: dict, others_tags: set = None
+):
     objs = statenames_to_blnames(state, child_vals["objs"])
     others = statenames_to_blnames(state, child_vals["others"])
 
@@ -99,7 +113,11 @@ def min_distance_impl(cons: cl.Node, state: state_def.State, child_vals: dict, o
         return 0
 
     res = trimesh_geometry.min_dist(
-        state.trimesh_scene, a=objs, b=others, b_tags=others_tags, bvh_cache=state.bvh_cache
+        state.trimesh_scene,
+        a=objs,
+        b=others,
+        b_tags=others_tags,
+        bvh_cache=state.bvh_cache,
     )
 
     if res.dist < 0:
@@ -109,7 +127,9 @@ def min_distance_impl(cons: cl.Node, state: state_def.State, child_vals: dict, o
 
 
 @register_node_impl(cl.min_distance_internal)
-def min_distance_internal_impl(cons: cl.min_distance_internal, state: state_def.State, child_vals: dict):
+def min_distance_internal_impl(
+    cons: cl.min_distance_internal, state: state_def.State, child_vals: dict
+):
     objs = statenames_to_blnames(state, child_vals["objs"])
     if len(objs) <= 1:
         return 0
@@ -142,7 +162,10 @@ def focus_score_impl(
 
 @register_node_impl(cl.angle_alignment_cost)
 def angle_alignment_impl(
-    cons: cl.angle_alignment_cost, state: state_def.State, child_vals: dict, others_tags: set = None
+    cons: cl.angle_alignment_cost,
+    state: state_def.State,
+    child_vals: dict,
+    others_tags: set = None,
 ):
     a = statenames_to_blnames(state, child_vals["objs"])
     b = statenames_to_blnames(state, child_vals["others"])
@@ -157,7 +180,9 @@ def freespace_2d_impl(cons: cl.freespace_2d, state: state_def.State, child_vals:
 
 
 @register_node_impl(cl.rotational_asymmetry)
-def rotational_asymmetry_impl(cons: cl.rotational_asymmetry, state: state_def.State, child_vals: dict):
+def rotational_asymmetry_impl(
+    cons: cl.rotational_asymmetry, state: state_def.State, child_vals: dict
+):
     objs = statenames_to_blnames(state, child_vals["objs"])
     if len(objs) <= 1:
         return 0
@@ -175,11 +200,15 @@ def reflectional_asymmetry_impl(
     others = statenames_to_blnames(state, child_vals["others"])
     if len(objs) <= 1:
         return 0
-    return trimesh_geometry.reflectional_asymmetry_score(state.trimesh_scene, objs, others, use_long_plane)
+    return trimesh_geometry.reflectional_asymmetry_score(
+        state.trimesh_scene, objs, others, use_long_plane
+    )
 
 
 @register_node_impl(cl.coplanarity_cost)
-def coplanarity_cost_impl(cons: cl.coplanarity_cost, state: state_def.State, child_vals: dict):
+def coplanarity_cost_impl(
+    cons: cl.coplanarity_cost, state: state_def.State, child_vals: dict
+):
     objs = child_vals["objs"]
     if len(objs) <= 1:
         return 0
@@ -207,14 +236,19 @@ def in_range_impl(cons: cl.in_range, state: state_def.State, child_vals: dict):
 
 
 @register_node_impl(cl.related_to)
-def related_children_impl(cons: cl.related_to, state: state_def.State, child_vals: dict):
+def related_children_impl(
+    cons: cl.related_to, state: state_def.State, child_vals: dict
+):
     r = cons.relation
     children: set[str] = child_vals["child"]
     parents: set[str] = child_vals["parent"]
 
     res = set()
     for o in children:
-        if any(rs.relation.implies(r) and rs.target_name in parents for rs in state.objs[o].relations):
+        if any(
+            rs.relation.implies(r) and rs.target_name in parents
+            for rs in state.objs[o].relations
+        ):
             res.add(o)
 
     # logger.debug('related_to %s produced %s from %i candidates', cons.relation, res, len(children))
@@ -261,5 +295,11 @@ def hinge_impl(cons: cl.hinge, state: state_def.State, child_vals: dict):
 
 
 @register_node_impl(r.FilterByDomain)
-def filter_by_domain_impl(cons: r.FilterByDomain, state: state_def.State, child_vals: dict) -> set[str]:
-    return {o for o in child_vals["objs"] if domain_contains.domain_contains(cons.filter, state, state.objs[o])}
+def filter_by_domain_impl(
+    cons: r.FilterByDomain, state: state_def.State, child_vals: dict
+) -> set[str]:
+    return {
+        o
+        for o in child_vals["objs"]
+        if domain_contains.domain_contains(cons.filter, state, state.objs[o])
+    }

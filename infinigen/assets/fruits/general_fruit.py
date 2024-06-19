@@ -5,16 +5,17 @@
 
 
 import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal
 
 from infinigen.assets.fruits.cross_section_lib import (
     nodegroup_circle_cross_section,
     nodegroup_coconut_cross_section,
     nodegroup_star_cross_section,
 )
-from infinigen.assets.fruits.fruit_utils import nodegroup_align_top_to_horizon, nodegroup_shape_quadratic
+from infinigen.assets.fruits.fruit_utils import (
+    nodegroup_align_top_to_horizon,
+    nodegroup_shape_quadratic,
+)
 from infinigen.assets.fruits.stem_lib import (
     nodegroup_basic_stem,
     nodegroup_calyx_stem,
@@ -23,20 +24,30 @@ from infinigen.assets.fruits.stem_lib import (
     nodegroup_pineapple_stem,
 )
 from infinigen.assets.fruits.surfaces.apple_surface import nodegroup_apple_surface
-from infinigen.assets.fruits.surfaces.blackberry_surface import nodegroup_blackberry_surface
-from infinigen.assets.fruits.surfaces.coconutgreen_surface import nodegroup_coconutgreen_surface
-from infinigen.assets.fruits.surfaces.coconuthairy_surface import nodegroup_coconuthairy_surface
+from infinigen.assets.fruits.surfaces.blackberry_surface import (
+    nodegroup_blackberry_surface,
+)
+from infinigen.assets.fruits.surfaces.coconutgreen_surface import (
+    nodegroup_coconutgreen_surface,
+)
+from infinigen.assets.fruits.surfaces.coconuthairy_surface import (
+    nodegroup_coconuthairy_surface,
+)
 from infinigen.assets.fruits.surfaces.durian_surface import nodegroup_durian_surface
-from infinigen.assets.fruits.surfaces.pineapple_surface import nodegroup_pineapple_surface
-from infinigen.assets.fruits.surfaces.starfruit_surface import nodegroup_starfruit_surface
-from infinigen.assets.fruits.surfaces.strawberry_surface import nodegroup_strawberry_surface
+from infinigen.assets.fruits.surfaces.pineapple_surface import (
+    nodegroup_pineapple_surface,
+)
+from infinigen.assets.fruits.surfaces.starfruit_surface import (
+    nodegroup_starfruit_surface,
+)
+from infinigen.assets.fruits.surfaces.strawberry_surface import (
+    nodegroup_strawberry_surface,
+)
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 crosssectionlib = {
@@ -76,7 +87,9 @@ def parse_args(nodeinfo, dictionary):
     return dictionary
 
 
-def general_fruit_geometry_nodes(nw: NodeWrangler, cross_section_params, shape_params, surface_params, stem_params):
+def general_fruit_geometry_nodes(
+    nw: NodeWrangler, cross_section_params, shape_params, surface_params, stem_params
+):
     nodeinfo = {}
 
     parse_args(nodeinfo, cross_section_params["cross_section_input_args"])
@@ -99,7 +112,9 @@ def general_fruit_geometry_nodes(nw: NodeWrangler, cross_section_params, shape_p
 
     parse_args(nodeinfo, surface_params["surface_input_args"])
     fruitsurface = nw.new_node(
-        surfacelib[surface_params["surface_name"]](**surface_params["surface_func_args"]).name,
+        surfacelib[surface_params["surface_name"]](
+            **surface_params["surface_func_args"]
+        ).name,
         input_kwargs=surface_params["surface_input_args"],
     )
     nodeinfo["fruitsurface"] = fruitsurface
@@ -113,11 +128,18 @@ def general_fruit_geometry_nodes(nw: NodeWrangler, cross_section_params, shape_p
     nodeinfo["stem"] = stem
     parse_args(nodeinfo, stem_params["stem_output_args"])
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [fruitsurface, stem]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [fruitsurface, stem]}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry}
+    )
 
-    align = nw.new_node(nodegroup_align_top_to_horizon().name, input_kwargs={"Geometry": realize_instances})
+    align = nw.new_node(
+        nodegroup_align_top_to_horizon().name,
+        input_kwargs={"Geometry": realize_instances},
+    )
 
     output_dict = {"Geometry": align}
     output_dict.update(cross_section_params["cross_section_output_args"])
@@ -158,12 +180,18 @@ class FruitFactoryGeneralFruit(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=4, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=4,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         with FixedSeed(self.factory_seed):
-            cross_section_params, shape_params, surface_params, stem_params = self.sample_geo_genome()
+            cross_section_params, shape_params, surface_params, stem_params = (
+                self.sample_geo_genome()
+            )
 
         scale_multiplier = surface_params["scale_multiplier"]
 
@@ -178,7 +206,12 @@ class FruitFactoryGeneralFruit(AssetFactory):
             general_fruit_geometry_nodes,
             attributes=output_list,
             apply=False,
-            input_args=[cross_section_params, shape_params, surface_params, stem_params],
+            input_args=[
+                cross_section_params,
+                shape_params,
+                surface_params,
+                stem_params,
+            ],
         )
 
         bpy.ops.object.convert(target="MESH")

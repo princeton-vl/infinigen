@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from functools import cached_property
 from statistics import mean
 
@@ -23,9 +23,17 @@ from infinigen.core.util.math import FixedSeed
 class FruitCover:
     def __init__(self, factory_seed=0):
         with FixedSeed(factory_seed):
-            fruit_factory_fns = list(subclasses(FruitFactoryGeneralFruit).difference([FruitFactoryGeneralFruit]))
-            fruit_factory_fn = make_normalized_factory(np.random.choice(fruit_factory_fns))
-            self.col = make_asset_collection(fruit_factory_fn(np.random.randint(1e5)), name="fruit", n=5)
+            fruit_factory_fns = list(
+                subclasses(FruitFactoryGeneralFruit).difference(
+                    [FruitFactoryGeneralFruit]
+                )
+            )
+            fruit_factory_fn = make_normalized_factory(
+                np.random.choice(fruit_factory_fns)
+            )
+            self.col = make_asset_collection(
+                fruit_factory_fn(np.random.randint(1e5)), name="fruit", n=5
+            )
             self.dimension = mean(mean(o.dimensions) for o in self.col.objects)
             self.shrink_rate = max(self.dimension, 2.0)
 

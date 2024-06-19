@@ -5,13 +5,10 @@
 
 
 from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_simple_white(nw: NodeWrangler):
@@ -36,12 +33,20 @@ def shader_simple_white(nw: NodeWrangler):
         input_kwargs={"Value": noise(), 3: U(0.1, 0.8), 4: U(0.1, 0.8)},
     )
     v = U(0.7, 1.0)
-    base_color = (v * (1.0 + N(0, 0.05)), v * (1.0 + N(0, 0.05)), v * (1.0 + N(0, 0.05)), 1.0)
+    base_color = (
+        v * (1.0 + N(0, 0.05)),
+        v * (1.0 + N(0, 0.05)),
+        v * (1.0 + N(0, 0.05)),
+        1.0,
+    )
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": base_color, "Roughness": rough.outputs["Result"]}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": base_color, "Roughness": rough.outputs["Result"]},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

@@ -14,7 +14,7 @@ from infinigen.assets.utils.object import new_icosphere
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 class TubeBaseCoralFactory(BaseCoralFactory):
@@ -28,7 +28,9 @@ class TubeBaseCoralFactory(BaseCoralFactory):
         obj = new_icosphere(subdivisions=2)
         obj.name = "tube_coral"
         surface.add_geomod(obj, self.geo_coral_tube, apply=True)
-        butil.modify_mesh(obj, "BEVEL", True, offset_type="PERCENT", width_pct=10, segments=1)
+        butil.modify_mesh(
+            obj, "BEVEL", True, offset_type="PERCENT", width_pct=10, segments=1
+        )
         butil.modify_mesh(obj, "SOLIDIFY", True, thickness=0.05)
         butil.modify_mesh(obj, "SUBSURF", True, levels=2, render_levels=2)
         butil.modify_mesh(
@@ -53,18 +55,24 @@ class TubeBaseCoralFactory(BaseCoralFactory):
         face_perturb = 0.4
         growth_prob = 0.75
         seed = np.random.randint(1e3)
-        ico_sphere = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        ico_sphere = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         perturbed_ico_sphere = nw.new_node(
             Nodes.SetPosition,
             input_kwargs={
                 "Geometry": ico_sphere,
-                "Offset": nw.uniform([-ico_sphere_perturb] * 3, [ico_sphere_perturb] * 3, seed),
+                "Offset": nw.uniform(
+                    [-ico_sphere_perturb] * 3, [ico_sphere_perturb] * 3, seed
+                ),
             },
         )
         mesh = nw.new_node(Nodes.DualMesh, input_kwargs={"Mesh": perturbed_ico_sphere})
         normal = nw.new_node(Nodes.InputNormal)
         top = nw.boolean_math(
-            "AND", nw.compare_direction("LESS_THAN", normal, (0, 0, 1), angles[0]), nw.bernoulli(growth_prob, seed)
+            "AND",
+            nw.compare_direction("LESS_THAN", normal, (0, 0, 1), angles[0]),
+            nw.bernoulli(growth_prob, seed),
         )
 
         for i, (angle, scale) in enumerate(zip(angles, scales)):
@@ -82,12 +90,22 @@ class TubeBaseCoralFactory(BaseCoralFactory):
             )
             mesh, top = nw.new_node(
                 Nodes.ExtrudeMesh,
-                input_kwargs={"Mesh": mesh, "Selection": top, "Offset": direction, "Offset Scale": length},
+                input_kwargs={
+                    "Mesh": mesh,
+                    "Selection": top,
+                    "Offset": direction,
+                    "Offset Scale": length,
+                },
             ).outputs[:2]
-            mesh = nw.new_node(Nodes.ScaleElements, input_kwargs={"Geometry": mesh, "Selection": top, "Scale": scale})
+            mesh = nw.new_node(
+                Nodes.ScaleElements,
+                input_kwargs={"Geometry": mesh, "Selection": top, "Scale": scale},
+            )
 
         geometry_without_top = nw.new_node(
-            Nodes.DeleteGeometry, input_kwargs={"Geometry": mesh, "Selection": top}, attrs={"domain": "FACE"}
+            Nodes.DeleteGeometry,
+            input_kwargs={"Geometry": mesh, "Selection": top},
+            attrs={"domain": "FACE"},
         )
 
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry_without_top})

@@ -4,7 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
 from collections import defaultdict
 
 import bpy
@@ -12,12 +11,24 @@ import gin
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.creatures.parts.crustacean.antenna import LobsterAntennaFactory, SpinyLobsterAntennaFactory
-from infinigen.assets.creatures.parts.crustacean.body import CrabBodyFactory, LobsterBodyFactory
-from infinigen.assets.creatures.parts.crustacean.claw import CrabClawFactory, LobsterClawFactory
+from infinigen.assets.creatures.parts.crustacean.antenna import (
+    LobsterAntennaFactory,
+    SpinyLobsterAntennaFactory,
+)
+from infinigen.assets.creatures.parts.crustacean.body import (
+    CrabBodyFactory,
+    LobsterBodyFactory,
+)
+from infinigen.assets.creatures.parts.crustacean.claw import (
+    CrabClawFactory,
+    LobsterClawFactory,
+)
 from infinigen.assets.creatures.parts.crustacean.eye import CrustaceanEyeFactory
 from infinigen.assets.creatures.parts.crustacean.fin import CrustaceanFinFactory
-from infinigen.assets.creatures.parts.crustacean.leg import CrabLegFactory, LobsterLegFactory
+from infinigen.assets.creatures.parts.crustacean.leg import (
+    CrabLegFactory,
+    LobsterLegFactory,
+)
 from infinigen.assets.creatures.parts.crustacean.tail import CrustaceanTailFactory
 from infinigen.assets.creatures.util.creature import genome_to_creature
 from infinigen.assets.creatures.util.genome import CreatureGenome, Joint, attach, part
@@ -52,7 +63,9 @@ def crustacean_genome(sp):
     shared_leg_params = ["bottom_flat", "bottom_cutoff"]
     leg_fn = sp["leg_fn"]
     leg_params = {k: v for k, v in leg_fn().params.items() if k in shared_leg_params}
-    leg_fac = [leg_fn({**leg_params, "x_length": leg_x_lengths[i]}) for i in range(n_legs)]
+    leg_fac = [
+        leg_fn({**leg_params, "x_length": leg_x_lengths[i]}) for i in range(n_legs)
+    ]
     for i in range(n_legs):
         for side in [1, -1]:
             attach(
@@ -69,12 +82,23 @@ def crustacean_genome(sp):
 
     for side in [1, -1]:
         attach(
-            part(claw_fac), obj, (x_legs[0] + sp["x_claw_offset"], claw_angle, 0.99), Joint(sp["claw_joint"]), side=side
+            part(claw_fac),
+            obj,
+            (x_legs[0] + sp["x_claw_offset"], claw_angle, 0.99),
+            Joint(sp["claw_joint"]),
+            side=side,
         )
     # Add tails
     tail_fac = sp["tail_fn"]
     if tail_fac is not None:
-        shared_params = ["bottom_shift", "bottom_cutoff", "top_shift", "top_cutoff", "y_length", "z_length"]
+        shared_params = [
+            "bottom_shift",
+            "bottom_cutoff",
+            "top_shift",
+            "top_cutoff",
+            "y_length",
+            "z_length",
+        ]
         tail_fac = tail_fac(
             {
                 **{k: v for k, v in body_fac.params.items() if k in shared_params},
@@ -90,7 +114,9 @@ def crustacean_genome(sp):
             fin_joints_x, fin_joints_y, fin_joints_z = sp["fin_joints"]
             fin_x_length = sp["fin_x_length"](body_fac.params)
             fin_x_lengths = np.sort(uniform(0.6, 1, 4))[::-1] * fin_x_length
-            fin_fac = [fin_fn({"x_length": fin_x_lengths[i]}) for i in range(n_side_fin + 1)]
+            fin_fac = [
+                fin_fn({"x_length": fin_x_lengths[i]}) for i in range(n_side_fin + 1)
+            ]
 
             for i in range(n_side_fin):
                 for side in [1, -1]:
@@ -109,7 +135,13 @@ def crustacean_genome(sp):
     eye_joint_x, eye_joint_y, eye_joint_z = sp["eye_joint"]
     eye_fac = CrustaceanEyeFactory()
     for side in [1, -1]:
-        attach(part(eye_fac), obj, (x_eye, eye_angle, 0.99), Joint((eye_joint_x, eye_joint_y, eye_joint_z)), side=side)
+        attach(
+            part(eye_fac),
+            obj,
+            (x_eye, eye_angle, 0.99),
+            Joint((eye_joint_x, eye_joint_y, eye_joint_z)),
+            side=side,
+        )
     # Add antenna
     antenna_fn = sp["antenna_fn"]
     if antenna_fn is not None:
@@ -117,7 +149,13 @@ def crustacean_genome(sp):
         antenna_angle = sp["antenna_angle"]
         antenna_fac = antenna_fn({"x_length": sp["antenna_x_length"](body_fac.params)})
         for side in [1, -1]:
-            attach(part(antenna_fac), obj, (x_antenna, antenna_angle, 0.99), Joint(sp["antenna_joint"]), side=side)
+            attach(
+                part(antenna_fac),
+                obj,
+                (x_antenna, antenna_angle, 0.99),
+                Joint(sp["antenna_joint"]),
+                side=side,
+            )
 
     anim_params = {k: v for k, v in sp.items() if "curl" in k or "rot" in k}
     anim_params["freq"] = sp["freq"]
@@ -135,9 +173,13 @@ def build_base_hue():
 def shader_crustacean(nw: NodeWrangler, params):
     value_shift = log_uniform(2, 10)
     base_hue = params["base_hue"]
-    bright_color = hsv2rgba(base_hue, uniform(0.8, 1.0), log_uniform(0.02, 0.05) * value_shift)
+    bright_color = hsv2rgba(
+        base_hue, uniform(0.8, 1.0), log_uniform(0.02, 0.05) * value_shift
+    )
     dark_color = hsv2rgba(
-        (base_hue + uniform(-0.05, 0.05)) % 1, uniform(0.8, 1.0), log_uniform(0.01, 0.02) * value_shift
+        (base_hue + uniform(-0.05, 0.05)) % 1,
+        uniform(0.8, 1.0),
+        log_uniform(0.01, 0.02) * value_shift,
     )
     light_color = hsv2rgba(base_hue, uniform(0.0, 0.4), log_uniform(0.2, 1.0))
     specular = uniform(0.6, 0.8)
@@ -165,7 +207,9 @@ def shader_crustacean(nw: NodeWrangler, params):
         [0.0, 0.3, 0.7, 1.0],
         [bright_color, bright_color, dark_color, dark_color],
     )
-    ratio = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "ratio"}).outputs["Fac"]
+    ratio = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "ratio"}).outputs[
+        "Fac"
+    ]
     color = nw.new_node(Nodes.MixRGB, [ratio, light_color, color])
     bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
@@ -182,12 +226,18 @@ def shader_crustacean(nw: NodeWrangler, params):
 
 
 def shader_eye(nw: NodeWrangler):
-    return nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.1, 0.1, 0.1, 1), "Specular": 0})
+    return nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.1, 0.1, 0.1, 1), "Specular": 0},
+    )
 
 
 def crustacean_postprocessing(body_parts, extras, params):
     tag_list = ["body", "claw", "leg"]
-    materials = [shaderfunc_to_material(shader_crustacean, params["material"]) for _, t in enumerate(tag_list)]
+    materials = [
+        shaderfunc_to_material(shader_crustacean, params["material"])
+        for _, t in enumerate(tag_list)
+    ]
     tag_list.append("eye")
     materials.append(shaderfunc_to_material(shader_eye))
     assign_material(body_parts + extras, materials)
@@ -233,7 +283,9 @@ class CrustaceanFactory(AssetFactory):
 
     def create_asset(self, i, animate=True, rigging=True, cloth=False, **kwargs):
         genome = crustacean_genome(self.species_params[self.species]())
-        root, parts = genome_to_creature(genome, name=f"crustacean({self.factory_seed}, {i})")
+        root, parts = genome_to_creature(
+            genome, name=f"crustacean({self.factory_seed}, {i})"
+        )
         for p in parts:
             if p.obj.name.split("=")[-1] == "CrustaceanEyeFactor":
                 assign_material(p.obj, shaderfunc_to_material(shader_eye))
@@ -267,12 +319,16 @@ class CrustaceanFactory(AssetFactory):
             "tail_x_length": lambda p: 0,
             "antenna_x_length": lambda p: 0,
             "fin_x_length": lambda p: 0,
-            "x_legs": (np.linspace(uniform(0.08, 0.1), uniform(0.55, 0.6), n_limbs) + np.arange(n_limbs) * 0.02)[::-1],
+            "x_legs": (
+                np.linspace(uniform(0.08, 0.1), uniform(0.55, 0.6), n_limbs)
+                + np.arange(n_limbs) * 0.02
+            )[::-1],
             "leg_angle": uniform(0.42, 0.44),
             "leg_joint": (
                 np.sort(uniform(-5, 5, n_legs))[:: 1 if uniform(0, 1) > 0.5 else -1],
                 np.sort(uniform(0, 10, n_legs)),
-                np.sort(uniform(65, 105, n_legs) + uniform(-8, 8)) + np.arange(n_legs) * 2,
+                np.sort(uniform(65, 105, n_legs) + uniform(-8, 8))
+                + np.arange(n_legs) * 2,
             ),
             "x_claw_offset": uniform(0.08, 0.1),
             "claw_angle": uniform(0.44, 0.46),
@@ -286,7 +342,11 @@ class CrustaceanFactory(AssetFactory):
             "x_fins": 0,
             "fin_joints": ([0] * n_side_fin, [0] * n_side_fin, [0] * n_side_fin),
             "leg_rot": (uniform(np.pi * 0.8, np.pi * 1.1), 0, 0),
-            "leg_curl": ((-np.pi * 1.1, -np.pi * 0.7), 0, (base_leg_curl - np.pi * 0.02, base_leg_curl + np.pi * 0.02)),
+            "leg_curl": (
+                (-np.pi * 1.1, -np.pi * 0.7),
+                0,
+                (base_leg_curl - np.pi * 0.02, base_leg_curl + np.pi * 0.02),
+            ),
             "claw_curl": ((-np.pi * 0.2, np.pi * 0.1), 0, (-np.pi * 0.1, np.pi * 0.1)),
             "claw_lower_curl": ((-np.pi * 0.1, np.pi * 0.1), 0, 0),
             "tail_curl": (0, 0, 0),
@@ -309,7 +369,10 @@ class CrustaceanFactory(AssetFactory):
             "tail_x_length": lambda p: p["x_length"] * log_uniform(1.2, 1.8),
             "antenna_x_length": lambda p: p["x_length"] * log_uniform(1.6, 3.0),
             "fin_x_length": lambda p: p["y_length"] * log_uniform(1.2, 2.5),
-            "x_legs": (np.linspace(0.05, uniform(0.2, 0.25), n_limbs) + np.arange(n_limbs) * 0.02)[::-1],
+            "x_legs": (
+                np.linspace(0.05, uniform(0.2, 0.25), n_limbs)
+                + np.arange(n_limbs) * 0.02
+            )[::-1],
             "leg_angle": uniform(0.3, 0.35),
             "leg_joint": (
                 uniform(-5, 5, n_legs),
@@ -327,12 +390,18 @@ class CrustaceanFactory(AssetFactory):
             "antenna_joint": (uniform(70, 110), uniform(-40, -30), uniform(20, 40)),
             "x_fins": np.sort(uniform(0.85, 0.95, n_side_fin)),
             "fin_joints": (
-                np.sort(uniform(0, 30, n_side_fin))[:: 1 if uniform(0, 1) < 0.5 else -1],
+                np.sort(uniform(0, 30, n_side_fin))[
+                    :: 1 if uniform(0, 1) < 0.5 else -1
+                ],
                 [0] * n_side_fin,
                 np.sort(uniform(10, 30, n_side_fin)),
             ),
             "leg_rot": (uniform(np.pi * 0.8, np.pi * 1.1), 0, 0),
-            "leg_curl": ((-np.pi * 1.1, -np.pi * 0.7), 0, (base_leg_curl - np.pi * 0.02, base_leg_curl + np.pi * 0.02)),
+            "leg_curl": (
+                (-np.pi * 1.1, -np.pi * 0.7),
+                0,
+                (base_leg_curl - np.pi * 0.02, base_leg_curl + np.pi * 0.02),
+            ),
             "claw_curl": ((-np.pi * 0.1, np.pi * 0.2), 0, 0),
             "claw_lower_curl": ((-np.pi * 0.1, np.pi * 0.1), 0, 0),
             "tail_curl": ((-np.pi * 0.6, 0), 0, 0),

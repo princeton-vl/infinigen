@@ -4,18 +4,14 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_simple_tube_v2
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_dragonfly_mouth", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_dragonfly_mouth", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_dragonfly_mouth(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -107,7 +103,8 @@ def nodegroup_dragonfly_mouth(nw: NodeWrangler):
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_1, transform, transform_2, transform_4]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_1, transform, transform_2, transform_4]},
     )
 
     transform_3 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": join_geometry})
@@ -116,16 +113,25 @@ def nodegroup_dragonfly_mouth(nw: NodeWrangler):
 
     noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 0.5})
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 4: 0.3})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": noise_texture.outputs["Fac"], 4: 0.3}
+    )
 
     scale = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: normal, "Scale": map_range.outputs["Result"]}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: normal, "Scale": map_range.outputs["Result"]},
+        attrs={"operation": "SCALE"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": transform_3, "Offset": scale.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": transform_3, "Offset": scale.outputs["Vector"]},
     )
 
-    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": set_position, "Level": 2})
+    subdivision_surface = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": set_position, "Level": 2}
+    )
 
-    group_output_1 = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": subdivision_surface})
+    group_output_1 = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": subdivision_surface}
+    )

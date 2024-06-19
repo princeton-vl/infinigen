@@ -5,15 +5,12 @@
 # Authors: Alexander Raistrick
 
 import importlib
-import pdb
 from pathlib import Path
 
-import bpy
 import gin
 
 from infinigen.core import init, surface
 from infinigen.core.constraints.example_solver.room import constants
-from infinigen.core.util import blender as butil
 from infinigen.core.util import math as mutil
 
 
@@ -51,5 +48,9 @@ def load_txt_list(path: Path, skip_sharp=True):
         raise FileNotFoundError(f"{path=} resolved to {pathabs=} which does not exist")
 
     res = pathabs.read_text().splitlines()
-    res = [f.lstrip("#").lstrip(" ") for f in res if (not f.startswith("#") or not skip_sharp) and len(f) > 0]
+    res = [
+        f.lstrip("#").lstrip(" ")
+        for f in res
+        if (not f.startswith("#") or not skip_sharp) and len(f) > 0
+    ]
     return res

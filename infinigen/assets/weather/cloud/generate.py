@@ -9,11 +9,17 @@ import gin
 import numpy as np
 
 from infinigen.assets.utils.object import new_cube
-from infinigen.assets.weather.cloud.cloud import Altocumulus, Cumulonimbus, Cumulus, Stratocumulus, create_3d_grid
+from infinigen.assets.weather.cloud.cloud import (
+    Altocumulus,
+    Cumulonimbus,
+    Cumulus,
+    Stratocumulus,
+    create_3d_grid,
+)
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general as rg
@@ -60,7 +66,10 @@ class CloudFactory(AssetFactory):
             Altocumulus: [16, 64],
         }
         scale_resolution = 4
-        self.resolutions = {k: (scale_resolution * u, scale_resolution * v) for k, (u, v) in self.resolutions.items()}
+        self.resolutions = {
+            k: (scale_resolution * u, scale_resolution * v)
+            for k, (u, v) in self.resolutions.items()
+        }
 
         self.min_distance = 256 if self.cloudy else 64
         self.dome_radius = 1024 if self.cloudy else 256
@@ -76,7 +85,12 @@ class CloudFactory(AssetFactory):
             obj,
             self.geo_dome,
             apply=True,
-            input_args=[self.dome_radius, self.dome_threshold, self.density_range, self.min_distance],
+            input_args=[
+                self.dome_radius,
+                self.dome_threshold,
+                self.density_range,
+                self.min_distance,
+            ],
         )
 
         locations = np.array([obj.matrix_world @ v.co for v in obj.data.vertices])
@@ -207,7 +221,9 @@ class CumulonimbusFactory(CloudFactory):
         steps=128,
     ):
         self.cloud_types = [Cumulonimbus]
-        super(CumulonimbusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
+        super(CumulonimbusFactory, self).__init__(
+            factory_seed, coarse, max_distance, steps
+        )
         self.cloud_types = [Cumulonimbus]
 
 
@@ -233,7 +249,9 @@ class StratocumulusFactory(CloudFactory):
         steps=128,
     ):
         self.cloud_types = [Stratocumulus]
-        super(StratocumulusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
+        super(StratocumulusFactory, self).__init__(
+            factory_seed, coarse, max_distance, steps
+        )
         self.cloud_types = [Stratocumulus]
 
 
@@ -246,5 +264,7 @@ class AltocumulusFactory(CloudFactory):
         steps=128,
     ):
         self.cloud_types = [Altocumulus]
-        super(AltocumulusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
+        super(AltocumulusFactory, self).__init__(
+            factory_seed, coarse, max_distance, steps
+        )
         self.cloud_types = [Altocumulus]

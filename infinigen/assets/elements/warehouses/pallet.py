@@ -9,7 +9,6 @@ from numpy.random import uniform
 from infinigen.assets.materials import wood
 from infinigen.assets.utils.decorate import read_normal
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube
-from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -32,7 +31,11 @@ class PalletFactory(AssetFactory):
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         bbox = new_bbox(0, self.width, 0, self.depth, 0, self.height)
         write_attr_data(
-            bbox, f"{PREFIX}{t.Subpart.SupportSurface.value}", read_normal(bbox)[:, -1] > 0.5, "INT", "FACE"
+            bbox,
+            f"{PREFIX}{t.Subpart.SupportSurface.value}",
+            read_normal(bbox)[:, -1] > 0.5,
+            "INT",
+            "FACE",
         )
         return bbox
 
@@ -55,7 +58,17 @@ class PalletFactory(AssetFactory):
         butil.apply_transform(obj, True)
         obj.scale = self.tile_width / 2, self.depth / 2, self.thickness / 2
         butil.apply_transform(obj)
-        count = int(np.floor((self.width - self.tile_width) / self.tile_width / self.tile_slackness) / 2) * 2
+        count = (
+            int(
+                np.floor(
+                    (self.width - self.tile_width)
+                    / self.tile_width
+                    / self.tile_slackness
+                )
+                / 2
+            )
+            * 2
+        )
         butil.modify_mesh(
             obj,
             "ARRAY",
@@ -72,7 +85,17 @@ class PalletFactory(AssetFactory):
         butil.apply_transform(obj, True)
         obj.scale = self.width / 2, self.tile_width / 2, self.thickness / 2
         butil.apply_transform(obj)
-        count = int(np.floor((self.depth - self.tile_width) / self.tile_width / self.tile_slackness) / 2) * 2
+        count = (
+            int(
+                np.floor(
+                    (self.depth - self.tile_width)
+                    / self.tile_width
+                    / self.tile_slackness
+                )
+                / 2
+            )
+            * 2
+        )
         butil.modify_mesh(
             obj,
             "ARRAY",
@@ -87,7 +110,11 @@ class PalletFactory(AssetFactory):
         obj = new_cube()
         obj.location = 1, 1, 1
         butil.apply_transform(obj, True)
-        obj.scale = self.tile_width / 2, self.tile_width / 2, self.height / 2 - 2 * self.thickness
+        obj.scale = (
+            self.tile_width / 2,
+            self.tile_width / 2,
+            self.height / 2 - 2 * self.thickness,
+        )
         butil.apply_transform(obj)
         butil.modify_mesh(
             obj,

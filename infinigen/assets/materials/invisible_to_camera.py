@@ -5,13 +5,9 @@
 # Authors: Alexander Raistrick
 
 import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_invisible(nw: NodeWrangler):
@@ -19,17 +15,25 @@ def shader_invisible(nw: NodeWrangler):
 
     light_path = nw.new_node(Nodes.LightPath)
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Roughness": 0.7697})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Roughness": 0.7697}
+    )
 
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF)
 
     mix_shader = nw.new_node(
         Nodes.MixShader,
-        input_kwargs={"Fac": light_path.outputs["Is Camera Ray"], 1: principled_bsdf, 2: transparent_bsdf},
+        input_kwargs={
+            "Fac": light_path.outputs["Is Camera Ray"],
+            1: principled_bsdf,
+            2: transparent_bsdf,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": mix_shader},
+        attrs={"is_active_output": True},
     )
 
 

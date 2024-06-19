@@ -4,10 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
-import bpy
-import mathutils
 import numpy as np
 from numpy.random import uniform as U
 
@@ -19,7 +15,9 @@ from infinigen.core.placement.instance_scatter import scatter_instances
 def apply(obj, scale=1, density=2e3, n=3, selection=None):
     n_species = np.random.randint(2, 3)
     factories = [PineNeedleFactory(np.random.randint(1e5)) for i in range(n_species)]
-    pine_needle = make_asset_collection(factories, weights=U(0.5, 1, len(factories)), n=n, verbose=True)
+    pine_needle = make_asset_collection(
+        factories, weights=U(0.5, 1, len(factories)), n=n, verbose=True
+    )
 
     d = np.deg2rad(U(5, 15))
     scatter_obj = scatter_instances(

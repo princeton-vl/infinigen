@@ -2,15 +2,9 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-import numpy as np
 
-from infinigen.assets.clothes import blanket
-from infinigen.assets.materials import ceramic, fabrics, metal
-from infinigen.assets.materials.woods import wood
-from infinigen.assets.scatters.clothes import ClothesCover
 from infinigen.assets.seating import ChairFactory
 from infinigen.assets.tableware import FruitContainerFactory, PanFactory, PotFactory
-from infinigen.core.surface import NoApply
 
 parameters = {
     "ChairFactory": {
@@ -33,7 +27,10 @@ parameters = {
         "scene_idx": 4,
     },
     "PanFactory": {
-        "factories": [PanFactory] * 8 + [PanFactory] * 2 + [PotFactory] * 3 + [FruitContainerFactory] * 3,
+        "factories": [PanFactory] * 8
+        + [PanFactory] * 2
+        + [PotFactory] * 3
+        + [FruitContainerFactory] * 3,
         "globals": {},
         "individuals": [
             {},

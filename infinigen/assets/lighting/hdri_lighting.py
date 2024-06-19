@@ -23,11 +23,19 @@ def hdri_lighting(
 ):
     suffixes = [f for f in os.listdir(HDRI_RESOURCES) if f.endswith(".exr")]
     suffix = np.random.choice(suffixes)
-    image = bpy.data.images.load(filepath=f"{HDRI_RESOURCES}/{suffix}", check_existing=True)
+    image = bpy.data.images.load(
+        filepath=f"{HDRI_RESOURCES}/{suffix}", check_existing=True
+    )
     texture_coord = nw.new_node(Nodes.TextureCoord)
-    coord = nw.new_node(Nodes.Mapping, [texture_coord], input_kwargs={"Rotation": (0, 0, uniform(np.pi * 2))})
+    coord = nw.new_node(
+        Nodes.Mapping,
+        [texture_coord],
+        input_kwargs={"Rotation": (0, 0, uniform(np.pi * 2))},
+    )
     texture = nw.new_node(Nodes.EnvironmentTexture, [coord], attrs={"image": image})
-    return nw.new_node(Nodes.Background, input_kwargs={"Color": texture, "Strength": rg(strength)})
+    return nw.new_node(
+        Nodes.Background, input_kwargs={"Color": texture, "Strength": rg(strength)}
+    )
 
 
 def add_lighting():

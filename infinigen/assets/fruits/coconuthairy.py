@@ -4,19 +4,11 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 class FruitFactoryCoconuthairy(FruitFactoryGeneralFruit):
@@ -29,7 +21,9 @@ class FruitFactoryCoconuthairy(FruitFactoryGeneralFruit):
 
         return {
             "cross_section_name": "coconut_cross_section",
-            "cross_section_func_args": {"control_points": [(0.0, rad_small), (0.1, rad_small), (1.0, 0.76)]},
+            "cross_section_func_args": {
+                "control_points": [(0.0, rad_small), (0.1, rad_small), (1.0, 0.76)]
+            },
             "cross_section_input_args": {
                 "random seed": uniform(-100, 100),
                 "radius": normal(1.8, 0.1),
@@ -82,4 +76,9 @@ class FruitFactoryCoconuthairy(FruitFactoryGeneralFruit):
         }
 
     def sample_stem_params(self):
-        return {"stem_name": "empty_stem", "stem_func_args": {}, "stem_input_args": {}, "stem_output_args": {}}
+        return {
+            "stem_name": "empty_stem",
+            "stem_func_args": {},
+            "stem_input_args": {},
+            "stem_output_args": {},
+        }

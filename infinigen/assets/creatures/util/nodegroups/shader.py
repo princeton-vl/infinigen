@@ -4,19 +4,16 @@
 # Authors: Mingzhe Wang and Alexander Raistrick
 
 
-import bpy
-import mathutils
 from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_norm_local_pos", singleton=True, type="ShaderNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_norm_local_pos", singleton=True, type="ShaderNodeTree"
+)
 def nodegroup_norm_local_pos(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -25,12 +22,18 @@ def nodegroup_norm_local_pos(nw: NodeWrangler):
     attribute_6 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "skeleton_rad"})
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: attribute_6.outputs["Fac"], 1: -1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: attribute_6.outputs["Fac"], 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply, "Z": multiply})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply, "Z": multiply}
+    )
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "X Max", 1.0)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "X Max", 1.0)]
+    )
 
     combine_xyz_1 = nw.new_node(
         Nodes.CombineXYZ,
@@ -43,29 +46,49 @@ def nodegroup_norm_local_pos(nw: NodeWrangler):
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Vector": attribute_5.outputs["Vector"], 7: combine_xyz_2, 8: combine_xyz_1},
+        input_kwargs={
+            "Vector": attribute_5.outputs["Vector"],
+            7: combine_xyz_2,
+            8: combine_xyz_1,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": map_range_1.outputs["Vector"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vector": map_range_1.outputs["Vector"]}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_abs_y", singleton=True, type="ShaderNodeTree")
 def nodegroup_abs_y(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketVector", "Vector", (0.0, 0.0, 0.0))])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketVector", "Vector", (0.0, 0.0, 0.0))]
+    )
 
-    separate_xyz_4 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]})
+    separate_xyz_4 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]}
+    )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_4.outputs["Y"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_4.outputs["Y"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
     combine_xyz_1 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": separate_xyz_4.outputs["X"], "Y": absolute, "Z": separate_xyz_4.outputs["Z"]},
+        input_kwargs={
+            "X": separate_xyz_4.outputs["X"],
+            "Y": absolute,
+            "Z": separate_xyz_4.outputs["Z"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": combine_xyz_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vector": combine_xyz_1}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_color_mask", singleton=False, type="ShaderNodeTree")
@@ -80,15 +103,25 @@ def nodegroup_color_mask(nw: NodeWrangler):
 
     attribute_5 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "local_pos"})
 
-    group_2 = nw.new_node(nodegroup_abs_y().name, input_kwargs={"Vector": attribute_5.outputs["Vector"]})
+    group_2 = nw.new_node(
+        nodegroup_abs_y().name, input_kwargs={"Vector": attribute_5.outputs["Vector"]}
+    )
 
     musgrave_texture = nw.new_node(
         Nodes.MusgraveTexture,
-        input_kwargs={"Vector": group_2, "W": U(1e4), "Scale": N(7, 1), "Detail": N(7, 1), "Dimension": U(1.5, 3)},
+        input_kwargs={
+            "Vector": group_2,
+            "W": U(1e4),
+            "Scale": N(7, 1),
+            "Detail": N(7, 1),
+            "Dimension": U(1.5, 3),
+        },
         attrs={"musgrave_dimensions": "4D"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: musgrave_texture, 1: 0.69999999999999996})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: musgrave_texture, 1: 0.69999999999999996}
+    )
 
     colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": add})
     colorramp_4.color_ramp.interpolation = "EASE"
@@ -101,7 +134,9 @@ def nodegroup_color_mask(nw: NodeWrangler):
 
     separate_xyz_4 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group})
 
-    colorramp_5 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_4.outputs["Z"]})
+    colorramp_5 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_4.outputs["Z"]}
+    )
     colorramp_5.color_ramp.interpolation = "EASE"
     colorramp_5.color_ramp.elements[0].position = 0.0
     colorramp_5.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -116,7 +151,11 @@ def nodegroup_color_mask(nw: NodeWrangler):
 
     mix_3 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": attribute_4.outputs["Fac"], "Color1": (1.0, 1.0, 1.0, 1.0), "Color2": multiply},
+        input_kwargs={
+            "Fac": attribute_4.outputs["Fac"],
+            "Color1": (1.0, 1.0, 1.0, 1.0),
+            "Color2": multiply,
+        },
     )
 
     noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": N(14, 2)})
@@ -131,18 +170,26 @@ def nodegroup_color_mask(nw: NodeWrangler):
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: group, 1: map_range_1.outputs["Vector"]})
+    add_1 = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: group, 1: map_range_1.outputs["Vector"]}
+    )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": add_1.outputs["Vector"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": add_1.outputs["Vector"]}
+    )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_2.outputs["X"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_2.outputs["X"]}
+    )
     colorramp_1.color_ramp.interpolation = "EASE"
     colorramp_1.color_ramp.elements[0].position = 0.3091
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = 0.9773
     colorramp_1.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_2.outputs["Y"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": separate_xyz_2.outputs["Y"]}
+    )
     colorramp_2.color_ramp.interpolation = "EASE"
     colorramp_2.color_ramp.elements[0].position = 0.0955
     colorramp_2.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
@@ -155,13 +202,24 @@ def nodegroup_color_mask(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: 1.0, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
-
-    mix_2 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": attribute_3.outputs["Fac"], "Color1": mix_3, "Color2": subtract}
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: 1.0, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": add_1.outputs["Vector"]})
+    mix_2 = nw.new_node(
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": attribute_3.outputs["Fac"],
+            "Color1": mix_3,
+            "Color2": subtract,
+        },
+    )
+
+    separate_xyz_3 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": add_1.outputs["Vector"]}
+    )
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_3.outputs["Z"]})
 
@@ -173,7 +231,11 @@ def nodegroup_color_mask(nw: NodeWrangler):
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": attribute_2.outputs["Fac"], "Color1": mix_2, "Color2": colorramp_3.outputs["Color"]},
+        input_kwargs={
+            "Fac": attribute_2.outputs["Fac"],
+            "Color1": mix_2,
+            "Color2": colorramp_3.outputs["Color"],
+        },
     )
 
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_1})
@@ -181,8 +243,15 @@ def nodegroup_color_mask(nw: NodeWrangler):
     colorramp.color_ramp.elements[0].position = 0.2727
     colorramp.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.6091
-    colorramp.color_ramp.elements[1].color = (0.78220000000000001, 0.78220000000000001, 0.78220000000000001, 1.0)
+    colorramp.color_ramp.elements[1].color = (
+        0.78220000000000001,
+        0.78220000000000001,
+        0.78220000000000001,
+        1.0,
+    )
     colorramp.color_ramp.elements[2].position = 0.9727
     colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Color": colorramp.outputs["Color"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Color": colorramp.outputs["Color"]}
+    )

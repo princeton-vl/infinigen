@@ -12,7 +12,7 @@ from infinigen.assets.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import color_category
 
@@ -20,13 +20,19 @@ from infinigen.core.util.color import color_category
 def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
     white_noise = nw.new_node(
-        Nodes.WhiteNoiseTexture, attrs={"noise_dimensions": "4D"}, input_kwargs={"Vector": (object_info, "Random")}
+        Nodes.WhiteNoiseTexture,
+        attrs={"noise_dimensions": "4D"},
+        input_kwargs={"Vector": (object_info, "Random")},
     )
-    mix_rgb = nw.new_node(Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(color_category("gem"))])
+    mix_rgb = nw.new_node(
+        Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(color_category("gem"))]
+    )
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, [mix_rgb])
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF, [mix_rgb])
     is_camera_ray = nw.new_node(Nodes.LightPath) if transparent_for_bounce else 1
-    mix_shader = nw.new_node(Nodes.MixShader, [is_camera_ray, transparent_bsdf, translucent_bsdf])
+    mix_shader = nw.new_node(
+        Nodes.MixShader, [is_camera_ray, transparent_bsdf, translucent_bsdf]
+    )
     nw.new_node(Nodes.MaterialOutput, [mix_shader])
 
 
@@ -36,13 +42,22 @@ class GlowingRocksFactory(AssetFactory):
         assert obj.type == "EMPTY", obj.type
         obj.rotation_euler[:] = np.random.uniform(-np.pi, np.pi, size=(3,))
 
-    def __init__(self, factory_seed, coarse=False, transparent_for_bounce=True, watt_power_range=(400, 800), **kwargs):
+    def __init__(
+        self,
+        factory_seed,
+        coarse=False,
+        transparent_for_bounce=True,
+        watt_power_range=(400, 800),
+        **kwargs,
+    ):
         super().__init__(factory_seed, coarse=coarse)
         if coarse:
             return
         self.watt_power_range = watt_power_range
         self.rock_collection = make_asset_collection(
-            BlenderRockFactory(np.random.randint(1e5), detail=1), name="glow_rock_base", n=5
+            BlenderRockFactory(np.random.randint(1e5), detail=1),
+            name="glow_rock_base",
+            n=5,
         )
 
         for o in self.rock_collection.objects:

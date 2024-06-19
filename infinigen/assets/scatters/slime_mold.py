@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import numpy as np
 from numpy.random import uniform
 
@@ -23,14 +21,21 @@ from infinigen.core.util.color import hsv2rgba
 
 
 def shader_mold(nw: NodeWrangler, base_hue):
-    bright_color = hsv2rgba((base_hue + uniform(-0.04, 0.04)) % 1, uniform(0.8, 1.0), 0.8)
+    bright_color = hsv2rgba(
+        (base_hue + uniform(-0.04, 0.04)) % 1, uniform(0.8, 1.0), 0.8
+    )
     dark_color = hsv2rgba(base_hue, uniform(0.4, 0.6), 0.2)
 
     color = build_color_ramp(
-        nw, nw.musgrave(10), [0.0, 0.3, 0.7, 1.0], [dark_color, dark_color, bright_color, bright_color]
+        nw,
+        nw.musgrave(10),
+        [0.0, 0.3, 0.7, 1.0],
+        [dark_color, dark_color, bright_color, bright_color],
     )
     roughness = 0.8
-    bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness})
+    bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness}
+    )
     return bsdf
 
 
@@ -40,17 +45,30 @@ class SlimeMold:
 
     def apply(self, obj, selection=None):
         scatter_obj = butil.spawn_vert("scatter:" + "slime_mold")
-        surface.add_geomod(scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection])
+        surface.add_geomod(
+            scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection]
+        )
         if len(scatter_obj.data.vertices) < 5:
             butil.delete(scatter_obj)
             return
 
-        end_index = lambda nw: nw.build_index_case(np.random.randint(0, len(scatter_obj.data.vertices), 40))
-        weight = lambda nw: nw.build_float_curve(
-            nw.new_node(Nodes.InputEdgeAngle).outputs["Signed Angle"], [(0, 0.25), (0.2, 0.4)]
-        )
+        def end_index(nw):
+            return nw.build_index_case(
+                np.random.randint(0, len(scatter_obj.data.vertices), 40)
+            )
 
-        surface.add_geomod(scatter_obj, geo_shortest_path, apply=True, input_args=[end_index, weight, 0.1, 0.02])
+        def weight(nw):
+            return nw.build_float_curve(
+                nw.new_node(Nodes.InputEdgeAngle).outputs["Signed Angle"],
+                [(0, 0.25), (0.2, 0.4)],
+            )
+
+        surface.add_geomod(
+            scatter_obj,
+            geo_shortest_path,
+            apply=True,
+            input_args=[end_index, weight, 0.1, 0.02],
+        )
         treeify(scatter_obj)
         surface.add_geomod(
             scatter_obj,
@@ -58,7 +76,8 @@ class SlimeMold:
             apply=True,
             input_args=[
                 lambda nw: nw.build_float_curve(
-                    nw.new_node(Nodes.NamedAttribute, ["spline_parameter"]), [(0, 0.008), (1, 0.015)]
+                    nw.new_node(Nodes.NamedAttribute, ["spline_parameter"]),
+                    [(0, 0.008), (1, 0.015)],
                 ),
                 6,
             ],

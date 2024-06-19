@@ -4,15 +4,12 @@
 
 # Authors: Alexander Raistrick
 
-from math import prod
 from pathlib import Path
 
 import bpy
-import gin
 import pytest
 
 from infinigen.core import tagging
-from infinigen.core import tags as t
 from infinigen.core.util import blender as butil
 from infinigen_examples.util.test_utils import import_item, load_txt_list, setup_gin
 
@@ -44,7 +41,9 @@ def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
                 # currently we allow unapplied non-modifiers for things like time-based deformation on
                 # seaweed etc. NODES and SUBSURF should still always be applied.
                 continue
-            raise ValueError(f"In {asset.name=} {o.name=} had unapplied modifier {mod.name=} {mod.type=} ")
+            raise ValueError(
+                f"In {asset.name=} {o.name=} had unapplied modifier {mod.name=} {mod.type=} "
+            )
 
         if o.type != "MESH":
             continue
@@ -53,12 +52,16 @@ def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
             raise ValueError(f"In {asset.name=} {o.name=} had {o.data=}")
 
         if len(o.data.vertices) <= 2:
-            raise ValueError(f"{asset.name=} had {len(o.data.vertices)} vertices, usually indicates failed operation")
+            raise ValueError(
+                f"{asset.name=} had {len(o.data.vertices)} vertices, usually indicates failed operation"
+            )
 
         if tagging.COMBINED_ATTR_NAME in o.data.attributes:
             attr = o.data.attributes[tagging.COMBINED_ATTR_NAME]
             if attr.domain != "FACE":
-                raise ValueError(f"In {asset.name=} had {attr.domain=} for {attr.name=}. Should be FACE")
+                raise ValueError(
+                    f"In {asset.name=} had {attr.domain=} for {attr.name=}. Should be FACE"
+                )
 
         # some objects like the older LeafFactory
         # if len(o.data.polygons) < 2:
@@ -72,14 +75,18 @@ def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
 
 
 @pytest.mark.nature
-@pytest.mark.parametrize("pathspec", load_txt_list(Path(__file__).parent / "list_nature_meshes.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list(Path(__file__).parent / "list_nature_meshes.txt")
+)
 def test_nature_factory_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_nature")
     fac_class = import_item(pathspec)
     check_factory_runs(fac_class, **kwargs)
 
 
-@pytest.mark.parametrize("pathspec", load_txt_list(Path(__file__).parent / "list_indoor_meshes.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list(Path(__file__).parent / "list_indoor_meshes.txt")
+)
 def test_indoor_factory_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_indoor")
     fac_class = import_item(pathspec)

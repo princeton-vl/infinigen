@@ -5,13 +5,11 @@
 # Authors: Alexander Raistrick
 
 import copy
-import functools
 import itertools
 import logging
 import typing
 
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.evaluator.domain_contains import objkeys_in_dom
 from infinigen.core.constraints.example_solver import state_def
@@ -45,7 +43,9 @@ def _resolve_toplevel_var(
     result = copy.deepcopy(dom)
     result.tags.remove(vartag)
     objkeys = objkeys_in_dom(result, state)
-    logger.debug(f"Found {len(objkeys)} valid assignments for {repr(vartag)} via {result} on ")
+    logger.debug(
+        f"Found {len(objkeys)} valid assignments for {repr(vartag)} via {result} on "
+    )
 
     # if the user says limit "room" to 3 and we are doing "room", apply the limit
     name_limit = limits.get(vartag, None)
@@ -136,14 +136,20 @@ def iterate_assignments(
     combined, *rest = doms_for_var
     for d in rest:
         combined = combined.intersection(d)
-    combined = copy.deepcopy(combined)  # prevents modification of original domain if it had the var
+    combined = copy.deepcopy(
+        combined
+    )  # prevents modification of original domain if it had the var
     combined.tags.remove(var)
     if not combined.intersects(combined):
-        raise ValueError(f"{iterate_assignments.__name__} with {var=} arrived at contradictory {combined=}")
+        raise ValueError(
+            f"{iterate_assignments.__name__} with {var=} arrived at contradictory {combined=}"
+        )
 
     candidates = sorted(objkeys_in_dom(combined, state))
 
-    candidates = [c for c in candidates if t.Semantics.NoChildren not in state.objs[c].tags]
+    candidates = [
+        c for c in candidates if t.Semantics.NoChildren not in state.objs[c].tags
+    ]
 
     i = None
     for i, objkey in enumerate(candidates):
@@ -151,7 +157,9 @@ def iterate_assignments(
         if limit is not None and i >= limits[var]:
             break
 
-        dom_objkey = r.domain_tag_substitute(copy.deepcopy(dom), var, combined.with_tags(t.SpecificObject(objkey)))
+        dom_objkey = r.domain_tag_substitute(
+            copy.deepcopy(dom), var, combined.with_tags(t.SpecificObject(objkey))
+        )
         rest_iter = iterate_assignments(
             dom_objkey,
             state,

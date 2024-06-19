@@ -17,7 +17,7 @@ cpu_regex = re.compile(".+/([0-9]+)[^/]+").fullmatch
 
 
 def sinfo():
-    sinfo_command = f"/usr/bin/sinfo --Node --format=%12N%22P%C%30G%10m --noheader"
+    sinfo_command = "/usr/bin/sinfo --Node --format=%12N%22P%C%30G%10m --noheader"
     while True:
         try:
             return subprocess.check_output(sinfo_command.split()).decode()
@@ -55,7 +55,9 @@ def nodes_with_gpus(*gpu_names):
     if len(gpu_names) == 0:
         return []
     _, node_type_lookup, _ = get_gpu_nodes()
-    return sorted(chain.from_iterable(node_type_lookup.get(n, set()) for n in gpu_names))
+    return sorted(
+        chain.from_iterable(node_type_lookup.get(n, set()) for n in gpu_names)
+    )
 
 
 if __name__ == "__main__":

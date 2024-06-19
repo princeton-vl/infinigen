@@ -6,12 +6,8 @@
 # -
 # - Alexander Raistrick: add point light
 
-import random
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
@@ -22,7 +18,6 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 
 from .indoor_lights import PointLampFactory
@@ -62,7 +57,9 @@ class CeilingLightFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.light_factory = PointLampFactory(factory_seed)
             self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            self.material_params, self.scratch, self.edge_wear = (
+                self.get_material_params()
+            )
 
         self.params.update(self.material_params)
         self.beveler = BevelSharp(mult=U(1, 3))
@@ -91,7 +88,9 @@ class CeilingLightFactory(AssetFactory):
 
     def sample_parameters(self, dimensions, use_default=False):
         if use_default:
-            return self.ceiling_light_default_params[RI(0, len(self.ceiling_light_default_params))]
+            return self.ceiling_light_default_params[
+                RI(0, len(self.ceiling_light_default_params))
+            ]
         else:
             Radius = clip_gaussian(0.12, 0.04, 0.1, 0.25)
             Thickness = U(0.005, 0.05)
@@ -112,7 +111,11 @@ class CeilingLightFactory(AssetFactory):
     def create_placeholder(self, i, **params):
         obj = butil.spawn_cube()
         butil.modify_mesh(
-            obj, "NODES", node_group=nodegroup_ceiling_light_geometry(), ng_inputs=self.params, apply=True
+            obj,
+            "NODES",
+            node_group=nodegroup_ceiling_light_geometry(),
+            ng_inputs=self.params,
+            apply=True,
         )
         return obj
 
@@ -134,7 +137,9 @@ class CeilingLightFactory(AssetFactory):
             self.edge_wear.apply(assets)
 
 
-@node_utils.to_nodegroup("nodegroup_ceiling_light_geometry", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_ceiling_light_geometry", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -153,7 +158,9 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -1.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Height"], 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
@@ -161,45 +168,69 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz})
 
     curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": 512, "Radius": group_input.outputs["Radius"]}
+        Nodes.CurveCircle,
+        input_kwargs={"Resolution": 512, "Radius": group_input.outputs["Radius"]},
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": curve_line, "Profile Curve": curve_circle.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": curve_line,
+            "Profile Curve": curve_circle.outputs["Curve"],
+        },
     )
 
     extrude_mesh = nw.new_node(
         Nodes.ExtrudeMesh,
-        input_kwargs={"Mesh": curve_to_mesh, "Offset Scale": group_input.outputs["Thickness"], "Individual": False},
+        input_kwargs={
+            "Mesh": curve_to_mesh,
+            "Offset Scale": group_input.outputs["Thickness"],
+            "Individual": False,
+        },
     )
 
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": curve_to_mesh})
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [extrude_mesh.outputs["Mesh"], flip_faces]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [extrude_mesh.outputs["Mesh"], flip_faces]},
     )
 
     set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth, input_kwargs={"Geometry": join_geometry, "Shade Smooth": False}
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": join_geometry, "Shade Smooth": False},
     )
 
     mesh_circle = nw.new_node(
-        Nodes.MeshCircle, input_kwargs={"Radius": group_input.outputs["Radius"]}, attrs={"fill_type": "NGON"}
+        Nodes.MeshCircle,
+        input_kwargs={"Radius": group_input.outputs["Radius"]},
+        attrs={"fill_type": "NGON"},
     )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_shade_smooth, mesh_circle]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_shade_smooth, mesh_circle]}
+    )
 
     set_material = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": join_geometry_1, "Material": group_input.outputs["BlackMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": join_geometry_1,
+            "Material": group_input.outputs["BlackMaterial"],
+        },
     )
 
     ico_sphere_1 = nw.new_node(
-        Nodes.MeshIcoSphere, input_kwargs={"Radius": group_input.outputs["InnerRadius"], "Subdivisions": 5}
+        Nodes.MeshIcoSphere,
+        input_kwargs={"Radius": group_input.outputs["InnerRadius"], "Subdivisions": 5},
     )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": ico_sphere_1.outputs["Mesh"], "Name": "UVMap", 3: ico_sphere_1.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": ico_sphere_1.outputs["Mesh"],
+            "Name": "UVMap",
+            3: ico_sphere_1.outputs["UV Map"],
+        },
         attrs={"domain": "CORNER", "data_type": "FLOAT_VECTOR"},
     )
 
@@ -208,21 +239,27 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_2})
 
     less_than = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["Z"], 1: 0.0010}, attrs={"operation": "LESS_THAN"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_2.outputs["Z"], 1: 0.0010},
+        attrs={"operation": "LESS_THAN"},
     )
 
     separate_geometry_1 = nw.new_node(
-        Nodes.SeparateGeometry, input_kwargs={"Geometry": store_named_attribute, "Selection": less_than}
+        Nodes.SeparateGeometry,
+        input_kwargs={"Geometry": store_named_attribute, "Selection": less_than},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["InnerHeight"], 1: -1.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["InnerHeight"], 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
 
     combine_xyz_3 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": 1.0000, "Z": group_input.outputs["Curvature"]}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": 1.0000, "Y": 1.0000, "Z": group_input.outputs["Curvature"]},
     )
 
     transform = nw.new_node(
@@ -236,24 +273,43 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
 
-    curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": (0.0000, 0.0000, -0.0010), "End": combine_xyz_1})
+    curve_line_1 = nw.new_node(
+        Nodes.CurveLine,
+        input_kwargs={"Start": (0.0000, 0.0000, -0.0010), "End": combine_xyz_1},
+    )
 
-    curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["InnerRadius"]})
+    curve_circle_1 = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["InnerRadius"]}
+    )
 
     curve_to_mesh_1 = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": curve_line_1, "Profile Curve": curve_circle_1.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": curve_line_1,
+            "Profile Curve": curve_circle_1.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, curve_to_mesh_1]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, curve_to_mesh_1]}
+    )
 
     set_material_1 = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": join_geometry_2, "Material": group_input.outputs["WhiteMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": join_geometry_2,
+            "Material": group_input.outputs["WhiteMaterial"],
+        },
     )
 
-    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]})
+    join_geometry_3 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
+    )
 
-    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": join_geometry_3})
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox, input_kwargs={"Geometry": join_geometry_3}
+    )
 
     vector = nw.new_node(Nodes.Vector)
     vector.vector = (0.0000, 0.0000, 0.0000)

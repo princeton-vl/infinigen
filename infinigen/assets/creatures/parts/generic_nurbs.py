@@ -4,19 +4,16 @@
 # Authors: Alexander Raistrick
 
 
-import pdb
 from pathlib import Path
 
 import bpy
 import numpy as np
 
 from infinigen.assets.creatures.util import part_util
-from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.genome import IKParams, Joint
 from infinigen.assets.creatures.util.geometry import lofting
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
 
@@ -61,19 +58,27 @@ def decompose_nurbs_handles(handles):
 def recompose_nurbs_handles(params):
     lens = params["length"] * params["proportions"]
     thetas = np.deg2rad(params["thetas"])
-    skeleton_offs = np.stack([lens * np.cos(thetas), lens * params["skeleton_yoffs"], lens * np.sin(thetas)], axis=-1)
+    skeleton_offs = np.stack(
+        [lens * np.cos(thetas), lens * params["skeleton_yoffs"], lens * np.sin(thetas)],
+        axis=-1,
+    )
     skeleton = np.concatenate([params["skeleton_root"], skeleton_offs], axis=0)
     skeleton = np.cumsum(skeleton, axis=0)
 
     handles = lofting.compute_profile_verts(
-        skeleton, params["ts"], params["profiles_norm"] * params["rads"], profile_as_points=True
+        skeleton,
+        params["ts"],
+        params["profiles_norm"] * params["rads"],
+        profile_as_points=True,
     )
 
     return handles
 
 
 class NurbsPart(PartFactory):
-    def __init__(self, params=None, prefix=None, tags=None, temperature=0.3, var=1, exps=None):
+    def __init__(
+        self, params=None, prefix=None, tags=None, temperature=0.3, var=1, exps=None
+    ):
         self.prefix = prefix
         self.tags = tags or []
         self.temperature = temperature
@@ -86,10 +91,15 @@ class NurbsPart(PartFactory):
             # for compatibility with interp which will not init prefix but does not need sample_params
             return {}  # TODO hacky, replace
 
-        N = lambda u, v, d=1: np.random.normal(u, np.array(v) * self.var, d)
+        def N(u, v, d=1):
+            return np.random.normal(u, np.array(v) * self.var, d)
 
-        target_keys = [k for k in NURBS_KEYS if self.prefix is None or k.startswith(self.prefix)]
-        weights = part_util.random_convex_coord(target_keys, select=select, temp=self.temperature)
+        target_keys = [
+            k for k in NURBS_KEYS if self.prefix is None or k.startswith(self.prefix)
+        ]
+        weights = part_util.random_convex_coord(
+            target_keys, select=select, temp=self.temperature
+        )
         if self.exps is not None:
             for k, exp in self.exps.items():
                 weights[k] = weights[k] ** exp
@@ -108,8 +118,12 @@ class NurbsPart(PartFactory):
 
         n, m, d = decomp["profiles_norm"].shape
         profile_noise = N(1, 0.07, (1, m, 1)) * N(1, 0.15, (n, m, 1))
-        profile_noise[:, : m // 2 - 1] = profile_noise[:, m // 2 : -1][:, ::-1]  # symmetrize noise
-        decomp["profiles_norm"] *= profile_noise  # profiles are 0-centered so multiplication is sensible
+        profile_noise[:, : m // 2 - 1] = profile_noise[:, m // 2 : -1][
+            :, ::-1
+        ]  # symmetrize noise
+        decomp["profiles_norm"] *= (
+            profile_noise  # profiles are 0-centered so multiplication is sensible
+        )
 
         return decomp
 
@@ -124,7 +138,14 @@ class NurbsPart(PartFactory):
 
 
 class NurbsBody(NurbsPart):
-    def __init__(self, *args, shoulder_ik_ts=[0.0, 0.6], n_bones=8, rig_reverse_skeleton=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        shoulder_ik_ts=[0.0, 0.6],
+        n_bones=8,
+        rig_reverse_skeleton=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.shoulder_ik_ts = shoulder_ik_ts
         self.n_bones = n_bones
@@ -137,7 +158,12 @@ class NurbsBody(NurbsPart):
             for i in np.linspace(0, 1, self.n_bones, endpoint=True)
         }
         part.iks = {
-            t: IKParams(name=f"body_{i}", mode="pin" if i == 0 else "iksolve", rotation_weight=0, target_size=0.3)
+            t: IKParams(
+                name=f"body_{i}",
+                mode="pin" if i == 0 else "iksolve",
+                rotation_weight=0,
+                target_size=0.3,
+            )
             for i, t in enumerate(self.shoulder_ik_ts)
         }
         part.settings["rig_reverse_skeleton"] = self.rig_reverse_skeleton
@@ -148,7 +174,11 @@ class NurbsBody(NurbsPart):
 class NurbsHead(NurbsPart):
     def make_part(self, params):
         part = super().make_part(params)
-        part.iks = {1.0: IKParams(name="head", rotation_weight=0.1, target_size=0.4, chain_length=1)}
+        part.iks = {
+            1.0: IKParams(
+                name="head", rotation_weight=0.1, target_size=0.4, chain_length=1
+            )
+        }
         part.settings["rig_extras"] = True
         tag_object(part.obj, "head")
         return part

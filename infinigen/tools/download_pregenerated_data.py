@@ -5,7 +5,6 @@
 
 import argparse
 import json
-import re
 import subprocess
 import urllib.request
 from collections import OrderedDict
@@ -21,30 +20,48 @@ ANNOT_DESCRIPTIONS = OrderedDict(
     [
         ("Image_png", "RGB image as a .png."),
         ("Image_exr", "RGB image as an .exr"),
-        ("camview_npz", "Camera intrinsic & extrinsic matricies, IE, camera calibration and poses."),
+        (
+            "camview_npz",
+            "Camera intrinsic & extrinsic matricies, IE, camera calibration and poses.",
+        ),
         ("Depth_npy", "Depth"),
         ("Depth_png", "Color-mapped PNG of Depth_npy. FOR VISUALIZATION ONLY"),
         ("SurfaceNormal_npy", "Surface Normals"),
-        ("SurfaceNormal_png", "Color-mapped PNG of SurfaceNormal_npy. FOR VISUALIZATION ONLY"),
+        (
+            "SurfaceNormal_png",
+            "Color-mapped PNG of SurfaceNormal_npy. FOR VISUALIZATION ONLY",
+        ),
         ("Flow3D_npy", "Optical Flow and Depth change."),
-        ("Flow3D_png", "Color-wheel visualization of the 2D part of Flow3D_npy. FOR VISUALIZATION ONLY"),
+        (
+            "Flow3D_png",
+            "Color-wheel visualization of the 2D part of Flow3D_npy. FOR VISUALIZATION ONLY",
+        ),
         ("Flow3DMask_png", "Flow Occlusion mask."),
         ("OcclusionBoundaries_png", "Occlusion Boundaries."),
         (
             "ObjectSegmentation_npz",
             "Semantic Segmentation mask. Compressed using a lookup table - see docs for more info.",
         ),
-        ("ObjectSegmentation_png", "Color-mapped PNG of ObjectSegmentation.npz. FOR VISUALIZATION ONLY"),
+        (
+            "ObjectSegmentation_png",
+            "Color-mapped PNG of ObjectSegmentation.npz. FOR VISUALIZATION ONLY",
+        ),
         (
             "InstanceSegmentation_npz",
             "Instance Segmentation mask. Compressed using a lookup table - see docs for more info.",
         ),
-        ("InstanceSegmentation_png", "Color-mapped PNG of InstanceSegmentation.npz. FOR VISUALIZATION ONLY"),
+        (
+            "InstanceSegmentation_png",
+            "Color-mapped PNG of InstanceSegmentation.npz. FOR VISUALIZATION ONLY",
+        ),
         (
             "TagSegmentation_npz",
             "Segmentation mask to help distinguish different parts of the same object. Compressed using a lookup table - see docs for more info.",
         ),
-        ("TagSegmentation_png", "Color-mapped PNG of TagSegmentation_npz. FOR VISUALIZATION ONLY"),
+        (
+            "TagSegmentation_png",
+            "Color-mapped PNG of TagSegmentation_npz. FOR VISUALIZATION ONLY",
+        ),
         (
             "Objects_json",
             "LARGE json object specifying names, poses and bounding boxes of objects in the scene. Required for 2D/3D BBox.",
@@ -97,7 +114,9 @@ def user_select_string_list(values, descriptions_dict=None, extra_msg=None):
 
         def sort_by_description_order(vinp):
             try:
-                return next(i for i, k in enumerate(descriptions_dict.keys()) if k == vinp)
+                return next(
+                    i for i, k in enumerate(descriptions_dict.keys()) if k == vinp
+                )
             except StopIteration:
                 return len(values)
 
@@ -116,7 +135,9 @@ def user_select_string_list(values, descriptions_dict=None, extra_msg=None):
 
     print(TEXT_SEPARATOR_LINE)
 
-    print('Please enter your choices from above, as a space-separated list of integers or strings, or type "ALL"')
+    print(
+        'Please enter your choices from above, as a space-separated list of integers or strings, or type "ALL"'
+    )
     selections = input("Enter your selection: ")
 
     print("\n")
@@ -130,7 +151,9 @@ def user_select_string_list(values, descriptions_dict=None, extra_msg=None):
         except ValueError:
             pass
 
-        if (isinstance(x, str) and x not in values) or (isinstance(x, int) and x not in range(len(values))):
+        if (isinstance(x, str) and x not in values) or (
+            isinstance(x, int) and x not in range(len(values))
+        ):
             raise ValueError(
                 f'User provided input "{x}" was not recognized, expected integer 0 to {len(values)-1} or a shorthand string'
             )
@@ -187,7 +210,9 @@ def check_and_preprocess_args(args, metadata):
 
     missing = set(args.seeds) - set(metadata["seeds"])
     if len(missing):
-        raise ValueError(f"In user-provided --seeds, {missing} could not be found in {args.release_name} metadata.json")
+        raise ValueError(
+            f"In user-provided --seeds, {missing} could not be found in {args.release_name} metadata.json"
+        )
 
     if args.cameras is None:
         args.cameras = user_select_string_list(metadata["cameras"], CAMERA_DESCRIPTIONS)
@@ -232,8 +257,12 @@ def main(args):
                 name = f"{seed}_{imgtype}_{camera}.tar.gz"
                 paths.append(toplevel / seed / name)
 
-    print(f"User requested {len(args.seeds)} seeds x {len(args.cameras)} cameras x {len(args.data_types)} data types")
-    print(f"This script will download and untar {len(paths)} tarballs from {args.repo_url}")
+    print(
+        f"User requested {len(args.seeds)} seeds x {len(args.cameras)} cameras x {len(args.data_types)} data types"
+    )
+    print(
+        f"This script will download and untar {len(paths)} tarballs from {args.repo_url}"
+    )
     choice = input("Do you wish to proceed? [y/n]: ")
     if not (choice == "" or choice in " yY1"):
         exit()

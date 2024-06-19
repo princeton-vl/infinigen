@@ -4,10 +4,6 @@
 
 # Authors: Alexander Raistrick
 
-import typing
-from dataclasses import dataclass, field
-
-import numpy as np
 
 from .expression import BoolExpression, ScalarExpression, nodedataclass
 from .types import Node

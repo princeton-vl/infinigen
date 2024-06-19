@@ -11,7 +11,6 @@ import logging
 import typing
 
 import bpy
-import mathutils
 import numpy as np
 from tqdm import trange
 
@@ -53,7 +52,11 @@ class AssetFactory:
 
     def asset_parameters(self, distance: float, vis_distance: float) -> dict:
         # Optionally, override to determine the **params input of create_asset w.r.t. camera distance
-        return {"face_size": detail.target_face_size(distance), "distance": distance, "vis_distance": vis_distance}
+        return {
+            "face_size": detail.target_face_size(distance),
+            "distance": distance,
+            "vis_distance": vis_distance,
+        }
 
     def create_asset(self, **params) -> bpy.types.Object:
         # Override this function to produce a high detail asset
@@ -72,7 +75,9 @@ class AssetFactory:
         with FixedSeed(int_hash((self.factory_seed, i))):
             obj = self.create_placeholder(i=i, loc=loc, rot=rot)
 
-        has_sensitive_constraint = any(c.type in ["FOLLOW_PATH"] for c in obj.constraints)
+        has_sensitive_constraint = any(
+            c.type in ["FOLLOW_PATH"] for c in obj.constraints
+        )
 
         if not has_sensitive_constraint:
             obj.location = loc
@@ -85,11 +90,22 @@ class AssetFactory:
         obj.name = f"{repr(self)}.spawn_placeholder({i})"
 
         if obj.parent is not None:
-            logger.warning(f"{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated")
+            logger.warning(
+                f"{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated"
+            )
 
         return obj
 
-    def spawn_asset(self, i, placeholder=None, distance=None, vis_distance=0, loc=(0, 0, 0), rot=(0, 0, 0), **kwargs):
+    def spawn_asset(
+        self,
+        i,
+        placeholder=None,
+        distance=None,
+        vis_distance=0,
+        loc=(0, 0, 0),
+        rot=(0, 0, 0),
+        **kwargs,
+    ):
         if not isinstance(i, int):
             raise TypeError(f"{i=} {type(i)=}, expected int")
         # Not intended to be overridden - override create_asset instead
@@ -100,7 +116,9 @@ class AssetFactory:
             distance = detail.scatter_res_distance()
 
         if self.coarse:
-            raise ValueError("Attempted to spawn_asset() on an AssetFactory(coarse=True)")
+            raise ValueError(
+                "Attempted to spawn_asset() on an AssetFactory(coarse=True)"
+            )
 
         user_provided_placeholder = placeholder is not None
 
@@ -110,9 +128,17 @@ class AssetFactory:
             placeholder = self.spawn_placeholder(i=i, loc=loc, rot=rot)
             self.finalize_placeholders([placeholder])
 
-        gc_targets = [bpy.data.meshes, bpy.data.textures, bpy.data.node_groups, bpy.data.materials]
+        gc_targets = [
+            bpy.data.meshes,
+            bpy.data.textures,
+            bpy.data.node_groups,
+            bpy.data.materials,
+        ]
 
-        with FixedSeed(int_hash((self.factory_seed, i))), butil.GarbageCollect(gc_targets, verbose=False):
+        with (
+            FixedSeed(int_hash((self.factory_seed, i))),
+            butil.GarbageCollect(gc_targets, verbose=False),
+        ):
             params = self.asset_parameters(distance, vis_distance)
             params.update(kwargs)
             obj = self.create_asset(i=i, placeholder=placeholder, **params)
@@ -139,7 +165,16 @@ class AssetFactory:
         pass
 
 
-def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, verbose=True, centered=False, **kwargs):
+def make_asset_collection(
+    spawn_fns,
+    n,
+    name=None,
+    weights=None,
+    as_list=False,
+    verbose=True,
+    centered=False,
+    **kwargs,
+):
     if not isinstance(spawn_fns, list):
         spawn_fns = [spawn_fns]
     if weights is None:

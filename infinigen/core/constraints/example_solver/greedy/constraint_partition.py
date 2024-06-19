@@ -8,19 +8,22 @@ import copy
 import logging
 import operator
 import typing
-from dataclasses import dataclass
 from functools import partial
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import example_solver as ex
 from infinigen.core.constraints import reasoning as r
 
 logger = logging.getLogger(__name__)
 
 OPS_COMMUTATIVE = {operator.add, operator.and_, operator.mul, operator.or_}
 
-OPS_UNIT_VALUE = {operator.add: 0, operator.mul: 1, operator.pow: 0, operator.truediv: 0}
+OPS_UNIT_VALUE = {
+    operator.add: 0,
+    operator.mul: 1,
+    operator.pow: 0,
+    operator.truediv: 0,
+}
 
 
 def _get_op_unit_value(node: cl.BoolExpression | cl.ScalarExpression):
@@ -43,7 +46,9 @@ def _partition_dict(terms: dict[str, cl.Node], recurse: typing.Callable):
     return new_terms
 
 
-def _update_item_nodes(node: cl.Node, from_varname: str, to_varname: str, to_objs: cl.ObjectSetExpression):
+def _update_item_nodes(
+    node: cl.Node, from_varname: str, to_varname: str, to_objs: cl.ObjectSetExpression
+):
     for child in node.traverse():
         if not isinstance(child, cl.item):
             continue
@@ -80,7 +85,9 @@ def _filter_gather_constraint(
     for pred_child in pred_part.traverse():
         if not isinstance(pred_child, r.FilterByDomain):
             continue
-        subst_filter, matched = r.domain_tag_substitute(pred_child.filter, var, obj_dom, return_match=True)
+        subst_filter, matched = r.domain_tag_substitute(
+            pred_child.filter, var, obj_dom, return_match=True
+        )
 
         pred_child.filter = subst_filter
 
@@ -113,9 +120,14 @@ def _filter_object_set(
 
     relevant = dom_subst.intersects(filter_dom, require_satisfies_right=True)
     if (
-        relevant and not dom_subst.satisfies(filter_dom)  # no need to filter something that is already strict enough
+        relevant
+        and not dom_subst.satisfies(
+            filter_dom
+        )  # no need to filter something that is already strict enough
     ):
-        finalized = r.domain_finalized(filter_dom, check_anyrel=False, check_variable=True)
+        finalized = r.domain_finalized(
+            filter_dom, check_anyrel=False, check_variable=True
+        )
         assert finalized, filter_dom
         new_consnode = r.FilterByDomain(new_consnode, filter_dom)
 
@@ -138,7 +150,9 @@ def _filter_operator(
             return cl.constant(_get_op_unit_value(node)), False
         case ([op], f) if f in OPS_COMMUTATIVE:
             return op, True
-        case (new_operands, f) if (len(new_operands) == len(operands) or f in OPS_COMMUTATIVE):
+        case (new_operands, f) if (
+            len(new_operands) == len(operands) or f in OPS_COMMUTATIVE
+        ):
             return node.__class__(f, new_operands), True
         case _:
             res = node.__class__(func, [o[0] for o in op_results])
@@ -147,11 +161,16 @@ def _filter_operator(
 
 
 def _filter_node_cases(
-    node: cl.Node, recurse: typing.Callable, filter_dom: r.Domain, var_assignments: dict[t.Variable, r.Domain]
+    node: cl.Node,
+    recurse: typing.Callable,
+    filter_dom: r.Domain,
+    var_assignments: dict[t.Variable, r.Domain],
 ) -> tuple[cl.Node, bool]:
     match node:
         case cl.Problem(cons, score_terms):
-            prob = cl.Problem(_partition_dict(cons, recurse), _partition_dict(score_terms, recurse))
+            prob = cl.Problem(
+                _partition_dict(cons, recurse), _partition_dict(score_terms, recurse)
+            )
             relevant = len(prob.constraints) > 0 or len(prob.score_terms) > 0
             return prob, relevant
         case cl.ForAll() | cl.SumOver() | cl.MeanOver():
@@ -167,7 +186,9 @@ def _filter_node_cases(
             for name, child in node.children():
                 res, relevant = recurse(child)
                 if not hasattr(node, name):
-                    raise ValueError(f"Node {node.__class__} has child with {name=} but no attribute {name} to set")
+                    raise ValueError(
+                        f"Node {node.__class__} has child with {name=} but no attribute {name} to set"
+                    )
                 setattr(result_consnode, name, res)
                 result_relevant = result_relevant or relevant
 
@@ -193,7 +214,10 @@ def _check_partition_correctness(
 
 
 def filter_constraints(
-    node: cl.Node, filter_dom: r.Domain, var_assignments: dict[str, r.Domain] = None, check_correctness=True
+    node: cl.Node,
+    filter_dom: r.Domain,
+    var_assignments: dict[str, r.Domain] = None,
+    check_correctness=True,
 ) -> tuple[cl.Node, bool]:
     """Return a constraint graph representing the component of `node` that is relevant for
     to a particular greedy filter domain.
@@ -221,14 +245,20 @@ def filter_constraints(
     if var_assignments is None:
         var_assignments = {}
 
-    recurse = partial(filter_constraints, filter_dom=filter_dom, var_assignments=var_assignments)
+    recurse = partial(
+        filter_constraints, filter_dom=filter_dom, var_assignments=var_assignments
+    )
 
-    logger.debug(f"{filter_constraints.__name__} for {node.__class__.__name__}, {var_assignments.keys()=}")
+    logger.debug(
+        f"{filter_constraints.__name__} for {node.__class__.__name__}, {var_assignments.keys()=}"
+    )
     new_node, relevant = _filter_node_cases(node, recurse, filter_dom, var_assignments)
 
     if relevant and check_correctness and isinstance(new_node, cl.ObjectSetExpression):
         _check_partition_correctness(new_node, filter_dom, var_assignments)
 
-    logger.debug(f"Partitioned {node.__class__.__name__} to {new_node.__class__.__name__}")
+    logger.debug(
+        f"Partitioned {node.__class__.__name__} to {new_node.__class__.__name__}"
+    )
 
     return new_node, relevant

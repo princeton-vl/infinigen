@@ -9,11 +9,9 @@
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
-from tqdm import trange
 
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.blender import group_in_collection
 from infinigen.core.util.color import random_color_mapping
 
 
@@ -72,8 +70,14 @@ def assign_curve(c, points, handles=None):
 
 def facing_mask(nw, dir, thresh=0.5):
     normal = nw.new_node(Nodes.InputNormal)
-    up_mask = nw.new_node(Nodes.VectorMath, input_kwargs={0: normal, 1: dir}, attrs={"operation": "DOT_PRODUCT"})
-    up_mask = nw.new_node(Nodes.Math, input_args=[up_mask, thresh], attrs={"operation": "GREATER_THAN"})
+    up_mask = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: normal, 1: dir},
+        attrs={"operation": "DOT_PRODUCT"},
+    )
+    up_mask = nw.new_node(
+        Nodes.Math, input_args=[up_mask, thresh], attrs={"operation": "GREATER_THAN"}
+    )
 
     return up_mask
 
@@ -105,13 +109,17 @@ def resample_node_group(nw: NodeWrangler, scene_seed: int):
                 element.color = random_color_mapping(element.color, scene_seed)
 
         if node.bl_idname == Nodes.RGB:
-            node.outputs["Color"].default_value = random_color_mapping(node.outputs["Color"].default_value, scene_seed)
+            node.outputs["Color"].default_value = random_color_mapping(
+                node.outputs["Color"].default_value, scene_seed
+            )
 
         # Randomized fixed color input
         for input_socket in node.inputs:
             if input_socket.type == "RGBA":
                 # print(f"Mapping", input_socket)
-                input_socket.default_value = random_color_mapping(input_socket.default_value, scene_seed)
+                input_socket.default_value = random_color_mapping(
+                    input_socket.default_value, scene_seed
+                )
 
             if input_socket.name == "Seed":
                 input_socket.default_value = np.random.randint(1000)

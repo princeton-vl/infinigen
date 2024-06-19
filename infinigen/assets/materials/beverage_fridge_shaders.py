@@ -12,7 +12,9 @@ def shader_glass_001(nw: NodeWrangler):
     glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={"IOR": 1.5000})
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": glass_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": glass_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -20,11 +22,14 @@ def shader_black_medal_001(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     anisotropic_bsdf = nw.new_node(
-        "ShaderNodeBsdfAnisotropic", input_kwargs={"Color": (0.0167, 0.0167, 0.0167, 1.0000)}
+        "ShaderNodeBsdfAnisotropic",
+        input_kwargs={"Color": (0.0167, 0.0167, 0.0167, 1.0000)},
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": anisotropic_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": anisotropic_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -34,14 +39,26 @@ def shader_white_metal_001(nw: NodeWrangler):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": (1.0000, 1.0000, 50.0000)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": (1.0000, 1.0000, 50.0000),
+        },
     )
 
     noise_texture_1 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": 20.0000, "Detail": 20.0000, "Distortion": 1.0000}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 20.0000,
+            "Detail": 20.0000,
+            "Distortion": 1.0000,
+        },
     )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Color"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Color"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.2500
     colorramp.color_ramp.elements[0].color = [0.5244, 0.5244, 0.5244, 1.0000]
     colorramp.color_ramp.elements[1].position = 1.0000
@@ -63,5 +80,7 @@ def shader_white_metal_001(nw: NodeWrangler):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )

@@ -26,8 +26,12 @@ class MushroomGrowthFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.base_hue = self.build_base_hue()
-            self.material_func = lambda: surface.shaderfunc_to_material(self.shader_mushroom, self.base_hue)
-            self.cap_factory = MushroomCapFactory(factory_seed, self.base_hue, self.material_func, coarse)
+            self.material_func = lambda: surface.shaderfunc_to_material(
+                self.shader_mushroom, self.base_hue
+            )
+            self.cap_factory = MushroomCapFactory(
+                factory_seed, self.base_hue, self.material_func, coarse
+            )
             self.stem_factory = MushroomStemFactory(
                 factory_seed, self.cap_factory.inner_radius, self.material_func, coarse
             )
@@ -50,11 +54,19 @@ class MushroomGrowthFactory(AssetFactory):
     def shader_mushroom(nw: NodeWrangler, base_hue):
         roughness = 0.8
         front_color = (
-            *colorsys.hsv_to_rgb((base_hue + uniform(-0.1, 0.1)) % 1, uniform(0.1, 0.3), log_uniform(0.02, 0.5)),
+            *colorsys.hsv_to_rgb(
+                (base_hue + uniform(-0.1, 0.1)) % 1,
+                uniform(0.1, 0.3),
+                log_uniform(0.02, 0.5),
+            ),
             1,
         )
         back_color = (
-            *colorsys.hsv_to_rgb((base_hue + uniform(-0.1, 0.1)) % 1, uniform(0.1, 0.3), log_uniform(0.02, 0.5)),
+            *colorsys.hsv_to_rgb(
+                (base_hue + uniform(-0.1, 0.1)) % 1,
+                uniform(0.1, 0.3),
+                log_uniform(0.02, 0.5),
+            ),
             1,
         )
 
@@ -74,6 +86,14 @@ class MushroomGrowthFactory(AssetFactory):
             ],
         )
 
-        color = build_color_ramp(nw, musgrave, [0, 0.3, 0.7, 1], [front_color, front_color, back_color, back_color])
-        principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Roughness": roughness})
+        color = build_color_ramp(
+            nw,
+            musgrave,
+            [0, 0.3, 0.7, 1],
+            [front_color, front_color, back_color, back_color],
+        )
+        principled_bsdf = nw.new_node(
+            Nodes.PrincipledBSDF,
+            input_kwargs={"Base Color": color, "Roughness": roughness},
+        )
         return principled_bsdf

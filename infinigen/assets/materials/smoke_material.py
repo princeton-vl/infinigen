@@ -3,15 +3,10 @@
 
 # Authors: Karhan Kayan
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.random import random_color_neighbour
 
 
@@ -26,7 +21,9 @@ def smoke_material(nw):
         },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Volume": principled_volume})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Volume": principled_volume}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

@@ -6,7 +6,6 @@
 
 import json
 
-import cv2
 import gin
 import numpy as np
 
@@ -14,7 +13,12 @@ from infinigen.core.util.organization import AssetFile, LandTile, Process
 from infinigen.terrain.utils import boundary_smooth, read, smooth
 
 from .ant_landscape import ant_landscape_asset
-from .custom import coast_asset, coast_params, multi_mountains_asset, multi_mountains_params
+from .custom import (
+    coast_asset,
+    coast_params,
+    multi_mountains_asset,
+    multi_mountains_params,
+)
 
 
 @gin.configurable
@@ -114,7 +118,8 @@ def assets_to_data(
     direction = tile_directions()[preset_name]
     if direction == "dependent":
         data["direction"] = np.arctan2(
-            np.mean(heightmap[:, -1] - heightmap[:, 0]), np.mean(heightmap[-1] - heightmap[0])
+            np.mean(heightmap[:, -1] - heightmap[:, 0]),
+            np.mean(heightmap[-1] - heightmap[0]),
         ).reshape(-1)
     elif direction == "initial":
         data["direction"] = np.array([0.0])
@@ -123,10 +128,15 @@ def assets_to_data(
         heightmap = boundary_smooth(heightmap)
     data["heightmap"] = heightmap.reshape(-1)
     L = float(np.loadtxt(folder / f"{AssetFile.TileSize}.txt"))
-    if preset_name == LandTile.MultiMountains and (folder / f"{AssetFile.Params}.txt").exists():
+    if (
+        preset_name == LandTile.MultiMountains
+        and (folder / f"{AssetFile.Params}.txt").exists()
+    ):
         with open(folder / f"{AssetFile.Params}.txt", "r") as file:
             params = json.load(file)
-            assert params == multi_mountains_params(raw=1), "asset should not be reused if you changed settings"
+            assert params == multi_mountains_params(
+                raw=1
+            ), "asset should not be reused if you changed settings"
     if preset_name == LandTile.Coast and (folder / f"{AssetFile.Params}.txt").exists():
         with open(folder / f"{AssetFile.Params}.txt", "r") as file:
             params = json.load(file)

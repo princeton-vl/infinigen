@@ -9,12 +9,9 @@ from numpy.random import uniform
 from infinigen.assets.elements.doors.base import BaseDoorFactory
 from infinigen.assets.utils.decorate import read_area, select_faces, write_attribute
 from infinigen.assets.utils.object import new_cube
-from infinigen.core import surface
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-
-from .casing import DoorCasingFactory
 
 
 class PanelDoorFactory(BaseDoorFactory):
@@ -31,11 +28,17 @@ class PanelDoorFactory(BaseDoorFactory):
         butil.apply_transform(cutter, loc=True)
         if panel["attribute_name"] is not None:
             write_attribute(cutter, 1, panel["attribute_name"], "FACE")
-        cutter.location = (x_max + x_min) / 2, self.bevel_width * 0.5 - 0.1, (y_max + y_min) / 2
+        cutter.location = (
+            (x_max + x_min) / 2,
+            self.bevel_width * 0.5 - 0.1,
+            (y_max + y_min) / 2,
+        )
         cutter.scale = (x_max - x_min) / 2 - 2e-3, 0.1, (y_max - y_min) / 2 - 2e-3
         butil.apply_transform(cutter, loc=True)
         # butil.modify_mesh(cutter, 'BEVEL', width=self.bevel_width)
-        write_attr_data(cutter, "cut", np.ones(len(cutter.data.polygons), dtype=int), "INT", "FACE")
+        write_attr_data(
+            cutter, "cut", np.ones(len(cutter.data.polygons), dtype=int), "INT", "FACE"
+        )
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
         cutter.location[1] += 0.2 + self.depth - self.bevel_width
         butil.apply_transform(cutter, loc=True)
@@ -56,11 +59,21 @@ class PanelDoorFactory(BaseDoorFactory):
         y_cuts = np.cumsum(y_cuts / y_cuts.sum())
         for j in range(len(y_cuts)):
             for i in range(len(x_cuts)):
-                x_min = self.panel_margin + (self.width - self.panel_margin) * (x_cuts[i - 1] if i > 0 else 0)
+                x_min = self.panel_margin + (self.width - self.panel_margin) * (
+                    x_cuts[i - 1] if i > 0 else 0
+                )
                 x_max = (self.width - self.panel_margin) * x_cuts[i]
-                y_min = self.panel_margin + (self.height - self.panel_margin) * (y_cuts[j - 1] if j > 0 else 0)
+                y_min = self.panel_margin + (self.height - self.panel_margin) * (
+                    y_cuts[j - 1] if j > 0 else 0
+                )
                 y_max = (self.height - self.panel_margin) * y_cuts[j]
-                panels.append({"dimension": (x_min, x_max, y_min, y_max), "func": self.bevel, "attribute_name": None})
+                panels.append(
+                    {
+                        "dimension": (x_min, x_max, y_min, y_max),
+                        "func": self.bevel,
+                        "attribute_name": None,
+                    }
+                )
         return panels
 
 
@@ -79,7 +92,12 @@ class GlassPanelDoorFactory(PanelDoorFactory):
             first_dimension = panels[-self.x_subdivisions]["dimension"]
             last_dimension = panels[-1]["dimension"]
             merged = {
-                "dimension": (first_dimension[0], last_dimension[1], first_dimension[2], last_dimension[3]),
+                "dimension": (
+                    first_dimension[0],
+                    last_dimension[1],
+                    first_dimension[2],
+                    last_dimension[3],
+                ),
                 "func": self.bevel,
                 "attribute_name": "glass",
             }

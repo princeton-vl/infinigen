@@ -4,15 +4,16 @@
 # Authors: Alexander Raistrick
 
 
-import pdb
 from dataclasses import dataclass
 
-import bmesh
-import bpy
 import numpy as np
 
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import inverse_interpolate, lerp_sample, rotate_match_directions
+from infinigen.core.util.math import (
+    inverse_interpolate,
+    lerp_sample,
+    rotate_match_directions,
+)
 
 from .nurbs import nurbs
 
@@ -69,7 +70,9 @@ def skeleton_to_tangents(skeleton):
     axes = np.empty_like(skeleton, dtype=np.float32)
     axes[-1] = skeleton[-1] - skeleton[-2]
     axes[:-1] = skeleton[1:] - skeleton[:-1]
-    axes[1:-1] = (axes[1:-1] + axes[:-2]) / 2  # use average of neighboring edge directions where available
+    axes[1:-1] = (
+        axes[1:-1] + axes[:-2]
+    ) / 2  # use average of neighboring edge directions where available
 
     norm = np.linalg.norm(axes, axis=-1)
     axes[norm > 0] /= norm[norm > 0, None]
@@ -102,7 +105,9 @@ def compute_profile_verts(skeleton, ts, profiles, angles=None, profile_as_points
         assert profiles.shape[2] == 3
         profile_verts = profiles
     else:
-        unit_circle = np.stack([np.zeros_like(angles), np.cos(angles), np.sin(angles)], axis=-1)
+        unit_circle = np.stack(
+            [np.zeros_like(angles), np.cos(angles), np.sin(angles)], axis=-1
+        )
         profile_verts = profiles[..., None] * unit_circle[None]
 
     # pose profiles to get vert locations
@@ -116,7 +121,11 @@ def compute_profile_verts(skeleton, ts, profiles, angles=None, profile_as_points
 
 def loft(skeleton, skin, method="blender", face_size=0.01, debug=False, **kwargs):
     ctrlpts = compute_profile_verts(
-        skeleton, skin.ts, skin.profiles, skin.angles, profile_as_points=skin.profile_as_points
+        skeleton,
+        skin.ts,
+        skin.profiles,
+        skin.angles,
+        profile_as_points=skin.profile_as_points,
     )
     obj = nurbs(ctrlpts, method, face_size, debug, **kwargs)
 

@@ -12,8 +12,10 @@ from tqdm import tqdm
 
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints.example_solver import propose_discrete, propose_relations
-from infinigen_examples import indoor_constraint_examples as ex
+from infinigen.core.constraints.example_solver import (
+    propose_discrete,
+    propose_relations,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +32,16 @@ def iter_domains(node: cl.Node) -> typing.Iterator[r.Domain]:
 
 
 def bound_coverage(b: r.Bound, stages: dict[str, r.Domain]) -> list[str]:
-    return [k for k, f in stages.items() if propose_discrete.active_for_stage(b.domain, f)]
+    return [
+        k for k, f in stages.items() if propose_discrete.active_for_stage(b.domain, f)
+    ]
 
 
 def check_coverage_errors(b: r.Bound, coverage: list, stages: dict[str, r.Domain]):
     if len(coverage) == 0:
-        raise ValueError(f"Greedy stages did not cover all object classes! User specified bound {b} had {coverage=}")
+        raise ValueError(
+            f"Greedy stages did not cover all object classes! User specified bound {b} had {coverage=}"
+        )
 
     if len(coverage) != 1:
         raise ValueError(
@@ -54,12 +60,16 @@ def check_coverage_errors(b: r.Bound, coverage: list, stages: dict[str, r.Domain
         prop = b.domain.intersection(stages[k])
 
         if prop.is_recursive():
-            raise ValueError(f"Found recursive prop domain {prop.tags=} {len(prop.relations)=}")
+            raise ValueError(
+                f"Found recursive prop domain {prop.tags=} {len(prop.relations)=}"
+            )
         assert not prop.is_recursive(), prop.tags
 
         if not len(prop.relations):
             continue
-        first, remaining, implied = propose_relations.minimize_redundant_relations(prop.relations)
+        first, remaining, implied = propose_relations.minimize_redundant_relations(
+            prop.relations
+        )
         if implied:
             continue
         if isinstance(first[0], cl.AnyRelation):
@@ -83,7 +93,9 @@ def check_contradictory_domains(prob: cl.Problem):
     for node, dom in iter_domains(prob):
         contradictory = not dom.satisfies(dom)
         if contradictory:
-            raise ValueError(f"Constraint node had self-contradicting domain. \n{node=} \n{dom=}")
+            raise ValueError(
+                f"Constraint node had self-contradicting domain. \n{node=} \n{dom=}"
+            )
 
 
 def validate_stages(stages: dict[str, r.Domain]):
@@ -100,14 +112,18 @@ def validate_stages(stages: dict[str, r.Domain]):
             )
 
 
-def check_all(prob: cl.Problem, greedy_stages: dict[str, r.Domain], all_vars: list[str]):
+def check_all(
+    prob: cl.Problem, greedy_stages: dict[str, r.Domain], all_vars: list[str]
+):
     for k, v in greedy_stages.items():
         if not isinstance(v, r.Domain):
             raise TypeError(f"Greedy stage {k=} had non-domain value {v=}")
 
         extras = v.all_vartags() - set(all_vars)
         if len(extras):
-            raise ValueError(f"{k=} had extra vars {extras=}. Greedy domains may only contain vars from {all_vars}")
+            raise ValueError(
+                f"{k=} had extra vars {extras=}. Greedy domains may only contain vars from {all_vars}"
+            )
 
     validate_stages(greedy_stages)
 

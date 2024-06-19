@@ -4,18 +4,19 @@
 # Authors: Beining Han
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=jDEijCwz6to by Lachlan Sarv
 
-import json
 
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
-from infinigen.assets.materials import metal_shader_list, shader_glass, shader_rough_plastic, wood
-from infinigen.assets.materials.leather_and_fabrics import fabric_shader_list
+from infinigen.assets.materials import (
+    metal_shader_list,
+    shader_glass,
+    shader_rough_plastic,
+    wood,
+)
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.random import random_general as rg
+from infinigen.core.util.color import hsv2rgba
 
 
 def shader_shelves_white(nw: NodeWrangler, **kwargs):
@@ -23,17 +24,27 @@ def shader_shelves_white(nw: NodeWrangler, **kwargs):
     rgb = kwargs.get("rgb", [0.9, 0.9, 0.9])
     base_color = (*rgb, 1.0)
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": base_color, "Roughness": kwargs.get("roughness", 0.9)}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": base_color,
+            "Roughness": kwargs.get("roughness", 0.9),
+        },
     )
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
 def shader_shelves_white_sampler():
     params = dict()
     v = uniform(0.7, 1.0)
-    base_color = [v * (1.0 + normal(0, 0.005)), v * (1.0 + normal(0, 0.005)), v * (1.0 + normal(0, 0.005))]
+    base_color = [
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+    ]
     params["rgb"] = base_color
     params["roughness"] = uniform(0.7, 1.0)
     return params
@@ -44,10 +55,13 @@ def shader_shelves_black_metallic(nw: NodeWrangler, **kwargs):
 
     color = (*kwargs.get("rgb", [0.0, 0.0, 0.0]), 1.0)
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": color, "Metallic": kwargs.get("metallic", 0.65)}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": color, "Metallic": kwargs.get("metallic", 0.65)},
     )
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -65,18 +79,28 @@ def shader_shelves_white_metallic(nw: NodeWrangler, **kwargs):
     rgb = kwargs.get("rgb", [0.9, 0.9, 0.9])
     base_color = (*rgb, 1.0)
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": base_color, "Metallic": kwargs.get("metallic", 0.65)}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": base_color,
+            "Metallic": kwargs.get("metallic", 0.65),
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
 def shader_shelves_white_metallic_sampler():
     params = dict()
     v = uniform(0.7, 1.0)
-    base_color = [v * (1.0 + normal(0, 0.005)), v * (1.0 + normal(0, 0.005)), v * (1.0 + normal(0, 0.005))]
+    base_color = [
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+    ]
     params["rgb"] = base_color
     params["metallic"] = uniform(0.45, 0.75)
     return params
@@ -96,20 +120,30 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
         Nodes.Mapping,
         input_kwargs={
             "Vector": texture_coordinate_1.outputs["Object"],
-            "Scale": (0.1, 0.1, 2.0) if kwargs.get("z_axis_texture", False) else (0.1, 2.0, 2.0),
+            "Scale": (0.1, 0.1, 2.0)
+            if kwargs.get("z_axis_texture", False)
+            else (0.1, 2.0, 2.0),
         },
     )
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": mapping_1, "Scale": 100.0000, "Detail": 10.0000, "Distortion": 2.0000},
+        input_kwargs={
+            "Vector": mapping_1,
+            "Scale": 100.0000,
+            "Detail": 10.0000,
+            "Distortion": 2.0000,
+        },
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": noise_texture_1.outputs["Fac"], "Scale": 40.0000}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": noise_texture_1.outputs["Fac"], "Scale": 40.0000},
     )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.0864
     colorramp_1.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     colorramp_1.color_ramp.elements[1].position = 0.1091
@@ -118,19 +152,36 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": wave_scale}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": wave_scale,
+        },
     )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": 3.0000, "Detail": 15.0000, "Distortion": 2.0000}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 3.0000,
+            "Detail": 15.0000,
+            "Distortion": 2.0000,
+        },
     )
 
     musgrave_texture = nw.new_node(
-        Nodes.MusgraveTexture, input_kwargs={"Vector": noise_texture.outputs["Fac"], "Scale": 20.0000, "Detail": 3.0000}
+        Nodes.MusgraveTexture,
+        input_kwargs={
+            "Vector": noise_texture.outputs["Fac"],
+            "Scale": 20.0000,
+            "Detail": 3.0000,
+        },
     )
 
     mix_1 = nw.new_node(
-        Nodes.Mix, input_kwargs={6: musgrave_texture, 7: noise_texture.outputs["Color"]}, attrs={"data_type": "RGBA"}
+        Nodes.Mix,
+        input_kwargs={6: musgrave_texture, 7: noise_texture.outputs["Color"]},
+        attrs={"data_type": "RGBA"},
     )
 
     colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_1.outputs[2]})
@@ -141,7 +192,11 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
 
     mix_2 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.6000, 6: colorramp_1.outputs["Color"], 7: colorramp_2.outputs["Color"]},
+        input_kwargs={
+            0: 0.6000,
+            6: colorramp_1.outputs["Color"],
+            7: colorramp_2.outputs["Color"],
+        },
         attrs={"data_type": "RGBA"},
     )
 
@@ -151,19 +206,35 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
     colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_2})
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.15
-    colorramp.color_ramp.elements[0].color = [dark_scale, dark_scale, dark_scale, 1.0000]
+    colorramp.color_ramp.elements[0].color = [
+        dark_scale,
+        dark_scale,
+        dark_scale,
+        1.0000,
+    ]
     colorramp.color_ramp.elements[1].position = 0.5
-    colorramp.color_ramp.elements[1].color = [gray_scale, gray_scale, gray_scale, 1.0000]
+    colorramp.color_ramp.elements[1].color = [
+        gray_scale,
+        gray_scale,
+        gray_scale,
+        1.0000,
+    ]
     colorramp.color_ramp.elements[2].position = 1.0000
     colorramp.color_ramp.elements[2].color = color_scale
 
     mix_3 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.0040, 6: colorramp_1.outputs["Color"], 7: colorramp_2.outputs["Color"]},
+        input_kwargs={
+            0: 0.0040,
+            6: colorramp_1.outputs["Color"],
+            7: colorramp_2.outputs["Color"],
+        },
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]})
+    bump = nw.new_node(
+        Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]}
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
@@ -175,7 +246,9 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -203,20 +276,30 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
         Nodes.Mapping,
         input_kwargs={
             "Vector": texture_coordinate_1.outputs["Object"],
-            "Scale": (0.1, 0.1, 2.0) if kwargs.get("z_axis_texture", False) else (0.1, 2.0, 2.0),
+            "Scale": (0.1, 0.1, 2.0)
+            if kwargs.get("z_axis_texture", False)
+            else (0.1, 2.0, 2.0),
         },
     )
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": mapping_1, "Scale": 100.0000, "Detail": 10.0000, "Distortion": 2.0000},
+        input_kwargs={
+            "Vector": mapping_1,
+            "Scale": 100.0000,
+            "Detail": 10.0000,
+            "Distortion": 2.0000,
+        },
     )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": noise_texture_1.outputs["Fac"], "Scale": 40.0000}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": noise_texture_1.outputs["Fac"], "Scale": 40.0000},
     )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.0864
     colorramp_1.color_ramp.elements[0].color = [0.0000, 0.0000, 0.0000, 1.0000]
     colorramp_1.color_ramp.elements[1].position = 0.1091
@@ -225,19 +308,36 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     mapping = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": wave_scale}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": wave_scale,
+        },
     )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": 3.0000, "Detail": 15.0000, "Distortion": 2.0000}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 3.0000,
+            "Detail": 15.0000,
+            "Distortion": 2.0000,
+        },
     )
 
     musgrave_texture = nw.new_node(
-        Nodes.MusgraveTexture, input_kwargs={"Vector": noise_texture.outputs["Fac"], "Scale": 20.0000, "Detail": 3.0000}
+        Nodes.MusgraveTexture,
+        input_kwargs={
+            "Vector": noise_texture.outputs["Fac"],
+            "Scale": 20.0000,
+            "Detail": 3.0000,
+        },
     )
 
     mix_1 = nw.new_node(
-        Nodes.Mix, input_kwargs={6: musgrave_texture, 7: noise_texture.outputs["Color"]}, attrs={"data_type": "RGBA"}
+        Nodes.Mix,
+        input_kwargs={6: musgrave_texture, 7: noise_texture.outputs["Color"]},
+        attrs={"data_type": "RGBA"},
     )
 
     colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix_1.outputs[2]})
@@ -248,7 +348,11 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
 
     mix_2 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.6000, 6: colorramp_1.outputs["Color"], 7: colorramp_2.outputs["Color"]},
+        input_kwargs={
+            0: 0.6000,
+            6: colorramp_1.outputs["Color"],
+            7: colorramp_2.outputs["Color"],
+        },
         attrs={"data_type": "RGBA"},
     )
 
@@ -267,11 +371,17 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
 
     mix_3 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.0040, 6: colorramp_1.outputs["Color"], 7: colorramp_2.outputs["Color"]},
+        input_kwargs={
+            0: 0.0040,
+            6: colorramp_1.outputs["Color"],
+            7: colorramp_2.outputs["Color"],
+        },
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]})
+    bump = nw.new_node(
+        Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]}
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
@@ -283,7 +393,9 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -300,11 +412,17 @@ def shader_shelves_wood_sampler():
 def get_shelf_material(name, **kwargs):
     match name:
         case "white":
-            shader_func = np.random.choice([shader_shelves_white, shader_rough_plastic], p=[0.6, 0.4])
+            shader_func = np.random.choice(
+                [shader_shelves_white, shader_rough_plastic], p=[0.6, 0.4]
+            )
         case "black_wood":
-            shader_func = np.random.choice([shader_shelves_black_wood, wood.shader_wood], p=[0.6, 0.4])
+            shader_func = np.random.choice(
+                [shader_shelves_black_wood, wood.shader_wood], p=[0.6, 0.4]
+            )
         case "wood":
-            shader_func = np.random.choice([shader_shelves_wood, wood.shader_wood], p=[0.6, 0.4])
+            shader_func = np.random.choice(
+                [shader_shelves_wood, wood.shader_wood], p=[0.6, 0.4]
+            )
 
         case "glass":
             shader_func = shader_glass

@@ -16,7 +16,6 @@ from PIL import Image
 from infinigen.core.constraints.example_solver.room import GraphMaker
 
 # noinspection PyUnresolvedReferences
-from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen_examples.generate_individual_assets import make_args
 
@@ -43,7 +42,11 @@ def make_grid(args, path, n):
         return
     with Image.open(files[0]) as i:
         x, y = i.size
-    sz_x = list(sorted(range(1, n + 1), key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio)))[0]
+    sz_x = list(
+        sorted(
+            range(1, n + 1), key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio)
+        )
+    )[0]
     sz_y = math.ceil(n / sz_x)
     img = Image.new("RGBA", (sz_x * x, sz_y * y))
     for idx, file in enumerate(files):

@@ -6,19 +6,16 @@
 
 import bpy
 import gin
-import mathutils
 import numpy as np
 from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 from .parts.body.dragonfly_body import nodegroup_dragonfly_body
@@ -35,11 +32,16 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     value_head_scale.outputs[0].default_value = kwargs["Head Scale"]
 
     dragonflyhead = nw.new_node(
-        nodegroup_dragon_fly_head(base_color=kwargs["Base Color"], eye_color=kwargs["Eye Color"], v=kwargs["V"]).name
+        nodegroup_dragon_fly_head(
+            base_color=kwargs["Base Color"],
+            eye_color=kwargs["Eye Color"],
+            v=kwargs["V"],
+        ).name
     )
 
     combine_xyz_8 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": kwargs["Head Roll"], "Y": kwargs["Head Pitch"], "Z": 1.5708}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": kwargs["Head Roll"], "Y": kwargs["Head Pitch"], "Z": 1.5708},
     )
 
     transform_8 = nw.new_node(
@@ -52,11 +54,17 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         },
     )
 
-    transform_13 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform_8, "Scale": (1.1, 1.0, 1.0)})
+    transform_13 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_8, "Scale": (1.1, 1.0, 1.0)},
+    )
 
     dragonflybody = nw.new_node(
         nodegroup_dragonfly_body(base_color=kwargs["Body Color"], v=kwargs["V"]).name,
-        input_kwargs={"Body Length": kwargs["Body Length"], "Random Seed": kwargs["Body Seed"]},
+        input_kwargs={
+            "Body Length": kwargs["Body Length"],
+            "Random Seed": kwargs["Body Seed"],
+        },
     )
 
     store_named_attribute = nw.new_node(
@@ -70,26 +78,47 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     store_named_attribute_1 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": store_named_attribute, "Name": "body seed", "Value": kwargs["Body Seed"]},
+        input_kwargs={
+            "Geometry": store_named_attribute,
+            "Name": "body seed",
+            "Value": kwargs["Body Seed"],
+        },
     )
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": store_named_attribute_1, "Rotation": (1.5708, 0.0, 0.0)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": store_named_attribute_1,
+            "Rotation": (1.5708, 0.0, 0.0),
+        },
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: kwargs["Tail Length"]}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: kwargs["Tail Length"]},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: kwargs["Tail Tip Z"], 1: -0.5}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: kwargs["Tail Tip Z"], 1: -0.5},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply, "Z": multiply_1})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Z": multiply_1}
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": kwargs["Tail Length"], "Z": kwargs["Tail Tip Z"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": kwargs["Tail Length"], "Z": kwargs["Tail Tip Z"]},
+    )
 
     dragonflytail = nw.new_node(
         nodegroup_dragonfly_tail(
-            base_color=kwargs["Base Color"], v=kwargs["V"], ring_length=kwargs["Ring Length"]
+            base_color=kwargs["Base Color"],
+            v=kwargs["V"],
+            ring_length=kwargs["Ring Length"],
         ).name,
         input_kwargs={
             "Middle": combine_xyz_1,
@@ -113,9 +142,14 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, transform_1]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, transform_1]}
+    )
 
-    nodegroup = nw.new_node(nodegroup_leg_control().name, input_kwargs={"Openness": kwargs["Leg Openness 3"]})
+    nodegroup = nw.new_node(
+        nodegroup_leg_control().name,
+        input_kwargs={"Openness": kwargs["Leg Openness 3"]},
+    )
 
     dragonflyleg = nw.new_node(
         nodegroup_dragonfly_leg().name,
@@ -131,18 +165,30 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     transform_15 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": dragonflyleg, "Rotation": (0.0, 0.0, -0.5236), "Scale": value_leg_scale},
+        input_kwargs={
+            "Geometry": dragonflyleg,
+            "Rotation": (0.0, 0.0, -0.5236),
+            "Scale": value_leg_scale,
+        },
     )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": nodegroup.outputs["Shoulder"], "Z": -0.5861})
+    combine_xyz_6 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"Y": nodegroup.outputs["Shoulder"], "Z": -0.5861},
+    )
 
     transform_2 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": transform_15, "Translation": (0.38, 0.0, 0.0), "Rotation": combine_xyz_6},
+        input_kwargs={
+            "Geometry": transform_15,
+            "Translation": (0.38, 0.0, 0.0),
+            "Rotation": combine_xyz_6,
+        },
     )
 
     symmetric_clone = nw.new_node(
-        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_2, "Scale": (-1.0, 1.0, 1.0)}
+        nodegroup_symmetric_clone().name,
+        input_kwargs={"Geometry": transform_2, "Scale": (-1.0, 1.0, 1.0)},
     )
 
     value_1 = nw.new_node(Nodes.Value)
@@ -150,10 +196,17 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     transform_3 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": symmetric_clone.outputs["Both"], "Translation": (0.0, -4.6, -2.26), "Scale": value_1},
+        input_kwargs={
+            "Geometry": symmetric_clone.outputs["Both"],
+            "Translation": (0.0, -4.6, -2.26),
+            "Scale": value_1,
+        },
     )
 
-    nodegroup_1 = nw.new_node(nodegroup_leg_control().name, input_kwargs={"Openness": kwargs["Leg Openness 2"]})
+    nodegroup_1 = nw.new_node(
+        nodegroup_leg_control().name,
+        input_kwargs={"Openness": kwargs["Leg Openness 2"]},
+    )
 
     dragonflyleg_1 = nw.new_node(
         nodegroup_dragonfly_leg().name,
@@ -166,18 +219,30 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     transform_16 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": dragonflyleg_1, "Rotation": (0.0, 0.0, -0.1745), "Scale": value_leg_scale},
+        input_kwargs={
+            "Geometry": dragonflyleg_1,
+            "Rotation": (0.0, 0.0, -0.1745),
+            "Scale": value_leg_scale,
+        },
     )
 
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": nodegroup_1.outputs["Shoulder"], "Z": 0.174})
+    combine_xyz_5 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"Y": nodegroup_1.outputs["Shoulder"], "Z": 0.174},
+    )
 
     transform_5 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": transform_16, "Translation": (0.38, 0.0, 0.0), "Rotation": combine_xyz_5},
+        input_kwargs={
+            "Geometry": transform_16,
+            "Translation": (0.38, 0.0, 0.0),
+            "Rotation": combine_xyz_5,
+        },
     )
 
     symmetric_clone_1 = nw.new_node(
-        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_5, "Scale": (-1.0, 1.0, 1.0)}
+        nodegroup_symmetric_clone().name,
+        input_kwargs={"Geometry": transform_5, "Scale": (-1.0, 1.0, 1.0)},
     )
 
     value_2 = nw.new_node(Nodes.Value)
@@ -192,7 +257,10 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
         },
     )
 
-    nodegroup_2 = nw.new_node(nodegroup_leg_control().name, input_kwargs={"Openness": kwargs["Leg Openness 1"]})
+    nodegroup_2 = nw.new_node(
+        nodegroup_leg_control().name,
+        input_kwargs={"Openness": kwargs["Leg Openness 1"]},
+    )
 
     dragonflyleg_2 = nw.new_node(
         nodegroup_dragonfly_leg().name,
@@ -205,18 +273,30 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     transform_14 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": dragonflyleg_2, "Rotation": (0.0, 0.0, 0.3491), "Scale": value_leg_scale},
+        input_kwargs={
+            "Geometry": dragonflyleg_2,
+            "Rotation": (0.0, 0.0, 0.3491),
+            "Scale": value_leg_scale,
+        },
     )
 
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": nodegroup_2.outputs["Shoulder"], "Z": 0.663})
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"Y": nodegroup_2.outputs["Shoulder"], "Z": 0.663},
+    )
 
     transform_6 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": transform_14, "Translation": (0.38, 0.0, 0.0), "Rotation": combine_xyz_4},
+        input_kwargs={
+            "Geometry": transform_14,
+            "Translation": (0.38, 0.0, 0.0),
+            "Rotation": combine_xyz_4,
+        },
     )
 
     symmetric_clone_2 = nw.new_node(
-        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_6, "Scale": (-1.0, 1.0, 1.0)}
+        nodegroup_symmetric_clone().name,
+        input_kwargs={"Geometry": transform_6, "Scale": (-1.0, 1.0, 1.0)},
     )
 
     value_3 = nw.new_node(Nodes.Value)
@@ -232,26 +312,42 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry, transform_3, transform_4, transform_7]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [join_geometry, transform_3, transform_4, transform_7]
+        },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_13, join_geometry_1]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_13, join_geometry_1]}
+    )
 
     dragonflywing = nw.new_node(nodegroup_dragonfly_wing().name)
 
     scene_time = nw.new_node("GeometryNodeInputSceneTime")
     multiply_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: scene_time.outputs["Seconds"], 1: 2 * np.pi * kwargs["Flap Freq"]},
+        input_kwargs={
+            0: scene_time.outputs["Seconds"],
+            1: 2 * np.pi * kwargs["Flap Freq"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
-    sine = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2}, attrs={"operation": "SINE"})
-    wing_roll = nw.new_node(Nodes.Math, input_kwargs={0: sine, 1: kwargs["Flap Mag"]}, attrs={"operation": "MULTIPLY"})
+    sine = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply_2}, attrs={"operation": "SINE"}
+    )
+    wing_roll = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: sine, 1: kwargs["Flap Mag"]},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     value_wing_yaw = nw.new_node(Nodes.Value)
     value_wing_yaw.outputs[0].default_value = kwargs["Wing Yaw"]
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": wing_roll, "Z": value_wing_yaw})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": wing_roll, "Z": value_wing_yaw}
+    )
 
     value_wing_scale = nw.new_node(Nodes.Value)
     value_wing_scale.outputs[0].default_value = kwargs["Wing Scale"]
@@ -267,7 +363,8 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     )
 
     symmetric_clone_3 = nw.new_node(
-        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_9, "Scale": (-1.0, 1.0, 1.0)}
+        nodegroup_symmetric_clone().name,
+        input_kwargs={"Geometry": transform_9, "Scale": (-1.0, 1.0, 1.0)},
     )
 
     value_5 = nw.new_node(Nodes.Value)
@@ -275,16 +372,24 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
 
     transform_10 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": symmetric_clone_3.outputs["Both"], "Translation": (0.0, -2.4, 1.8), "Scale": value_5},
+        input_kwargs={
+            "Geometry": symmetric_clone_3.outputs["Both"],
+            "Translation": (0.0, -2.4, 1.8),
+            "Scale": value_5,
+        },
     )
 
     dragonflywing_1 = nw.new_node(nodegroup_dragonfly_wing().name)
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: wing_roll, 1: 0.0524})
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={1: value_wing_yaw}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math, input_kwargs={1: value_wing_yaw}, attrs={"operation": "SUBTRACT"}
+    )
 
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": add, "Z": subtract})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": add, "Z": subtract}
+    )
 
     transform_12 = nw.new_node(
         Nodes.Transform,
@@ -297,7 +402,8 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     )
 
     symmetric_clone_4 = nw.new_node(
-        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_12, "Scale": (-1.0, 1.0, 1.0)}
+        nodegroup_symmetric_clone().name,
+        input_kwargs={"Geometry": transform_12, "Scale": (-1.0, 1.0, 1.0)},
     )
 
     value_6 = nw.new_node(Nodes.Value)
@@ -313,10 +419,13 @@ def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     )
 
     join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_2, transform_10, transform_11]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [join_geometry_2, transform_10, transform_11]},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_3})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_3}
+    )
 
     # TODO replace this hacky postprocess transform
     result = nw.new_node(
@@ -406,7 +515,11 @@ class DragonflyFactory(AssetFactory):
 
     def create_asset(self, placeholder, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 

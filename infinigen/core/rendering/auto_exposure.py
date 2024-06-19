@@ -1,17 +1,14 @@
 # Derived from https://www.blendswap.com/blend/30728
 # Original node-graph created by PedroPLopes https://www.blendswap.com/profile/1609866 and licensed CC-0
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
 
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_auto_exposure", singleton=False, type="CompositorNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_auto_exposure", singleton=False, type="CompositorNodeTree"
+)
 def nodegroup_auto_exposure(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -31,7 +28,8 @@ def nodegroup_auto_exposure(nw: NodeWrangler):
     )
 
     scale = nw.new_node(
-        "CompositorNodeScale", input_kwargs={"Image": group_input.outputs["Image"], "X": divide, "Y": divide}
+        "CompositorNodeScale",
+        input_kwargs={"Image": group_input.outputs["Image"], "X": divide, "Y": divide},
     )
 
     multiply = nw.new_node(
@@ -40,16 +38,29 @@ def nodegroup_auto_exposure(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    exposure = nw.new_node(Nodes.Exposure, input_kwargs={"Image": scale, "Exposure": multiply})
+    exposure = nw.new_node(
+        Nodes.Exposure, input_kwargs={"Image": scale, "Exposure": multiply}
+    )
 
-    levels = nw.new_node("CompositorNodeLevels", input_kwargs={"Image": exposure}, attrs={"channel": "LUMINANCE"})
+    levels = nw.new_node(
+        "CompositorNodeLevels",
+        input_kwargs={"Image": exposure},
+        attrs={"channel": "LUMINANCE"},
+    )
 
     multiply_1 = nw.new_node(
-        "CompositorNodeMath", input_kwargs={0: levels.outputs["Mean"], 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+        "CompositorNodeMath",
+        input_kwargs={0: levels.outputs["Mean"], 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     rgb_curves = nw.new_node(
-        "CompositorNodeCurveRGB", input_kwargs={"Image": group_input.outputs["Image"], "White Level": multiply_1}
+        "CompositorNodeCurveRGB",
+        input_kwargs={"Image": group_input.outputs["Image"], "White Level": multiply_1},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Image": rgb_curves}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Image": rgb_curves},
+        attrs={"is_active_output": True},
+    )

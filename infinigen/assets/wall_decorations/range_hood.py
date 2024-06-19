@@ -4,9 +4,8 @@
 # Authors: Yiming Zuo
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.material_assignments import AssetList
@@ -16,7 +15,6 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
@@ -75,11 +73,17 @@ class RangeHoodFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
-        surface.add_geomod(obj, geometry_generate_hood, apply=True, input_kwargs=self.params)
+        surface.add_geomod(
+            obj, geometry_generate_hood, apply=True, input_kwargs=self.params
+        )
         butil.modify_mesh(obj, "SOLIDIFY", apply=True, thickness=0.002)
         butil.modify_mesh(obj, "SUBSURF", apply=True, levels=1, render_levels=1)
 
@@ -110,11 +114,15 @@ def geometry_generate_hood(nw: NodeWrangler, **kwargs):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": generatetabletop}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": generatetabletop},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("geometry_range_hood", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "geometry_range_hood", singleton=False, type="GeometryNodeTree"
+)
 def geometry_range_hood(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -133,7 +141,9 @@ def geometry_range_hood(nw: NodeWrangler):
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: 1.4140}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"], 1: 1.4140},
+        attrs={"operation": "MULTIPLY"},
     )
 
     divide = nw.new_node(
@@ -152,26 +162,35 @@ def geometry_range_hood(nw: NodeWrangler):
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": ngonprofile, "Count": group_input.outputs["Resolution"]}
+        Nodes.ResampleCurve,
+        input_kwargs={"Curve": ngonprofile, "Count": group_input.outputs["Resolution"]},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Depth"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Depth"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_1})
 
     transform_geometry = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": resample_curve, "Translation": combine_xyz}
+        Nodes.Transform,
+        input_kwargs={"Geometry": resample_curve, "Translation": combine_xyz},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Height_1"]})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Height_1"]}
+    )
 
     transform_geometry_1 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform_geometry, "Translation": combine_xyz_1}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_geometry, "Translation": combine_xyz_1},
     )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Height_2"]})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Height_2"]}
+    )
 
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
@@ -184,20 +203,29 @@ def geometry_range_hood(nw: NodeWrangler):
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Height_total"], 1: group_input.outputs["Height_2"]},
+        input_kwargs={
+            0: group_input.outputs["Height_total"],
+            1: group_input.outputs["Height_2"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": subtract})
 
     transform_geometry_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": transform_geometry_2, "Translation": combine_xyz_3}
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_geometry_2, "Translation": combine_xyz_3},
     )
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={
-            "Geometry": [transform_geometry_3, transform_geometry_2, transform_geometry_1, transform_geometry]
+            "Geometry": [
+                transform_geometry_3,
+                transform_geometry_2,
+                transform_geometry_1,
+                transform_geometry,
+            ]
         },
     )
 
@@ -212,7 +240,10 @@ def geometry_range_hood(nw: NodeWrangler):
 
     delete_geometry = nw.new_node(
         Nodes.DeleteGeometry,
-        input_kwargs={"Geometry": lofting_poly.outputs["Geometry"], "Selection": lofting_poly.outputs["Top"]},
+        input_kwargs={
+            "Geometry": lofting_poly.outputs["Geometry"],
+            "Selection": lofting_poly.outputs["Top"],
+        },
     )
 
     grid = nw.new_node(
@@ -226,7 +257,9 @@ def geometry_range_hood(nw: NodeWrangler):
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Depth"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Depth"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_2})
@@ -251,13 +284,20 @@ def geometry_range_hood(nw: NodeWrangler):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [delete_geometry, transform_geometry_5]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [delete_geometry, transform_geometry_5]},
     )
 
     transform_geometry_6 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": join_geometry_1, "Rotation": (0.0, 0.0000, -np.pi / 2)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": join_geometry_1,
+            "Rotation": (0.0, 0.0000, -np.pi / 2),
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_geometry_6}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_geometry_6},
+        attrs={"is_active_output": True},
     )

@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -15,8 +13,7 @@ from infinigen.assets.monocot.growth import MonocotGrowthFactory
 from infinigen.assets.utils.decorate import displace_vertices, distance2boundary
 from infinigen.assets.utils.draw import cut_plane, leaf
 from infinigen.assets.utils.object import join_objects
-from infinigen.core.surface import shaderfunc_to_material
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -34,7 +31,11 @@ class AgaveMonocotFactory(MonocotGrowthFactory):
             self.min_y_angle = uniform(np.pi * 0.1, np.pi * 0.15)
             self.max_y_angle = uniform(np.pi * 0.4, np.pi * 0.52)
             self.count = int(log_uniform(32, 64))
-            self.scale_curve = [(0, uniform(0.8, 1.0)), (0.5, 1), (1, uniform(0.6, 1.0))]
+            self.scale_curve = [
+                (0, uniform(0.8, 1.0)),
+                (0.5, 1),
+                (1, uniform(0.6, 1.0)),
+            ]
 
             self.bud_angle = uniform(np.pi / 8, np.pi / 4)
             self.cut_prob = 0 if uniform(0, 1) < 0.5 else uniform(0.2, 0.4)
@@ -52,7 +53,9 @@ class AgaveMonocotFactory(MonocotGrowthFactory):
         lower = deep_clone_obj(obj)
         z_offset = -log_uniform(0.08, 0.16)
         z_ratio = uniform(1.5, 2.5)
-        displace_vertices(lower, lambda x, y, z: (0, 0, (1 - (1 - distance) ** z_ratio) * z_offset))
+        displace_vertices(
+            lower, lambda x, y, z: (0, 0, (1 - (1 - distance) ** z_ratio) * z_offset)
+        )
         obj = join_objects([lower, obj])
         butil.modify_mesh(obj, "WELD", merge_threshold=2e-4)
 

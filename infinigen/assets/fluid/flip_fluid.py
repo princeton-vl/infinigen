@@ -4,12 +4,10 @@
 # Authors: Karhan Kayan
 
 import os
-import sys
 from pathlib import Path
 
 import bpy
 from mathutils import Vector
-from numpy.random import uniform
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 
@@ -19,21 +17,15 @@ import cv2
 import gin
 from numpy.random import normal as N
 
-import infinigen.assets.fluid.liquid_particle_material as liquid_particle_material
 from infinigen.assets.fluid.fluid import find_available_cache, obj_bb_minmax
 from infinigen.assets.materials import (
-    blackbody_shader,
-    lava,
     new_whitewater,
     river_water,
-    smoke_material,
     water,
-    waterfall_material,
 )
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import SelectObjects, deep_clone_obj, object_from_trimesh
 from infinigen.core.util.logging import Timer
-from infinigen.core.util.organization import AssetFile, Assets, LandTile, Materials, Process
+from infinigen.core.util.organization import AssetFile, LandTile, Materials, Process
 from infinigen.terrain.utils import Mesh
 
 
@@ -120,23 +112,31 @@ def set_flip_fluid_domain(
     dom.flip_fluid.domain.whitewater.wavecrest_emission_rate = wavecrest_emission_rate
     dom.flip_fluid.domain.whitewater.turbulence_emission_rate = turbulence_emission_rate
     dom.flip_fluid.domain.whitewater.spray_emission_speed = spray_emission_speed
-    dom.flip_fluid.domain.whitewater.min_max_whitewater_energy_speed.value_max = max_whitewater_energy + N()
+    dom.flip_fluid.domain.whitewater.min_max_whitewater_energy_speed.value_max = (
+        max_whitewater_energy + N()
+    )
     dom.flip_fluid.domain.render.viewport_whitewater_pct = 100
     dom.flip_fluid.domain.render.only_display_whitewater_in_render = False
     dom.flip_fluid.domain.render.whitewater_particle_scale = particle_size
     dom.flip_fluid.domain.simulation.frame_range_mode = "FRAME_RANGE_CUSTOM"
     dom.flip_fluid.domain.simulation.frame_range_custom.value_min = start_frame
-    dom.flip_fluid.domain.simulation.frame_range_custom.value_max = start_frame + simulation_duration
+    dom.flip_fluid.domain.simulation.frame_range_custom.value_max = (
+        start_frame + simulation_duration
+    )
     dom.flip_fluid.domain.surface.subdivisions = subdivisions
     dom.flip_fluid.domain.world.enable_surface_tension = True
     dom.flip_fluid.domain.world.enable_sheet_seeding = True
 
     if output_folder:
         cache_folder = os.path.join(output_folder, "cache")
-        dom.flip_fluid.domain.cache.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        dom.flip_fluid.domain.cache.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
     else:
         cache_folder = os.path.join(os.getcwd(), "cache")
-        dom.flip_fluid.domain.cache.cache_directory = os.path.join(cache_folder, find_available_cache(cache_folder))
+        dom.flip_fluid.domain.cache.cache_directory = os.path.join(
+            cache_folder, find_available_cache(cache_folder)
+        )
 
     print(f"cache folder = {cache_folder}")
 
@@ -161,7 +161,9 @@ def set_flip_fluid_domain(
 
 
 @gin.configurable
-def create_flip_fluid_inflow(location, size=0.1, initial_velo=(0, 0, 2), fluid_type="water"):
+def create_flip_fluid_inflow(
+    location, size=0.1, initial_velo=(0, 0, 2), fluid_type="water"
+):
     bpy.ops.mesh.primitive_ico_sphere_add(location=location, radius=size)
     obj = bpy.context.object
     set_flip_fluid_inflow(obj, initial_velo=initial_velo)
@@ -244,7 +246,9 @@ def obj_simulate(
 
 
 # deprecated
-def asset_heightmap_simulate(folder, resolution=300, simulation_duration=50, AntLandscapeTileSize=10):
+def asset_heightmap_simulate(
+    folder, resolution=300, simulation_duration=50, AntLandscapeTileSize=10
+):
     # now only do for eroded one
     prefix = f"{Process.Erosion}."
     input_heightmap_path = f"{folder}/{prefix}{AssetFile.Heightmap}.exr"
@@ -292,8 +296,12 @@ def asset_heightmap_simulate(folder, resolution=300, simulation_duration=50, Ant
 
 @gin.configurable
 def make_still_water(start_mesh, dom, terrain, initial_velocity=(0, 0, 0)):
-    butil.modify_mesh(start_mesh, "BOOLEAN", apply=True, operation="INTERSECT", object=dom)
-    butil.modify_mesh(start_mesh, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain)
+    butil.modify_mesh(
+        start_mesh, "BOOLEAN", apply=True, operation="INTERSECT", object=dom
+    )
+    butil.modify_mesh(
+        start_mesh, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain
+    )
     butil.select(start_mesh)
     bpy.context.view_layer.objects.active = start_mesh
     bpy.ops.flip_fluid_operators.flip_fluid_add()
@@ -330,7 +338,9 @@ def add_wave_pusher(location, amplitude, half_period=30, simulation_duration=250
 def obstacle_terrain(terrain, dom, friction=0.3, is_planar=True):
     smaller_terrain = butil.deep_clone_obj(terrain)
     # butil.modify_mesh(smaller_terrain, "BOOLEAN", apply = True, operation = "INTERSECT", object = dom)
-    set_flip_fluid_obstacle(smaller_terrain, is_planar=is_planar, thickness=0.5, friction=friction)
+    set_flip_fluid_obstacle(
+        smaller_terrain, is_planar=is_planar, thickness=0.5, friction=friction
+    )
     smaller_terrain.hide_render = True
 
 
@@ -389,7 +399,9 @@ def make_river(
     terrain_friction=0.3,
 ):
     flow_velocity = flow_velocity + N()
-    cloned_water = butil.deep_clone_obj(bpy.data.objects["liquid"], keep_modifiers=False, keep_materials=False)
+    cloned_water = butil.deep_clone_obj(
+        bpy.data.objects["liquid"], keep_modifiers=False, keep_materials=False
+    )
     bpy.data.objects["liquid"].hide_render = True
     bpy.data.objects["liquid"].hide_viewport = True
     dom = create_flip_fluid_domain(
@@ -410,14 +422,18 @@ def make_river(
     inflow = bpy.context.object
     inflow.dimensions = inflow_dimensions
     butil.modify_mesh(inflow, "BOOLEAN", apply=True, operation="INTERSECT", object=dom)
-    butil.modify_mesh(inflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain)
+    butil.modify_mesh(
+        inflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain
+    )
     set_flip_fluid_inflow(inflow, initial_velo=(0, flow_velocity, 0))
 
     bpy.ops.mesh.primitive_cube_add(location=outflow_location)
     outflow = bpy.context.object
     outflow.dimensions = outflow_dimensions
     butil.modify_mesh(outflow, "BOOLEAN", apply=True, operation="INTERSECT", object=dom)
-    butil.modify_mesh(outflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain)
+    butil.modify_mesh(
+        outflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain
+    )
     set_flip_fluid_outflow(outflow)
 
     obstacle_terrain(terrain, dom, is_planar=False, friction=terrain_friction)
@@ -473,7 +489,9 @@ def make_tilted_river(
     inflow = bpy.context.object
     inflow.dimensions = inflow_dimensions
     butil.modify_mesh(inflow, "BOOLEAN", apply=True, operation="INTERSECT", object=dom)
-    butil.modify_mesh(inflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain)
+    butil.modify_mesh(
+        inflow, "BOOLEAN", apply=True, operation="DIFFERENCE", object=terrain
+    )
     set_flip_fluid_inflow(inflow, initial_velo=(0, flow_velocity + N(), 0))
 
     obstacle_terrain(terrain, dom, friction=terrain_friction, is_planar=False)

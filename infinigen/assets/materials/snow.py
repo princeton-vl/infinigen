@@ -14,15 +14,25 @@ name = "snow"
 def shader_snow(nw, subsurface=1.0, **kwargs):
     nw.force_input_consistency()
     position = nw.new_node("ShaderNodeNewGeometry", [])
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 0.36, "Y": 0.46, "Z": 0.6})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": 0.36, "Y": 0.46, "Z": 0.6}
+    )
     vector_math = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: (0.5, 0.5, 0.5)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz, 1: (0.5, 0.5, 0.5)},
+        attrs={"operation": "MULTIPLY"},
     )
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": position, "Scale": (12.0, 12.0, 12.0)})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": position, "Scale": (12.0, 12.0, 12.0)}
+    )
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mapping, "Scale": 30.0}, attrs={"feature": "N_SPHERE_RADIUS"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mapping, "Scale": 30.0},
+        attrs={"feature": "N_SPHERE_RADIUS"},
     )
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Radius"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": voronoi_texture.outputs["Radius"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.525
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.58
@@ -53,17 +63,28 @@ def geo_snowtexture(nw, selection=None, **kwargs):
     position0 = nw.new_node(Nodes.InputPosition)
     position = nw.multiply(position0, [12] * 3)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 12.0, "Detail": 2})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": position, "Scale": 12.0, "Detail": 2},
+    )
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 2.0, "Detail": 4})
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 2.0, "Detail": 4}
+    )
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.069
     colorramp_1.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_1.color_ramp.elements[1].position = 0.757
     colorramp_1.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    noise_texture_2 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 1.0, "Detail": 4})
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]})
+    noise_texture_2 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 1.0, "Detail": 4}
+    )
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_2.outputs["Fac"]}
+    )
     colorramp_2.color_ramp.elements[0].position = 0.069
     colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_2.color_ramp.elements[1].position = 0.757
@@ -75,9 +96,14 @@ def geo_snowtexture(nw, selection=None, **kwargs):
         colorramp_2,
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": height, 1: 0.0, 2: 2.0, 3: -0.03, 4: 0.03})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": height, 1: 0.0, 2: 2.0, 3: -0.03, 4: 0.03},
+    )
 
-    modulation = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position0, "Scale": 0.5})
+    modulation = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": position0, "Scale": 0.5}
+    )
     colorramp_3 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": modulation})
     colorramp_3.color_ramp.elements[0].position = 0.25
     colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -90,10 +116,13 @@ def geo_snowtexture(nw, selection=None, **kwargs):
         offset = nw.multiply(offset, surface.eval_argument(nw, selection))
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": offset}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": offset},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 def apply(objs, selection=None, **kwargs):

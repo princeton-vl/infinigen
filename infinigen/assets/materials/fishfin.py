@@ -4,27 +4,15 @@
 # Authors: Mingzhe Wang
 
 
-import math as ma
-import os
 import random
-import sys
 
-import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
     sample_color,
     sample_range,
-    sample_ratio,
 )
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_fin_regular(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -32,17 +20,25 @@ def shader_fin_regular(nw: NodeWrangler, rand=True, **input_kwargs):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Bump"})
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]}
+    )
     colorramp_2.color_ramp.elements[0].position = 0.0227
     colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_2.color_ramp.elements[1].position = 0.1432
     colorramp_2.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 20.0}, attrs={"noise_dimensions": "4D"})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 20.0},
+        attrs={"noise_dimensions": "4D"},
+    )
     if rand:
         noise_texture.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp_1.color_ramp.elements.new(0)
     colorramp_1.color_ramp.elements[0].position = 0.0
     colorramp_1.color_ramp.elements[0].color = (0.0288, 0.0301, 0.0266, 1.0)
@@ -55,11 +51,17 @@ def shader_fin_regular(nw: NodeWrangler, rand=True, **input_kwargs):
             for e in colorramp_1.color_ramp.elements:
                 e.color[i] = sample_range(0, 0.15)
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 10.0}, attrs={"noise_dimensions": "4D"})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 10.0},
+        attrs={"noise_dimensions": "4D"},
+    )
     if rand:
         noise_texture_1.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0045
     colorramp.color_ramp.elements[0].color = (0.1512, 0.1236, 0.0977, 1.0)
     colorramp.color_ramp.elements[1].position = 0.5364
@@ -78,9 +80,13 @@ def shader_fin_regular(nw: NodeWrangler, rand=True, **input_kwargs):
         },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -88,7 +94,9 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Bump"})
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Vector"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Vector"]}
+    )
     colorramp_2.color_ramp.elements[0].position = 0.0
     colorramp_2.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_2.color_ramp.elements[1].position = 0.7977
@@ -96,7 +104,9 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
 
     attribute_2 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "BumpMask"})
 
-    colorramp_8 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute_2.outputs["Color"]})
+    colorramp_8 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute_2.outputs["Color"]}
+    )
     colorramp_8.color_ramp.elements[0].position = 0.0727
     colorramp_8.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_8.color_ramp.elements[1].position = 1.0
@@ -119,7 +129,9 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
     colorramp_5.color_ramp.elements[2].position = 0.6977
     colorramp_5.color_ramp.elements[2].color = (1.0, 1.0, 1.0, 1.0)
 
-    colorramp_7 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute_2.outputs["Color"]})
+    colorramp_7 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute_2.outputs["Color"]}
+    )
     colorramp_7.color_ramp.elements.new(0)
     colorramp_7.color_ramp.elements[0].position = 0.0
     colorramp_7.color_ramp.elements[0].color = (0.4063, 0.4063, 0.4063, 1.0)
@@ -130,7 +142,9 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
     if rand:
         colorramp_7.color_ramp.elements[1].position = sample_range(0.2, 0.8)
 
-    colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": colorramp_7.outputs["Color"]})
+    colorramp_4 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": colorramp_7.outputs["Color"]}
+    )
     colorramp_4.color_ramp.elements.new(0)
     colorramp_4.color_ramp.elements[0].position = 0.0
     colorramp_4.color_ramp.elements[0].color = (1.0, 0.8, 0.6, 1.0)
@@ -142,23 +156,38 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
         sample_color(colorramp_4.color_ramp.elements[0].color, offset=0.03)
         sample_color(colorramp_4.color_ramp.elements[1].color, offset=0.03)
 
-    transparent_bsdf = nw.new_node(Nodes.TransparentBSDF, input_kwargs={"Color": colorramp_4.outputs["Color"]})
+    transparent_bsdf = nw.new_node(
+        Nodes.TransparentBSDF, input_kwargs={"Color": colorramp_4.outputs["Color"]}
+    )
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": (1.0, 0.7354, 0.4708, 1.0)})
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": (1.0, 0.7354, 0.4708, 1.0)}
+    )
 
-    mix_shader_1 = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.1, 1: transparent_bsdf, 2: translucent_bsdf})
+    mix_shader_1 = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": 0.1, 1: transparent_bsdf, 2: translucent_bsdf},
+    )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Vector"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Vector"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 0.1273
     colorramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 10.0}, attrs={"noise_dimensions": "4D"})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Scale": 10.0},
+        attrs={"noise_dimensions": "4D"},
+    )
     if rand:
         noise_texture_1.inputs["W"].default_value = sample_range(-2, 2)
 
-    colorramp_3 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]})
+    colorramp_3 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_1.outputs["Fac"]}
+    )
     colorramp_3.color_ramp.elements[0].position = 0.3568
     colorramp_3.color_ramp.elements[0].color = (0.8258, 0.1192, 0.0, 1.0)
     colorramp_3.color_ramp.elements[1].position = 1.0
@@ -176,13 +205,22 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
         },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": 1.0})
-
-    mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": colorramp_5.outputs["Color"], 1: mix_shader_1, 2: principled_bsdf}
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": 1.0}
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    mix_shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": colorramp_5.outputs["Color"],
+            1: mix_shader_1,
+            2: principled_bsdf,
+        },
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def apply(obj, geo_kwargs={}, shader_kwargs={}, **kwargs):

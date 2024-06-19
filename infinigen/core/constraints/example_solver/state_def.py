@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import copy
 import enum
 import importlib
 import json
@@ -16,7 +15,6 @@ import logging
 import pickle
 import typing
 from collections import OrderedDict
-from collections.abc import Collection
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -27,7 +25,6 @@ import trimesh
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.example_solver.geometry.planes import Planes
 from infinigen.core.placement.factory import AssetFactory
 
@@ -66,7 +63,9 @@ class ObjectState:
 
     def __post_init__(self):
         assert not t.contradiction(self.tags)
-        assert not any(isinstance(r.relation, cl.NegatedRelation) for r in self.relations), self.relations
+        assert not any(
+            isinstance(r.relation, cl.NegatedRelation) for r in self.relations
+        ), self.relations
 
     def __repr__(self):
         obj = self.obj
@@ -90,8 +89,14 @@ class State:
         order = sorted(self.objs.keys(), key=lambda s: s.split("_")[-1])
         for k in order:
             v = self.objs[k]
-            relations = ", ".join(f"{r.relation.__class__.__name__}({r.target_name})" for r in v.relations)
-            semantics = {tg for tg in t.decompose_tags(v.tags)[0] if not isinstance(tg, t.SpecificObject)}
+            relations = ", ".join(
+                f"{r.relation.__class__.__name__}({r.target_name})" for r in v.relations
+            )
+            semantics = {
+                tg
+                for tg in t.decompose_tags(v.tags)[0]
+                if not isinstance(tg, t.SpecificObject)
+            }
             print(f"  {v.obj.name} {semantics} [{relations}]")
 
     def to_json(self, path: Path):
@@ -131,7 +136,14 @@ class State:
         }
 
         with path.open("w") as f:
-            json.dump(data, f, default=preprocess_field, sort_keys=True, indent=4, check_circular=True)
+            json.dump(
+                data,
+                f,
+                default=preprocess_field,
+                sort_keys=True,
+                indent=4,
+                check_circular=True,
+            )
 
     def __post_init__(self):
         bpy_objs = [o.obj for o in self.objs.values() if o.obj is not None]

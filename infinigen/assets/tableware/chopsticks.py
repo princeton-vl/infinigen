@@ -9,9 +9,6 @@ from numpy.random import uniform
 from infinigen.assets.tableware.base import TablewareFactory
 from infinigen.assets.utils.decorate import subsurf, write_co
 from infinigen.assets.utils.object import join_objects, new_grid
-from infinigen.core import surface
-from infinigen.core.nodes.node_info import Nodes
-from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed

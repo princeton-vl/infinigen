@@ -4,29 +4,19 @@
 # Authors: Mingzhe Wang, Alex Raistrick
 
 
-import math as ma
 import os
-import sys
 
 import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.assets.creatures.util.nodegroups.shader import nodegroup_color_mask
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
-    sample_color,
     sample_range,
     sample_ratio,
 )
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 
 
 def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
@@ -34,11 +24,17 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "local_pos"})
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": attribute.outputs["Color"]})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": attribute.outputs["Color"]}
+    )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.9, "Color1": noise_texture.outputs["Color"], "Color2": attribute.outputs["Color"]},
+        input_kwargs={
+            "Fac": 0.9,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": attribute.outputs["Color"],
+        },
     )
 
     mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": mix})
@@ -46,10 +42,14 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 10.0
     if rand:
-        value.outputs[0].default_value = sample_ratio(value.outputs[0].default_value, 0.5, 2)
+        value.outputs[0].default_value = sample_ratio(
+            value.outputs[0].default_value, 0.5, 2
+        )
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mapping, "Scale": value}, attrs={"voronoi_dimensions": "2D"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mapping, "Scale": value},
+        attrs={"voronoi_dimensions": "2D"},
     )
 
     voronoi_texture_4 = nw.new_node(
@@ -60,7 +60,10 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture_4.outputs["Distance"]},
+        input_kwargs={
+            0: voronoi_texture.outputs["Distance"],
+            1: voronoi_texture_4.outputs["Distance"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -84,8 +87,12 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     colorramp.color_ramp.elements[1].position = 1.0
     colorramp.color_ramp.elements[1].color = (0.9755, 1.0, 0.9096, 1.0)
     if rand:
-        colorramp.color_ramp.elements[0].color = hsv2rgba((U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7)))
-        colorramp.color_ramp.elements[1].color = hsv2rgba((U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7)))
+        colorramp.color_ramp.elements[0].color = hsv2rgba(
+            (U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7))
+        )
+        colorramp.color_ramp.elements[1].color = hsv2rgba(
+            (U(0.02, 0.06), U(0.4, 0.8), U(0.15, 0.7))
+        )
 
     mix_1 = nw.new_node(
         Nodes.MixRGB,
@@ -97,14 +104,20 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix_1}, attrs={"subsurface_method": "BURLEY"}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": mix_1},
+        attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_material(obj, shader_giraffe_attr, reuse=False, input_kwargs=shader_kwargs)
+    surface.add_material(
+        obj, shader_giraffe_attr, reuse=False, input_kwargs=shader_kwargs
+    )
 
 
 if __name__ == "__main__":
@@ -116,7 +129,9 @@ if __name__ == "__main__":
             geo_kwargs={"rand": True},
             shader_kwargs={"rand": True},
         )
-        fn = os.path.join(os.path.abspath(os.curdir), "dev_scene_test_giraffe_attr.blend")
+        fn = os.path.join(
+            os.path.abspath(os.curdir), "dev_scene_test_giraffe_attr.blend"
+        )
         bpy.ops.wm.save_as_mainfile(filepath=fn)
         # bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
         # bpy.context.scene.render.image_settings.file_format='JPEG'

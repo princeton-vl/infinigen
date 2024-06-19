@@ -8,14 +8,8 @@ import logging
 import typing
 from dataclasses import dataclass
 
-import bpy
-import numpy as np
-import trimesh
-from mathutils import Matrix, Vector
 
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.geometry import parse_scene
-from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
 

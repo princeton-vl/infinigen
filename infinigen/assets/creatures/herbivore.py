@@ -6,7 +6,6 @@
 
 from collections import defaultdict
 
-import bpy
 import gin
 import mathutils
 import numpy as np
@@ -28,7 +27,6 @@ from infinigen.assets.creatures.util.genome import Joint
 from infinigen.assets.materials import bone, eyeball, horn, nose, tongue
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 
@@ -44,8 +42,12 @@ def herbivore_hair():
         "clump_n": np.random.randint(10, 300),
         "avoid_features_dist": 0.06,
         "grooming": {
-            "Length MinMaxScale": np.array((length, length * U(1.5, 4), U(15, 60)), dtype=np.float32),
-            "Puff MinMaxScale": np.array((puff, U(0.5, 1.3), U(15, 60)), dtype=np.float32),
+            "Length MinMaxScale": np.array(
+                (length, length * U(1.5, 4), U(15, 60)), dtype=np.float32
+            ),
+            "Puff MinMaxScale": np.array(
+                (puff, U(0.5, 1.3), U(15, 60)), dtype=np.float32
+            ),
             "Combing": U(0.5, 1),
             "Strand Random Mag": U(0, 0.003) if U() < 0.5 else 0,
             "Strand Perlin Mag": U(0, 0.006),
@@ -66,7 +68,8 @@ def herbivore_hair():
 
 
 def herbivore_postprocessing(body_parts, extras, params):
-    get_extras = lambda k: [o for o in extras if k in o.name]
+    def get_extras(k):
+        return [o for o in extras if k in o.name]
 
     main_template = surface.registry.sample_registry(params["surface_registry"])
     main_template.apply(body_parts + get_extras("BodyExtra"))
@@ -79,16 +82,22 @@ def herbivore_postprocessing(body_parts, extras, params):
 
 
 def herbivore_genome():
-    temp_dict = defaultdict(lambda: 0.2, {"body_herbivore_giraffe": 0.02, "body_herbivore_llama": 0.1})
+    temp_dict = defaultdict(
+        lambda: 0.2, {"body_herbivore_giraffe": 0.02, "body_herbivore_llama": 0.1}
+    )
     body = genome.part(
-        parts.generic_nurbs.NurbsBody(prefix="body_herbivore", tags=["body"], var=1, temperature=temp_dict)
+        parts.generic_nurbs.NurbsBody(
+            prefix="body_herbivore", tags=["body"], var=1, temperature=temp_dict
+        )
     )
 
     neck_t = 0.67
     shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
     splay = clip_gaussian(130, 7, 90, 130) / 180
     shoulder_t = clip_gaussian(0.1, 0.05, 0.05, 0.2)
-    params = {"length_rad1_rad2": np.array((1.8, 0.1, 0.05)) * N(1, (0.1, 0.05, 0.05), 3)}
+    params = {
+        "length_rad1_rad2": np.array((1.8, 0.1, 0.05)) * N(1, (0.1, 0.05, 0.05), 3)
+    }
 
     leg_rest = (0, 90, 0)  # (0, 90, 0)
     foot_rest = (0, -90, 0)
@@ -112,7 +121,11 @@ def herbivore_genome():
             rotation_basis="global",
         )
         back_leg = genome.attach(
-            foot, genome.part(backleg_fac), coord=(0.95, 1, 0.2), joint=Joint(rest=foot_rest), rotation_basis="global"
+            foot,
+            genome.part(backleg_fac),
+            coord=(0.95, 1, 0.2),
+            joint=Joint(rest=foot_rest),
+            rotation_basis="global",
         )
         genome.attach(
             back_leg,
@@ -132,7 +145,12 @@ def herbivore_genome():
             joint=Joint(rest=(0, 90, 0)),
             rotation_basis="normal",
         )
-        front_leg = genome.attach(foot, genome.part(frontleg_fac), coord=(0.95, 0, 0.5), joint=Joint(rest=(0, -70, 0)))
+        front_leg = genome.attach(
+            foot,
+            genome.part(frontleg_fac),
+            coord=(0.95, 0, 0.5),
+            joint=Joint(rest=(0, -70, 0)),
+        )
         genome.attach(
             front_leg,
             body,
@@ -143,7 +161,9 @@ def herbivore_genome():
         )
 
     temp_dict = defaultdict(lambda: 0.2, {"body_herbivore_giraffe": 0.02})
-    head_fac = parts.generic_nurbs.NurbsHead(prefix="head_herbivore", tags=["head"], var=0.5, temperature=temp_dict)
+    head_fac = parts.generic_nurbs.NurbsHead(
+        prefix="head_herbivore", tags=["head"], var=0.5, temperature=temp_dict
+    )
     head = genome.part(head_fac)
 
     eye_fac = parts.eye.MammalEye({"Radius": N(0.035, 0.01)})
@@ -152,12 +172,29 @@ def herbivore_genome():
     rot = np.array([0, 0, 0])
     for side in [-1, 1]:
         eye = genome.part(eye_fac)
-        genome.attach(eye, head, coord=(eye_t, splay, r), joint=Joint(rest=rot), rotation_basis="normal", side=side)
+        genome.attach(
+            eye,
+            head,
+            coord=(eye_t, splay, r),
+            joint=Joint(rest=rot),
+            rotation_basis="normal",
+            side=side,
+        )
 
     jaw = genome.part(
-        parts.head.CarnivoreJaw({"length_rad1_rad2": (0.6 * head_fac.params["length"], 0.12, 0.08), "Canine Length": 0})
+        parts.head.CarnivoreJaw(
+            {
+                "length_rad1_rad2": (0.6 * head_fac.params["length"], 0.12, 0.08),
+                "Canine Length": 0,
+            }
+        )
     )
-    genome.attach(jaw, head, coord=(0.25 * N(1, 0.1), 0, 0.35 * N(1, 0.1)), joint=Joint(rest=(0, 10 * N(1, 0.1), 0)))
+    genome.attach(
+        jaw,
+        head,
+        coord=(0.25 * N(1, 0.1), 0, 0.35 * N(1, 0.1)),
+        joint=Joint(rest=(0, 10 * N(1, 0.1), 0)),
+    )
 
     if U() < 0.7:
         nose = genome.part(parts.head_detail.CatNose())
@@ -169,7 +206,14 @@ def herbivore_genome():
     rot = np.array([0, -10, -23]) * N(1, 0.1, 3)
     for side in [-1, 1]:
         ear = genome.part(ear_fac)
-        genome.attach(ear, head, coord=(t, splay, 1), joint=Joint(rest=rot), rotation_basis="normal", side=side)
+        genome.attach(
+            ear,
+            head,
+            coord=(t, splay, 1),
+            joint=Joint(rest=rot),
+            rotation_basis="normal",
+            side=side,
+        )
 
     if U() < 0.7:
         horn_fac = parts.horn.Horn()
@@ -180,19 +224,35 @@ def herbivore_genome():
         rot = np.array([U(-40, 0), 0, N(120, 10)])
         for side in [-1, 1]:
             horn = genome.part(horn_fac)
-            genome.attach(horn, head, coord=(t, splay, 0.5), joint=Joint(rest=rot), rotation_basis="global", side=side)
+            genome.attach(
+                horn,
+                head,
+                coord=(t, splay, 0.5),
+                joint=Joint(rest=rot),
+                rotation_basis="global",
+                side=side,
+            )
     elif U() < 0:
         horn_fac = parts.horn.Horn()
         horn_fac.params["length"] *= U(0.3, 1)
         horn_fac.params["rotation_x"] = 0
         horn = genome.part(horn_fac)
-        genome.attach(horn, head, coord=(U(0.3, 0.9), 1, 0.6), joint=Joint(rest=(0, -90, -90)), rotation_basis="global")
+        genome.attach(
+            horn,
+            head,
+            coord=(U(0.3, 0.9), 1, 0.6),
+            joint=Joint(rest=(0, -90, -90)),
+            rotation_basis="global",
+        )
 
     genome.attach(head, body, coord=(0.97, 0, 0.2), joint=Joint(rest=(0, 20, 0)))
 
     if U() < 1:
         hair = herbivore_hair()
-        registry = [(infinigen.assets.materials.giraffe_attr, 1), (infinigen.assets.materials.spot_sparse_attr, 3)]
+        registry = [
+            (infinigen.assets.materials.giraffe_attr, 1),
+            (infinigen.assets.materials.spot_sparse_attr, 3),
+        ]
     else:
         hair = None
         registry = [
@@ -201,7 +261,8 @@ def herbivore_genome():
         ]
 
     return genome.CreatureGenome(
-        parts=body, postprocess_params=dict(animation=dict(), hair=hair, surface_registry=registry)
+        parts=body,
+        postprocess_params=dict(animation=dict(), hair=hair, surface_registry=registry),
     )
 
 
@@ -227,7 +288,8 @@ class HerbivoreFactory(AssetFactory):
 
         if self.hair and (self.animation_mode is not None or self.clothsim_skin):
             raise NotImplementedError(
-                "Dynamic hair is not yet fully working. " "Please disable either hair or both of animation/clothsim"
+                "Dynamic hair is not yet fully working. "
+                "Please disable either hair or both of animation/clothsim"
             )
 
     def create_placeholder(self, **kwargs):
@@ -235,20 +297,29 @@ class HerbivoreFactory(AssetFactory):
 
     def create_asset(self, i, placeholder, **kwargs):
         genome = herbivore_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"herbivore({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"herbivore({self.factory_seed}, {i})"
+        )
         # tag_object(root, 'herbivore')
         offset_center(root)
 
         dynamic = self.animation_mode is not None
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
-            root, parts, genome, rigging=dynamic, postprocess_func=herbivore_postprocessing, **kwargs
+            root,
+            parts,
+            genome,
+            rigging=dynamic,
+            postprocess_func=herbivore_postprocessing,
+            **kwargs,
         )
 
         butil.parent_to(root, placeholder, no_inverse=True)
 
         if self.hair:
-            creature_hair.configure_hair(joined, root, genome.postprocess_params["hair"])
+            creature_hair.configure_hair(
+                joined, root, genome.postprocess_params["hair"]
+            )
         if dynamic:
             if self.animation_mode == "run":
                 run_cycle.animate_run(root, arma, ik_targets)
@@ -258,7 +329,13 @@ class HerbivoreFactory(AssetFactory):
             else:
                 raise ValueError(f"Unrecognized mode {self.animation_mode=}")
         if self.clothsim_skin:
-            rigidity = surface.write_vertex_group(joined, cloth_sim.local_pos_rigity_mask, apply=True)
-            cloth_sim.bake_cloth(joined, genome.postprocess_params["skin"], attributes=dict(vertex_group_mass=rigidity))
+            rigidity = surface.write_vertex_group(
+                joined, cloth_sim.local_pos_rigity_mask, apply=True
+            )
+            cloth_sim.bake_cloth(
+                joined,
+                genome.postprocess_params["skin"],
+                attributes=dict(vertex_group_mass=rigidity),
+            )
 
         return root

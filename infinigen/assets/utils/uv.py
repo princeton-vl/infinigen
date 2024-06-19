@@ -6,7 +6,6 @@ import logging
 # Authors: Lingjie Mei
 from collections.abc import Iterable
 
-import bmesh
 import bpy
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -113,20 +112,39 @@ def compute_uv_direction(obj, x="x", y="y", selection=None):
     if x_max - x_min > y_max - y_min:
         scale = 1 / (x_max - x_min + 1e-4)
         mid = (y_max + y_min) / 2
-        pred = np.stack([(pred[:, 0] - x_min) * scale, (pred[:, 1] - mid) * scale + 0.5], -1)
-        bbox = 0, 1, 0.5 - 0.5 * (y_max - y_min) * scale, 0.5 + 0.5 * (y_max - y_min) * scale
+        pred = np.stack(
+            [(pred[:, 0] - x_min) * scale, (pred[:, 1] - mid) * scale + 0.5], -1
+        )
+        bbox = (
+            0,
+            1,
+            0.5 - 0.5 * (y_max - y_min) * scale,
+            0.5 + 0.5 * (y_max - y_min) * scale,
+        )
     else:
         scale = 1 / (y_max - y_min + 1e-4)
         mid = (x_max + x_min) / 2
-        pred = np.stack([(pred[:, 0] - mid) * scale + 0.5, (pred[:, 1] - y_min) * scale], -1)
-        bbox = 0.5 - 0.5 * (x_max - x_min) * scale, 0.5 + 0.5 * (x_max - x_min) * scale, 0, 1
+        pred = np.stack(
+            [(pred[:, 0] - mid) * scale + 0.5, (pred[:, 1] - y_min) * scale], -1
+        )
+        bbox = (
+            0.5 - 0.5 * (x_max - x_min) * scale,
+            0.5 + 0.5 * (x_max - x_min) * scale,
+            0,
+            1,
+        )
     new_uv = np.where(selection[:, np.newaxis], pred, uv)
     write_uv(obj, new_uv)
     return bbox
 
 
 def max_bbox(bboxes):
-    return min(b[0] for b in bboxes), max(b[1] for b in bboxes), min(b[2] for b in bboxes), max(b[3] for b in bboxes)
+    return (
+        min(b[0] for b in bboxes),
+        max(b[1] for b in bboxes),
+        min(b[2] for b in bboxes),
+        max(b[3] for b in bboxes),
+    )
 
 
 def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwargs):
@@ -140,15 +158,21 @@ def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwa
         selected = faces == i
         selections.append(selected)
         unwrap_faces(obj, selected)
-        bboxes.append(compute_uv_direction(obj, str2vec(xs[i]), str2vec(ys[i]), selected[fc2f]))
+        bboxes.append(
+            compute_uv_direction(obj, str2vec(xs[i]), str2vec(ys[i]), selected[fc2f])
+        )
     if groupings is None:
         groupings = [[i] for i in range(len(axes))]
     for indices in groupings:
         selected = sum(selections[i] for i in indices)
         try:
-            surface.apply(obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs)
+            surface.apply(
+                obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs
+            )
         except TypeError:
-            logger.debug(f"apply() for {surface=} with kwarg bbox failed, trying again without")
+            logger.debug(
+                f"apply() for {surface=} with kwarg bbox failed, trying again without"
+            )
             surface.apply(obj, selected, **kwargs)
 
 
@@ -161,15 +185,33 @@ def wrap_top_bottom(obj, surface, shared=True, **kwargs):
 
 
 def wrap_front_back_side(obj, surface, shared=True, **kwargs):
-    wrap_sides(obj, surface, "vuy", "xyu", "zzz", [[0, 2], [1]] if shared else None, **kwargs)
+    wrap_sides(
+        obj, surface, "vuy", "xyu", "zzz", [[0, 2], [1]] if shared else None, **kwargs
+    )
 
 
 def wrap_four_sides(obj, surface, shared=True, **kwargs):
-    wrap_sides(obj, surface, "vxyu", "xyuv", "zzzz", [[0, 2], [1, 3]] if shared else None, **kwargs)
+    wrap_sides(
+        obj,
+        surface,
+        "vxyu",
+        "xyuv",
+        "zzzz",
+        [[0, 2], [1, 3]] if shared else None,
+        **kwargs,
+    )
 
 
 def wrap_six_sides(obj, surface, shared=True, **kwargs):
-    wrap_sides(obj, surface, "vxyuzw", "xyuvxx", "zzzzyv", [[0, 2], [1, 3], [4, 5]] if shared else None, **kwargs)
+    wrap_sides(
+        obj,
+        surface,
+        "vxyuzw",
+        "xyuvxx",
+        "zzzzyv",
+        [[0, 2], [1, 3], [4, 5]] if shared else None,
+        **kwargs,
+    )
 
 
 def unwrap_normal(obj, selection=None, axis=None, axis_=None):
@@ -195,7 +237,9 @@ def unwrap_normal(obj, selection=None, axis=None, axis_=None):
         axis = axis[np.newaxis, :] - np.inner(axis, normal)[:, np.newaxis] * normal
         axis /= np.maximum(np.linalg.norm(axis, axis=-1, keepdims=True), 1e-4)
         axis_ = np.cross(normal, axis)
-    uv = np.stack([(co[loop_vertices] * axis).sum(1), (co[loop_vertices] * axis_).sum(1)], -1)
+    uv = np.stack(
+        [(co[loop_vertices] * axis).sum(1), (co[loop_vertices] * axis_).sum(1)], -1
+    )
     uv = np.where(selection[:, np.newaxis], uv, read_uv(obj))
     write_uv(obj, uv)
 

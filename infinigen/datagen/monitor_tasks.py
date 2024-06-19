@@ -14,14 +14,27 @@ from shutil import rmtree
 
 import gin
 
-from infinigen.datagen.states import CONCLUDED_JOBSTATES, JobState, SceneState, get_scene_state, get_suffix
+from infinigen.datagen.states import (
+    CONCLUDED_JOBSTATES,
+    JobState,
+    SceneState,
+    get_scene_state,
+    get_suffix,
+)
 from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.cleanup import cleanup
 
 logger = logging.getLogger(__name__)
 
 
-def iterate_sequential_tasks(task_list, get_task_state, overrides, configs, input_indices=None, output_indices=None):
+def iterate_sequential_tasks(
+    task_list,
+    get_task_state,
+    overrides,
+    configs,
+    input_indices=None,
+    output_indices=None,
+):
     if len(task_list) == 0:
         return JobState.Succeeded
 
@@ -39,7 +52,10 @@ def iterate_sequential_tasks(task_list, get_task_state, overrides, configs, inpu
             pass  # any outcome is fine
 
         # determine whether the current step failing would be catastrophic
-        fatal = i + 1 >= len(task_list) or task_list[i + 1].get("condition", "prev_succeeded") != "prev_failed"
+        fatal = (
+            i + 1 >= len(task_list)
+            or task_list[i + 1].get("condition", "prev_succeeded") != "prev_failed"
+        )
 
         queue_func = partial(
             task_spec["func"],
@@ -101,7 +117,8 @@ def on_scene_termination(
     apply_cleanup_options(args, seed, crashed, scene_folder)
 
     if scene_folder.exists() and (
-        remove_write_permission is True or (remove_write_permission == "except_crashed" and not crashed)
+        remove_write_permission is True
+        or (remove_write_permission == "except_crashed" and not crashed)
     ):
         subprocess.check_output(f"chmod -R a-w {scene_folder}".split())
 
@@ -156,14 +173,17 @@ def iterate_scene_tasks(
 
     for task in global_tasks + view_dependent_tasks + camera_dependent_tasks:
         if "_" in task["name"]:
-            raise ValueError(f'{task=} with {task["name"]=} is invalid, must not contain underscores')
+            raise ValueError(
+                f'{task=} with {task["name"]=} is invalid, must not contain underscores'
+            )
 
     if cam_block_size is None:
         cam_block_size = view_block_size
 
     if cam_id_ranges[0] <= 0 or cam_id_ranges[1] <= 0:
         raise ValueError(
-            f"{cam_id_ranges=} is invalid, both num. rigs and " "num subcams must be >= 1 or no work is done"
+            f"{cam_id_ranges=} is invalid, both num. rigs and "
+            "num subcams must be >= 1 or no work is done"
         )
     assert view_block_size >= 1
     assert cam_block_size >= 1
@@ -172,12 +192,20 @@ def iterate_scene_tasks(
     seed = scene_dict["seed"]
 
     scene_folder = args.output_folder / seed
-    get_task_state = partial(get_scene_state, scene=scene_dict, scene_folder=scene_folder)
+    get_task_state = partial(
+        get_scene_state, scene=scene_dict, scene_folder=scene_folder
+    )
 
-    global_overrides = [f"execute_tasks.frame_range={repr(list(frame_range))}", "execute_tasks.camera_id=[0, 0]"]
+    global_overrides = [
+        f"execute_tasks.frame_range={repr(list(frame_range))}",
+        "execute_tasks.camera_id=[0, 0]",
+    ]
     global_configs = scene_dict.get("configs", []) + args.configs
     global_iter = iterate_sequential_tasks(
-        global_tasks, get_task_state, overrides=args.overrides + global_overrides, configs=global_configs
+        global_tasks,
+        get_task_state,
+        overrides=args.overrides + global_overrides,
+        configs=global_configs,
     )
 
     for state, *rest in global_iter:
@@ -194,7 +222,10 @@ def iterate_scene_tasks(
 
     running_views = 0
     for cam_rig, view_frame in itertools.product(cam_rigs, view_frames):
-        view_frame_range = [view_frame, min(frame_range[1], view_frame + view_block_size - 1)]
+        view_frame_range = [
+            view_frame,
+            min(frame_range[1], view_frame + view_block_size - 1),
+        ]
         view_overrides = [
             f"execute_tasks.frame_range=[{view_frame_range[0]},{view_frame_range[1]}]",
             f"execute_tasks.camera_id=[{cam_rig},{0}]",
@@ -221,7 +252,9 @@ def iterate_scene_tasks(
 
         running_blocks = 0
         for subcam, resample_idx in itertools.product(subcams, resamples):
-            for cam_frame in range(view_frame_range[0], view_frame_range[1] + 1, cam_block_size):
+            for cam_frame in range(
+                view_frame_range[0], view_frame_range[1] + 1, cam_block_size
+            ):
                 cam_frame_range = [
                     cam_frame,
                     min(view_frame_range[1], cam_frame + cam_block_size - 1),
@@ -272,7 +305,10 @@ def iterate_scene_tasks(
         return
 
     finalize_iter = iterate_sequential_tasks(
-        finalize_tasks, get_task_state, overrides=args.overrides + global_overrides, configs=global_configs
+        finalize_tasks,
+        get_task_state,
+        overrides=args.overrides + global_overrides,
+        configs=global_configs,
     )
     for state, *rest in finalize_iter:
         yield state, *rest

@@ -4,29 +4,31 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_black_w_noise_shader(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group = nw.new_node(
-        nodegroup_color_noise().name, input_kwargs={"Scale": 10.0, "Color": (0.0779, 0.0839, 0.0809, 1.0)}
+        nodegroup_color_noise().name,
+        input_kwargs={"Scale": 10.0, "Color": (0.0779, 0.0839, 0.0809, 1.0)},
     )
 
     principled_bsdf_1 = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": group, "Metallic": 0.9, "Specular": 0.5114, "Roughness": 0.2568},
+        input_kwargs={
+            "Base Color": group,
+            "Metallic": 0.9,
+            "Specular": 0.5114,
+            "Roughness": 0.2568,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_add_noise", singleton=False, type="ShaderNodeTree")
@@ -66,12 +68,19 @@ def nodegroup_add_noise(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"], 1: group_input.outputs["Vector"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply.outputs["Vector"], 1: group_input.outputs["Vector"]},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": add.outputs["Vector"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vector": add.outputs["Vector"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_color_noise", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_color_noise", singleton=False, type="ShaderNodeTree"
+)
 def nodegroup_color_noise(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -104,7 +113,9 @@ def nodegroup_color_noise(nw: NodeWrangler):
     )
 
     separate_rgb = nw.new_node(
-        Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]}, attrs={"mode": "HSV"}
+        Nodes.SeparateColor,
+        input_kwargs={"Color": noise_texture.outputs["Color"]},
+        attrs={"mode": "HSV"},
     )
 
     map_range_1 = nw.new_node(
@@ -140,4 +151,6 @@ def nodegroup_color_noise(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Color": hue_saturation_value})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Color": hue_saturation_value}
+    )

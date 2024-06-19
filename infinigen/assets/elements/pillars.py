@@ -4,7 +4,6 @@
 # Authors: Lingjie Mei
 import bmesh
 import bpy
-import gin
 import numpy as np
 from numpy.random import uniform
 
@@ -18,7 +17,7 @@ from infinigen.assets.utils.decorate import (
     subsurf,
     write_co,
 )
-from infinigen.assets.utils.object import join_objects, new_base_circle, new_base_cylinder, new_circle, new_cylinder
+from infinigen.assets.utils.object import join_objects, new_base_circle, new_cylinder
 from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -46,14 +45,25 @@ class PillarFactory(AssetFactory):
             self.outer_n = np.random.choice([1, 2, self.n])
             self.m = np.random.randint(12, 20)
             z_profile = uniform(1, 3, self.m)
-            self.z_profile = np.array([0, *(np.cumsum(z_profile) / np.sum(z_profile))[:-1]])
+            self.z_profile = np.array(
+                [0, *(np.cumsum(z_profile) / np.sum(z_profile))[:-1]]
+            )
             alpha = uniform(0.7, 0.85)
             r_profile = uniform(0, 1, self.m + 3)
             r_profile[[0, 1]] = 1
             r_profile[[-2, -1]] = 0
-            r_profile = np.convolve(r_profile, np.array([(1 - alpha) / 2, alpha, (1 - alpha) / 2]))
-            self.r_profile = np.array([1, *r_profile[2:-2]]) * (self.outer_radius - self.radius) + self.radius
-            self.n_profile = np.where(np.arange(self.m) < np.random.randint(2, self.m - 1), self.outer_n, self.n)
+            r_profile = np.convolve(
+                r_profile, np.array([(1 - alpha) / 2, alpha, (1 - alpha) / 2])
+            )
+            self.r_profile = (
+                np.array([1, *r_profile[2:-2]]) * (self.outer_radius - self.radius)
+                + self.radius
+            )
+            self.n_profile = np.where(
+                np.arange(self.m) < np.random.randint(2, self.m - 1),
+                self.outer_n,
+                self.n,
+            )
             self.inset_profile = uniform(0, 1, self.m) < 0.3
             self.surface = np.random.choice([marble_regular, marble_voronoi])
 
@@ -65,16 +75,26 @@ class PillarFactory(AssetFactory):
             bmesh.ops.delete(bm, geom=geom, context="FACES_ONLY")
             bmesh.update_edit_mesh(obj.data)
 
-        obj.scale = self.radius, self.radius, (1 - self.lower_offset - self.upper_offset) * self.height
+        obj.scale = (
+            self.radius,
+            self.radius,
+            (1 - self.lower_offset - self.upper_offset) * self.height,
+        )
         obj.location[-1] = self.lower_offset * self.height
         butil.apply_transform(obj, True)
-        inset_scale = 1 + self.inset_scale * (1 if self.detail_type == "reeding" else -1)
+        inset_scale = 1 + self.inset_scale * (
+            1 if self.detail_type == "reeding" else -1
+        )
         if self.detail_type in ["fluting", "reeding"]:
             with butil.ViewportMode(obj, "EDIT"):
                 bpy.ops.mesh.select_mode(type="FACE")
                 bpy.ops.mesh.select_all(action="SELECT")
-                bpy.ops.mesh.inset(thickness=self.inset_width * self.radius, use_individual=True)
-                bpy.ops.mesh.inset(thickness=self.inset_width_ * self.radius, use_individual=True)
+                bpy.ops.mesh.inset(
+                    thickness=self.inset_width * self.radius, use_individual=True
+                )
+                bpy.ops.mesh.inset(
+                    thickness=self.inset_width_ * self.radius, use_individual=True
+                )
                 bpy.ops.transform.resize(value=(inset_scale, inset_scale, 1))
         subdivide_edge_ring(obj, 16)
         parts = [obj]
@@ -83,12 +103,16 @@ class PillarFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
         z_rot = np.pi / 2 * np.random.randint(2)
-        for z, r, n, i in zip(self.z_profile, self.r_profile, self.n_profile, self.inset_profile):
+        for z, r, n, i in zip(
+            self.z_profile, self.r_profile, self.n_profile, self.inset_profile
+        ):
             o = new_base_circle(vertices=4 * n)
             if i:
                 co = read_co(o)
                 stride = np.random.choice([2, 4, 8])
-                co *= np.where(np.arange(len(co)) % stride == 0, 1, inset_scale)[:, np.newaxis]
+                co *= np.where(np.arange(len(co)) % stride == 0, 1, inset_scale)[
+                    :, np.newaxis
+                ]
                 write_co(o, co)
             with butil.ViewportMode(o, "EDIT"):
                 bpy.ops.mesh.select_mode(type="EDGE")
@@ -110,10 +134,14 @@ class PillarFactory(AssetFactory):
         smoothness = uniform(1, 1.4)
         select_edges(obj, selection & (z < 0.5))
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.bridge_edge_loops(number_cuts=number_cuts, smoothness=smoothness)
+            bpy.ops.mesh.bridge_edge_loops(
+                number_cuts=number_cuts, smoothness=smoothness
+            )
         select_edges(obj, selection & (z > 0.5))
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.bridge_edge_loops(number_cuts=number_cuts, smoothness=smoothness)
+            bpy.ops.mesh.bridge_edge_loops(
+                number_cuts=number_cuts, smoothness=smoothness
+            )
         subsurf(obj, 1, True)
         subsurf(obj, 1)
         return obj

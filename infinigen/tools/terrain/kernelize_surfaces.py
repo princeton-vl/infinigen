@@ -4,9 +4,7 @@
 # Authors: Zeyu Ma
 
 
-import os
 import subprocess
-import sys
 from pathlib import Path
 
 import bpy
@@ -60,4 +58,6 @@ if __name__ == "__main__":
             f.write(code)
             f.write("\n")
         # optional: clang-format needed to format output code
-        subprocess.call(f"clang-format -style=\"{{IndentWidth: 4}}\"  -i '{dst}'", shell=True)
+        subprocess.call(
+            f"clang-format -style=\"{{IndentWidth: 4}}\"  -i '{dst}'", shell=True
+        )

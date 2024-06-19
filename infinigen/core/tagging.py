@@ -7,8 +7,7 @@
 
 import json
 import logging
-import os
-from typing import Any, Union
+from typing import Union
 
 import bpy
 import numpy as np
@@ -46,7 +45,9 @@ class AutoTag:
             self.tag_dict = json.load(f)
 
     def _extract_incoming_tagmasks(self, obj):
-        new_attr_names = [name for name in obj.data.attributes.keys() if name.startswith(PREFIX)]
+        new_attr_names = [
+            name for name in obj.data.attributes.keys() if name.startswith(PREFIX)
+        ]
 
         n_poly = len(obj.data.polygons)
         for name in new_attr_names:
@@ -60,7 +61,10 @@ class AutoTag:
                     f"Incoming attribute {obj.name=} {attr.name=} had invalid {len(attr.data)=}, expected {n_poly=}"
                 )
 
-        new_attrs = {name[len(PREFIX) :]: surface.read_attr_data(obj, name, "FACE") for name in new_attr_names}
+        new_attrs = {
+            name[len(PREFIX) :]: surface.read_attr_data(obj, name, "FACE")
+            for name in new_attr_names
+        }
 
         for name, vals in new_attrs.items():
             if vals.dtype == bool:
@@ -76,7 +80,9 @@ class AutoTag:
 
         for name, arr in new_attrs.items():
             if arr.dtype != bool:
-                raise ValueError(f"Retrieved incoming tag mask {name=} had {arr.dtype=}, expected bool")
+                raise ValueError(
+                    f"Retrieved incoming tag mask {name=} had {arr.dtype=}, expected bool"
+                )
 
         for name in new_attr_names:
             obj.data.attributes.remove(obj.data.attributes[name])
@@ -106,7 +112,9 @@ class AutoTag:
         if COMBINED_ATTR_NAME in obj.data.attributes.keys():
             domain = obj.data.attributes[COMBINED_ATTR_NAME].domain
             if domain != "FACE":
-                raise ValueError(f"{obj.name=} had {COMBINED_ATTR_NAME} on {domain=}, expected FACE")
+                raise ValueError(
+                    f"{obj.name=} had {COMBINED_ATTR_NAME} on {domain=}, expected FACE"
+                )
             tagint = surface.read_attr_data(obj, COMBINED_ATTR_NAME, domain="FACE")
         else:
             tagint = np.full(n_poly, 0, np.int64)
@@ -129,8 +137,8 @@ class AutoTag:
                     self.tag_dict[new_tag_name] = tag_value
                     tag_name_lookup.append(new_tag_name)
 
-                assert len(self.tag_dict) == len(
-                    tag_name_lookup
+                assert (
+                    len(self.tag_dict) == len(tag_name_lookup)
                 ), f"{len(self.tag_dict)=} yet {len(tag_name_lookup)=}, out of sync at {vi=} {new_tag_name=}"
                 assert new_tag_name in tag_name_lookup
 
@@ -153,9 +161,13 @@ class AutoTag:
         for name, tag_id in self.tag_dict.items():
             key = tag_id - 1
             if key >= len(tag_name_lookup):
-                raise IndexError(f"{name} had {tag_id=} {key=} yet {len(self.tag_dict)=}")
+                raise IndexError(
+                    f"{name} had {tag_id=} {key=} yet {len(self.tag_dict)=}"
+                )
             if tag_name_lookup[key] is not None:
-                raise ValueError(f"{name=} {tag_id=} {key=} attempted to overwrite {tag_name_lookup[key]=}")
+                raise ValueError(
+                    f"{name=} {tag_id=} {key=} attempted to overwrite {tag_name_lookup[key]=}"
+                )
             tag_name_lookup[key] = name
 
         for obj in butil.iter_object_tree(root_obj):
@@ -197,7 +209,9 @@ def tag_object(obj, name=None, mask=None):
             n_poly = len(o.data.polygons)
 
             if n_poly == 0:
-                logger.debug(f"{tag_object.__name__} had {n_poly=} for {o.name=} {name=} child of {obj.name=}")
+                logger.debug(
+                    f"{tag_object.__name__} had {n_poly=} for {o.name=} {name=} child of {obj.name=}"
+                )
                 continue
 
             mask_o = np.full(n_poly, 1, dtype=bool) if mask is None else mask
@@ -205,8 +219,12 @@ def tag_object(obj, name=None, mask=None):
             assert isinstance(mask_o, np.ndarray)
             assert len(mask_o) == n_poly
 
-            logger.debug(f"{tag_object.__name__} applying {name=} {mask_o.mean()=:.2f} to {o.name=}")
-            surface.write_attr_data(obj=o, attr=(PREFIX + name), data=mask_o, type="BOOLEAN", domain="FACE")
+            logger.debug(
+                f"{tag_object.__name__} applying {name=} {mask_o.mean()=:.2f} to {o.name=}"
+            )
+            surface.write_attr_data(
+                obj=o, attr=(PREFIX + name), data=mask_o, type="BOOLEAN", domain="FACE"
+            )
 
         tag_system.relabel_obj(obj)
 
@@ -217,9 +235,17 @@ def vert_mask_to_tri_mask(obj, vert_mask, require_all=True):
     face_vert_idxs = arr.reshape(-1, 3).astype(int)
 
     if require_all:
-        return vert_mask[face_vert_idxs[:, 0]] * vert_mask[face_vert_idxs[:, 1]] * vert_mask[face_vert_idxs[:, 2]]
+        return (
+            vert_mask[face_vert_idxs[:, 0]]
+            * vert_mask[face_vert_idxs[:, 1]]
+            * vert_mask[face_vert_idxs[:, 2]]
+        )
     else:
-        return vert_mask[face_vert_idxs[:, 0]] | vert_mask[face_vert_idxs[:, 1]] | vert_mask[face_vert_idxs[:, 2]]
+        return (
+            vert_mask[face_vert_idxs[:, 0]]
+            | vert_mask[face_vert_idxs[:, 1]]
+            | vert_mask[face_vert_idxs[:, 2]]
+        )
 
 
 CANONICAL_TAGS = [t.Subpart.Back, t.Subpart.Front, t.Subpart.Top, t.Subpart.Bottom]
@@ -255,8 +281,12 @@ def tag_canonical_surfaces(obj, rtol=0.01):
                 f"{tag_canonical_surfaces.__name__} found got {face_mask.mean()=:.2f} for {tag=} on {obj.name=}"
             )
 
-        logger.debug(f"{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}")
-        surface.write_attr_data(obj, PREFIX + tag.value, face_mask, type="BOOLEAN", domain="FACE")
+        logger.debug(
+            f"{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}"
+        )
+        surface.write_attr_data(
+            obj, PREFIX + tag.value, face_mask, type="BOOLEAN", domain="FACE"
+        )
 
     tag_system.relabel_obj(obj)
 
@@ -266,7 +296,12 @@ def tag_nodegroup(nw: NodeWrangler, input_node, name: t.Tag, selection=None):
     sel = surface.eval_argument(nw, selection)
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": input_node, "Name": name, "Selection": sel, "Value": True},
+        input_kwargs={
+            "Geometry": input_node,
+            "Name": name,
+            "Selection": sel,
+            "Value": True,
+        },
         attrs={"domain": "FACE", "data_type": "BOOLEAN"},
     )
     return store_named_attribute
@@ -309,8 +344,12 @@ def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarra
     # ASSUMES: object is triangulated, no quads/polygons
 
     tags = t.to_tag_set(tags)
-    pos_tags = [t.to_string(tagval) for tagval in tags if not isinstance(tagval, t.Negated)]
-    neg_tags = [t.to_string(tagval.tag) for tagval in tags if isinstance(tagval, t.Negated)]
+    pos_tags = [
+        t.to_string(tagval) for tagval in tags if not isinstance(tagval, t.Negated)
+    ]
+    neg_tags = [
+        t.to_string(tagval.tag) for tagval in tags if isinstance(tagval, t.Negated)
+    ]
     del tags
 
     n_poly = len(obj.data.polygons)
@@ -339,7 +378,9 @@ def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarra
     return face_mask
 
 
-def extract_tagged_faces(obj: bpy.types.Object, tags: set, nonempty=False) -> bpy.types.Object:
+def extract_tagged_faces(
+    obj: bpy.types.Object, tags: set, nonempty=False
+) -> bpy.types.Object:
     "extract the surface that satisfies all tags"
 
     # Ensure we're dealing with a mesh object
@@ -356,7 +397,9 @@ def extract_tagged_faces(obj: bpy.types.Object, tags: set, nonempty=False) -> bp
     return extract_mask(obj, face_mask, nonempty=nonempty)
 
 
-def extract_mask(obj: bpy.types.Object, face_mask: np.array, nonempty=False) -> bpy.types.Object:
+def extract_mask(
+    obj: bpy.types.Object, face_mask: np.array, nonempty=False
+) -> bpy.types.Object:
     if not face_mask.any():
         if nonempty:
             raise ValueError(f"extract_mask({obj.name=}) got empty mask")
@@ -374,7 +417,9 @@ def extract_mask(obj: bpy.types.Object, face_mask: np.array, nonempty=False) -> 
         for poly in obj.data.polygons:
             poly.select = face_mask[poly.index]
         if nonempty and len([p for p in obj.data.polygons if p.select]) == 0:
-            raise ValueError(f"extract_mask({obj.name=}, {nonempty=}) failed to select polygons")
+            raise ValueError(
+                f"extract_mask({obj.name=}, {nonempty=}) failed to select polygons"
+            )
 
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.duplicate_move()
@@ -386,9 +431,13 @@ def extract_mask(obj: bpy.types.Object, face_mask: np.array, nonempty=False) -> 
 
     if nonempty:
         if res is None:
-            raise ValueError(f"extract_mask({obj.name=}) got {res=} for {face_mask.mean()=}")
+            raise ValueError(
+                f"extract_mask({obj.name=}) got {res=} for {face_mask.mean()=}"
+            )
         if len(res.data.polygons) == 0:
-            raise ValueError(f"extract_mask({obj.name=}) got {res=} with {len(res.data.polygons)=}")
+            raise ValueError(
+                f"extract_mask({obj.name=}) got {res=} with {len(res.data.polygons)=}"
+            )
     elif res is None:
         logger.warning(f"extract_mask({obj.name=}) failed to extract any faces")
         return butil.spawn_vert()

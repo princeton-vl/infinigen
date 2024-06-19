@@ -14,7 +14,7 @@ from infinigen.assets.utils.object import center, data2mesh, mesh2obj, new_empty
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
@@ -25,7 +25,12 @@ class SnailBaseFactory(BaseMolluskFactory):
     def __init__(self, factory_seed, coarse=False):
         super(SnailBaseFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.makers = [self.volute_make, self.nautilus_make, self.snail_make, self.conch_make]
+            self.makers = [
+                self.volute_make,
+                self.nautilus_make,
+                self.snail_make,
+                self.conch_make,
+            ]
             self.maker = np.random.choice(self.makers)
             self.ratio = uniform(0, 0.3) if uniform(0, 1) < 0.5 else uniform(0.7, 1.0)
             self.z_scale = log_uniform(0.2, 1)
@@ -37,14 +42,29 @@ class SnailBaseFactory(BaseMolluskFactory):
         angles = (np.arange(n) / n + uniform(-perturb, perturb, n)) * 2 * np.pi
         radius = np.abs(np.cos(angles)) ** concave + np.abs(np.sin(angles)) ** concave
         radius *= 1 + uniform(0, spike, n) * (uniform(0, 1, n) < 0.2)
-        vertices = np.stack([np.cos(angles) * radius, np.sin(angles) * radius * affine, np.zeros_like(angles)]).T
+        vertices = np.stack(
+            [
+                np.cos(angles) * radius,
+                np.sin(angles) * radius * affine,
+                np.zeros_like(angles),
+            ]
+        ).T
         edges = np.stack([np.arange(n), np.roll(np.arange(n), -1)]).T
         obj = mesh2obj(data2mesh(vertices, edges, [], "circle"))
         obj.rotation_euler = 0, 0, uniform(0, np.pi / 12)
         butil.apply_transform(obj)
         return obj
 
-    def snail_make(self, lateral=0.15, longitudinal=0.04, freq=28, scale=0.99, loop=8, affine=1, spike=0.0):
+    def snail_make(
+        self,
+        lateral=0.15,
+        longitudinal=0.04,
+        freq=28,
+        scale=0.99,
+        loop=8,
+        affine=1,
+        spike=0.0,
+    ):
         n = 40
         resolution = loop * freq
         concave = uniform(1.9, 2.1)
@@ -66,7 +86,13 @@ class SnailBaseFactory(BaseMolluskFactory):
             offset_object=empty,
         )
         butil.delete(empty)
-        surface.add_geomod(obj, self.geo_shader_vector, apply=True, input_args=[n, lateral], attributes=["vector"])
+        surface.add_geomod(
+            obj,
+            self.geo_shader_vector,
+            apply=True,
+            input_args=[n, lateral],
+            attributes=["vector"],
+        )
 
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
@@ -77,12 +103,16 @@ class SnailBaseFactory(BaseMolluskFactory):
 
     @staticmethod
     def geo_shader_vector(nw: NodeWrangler, n, interval):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         id = nw.new_node(Nodes.InputID)
         angle = nw.scalar_multiply(nw.math("MODULO", id, n), 2 * np.pi / n)
         height = nw.scalar_multiply(nw.math("FLOOR", nw.scalar_divide(id, n)), interval)
         vector = nw.combine(nw.math("COSINE", angle), nw.math("SINE", angle), height)
-        nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry, "Vector": vector})
+        nw.new_node(
+            Nodes.GroupOutput, input_kwargs={"Geometry": geometry, "Vector": vector}
+        )
 
     @staticmethod
     def solve_longitude(ratio, freq, scale):
@@ -90,7 +120,12 @@ class SnailBaseFactory(BaseMolluskFactory):
 
     @staticmethod
     def solve_lateral(ratio, freq, scale):
-        return ratio / (np.sin(2 * np.pi / freq * np.arange(freq)) * scale ** np.arange(freq)).sum()
+        return (
+            ratio
+            / (
+                np.sin(2 * np.pi / freq * np.arange(freq)) * scale ** np.arange(freq)
+            ).sum()
+        )
 
     @staticmethod
     def solve_scale(shrink, freq):
@@ -101,7 +136,15 @@ class SnailBaseFactory(BaseMolluskFactory):
         lateral = self.solve_lateral(uniform(0.3, 0.4), self.freq, scale)
         longitude = self.solve_longitude(uniform(0.7, 0.8), self.freq, scale)
         loop = np.random.randint(8, 10)
-        obj = self.snail_make(lateral, longitude, self.freq, scale, loop, affine=uniform(0.8, 0.9), spike=0.1)
+        obj = self.snail_make(
+            lateral,
+            longitude,
+            self.freq,
+            scale,
+            loop,
+            affine=uniform(0.8, 0.9),
+            spike=0.1,
+        )
         tag_object(obj, "conch")
         return obj
 
@@ -110,7 +153,9 @@ class SnailBaseFactory(BaseMolluskFactory):
         lateral = self.solve_lateral(uniform(0.1, 0.15), self.freq, scale)
         longitude = self.solve_longitude(uniform(0.9, 1.0), self.freq, scale)
         loop = np.random.randint(8, 12)
-        obj = self.snail_make(lateral, longitude, self.freq, scale, loop, affine=uniform(0.5, 0.6))
+        obj = self.snail_make(
+            lateral, longitude, self.freq, scale, loop, affine=uniform(0.5, 0.6)
+        )
         tag_object(obj, "auger")
         return obj
 
@@ -134,14 +179,20 @@ class SnailBaseFactory(BaseMolluskFactory):
 
     @staticmethod
     def geo_affine(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         affine = nw.new_node(
             Nodes.SetPosition,
             input_kwargs={
                 "Geometry": geometry,
                 "Offset": nw.combine(
                     *[
-                        nw.vector_math("DOT_PRODUCT", uniform(-0.1, 0.1, 3), nw.new_node(Nodes.InputPosition))
+                        nw.vector_math(
+                            "DOT_PRODUCT",
+                            uniform(-0.1, 0.1, 3),
+                            nw.new_node(Nodes.InputPosition),
+                        )
                         for _ in range(3)
                     ]
                 ),

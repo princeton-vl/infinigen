@@ -10,12 +10,10 @@ from functools import partial
 from numbers import Number
 
 import bpy
-import mathutils
 import numpy as np
-from tqdm import tqdm
 
 from infinigen.assets.creatures.util import tree
-from infinigen.assets.creatures.util.creature import Part, infer_skeleton_from_mesh
+from infinigen.assets.creatures.util.creature import infer_skeleton_from_mesh
 from infinigen.assets.creatures.util.genome import IKParams, Joint
 from infinigen.core.util import blender as butil
 from infinigen.core.util import math as mutil
@@ -74,7 +72,10 @@ def create_part_bones(part_node: tree.Tree, editbones, parent):
         for i, extra in enumerate(part.obj.children):
             if extra.type != "MESH":
                 continue
-            skeleton = mutil.homogenize(infer_skeleton_from_mesh(extra)) @ np.array(extra.matrix_world)[:-1].T
+            skeleton = (
+                mutil.homogenize(infer_skeleton_from_mesh(extra))
+                @ np.array(extra.matrix_world)[:-1].T
+            )
             head = mutil.lerp_sample(skeleton, 0 * (len(skeleton) - 1)).reshape(-1)
             tail = mutil.lerp_sample(skeleton, 1 * (len(skeleton) - 1)).reshape(-1)
 
@@ -116,11 +117,17 @@ def create_bones(parts_atts, arma):
 
         if parent_bones is not None:
             bonekeys = [k for k in parent_bones.keys() if not isinstance(k, str)]
-            parent_bone_t = max((i for i in bonekeys if i <= att.coord[0]), default=min(bonekeys))
+            parent_bone_t = max(
+                (i for i in bonekeys if i <= att.coord[0]), default=min(bonekeys)
+            )
             parent_bone = parent_bones[parent_bone_t]
 
-            if att.coord[-1] > part.settings.get("connector_collapse_margin_radpct", 0.5):
-                bones[-1] = parent_bone = make_parent_connector_bone(part, att, parent_bones, parent_bone_t)
+            if att.coord[-1] > part.settings.get(
+                "connector_collapse_margin_radpct", 0.5
+            ):
+                bones[-1] = parent_bone = make_parent_connector_bone(
+                    part, att, parent_bones, parent_bone_t
+                )
 
         part_bones = create_part_bones(node, editbones, parent=parent_bone)
         bones.update(part_bones)
@@ -146,7 +153,9 @@ def create_bones(parts_atts, arma):
 
     with butil.ViewportMode(arma, mode="EDIT"):
         editbones = arma.data.edit_bones
-        part_bones = tree.map_parent_child(parts_atts, partial(make_bones, editbones=editbones))
+        part_bones = tree.map_parent_child(
+            parts_atts, partial(make_bones, editbones=editbones)
+        )
         for (part, _), bones in tree.tzip(parts_atts, part_bones):
             finalize_bonedict_to_leave_editmode(bones)
 
@@ -163,7 +172,9 @@ def compute_chain_length(parts_atts: tree.Tree, bones, part, ik: IKParams):
     chain_length = 0
     for i in range(math.ceil(ik.chain_parts)):
         p = 1 if i < int(ik.chain_parts) else (ik.chain_parts - int(ik.chain_parts))
-        n_skeleton_bones = len([b for b in nodes[curr_idx][1].values() if "extra" not in b])
+        n_skeleton_bones = len(
+            [b for b in nodes[curr_idx][1].values() if "extra" not in b]
+        )
         chain_length += math.ceil(p * n_skeleton_bones)
         if curr_idx not in parents:
             break
@@ -197,7 +208,9 @@ def create_ik_targets(arma, parts_atts: tree.Tree, bones):
         else:
             raise ValueError(f"Unrecognized {ik.mode=}")
 
-        con.target = butil.spawn_empty(f"{IK_TARGET_PREFIX}({ik.name})", disp_type="CUBE", s=ik.target_size)
+        con.target = butil.spawn_empty(
+            f"{IK_TARGET_PREFIX}({ik.name})", disp_type="CUBE", s=ik.target_size
+        )
         con.target.location = pbone.tail if t != 0 else pbone.head
 
         if ik.rotation_weight > 0:
@@ -236,7 +249,9 @@ def apply_joint_constraint(joint: Joint, pose_bone, eps=1e-2):
         bounds = np.deg2rad(joint.bounds)
 
         if not bounds.shape == (2, 3):
-            raise ValueError(f"Encountered invalid {joint.bounds=}, {joint.bounds.shape=}")
+            raise ValueError(
+                f"Encountered invalid {joint.bounds=}, {joint.bounds.shape=}"
+            )
 
         ranges = bounds[1] - bounds[0]
 
@@ -278,7 +293,9 @@ def constrain_bones(arma, parts_atts, bones, shoulder_auto_stiffness=0.85):
         if skeleton_idx < 0 and shoulder_auto_stiffness > 0:
             # shoulder bones have index < 1, and were added automatically
             # make them stiff to minimally affect final outcome
-            pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = (shoulder_auto_stiffness,) * 3
+            pb.ik_stiffness_x, pb.ik_stiffness_y, pb.ik_stiffness_z = (
+                shoulder_auto_stiffness,
+            ) * 3
             pb.lock_ik_x = True
             pb.lock_ik_y = True
             pb.lock_ik_z = True
@@ -318,7 +335,10 @@ def parent_to_bones(objs, arma):
 def parent_bones_by_part(creature, arma, part_bones):
     assert creature.parts[0] is creature.root
     for i, part in enumerate(creature.parts[1:]):
-        with butil.SelectObjects([part.obj, arma]), butil.ViewportMode(arma, mode="POSE"):
+        with (
+            butil.SelectObjects([part.obj, arma]),
+            butil.ViewportMode(arma, mode="POSE"),
+        ):
             for bone in arma.pose.bones:
                 select = bone.name in part_bones[i].values()
                 arma.data.bones[bone.name].select = select
@@ -355,7 +375,9 @@ def creature_rig(root, genome, parts, constraints=True, roll="GLOBAL_POS_Y"):
     return arma, targets
 
 
-def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_radius=0.07):
+def create_ragdoll(
+    root, arma, min_col_length=0.1, col_joint_margin=0.2, col_radius=0.07
+):
     def include_bone(b):
         if "-1" in b.name:
             return False
@@ -441,7 +463,9 @@ def create_ragdoll(root, arma, min_col_length=0.1, col_joint_margin=0.2, col_rad
                 hinge_target = next(b for b in ancestors(b) if b in col_bones)
             except StopIteration:
                 continue
-            joint_obj = configure_rigidbody_joint(b, col_objs[b.name], col_objs[hinge_target.name])
+            joint_obj = configure_rigidbody_joint(
+                b, col_objs[b.name], col_objs[hinge_target.name]
+            )
             joint_obj.parent = root
 
         col_bone_names = [

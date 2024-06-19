@@ -9,7 +9,6 @@ from numpy.random import uniform
 from infinigen.assets.cactus import CactusFactory
 from infinigen.assets.corals import CoralFactory
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import glass, metal, water
 from infinigen.assets.mollusk import MolluskFactory
 from infinigen.assets.mushroom import MushroomFactory
 from infinigen.assets.rocks.boulder import BoulderFactory
@@ -31,7 +30,9 @@ class AquariumTankFactory(AssetFactory):
         super(AquariumTankFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.is_wet = uniform() < 0.5
-            base_factory_fn = np.random.choice(self.wet_factories if self.is_wet else self.dry_factories)
+            base_factory_fn = np.random.choice(
+                self.wet_factories if self.is_wet else self.dry_factories
+            )
             self.base_factory = base_factory_fn(self.factory_seed)
             self.width = log_uniform(0.5, 1)
             self.depth = log_uniform(0.5, 0.8)
@@ -55,7 +56,12 @@ class AquariumTankFactory(AssetFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
-            -self.thickness - self.depth, self.thickness, -self.thickness, self.width + self.thickness, 0, self.height
+            -self.thickness - self.depth,
+            self.thickness,
+            -self.thickness,
+            self.width + self.thickness,
+            0,
+            self.height,
         )
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -70,7 +76,9 @@ class AquariumTankFactory(AssetFactory):
         base_obj = self.base_factory.create_asset(**params)
         co = read_co(base_obj)
         x_min, x_max = np.amin(co, 0), np.amax(co, 0)
-        scale = uniform(0.7, 0.9) / np.max((x_max - x_min) / np.array([self.width, self.depth, self.height]))
+        scale = uniform(0.7, 0.9) / np.max(
+            (x_max - x_min) / np.array([self.width, self.depth, self.height])
+        )
         base_obj.location = -(x_min + x_max) * np.array(base_obj.scale) / 2
         base_obj.location[-1] = -(x_min * base_obj.scale)[-1]
         butil.apply_transform(base_obj, True)
@@ -94,7 +102,9 @@ class AquariumTankFactory(AssetFactory):
         with butil.ViewportMode(belt, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, self.belt_thickness)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, self.belt_thickness)}
+            )
         butil.modify_mesh(belt, "SOLIDIFY", thickness=self.thickness)
         write_attribute(belt, 1, "belt", "FACE")
 

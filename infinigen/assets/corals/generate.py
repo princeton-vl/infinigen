@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -19,18 +17,26 @@ from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 from . import tentacles
 from .base import BaseCoralFactory
-from .diff_growth import DiffGrowthBaseCoralFactory, LeatherBaseCoralFactory, TableBaseCoralFactory
+from .diff_growth import (
+    DiffGrowthBaseCoralFactory,
+    LeatherBaseCoralFactory,
+    TableBaseCoralFactory,
+)
 from .elkhorn import ElkhornBaseCoralFactory
 from .fan import FanBaseCoralFactory
 from .laplacian import CauliflowerBaseCoralFactory
-from .reaction_diffusion import BrainBaseCoralFactory, HoneycombBaseCoralFactory, ReactionDiffusionBaseCoralFactory
+from .reaction_diffusion import (
+    BrainBaseCoralFactory,
+    HoneycombBaseCoralFactory,
+    ReactionDiffusionBaseCoralFactory,
+)
 from .star import StarBaseCoralFactory
 from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFactory
 from .tube import TubeBaseCoralFactory
@@ -55,11 +61,18 @@ class CoralFactory(AssetFactory):
                 factory_method = np.random.choice(self.factory_methods, p=self.weights)
             self.factory: BaseCoralFactory = factory_method(factory_seed, coarse)
             self.base_hue = self.build_base_hue()
-            self.material = surface.shaderfunc_to_material(self.shader_coral, self.base_hue)
+            self.material = surface.shaderfunc_to_material(
+                self.shader_coral, self.base_hue
+            )
 
     def create_asset(self, face_size=0.01, realize=True, **params):
         obj = self.factory.create_asset(**params)
-        obj.scale = 2 * np.array(self.factory.default_scale) / max(obj.dimensions[:2]) * uniform(0.8, 1.2, 3)
+        obj.scale = (
+            2
+            * np.array(self.factory.default_scale)
+            / max(obj.dimensions[:2])
+            * uniform(0.8, 1.2, 3)
+        )
         butil.apply_transform(obj)
         remesh_with_attrs(obj, face_size)
         assign_material(obj, self.material)
@@ -74,7 +87,13 @@ class CoralFactory(AssetFactory):
         tag_object(obj, "coral")
 
         if uniform(0, 1) < self.factory.tentacle_prob and not has_bump:
-            t = tentacles.apply(obj, self.factory.points_fn, self.factory.density, realize, self.base_hue)
+            t = tentacles.apply(
+                obj,
+                self.factory.points_fn,
+                self.factory.density,
+                realize,
+                self.base_hue,
+            )
             obj = join_objects([obj, t])
 
         return obj
@@ -99,7 +118,12 @@ class CoralFactory(AssetFactory):
         texture.distance_metric = "MINKOVSKY"
         texture.minkovsky_exponent = uniform(1, 1.5)
         butil.modify_mesh(
-            obj, "DISPLACE", True, strength=-self.factory.noise_strength * uniform(1, 2), mid_level=1, texture=texture
+            obj,
+            "DISPLACE",
+            True,
+            strength=-self.factory.noise_strength * uniform(1, 2),
+            mid_level=1,
+            texture=texture,
         )
 
     @staticmethod
@@ -116,16 +140,24 @@ class CoralFactory(AssetFactory):
         subsurface_color = hsv2rgba(uniform(0, 1), uniform(0, 1), 1.0)
         bright_color = hsv2rgba((base_hue + shift) % 1, uniform(0.7, 0.9), 0.2)
         dark_color = hsv2rgba(base_hue, uniform(0.5, 0.7), 0.1)
-        light_color = hsv2rgba((base_hue + uniform(-0.2, 0.2)) % 1, uniform(0.2, 0.4), 0.4)
+        light_color = hsv2rgba(
+            (base_hue + uniform(-0.2, 0.2)) % 1, uniform(0.2, 0.4), 0.4
+        )
         specular = uniform(0.25, 0.5)
 
         color = build_color_ramp(
-            nw, nw.musgrave(uniform(10, 20)), [0.0, 0.3, 0.7, 1.0], [dark_color, dark_color, bright_color, bright_color]
+            nw,
+            nw.musgrave(uniform(10, 20)),
+            [0.0, 0.3, 0.7, 1.0],
+            [dark_color, dark_color, bright_color, bright_color],
         )
         color = nw.new_node(
             Nodes.MixRGB,
             [
-                nw.build_float_curve(nw.musgrave(uniform(10, 20)), [(0, 1), (uniform(0.3, 0.4), 0), (1, 0)]),
+                nw.build_float_curve(
+                    nw.musgrave(uniform(10, 20)),
+                    [(0, 1), (uniform(0.3, 0.4), 0), (1, 0)],
+                ),
                 color,
                 light_color,
             ],
@@ -151,42 +183,58 @@ class CoralFactory(AssetFactory):
 
 class LeatherCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(LeatherCoralFactory, self).__init__(factory_seed, coarse, LeatherBaseCoralFactory)
+        super(LeatherCoralFactory, self).__init__(
+            factory_seed, coarse, LeatherBaseCoralFactory
+        )
 
 
 class TableCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(TableCoralFactory, self).__init__(factory_seed, coarse, TableBaseCoralFactory)
+        super(TableCoralFactory, self).__init__(
+            factory_seed, coarse, TableBaseCoralFactory
+        )
 
 
 class CauliflowerCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(CauliflowerCoralFactory, self).__init__(factory_seed, coarse, CauliflowerBaseCoralFactory)
+        super(CauliflowerCoralFactory, self).__init__(
+            factory_seed, coarse, CauliflowerBaseCoralFactory
+        )
 
 
 class BrainCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(BrainCoralFactory, self).__init__(factory_seed, coarse, BrainBaseCoralFactory)
+        super(BrainCoralFactory, self).__init__(
+            factory_seed, coarse, BrainBaseCoralFactory
+        )
 
 
 class HoneycombCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(HoneycombCoralFactory, self).__init__(factory_seed, coarse, HoneycombBaseCoralFactory)
+        super(HoneycombCoralFactory, self).__init__(
+            factory_seed, coarse, HoneycombBaseCoralFactory
+        )
 
 
 class BushCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(BushCoralFactory, self).__init__(factory_seed, coarse, BushBaseCoralFactory)
+        super(BushCoralFactory, self).__init__(
+            factory_seed, coarse, BushBaseCoralFactory
+        )
 
 
 class TwigCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(TwigCoralFactory, self).__init__(factory_seed, coarse, TwigBaseCoralFactory)
+        super(TwigCoralFactory, self).__init__(
+            factory_seed, coarse, TwigBaseCoralFactory
+        )
 
 
 class TubeCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(TubeCoralFactory, self).__init__(factory_seed, coarse, TubeBaseCoralFactory)
+        super(TubeCoralFactory, self).__init__(
+            factory_seed, coarse, TubeBaseCoralFactory
+        )
 
 
 class FanCoralFactory(CoralFactory):
@@ -196,9 +244,13 @@ class FanCoralFactory(CoralFactory):
 
 class ElkhornCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(ElkhornCoralFactory, self).__init__(factory_seed, coarse, ElkhornBaseCoralFactory)
+        super(ElkhornCoralFactory, self).__init__(
+            factory_seed, coarse, ElkhornBaseCoralFactory
+        )
 
 
 class StarCoralFactory(CoralFactory):
     def __init__(self, factory_seed, coarse=False):
-        super(StarCoralFactory, self).__init__(factory_seed, coarse, StarBaseCoralFactory)
+        super(StarCoralFactory, self).__init__(
+            factory_seed, coarse, StarBaseCoralFactory
+        )

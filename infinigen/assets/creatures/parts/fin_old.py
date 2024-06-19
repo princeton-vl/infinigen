@@ -4,9 +4,7 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
 import numpy as np
-from numpy.random import normal, uniform
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.genome import IKParams, Joint
@@ -15,7 +13,7 @@ from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tu
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 @node_utils.to_nodegroup("nodegroup_fish_fin", singleton=False, type="GeometryNodeTree")
@@ -69,14 +67,20 @@ class FishFin(PartFactory):
     def make_part(self, params):
         part = nodegroup_to_part(nodegroup_fish_fin, params)
         part.joints = {
-            0: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # shoulder
-            0.6: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # elbow
+            0: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # shoulder
+            0.6: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # elbow
         }
         tag_object(part.obj, "fish_fin")
         return part
 
 
-@node_utils.to_nodegroup("nodegroup_fish_tail", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_fish_tail", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_fish_tail(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -102,7 +106,8 @@ def nodegroup_fish_tail(nw: NodeWrangler):
     )
 
     fishfin = nw.new_node(
-        nodegroup_fish_fin().name, input_kwargs={"length_rad1_rad2": (0.34, 0.07, 0.11), "aspect": 4.7}
+        nodegroup_fish_fin().name,
+        input_kwargs={"length_rad1_rad2": (0.34, 0.07, 0.11), "aspect": 4.7},
     )
 
     attach_part = nw.new_node(
@@ -117,7 +122,8 @@ def nodegroup_fish_tail(nw: NodeWrangler):
     )
 
     fishfin_1 = nw.new_node(
-        nodegroup_fish_fin().name, input_kwargs={"length_rad1_rad2": (0.34, 0.07, 0.11), "aspect": 4.7}
+        nodegroup_fish_fin().name,
+        input_kwargs={"length_rad1_rad2": (0.34, 0.07, 0.11), "aspect": 4.7},
     )
 
     attach_part_1 = nw.new_node(
@@ -156,12 +162,18 @@ class FishTail(PartFactory):
     tags = ["tail"]
 
     def sample_params(self):
-        return {"length_rad1_rad2": (0.5, 0.18, 0.04), "angles_deg": (0.0, -4.6, 0.0), "aspect": 0.46, "fullness": 4.0}
+        return {
+            "length_rad1_rad2": (0.5, 0.18, 0.04),
+            "angles_deg": (0.0, -4.6, 0.0),
+            "aspect": 0.46,
+            "fullness": 4.0,
+        }
 
     def make_part(self, params):
         part = nodegroup_to_part(nodegroup_fish_tail, params)
         part.joints = {
-            t: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])) for t in np.linspace(0, 0.7, 4)
+            t: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]]))
+            for t in np.linspace(0, 0.7, 4)
         }
         part.iks = {1.0: IKParams("tail", rotation_weight=0, chain_parts=1)}
         tag_object(part.obj, "fish_tail")

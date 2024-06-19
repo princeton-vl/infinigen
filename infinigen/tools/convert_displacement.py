@@ -60,7 +60,9 @@ def bake_vertex_colors(obj):
     bpy.context.scene.cycles.samples = 1
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    vertColor = bpy.context.object.data.color_attributes.new(name="Displacement", domain="POINT", type="FLOAT_COLOR")
+    vertColor = bpy.context.object.data.color_attributes.new(
+        name="Displacement", domain="POINT", type="FLOAT_COLOR"
+    )
     bpy.context.object.data.attributes.active_color = vertColor
     bpy.ops.object.bake(type="EMIT", pass_filter={"COLOR"}, target="VERTEX_COLORS")
     obj.select_set(False)
@@ -84,11 +86,15 @@ def create_modifier(obj, scale_val, apply_geo_modifier):
     input = nodes["Group Input"]
 
     modifier.node_group.links.new(input.outputs["Geometry"], set_pos.inputs["Geometry"])
-    modifier.node_group.links.new(attribute.outputs[2], mult.inputs[0])  # index 2 must be hardcoded
+    modifier.node_group.links.new(
+        attribute.outputs[2], mult.inputs[0]
+    )  # index 2 must be hardcoded
     modifier.node_group.links.new(normal.outputs["Normal"], mult.inputs[1])
     modifier.node_group.links.new(mult.outputs["Vector"], scale.inputs["Vector"])
     modifier.node_group.links.new(scale.outputs["Vector"], set_pos.inputs["Offset"])
-    modifier.node_group.links.new(set_pos.outputs["Geometry"], output.inputs["Geometry"])
+    modifier.node_group.links.new(
+        set_pos.outputs["Geometry"], output.inputs["Geometry"]
+    )
 
     if apply_geo_modifier:
         obj.select_set(True)
@@ -110,7 +116,9 @@ def convert_shader_displacement(obj, apply_geo_modifier=True):
             bsdf_link = nodes["Material Output"].inputs["Surface"].links[0]
             bsdf_socket = bsdf_link.from_socket
             mat.node_tree.links.remove(displacement_link)
-            mat.node_tree.links.new(displace_socket, nodes["Material Output"].inputs["Surface"])
+            mat.node_tree.links.new(
+                displace_socket, nodes["Material Output"].inputs["Surface"]
+            )
             displaced_materials[mat] = bsdf_socket
 
     if len(displaced_materials) != 0:
@@ -120,4 +128,6 @@ def convert_shader_displacement(obj, apply_geo_modifier=True):
     for mat in displaced_materials:
         mat = slot.material
         mat.node_tree.links.remove(nodes["Material Output"].inputs["Surface"].links[0])
-        mat.node_tree.links.new(displaced_materials[mat], nodes["Material Output"].inputs["Surface"])
+        mat.node_tree.links.new(
+            displaced_materials[mat], nodes["Material Output"].inputs["Surface"]
+        )

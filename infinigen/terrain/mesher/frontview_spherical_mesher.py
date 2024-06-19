@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from ._marching_cubes_lewiner import marching_cubes
-except ImportError as e:
-    logger.warning(f"Could not import marching_cubes, terrain is likely not installed")
+except ImportError:
+    logger.warning("Could not import marching_cubes, terrain is likely not installed")
 
 
 @gin.configurable("FrontviewSphericalMesherTimer")
@@ -85,7 +85,9 @@ class FrontviewSphericalMesher:
             ],
         )
         register_func(self, dll, "initial_update", [POINTER(c_double)], c_int32)
-        register_func(self, dll, "get_coarse_queries", [POINTER(c_double), POINTER(c_int32)])
+        register_func(
+            self, dll, "get_coarse_queries", [POINTER(c_double), POINTER(c_int32)]
+        )
         register_func(
             self,
             dll,
@@ -103,7 +105,9 @@ class FrontviewSphericalMesher:
         )
         register_func(self, dll, "get_cnt", restype=c_int32)
         register_func(self, dll, "get_coarse_mesh_cnt", [POINTER(c_int32)])
-        register_func(self, dll, "bisection_get_positions", [c_int32, POINTER(c_double)])
+        register_func(
+            self, dll, "bisection_get_positions", [c_int32, POINTER(c_double)]
+        )
         register_func(self, dll, "bisection_update", [c_int32, POINTER(c_double)])
         register_func(self, dll, "init_fine", [c_int32, c_int32], c_int32)
         register_func(self, dll, "get_fine_queries", [POINTER(c_double)])
@@ -123,13 +127,32 @@ class FrontviewSphericalMesher:
             ],
         )
         register_func(self, dll, "update_fine", restype=c_int32)
-        register_func(self, dll, "complete_depth_test_get_query_cnt", [c_int32, c_int32], c_int32)
-        register_func(self, dll, "complete_depth_test_get_queries", [c_int32, c_int32, POINTER(c_double)])
-        register_func(self, dll, "complete_depth_test_update", [c_int32, c_int32, POINTER(c_double)])
+        register_func(
+            self, dll, "complete_depth_test_get_query_cnt", [c_int32, c_int32], c_int32
+        )
+        register_func(
+            self,
+            dll,
+            "complete_depth_test_get_queries",
+            [c_int32, c_int32, POINTER(c_double)],
+        )
+        register_func(
+            self,
+            dll,
+            "complete_depth_test_update",
+            [c_int32, c_int32, POINTER(c_double)],
+        )
         register_func(self, dll, "complete_depth_test_get_cnt", restype=c_int32)
 
-        register_func(self, dll, "get_final_mesh_statistics", [POINTER(c_int32), POINTER(c_int32), POINTER(c_int32)])
-        register_func(self, dll, "get_final_mesh", [POINTER(c_double), POINTER(c_int32)])
+        register_func(
+            self,
+            dll,
+            "get_final_mesh_statistics",
+            [POINTER(c_int32), POINTER(c_int32), POINTER(c_int32)],
+        )
+        register_func(
+            self, dll, "get_final_mesh", [POINTER(c_double), POINTER(c_int32)]
+        )
 
     def __call__(self, kernels):
         n_elements = len(kernels)
@@ -138,7 +161,11 @@ class FrontviewSphericalMesher:
             test_H = (self.H - 1) // self.test_downscale + 1
             test_W = (self.W - 1) // self.test_downscale + 1
             test_R = (self.R - 1) // self.test_downscale + 1
-            positions = AC(np.zeros(((test_H + 1) * (test_W + 1) * (test_R + 1), 3), dtype=np.float64))
+            positions = AC(
+                np.zeros(
+                    ((test_H + 1) * (test_W + 1) * (test_R + 1), 3), dtype=np.float64
+                )
+            )
             self.init_and_get_emptytest_queries(
                 ASDOUBLE(AC((self.cam_pose.reshape(-1).astype(np.float64)))),
                 self.H_fov,
@@ -153,8 +180,12 @@ class FrontviewSphericalMesher:
                 self.upscale,
             )
 
-        with Timer(f"compute emptytest sdf of #{(test_H + 1) * (test_W + 1) * (test_R + 1)}"):
-            sdf = AC(self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64))
+        with Timer(
+            f"compute emptytest sdf of #{(test_H + 1) * (test_W + 1) * (test_R + 1)}"
+        ):
+            sdf = AC(
+                self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64)
+            )
 
         with Timer("initial_update"):
             cnt = self.initial_update(ASDOUBLE(sdf))
@@ -172,7 +203,11 @@ class FrontviewSphericalMesher:
                 position_bounds = AC(np.zeros((cnt * 3,), dtype=np.int32))
                 self.get_coarse_queries(ASDOUBLE(positions), ASINT(position_bounds))
             with Timer("compute coarse sdf"):
-                sdf = AC(self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64))
+                sdf = AC(
+                    self.kernel_caller(kernels, positions)
+                    .min(axis=-1)
+                    .astype(np.float64)
+                )
             with Timer("run marching cube"):
                 if self.verbose:
                     range_cnt = tqdm(range(cnt))
@@ -180,7 +215,9 @@ class FrontviewSphericalMesher:
                     range_cnt = range(cnt)
                 for i in range_cnt:
                     S1, S2, S3 = position_bounds[i * 3 : (i + 1) * 3]
-                    part_sdf = sdf[i * block_size : (i + 1) * block_size].reshape(S, S, S)[: S1 + 1, : S2 + 1, : S3 + 1]
+                    part_sdf = sdf[i * block_size : (i + 1) * block_size].reshape(
+                        S, S, S
+                    )[: S1 + 1, : S2 + 1, : S3 + 1]
                     verts_int, verts_frac, faces, _, _ = marching_cubes(part_sdf, 0)
                     self.update(
                         i,
@@ -202,7 +239,9 @@ class FrontviewSphericalMesher:
             M = NM[1]
 
         if self.verbose:
-            print(f"Entire in view coarse mesh (without visibility face removal) has {N} vertices and {M} faces")
+            print(
+                f"Entire in view coarse mesh (without visibility face removal) has {N} vertices and {M} faces"
+            )
 
         with Timer("bisection on in view coarse mesh"):
             positions = AC(np.zeros((N * 3,), dtype=np.float64))
@@ -213,7 +252,9 @@ class FrontviewSphericalMesher:
             for it in range_it:
                 self.bisection_get_positions(-1, ASDOUBLE(positions))
                 sdf = np.ascontiguousarray(
-                    self.kernel_caller(kernels, positions.reshape((-1, 3))).min(axis=-1).astype(np.float64)
+                    self.kernel_caller(kernels, positions.reshape((-1, 3)))
+                    .min(axis=-1)
+                    .astype(np.float64)
                 )
                 self.bisection_update(-1, ASDOUBLE(sdf))
 
@@ -231,23 +272,45 @@ class FrontviewSphericalMesher:
                 with Timer("complete_depth_test"):
                     self.complete_depth_test = False  # one time use
                     if self.verbose:
-                        batch_range = tqdm(range(0, self.W * self.upscale, self.complete_depth_test_relax))
+                        batch_range = tqdm(
+                            range(
+                                0, self.W * self.upscale, self.complete_depth_test_relax
+                            )
+                        )
                     else:
-                        batch_range = range(0, self.W * self.upscale, self.complete_depth_test_relax)
+                        batch_range = range(
+                            0, self.W * self.upscale, self.complete_depth_test_relax
+                        )
                     for b in batch_range:
-                        cnt = self.complete_depth_test_get_query_cnt(self.complete_depth_test_relax, b)
+                        cnt = self.complete_depth_test_get_query_cnt(
+                            self.complete_depth_test_relax, b
+                        )
                         positions = AC(np.zeros((cnt, 3), dtype=np.float64))
-                        self.complete_depth_test_get_queries(self.complete_depth_test_relax, b, ASDOUBLE(positions))
-                        sdf = AC(self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64))
-                        self.complete_depth_test_update(self.complete_depth_test_relax, b, ASDOUBLE(sdf))
+                        self.complete_depth_test_get_queries(
+                            self.complete_depth_test_relax, b, ASDOUBLE(positions)
+                        )
+                        sdf = AC(
+                            self.kernel_caller(kernels, positions)
+                            .min(axis=-1)
+                            .astype(np.float64)
+                        )
+                        self.complete_depth_test_update(
+                            self.complete_depth_test_relax, b, ASDOUBLE(sdf)
+                        )
                     cnt = self.complete_depth_test_get_cnt()
             if cnt == 0:
                 break
             with Timer(f"get_fine_positions of #{cnt}"):
-                positions = AC(np.zeros((cnt, (self.upscale + 1) ** 3, 3), dtype=np.float64))
+                positions = AC(
+                    np.zeros((cnt, (self.upscale + 1) ** 3, 3), dtype=np.float64)
+                )
                 self.get_fine_queries(ASDOUBLE(positions))
             with Timer("compute fine sdf"):
-                sdf = np.ascontiguousarray(self.kernel_caller(kernels, positions.reshape((-1, 3))).astype(np.float64))
+                sdf = np.ascontiguousarray(
+                    self.kernel_caller(kernels, positions.reshape((-1, 3))).astype(
+                        np.float64
+                    )
+                )
                 del positions
 
             with Timer("run marching cube"):
@@ -257,7 +320,9 @@ class FrontviewSphericalMesher:
                     range_cnt = range(cnt)
                 for i in range_cnt:
                     for e in range(n_elements):
-                        part_sdf = sdf[i * block_size : (i + 1) * block_size].reshape(S, S, S, n_elements)[..., e]
+                        part_sdf = sdf[i * block_size : (i + 1) * block_size].reshape(
+                            S, S, S, n_elements
+                        )[..., e]
                         if (part_sdf >= 0).all() or (part_sdf <= 0).all():
                             continue
                         verts_int, verts_frac, faces, _, _ = marching_cubes(part_sdf, 0)
@@ -280,10 +345,14 @@ class FrontviewSphericalMesher:
             NM[:] = 0
             self.get_final_mesh_statistics(ASINT(NM), ASINT(Ns), ASINT(Ms))
             if self.verbose:
-                print(f"Invisible cleaned coarse mesh has {NM[0]} vertices and {NM[1]} faces")
+                print(
+                    f"Invisible cleaned coarse mesh has {NM[0]} vertices and {NM[1]} faces"
+                )
             for e in range(n_elements):
                 if self.verbose:
-                    print(f"In view fine mesh (element {e}) has {Ns[e]} vertices and {Ms[e]} faces")
+                    print(
+                        f"In view fine mesh (element {e}) has {Ns[e]} vertices and {Ms[e]} faces"
+                    )
 
         with Timer("fine bisection"):
             for e in range(n_elements):
@@ -295,7 +364,9 @@ class FrontviewSphericalMesher:
                 for it in range_it:
                     self.bisection_get_positions(e, ASDOUBLE(positions))
                     sdf = np.ascontiguousarray(
-                        self.kernel_caller([kernels[e]], positions.reshape((-1, 3))).astype(np.float64)
+                        self.kernel_caller(
+                            [kernels[e]], positions.reshape((-1, 3))
+                        ).astype(np.float64)
                     )
                     self.bisection_update(e, ASDOUBLE(sdf))
 
@@ -303,14 +374,19 @@ class FrontviewSphericalMesher:
             vertices = AC(np.zeros((NM[0] + np.sum(Ns)) * 3, dtype=np.float64))
             faces = AC(np.zeros((NM[1] + np.sum(Ms)) * 3, dtype=np.int32))
             self.get_final_mesh(ASDOUBLE(vertices), ASINT(faces))
-            mesh = Mesh(vertices=vertices[: NM[0] * 3].reshape((-1, 3)), faces=faces[: NM[1] * 3].reshape((-1, 3)))
+            mesh = Mesh(
+                vertices=vertices[: NM[0] * 3].reshape((-1, 3)),
+                faces=faces[: NM[1] * 3].reshape((-1, 3)),
+            )
             meshes = []
             cnt_N = NM[0]
             cnt_M = NM[1]
             for e in range(n_elements):
                 meshes.append(
                     Mesh(
-                        vertices=vertices[cnt_N * 3 : (cnt_N + Ns[e]) * 3].reshape((-1, 3)),
+                        vertices=vertices[cnt_N * 3 : (cnt_N + Ns[e]) * 3].reshape(
+                            (-1, 3)
+                        ),
                         faces=faces[cnt_M * 3 : (cnt_M + Ms[e]) * 3].reshape((-1, 3)),
                     )
                 )

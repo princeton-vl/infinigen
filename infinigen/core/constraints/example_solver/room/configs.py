@@ -4,13 +4,12 @@
 # Authors: Lingjie Mei
 from collections import defaultdict
 
-from infinigen.assets.materials import brick, hardwood_floor, plaster, rug, tile
+from infinigen.assets.materials import brick, plaster, rug, tile
 from infinigen.assets.materials.stone_and_concrete import concrete
 from infinigen.assets.materials.woods import tiled_wood
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
-from infinigen.core.util.random import random_general as rg
 
 EXTERIOR_CONNECTED_ROOM_TYPES = [
     RoomType.Bedroom,
@@ -45,7 +44,10 @@ TYPICAL_AREA_ROOM_TYPES = {
     RoomType.Staircase: 20,
 }
 ROOM_NUMBERS = {RoomType.Bathroom: (1, 10), RoomType.LivingRoom: (1, 10)}
-COMBINED_ROOM_TYPES = [[RoomType.Hallway, RoomType.LivingRoom, RoomType.DiningRoom], [RoomType.Garage]]
+COMBINED_ROOM_TYPES = [
+    [RoomType.Hallway, RoomType.LivingRoom, RoomType.DiningRoom],
+    [RoomType.Garage],
+]
 PANORAMIC_ROOM_TYPES = {
     RoomType.Hallway: 0.3,
     RoomType.LivingRoom: 0.5,
@@ -104,10 +106,19 @@ ROOM_CHILDREN = defaultdict(
             RoomType.Utility: ("bool", 0.2),
             RoomType.Hallway: ("categorical", 0.5, 0.4, 0.1),
         },
-        RoomType.Kitchen: {RoomType.Garage: ("bool", 0.5), RoomType.Utility: ("bool", 0.1)},
-        RoomType.Bedroom: {RoomType.Bathroom: ("bool", 0.3), RoomType.Closet: ("bool", 0.5)},
+        RoomType.Kitchen: {
+            RoomType.Garage: ("bool", 0.5),
+            RoomType.Utility: ("bool", 0.1),
+        },
+        RoomType.Bedroom: {
+            RoomType.Bathroom: ("bool", 0.3),
+            RoomType.Closet: ("bool", 0.5),
+        },
         RoomType.Bathroom: {RoomType.Closet: ("bool", 0.2)},
-        RoomType.DiningRoom: {RoomType.Kitchen: ("bool", 1.0), RoomType.Hallway: ("bool", 0.2)},
+        RoomType.DiningRoom: {
+            RoomType.Kitchen: ("bool", 1.0),
+            RoomType.Hallway: ("bool", 0.2),
+        },
     },
 )
 
@@ -133,13 +144,23 @@ UPSTAIRS_ROOM_CHILDREN = defaultdict(
             RoomType.Utility: ("bool", 0.2),
             RoomType.Hallway: ("categorical", 0.0, 0.5, 0.5),
         },
-        RoomType.Bedroom: {RoomType.Bathroom: ("bool", 0.3), RoomType.Closet: ("bool", 0.5)},
+        RoomType.Bedroom: {
+            RoomType.Bathroom: ("bool", 0.3),
+            RoomType.Closet: ("bool", 0.5),
+        },
         RoomType.Bathroom: {RoomType.Closet: ("bool", 0.2)},
-        RoomType.Balcony: {RoomType.Utility: ("bool", 0.4), RoomType.Hallway: ("bool", 0.1)},
+        RoomType.Balcony: {
+            RoomType.Utility: ("bool", 0.4),
+            RoomType.Hallway: ("bool", 0.1),
+        },
     },
 )
 LOOP_ROOM_TYPES = {
-    RoomType.LivingRoom: {RoomType.Garage: 0.2, RoomType.Balcony: 0.2, RoomType.Kitchen: 0.1},
+    RoomType.LivingRoom: {
+        RoomType.Garage: 0.2,
+        RoomType.Balcony: 0.2,
+        RoomType.Kitchen: 0.1,
+    },
     RoomType.Bedroom: {RoomType.Balcony: 0.1},
 }
 
@@ -148,7 +169,13 @@ ROOM_WALLS = defaultdict(
     {
         RoomType.Kitchen: ("weighted_choice", (2, tile), (5, plaster)),
         RoomType.Garage: ("weighted_choice", (5, concrete), (1, brick), (3, plaster)),
-        RoomType.Utility: ("weighted_choice", (1, concrete), (1, brick), (1, brick), (5, plaster)),
+        RoomType.Utility: (
+            "weighted_choice",
+            (1, concrete),
+            (1, brick),
+            (1, brick),
+            (5, plaster),
+        ),
         RoomType.Balcony: ("weighted_choice", (1, brick), (5, plaster)),
         RoomType.Bathroom: tile,
     },
@@ -164,4 +191,9 @@ ROOM_FLOORS = defaultdict(
     },
 )
 
-PILLAR_ROOM_TYPES = [RoomType.Hallway, RoomType.LivingRoom, RoomType.Staircase, RoomType.DiningRoom]
+PILLAR_ROOM_TYPES = [
+    RoomType.Hallway,
+    RoomType.LivingRoom,
+    RoomType.Staircase,
+    RoomType.DiningRoom,
+]

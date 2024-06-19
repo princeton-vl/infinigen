@@ -16,7 +16,14 @@ from infinigen.core.util.random import log_uniform
 
 
 class CurvedStaircaseFactory(StraightStaircaseFactory):
-    support_types = "weighted_choice", (2, "single-rail"), (2, "double-rail"), (4, "side"), (4, "solid"), (4, "hole")
+    support_types = (
+        "weighted_choice",
+        (2, "single-rail"),
+        (2, "double-rail"),
+        (4, "side"),
+        (4, "solid"),
+        (4, "hole"),
+    )
 
     handrail_types = "weighted_choice", (2, "horizontal-post"), (2, "vertical-post")
 

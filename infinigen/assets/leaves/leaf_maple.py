@@ -6,18 +6,17 @@
 
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 
@@ -43,13 +42,22 @@ def nodegroup_vein(nw: NodeWrangler):
     )
 
     absolute = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["X Modulated"]}, attrs={"operation": "ABSOLUTE"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X Modulated"]},
+        attrs={"operation": "ABSOLUTE"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]}
+    )
 
     combine_xyz_1 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": absolute, "Y": separate_xyz.outputs["Y"], "Z": separate_xyz.outputs["Z"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": absolute,
+            "Y": separate_xyz.outputs["Y"],
+            "Z": separate_xyz.outputs["Z"],
+        },
     )
 
     vector_rotate = nw.new_node(
@@ -58,26 +66,50 @@ def nodegroup_vein(nw: NodeWrangler):
         attrs={"rotation_type": "Z_AXIS"},
     )
 
-    separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate})
+    separate_xyz_3 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate}
+    )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": combine_xyz_1})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": combine_xyz_1}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz_1.outputs["X"], 2: 0.3})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": separate_xyz_1.outputs["X"], 2: 0.3}
+    )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.5932, 0.1969), (1.0, 1.0)])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0], [(0.0, 0.0), (0.5932, 0.1969), (1.0, 1.0)]
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: 0.2}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: 0.2},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_3.outputs["X"], 1: multiply})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: separate_xyz_3.outputs["X"], 1: multiply}
+    )
 
-    sign = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["X Modulated"]}, attrs={"operation": "SIGN"})
+    sign = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X Modulated"]},
+        attrs={"operation": "SIGN"},
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: sign, 1: 0.1}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: sign, 1: 0.1}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: multiply_1})
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["Phase Offset"]})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["Phase Offset"]}
+    )
 
     voronoi_texture = nw.new_node(
         Nodes.VoronoiTexture,
@@ -85,7 +117,9 @@ def nodegroup_vein(nw: NodeWrangler):
         attrs={"voronoi_dimensions": "1D"},
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: vector_rotate}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: vector_rotate}, attrs={"operation": "LENGTH"}
+    )
 
     multiply_2 = nw.new_node(
         Nodes.Math,
@@ -94,70 +128,116 @@ def nodegroup_vein(nw: NodeWrangler):
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: 0.08, 1: multiply_2}, attrs={"operation": "SUBTRACT", "use_clamp": True}
+        Nodes.Math,
+        input_kwargs={0: 0.08, 1: multiply_2},
+        attrs={"operation": "SUBTRACT", "use_clamp": True},
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": voronoi_texture.outputs["Distance"], 2: subtract, 3: 1.0, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": voronoi_texture.outputs["Distance"],
+            2: subtract,
+            3: 1.0,
+            4: 0.0,
+        },
     )
 
     absolute_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["X Modulated"]}, attrs={"operation": "ABSOLUTE"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X Modulated"]},
+        attrs={"operation": "ABSOLUTE"},
     )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_1.outputs["Y"], 1: 0.0}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_1.outputs["Y"], 1: 0.0},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract_1, 1: group_input.outputs["Anneal"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: group_input.outputs["Anneal"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    less_than = nw.new_node(Nodes.Math, input_kwargs={0: absolute_1, 1: multiply_3}, attrs={"operation": "LESS_THAN"})
+    less_than = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: absolute_1, 1: multiply_3},
+        attrs={"operation": "LESS_THAN"},
+    )
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: less_than}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: less_than},
+        attrs={"operation": "MULTIPLY"},
     )
 
     less_than_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add, 1: group_input.outputs["Start"]}, attrs={"operation": "LESS_THAN"}
+        Nodes.Math,
+        input_kwargs={0: add, 1: group_input.outputs["Start"]},
+        attrs={"operation": "LESS_THAN"},
     )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: less_than_1}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_4, 1: less_than_1},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": multiply_5})
 
 
-@node_utils.to_nodegroup("nodegroup_leaf_shader", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_leaf_shader", singleton=False, type="ShaderNodeTree"
+)
 def nodegroup_leaf_shader(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketColor", "Color", (0.8, 0.8, 0.8, 1.0))])
-
-    diffuse_bsdf = nw.new_node("ShaderNodeBsdfDiffuse", input_kwargs={"Color": group_input.outputs["Color"]})
-
-    glossy_bsdf = nw.new_node(
-        "ShaderNodeBsdfGlossy", input_kwargs={"Color": group_input.outputs["Color"], "Roughness": 0.3}
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[("NodeSocketColor", "Color", (0.8, 0.8, 0.8, 1.0))],
     )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.2, 1: diffuse_bsdf, 2: glossy_bsdf})
+    diffuse_bsdf = nw.new_node(
+        "ShaderNodeBsdfDiffuse", input_kwargs={"Color": group_input.outputs["Color"]}
+    )
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": group_input.outputs["Color"]})
+    glossy_bsdf = nw.new_node(
+        "ShaderNodeBsdfGlossy",
+        input_kwargs={"Color": group_input.outputs["Color"], "Roughness": 0.3},
+    )
 
-    mix_shader_1 = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": 0.3, 1: mix_shader, 2: translucent_bsdf})
+    mix_shader = nw.new_node(
+        Nodes.MixShader, input_kwargs={"Fac": 0.2, 1: diffuse_bsdf, 2: glossy_bsdf}
+    )
+
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": group_input.outputs["Color"]}
+    )
+
+    mix_shader_1 = nw.new_node(
+        Nodes.MixShader, input_kwargs={"Fac": 0.3, 1: mix_shader, 2: translucent_bsdf}
+    )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Shader": mix_shader_1})
 
 
-@node_utils.to_nodegroup("nodegroup_node_group_002", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_node_group_002", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_node_group_002(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     position = nw.new_node(Nodes.InputPosition)
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: position}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: position}, attrs={"operation": "LENGTH"}
+    )
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Shape", 0.5)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Shape", 0.5)]
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
@@ -166,31 +246,53 @@ def nodegroup_node_group_002(nw: NodeWrangler):
     )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": multiply, 1: -1.0, 2: 0.0, 3: -0.1, 4: 0.1}, attrs={"clamp": False}
+        Nodes.MapRange,
+        input_kwargs={"Value": multiply, 1: -1.0, 2: 0.0, 3: -0.1, 4: 0.1},
+        attrs={"clamp": False},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range_1.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range_1.outputs["Result"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_sub_vein", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_sub_vein", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_sub_vein(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "X", 0.5), ("NodeSocketFloat", "Y", 0.0)]
+        Nodes.GroupInput,
+        expose_input=[("NodeSocketFloat", "X", 0.5), ("NodeSocketFloat", "Y", 0.0)],
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["X"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": absolute, "Y": group_input.outputs["Y"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": absolute, "Y": group_input.outputs["Y"]}
+    )
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": combine_xyz})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": combine_xyz}
+    )
 
     mix = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": 0.9, "Color1": noise_texture.outputs["Color"], "Color2": combine_xyz}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": 0.9,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": combine_xyz,
+        },
     )
 
-    voronoi_texture = nw.new_node(Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 30.0})
+    voronoi_texture = nw.new_node(
+        Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 30.0}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
@@ -199,19 +301,32 @@ def nodegroup_nodegroup_sub_vein(nw: NodeWrangler):
     )
 
     voronoi_texture_1 = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix, "Scale": 150.0}, attrs={"feature": "DISTANCE_TO_EDGE"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix, "Scale": 150.0},
+        attrs={"feature": "DISTANCE_TO_EDGE"},
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": voronoi_texture_1.outputs["Distance"], 2: 0.1})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": voronoi_texture_1.outputs["Distance"], 2: 0.1},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: map_range_1.outputs["Result"]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: map_range_1.outputs["Result"]},
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: -1.0}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: -1.0}, attrs={"operation": "MULTIPLY"}
+    )
 
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": map_range_1.outputs["Result"], 4: -1.0})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": map_range_1.outputs["Result"], 4: -1.0}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Value": multiply, "Color Value": map_range_3.outputs["Result"]}
+        Nodes.GroupOutput,
+        input_kwargs={"Value": multiply, "Color Value": map_range_3.outputs["Result"]},
     )
 
 
@@ -234,15 +349,24 @@ def nodegroup_midrib(nw: NodeWrangler):
 
     vector_rotate_1 = nw.new_node(
         Nodes.VectorRotate,
-        input_kwargs={"Vector": group_input.outputs["Vector"], "Angle": group_input.outputs["Angle"]},
+        input_kwargs={
+            "Vector": group_input.outputs["Vector"],
+            "Angle": group_input.outputs["Angle"],
+        },
         attrs={"rotation_type": "Z_AXIS"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_1})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_1}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Y"]})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Y"]}
+    )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]}
+    )
     node_utils.assign_curve(
         float_curve.mapping.curves[0],
         [
@@ -261,13 +385,25 @@ def nodegroup_midrib(nw: NodeWrangler):
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.1
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: value}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: value},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: multiply})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: multiply}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: value}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: value}, attrs={"operation": "MULTIPLY"}
+    )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     vein = nw.new_node(
         nodegroup_vein().name,
@@ -282,47 +418,83 @@ def nodegroup_midrib(nw: NodeWrangler):
         },
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"})
-
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": vector_rotate_1, "Scale": 10.0})
-
-    subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"}
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: 0.01}, attrs={"operation": "MULTIPLY"})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": vector_rotate_1, "Scale": 10.0}
+    )
+
+    subtract_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"]},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: 0.01},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: absolute, 1: multiply_2})
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": add_1, 2: 0.01, 3: 1.0, 4: 0.0})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": add_1, 2: 0.01, 3: 1.0, 4: 0.0}
+    )
 
     greater_than = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: 0.0}, attrs={"operation": "GREATER_THAN"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Y"], 1: 0.0},
+        attrs={"operation": "GREATER_THAN"},
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: greater_than}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: greater_than},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    maximum = nw.new_node(Nodes.Math, input_kwargs={0: vein, 1: multiply_3}, attrs={"operation": "MAXIMUM"})
+    maximum = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: vein, 1: multiply_3},
+        attrs={"operation": "MAXIMUM"},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": maximum, "Vector": vector_rotate_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": maximum, "Vector": vector_rotate_1}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_valid_area", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_valid_area", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_valid_area(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)]
+    )
 
-    sign = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"]}, attrs={"operation": "SIGN"})
+    sign = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Value"]},
+        attrs={"operation": "SIGN"},
+    )
 
-    map_range_4 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": sign, 1: -1.0, 3: 1.0, 4: 0.0})
+    map_range_4 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": sign, 1: -1.0, 3: 1.0, 4: 0.0}
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range_4.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range_4.outputs["Result"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_maple_shape", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_maple_shape", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_maple_shape(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -341,7 +513,11 @@ def nodegroup_maple_shape(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"]}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply.outputs["Vector"]},
+        attrs={"operation": "LENGTH"},
+    )
 
     gradient_texture = nw.new_node(
         Nodes.GradientTexture,
@@ -350,11 +526,15 @@ def nodegroup_maple_shape(nw: NodeWrangler):
     )
 
     pingpong = nw.new_node(
-        Nodes.Math, input_kwargs={0: gradient_texture.outputs["Fac"]}, attrs={"operation": "PINGPONG"}
+        Nodes.Math,
+        input_kwargs={0: gradient_texture.outputs["Fac"]},
+        attrs={"operation": "PINGPONG"},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: pingpong, 1: group_input.outputs["Multiplier"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: pingpong, 1: group_input.outputs["Multiplier"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": multiply_1})
@@ -421,10 +601,14 @@ def nodegroup_maple_shape(nw: NodeWrangler):
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: length.outputs["Value"], 1: float_curve}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: length.outputs["Value"], 1: float_curve},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: 0.06}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract, 1: 0.06}, attrs={"operation": "SUBTRACT"}
+    )
 
     float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": multiply_1})
     node_utils.assign_curve(
@@ -476,15 +660,26 @@ def nodegroup_maple_shape(nw: NodeWrangler):
     )
 
     subtract_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: length.outputs["Value"], 1: float_curve_1}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: length.outputs["Value"], 1: float_curve_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    subtract_3 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_2, 1: 0.06}, attrs={"operation": "SUBTRACT"})
+    subtract_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_2, 1: 0.06},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Shape": subtract_1, "Displacement": subtract_3})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Shape": subtract_1, "Displacement": subtract_3},
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_maple_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_maple_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_maple_stem(nw: NodeWrangler, stem_curve_control_points):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -497,55 +692,97 @@ def nodegroup_maple_stem(nw: NodeWrangler, stem_curve_control_points):
         ],
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["Coordinate"], 1: (0.0, 0.08, 0.0)})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["Coordinate"], 1: (0.0, 0.08, 0.0)},
+    )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": add.outputs["Vector"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": add.outputs["Vector"]}
+    )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.0, 2: 0.0})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.0, 2: 0.0},
+    )
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]})
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]}
+    )
     node_utils.assign_curve(float_curve_1.mapping.curves[0], stem_curve_control_points)
 
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0}
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: map_range_3.outputs["Result"], 1: separate_xyz.outputs["X"]})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range_3.outputs["Result"], 1: separate_xyz.outputs["X"]},
+    )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "ABSOLUTE"}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.72, 2: -0.35, 3: 0.03, 4: 0.008},
+        input_kwargs={
+            "Value": separate_xyz.outputs["Y"],
+            1: -1.72,
+            2: -0.35,
+            3: 0.03,
+            4: 0.008,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: absolute, 1: map_range.outputs["Result"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: absolute, 1: map_range.outputs["Result"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: group_input.outputs["Length"]})
+    add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Y"], 1: group_input.outputs["Length"]},
+    )
 
-    absolute_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "ABSOLUTE"})
+    absolute_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "ABSOLUTE"}
+    )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: absolute_1, 1: group_input.outputs["Length"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: absolute_1, 1: group_input.outputs["Length"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     smooth_max = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: subtract_1, 2: 0.02}, attrs={"operation": "SMOOTH_MAX"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: subtract_1, 2: 0.02},
+        attrs={"operation": "SMOOTH_MAX"},
     )
 
     subtract_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: smooth_max, 1: group_input.outputs["Value"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: smooth_max, 1: group_input.outputs["Value"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Stem": subtract_2, "Stem Raw": absolute})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Stem": subtract_2, "Stem Raw": absolute}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_move_to_origin", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_move_to_origin", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_move_to_origin(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -553,29 +790,47 @@ def nodegroup_move_to_origin(nw: NodeWrangler):
 
     attribute_statistic = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], 2: separate_xyz.outputs["Y"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            2: separate_xyz.outputs["Y"],
+        },
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: 0.0, 1: attribute_statistic.outputs["Min"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: 0.0, 1: attribute_statistic.outputs["Min"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     attribute_statistic_1 = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], 2: separate_xyz.outputs["Z"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            2: separate_xyz.outputs["Z"],
+        },
     )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: 0.0, 1: attribute_statistic_1.outputs["Max"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: 0.0, 1: attribute_statistic_1.outputs["Max"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": subtract, "Z": subtract_1})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": subtract, "Z": subtract_1}
+    )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": combine_xyz,
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 def shader_material(nw: NodeWrangler, **kwargs):
@@ -585,14 +840,26 @@ def shader_material(nw: NodeWrangler, **kwargs):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]}
+    )
 
     map_range_4 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["G"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["G"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -615,10 +882,16 @@ def shader_material(nw: NodeWrangler, **kwargs):
 
     hue_saturation_value = nw.new_node(
         "ShaderNodeHueSaturation",
-        input_kwargs={"Hue": map_range_4.outputs["Result"], "Value": map_range_6.outputs["Result"], "Color": mix},
+        input_kwargs={
+            "Hue": map_range_4.outputs["Result"],
+            "Value": map_range_6.outputs["Result"],
+            "Color": mix,
+        },
     )
 
-    group = nw.new_node(nodegroup_leaf_shader().name, input_kwargs={"Color": hue_saturation_value})
+    group = nw.new_node(
+        nodegroup_leaf_shader().name, input_kwargs={"Color": hue_saturation_value}
+    )
 
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": group})
 
@@ -626,19 +899,24 @@ def shader_material(nw: NodeWrangler, **kwargs):
 def geo_leaf_maple(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     # subdivide_mesh_1 = nw.new_node(Nodes.SubdivideMesh,
     #     input_kwargs={'Mesh': group_input.outputs["Geometry"]})
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": group_input.outputs["Geometry"], "Level": 11}
+        Nodes.SubdivideMesh,
+        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Level": 11},
     )
 
     position = nw.new_node(Nodes.InputPosition)
 
     maplestem = nw.new_node(
-        nodegroup_maple_stem(stem_curve_control_points=kwargs["stem_curve_control_points"]).name,
+        nodegroup_maple_stem(
+            stem_curve_control_points=kwargs["stem_curve_control_points"]
+        ).name,
         input_kwargs={"Coordinate": position, "Length": 0.32, "Value": 0.005},
     )
 
@@ -656,20 +934,35 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
 
     mapleshape = nw.new_node(
         nodegroup_maple_shape().name,
-        input_kwargs={"Coordinate": vector_rotate, "Multiplier": kwargs["multiplier"], "Noise Level": 0.04},
+        input_kwargs={
+            "Coordinate": vector_rotate,
+            "Multiplier": kwargs["multiplier"],
+            "Noise Level": 0.04,
+        },
     )
 
     smooth_min = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: maplestem.outputs["Stem"], 1: mapleshape.outputs["Shape"], 2: 0.0},
+        input_kwargs={
+            0: maplestem.outputs["Stem"],
+            1: mapleshape.outputs["Shape"],
+            2: 0.0,
+        },
         attrs={"operation": "SMOOTH_MIN"},
     )
 
-    stem_length = nw.new_node(Nodes.Compare, input_kwargs={0: smooth_min}, label="stem length")
+    stem_length = nw.new_node(
+        Nodes.Compare, input_kwargs={0: smooth_min}, label="stem length"
+    )
 
-    delete_geometry = nw.new_node(Nodes.DeleteGeom, input_kwargs={"Geometry": subdivide_mesh, "Selection": stem_length})
+    delete_geometry = nw.new_node(
+        Nodes.DeleteGeom,
+        input_kwargs={"Geometry": subdivide_mesh, "Selection": stem_length},
+    )
 
-    validarea = nw.new_node(nodegroup_valid_area().name, input_kwargs={"Value": mapleshape.outputs["Shape"]})
+    validarea = nw.new_node(
+        nodegroup_valid_area().name, input_kwargs={"Value": mapleshape.outputs["Shape"]}
+    )
 
     midrib = nw.new_node(
         nodegroup_midrib().name,
@@ -712,7 +1005,12 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
 
     midrib_3 = nw.new_node(
         nodegroup_midrib().name,
-        input_kwargs={"Vector": vector_rotate_1, "Angle": -0.9041, "vein Start": 0.0, "Phase Offset": uniform(0, 100)},
+        input_kwargs={
+            "Vector": vector_rotate_1,
+            "Angle": -0.9041,
+            "vein Start": 0.0,
+            "Phase Offset": uniform(0, 100),
+        },
     )
 
     maximum_1 = nw.new_node(
@@ -721,7 +1019,11 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
         attrs={"operation": "MAXIMUM"},
     )
 
-    maximum_2 = nw.new_node(Nodes.Math, input_kwargs={0: maximum, 1: maximum_1}, attrs={"operation": "MAXIMUM"})
+    maximum_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: maximum, 1: maximum_1},
+        attrs={"operation": "MAXIMUM"},
+    )
 
     midrib_4 = nw.new_node(
         nodegroup_midrib().name,
@@ -753,7 +1055,11 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
         attrs={"operation": "MAXIMUM"},
     )
 
-    maximum_4 = nw.new_node(Nodes.Math, input_kwargs={0: maximum_2, 1: maximum_3}, attrs={"operation": "MAXIMUM"})
+    maximum_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: maximum_2, 1: maximum_3},
+        attrs={"operation": "MAXIMUM"},
+    )
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
@@ -763,45 +1069,90 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": nodegroup_sub_vein.outputs["Color Value"], 2: -0.94, 3: 1.0, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": nodegroup_sub_vein.outputs["Color Value"],
+            2: -0.94,
+            3: 1.0,
+            4: 0.0,
+        },
     )
 
     maximum_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: maximum_4, 1: map_range.outputs["Result"]}, attrs={"operation": "MAXIMUM"}
+        Nodes.Math,
+        input_kwargs={0: maximum_4, 1: map_range.outputs["Result"]},
+        attrs={"operation": "MAXIMUM"},
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: 1.0, 1: maximum_5}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math, input_kwargs={0: 1.0, 1: maximum_5}, attrs={"operation": "SUBTRACT"}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: validarea, 1: subtract}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: validarea, 1: subtract},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    capture_attribute = nw.new_node(Nodes.CaptureAttribute, input_kwargs={"Geometry": delete_geometry, 2: multiply})
+    capture_attribute = nw.new_node(
+        Nodes.CaptureAttribute, input_kwargs={"Geometry": delete_geometry, 2: multiply}
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: -0.03}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: -0.03},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    maximum_6 = nw.new_node(Nodes.Math, input_kwargs={0: maximum_4, 1: multiply_1}, attrs={"operation": "MAXIMUM"})
+    maximum_6 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: maximum_4, 1: multiply_1},
+        attrs={"operation": "MAXIMUM"},
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: maximum_6, 1: 0.015}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: maximum_6, 1: 0.015},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: -1.0}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_3, 1: validarea}, attrs={"operation": "MULTIPLY"})
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_3, 1: validarea},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    validarea_1 = nw.new_node(nodegroup_valid_area().name, input_kwargs={"Value": maplestem.outputs["Stem"]})
+    validarea_1 = nw.new_node(
+        nodegroup_valid_area().name, input_kwargs={"Value": maplestem.outputs["Stem"]}
+    )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: maplestem.outputs["Stem Raw"], 1: 0.01}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: maplestem.outputs["Stem Raw"], 1: 0.01},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: validarea_1, 1: subtract_1}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: validarea_1, 1: subtract_1},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_5})
 
-    multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    multiply_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
     nodegroup_002 = nw.new_node(
-        nodegroup_node_group_002().name, input_kwargs={"Shape": mapleshape.outputs["Displacement"]}
+        nodegroup_node_group_002().name,
+        input_kwargs={"Shape": mapleshape.outputs["Displacement"]},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: nodegroup_002})
@@ -809,16 +1160,25 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": add_1})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            "Offset": combine_xyz,
+        },
     )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_1})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_1}
+    )
 
-    move_to_origin = nw.new_node(nodegroup_move_to_origin().name, input_kwargs={"Geometry": set_position})
+    move_to_origin = nw.new_node(
+        nodegroup_move_to_origin().name, input_kwargs={"Geometry": set_position}
+    )
 
     apply_wave = nw.new_node(
         nodegroup_apply_wave(
-            y_wave_control_points=kwargs["y_wave_control_points"], x_wave_control_points=kwargs["x_wave_control_points"]
+            y_wave_control_points=kwargs["y_wave_control_points"],
+            x_wave_control_points=kwargs["x_wave_control_points"],
         ).name,
         input_kwargs={
             "Geometry": move_to_origin,
@@ -829,7 +1189,8 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[2]}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[2]},
     )
 
 
@@ -856,7 +1217,11 @@ class LeafFactoryMaple(AssetFactory):
                 hsvcol_vein[2] = uniform(0.1, 0.5)
 
             elif season == "winter":
-                hsvcol_blade = [uniform(0.0, 0.10), uniform(0.2, 0.6), uniform(0.0, 0.1)]
+                hsvcol_blade = [
+                    uniform(0.0, 0.10),
+                    uniform(0.2, 0.6),
+                    uniform(0.0, 0.1),
+                ]
                 hsvcol_vein = [uniform(0.0, 0.10), uniform(0.2, 0.6), uniform(0.0, 0.1)]
 
             else:
@@ -896,12 +1261,21 @@ class LeafFactoryMaple(AssetFactory):
                 (uniform(0.6, 0.8), uniform(0.1, 0.4)),
                 (1.0, 0.0),
             ],
-            "vein_shape_control_points": [(0.0, 0.0), (0.25, uniform(0.1, 0.4)), (0.75, uniform(0.6, 0.9)), (1.0, 1.0)],
+            "vein_shape_control_points": [
+                (0.0, 0.0),
+                (0.25, uniform(0.1, 0.4)),
+                (0.75, uniform(0.6, 0.9)),
+                (1.0, 1.0),
+            ],
         }
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=4, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=4,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -912,9 +1286,19 @@ class LeafFactoryMaple(AssetFactory):
 
         phenome = self.genome.copy()
 
-        phenome["y_wave_control_points"] = [(0.0, 0.5), (uniform(0.25, 0.75), uniform(0.50, 0.60)), (1.0, 0.5)]
+        phenome["y_wave_control_points"] = [
+            (0.0, 0.5),
+            (uniform(0.25, 0.75), uniform(0.50, 0.60)),
+            (1.0, 0.5),
+        ]
         x_wave_val = np.random.uniform(0.50, 0.58)
-        phenome["x_wave_control_points"] = [(0.0, 0.5), (0.4, x_wave_val), (0.5, 0.5), (0.6, x_wave_val), (1.0, 0.5)]
+        phenome["x_wave_control_points"] = [
+            (0.0, 0.5),
+            (0.4, x_wave_val),
+            (0.5, 0.5),
+            (0.6, x_wave_val),
+            (1.0, 0.5),
+        ]
 
         phenome["stem_curve_control_points"] = [
             (0.0, 0.5),
@@ -939,20 +1323,28 @@ class LeafFactoryMaple(AssetFactory):
         phenome["scale_margin"] = uniform(5.5, 7.5)
 
         material_kwargs = phenome.copy()
-        material_kwargs["color_base"] = np.copy(self.blade_color)  # (0.2346, 0.4735, 0.0273, 1.0),
+        material_kwargs["color_base"] = np.copy(
+            self.blade_color
+        )  # (0.2346, 0.4735, 0.0273, 1.0),
         material_kwargs["color_base"][0] += np.random.normal(0.0, 0.02)
         material_kwargs["color_base"][1] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_base"][2] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_base"] = hsv2rgba(material_kwargs["color_base"])
 
-        material_kwargs["color_vein"] = np.copy(self.vein_color)  # (0.2346, 0.4735, 0.0273, 1.0),
+        material_kwargs["color_vein"] = np.copy(
+            self.vein_color
+        )  # (0.2346, 0.4735, 0.0273, 1.0),
         material_kwargs["color_vein"][0] += np.random.normal(0.0, 0.02)
         material_kwargs["color_vein"][1] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_vein"][2] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_vein"] = hsv2rgba(material_kwargs["color_vein"])
 
-        surface.add_geomod(obj, geo_leaf_maple, apply=False, attributes=["vein"], input_kwargs=phenome)
-        surface.add_material(obj, shader_material, reuse=False, input_kwargs=material_kwargs)
+        surface.add_geomod(
+            obj, geo_leaf_maple, apply=False, attributes=["vein"], input_kwargs=phenome
+        )
+        surface.add_material(
+            obj, shader_material, reuse=False, input_kwargs=material_kwargs
+        )
 
         bpy.ops.object.convert(target="MESH")
 

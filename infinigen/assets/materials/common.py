@@ -2,7 +2,6 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-import functools
 from collections.abc import Callable, Iterable
 
 import numpy as np
@@ -34,7 +33,9 @@ def apply(obj, shader_func, selection=None, *args, **kwargs):
         elif isinstance(selection, str):
             try:
                 sel = read_attr_data(o, selection.lstrip("!"), "FACE")
-                material_index = np.where(1 - sel if selection.startswith("!") else sel, index, material_index)
+                material_index = np.where(
+                    1 - sel if selection.startswith("!") else sel, index, material_index
+                )
             except:
                 material_index = np.zeros(len(material_index), dtype=int)
         else:

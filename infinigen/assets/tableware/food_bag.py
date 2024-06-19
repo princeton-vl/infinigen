@@ -10,7 +10,13 @@ from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials import text
-from infinigen.assets.utils.decorate import geo_extension, read_co, subdivide_edge_ring, subsurf, write_co
+from infinigen.assets.utils.decorate import (
+    geo_extension,
+    read_co,
+    subdivide_edge_ring,
+    subsurf,
+    write_co,
+)
 from infinigen.assets.utils.object import new_base_cylinder
 from infinigen.assets.utils.uv import wrap_front_back
 from infinigen.core import surface
@@ -46,7 +52,9 @@ class FoodBagFactory(AssetFactory):
         self.add_seal(obj)
         self.build_uv(obj)
         subsurf(obj, 2)
-        surface.add_geomod(obj, geo_extension, input_kwargs={"musgrave_dimensions": "2D"}, apply=True)
+        surface.add_geomod(
+            obj, geo_extension, input_kwargs={"musgrave_dimensions": "2D"}, apply=True
+        )
         return obj
 
     def make_base(self):
@@ -66,13 +74,17 @@ class FoodBagFactory(AssetFactory):
             for i in [-1, 1]:
                 bpy.ops.mesh.select_all(action="DESELECT")
                 bm.verts.ensure_lookup_table()
-                indices = np.nonzero(read_co(obj)[:, -1] * i >= self.length / 2 - 1e-3)[0]
+                indices = np.nonzero(read_co(obj)[:, -1] * i >= self.length / 2 - 1e-3)[
+                    0
+                ]
                 for idx in indices:
                     bm.verts[idx].select_set(True)
                 bm.select_flush(False)
                 bmesh.update_edit_mesh(obj.data)
                 bpy.ops.mesh.extrude_edges_move(
-                    TRANSFORM_OT_translate={"value": (0, 0, self.extrude_length * self.length * i)}
+                    TRANSFORM_OT_translate={
+                        "value": (0, 0, self.extrude_length * self.length * i)
+                    }
                 )
 
     def build_uv(self, obj):

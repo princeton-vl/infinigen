@@ -9,10 +9,8 @@ from __future__ import annotations
 import copy
 import itertools
 import logging
-import typing
 from dataclasses import dataclass, field
 
-import numpy as np
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -43,11 +41,15 @@ def reldom_compatible(
     match (a_neg, b_neg):
         case True, False:
             if b[0].implies(a[0].rel) and b[1].intersects(a[1]):
-                logger.debug("reldom_compatible found contradicting negated %s %s", a[0], b[0])
+                logger.debug(
+                    "reldom_compatible found contradicting negated %s %s", a[0], b[0]
+                )
                 return False
         case False, True:
             if a[0].implies(b[0].rel) and a[1].intersects(b[1]):
-                logger.debug("reldom_compatible found contradicting negated %s %s", a[0], b[0])
+                logger.debug(
+                    "reldom_compatible found contradicting negated %s %s", a[0], b[0]
+                )
                 return False
 
     return True
@@ -60,7 +62,9 @@ def reldom_satisfies(
     return a[0].intersects(b[0], strict=True) and a[1].satisfies(b[1])
 
 
-def reldom_intersects(a: tuple[cl.Relation, Domain], b: tuple[cl.Relation, Domain], **kwargs):
+def reldom_intersects(
+    a: tuple[cl.Relation, Domain], b: tuple[cl.Relation, Domain], **kwargs
+):
     return a[0].intersects(b[0]) and a[1].intersects(b[1], **kwargs)
 
 
@@ -102,23 +106,35 @@ class Domain:
     relations: list[tuple[cl.Relation, Domain]] = field(default_factory=list)
 
     def repr(self, abbrv=False, onelevel=False, oneline=False):
-        is_neg = lambda x: isinstance(x, t.Negated)
+        def is_neg(x):
+            return isinstance(x, t.Negated)
 
         def setrepr(s):
-            inner = ", ".join(repr(x) for x in sorted(list(s), key=is_neg) if not (abbrv and isinstance(x, t.Negated)))
+            inner = ", ".join(
+                repr(x)
+                for x in sorted(list(s), key=is_neg)
+                if not (abbrv and isinstance(x, t.Negated))
+            )
             return "{" + inner + "}"
 
         next_abbrv = abbrv or onelevel
 
         def repr_reldom(r, d):
             if abbrv:
-                rel = f"-{r.rel.__class__.__name__}" if isinstance(r, cl.NegatedRelation) else f"{r.__class__.__name__}"
+                rel = (
+                    f"-{r.rel.__class__.__name__}"
+                    if isinstance(r, cl.NegatedRelation)
+                    else f"{r.__class__.__name__}"
+                )
                 return f"({rel}(...), Domain({setrepr(d.tags)}, [...]))"
             else:
                 return f"({repr(r)}, {d.repr(abbrv=next_abbrv)})"
 
         relations = [
-            repr_reldom(r, d) for r, d in sorted(self.relations, key=lambda x: isinstance(x[0], cl.NegatedRelation))
+            repr_reldom(r, d)
+            for r, d in sorted(
+                self.relations, key=lambda x: isinstance(x[0], cl.NegatedRelation)
+            )
         ]
 
         if not oneline and sum(len(x) for x in relations) > 20:
@@ -136,10 +152,13 @@ class Domain:
 
     def implies(self, other: Domain):
         return t.implies(self.tags, other.tags) and all(
-            any(reldom_implies(rel, orel) for rel in self.relations) for orel in other.relations
+            any(reldom_implies(rel, orel) for rel in self.relations)
+            for orel in other.relations
         )
 
-    def add_relation(self, new_rel: cl.Relation, new_dom: Domain, optimize_check_implies=True):
+    def add_relation(
+        self, new_rel: cl.Relation, new_dom: Domain, optimize_check_implies=True
+    ):
         """
         new_rel, new_dom: the relation and domain to be added
         optimize_check_implies: bool
@@ -151,7 +170,9 @@ class Domain:
 
         assert new_dom is not self
 
-        logger.debug("add_relation %s %s to existing %i", new_rel, new_dom, len(self.relations))
+        logger.debug(
+            "add_relation %s %s to existing %i", new_rel, new_dom, len(self.relations)
+        )
 
         if not optimize_check_implies:
             self.relations.append((new_rel, new_dom))
@@ -166,8 +187,14 @@ class Domain:
                 continue
             elif reldom_implies((er, ed), (new_rel, new_dom)):
                 covered = True
-            elif reldom_satisfies((er, ed), (new_rel, new_dom)) or reldom_satisfies((new_rel, new_dom), (er, ed)):
-                logger.debug("Tightening existing relation %s with %s", (er, ed), (new_rel, new_dom))
+            elif reldom_satisfies((er, ed), (new_rel, new_dom)) or reldom_satisfies(
+                (new_rel, new_dom), (er, ed)
+            ):
+                logger.debug(
+                    "Tightening existing relation %s with %s",
+                    (er, ed),
+                    (new_rel, new_dom),
+                )
                 self.relations[i] = reldom_intersection((new_rel, new_dom), (er, ed))
                 covered = True
             elif new_dom.intersects(ed, require_satisfies_right=True):
@@ -177,7 +204,11 @@ class Domain:
                 logger.debug("%s is not relevant for %s", (er, ed), (new_rel, new_dom))
 
         if not covered:
-            logger.debug("optimize_check_implies found nothing, adding relation %s %s", new_rel, new_dom)
+            logger.debug(
+                "optimize_check_implies found nothing, adding relation %s %s",
+                new_rel,
+                new_dom,
+            )
             self.relations.append((new_rel, new_dom))
 
         if self.is_recursive():
@@ -220,7 +251,9 @@ class Domain:
         for orel in other.relations:
             match orel:
                 case (cl.NegatedRelation(n), d):
-                    contradictor = next((srel for srel in self.relations if bothsat(srel, (n, d))), None)
+                    contradictor = next(
+                        (srel for srel in self.relations if bothsat(srel, (n, d))), None
+                    )
 
                     if contradictor is not None:
                         logger.debug(
@@ -232,12 +265,16 @@ class Domain:
                         return False
                 case _:
                     if not any(bothsat(srel, orel) for srel in self.relations):
-                        logger.debug("found unsatisfied %s for %s", orel, self.relations)
+                        logger.debug(
+                            "found unsatisfied %s for %s", orel, self.relations
+                        )
                         return False
 
         return True
 
-    def intersects(self, other: Domain, require_satisfies_left=False, require_satisfies_right=False):
+    def intersects(
+        self, other: Domain, require_satisfies_left=False, require_satisfies_right=False
+    ):
         """Return True if self and other could have a non-empty intersection.
 
         Parameters
@@ -268,21 +305,31 @@ class Domain:
                 return False
 
         # any relations actually known to be present must intersect
-        a_pos = [rd for rd in self.relations if not isinstance(rd[0], cl.NegatedRelation)]
-        b_pos = [rd for rd in other.relations if not isinstance(rd[0], cl.NegatedRelation)]
+        a_pos = [
+            rd for rd in self.relations if not isinstance(rd[0], cl.NegatedRelation)
+        ]
+        b_pos = [
+            rd for rd in other.relations if not isinstance(rd[0], cl.NegatedRelation)
+        ]
         if require_satisfies_left:
             if not t.satisfies(other.tags, self.tags):
                 return False
             for ard in a_pos:
                 if not any(reldom_intersects(ard, brd) for brd in b_pos):
-                    logger.debug("require_satisfies_left found no intersecting %s %s", ard, b_pos)
+                    logger.debug(
+                        "require_satisfies_left found no intersecting %s %s", ard, b_pos
+                    )
                     return False
         if require_satisfies_right:
             if not t.satisfies(self.tags, other.tags):
                 return False
             for brd in b_pos:
                 if not any(reldom_intersects(ard, brd) for ard in a_pos):
-                    logger.debug("require_satisfies_right found no intersecting %s %s", brd, a_pos)
+                    logger.debug(
+                        "require_satisfies_right found no intersecting %s %s",
+                        brd,
+                        a_pos,
+                    )
                     return False
 
         logger.debug("Domain.intersects for %s %s returning True", self, other)
@@ -304,7 +351,9 @@ class Domain:
 
         newtags = self.tags.union(other.tags)
         if t.contradiction(newtags):
-            raise ValueError(f"Contradictory {newtags=} for {self.intersection} {other=}")
+            raise ValueError(
+                f"Contradictory {newtags=} for {self.intersection} {other=}"
+            )
 
         newdom = Domain(newtags)
         for orel, odom in *self.relations, *other.relations:
@@ -330,7 +379,11 @@ class Domain:
     def positive_part(self):
         return Domain(
             tags={ti for ti in self.tags if not isinstance(ti, t.Negated)},
-            relations=[(r, d.positive_part()) for r, d in self.relations if not isinstance(r, cl.NegatedRelation)],
+            relations=[
+                (r, d.positive_part())
+                for r, d in self.relations
+                if not isinstance(r, cl.NegatedRelation)
+            ],
         )
 
     def traverse(self):

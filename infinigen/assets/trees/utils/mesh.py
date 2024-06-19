@@ -6,7 +6,7 @@
 
 import bpy
 import numpy as np
-from mathutils import Matrix, Vector
+from mathutils import Vector
 
 from . import helper
 
@@ -49,7 +49,9 @@ def finalize_obj(obj):
 
 
 def init_vertex(pos):
-    bpy.ops.mesh.primitive_cube_add(size=1, enter_editmode=True, align="WORLD", location=pos, scale=(1, 1, 1))
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, enter_editmode=True, align="WORLD", location=pos, scale=(1, 1, 1)
+    )
     bpy.ops.mesh.merge(type="COLLAPSE")
     bpy.ops.object.editmode_toggle()
 
@@ -104,7 +106,9 @@ def sample_vtxs(obj, emit_from="VOLUME", n=1000, seed=1):
     return all_cds.reshape(-1, 3)
 
 
-def get_pts_from_shape(shape_fn, n=10, emit_from="VOLUME", loc=(0, 0, 0), scaling=1, pt_offset=0):
+def get_pts_from_shape(
+    shape_fn, n=10, emit_from="VOLUME", loc=(0, 0, 0), scaling=1, pt_offset=0
+):
     if isinstance(pt_offset, list):
         pt_offset = np.array([pt_offset])
     if isinstance(scaling, list):
@@ -161,10 +165,14 @@ def extrude_path(obj, path):
 
 
 def get_vtx_obj():
-    if not "vtx" in D.objects:
+    if "vtx" not in D.objects:
         bpy.ops.object.mode_set(mode="OBJECT")
         bpy.ops.mesh.primitive_cube_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.merge(type="COLLAPSE")
@@ -258,7 +266,9 @@ def get_visible_vertices(cam, vertices, co2D=None, limit=0.02):
         depsgraph = C.evaluated_depsgraph_get()
 
         # Try a ray cast, in order to test the vertex visibility from the camera
-        location = C.scene.ray_cast(depsgraph, cam.location, (v - cam.location).normalized())
+        location = C.scene.ray_cast(
+            depsgraph, cam.location, (v - cam.location).normalized()
+        )
         # If the ray hits something and if this hit is close to the vertex, we assume this is the vertex
         if not (location[0] and (v - location[1]).length < limit):
             is_visible[i] = False

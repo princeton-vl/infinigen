@@ -4,16 +4,16 @@
 # Authors: Alexander Raistrick
 
 
-import pdb
-import warnings
-
 import bpy
 import mathutils
 import numpy as np
-from mathutils import Vector, geometry
+from mathutils import geometry
 from mathutils.bvhtree import BVHTree
 
-from infinigen.assets.creatures.util.geometry.nurbs import blender_mesh_from_pydata, compute_cylinder_topology
+from infinigen.assets.creatures.util.geometry.nurbs import (
+    blender_mesh_from_pydata,
+    compute_cylinder_topology,
+)
 from infinigen.core.util import blender as butil
 
 
@@ -78,7 +78,9 @@ def find_poly_line_bounds(mesh, poly_idx, line, eps=1e-5):
     return float(ts.min()), float(ts.max())
 
 
-def intersect_poly_poly(am: bpy.types.Mesh, bm: bpy.types.Mesh, ai: int, bi: int, return_normals=False):
+def intersect_poly_poly(
+    am: bpy.types.Mesh, bm: bpy.types.Mesh, ai: int, bi: int, return_normals=False
+):
     """
     ai, bi = polygon index into am.polygons, bm.polygons
     """
@@ -155,24 +157,33 @@ def create_bevel_connection(
         butil.delete(inter)
 
     if len(verts) < 3:
-        raise ValueError(f"create_bevel_connection({a=}, {b=}) had only {len(verts)=} intersecting points")
+        raise ValueError(
+            f"create_bevel_connection({a=}, {b=}) had only {len(verts)=} intersecting points"
+        )
 
     a_offset = normal_offset_verts(verts, a_bvh, b_bvh, width)
     b_offset = normal_offset_verts(verts, b_bvh, a_bvh, width)
 
     final_vert_parts = [a_offset, verts, b_offset]
     if close_caps:
-        close = lambda vs: np.ones_like(vs) * vs.mean(axis=0, keepdims=True)
+
+        def close(vs):
+            return np.ones_like(vs) * vs.mean(axis=0, keepdims=True)
+
         final_vert_parts = [close(a_offset)] + final_vert_parts + [close(b_offset)]
 
     final_verts = np.concatenate(final_vert_parts, axis=0)
     final_edges, final_faces = compute_cylinder_topology(
         len(final_vert_parts), len(verts), cyclic=True, h_neighbors=edges
     )
-    final = blender_mesh_from_pydata(final_verts, final_edges.reshape(-1, 2), final_faces)
+    final = blender_mesh_from_pydata(
+        final_verts, final_edges.reshape(-1, 2), final_faces
+    )
 
     def select_loop(li):
-        in_loop = lambda vi: (li * len(verts) <= vi) and (vi < (li + 1) * len(verts))
+        def in_loop(vi):
+            return li * len(verts) <= vi and vi < (li + 1) * len(verts)
+
         for vi, v in enumerate(final.data.vertices):
             v.select = in_loop(vi)
         for e in final.data.edges:

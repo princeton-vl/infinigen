@@ -4,7 +4,6 @@
 # Authors: Lingjie Mei
 import random
 
-import bpy
 import gin
 import numpy as np
 from numpy.random import uniform
@@ -12,11 +11,13 @@ from shapely import Polygon, box
 
 from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.object import new_plane
-from infinigen.core.constraints.example_solver.room.configs import TYPICAL_AREA_ROOM_TYPES
+from infinigen.core.constraints.example_solver.room.configs import (
+    TYPICAL_AREA_ROOM_TYPES,
+)
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.constraints.example_solver.room.utils import unit_cast
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 LARGE = 100
@@ -35,7 +36,11 @@ class ContourFactory:
             obj.location = self.width / 2, self.height / 2, 0
             obj.scale = self.width / 2, self.height / 2, 1
             butil.apply_transform(obj, loc=True)
-            corners = list((x, y) for x in [0, unit_cast(self.width)] for y in [0, unit_cast(self.height)])
+            corners = list(
+                (x, y)
+                for x in [0, unit_cast(self.width)]
+                for y in [0, unit_cast(self.height)]
+            )
             random.shuffle(corners)
             corners = dict(enumerate(corners))
 
@@ -98,7 +103,13 @@ class ContourFactory:
         width = unit_cast(uniform(0.1, 0.3) * min(self.width, self.height))
         if width > 0:
             butil.modify_mesh(
-                obj, "BEVEL", affect="VERTICES", limit_method="VGROUP", vertex_group="corner", segments=1, width=width
+                obj,
+                "BEVEL",
+                affect="VERTICES",
+                limit_method="VGROUP",
+                vertex_group="corner",
+                segments=1,
+                width=width,
             )
         obj.vertex_groups.remove(obj.vertex_groups["corner"])
 
@@ -132,7 +143,10 @@ class ContourFactory:
             skewness = log_uniform(0.6, 0.8)
             if uniform() < 0.5:
                 skewness = 1 / skewness
-            width, height = unit_cast(np.sqrt(area * skewness).item()), unit_cast(np.sqrt(area / skewness).item())
+            width, height = (
+                unit_cast(np.sqrt(area * skewness).item()),
+                unit_cast(np.sqrt(area / skewness).item()),
+            )
             x = unit_cast(uniform(x_, x__ - width))
             y = unit_cast(uniform(y_, y__ - height))
             b = box(x, y, x + width, y + height)

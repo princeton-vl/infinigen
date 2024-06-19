@@ -4,8 +4,6 @@
 # Authors: Alejandro Newell
 
 
-from logging import root
-
 import bpy
 import numpy as np
 
@@ -28,7 +26,12 @@ subsubtwig_config = {
 subtwig_config = {
     "n": 3,
     "symmetry": True,
-    "path_kargs": lambda idx: {"n_pts": 6, "std": 1, "momentum": 1, "sz": 0.6 - 0.1 * idx},
+    "path_kargs": lambda idx: {
+        "n_pts": 6,
+        "std": 1,
+        "momentum": 1,
+        "sz": 0.6 - 0.1 * idx,
+    },
     "spawn_kargs": lambda idx: {
         "rng": [0.2, 0.9],
         "z_bias": 0.1,
@@ -69,7 +72,12 @@ subsubtwig_config = {
 subtwig_config = {
     "n": 7,
     "symmetry": False,
-    "path_kargs": lambda idx: {"n_pts": 10, "std": 0.3, "momentum": 1, "sz": 0.2 - 0.01 * idx},
+    "path_kargs": lambda idx: {
+        "n_pts": 10,
+        "std": 0.3,
+        "momentum": 1,
+        "sz": 0.2 - 0.01 * idx,
+    },
     "spawn_kargs": lambda idx: {
         "rng": [0.2, 0.9],
         "z_bias": 0.1,
@@ -103,7 +111,12 @@ subsubsubtwig_config = {
 subsubtwig_config = {
     "n": 3,
     "symmetry": False,
-    "path_kargs": lambda idx: {"n_pts": 3, "std": 1, "momentum": 1, "sz": 0.6 - 0.1 * idx},
+    "path_kargs": lambda idx: {
+        "n_pts": 3,
+        "std": 1,
+        "momentum": 1,
+        "sz": 0.6 - 0.1 * idx,
+    },
     "spawn_kargs": lambda idx: {
         "rng": [0.1, 1.0],
         "z_bias": 0.1,
@@ -116,7 +129,12 @@ subsubtwig_config = {
 subtwig_config = {
     "n": 8,
     "symmetry": False,
-    "path_kargs": lambda idx: {"n_pts": 7, "std": 1, "momentum": 1, "sz": 0.6 - 0.1 * idx},
+    "path_kargs": lambda idx: {
+        "n_pts": 7,
+        "std": 1,
+        "momentum": 1,
+        "sz": 0.6 - 0.1 * idx,
+    },
     "spawn_kargs": lambda idx: {
         "rng": [0.2, 1.0],
         "z_bias": 0.1,
@@ -178,7 +196,12 @@ palmtwig_config = {
 subtwig_config = {
     "n": 3,
     "symmetry": True,
-    "path_kargs": lambda idx: {"n_pts": 3, "std": 1, "momentum": 1, "sz": 0.6 - 0.1 * idx},
+    "path_kargs": lambda idx: {
+        "n_pts": 3,
+        "std": 1,
+        "momentum": 1,
+        "sz": 0.6 - 0.1 * idx,
+    },
     "spawn_kargs": lambda idx: {
         "rng": [0.2, 0.9],
         "z_bias": 0.1,
@@ -203,7 +226,9 @@ def generate_twig_config():
     twig_sz = twig_len / n_twig_pts
     avail_idxs = np.arange(n_twig_pts)
     start_idx = 1 + int(n_twig_pts * np.random.uniform(0, 0.3))
-    sample_density = np.random.choice(np.arange(np.ceil(np.sqrt(n_twig_pts)), dtype=int) + 1)
+    sample_density = np.random.choice(
+        np.arange(np.ceil(np.sqrt(n_twig_pts)), dtype=int) + 1
+    )
     avail_sub_idxs = avail_idxs[start_idx::sample_density]
 
     init_z = np.random.uniform(0, 0.3)
@@ -309,7 +334,10 @@ def basic_tree(init_pos=np.array([[0, 0, 0]])):
     def init_att_fn(nodes):
         pt_offset = init_pos[0] + np.array([0, 0, 11])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=500, scaling=[7, 7, 7], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=500,
+            scaling=[7, 7, 7],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -317,7 +345,10 @@ def basic_tree(init_pos=np.array([[0, 0, 0]])):
         # Pass this into root_kargs to initialize a root system
         pt_offset = init_pos[0] + np.array([0, 0, -3.5])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=500, scaling=[5, 5, 4], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=500,
+            scaling=[5, 5, 4],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -341,14 +372,26 @@ def basic_tree(init_pos=np.array([[0, 0, 0]])):
     twig_kargs = {
         "config": shrubtwig_config,
         "radii_kargs": {"Max radius": 0.1},
-        "leaf_kargs": {"Density": 1, "Min scale": 0.4, "Max scale": 0.6, "Multi inst": 2},
+        "leaf_kargs": {
+            "Density": 1,
+            "Min scale": 0.4,
+            "Max scale": 0.6,
+            "Multi inst": 2,
+        },
     }
     tree_kargs = {
         "config": tree_config,
         "init_pos": init_pos,
         "radii_kargs": {"Min radius": 0.04, "Exponent": 2},
         "leaf_kargs": {"Density": 1, "Min scale": 0.35, "Max scale": 0.45},
-        "space_kargs": {"atts": init_att_fn, "D": 0.3, "s": 0.4, "d": 10, "pull_dir": [0, 0, 0.5], "n_steps": 20},
+        "space_kargs": {
+            "atts": init_att_fn,
+            "D": 0.3,
+            "s": 0.4,
+            "d": 10,
+            "pull_dir": [0, 0, 0.5],
+            "n_steps": 20,
+        },
         "root_kargs": None,  # {'atts': None, 'D': .2, 's': .3, 'd': 2,
         #'dir_rand': .3, 'mag_rand': .2,
         #'pull_dir': None, 'n_steps': 30},
@@ -362,7 +405,10 @@ def palm_tree(init_pos=np.array([[0, 0, 0]])):
         # pt_offset = init_pos[0] + np.array([0,0,20])
         pt_offset = nodes[-1]
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=500, scaling=[1, 1, 1], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=500,
+            scaling=[1, 1, 1],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -388,7 +434,12 @@ def palm_tree(init_pos=np.array([[0, 0, 0]])):
     twig_kargs = {
         "config": palmtwig_config,
         "radii_kargs": {"max_radius": 0.1, "merge_size": 0.2},
-        "leaf_kargs": {"max_density": 20, "scale": 2.0, "rot_x": (-0.5, -0.4), "rot_z": (-0.1, 0.1)},
+        "leaf_kargs": {
+            "max_density": 20,
+            "scale": 2.0,
+            "rot_x": (-0.5, -0.4),
+            "rot_z": (-0.1, 0.1),
+        },
     }
     tree_kargs = {
         "config": tree_config,
@@ -399,8 +450,18 @@ def palm_tree(init_pos=np.array([[0, 0, 0]])):
         "pull_dir": [0, 0, 0.5],
         "n_updates": 20,
         "init_att_fn": tmp_att_fn,
-        "radii_kargs": {"max_radius": 0.7, "merge_size": 0.3, "min_radius": 0.1, "growth_amt": 1.01},
-        "leaf_kargs": {"max_density": 20, "scale": 0.3, "rot_x": (-1.0, 1.0), "rot_z": (-0.1, 0.1)},
+        "radii_kargs": {
+            "max_radius": 0.7,
+            "merge_size": 0.3,
+            "min_radius": 0.1,
+            "growth_amt": 1.01,
+        },
+        "leaf_kargs": {
+            "max_density": 20,
+            "scale": 0.3,
+            "rot_x": (-1.0, 1.0),
+            "rot_z": (-0.1, 0.1),
+        },
     }
 
     return tree_kargs, twig_kargs, leaf_kargs
@@ -411,7 +472,10 @@ def baobab_tree(init_pos=np.array([[0, 0, 0]])):
         # pt_offset = init_pos[0] + np.array([0,0,20])
         pt_offset = nodes[-1]
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=50, scaling=[7, 7, 1], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=50,
+            scaling=[7, 7, 1],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -420,7 +484,12 @@ def baobab_tree(init_pos=np.array([[0, 0, 0]])):
 
     tree_config = {
         "n": 1,
-        "path_kargs": lambda idx: {"n_pts": 20, "sz": 0.8, "std": 0.1, "momentum": 0.95},
+        "path_kargs": lambda idx: {
+            "n_pts": 20,
+            "sz": 0.8,
+            "std": 0.1,
+            "momentum": 0.95,
+        },
         "spawn_kargs": lambda idx: {"init_vec": [0, 0, 1]},
         "children": [],
     }
@@ -429,7 +498,12 @@ def baobab_tree(init_pos=np.array([[0, 0, 0]])):
     twig_kargs = {
         "config": shrubtwig_config,
         "radii_kargs": {"max_radius": 0.1, "merge_size": 0.2},
-        "leaf_kargs": {"max_density": 20, "scale": 0.5, "rot_x": (-0.5, -0.4), "rot_z": (-0.1, 0.1)},
+        "leaf_kargs": {
+            "max_density": 20,
+            "scale": 0.5,
+            "rot_x": (-0.5, -0.4),
+            "rot_z": (-0.1, 0.1),
+        },
     }
     tree_kargs = {
         "config": tree_config,
@@ -440,8 +514,18 @@ def baobab_tree(init_pos=np.array([[0, 0, 0]])):
         "pull_dir": [0, 0, 0.5],
         "n_updates": 20,
         "init_att_fn": tmp_att_fn,
-        "radii_kargs": {"max_radius": 2.0, "merge_size": 0.3, "min_radius": 0.1, "growth_amt": 1.10},
-        "leaf_kargs": {"max_density": 30, "scale": 0.7, "rot_x": (0, 1.0), "rot_z": (-1.0, 1.0)},
+        "radii_kargs": {
+            "max_radius": 2.0,
+            "merge_size": 0.3,
+            "min_radius": 0.1,
+            "growth_amt": 1.10,
+        },
+        "leaf_kargs": {
+            "max_density": 30,
+            "scale": 0.7,
+            "rot_x": (0, 1.0),
+            "rot_z": (-1.0, 1.0),
+        },
     }
 
     return tree_kargs, twig_kargs, leaf_kargs
@@ -453,12 +537,16 @@ def bamboo_tree(init_pos=np.array([[0, 0, 0]])):
     def tmp_att_fn(nodes):
         # pt_offset = init_pos[0] + np.array([0,0,20])
         pt_offset = nodes[-1]
-        branch_pts = mesh.get_pts_from_shape(bpy.ops.mesh.primitive_cube_add, n=50, scaling=[0.5, 0.5, 4])
+        branch_pts = mesh.get_pts_from_shape(
+            bpy.ops.mesh.primitive_cube_add, n=50, scaling=[0.5, 0.5, 4]
+        )
         # rotate the points
         rot_axis = (nodes[-1] - nodes[-2]) / np.linalg.norm((nodes[-1] - nodes[-2]))
         rot_axis = (rot_axis + np.array([0, 0, 1])) / 2.0
 
-        branch_pts = np.array([helper.rodrigues_rot(pts, rot_axis, np.pi) for pts in branch_pts])
+        branch_pts = np.array(
+            [helper.rodrigues_rot(pts, rot_axis, np.pi) for pts in branch_pts]
+        )
 
         branch_pts += pt_offset
 
@@ -486,7 +574,12 @@ def bamboo_tree(init_pos=np.array([[0, 0, 0]])):
     twig_kargs = {
         "config": bambootwig_config,
         "radii_kargs": {"max_radius": 0.1, "merge_size": 0.2},
-        "leaf_kargs": {"max_density": 20, "scale": 1.5, "rot_x": (-0.5, -0.4), "rot_z": (-0.1, 0.1)},
+        "leaf_kargs": {
+            "max_density": 20,
+            "scale": 1.5,
+            "rot_x": (-0.5, -0.4),
+            "rot_z": (-0.1, 0.1),
+        },
     }
     tree_kargs = {
         "config": tree_config,
@@ -497,8 +590,18 @@ def bamboo_tree(init_pos=np.array([[0, 0, 0]])):
         "pull_dir": [0, 0, 0.5],
         "n_updates": 20,
         "init_att_fn": tmp_att_fn,
-        "radii_kargs": {"max_radius": 0.3, "merge_size": 0.1, "min_radius": 0.2, "growth_amt": 1.01},
-        "leaf_kargs": {"max_density": 20, "scale": 0.3, "rot_x": (-1.0, 1.0), "rot_z": (-0.1, 0.1)},
+        "radii_kargs": {
+            "max_radius": 0.3,
+            "merge_size": 0.1,
+            "min_radius": 0.2,
+            "growth_amt": 1.01,
+        },
+        "leaf_kargs": {
+            "max_density": 20,
+            "scale": 0.3,
+            "rot_x": (-1.0, 1.0),
+            "rot_z": (-0.1, 0.1),
+        },
     }
 
     return tree_kargs, twig_kargs, leaf_kargs
@@ -510,21 +613,30 @@ def shrub(init_pos=np.array([[0, 0, 0]]), shrub_shape=0):
     def att_fn_ball(nodes):
         pt_offset = init_pos[0] + np.array([0, 0, 7 * scale])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_uv_sphere_add, n=2000, scaling=[7 * scale, 7 * scale, 7 * scale], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_uv_sphere_add,
+            n=2000,
+            scaling=[7 * scale, 7 * scale, 7 * scale],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
     def att_fn_cone(nodes):
         pt_offset = init_pos[0] + np.array([0, 0, 9 * scale])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cone_add, n=2000, scaling=[5 * scale, 5 * scale, 10 * scale], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cone_add,
+            n=2000,
+            scaling=[5 * scale, 5 * scale, 10 * scale],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
     def att_fn_cube(nodes):
         pt_offset = init_pos[0] + np.array([0, 0, 9 * scale])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=2000, scaling=[4 * scale, 4 * scale, 7 * scale], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=2000,
+            scaling=[4 * scale, 4 * scale, 7 * scale],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -537,7 +649,10 @@ def shrub(init_pos=np.array([[0, 0, 0]]), shrub_shape=0):
     else:
         raise NotImplementedError
 
-    leaf_kargs = {"leaf_width": np.random.rand() * 0.5 + 0.1, "alpha": np.random.rand() * 0.3}
+    leaf_kargs = {
+        "leaf_width": np.random.rand() * 0.5 + 0.1,
+        "alpha": np.random.rand() * 0.3,
+    }
     branch_config = {
         "n": 5,
         "spawn_kargs": lambda idx: {"rng": [0.5, 0.8]},
@@ -559,7 +674,12 @@ def shrub(init_pos=np.array([[0, 0, 0]]), shrub_shape=0):
         skeleton=shrubtwig_config,
         trunk_spacecol=None,
         roots_spacecol=None,
-        child_placement={"Density": 1, "Min scale": 0.4, "Max scale": 0.6, "Multi inst": 2},
+        child_placement={
+            "Density": 1,
+            "Min scale": 0.4,
+            "Max scale": 0.6,
+            "Multi inst": 2,
+        },
         skinning={"Max radius": 0.1},
     )
 
@@ -635,7 +755,9 @@ def basic_stem(init_pos=np.array([[0, 0, 0]])):
                 "pull_factor": 2 + idx * 0.5,
             }
         ),
-        "spawn_kargs": lambda idx: {"init_vec": [np.random.randn(), np.random.randn(), 1]},
+        "spawn_kargs": lambda idx: {
+            "init_vec": [np.random.randn(), np.random.randn(), 1]
+        },
         "children": [branch_config],
     }
 
@@ -676,7 +798,12 @@ def space_tree_wrap(cds, n_init=5):
         "pull_dir": [0, 0, 0],
         "n_updates": 40,
         "init_att_fn": tmp_att_fn,
-        "radii_kargs": {"max_radius": 0.04, "merge_size": 0.1, "min_radius": 0.01, "growth_amt": 1.02},
+        "radii_kargs": {
+            "max_radius": 0.04,
+            "merge_size": 0.1,
+            "min_radius": 0.01,
+            "growth_amt": 1.02,
+        },
         "leaf_kargs": {},
     }
 
@@ -688,7 +815,9 @@ def space_tree_wrap(cds, n_init=5):
 
 def space_tree(obj, init_pos=np.array([[0, 0, 0]])):
     def init_att_fn(nodes):
-        return mesh.sample_vtxs(obj, n=1000, emit_from="VOLUME", seed=np.random.randint(100))
+        return mesh.sample_vtxs(
+            obj, n=1000, emit_from="VOLUME", seed=np.random.randint(100)
+        )
 
     twig_kargs = {
         "config": shrubtwig_config,
@@ -725,7 +854,10 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
         # Pass this into root_kargs to initialize a root system
         pt_offset = init_pos[0] + np.array([0, 0, -3.5])
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=500, scaling=[5, 5, 4], pt_offset=pt_offset
+            bpy.ops.mesh.primitive_cube_add,
+            n=500,
+            scaling=[5, 5, 4],
+            pt_offset=pt_offset,
         )
         return branch_pts
 
@@ -739,7 +871,8 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
         "n": n * per_layer,
         "path_kargs": lambda idx: {
             "n_pts": np.random.randint(
-                np.floor(((n - idx // per_layer) / n) * 6), np.ceil(((n - idx // per_layer) / n) * 8)
+                np.floor(((n - idx // per_layer) / n) * 6),
+                np.ceil(((n - idx // per_layer) / n) * 8),
             )
             + 3,
             "std": 0.3,
@@ -758,7 +891,12 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
     }
     pinetree_config = {
         "n": 1,
-        "path_kargs": lambda idx: {"n_pts": tree_ht + 1, "sz": 0.8, "std": 0.1, "momentum": 0.7},
+        "path_kargs": lambda idx: {
+            "n_pts": tree_ht + 1,
+            "sz": 0.8,
+            "std": 0.1,
+            "momentum": 0.7,
+        },
         "spawn_kargs": lambda idx: {"init_vec": [0, 0, 1]},
         "children": [branch_config],
     }
@@ -768,18 +906,41 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
         skeleton=pinetwig_config,
         trunk_spacecol=None,
         roots_spacecol=None,
-        skinning={"Min radius": 0.005, "Max radius": 0.03, "Exponent": 1.3, "Scaling": 0.1, "Profile res": 3},
-        child_placement={"depth_range": (0, 5.0), "Density": 1.0, "Min scale": 0.7, "Max scale": 0.9},
+        skinning={
+            "Min radius": 0.005,
+            "Max radius": 0.03,
+            "Exponent": 1.3,
+            "Scaling": 0.1,
+            "Profile res": 3,
+        },
+        child_placement={
+            "depth_range": (0, 5.0),
+            "Density": 1.0,
+            "Min scale": 0.7,
+            "Max scale": 0.9,
+        },
     )
 
     tree_kargs = TreeParams(
         skeleton=pinetree_config,
         skinning={"Min radius": 0.02, "Exponent": 1.5, "Max radius": 0.2},
-        trunk_spacecol={"atts": tmp_att_fn, "D": 0.3, "s": 0.4, "d": 10, "pull_dir": [0, 0, 0.5], "n_steps": 20},
+        trunk_spacecol={
+            "atts": tmp_att_fn,
+            "D": 0.3,
+            "s": 0.4,
+            "d": 10,
+            "pull_dir": [0, 0, 0.5],
+            "n_steps": 20,
+        },
         roots_spacecol=None,  # {'atts': None, 'D': .2, 's': .3, 'd': 2,
         #     'dir_rand': .3, 'mag_rand': .2,
         #     'pull_dir': None, 'n_steps': 30},
-        child_placement={"depth_range": (0, 2.7), "Density": 1.0, "Min scale": 0.7, "Max scale": 0.9},
+        child_placement={
+            "depth_range": (0, 2.7),
+            "Density": 1.0,
+            "Min scale": 0.7,
+            "Max scale": 0.9,
+        },
     )
 
     return tree_kargs, twig_kargs, leaf_kargs
@@ -788,7 +949,10 @@ def pine_tree(init_pos=np.array([[0, 0, 0]])):
 def coral():
     def tmp_att_fn(nodes):
         branch_pts = mesh.get_pts_from_shape(
-            bpy.ops.mesh.primitive_cube_add, n=500, scaling=[7, 7, 7], pt_offset=[0, 0, 11]
+            bpy.ops.mesh.primitive_cube_add,
+            n=500,
+            scaling=[7, 7, 7],
+            pt_offset=[0, 0, 11],
         )
         return branch_pts
 
@@ -822,7 +986,12 @@ def coral():
         "pull_dir": [0, 0, 0.5],
         "n_updates": 20,
         "init_att_fn": tmp_att_fn,
-        "radii_kargs": {"max_radius": 0.7, "merge_size": 0.3, "min_radius": 0.03, "growth_amt": 1.01},
+        "radii_kargs": {
+            "max_radius": 0.7,
+            "merge_size": 0.3,
+            "min_radius": 0.03,
+            "growth_amt": 1.01,
+        },
         "leaf_kargs": {"max_density": 5, "scale": 0.3},
     }
 
@@ -889,7 +1058,9 @@ def generate_tree_config(tree_genome=None, season="autumn"):
     radial_out = False  # False # np.random.rand() < .3
     avail_idxs = np.arange(n_tree_pts)
     start_idx = 1 + int(n_tree_pts * np.random.uniform(0.1, 0.7))
-    sample_density = np.random.choice(np.arange(np.ceil(np.sqrt(n_tree_pts)), dtype=int) + 1)
+    sample_density = np.random.choice(
+        np.arange(np.ceil(np.sqrt(n_tree_pts)), dtype=int) + 1
+    )
     avail_idxs = avail_idxs[start_idx::sample_density]
     multi_branch = int(5 ** (cfg["multi_branch"] ** 1.6))
     avail_idxs = np.repeat(avail_idxs, multi_branch).flatten()
@@ -917,7 +1088,8 @@ def generate_tree_config(tree_genome=None, season="autumn"):
             "n": n * per_layer,
             "path_kargs": lambda idx: {
                 "n_pts": np.random.randint(
-                    np.floor(((n - idx // per_layer) / n) * 6), np.ceil(((n - idx // per_layer) / n) * 8)
+                    np.floor(((n - idx // per_layer) / n) * 6),
+                    np.ceil(((n - idx // per_layer) / n) * 8),
                 )
                 + 3,
                 "std": 0.3,
@@ -951,7 +1123,13 @@ def generate_tree_config(tree_genome=None, season="autumn"):
     tree_config = {
         "n": n_trunks,
         "path_kargs": lambda idx: (
-            {"n_pts": n_tree_pts, "sz": 1, "std": trunk_std, "momentum": trunk_mtm, "pull_dir": [0, 0, 0]}
+            {
+                "n_pts": n_tree_pts,
+                "sz": 1,
+                "std": trunk_std,
+                "momentum": trunk_mtm,
+                "pull_dir": [0, 0, 0],
+            }
         ),
         "spawn_kargs": lambda idx: {"init_vec": [0, 0, 1]},
         "children": [branch_config],
@@ -999,7 +1177,10 @@ def generate_tree_config(tree_genome=None, season="autumn"):
 
 
 def random_tree(tree_genome=None, season="autumn"):
-    leaf_kargs = {"leaf_width": np.random.rand() * 0.5 + 0.1, "alpha": np.random.rand() * 0.3}
+    leaf_kargs = {
+        "leaf_width": np.random.rand() * 0.5 + 0.1,
+        "alpha": np.random.rand() * 0.3,
+    }
 
     if season == "winter":
         leaf_density = np.random.uniform(0.0, 0.1)
@@ -1016,7 +1197,12 @@ def random_tree(tree_genome=None, season="autumn"):
         skinning={"Max radius": 0.01, "Min radius": 0.005},
         trunk_spacecol=None,
         roots_spacecol=None,
-        child_placement={"Density": leaf_density, "Multi inst": leaf_inst, "Min scale": 0.3, "Max scale": 0.4},
+        child_placement={
+            "Density": leaf_density,
+            "Multi inst": leaf_inst,
+            "Min scale": 0.3,
+            "Max scale": 0.4,
+        },
     )
     tree_kargs = generate_tree_config(tree_genome, season=season)
     return tree_kargs, twig_kargs, leaf_kargs
@@ -1050,7 +1236,9 @@ def generate_coral_config(tree_genome=None):
     radial_out = False  # np.random.rand() < .3
     avail_idxs = np.arange(n_tree_pts)
     start_idx = 1 + int(n_tree_pts * np.random.uniform(0, 0.7))
-    sample_density = np.random.choice(np.arange(np.ceil(np.sqrt(n_tree_pts)), dtype=int) + 1)
+    sample_density = np.random.choice(
+        np.arange(np.ceil(np.sqrt(n_tree_pts)), dtype=int) + 1
+    )
     avail_idxs = avail_idxs[start_idx::sample_density]
     multi_branch = int(5 ** (cfg["multi_branch"] ** 1.6))
     avail_idxs = np.repeat(avail_idxs, multi_branch).flatten()
@@ -1087,7 +1275,13 @@ def generate_coral_config(tree_genome=None):
     tree_config = {
         "n": n_trunks,
         "path_kargs": lambda idx: (
-            {"n_pts": n_tree_pts, "sz": 1, "std": trunk_std, "momentum": trunk_mtm, "pull_dir": [0, 0, 1]}
+            {
+                "n_pts": n_tree_pts,
+                "sz": 1,
+                "std": trunk_std,
+                "momentum": trunk_mtm,
+                "pull_dir": [0, 0, 1],
+            }
         ),
         "spawn_kargs": lambda idx: {"init_vec": [0, 0, 1]},
         "children": [branch_config],

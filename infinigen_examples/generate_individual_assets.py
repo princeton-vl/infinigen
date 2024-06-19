@@ -35,8 +35,12 @@ import numpy as np
 import submitit
 from PIL import Image
 
-from infinigen.assets.fluid.fluid import set_obj_on_fire
-from infinigen.assets.lighting import hdri_lighting, holdout_lighting, sky_lighting, three_point_lighting
+from infinigen.assets.lighting import (
+    hdri_lighting,
+    holdout_lighting,
+    sky_lighting,
+    three_point_lighting,
+)
 
 # from infinigen.core.rendering.render import enable_gpu
 from infinigen.assets.utils.decorate import read_base_co, read_co
@@ -90,7 +94,9 @@ def build_scene_asset(args, factory_name, idx):
             )
             bpy.context.scene.frame_set(args.fire_duration)
             bpy.context.scene.frame_end = args.fire_duration
-            bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
+            bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[
+                1
+            ].default_value = 0.04
             bpy.context.scene.view_settings.exposure = -1
         bpy.context.view_layer.objects.active = asset
         parent = asset
@@ -112,13 +118,20 @@ def build_scene_asset(args, factory_name, idx):
             parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
             butil.apply_transform(parent, loc=True)
             if not args.no_ground:
-                bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
+                bpy.ops.mesh.primitive_grid_add(
+                    size=5, x_subdivisions=400, y_subdivisions=400
+                )
                 plane = bpy.context.active_object
                 plane.location[-1] = x_min[-1]
                 plane.is_shadow_catcher = True
                 material = bpy.data.materials.new("plane")
                 material.use_nodes = True
-                material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = 0.015, 0.009, 0.003, 1
+                material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
+                    0.015,
+                    0.009,
+                    0.003,
+                    1,
+                )
                 assign_material(plane, material)
 
     return asset
@@ -127,17 +140,26 @@ def build_scene_asset(args, factory_name, idx):
 def build_scene_surface(factory_name, idx):
     try:
         with gin.unlock_config():
-            scatter = importlib.import_module(f"infinigen.assets.scatters.{factory_name}")
+            scatter = importlib.import_module(
+                f"infinigen.assets.scatters.{factory_name}"
+            )
 
             if not hasattr(scatter, "apply"):
                 raise ValueError(f"{scatter} has no apply()")
 
-            bpy.ops.mesh.primitive_grid_add(size=10, x_subdivisions=400, y_subdivisions=400)
+            bpy.ops.mesh.primitive_grid_add(
+                size=10, x_subdivisions=400, y_subdivisions=400
+            )
             plane = bpy.context.active_object
 
             material = bpy.data.materials.new("plane")
             material.use_nodes = True
-            material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = 0.015, 0.009, 0.003, 1
+            material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
+                0.015,
+                0.009,
+                0.003,
+                1,
+            )
             assign_material(plane, material)
             if type(scatter) is type:
                 scatter = scatter(idx)
@@ -147,11 +169,15 @@ def build_scene_surface(factory_name, idx):
         try:
             with gin.unlock_config():
                 try:
-                    template = importlib.import_module(f"infinigen.assets.materials.{factory_name}")
+                    template = importlib.import_module(
+                        f"infinigen.assets.materials.{factory_name}"
+                    )
                 except:
                     for subdir in os.listdir("infinigen/assets/materials"):
                         with gin.unlock_config():
-                            module = importlib.import_module(f'infinigen.assets.materials.{subdir.split(".")[0]}')
+                            module = importlib.import_module(
+                                f'infinigen.assets.materials.{subdir.split(".")[0]}'
+                            )
                         if hasattr(module, factory_name):
                             template = getattr(module, factory_name)
                             break
@@ -188,14 +214,18 @@ def build_and_save_asset(payload: dict):
 
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.render.resolution_x, scene.render.resolution_y = map(int, args.resolution.split("x"))
+    scene.render.resolution_x, scene.render.resolution_y = map(
+        int, args.resolution.split("x")
+    )
     scene.cycles.samples = args.samples
     butil.clear_scene()
     configure_cycles_devices()
 
     if not args.fire:
         bpy.context.scene.render.film_transparent = args.film_transparent
-        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[-1] = 0
+        bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value[
+            -1
+        ] = 0
     camera, center = setup_camera(args)
 
     if "Factory" in factory_name:
@@ -217,7 +247,9 @@ def build_and_save_asset(payload: dict):
             sky_texture.sun_rotation = np.pi * 0.75
 
     if args.scale_reference:
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2))
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=0.3, depth=1.8, location=(4.9, 4.9, 1.8 / 2)
+        )
 
     if args.cam_center > 0 and asset:
         co = read_base_co(asset) + asset.location
@@ -240,7 +272,9 @@ def build_and_save_asset(payload: dict):
         tag_system.save_tag(f"{path}/MaskTag.json")
 
     if args.fire:
-        bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[1].default_value = 0.04
+        bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[
+            1
+        ].default_value = 0.04
         bpy.context.scene.view_settings.exposure = -2
 
     if args.render == "image":
@@ -265,7 +299,9 @@ def build_and_save_asset(payload: dict):
     if args.export is not None:
         export_path = path / "export" / f"export_{idx:03d}"
         export_path.mkdir(exist_ok=True, parents=True)
-        export.export_curr_scene(export_path, format=args.export, image_res=args.export_texture_res)
+        export.export_curr_scene(
+            export_path, format=args.export, image_res=args.export_texture_res
+        )
 
 
 def parent(obj):
@@ -312,10 +348,18 @@ def make_grid(args, path, n):
                 img.paste(i, (0, 0))
             for idx in range(sz**2):
                 with Image.open(files[min(idx + 1, len(files) - 1)]) as i:
-                    img.paste(i.resize((x // sz, y // sz)), (x + (idx % sz) * (x // sz), idx // sz * (y // sz)))
+                    img.paste(
+                        i.resize((x // sz, y // sz)),
+                        (x + (idx % sz) * (x // sz), idx // sz * (y // sz)),
+                    )
             img.save(f"{path}/{name}.png")
         else:
-            sz_x = list(sorted(range(1, n + 1), key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio)))[0]
+            sz_x = list(
+                sorted(
+                    range(1, n + 1),
+                    key=lambda x: abs(math.ceil(n / x) / x - args.best_ratio),
+                )
+            )[0]
             sz_y = math.ceil(n / sz_x)
             img = Image.new("RGBA", (sz_x * x, sz_y * y))
             if i > 0:
@@ -336,7 +380,9 @@ def setup_camera(args):
     camera.parent.rotation_euler = np.deg2rad(np.array(args.cam_angle))
     bpy.data.scenes["Scene"].camera = camera
     scene = bpy.context.scene
-    camera.data.sensor_height = camera.data.sensor_width * scene.render.resolution_y / scene.render.resolution_x
+    camera.data.sensor_height = (
+        camera.data.sensor_width * scene.render.resolution_y / scene.render.resolution_x
+    )
     for area in bpy.context.screen.areas:
         if area.type == "VIEW_3D":
             area.spaces.active.region_3d.view_perspective = "CAMERA"
@@ -348,7 +394,9 @@ def setup_camera(args):
 
 
 def subclasses(cls):
-    return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in subclasses(c)])
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in subclasses(c)]
+    )
 
 
 def mapfunc(f, its, args):
@@ -414,11 +462,15 @@ def main(args):
         factories.remove("ALL_MATERIALS")
     has_txt = ".txt" in factories[0]
     if has_txt:
-        factories = [f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)]
+        factories = [
+            f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
+        ]
 
     if not args.postprocessing_only:
         for fac in factories:
-            targets = [{"args": args, "fac": fac, "idx": idx} for idx in range(args.n_images)]
+            targets = [
+                {"args": args, "fac": fac, "idx": idx} for idx in range(args.n_images)
+            ]
             mapfunc(build_and_save_asset, targets, args)
 
     for j, fac in enumerate(factories):
@@ -429,7 +481,9 @@ def main(args):
             for i in range(args.n_images):
                 img_path = fac_path / "images" / f"image_{i:03d}.png"
                 if img_path.exists():
-                    subprocess.run(f"cp -f {img_path} {path}/{fac}_{i:03d}.png", shell=True)
+                    subprocess.run(
+                        f"cp -f {img_path} {path}/{fac}_{i:03d}.png", shell=True
+                    )
                 else:
                     print(f"{img_path} does not exist")
         elif args.render == "image":
@@ -445,7 +499,11 @@ def main(args):
 
 
 def snake_case(s):
-    return "_".join(re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", s.replace("-", " "))).split()).lower()
+    return "_".join(
+        re.sub(
+            "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", s.replace("-", " "))
+        ).split()
+    ).lower()
 
 
 def make_args():
@@ -458,15 +516,26 @@ def make_args():
         nargs="+",
         help="List factories/surface scatters/surface materials you want to render",
     )
-    parser.add_argument("-n", "--n_images", default=1, type=int, help="Number of scenes to render")
+    parser.add_argument(
+        "-n", "--n_images", default=1, type=int, help="Number of scenes to render"
+    )
     parser.add_argument(
         "-m",
         "--margin",
         default=0.01,
-        help="Margin between the asset the boundary of the image when automatically adjusting " "the camera",
+        help="Margin between the asset the boundary of the image when automatically adjusting "
+        "the camera",
     )
-    parser.add_argument("-R", "--resolution", default="1024x1024", type=str, help="Image resolution widthxheight")
-    parser.add_argument("-p", "--samples", default=200, type=int, help="Blender cycles samples")
+    parser.add_argument(
+        "-R",
+        "--resolution",
+        default="1024x1024",
+        type=str,
+        help="Image resolution widthxheight",
+    )
+    parser.add_argument(
+        "-p", "--samples", default=200, type=int, help="Blender cycles samples"
+    )
     parser.add_argument("-l", "--lighting", default=0, type=int, help="Lighting seed")
     parser.add_argument(
         "-Z",
@@ -476,12 +545,37 @@ def make_args():
         default=0.0,
         help="Additional offset on Z axis for camera look-at positions",
     )
-    parser.add_argument("-s", "--save_blend", action="store_true", help="Whether to save .blend file")
-    parser.add_argument("-e", "--elevation", default=60, type=float, help="Elevation of the sun")
-    parser.add_argument("--cam_dist", default=0, type=float, help="Distance from the camera to the look-at position")
-    parser.add_argument("-a", "--cam_angle", default=(-30, 0, 45), type=float, nargs="+", help="Camera rotation in XYZ")
-    parser.add_argument("-O", "--offset", default=(0, 0, 0), type=float, nargs="+", help="asset location")
-    parser.add_argument("-c", "--cam_center", default=1, type=int, help="Camera rotation in XYZ")
+    parser.add_argument(
+        "-s", "--save_blend", action="store_true", help="Whether to save .blend file"
+    )
+    parser.add_argument(
+        "-e", "--elevation", default=60, type=float, help="Elevation of the sun"
+    )
+    parser.add_argument(
+        "--cam_dist",
+        default=0,
+        type=float,
+        help="Distance from the camera to the look-at position",
+    )
+    parser.add_argument(
+        "-a",
+        "--cam_angle",
+        default=(-30, 0, 45),
+        type=float,
+        nargs="+",
+        help="Camera rotation in XYZ",
+    )
+    parser.add_argument(
+        "-O",
+        "--offset",
+        default=(0, 0, 0),
+        type=float,
+        nargs="+",
+        help="asset location",
+    )
+    parser.add_argument(
+        "-c", "--cam_center", default=1, type=int, help="Camera rotation in XYZ"
+    )
     parser.add_argument(
         "-r",
         "--render",
@@ -500,28 +594,65 @@ def make_args():
     parser.add_argument("-F", "--fire", action="store_true")
     parser.add_argument("-I", "--fire_res", default=100, type=int)
     parser.add_argument("-U", "--fire_duration", default=30, type=int)
-    parser.add_argument("-t", "--film_transparent", default=1, type=int, help="Whether the background is transparent")
-    parser.add_argument("-E", "--frame_end", type=int, default=120, help="End of frame in videos")
-    parser.add_argument("-g", "--gpu", action="store_true", help="Whether to use gpu in rendering")
-    parser.add_argument("-C", "--cycles", type=float, default=1, help="render video cycles")
-    parser.add_argument("-A", "--scale_reference", action="store_true", help="Add the scale reference")
-    parser.add_argument("-S", "--skip_existing", action="store_true", help="Skip existing scenes and renders")
-    parser.add_argument("-P", "--postprocessing_only", action="store_true", help="Only run postprocessing")
-    parser.add_argument("-D", "--seed", type=int, default=-1, help="Run a specific seed.")
+    parser.add_argument(
+        "-t",
+        "--film_transparent",
+        default=1,
+        type=int,
+        help="Whether the background is transparent",
+    )
+    parser.add_argument(
+        "-E", "--frame_end", type=int, default=120, help="End of frame in videos"
+    )
+    parser.add_argument(
+        "-g", "--gpu", action="store_true", help="Whether to use gpu in rendering"
+    )
+    parser.add_argument(
+        "-C", "--cycles", type=float, default=1, help="render video cycles"
+    )
+    parser.add_argument(
+        "-A", "--scale_reference", action="store_true", help="Add the scale reference"
+    )
+    parser.add_argument(
+        "-S",
+        "--skip_existing",
+        action="store_true",
+        help="Skip existing scenes and renders",
+    )
+    parser.add_argument(
+        "-P",
+        "--postprocessing_only",
+        action="store_true",
+        help="Only run postprocessing",
+    )
+    parser.add_argument(
+        "-D", "--seed", type=int, default=-1, help="Run a specific seed."
+    )
     parser.add_argument("-N", "--no-mod", action="store_true", help="No modification")
     parser.add_argument(
-        "-d", "--debug", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO
+        "-d",
+        "--debug",
+        action="store_const",
+        dest="loglevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
     )
     parser.add_argument("-H", "--hdri", action="store_true", help="add_hdri")
-    parser.add_argument("-T", "--three_point", action="store_true", help="add three-point lighting")
+    parser.add_argument(
+        "-T", "--three_point", action="store_true", help="add three-point lighting"
+    )
     parser.add_argument("-G", "--no_ground", action="store_true", help="no ground")
-    parser.add_argument("-W", "--spawn_placeholder", action="store_true", help="spawn placeholder")
+    parser.add_argument(
+        "-W", "--spawn_placeholder", action="store_true", help="spawn placeholder"
+    )
     parser.add_argument("-z", "--zoom", action="store_true", help="zoom first figure")
 
     parser.add_argument("--n_workers", type=int, default=1)
     parser.add_argument("--slurm", action="store_true")
 
-    parser.add_argument("--export", type=str, default=None, choices=export.FORMAT_CHOICES)
+    parser.add_argument(
+        "--export", type=str, default=None, choices=export.FORMAT_CHOICES
+    )
     parser.add_argument("--export_texture_res", type=int, default=1024)
 
     return init.parse_args_blender(parser)

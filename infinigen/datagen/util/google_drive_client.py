@@ -12,7 +12,8 @@ from pathlib import Path
 
 def listdir(remote_path):
     stdout = subprocess.check_output(
-        f"{shutil.which('rclone')} lsf infinigen_renders:{remote_path}/".split(), text=True
+        f"{shutil.which('rclone')} lsf infinigen_renders:{remote_path}/".split(),
+        text=True,
     )
     return sorted((Path(remote_path) / l) for l in stdout.splitlines())
 

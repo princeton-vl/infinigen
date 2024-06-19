@@ -10,10 +10,9 @@ import math
 import bmesh
 import bpy
 import numpy as np
-from geomdl import NURBS, knotvector
+from geomdl import NURBS
 
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import randomspacing
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ try:
     import bnurbs
 except ImportError:
     logger.warning(
-        f"Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
+        "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
     )
     bnurbs = None
 
@@ -58,7 +57,9 @@ def compute_cylinder_topology(n: int, m: int, uvs=False, cyclic=True, h_neighbor
     if not uvs:
         return edges, faces
 
-    us, vs = np.meshgrid(np.linspace(0, 1, m, endpoint=True), np.linspace(0, 1, n, endpoint=True))
+    us, vs = np.meshgrid(
+        np.linspace(0, 1, m, endpoint=True), np.linspace(0, 1, n, endpoint=True)
+    )
     uvs = np.stack([us, vs], axis=-1).reshape(-1, 2)
 
     return edges, faces, uvs
@@ -82,7 +83,9 @@ def apply_crease_values(obj, creases: np.array):
         bmesh.update_edit_mesh(obj.data)
 
 
-def subdiv_mesh_nurbs(verts, level, creases=None, name="loft_mesh", cyclic_v=True) -> bpy.types.Object:
+def subdiv_mesh_nurbs(
+    verts, level, creases=None, name="loft_mesh", cyclic_v=True
+) -> bpy.types.Object:
     if not cyclic_v:
         raise NotImplementedError()
 
@@ -95,12 +98,22 @@ def subdiv_mesh_nurbs(verts, level, creases=None, name="loft_mesh", cyclic_v=Tru
         apply_crease_values(obj, creases)
 
     if level:
-        butil.modify_mesh(obj, type="SUBSURF", levels=level, render_levels=level, apply=False)
+        butil.modify_mesh(
+            obj, type="SUBSURF", levels=level, render_levels=level, apply=False
+        )
 
     return obj
 
 
-def blender_nurbs(ctrlpts, ws=None, name="loft_nurbs", resolution=(32, 32), cyclic_v=True, kv_u=None, kv_v=None):
+def blender_nurbs(
+    ctrlpts,
+    ws=None,
+    name="loft_nurbs",
+    resolution=(32, 32),
+    cyclic_v=True,
+    kv_u=None,
+    kv_v=None,
+):
     n, m, _ = ctrlpts.shape
 
     if ws is None:
@@ -160,7 +173,9 @@ def generate_knotvector(degree, n, mode="uniform", clamped=True):
 
     if clamped:
         assert len(middle) == n - degree - 1, f"{len(middle)} != {n - degree - 1}"
-        knot = np.concatenate([np.full(degree + 1, 0), middle, np.full(degree + 1, n)])  # pin the ends
+        knot = np.concatenate(
+            [np.full(degree + 1, 0), middle, np.full(degree + 1, n)]
+        )  # pin the ends
     else:
         knot = middle
 
@@ -202,7 +217,7 @@ def blender_nurbs_to_geomdl(s: bpy.types.Spline) -> NURBS.Surface:
 
     if bnurbs is None:
         logger.warning(
-            f"Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
+            "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
         )
     surf.knotvector_u = bnurbs.get_knotsu(s)
     surf.knotvector_v = bnurbs.get_knotsv(s)
@@ -230,7 +245,9 @@ def geomdl_to_mesh(surf: NURBS.Surface, eval_delta, name="geomdl_mesh"):
     surf.delta = eval_delta
     points = np.array(surf.evalpts)
 
-    edges, faces = compute_cylinder_topology(surf.sample_size_u, surf.sample_size_v, cyclic=False)
+    edges, faces = compute_cylinder_topology(
+        surf.sample_size_u, surf.sample_size_v, cyclic=False
+    )
 
     mesh = bpy.data.meshes.new(name=name)
     mesh.from_pydata(points, edges, faces)
@@ -257,7 +274,9 @@ def map_uv_to_valid_domain(s: bpy.types.Spline, uv: np.array):
     return np.stack([u, v], axis=-1)
 
 
-def geomdl_nurbs(ctrlpts, eval_delta, ws=None, kv_u=None, kv_v=None, name="loft_nurbs", cyclic_v=True):
+def geomdl_nurbs(
+    ctrlpts, eval_delta, ws=None, kv_u=None, kv_v=None, name="loft_nurbs", cyclic_v=True
+):
     n, m, _ = ctrlpts.shape
     degree_u, degree_v = (3, 3)
 
@@ -280,11 +299,15 @@ def geomdl_nurbs(ctrlpts, eval_delta, ws=None, kv_u=None, kv_v=None, name="loft_
     if ws is not None:
         surf.weights = ws
 
-    surf.knotvector_u = generate_knotvector(surf.degree_u, n) if kv_u is None else list(kv_u)
+    surf.knotvector_u = (
+        generate_knotvector(surf.degree_u, n) if kv_u is None else list(kv_u)
+    )
 
     # uniform spacing is generally recommended, especially for cyclic v
     if kv_v is None:
-        kv_v = np.array(generate_knotvector(surf.degree_v, m, mode="uniform", clamped=not cyclic_v))
+        kv_v = np.array(
+            generate_knotvector(surf.degree_v, m, mode="uniform", clamped=not cyclic_v)
+        )
 
     if cyclic_v:  # wrap around p knot intervals
         kv_v = np.append(kv_v, kv_v[1 : degree_v + 1] + kv_v[-1] - kv_v[0])
@@ -294,7 +317,9 @@ def geomdl_nurbs(ctrlpts, eval_delta, ws=None, kv_u=None, kv_v=None, name="loft_
 
     points = np.array(surf.evalpts)
     if cyclic_v:  # drop the last point (which is a duplicate) for each loop
-        points = points.reshape(surf.sample_size_u, surf.sample_size_v, -1)[:, :-1, :].reshape(-1, 3)
+        points = points.reshape(surf.sample_size_u, surf.sample_size_v, -1)[
+            :, :-1, :
+        ].reshape(-1, 3)
 
     edges, faces, uvs = compute_cylinder_topology(
         surf.sample_size_u, surf.sample_size_v - cyclic_v, cyclic=cyclic_v, uvs=True
@@ -311,7 +336,9 @@ def nurbs(ctrlpts, method, face_size=0.01, debug=False, **kwargs):
         steps = face_size / max(ulength, vlength)
         obj = geomdl_nurbs(ctrlpts, steps, **kwargs)
     elif method == "blender":
-        resolution = np.clip(np.array([ulength, vlength]) / face_size, 6, 40).astype(int)
+        resolution = np.clip(np.array([ulength, vlength]) / face_size, 6, 40).astype(
+            int
+        )
         resolution = (6, 6)
         obj = blender_nurbs(ctrlpts, resolution=resolution)
     elif method == "subdiv":

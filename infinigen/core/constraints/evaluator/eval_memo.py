@@ -56,7 +56,7 @@ def reset_bvh_cache(state, filter_name=None):
 
         if filter_name is not None:
             obj = state.objs[filter_name].obj
-            return not (obj.name in names)
+            return obj.name not in names
 
         for n in names:
             if n not in state.objs:
@@ -74,10 +74,14 @@ def reset_bvh_cache(state, filter_name=None):
             continue
         del state.bvh_cache[k]
 
-    logger.debug(f"reset_bvh_cache evicted {len(prev_keys) - len(state.bvh_cache)} out of {len(prev_keys)} orig")
+    logger.debug(
+        f"reset_bvh_cache evicted {len(prev_keys) - len(state.bvh_cache)} out of {len(prev_keys)} orig"
+    )
 
 
-def evict_memo_for_move(problem: cl.Problem, state: State, memo: dict, move: moves.Move):
+def evict_memo_for_move(
+    problem: cl.Problem, state: State, memo: dict, move: moves.Move
+):
     match move:
         case (
             moves.TranslateMove(names)

@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Optional, Union
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -89,7 +88,9 @@ class NegatedRelation(Relation):
             case NegatedRelation(rel):
                 return self.rel.implies(rel)
             case _:
-                return not self.rel.implies(other) and not self.intersects(other, strict=True)
+                return not self.rel.implies(other) and not self.intersects(
+                    other, strict=True
+                )
 
     def satisfies(self, other: cl.Relation) -> bool:
         match other:
@@ -98,7 +99,9 @@ class NegatedRelation(Relation):
             case NegatedRelation(rel):
                 return self.rel.satisfies(rel)
             case _:
-                return not self.rel.satisfies(other) and not self.intersects(other, strict=True)
+                return not self.rel.satisfies(other) and not self.intersects(
+                    other, strict=True
+                )
 
     def intersects(self, other: Relation, strict=False) -> bool:
         match other:
@@ -136,7 +139,9 @@ class RoomNeighbour(Relation):
         if isinstance(other, AnyRelation):
             return True
 
-        return isinstance(other, RoomNeighbour) and self.connector_types.issuperset(other.connector_types)
+        return isinstance(other, RoomNeighbour) and self.connector_types.issuperset(
+            other.connector_types
+        )
 
     def satisfies(self, other: Relation) -> bool:
         return self.implies(other)
@@ -145,24 +150,34 @@ class RoomNeighbour(Relation):
         if isinstance(other, AnyRelation):
             return True
 
-        return isinstance(other, RoomNeighbour) and not self.connector_types.isdisjoint(other.connector_types)
+        return isinstance(other, RoomNeighbour) and not self.connector_types.isdisjoint(
+            other.connector_types
+        )
 
     def intersection(self, other: Relation) -> Relation:
         if isinstance(other, AnyRelation):
             return deepcopy(self)
 
-        return self.__class__(connector_types=self.connector_types.intersection(other.connector_types))
+        return self.__class__(
+            connector_types=self.connector_types.intersection(other.connector_types)
+        )
 
     def difference(self, other: Relation) -> Relation:
         if isinstance(other, AnyRelation):
             return -AnyRelation()
 
-        return self.__class__(connector_types=self.connector_types.difference(other.connector_types))
+        return self.__class__(
+            connector_types=self.connector_types.difference(other.connector_types)
+        )
 
 
 def no_frozenset_repr(self: GeometryRelation):
-    is_neg = lambda x: isinstance(x, t.Negated)
-    setrepr = lambda s: f'{{{", ".join(repr(x) for x in sorted(list(s), key=is_neg))}}}'
+    def is_neg(x):
+        return isinstance(x, t.Negated)
+
+    def setrepr(s):
+        return f"{{{', '.join(repr(x) for x in sorted(list(s), key=is_neg))}}}"
+
     return f"{self.__class__.__name__}({setrepr(self.child_tags)}, {setrepr(self.parent_tags)})"
 
 
@@ -183,9 +198,13 @@ class GeometryRelation(Relation):
         """Return any fields added by subclasses. Useful for implementing implies/intersects
         which must check these fields regardless of inheritance. TODO, Hacky.
         """
-        return [f.name for f in fields(self) if f.name not in ["child_tags", "parent_tags"]]
+        return [
+            f.name for f in fields(self) if f.name not in ["child_tags", "parent_tags"]
+        ]
 
-    def _compatibility_checks(self, other: GeometryRelation, strict_on_fields=False) -> bool:
+    def _compatibility_checks(
+        self, other: GeometryRelation, strict_on_fields=False
+    ) -> bool:
         if not issubclass(other.__class__, self.__class__):
             return False
 
@@ -271,13 +290,19 @@ class GeometryRelation(Relation):
                 return False
             case GeometryRelation(ochild, oparent):
                 if not self._compatibility_checks(other):
-                    logger.debug(f"{self.intersects} failed compatibility for other=%s", other)
+                    logger.debug(
+                        f"{self.intersects} failed compatibility for other=%s", other
+                    )
                     return False
                 if not tags_compatible(self.child_tags, ochild):
-                    logger.debug(f"{self.intersects} failed child tags for other=%s", other)
+                    logger.debug(
+                        f"{self.intersects} failed child tags for other=%s", other
+                    )
                     return False
                 if not tags_compatible(self.parent_tags, oparent):
-                    logger.debug("{self.intersects} failed parent tags for other=%s", other)
+                    logger.debug(
+                        "{self.intersects} failed parent tags for other=%s", other
+                    )
                     return False
                 return True
             case NegatedRelation(GeometryRelation()):
@@ -285,7 +310,10 @@ class GeometryRelation(Relation):
                 # true unless other.rel->self
                 return not other.rel.implies(self)
             case _:
-                logger.warning(f"{self.intersects} encountered unhandled %s, returning False", other)
+                logger.warning(
+                    f"{self.intersects} encountered unhandled %s, returning False",
+                    other,
+                )
                 return False
 
     def intersection(self: Relation, other: Relation) -> Relation:
@@ -298,7 +326,9 @@ class GeometryRelation(Relation):
                 return self.difference(rel)
             case GeometryRelation(ochild, oparent):
                 if not self._compatibility_checks(other):
-                    logger.warning(f"{self.intersection} failed compatibility for {other=}")
+                    logger.warning(
+                        f"{self.intersection} failed compatibility for {other=}"
+                    )
                     return -AnyRelation()
                 return self.__class__(
                     child_tags=self.child_tags.union(ochild),
@@ -306,7 +336,9 @@ class GeometryRelation(Relation):
                     **{k: getattr(self, k) for k in self._extra_fields()},
                 )
             case _:
-                logger.warning(f"Encountered unhandled {other=} for {self.intersection}")
+                logger.warning(
+                    f"Encountered unhandled {other=} for {self.intersection}"
+                )
                 return -AnyRelation()
 
     def difference(self: Relation, other: Relation) -> Relation:
@@ -318,7 +350,9 @@ class GeometryRelation(Relation):
             case GeometryRelation(ochild, oparent):
                 if not self.intersects(other):
                     return deepcopy(self)
-                if t.implies(self.child_tags, ochild) and t.implies(self.parent_tags, oparent):
+                if t.implies(self.child_tags, ochild) and t.implies(
+                    self.parent_tags, oparent
+                ):
                     return -AnyRelation()
 
                 return self.__class__(
@@ -327,7 +361,9 @@ class GeometryRelation(Relation):
                     **{k: getattr(self, k) for k in self._extra_fields()},
                 )
             case _:
-                logger.warning(f"Encountered unhandled {other=} for {self.intersection}")
+                logger.warning(
+                    f"Encountered unhandled {other=} for {self.intersection}"
+                )
                 return -AnyRelation()
 
 

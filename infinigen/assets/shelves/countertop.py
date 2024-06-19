@@ -12,7 +12,12 @@ from infinigen.assets.materials.woods import wood_tile
 from infinigen.assets.utils.decorate import read_center, read_normal, select_faces
 from infinigen.assets.utils.mesh import separate_selected, snap_mesh
 from infinigen.assets.utils.object import join_objects
-from infinigen.assets.utils.shapes import buffer, dissolve_limited, obj2polygon, safe_polygon2obj
+from infinigen.assets.utils.shapes import (
+    buffer,
+    dissolve_limited,
+    obj2polygon,
+    safe_polygon2obj,
+)
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -39,7 +44,11 @@ class CountertopFactory(AssetFactory):
         from .simple_desk import SimpleDeskFactory
 
         shelves = make_asset_collection(
-            [KitchenCabinetFactory(np.random.randint(1e7)), SimpleDeskFactory(np.random.randint(1e7))], 10
+            [
+                KitchenCabinetFactory(np.random.randint(1e7)),
+                SimpleDeskFactory(np.random.randint(1e7)),
+            ],
+            10,
         )
         for s in shelves.objects:
             s.location = *uniform(-1, 1, 2), uniform(0, 0.5)
@@ -57,7 +66,9 @@ class CountertopFactory(AssetFactory):
             t = deep_clone_obj(s)
             z = read_center(t)[:, -1]
             max_z = np.max(z[(self.z_range[0] < z) & (z < self.z_range[1])])
-            selection = (read_normal(t)[:, -1] > 0.5) & (z - 1e-2 < max_z) & (max_z < z + 1e-2)
+            selection = (
+                (read_normal(t)[:, -1] > 0.5) & (z - 1e-2 < max_z) & (max_z < z + 1e-2)
+            )
             select_faces(t, selection)
             r = separate_selected(t, True)
             r.location = s.location
@@ -84,7 +95,10 @@ class CountertopFactory(AssetFactory):
         groups = []
         for i in range(len(geoms)):
             for j in range(i):
-                if geoms[i].distance(geoms[j]) <= self.h_snap and zs[i] - zs[j] < self.v_snap:
+                if (
+                    geoms[i].distance(geoms[j]) <= self.h_snap
+                    and zs[i] - zs[j] < self.v_snap
+                ):
                     group = next(g for g in groups if j in g)
                     group.add(i)
                     break
@@ -95,9 +109,15 @@ class CountertopFactory(AssetFactory):
             n = len(group)
             geoms_ = [geoms[i] for i in group]
             zs_ = [zs[i] for i in group]
-            geom_unions = [self.rebuffer(shapely.union_all(geoms_[i:]), self.h_snap / 2) for i in range(n)]
+            geom_unions = [
+                self.rebuffer(shapely.union_all(geoms_[i:]), self.h_snap / 2)
+                for i in range(n)
+            ]
             geom_unions.append(shapely.Point())
-            shapes = [self.rebuffer(geom_unions[i].difference(geom_unions[i + 1]), -1e-4) for i in range(n)]
+            shapes = [
+                self.rebuffer(geom_unions[i].difference(geom_unions[i + 1]), -1e-4)
+                for i in range(n)
+            ]
             for s, z in zip(shapes, zs_):
                 if s.area > 0:
                     o = safe_polygon2obj(self.rebuffer(s, -1e-4).buffer(0))
@@ -122,7 +142,9 @@ class CountertopFactory(AssetFactory):
                     with butil.ViewportMode(o, "EDIT"):
                         bpy.ops.mesh.select_mode(type="EDGE")
                         bpy.ops.mesh.select_all(action="SELECT")
-                        bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, zs_[j] - zs_[i])})
+                        bpy.ops.mesh.extrude_edges_move(
+                            TRANSFORM_OT_translate={"value": (0, 0, zs_[j] - zs_[i])}
+                        )
                     objs.append(o)
         obj = join_objects(objs)
         snap_mesh(obj, 2e-2)
@@ -131,7 +153,12 @@ class CountertopFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.normals_make_consistent(inside=False)
         butil.modify_mesh(
-            obj, "SOLIDIFY", thickness=self.thickness, use_even_offset=True, offset=1, use_quality_normals=True
+            obj,
+            "SOLIDIFY",
+            thickness=self.thickness,
+            use_even_offset=True,
+            offset=1,
+            use_quality_normals=True,
         )
 
         if shelves_generated:

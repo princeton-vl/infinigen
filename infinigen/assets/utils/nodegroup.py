@@ -10,9 +10,7 @@ from typing import Iterable
 import bpy
 import numpy as np
 
-from infinigen.assets.utils.misc import toggle_hide
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
@@ -25,7 +23,9 @@ def build_curve(nw: NodeWrangler, positions, circular=False, handle="VECTOR"):
         if isinstance(p, Iterable) and not isinstance(p, bpy.types.Nodes):
             length = len(p)
             transferred_positions.append(
-                nw.build_float_curve(id_mesh, np.stack([np.arange(length), np.array(p)], -1), handle)
+                nw.build_float_curve(
+                    id_mesh, np.stack([np.arange(length), np.array(p)], -1), handle
+                )
             )
         else:
             transferred_positions.append(p)
@@ -36,13 +36,20 @@ def build_curve(nw: NodeWrangler, positions, circular=False, handle="VECTOR"):
         base_curve = nw.new_node(
             Nodes.MeshToCurve,
             input_kwargs={
-                "Mesh": nw.new_node(Nodes.MeshLine, input_kwargs={"Count": length}, attrs={"mode": "END_POINTS"})
+                "Mesh": nw.new_node(
+                    Nodes.MeshLine,
+                    input_kwargs={"Count": length},
+                    attrs={"mode": "END_POINTS"},
+                )
             },
         )
 
     curve = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": base_curve, "Position": nw.new_node(Nodes.CombineXYZ, transferred_positions)},
+        input_kwargs={
+            "Geometry": base_curve,
+            "Position": nw.new_node(Nodes.CombineXYZ, transferred_positions),
+        },
     )
     return curve
 
@@ -56,12 +63,16 @@ def geo_radius(
     to_align_tilt=True,
     align_tilt_axis=(0, 0, 1),
 ):
-    skeleton = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    skeleton = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     radius = surface.eval_argument(nw, radius)
     curve = nw.new_node(Nodes.MeshToCurve, [skeleton])
     if to_align_tilt:
         curve = align_tilt(nw, curve, align_tilt_axis)
-    skeleton = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": curve, "Radius": radius})
+    skeleton = nw.new_node(
+        Nodes.SetCurveRadius, input_kwargs={"Curve": curve, "Radius": radius}
+    )
     geometry = nw.curve2mesh(
         skeleton,
         nw.new_node(
@@ -76,21 +87,31 @@ def geo_radius(
 
 
 def geo_selection(nw: NodeWrangler, selection):
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     selection = surface.eval_argument(nw, selection)
     geometry = nw.new_node(Nodes.SeparateGeometry, [geometry, selection])
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
 
 def geo_selection_attribute(nw: NodeWrangler, selection, name, domain="POINT"):
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     selection = surface.eval_argument(nw, selection)
-    geometry = nw.new_node(Nodes.StoreNamedAttribute, [geometry, None, name, None, selection], attrs={"domain": domain})
+    geometry = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        [geometry, None, name, None, selection],
+        attrs={"domain": domain},
+    )
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
 
 def geo_base_selection(nw: NodeWrangler, base_obj, selection, merge_threshold=0):
-    geometry = nw.new_node(Nodes.ObjectInfo, [base_obj], attrs={"transform_space": "RELATIVE"}).outputs["Geometry"]
+    geometry = nw.new_node(
+        Nodes.ObjectInfo, [base_obj], attrs={"transform_space": "RELATIVE"}
+    ).outputs["Geometry"]
     selection = surface.eval_argument(nw, selection)
     geometry = nw.new_node(Nodes.SeparateGeometry, [geometry, selection])
     if merge_threshold > 0:
@@ -98,18 +119,24 @@ def geo_base_selection(nw: NodeWrangler, base_obj, selection, merge_threshold=0)
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
 
-def align_tilt(nw: NodeWrangler, curve, axis=(1, 0, 0), noise_strength=0, noise_scale=0.5):
+def align_tilt(
+    nw: NodeWrangler, curve, axis=(1, 0, 0), noise_strength=0, noise_scale=0.5
+):
     axis = nw.vector_math("NORMALIZE", axis)
     if noise_strength != 0:
         z = nw.separate(nw.new_node(Nodes.InputPosition))[-1]
         rot_z = nw.scalar_multiply(
             noise_strength,
             nw.new_node(
-                Nodes.NoiseTexture, input_kwargs={"W": z, "Scale": noise_scale}, attrs={"noise_dimensions": "1D"}
+                Nodes.NoiseTexture,
+                input_kwargs={"W": z, "Scale": noise_scale},
+                attrs={"noise_dimensions": "1D"},
             ),
         )
         axis = nw.new_node(
-            Nodes.VectorRotate, input_kwargs={"Vector": axis, "Angle": rot_z}, attrs={"rotation_type": "Z_AXIS"}
+            Nodes.VectorRotate,
+            input_kwargs={"Vector": axis, "Angle": rot_z},
+            attrs={"rotation_type": "Z_AXIS"},
         )
 
     normal = nw.new_node(Nodes.InputNormal)

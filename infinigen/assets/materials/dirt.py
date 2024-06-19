@@ -25,7 +25,9 @@ name = "dirt"
 
 def shader_dirt(nw, random_seed=0):
     nw.force_input_consistency()
-    dirt_base_color, dirt_roughness = geo_dirt(nw, selection=None, random_seed=random_seed, geometry=False)
+    dirt_base_color, dirt_roughness = geo_dirt(
+        nw, selection=None, random_seed=random_seed, geometry=False
+    )
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
@@ -149,7 +151,10 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
 
         mix_mul1 = nw.new_node(
             Nodes.VectorMath,
-            input_kwargs={0: mix_sub.outputs["Vector"], 1: colorramp_1.outputs["Result"]},
+            input_kwargs={
+                0: mix_sub.outputs["Vector"],
+                1: colorramp_1.outputs["Result"],
+            },
             attrs={"operation": "MULTIPLY"},
         )
 
@@ -207,11 +212,15 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         )
 
         subtract = nw.new_node(
-            Nodes.Math, input_kwargs={0: noise_texture_3.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+            Nodes.Math,
+            input_kwargs={0: noise_texture_3.outputs["Fac"]},
+            attrs={"operation": "SUBTRACT"},
         )
 
         multiply_8 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: subtract, 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: subtract, 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value_5 = nw.new_node(Nodes.Value)
@@ -233,7 +242,9 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             attrs={"noise_dimensions": "4D"},
         )
 
-        colorramp_5 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]})
+        colorramp_5 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]}
+        )
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements.new(0)
         colorramp_5.color_ramp.elements[0].position = 0.0
@@ -246,11 +257,15 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         colorramp_5.color_ramp.elements[3].color = (1.0, 1.0, 1.0, 1.0)
 
         subtract_1 = nw.new_node(
-            Nodes.Math, input_kwargs={0: colorramp_5.outputs["Color"]}, attrs={"operation": "SUBTRACT"}
+            Nodes.Math,
+            input_kwargs={0: colorramp_5.outputs["Color"]},
+            attrs={"operation": "SUBTRACT"},
         )
 
         multiply_10 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: subtract_1, 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: subtract_1, 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value_6 = nw.new_node(Nodes.Value)
@@ -262,7 +277,9 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             attrs={"operation": "MULTIPLY"},
         )
 
-        colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+        colorramp = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+        )
         colorramp.color_ramp.elements.new(1)
         colorramp.color_ramp.elements[0].position = 0.223
         colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -282,7 +299,9 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
             },
         )
 
-        colorramp_3 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+        colorramp_3 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+        )
         colorramp_3.color_ramp.elements[0].position = 0.08
         colorramp_3.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
         colorramp_3.color_ramp.elements[1].position = 0.768
@@ -303,7 +322,9 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         groupinput = nw.new_node(Nodes.GroupInput)
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        set_position = nw.new_node(
+            Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return dirt_base_color, dirt_roughness
@@ -325,7 +346,11 @@ if __name__ == "__main__":
     for i in range(10):
         bpy.ops.wm.open_mainfile(filepath="landscape_surface_dev.blend")
         apply(bpy.data.objects["Plane.002"])
-        bpy.context.scene.render.filepath = os.path.join("outputs", mat, "%s_%d.jpg" % (mat, i))
+        bpy.context.scene.render.filepath = os.path.join(
+            "outputs", mat, "%s_%d.jpg" % (mat, i)
+        )
         bpy.context.scene.render.image_settings.file_format = "JPEG"
         bpy.ops.render.render(write_still=True)
-        bpy.ops.wm.save_as_mainfile(filepath=os.path.join("outputs", mat, "landscape_surface_dev_dirt.blend"))
+        bpy.ops.wm.save_as_mainfile(
+            filepath=os.path.join("outputs", mat, "landscape_surface_dev_dirt.blend")
+        )

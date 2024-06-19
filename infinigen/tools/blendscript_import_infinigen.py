@@ -33,7 +33,9 @@ gin.enter_interactive_mode()
 from infinigen.core import init, surface
 from infinigen_examples import generate_nature
 
-init.apply_gin_configs(Path(pwd) / "infinigen_examples/configs_nature", ["base.gin"], skip_unknown=True)
+init.apply_gin_configs(
+    Path(pwd) / "infinigen_examples/configs_nature", ["base.gin"], skip_unknown=True
+)
 surface.registry.initialize_from_gin()
 
 logging.basicConfig(

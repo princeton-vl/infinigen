@@ -27,13 +27,19 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import NoApply
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.math import FixedSeed, normalize
+from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
 
 class ChairFactory(AssetFactory):
-    back_types = "weighted_choice", (1, "whole"), (1, "partial"), (1, "horizontal-bar"), (1, "vertical-bar")
+    back_types = (
+        "weighted_choice",
+        (1, "whole"),
+        (1, "partial"),
+        (1, "horizontal-bar"),
+        (1, "vertical-bar"),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
@@ -44,7 +50,9 @@ class ChairFactory(AssetFactory):
             self.bevel_width = self.thickness * (0.1 if uniform() < 0.4 else 0.5)
             self.seat_back = uniform(0.7, 1.0) if uniform() < 0.75 else 1.0
             self.seat_mid = uniform(0.7, 0.8)
-            self.seat_mid_x = uniform(self.seat_back + self.seat_mid * (1 - self.seat_back), 1)
+            self.seat_mid_x = uniform(
+                self.seat_back + self.seat_mid * (1 - self.seat_back), 1
+            )
             self.seat_mid_z = uniform(0, 0.5)
             self.seat_front = uniform(1.0, 1.2)
             self.is_seat_round = uniform() < 0.6
@@ -55,7 +63,9 @@ class ChairFactory(AssetFactory):
             self.leg_height = uniform(0.45, 0.5)
             self.back_height = uniform(0.4, 0.5)
             self.is_leg_round = uniform() < 0.5
-            self.leg_type = np.random.choice(["vertical", "straight", "up-curved", "down-curved"])
+            self.leg_type = np.random.choice(
+                ["vertical", "straight", "up-curved", "down-curved"]
+            )
 
             self.leg_x_offset = 0
             self.leg_y_offset = 0, 0
@@ -71,7 +81,9 @@ class ChairFactory(AssetFactory):
             self.arm_height = self.arm_thickness * uniform(0.6, 1)
             self.arm_y = uniform(0.8, 1) * self.size
             self.arm_z = uniform(0.3, 0.6) * self.back_height
-            self.arm_mid = np.array([uniform(-0.03, 0.03), uniform(-0.03, 0.09), uniform(-0.09, 0.03)])
+            self.arm_mid = np.array(
+                [uniform(-0.03, 0.03), uniform(-0.03, 0.09), uniform(-0.09, 0.03)]
+            )
             self.arm_profile = log_uniform(0.1, 3, 2)
 
             self.back_thickness = uniform(0.04, 0.05)
@@ -125,7 +137,12 @@ class ChairFactory(AssetFactory):
                     locs = uniform(1, 2, n_cuts).cumsum()
                     locs = locs / locs[-1]
                     ratio = uniform(0.5, 0.75)
-                    locs = np.array([(p + ratio * (l - p), l) for p, l in zip([0, *locs[:-1]], locs)])
+                    locs = np.array(
+                        [
+                            (p + ratio * (l - p), l)
+                            for p, l in zip([0, *locs[:-1]], locs)
+                        ]
+                    )
                     lowest = uniform(0, 0.4)
                     self.back_profile = locs * (1 - lowest) + lowest
                 case "vertical-bar":
@@ -182,12 +199,32 @@ class ChairFactory(AssetFactory):
 
     def make_seat(self):
         x_anchors = (
-            np.array([0, -self.seat_back, -self.seat_mid_x, -1, 0, 1, self.seat_mid_x, self.seat_back, 0])
+            np.array(
+                [
+                    0,
+                    -self.seat_back,
+                    -self.seat_mid_x,
+                    -1,
+                    0,
+                    1,
+                    self.seat_mid_x,
+                    self.seat_back,
+                    0,
+                ]
+            )
             * self.width
             / 2
         )
-        y_anchors = np.array([0, 0, -self.seat_mid, -1, -self.seat_front, -1, -self.seat_mid, 0, 0]) * self.size
-        z_anchors = np.array([0, 0, self.seat_mid_z, 0, 0, 0, self.seat_mid_z, 0, 0]) * self.thickness
+        y_anchors = (
+            np.array(
+                [0, 0, -self.seat_mid, -1, -self.seat_front, -1, -self.seat_mid, 0, 0]
+            )
+            * self.size
+        )
+        z_anchors = (
+            np.array([0, 0, self.seat_mid_z, 0, 0, 0, self.seat_mid_z, 0, 0])
+            * self.thickness
+        )
         vector_locations = [1, 7] if self.is_seat_round else [1, 3, 5, 7]
         obj = bezier_curve((x_anchors, y_anchors, z_anchors), vector_locations, 8)
         with butil.ViewportMode(obj, "EDIT"):
@@ -199,9 +236,9 @@ class ChairFactory(AssetFactory):
         return obj
 
     def make_legs(self):
-        leg_starts = np.array([[-self.seat_back, 0, 0], [-1, -1, 0], [1, -1, 0], [self.seat_back, 0, 0]]) * np.array(
-            [[self.width / 2, self.size, 0]]
-        )
+        leg_starts = np.array(
+            [[-self.seat_back, 0, 0], [-1, -1, 0], [1, -1, 0], [self.seat_back, 0, 0]]
+        ) * np.array([[self.width / 2, self.size, 0]])
         leg_ends = leg_starts.copy()
         leg_ends[[0, 1], 0] -= self.leg_x_offset
         leg_ends[[2, 3], 0] += self.leg_x_offset
@@ -223,9 +260,17 @@ class ChairFactory(AssetFactory):
                 case _:
                     axes = None
                     scale = None
-            limb = align_bezier(np.stack([leg_start, leg_end], -1), axes, scale, resolution=64)
+            limb = align_bezier(
+                np.stack([leg_start, leg_end], -1), axes, scale, resolution=64
+            )
             limb.location = (
-                np.array([1 if leg_start[0] < 0 else -1, 1 if leg_start[1] < -self.size / 2 else -1, 0])
+                np.array(
+                    [
+                        1 if leg_start[0] < 0 else -1,
+                        1 if leg_start[1] < -self.size / 2 else -1,
+                        0,
+                    ]
+                )
                 * self.leg_thickness
                 / 2
             )
@@ -234,7 +279,9 @@ class ChairFactory(AssetFactory):
         return limbs
 
     def make_backs(self):
-        back_starts = np.array([[-self.seat_back, 0, 0], [self.seat_back, 0, 0]]) * self.width / 2
+        back_starts = (
+            np.array([[-self.seat_back, 0, 0], [self.seat_back, 0, 0]]) * self.width / 2
+        )
         back_ends = back_starts.copy()
         back_ends[:, 0] += np.array([self.back_x_offset, -self.back_x_offset])
         back_ends[:, 1] = self.back_y_offset
@@ -249,16 +296,24 @@ class ChairFactory(AssetFactory):
             for leg in legs:
                 co = read_co(leg)
                 locs.append(co[np.argmin(np.abs(co[:, -1] - z_height))])
-            decors.append(self.solidify(bezier_curve(np.stack([locs[0], locs[3]], -1)), 0))
-            decors.append(self.solidify(bezier_curve(np.stack([locs[1], locs[2]], -1)), 0))
+            decors.append(
+                self.solidify(bezier_curve(np.stack([locs[0], locs[3]], -1)), 0)
+            )
+            decors.append(
+                self.solidify(bezier_curve(np.stack([locs[1], locs[2]], -1)), 0)
+            )
         if self.has_leg_y_bar:
             z_height = -self.leg_height * uniform(*self.leg_offset_bar)
             locs = []
             for leg in legs:
                 co = read_co(leg)
                 locs.append(co[np.argmin(np.abs(co[:, -1] - z_height))])
-            decors.append(self.solidify(bezier_curve(np.stack([locs[0], locs[1]], -1)), 1))
-            decors.append(self.solidify(bezier_curve(np.stack([locs[2], locs[3]], -1)), 1))
+            decors.append(
+                self.solidify(bezier_curve(np.stack([locs[0], locs[1]], -1)), 1)
+            )
+            decors.append(
+                self.solidify(bezier_curve(np.stack([locs[2], locs[3]], -1)), 1)
+            )
         for d in decors:
             write_attribute(d, 1, "limb", "FACE")
         return decors
@@ -275,7 +330,9 @@ class ChairFactory(AssetFactory):
             center = read_edge_center(obj)
             for z_min, z_max in self.back_profile:
                 select_edges(
-                    obj, (z_min * self.back_height <= center[:, -1]) & (center[:, -1] <= z_max * self.back_height)
+                    obj,
+                    (z_min * self.back_height <= center[:, -1])
+                    & (center[:, -1] <= z_max * self.back_height),
                 )
                 bpy.ops.mesh.bridge_edge_loops(
                     number_cuts=32,
@@ -285,7 +342,12 @@ class ChairFactory(AssetFactory):
                 )
             bpy.ops.mesh.select_loose()
             bpy.ops.mesh.delete()
-        butil.modify_mesh(obj, "SOLIDIFY", thickness=np.minimum(self.thickness, self.back_thickness), offset=0)
+        butil.modify_mesh(
+            obj,
+            "SOLIDIFY",
+            thickness=np.minimum(self.thickness, self.back_thickness),
+            offset=0,
+        )
         if finalize:
             butil.modify_mesh(obj, "BEVEL", width=self.bevel_width, segments=8)
         parts = [obj]
@@ -307,7 +369,11 @@ class ChairFactory(AssetFactory):
             remove_edges(other, np.abs(read_edge_direction(other)[:, -1]) < 0.5)
             remove_vertices(other, lambda x, y, z: z < -self.thickness / 2)
             remove_vertices(
-                other, lambda x, y, z: z > (self.back_profile[0][0] + self.back_profile[0][1]) * self.back_height / 2
+                other,
+                lambda x, y, z: z
+                > (self.back_profile[0][0] + self.back_profile[0][1])
+                * self.back_height
+                / 2,
             )
             parts.append(self.solidify(other, 2, self.back_thickness))
         elif self.back_type == "partial":
@@ -340,7 +406,13 @@ class ChairFactory(AssetFactory):
             )
             arm = align_bezier(
                 np.stack([start, mid, end], -1),
-                np.array([[end[0] - start[0], end[1] - start[1], 0], [0, 1 / np.sqrt(2), 1 / np.sqrt(2)], [0, 0, 1]]),
+                np.array(
+                    [
+                        [end[0] - start[0], end[1] - start[1], 0],
+                        [0, 1 / np.sqrt(2), 1 / np.sqrt(2)],
+                        [0, 0, 1],
+                    ]
+                ),
                 [1, *self.arm_profile, 1],
             )
             if self.is_leg_round:
@@ -356,7 +428,13 @@ class ChairFactory(AssetFactory):
                     bpy.ops.mesh.select_all(action="SELECT")
                     bpy.ops.mesh.extrude_edges_move(
                         TRANSFORM_OT_translate={
-                            "value": (self.arm_thickness if end[0] < 0 else -self.arm_thickness, 0, 0)
+                            "value": (
+                                self.arm_thickness
+                                if end[0] < 0
+                                else -self.arm_thickness,
+                                0,
+                                0,
+                            )
                         }
                     )
                 butil.modify_mesh(arm, "SOLIDIFY", thickness=self.arm_height, offset=0)
@@ -371,6 +449,8 @@ class ChairFactory(AssetFactory):
             solidify(obj, axis, thickness)
             butil.modify_mesh(obj, "BEVEL", width=self.bevel_width, segments=8)
         else:
-            surface.add_geomod(obj, geo_radius, apply=True, input_args=[thickness / 2, 32])
+            surface.add_geomod(
+                obj, geo_radius, apply=True, input_args=[thickness / 2, 32]
+            )
         write_attribute(obj, 1, "limb", "FACE")
         return obj

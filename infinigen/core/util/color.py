@@ -8,7 +8,6 @@
 import colorsys
 from dataclasses import dataclass
 
-import bpy
 import gin
 import mathutils
 import numpy as np
@@ -32,8 +31,13 @@ class ChannelScheme:
         return v
 
 
-U = lambda min, max, **kwargs: ChannelScheme([min, max], dist="uniform", **kwargs)
-N = lambda m, std, **kwargs: ChannelScheme([m, std], dist="normal", **kwargs)
+def U(min, max, **kwargs):
+    return ChannelScheme([min, max], dist="uniform", **kwargs)
+
+
+def N(m, std, **kwargs):
+    return ChannelScheme([m, std], dist="normal", **kwargs)
+
 
 HSV_RANGES = {
     "petal": (N(0.95, 1.2, wrap=True), U(0.2, 0.85), U(0.2, 0.75)),
@@ -91,8 +95,10 @@ HSV_RANGES = {
 
 
 def color_category(name):
-    if not name in HSV_RANGES:
-        raise ValueError(f"color_category did not recognize {name=}, options are {HSV_RANGES.keys()=}")
+    if name not in HSV_RANGES:
+        raise ValueError(
+            f"color_category did not recognize {name=}, options are {HSV_RANGES.keys()=}"
+        )
     schemes = HSV_RANGES[name]
     assert len(schemes) == 3
     hsv = [s.sample() for s in schemes]

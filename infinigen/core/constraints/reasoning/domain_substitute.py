@@ -7,22 +7,19 @@
 from __future__ import annotations
 
 import copy
-import itertools
 import logging
-import typing
-from dataclasses import dataclass, field
 
-import numpy as np
 
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
 
 from .constraint_domain import Domain
 
 logger = logging.getLogger(__name__)
 
 
-def domain_tag_substitute(domain: Domain, vartag: t.Variable, subst_domain: Domain, return_match=False) -> Domain:
+def domain_tag_substitute(
+    domain: Domain, vartag: t.Variable, subst_domain: Domain, return_match=False
+) -> Domain:
     """Return concrete substitution of `domain`, where `subst_domain` must be satisfied
     whenever `subst_tag` was present in the original.
     """

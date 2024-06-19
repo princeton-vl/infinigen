@@ -4,14 +4,10 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_info, node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util import blender as butil
 
 
@@ -55,7 +51,9 @@ def transfer_all(source, target, attributes=None, uvs=False):
     assert target.type == "MESH"
 
     if attributes is None:
-        attributes = [a.name for a in source.data.attributes if not butil.blender_internal_attr(a)]
+        attributes = [
+            a.name for a in source.data.attributes if not butil.blender_internal_attr(a)
+        ]
 
     if len(source.data.uv_layers) == 0:
         uvs = False
@@ -70,13 +68,22 @@ def transfer_all(source, target, attributes=None, uvs=False):
     surface.add_geomod(
         source,
         transfer_att_node,
-        input_kwargs={"source": source, "target": target, "attribute_to_transfer_list": list(zip(attributes, dtypes))},
+        input_kwargs={
+            "source": source,
+            "target": target,
+            "attribute_to_transfer_list": list(zip(attributes, dtypes)),
+        },
         attributes=attributes,
         apply=True,
         domains=domains,
     )
 
-    surface.add_geomod(target, copy_geom_info, input_kwargs={"source": source, "target": target}, apply=True)
+    surface.add_geomod(
+        target,
+        copy_geom_info,
+        input_kwargs={"source": source, "target": target},
+        apply=True,
+    )
 
     if uvs:
         attribute_to_uvs(target, uv_att_name)

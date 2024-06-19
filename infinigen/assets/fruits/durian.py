@@ -4,20 +4,12 @@
 # Authors: Yiming Zuo
 
 
-import bpy
 import gin
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 @gin.register
@@ -89,7 +81,9 @@ class FruitFactoryDurian(FruitFactoryGeneralFruit):
                 "displacement": uniform(0.25, 0.35),
                 "noise amount": 0.2,
             },
-            "surface_output_args": {"durian thorn coordiante": "noderef-fruitsurface-distance to center"},
+            "surface_output_args": {
+                "durian thorn coordiante": "noderef-fruitsurface-distance to center"
+            },
             "surface_resolution": 512,
             "scale_multiplier": 2.0,
         }
@@ -106,7 +100,11 @@ class FruitFactoryDurian(FruitFactoryGeneralFruit):
             "stem_func_args": {"stem_color": stem_color_rgba},
             "stem_input_args": {
                 "cross_radius": uniform(0.07, 0.09),
-                "quad_mid": (uniform(-0.1, 0.1), uniform(-0.1, 0.1), uniform(0.15, 0.2)),
+                "quad_mid": (
+                    uniform(-0.1, 0.1),
+                    uniform(-0.1, 0.1),
+                    uniform(0.15, 0.2),
+                ),
                 "quad_end": (uniform(-0.2, 0.2), uniform(-0.2, 0.2), uniform(0.3, 0.4)),
                 "Translation": (0.0, 0.0, 0.9),
             },

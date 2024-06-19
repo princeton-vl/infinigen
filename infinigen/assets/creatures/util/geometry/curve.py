@@ -10,7 +10,9 @@ from infinigen.core.util import blender as butil
 
 
 class Curve:
-    def __init__(self, points, profile=None, taper=None, closed=False, sharp=None, scale=None):
+    def __init__(
+        self, points, profile=None, taper=None, closed=False, sharp=None, scale=None
+    ):
         self.points = points
         self.profile = profile
         self.taper = taper
@@ -19,7 +21,14 @@ class Curve:
         self.scale = scale
 
     def to_curve_obj(
-        self, name="curve", resu=4, curvetype="NURBS", extrude=0, fill_caps=True, to_mesh=False, cleanup=True
+        self,
+        name="curve",
+        resu=4,
+        curvetype="NURBS",
+        extrude=0,
+        fill_caps=True,
+        to_mesh=False,
+        cleanup=True,
     ):
         curveData = bpy.data.curves.new(f"{name}_curve", type="CURVE")
         curveData.dimensions = "3D"
@@ -37,7 +46,9 @@ class Curve:
                 x, y = p
                 z = 0
             else:
-                raise ValueError(f"Unrecognized point dim {len(p)} in Curve.to_curve_obj")
+                raise ValueError(
+                    f"Unrecognized point dim {len(p)} in Curve.to_curve_obj"
+                )
             return x, y, z, 1
 
         for i, p in enumerate(self.points):

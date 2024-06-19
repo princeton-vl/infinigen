@@ -400,7 +400,15 @@ OUTPUT_NODE_IDS = {
     bpy.types.CompositorNodeGroup: Nodes.GroupOutput,
 }
 
-DATATYPE_DIMS = {"FLOAT": 1, "INT": 1, "FLOAT_VECTOR": 3, "FLOAT2": 2, "FLOAT_COLOR": 4, "BOOLEAN": 1, "INT32_2D": 2}
+DATATYPE_DIMS = {
+    "FLOAT": 1,
+    "INT": 1,
+    "FLOAT_VECTOR": 3,
+    "FLOAT2": 2,
+    "FLOAT_COLOR": 4,
+    "BOOLEAN": 1,
+    "INT32_2D": 2,
+}
 DATATYPE_FIELDS = {
     "FLOAT": "value",
     "INT": "value",

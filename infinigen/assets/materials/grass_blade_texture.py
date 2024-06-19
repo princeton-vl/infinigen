@@ -4,15 +4,11 @@
 # Authors: Lahav Lipson, Alexander Raistrick
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 pallete1 = [
     ((0.2632, 0.1493, 0.0558, 1.0), 0.0),
@@ -195,25 +191,49 @@ def shader_grass_texture_original(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": separate_xyz.outputs["Y"], "Y": edge_height})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": separate_xyz.outputs["Y"], "Y": edge_height},
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
-        input_kwargs={"Vector": separate_xyz.outputs["Y"], "Scale": 25.0, "Distortion": 8.0, "Detail Scale": 6.0},
+        input_kwargs={
+            "Vector": separate_xyz.outputs["Y"],
+            "Scale": 25.0,
+            "Distortion": 8.0,
+            "Detail Scale": 6.0,
+        },
     )
 
     musgrave_texture = nw.new_node(
         Nodes.MusgraveTexture,
-        input_kwargs={"Vector": combine_xyz, "Scale": 8.0, "Detail": 5.0, "Dimension": 0.1, "Lacunarity": 3.0},
+        input_kwargs={
+            "Vector": combine_xyz,
+            "Scale": 8.0,
+            "Detail": 5.0,
+            "Dimension": 0.1,
+            "Lacunarity": 3.0,
+        },
     )
 
     mix_1 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": 0.2, "Color1": wave_texture.outputs["Color"], "Color2": musgrave_texture}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": 0.2,
+            "Color1": wave_texture.outputs["Color"],
+            "Color2": musgrave_texture,
+        },
     )
 
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1})
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": map_range_1.outputs["Result"]})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1},
+    )
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": map_range_1.outputs["Result"]}
+    )
 
     pallete = np.random.choice(pallettes)
     np.random.shuffle(pallete)
@@ -229,7 +249,8 @@ def shader_grass_texture_original(nw: NodeWrangler):
     roughness = nw.new_node(Nodes.MapRange, [mix_1, 0, 1, rough1, rough2])
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": roughness}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": roughness},
     )
     translucent = nw.new_node(Nodes.TranslucentBSDF, [colorramp.outputs["Color"]])
     shader = nw.new_node(Nodes.MixShader, [0.7, principled_bsdf, translucent])

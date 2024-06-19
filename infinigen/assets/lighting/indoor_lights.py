@@ -5,25 +5,19 @@
 # Authors: Alexander Raistrick
 
 import bpy
-import numpy as np
-from mathutils import Vector
-from numpy.random import normal as N
-from numpy.random import randint
-from numpy.random import uniform
 from numpy.random import uniform as U
 
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement import placement
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.placement.placement import placeholder_locs
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import clip_gaussian, log_uniform
+from infinigen.core.util.random import clip_gaussian
 
 
 def shader_blackbody_temp(nw, params):
-    blackbody = nw.new_node(Nodes.BlackBody, input_kwargs={"Temperature": params["Temperature"]})
+    blackbody = nw.new_node(
+        Nodes.BlackBody, input_kwargs={"Temperature": params["Temperature"]}
+    )
     emission = nw.new_node(Nodes.Emission, input_kwargs={"Color": blackbody})
     nw.new_node(Nodes.LightOutput, [emission])
 

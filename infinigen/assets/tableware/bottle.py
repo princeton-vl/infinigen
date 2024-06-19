@@ -29,7 +29,9 @@ class BottleFactory(AssetFactory):
             self.z_length = uniform(0.15, 0.25)
             self.x_length = self.z_length * uniform(0.15, 0.25)
             self.x_cap = uniform(0.3, 0.35)
-            self.bottle_type = np.random.choice(["beer", "bordeaux", "champagne", "coke", "vintage"])
+            self.bottle_type = np.random.choice(
+                ["beer", "bordeaux", "champagne", "coke", "vintage"]
+            )
             self.bottle_width = uniform(0.002, 0.005)
             self.z_waist = 0
             match self.bottle_type:
@@ -63,7 +65,15 @@ class BottleFactory(AssetFactory):
                     self.z_neck = uniform(0.6, 0.7)
                     self.z_cap = uniform(0.1, 0.15)
                     neck_size = uniform(0.1, 0.15)
-                    self.x_anchors = 0, 1, 1, (1 + self.x_cap) / 2, self.x_cap, self.x_cap, 0
+                    self.x_anchors = (
+                        0,
+                        1,
+                        1,
+                        (1 + self.x_cap) / 2,
+                        self.x_cap,
+                        self.x_cap,
+                        0,
+                    )
                     self.z_anchors = [
                         0,
                         0,
@@ -77,7 +87,16 @@ class BottleFactory(AssetFactory):
                 case "champagne":
                     self.z_neck = uniform(0.4, 0.5)
                     self.z_cap = uniform(0.05, 0.08)
-                    self.x_anchors = [0, 1, 1, 1, (1 + self.x_cap) / 2, self.x_cap, self.x_cap, 0]
+                    self.x_anchors = [
+                        0,
+                        1,
+                        1,
+                        1,
+                        (1 + self.x_cap) / 2,
+                        self.x_cap,
+                        self.x_cap,
+                        0,
+                    ]
                     self.z_anchors = [
                         0,
                         0,
@@ -93,7 +112,17 @@ class BottleFactory(AssetFactory):
                     self.z_waist = uniform(0.4, 0.5)
                     self.z_neck = self.z_waist + uniform(0.2, 0.25)
                     self.z_cap = uniform(0.05, 0.08)
-                    self.x_anchors = [0, uniform(0.85, 0.95), 1, uniform(0.85, 0.95), 1, 1, self.x_cap, self.x_cap, 0]
+                    self.x_anchors = [
+                        0,
+                        uniform(0.85, 0.95),
+                        1,
+                        uniform(0.85, 0.95),
+                        1,
+                        1,
+                        self.x_cap,
+                        self.x_cap,
+                        0,
+                    ]
                     self.z_anchors = [
                         0,
                         0,
@@ -184,8 +213,12 @@ class BottleFactory(AssetFactory):
             bmesh.ops.delete(bm, geom=geom, context="FACES_ONLY")
             bmesh.update_edit_mesh(obj.data)
         subdivide_edge_ring(obj, 16)
-        z_max = self.z_neck - uniform(0.02, self.z_neck_offset) * (self.z_neck - self.z_waist)
-        z_min = self.z_waist + uniform(0.02, self.z_waist_offset) * (self.z_neck - self.z_waist)
+        z_max = self.z_neck - uniform(0.02, self.z_neck_offset) * (
+            self.z_neck - self.z_waist
+        )
+        z_min = self.z_waist + uniform(0.02, self.z_waist_offset) * (
+            self.z_neck - self.z_waist
+        )
         radius = np.max(read_co(bottle)[:, 0]) + 2e-3
         obj.scale = radius, radius, (z_max - z_min) * self.z_length
         obj.location[-1] = z_min * self.z_length

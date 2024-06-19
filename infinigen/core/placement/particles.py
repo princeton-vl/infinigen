@@ -12,7 +12,6 @@ from copy import copy
 from typing import Union
 
 import bpy
-import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform
 from numpy.random import uniform as U
@@ -123,9 +122,13 @@ def particle_system(
     butil.origin_set(objects, "ORIGIN_GEOMETRY", center="MEDIAN")
 
     dur = bpy.context.scene.frame_end - bpy.context.scene.frame_start
-    system.settings.frame_start = bpy.context.scene.frame_start - settings.pop("warmup_frames", 0)
+    system.settings.frame_start = bpy.context.scene.frame_start - settings.pop(
+        "warmup_frames", 0
+    )
     system.settings.frame_end = (
-        bpy.context.scene.frame_start + settings.pop("emit_duration", dur) + settings.pop("warmup_frames", 0)
+        bpy.context.scene.frame_start
+        + settings.pop("emit_duration", dur)
+        + settings.pop("warmup_frames", 0)
     )
 
     if (g := settings.pop("effect_gravity", None)) is not None:

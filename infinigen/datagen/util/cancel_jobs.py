@@ -23,7 +23,10 @@ if __name__ == "__main__":
     for job_id, job_name, job_status in tqdm(matches):
         should_cancel = (
             (args.with_substring in job_name)
-            and ((args.without_substring is None) or args.without_substring not in job_name)
+            and (
+                (args.without_substring is None)
+                or args.without_substring not in job_name
+            )
             and ((not args.not_running) or "node" not in job_status)
         )
         if should_cancel:

@@ -12,13 +12,19 @@ from numpy.random import uniform
 
 from infinigen.assets.corals.base import BaseCoralFactory
 from infinigen.assets.corals.tentacles import make_radius_points_fn
-from infinigen.assets.utils.decorate import displace_vertices, geo_extension, read_co, remove_vertices, write_co
+from infinigen.assets.utils.decorate import (
+    displace_vertices,
+    geo_extension,
+    read_co,
+    remove_vertices,
+    write_co,
+)
 from infinigen.assets.utils.draw import make_circular_interp
 from infinigen.assets.utils.object import new_circle, origin2lowest, separate_loose
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
@@ -34,32 +40,54 @@ class ElkhornBaseCoralFactory(BaseCoralFactory):
 
     @staticmethod
     def geo_elkhorn(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         start_index = nw.boolean_math(
             "AND",
-            nw.compare("GREATER_THAN", nw.vector_math("LENGTH", nw.new_node(Nodes.InputPosition)), 0.7),
+            nw.compare(
+                "GREATER_THAN",
+                nw.vector_math("LENGTH", nw.new_node(Nodes.InputPosition)),
+                0.7,
+            ),
             nw.bernoulli(0.005),
         )
-        end_index = nw.compare("LESS_THAN", nw.vector_math("LENGTH", nw.new_node(Nodes.InputPosition)), 0.02)
-        distance = nw.vector_math("DISTANCE", *nw.new_node(Nodes.InputEdgeVertices).outputs[2:])
+        end_index = nw.compare(
+            "LESS_THAN",
+            nw.vector_math("LENGTH", nw.new_node(Nodes.InputPosition)),
+            0.02,
+        )
+        distance = nw.vector_math(
+            "DISTANCE", *nw.new_node(Nodes.InputEdgeVertices).outputs[2:]
+        )
         weight = nw.scale(distance, nw.musgrave(10))
 
         curve = nw.new_node(
             Nodes.EdgePathToCurve,
-            [geometry, start_index, nw.new_node(Nodes.ShortestEdgePath, [end_index, weight]).outputs[0]],
+            [
+                geometry,
+                start_index,
+                nw.new_node(Nodes.ShortestEdgePath, [end_index, weight]).outputs[0],
+            ],
         )
         curve = nw.new_node(Nodes.SplineType, [curve], attrs={"spline_type": "NURBS"})
 
-        geometry = nw.new_node(Nodes.MergeByDistance, [nw.curve2mesh(curve), None, 0.005])
+        geometry = nw.new_node(
+            Nodes.MergeByDistance, [nw.curve2mesh(curve), None, 0.005]
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     def create_asset(self, face_size=0.01, **params):
         obj = new_circle(location=(0, 0, 0), vertices=1024)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.fill_grid()
-        displace_vertices(obj, lambda x, y, z: (*uniform(-0.005, 0.005, (2, len(x))), 0))
+        displace_vertices(
+            obj, lambda x, y, z: (*uniform(-0.005, 0.005, (2, len(x))), 0)
+        )
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
         temp = deep_clone_obj(obj)
         surface.add_geomod(temp, self.geo_elkhorn, apply=True)
 
@@ -74,11 +102,19 @@ class ElkhornBaseCoralFactory(BaseCoralFactory):
         butil.apply_transform(obj)
 
         butil.modify_mesh(obj, "SOLIDIFY", thickness=0.02)
-        surface.add_geomod(obj, geo_extension, apply=True, input_kwargs={"musgrave_dimensions": "2D"})
+        surface.add_geomod(
+            obj, geo_extension, apply=True, input_kwargs={"musgrave_dimensions": "2D"}
+        )
         texture = bpy.data.textures.new(name="elkhorn_coral", type="STUCCI")
         texture.noise_scale = log_uniform(0.1, 0.5)
         butil.modify_mesh(
-            obj, "DISPLACE", True, strength=uniform(0.1, 0.2), texture=texture, mid_level=0, direction="Z"
+            obj,
+            "DISPLACE",
+            True,
+            strength=uniform(0.1, 0.2),
+            texture=texture,
+            mid_level=0,
+            direction="Z",
         )
         origin2lowest(obj)
         tag_object(obj, "elkhorn_coral")
@@ -140,7 +176,9 @@ class ElkhornBaseCoralFactory(BaseCoralFactory):
         z += f_scale(a) * (x * x + y * y) ** f_power(a)
         rotation = f_rotation(a)
         c, s = np.cos(rotation), np.sin(rotation)
-        co = np.stack([c * x - s * z, c * y - s * z, c * z + s * np.sqrt(x * x + y * y)], -1)
+        co = np.stack(
+            [c * x - s * z, c * y - s * z, c * z + s * np.sqrt(x * x + y * y)], -1
+        )
         write_co(obj, co)
         with butil.ViewportMode(obj, "EDIT"):
             bm = bmesh.from_edit_mesh(obj.data)

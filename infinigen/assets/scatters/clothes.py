@@ -17,7 +17,11 @@ from infinigen.core.util.blender import deep_clone_obj
 
 
 def cloth_sim(clothes, obj=None, end_frame=50, **kwargs):
-    with butil.ViewportMode(clothes, mode="OBJECT"), butil.SelectObjects(clothes), butil.Suppress():
+    with (
+        butil.ViewportMode(clothes, mode="OBJECT"),
+        butil.SelectObjects(clothes),
+        butil.Suppress(),
+    ):
         bpy.ops.ptcache.free_bake_all()
     if obj is None:
         obj = []
@@ -42,31 +46,40 @@ def cloth_sim(clothes, obj=None, end_frame=50, **kwargs):
 
 
 class ClothesCover:
-    def __init__(self, bbox=(0.3, 0.7, 0.3, 0.7), factory_fn=None, width=None, size=None):
+    def __init__(
+        self, bbox=(0.3, 0.7, 0.3, 0.7), factory_fn=None, width=None, size=None
+    ):
         from infinigen.assets.clothes import blanket, pants, shirt
 
         probs = np.array([2, 1, 1])
         if factory_fn is None:
             factory_fn = np.random.choice(
-                [blanket.BlanketFactory, shirt.ShirtFactory, pants.PantsFactory], p=probs / probs.sum()
+                [blanket.BlanketFactory, shirt.ShirtFactory, pants.PantsFactory],
+                p=probs / probs.sum(),
             )
         self.factory = factory_fn(np.random.randint(1e5))
         if width is not None:
             self.factory.width = width
         if size is not None:
             self.factory.size = size
-        self.col = make_asset_collection(self.factory, name="clothes", centered=True, n=3, verbose=False)
+        self.col = make_asset_collection(
+            self.factory, name="clothes", centered=True, n=3, verbose=False
+        )
         self.bbox = bbox
         self.z_offset = 0.2
 
     def apply(self, obj, selection=None, **kwargs):
         for obj in obj if isinstance(obj, list) else [obj]:
             x, y, z = read_co(obj).T
-            clothes = deep_clone_obj(np.random.choice(self.col.objects), keep_materials=True)
+            clothes = deep_clone_obj(
+                np.random.choice(self.col.objects), keep_materials=True
+            )
             clothes.parent = obj
             clothes.location = (
-                uniform(self.bbox[0], self.bbox[1]) * (np.max(x) - np.min(x)) + np.min(x),
-                uniform(self.bbox[2], self.bbox[3]) * (np.max(y) - np.min(y)) + np.min(y),
+                uniform(self.bbox[0], self.bbox[1]) * (np.max(x) - np.min(x))
+                + np.min(x),
+                uniform(self.bbox[2], self.bbox[3]) * (np.max(y) - np.min(y))
+                + np.min(y),
                 np.max(z) + self.z_offset - np.min(read_co(clothes)[:, -1]),
             )
             clothes.rotation_euler[-1] = uniform(0, np.pi * 2)

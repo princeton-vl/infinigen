@@ -11,7 +11,6 @@
 import logging
 import re
 import sys
-from copy import copy
 from functools import partial
 from pathlib import Path
 from shutil import copytree
@@ -73,7 +72,16 @@ def get_cmd(
 
 
 @gin.configurable
-def queue_upload(folder, submit_cmd, name, taskname, dir_prefix_len=0, method="rclone", seed=None, **kwargs):
+def queue_upload(
+    folder,
+    submit_cmd,
+    name,
+    taskname,
+    dir_prefix_len=0,
+    method="rclone",
+    seed=None,
+    **kwargs,
+):
     func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
     res = submit_cmd((func, folder, taskname), folder, name, **kwargs)
     return res, None
@@ -97,7 +105,14 @@ def queue_export(
     input_folder = f"{folder}/coarse{input_suffix}"
 
     cmd = (
-        get_cmd(seed, "export", configs, taskname, output_folder=f"{folder}/frames", input_folder=input_folder)
+        get_cmd(
+            seed,
+            "export",
+            configs,
+            taskname,
+            output_folder=f"{folder}/frames",
+            input_folder=input_folder,
+        )
         + f"""
         LOG_DIR='{folder / "logs"}'
     """.split("\n")
@@ -149,7 +164,14 @@ def queue_coarse(
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
     (folder / "run_pipeline.sh").chmod(0o774)
 
-    res = submit_cmd(cmd, folder=folder, name=name, gpus=0, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
+    res = submit_cmd(
+        cmd,
+        folder=folder,
+        name=name,
+        gpus=0,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
+        **kwargs,
+    )
     return res, output_folder
 
 
@@ -178,7 +200,14 @@ def queue_populate(
     output_folder = input_folder
 
     cmd = (
-        get_cmd(seed, "populate", configs, taskname, input_folder=input_folder, output_folder=output_folder)
+        get_cmd(
+            seed,
+            "populate",
+            configs,
+            taskname,
+            input_folder=input_folder,
+            output_folder=output_folder,
+        )
         + f"""
         LOG_DIR='{folder / "logs"}'
     """.split("\n")
@@ -236,7 +265,14 @@ def queue_fine_terrain(
     with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd, folder=folder, name=name, gpus=gpus, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
+    res = submit_cmd(
+        cmd,
+        folder=folder,
+        name=name,
+        gpus=gpus,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
+        **kwargs,
+    )
     return res, output_folder
 
 
@@ -273,7 +309,9 @@ def queue_combined(
             tasks,
             configs,
             taskname,
-            input_folder=f"{folder}/coarse{input_suffix}" if not include_coarse else None,
+            input_folder=f"{folder}/coarse{input_suffix}"
+            if not include_coarse
+            else None,
             output_folder=output_folder,
         )
         + f"""
@@ -286,7 +324,14 @@ def queue_combined(
     with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd, folder=folder, name=name, gpus=gpus, slurm_exclude=nodes_with_gpus(*exclude_gpus), **kwargs)
+    res = submit_cmd(
+        cmd,
+        folder=folder,
+        name=name,
+        gpus=gpus,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
+        **kwargs,
+    )
     return res, output_folder
 
 
@@ -310,17 +355,31 @@ def queue_render(
 
     output_folder = Path(f"{folder}/frames{output_suffix}")
 
-    input_folder_priority_options = [f"fine{input_suffix}", "fine", f"coarse{input_suffix}", "coarse"]
+    input_folder_priority_options = [
+        f"fine{input_suffix}",
+        "fine",
+        f"coarse{input_suffix}",
+        "coarse",
+    ]
 
     for option in input_folder_priority_options:
         input_folder = f"{folder}/{option}"
         if (Path(input_folder) / "scene.blend").exists():
             break
     else:
-        raise ValueError(f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}")
+        raise ValueError(
+            f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}"
+        )
 
     cmd = (
-        get_cmd(seed, "render", configs, taskname, input_folder=input_folder, output_folder=f"{output_folder}")
+        get_cmd(
+            seed,
+            "render",
+            configs,
+            taskname,
+            input_folder=input_folder,
+            output_folder=f"{output_folder}",
+        )
         + f"""
         render.render_image_func=@{render_type}/render_image
         LOG_DIR='{folder / "logs"}'
@@ -396,7 +455,9 @@ def queue_mesh_save(
 
 process_mesh_path = Path(__file__).parent / "customgt" / "build" / "customgt"
 if not process_mesh_path.exists():
-    logger.warning(f"{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail")
+    logger.warning(
+        f"{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail"
+    )
 
 
 @gin.configurable
@@ -441,11 +502,14 @@ def queue_opengl(
         lines = ["set -e"]
 
         lines += [
-            f"{process_mesh_path} -in {input_folder} " f"--frame {frame_idx} -out {output_folder}"
+            f"{process_mesh_path} -in {input_folder} "
+            f"--frame {frame_idx} -out {output_folder}"
             for frame_idx in range(start_frame, end_frame + 1)
         ]
 
-        lines.append(f"{sys.executable} {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
+        lines.append(
+            f"{sys.executable} {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"
+        )
 
         lines.append(
             f'{sys.executable} -c "from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder; '

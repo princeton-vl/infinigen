@@ -6,7 +6,11 @@
 
 import bpy
 
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, geometry_node_group_empty_new
+from infinigen.core.nodes.node_wrangler import (
+    Nodes,
+    NodeWrangler,
+    geometry_node_group_empty_new,
+)
 from infinigen.core.util import blender as butil
 
 

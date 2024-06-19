@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-from copy import deepcopy
-
 import numpy as np
 from mathutils import Euler, kdtree
 from numpy.random import uniform
@@ -13,11 +11,10 @@ from numpy.random import uniform
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
 
 from .growth import MushroomGrowthFactory
 
@@ -57,11 +54,15 @@ class MushroomFactory(AssetFactory):
         n = np.random.randint(1, 6)
         mushrooms, keypoints = [], []
         for j in range(n):
-            obj = self.factory.create_asset(i=j + i * self.max_cluster, face_size=face_size / 2)
+            obj = self.factory.create_asset(
+                i=j + i * self.max_cluster, face_size=face_size / 2
+            )
             clone = deep_clone_obj(obj)
             butil.modify_mesh(clone, "REMESH", voxel_size=0.04)
             mushrooms.append(obj)
-            k = np.array([v.co for v in clone.data.vertices if v.co[-1] > self.tolerant_length])
+            k = np.array(
+                [v.co for v in clone.data.vertices if v.co[-1] > self.tolerant_length]
+            )
             if len(k) == 0:
                 k = np.array([v.co for v in clone.data.vertices])
             if len(k) == 0:
@@ -79,7 +80,11 @@ class MushroomFactory(AssetFactory):
         locations, scales = [np.zeros(3)], []
         scales = np.tile(uniform(0.3, 1.2, len(keypoints))[:, np.newaxis], 3)
         for i in range(len(vertices)):
-            vertices[i] = (np.array(Euler(rotations[i]).to_matrix()) @ np.diag(scales[i]) @ vertices[i].T).T
+            vertices[i] = (
+                np.array(Euler(rotations[i]).to_matrix())
+                @ np.diag(scales[i])
+                @ vertices[i].T
+            ).T
         for i in range(1, len(vertices)):
             basis = np.concatenate(vertices[:i])
             kd = kdtree.KDTree(len(basis))
@@ -111,6 +116,8 @@ class MushroomFactory(AssetFactory):
         rot_y = uniform(0, np.pi / 6, n) if self.lowered else np.zeros(n)
         rot_z = -np.pi / 2 + uniform(-np.pi / 8, np.pi / 8, n)
         rotations = np.stack([np.zeros(n), rot_y, rot_z], -1)
-        start_locs = np.stack([np.linspace(0, self.radius * n * 0.4, n), np.zeros(n), np.zeros(n)], -1)
+        start_locs = np.stack(
+            [np.linspace(0, self.radius * n * 0.4, n), np.zeros(n), np.zeros(n)], -1
+        )
         directions = np.tile([0, 1, 0], (n, 1))
         return self.find_closest(keypoints, rotations, start_locs, directions)

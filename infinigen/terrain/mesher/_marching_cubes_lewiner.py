@@ -143,11 +143,27 @@ def marching_cubes(
     elif method != "lewiner":
         raise ValueError("method should be either 'lewiner' or 'lorensen'")
     return _marching_cubes_lewiner(
-        volume, level, spacing, gradient_direction, step_size, allow_degenerate, use_classic=use_classic, mask=mask
+        volume,
+        level,
+        spacing,
+        gradient_direction,
+        step_size,
+        allow_degenerate,
+        use_classic=use_classic,
+        mask=mask,
     )
 
 
-def _marching_cubes_lewiner(volume, level, spacing, gradient_direction, step_size, allow_degenerate, use_classic, mask):
+def _marching_cubes_lewiner(
+    volume,
+    level,
+    spacing,
+    gradient_direction,
+    step_size,
+    allow_degenerate,
+    use_classic,
+    mask,
+):
     """Lewiner et al. algorithm for marching cubes. See
     marching_cubes_lewiner for documentation.
 
@@ -188,7 +204,9 @@ def _marching_cubes_lewiner(volume, level, spacing, gradient_direction, step_siz
 
     # Apply algorithm
     func = _marching_cubes_lewiner_cy.marching_cubes
-    vertices_integral, vertices_fractal, faces, normals, values = func(volume, level, L, step_size, use_classic, mask)
+    vertices_integral, vertices_fractal, faces, normals, values = func(
+        volume, level, L, step_size, use_classic, mask
+    )
 
     if not len(vertices_integral):
         raise RuntimeError("No surface found at the given iso value.")
@@ -205,7 +223,10 @@ def _marching_cubes_lewiner(volume, level, spacing, gradient_direction, step_siz
         # left-handed
         faces = np.fliplr(faces)
     elif not gradient_direction == "ascent":
-        raise ValueError(f"Incorrect input {gradient_direction} in `gradient_direction`, " "see docstring.")
+        raise ValueError(
+            f"Incorrect input {gradient_direction} in `gradient_direction`, "
+            "see docstring."
+        )
     assert np.array_equal(spacing, (1, 1, 1))
     assert allow_degenerate
     # hacky fixing
@@ -229,13 +250,55 @@ def _to_array(args):
 # 3   1   ->  0x
 #   2         xx
 EDGETORELATIVEPOSX = np.array(
-    [[0, 1], [1, 1], [1, 0], [0, 0], [0, 1], [1, 1], [1, 0], [0, 0], [0, 0], [1, 1], [1, 1], [0, 0]], "int8"
+    [
+        [0, 1],
+        [1, 1],
+        [1, 0],
+        [0, 0],
+        [0, 1],
+        [1, 1],
+        [1, 0],
+        [0, 0],
+        [0, 0],
+        [1, 1],
+        [1, 1],
+        [0, 0],
+    ],
+    "int8",
 )
 EDGETORELATIVEPOSY = np.array(
-    [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0], [0, 1], [1, 1], [1, 0], [0, 0], [0, 0], [1, 1], [1, 1]], "int8"
+    [
+        [0, 0],
+        [0, 1],
+        [1, 1],
+        [1, 0],
+        [0, 0],
+        [0, 1],
+        [1, 1],
+        [1, 0],
+        [0, 0],
+        [0, 0],
+        [1, 1],
+        [1, 1],
+    ],
+    "int8",
 )
 EDGETORELATIVEPOSZ = np.array(
-    [[0, 0], [0, 0], [0, 0], [0, 0], [1, 1], [1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]], "int8"
+    [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [0, 1],
+        [0, 1],
+        [0, 1],
+        [0, 1],
+    ],
+    "int8",
 )
 
 

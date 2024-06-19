@@ -1,32 +1,29 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import os
-import sys
 from functools import partial
 
 # Authors: Karhan Kayan
-from itertools import chain
-from time import time
 
 import bpy
 import numpy as np
 import pytest
 from mathutils import Vector
 
-import infinigen.core.constraints.example_solver.moves.addition as addition
 from infinigen.assets.seating.chairs import ChairFactory
 from infinigen.assets.tables.dining_table import TableDiningFactory
 from infinigen.assets.utils.bbox_from_mesh import bbox_mesh_from_hipoly
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import example_solver as solver
 from infinigen.core.constraints import usage_lookup
 from infinigen.core.constraints.evaluator import evaluate
 from infinigen.core.constraints.evaluator.node_impl import node_impls
-from infinigen.core.constraints.example_solver.propose_discrete import lookup_generator
-from infinigen.core.constraints.example_solver.state_def import ObjectState, State, state_from_dummy_scene
+from infinigen.core.constraints.example_solver.state_def import (
+    ObjectState,
+    State,
+    state_from_dummy_scene,
+)
 from infinigen.core.util import blender as butil
 from infinigen_examples.indoor_asset_semantics import home_asset_usage
 from infinigen_examples.indoor_constraint_examples import home_constraints
@@ -207,7 +204,9 @@ def test_accessibility_angle():
 
         chair = butil.spawn_cube(size=2, location=(0, 0, 0), name="chair1")
 
-        table = butil.spawn_sphere(radius=1, location=(4 * np.cos(angle), 4 * np.sin(angle), 0), name="table1")
+        table = butil.spawn_sphere(
+            radius=1, location=(4 * np.cos(angle), 4 * np.sin(angle), 0), name="table1"
+        )
         print(table.location)
 
         obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Chair})
@@ -494,7 +493,9 @@ def test_angle_alignment_tagged():
     chair = cl.tagged(scene, {t.Semantics.Chair})
     table = cl.tagged(scene, {t.Semantics.Table})
 
-    score_terms += [cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})]
+    score_terms += [
+        cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})
+    ]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
 
@@ -520,7 +521,9 @@ def test_angle_alignment_tagged():
     chair = cl.tagged(scene, {t.Semantics.Chair})
     table = cl.tagged(scene, {t.Semantics.Table})
 
-    score_terms += [cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})]
+    score_terms += [
+        cl.angle_alignment_cost(chair, table, others_tags={t.Subpart.Front})
+    ]
     problem = cl.Problem(constraints, score_terms)
     res = evaluate.evaluate_problem(problem, state).loss()
 
@@ -572,11 +575,15 @@ def test_viol_amounts():
 
         for i in range(n):
             chair = butil.spawn_cube(size=1, location=(-3, 0, 0), name=f"chair{i}")
-            obj_states[chair.name] = ObjectState(chair, tags={t.Semantics.Furniture, t.Semantics.Chair})
+            obj_states[chair.name] = ObjectState(
+                chair, tags={t.Semantics.Furniture, t.Semantics.Chair}
+            )
 
         return State(objs=obj_states)
 
-    cons = cl.Problem([cl.scene().tagged(t.Semantics.Furniture).count().in_range(1, 3)], [])
+    cons = cl.Problem(
+        [cl.scene().tagged(t.Semantics.Furniture).count().in_range(1, 3)], []
+    )
     assert evaluate.evaluate_problem(cons, mk_state(0))[1] == 1
     assert evaluate.evaluate_problem(cons, mk_state(1))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
@@ -787,7 +794,8 @@ def test_rotation_asymmetry():
         chairs.append(chair)
 
     circle_locations_rotations = [
-        ((2 * np.cos(i * np.pi / 3), 2 * np.sin(i * np.pi / 3), 0), i * np.pi / 3) for i in range(6)
+        ((2 * np.cos(i * np.pi / 3), 2 * np.sin(i * np.pi / 3), 0), i * np.pi / 3)
+        for i in range(6)
     ]
     np.random.shuffle(circle_locations_rotations)
     # put the chairs in a circle
@@ -915,7 +923,8 @@ def test_evaluate_problem_scalar_ops():
     two = cl.constant(2)
     three = cl.constant(3)
 
-    e = lambda x: evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
+    def e(x):
+        return evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
 
     assert e(two) == 2
     assert e(one + two) == 3
@@ -949,7 +958,9 @@ def test_evaluate_problem_scalar_ops():
 
 def test_evaluate_hinge():
     state = State(objs={})
-    e = lambda x: evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
+
+    def e(x):
+        return evaluate.evaluate_problem(cl.Problem({}, {repr(x): x}), state).loss()
 
     one = cl.constant(1)
     two = cl.constant(2)

@@ -48,7 +48,9 @@ def run_erosion(
     heightmap = read(str(folder / f"{AssetFile.Heightmap}.exr")).astype(np.float32)
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
 
-    soil_config_path = repo_root() / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
+    soil_config_path = (
+        repo_root() / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
+    )
 
     for i, N, n_iter in zip(list(range(len(Ns))), Ns, n_iters):
         M = heightmap.shape[0]
@@ -76,11 +78,18 @@ def run_erosion(
         )
         heightmap = result_heightmap / height_scale + ground_level
         watertrack = watertrack.reshape((N, N))
-        watertrack = np.clip((watertrack - mask_range[0]) / (mask_range[1] - mask_range[0]), a_min=0, a_max=1)
+        watertrack = np.clip(
+            (watertrack - mask_range[0]) / (mask_range[1] - mask_range[0]),
+            a_min=0,
+            a_max=1,
+        )
         watertrack = watertrack**0.2
         if mask_height_range is not None:
             mask = np.clip(
-                (heightmap - mask_height_range[0]) / (mask_height_range[1] - mask_height_range[0]), a_min=0, a_max=1
+                (heightmap - mask_height_range[0])
+                / (mask_height_range[1] - mask_height_range[0]),
+                a_min=0,
+                a_max=1,
             )
         else:
             mask = np.ones_like(heightmap)

@@ -6,7 +6,6 @@
 # - Lahav Lipson: initial version
 
 import argparse
-import itertools
 import json
 import os
 import platform
@@ -17,12 +16,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import gin
-from tqdm import tqdm
 
 from infinigen.core.util.logging import Suppress
 
-from . import cleanup, smb_client
+from . import smb_client
 
 RCLONE_PREFIX_ENVVAR = "INFINIGEN_RCLONE_PREFIX"
 
@@ -117,7 +114,9 @@ def rclone_upload_file(src_file, dst_folder):
     if prefix is None:
         raise ValueError(f"Please specify envvar {RCLONE_PREFIX_ENVVAR}")
     if ":" not in prefix:
-        raise ValueError(f'Rclone prefix must contain ":" to separate remote from path prefix')
+        raise ValueError(
+            'Rclone prefix must contain ":" to separate remote from path prefix'
+        )
 
     assert os.path.exists(src_file), src_file
     cmd = f"{shutil.which('rclone')} copy -P {src_file} {prefix}{dst_folder}"
@@ -195,7 +194,9 @@ def get_upload_destfolder(job_folder):
 
 # DO NOT make gin.configurable
 # this function gets submitted via pickle in some settings, and gin args are not preserved
-def upload_job_folder(parent_folder, task_uniqname, dir_prefix_len=0, method="smbclient"):
+def upload_job_folder(
+    parent_folder, task_uniqname, dir_prefix_len=0, method="smbclient"
+):
     parent_folder = Path(parent_folder)
     seed = parent_folder.name
 

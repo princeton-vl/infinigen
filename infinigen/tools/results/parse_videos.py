@@ -53,7 +53,9 @@ for input_folder in args.input_folder:
 
     if args.join:
         cat_output = output_folder / f"{output_folder.name}_{args.image_type}.mp4"
-        videos = [x for x in output_folder.glob(f"*_{args.image_type}.mp4") if x != cat_output]
+        videos = [
+            x for x in output_folder.glob(f"*_{args.image_type}.mp4") if x != cat_output
+        ]
 
         instructions = output_folder / "videos.txt"
         instructions.write_text("\n".join([f"file '{x.absolute()}'" for x in videos]))

@@ -5,22 +5,15 @@
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=5BXvwqVyCQw by Artisans of Vaul
 
 
-import math
-from platform import node
-from re import M
-
 import bpy
 import numpy as np
-from numpy.random import normal as N
-from numpy.random import uniform as U
 
 from infinigen.assets.creatures.util import part_util
 from infinigen.assets.creatures.util.creature import PartFactory
-from infinigen.assets.creatures.util.genome import IKParams, Joint
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
@@ -44,18 +37,25 @@ def nodegroup_noise(nw: NodeWrangler):
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Color"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Color"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: group_input.outputs["Scale"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: group_input.outputs["Scale"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": multiply}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": multiply},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_ridge", singleton=False, type="GeometryNodeTree")
@@ -74,35 +74,60 @@ def nodegroup_ridge(nw: NodeWrangler):
 
     resample_curve = nw.new_node(
         Nodes.ResampleCurve,
-        input_kwargs={"Curve": group_input.outputs["geometry"], "Count": group_input.outputs["number_of_ridge"]},
+        input_kwargs={
+            "Curve": group_input.outputs["geometry"],
+            "Count": group_input.outputs["number_of_ridge"],
+        },
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
+    )
     node_utils.assign_curve(
         float_curve.mapping.curves[0],
-        [(0.0, 1.0), (0.2, 0.9), (0.3705, 0.7406), (0.55, 0.5938), (0.6886, 0.4188), (0.85, 0.1844), (1.0, 0.0)],
+        [
+            (0.0, 1.0),
+            (0.2, 0.9),
+            (0.3705, 0.7406),
+            (0.55, 0.5938),
+            (0.6886, 0.4188),
+            (0.85, 0.1844),
+            (1.0, 0.0),
+        ],
     )
 
     modulo = nw.new_node(
-        Nodes.Math, input_kwargs={0: spline_parameter.outputs["Index"], 1: 5.0}, attrs={"operation": "MODULO"}
+        Nodes.Math,
+        input_kwargs={0: spline_parameter.outputs["Index"], 1: 5.0},
+        attrs={"operation": "MODULO"},
     )
 
-    power = nw.new_node(Nodes.Math, input_kwargs={0: -1.0, 1: modulo}, attrs={"operation": "POWER"})
+    power = nw.new_node(
+        Nodes.Math, input_kwargs={0: -1.0, 1: modulo}, attrs={"operation": "POWER"}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["depth_of_ridge"], 1: power}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["depth_of_ridge"], 1: power},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: 1.0, 1: multiply})
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: add}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: add},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     noise_texture = nw.new_node(Nodes.NoiseTexture)
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Color"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Color"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply_2 = nw.new_node(
@@ -114,13 +139,20 @@ def nodegroup_ridge(nw: NodeWrangler):
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: multiply_2})
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["thickness"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: add_1, 1: group_input.outputs["thickness"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": resample_curve, "Radius": multiply_3})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": resample_curve, "Radius": multiply_3},
+    )
 
     noise = nw.new_node(
-        nodegroup_noise().name, input_kwargs={"Geometry": set_curve_radius, "Scale": 0.02}, label="Noise"
+        nodegroup_noise().name,
+        input_kwargs={"Geometry": set_curve_radius, "Scale": 0.02},
+        label="Noise",
     )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": noise})
@@ -146,21 +178,31 @@ def nodegroup_horn(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["length"], 1: group_input.outputs["density_of_ridge"]},
+        input_kwargs={
+            0: group_input.outputs["length"],
+            1: group_input.outputs["density_of_ridge"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["rad1"], 1: group_input.outputs["rad2"]})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["rad1"], 1: group_input.outputs["rad2"]},
+    )
 
     # divide = nw.new_node(Nodes.Math,
     #     input_kwargs={0: add, 1: 2.0},
     #     attrs={'operation': 'DIVIDE'})
 
     divide_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["length"], 1: add}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["length"], 1: add},
+        attrs={"operation": "DIVIDE"},
     )
 
-    divide_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide_1, 1: 3.1415}, attrs={"operation": "DIVIDE"})
+    divide_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_1, 1: 3.1415}, attrs={"operation": "DIVIDE"}
+    )
 
     spiral = nw.new_node(
         "GeometryNodeCurveSpiral",
@@ -183,29 +225,50 @@ def nodegroup_horn(nw: NodeWrangler):
         },
     )
 
-    curve_circle_2 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": 10, "Radius": 0.5})
-
-    noise = nw.new_node(
-        nodegroup_noise().name, input_kwargs={"Geometry": curve_circle_2.outputs["Curve"], "Scale": 0.2}, label="Noise"
+    curve_circle_2 = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Resolution": 10, "Radius": 0.5}
     )
 
-    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": ridge, "Profile Curve": noise})
+    noise = nw.new_node(
+        nodegroup_noise().name,
+        input_kwargs={"Geometry": curve_circle_2.outputs["Curve"], "Scale": 0.2},
+        label="Noise",
+    )
+
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh, input_kwargs={"Curve": ridge, "Profile Curve": noise}
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["rad1"], 1: -1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["rad1"], 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_1})
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": curve_to_mesh, "Offset": combine_xyz})
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": curve_to_mesh, "Offset": combine_xyz},
+    )
 
-    transform_1 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": set_position, "Rotation": (-0.8, 0.0, 2.6)})
+    transform_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": set_position, "Rotation": (-0.8, 0.0, 2.6)},
+    )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["rotation_x"]})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["rotation_x"]}
+    )
 
-    transform_2 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform_1, "Rotation": combine_xyz_2})
+    transform_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_1, "Rotation": combine_xyz_2},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": transform_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": transform_2}
+    )
 
 
 class Horn(PartFactory):
@@ -213,9 +276,15 @@ class Horn(PartFactory):
     tags = ["head_detail", "rigid"]
 
     def sample_params(self, select=None, var=1):
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
-        weights = part_util.random_convex_coord(self.param_templates.keys(), select=select)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
+
+        weights = part_util.random_convex_coord(
+            self.param_templates.keys(), select=select
+        )
         params = part_util.rdict_comb(self.param_templates, weights)
 
         for key in params["horn"]:

@@ -24,7 +24,13 @@ class LobsterAntennaFactory(CrabLegFactory):
         segments, x_cuts = self.make_segments(params)
         displace_vertices(
             segments[-1],
-            lambda x, y, z: (0, 0, params["antenna_bend"] * (x / x_length - x_cuts[-2]) ** 2 * params["z_length"]),
+            lambda x, y, z: (
+                0,
+                0,
+                params["antenna_bend"]
+                * (x / x_length - x_cuts[-2]) ** 2
+                * params["z_length"],
+            ),
         )
         obj = join_objects(segments)
 

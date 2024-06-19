@@ -24,7 +24,7 @@ from infinigen.assets.creatures.util.creature_util import offset_center
 from infinigen.assets.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed, clip_gaussian, lerp
 
 logger = logging.getLogger(__name__)
@@ -41,8 +41,12 @@ def insect_hair_params():
         "clump_n": 1,
         "avoid_features_dist": 0.01,
         "grooming": {
-            "Length MinMaxScale": np.array((length, length * N(2, 0.5), U(15, 60)), dtype=np.float32),
-            "Puff MinMaxScale": np.array((puff, puff * N(3, 0.5), U(15, 60)), dtype=np.float32),
+            "Length MinMaxScale": np.array(
+                (length, length * N(2, 0.5), U(15, 60)), dtype=np.float32
+            ),
+            "Puff MinMaxScale": np.array(
+                (puff, puff * N(3, 0.5), U(15, 60)), dtype=np.float32
+            ),
             "Combing": U(0, 0.2),
             "Strand Random Mag": 0.0,
             "Strand Perlin Mag": 0.0,
@@ -68,7 +72,9 @@ def beetle_postprocessing(body_parts, extras, params):
 
 
 def beetle_genome():
-    fac = parts.generic_nurbs.NurbsBody(prefix="body_insect", tags=["body", "rigid"], var=2)
+    fac = parts.generic_nurbs.NurbsBody(
+        prefix="body_insect", tags=["body", "rigid"], var=2
+    )
     if U() < 0.5:
         n = len(fac.params["proportions"])
         noise = U(1, 3, n)
@@ -87,33 +93,54 @@ def beetle_genome():
         for side in [-1, 1]:
             leg = genome.part(leg_fac)
             xrot = lerp(70, -100, t)
-            genome.attach(leg, body, coord=(t, splay / 180, 1), joint=Joint((xrot, 5, 90)), side=side)
+            genome.attach(
+                leg,
+                body,
+                coord=(t, splay / 180, 1),
+                joint=Joint((xrot, 5, 90)),
+                side=side,
+            )
 
-    head = genome.part(parts.generic_nurbs.NurbsHead(prefix="head_insect", tags=["head", "rigid"]))
+    head = genome.part(
+        parts.generic_nurbs.NurbsHead(prefix="head_insect", tags=["head", "rigid"])
+    )
     genome.attach(head, body, coord=(1, 0, 0), joint=Joint((0, -15, 0)))
 
     if U() < 0.7:
         mandible_fac = parts.head_detail.InsectMandible()
         rot = np.array((120, 20, 80)) * N(1, 0.15)
         for side in [-1, 1]:
-            genome.attach(genome.part(mandible_fac), head, coord=(0.75, 0.5, 0.1), joint=Joint(rot), side=side)
+            genome.attach(
+                genome.part(mandible_fac),
+                head,
+                coord=(0.75, 0.5, 0.1),
+                joint=Joint(rot),
+                side=side,
+            )
 
     return genome.CreatureGenome(
         parts=body,
-        postprocess_params=dict(surface_registry=[(infinigen.assets.materials.chitin, 1)], hair=insect_hair_params()),
+        postprocess_params=dict(
+            surface_registry=[(infinigen.assets.materials.chitin, 1)],
+            hair=insect_hair_params(),
+        ),
     )
 
 
 @gin.configurable
 class BeetleFactory(AssetFactory):
-    def __init__(self, factory_seed=None, bvh=None, coarse=False, animation_mode=None, **kwargs):
+    def __init__(
+        self, factory_seed=None, bvh=None, coarse=False, animation_mode=None, **kwargs
+    ):
         super().__init__(factory_seed, coarse)
         self.bvh = bvh
         self.animation_mode = animation_mode
 
     def create_asset(self, i, hair=False, **kwargs):
         genome = beetle_genome()
-        root, parts = creature.genome_to_creature(genome, name=f"beetle({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            genome, name=f"beetle({self.factory_seed}, {i})"
+        )
         tag_object(root, "beetle")
         offset_center(root)
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
@@ -125,9 +152,13 @@ class BeetleFactory(AssetFactory):
             **kwargs,
         )
         if self.animation_mode == "walk_cycle":
-            creature_animation.animate_run(root, arma, ik_targets, steps_per_sec=N(2, 0.2))
+            creature_animation.animate_run(
+                root, arma, ik_targets, steps_per_sec=N(2, 0.2)
+            )
         if hair and U() < 0.5:
-            creature_hair.configure_hair(joined, root, genome.postprocess_params["hair"])
+            creature_hair.configure_hair(
+                joined, root, genome.postprocess_params["hair"]
+            )
         return root
 
 
@@ -152,12 +183,22 @@ class AntSwarmFactory(BoidSwarmFactory):
 
         if mode == "queues":
             boids_settings["rules"] = [
-                dict(type="FOLLOW_LEADER", use_line=True, queue_count=100, distance=0.0),
+                dict(
+                    type="FOLLOW_LEADER", use_line=True, queue_count=100, distance=0.0
+                ),
             ]
         elif mode == "goal_swarm":
-            boids_settings["rules"] = [dict(type="SEPARATE"), dict(type="GOAL", use_predict=True), dict(type="FLOCK")]
+            boids_settings["rules"] = [
+                dict(type="SEPARATE"),
+                dict(type="GOAL", use_predict=True),
+                dict(type="FLOCK"),
+            ]
         elif mode == "random_swarm":
-            boids_settings["rules"] = [dict(type="SEPARATE"), dict(type="AVERAGE_SPEED"), dict(type="FLOCK")]
+            boids_settings["rules"] = [
+                dict(type="SEPARATE"),
+                dict(type="AVERAGE_SPEED"),
+                dict(type="FLOCK"),
+            ]
         else:
             raise ValueError(f"Unrecognized {mode=}")
 
@@ -177,7 +218,10 @@ class AntSwarmFactory(BoidSwarmFactory):
     def __init__(self, factory_seed, bvh, coarse=False):
         with FixedSeed(factory_seed):
             settings = self.ant_swarm_settings()
-            col = make_asset_collection(BeetleFactory(factory_seed=randint(1e7), animation_mode="walk_cycle"), n=1)
+            col = make_asset_collection(
+                BeetleFactory(factory_seed=randint(1e7), animation_mode="walk_cycle"),
+                n=1,
+            )
         super(AntSwarmFactory, self).__init__(
             factory_seed,
             child_col=col,

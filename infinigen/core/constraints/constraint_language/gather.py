@@ -5,13 +5,10 @@
 # Authors: Alexander Raistrick
 
 import typing
-from dataclasses import dataclass, field
 
-from infinigen.core import tags as t
 
 from .expression import BoolExpression, ScalarExpression, nodedataclass
 from .geometry import ObjectSetExpression
-from .relations import Relation
 
 
 @nodedataclass()
@@ -35,7 +32,9 @@ class ForAll(BoolExpression):
 
 
 @ObjectSetExpression.register_postfix_func
-def all(objs: ObjectSetExpression, pred: typing.Callable[[item], BoolExpression]) -> BoolExpression:
+def all(
+    objs: ObjectSetExpression, pred: typing.Callable[[item], BoolExpression]
+) -> BoolExpression:
     var = "var_all_" + str(id(pred))
     return ForAll(objs, var, pred(item(var, objs)))
 

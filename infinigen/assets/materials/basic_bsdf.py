@@ -4,13 +4,11 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
 import numpy as np
 from numpy.random import normal, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.color import hsv2rgba
 
 
@@ -29,7 +27,9 @@ def shader_basic_bsdf(nw):
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
     return principled_bsdf
 

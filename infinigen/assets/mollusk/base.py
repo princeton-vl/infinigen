@@ -21,4 +21,4 @@ class BaseMolluskFactory(AssetFactory):
         super(BaseMolluskFactory, self).__init__(factory_seed, coarse)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        raise NotImplemented
+        raise NotImplementedError

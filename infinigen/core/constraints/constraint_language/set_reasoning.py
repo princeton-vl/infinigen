@@ -4,8 +4,7 @@
 
 # Authors: Alexander Raistrick
 
-import typing
-from dataclasses import dataclass, field
+from dataclasses import field
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import usage_lookup
@@ -53,9 +52,13 @@ class related_to(ObjectSetExpression):
 
     def __post_init__(self):
         if not isinstance(self.child, ObjectSetExpression):
-            raise TypeError(f"related_to got {self.child=}, must be an ObjectSetExpression")
+            raise TypeError(
+                f"related_to got {self.child=}, must be an ObjectSetExpression"
+            )
         if not isinstance(self.parent, ObjectSetExpression):
-            raise TypeError(f"related_to got {self.parent=}, must be an ObjectSetExpression")
+            raise TypeError(
+                f"related_to got {self.parent=}, must be an ObjectSetExpression"
+            )
         if not isinstance(self.relation, Relation):
             raise TypeError(f"related_to got {self.relation=}, must be a Relation")
 

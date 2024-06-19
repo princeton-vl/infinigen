@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from ._marching_cubes_lewiner import marching_cubes
-except ImportError as e:
-    logger.warning(f"Could not import marching_cubes, terrain is likely not installed")
+except ImportError:
+    logger.warning("Could not import marching_cubes, terrain is likely not installed")
     marching_cubes = None
 
 
@@ -109,7 +109,9 @@ class UniformMesher:
         register_func(self, dll, "get_coarse_mesh_cnt", [POINTER(c_int32)])
         register_func(self, dll, "bisection_get_positions", [POINTER(c_double)])
         register_func(self, dll, "bisection_update", [POINTER(c_double)])
-        register_func(self, dll, "get_final_mesh", [POINTER(c_double), POINTER(c_int32)])
+        register_func(
+            self, dll, "get_final_mesh", [POINTER(c_double), POINTER(c_int32)]
+        )
 
     def kernel_caller(self, kernels, XYZ):
         sdfs = []
@@ -137,7 +139,12 @@ class UniformMesher:
             )
 
         with Timer("get_coarse_queries"):
-            positions = AC(np.zeros(((self.x_N + 1) * (self.y_N + 1) * (self.z_N + 1), 3), dtype=np.float64))
+            positions = AC(
+                np.zeros(
+                    ((self.x_N + 1) * (self.y_N + 1) * (self.z_N + 1), 3),
+                    dtype=np.float64,
+                )
+            )
             self.init_and_get_coarse_queries(
                 self.x_min,
                 self.x_max,
@@ -153,7 +160,9 @@ class UniformMesher:
             )
 
         with Timer("compute sdf"):
-            sdf = AC(self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64))
+            sdf = AC(
+                self.kernel_caller(kernels, positions).min(axis=-1).astype(np.float64)
+            )
 
         with Timer("initial_update"):
             cnt = self.initial_update(ASDOUBLE(sdf))
@@ -164,11 +173,15 @@ class UniformMesher:
             if cnt == 0:
                 break
             with Timer(f"get_fine_queries of {cnt} blocks"):
-                positions = AC(np.zeros(((self.upscale + 1) ** 3 * cnt, 3), dtype=np.float64))
+                positions = AC(
+                    np.zeros(((self.upscale + 1) ** 3 * cnt, 3), dtype=np.float64)
+                )
                 self.get_fine_queries(ASDOUBLE(positions))
             with Timer("compute fine sdf and run marching cube"):
                 sdf = np.ascontiguousarray(
-                    self.kernel_caller(kernels, positions.reshape((-1, 3))).min(axis=-1).astype(np.float64)
+                    self.kernel_caller(kernels, positions.reshape((-1, 3)))
+                    .min(axis=-1)
+                    .astype(np.float64)
                 )
                 for i in range(cnt):
                     verts_int, verts_frac, faces, _, _ = marching_cubes(
@@ -205,7 +218,9 @@ class UniformMesher:
             for it in range_it:
                 self.bisection_get_positions(ASDOUBLE(positions))
                 sdf = np.ascontiguousarray(
-                    self.kernel_caller(kernels, positions.reshape((-1, 3))).min(axis=-1).astype(np.float64)
+                    self.kernel_caller(kernels, positions.reshape((-1, 3)))
+                    .min(axis=-1)
+                    .astype(np.float64)
                 )
                 self.bisection_update(ASDOUBLE(sdf))
 

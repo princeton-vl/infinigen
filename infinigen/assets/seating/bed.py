@@ -24,14 +24,22 @@ from . import BedFrameFactory, MattressFactory, PillowFactory
 
 class BedFactory(BedFrameFactory):
     mattress_types = "weighted_choice", (1, "coiled"), (3, "wrapped")
-    sheet_types = "weighted_choice", (4, "quilt"), (4, "comforter"), (4, "box_comforter"), (1, "none")
+    sheet_types = (
+        "weighted_choice",
+        (4, "quilt"),
+        (4, "comforter"),
+        (4, "box_comforter"),
+        (1, "none"),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super(BedFactory, self).__init__(factory_seed, coarse)
         self.sheet_type = rg(self.sheet_types)
         self.sheet_folded = uniform() < 0.5
         self.has_cover = uniform() < 0.5
-        self.clothes_scatter = ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.2 else surface.NoApply
+        self.clothes_scatter = (
+            ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.2 else surface.NoApply
+        )
 
     @cached_property
     def mattress_factory(self):
@@ -85,7 +93,9 @@ class BedFactory(BedFrameFactory):
 
     @cached_property
     def cloth_scatter(self):
-        return ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.0 else surface.NoApply
+        return (
+            ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.0 else surface.NoApply
+        )
 
     @cached_property
     def pillow_factory(self):
@@ -106,7 +116,14 @@ class BedFactory(BedFrameFactory):
         else:
             pillows = []
         self.pillow_factory.finalize_assets(pillows)
-        points = np.stack([uniform(0.1, 0.4, 10) * self.size, uniform(-0.3, 0.3, 10) * self.width, np.full(10, 1)], -1)
+        points = np.stack(
+            [
+                uniform(0.1, 0.4, 10) * self.size,
+                uniform(-0.3, 0.3, 10) * self.width,
+                np.full(10, 1),
+            ],
+            -1,
+        )
         self.scatter(pillows, points, [sheet, mattress])
 
         n_towels = np.random.randint(1, 2)
@@ -116,7 +133,14 @@ class BedFactory(BedFrameFactory):
         else:
             towels = []
         self.towel_factory.finalize_assets(towels)
-        points = np.stack([uniform(0.5, 0.8, 10) * self.size, uniform(-0.3, 0.3, 10) * self.width, np.full(10, 1)], -1)
+        points = np.stack(
+            [
+                uniform(0.5, 0.8, 10) * self.size,
+                uniform(-0.3, 0.3, 10) * self.width,
+                np.full(10, 1),
+            ],
+            -1,
+        )
         self.scatter(towels, points, [sheet, mattress])
 
         for _ in [mattress, sheet, cover] + pillows + towels:
@@ -171,7 +195,14 @@ class BedFactory(BedFrameFactory):
         cover.location = self.size / 2 + uniform(0, 0.3), 0, z_sheet
         cover.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(cover, True)
-        clothes.cloth_sim(cover, [sheet, mattress], 80, mass=0.05, tension_stiffness=2, distance_min=5e-3)
+        clothes.cloth_sim(
+            cover,
+            [sheet, mattress],
+            80,
+            mass=0.05,
+            tension_stiffness=2,
+            distance_min=5e-3,
+        )
         subsurf(cover, 2)
         return cover
 
@@ -180,7 +211,10 @@ class BedFactory(BedFrameFactory):
         lengths = np.full(len(points), np.inf)
         for b in bases:
             lengths = np.minimum(
-                lengths, trimesh.proximity.longest_ray(obj2trimesh(b), points, np.repeat(dir, len(points), 0))
+                lengths,
+                trimesh.proximity.longest_ray(
+                    obj2trimesh(b), points, np.repeat(dir, len(points), 0)
+                ),
             )
         points += dir * lengths[:, np.newaxis]
         for a, loc in zip(pillows, decimate(points, len(pillows))):

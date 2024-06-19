@@ -6,14 +6,10 @@
 
 from __future__ import annotations
 
-import copy
-import itertools
 import logging
-import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import partial
 
-import numpy as np
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -38,7 +34,9 @@ def constraint_domain(node: cl.ObjectSetExpression, finalize_variables=False) ->
             d = recurse(objs)
             d.tags.update(tags)
             if t.contradiction(d.tags):
-                raise ValueError(f"Contradictory tags {tags=} for {d=} while parsing constraint {node=}")
+                raise ValueError(
+                    f"Contradictory tags {tags=} for {d=} while parsing constraint {node=}"
+                )
             return d
         case cl.related_to(children, parents, relation):
             c_d = recurse(children)
@@ -49,7 +47,9 @@ def constraint_domain(node: cl.ObjectSetExpression, finalize_variables=False) ->
             return Domain()
         case cl.item(x):
             if finalize_variables:
-                return recurse(node.member_of)  # TODO - worried about infinite recursion somehow
+                return recurse(
+                    node.member_of
+                )  # TODO - worried about infinite recursion somehow
             else:
                 return Domain(tags={t.Variable(x)})
         case FilterByDomain(objs, filter):

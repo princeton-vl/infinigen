@@ -6,17 +6,15 @@
 
 import bpy
 import gin
-import mathutils
 import numpy as np
 from numpy.random import normal as N
 
 from infinigen.assets.materials import dirt
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
-from infinigen.core.util import blender as butil
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.random import random_general
 from infinigen.infinigen_gpl.surfaces import snow
 

@@ -5,7 +5,6 @@
 # Authors: Alexander Raistrick
 
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import reasoning as r
 from infinigen_examples import indoor_constraint_examples as ex
 
 

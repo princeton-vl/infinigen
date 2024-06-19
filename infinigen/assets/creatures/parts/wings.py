@@ -6,16 +6,19 @@
 # - Beining Han: flying variant
 
 
-import bpy
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
 from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.genome import IKParams, Joint
-from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
-from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube, nodegroup_simple_tube_v2
-from infinigen.assets.creatures.util.nodegroups.geometry import nodegroup_symmetric_clone
+from infinigen.assets.creatures.util.nodegroups.curve import (
+    nodegroup_simple_tube,
+    nodegroup_simple_tube_v2,
+)
+from infinigen.assets.creatures.util.nodegroups.geometry import (
+    nodegroup_symmetric_clone,
+)
 from infinigen.assets.creatures.util.nodegroups.math import nodegroup_deg2_rad
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
@@ -29,10 +32,14 @@ def nodegroup_feather(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketVector", "Length Rad1 Rad2", (0.5, 0.1, 0.1))]
+        Nodes.GroupInput,
+        expose_input=[("NodeSocketVector", "Length Rad1 Rad2", (0.5, 0.1, 0.1))],
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Length Rad1 Rad2"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Length Rad1 Rad2"]},
+    )
 
     scale = nw.new_node(
         Nodes.VectorMath,
@@ -40,14 +47,23 @@ def nodegroup_feather(nw: NodeWrangler):
         attrs={"operation": "SCALE"},
     )
 
-    curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": scale.outputs["Vector"]})
+    curve_line = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"End": scale.outputs["Vector"]}
+    )
 
-    subdivide_curve = nw.new_node(Nodes.SubdivideCurve, input_kwargs={"Curve": curve_line, "Cuts": 30})
+    subdivide_curve = nw.new_node(
+        Nodes.SubdivideCurve, input_kwargs={"Curve": curve_line, "Cuts": 30}
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.2327, 0.985), (0.8909, 0.6), (1.0, 0.0)])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0],
+        [(0.0, 0.0), (0.2327, 0.985), (0.8909, 0.6), (1.0, 0.0)],
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
@@ -59,23 +75,37 @@ def nodegroup_feather(nw: NodeWrangler):
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: float_curve, 1: map_range.outputs["Result"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: map_range.outputs["Result"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": subdivide_curve, "Radius": multiply})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": subdivide_curve, "Radius": multiply},
+    )
 
-    curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": (0.0, -1.0, 0.0), "End": (0.0, 1.0, 0.0)})
+    curve_line_1 = nw.new_node(
+        Nodes.CurveLine,
+        input_kwargs={"Start": (0.0, -1.0, 0.0), "End": (0.0, 1.0, 0.0)},
+    )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_line_1}
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_line_1},
     )
 
-    subdivide_curve_1 = nw.new_node(Nodes.SubdivideCurve, input_kwargs={"Curve": curve_line, "Cuts": 4})
+    subdivide_curve_1 = nw.new_node(
+        Nodes.SubdivideCurve, input_kwargs={"Curve": curve_line, "Cuts": 4}
+    )
 
-    trim_curve = nw.new_node(Nodes.TrimCurve, input_kwargs={"Curve": subdivide_curve_1, "End": 0.8742})
+    trim_curve = nw.new_node(
+        Nodes.TrimCurve, input_kwargs={"Curve": subdivide_curve_1, "End": 0.8742}
+    )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: 0.15, 4: 0.05}
+        Nodes.MapRange,
+        input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: 0.15, 4: 0.05},
     )
 
     multiply_1 = nw.new_node(
@@ -84,21 +114,32 @@ def nodegroup_feather(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_radius_1 = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": trim_curve, "Radius": multiply_1})
+    set_curve_radius_1 = nw.new_node(
+        Nodes.SetCurveRadius, input_kwargs={"Curve": trim_curve, "Radius": multiply_1}
+    )
 
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": 6})
 
     curve_to_mesh_1 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius_1, "Profile Curve": curve_circle.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius_1,
+            "Profile Curve": curve_circle.outputs["Curve"],
+        },
     )
 
     # join_geometry = nw.new_node(Nodes.JoinGeometry,
     #    input_kwargs={'Geometry': [curve_to_mesh, curve_to_mesh_1]})
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": tag_nodegroup(nw, curve_to_mesh, "feather")})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Mesh": tag_nodegroup(nw, curve_to_mesh, "feather")},
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_bird_tail", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_bird_tail", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_bird_tail(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -134,18 +175,27 @@ def nodegroup_bird_tail(nw: NodeWrangler):
     )
 
     feather = nw.new_node(
-        nodegroup_feather().name, input_kwargs={"Length Rad1 Rad2": group_input.outputs["Feather Length Rad1 Rad2"]}
+        nodegroup_feather().name,
+        input_kwargs={
+            "Length Rad1 Rad2": group_input.outputs["Feather Length Rad1 Rad2"]
+        },
     )
 
     index = nw.new_node(Nodes.Index)
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: index, 1: group_input.outputs["N Feathers"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: index, 1: group_input.outputs["N Feathers"]},
+        attrs={"operation": "DIVIDE"},
     )
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Vector": divide, 9: (-90.0, -14.88, 4.01), 10: group_input.outputs["Feather Rot Extent"]},
+        input_kwargs={
+            "Vector": divide,
+            9: (-90.0, -14.88, 4.01),
+            10: group_input.outputs["Feather Rot Extent"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
@@ -157,21 +207,38 @@ def nodegroup_bird_tail(nw: NodeWrangler):
 
     random_value = nw.new_node(
         Nodes.RandomValue,
-        input_kwargs={0: scale.outputs["Vector"], 1: group_input.outputs["Feather Rot Rand Bounds"]},
+        input_kwargs={
+            0: scale.outputs["Vector"],
+            1: group_input.outputs["Feather Rot Rand Bounds"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: map_range.outputs["Vector"], 1: random_value.outputs["Value"]})
-
-    deg2rad = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]})
-
-    instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": quadratic_bezier, "Instance": feather, "Rotation": deg2rad}
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: map_range.outputs["Vector"], 1: random_value.outputs["Value"]},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points})
+    deg2rad = nw.new_node(
+        nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]}
+    )
 
-    symmetric_clone = nw.new_node(nodegroup_symmetric_clone().name, input_kwargs={"Geometry": realize_instances})
+    instance_on_points = nw.new_node(
+        Nodes.InstanceOnPoints,
+        input_kwargs={
+            "Points": quadratic_bezier,
+            "Instance": feather,
+            "Rotation": deg2rad,
+        },
+    )
+
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
+
+    symmetric_clone = nw.new_node(
+        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": realize_instances}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -183,7 +250,9 @@ def nodegroup_bird_tail(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_bird_wing", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_bird_wing", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_bird_wing(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -222,7 +291,10 @@ def nodegroup_bird_wing(nw: NodeWrangler):
         },
     )
 
-    curve_length = nw.new_node(Nodes.CurveLength, input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"]})
+    curve_length = nw.new_node(
+        Nodes.CurveLength,
+        input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"]},
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
@@ -231,45 +303,74 @@ def nodegroup_bird_wing(nw: NodeWrangler):
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"], "Count": multiply}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": simple_tube_v2.outputs["Skeleton Curve"],
+            "Count": multiply,
+        },
     )
 
-    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": resample_curve})
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh, input_kwargs={"Curve": resample_curve}
+    )
 
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": curve_to_mesh})
 
     feather = nw.new_node(
-        nodegroup_feather().name, input_kwargs={"Length Rad1 Rad2": group_input.outputs["Feather length_rad1_rad2"]}
+        nodegroup_feather().name,
+        input_kwargs={
+            "Length Rad1 Rad2": group_input.outputs["Feather length_rad1_rad2"]
+        },
     )
 
     index = nw.new_node(Nodes.Index)
 
-    attribute_statistic = nw.new_node(Nodes.AttributeStatistic, input_kwargs={"Geometry": curve_to_mesh, 2: index})
+    attribute_statistic = nw.new_node(
+        Nodes.AttributeStatistic, input_kwargs={"Geometry": curve_to_mesh, 2: index}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": index, 1: attribute_statistic.outputs["Min"], 2: attribute_statistic.outputs["Max"]},
+        input_kwargs={
+            "Value": index,
+            1: attribute_statistic.outputs["Min"],
+            2: attribute_statistic.outputs["Max"],
+        },
     )
 
     transfer_attribute_index = nw.new_node(
-        Nodes.SampleNearest, input_kwargs={"Geometry": curve_to_mesh, "Sample Position": map_range_1.outputs["Result"]}
+        Nodes.SampleNearest,
+        input_kwargs={
+            "Geometry": curve_to_mesh,
+            "Sample Position": map_range_1.outputs["Result"],
+        },
     )
 
     transfer_attribute = nw.new_node(
-        Nodes.SampleIndex, input_kwargs={"Geometry": curve_to_mesh, "Index": transfer_attribute_index}
+        Nodes.SampleIndex,
+        input_kwargs={"Geometry": curve_to_mesh, "Index": transfer_attribute_index},
     )
 
     float_curve = nw.new_node(
         Nodes.FloatCurve,
-        input_kwargs={"Factor": group_input.outputs["Wing Shape Sculpting"], "Value": (transfer_attribute, "Value")},
+        input_kwargs={
+            "Factor": group_input.outputs["Wing Shape Sculpting"],
+            "Value": (transfer_attribute, "Value"),
+        },
     )
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.5164, 0.245), (0.7564, 0.625), (1.0, 1.0)])
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0],
+        [(0.0, 0.0), (0.5164, 0.245), (0.7564, 0.625), (1.0, 1.0)],
+    )
 
     map_range_2 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Extension"], 3: 115.65, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Extension"], 3: 115.65, 4: 0.0},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": map_range_2.outputs["Result"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": map_range_2.outputs["Result"]}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
@@ -277,17 +378,33 @@ def nodegroup_bird_wing(nw: NodeWrangler):
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: map_range.outputs["Vector"], 1: (-5.0, 0.0, -1.0)})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: map_range.outputs["Vector"], 1: (-5.0, 0.0, -1.0)},
+    )
 
-    deg2rad = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]})
+    deg2rad = nw.new_node(
+        nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]}
+    )
 
     vector_curves = nw.new_node(
         Nodes.VectorCurve,
-        input_kwargs={"Fac": group_input.outputs["Wing Shape Sculpting"], "Vector": transfer_attribute},
+        input_kwargs={
+            "Fac": group_input.outputs["Wing Shape Sculpting"],
+            "Vector": transfer_attribute,
+        },
     )
     node_utils.assign_curve(
         vector_curves.mapping.curves[0],
-        [(-1.0, -0.0), (0.0036, 0.0), (0.0473, 0.6), (0.3527, 0.54), (0.6, 0.9), (0.8836, 0.92), (1.0, 0.58)],
+        [
+            (-1.0, -0.0),
+            (0.0036, 0.0),
+            (0.0473, 0.6),
+            (0.3527, 0.54),
+            (0.6, 0.9),
+            (0.8836, 0.92),
+            (1.0, 0.58),
+        ],
         handles=["AUTO", "VECTOR", "AUTO", "AUTO", "VECTOR", "AUTO", "AUTO"],
     )
     node_utils.assign_curve(vector_curves.mapping.curves[1], [(-1.0, 1.0), (1.0, 1.0)])
@@ -295,15 +412,27 @@ def nodegroup_bird_wing(nw: NodeWrangler):
 
     instance_on_points = nw.new_node(
         Nodes.InstanceOnPoints,
-        input_kwargs={"Points": reroute, "Instance": feather, "Rotation": deg2rad, "Scale": vector_curves},
+        input_kwargs={
+            "Points": reroute,
+            "Instance": feather,
+            "Rotation": deg2rad,
+            "Scale": vector_curves,
+        },
     )
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: map_range.outputs["Vector"], 1: (-5.0, 0.0, 0.0)})
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: map_range.outputs["Vector"], 1: (-5.0, 0.0, 0.0)},
+    )
 
-    deg2rad_1 = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": add_1.outputs["Vector"]})
+    deg2rad_1 = nw.new_node(
+        nodegroup_deg2_rad().name, input_kwargs={"Deg": add_1.outputs["Vector"]}
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_curves, 1: (0.75, 1.0, 1.0)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: vector_curves, 1: (0.75, 1.0, 1.0)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     instance_on_points_1 = nw.new_node(
@@ -316,12 +445,19 @@ def nodegroup_bird_wing(nw: NodeWrangler):
         },
     )
 
-    add_2 = nw.new_node(Nodes.VectorMath, input_kwargs={0: map_range.outputs["Vector"], 1: (-10.3, 0.0, 1.0)})
+    add_2 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: map_range.outputs["Vector"], 1: (-10.3, 0.0, 1.0)},
+    )
 
-    deg2rad_2 = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": add_2.outputs["Vector"]})
+    deg2rad_2 = nw.new_node(
+        nodegroup_deg2_rad().name, input_kwargs={"Deg": add_2.outputs["Vector"]}
+    )
 
     multiply_2 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_curves, 1: (0.45, 1.0, 1.0)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: vector_curves, 1: (0.45, 1.0, 1.0)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     instance_on_points_2 = nw.new_node(
@@ -335,10 +471,15 @@ def nodegroup_bird_wing(nw: NodeWrangler):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [instance_on_points, instance_on_points_1, instance_on_points_2]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [instance_on_points, instance_on_points_1, instance_on_points_2]
+        },
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -355,9 +496,13 @@ class BirdTail(PartFactory):
 
     def sample_params(self):
         return {
-            "Feather Length Rad1 Rad2": np.array((0.4, 0.06, 0.04)) * N(1, 0.1) * N(1, 0.1, 3),
+            "Feather Length Rad1 Rad2": np.array((0.4, 0.06, 0.04))
+            * N(1, 0.1)
+            * N(1, 0.1, 3),
             "Feather Rot Extent": np.array((25, -10, -16)) * N(1, 0.1, 3),
-            "Feather Rot Rand Bounds": np.array((5.0, 5.0, 5.0)) * N(1, 0.1) * N(1, 0.05, 3),
+            "Feather Rot Rand Bounds": np.array((5.0, 5.0, 5.0))
+            * N(1, 0.1)
+            * N(1, 0.05, 3),
             "N Feathers": int(N(16, 3)),
         }
 
@@ -384,9 +529,13 @@ class BirdWing(PartFactory):
         # split extras is essential to make automatic rigging work. We will join them back together later
         part = nodegroup_to_part(nodegroup_bird_wing, params, split_extras=True)
         part.joints = {
-            0: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # shoulder
+            0: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # shoulder
             0.27: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),
-            0.65: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # elbow
+            0.65: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # elbow
         }
         part.iks = {1.0: IKParams(name="wingtip", chain_parts=1)}
         tag_object(part.obj, "bird_wing")
@@ -394,7 +543,9 @@ class BirdWing(PartFactory):
         return part
 
 
-@node_utils.to_nodegroup("nodegroup_flying_feather", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_flying_feather", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_flying_feather(nw: NodeWrangler):
     # Code generated using version 2.5.1 of the node_transpiler
 
@@ -402,13 +553,21 @@ def nodegroup_flying_feather(nw: NodeWrangler):
     vector.vector = (0.5000, 0.0500, 0.0000)
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketVector", "Length Rad1 Rad2", (0.5000, 0.1000, 0.1000))]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketVector", "Length Rad1 Rad2", (0.5000, 0.1000, 0.1000))
+        ],
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Length Rad1 Rad2"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["Length Rad1 Rad2"]},
+    )
 
     scale = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector, "Scale": separate_xyz.outputs["X"]}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: vector, "Scale": separate_xyz.outputs["X"]},
+        attrs={"operation": "SCALE"},
     )
 
     scale_1 = nw.new_node(
@@ -427,16 +586,27 @@ def nodegroup_flying_feather(nw: NodeWrangler):
         },
     )
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": quadratic_bezier})
+    set_position = nw.new_node(
+        Nodes.SetPosition, input_kwargs={"Geometry": quadratic_bezier}
+    )
 
-    subdivide_curve_1 = nw.new_node(Nodes.SubdivideCurve, input_kwargs={"Curve": set_position, "Cuts": 4})
+    subdivide_curve_1 = nw.new_node(
+        Nodes.SubdivideCurve, input_kwargs={"Curve": set_position, "Cuts": 4}
+    )
 
-    trim_curve = nw.new_node(Nodes.TrimCurve, input_kwargs={"Curve": subdivide_curve_1, "End": 0.8742})
+    trim_curve = nw.new_node(
+        Nodes.TrimCurve, input_kwargs={"Curve": subdivide_curve_1, "End": 0.8742}
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: 0.1500, 4: 0.0100}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": spline_parameter.outputs["Factor"],
+            3: 0.1500,
+            4: 0.0100,
+        },
     )
 
     multiply = nw.new_node(
@@ -445,25 +615,38 @@ def nodegroup_flying_feather(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_radius_1 = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": trim_curve, "Radius": multiply})
+    set_curve_radius_1 = nw.new_node(
+        Nodes.SetCurveRadius, input_kwargs={"Curve": trim_curve, "Radius": multiply}
+    )
 
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": 6})
 
     curve_to_mesh_1 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius_1, "Profile Curve": curve_circle.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius_1,
+            "Profile Curve": curve_circle.outputs["Curve"],
+        },
     )
 
-    subdivide_curve = nw.new_node(Nodes.SubdivideCurve, input_kwargs={"Curve": set_position, "Cuts": 30})
+    subdivide_curve = nw.new_node(
+        Nodes.SubdivideCurve, input_kwargs={"Curve": set_position, "Cuts": 30}
+    )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
+    )
     node_utils.assign_curve(
-        float_curve.mapping.curves[0], [(0.0000, 0.0000), (0.3373, 0.8188), (0.7182, 0.7375), (1.0000, 0.0000)]
+        float_curve.mapping.curves[0],
+        [(0.0000, 0.0000), (0.3373, 0.8188), (0.7182, 0.7375), (1.0000, 0.0000)],
     )
 
     white_noise_texture = nw.new_node(Nodes.WhiteNoiseTexture)
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: white_noise_texture.outputs["Value"], 1: 0.1000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: white_noise_texture.outputs["Value"], 1: 0.1000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: multiply_1})
@@ -478,25 +661,43 @@ def nodegroup_flying_feather(nw: NodeWrangler):
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add, 1: map_range.outputs["Result"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: add, 1: map_range.outputs["Result"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": subdivide_curve, "Radius": multiply_2})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": subdivide_curve, "Radius": multiply_2},
+    )
 
     curve_line_1 = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": (0.0000, -1.0000, 0.1000), "End": (0.0000, 1.0000, 0.0000)}
+        Nodes.CurveLine,
+        input_kwargs={
+            "Start": (0.0000, -1.0000, 0.1000),
+            "End": (0.0000, 1.0000, 0.0000),
+        },
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_line_1, "Fill Caps": True}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_line_1,
+            "Fill Caps": True,
+        },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh_1, curve_to_mesh]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh_1, curve_to_mesh]}
+    )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": join_geometry})
 
 
-@node_utils.to_nodegroup("nodegroup_flying_bird_tail", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_flying_bird_tail", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_flying_bird_tail(nw: NodeWrangler):
     # Code generated using version 2.5.1 of the node_transpiler
 
@@ -533,44 +734,72 @@ def nodegroup_flying_bird_tail(nw: NodeWrangler):
 
     feather = nw.new_node(
         nodegroup_flying_feather().name,
-        input_kwargs={"Length Rad1 Rad2": group_input.outputs["Feather Length Rad1 Rad2"]},
+        input_kwargs={
+            "Length Rad1 Rad2": group_input.outputs["Feather Length Rad1 Rad2"]
+        },
     )
 
     curve_tangent = nw.new_node(Nodes.CurveTangent)
 
     align_euler_to_vector = nw.new_node(
-        Nodes.AlignEulerToVector, input_kwargs={"Vector": curve_tangent}, attrs={"axis": "Y"}
+        Nodes.AlignEulerToVector,
+        input_kwargs={"Vector": curve_tangent},
+        attrs={"axis": "Y"},
     )
 
     instance_on_points = nw.new_node(
         Nodes.InstanceOnPoints,
-        input_kwargs={"Points": quadratic_bezier, "Instance": feather, "Rotation": align_euler_to_vector},
+        input_kwargs={
+            "Points": quadratic_bezier,
+            "Instance": feather,
+            "Rotation": align_euler_to_vector,
+        },
     )
 
     rotate_instances = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": instance_on_points, "Rotation": (1.5708, 0.0000, 0.0000)}
+        Nodes.RotateInstances,
+        input_kwargs={
+            "Instances": instance_on_points,
+            "Rotation": (1.5708, 0.0000, 0.0000),
+        },
     )
 
-    random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000})
+    random_value_1 = nw.new_node(
+        Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000}
+    )
 
-    random_value_2 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000, "Seed": 1})
+    random_value_2 = nw.new_node(
+        Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000, "Seed": 1}
+    )
 
-    random_value_3 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000})
+    random_value_3 = nw.new_node(
+        Nodes.RandomValue, input_kwargs={2: -0.1000, 3: 0.1000}
+    )
 
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": random_value_1.outputs[1], "Y": random_value_2.outputs[1], "Z": random_value_3.outputs[1]},
+        input_kwargs={
+            "X": random_value_1.outputs[1],
+            "Y": random_value_2.outputs[1],
+            "Z": random_value_3.outputs[1],
+        },
     )
 
     rotate_instances_1 = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": rotate_instances, "Rotation": combine_xyz}
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": rotate_instances, "Rotation": combine_xyz},
     )
 
     index_1 = nw.new_node(Nodes.Index)
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": index_1, 2: group_input.outputs["N Feathers"]})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": index_1, 2: group_input.outputs["N Feathers"]},
+    )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]}
+    )
 
     if U(0, 1) < 0.5:
         control_points = [0.2, 0.3, 0.45, 0.9]
@@ -587,18 +816,27 @@ def nodegroup_flying_bird_tail(nw: NodeWrangler):
     )
 
     multiply_add = nw.new_node(
-        Nodes.Math, input_kwargs={0: float_curve, 1: 1.2000}, attrs={"operation": "MULTIPLY_ADD"}
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: 1.2000},
+        attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_add, "Y": 1.0000, "Z": 1.0000})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_add, "Y": 1.0000, "Z": 1.0000}
+    )
 
     scale_instances = nw.new_node(
-        Nodes.ScaleInstances, input_kwargs={"Instances": rotate_instances_1, "Scale": combine_xyz_1}
+        Nodes.ScaleInstances,
+        input_kwargs={"Instances": rotate_instances_1, "Scale": combine_xyz_1},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": scale_instances})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": scale_instances}
+    )
 
-    symmetric_clone = nw.new_node(nodegroup_symmetric_clone().name, input_kwargs={"Geometry": realize_instances})
+    symmetric_clone = nw.new_node(
+        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": realize_instances}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -610,7 +848,9 @@ def nodegroup_flying_bird_tail(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_flying_bird_wing", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_flying_bird_wing", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_flying_bird_wing(nw: NodeWrangler):
     # Code generated using version 2.5.1 of the node_transpiler
 
@@ -649,7 +889,10 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
         },
     )
 
-    curve_length = nw.new_node(Nodes.CurveLength, input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"]})
+    curve_length = nw.new_node(
+        Nodes.CurveLength,
+        input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"]},
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
@@ -658,39 +901,64 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": simple_tube_v2.outputs["Skeleton Curve"], "Count": multiply}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": simple_tube_v2.outputs["Skeleton Curve"],
+            "Count": multiply,
+        },
     )
 
-    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": resample_curve})
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh, input_kwargs={"Curve": resample_curve}
+    )
 
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": curve_to_mesh})
 
     feather = nw.new_node(
-        nodegroup_flying_feather().name, input_kwargs={"Length Rad1 Rad2": group_input.outputs["Length Rad1 Rad2"]}
+        nodegroup_flying_feather().name,
+        input_kwargs={"Length Rad1 Rad2": group_input.outputs["Length Rad1 Rad2"]},
     )
 
     index = nw.new_node(Nodes.Index)
 
-    attribute_statistic = nw.new_node(Nodes.AttributeStatistic, input_kwargs={"Geometry": curve_to_mesh, 2: index})
+    attribute_statistic = nw.new_node(
+        Nodes.AttributeStatistic, input_kwargs={"Geometry": curve_to_mesh, 2: index}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": index, 1: attribute_statistic.outputs["Min"], 2: attribute_statistic.outputs["Max"]},
+        input_kwargs={
+            "Value": index,
+            1: attribute_statistic.outputs["Min"],
+            2: attribute_statistic.outputs["Max"],
+        },
     )
 
     transfer_attribute_index = nw.new_node(
-        Nodes.SampleNearest, input_kwargs={"Geometry": curve_to_mesh, "Sample Position": map_range_1.outputs["Result"]}
+        Nodes.SampleNearest,
+        input_kwargs={
+            "Geometry": curve_to_mesh,
+            "Sample Position": map_range_1.outputs["Result"],
+        },
     )
 
     transfer_attribute = nw.new_node(
-        Nodes.SampleIndex, input_kwargs={"Geometry": curve_to_mesh, "Index": transfer_attribute_index}
+        Nodes.SampleIndex,
+        input_kwargs={"Geometry": curve_to_mesh, "Index": transfer_attribute_index},
     )
 
     map_range_2 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Extension"], 3: 115.6500, 4: 0.0000}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": group_input.outputs["Extension"],
+            3: 115.6500,
+            4: 0.0000,
+        },
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": map_range_2.outputs["Result"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": map_range_2.outputs["Result"]}
+    )
 
     wing_feathers = []
 
@@ -704,24 +972,43 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
         )
         node_utils.assign_curve(
             float_curve.mapping.curves[0],
-            [(0.0000, 0.0000), (0.25, 0.2), (0.50, 0.4), (0.75, 0.6), (1.0000, 0.8 - i * 0.02 + N(0.0, 0.02))],
+            [
+                (0.0000, 0.0000),
+                (0.25, 0.2),
+                (0.50, 0.4),
+                (0.75, 0.6),
+                (1.0000, 0.8 - i * 0.02 + N(0.0, 0.02)),
+            ],
         )
 
         map_range = nw.new_node(
             Nodes.MapRange,
-            input_kwargs={"Vector": float_curve, 9: (0.0000, 80.0000, 0.0000), 10: combine_xyz},
+            input_kwargs={
+                "Vector": float_curve,
+                9: (0.0000, 80.0000, 0.0000),
+                10: combine_xyz,
+            },
             attrs={"data_type": "FLOAT_VECTOR"},
         )
 
         add = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: map_range.outputs["Vector"], 1: (0.0, -5 + 5 * i, (i - 1) * 8.0)}
+            Nodes.VectorMath,
+            input_kwargs={
+                0: map_range.outputs["Vector"],
+                1: (0.0, -5 + 5 * i, (i - 1) * 8.0),
+            },
         )
 
-        deg2rad = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]})
+        deg2rad = nw.new_node(
+            nodegroup_deg2_rad().name, input_kwargs={"Deg": add.outputs["Vector"]}
+        )
 
         vector_curves = nw.new_node(
             Nodes.VectorCurve,
-            input_kwargs={"Fac": group_input.outputs["Wing Shape Sculpting"], "Vector": (transfer_attribute, "Value")},
+            input_kwargs={
+                "Fac": group_input.outputs["Wing Shape Sculpting"],
+                "Vector": (transfer_attribute, "Value"),
+            },
         )
         node_utils.assign_curve(
             vector_curves.mapping.curves[0],
@@ -736,8 +1023,12 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
             ],
             handles=["AUTO", "VECTOR", "AUTO", "AUTO", "VECTOR", "AUTO", "AUTO"],
         )
-        node_utils.assign_curve(vector_curves.mapping.curves[1], [(-1.0000, 1.0000), (1.0000, 1.0000)])
-        node_utils.assign_curve(vector_curves.mapping.curves[2], [(-1.0000, 1.0000), (1.0000, 1.0000)])
+        node_utils.assign_curve(
+            vector_curves.mapping.curves[1], [(-1.0000, 1.0000), (1.0000, 1.0000)]
+        )
+        node_utils.assign_curve(
+            vector_curves.mapping.curves[2], [(-1.0000, 1.0000), (1.0000, 1.0000)]
+        )
 
         scale = nw.new_node(
             Nodes.VectorMath,
@@ -755,11 +1046,17 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
             },
         )
 
-        random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.01, 3: 0.01})
+        random_value_1 = nw.new_node(
+            Nodes.RandomValue, input_kwargs={2: -0.01, 3: 0.01}
+        )
 
-        random_value_2 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.03, 3: 0.03, "Seed": 1})
+        random_value_2 = nw.new_node(
+            Nodes.RandomValue, input_kwargs={2: -0.03, 3: 0.03, "Seed": 1}
+        )
 
-        random_value_3 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.01, 3: 0.01, "Seed": 2})
+        random_value_3 = nw.new_node(
+            Nodes.RandomValue, input_kwargs={2: -0.01, 3: 0.01, "Seed": 2}
+        )
 
         combine_xyz = nw.new_node(
             Nodes.CombineXYZ,
@@ -771,13 +1068,18 @@ def nodegroup_flying_bird_wing(nw: NodeWrangler):
         )
 
         rotate_instances_1 = nw.new_node(
-            Nodes.RotateInstances, input_kwargs={"Instances": instance_on_points, "Rotation": combine_xyz}
+            Nodes.RotateInstances,
+            input_kwargs={"Instances": instance_on_points, "Rotation": combine_xyz},
         )
         wing_feathers.append(rotate_instances_1)
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": wing_feathers})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": wing_feathers}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_1}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -794,9 +1096,13 @@ class FlyingBirdTail(PartFactory):
 
     def sample_params(self):
         return {
-            "Feather Length Rad1 Rad2": np.array((0.4, 0.06, 0.04)) * N(1, 0.1) * N(1, 0.1, 3),
+            "Feather Length Rad1 Rad2": np.array((0.4, 0.06, 0.04))
+            * N(1, 0.1)
+            * N(1, 0.1, 3),
             "Feather Rot Extent": np.array((25, -10, -16)) * N(1, 0.1, 3),
-            "Feather Rot Rand Bounds": np.array((5.0, 5.0, 5.0)) * N(1, 0.1) * N(1, 0.05, 3),
+            "Feather Rot Rand Bounds": np.array((5.0, 5.0, 5.0))
+            * N(1, 0.1)
+            * N(1, 0.05, 3),
             "N Feathers": int(N(16, 3)),
         }
 
@@ -810,7 +1116,9 @@ class FlyingBirdWing(PartFactory):
 
     def sample_params(self):
         return {
-            "length_rad1_rad2": np.array((clip_gaussian(1.2, 0.7, 0.4, 2), U(0.08, 0.13), 0.02)),
+            "length_rad1_rad2": np.array(
+                (clip_gaussian(1.2, 0.7, 0.4, 2), U(0.08, 0.13), 0.02)
+            ),
             "feather_density": 40,
             "aspect": N(0.35, 0.04),
             "fullness": N(4, 0.1),
@@ -823,9 +1131,13 @@ class FlyingBirdWing(PartFactory):
         # split extras is essential to make automatic rigging work. We will join them back together later
         part = nodegroup_to_part(nodegroup_flying_bird_wing, params, split_extras=True)
         part.joints = {
-            0: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # shoulder
+            0: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # shoulder
             0.27: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),
-            0.65: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # elbow
+            0.65: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # elbow
         }
         part.iks = {1.0: IKParams(name="wingtip", chain_length=3)}
         part.settings["parent_extras_rigid"] = True

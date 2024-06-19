@@ -3,22 +3,15 @@
 
 # Authors: Stamatis Alexandropulos
 
-import colorsys
 
 import bpy
 import mathutils
 import numpy as np
 import trimesh
-from numpy.random import uniform
 
 from infinigen.assets.corals import CoralFactory
-from infinigen.assets.creatures.beetle import AntSwarmFactory, BeetleFactory
-from infinigen.assets.creatures.bird import BirdFactory, FlyingBirdFactory
 from infinigen.assets.creatures.carnivore import CarnivoreFactory
-from infinigen.assets.creatures.crustacean import CrabFactory, CrustaceanFactory, LobsterFactory, SpinyLobsterFactory
 from infinigen.assets.creatures.herbivore import HerbivoreFactory
-from infinigen.assets.creatures.insects.dragonfly import DragonflyFactory
-from infinigen.assets.creatures.reptile import FrogFactory
 from infinigen.assets.mollusk import (
     AugerFactory,
     ClamFactory,
@@ -32,7 +25,6 @@ from infinigen.assets.monocot import PineconeFactory
 from infinigen.assets.rocks import BlenderRockFactory
 from infinigen.assets.rocks.boulder import BoulderFactory
 from infinigen.assets.utils import object as obj
-from infinigen.assets.utils.decorate import remove_vertices
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -60,7 +52,9 @@ class NatureShelfTrinketsFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(NatureShelfTrinketsFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            base_factory_fn = np.random.choice(self.factories, p=self.probs / self.probs.sum())
+            base_factory_fn = np.random.choice(
+                self.factories, p=self.probs / self.probs.sum()
+            )
 
             kwargs = {}
             if base_factory_fn in [HerbivoreFactory, CarnivoreFactory]:
@@ -75,7 +69,9 @@ class NatureShelfTrinketsFactory(AssetFactory):
         return placeholder
 
     def create_asset(self, i, placeholder=None, **params):
-        asset = self.base_factory.spawn_asset(np.random.randint(1e7), distance=200, adaptive_resolution=False)
+        asset = self.base_factory.spawn_asset(
+            np.random.randint(1e7), distance=200, adaptive_resolution=False
+        )
 
         if list(asset.children):
             asset = join_objects(list(asset.children))
@@ -83,7 +79,9 @@ class NatureShelfTrinketsFactory(AssetFactory):
         # butil.modify_mesh(asset, 'DECIMATE')
         butil.apply_transform(asset, loc=True)
         butil.apply_modifiers(asset)
-        if isinstance(self.base_factory, HerbivoreFactory) or isinstance(self.base_factory, CarnivoreFactory):
+        if isinstance(self.base_factory, HerbivoreFactory) or isinstance(
+            self.base_factory, CarnivoreFactory
+        ):
             pass
         else:
             if not isinstance(asset, trimesh.Trimesh):
@@ -100,7 +98,9 @@ class NatureShelfTrinketsFactory(AssetFactory):
         butil.apply_transform(asset, loc=True)
         bounds = butil.bounds(asset)
         cur_loc = asset.location
-        new_location = [cur_loc[i] - (bounds[0][i] + bounds[1][i]) / 2 for i in range(3)]
+        new_location = [
+            cur_loc[i] - (bounds[0][i] + bounds[1][i]) / 2 for i in range(3)
+        ]
         new_location[2] = cur_loc[2] - (bounds[0][2] + bounding_box[2] / 2)
         asset.location = new_location
         butil.apply_transform(asset, loc=True)

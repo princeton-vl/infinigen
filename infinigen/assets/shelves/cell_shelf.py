@@ -23,20 +23,21 @@ from infinigen.assets.materials.shelf_shaders import (
 from infinigen.assets.shelves.utils import nodegroup_tagged_cube
 from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
-from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util import math as mu
 from infinigen.core.util.math import FixedSeed
 
 
-@node_utils.to_nodegroup("nodegroup_screw_head", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_screw_head", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_screw_head(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
-    cylinder = nw.new_node("GeometryNodeMeshCylinder", input_kwargs={"Radius": 0.0050, "Depth": 0.0010})
+    cylinder = nw.new_node(
+        "GeometryNodeMeshCylinder", input_kwargs={"Radius": 0.0050, "Depth": 0.0010}
+    )
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -49,62 +50,107 @@ def nodegroup_screw_head(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["external"], 1: 0.0000})
-
-    subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["X"], 1: add}, attrs={"operation": "SUBTRACT"}
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["external"], 1: 0.0000}
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "MULTIPLY"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["X"], 1: add},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Z"], 1: group_input.outputs["leg"]})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Z"], 1: group_input.outputs["leg"]},
+    )
+
+    multiply_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: multiply_2})
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": multiply_1, "Z": add_2})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": multiply_1, "Z": add_2}
+    )
 
     transform_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Translation": combine_xyz}
+        Nodes.Transform,
+        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Translation": combine_xyz},
     )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: multiply_1}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["depth"], 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": subtract_1, "Z": add_2})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": subtract_1, "Z": add_2}
+    )
 
     transform_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Translation": combine_xyz_1}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Translation": combine_xyz_1,
+        },
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": subtract_1, "Z": add_2})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": subtract_1, "Z": add_2}
+    )
 
     transform_4 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Translation": combine_xyz_2}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Translation": combine_xyz_2,
+        },
     )
 
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": multiply_1, "Z": add_2})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": multiply_1, "Z": add_2}
+    )
 
     transform_5 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Translation": combine_xyz_3}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Translation": combine_xyz_3,
+        },
     )
 
     join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_2, transform_3, transform_4, transform_5]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_2, transform_3, transform_4, transform_5]},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_3}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_3},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_base_frame", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_base_frame", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_base_frame(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -118,101 +164,218 @@ def nodegroup_base_frame(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["leg_size"], 1: 0.0000})
-
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["leg_height"], 1: 0.0000})
-
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add, "Z": add_1})
-
-    cube = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["leg_size"], 1: 0.0000}
     )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["bottom_x"], 1: 0.0000})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["leg_height"], 1: 0.0000}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "MULTIPLY"})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add, "Z": add_1}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    cube = nw.new_node(
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
+    )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["bottom_x"], 1: 0.0000}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "MULTIPLY"}
+    )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": subtract, "Y": multiply_1, "Z": multiply_2})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    transform_2 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_1})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "MULTIPLY"}
+    )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": multiply_1, "Z": multiply_2})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": subtract, "Y": multiply_1, "Z": multiply_2}
+    )
 
-    transform_3 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_2})
+    transform_2 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_1}
+    )
 
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": multiply_3, "Y": multiply_1, "Z": multiply_2},
+    )
+
+    transform_3 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_2}
+    )
+
+    add_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000}
+    )
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: 0.0000})
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_4, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
-
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": subtract, "Y": subtract_1, "Z": multiply_2})
-
-    transform_4 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_3})
-
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": subtract_1, "Z": multiply_2})
-
-    transform_5 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_4})
-
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
-
-    subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: multiply_4}, attrs={"operation": "SUBTRACT"})
-
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": subtract_2, "Y": add, "Z": add})
-
-    cube_1 = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz_5, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+    subtract_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_4, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    subtract_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": subtract, "Y": subtract_1, "Z": multiply_2}
+    )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_1, "Z": subtract_3})
+    transform_4 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_3}
+    )
 
-    transform_6 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_6})
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": multiply_3, "Y": subtract_1, "Z": multiply_2},
+    )
+
+    transform_5 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_4}
+    )
+
+    multiply_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+    )
+
+    subtract_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_2, 1: multiply_4},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    combine_xyz_5 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": subtract_2, "Y": add, "Z": add}
+    )
+
+    cube_1 = nw.new_node(
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz_5,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
+    )
+
+    subtract_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_1, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    combine_xyz_6 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_1, "Z": subtract_3}
+    )
+
+    transform_6 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_6}
+    )
 
     add_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: 0.0000})
 
-    subtract_4 = nw.new_node(Nodes.Math, input_kwargs={0: add_5, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
-
-    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": subtract_4, "Z": subtract_3})
-
-    transform_7 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_7})
-
-    subtract_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: multiply_4}, attrs={"operation": "SUBTRACT"})
-
-    combine_xyz_8 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": subtract_5, "Z": add})
-
-    cube_2 = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz_8, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+    subtract_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_5, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    subtract_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: add}, attrs={"operation": "SUBTRACT"})
+    combine_xyz_7 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": subtract_4, "Z": subtract_3}
+    )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_6}, attrs={"operation": "MULTIPLY"})
+    transform_7 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_7}
+    )
 
-    multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_5}, attrs={"operation": "MULTIPLY"})
+    subtract_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_3, 1: multiply_4},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    combine_xyz_8 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add, "Y": subtract_5, "Z": add}
+    )
+
+    cube_2 = nw.new_node(
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz_8,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
+    )
+
+    subtract_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2, 1: add}, attrs={"operation": "SUBTRACT"}
+    )
+
+    multiply_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_6}, attrs={"operation": "MULTIPLY"}
+    )
+
+    multiply_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_5}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: add})
 
-    subtract_7 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    subtract_7 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_1, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    combine_xyz_9 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_5, "Y": add_6, "Z": subtract_7})
+    combine_xyz_9 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_5, "Y": add_6, "Z": subtract_7}
+    )
 
-    transform_8 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_2, "Translation": combine_xyz_9})
+    transform_8 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube_2, "Translation": combine_xyz_9}
+    )
 
-    multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_5, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_7 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_5, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    combine_xyz_10 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": add_6, "Z": subtract_7})
+    combine_xyz_10 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": add_6, "Z": subtract_7}
+    )
 
-    transform_9 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_2, "Translation": combine_xyz_10})
+    transform_9 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": cube_2, "Translation": combine_xyz_10},
+    )
 
     join_geometry_3 = nw.new_node(
         Nodes.JoinGeometry,
@@ -231,11 +394,15 @@ def nodegroup_base_frame(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_3}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_3},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_back_board", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_back_board", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_back_board(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -251,28 +418,49 @@ def nodegroup_back_board(nw: NodeWrangler):
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Z"], 1: 0.0000})
 
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["X"], "Y": 0.01, "Z": add})
-
-    cube = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz_4, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": group_input.outputs["X"], "Y": 0.01, "Z": add},
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    cube = nw.new_node(
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz_4,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["leg"]})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["external"]})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["leg"]}
+    )
+
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["external"]}
+    )
 
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": add_2})
 
-    transform_6 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_5})
+    transform_6 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_5}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_6}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_6},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_attach_gadget", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_attach_gadget", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_attach_gadget(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -287,48 +475,91 @@ def nodegroup_attach_gadget(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["size"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["size"], 1: 0.0000}
+    )
 
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": 0.0010, "Z": add})
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add, "Y": 0.0010, "Z": add}
+    )
 
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_4})
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["x"]}, attrs={"operation": "MULTIPLY"})
-
-    subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["thickness"]}, attrs={"operation": "SUBTRACT"}
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["x"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: group_input.outputs["thickness"]},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    subtract_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["base_leg"], 1: group_input.outputs["z"]})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["thickness"]})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["base_leg"], 1: group_input.outputs["z"]},
+    )
+
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: group_input.outputs["thickness"]}
+    )
 
     add_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: -0.02})
 
-    subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    subtract_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_3, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Z": subtract_2})
+    combine_xyz_5 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Z": subtract_2}
+    )
 
-    transform_6 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_5})
+    transform_6 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_5}
+    )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": subtract_1, "Z": subtract_2})
+    combine_xyz_6 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": subtract_1, "Z": subtract_2}
+    )
 
-    transform_7 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_6})
+    transform_7 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_6}
+    )
 
-    join_geometry_5 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_6, transform_7]})
+    join_geometry_5 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_6, transform_7]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_5}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_5},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_h_division_placement", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_h_division_placement", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_h_division_placement(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -344,41 +575,65 @@ def nodegroup_h_division_placement(nw: NodeWrangler):
         ],
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["depth"]}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["depth"]},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["index"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["index"], 1: 0.0000}
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add, 1: group_input.outputs["cell_size"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: add, 1: group_input.outputs["cell_size"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: -1.0000})
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["external_board_thickness"], 1: 0.0000})
+    add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["external_board_thickness"], 1: 0.0000},
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: add_2}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: add_2}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: multiply_2})
 
     add_4 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["division_board_thickness"], 1: group_input.outputs["leg_height"]},
+        input_kwargs={
+            0: group_input.outputs["division_board_thickness"],
+            1: group_input.outputs["leg_height"],
+        },
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_4, 1: multiply_3})
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: add_5})
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply, "Z": add_6})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply, "Z": add_6}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Vector": combine_xyz}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Vector": combine_xyz},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_h_division_board", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_h_division_board", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_h_division_board(nw: NodeWrangler, tag_support=False):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -392,10 +647,15 @@ def nodegroup_h_division_board(nw: NodeWrangler, tag_support=False):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["horizontal_cell_num"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["horizontal_cell_num"], 1: 0.0000},
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: add, 1: group_input.outputs["cell_size"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: add, 1: group_input.outputs["cell_size"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: -1.0000})
@@ -408,22 +668,38 @@ def nodegroup_h_division_board(nw: NodeWrangler, tag_support=False):
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1})
 
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["division_board_thickness"], 1: 0.0000})
+    add_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["division_board_thickness"], 1: 0.0000},
+    )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": add_2, "Y": group_input.outputs["depth"], "Z": add_3}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": add_2, "Y": group_input.outputs["depth"], "Z": add_3},
     )
     if tag_support:
-        cube = nw.new_node(nodegroup_tagged_cube().name, input_kwargs={"Size": combine_xyz})
+        cube = nw.new_node(
+            nodegroup_tagged_cube().name, input_kwargs={"Size": combine_xyz}
+        )
     else:
         cube = nw.new_node(
-            Nodes.MeshCube, input_kwargs={"Size": combine_xyz, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+            Nodes.MeshCube,
+            input_kwargs={
+                "Size": combine_xyz,
+                "Vertices X": 5,
+                "Vertices Y": 5,
+                "Vertices Z": 5,
+            },
         )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": cube}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Mesh": cube}, attrs={"is_active_output": True}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_v_division_board_placement", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_v_division_board_placement", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_v_division_board_placement(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -441,15 +717,25 @@ def nodegroup_v_division_board_placement(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["h_cell_num"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["h_cell_num"], 1: 0.0000}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: -1.0000})
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={1: add_1}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={1: add_1}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["index"], 1: 0.0000})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["index"], 1: 0.0000}
+    )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: add_2}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: add_2},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     add_3 = nw.new_node(Nodes.Math, input_kwargs={0: subtract})
 
@@ -459,38 +745,60 @@ def nodegroup_v_division_board_placement(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: add_2}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: add_2},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: subtract_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["cell_size"], 1: subtract_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: multiply_3})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["depth"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["depth"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["base_leg"], 1: group_input.outputs["external_thickness"]}
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["base_leg"],
+            1: group_input.outputs["external_thickness"],
+        },
     )
 
     multiply_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["side_z"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["side_z"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_5, 1: multiply_5})
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add_4, "Y": multiply_4, "Z": add_6})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add_4, "Y": multiply_4, "Z": add_6}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Vector": combine_xyz_1}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Vector": combine_xyz_1},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_v_division_board", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_v_division_board", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_v_division_board(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -504,13 +812,20 @@ def nodegroup_v_division_board(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000})
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: add}, attrs={"operation": "MULTIPLY"}
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000},
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 1.0000}, attrs={"operation": "SUBTRACT"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["cell_size"], 1: add},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    subtract = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 1.0000}, attrs={"operation": "SUBTRACT"}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
@@ -520,22 +835,39 @@ def nodegroup_v_division_board(nw: NodeWrangler):
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1})
 
-    add_200 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: -0.001})
+    add_200 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: -0.001}
+    )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["division_board_thickness"], "Y": add_200, "Z": add_1}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["division_board_thickness"],
+            "Y": add_200,
+            "Z": add_1,
+        },
     )
 
     cube = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Mesh": cube, "Value": add_1}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Mesh": cube, "Value": add_1},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_top_bottom_board", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_top_bottom_board", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_top_bottom_board(nw: NodeWrangler, tag_support=False):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -552,77 +884,134 @@ def nodegroup_top_bottom_board(nw: NodeWrangler, tag_support=False):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["external_board_thickness"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["external_board_thickness"], 1: 0.0000},
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["division_board_thickness"], 1: 0.0000})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["division_board_thickness"], 1: 0.0000},
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["horizontal_cell_num"], 1: 0.0000})
+    add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["horizontal_cell_num"], 1: 0.0000},
+    )
 
     add_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: -1.0000})
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: add_3}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: add_3}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1})
 
-    add_5 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: 0.0000})
+    add_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: 0.0000}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: add_5, 1: add_2}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_5, 1: add_2}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_4, 1: multiply_2})
 
     add_7 = nw.new_node(Nodes.Math, input_kwargs={0: add_6, 1: 0.0020})
 
-    add_8 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000})
+    add_8 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000}
+    )
 
     add_9 = nw.new_node(Nodes.Math, input_kwargs={0: add_8, 1: 0.0000})
 
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add_7, "Y": add_9, "Z": add})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add_7, "Y": add_9, "Z": add}
+    )
 
     if tag_support:
-        cube_1 = nw.new_node(nodegroup_tagged_cube().name, input_kwargs={"Size": combine_xyz_3})
+        cube_1 = nw.new_node(
+            nodegroup_tagged_cube().name, input_kwargs={"Size": combine_xyz_3}
+        )
     else:
         cube_1 = nw.new_node(
-            Nodes.MeshCube, input_kwargs={"Size": combine_xyz_3, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+            Nodes.MeshCube,
+            input_kwargs={
+                "Size": combine_xyz_3,
+                "Vertices X": 5,
+                "Vertices Y": 5,
+                "Vertices Z": 5,
+            },
         )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_8}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_8}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"})
+    multiply_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_10 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: group_input.outputs["base_leg_height"]})
+    add_10 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_4, 1: group_input.outputs["base_leg_height"]},
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_3, "Z": add_10})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_3, "Z": add_10}
+    )
 
-    transform_2 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz})
+    transform_2 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz}
+    )
 
     add_11 = nw.new_node(Nodes.Math, input_kwargs={0: add_10, 1: add})
 
-    add_12 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000})
+    add_12 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000},
+    )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_12, 1: add_5}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_12, 1: add_5}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_13 = nw.new_node(Nodes.Math, input_kwargs={0: add_11, 1: multiply_5})
 
     add_14 = nw.new_node(Nodes.Math, input_kwargs={0: add_12, 1: -1.0000})
 
-    multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: add_14}, attrs={"operation": "MULTIPLY"})
+    multiply_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: add_14}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_15 = nw.new_node(Nodes.Math, input_kwargs={0: add_13, 1: multiply_6})
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_3, "Z": add_15})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_3, "Z": add_15}
+    )
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_1})
+    transform = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube_1, "Translation": combine_xyz_1}
+    )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_2, transform]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_2, transform]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_1, "x": add_7}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_1, "x": add_7},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_side_board", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_side_board", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_side_board(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -639,28 +1028,57 @@ def nodegroup_side_board(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["external_thickness"], 1: 0.0000})
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["external_thickness"], 1: 0.0000},
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["depth"], 1: 0.0000}
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000})
+    add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["vertical_cell_num"], 1: 0.0000},
+    )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: 1.0000}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2, 1: 1.0000}, attrs={"operation": "SUBTRACT"}
+    )
 
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["division_thickness"], 1: 0.0000})
+    add_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["division_thickness"], 1: 0.0000},
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: add_3}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: add_3},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add_4 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: 0.0000})
+    add_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["cell_size"], 1: 0.0000}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_2, 1: add_4}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2, 1: add_4}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_5 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1})
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add_1, "Z": add_5})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add_1, "Z": add_5}
+    )
 
     cube = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": combine_xyz, "Vertices X": 5, "Vertices Y": 5, "Vertices Z": 5}
+        Nodes.MeshCube,
+        input_kwargs={
+            "Size": combine_xyz,
+            "Vertices X": 5,
+            "Vertices Y": 5,
+            "Vertices Z": 5,
+        },
     )
 
     multiply_2 = nw.new_node(
@@ -675,36 +1093,68 @@ def nodegroup_side_board(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: subtract_1}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_3, 1: subtract_1},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     add_6 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: multiply_3})
 
     add_7 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: add_6})
 
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={1: add_7}, attrs={"operation": "MULTIPLY"})
+    multiply_4 = nw.new_node(
+        Nodes.Math, input_kwargs={1: add_7}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_5}, attrs={"operation": "MULTIPLY"})
+    multiply_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_5}, attrs={"operation": "MULTIPLY"}
+    )
 
-    add_8 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: group_input.outputs["base_leg_height"]})
+    add_8 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_6, 1: group_input.outputs["base_leg_height"]},
+    )
 
-    add_9 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["external_thickness"], 1: add_8})
+    add_9 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["external_thickness"], 1: add_8},
+    )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_4, "Y": multiply_5, "Z": add_9})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_4, "Y": multiply_5, "Z": add_9}
+    )
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_1})
+    transform = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_1}
+    )
 
-    multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_7 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_4, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": multiply_5, "Z": add_9})
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": multiply_5, "Z": add_9}
+    )
 
-    transform_1 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_2})
+    transform_1 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz_2}
+    )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, transform_1]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, transform_1]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry},
+        attrs={"is_active_output": True},
     )
 
 
@@ -726,11 +1176,19 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
     depth = nw.new_node(Nodes.Value, label="depth")
     depth.outputs[0].default_value = kwargs["depth"]
 
-    division_board_thickness = nw.new_node(Nodes.Value, label="division_board_thickness")
-    division_board_thickness.outputs[0].default_value = kwargs["division_board_thickness"]
+    division_board_thickness = nw.new_node(
+        Nodes.Value, label="division_board_thickness"
+    )
+    division_board_thickness.outputs[0].default_value = kwargs[
+        "division_board_thickness"
+    ]
 
-    external_board_thickness = nw.new_node(Nodes.Value, label="external_board_thickness")
-    external_board_thickness.outputs[0].default_value = kwargs["external_board_thickness"]
+    external_board_thickness = nw.new_node(
+        Nodes.Value, label="external_board_thickness"
+    )
+    external_board_thickness.outputs[0].default_value = kwargs[
+        "external_board_thickness"
+    ]
 
     sideboard = nw.new_node(
         nodegroup_side_board().name,
@@ -791,12 +1249,17 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 
         transform_1 = nw.new_node(
             Nodes.Transform,
-            input_kwargs={"Geometry": vdivisionboard.outputs["Mesh"], "Translation": vdivisionboardplacement},
+            input_kwargs={
+                "Geometry": vdivisionboard.outputs["Mesh"],
+                "Translation": vdivisionboardplacement,
+            },
         )
         v_division_boards.append(transform_1)
 
     if len(v_division_boards) > 0:
-        join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": v_division_boards})
+        join_geometry_1 = nw.new_node(
+            Nodes.JoinGeometry, input_kwargs={"Geometry": v_division_boards}
+        )
         all_components.append(join_geometry_1)
 
     hdivisionboard = nw.new_node(
@@ -827,12 +1290,18 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         )
 
         transform = nw.new_node(
-            Nodes.Transform, input_kwargs={"Geometry": hdivisionboard, "Translation": hdivisionplacement}
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": hdivisionboard,
+                "Translation": hdivisionplacement,
+            },
         )
         h_division_boards.append(transform)
 
     if len(h_division_boards) > 0:
-        join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": h_division_boards})
+        join_geometry = nw.new_node(
+            Nodes.JoinGeometry, input_kwargs={"Geometry": h_division_boards}
+        )
         all_components.append(join_geometry)
 
     if kwargs["has_backboard"]:
@@ -862,9 +1331,13 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         )
         all_components.append(attachgadget)
 
-    join_geometry_4 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": all_components})
+    join_geometry_4 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": all_components}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_4})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_4}
+    )
 
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
@@ -889,7 +1362,9 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
             },
         )
 
-        realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": baseframe})
+        realize_instances_1 = nw.new_node(
+            Nodes.RealizeInstances, input_kwargs={"Geometry": baseframe}
+        )
 
         set_material = nw.new_node(
             Nodes.SetMaterial,
@@ -911,24 +1386,36 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-    realize_instances_2 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": screwhead})
+    realize_instances_2 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": screwhead}
+    )
 
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": realize_instances_2, "Material": surface.shaderfunc_to_material(metal.get_shader())},
+        input_kwargs={
+            "Geometry": realize_instances_2,
+            "Material": surface.shaderfunc_to_material(metal.get_shader()),
+        },
     )
     merge_components.append(set_material_2)
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": merge_components})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": merge_components}
+    )
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": join_geometry_2})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": join_geometry_2}
+    )
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": triangulate, "Rotation": (0.0000, 0.0000, -1.5708)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": triangulate, "Rotation": (0.0000, 0.0000, -1.5708)},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform},
+        attrs={"is_active_output": True},
     )
 
 
@@ -952,9 +1439,13 @@ class CellShelfBaseFactory(AssetFactory):
         if params.get("horizontal_cell_num", None) is None:
             params["horizontal_cell_num"] = randint(1, 7)
         if params.get("division_board_thickness", None) is None:
-            params["division_board_thickness"] = np.clip(normal(0.015, 0.005), 0.008, 0.022)
+            params["division_board_thickness"] = np.clip(
+                normal(0.015, 0.005), 0.008, 0.022
+            )
         if params.get("external_board_thickness", None) is None:
-            params["external_board_thickness"] = np.clip(normal(0.04, 0.005), 0.028, 0.052)
+            params["external_board_thickness"] = np.clip(
+                normal(0.04, 0.005), 0.028, 0.052
+            )
         if params.get("has_backboard", None) is None:
             params["has_backboard"] = False
         if params.get("has_base_frame", None) is None:
@@ -965,7 +1456,9 @@ class CellShelfBaseFactory(AssetFactory):
             if params.get("base_leg_size", None) is None:
                 params["base_leg_size"] = np.clip(normal(0.035, 0.007), 0.02, 0.05)
             if params.get("base_material", None) is None:
-                params["base_material"] = np.random.choice(["black", "white"], p=[0.4, 0.6])
+                params["base_material"] = np.random.choice(
+                    ["black", "white"], p=[0.4, 0.6]
+                )
         else:
             params["base_leg_height"] = 0.0
             params["base_leg_size"] = 0.0
@@ -973,7 +1466,9 @@ class CellShelfBaseFactory(AssetFactory):
         if params.get("attachment_size", None) is None:
             params["attachment_size"] = np.clip(normal(0.05, 0.02), 0.02, 0.1)
         if params.get("wood_material", None) is None:
-            params["wood_material"] = np.random.choice(["black_wood", "white", "wood"], p=[0.3, 0.2, 0.5])
+            params["wood_material"] = np.random.choice(
+                ["black_wood", "white", "wood"], p=[0.3, 0.2, 0.5]
+            )
         params["tag_support"] = True
         params = self.get_material_func(params, randomness=True)
         return params
@@ -981,17 +1476,23 @@ class CellShelfBaseFactory(AssetFactory):
     def get_material_func(self, params, randomness=True):
         if params["wood_material"] == "white":
             if randomness:
-                params["wood_material"] = lambda x: shader_shelves_white(x, **shader_shelves_white_sampler())
+                params["wood_material"] = lambda x: shader_shelves_white(
+                    x, **shader_shelves_white_sampler()
+                )
             else:
                 params["wood_material"] = shader_shelves_white
         elif params["wood_material"] == "black_wood":
             if randomness:
-                params["wood_material"] = lambda x: shader_shelves_black_wood(x, **shader_shelves_black_wood_sampler())
+                params["wood_material"] = lambda x: shader_shelves_black_wood(
+                    x, **shader_shelves_black_wood_sampler()
+                )
             else:
                 params["wood_material"] = shader_shelves_black_wood
         elif params["wood_material"] == "wood":
             if randomness:
-                params["wood_material"] = lambda x: shader_shelves_wood(x, **shader_shelves_wood_sampler())
+                params["wood_material"] = lambda x: shader_shelves_wood(
+                    x, **shader_shelves_wood_sampler()
+                )
             else:
                 params["wood_material"] = shader_shelves_wood
         else:
@@ -1018,12 +1519,18 @@ class CellShelfBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         obj_params = self.params
-        surface.add_geomod(obj, geometry_nodes, attributes=[], input_kwargs=obj_params, apply=True)
+        surface.add_geomod(
+            obj, geometry_nodes, attributes=[], input_kwargs=obj_params, apply=True
+        )
         tagging.tag_system.relabel_obj(obj)
 
         return obj
@@ -1032,11 +1539,17 @@ class CellShelfBaseFactory(AssetFactory):
 class CellShelfFactory(CellShelfBaseFactory):
     def sample_params(self):
         params = dict()
-        params["Dimensions"] = (uniform(0.3, 0.45), uniform(2 * 0.35, 6 * 0.35), uniform(1 * 0.35, 6 * 0.35))
+        params["Dimensions"] = (
+            uniform(0.3, 0.45),
+            uniform(2 * 0.35, 6 * 0.35),
+            uniform(1 * 0.35, 6 * 0.35),
+        )
         h_cell_num = int(params["Dimensions"][1] / 0.35)
         params["cell_size"] = params["Dimensions"][1] / h_cell_num
         params["horizontal_cell_num"] = h_cell_num
-        params["vertical_cell_num"] = max(int(params["Dimensions"][2] / params["cell_size"]), 1)
+        params["vertical_cell_num"] = max(
+            int(params["Dimensions"][2] / params["cell_size"]), 1
+        )
         params["depth"] = params["Dimensions"][0]
         params["has_base_frame"] = False
         params["Dimensions"] = list(params["Dimensions"])
@@ -1044,7 +1557,11 @@ class CellShelfFactory(CellShelfBaseFactory):
         return params
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
-        x, y, z = self.params["Dimensions"][0], self.params["Dimensions"][1], self.params["Dimensions"][2]
+        x, y, z = (
+            self.params["Dimensions"][0],
+            self.params["Dimensions"][1],
+            self.params["Dimensions"][2],
+        )
         return new_bbox(
             0,
             x,
@@ -1052,19 +1569,28 @@ class CellShelfFactory(CellShelfBaseFactory):
             y / 2 * 1.1,
             0,
             z
-            + (self.params["vertical_cell_num"] - 1) * self.params["division_board_thickness"]
+            + (self.params["vertical_cell_num"] - 1)
+            * self.params["division_board_thickness"]
             + 2 * self.params["external_board_thickness"],
         )
 
 
 class TVStandFactory(CellShelfFactory):
-    def sample_params(self):  # TODO HACK copied code just following the pattern to get this working
+    def sample_params(
+        self,
+    ):  # TODO HACK copied code just following the pattern to get this working
         params = dict()
-        params["Dimensions"] = (uniform(0.3, 0.45), uniform(2 * 0.35, 6 * 0.35), uniform(0.3, 0.5))
+        params["Dimensions"] = (
+            uniform(0.3, 0.45),
+            uniform(2 * 0.35, 6 * 0.35),
+            uniform(0.3, 0.5),
+        )
         h_cell_num = int(params["Dimensions"][1] / 0.35)
         params["cell_size"] = params["Dimensions"][1] / h_cell_num
         params["horizontal_cell_num"] = h_cell_num
-        params["vertical_cell_num"] = max(int(params["Dimensions"][2] / params["cell_size"]), 1)
+        params["vertical_cell_num"] = max(
+            int(params["Dimensions"][2] / params["cell_size"]), 1
+        )
         params["depth"] = params["Dimensions"][0]
         params["has_base_frame"] = False
         params["Dimensions"] = list(params["Dimensions"])

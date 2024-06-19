@@ -4,7 +4,6 @@
 
 # Authors: Alexander Raistrick
 
-import copy
 
 import bpy
 import pytest
@@ -12,7 +11,6 @@ import pytest
 from infinigen.assets.mollusk import MolluskFactory
 from infinigen.core.util import blender as butil
 from infinigen.tools import export
-from infinigen.tools.export import triangulate_meshes
 
 TEST_FORMATS = ["obj", "usdc", "fbx", "ply", "usdc"]
 TEST_IMAGE_RES = 32
@@ -32,7 +30,9 @@ def test_export_one_obj(format, tmp_path):
     new_obj = butil.import_mesh(file)
 
     if format == "usdc":
-        assert num_objs + 1 == len(bpy.data.objects)  # usdc import generates extra "world" prim
+        assert num_objs + 1 == len(
+            bpy.data.objects
+        )  # usdc import generates extra "world" prim
     else:
         assert num_objs == len(bpy.data.objects)
 
@@ -67,7 +67,9 @@ def test_export_curr_scene(format, tmp_path):
     assert total_polys == poly_count1 + poly_count2
 
     if format == "usdc":
-        assert num_objs + 1 == len(bpy.data.objects)  # usdc import generates extra "world" prim
+        assert num_objs + 1 == len(
+            bpy.data.objects
+        )  # usdc import generates extra "world" prim
     elif format == "ply":
         assert len(bpy.data.objects) == 1
     else:

@@ -5,19 +5,12 @@
 
 
 import logging
-import pdb
 
 import bpy
-import bpy_types
 import mathutils
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
-
-from infinigen.assets.creatures.util import creature
-from infinigen.assets.creatures.util import creature_util as cutil
-from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian, lerp, randomspacing
 
 
 def compute_ik_length_height(targets):
@@ -34,13 +27,18 @@ def snap_iks_to_floor(targets, floor_bvh, minweight=0.7):
 
     bpy.context.view_layer.update()
 
-    get_targets = lambda k: [t for t in targets if k in t.name]
+    def get_targets(k):
+        return [t for t in targets if k in t.name]
 
     bounds = compute_ik_length_height(targets)
 
     def find_floor_offset(t):
-        ray_origin = mathutils.Vector((t.matrix_world.translation.x, t.matrix_world.translation.y, bounds[2, 1]))
-        location, normal, index, dist = floor_bvh.ray_cast(ray_origin, mathutils.Vector((0, 0, -1)))
+        ray_origin = mathutils.Vector(
+            (t.matrix_world.translation.x, t.matrix_world.translation.y, bounds[2, 1])
+        )
+        location, normal, index, dist = floor_bvh.ray_cast(
+            ray_origin, mathutils.Vector((0, 0, -1))
+        )
         if location is None:
             return None
         return location - t.matrix_world.translation
@@ -49,7 +47,9 @@ def snap_iks_to_floor(targets, floor_bvh, minweight=0.7):
     feet_offsets = [find_floor_offset(f) for f in feet]
 
     if any(off is None for off in feet_offsets):
-        logging.warning(f"snap_iks_to_floor found {feet_offsets=}, aborting snap operation")
+        logging.warning(
+            f"snap_iks_to_floor found {feet_offsets=}, aborting snap operation"
+        )
         return
 
     # dont allow the pose diff to be too large (ie, prevent weird behavior at cliffs)
@@ -84,7 +84,7 @@ def snap_iks_to_floor(targets, floor_bvh, minweight=0.7):
             o.location += hip_offsets[0]
 
     else:
-        logging.warning(f"Couldnt establish feet-hip mapping")
+        logging.warning("Couldnt establish feet-hip mapping")
         off = mathutils.Vector(np.array(feet_offsets).mean(axis=0))
         for o in targets:
             if o in feet:
@@ -92,7 +92,9 @@ def snap_iks_to_floor(targets, floor_bvh, minweight=0.7):
             o.location += off
 
 
-def idle_body_noise_drivers(targets, foot_motion_chance=0.2, head_benddown=1.0, body_mag=1.0, wing_mag=1.0):
+def idle_body_noise_drivers(
+    targets, foot_motion_chance=0.2, head_benddown=1.0, body_mag=1.0, wing_mag=1.0
+):
     # all magnitudes are determined as multiples of the creatures overall length/height/width
     bounds = compute_ik_length_height(targets)
     ls = bounds[:, 1] - bounds[:, 0]
@@ -114,7 +116,9 @@ def idle_body_noise_drivers(targets, foot_motion_chance=0.2, head_benddown=1.0, 
         mag *= mag_scalar
 
         if mode == "noise":
-            s1, s2 = seeds if seeds is not None else U(0, 1000, 2)  # random offsets as 'seeds'
+            s1, s2 = (
+                seeds if seeds is not None else U(0, 1000, 2)
+            )  # random offsets as 'seeds'
             varying = f"noise.noise(({freq:.6f}*frame, {s1:.2f}, {s2:.2f}))"
         elif mode == "sin":
             varying = f"sin({freq:6f}*frame*2*pi)"
@@ -123,12 +127,22 @@ def idle_body_noise_drivers(targets, foot_motion_chance=0.2, head_benddown=1.0, 
 
         d.driver.expression = f"{p:.4f}+{mag:.4f}*({off:.4f}+{varying})"
 
-    get_targets = lambda k: [t for t in targets if k in t.name]
+    def get_targets(k):
+        return [t for t in targets if k in t.name]
 
     for i, t in enumerate(get_targets("body")):
-        add_noise(t, "location", 0, mag=body_mag * 0.025 * N(1, 0.2), freq=0.25 * N(1, 0.2))
+        add_noise(
+            t, "location", 0, mag=body_mag * 0.025 * N(1, 0.2), freq=0.25 * N(1, 0.2)
+        )
         if i != 0:
-            add_noise(t, "location", 2, mag=body_mag * 0.015 * N(1, 0.2), freq=0.5 * N(1, 0.2), mode="sin")
+            add_noise(
+                t,
+                "location",
+                2,
+                mag=body_mag * 0.015 * N(1, 0.2),
+                freq=0.5 * N(1, 0.2),
+                mode="sin",
+            )
 
     for t in get_targets("foot"):
         if U() < foot_motion_chance:
@@ -137,16 +151,44 @@ def idle_body_noise_drivers(targets, foot_motion_chance=0.2, head_benddown=1.0, 
 
     for t in get_targets("head"):
         headfreq = 0.4
-        add_noise(t, "location", 0, mag=0.07 * N(1, 0.1), freq=headfreq, off=-0.5 * head_benddown)
+        add_noise(
+            t,
+            "location",
+            0,
+            mag=0.07 * N(1, 0.1),
+            freq=headfreq,
+            off=-0.5 * head_benddown,
+        )
         add_noise(t, "location", 1, mag=0.03 * N(1, 0.1), freq=headfreq)
-        add_noise(t, "location", 2, mag=0.2 * N(1, 0.1), freq=headfreq / 2, off=-0.7 * head_benddown)
+        add_noise(
+            t,
+            "location",
+            2,
+            mag=0.2 * N(1, 0.1),
+            freq=headfreq / 2,
+            off=-0.7 * head_benddown,
+        )
         # add_noise(t, 'rotation_euler', 0, mag=0.4*N(1, 0.1), freq=U(0.1, 0.4))
         # add_noise(t, 'rotation_euler', 1, mag=0.4*N(1, 0.1), freq=U(0.1, 0.4))
 
     seeds = U(0, 1000, 2)  # synchronize wing motion a little bit
     for t in get_targets("wingtip"):
-        add_noise(t, "location", 0, mag=wing_mag * 0.1 * N(1, 0.1), freq=U(0.6, 4), seeds=seeds + N(0, 0.2, 2))
-        add_noise(t, "location", 2, mag=wing_mag * 0.2 * N(1, 0.1), freq=U(0.6, 4), seeds=seeds + N(0, 0.2, 2))
+        add_noise(
+            t,
+            "location",
+            0,
+            mag=wing_mag * 0.1 * N(1, 0.1),
+            freq=U(0.6, 4),
+            seeds=seeds + N(0, 0.2, 2),
+        )
+        add_noise(
+            t,
+            "location",
+            2,
+            mag=wing_mag * 0.2 * N(1, 0.1),
+            freq=U(0.6, 4),
+            seeds=seeds + N(0, 0.2, 2),
+        )
 
     for t in get_targets("tail"):
         for i in range(3):

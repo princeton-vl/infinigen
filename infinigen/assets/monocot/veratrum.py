@@ -5,14 +5,16 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.decorate import distance2boundary, write_attribute, write_material_index
+from infinigen.assets.utils.decorate import (
+    distance2boundary,
+    write_attribute,
+    write_material_index,
+)
 from infinigen.assets.utils.draw import leaf, spin
 from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.object import join_objects
@@ -21,7 +23,7 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import shaderfunc_to_material
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
@@ -39,7 +41,12 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
             self.min_y_angle = uniform(np.pi * 0.25, np.pi * 0.35)
             self.max_y_angle = uniform(np.pi * 0.6, np.pi * 0.7)
             self.count = int(log_uniform(32, 64))
-            self.scale_curve = (0, uniform(0.8, 1.0)), (0.4, 0.6), (0.8, uniform(0, 0.1)), (1, 0)
+            self.scale_curve = (
+                (0, uniform(0.8, 1.0)),
+                (0.4, 0.6),
+                (0.8, uniform(0, 0.1)),
+                (1, 0),
+            )
             self.leaf_range = 0, uniform(0.7, 0.8)
             self.bud_angle = uniform(np.pi / 15, np.pi / 12)
             self.freq = uniform(25, 50)
@@ -80,7 +87,13 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
         weights = np.cos(self.freq * distance) ** 4
         for i, w in enumerate(weights):
             vg.add([i], w, "REPLACE")
-        butil.modify_mesh(obj, "DISPLACE", strength=-uniform(5e-3, 8e-3), mid_level=0, vertex_group="distance")
+        butil.modify_mesh(
+            obj,
+            "DISPLACE",
+            strength=-uniform(5e-3, 8e-3),
+            mid_level=0,
+            vertex_group="distance",
+        )
         self.decorate_leaf(obj, 8, np.pi / 2)
         return obj
 
@@ -92,7 +105,9 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
 
         self.decorate_monocot(obj)
         assign_material(obj, [self.material, self.branch_material])
-        write_material_index(obj, surface.read_attr_data(obj, "ear", "FACE").astype(int))
+        write_material_index(
+            obj, surface.read_attr_data(obj, "ear", "FACE").astype(int)
+        )
         tag_object(obj, "veratrum")
         return obj
 
@@ -118,7 +133,11 @@ class VeratrumBranchMonocotFactory(AssetFactory):
         for i, branch in enumerate(branches):
             if i > 0:
                 branch.location[-1] = self.primary_stem_offset * uniform(0, 0.6)
-                branch.rotation_euler = uniform(np.pi * 0.25, np.pi * 0.4), 0, uniform(0, np.pi * 2)
+                branch.rotation_euler = (
+                    uniform(np.pi * 0.25, np.pi * 0.4),
+                    0,
+                    uniform(0, np.pi * 2),
+                )
         obj = join_objects(branches)
         tag_object(obj, "veratrum_branch")
         return obj
@@ -139,7 +158,14 @@ class VeratrumEarMonocotFactory(MonocotGrowthFactory):
         y_anchors = 0, 0.01, 0, -0.01, 0
         z_anchors = 0, -0.01, -0.01, -0.006, 0
         anchors = [x_anchors, y_anchors, z_anchors]
-        obj = spin(anchors, [0, 2, 4], dupli=True, loop=True, resolution=np.random.randint(3, 5), axis=(1, 0, 0))
+        obj = spin(
+            anchors,
+            [0, 2, 4],
+            dupli=True,
+            loop=True,
+            resolution=np.random.randint(3, 5),
+            axis=(1, 0, 0),
+        )
         butil.modify_mesh(obj, "WELD", merge_threshold=face_size / 2)
         write_attribute(obj, 1, "ear", "FACE")
         tag_object(obj, "veratrum_ear")

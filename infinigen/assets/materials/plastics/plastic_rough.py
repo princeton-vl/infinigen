@@ -4,15 +4,12 @@
 
 # Authors: Mingzhe Wang, Lingjie Mei
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets.materials import common
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
 
@@ -31,18 +28,24 @@ def nodegroup_plastics(nw: NodeWrangler):
     )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": group_input.outputs["Roughness"], 3: 0.0500, 4: 0.2500}
+        Nodes.MapRange,
+        input_kwargs={"Value": group_input.outputs["Roughness"], 3: 0.0500, 4: 0.2500},
     )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": group_input.outputs["Base Color"], "Roughness": map_range.outputs["Result"]},
+        input_kwargs={
+            "Base Color": group_input.outputs["Base Color"],
+            "Roughness": map_range.outputs["Result"],
+        },
     )
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Scale"], 1: 2000.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Scale"], 1: 2000.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     noise_texture = nw.new_node(
@@ -58,14 +61,22 @@ def nodegroup_plastics(nw: NodeWrangler):
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range.outputs["Result"], 1: 0.4000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: map_range.outputs["Result"], 1: 0.4000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"], 1: multiply_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: multiply_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: 0.0030}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_2, 1: 0.0030},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -75,7 +86,13 @@ def nodegroup_plastics(nw: NodeWrangler):
 
 
 def shader_rough_plastic(
-    nw: NodeWrangler, scale=1.0, base_color=None, roughness=None, seed=None, clear=False, **kwargs
+    nw: NodeWrangler,
+    scale=1.0,
+    base_color=None,
+    roughness=None,
+    seed=None,
+    clear=False,
+    **kwargs,
 ):
     # Code generated using version 2.6.4 of the node_transpiler
     if roughness is None:
@@ -86,7 +103,9 @@ def shader_rough_plastic(
         if clear:
             base_color = hsv2rgba(0, 0, log_uniform(0.02, 0.8))
         else:
-            base_color = hsv2rgba(uniform(0, 1), uniform(0.5, 0.8), log_uniform(0.01, 0.5))
+            base_color = hsv2rgba(
+                uniform(0, 1), uniform(0.5, 0.8), log_uniform(0.01, 0.5)
+            )
 
     group = nw.new_node(
         nodegroup_plastics().name,
@@ -99,7 +118,8 @@ def shader_rough_plastic(
     )
 
     displacement = nw.new_node(
-        "ShaderNodeDisplacement", input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000}
+        "ShaderNodeDisplacement",
+        input_kwargs={"Height": group.outputs["Displacement"], "Midlevel": 0.0000},
     )
 
     material_output = nw.new_node(

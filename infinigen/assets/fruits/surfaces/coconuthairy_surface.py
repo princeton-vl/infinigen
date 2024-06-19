@@ -4,10 +4,6 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.fruits.fruit_utils import (
     nodegroup_hair,
     nodegroup_instance_on_points,
@@ -17,7 +13,6 @@ from infinigen.assets.fruits.fruit_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_hair_shader(nw: NodeWrangler, basic_color):
@@ -27,14 +22,27 @@ def shader_hair_shader(nw: NodeWrangler, basic_color):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 0.5, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 0.5,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -53,24 +61,39 @@ def shader_hair_shader(nw: NodeWrangler, basic_color):
         },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_coconuthairy_surface", singleton=False, type="GeometryNodeTree")
-def nodegroup_coconuthairy_surface(nw: NodeWrangler, basic_color=(0.9473, 0.552, 0.2623, 1.0)):
+@node_utils.to_nodegroup(
+    "nodegroup_coconuthairy_surface", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_coconuthairy_surface(
+    nw: NodeWrangler, basic_color=(0.9473, 0.552, 0.2623, 1.0)
+):
     # Code generated using version 2.4.3 of the node_transpiler
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketGeometry", "Geometry", None), ("NodeSocketFloat", "spline parameter", 0.0)],
+        expose_input=[
+            ("NodeSocketGeometry", "Geometry", None),
+            ("NodeSocketFloat", "spline parameter", 0.0),
+        ],
     )
 
     material = nw.new_node("GeometryNodeInputMaterial")
     material.material = surface.shaderfunc_to_material(shader_hair_shader, basic_color)
 
     set_material = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Material": material}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Material": material,
+        },
     )
 
     pointonmesh = nw.new_node(
@@ -134,12 +157,22 @@ def nodegroup_coconuthairy_surface(nw: NodeWrangler, basic_color=(0.9473, 0.552,
 
     randomrotationscale_1 = nw.new_node(
         nodegroup_random_rotation_scale().name,
-        input_kwargs={"rot mean": (1.3, 0.0, 0.0), " rot std z": 3.0, "scale mean": 0.3, "scale std": 0.5},
+        input_kwargs={
+            "rot mean": (1.3, 0.0, 0.0),
+            " rot std z": 3.0,
+            "scale mean": 0.3,
+            "scale std": 0.5,
+        },
     )
 
     hair_1 = nw.new_node(
         nodegroup_hair().name,
-        input_kwargs={"scale": 1.0, "Material": material, "Middle": (0.0, 0.5, 1.0), "End": (0.0, -1.9, 2.0)},
+        input_kwargs={
+            "scale": 1.0,
+            "Material": material,
+            "Middle": (0.0, 0.5, 1.0),
+            "End": (0.0, -1.9, 2.0),
+        },
     )
 
     instanceonpoints_1 = nw.new_node(
@@ -155,7 +188,10 @@ def nodegroup_coconuthairy_surface(nw: NodeWrangler, basic_color=(0.9473, 0.552,
     )
 
     join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, instanceonpoints, instanceonpoints_1]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [set_material, instanceonpoints, instanceonpoints_1]},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry_2}
+    )

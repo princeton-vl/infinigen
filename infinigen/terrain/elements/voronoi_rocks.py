@@ -8,7 +8,13 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.core.util.organization import ElementNames, ElementTag, Materials, Tags, Transparency
+from infinigen.core.util.organization import (
+    ElementNames,
+    ElementTag,
+    Materials,
+    Tags,
+    Transparency,
+)
 from infinigen.terrain.utils import random_int
 
 from .core import Element
@@ -61,10 +67,14 @@ class VoronoiRocks(Element):
             and attachment.attribute_modification_start_height is not None
         )
         attribute_modification_start_height = (
-            attachment.attribute_modification_start_height if height_modification else None
+            attachment.attribute_modification_start_height
+            if height_modification
+            else None
         )
         attribute_modification_end_height = (
-            attachment.attribute_modification_end_height if height_modification else None
+            attachment.attribute_modification_end_height
+            if height_modification
+            else None
         )
         if height_modification and variable_material:
             self.aux_names = [Materials.Beach]
@@ -75,7 +85,9 @@ class VoronoiRocks(Element):
         else:
             self.aux_names.append(Tags.Cave)
 
-        self.int_params = AC(np.array([seed, n_lattice, height_modification], dtype=np.int32))
+        self.int_params = AC(
+            np.array([seed, n_lattice, height_modification], dtype=np.int32)
+        )
         self.float_params = AC(
             np.array(
                 [

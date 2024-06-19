@@ -3,11 +3,8 @@
 
 # Authors: Stamatis Alexandropoulos, Meenal Parakh
 
-import os
-import time
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 from infinigen.core.util.color import hsv2rgba
 
@@ -24,7 +21,10 @@ manual_fits = {
     },
     "sofa_leather": {
         "means": np.array([[0.07, 0.45], [0.6, 0.3]]),
-        "covariances": [0.7 * np.array([[0.005, 0], [0, 0.09]]), 0.7 * np.array([[0.015, 0], [0, 0.04]])],
+        "covariances": [
+            0.7 * np.array([[0.005, 0], [0, 0.09]]),
+            0.7 * np.array([[0.015, 0], [0, 0.04]]),
+        ],
         "min_val": [0.04, 0.04],
         "max_val": [0.75, 0.85],
         "probabilities": [0.7, 0.3],
@@ -48,7 +48,10 @@ manual_fits = {
     },
     "bedding_sheet": {
         "means": np.array([[0.1, 0.4], [0.6, 0.2]]),
-        "covariances": [0.7 * np.array([[0.01, 0], [0, 0.1]]), 0.7 * np.array([[0.03, 0], [-0.01, 0.02]])],
+        "covariances": [
+            0.7 * np.array([[0.01, 0], [0, 0.1]]),
+            0.7 * np.array([[0.03, 0], [-0.01, 0.02]]),
+        ],
         "probabilities": [0.9, 0.1],
         "n_components": 2,
     },

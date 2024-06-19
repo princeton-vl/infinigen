@@ -144,7 +144,9 @@ class Kernelizer:
                     new_links.append(link)
                 elif i != head_link:
                     from_node, from_socket, to_node, to_socket = link
-                    new_links.append((links[head_link][0], links[head_link][1], to_node, to_socket))
+                    new_links.append(
+                        (links[head_link][0], links[head_link][1], to_node, to_socket)
+                    )
             links = new_links
             nodes = nodes[:capture_node] + nodes[capture_node + 1 :]
 
@@ -190,7 +192,15 @@ class Kernelizer:
 
         return nodes, links, use_position, use_normal
 
-    def code(self, nodes, links, kernel_inputs, kernel_impl_inputs, kernel_outputs, node_tree_name):
+    def code(
+        self,
+        nodes,
+        links,
+        kernel_inputs,
+        kernel_impl_inputs,
+        kernel_outputs,
+        node_tree_name,
+    ):
         nodes = {node.name: node for node in nodes}
         dependency_count = {}
         for node in nodes:
@@ -207,7 +217,8 @@ class Kernelizer:
                     head_node = nodes[node]
                     break
             params = [
-                str(sanitize(my_getattr(head_node, p), head_node, p)) for p in NODE_ATTRS_AVAILABLE[head_node.bl_idname]
+                str(sanitize(my_getattr(head_node, p), head_node, p))
+                for p in NODE_ATTRS_AVAILABLE[head_node.bl_idname]
             ]
             inputs = []
             outputs = []
@@ -224,7 +235,11 @@ class Kernelizer:
                         if from_node is None:
                             input_raw = from_socket
                         else:
-                            input_raw = usable_name(from_node.name) + "__" + from_socket.identifier
+                            input_raw = (
+                                usable_name(from_node.name)
+                                + "__"
+                                + from_socket.identifier
+                            )
                         if from_node is None:
                             if from_socket in kernel_inputs:
                                 from_type = kernel_inputs[from_socket]
@@ -259,12 +274,17 @@ class Kernelizer:
                 if head_node.name.endswith("_VAR"):
                     code += special_sanitize(
                         usable_name(head_node.name),
-                        my_getattr(head_node, NODE_ATTRS_AVAILABLE[head_node.bl_idname][0]),
+                        my_getattr(
+                            head_node, NODE_ATTRS_AVAILABLE[head_node.bl_idname][0]
+                        ),
                         node_tree_name,
                     )
                 else:
                     code += special_sanitize_constant(
-                        usable_name(head_node.name), my_getattr(head_node, NODE_ATTRS_AVAILABLE[head_node.bl_idname][0])
+                        usable_name(head_node.name),
+                        my_getattr(
+                            head_node, NODE_ATTRS_AVAILABLE[head_node.bl_idname][0]
+                        ),
                     )
             elif head_node.bl_idname == Nodes.FloatCurve:
                 code += special_sanitize_float_curve(
@@ -294,7 +314,11 @@ class Kernelizer:
                 """
             for link in links:
                 from_node, from_socket, to_node, to_socket = link
-                if from_node is not None and to_node is not None and from_node.name == head_node.name:
+                if (
+                    from_node is not None
+                    and to_node is not None
+                    and from_node.name == head_node.name
+                ):
                     dependency_count[to_node.name] -= 1
             del dependency_count[head_node.name]
         for link in links:
@@ -302,7 +326,9 @@ class Kernelizer:
             if from_node is None:
                 from_socket_name = from_socket
             else:
-                from_socket_name = usable_name(from_node.name) + "__" + from_socket.identifier
+                from_socket_name = (
+                    usable_name(from_node.name) + "__" + from_socket.identifier
+                )
             if to_node is None:
                 to_type = kernel_outputs[to_socket][0]
                 if SOCKETTYPE_KERNEL[from_socket.type] != to_type:
@@ -343,17 +369,29 @@ class Kernelizer:
                 )
             elif node.bl_idname == Nodes.ColorRamp and node.name.endswith("_VAR"):
                 for i in range(len(node.color_ramp.elements)):
-                    imp_inputs[get_imp_var_name(node_tree.name, node.name) + f"_pos{i}"] = (
+                    imp_inputs[
+                        get_imp_var_name(node_tree.name, node.name) + f"_pos{i}"
+                    ] = (
                         KernelDataType.float,
-                        np.array([node.color_ramp.elements[i].position], dtype=np.float32),
+                        np.array(
+                            [node.color_ramp.elements[i].position], dtype=np.float32
+                        ),
                     )
-                    imp_inputs[get_imp_var_name(node_tree.name, node.name) + f"_color{i}"] = (
+                    imp_inputs[
+                        get_imp_var_name(node_tree.name, node.name) + f"_color{i}"
+                    ] = (
                         KernelDataType.float4,
-                        np.array([node.color_ramp.elements[i].color[j] for j in range(4)], dtype=np.float32),
+                        np.array(
+                            [node.color_ramp.elements[i].color[j] for j in range(4)],
+                            dtype=np.float32,
+                        ),
                     )
 
         for node in nodes:
-            if node.bl_idname == Nodes.Group and node.node_tree.name not in self.node_tree_dict:
+            if (
+                node.bl_idname == Nodes.Group
+                and node.node_tree.name not in self.node_tree_dict
+            ):
                 subcode, sub_imp_inputs, _ = self.execute_node_tree(node.node_tree)
                 imp_inputs.update(sub_imp_inputs)
                 code += subcode
@@ -375,7 +413,9 @@ class Kernelizer:
     def __call__(self, modifier):
         node_tree = modifier.node_group
         self.node_tree_dict = {}
-        code, imp_inputs, outputs = self.execute_node_tree(node_tree, collective_style=True)
+        code, imp_inputs, outputs = self.execute_node_tree(
+            node_tree, collective_style=True
+        )
         for nodeoutput in node_tree.outputs:
             id = nodeoutput.identifier
             if id != "Output_1":  # not Geometry

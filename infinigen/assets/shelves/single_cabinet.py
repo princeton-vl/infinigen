@@ -9,11 +9,8 @@ from numpy.random import normal, randint, uniform
 
 from infinigen.assets.shelves.doors import CabinetDoorBaseFactory
 from infinigen.assets.shelves.large_shelf import LargeShelfBaseFactory
-from infinigen.assets.shelves.utils import blender_rotate, nodegroup_tagged_cube
 from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
-from infinigen.core import tags as t
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -22,8 +19,12 @@ from infinigen.core.util.math import FixedSeed
 
 def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
-    right_door_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][0]})
-    left_door_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][1]})
+    right_door_info = nw.new_node(
+        Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][0]}
+    )
+    left_door_info = nw.new_node(
+        Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][1]}
+    )
     shelf_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["shelf"]})
 
     doors = []
@@ -49,34 +50,58 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
 
     attaches = []
     for pos in kwargs["attach_pos"]:
-        cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": (0.0006, 0.0200, 0.04500)})
+        cube = nw.new_node(
+            Nodes.MeshCube, input_kwargs={"Size": (0.0006, 0.0200, 0.04500)}
+        )
 
         combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": -0.0100})
 
-        transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz})
+        transform = nw.new_node(
+            Nodes.Transform, input_kwargs={"Geometry": cube, "Translation": combine_xyz}
+        )
 
-        cube_1 = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": (0.0005, 0.0340, 0.0200)})
+        cube_1 = nw.new_node(
+            Nodes.MeshCube, input_kwargs={"Size": (0.0005, 0.0340, 0.0200)}
+        )
 
-        join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, cube_1]})
+        join_geometry = nw.new_node(
+            Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, cube_1]}
+        )
 
         transform_1 = nw.new_node(
-            Nodes.Transform, input_kwargs={"Geometry": join_geometry, "Translation": (0.0000, -0.0170, 0.0000)}
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": join_geometry,
+                "Translation": (0.0000, -0.0170, 0.0000),
+            },
         )
 
         transform_2 = nw.new_node(
-            Nodes.Transform, input_kwargs={"Geometry": transform_1, "Rotation": (0.0000, 0.0000, -1.5708)}
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": transform_1,
+                "Rotation": (0.0000, 0.0000, -1.5708),
+            },
         )
 
-        transform_3 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform_2, "Translation": pos})
+        transform_3 = nw.new_node(
+            Nodes.Transform, input_kwargs={"Geometry": transform_2, "Translation": pos}
+        )
 
         attaches.append(transform_3)
 
-    join_geometry_a = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": attaches})
+    join_geometry_a = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": attaches}
+    )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": doors + [join_geometry_a]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": doors + [join_geometry_a]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry},
+        attrs={"is_active_output": True},
     )
 
 
@@ -99,14 +124,17 @@ class SingleCabinetBaseFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             params = self.mat_params.copy()
             if params.get("frame_material", None) is None:
-                params["frame_material"] = np.random.choice(["white", "black_wood", "wood"], p=[0.5, 0.2, 0.3])
+                params["frame_material"] = np.random.choice(
+                    ["white", "black_wood", "wood"], p=[0.5, 0.2, 0.3]
+                )
             return params
 
     def get_shelf_params(self, i=0):
         params = self.shelf_params.copy()
         if params.get("shelf_cell_width", None) is None:
             params["shelf_cell_width"] = [
-                np.random.choice([0.76, 0.36], p=[0.5, 0.5]) * np.clip(normal(1.0, 0.1), 0.75, 1.25)
+                np.random.choice([0.76, 0.36], p=[0.5, 0.5])
+                * np.clip(normal(1.0, 0.1), 0.75, 1.25)
             ]
         if params.get("shelf_cell_height", None) is None:
             num_v_cells = randint(3, 7)
@@ -123,7 +151,10 @@ class SingleCabinetBaseFactory(AssetFactory):
         params = self.door_params.copy()
 
         # get door params
-        shelf_width = self.shelf_params["shelf_width"] + self.shelf_params["side_board_thickness"] * 2
+        shelf_width = (
+            self.shelf_params["shelf_width"]
+            + self.shelf_params["side_board_thickness"] * 2
+        )
         if params.get("door_width", None) is None:
             if shelf_width < 0.55:
                 params["door_width"] = shelf_width
@@ -137,9 +168,9 @@ class SingleCabinetBaseFactory(AssetFactory):
                 - self.shelf_params["division_board_z_translation"][0]
                 + self.shelf_params["division_board_thickness"]
             )
-            if len(self.shelf_params["division_board_z_translation"]) > 5 and np.random.choice(
-                [True, False], p=[0.5, 0.5]
-            ):
+            if len(
+                self.shelf_params["division_board_z_translation"]
+            ) > 5 and np.random.choice([True, False], p=[0.5, 0.5]):
                 params["door_height"] = (
                     self.shelf_params["division_board_z_translation"][3]
                     - self.shelf_params["division_board_z_translation"][0]
@@ -153,7 +184,10 @@ class SingleCabinetBaseFactory(AssetFactory):
     def get_cabinet_params(self, i=0):
         params = dict()
 
-        shelf_width = self.shelf_params["shelf_width"] + self.shelf_params["side_board_thickness"] * 2
+        shelf_width = (
+            self.shelf_params["shelf_width"]
+            + self.shelf_params["side_board_thickness"] * 2
+        )
         if self.door_params["num_door"] == 1:
             params["door_hinge_pos"] = [
                 (
@@ -232,7 +266,11 @@ class SingleCabinetBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -263,16 +301,24 @@ class SingleCabinetBaseFactory(AssetFactory):
 class SingleCabinetFactory(SingleCabinetBaseFactory):
     def sample_params(self):
         params = dict()
-        params["Dimensions"] = (uniform(0.25, 0.35), uniform(0.3, 0.7), uniform(0.9, 1.8))
+        params["Dimensions"] = (
+            uniform(0.25, 0.35),
+            uniform(0.3, 0.7),
+            uniform(0.9, 1.8),
+        )
 
         params["bottom_board_height"] = 0.083
         params["shelf_depth"] = params["Dimensions"][0] - 0.01
         num_h = int((params["Dimensions"][2] - 0.083) / 0.3)
-        params["shelf_cell_height"] = [(params["Dimensions"][2] - 0.083) / num_h for _ in range(num_h)]
+        params["shelf_cell_height"] = [
+            (params["Dimensions"][2] - 0.083) / num_h for _ in range(num_h)
+        ]
         params["shelf_cell_width"] = [params["Dimensions"][1]]
         self.shelf_params = params
         self.dims = params["Dimensions"]
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         x, y, z = self.dims
-        return new_bbox(-x / 2 * 1.2, x / 2 * 1.2, -y / 2 * 1.2, y / 2 * 1.2, 0, (z + 0.083) * 1.02)
+        return new_bbox(
+            -x / 2 * 1.2, x / 2 * 1.2, -y / 2 * 1.2, y / 2 * 1.2, 0, (z + 0.083) * 1.02
+        )

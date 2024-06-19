@@ -9,7 +9,7 @@ from numpy.random import uniform
 
 from infinigen.assets.materials import common
 from infinigen.assets.utils.object import new_plane
-from infinigen.assets.utils.uv import unwrap_faces, unwrap_normal
+from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
@@ -22,11 +22,16 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
         height = log_uniform(0.07, 0.12)
     uv_map = nw.new_node(Nodes.UVMap)
 
-    front_color, back_color = [hsv2rgba(uniform(0, 0.05), uniform(0.8, 1), log_uniform(0.02, 0.5)) for _ in range(2)]
+    front_color, back_color = [
+        hsv2rgba(uniform(0, 0.05), uniform(0.8, 1), log_uniform(0.02, 0.5))
+        for _ in range(2)
+    ]
     mortar_color = hsv2rgba(uniform(0, 0.05), uniform(0.2, 0.5), log_uniform(0.02, 0.8))
     dark_color = hsv2rgba(uniform(0, 0.05), uniform(0.8, 1), log_uniform(0.005, 0.02))
     noise = nw.new_node(
-        Nodes.NoiseTexture, [uv_map], input_kwargs={"Scale": uniform(40, 50), "Detail": uniform(15, 20)}
+        Nodes.NoiseTexture,
+        [uv_map],
+        input_kwargs={"Scale": uniform(40, 50), "Detail": uniform(15, 20)},
     )
     color = nw.new_node(
         Nodes.BrickTexture,
@@ -39,24 +44,31 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
             "Mortar Smooth": noise,
         },
     ).outputs["Color"]
-    noise = nw.new_node(Nodes.MusgraveTexture, [uv_map], input_kwargs={"Scale": uniform(2, 5)})
+    noise = nw.new_node(
+        Nodes.MusgraveTexture, [uv_map], input_kwargs={"Scale": uniform(2, 5)}
+    )
     color = nw.new_node(
         Nodes.MixRGB,
         [nw.scalar_multiply(log_uniform(0.5, 1.0), noise), color, dark_color],
         attrs={"blend_type": "DARKEN"},
     )
 
-    roughness = nw.build_float_curve(nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 50}), [(0, 0.5), (1, 1.0)])
+    roughness = nw.build_float_curve(
+        nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 50}),
+        [(0, 0.5), (1, 1.0)],
+    )
 
     offset = nw.scalar_add(
         nw.scalar_multiply(nw.scalar_sub(color, 0.5), uniform(0.01, 0.04)),
         nw.scalar_multiply(
-            nw.new_node(Nodes.MusgraveTexture, [uv_map], input_kwargs={"Scale": 50}), uniform(0.0, 0.01)
+            nw.new_node(Nodes.MusgraveTexture, [uv_map], input_kwargs={"Scale": 50}),
+            uniform(0.0, 0.01),
         ),
     )
     bump = nw.new_node(Nodes.Bump, input_kwargs={"Height": offset})
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Roughness": roughness, "Base Color": color, "Normal": bump}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Roughness": roughness, "Base Color": color, "Normal": bump},
     )
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 

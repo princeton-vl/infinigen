@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 
 from . import helper, mesh
 from .materials import new_link
@@ -52,31 +52,50 @@ def coll_distribute(nw, merge_dist=None):
 
     mesh_to_curve = nw.new_node(
         "GeometryNodeMeshToCurve",
-        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Selection": group_input.outputs["Selection"]},
+        input_kwargs={
+            "Mesh": group_input.outputs["Geometry"],
+            "Selection": group_input.outputs["Selection"],
+        },
     )
 
     curve_to_points = nw.new_node(
-        "GeometryNodeCurveToPoints", input_kwargs={"Curve": mesh_to_curve, "Count": group_input.outputs["Multi inst"]}
+        "GeometryNodeCurveToPoints",
+        input_kwargs={
+            "Curve": mesh_to_curve,
+            "Count": group_input.outputs["Multi inst"],
+        },
     )
 
     mesh_to_points = nw.new_node(
         "GeometryNodeMeshToPoints",
-        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Selection": group_input.outputs["Selection"]},
+        input_kwargs={
+            "Mesh": group_input.outputs["Geometry"],
+            "Selection": group_input.outputs["Selection"],
+        },
     )
 
     position = nw.new_node(Nodes.InputPosition)
 
-    transfer_attribute_index = nw.new_node(Nodes.SampleNearest, input_kwargs={"Geometry": mesh_to_points})
+    transfer_attribute_index = nw.new_node(
+        Nodes.SampleNearest, input_kwargs={"Geometry": mesh_to_points}
+    )
 
     transfer_attribute = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": mesh_to_points, "Value": position, "Index": transfer_attribute_index},
+        input_kwargs={
+            "Geometry": mesh_to_points,
+            "Value": position,
+            "Index": transfer_attribute_index,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": curve_to_points.outputs["Points"], "Position": (transfer_attribute, "Value")},
+        input_kwargs={
+            "Geometry": curve_to_points.outputs["Points"],
+            "Position": (transfer_attribute, "Value"),
+        },
     )
 
     random_value = nw.new_node(Nodes.RandomValue)
@@ -87,38 +106,65 @@ def coll_distribute(nw, merge_dist=None):
         attrs={"operation": "LESS_THAN"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": curve_to_points.outputs["Rotation"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": curve_to_points.outputs["Rotation"]}
+    )
 
-    math_1 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: 1.5708})
+    math_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: 1.5708}
+    )
 
     math_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: math_1, 1: group_input.outputs["Pitch scaling"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: math_1, 1: group_input.outputs["Pitch scaling"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    math_3 = nw.new_node(Nodes.Math, input_kwargs={0: math_2, 1: group_input.outputs["Pitch offset"]})
+    math_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_2, 1: group_input.outputs["Pitch offset"]}
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": math_3, "Z": separate_xyz.outputs["Z"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": math_3, "Z": separate_xyz.outputs["Z"]}
+    )
 
     math_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Pitch variance"], 1: -1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Pitch variance"], 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: math_4, 3: group_input.outputs["Pitch variance"]})
+    random_value_1 = nw.new_node(
+        Nodes.RandomValue,
+        input_kwargs={2: math_4, 3: group_input.outputs["Pitch variance"]},
+    )
 
     math_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Yaw variance"], 1: -1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Yaw variance"], 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    random_value_2 = nw.new_node(Nodes.RandomValue, input_kwargs={2: math_5, 3: group_input.outputs["Yaw variance"]})
+    random_value_2 = nw.new_node(
+        Nodes.RandomValue,
+        input_kwargs={2: math_5, 3: group_input.outputs["Yaw variance"]},
+    )
 
     combine_xyz_1 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": random_value_1.outputs[1], "Z": random_value_2.outputs[1]}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": random_value_1.outputs[1], "Z": random_value_2.outputs[1]},
     )
 
-    vector_math = nw.new_node(Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: combine_xyz_1})
+    vector_math = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: combine_xyz_1}
+    )
 
     random_value_3 = nw.new_node(
-        Nodes.RandomValue, input_kwargs={2: group_input.outputs["Min scale"], 3: group_input.outputs["Max scale"]}
+        Nodes.RandomValue,
+        input_kwargs={
+            2: group_input.outputs["Min scale"],
+            3: group_input.outputs["Max scale"],
+        },
     )
 
     geo = nw.new_node(
@@ -145,14 +191,22 @@ def coll_distribute(nw, merge_dist=None):
         },
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Realize Instance"], 14: instance_on_points, 15: realize_instances},
+        input_kwargs={
+            1: group_input.outputs["Realize Instance"],
+            14: instance_on_points,
+            15: realize_instances,
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": switch.outputs[6]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": switch.outputs[6]}
+    )
 
 
 @node_utils.to_nodegroup("PhylloDist", singleton=False)
@@ -176,9 +230,13 @@ def phyllotaxis_distribute(nw):
         ],
     )
 
-    mesh_line = nw.new_node("GeometryNodeMeshLine", input_kwargs={"Count": group_input.outputs["Count"]})
+    mesh_line = nw.new_node(
+        "GeometryNodeMeshLine", input_kwargs={"Count": group_input.outputs["Count"]}
+    )
 
-    mesh_to_points = nw.new_node("GeometryNodeMeshToPoints", input_kwargs={"Mesh": mesh_line})
+    mesh_to_points = nw.new_node(
+        "GeometryNodeMeshToPoints", input_kwargs={"Mesh": mesh_line}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -193,53 +251,93 @@ def phyllotaxis_distribute(nw):
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 1.0
 
-    math = nw.new_node(Nodes.Math, input_kwargs={0: index, 1: value}, attrs={"operation": "DIVIDE"})
+    math = nw.new_node(
+        Nodes.Math, input_kwargs={0: index, 1: value}, attrs={"operation": "DIVIDE"}
+    )
 
-    math_1 = nw.new_node(Nodes.Math, input_kwargs={0: math}, attrs={"operation": "FLOOR"})
+    math_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math}, attrs={"operation": "FLOOR"}
+    )
 
-    math_6 = nw.new_node(Nodes.Math, input_kwargs={0: math_1, 1: 2.3998}, attrs={"operation": "MULTIPLY"})
+    math_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_1, 1: 2.3998}, attrs={"operation": "MULTIPLY"}
+    )
 
-    math_2 = nw.new_node(Nodes.Math, input_kwargs={0: math}, attrs={"operation": "FRACT"})
+    math_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math}, attrs={"operation": "FRACT"}
+    )
 
-    math_5 = nw.new_node(Nodes.Math, input_kwargs={0: math_2, 1: 6.2832}, attrs={"operation": "MULTIPLY"})
+    math_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_2, 1: 6.2832}, attrs={"operation": "MULTIPLY"}
+    )
 
     math_7 = nw.new_node(Nodes.Math, input_kwargs={0: math_6, 1: math_5})
 
-    math_8 = nw.new_node(Nodes.Math, input_kwargs={0: math_7}, attrs={"operation": "COSINE"})
+    math_8 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_7}, attrs={"operation": "COSINE"}
+    )
 
-    math_9 = nw.new_node(Nodes.Math, input_kwargs={0: math_7}, attrs={"operation": "SINE"})
+    math_9 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_7}, attrs={"operation": "SINE"}
+    )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": math_8, "Y": math_9})
 
     math_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Count"], 1: value}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Count"], 1: value},
+        attrs={"operation": "DIVIDE"},
     )
 
-    math_4 = nw.new_node(Nodes.Math, input_kwargs={0: math_1, 1: math_3}, attrs={"operation": "DIVIDE"})
+    math_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_1, 1: math_3}, attrs={"operation": "DIVIDE"}
+    )
 
     math_10 = nw.new_node(
-        Nodes.Math, input_kwargs={0: math_4, 1: group_input.outputs["Radius exp"]}, attrs={"operation": "POWER"}
+        Nodes.Math,
+        input_kwargs={0: math_4, 1: group_input.outputs["Radius exp"]},
+        attrs={"operation": "POWER"},
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": math_10, 3: group_input.outputs["Inner pct"]})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": math_10, 3: group_input.outputs["Inner pct"]},
+    )
 
     math_11 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range.outputs["Result"], 1: group_input.outputs["Max radius"]},
+        input_kwargs={
+            0: map_range.outputs["Result"],
+            1: group_input.outputs["Max radius"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": math_4, 3: 1.5708, 4: 1.5708})
-
-    math_12 = nw.new_node(Nodes.Math, input_kwargs={0: map_range_1.outputs["Result"]}, attrs={"operation": "SINE"})
-
-    math_13 = nw.new_node(Nodes.Math, input_kwargs={0: math_11, 1: math_12}, attrs={"operation": "MULTIPLY"})
-
-    vector_math = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: math_13}, attrs={"operation": "MULTIPLY"}
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": math_4, 3: 1.5708, 4: 1.5708}
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": vector_math.outputs["Vector"]})
+    math_12 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range_1.outputs["Result"]},
+        attrs={"operation": "SINE"},
+    )
+
+    math_13 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: math_11, 1: math_12},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    vector_math = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz, 1: math_13},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": vector_math.outputs["Vector"]}
+    )
 
     map_range_2 = nw.new_node(
         Nodes.MapRange,
@@ -261,12 +359,19 @@ def phyllotaxis_distribute(nw):
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], "Position": combine_xyz_1}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            "Position": combine_xyz_1,
+        },
     )
 
     attribute_statistic = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], 2: map_range.outputs["Result"]},
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            2: map_range.outputs["Result"],
+        },
     )
 
     map_range_3 = nw.new_node(
@@ -282,15 +387,25 @@ def phyllotaxis_distribute(nw):
 
     random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1, 3: 0.1})
 
-    math_14 = nw.new_node(Nodes.Math, input_kwargs={0: math_7, 1: group_input.outputs["Yaw offset"]})
+    math_14 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_7, 1: group_input.outputs["Yaw offset"]}
+    )
 
     combine_xyz_2 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": map_range_3.outputs["Result"], "Y": random_value_1.outputs[1], "Z": math_14},
+        input_kwargs={
+            "X": map_range_3.outputs["Result"],
+            "Y": random_value_1.outputs[1],
+            "Z": math_14,
+        },
     )
 
     random_value = nw.new_node(
-        Nodes.RandomValue, input_kwargs={2: group_input.outputs["Min scale"], 3: group_input.outputs["Max scale"]}
+        Nodes.RandomValue,
+        input_kwargs={
+            2: group_input.outputs["Min scale"],
+            3: group_input.outputs["Max scale"],
+        },
     )
 
     instance_on_points = nw.new_node(
@@ -303,7 +418,9 @@ def phyllotaxis_distribute(nw):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Instances": instance_on_points})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Instances": instance_on_points}
+    )
 
 
 @node_utils.to_nodegroup("FollowCurve", singleton=False)
@@ -325,34 +442,54 @@ def follow_curve(nw):
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": capture_attribute.outputs["Attribute"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+    )
 
-    math = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Z"], 1: group_input.outputs["Offset"]})
+    math = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Z"], 1: group_input.outputs["Offset"]},
+    )
 
     sample_curve = nw.new_node(
-        "GeometryNodeSampleCurve", input_kwargs={"Curve": group_input.outputs["Curve"], "Length": math}
+        "GeometryNodeSampleCurve",
+        input_kwargs={"Curve": group_input.outputs["Curve"], "Length": math},
     )
 
     vector_math = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: sample_curve.outputs["Tangent"], 1: sample_curve.outputs["Normal"]},
+        input_kwargs={
+            0: sample_curve.outputs["Tangent"],
+            1: sample_curve.outputs["Normal"],
+        },
         attrs={"operation": "CROSS_PRODUCT"},
     )
 
     vector_math_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: vector_math.outputs["Vector"], "Scale": separate_xyz.outputs["X"]},
+        input_kwargs={
+            0: vector_math.outputs["Vector"],
+            "Scale": separate_xyz.outputs["X"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     vector_math_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: sample_curve.outputs["Normal"], "Scale": separate_xyz.outputs["Y"]},
+        input_kwargs={
+            0: sample_curve.outputs["Normal"],
+            "Scale": separate_xyz.outputs["Y"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     vector_math_3 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_math_1.outputs["Vector"], 1: vector_math_2.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: vector_math_1.outputs["Vector"],
+            1: vector_math_2.outputs["Vector"],
+        },
     )
 
     set_position = nw.new_node(
@@ -364,7 +501,9 @@ def follow_curve(nw):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 @node_utils.to_nodegroup("SetTreeRadius", singleton=False, type="GeometryNodeTree")
@@ -388,75 +527,121 @@ def set_tree_radius(nw):
 
     mesh_to_curve = nw.new_node(
         Nodes.MeshToCurve,
-        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Selection": group_input.outputs["Selection"]},
+        input_kwargs={
+            "Mesh": group_input.outputs["Geometry"],
+            "Selection": group_input.outputs["Selection"],
+        },
     )
 
     set_spline_type = nw.new_node(
-        Nodes.CurveSplineType, input_kwargs={"Curve": mesh_to_curve}, attrs={"spline_type": "BEZIER"}
+        Nodes.CurveSplineType,
+        input_kwargs={"Curve": mesh_to_curve},
+        attrs={"spline_type": "BEZIER"},
     )
 
-    set_handle_type = nw.new_node(Nodes.SetHandleType, input_kwargs={"Curve": set_spline_type})
+    set_handle_type = nw.new_node(
+        Nodes.SetHandleType, input_kwargs={"Curve": set_spline_type}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 1.0})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": position, "Scale": 1.0}
+    )
 
     scale = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: noise_texture.outputs["Color"], "Scale": 0.02}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: noise_texture.outputs["Color"], "Scale": 0.02},
+        attrs={"operation": "SCALE"},
     )
 
     set_handle_positions = nw.new_node(
-        Nodes.SetHandlePositions, input_kwargs={"Curve": set_handle_type, "Offset": scale.outputs["Vector"]}
+        Nodes.SetHandlePositions,
+        input_kwargs={"Curve": set_handle_type, "Offset": scale.outputs["Vector"]},
     )
 
-    switch = nw.new_node(Nodes.Switch, input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions})
+    switch = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions},
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Reverse depth"], 1: group_input.outputs["Scaling"]},
+        input_kwargs={
+            0: group_input.outputs["Reverse depth"],
+            1: group_input.outputs["Scaling"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 0.1}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: 0.1}, attrs={"operation": "MULTIPLY"}
+    )
 
     power = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_1, 1: group_input.outputs["Exponent"]}, attrs={"operation": "POWER"}
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: group_input.outputs["Exponent"]},
+        attrs={"operation": "POWER"},
     )
 
     maximum = nw.new_node(
-        Nodes.Math, input_kwargs={0: power, 1: group_input.outputs["Min radius"]}, attrs={"operation": "MAXIMUM"}
+        Nodes.Math,
+        input_kwargs={0: power, 1: group_input.outputs["Min radius"]},
+        attrs={"operation": "MAXIMUM"},
     )
 
     minimum = nw.new_node(
-        Nodes.Math, input_kwargs={0: maximum, 1: group_input.outputs["Max radius"]}, attrs={"operation": "MINIMUM"}
+        Nodes.Math,
+        input_kwargs={0: maximum, 1: group_input.outputs["Max radius"]},
+        attrs={"operation": "MINIMUM"},
     )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": switch.outputs[6], "Radius": minimum})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": switch.outputs[6], "Radius": minimum},
+    )
 
-    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["Profile res"]})
+    curve_circle = nw.new_node(
+        Nodes.CurveCircle,
+        input_kwargs={"Resolution": group_input.outputs["Profile res"]},
+    )
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth, input_kwargs={"Geometry": curve_to_mesh, "Shade Smooth": False}
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": curve_to_mesh, "Shade Smooth": False},
     )
 
     merge_by_distance = nw.new_node(
         Nodes.MergeByDistance,
-        input_kwargs={"Geometry": set_shade_smooth, "Distance": group_input.outputs["Merge dist"]},
+        input_kwargs={
+            "Geometry": set_shade_smooth,
+            "Distance": group_input.outputs["Merge dist"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": merge_by_distance})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": merge_by_distance}
+    )
 
 
 @node_utils.to_material("BarkMat2", singleton=False)
 def bark_shader_2(nw):
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "offset_barkgeo2"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "offset_barkgeo2"}
+    )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": attribute.outputs["Color"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": attribute.outputs["Color"]}
+    )
 
     math = nw.new_node(Nodes.Math, input_kwargs={0: reroute, 1: 0.0})
 
@@ -473,7 +658,9 @@ def bark_shader_2(nw):
     colorramp_1.color_ramp.elements[3].position = 0.6268
     colorramp_1.color_ramp.elements[3].color = (0.0712, 0.0477, 0.0477, 1.0)
 
-    math_1 = nw.new_node(Nodes.Math, input_kwargs={0: 1.0, 1: reroute}, attrs={"operation": "SUBTRACT"})
+    math_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: 1.0, 1: reroute}, attrs={"operation": "SUBTRACT"}
+    )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
@@ -481,22 +668,34 @@ def bark_shader_2(nw):
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 @node_utils.to_material("BarkMat1", singleton=False)
 def bark_shader_1(nw):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Object"]}
+    )
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Detail": 16.0, "Roughness": 0.62})
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": mapping, "Detail": 16.0, "Roughness": 0.62},
+    )
 
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "offset_barkgeo1"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "offset_barkgeo1"}
+    )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Color1": noise_texture.outputs["Fac"], "Color2": attribute.outputs["Color"]},
+        input_kwargs={
+            "Color1": noise_texture.outputs["Fac"],
+            "Color2": attribute.outputs["Color"],
+        },
         attrs={"blend_type": "MULTIPLY"},
     )
 
@@ -509,7 +708,9 @@ def bark_shader_1(nw):
     colorramp.color_ramp.elements[2].position = 1.0
     colorramp.color_ramp.elements[2].color = (0.2243, 0.1341, 0.1001, 1.0)
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp_2.color_ramp.elements[0].position = 0.0
     colorramp_2.color_ramp.elements[0].color = (0.5173, 0.5173, 0.5173, 1.0)
     colorramp_2.color_ramp.elements[1].position = 1.0
@@ -517,16 +718,23 @@ def bark_shader_1(nw):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": colorramp_2.outputs["Color"]},
+        input_kwargs={
+            "Base Color": colorramp.outputs["Color"],
+            "Roughness": colorramp_2.outputs["Color"],
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 @node_utils.to_nodegroup("BarkGeo2", singleton=False)
 def bark_geo_2(nw):
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -534,7 +742,9 @@ def bark_geo_2(nw):
     vector.vector = (0.1, 0.1, 0.1)
 
     vector_math_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: position, 1: vector}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: vector},
+        attrs={"operation": "MULTIPLY"},
     )
 
     value_2 = nw.new_node(Nodes.Value)
@@ -547,15 +757,26 @@ def bark_geo_2(nw):
     value_1.outputs[0].default_value = 2.0
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": vector_math_1.outputs["Vector"], "Scale": value, "Detail": value_1}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": vector_math_1.outputs["Vector"],
+            "Scale": value,
+            "Detail": value_1,
+        },
     )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": value_2, "Color1": noise_texture.outputs["Color"], "Color2": (0.0, 0.0, 0.0, 1.0)},
+        input_kwargs={
+            "Fac": value_2,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": (0.0, 0.0, 0.0, 1.0),
+        },
     )
 
-    vector_math_2 = nw.new_node(Nodes.VectorMath, input_kwargs={0: vector_math_1.outputs["Vector"], 1: mix})
+    vector_math_2 = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: vector_math_1.outputs["Vector"], 1: mix}
+    )
 
     value_4 = nw.new_node(Nodes.Value)
     value_4.outputs[0].default_value = 0.0
@@ -565,68 +786,111 @@ def bark_geo_2(nw):
 
     voronoi_texture = nw.new_node(
         Nodes.VoronoiTexture,
-        input_kwargs={"Vector": vector_math_2.outputs["Vector"], "W": value_4, "Scale": value_3},
+        input_kwargs={
+            "Vector": vector_math_2.outputs["Vector"],
+            "W": value_4,
+            "Scale": value_3,
+        },
         attrs={"voronoi_dimensions": "4D", "feature": "F2"},
     )
 
     math_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: voronoi_texture.outputs["Distance"], 1: voronoi_texture.outputs["Distance"]},
+        input_kwargs={
+            0: voronoi_texture.outputs["Distance"],
+            1: voronoi_texture.outputs["Distance"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     voronoi_texture_1 = nw.new_node(
         Nodes.VoronoiTexture,
-        input_kwargs={"Vector": vector_math_2.outputs["Vector"], "W": value_4, "Scale": value_3},
+        input_kwargs={
+            "Vector": vector_math_2.outputs["Vector"],
+            "W": value_4,
+            "Scale": value_3,
+        },
         attrs={"voronoi_dimensions": "4D"},
     )
 
     math_4 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: voronoi_texture_1.outputs["Distance"]},
+        input_kwargs={
+            0: voronoi_texture_1.outputs["Distance"],
+            1: voronoi_texture_1.outputs["Distance"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    math_5 = nw.new_node(Nodes.Math, input_kwargs={0: math_3, 1: math_4}, attrs={"operation": "SUBTRACT"})
+    math_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_3, 1: math_4}, attrs={"operation": "SUBTRACT"}
+    )
 
     value_5 = nw.new_node(Nodes.Value)
     value_5.outputs[0].default_value = 0.6
 
-    math_7 = nw.new_node(Nodes.Math, input_kwargs={0: math_5, 1: value_5}, attrs={"operation": "MINIMUM"})
+    math_7 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_5, 1: value_5}, attrs={"operation": "MINIMUM"}
+    )
 
-    math_6 = nw.new_node(Nodes.Math, input_kwargs={0: math_5, 1: value_5}, attrs={"operation": "MAXIMUM"})
+    math_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_5, 1: value_5}, attrs={"operation": "MAXIMUM"}
+    )
 
     value_6 = nw.new_node(Nodes.Value)
     value_6.outputs[0].default_value = 0.1
 
-    math_8 = nw.new_node(Nodes.Math, input_kwargs={0: math_6, 1: value_6}, attrs={"operation": "MULTIPLY"})
+    math_8 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: math_6, 1: value_6},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    math_9 = nw.new_node(Nodes.Math, input_kwargs={0: math_7, 1: math_8}, attrs={"operation": "SUBTRACT"})
+    math_9 = nw.new_node(
+        Nodes.Math, input_kwargs={0: math_7, 1: math_8}, attrs={"operation": "SUBTRACT"}
+    )
 
     normal = nw.new_node(Nodes.InputNormal)
 
-    vector_math_3 = nw.new_node(Nodes.VectorMath, input_kwargs={0: math_9, 1: normal}, attrs={"operation": "MULTIPLY"})
+    vector_math_3 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: math_9, 1: normal},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     face_area = nw.new_node("GeometryNodeInputMeshFaceArea")
 
-    math_1 = nw.new_node(Nodes.Math, input_kwargs={0: face_area}, attrs={"operation": "SQRT"})
+    math_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: face_area}, attrs={"operation": "SQRT"}
+    )
 
     value_7 = nw.new_node(Nodes.Value)
     value_7.outputs[0].default_value = 2.0
 
-    math = nw.new_node(Nodes.Math, input_kwargs={0: math_1, 1: value_7}, attrs={"operation": "MULTIPLY"})
+    math = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: math_1, 1: value_7},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     vector_math_4 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_math_3.outputs["Vector"], 1: math}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: vector_math_3.outputs["Vector"], 1: math},
+        attrs={"operation": "MULTIPLY"},
     )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": vector_math_4.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": vector_math_4.outputs["Vector"],
+        },
     )
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": set_position, 1: math_7}, attrs={"data_type": "FLOAT_VECTOR"}
+        Nodes.CaptureAttribute,
+        input_kwargs={"Geometry": set_position, 1: math_7},
+        attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     group_output = nw.new_node(
@@ -640,14 +904,20 @@ def bark_geo_2(nw):
 
 @node_utils.to_nodegroup("BarkGeo1", singleton=False)
 def bark_geo_1(nw):
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.2
 
-    vector_math = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: value}, attrs={"operation": "MULTIPLY"})
+    vector_math = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: value},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     value_1 = nw.new_node(Nodes.Value)
     value_1.outputs[0].default_value = 10.0
@@ -657,31 +927,48 @@ def bark_geo_1(nw):
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
-        input_kwargs={"Vector": vector_math.outputs["Vector"], "Scale": value_1, "Distortion": value_2},
+        input_kwargs={
+            "Vector": vector_math.outputs["Vector"],
+            "Scale": value_1,
+            "Distortion": value_2,
+        },
     )
 
     normal = nw.new_node(Nodes.InputNormal)
 
     vector_math_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: wave_texture.outputs["Color"], 1: normal}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: wave_texture.outputs["Color"], 1: normal},
+        attrs={"operation": "MULTIPLY"},
     )
 
     face_area = nw.new_node("GeometryNodeInputMeshFaceArea")
 
-    math_1 = nw.new_node(Nodes.Math, input_kwargs={0: face_area}, attrs={"operation": "SQRT"})
+    math_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: face_area}, attrs={"operation": "SQRT"}
+    )
 
     value_3 = nw.new_node(Nodes.Value)
     value_3.outputs[0].default_value = 1.0
 
-    math = nw.new_node(Nodes.Math, input_kwargs={0: math_1, 1: value_3}, attrs={"operation": "MULTIPLY"})
+    math = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: math_1, 1: value_3},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     vector_math_2 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_math_1.outputs["Vector"], 1: math}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: vector_math_1.outputs["Vector"], 1: math},
+        attrs={"operation": "MULTIPLY"},
     )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": vector_math_2.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": vector_math_2.outputs["Vector"],
+        },
     )
 
     capture_attribute = nw.new_node(

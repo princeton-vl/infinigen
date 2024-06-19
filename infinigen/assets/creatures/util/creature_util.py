@@ -5,9 +5,7 @@
 
 
 import numbers
-from dataclasses import dataclass
 
-import bpy
 import mathutils
 import numpy as np
 from mathutils import Euler, Quaternion, Vector
@@ -20,7 +18,9 @@ def euler(r, p, y):
     return mathutils.Euler(np.deg2rad([r, p, y])).to_quaternion()
 
 
-def interp_dict(a: dict, b: dict, t: float, keys="assert", fill=0, recurse=True, lerp=lerp):
+def interp_dict(
+    a: dict, b: dict, t: float, keys="assert", fill=0, recurse=True, lerp=lerp
+):
     """
     keys: 'a', 'b', 'intersect', 'union', 'asset', 'switch'
     """
@@ -30,7 +30,9 @@ def interp_dict(a: dict, b: dict, t: float, keys="assert", fill=0, recurse=True,
 
     if keys == "assert":
         if not a.keys() == b.keys():
-            raise ValueError(f"lerp_dict(..., {keys=}) recieved {a.keys()=}, {b.keys()}=")
+            raise ValueError(
+                f"lerp_dict(..., {keys=}) recieved {a.keys()=}, {b.keys()}="
+            )
         out_keys = a.keys()
     elif keys == "a":
         out_keys = a.keys()
@@ -50,7 +52,9 @@ def interp_dict(a: dict, b: dict, t: float, keys="assert", fill=0, recurse=True,
         elif k not in a:
             res[k] = b[k]
         elif recurse and isinstance(a[k], dict):
-            res[k] = interp_dict(a[k], b[k], t, keys=keys, fill=fill, recurse=recurse, lerp=lerp)
+            res[k] = interp_dict(
+                a[k], b[k], t, keys=keys, fill=fill, recurse=recurse, lerp=lerp
+            )
         elif isinstance(a[k], numbers.Number) or isinstance(a[k], np.ndarray):
             res[k] = lerp(a[k], b[k], t)
         else:

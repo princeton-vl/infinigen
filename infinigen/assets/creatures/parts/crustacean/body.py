@@ -12,9 +12,12 @@ from scipy.interpolate import interp1d
 from infinigen.assets.creatures.parts.utils.draw import geo_symmetric_texture
 from infinigen.assets.creatures.util.creature import Part, PartFactory
 from infinigen.assets.creatures.util.genome import Joint
-from infinigen.assets.utils.decorate import displace_vertices, distance2boundary, read_co, write_co
+from infinigen.assets.utils.decorate import (
+    displace_vertices,
+    distance2boundary,
+    read_co,
+)
 from infinigen.assets.utils.draw import leaf, spin
-from infinigen.assets.utils.misc import log_uniform
 from infinigen.assets.utils.object import join_objects, new_line
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
@@ -22,6 +25,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.placement import placeholder_locs
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
+from infinigen.core.util.random import log_uniform
 
 
 class CrabBodyFactory(PartFactory):
@@ -30,7 +34,9 @@ class CrabBodyFactory(PartFactory):
     min_spike_radius = 0.02
 
     def make_part(self, params) -> Part:
-        x_length, x_tip, bend_height = map(params.get, ["x_length", "x_tip", "bend_height"])
+        x_length, x_tip, bend_height = map(
+            params.get, ["x_length", "x_tip", "bend_height"]
+        )
         upper = self.make_surface(params)
         lower = butil.deep_clone_obj(upper)
         self.make_surface_side(upper, params, "upper")
@@ -40,7 +46,9 @@ class CrabBodyFactory(PartFactory):
         obj = join_objects([upper, lower])
 
         x, y, z = read_co(obj).T
-        write_attr_data(obj, "ratio", np.where(z > np.min(z) * params["color_cutoff"], 1, 0))
+        write_attr_data(
+            obj, "ratio", np.where(z > np.min(z) * params["color_cutoff"], 1, 0)
+        )
         butil.modify_mesh(obj, "WELD", merge_threshold=0.001)
 
         height_scale = interp1d(
@@ -58,7 +66,13 @@ class CrabBodyFactory(PartFactory):
 
         line.rotation_euler[1] = np.pi / 2
         butil.apply_transform(line)
-        butil.modify_mesh(line, "SIMPLE_DEFORM", deform_method="BEND", angle=-params["bend_angle"], deform_axis="Y")
+        butil.modify_mesh(
+            line,
+            "SIMPLE_DEFORM",
+            deform_method="BEND",
+            angle=-params["bend_angle"],
+            deform_axis="Y",
+        )
         line.rotation_euler[1] = -np.pi / 2
         butil.apply_transform(line)
         skeleton = read_co(line)
@@ -66,29 +80,71 @@ class CrabBodyFactory(PartFactory):
 
         obj.rotation_euler[1] = np.pi / 2
         butil.apply_transform(obj)
-        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="BEND", angle=-params["bend_angle"], deform_axis="Y")
+        butil.modify_mesh(
+            obj,
+            "SIMPLE_DEFORM",
+            deform_method="BEND",
+            angle=-params["bend_angle"],
+            deform_axis="Y",
+        )
         obj.rotation_euler[1] = -np.pi / 2
         butil.apply_transform(obj)
         joints = {
-            i: Joint((0, 0, 0), bounds=np.array([[0, 0, 0], [0, 0, 0]])) for i in np.linspace(0, 1, 5, endpoint=True)
+            i: Joint((0, 0, 0), bounds=np.array([[0, 0, 0], [0, 0, 0]]))
+            for i in np.linspace(0, 1, 5, endpoint=True)
         }
         return Part(skeleton, obj, joints=joints)
 
     def add_head(self, obj, params):
         def offset(nw: NodeWrangler, vector):
             head = nw.scalar_add(
-                1, nw.scalar_divide(nw.separate(nw.new_node(Nodes.InputPosition))[0], params["x_length"])
+                1,
+                nw.scalar_divide(
+                    nw.separate(nw.new_node(Nodes.InputPosition))[0], params["x_length"]
+                ),
             )
-            texture = nw.new_node(Nodes.MusgraveTexture, [vector], input_kwargs={"Scale": params["noise_scale"]})
-            return nw.combine(nw.scalar_multiply(head, nw.scalar_multiply(texture, params["noise_strength"])), 0, 0)
+            texture = nw.new_node(
+                Nodes.MusgraveTexture,
+                [vector],
+                input_kwargs={"Scale": params["noise_scale"]},
+            )
+            return nw.combine(
+                nw.scalar_multiply(
+                    head, nw.scalar_multiply(texture, params["noise_strength"])
+                ),
+                0,
+                0,
+            )
 
         surface.add_geomod(obj, geo_symmetric_texture, input_args=[offset], apply=True)
 
     @staticmethod
     def make_surface(params):
-        x_length, y_length, x_tip, y_tail = map(params.get, ["x_length", "y_length", "x_tip", "y_tail"])
-        x_anchors = np.array([0, 0, -x_tip / 2, -x_tip, -x_tip, -x_tip, -(x_tip + 1) / 2, -1, -1]) * x_length
-        y_anchors = np.array([0, 0.1, params["front_midpoint"], 1, 1, 1, params["back_midpoint"], y_tail, 0]) * y_length
+        x_length, y_length, x_tip, y_tail = map(
+            params.get, ["x_length", "y_length", "x_tip", "y_tail"]
+        )
+        x_anchors = (
+            np.array(
+                [0, 0, -x_tip / 2, -x_tip, -x_tip, -x_tip, -(x_tip + 1) / 2, -1, -1]
+            )
+            * x_length
+        )
+        y_anchors = (
+            np.array(
+                [
+                    0,
+                    0.1,
+                    params["front_midpoint"],
+                    1,
+                    1,
+                    1,
+                    params["back_midpoint"],
+                    y_tail,
+                    0,
+                ]
+            )
+            * y_length
+        )
         tip_size = params["tip_size"]
         if params["has_sharp_tip"]:
             front_angle = params["front_angle"]
@@ -110,41 +166,76 @@ class CrabBodyFactory(PartFactory):
 
     def make_surface_side(self, obj, params, prefix="upper"):
         distance = read_attr_data(obj, "distance")
-        height_scale = interp1d([0, 0.5, 1], [0, params[f"{prefix}_alpha"], 1], "quadratic")
+        height_scale = interp1d(
+            [0, 0.5, 1], [0, params[f"{prefix}_alpha"], 1], "quadratic"
+        )
         displace_vertices(
             obj,
-            lambda x, y, z: (0, 0, (1 if prefix == "upper" else -1) * height_scale(distance) * params[f"{prefix}_z"]),
-        )
-        displace_vertices(obj, lambda x, y, z: (params[f"{prefix}_shift"] * z, 0, 0))
-        offset = lambda nw, vector, distance: nw.combine(
-            0,
-            0,
-            nw.scalar_multiply(
-                distance,
-                nw.scalar_multiply(
-                    nw.new_node(Nodes.MusgraveTexture, [vector], input_kwargs={"Scale": params["noise_scale"]}),
-                    params[f"noise_strength"],
-                ),
+            lambda x, y, z: (
+                0,
+                0,
+                (1 if prefix == "upper" else -1)
+                * height_scale(distance)
+                * params[f"{prefix}_z"],
             ),
         )
+        displace_vertices(obj, lambda x, y, z: (params[f"{prefix}_shift"] * z, 0, 0))
+
+        def offset(nw, vector, distance):
+            return nw.combine(
+                0,
+                0,
+                nw.scalar_multiply(
+                    distance,
+                    nw.scalar_multiply(
+                        nw.new_node(
+                            Nodes.MusgraveTexture,
+                            [vector],
+                            input_kwargs={"Scale": params["noise_scale"]},
+                        ),
+                        params["noise_strength"],
+                    ),
+                ),
+            )
+
         surface.add_geomod(obj, geo_symmetric_texture, input_args=[offset], apply=True)
         return obj
 
     def add_spikes(self, obj, params):
         def selection(nw: NodeWrangler):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
-            return nw.boolean_math("AND", nw.compare("GREATER_THAN", y, 0), nw.compare("GREATER_THAN", z, 0.02))
+            return nw.boolean_math(
+                "AND",
+                nw.compare("GREATER_THAN", y, 0),
+                nw.compare("GREATER_THAN", z, 0.02),
+            )
 
-        locations = placeholder_locs(obj, params["spike_density"], selection, self.min_spike_distance, 0)
+        locations = placeholder_locs(
+            obj, params["spike_density"], selection, self.min_spike_distance, 0
+        )
         locations_ = locations.copy()
         locations_[:, 1] = -locations_[:, 1]
         locations = np.concatenate([locations, locations_], 0)
         if len(locations) == 0:
             return
         x, y, z = read_co(obj).T
-        dist = np.amin(np.linalg.norm(read_co(obj)[np.newaxis] - locations[:, np.newaxis], axis=-1), 0)
-        extrude = params["spike_height"] * np.clip(1 - dist / self.min_spike_radius, 0, None)
-        d = np.stack([x + params["spike_center"] * params["x_length"], y, z + params["spike_depth"]], -1)
+        dist = np.amin(
+            np.linalg.norm(
+                read_co(obj)[np.newaxis] - locations[:, np.newaxis], axis=-1
+            ),
+            0,
+        )
+        extrude = params["spike_height"] * np.clip(
+            1 - dist / self.min_spike_radius, 0, None
+        )
+        d = np.stack(
+            [
+                x + params["spike_center"] * params["x_length"],
+                y,
+                z + params["spike_depth"],
+            ],
+            -1,
+        )
         d = d / np.linalg.norm(d, axis=-1, keepdims=True)
         displace_vertices(obj, lambda x, y, z: (d * extrude[:, np.newaxis]).T)
 
@@ -153,26 +244,42 @@ class CrabBodyFactory(PartFactory):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
             z_length = params["lower_z"] if "lower_z" in params else params["z_length"]
             z_range = nw.boolean_math(
-                "AND", nw.compare("GREATER_THAN", z, -params["mouth_z"] * z_length), nw.compare("LESS_THAN", z, 0)
+                "AND",
+                nw.compare("GREATER_THAN", z, -params["mouth_z"] * z_length),
+                nw.compare("LESS_THAN", z, 0),
             )
-            x_range = nw.compare("GREATER_THAN", x, -params["mouth_x"] * params["x_length"])
+            x_range = nw.compare(
+                "GREATER_THAN", x, -params["mouth_x"] * params["x_length"]
+            )
             return nw.boolean_math("AND", z_range, x_range)
 
         def offset(nw: NodeWrangler, vector, distance):
             wave_texture = nw.new_node(
                 Nodes.WaveTexture,
                 [vector],
-                input_kwargs={"Scale": params["mouth_noise_scale"], "Distortion": 20, "Detail": 0},
+                input_kwargs={
+                    "Scale": params["mouth_noise_scale"],
+                    "Distortion": 20,
+                    "Detail": 0,
+                },
             )
             ratio = nw.scalar_multiply(
-                distance, nw.build_float_curve(distance, [(0, 0), (0.001, 0), (0.005, 1), (1, 1)])
+                distance,
+                nw.build_float_curve(
+                    distance, [(0, 0), (0.001, 0), (0.005, 1), (1, 1)]
+                ),
             )
             return nw.scale(
-                nw.scalar_multiply(ratio, nw.scalar_multiply(wave_texture, params["mouth_noise_strength"])),
+                nw.scalar_multiply(
+                    ratio,
+                    nw.scalar_multiply(wave_texture, params["mouth_noise_strength"]),
+                ),
                 nw.new_node(Nodes.InputNormal),
             )
 
-        surface.add_geomod(obj, geo_symmetric_texture, input_args=[offset, selection], apply=True)
+        surface.add_geomod(
+            obj, geo_symmetric_texture, input_args=[offset, selection], apply=True
+        )
 
     def sample_params(self):
         x_length = uniform(0.8, 1.2)
@@ -243,38 +350,58 @@ class LobsterBodyFactory(CrabBodyFactory):
     min_spike_radius = 0.01
 
     def make_part(self, params) -> Part:
-        x_length, y_length, z_length = map(params.get, ["x_length", "y_length", "z_length"])
+        x_length, y_length, z_length = map(
+            params.get, ["x_length", "y_length", "z_length"]
+        )
         x_anchors = np.array([0, 0, 1 / 3, 2 / 3, 1, 1]) * x_length
-        y_anchors = np.array([0, 1, params["midpoint_second"], params["midpoint_first"], 0.01, 0]) * y_length
+        y_anchors = (
+            np.array(
+                [0, 1, params["midpoint_second"], params["midpoint_first"], 0.01, 0]
+            )
+            * y_length
+        )
         obj = spin([x_anchors, y_anchors, 0], [1, 4], axis=(1, 0, 0))
         self.add_mouth(obj, params)
 
         height_fn = interp1d(
-            [0, 1 / 2, 1], [0, params["z_shift_midpoint"] / 2, params["z_shift"]], fill_value="extrapolate"
+            [0, 1 / 2, 1],
+            [0, params["z_shift_midpoint"] / 2, params["z_shift"]],
+            fill_value="extrapolate",
         )
-        displace_vertices(obj, lambda x, y, z: (0, 0, height_fn(x / x_length) * y_length))
+        displace_vertices(
+            obj, lambda x, y, z: (0, 0, height_fn(x / x_length) * y_length)
+        )
 
         z = read_co(obj).T[-1]
-        write_attr_data(obj, "ratio", 1 + np.where(z > 0, 0, uniform(1, 1.5) * z / y_length))
+        write_attr_data(
+            obj, "ratio", 1 + np.where(z > 0, 0, uniform(1, 1.5) * z / y_length)
+        )
         displace_vertices(
             obj,
             lambda x, y, z: (
                 0,
                 0,
-                -np.clip(z + y_length * params["bottom_cutoff"], None, 0) * (1 - params["bottom_shift"]),
+                -np.clip(z + y_length * params["bottom_cutoff"], None, 0)
+                * (1 - params["bottom_shift"]),
             ),
         )
 
         obj.scale[-1] = z_length / y_length
         butil.apply_transform(obj)
 
-        offset = lambda nw, vector: nw.scale(
-            nw.scalar_multiply(
-                nw.new_node(Nodes.MusgraveTexture, [vector], input_kwargs={"Scale": params["noise_scale"]}),
-                params[f"noise_strength"],
-            ),
-            nw.new_node(Nodes.InputNormal),
-        )
+        def offset(nw, vector):
+            return nw.scale(
+                nw.scalar_multiply(
+                    nw.new_node(
+                        Nodes.MusgraveTexture,
+                        [vector],
+                        input_kwargs={"Scale": params["noise_scale"]},
+                    ),
+                    params["noise_strength"],
+                ),
+                nw.new_node(Nodes.InputNormal),
+            )
+
         surface.add_geomod(obj, geo_symmetric_texture, input_args=[offset], apply=True)
 
         n_segments = 4

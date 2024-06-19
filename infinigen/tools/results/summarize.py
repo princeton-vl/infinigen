@@ -28,7 +28,9 @@ def make_defaultdict(inner):
 
 def parse_mask_tag_jsons(base_folder):
     for file_path in base_folder.rglob("MaskTag.json"):
-        if match := re.fullmatch("fine_([0-9])_([0-9])_([0-9]{4})_([0-9])", file_path.parent.name):
+        if match := re.fullmatch(
+            "fine_([0-9])_([0-9])_([0-9]{4})_([0-9])", file_path.parent.name
+        ):
             _, _, frame_str, _ = match.groups()
             yield (int(frame_str), file_path)
     for file_path in base_folder.rglob("MaskTag.json"):
@@ -44,9 +46,13 @@ def summarize_folder(base_folder):
         if (not file_path.is_file) or ("saved_mesh" in file_path.parts):
             continue
 
-        if match := re.fullmatch("(.*)_([0-9]{4})_([0-9]{2})_([0-9]{2})\.([a-z]+)", file_path.name):
+        if match := re.fullmatch(
+            "(.*)_([0-9]{4})_([0-9]{2})_([0-9]{2})\.([a-z]+)", file_path.name
+        ):
             data_type, frame_str, rig, subcam, suffix = match.groups()
-            output[data_type][suffix][rig][subcam][frame_str] = str(file_path.relative_to(base_folder))
+            output[data_type][suffix][rig][subcam][frame_str] = str(
+                file_path.relative_to(base_folder)
+            )
             max_frame = max(max_frame, int(frame_str))
 
     # Rename keys
@@ -66,9 +72,17 @@ def summarize_folder(base_folder):
 
 def what_is_missing(summary):
     max_frame = summary["stats"]["Max Frame"]
-    all_rigs = set(chain((summary["SurfaceNormal"]["png"].keys()), (summary["SurfaceNormal"]["png"].keys())))
+    all_rigs = set(
+        chain(
+            (summary["SurfaceNormal"]["png"].keys()),
+            (summary["SurfaceNormal"]["png"].keys()),
+        )
+    )
     all_subcams = set(
-        chain((summary["SurfaceNormal"]["png"]["00"].keys()), (summary["SurfaceNormal"]["png"]["00"].keys()))
+        chain(
+            (summary["SurfaceNormal"]["png"]["00"].keys()),
+            (summary["SurfaceNormal"]["png"]["00"].keys()),
+        )
     )
     logs = []
     for rig in all_rigs:
@@ -85,7 +99,9 @@ def what_is_missing(summary):
 
 def process_flow_frame(path, shape):
     flow3d = np.load(path)
-    flow2d_resized = cv2.resize(flow3d, dsize=shape, interpolation=cv2.INTER_LINEAR)[..., :2]
+    flow2d_resized = cv2.resize(flow3d, dsize=shape, interpolation=cv2.INTER_LINEAR)[
+        ..., :2
+    ]
     flow2d_resized[(np.abs(flow2d_resized) > 1e3) | np.isnan(flow2d_resized)] = -1
     flow_color = flow_vis.flow_to_color(flow2d_resized, convert_to_bgr=False)
     return flow_color
@@ -107,7 +123,9 @@ def process_mask(path, shape):
 def frames_to_video(file_path, frames: list, fps=24):
     assert Path(file_path).suffix == ".avi"
     H, W, _ = frames[0].shape
-    video = cv2.VideoWriter(str(file_path), cv2.VideoWriter_fourcc(*"DIVX"), frameSize=(W, H), fps=fps)
+    video = cv2.VideoWriter(
+        str(file_path), cv2.VideoWriter_fourcc(*"DIVX"), frameSize=(W, H), fps=fps
+    )
     for img in frames:
         video.write(img)
     video.release()
@@ -146,16 +164,27 @@ def process_scene_folder(folder, preview):
     shape = (1280, 720)
     with mp.Pool() as pool:
         all_flow_frames = pool.starmap(
-            process_flow_frame, tqdm([(folder / path, shape) for _, path in sorted(flow3d_paths.items())])
+            process_flow_frame,
+            tqdm([(folder / path, shape) for _, path in sorted(flow3d_paths.items())]),
         )
         all_depth_frames = pool.starmap(
-            process_depth_frame, tqdm([(folder / path, shape) for _, path in sorted(depth_paths.items())])
+            process_depth_frame,
+            tqdm([(folder / path, shape) for _, path in sorted(depth_paths.items())]),
         )
         all_occlusion_frames = pool.starmap(
-            process_mask, tqdm([(folder / path, shape) for _, path in sorted(occlusion_boundary_paths.items())])
+            process_mask,
+            tqdm(
+                [
+                    (folder / path, shape)
+                    for _, path in sorted(occlusion_boundary_paths.items())
+                ]
+            ),
         )
         all_flow_mask_frames = pool.starmap(
-            process_mask, tqdm([(folder / path, shape) for _, path in sorted(flow_mask_paths.items())])
+            process_mask,
+            tqdm(
+                [(folder / path, shape) for _, path in sorted(flow_mask_paths.items())]
+            ),
         )
 
     previews: Path = folder / "previews"

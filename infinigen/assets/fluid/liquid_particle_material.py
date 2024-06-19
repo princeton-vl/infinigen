@@ -3,14 +3,10 @@
 
 # Authors: Karhan Kayan
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import normal
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def liquid_particle_material(nw: NodeWrangler):
@@ -31,7 +27,9 @@ def liquid_particle_material(nw: NodeWrangler):
         attrs={"distribution": "MULTI_GGX"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

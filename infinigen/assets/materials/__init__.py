@@ -6,7 +6,13 @@
 from infinigen.infinigen_gpl.surfaces import *
 
 from . import *
-from .metal import brushed_metal, galvanized_metal, grained_and_polished_metal, hammered_metal, metal_basic
+from .metal import (
+    brushed_metal,
+    galvanized_metal,
+    grained_and_polished_metal,
+    hammered_metal,
+    metal_basic,
+)
 from .metal.brushed_metal import shader_brushed_metal
 from .metal.galvanized_metal import shader_galvanized_metal
 from .metal.grained_and_polished_metal import shader_grained_metal

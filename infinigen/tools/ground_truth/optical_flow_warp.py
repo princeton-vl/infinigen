@@ -38,9 +38,15 @@ if __name__ == "__main__":
     image1 = imread(image1_path)
     H, W, _ = image1.shape
 
-    flow2d = cv2.resize(np.load(flow3d_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR)[..., :2]
-    new_coords = flow2d + np.stack(np.meshgrid(np.arange(W), np.arange(H), indexing="xy"), axis=-1)
-    warped_image = cv2.remap(image2, new_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR)
+    flow2d = cv2.resize(
+        np.load(flow3d_path), dsize=(W, H), interpolation=cv2.INTER_LINEAR
+    )[..., :2]
+    new_coords = flow2d + np.stack(
+        np.meshgrid(np.arange(W), np.arange(H), indexing="xy"), axis=-1
+    )
+    warped_image = cv2.remap(
+        image2, new_coords.astype(np.float32), None, interpolation=cv2.INTER_LINEAR
+    )
 
     args.output.mkdir(exist_ok=True)
     imwrite(args.output / "A.png", image1)

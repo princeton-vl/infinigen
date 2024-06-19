@@ -8,7 +8,13 @@ from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials.art import ArtFabric
-from infinigen.assets.utils.decorate import read_center, read_normal, remove_faces, subsurf, write_co
+from infinigen.assets.utils.decorate import (
+    read_center,
+    read_normal,
+    remove_faces,
+    subsurf,
+    write_co,
+)
 from infinigen.assets.utils.draw import remesh_fill
 from infinigen.assets.utils.object import new_circle
 from infinigen.assets.utils.uv import wrap_front_back
@@ -55,7 +61,9 @@ class ShirtFactory(AssetFactory):
             0,
             0,
             self.size - self.sleeve_width / np.sin(self.sleeve_angle),
-            self.size - self.sleeve_width / np.sin(self.sleeve_angle) - self.sleeve_length * np.cos(self.sleeve_angle),
+            self.size
+            - self.sleeve_width / np.sin(self.sleeve_angle)
+            - self.sleeve_length * np.cos(self.sleeve_angle),
             self.size
             - self.sleeve_width / np.sin(self.sleeve_angle)
             - self.sleeve_length * np.cos(self.sleeve_angle)

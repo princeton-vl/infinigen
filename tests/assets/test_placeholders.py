@@ -3,17 +3,12 @@
 
 # Authors: David Yan
 
-from collections import OrderedDict
 
-import bpy
 import numpy as np
 import pytest
 
-from infinigen.core import tagging
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.example_solver.geometry import dof
 from infinigen.core.util import blender as butil
 from infinigen_examples.indoor_asset_semantics import home_asset_usage
 
@@ -55,10 +50,12 @@ def test_real_placeholders(fac):
     ph_max_corner = np.array(placeholder.bound_box[6])
     for i in range(3):
         assert (
-            asset_min_corner[i] <= ph_max_corner[i] and asset_min_corner[i] >= ph_min_corner[i]
+            asset_min_corner[i] <= ph_max_corner[i]
+            and asset_min_corner[i] >= ph_min_corner[i]
         ), "Asset not completely contained within placeholder"
         assert (
-            asset_max_corner[i] <= ph_max_corner[i] and asset_max_corner[i] >= ph_min_corner[i]
+            asset_max_corner[i] <= ph_max_corner[i]
+            and asset_max_corner[i] >= ph_min_corner[i]
         ), "Asset not completely contained within placeholder"
 
 

@@ -36,11 +36,17 @@ class HardwareFactory(AssetFactory):
             is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
             is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
             self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
-            self.edge_wear = material_assignments["wear_tear"][1] if is_edge_wear else None
+            self.edge_wear = (
+                material_assignments["wear_tear"][1] if is_edge_wear else None
+            )
 
     def make_attachment(self):
         base = new_base_cylinder() if self.is_circular else new_cube()
-        base.scale = self.attachment_radius, self.attachment_radius, self.attachment_depth / 2
+        base.scale = (
+            self.attachment_radius,
+            self.attachment_radius,
+            self.attachment_depth / 2,
+        )
         base.rotation_euler[0] = np.pi / 2
         base.location[1] = -self.attachment_depth / 2
         butil.apply_transform(base, True)
@@ -61,7 +67,11 @@ class HardwareFactory(AssetFactory):
 
     def make_holder(self):
         obj = new_base_cylinder() if self.is_circular else new_cube()
-        obj.scale = self.radius, self.radius, (self.holder_length + self.extension_length) / 2
+        obj.scale = (
+            self.radius,
+            self.radius,
+            (self.holder_length + self.extension_length) / 2,
+        )
         obj.rotation_euler[1] = np.pi / 2
         obj.location[0] = (self.holder_length - self.extension_length) / 2
         butil.apply_transform(obj, True)
@@ -69,7 +79,11 @@ class HardwareFactory(AssetFactory):
 
     def make_bar(self):
         obj = new_base_cylinder() if self.is_circular else new_cube()
-        obj.scale = self.radius, self.radius, self.bar_length / 2 + self.extension_length
+        obj.scale = (
+            self.radius,
+            self.radius,
+            self.bar_length / 2 + self.extension_length,
+        )
         obj.rotation_euler[1] = np.pi / 2
         obj.location[0] = self.bar_length / 2
         butil.apply_transform(obj, True)
@@ -77,7 +91,9 @@ class HardwareFactory(AssetFactory):
 
     def make_ring(self):
         bpy.ops.mesh.primitive_torus_add(
-            major_segments=128, major_radius=self.ring_radius, minor_radius=self.radius * uniform(0.4, 0.7)
+            major_segments=128,
+            major_radius=self.ring_radius,
+            minor_radius=self.radius * uniform(0.4, 0.7),
         )
         obj = bpy.context.active_object
         obj.rotation_euler[0] = np.pi / 2

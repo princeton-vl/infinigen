@@ -7,15 +7,13 @@ import os
 import random
 import sys
 
-import cv2
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
 
 
-def merge_images(image_path1, image_path2, text1="Program A", text2="Program B", strip_width=5):
+def merge_images(
+    image_path1, image_path2, text1="Program A", text2="Program B", strip_width=5
+):
     # Open the images
     image1 = Image.open(image_path1)
     image2 = Image.open(image_path2)
@@ -50,7 +48,9 @@ def merge_images(image_path1, image_path2, text1="Program A", text2="Program B",
     draw = ImageDraw.Draw(combined_image)
     try:
         # Load a specific TrueType or OpenType font file
-        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Black.ttf", font_size)
+        font = ImageFont.truetype(
+            "/System/Library/Fonts/Supplemental/Arial Black.ttf", font_size
+        )
     except IOError:
         # If the specific font file is not found, load the default font
         print("Font not found, using default font.")
@@ -71,10 +71,9 @@ def merge_images(image_path1, image_path2, text1="Program A", text2="Program B",
     return combined_image
 
 
-from PIL import Image, ImageDraw, ImageFont
-
-
-def merge_images2(image_path1, image_path2, text1="Program A", text2="Program B", strip_width=5):
+def merge_images2(
+    image_path1, image_path2, text1="Program A", text2="Program B", strip_width=5
+):
     # Open the images
     image1 = Image.open(image_path1)
     image2 = Image.open(image_path2)
@@ -107,7 +106,9 @@ def merge_images2(image_path1, image_path2, text1="Program A", text2="Program B"
     draw = ImageDraw.Draw(combined_image)
     try:
         # Load a specific TrueType or OpenType font file
-        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", font_size)
+        font = ImageFont.truetype(
+            "/System/Library/Fonts/Supplemental/Arial.ttf", font_size
+        )
     except IOError:
         # If the specific font file is not found, load the default font
         print("Font not found, using default font.")
@@ -173,7 +174,9 @@ if __name__ == "__main__":
                 continue
 
             # Creating a unique filename for the merged image
-            merged_filename = f"{perspective}-{methods[0]}-{img_0_id}-{methods[1]}-{img_1_id}.jpg"
+            merged_filename = (
+                f"{perspective}-{methods[0]}-{img_0_id}-{methods[1]}-{img_1_id}.jpg"
+            )
             merged_image_path = os.path.join(output_directory, merged_filename)
 
             # Merge and save images

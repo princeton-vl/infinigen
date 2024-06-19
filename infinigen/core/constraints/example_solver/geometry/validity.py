@@ -5,7 +5,6 @@
 
 import logging
 
-import bpy
 import gin
 from shapely.geometry import MultiPolygon, Point, Polygon
 
@@ -15,11 +14,13 @@ from infinigen.core.constraints.constraint_language.util import (
     blender_objs_from_names,
     meshes_from_names,
     project_to_xy_poly,
-    subset,
 )
-from infinigen.core.constraints.evaluator.node_impl.trimesh_geometry import any_touching, constrain_contact
-from infinigen.core.constraints.example_solver.geometry.stability import stable_against, supported_by
-from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
+from infinigen.core.constraints.evaluator.node_impl.trimesh_geometry import (
+    any_touching,
+    constrain_contact,
+)
+from infinigen.core.constraints.example_solver.geometry.stability import stable_against
+from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
@@ -82,12 +83,16 @@ def all_relations_valid(state, name):
 
 
 @gin.configurable
-def check_post_move_validity(state: State, name: str, disable_collision_checking=False, visualize=False):
+def check_post_move_validity(
+    state: State, name: str, disable_collision_checking=False, visualize=False
+):
     scene = state.trimesh_scene
     objstate = state.objs[name]
 
     collision_objs = [
-        os.obj.name for k, os in state.objs.items() if k != name and t.Semantics.NoCollision not in os.tags
+        os.obj.name
+        for k, os in state.objs.items()
+        if k != name and t.Semantics.NoCollision not in os.tags
     ]
 
     if len(collision_objs) == 0:
@@ -105,14 +110,20 @@ def check_post_move_validity(state: State, name: str, disable_collision_checking
     if t.Semantics.NoCollision in objstate.tags:
         return True
 
-    touch = any_touching(scene, objstate.obj.name, collision_objs, bvh_cache=state.bvh_cache)
+    touch = any_touching(
+        scene, objstate.obj.name, collision_objs, bvh_cache=state.bvh_cache
+    )
     if not constrain_contact(touch, should_touch=None, max_depth=0.0001):
         if visualize:
             vis_obj = butil.copy(objstate.obj)
             vis_obj.name = f"validity_contact_fail_{name}"
 
-        contact_names = [[x for x in t.names if not x.startswith("_")] for t in touch.contacts]
-        logger.debug(f"validity failed - {name} touched {contact_names[0]} {len(contact_names)=}")
+        contact_names = [
+            [x for x in t.names if not x.startswith("_")] for t in touch.contacts
+        ]
+        logger.debug(
+            f"validity failed - {name} touched {contact_names[0]} {len(contact_names)=}"
+        )
         return False
 
     # supposed to go through the consgraph here

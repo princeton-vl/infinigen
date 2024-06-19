@@ -30,7 +30,13 @@ def apply_cutter(state, objkey, cutter):
         # TODO in theory we maybe should check if they actually intersect
 
         parent_obj = state.objs[relation_state.target_name].obj
-        butil.modify_mesh(parent_obj, "BOOLEAN", object=butil.copy(cutter), operation="DIFFERENCE", solver="FAST")
+        butil.modify_mesh(
+            parent_obj,
+            "BOOLEAN",
+            object=butil.copy(cutter),
+            operation="DIFFERENCE",
+            solver="FAST",
+        )
 
         target_obj_name = state.objs[relation_state.target_name].obj.name
         cut_objs.append((relation_state.target_name, target_obj_name))
@@ -56,7 +62,9 @@ def populate_state_placeholders(state: State, filter=None, final=True):
         if os.generator is None:
             continue
 
-        if filter is not None and not usage_lookup.has_usage(os.generator.__class__, filter):
+        if filter is not None and not usage_lookup.has_usage(
+            os.generator.__class__, filter
+        ):
             continue
 
         if "spawn_asset" in os.obj.name:
@@ -86,18 +94,27 @@ def populate_state_placeholders(state: State, filter=None, final=True):
         os.generator.finalize_assets([os.obj])
         butil.put_in_collection(os.obj, unique_assets)
 
-        cutter = next((o for o in butil.iter_object_tree(os.obj) if o.name.endswith(".cutter")), None)
-        logger.debug(f"{populate_state_placeholders.__name__} found {cutter=} for {os.obj.name=}")
+        cutter = next(
+            (o for o in butil.iter_object_tree(os.obj) if o.name.endswith(".cutter")),
+            None,
+        )
+        logger.debug(
+            f"{populate_state_placeholders.__name__} found {cutter=} for {os.obj.name=}"
+        )
         if cutter is not None:
             cut_objs = apply_cutter(state, objkey, cutter)
-            logger.debug(f"{populate_state_placeholders.__name__} cut {cutter.name=} from {cut_objs=}")
+            logger.debug(
+                f"{populate_state_placeholders.__name__} cut {cutter.name=} from {cut_objs=}"
+            )
             update_state_mesh_objs += cut_objs
 
     if final:
         return
 
     # objects modified in any way (via pholder update or boolean cut) must be synched with trimesh state
-    for objkey, old_objname in tqdm(set(update_state_mesh_objs), desc="Updating trimesh with populated objects"):
+    for objkey, old_objname in tqdm(
+        set(update_state_mesh_objs), desc="Updating trimesh with populated objects"
+    ):
         os = state.objs[objkey]
 
         # delete old trimesh

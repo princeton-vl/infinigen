@@ -4,15 +4,10 @@
 # Authors: Karhan Kayan
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=zyIJQHlFQs0 by PolyFjord
 
-import bpy
-import mathutils
 from numpy.random import normal as N
-from numpy.random import randint, uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 from infinigen.core.util.random import random_color_neighbour
 
 
@@ -21,7 +16,9 @@ def blackbody_shader(nw: NodeWrangler):
 
     volume_info = nw.new_node("ShaderNodeVolumeInfo")
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": volume_info.outputs["Flame"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": volume_info.outputs["Flame"]}
+    )
     colorramp.color_ramp.interpolation = "B_SPLINE"
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.2455 + 0.01 * N()
@@ -31,7 +28,9 @@ def blackbody_shader(nw: NodeWrangler):
     colorramp.color_ramp.elements[2].position = 0.5864 + 0.01 * N()
     colorramp.color_ramp.elements[2].color = [0.0000, 0.0000, 0.0000, 1.0000]
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": volume_info.outputs["Density"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": volume_info.outputs["Density"]}
+    )
     colorramp_1.color_ramp.interpolation = "B_SPLINE"
     colorramp_1.color_ramp.elements[0].position = 0.3636 + 0.01 * N()
     colorramp_1.color_ramp.elements[0].color = [1.0000, 1.0000, 1.0000, 1.0000]
@@ -53,7 +52,9 @@ def blackbody_shader(nw: NodeWrangler):
     principled_volume = nw.new_node(
         Nodes.PrincipledVolume,
         input_kwargs={
-            "Color": random_color_neighbour((0.3568, 0.3568, 0.3568, 1.0000), 0.1, 0.1, 0.1),
+            "Color": random_color_neighbour(
+                (0.3568, 0.3568, 0.3568, 1.0000), 0.1, 0.1, 0.1
+            ),
             "Density": 15.0000 + N(),
             "Blackbody Intensity": multiply_1,
         },

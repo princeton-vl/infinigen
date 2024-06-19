@@ -5,8 +5,6 @@
 
 
 import argparse
-import os
-import sys
 from pathlib import Path
 
 import bpy
@@ -45,14 +43,17 @@ def asset_generation(
                     print(asset, i)
                     if not check_only:
                         with FixedSeed(int_hash([asset, seed, i])):
-                            landtile_asset(output_folder / asset / f"{i}", asset, device=device)
+                            landtile_asset(
+                                output_folder / asset / f"{i}", asset, device=device
+                            )
             if asset == Assets.UpsidedownMountains:
                 if not (output_folder / asset / f"{i}" / AssetFile.Finish).exists():
                     print(asset, i)
                     if not check_only:
                         with FixedSeed(int_hash([asset, seed, i])):
                             upsidedown_mountains_asset(
-                                output_folder / Assets.UpsidedownMountains / f"{i}", device=device
+                                output_folder / Assets.UpsidedownMountains / f"{i}",
+                                device=device,
                             )
             if asset == Assets.Caves:
                 if not (output_folder / asset / f"{i}" / AssetFile.Finish).exists():

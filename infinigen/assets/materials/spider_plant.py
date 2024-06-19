@@ -3,12 +3,11 @@
 
 # Authors: Beining Han
 
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 
 
 def shader_spider_plant(nw: NodeWrangler):
@@ -18,14 +17,25 @@ def shader_spider_plant(nw: NodeWrangler):
     main_color = hsv2rgba(main_hsv_color)
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": main_color, "Subsurface IOR": 1.01, "Roughness": 2.0}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": main_color,
+            "Subsurface IOR": 1.01,
+            "Roughness": 2.0,
+        },
     )
 
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, input_kwargs={"Color": main_color})
+    translucent_bsdf = nw.new_node(
+        Nodes.TranslucentBSDF, input_kwargs={"Color": main_color}
+    )
 
-    mix_shader = nw.new_node(Nodes.MixShader, input_kwargs={1: principled_bsdf, 2: translucent_bsdf})
+    mix_shader = nw.new_node(
+        Nodes.MixShader, input_kwargs={1: principled_bsdf, 2: translucent_bsdf}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

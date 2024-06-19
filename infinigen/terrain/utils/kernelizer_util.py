@@ -6,9 +6,10 @@
 
 import numpy as np
 
-from infinigen.core.nodes.node_info import NODE_ATTRS_AVAILABLE as o_NODE_ATTRS_AVAILABLE
+from infinigen.core.nodes.node_info import (
+    NODE_ATTRS_AVAILABLE as o_NODE_ATTRS_AVAILABLE,
+)
 from infinigen.core.nodes.node_info import Nodes as oNodes
-from infinigen.core.surface import Registry
 
 
 class Vars:
@@ -33,12 +34,23 @@ NODE_ATTRS_AVAILABLE.update(
             "color_ramp.hue_interpolation",
         ],
         Nodes.MixRGB: ["use_clamp", "blend_type"],
-        Nodes.Mix: ["data_type", "blend_type", "clamp_result", "clamp_factor", "factor_mode"],
+        Nodes.Mix: [
+            "data_type",
+            "blend_type",
+            "clamp_result",
+            "clamp_factor",
+            "factor_mode",
+        ],
         Nodes.FloatCurve: ["mapping"],
         Nodes.Value: [],
         Nodes.Vector: [],
         Nodes.InputColor: [],
-        Nodes.WaveTexture: ["wave_type", "bands_direction", "rings_direction", "wave_profile"],
+        Nodes.WaveTexture: [
+            "wave_type",
+            "bands_direction",
+            "rings_direction",
+            "wave_profile",
+        ],
         Nodes.SeparateXYZ: [],
         Nodes.Group: [],
     }
@@ -173,8 +185,18 @@ def special_sanitize_constant(node_name, x):
 
 
 def special_sanitize(node_name, x, node_tree_name):
-    positions = ",".join([get_imp_var_name(node_tree_name, node_name) + f"_pos{i}" for i in range(len(x))])
-    colors = ",".join([get_imp_var_name(node_tree_name, node_name) + f"_color{i}" for i in range(len(x))])
+    positions = ",".join(
+        [
+            get_imp_var_name(node_tree_name, node_name) + f"_pos{i}"
+            for i in range(len(x))
+        ]
+    )
+    colors = ",".join(
+        [
+            get_imp_var_name(node_tree_name, node_name) + f"_color{i}"
+            for i in range(len(x))
+        ]
+    )
     return f"""
         float {node_name}_positions[{len(x)}]{{{positions}}};
         float4_nonbuiltin {node_name}_colors[{len(x)}]{{{colors}}};
@@ -218,11 +240,20 @@ def sanitize(x, node, param):
         return int(x)
     elif node_type == Nodes.VectorMath and param == NODE_ATTRS_AVAILABLE[node_type][0]:
         return "NODE_VECTOR_MATH_" + x
-    elif node_type == Nodes.VoronoiTexture and param == NODE_ATTRS_AVAILABLE[node_type][0]:
+    elif (
+        node_type == Nodes.VoronoiTexture
+        and param == NODE_ATTRS_AVAILABLE[node_type][0]
+    ):
         return x[:-1]
-    elif node_type == Nodes.VoronoiTexture and param == NODE_ATTRS_AVAILABLE[node_type][1]:
+    elif (
+        node_type == Nodes.VoronoiTexture
+        and param == NODE_ATTRS_AVAILABLE[node_type][1]
+    ):
         return "SHD_VORONOI_" + x
-    elif node_type == Nodes.VoronoiTexture and param == NODE_ATTRS_AVAILABLE[node_type][2]:
+    elif (
+        node_type == Nodes.VoronoiTexture
+        and param == NODE_ATTRS_AVAILABLE[node_type][2]
+    ):
         return "SHD_VORONOI_" + x
     elif node_type == Nodes.MapRange and param == NODE_ATTRS_AVAILABLE[node_type][0]:
         return x
@@ -230,9 +261,15 @@ def sanitize(x, node, param):
         return "NODE_MAP_RANGE_" + x
     elif node_type == Nodes.MapRange and param == NODE_ATTRS_AVAILABLE[node_type][2]:
         return int(x)
-    elif node_type == Nodes.MusgraveTexture and param == NODE_ATTRS_AVAILABLE[node_type][0]:
+    elif (
+        node_type == Nodes.MusgraveTexture
+        and param == NODE_ATTRS_AVAILABLE[node_type][0]
+    ):
         return x[:-1]
-    elif node_type == Nodes.MusgraveTexture and param == NODE_ATTRS_AVAILABLE[node_type][1]:
+    elif (
+        node_type == Nodes.MusgraveTexture
+        and param == NODE_ATTRS_AVAILABLE[node_type][1]
+    ):
         return "SHD_MUSGRAVE_" + x
     elif node_type == Nodes.MixRGB and param == NODE_ATTRS_AVAILABLE[node_type][0]:
         return int(x)

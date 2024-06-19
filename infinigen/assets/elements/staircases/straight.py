@@ -8,7 +8,6 @@
 
 import bmesh
 import bpy
-import gin
 import numpy as np
 import shapely
 from numpy.random import uniform
@@ -52,8 +51,20 @@ from infinigen.core.util.random import random_general as rg
 
 
 class StraightStaircaseFactory(AssetFactory):
-    support_types = "weighted_choice", (2, "single-rail"), (2, "double-rail"), (3, "side"), (3, "solid"), (3, "hole")
-    handrail_types = "weighted_choice", (2, "glass"), (2, "horizontal-post"), (2, "vertical-post")
+    support_types = (
+        "weighted_choice",
+        (2, "single-rail"),
+        (2, "double-rail"),
+        (3, "side"),
+        (3, "solid"),
+        (3, "hole"),
+    )
+    handrail_types = (
+        "weighted_choice",
+        (2, "glass"),
+        (2, "horizontal-post"),
+        (2, "vertical-post"),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super(StraightStaircaseFactory, self).__init__(factory_seed, coarse)
@@ -65,7 +76,9 @@ class StraightStaircaseFactory(AssetFactory):
             self.has_step = self.support_type in ["solid", "hole"]
             self.hole_size = log_uniform(0.6, 1.0)
             probs = np.array([3, 2, 2, 2])
-            self.step_surface = np.random.choice([wood, plaster, concrete, fabrics], p=probs / probs.sum())
+            self.step_surface = np.random.choice(
+                [wood, plaster, concrete, fabrics], p=probs / probs.sum()
+            )
 
             self.has_rail = self.support_type in ["single-rail", "double-rail"]
             self.rail_offset = self.step_width * uniform(0.15, 0.3)
@@ -73,21 +86,33 @@ class StraightStaircaseFactory(AssetFactory):
             self.rail_width = log_uniform(0.08, 0.2)
             self.rail_height = log_uniform(0.08, 0.12)
             probs = np.array([3, 2, 2, 1])
-            self.rail_surface = np.random.choice([metal, plaster, concrete, fabrics], p=probs / probs.sum())
+            self.rail_surface = np.random.choice(
+                [metal, plaster, concrete, fabrics], p=probs / probs.sum()
+            )
 
             self.has_tread = not self.has_step or uniform() < 0.75
-            self.tread_height = uniform(0.01, 0.02) if self.has_step else uniform(0.06, 0.08)
+            self.tread_height = (
+                uniform(0.01, 0.02) if self.has_step else uniform(0.06, 0.08)
+            )
             self.tread_length = self.step_length + uniform(0.01, 0.02)
-            self.tread_width = self.step_width + uniform(0.01, 0.02) if uniform() < 0.8 else self.step_width
+            self.tread_width = (
+                self.step_width + uniform(0.01, 0.02)
+                if uniform() < 0.8
+                else self.step_width
+            )
             probs = np.array([3, 3, 1])
-            self.tread_surface = np.random.choice([wood, metal, glass], p=probs / probs.sum())
+            self.tread_surface = np.random.choice(
+                [wood, metal, glass], p=probs / probs.sum()
+            )
 
             self.has_sides = self.support_type in ["side", "solid", "hole"]
             self.side_type = np.random.choice(["zig-zag", "straight"])
             self.side_height = self.step_height * log_uniform(0.2, 0.8)
             self.side_thickness = uniform(0.03, 0.08)
             probs = np.array([3, 3, 1, 2])
-            self.side_surface = np.random.choice([wood, metal, plaster, fabrics], p=probs / probs.sum())
+            self.side_surface = np.random.choice(
+                [wood, metal, plaster, fabrics], p=probs / probs.sum()
+            )
 
             self.has_column = self.support_type == "chord"
 
@@ -97,9 +122,14 @@ class StraightStaircaseFactory(AssetFactory):
             self.handrail_height = log_uniform(0.02, 0.06)
             self.handrail_offset = self.handrail_width * log_uniform(1, 2)
             self.handrail_extension = uniform(0.1, 0.2)
-            self.handrail_alphas = [self.handrail_offset / self.step_width, 1 - self.handrail_offset / self.step_width]
+            self.handrail_alphas = [
+                self.handrail_offset / self.step_width,
+                1 - self.handrail_offset / self.step_width,
+            ]
             probs = np.array([3, 2, 3])
-            self.handrail_surface = np.random.choice([wood, metal, fabrics], p=probs / probs.sum())
+            self.handrail_surface = np.random.choice(
+                [wood, metal, fabrics], p=probs / probs.sum()
+            )
 
             self.post_height = log_uniform(0.8, 1.2)
             self.post_k = int(np.ceil(self.step_width / self.step_length))
@@ -107,12 +137,16 @@ class StraightStaircaseFactory(AssetFactory):
             self.post_minor_width = self.post_width * log_uniform(0.3, 0.5)
             self.is_post_circular = uniform() < 0.5
             probs = np.array([3, 3, 2])
-            self.post_surface = np.random.choice([wood, metal, fabrics], p=probs / probs.sum())
+            self.post_surface = np.random.choice(
+                [wood, metal, fabrics], p=probs / probs.sum()
+            )
             self.has_vertical_post = self.handrail_type == "vertical-post"
 
             self.has_bars = self.handrail_type == "horizontal-post"
             self.bar_size = log_uniform(0.1, 0.2)
-            self.n_bars = int(np.floor(self.post_height / self.bar_size * uniform(0.35, 0.75)))
+            self.n_bars = int(
+                np.floor(self.post_height / self.bar_size * uniform(0.35, 0.75))
+            )
 
             self.has_glasses = self.handrail_type == "glass"
             self.glass_height = self.post_height - uniform(0, 0.05)
@@ -165,13 +199,22 @@ class StraightStaircaseFactory(AssetFactory):
         return cos[indices]
 
     def split(self, start, end=None):
-        return np.array_split(np.arange(start, end), np.ceil((start if end is None else end - start) / self.post_k))
+        return np.array_split(
+            np.arange(start, end),
+            np.ceil((start if end is None else end - start) / self.post_k),
+        )
 
     @staticmethod
     def triangulate(obj):
         butil.modify_mesh(obj, "TRIANGULATE", min_vertices=3)
         levels = 1
-        butil.modify_mesh(obj, "SUBSURF", levels=levels, render_levels=levels, subdivision_type="SIMPLE")
+        butil.modify_mesh(
+            obj,
+            "SUBSURF",
+            levels=levels,
+            render_levels=levels,
+            subdivision_type="SIMPLE",
+        )
         return obj
 
     def vertical_cut(self, p):
@@ -183,7 +226,15 @@ class StraightStaircaseFactory(AssetFactory):
             part = new_circle(vertices=len(coords))
             with butil.ViewportMode(part, "EDIT"):
                 bpy.ops.mesh.edge_face_add()
-            write_co(part, np.array(list([0, y * self.step_length, z * self.step_height] for y, z in coords)))
+            write_co(
+                part,
+                np.array(
+                    list(
+                        [0, y * self.step_length, z * self.step_height]
+                        for y, z in coords
+                    )
+                ),
+            )
             parts.append(part)
         return parts
 
@@ -215,11 +266,16 @@ class StraightStaircaseFactory(AssetFactory):
         if self.support_type == "single-rail":
             alphas = [0.5]
         else:
-            alphas = [self.rail_offset / self.step_width, 1 - self.rail_offset / self.step_width]
+            alphas = [
+                self.rail_offset / self.step_width,
+                1 - self.rail_offset / self.step_width,
+            ]
         for alpha in alphas:
             obj = self.make_line(alpha)
             if self.is_rail_circular:
-                surface.add_geomod(obj, geo_radius, apply=True, input_args=[self.rail_width, 16])
+                surface.add_geomod(
+                    obj, geo_radius, apply=True, input_args=[self.rail_width, 16]
+                )
                 obj.location[-1] = -self.rail_width
                 butil.apply_transform(obj, loc=True)
             else:
@@ -227,7 +283,9 @@ class StraightStaircaseFactory(AssetFactory):
                 with butil.ViewportMode(obj, "EDIT"):
                     bpy.ops.mesh.select_mode(type="EDGE")
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, -self.rail_height * 2)})
+                    bpy.ops.mesh.extrude_edges_move(
+                        TRANSFORM_OT_translate={"value": (0, 0, -self.rail_height * 2)}
+                    )
                 butil.modify_mesh(obj, "SOLIDIFY", thickness=self.rail_width, offset=0)
             self.triangulate(obj)
             write_attribute(obj, 1, "rails", "FACE")
@@ -265,7 +323,17 @@ class StraightStaircaseFactory(AssetFactory):
                 single_sided=True,
             )
         else:
-            p = Polygon(LineString([(0, offset), (0, 1), (self.n, self.n + 1), (self.n, self.n + offset), (0, offset)]))
+            p = Polygon(
+                LineString(
+                    [
+                        (0, offset),
+                        (0, 1),
+                        (self.n, self.n + 1),
+                        (self.n, self.n + offset),
+                        (0, offset),
+                    ]
+                )
+            )
         objs = self.vertical_cut(p)
 
         bottom_cutter = new_cube(location=(0, 0, -1))
@@ -307,19 +375,32 @@ class StraightStaircaseFactory(AssetFactory):
         self.extend_line(obj, self.handrail_extension)
         if self.is_handrail_circular:
             surface.add_geomod(
-                obj, geo_radius, apply=True, input_args=[self.handrail_width, 32], input_kwargs={"to_align_tilt": False}
+                obj,
+                geo_radius,
+                apply=True,
+                input_args=[self.handrail_width, 32],
+                input_kwargs={"to_align_tilt": False},
             )
         else:
             butil.select_none()
             with butil.ViewportMode(obj, "EDIT"):
                 bpy.ops.mesh.select_mode(type="EDGE")
                 bpy.ops.mesh.select_all(action="SELECT")
-                bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, -self.handrail_height * 2)})
+                bpy.ops.mesh.extrude_edges_move(
+                    TRANSFORM_OT_translate={"value": (0, 0, -self.handrail_height * 2)}
+                )
             butil.modify_mesh(
-                obj, "SOLIDIFY", thickness=self.handrail_width * 2, offset=0, solidify_mode="NON_MANIFOLD"
+                obj,
+                "SOLIDIFY",
+                thickness=self.handrail_width * 2,
+                offset=0,
+                solidify_mode="NON_MANIFOLD",
             )
             butil.modify_mesh(
-                obj, "BEVEL", width=self.handrail_width * uniform(0.2, 0.5), segments=np.random.randint(4, 7)
+                obj,
+                "BEVEL",
+                width=self.handrail_width * uniform(0.2, 0.5),
+                segments=np.random.randint(4, 7),
             )
             obj.location[-1] += self.handrail_height
         write_attribute(obj, 1, "handrails", "FACE")
@@ -352,23 +433,33 @@ class StraightStaircaseFactory(AssetFactory):
             existing = np.concatenate([existing, loc[:1]], 0)
             cos = [0]
             for i, l in enumerate(loc):
-                if i > 0 and np.min(np.linalg.norm(existing - l[np.newaxis, :], axis=1)) > self.handrail_width * 2:
+                if (
+                    i > 0
+                    and np.min(np.linalg.norm(existing - l[np.newaxis, :], axis=1))
+                    > self.handrail_width * 2
+                ):
                     cos.append(i)
                     existing = np.concatenate([existing, loc[i : i + 1]], 0)
             obj = mesh2obj(data2mesh(loc[cos]))
             with butil.ViewportMode(obj, "EDIT"):
                 bpy.ops.mesh.select_all(action="SELECT")
-                bpy.ops.mesh.extrude_vertices_move(TRANSFORM_OT_translate={"value": (0, 0, self.post_height)})
+                bpy.ops.mesh.extrude_vertices_move(
+                    TRANSFORM_OT_translate={"value": (0, 0, self.post_height)}
+                )
             if self.is_post_circular:
                 surface.add_geomod(obj, geo_radius, apply=True, input_args=[width, 32])
             else:
                 with butil.ViewportMode(obj, "EDIT"):
                     bpy.ops.mesh.select_mode(type="EDGE")
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (width * 2, 0, 0)})
+                    bpy.ops.mesh.extrude_edges_move(
+                        TRANSFORM_OT_translate={"value": (width * 2, 0, 0)}
+                    )
                     bpy.ops.mesh.select_mode(type="FACE")
                     bpy.ops.mesh.select_all(action="SELECT")
-                    bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, width * 2, 0)})
+                    bpy.ops.mesh.extrude_region_move(
+                        TRANSFORM_OT_translate={"value": (0, width * 2, 0)}
+                    )
                 obj.location = -width, -width, 0
                 butil.apply_transform(obj, loc=True)
             write_attribute(obj, 1, "posts", "FACE")
@@ -383,7 +474,9 @@ class StraightStaircaseFactory(AssetFactory):
                     obj = new_line()
                     write_co(obj, np.stack([loc, loc_]))
                     subsurf(obj, 4)
-                    surface.add_geomod(obj, geo_radius, apply=True, input_args=[self.post_minor_width])
+                    surface.add_geomod(
+                        obj, geo_radius, apply=True, input_args=[self.post_minor_width]
+                    )
                     obj.location[-1] += self.post_height - (i + 1) * self.bar_size
                     butil.apply_transform(obj, loc=True)
                     write_attribute(obj, 1, "posts", "FACE")
@@ -400,7 +493,9 @@ class StraightStaircaseFactory(AssetFactory):
                     bpy.ops.mesh.select_mode(type="EDGE")
                     bpy.ops.mesh.select_all(action="SELECT")
                     bpy.ops.mesh.extrude_edges_move(
-                        TRANSFORM_OT_translate={"value": (0, 0, self.glass_height - self.glass_margin)}
+                        TRANSFORM_OT_translate={
+                            "value": (0, 0, self.glass_height - self.glass_margin)
+                        }
                     )
                 butil.modify_mesh(obj, "SOLIDIFY", thickness=self.post_minor_width)
                 obj.location[-1] += self.glass_margin
@@ -453,11 +548,14 @@ class StraightStaircaseFactory(AssetFactory):
         parts.extend(self.make_handrails())
         post_locs = list(self.make_post_locs(alpha) for alpha in self.handrail_alphas)
         if self.has_vertical_post:
-            vertical_post_locs = list(self.make_vertical_post_locs(alpha) for alpha in self.handrail_alphas)
+            vertical_post_locs = list(
+                self.make_vertical_post_locs(alpha) for alpha in self.handrail_alphas
+            )
             parts.extend(
                 self.make_posts(
                     post_locs + vertical_post_locs,
-                    [self.post_width] * len(post_locs) + [self.post_minor_width] * len(vertical_post_locs),
+                    [self.post_width] * len(post_locs)
+                    + [self.post_minor_width] * len(vertical_post_locs),
                 )
             )
         else:
@@ -483,25 +581,33 @@ class StraightStaircaseFactory(AssetFactory):
         write_attr_data(line, "end", end)
         with butil.ViewportMode(line, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, high - low)})
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, high - low)}
+            )
             bpy.ops.mesh.normals_make_consistent(inside=False)
         line.location[-1] -= low
-        butil.modify_mesh(line, "SOLIDIFY", thickness=self.step_width, offset=0, use_even_offset=True)
+        butil.modify_mesh(
+            line, "SOLIDIFY", thickness=self.step_width, offset=0, use_even_offset=True
+        )
         self.triangulate(line)
         line.location[-1] -= constants.WALL_THICKNESS / 2
         butil.apply_transform(line, True)
         write_attribute(
             line,
             lambda nw: nw.compare("LESS_THAN", surface.eval_argument(nw, "end"), 0.99),
-            f"staircase_wall",
+            "staircase_wall",
             "FACE",
             "INT",
         )
         sharp_remesh_with_attrs(line, 0.05)
         zeros = np.zeros(len(line.data.polygons), dtype=int)
         ones = np.ones(len(line.data.polygons), dtype=int)
-        write_attr_data(line, f"{PREFIX}{t.Subpart.Ceiling.value}", zeros, "INT", "FACE")
-        write_attr_data(line, f"{PREFIX}{t.Subpart.SupportSurface.value}", zeros, "INT", "FACE")
+        write_attr_data(
+            line, f"{PREFIX}{t.Subpart.Ceiling.value}", zeros, "INT", "FACE"
+        )
+        write_attr_data(
+            line, f"{PREFIX}{t.Subpart.SupportSurface.value}", zeros, "INT", "FACE"
+        )
         write_attr_data(line, f"{PREFIX}{t.Subpart.Wall.value}", ones, "INT", "FACE")
         write_attr_data(line, f"{PREFIX}{t.Subpart.Visible.value}", ones, "INT", "FACE")
         with butil.ViewportMode(line, "EDIT"):
@@ -512,7 +618,9 @@ class StraightStaircaseFactory(AssetFactory):
         if self.has_step:
             self.step_surface.apply(assets, selection="steps", metal_color="bw+natural")
         if self.has_tread:
-            self.tread_surface.apply(assets, selection="treads", metal_color="bw+natural")
+            self.tread_surface.apply(
+                assets, selection="treads", metal_color="bw+natural"
+            )
         if self.has_rail:
             self.rail_surface.apply(assets, selection="rails")
         if self.has_sides:
@@ -524,10 +632,17 @@ class StraightStaircaseFactory(AssetFactory):
 
     def make_guardrail(self, mesh):
         def geo_extrude(nw: NodeWrangler):
-            geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+            geometry = nw.new_node(
+                Nodes.GroupInput,
+                expose_input=[("NodeSocketGeometry", "Geometry", None)],
+            )
             x, y, _ = nw.separate(nw.new_node(Nodes.InputNormal))
-            offset = nw.scale(-self.handrail_offset, nw.vector_math("NORMALIZE", nw.combine(x, y, 0)))
-            geometry = nw.new_node(Nodes.SetPosition, [geometry], input_kwargs={"Offset": offset})
+            offset = nw.scale(
+                -self.handrail_offset, nw.vector_math("NORMALIZE", nw.combine(x, y, 0))
+            )
+            geometry = nw.new_node(
+                Nodes.SetPosition, [geometry], input_kwargs={"Offset": offset}
+            )
             nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
         self.unmake_spiral(mesh)
@@ -542,7 +657,9 @@ class StraightStaircaseFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="INVERT")
             bpy.ops.mesh.delete(type="EDGE")
         remove_vertices(
-            mesh, lambda x, y, z: (z < constants.WALL_THICKNESS / 4) | (z > constants.WALL_THICKNESS * 3 / 4)
+            mesh,
+            lambda x, y, z: (z < constants.WALL_THICKNESS / 4)
+            | (z > constants.WALL_THICKNESS * 3 / 4),
         )
         butil.modify_mesh(mesh, "WELD", merge_threshold=constants.WALL_THICKNESS / 4)
         name = mesh.name
@@ -563,7 +680,9 @@ class StraightStaircaseFactory(AssetFactory):
         parts.append(o)
         parts.extend(
             self.make_posts(
-                locs + minor_locs, [self.post_width] * len(locs) + [self.post_minor_width] * len(minor_locs)
+                locs + minor_locs,
+                [self.post_width] * len(locs)
+                + [self.post_minor_width] * len(minor_locs),
             )
         )
         if self.has_bars:
@@ -596,6 +715,9 @@ class StraightStaircaseFactory(AssetFactory):
             t = self.lower if lower else self.upper
             t = (np.pi - t if self.mirror else t) + self.rot_z
             v = np.array([np.cos(t), np.sin(t)])
-            if normalize(np.array([door.location[0] - x, door.location[1] - y])) @ v >= -0.5:
+            if (
+                normalize(np.array([door.location[0] - x, door.location[1] - y])) @ v
+                >= -0.5
+            ):
                 return True
         return False

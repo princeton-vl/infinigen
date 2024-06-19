@@ -6,14 +6,12 @@
 # - Alexander Raistrick: primary author
 # - David Yan: bounding for inequalities / expressions
 
-import copy
 import dataclasses
 import logging
 import operator
 import typing
 from functools import partial
 
-import numpy as np
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -46,7 +44,9 @@ class Bound:
         rhs = rhs() if is_constant(rhs) else None
 
         if lhs is None == rhs is None:
-            raise ValueError(f"Attempted to create bound with neither side constant {lhs=} {rhs=}")
+            raise ValueError(
+                f"Attempted to create bound with neither side constant {lhs=} {rhs=}"
+            )
         right_const = rhs is not None
         val = rhs if right_const else lhs
 
@@ -85,7 +85,9 @@ int_inverse_op = {
 int_inverse_op.update({v: k for k, v in int_inverse_op.items()})
 
 
-def _expression_map_bound_binop(node: cl.ScalarOperatorExpression, bound: Bound) -> list[Bound]:
+def _expression_map_bound_binop(
+    node: cl.ScalarOperatorExpression, bound: Bound
+) -> list[Bound]:
     lhs, rhs = node.operands
     inv_func = int_inverse_op.get(node.func)
     if inv_func is None:
@@ -109,7 +111,9 @@ def evaluate_known_vars(node: cl.Node, known_vars) -> cl.constant:
     if is_constant(node):
         return None
     match node:
-        case cl.ScalarOperatorExpression(f, (lhs, rhs)) if f in int_inverse_op.keys() or f in int_inverse_op:
+        case cl.ScalarOperatorExpression(
+            f, (lhs, rhs)
+        ) if f in int_inverse_op.keys() or f in int_inverse_op:
             if is_constant(lhs):
                 rhs_eval = evaluate_known_vars(rhs, known_vars)
                 if is_constant(rhs_eval):
@@ -196,7 +200,9 @@ def constraint_bounds(node: cl.Node, state=None) -> list[Bound]:
             bounds = recurse(pred)
             for b in bounds:
                 # TODO INCORRECT. Doesnt force EVERY object in o_domain to satify the bound
-                b.domain = domain_tag_substitute(b.domain, t.Variable(varname), o_domain)
+                b.domain = domain_tag_substitute(
+                    b.domain, t.Variable(varname), o_domain
+                )
             return bounds
         case unmatched:
             assert isinstance(unmatched, cl.Expression), unmatched

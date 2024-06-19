@@ -5,9 +5,8 @@
 
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.tropic_plants.tropic_plant_utils import (
     nodegroup_nodegroup_leaf_gen,
@@ -21,14 +20,18 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
-from infinigen.core.util import blender as butil
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 
 
-@node_utils.to_nodegroup("nodegroup_nodegroup_apply_wave", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_nodegroup_apply_wave", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_nodegroup_apply_wave(
-    nw: NodeWrangler, leaf_h_wave_control_points, leaf_w_wave_control_points, leaf_edge_wave_control_points
+    nw: NodeWrangler,
+    leaf_h_wave_control_points,
+    leaf_w_wave_control_points,
+    leaf_edge_wave_control_points,
 ):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -48,9 +51,14 @@ def nodegroup_nodegroup_apply_wave(
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
-    map_range_6 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -0.6, 2: 0.6})
+    map_range_6 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -0.6, 2: 0.6},
+    )
 
-    float_curve_3 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_6.outputs["Result"]})
+    float_curve_3 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_6.outputs["Result"]}
+    )
     node_utils.assign_curve(
         float_curve_3.mapping.curves[0],
         [
@@ -68,13 +76,24 @@ def nodegroup_nodegroup_apply_wave(
         ],
     )
 
-    map_range_7 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve_3, 3: -1.0})
+    map_range_7 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve_3, 3: -1.0}
+    )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"]}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["X"]},
+        attrs={"operation": "ABSOLUTE"},
+    )
 
-    map_range_4 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": absolute, 2: group_input.outputs["Width Scale"]})
+    map_range_4 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": absolute, 2: group_input.outputs["Width Scale"]},
+    )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": map_range_4.outputs["Result"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": map_range_4.outputs["Result"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.015
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = uniform(0.3, 0.5)
@@ -87,13 +106,19 @@ def nodegroup_nodegroup_apply_wave(
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["Wave Scale E"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: group_input.outputs["Wave Scale E"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
 
     set_position_2 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": combine_xyz_3}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": combine_xyz_3,
+        },
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -102,7 +127,10 @@ def nodegroup_nodegroup_apply_wave(
 
     attribute_statistic = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], 2: separate_xyz_1.outputs["Y"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            2: separate_xyz_1.outputs["Y"],
+        },
     )
 
     map_range = nw.new_node(
@@ -114,7 +142,9 @@ def nodegroup_nodegroup_apply_wave(
         },
     )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}
+    )
     node_utils.assign_curve(
         float_curve.mapping.curves[0],
         [
@@ -127,21 +157,32 @@ def nodegroup_nodegroup_apply_wave(
         ],
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve, 3: -1.0})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve, 3: -1.0}
+    )
 
     multiply_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_1.outputs["Result"], 1: group_input.outputs["Wave Scale Y"]},
+        input_kwargs={
+            0: map_range_1.outputs["Result"],
+            1: group_input.outputs["Wave Scale Y"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": set_position_2, "Offset": combine_xyz})
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": set_position_2, "Offset": combine_xyz},
+    )
 
     attribute_statistic_1 = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], 2: group_input.outputs["X Modulated"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            2: group_input.outputs["X Modulated"],
+        },
     )
 
     map_range_2 = nw.new_node(
@@ -153,7 +194,9 @@ def nodegroup_nodegroup_apply_wave(
         },
     )
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]})
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]}
+    )
     node_utils.assign_curve(
         float_curve_1.mapping.curves[0],
         [
@@ -167,22 +210,42 @@ def nodegroup_nodegroup_apply_wave(
             (0.9, leaf_w_wave_control_points[1] + 0.5 + normal(0.0, 0.02)),
             (1.0, leaf_w_wave_control_points[0] + 0.5 + normal(0.0, 0.02)),
         ],
-        handles=["AUTO", "AUTO", "AUTO", "AUTO", "VECTOR", "AUTO", "AUTO", "AUTO", "AUTO"],
+        handles=[
+            "AUTO",
+            "AUTO",
+            "AUTO",
+            "AUTO",
+            "VECTOR",
+            "AUTO",
+            "AUTO",
+            "AUTO",
+            "AUTO",
+        ],
     )
 
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0}
+    )
 
     multiply_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_3.outputs["Result"], 1: group_input.outputs["Wave Scale X"]},
+        input_kwargs={
+            0: map_range_3.outputs["Result"],
+            1: group_input.outputs["Wave Scale X"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_3})
 
-    set_position_1 = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": set_position, "Offset": combine_xyz_1})
+    set_position_1 = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": set_position, "Offset": combine_xyz_1},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1}
+    )
 
 
 def shader_leaf_material(nw: NodeWrangler, stem_color_hsv):
@@ -194,26 +257,52 @@ def shader_leaf_material(nw: NodeWrangler, stem_color_hsv):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 6.8, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 6.8,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateRGB, input_kwargs={"Image": noise_texture.outputs["Color"]}
+    )
 
     map_range = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": separate_rgb.outputs["G"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.52}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": separate_rgb.outputs["G"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.52,
+        },
     )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": separate_rgb.outputs["B"], 1: 0.4, 2: 0.7, 3: 0.8, 4: 1.2}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": separate_rgb.outputs["B"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.8,
+            4: 1.2,
+        },
     )
 
-    attribute_1 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "subvein offset"})
+    attribute_1 = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "subvein offset"}
+    )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": attribute_1.outputs["Color"], 2: -0.94})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": attribute_1.outputs["Color"], 2: -0.94}
+    )
 
     main_leaf_hsv = (uniform(0.26, 0.37), uniform(0.8, 1.0), uniform(0.15, 0.55))
     hue_saturation_value = nw.new_node(
-        "ShaderNodeHueSaturation", input_kwargs={"Value": 2.0, "Color": hsv2rgba(main_leaf_hsv)}
+        "ShaderNodeHueSaturation",
+        input_kwargs={"Value": 2.0, "Color": hsv2rgba(main_leaf_hsv)},
     )
 
     main_leaf_hsv_2 = (main_leaf_hsv[0] + normal(0.0, 0.02),) + main_leaf_hsv[1:]
@@ -228,7 +317,11 @@ def shader_leaf_material(nw: NodeWrangler, stem_color_hsv):
 
     hue_saturation_value_1 = nw.new_node(
         "ShaderNodeHueSaturation",
-        input_kwargs={"Hue": map_range.outputs["Result"], "Value": map_range_1.outputs["Result"], "Color": mix},
+        input_kwargs={
+            "Hue": map_range.outputs["Result"],
+            "Value": map_range_1.outputs["Result"],
+            "Color": mix,
+        },
     )
 
     mix_1 = nw.new_node(
@@ -240,12 +333,16 @@ def shader_leaf_material(nw: NodeWrangler, stem_color_hsv):
         },
     )
 
-    group = nw.new_node(nodegroup_nodegroup_leaf_shader().name, input_kwargs={"Color": mix_1})
+    group = nw.new_node(
+        nodegroup_nodegroup_leaf_shader().name, input_kwargs={"Color": mix_1}
+    )
 
     material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": group})
 
 
-@node_utils.to_nodegroup("nodegroup_round_tropical_leaf", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_round_tropical_leaf", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_round_tropical_leaf(
     nw: NodeWrangler,
     jigsaw_depth,
@@ -268,9 +365,14 @@ def nodegroup_round_tropical_leaf(
         ],
     )
 
-    subdivide_mesh = nw.new_node(Nodes.SubdivideMesh, input_kwargs={"Mesh": group_input.outputs["Mesh"], "Level": 10})
+    subdivide_mesh = nw.new_node(
+        Nodes.SubdivideMesh,
+        input_kwargs={"Mesh": group_input.outputs["Mesh"], "Level": 10},
+    )
 
-    subdivide_mesh_1 = nw.new_node(Nodes.SubdivideMesh, input_kwargs={"Mesh": subdivide_mesh})
+    subdivide_mesh_1 = nw.new_node(
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": subdivide_mesh}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -299,31 +401,47 @@ def nodegroup_round_tropical_leaf(
     )
 
     nodegroup_sub_vein = nw.new_node(
-        nodegroup_nodegroup_sub_vein().name, input_kwargs={"X": 0.0, "Y": nodegroup_leaf_gen.outputs["Vein Coord"]}
+        nodegroup_nodegroup_sub_vein().name,
+        input_kwargs={"X": 0.0, "Y": nodegroup_leaf_gen.outputs["Vein Coord"]},
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: 0.0005}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: nodegroup_sub_vein.outputs["Value"], 1: 0.0005},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": nodegroup_leaf_gen.outputs["Mesh"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": nodegroup_leaf_gen.outputs["Mesh"],
+            "Offset": combine_xyz,
+        },
     )
 
     capture_attribute_1 = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": set_position, 2: nodegroup_sub_vein.outputs["Color Value"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={
+            "Geometry": set_position,
+            2: nodegroup_sub_vein.outputs["Color Value"],
+        },
     )
 
     capture_attribute_2 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": capture_attribute_1.outputs["Geometry"], 2: nodegroup_leaf_gen.outputs["Vein Value"]},
+        input_kwargs={
+            "Geometry": capture_attribute_1.outputs["Geometry"],
+            2: nodegroup_leaf_gen.outputs["Vein Value"],
+        },
     )
 
     nodegroup_apply_wave = nw.new_node(
         nodegroup_nodegroup_apply_wave(
-            leaf_h_wave_control_points, leaf_w_wave_control_points, leaf_edge_wave_control_points
+            leaf_h_wave_control_points,
+            leaf_w_wave_control_points,
+            leaf_edge_wave_control_points,
         ).name,
         input_kwargs={
             "Geometry": capture_attribute_2.outputs["Geometry"],
@@ -335,12 +453,16 @@ def nodegroup_round_tropical_leaf(
     )
 
     nodegroup_move_to_origin = nw.new_node(
-        nodegroup_nodegroup_move_to_origin().name, input_kwargs={"Geometry": nodegroup_apply_wave}
+        nodegroup_nodegroup_move_to_origin().name,
+        input_kwargs={"Geometry": nodegroup_apply_wave},
     )
 
     nodegroup_leaf_rotate_x = nw.new_node(
         nodegroup_nodegroup_leaf_rotate_x().name,
-        input_kwargs={"Geometry": nodegroup_move_to_origin, "To Max": group_input.outputs["To Max"]},
+        input_kwargs={
+            "Geometry": nodegroup_move_to_origin,
+            "To Max": group_input.outputs["To Max"],
+        },
     )
 
     group_output = nw.new_node(
@@ -355,7 +477,9 @@ def nodegroup_round_tropical_leaf(
     )
 
 
-@node_utils.to_nodegroup("nodegroup_leaf_on_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_leaf_on_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_leaf_on_stem(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -368,12 +492,16 @@ def nodegroup_leaf_on_stem(nw: NodeWrangler):
         ],
     )
 
-    endpoint_selection = nw.new_node("GeometryNodeCurveEndpointSelection", input_kwargs={"End Size": 0})
+    endpoint_selection = nw.new_node(
+        "GeometryNodeCurveEndpointSelection", input_kwargs={"End Size": 0}
+    )
 
     curve_tangent = nw.new_node(Nodes.CurveTangent)
 
     align_euler_to_vector = nw.new_node(
-        Nodes.AlignEulerToVector, input_kwargs={"Vector": curve_tangent}, attrs={"axis": "Z"}
+        Nodes.AlignEulerToVector,
+        input_kwargs={"Vector": curve_tangent},
+        attrs={"axis": "Z"},
     )
 
     instance_on_points_1 = nw.new_node(
@@ -388,15 +516,25 @@ def nodegroup_leaf_on_stem(nw: NodeWrangler):
     )
 
     rotate_instances = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": instance_on_points_1, "Rotation": (-1.5708, 0.0, 0.0)}
+        Nodes.RotateInstances,
+        input_kwargs={
+            "Instances": instance_on_points_1,
+            "Rotation": (-1.5708, 0.0, 0.0),
+        },
     )
 
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances}
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances_1}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_stem_curvature", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_stem_curvature", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_stem_curvature(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -410,7 +548,8 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": group_input.outputs["Curve"], "Count": 100}
+        Nodes.ResampleCurve,
+        input_kwargs={"Curve": group_input.outputs["Curve"], "Count": 100},
     )
 
     position_2 = nw.new_node(Nodes.InputPosition)
@@ -419,17 +558,26 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": spline_parameter_1.outputs["Factor"], 3: group_input.outputs["To Min1"], 4: 0.0},
+        input_kwargs={
+            "Value": spline_parameter_1.outputs["Factor"],
+            3: group_input.outputs["To Min1"],
+            4: 0.0,
+        },
     )
 
     vector_rotate = nw.new_node(
         Nodes.VectorRotate,
-        input_kwargs={"Vector": position_2, "Center": (0.0, 0.0, 2.0), "Angle": map_range_1.outputs["Result"]},
+        input_kwargs={
+            "Vector": position_2,
+            "Center": (0.0, 0.0, 2.0),
+            "Angle": map_range_1.outputs["Result"],
+        },
         attrs={"rotation_type": "Y_AXIS"},
     )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": resample_curve, "Position": vector_rotate}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": resample_curve, "Position": vector_rotate},
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -437,7 +585,12 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
     spline_parameter_2 = nw.new_node(Nodes.SplineParameter)
 
     map_range_2 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": spline_parameter_2.outputs["Factor"], 3: group_input.outputs[2], 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": spline_parameter_2.outputs["Factor"],
+            3: group_input.outputs[2],
+            4: 0.0,
+        },
     )
 
     vector_rotate_1 = nw.new_node(
@@ -447,17 +600,24 @@ def nodegroup_stem_curvature(nw: NodeWrangler):
     )
 
     set_position_2 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": set_position_1, "Position": vector_rotate_1}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": set_position_1, "Position": vector_rotate_1},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position_2}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_stem_geometry", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_stem_geometry", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_stem_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Curve", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Curve", None)]
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
@@ -469,14 +629,21 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
 
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": group_input.outputs["Curve"], "Radius": map_range.outputs["Result"]},
+        input_kwargs={
+            "Curve": group_input.outputs["Curve"],
+            "Radius": map_range.outputs["Result"],
+        },
     )
 
     curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": 0.02})
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": curve_to_mesh})
@@ -486,7 +653,9 @@ def geometry_leaf_nodes(nw: NodeWrangler, **kwargs):
     leaf_x_curvature = nw.new_node(Nodes.Value, label="leaf_x_curvature")
     leaf_x_curvature.outputs[0].default_value = -kwargs["leaf_x_curvature"]
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     wave_x_scale = nw.new_node(Nodes.Value, label="wave_x_scale")
     wave_x_scale.outputs[0].default_value = kwargs["leaf_h_wave_scale"]
@@ -539,7 +708,9 @@ def geometry_leaf_nodes(nw: NodeWrangler, **kwargs):
 def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": (0.0, 0.0, 2.0), "End": (0.0, 0.0, 0.0)})
+    curve_line_1 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": (0.0, 0.0, 2.0), "End": (0.0, 0.0, 0.0)}
+    )
 
     stem_y_curvature = nw.new_node(Nodes.Value, label="stem_y_curvature")
     stem_y_curvature.outputs[0].default_value = uniform(-0.5, 0.5)
@@ -548,17 +719,22 @@ def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
     stem_x_curvature.outputs[0].default_value = -kwargs["leaf_x_curvature"]
 
     stem_curvature = nw.new_node(
-        nodegroup_stem_curvature().name, input_kwargs={"Curve": curve_line_1, 1: stem_y_curvature, 2: stem_x_curvature}
+        nodegroup_stem_curvature().name,
+        input_kwargs={"Curve": curve_line_1, 1: stem_y_curvature, 2: stem_x_curvature},
     )
 
-    stem_geometry = nw.new_node(nodegroup_stem_geometry().name, input_kwargs={"Curve": stem_curvature})
+    stem_geometry = nw.new_node(
+        nodegroup_stem_geometry().name, input_kwargs={"Curve": stem_curvature}
+    )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": stem_geometry,
             "Material": surface.shaderfunc_to_material(
-                lambda x: shader_stem_material(x, stem_color_hsv=kwargs["stem_color_hsv"])
+                lambda x: shader_stem_material(
+                    x, stem_color_hsv=kwargs["stem_color_hsv"]
+                )
             ),
         },
     )
@@ -566,7 +742,9 @@ def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
     leaf_x_curvature = nw.new_node(Nodes.Value, label="leaf_x_curvature")
     leaf_x_curvature.outputs[0].default_value = -kwargs["leaf_x_curvature"]
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     wave_x_scale = nw.new_node(Nodes.Value, label="wave_x_scale")
     wave_x_scale.outputs[0].default_value = kwargs["leaf_h_wave_scale"]
@@ -616,7 +794,9 @@ def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, leaf_on_stem]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, leaf_on_stem]}
+    )
 
     transform = nw.new_node(
         Nodes.Transform,
@@ -717,11 +897,15 @@ class LeafBananaTreeFactory(AssetFactory):
 
         if params.get("leaf_w_wave_control_points", None) is None:
             mode = np.random.choice(["fold", "wing"], p=[0.2, 0.8])
-            params["leaf_w_wave_control_points"], params["leaf_w_wave_scale"] = self.get_w_wave_contour(mode)
+            params["leaf_w_wave_control_points"], params["leaf_w_wave_scale"] = (
+                self.get_w_wave_contour(mode)
+            )
 
         if params.get("leaf_edge_wave_control_points", None) is None:
             mode = np.random.choice(["wavy", "flat"], p=[1.0, 0.0])  # 0.6, 0.4
-            params["leaf_edge_wave_control_points"], params["leaf_edge_wave_scale"] = self.get_e_wave_contour(mode)
+            params["leaf_edge_wave_control_points"], params["leaf_edge_wave_scale"] = (
+                self.get_e_wave_contour(mode)
+            )
 
         if params.get("leaf_contour_control_points", None) is None:
             mode = np.random.choice(["oval", "pear"], p=[0.5, 0.5])
@@ -744,13 +928,21 @@ class LeafBananaTreeFactory(AssetFactory):
             params["leaf_x_curvature"] = uniform(0.0, 0.1)
 
         if params.get("stem_color_hsv", None) is None:
-            params["stem_color_hsv"] = (uniform(0.25, 0.32), uniform(0.8, 1.0), uniform(0.8, 1.0))
+            params["stem_color_hsv"] = (
+                uniform(0.25, 0.32),
+                uniform(0.8, 1.0),
+                uniform(0.8, 1.0),
+            )
 
         return params
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -763,7 +955,9 @@ class LeafBananaTreeFactory(AssetFactory):
             input_kwargs=params,
         )
         surface.add_material(
-            obj, lambda x: shader_leaf_material(x, stem_color_hsv=params["stem_color_hsv"]), selection=None
+            obj,
+            lambda x: shader_leaf_material(x, stem_color_hsv=params["stem_color_hsv"]),
+            selection=None,
         )
 
         tag_object(obj, "leaf_banana_tree")
@@ -789,7 +983,11 @@ class PlantBananaTreeFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -802,7 +1000,9 @@ class PlantBananaTreeFactory(AssetFactory):
             input_kwargs=params,
         )
         surface.add_material(
-            obj, lambda x: shader_leaf_material(x, stem_color_hsv=params["stem_color_hsv"]), selection=None
+            obj,
+            lambda x: shader_leaf_material(x, stem_color_hsv=params["stem_color_hsv"]),
+            selection=None,
         )
 
         tag_object(obj, "leaf_banana_tree")

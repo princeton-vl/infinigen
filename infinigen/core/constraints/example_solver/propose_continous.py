@@ -7,18 +7,14 @@
 import logging
 import typing
 
-import gin
 import numpy as np
-from mathutils import Vector
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints import usage_lookup
 from infinigen.core.constraints.evaluator.domain_contains import domain_contains
 
 from . import moves, state_def
-from .geometry import dof
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +42,15 @@ def get_pose_candidates(
 
 
 def propose_translate(
-    consgraph: cl.Node, state: state_def.State, filter_domain: r.Domain, temperature: float
+    consgraph: cl.Node,
+    state: state_def.State,
+    filter_domain: r.Domain,
+    temperature: float,
 ) -> typing.Iterator[moves.TranslateMove]:
     candidates = get_pose_candidates(consgraph, state, filter_domain)
-    candidates = [c for c in candidates if state.objs[c].dof_matrix_translation is not None]
+    candidates = [
+        c for c in candidates if state.objs[c].dof_matrix_translation is not None
+    ]
     if not len(candidates):
         return
 
@@ -68,7 +69,10 @@ def propose_translate(
 
 
 def propose_rotate(
-    consgraph: cl.Node, state: state_def.State, filter_domain: r.Domain, temperature: float
+    consgraph: cl.Node,
+    state: state_def.State,
+    filter_domain: r.Domain,
+    temperature: float,
 ) -> typing.Iterator[moves.RotateMove]:
     candidates = get_pose_candidates(consgraph, state, filter_domain)
     candidates = [
@@ -99,10 +103,15 @@ def propose_rotate(
 
 
 def propose_reinit_pose(
-    consgraph: cl.Node, state: state_def.State, filter_domain: r.Domain, temperature: float
+    consgraph: cl.Node,
+    state: state_def.State,
+    filter_domain: r.Domain,
+    temperature: float,
 ) -> typing.Iterator[moves.ReinitPoseMove]:
     candidates = get_pose_candidates(consgraph, state, filter_domain)
-    candidates = [c for c in candidates if state.objs[c].dof_matrix_translation is not None]
+    candidates = [
+        c for c in candidates if state.objs[c].dof_matrix_translation is not None
+    ]
 
     if len(candidates) == 0:
         return

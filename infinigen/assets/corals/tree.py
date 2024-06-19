@@ -13,12 +13,10 @@ from numpy.random import uniform
 import infinigen.core.util.blender as butil
 from infinigen.assets.corals.base import BaseCoralFactory
 from infinigen.assets.corals.tentacles import make_radius_points_fn
-from infinigen.assets.trees.tree import FineTreeVertices, build_radius_tree, recursive_path
+from infinigen.assets.trees.tree import build_radius_tree
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import data2mesh, mesh2obj, separate_loose
 from infinigen.core import surface
-from infinigen.core.placement.detail import remesh_with_attrs
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 
 
@@ -38,7 +36,9 @@ class TreeBaseCoralFactory(BaseCoralFactory):
         with FixedSeed(self.factory_seed):
             if method is None:
                 method = np.random.choice(list(self.configs.keys()), p=self.weights)
-            self.radius, self.branch_config = map(self.configs[method].get, ["radius", "branch_config"])
+            self.radius, self.branch_config = map(
+                self.configs[method].get, ["radius", "branch_config"]
+            )
         self.points_fn = make_radius_points_fn(0.05, 0.4)
 
     @property
@@ -82,11 +82,22 @@ class TreeBaseCoralFactory(BaseCoralFactory):
         }
         major_config = {
             "n": n_branch,
-            "path_kargs": lambda idx: {"n_pts": n_major + 1, "std": 0.4, "momentum": 0.4, "sz": uniform(0.08, 0.1)},
+            "path_kargs": lambda idx: {
+                "n_pts": n_major + 1,
+                "std": 0.4,
+                "momentum": 0.4,
+                "sz": uniform(0.08, 0.1),
+            },
             "spawn_kargs": lambda idx: {
                 "init_vec": [
-                    span * np.cos(2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)),
-                    span * np.sin(2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)),
+                    span
+                    * np.cos(
+                        2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)
+                    ),
+                    span
+                    * np.sin(
+                        2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)
+                    ),
                     math.sqrt(1 - span * span),
                 ]
             },
@@ -135,11 +146,22 @@ class TreeBaseCoralFactory(BaseCoralFactory):
         }
         major_config = {
             "n": n_branch,
-            "path_kargs": lambda idx: {"n_pts": n_major * 2 + 1, "std": 0.4, "momentum": 0.4, "sz": uniform(0.08, 0.1)},
+            "path_kargs": lambda idx: {
+                "n_pts": n_major * 2 + 1,
+                "std": 0.4,
+                "momentum": 0.4,
+                "sz": uniform(0.08, 0.1),
+            },
             "spawn_kargs": lambda idx: {
                 "init_vec": [
-                    span * np.cos(2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)),
-                    span * np.sin(2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)),
+                    span
+                    * np.cos(
+                        2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)
+                    ),
+                    span
+                    * np.sin(
+                        2 * np.pi * idx / n_branch + uniform(-np.pi / 9, np.pi / 9)
+                    ),
                     math.sqrt(1 - span * span),
                 ]
             },
@@ -151,13 +173,19 @@ class TreeBaseCoralFactory(BaseCoralFactory):
     def radius_fn(base_radius, size, resolution):
         radius_decay_root = 0.85
         radius_decay_leaf = uniform(0.4, 0.6)
-        radius = base_radius * radius_decay_root ** (np.arange(size * resolution) / resolution)
-        radius[-resolution:] *= radius_decay_leaf ** (np.arange(resolution) / resolution)
+        radius = base_radius * radius_decay_root ** (
+            np.arange(size * resolution) / resolution
+        )
+        radius[-resolution:] *= radius_decay_leaf ** (
+            np.arange(resolution) / resolution
+        )
         return radius
 
     def create_asset(self, face_size=0.01, **params) -> bpy.types.Object:
         resolution = 16
-        obj = build_radius_tree(self.radius_fn, self.branch_config, self.radius, resolution)
+        obj = build_radius_tree(
+            self.radius_fn, self.branch_config, self.radius, resolution
+        )
         obj.scale = 2 * np.array(self.default_scale) / max(obj.dimensions[:2])
         butil.apply_transform(obj)
         surface.add_geomod(obj, geo_radius, apply=True, input_args=["radius", 32])

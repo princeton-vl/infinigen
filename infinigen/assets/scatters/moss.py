@@ -16,14 +16,27 @@ from infinigen.core.placement.instance_scatter import scatter_instances
 
 class MossCover:
     def __init__(self):
-        self.col = make_asset_collection(MossFactory(np.random.randint(1e5)), name="moss", n=3)
+        self.col = make_asset_collection(
+            MossFactory(np.random.randint(1e5)), name="moss", n=3
+        )
         base_hue = U(0.24, 0.28)
         for o in self.col.objects:
-            assign_material(o, surface.shaderfunc_to_material(MossFactory.shader_moss, (base_hue + U(-0.02, 0.02)) % 1))
+            assign_material(
+                o,
+                surface.shaderfunc_to_material(
+                    MossFactory.shader_moss, (base_hue + U(-0.02, 0.02)) % 1
+                ),
+            )
 
     def apply(self, obj, selection=None):
         def instance_index(nw: NodeWrangler, n):
-            return nw.math("MODULO", nw.new_node(Nodes.FloatToInt, [nw.scalar_multiply(nw.musgrave(10), 2 * n)]), n)
+            return nw.math(
+                "MODULO",
+                nw.new_node(
+                    Nodes.FloatToInt, [nw.scalar_multiply(nw.musgrave(10), 2 * n)]
+                ),
+                n,
+            )
 
         scatter_obj = scatter_instances(
             base_obj=obj,

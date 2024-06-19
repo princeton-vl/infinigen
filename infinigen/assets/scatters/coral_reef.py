@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.assets.corals.generate import CoralFactory, TableCoralFactory
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 
@@ -22,7 +22,9 @@ def apply(obj, scale=1, density=5.0, n=12, selection=None, horizontal=False, **k
 def apply_all(obj, scale=1, density=5.0, n=12, selection=None):
     n_species = np.random.randint(5, 10)
     factories = [CoralFactory(np.random.randint(1e7)) for i in range(n_species)]
-    corals = make_asset_collection(factories, name="coral", weights=U(0.8, 1, len(factories)), n=n)
+    corals = make_asset_collection(
+        factories, name="coral", weights=U(0.8, 1, len(factories)), n=n
+    )
 
     scatter_obj = scatter_instances(
         base_obj=obj,
@@ -42,7 +44,11 @@ def apply_horizontal(obj, scale=1, density=5.0, n=4, selection=None):
     n_species = np.random.randint(2, 3)
     factories = [TableCoralFactory(np.random.randint(1e5)) for _ in range(n_species)]
     corals = make_asset_collection(
-        factories, name="coral", weights=np.random.uniform(0.8, 1, len(factories)), n=n, verbose=True
+        factories,
+        name="coral",
+        weights=np.random.uniform(0.8, 1, len(factories)),
+        n=n,
+        verbose=True,
     )
     r = np.deg2rad(10)
     scatter_obj = scatter_instances(

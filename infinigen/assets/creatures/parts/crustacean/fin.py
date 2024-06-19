@@ -17,7 +17,9 @@ class CrustaceanFinFactory(PartFactory):
     tags = ["body"]
 
     def make_part(self, params) -> Part:
-        x_length, y_length, x_tip, y_mid = map(params.get, ["x_length", "y_length", "x_tip", "y_mid"])
+        x_length, y_length, x_tip, y_mid = map(
+            params.get, ["x_length", "y_length", "x_tip", "y_mid"]
+        )
         x_anchors = 0, x_tip / 2, x_tip, 1
         y_anchors = 0, y_mid, 1, 0
         obj = leaf(np.array(x_anchors) * x_length, np.array(y_anchors) * y_length)
@@ -32,4 +34,9 @@ class CrustaceanFinFactory(PartFactory):
         y_length = x_length * uniform(0.3, 0.4)
         x_tip = uniform(0.7, 0.8)
         y_mid = uniform(0.6, 0.8)
-        return {"x_length": x_length, "y_length": y_length, "x_tip": x_tip, "y_mid": y_mid}
+        return {
+            "x_length": x_length,
+            "y_length": y_length,
+            "x_tip": x_tip,
+            "y_mid": y_mid,
+        }

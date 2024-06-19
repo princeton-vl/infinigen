@@ -5,19 +5,12 @@
 # Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=mJVuodaPHTQ and https://www.youtube.com/watch?v=v7a4ouBLIow by Lance Phan
 
 
-import math as ma
 import os
 import random
-import sys
 
 import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal as normal_func
 
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
-    geo_voronoi_noise,
     sample_color,
     sample_range,
     sample_ratio,
@@ -28,9 +21,13 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
 def shader_scale(nw, rand=True, **input_kwargs):
-    math_4 = nw.new_node(Nodes.Math, input_kwargs={0: 1.0}, attrs={"operation": "SUBTRACT"})
+    math_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: 1.0}, attrs={"operation": "SUBTRACT"}
+    )
 
-    attribute_2 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Color variations"})
+    attribute_2 = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "Color variations"}
+    )
 
     noise_texture_3 = nw.new_node(
         Nodes.NoiseTexture,
@@ -40,7 +37,9 @@ def shader_scale(nw, rand=True, **input_kwargs):
     if rand:
         noise_texture_3.inputs["W"].default_value = sample_range(-5, 5)
 
-    colorramp_2 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]})
+    colorramp_2 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]}
+    )
     for i in range(3):
         colorramp_2.color_ramp.elements.new(0.0)
     colorramp_2.color_ramp.elements[0].position = 0.125
@@ -58,13 +57,17 @@ def shader_scale(nw, rand=True, **input_kwargs):
             sample_color(e.color)
 
     vector_math = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: math_4, 1: colorramp_2.outputs["Color"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: math_4, 1: colorramp_2.outputs["Color"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     attribute_3 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "offset2"})
 
     math_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: attribute_3.outputs["Vector"], 1: 0.01}, attrs={"operation": "GREATER_THAN"}
+        Nodes.Math,
+        input_kwargs={0: attribute_3.outputs["Vector"], 1: 0.01},
+        attrs={"operation": "GREATER_THAN"},
     )
 
     colorramp_7 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": math_5})
@@ -79,29 +82,43 @@ def shader_scale(nw, rand=True, **input_kwargs):
         sample_color(colorramp_7.color_ramp.elements[2].color)
 
     vector_math_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: vector_math.outputs["Vector"], 1: colorramp_7.outputs["Color"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: vector_math.outputs["Vector"],
+            1: colorramp_7.outputs["Color"],
+        },
     )
 
-    attribute_4 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "Color variations"})
+    attribute_4 = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "Color variations"}
+    )
 
     uv_map_1 = nw.new_node("ShaderNodeUVMap")
     uv_map_1.uv_map = "UVMap"
 
     noise_texture_5 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": uv_map_1, "Scale": 50.0}, attrs={"noise_dimensions": "4D"}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": uv_map_1, "Scale": 50.0},
+        attrs={"noise_dimensions": "4D"},
     )
     if rand:
         noise_texture_5.inputs["W"].default_value = sample_range(-5, 5)
 
     mix_3 = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 1.0, "Color1": attribute_4.outputs["Color"], "Color2": noise_texture_5.outputs["Color"]},
+        input_kwargs={
+            "Fac": 1.0,
+            "Color1": attribute_4.outputs["Color"],
+            "Color2": noise_texture_5.outputs["Color"],
+        },
         attrs={"blend_type": "ADD"},
     )
 
     noise_texture_4 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mix_3})
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_4.outputs["Fac"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0
     colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp.color_ramp.elements[1].position = 1.0
@@ -127,65 +144,101 @@ def shader_scale(nw, rand=True, **input_kwargs):
         attrs={"subsurface_method": "BURLEY"},
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_node_grid", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_node_grid", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_node_grid(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)])
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Value"], 1: 2.0}, attrs={"operation": "MULTIPLY"}
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)]
     )
 
-    floor = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 2.0}, attrs={"operation": "FLOOR"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Value"], 1: 2.0},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: floor}, attrs={"operation": "MULTIPLY"})
+    floor = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: 2.0}, attrs={"operation": "FLOOR"}
+    )
+
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: floor}, attrs={"operation": "MULTIPLY"}
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1})
 
     trunc = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "TRUNC"})
 
-    trunc_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1}, attrs={"operation": "TRUNC"})
+    trunc_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply_1}, attrs={"operation": "TRUNC"}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: trunc_1})
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"floor1": trunc, "floor2": add_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"floor1": trunc, "floor2": add_1}
+    )
 
 
 def geo_scale(nw, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     separate_xyz_2 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": nw.expose_input("UVMap", attribute="UVMap", dtype="NodeSocketVector")},
+        input_kwargs={
+            "Vector": nw.expose_input(
+                "UVMap", attribute="UVMap", dtype="NodeSocketVector"
+            )
+        },
     )
 
     angle = nw.new_node(Nodes.Value, label="Angle")
     angle.outputs[0].default_value = 0.0000
 
-    cosine = nw.new_node(Nodes.Math, input_kwargs={0: angle}, attrs={"operation": "COSINE"})
+    cosine = nw.new_node(
+        Nodes.Math, input_kwargs={0: angle}, attrs={"operation": "COSINE"}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["X"], 1: cosine}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_2.outputs["X"], 1: cosine},
+        attrs={"operation": "MULTIPLY"},
     )
 
     sine = nw.new_node(Nodes.Math, input_kwargs={0: angle}, attrs={"operation": "SINE"})
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["Y"], 1: sine}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_2.outputs["Y"], 1: sine},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     xscale = nw.new_node(Nodes.Value, label="Xscale")
     xscale.outputs[0].default_value = sample_range(0.7, 1.3)
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: xscale}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: xscale},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     noise_texture_2 = nw.new_node(
         Nodes.NoiseTexture,
@@ -197,17 +250,23 @@ def geo_scale(nw, rand=True, **input_kwargs):
     xnoise.outputs[0].default_value = sample_range(0.01, 0.03)
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture_2.outputs["Fac"], 1: xnoise}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture_2.outputs["Fac"], 1: xnoise},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: multiply_3})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["X"], 1: sine}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_2.outputs["X"], 1: sine},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["Y"], 1: cosine}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_2.outputs["Y"], 1: cosine},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_5})
@@ -215,7 +274,9 @@ def geo_scale(nw, rand=True, **input_kwargs):
     yscale = nw.new_node(Nodes.Value, label="Yscale")
     yscale.outputs[0].default_value = sample_range(0.7, 1.3)
 
-    multiply_6 = nw.new_node(Nodes.Math, input_kwargs={0: add_1, 1: yscale}, attrs={"operation": "MULTIPLY"})
+    multiply_6 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1, 1: yscale}, attrs={"operation": "MULTIPLY"}
+    )
 
     noise_texture_1 = nw.new_node(
         Nodes.NoiseTexture,
@@ -227,7 +288,9 @@ def geo_scale(nw, rand=True, **input_kwargs):
     ynoise.outputs[0].default_value = sample_range(0.01, 0.03)
 
     multiply_7 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture_1.outputs["Fac"], 1: ynoise}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture_1.outputs["Fac"], 1: ynoise},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: multiply_7})
@@ -238,12 +301,16 @@ def geo_scale(nw, rand=True, **input_kwargs):
     scale.outputs[0].default_value = sample_ratio(25, 2 / 3, 3 / 2)
 
     multiply_8 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: combine_xyz_2, 1: scale}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_2, 1: scale},
+        attrs={"operation": "MULTIPLY"},
     )
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_8})
 
-    nodegrid = nw.new_node(nodegroup_node_grid().name, input_kwargs={"Value": separate_xyz.outputs["Y"]})
+    nodegrid = nw.new_node(
+        nodegroup_node_grid().name, input_kwargs={"Value": separate_xyz.outputs["Y"]}
+    )
 
     greater_than = nw.new_node(
         Nodes.Compare,
@@ -251,53 +318,100 @@ def geo_scale(nw, rand=True, **input_kwargs):
         attrs={"operation": "LESS_THAN"},
     )
 
-    less_than = nw.new_node(Nodes.Compare, input_kwargs={0: nodegrid.outputs["floor1"], 1: separate_xyz.outputs["Y"]})
+    less_than = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={0: nodegrid.outputs["floor1"], 1: separate_xyz.outputs["Y"]},
+    )
 
-    nodegrid_1 = nw.new_node(nodegroup_node_grid().name, input_kwargs={"Value": separate_xyz.outputs["X"]})
+    nodegrid_1 = nw.new_node(
+        nodegroup_node_grid().name, input_kwargs={"Value": separate_xyz.outputs["X"]}
+    )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": nodegrid_1.outputs["floor2"], "Y": nodegrid.outputs["floor1"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": nodegrid_1.outputs["floor2"],
+            "Y": nodegrid.outputs["floor1"],
+        },
     )
 
     multiply_9 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: less_than, 1: combine_xyz}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: less_than, 1: combine_xyz},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_1 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": nodegrid_1.outputs["floor1"], "Y": nodegrid.outputs["floor2"]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": nodegrid_1.outputs["floor1"],
+            "Y": nodegrid.outputs["floor2"],
+        },
     )
 
     multiply_10 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: greater_than, 1: combine_xyz_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: greater_than, 1: combine_xyz_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_3 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: multiply_9.outputs["Vector"], 1: multiply_10.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: multiply_9.outputs["Vector"],
+            1: multiply_10.outputs["Vector"],
+        },
     )
 
-    subtract_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_8, 1: add_3}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_8, 1: add_3},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    distance = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_8, 1: add_3}, attrs={"operation": "DISTANCE"})
+    distance = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_8, 1: add_3},
+        attrs={"operation": "DISTANCE"},
+    )
 
-    add_4 = nw.new_node(Nodes.Math, input_kwargs={0: distance.outputs["Value"], 1: 0.0100})
+    add_4 = nw.new_node(
+        Nodes.Math, input_kwargs={0: distance.outputs["Value"], 1: 0.0100}
+    )
 
-    less_than_1 = nw.new_node(Nodes.Compare, input_kwargs={0: add_4, 1: 0.5000}, attrs={"operation": "LESS_THAN"})
+    less_than_1 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={0: add_4, 1: 0.5000},
+        attrs={"operation": "LESS_THAN"},
+    )
 
     greater_than_1 = nw.new_node(Nodes.Compare, input_kwargs={0: add_4, 1: 0.5000})
 
     multiply_11 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: less_than, 1: combine_xyz_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: less_than, 1: combine_xyz_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_12 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: greater_than, 1: combine_xyz}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: greater_than, 1: combine_xyz},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add_5 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: multiply_11.outputs["Vector"], 1: multiply_12.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: multiply_11.outputs["Vector"],
+            1: multiply_12.outputs["Vector"],
+        },
     )
 
-    subtract_2 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_8, 1: add_5}, attrs={"operation": "SUBTRACT"})
+    subtract_2 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_8, 1: add_5},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     multiply_13 = nw.new_node(
         Nodes.VectorMath,
@@ -307,16 +421,24 @@ def geo_scale(nw, rand=True, **input_kwargs):
 
     _multiply_add = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: subtract_1.outputs["Vector"], 1: less_than_1, 2: multiply_13.outputs["Vector"]},
+        input_kwargs={
+            0: subtract_1.outputs["Vector"],
+            1: less_than_1,
+            2: multiply_13.outputs["Vector"],
+        },
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
     multiply_add = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: _multiply_add, 1: (1, -1, 1)}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: _multiply_add, 1: (1, -1, 1)},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_14 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: greater_than_1, 1: add_5}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: greater_than_1, 1: add_5},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_add_1 = nw.new_node(
@@ -327,21 +449,37 @@ def geo_scale(nw, rand=True, **input_kwargs):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": multiply_add_1, "W": sample_range(-10, 10), "Scale": 33.0000},
+        input_kwargs={
+            "Vector": multiply_add_1,
+            "W": sample_range(-10, 10),
+            "Scale": 33.0000,
+        },
         attrs={"noise_dimensions": "4D"},
     )
 
     subtract_3 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={0: noise_texture.outputs["Fac"], 1: 0.26, 2: 0.74, 3: -0.5, 4: 0.5},
+        input_kwargs={
+            0: noise_texture.outputs["Fac"],
+            1: 0.26,
+            2: 0.74,
+            3: -0.5,
+            4: 0.5,
+        },
         attrs={"clamp": True},
     )
 
-    sine_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_3}, attrs={"operation": "SINE"})
+    sine_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_3}, attrs={"operation": "SINE"}
+    )
 
-    cosine_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_3}, attrs={"operation": "COSINE"})
+    cosine_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_3}, attrs={"operation": "COSINE"}
+    )
 
-    combine_xyz_color = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": sine_1, "Y": cosine_1, "Z": 0.0000})
+    combine_xyz_color = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": sine_1, "Y": cosine_1, "Z": 0.0000}
+    )
 
     add_6 = nw.new_node(
         Nodes.VectorMath,
@@ -349,30 +487,58 @@ def geo_scale(nw, rand=True, **input_kwargs):
         attrs={"operation": "DOT_PRODUCT"},
     )
 
-    distance_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_8, 1: add_5}, attrs={"operation": "DISTANCE"})
+    distance_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply_8, 1: add_5},
+        attrs={"operation": "DISTANCE"},
+    )
 
-    add_7 = nw.new_node(Nodes.Math, input_kwargs={0: distance_1.outputs["Value"], 1: 0.0100})
+    add_7 = nw.new_node(
+        Nodes.Math, input_kwargs={0: distance_1.outputs["Value"], 1: 0.0100}
+    )
 
-    multiply_17 = nw.new_node(Nodes.Math, input_kwargs={0: greater_than_1, 1: add_7}, attrs={"operation": "MULTIPLY"})
+    multiply_17 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: greater_than_1, 1: add_7},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_add_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add_4, 1: less_than_1, 2: multiply_17}, attrs={"operation": "MULTIPLY_ADD"}
+        Nodes.Math,
+        input_kwargs={0: add_4, 1: less_than_1, 2: multiply_17},
+        attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    multiply_18 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_add_2, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_18 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_add_2, 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_19 = nw.new_node(
-        Nodes.MapRange, input_kwargs={0: multiply_18, 1: 0.9156, 2: 1.0000, 3: 0.0000, 4: 0.5}, attrs={"clamp": True}
+        Nodes.MapRange,
+        input_kwargs={0: multiply_18, 1: 0.9156, 2: 1.0000, 3: 0.0000, 4: 0.5},
+        attrs={"clamp": True},
     )
 
-    subtract_4 = nw.new_node(Nodes.Math, input_kwargs={0: add_6, 1: multiply_19}, attrs={"operation": "SUBTRACT"})
+    subtract_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: add_6, 1: multiply_19},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    subtract_5 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_4, 1: 0.0000}, attrs={"operation": "SUBTRACT"})
+    subtract_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_4, 1: 0.0000},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     normal = nw.new_node(Nodes.InputNormal)
 
     multiply_20 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: subtract_5, 1: normal}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: subtract_5, 1: normal},
+        attrs={"operation": "MULTIPLY"},
     )
 
     offset_scale = nw.new_node(Nodes.Value, label="OffsetScale")
@@ -386,7 +552,10 @@ def geo_scale(nw, rand=True, **input_kwargs):
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": multiply_21.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": multiply_21.outputs["Vector"],
+        },
     )
 
     capture_attribute_1 = nw.new_node(
@@ -397,7 +566,10 @@ def geo_scale(nw, rand=True, **input_kwargs):
 
     capture_attribute_4 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": capture_attribute_1.outputs["Geometry"], 1: multiply_19},
+        input_kwargs={
+            "Geometry": capture_attribute_1.outputs["Geometry"],
+            1: multiply_19,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
@@ -414,7 +586,9 @@ def geo_scale(nw, rand=True, **input_kwargs):
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
     attributes = ["Color variations", "offset2"]
-    surface.add_geomod(obj, geo_scale, apply=False, input_kwargs=geo_kwargs, attributes=attributes)
+    surface.add_geomod(
+        obj, geo_scale, apply=False, input_kwargs=geo_kwargs, attributes=attributes
+    )
     surface.add_material(obj, shader_scale, reuse=False, input_kwargs=shader_kwargs)
 
 

@@ -7,15 +7,13 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import rug
-from infinigen.assets.materials.art import Art, ArtRug
-from infinigen.assets.utils.object import new_base_circle, new_bbox, new_circle, new_plane
+from infinigen.assets.materials.art import ArtRug
+from infinigen.assets.utils.object import new_base_circle, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides
-from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import clip_gaussian, log_uniform
+from infinigen.core.util.random import clip_gaussian
 
 
 class RugFactory(AssetFactory):
@@ -24,7 +22,9 @@ class RugFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             self.width = clip_gaussian(3, 1, 2, 6)
             self.length = self.width * uniform(1, 1.5)
-            self.rug_shape = np.random.choice(["rectangle", "circle", "rounded", "ellipse"])
+            self.rug_shape = np.random.choice(
+                ["rectangle", "circle", "rounded", "ellipse"]
+            )
             if self.rug_shape == "circle":
                 self.length = self.width
             self.rounded_buffer = self.width * uniform(0.1, 0.5)
@@ -55,7 +55,14 @@ class RugFactory(AssetFactory):
         return obj
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
-        return new_bbox(-self.length / 2, self.length / 2, -self.width / 2, self.width / 2, 0, self.thickness)
+        return new_bbox(
+            -self.length / 2,
+            self.length / 2,
+            -self.width / 2,
+            self.width / 2,
+            0,
+            self.thickness,
+        )
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.build_shape()

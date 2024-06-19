@@ -9,8 +9,7 @@ from numpy.random import uniform
 from numpy.random import uniform as U
 
 from infinigen.assets.mollusk import MolluskFactory
-from infinigen.assets.scatters.chopped_trees import approx_settle_transform
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import random_general as rg
 
@@ -19,7 +18,12 @@ def apply(obj, density=("uniform", 0.2, 1.0), n=10, selection=None):
     n_species = np.random.randint(4, 6)
     factories = list(MolluskFactory(np.random.randint(1e5)) for _ in range(n_species))
     mollusk = make_asset_collection(
-        factories, name="mollusk", verbose=True, weights=np.random.uniform(0.5, 1, len(factories)), n=n, face_size=0.02
+        factories,
+        name="mollusk",
+        verbose=True,
+        weights=np.random.uniform(0.5, 1, len(factories)),
+        n=n,
+        face_size=0.02,
     )
 
     # for o in mollusk.objects:

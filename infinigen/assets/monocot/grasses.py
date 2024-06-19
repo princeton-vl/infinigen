@@ -4,14 +4,16 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.monocot.growth import MonocotGrowthFactory
-from infinigen.assets.utils.decorate import remove_vertices, write_attribute, write_material_index
+from infinigen.assets.utils.decorate import (
+    remove_vertices,
+    write_attribute,
+    write_material_index,
+)
 from infinigen.assets.utils.draw import bezier_curve, leaf, spin
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import assign_material
@@ -20,9 +22,9 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.surface import read_attr_data, shaderfunc_to_material
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.placement.factory import make_asset_collection
+from infinigen.core.surface import shaderfunc_to_material
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
@@ -58,7 +60,10 @@ class GrassesMonocotFactory(MonocotGrowthFactory):
         if uniform(0, 1) < cut_prob:
             x_cutoff = uniform(0.5, 1.0)
             angle = uniform(-np.pi / 3, np.pi / 3)
-            remove_vertices(obj, lambda x, y, z: (x - x_cutoff) * np.cos(angle) + y * np.sin(angle) > 0)
+            remove_vertices(
+                obj,
+                lambda x, y, z: (x - x_cutoff) * np.cos(angle) + y * np.sin(angle) > 0,
+            )
         self.decorate_leaf(obj)
         tag_object(obj, "grasses")
         return obj
@@ -115,7 +120,12 @@ class WheatMonocotFactory(GrassesMonocotFactory):
     def create_asset(self, **params):
         obj = super().create_raw(**params)
         ear = self.ear_factory.create_asset(**params)
-        butil.modify_mesh(ear, "SIMPLE_DEFORM", deform_method="BEND", angle=uniform(0, self.ear_factory.bend_angle))
+        butil.modify_mesh(
+            ear,
+            "SIMPLE_DEFORM",
+            deform_method="BEND",
+            angle=uniform(0, self.ear_factory.bend_angle),
+        )
         ear.location[-1] = self.stem_offset - 0.02
         obj = join_objects([obj, ear])
         self.decorate_monocot(obj)
@@ -199,7 +209,9 @@ class ReedBranchMonocotFactory(MonocotGrowthFactory):
             self.radius = 0.005
 
     def make_collection(self, face_size):
-        return make_asset_collection(self.ear_factory.create_raw, 2, "leaves", verbose=False, face_size=face_size)
+        return make_asset_collection(
+            self.ear_factory.create_raw, 2, "leaves", verbose=False, face_size=face_size
+        )
 
 
 class ReedMonocotFactory(GrassesMonocotFactory):
@@ -225,7 +237,9 @@ class ReedMonocotFactory(GrassesMonocotFactory):
         self.decorate_monocot(obj)
 
         assign_material(obj, [self.material, self.branch_material])
-        write_material_index(obj, surface.read_attr_data(obj, "ear", "FACE").astype(int)[:, 0])
+        write_material_index(
+            obj, surface.read_attr_data(obj, "ear", "FACE").astype(int)[:, 0]
+        )
         tag_object(obj, "reed")
         return obj
 

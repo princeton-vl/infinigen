@@ -17,13 +17,24 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 from .base import BaseMolluskFactory
-from .shell import ClamBaseFactory, MusselBaseFactory, ScallopBaseFactory, ShellBaseFactory
-from .snail import AugerBaseFactory, ConchBaseFactory, NautilusBaseFactory, SnailBaseFactory, VoluteBaseFactory
+from .shell import (
+    ClamBaseFactory,
+    MusselBaseFactory,
+    ScallopBaseFactory,
+    ShellBaseFactory,
+)
+from .snail import (
+    AugerBaseFactory,
+    ConchBaseFactory,
+    NautilusBaseFactory,
+    SnailBaseFactory,
+    VoluteBaseFactory,
+)
 
 
 class MolluskFactory(AssetFactory):
@@ -58,7 +69,13 @@ class MolluskFactory(AssetFactory):
         t = np.random.choice(["STUCCI", "MARBLE"])
         texture = bpy.data.textures.new(name="mollusk", type=t)
         texture.noise_scale = log_uniform(0.1, 0.2)
-        butil.modify_mesh(obj, "DISPLACE", strength=self.factory.noise_strength, mid_level=0, texture=texture)
+        butil.modify_mesh(
+            obj,
+            "DISPLACE",
+            strength=self.factory.noise_strength,
+            mid_level=0,
+            texture=texture,
+        )
         assign_material(obj, self.material)
         tag_object(obj, "mollusk")
         return obj
@@ -71,7 +88,9 @@ class MolluskFactory(AssetFactory):
             return uniform(0.05, 0.12)
 
     @staticmethod
-    def shader_mollusk(nw: NodeWrangler, base_hue, ratio=0, x_scale=2, z_scale=1, distortion=5):
+    def shader_mollusk(
+        nw: NodeWrangler, base_hue, ratio=0, x_scale=2, z_scale=1, distortion=5
+    ):
         roughness = uniform(0.2, 0.8)
         specular = 0.3
         value_scale = log_uniform(1, 20)
@@ -79,31 +98,41 @@ class MolluskFactory(AssetFactory):
 
         def dark_color():
             return *colorsys.hsv_to_rgb(
-                base_hue + uniform(-0.06, 0.06), uniform(0.6, 1.0) * saturation_scale, 0.005 * value_scale**1.5
+                base_hue + uniform(-0.06, 0.06),
+                uniform(0.6, 1.0) * saturation_scale,
+                0.005 * value_scale**1.5,
             ), 1
 
         def light_color():
             return *colorsys.hsv_to_rgb(
-                base_hue + uniform(-0.06, 0.06), uniform(0.6, 1.0) * saturation_scale, 0.05 * value_scale
+                base_hue + uniform(-0.06, 0.06),
+                uniform(0.6, 1.0) * saturation_scale,
+                0.05 * value_scale,
             ), 1
 
         def color_fn(dark_prob):
             return dark_color() if uniform(0, 1) < dark_prob else light_color()
 
-        vector = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "vector"}).outputs["Vector"]
+        vector = nw.new_node(
+            Nodes.Attribute, attrs={"attribute_name": "vector"}
+        ).outputs["Vector"]
         n = np.random.randint(3, 5)
         texture_0 = nw.new_node(
             Nodes.WaveTexture,
             input_kwargs={"Vector": vector, "Distortion": distortion, "Scale": x_scale},
             attrs={"wave_profile": "SAW", "bands_direction": "X"},
         )
-        cr_0 = build_color_ramp(nw, texture_0, np.sort(uniform(0, 1, n)), [color_fn(0.4) for _ in range(n)])
+        cr_0 = build_color_ramp(
+            nw, texture_0, np.sort(uniform(0, 1, n)), [color_fn(0.4) for _ in range(n)]
+        )
         texture_1 = nw.new_node(
             Nodes.WaveTexture,
             input_kwargs={"Vector": vector, "Distortion": distortion, "Scale": z_scale},
             attrs={"wave_profile": "SAW", "bands_direction": "Z"},
         )
-        cr_1 = build_color_ramp(nw, texture_1, np.sort(uniform(0, 1, n)), [color_fn(0.4) for _ in range(n)])
+        cr_1 = build_color_ramp(
+            nw, texture_1, np.sort(uniform(0, 1, n)), [color_fn(0.4) for _ in range(n)]
+        )
         principled_bsdf = nw.new_node(
             Nodes.PrincipledBSDF,
             input_kwargs={

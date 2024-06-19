@@ -5,19 +5,21 @@
 
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.leaves.leaf_maple import nodegroup_leaf_shader
-from infinigen.assets.leaves.leaf_v2 import nodegroup_apply_wave, nodegroup_move_to_origin
+from infinigen.assets.leaves.leaf_v2 import (
+    nodegroup_apply_wave,
+    nodegroup_move_to_origin,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 
@@ -25,9 +27,17 @@ def deg2rad(deg):
     return deg / 180.0 * np.pi
 
 
-@node_utils.to_nodegroup("nodegroup_ginko_stem", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_ginko_stem", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_ginko_stem(
-    nw: NodeWrangler, stem_curve_control_points=[(0.0, 0.4938), (0.3659, 0.4969), (0.7477, 0.4688), (1.0, 0.4969)]
+    nw: NodeWrangler,
+    stem_curve_control_points=[
+        (0.0, 0.4938),
+        (0.3659, 0.4969),
+        (0.7477, 0.4688),
+        (1.0, 0.4969),
+    ],
 ):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -40,51 +50,91 @@ def nodegroup_ginko_stem(
         ],
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["Coordinate"], 1: (0.0, 0.03, 0.0)})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["Coordinate"], 1: (0.0, 0.03, 0.0)},
+    )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": add.outputs["Vector"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": add.outputs["Vector"]}
+    )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.0, 2: 0.0})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.0, 2: 0.0},
+    )
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]})
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_2.outputs["Result"]}
+    )
     node_utils.assign_curve(float_curve_1.mapping.curves[0], stem_curve_control_points)
 
-    map_range_3 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0})
+    map_range_3 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve_1, 3: -1.0}
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: map_range_3.outputs["Result"], 1: separate_xyz.outputs["X"]})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: map_range_3.outputs["Result"], 1: separate_xyz.outputs["X"]},
+    )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_1}, attrs={"operation": "ABSOLUTE"}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_xyz.outputs["Y"], 1: -1.72, 2: -0.35, 3: 0.03, 4: 0.008},
+        input_kwargs={
+            "Value": separate_xyz.outputs["Y"],
+            1: -1.72,
+            2: -0.35,
+            3: 0.03,
+            4: 0.008,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: absolute, 1: map_range.outputs["Result"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: absolute, 1: map_range.outputs["Result"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["Y"], 1: group_input.outputs["Length"]})
+    add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Y"], 1: group_input.outputs["Length"]},
+    )
 
-    absolute_1 = nw.new_node(Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "ABSOLUTE"})
+    absolute_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_2}, attrs={"operation": "ABSOLUTE"}
+    )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: absolute_1, 1: group_input.outputs["Length"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: absolute_1, 1: group_input.outputs["Length"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     smooth_max = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: subtract_1, 2: 0.02}, attrs={"operation": "SMOOTH_MAX"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: subtract_1, 2: 0.02},
+        attrs={"operation": "SMOOTH_MAX"},
     )
 
     subtract_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: smooth_max, 1: group_input.outputs["Value"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: smooth_max, 1: group_input.outputs["Value"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Stem": subtract_2, "Stem Raw": absolute})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Stem": subtract_2, "Stem Raw": absolute}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_ginko_vein", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_ginko_vein", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_ginko_vein(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -103,24 +153,42 @@ def nodegroup_ginko_vein(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": subtract.outputs["Vector"]})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": subtract.outputs["Vector"]}
+    )
 
     gradient_texture_1 = nw.new_node(
-        Nodes.GradientTexture, input_kwargs={"Vector": subtract.outputs["Vector"]}, attrs={"gradient_type": "RADIAL"}
+        Nodes.GradientTexture,
+        input_kwargs={"Vector": subtract.outputs["Vector"]},
+        attrs={"gradient_type": "RADIAL"},
     )
 
     pingpong = nw.new_node(
-        Nodes.Math, input_kwargs={0: gradient_texture_1.outputs["Fac"]}, attrs={"operation": "PINGPONG"}
+        Nodes.Math,
+        input_kwargs={0: gradient_texture_1.outputs["Fac"]},
+        attrs={"operation": "PINGPONG"},
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: subtract.outputs["Vector"]}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: subtract.outputs["Vector"]},
+        attrs={"operation": "LENGTH"},
+    )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: pingpong}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: pingpong}, attrs={"operation": "SUBTRACT"}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: -0.44}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: -0.44},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: length.outputs["Value"], 1: multiply}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: length.outputs["Value"], 1: multiply},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: pingpong, 1: multiply_1})
@@ -152,7 +220,9 @@ def nodegroup_ginko_vein(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": multiply_2, 1: 0.15, 2: -0.32, 4: -0.02})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": multiply_2, 1: 0.15, 2: -0.32, 4: -0.02}
+    )
 
     multiply_add_1 = nw.new_node(
         Nodes.Math,
@@ -181,11 +251,14 @@ def nodegroup_ginko_vein(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Vein": map_range_1.outputs["Result"], "Wave": multiply_3}
+        Nodes.GroupOutput,
+        input_kwargs={"Vein": map_range_1.outputs["Result"], "Wave": multiply_3},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_ginko_shape", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_ginko_shape", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_ginko_shape(
     nw: NodeWrangler,
     shape_curve_control_points=[
@@ -214,9 +287,16 @@ def nodegroup_ginko_shape(
         attrs={"operation": "MULTIPLY"},
     )
 
-    length = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"]}, attrs={"operation": "LENGTH"})
+    length = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: multiply.outputs["Vector"]},
+        attrs={"operation": "LENGTH"},
+    )
 
-    gradient_texture = nw.new_node("ShaderNodeTexGradient", input_kwargs={"Vector": group_input.outputs["Coordinate"]})
+    gradient_texture = nw.new_node(
+        "ShaderNodeTexGradient",
+        input_kwargs={"Vector": group_input.outputs["Coordinate"]},
+    )
 
     gradient_texture = nw.new_node(
         Nodes.GradientTexture,
@@ -225,19 +305,27 @@ def nodegroup_ginko_shape(
     )
 
     pingpong = nw.new_node(
-        Nodes.Math, input_kwargs={0: gradient_texture.outputs["Fac"]}, attrs={"operation": "PINGPONG"}
+        Nodes.Math,
+        input_kwargs={0: gradient_texture.outputs["Fac"]},
+        attrs={"operation": "PINGPONG"},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: pingpong, 1: group_input.outputs["Multiplier"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: pingpong, 1: group_input.outputs["Multiplier"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"W": gradient_texture.outputs["Fac"]}, attrs={"noise_dimensions": "1D"}
+        Nodes.NoiseTexture,
+        input_kwargs={"W": gradient_texture.outputs["Fac"]},
+        attrs={"noise_dimensions": "1D"},
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"], 1: 0.3}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"], 1: 0.3},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: multiply_2})
@@ -256,7 +344,9 @@ def nodegroup_ginko_shape(
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: wave_texture.outputs["Fac"], 1: 0.02}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: wave_texture.outputs["Fac"], 1: 0.02},
+        attrs={"operation": "MULTIPLY"},
     )
 
     float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": multiply_1})
@@ -265,27 +355,43 @@ def nodegroup_ginko_shape(
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_3, 1: float_curve})
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: length.outputs["Value"], 1: add_1}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: length.outputs["Value"], 1: add_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": subtract})
 
 
-@node_utils.to_nodegroup("nodegroup_valid_area", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_valid_area", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_valid_area(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Value", 0.5)]
+    )
 
-    sign = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Value"]}, attrs={"operation": "SIGN"})
+    sign = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Value"]},
+        attrs={"operation": "SIGN"},
+    )
 
-    map_range_4 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": sign, 1: -1.0, 3: 1.0, 4: 0.0})
+    map_range_4 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": sign, 1: -1.0, 3: 1.0, 4: 0.0}
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range_4.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range_4.outputs["Result"]}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_ginko", singleton=False, type="GeometryNodeTree")
-def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_control_points):
+def nodegroup_ginko(
+    nw: NodeWrangler, stem_curve_control_points, shape_curve_control_points
+):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -305,7 +411,11 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
     )
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": group_input.outputs["Mesh"], "Level": group_input.outputs["Level"]}
+        Nodes.SubdivideMesh,
+        input_kwargs={
+            "Mesh": group_input.outputs["Mesh"],
+            "Level": group_input.outputs["Level"],
+        },
     )
 
     position = nw.new_node(Nodes.InputPosition)
@@ -317,7 +427,9 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
     )
 
     ginkoshape = nw.new_node(
-        nodegroup_ginko_shape(shape_curve_control_points=shape_curve_control_points).name,
+        nodegroup_ginko_shape(
+            shape_curve_control_points=shape_curve_control_points
+        ).name,
         input_kwargs={
             "Coordinate": vector_rotate,
             "Multiplier": group_input.outputs["Multiplier"],
@@ -325,7 +437,9 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
         },
     )
 
-    validarea = nw.new_node(nodegroup_valid_area().name, input_kwargs={"Value": ginkoshape})
+    validarea = nw.new_node(
+        nodegroup_valid_area().name, input_kwargs={"Value": ginkoshape}
+    )
 
     ginkovein = nw.new_node(
         nodegroup_ginko_vein().name,
@@ -337,11 +451,15 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: validarea, 1: ginkovein.outputs["Vein"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: validarea, 1: ginkovein.outputs["Vein"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     map_range_4 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": ginkoshape, 1: -1.0, 2: 0.0, 3: -5.0, 4: 0.0}, attrs={"clamp": False}
+        Nodes.MapRange,
+        input_kwargs={"Value": ginkoshape, 1: -1.0, 2: 0.0, 3: -5.0, 4: 0.0},
+        attrs={"clamp": False},
     )
 
     multiply_1 = nw.new_node(
@@ -352,10 +470,16 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
 
     clamp = nw.new_node(Nodes.Clamp, input_kwargs={"Value": multiply_1, "Max": 0.01})
 
-    capture_attribute_1 = nw.new_node(Nodes.CaptureAttribute, input_kwargs={"Geometry": subdivide_mesh, 2: clamp})
+    capture_attribute_1 = nw.new_node(
+        Nodes.CaptureAttribute, input_kwargs={"Geometry": subdivide_mesh, 2: clamp}
+    )
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": capture_attribute_1.outputs["Geometry"], 2: ginkoshape}
+        Nodes.CaptureAttribute,
+        input_kwargs={
+            "Geometry": capture_attribute_1.outputs["Geometry"],
+            2: ginkoshape,
+        },
     )
 
     ginkostem = nw.new_node(
@@ -373,36 +497,60 @@ def nodegroup_ginko(nw: NodeWrangler, stem_curve_control_points, shape_curve_con
         attrs={"operation": "SMOOTH_MIN"},
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: smooth_min, 1: -1.0}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: smooth_min, 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     stem_length = nw.new_node(
-        Nodes.Compare, input_kwargs={0: multiply_2, 1: 0.0}, label="stem length", attrs={"operation": "LESS_THAN"}
+        Nodes.Compare,
+        input_kwargs={0: multiply_2, 1: 0.0},
+        label="stem length",
+        attrs={"operation": "LESS_THAN"},
     )
 
     delete_geometry = nw.new_node(
-        Nodes.DeleteGeom, input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], "Selection": stem_length}
+        Nodes.DeleteGeom,
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            "Selection": stem_length,
+        },
     )
 
-    validarea_1 = nw.new_node(nodegroup_valid_area().name, input_kwargs={"Value": ginkostem.outputs["Stem"]})
+    validarea_1 = nw.new_node(
+        nodegroup_valid_area().name, input_kwargs={"Value": ginkostem.outputs["Stem"]}
+    )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: validarea_1, 1: ginkostem.outputs["Stem Raw"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: validarea_1, 1: ginkostem.outputs["Stem Raw"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_3, 1: clamp})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add, 1: group_input.outputs["Displacenment"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: add, 1: group_input.outputs["Displacenment"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_4})
 
-    set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": delete_geometry, "Offset": combine_xyz})
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": delete_geometry, "Offset": combine_xyz},
+    )
 
-    validarea_2 = nw.new_node(nodegroup_valid_area().name, input_kwargs={"Value": ginkoshape})
+    validarea_2 = nw.new_node(
+        nodegroup_valid_area().name, input_kwargs={"Value": ginkoshape}
+    )
 
     multiply_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: validarea_2, 1: ginkovein.outputs["Wave"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: validarea_2, 1: ginkovein.outputs["Wave"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     group_output = nw.new_node(
@@ -421,33 +569,66 @@ def shader_material(nw: NodeWrangler, **kwargs):
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "vein"})
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": attribute.outputs["Color"], 2: 0.12, 4: 6.26})
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={"Value": attribute.outputs["Color"], 2: 0.12, 4: 6.26},
+    )
 
     attribute_1 = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "shape"})
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": attribute_1.outputs["Color"], 1: -0.74, 2: 0.01, 3: 2.0, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": attribute_1.outputs["Color"],
+            1: -0.74,
+            2: 0.01,
+            3: 2.0,
+            4: 0.0,
+        },
     )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.3795, 0.6344), (1.0, 1.0)])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range_1.outputs["Result"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0], [(0.0, 0.0), (0.3795, 0.6344), (1.0, 1.0)]
+    )
 
-    separate_hsv = nw.new_node("ShaderNodeSeparateHSV", input_kwargs={"Color": kwargs["color_base"]})
+    separate_hsv = nw.new_node(
+        "ShaderNodeSeparateHSV", input_kwargs={"Color": kwargs["color_base"]}
+    )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_hsv.outputs["V"], 1: 0.2}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: separate_hsv.outputs["V"], 1: 0.2},
+        attrs={"operation": "SUBTRACT"},
     )
 
     combine_hsv = nw.new_node(
-        Nodes.CombineHSV, input_kwargs={"H": separate_hsv.outputs["H"], "S": separate_hsv.outputs["S"], "V": subtract}
+        Nodes.CombineHSV,
+        input_kwargs={
+            "H": separate_hsv.outputs["H"],
+            "S": separate_hsv.outputs["S"],
+            "V": subtract,
+        },
     )
 
     mix_1 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": float_curve, "Color1": kwargs["color_base"], "Color2": combine_hsv}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": float_curve,
+            "Color1": kwargs["color_base"],
+            "Color2": combine_hsv,
+        },
     )
 
     mix = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": map_range.outputs["Result"], "Color1": mix_1, "Color2": kwargs["color_vein"]}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": map_range.outputs["Result"],
+            "Color1": mix_1,
+            "Color2": kwargs["color_vein"],
+        },
     )
 
     group = nw.new_node(nodegroup_leaf_shader().name, input_kwargs={"Color": mix})
@@ -458,7 +639,9 @@ def shader_material(nw: NodeWrangler, **kwargs):
 def geo_leaf_ginko(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     nodegroup = nw.new_node(
         nodegroup_ginko(
@@ -476,12 +659,17 @@ def geo_leaf_ginko(nw: NodeWrangler, **kwargs):
         },
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": nodegroup.outputs["Wave"], 4: 0.04})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": nodegroup.outputs["Wave"], 4: 0.04}
+    )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": map_range.outputs["Result"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": map_range.outputs["Result"]}
+    )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": nodegroup.outputs["Geometry"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": nodegroup.outputs["Geometry"], "Offset": combine_xyz},
     )
 
     position = nw.new_node(Nodes.InputPosition)
@@ -490,7 +678,8 @@ def geo_leaf_ginko(nw: NodeWrangler, **kwargs):
 
     apply_wave = nw.new_node(
         nodegroup_apply_wave(
-            y_wave_control_points=kwargs["y_wave_control_points"], x_wave_control_points=kwargs["x_wave_control_points"]
+            y_wave_control_points=kwargs["y_wave_control_points"],
+            x_wave_control_points=kwargs["x_wave_control_points"],
         ).name,
         input_kwargs={
             "Geometry": set_position,
@@ -500,7 +689,9 @@ def geo_leaf_ginko(nw: NodeWrangler, **kwargs):
         },
     )
 
-    move_to_origin = nw.new_node(nodegroup_move_to_origin().name, input_kwargs={"Geometry": apply_wave})
+    move_to_origin = nw.new_node(
+        nodegroup_move_to_origin().name, input_kwargs={"Geometry": apply_wave}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -560,12 +751,21 @@ class LeafFactoryGinko(AssetFactory):
                 (uniform(0.6, 0.8), uniform(0.1, 0.4)),
                 (1.0, 0.0),
             ],
-            "vein_shape_control_points": [(0.0, 0.0), (0.25, uniform(0.1, 0.4)), (0.75, uniform(0.6, 0.9)), (1.0, 1.0)],
+            "vein_shape_control_points": [
+                (0.0, 0.0),
+                (0.25, uniform(0.1, 0.4)),
+                (0.75, uniform(0.6, 0.9)),
+                (1.0, 1.0),
+            ],
         }
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
@@ -576,9 +776,19 @@ class LeafFactoryGinko(AssetFactory):
 
         phenome = self.genome.copy()
 
-        phenome["y_wave_control_points"] = [(0.0, 0.5), (uniform(0.25, 0.75), uniform(0.50, 0.60)), (1.0, 0.5)]
+        phenome["y_wave_control_points"] = [
+            (0.0, 0.5),
+            (uniform(0.25, 0.75), uniform(0.50, 0.60)),
+            (1.0, 0.5),
+        ]
         x_wave_val = np.random.uniform(0.50, 0.58)
-        phenome["x_wave_control_points"] = [(0.0, 0.5), (0.4, x_wave_val), (0.5, 0.5), (0.6, x_wave_val), (1.0, 0.5)]
+        phenome["x_wave_control_points"] = [
+            (0.0, 0.5),
+            (0.4, x_wave_val),
+            (0.5, 0.5),
+            (0.6, x_wave_val),
+            (1.0, 0.5),
+        ]
 
         phenome["stem_curve_control_points"] = [
             (0.0, 0.5),
@@ -603,7 +813,9 @@ class LeafFactoryGinko(AssetFactory):
         phenome["scale_margin"] = uniform(5.5, 7.5)
 
         material_kwargs = phenome.copy()
-        material_kwargs["color_base"] = np.copy(self.blade_color)  # (0.2346, 0.4735, 0.0273, 1.0),
+        material_kwargs["color_base"] = np.copy(
+            self.blade_color
+        )  # (0.2346, 0.4735, 0.0273, 1.0),
         material_kwargs["color_base"][0] += np.random.normal(0.0, 0.02)
         material_kwargs["color_base"][1] += np.random.normal(0.0, self.color_randomness)
         material_kwargs["color_base"][2] += np.random.normal(0.0, self.color_randomness)
@@ -611,8 +823,16 @@ class LeafFactoryGinko(AssetFactory):
 
         material_kwargs["color_vein"] = hsv2rgba(np.copy(self.blade_color))
 
-        surface.add_geomod(obj, geo_leaf_ginko, apply=False, attributes=["vein", "shape"], input_kwargs=phenome)
-        surface.add_material(obj, shader_material, reuse=False, input_kwargs=material_kwargs)
+        surface.add_geomod(
+            obj,
+            geo_leaf_ginko,
+            apply=False,
+            attributes=["vein", "shape"],
+            input_kwargs=phenome,
+        )
+        surface.add_material(
+            obj, shader_material, reuse=False, input_kwargs=material_kwargs
+        )
 
         bpy.ops.object.convert(target="MESH")
 

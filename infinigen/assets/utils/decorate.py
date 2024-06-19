@@ -28,10 +28,14 @@ def multi_res(obj):
     butil.apply_modifiers(obj)
 
 
-def geo_extension(nw: NodeWrangler, noise_strength=0.2, noise_scale=2.0, musgrave_dimensions="3D"):
+def geo_extension(
+    nw: NodeWrangler, noise_strength=0.2, noise_scale=2.0, musgrave_dimensions="3D"
+):
     noise_strength = uniform(noise_strength / 2, noise_strength)
     noise_scale = uniform(noise_scale * 0.7, noise_scale * 1.4)
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     pos = nw.new_node(Nodes.InputPosition)
     direction = nw.scale(pos, nw.scalar_divide(1, nw.vector_math("LENGTH", pos)))
     direction = nw.add(direction, uniform(-1, 1, 3))
@@ -47,7 +51,10 @@ def geo_extension(nw: NodeWrangler, noise_strength=0.2, noise_scale=2.0, musgrav
         ),
         noise_strength,
     )
-    geometry = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": geometry, "Offset": nw.scale(musgrave, pos)})
+    geometry = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": geometry, "Offset": nw.scale(musgrave, pos)},
+    )
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
 
@@ -160,7 +167,8 @@ def write_co(obj, arr):
         obj.data.vertices.foreach_set("co", arr.reshape(-1))
     except RuntimeError as e:
         raise RuntimeError(
-            f"Failed to set vertices.co on {obj.name=}. Object has {len(obj.data.vertices)} verts, " f"{arr.shape=}"
+            f"Failed to set vertices.co on {obj.name=}. Object has {len(obj.data.vertices)} verts, "
+            f"{arr.shape=}"
         ) from e
 
 
@@ -187,7 +195,9 @@ def write_material_index(obj, arr):
 
 
 def set_shade_smooth(obj):
-    write_attr_data(obj, "use_smooth", np.ones(len(obj.data.polygons), dtype=int), "INT", "FACE")
+    write_attr_data(
+        obj, "use_smooth", np.ones(len(obj.data.polygons), dtype=int), "INT", "FACE"
+    )
 
 
 def displace_vertices(obj, fn):
@@ -301,7 +311,9 @@ def select_faces(obj, to_select):
 
 def write_attribute(obj, fn, name, domain="POINT", data_type="FLOAT"):
     def geo_attribute(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         attr = surface.eval_argument(nw, fn, position=nw.new_node(Nodes.InputPosition))
         geometry = nw.new_node(
             Nodes.StoreNamedAttribute,
@@ -365,7 +377,10 @@ def subdivide_edge_ring(obj, cuts=64, axis=(0, 0, 1), **kwargs):
     with butil.ViewportMode(obj, "EDIT"):
         bm = bmesh.from_edit_mesh(obj.data)
         bm.edges.ensure_lookup_table()
-        selected = np.abs((read_edge_direction(obj) * np.array(axis)[np.newaxis, :]).sum(1)) > 1 - 1e-3
+        selected = (
+            np.abs((read_edge_direction(obj) * np.array(axis)[np.newaxis, :]).sum(1))
+            > 1 - 1e-3
+        )
         edges = [bm.edges[i] for i in np.nonzero(selected)[0]]
         bmesh.ops.subdivide_edgering(bm, edges=edges, cuts=int(cuts), **kwargs)
         bmesh.update_edit_mesh(obj.data)

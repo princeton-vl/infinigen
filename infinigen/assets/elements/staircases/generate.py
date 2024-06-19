@@ -30,7 +30,9 @@ class StaircaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(StaircaseFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            base_factory_fn = np.random.choice(self.factories, p=self.probs / self.probs.sum())
+            base_factory_fn = np.random.choice(
+                self.factories, p=self.probs / self.probs.sum()
+            )
             self.base_factory = base_factory_fn(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:

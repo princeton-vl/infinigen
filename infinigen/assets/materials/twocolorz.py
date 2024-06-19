@@ -4,30 +4,22 @@
 # Authors: Mingzhe Wang
 
 
-import math as ma
-import os
-import sys
-
-import bpy
-import mathutils
-import numpy as np
-from numpy.random import normal, uniform
-
 from infinigen.assets.materials.utils.surface_utils import (
-    clip,
     geo_voronoi_noise,
     sample_color,
     sample_range,
     sample_ratio,
 )
 from infinigen.core import surface
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes
 
 
 def shader_twocolorz(nw, rand=True, **input_kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Generated"]})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate.outputs["Generated"]}
+    )
     if rand:
         for i in range(2):
             # do not change Z
@@ -36,15 +28,26 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": mapping})
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Scale": 10.0, "Detail": 3.0, "Distortion": 0.5}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": mapping,
+            "Scale": 10.0,
+            "Detail": 3.0,
+            "Distortion": 0.5,
+        },
     )
     if rand:
         for k in ["Scale", "Detail", "Distortion", "Roughness"]:
-            noise_texture.inputs[k].default_value = sample_ratio(noise_texture.inputs[k].default_value, 1 / 3, 3)
+            noise_texture.inputs[k].default_value = sample_ratio(
+                noise_texture.inputs[k].default_value, 1 / 3, 3
+            )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Color1": separate_xyz.outputs["Z"], "Color2": noise_texture.outputs["Fac"]},
+        input_kwargs={
+            "Color1": separate_xyz.outputs["Z"],
+            "Color2": noise_texture.outputs["Fac"],
+        },
         attrs={"blend_type": "MULTIPLY"},
     )
 
@@ -56,14 +59,18 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
     if rand:
         pos_max = [0.4, 0.8]
         colorramp.color_ramp.elements[0].position = sample_range(0, pos_max[0])
-        _min = (pos_max[1] - colorramp.color_ramp.elements[0].position) / 3 + colorramp.color_ramp.elements[0].position
+        _min = (
+            pos_max[1] - colorramp.color_ramp.elements[0].position
+        ) / 3 + colorramp.color_ramp.elements[0].position
         colorramp.color_ramp.elements[1].position = sample_range(_min, pos_max[1])
         sample_color(colorramp.color_ramp.elements[0].color)
         sample_color(colorramp.color_ramp.elements[1].color)
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "offset"})
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Color"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.0
     colorramp_1.color_ramp.elements[0].color = (0.2634, 0.2634, 0.2634, 1.0)
     colorramp_1.color_ramp.elements[1].position = 1.0
@@ -78,9 +85,17 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
         },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(obj, geo_voronoi_noise, apply=False, input_kwargs=geo_kwargs, attributes=["offset"])
+    surface.add_geomod(
+        obj,
+        geo_voronoi_noise,
+        apply=False,
+        input_kwargs=geo_kwargs,
+        attributes=["offset"],
+    )
     surface.add_material(obj, shader_twocolorz, reuse=False, input_kwargs=shader_kwargs)

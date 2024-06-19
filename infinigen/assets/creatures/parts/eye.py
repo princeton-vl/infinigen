@@ -4,11 +4,7 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
-import mathutils
-import numpy as np
 from numpy.random import normal as N
-from numpy.random import randint, uniform
 
 from infinigen.assets.creatures.util import part_util
 from infinigen.assets.creatures.util.creature import PartFactory
@@ -19,13 +15,10 @@ from infinigen.assets.creatures.util.nodegroups.curve import (
     nodegroup_warped_circle_curve,
 )
 from infinigen.assets.creatures.util.nodegroups.math import nodegroup_aspect_to_dim
-from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_value, nodegroup_norm_vec
-from infinigen.core import surface
+from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_vec
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_nodegroup, tag_object
-from infinigen.core.util.color import color_category
-from infinigen.core.util.math import clip_gaussian
 
 
 @node_utils.to_nodegroup("nodegroup_eyelid", singleton=True, type="GeometryNodeTree")
@@ -49,19 +42,28 @@ def nodegroup_eyelid(nw: NodeWrangler):
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["TearDuctCoord"], "Scale": group_input.outputs["Eyeball Radius"]},
+        input_kwargs={
+            0: group_input.outputs["TearDuctCoord"],
+            "Scale": group_input.outputs["Eyeball Radius"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["PeakCoord"], "Scale": group_input.outputs["Eyeball Radius"]},
+        input_kwargs={
+            0: group_input.outputs["PeakCoord"],
+            "Scale": group_input.outputs["Eyeball Radius"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     scale_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["EyelidEndCoord"], "Scale": group_input.outputs["Eyeball Radius"]},
+        input_kwargs={
+            0: group_input.outputs["EyelidEndCoord"],
+            "Scale": group_input.outputs["Eyeball Radius"],
+        },
         attrs={"operation": "SCALE"},
     )
 
@@ -75,38 +77,53 @@ def nodegroup_eyelid(nw: NodeWrangler):
     )
 
     set_curve_tilt = nw.new_node(
-        Nodes.SetCurveTilt, input_kwargs={"Curve": quadratic_bezier, "Tilt": group_input.outputs["Tilt"]}
+        Nodes.SetCurveTilt,
+        input_kwargs={"Curve": quadratic_bezier, "Tilt": group_input.outputs["Tilt"]},
     )
 
     position = nw.new_node(Nodes.InputPosition)
 
     aspect_to_dim = nw.new_node(
-        nodegroup_aspect_to_dim().name, input_kwargs={"Aspect Ratio": group_input.outputs["Aspect Ratio"]}
+        nodegroup_aspect_to_dim().name,
+        input_kwargs={"Aspect Ratio": group_input.outputs["Aspect Ratio"]},
     )
 
     multiply = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: position, 1: aspect_to_dim}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: aspect_to_dim},
+        attrs={"operation": "MULTIPLY"},
     )
 
     warped_circle_curve = nw.new_node(
-        nodegroup_warped_circle_curve().name, input_kwargs={"Position": multiply.outputs["Vector"]}
+        nodegroup_warped_circle_curve().name,
+        input_kwargs={"Position": multiply.outputs["Vector"]},
     )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Eyeball Radius"], 1: group_input.outputs["StartRadPct"]},
+        input_kwargs={
+            0: group_input.outputs["Eyeball Radius"],
+            1: group_input.outputs["StartRadPct"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Eyeball Radius"], 1: group_input.outputs["EndRadPct"]},
+        input_kwargs={
+            0: group_input.outputs["Eyeball Radius"],
+            1: group_input.outputs["EndRadPct"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     smoothtaper = nw.new_node(
         nodegroup_smooth_taper().name,
-        input_kwargs={"start_rad": multiply_1, "end_rad": multiply_2, "fullness": group_input.outputs["fullness"]},
+        input_kwargs={
+            "start_rad": multiply_1,
+            "end_rad": multiply_2,
+            "fullness": group_input.outputs["fullness"],
+        },
     )
 
     profilepart = nw.new_node(
@@ -118,10 +135,15 @@ def nodegroup_eyelid(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": tag_nodegroup(nw, profilepart, "eyelid")})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": tag_nodegroup(nw, profilepart, "eyelid")},
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_mammal_eye", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_mammal_eye", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_mammal_eye(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -158,15 +180,25 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
         },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [eyelid, eyelid_1]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [eyelid, eyelid_1]}
+    )
 
-    switch = nw.new_node(Nodes.Switch, input_kwargs={1: group_input.outputs["Eyelids"], 15: join_geometry})
+    switch = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={1: group_input.outputs["Eyelids"], 15: join_geometry},
+    )
 
-    uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={"Radius": group_input.outputs["Radius"]})
+    uv_sphere = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Radius": group_input.outputs["Radius"]}
+    )
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (0.10000000000000001, 0.0, 0.0), "Scale": group_input.outputs["Radius"]},
+        input_kwargs={
+            0: (0.10000000000000001, 0.0, 0.0),
+            "Scale": group_input.outputs["Radius"],
+        },
         attrs={"operation": "SCALE"},
     )
 
@@ -187,17 +219,24 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Radius"], 1: 6.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Radius"], 1: 6.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
     scale_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (0.33000000000000002, 0.33000000000000002, 0.33000000000000002), "Scale": multiply},
+        input_kwargs={
+            0: (0.33000000000000002, 0.33000000000000002, 0.33000000000000002),
+            "Scale": multiply,
+        },
         attrs={"operation": "SCALE"},
     )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Radius"], 1: 3.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Radius"], 1: 3.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
     simple_tube = nw.new_node(
@@ -216,15 +255,25 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
 
     transform_2 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": simple_tube.outputs["Geometry"], "Rotation": (0.0, 0.0, 0.34910000000000002)},
+        input_kwargs={
+            "Geometry": simple_tube.outputs["Geometry"],
+            "Rotation": (0.0, 0.0, 0.34910000000000002),
+        },
     )
 
-    eyeball = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": transform_1, "Level": 2})
+    eyeball = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": transform_1, "Level": 2}
+    )
 
     position_2 = nw.new_node(Nodes.InputPosition)
 
     normvec = nw.new_node(
-        nodegroup_norm_vec().name, input_kwargs={"Geometry": eyeball, "Name": "EyeballPosition", "Vector": position_2}
+        nodegroup_norm_vec().name,
+        input_kwargs={
+            "Geometry": eyeball,
+            "Name": "EyeballPosition",
+            "Vector": position_2,
+        },
     )
 
     group_output = nw.new_node(

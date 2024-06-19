@@ -1,36 +1,25 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import argparse
-import ast
-import cProfile
 import logging
 import os
 import pickle
-import pprint
-import random
 import shutil
-import sys
 import time
 from collections import defaultdict
-from functools import partial
 from pathlib import Path
 
-# ruff: noqa: F402
+# ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
 import bpy
 import gin
-import mathutils
-import numpy as np
 from frozendict import frozendict
-from mathutils import Vector
-from numpy.random import normal, randint, uniform
-from tqdm import tqdm
+from numpy.random import uniform
 
 import infinigen.assets.scatters
-from infinigen.assets import cactus, creatures, fluid, lighting, rocks, trees, weather
+from infinigen.assets import cactus, creatures, fluid, rocks, trees, weather
 from infinigen.assets.materials import (
     atmosphere_light_haze,
     chunkyrock,
@@ -51,48 +40,26 @@ from infinigen.assets.materials import (
 from infinigen.tools.export import export_scene, triangulate_meshes
 from infinigen.assets.monocot import kelp
 from infinigen.assets.scatters import (
-    chopped_trees,
-    coral_reef,
-    decorative_plants,
-    fern,
-    flowerplant,
-    grass,
-    ground_leaves,
     ground_mushroom,
-    ground_twigs,
     ivy,
-    jellyfish,
     lichen,
-    monocot,
     moss,
-    mushroom,
-    pebbles,
-    pine_needle,
-    pinecone,
-    seashells,
-    seaweed,
     slime_mold,
     snow_layer,
-    urchin,
 )
 from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 from infinigen.core import init, surface
-from infinigen.core.placement import animation_policy
 from infinigen.core.placement import camera as cam_util
-from infinigen.core.placement import density, detail, factory, instance_scatter, particles, placement, split_in_view
-from infinigen.core.placement.split_in_view import split_inview
+from infinigen.core.placement import placement
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
 from infinigen.core.tagging import tag_system
 from infinigen.core.util import blender as butil
 from infinigen.core.util import exporting
-from infinigen.core.util import logging as logging_util
-from infinigen.core.util import pipeline
 from infinigen.core.util.logging import Timer, create_text_file, save_polycounts
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.organization import Attributes, Task, TerrainNames
+from infinigen.core.util.organization import Task
 from infinigen.core.util.pipeline import RandomStageExecutor
-from infinigen.core.util.random import sample_registry
 from infinigen.terrain import Terrain
 from infinigen.tools.export import export_scene
 
@@ -104,7 +71,9 @@ def populate_scene(output_folder, scene_seed, **params):
     p = RandomStageExecutor(scene_seed, output_folder, params)
     camera = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
 
-    season = p.run_stage("choose_season", trees.random_season, use_chance=False, default=[])
+    season = p.run_stage(
+        "choose_season", trees.random_season, use_chance=False, default=[]
+    )
 
     fire_cache_system = fluid.FireCachingSystem() if params.get("cached_fire") else None
 
@@ -113,7 +82,9 @@ def populate_scene(output_folder, scene_seed, **params):
         "populate_trees",
         use_chance=False,
         default=[],
-        fn=lambda: placement.populate_all(trees.TreeFactory, camera, season=season, vis_cull=4),
+        fn=lambda: placement.populate_all(
+            trees.TreeFactory, camera, season=season, vis_cull=4
+        ),
     )  # ,
     # meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
     populated["boulders"] = p.run_stage(
@@ -126,7 +97,9 @@ def populate_scene(output_folder, scene_seed, **params):
     populated["bushes"] = p.run_stage(
         "populate_bushes",
         use_chance=False,
-        fn=lambda: placement.populate_all(trees.BushFactory, camera, vis_cull=1, adapt_mesh_method="subdivide"),
+        fn=lambda: placement.populate_all(
+            trees.BushFactory, camera, vis_cull=1, adapt_mesh_method="subdivide"
+        ),
     )
     p.run_stage(
         "populate_kelp",
@@ -134,17 +107,23 @@ def populate_scene(output_folder, scene_seed, **params):
         fn=lambda: placement.populate_all(kelp.KelpMonocotFactory, camera, vis_cull=5),
     )
     populated["cactus"] = p.run_stage(
-        "populate_cactus", use_chance=False, fn=lambda: placement.populate_all(cactus.CactusFactory, camera, vis_cull=6)
+        "populate_cactus",
+        use_chance=False,
+        fn=lambda: placement.populate_all(cactus.CactusFactory, camera, vis_cull=6),
     )
     p.run_stage(
         "populate_clouds",
         use_chance=False,
-        fn=lambda: placement.populate_all(weather.CloudFactory, camera, dist_cull=None, vis_cull=None),
+        fn=lambda: placement.populate_all(
+            weather.CloudFactory, camera, dist_cull=None, vis_cull=None
+        ),
     )
     p.run_stage(
         "populate_glowing_rocks",
         use_chance=False,
-        fn=lambda: placement.populate_all(rocks.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None),
+        fn=lambda: placement.populate_all(
+            rocks.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None
+        ),
     )
 
     populated["cached_fire_trees"] = p.run_stage(
@@ -152,7 +131,12 @@ def populate_scene(output_folder, scene_seed, **params):
         use_chance=False,
         default=[],
         fn=lambda: placement.populate_all(
-            fluid.CachedTreeFactory, camera, season=season, vis_cull=4, dist_cull=70, cache_system=fire_cache_system
+            fluid.CachedTreeFactory,
+            camera,
+            season=season,
+            vis_cull=4,
+            dist_cull=70,
+            cache_system=fire_cache_system,
         ),
     )
     populated["cached_fire_boulders"] = p.run_stage(
@@ -160,21 +144,32 @@ def populate_scene(output_folder, scene_seed, **params):
         use_chance=False,
         default=[],
         fn=lambda: placement.populate_all(
-            fluid.CachedBoulderFactory, camera, vis_cull=3, dist_cull=70, cache_system=fire_cache_system
+            fluid.CachedBoulderFactory,
+            camera,
+            vis_cull=3,
+            dist_cull=70,
+            cache_system=fire_cache_system,
         ),
     )
     populated["cached_fire_bushes"] = p.run_stage(
         "populate_cached_fire_bushes",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            fluid.CachedBushFactory, camera, vis_cull=1, adapt_mesh_method="subdivide", cache_system=fire_cache_system
+            fluid.CachedBushFactory,
+            camera,
+            vis_cull=1,
+            adapt_mesh_method="subdivide",
+            cache_system=fire_cache_system,
         ),
     )
     populated["cached_fire_cactus"] = p.run_stage(
         "populate_cached_fire_cactus",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            fluid.CachedCactusFactory, camera, vis_cull=6, cache_system=fire_cache_system
+            fluid.CachedCactusFactory,
+            camera,
+            vis_cull=6,
+            cache_system=fire_cache_system,
         ),
     )
 
@@ -242,22 +237,48 @@ def populate_scene(output_folder, scene_seed, **params):
         "snake": creatures.SnakeFactory,
     }
     for k, fac in creature_facs.items():
-        p.run_stage(f"populate_{k}", use_chance=False, fn=lambda: placement.populate_all(fac, camera=None))
+        p.run_stage(
+            f"populate_{k}",
+            use_chance=False,
+            fn=lambda: placement.populate_all(fac, camera=None),
+        )
 
     fire_warmup = params.get("fire_warmup", 50)
-    simulation_duration = bpy.context.scene.frame_end - bpy.context.scene.frame_start + fire_warmup
+    simulation_duration = (
+        bpy.context.scene.frame_end - bpy.context.scene.frame_start + fire_warmup
+    )
 
     def set_fire(assets):
         objs = [o for *_, a in assets for _, o in a]
         with butil.EnableParentCollections(objs):
             fluid.set_fire_to_assets(
-                assets, bpy.context.scene.frame_start - fire_warmup, simulation_duration, output_folder
+                assets,
+                bpy.context.scene.frame_start - fire_warmup,
+                simulation_duration,
+                output_folder,
             )
 
-    p.run_stage("trees_fire_on_the_fly", set_fire, populated["trees"], prereq="populate_trees")
-    p.run_stage("bushes_fire_on_the_fly", set_fire, populated["bushes"], prereq="populate_bushes")
-    p.run_stage("boulders_fire_on_the_fly", set_fire, populated["boulders"], prereq="populate_boulders")
-    p.run_stage("cactus_fire_on_the_fly", set_fire, populated["cactus"], prereq="populate_cactus")
+    p.run_stage(
+        "trees_fire_on_the_fly", set_fire, populated["trees"], prereq="populate_trees"
+    )
+    p.run_stage(
+        "bushes_fire_on_the_fly",
+        set_fire,
+        populated["bushes"],
+        prereq="populate_bushes",
+    )
+    p.run_stage(
+        "boulders_fire_on_the_fly",
+        set_fire,
+        populated["boulders"],
+        prereq="populate_boulders",
+    )
+    p.run_stage(
+        "cactus_fire_on_the_fly",
+        set_fire,
+        populated["cactus"],
+        prereq="populate_cactus",
+    )
 
     p.save_results(output_folder / "pipeline_fine.csv")
 
@@ -271,7 +292,14 @@ def get_scene_tag(name):
 
 
 @gin.configurable
-def render(scene_seed, output_folder, camera_id, render_image_func=render_image, resample_idx=None, hide_water=False):
+def render(
+    scene_seed,
+    output_folder,
+    camera_id,
+    render_image_func=render_image,
+    resample_idx=None,
+    hide_water=False,
+):
     if hide_water and "water_fine" in bpy.data.objects:
         logger.info("Hiding water fine")
         bpy.data.objects["water_fine"].hide_render = True
@@ -280,6 +308,7 @@ def render(scene_seed, output_folder, camera_id, render_image_func=render_image,
         resample_scene(int_hash((scene_seed, resample_idx)))
     with Timer("Render Frames"):
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
+
 
 @gin.configurable
 def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
@@ -304,32 +333,44 @@ def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
         logger.info(f"Working on frame {frame_idx}")
 
         exporting.save_obj_and_instances(
-            frame_info_folder / "mesh", previous_frame_mesh_id_mapping, current_frame_mesh_id_mapping
+            frame_info_folder / "mesh",
+            previous_frame_mesh_id_mapping,
+            current_frame_mesh_id_mapping,
         )
         cam_util.save_camera_parameters(
-            camera_ids=cam_util.get_cameras_ids(), output_folder=frame_info_folder / "cameras", frame=frame_idx
+            camera_ids=cam_util.get_cameras_ids(),
+            output_folder=frame_info_folder / "cameras",
+            frame=frame_idx,
         )
         previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
 
 def validate_version(scene_version):
-    if scene_version is None or scene_version.split(".")[:-1] != infinigen.__version__.split(".")[:-1]:
+    if (
+        scene_version is None
+        or scene_version.split(".")[:-1] != infinigen.__version__.split(".")[:-1]
+    ):
         raise ValueError(
             f"infinigen_examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}"
         )
     if scene_version != infinigen.__version__:
-        logger.warning(f"{infinigen.__version__=} has minor version mismatch with {scene_version=}")
+        logger.warning(
+            f"{infinigen.__version__=} has minor version mismatch with {scene_version=}"
+        )
 
 
 @gin.configurable
 def group_collections(config):
     for config in config:  # Group collections before fine runs
         butil.group_in_collection(
-            [o for o in bpy.data.objects if o.name.startswith(f'{config["name"]}:')], config["name"]
+            [o for o in bpy.data.objects if o.name.startswith(f'{config["name"]}:')],
+            config["name"],
         )
         butil.group_toplevel_collections(
-            config["name"], hide_viewport=config["hide_viewport"], hide_render=config["hide_render"]
+            config["name"],
+            hide_viewport=config["hide_viewport"],
+            hide_render=config["hide_render"],
         )
 
 
@@ -376,9 +417,13 @@ def execute_tasks(
         butil.approve_all_drivers()
 
     if frame_range[1] < frame_range[0]:
-        raise ValueError(f"{frame_range=} is invalid, frame range must be nonempty. Blender end frame is INCLUSIVE")
+        raise ValueError(
+            f"{frame_range=} is invalid, frame range must be nonempty. Blender end frame is INCLUSIVE"
+        )
 
-    logger.info(f"Processing frames {frame_range[0]} through {frame_range[1]} inclusive")
+    logger.info(
+        f"Processing frames {frame_range[0]} through {frame_range[1]} inclusive"
+    )
     bpy.context.scene.frame_start = int(frame_range[0])
     bpy.context.scene.frame_end = int(frame_range[1])
     bpy.context.scene.frame_set(int(frame_range[0]))
@@ -421,23 +466,33 @@ def execute_tasks(
         )
 
         cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
-        terrain.fine_terrain(output_folder, cameras=cameras, optimize_terrain_diskusage=optimize_terrain_diskusage)
+        terrain.fine_terrain(
+            output_folder,
+            cameras=cameras,
+            optimize_terrain_diskusage=optimize_terrain_diskusage,
+        )
 
     group_collections()
 
     if input_folder is not None and input_folder != output_folder:
         for mesh in os.listdir(input_folder):
-            if (mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")) and not os.path.islink(
-                output_folder / mesh
-            ):
+            if (
+                mesh.endswith(".glb") or mesh.endswith(".b_displacement.npy")
+            ) and not os.path.islink(output_folder / mesh):
                 os.symlink(input_folder / mesh, output_folder / mesh)
     if Task.Coarse in task or Task.Populate in task or Task.FineTerrain in task:
-        with Timer(f"Writing output blendfile"):
-            logging.info(f"Writing output blendfile to {output_folder / output_blend_name}")
+        with Timer("Writing output blendfile"):
+            logging.info(
+                f"Writing output blendfile to {output_folder / output_blend_name}"
+            )
             if optimize_terrain_diskusage and task == [Task.FineTerrain]:
-                os.symlink(input_folder / output_blend_name, output_folder / output_blend_name)
+                os.symlink(
+                    input_folder / output_blend_name, output_folder / output_blend_name
+                )
             else:
-                bpy.ops.wm.save_mainfile(filepath=str(output_folder / output_blend_name))
+                bpy.ops.wm.save_mainfile(
+                    filepath=str(output_folder / output_blend_name)
+                )
 
         tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 
@@ -450,13 +505,25 @@ def execute_tasks(
     for col in bpy.data.collections["unique_assets"].children:
         col.hide_viewport = False
 
-    if need_terrain_processing and (Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task):
-        terrain = Terrain(scene_seed, surface.registry, task=task, on_the_fly_asset_folder=output_folder / "assets")
+    if need_terrain_processing and (
+        Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task
+    ):
+        terrain = Terrain(
+            scene_seed,
+            surface.registry,
+            task=task,
+            on_the_fly_asset_folder=output_folder / "assets",
+        )
         if optimize_terrain_diskusage:
             terrain.load_glb(output_folder)
 
     if Task.Render in task or Task.GroundTruth in task:
-        render(scene_seed, output_folder=output_folder, camera_id=camera_id, resample_idx=resample_idx)
+        render(
+            scene_seed,
+            output_folder=output_folder,
+            camera_id=camera_id,
+            resample_idx=resample_idx,
+        )
 
     if Task.Export in task:
         export_scene(input_folder / output_blend_name, output_folder)
@@ -472,7 +539,8 @@ def execute_tasks(
 def main(input_folder, output_folder, scene_seed, task, task_uniqname, **kwargs):
     version_req = ["3.6.0"]
     assert bpy.app.version_string in version_req, (
-        f"You are using blender={bpy.app.version_string} which is " f"not supported. Please use {version_req}"
+        f"You are using blender={bpy.app.version_string} which is "
+        f"not supported. Please use {version_req}"
     )
     logger.info(f"infinigen version {infinigen.__version__}")
     logger.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}")
@@ -487,9 +555,16 @@ def main(input_folder, output_folder, scene_seed, task, task_uniqname, **kwargs)
 
     with Timer("MAIN TOTAL"):
         execute_tasks(
-            input_folder=input_folder, output_folder=output_folder, task=task, scene_seed=scene_seed, **kwargs
+            input_folder=input_folder,
+            output_folder=output_folder,
+            task=task,
+            scene_seed=scene_seed,
+            **kwargs,
         )
 
     if task_uniqname is not None:
         create_text_file(filename=f"FINISH_{task_uniqname}")
-        create_text_file(filename=f"operative_gin_{task_uniqname}.txt", text=gin.operative_config_str())
+        create_text_file(
+            filename=f"operative_gin_{task_uniqname}.txt",
+            text=gin.operative_config_str(),
+        )

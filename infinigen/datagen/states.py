@@ -8,14 +8,12 @@
 
 import subprocess
 import time
-from copy import copy
 from pathlib import Path
 
 import gin
 import submitit
 
 from infinigen.datagen.util.submitit_emulator import LocalJob
-from infinigen.tools.suffixes import SUFFIX_ORDERING, get_suffix, parse_suffix
 
 
 class JobState:
@@ -45,7 +43,9 @@ def seff(job_obj, retry_on_error=True):
     assert scene_id.isdigit()
     while True:
         try:
-            seff_out = subprocess.check_output(f"/usr/bin/seff -d {scene_id}".split()).decode()
+            seff_out = subprocess.check_output(
+                f"/usr/bin/seff -d {scene_id}".split()
+            ).decode()
             lines = seff_out.splitlines()
             return dict(zip(lines[0].split(" ")[2:], lines[1].split(" ")[2:]))["State"]
         except Exception as e:

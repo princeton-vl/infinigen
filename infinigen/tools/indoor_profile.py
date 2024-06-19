@@ -10,7 +10,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import pandas as pd
-from tabulate import tabulate
 
 """
 The following function s attributed to FObersteiner from Stack Overflow at https://stackoverflow.com/a/64662985
@@ -39,17 +38,23 @@ def main(dir: Path):
     for seed in seeds:
         try:
             coarse_log = open(dir / seed / "logs" / "coarse.err").read()
-            render_log = open(next((dir / seed / "logs").glob("shortrender*.err"))).read()
+            render_log = open(
+                next((dir / seed / "logs").glob("shortrender*.err"))
+            ).read()
         except:
             continue
 
-        for name, h, m, s in re.findall(r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", coarse_log):
+        for name, h, m, s in re.findall(
+            r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", coarse_log
+        ):
             timedelta_obj = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
             if timedelta_obj.total_seconds() < 1:
                 continue
             coarse_data[name].append(timedelta_obj)
 
-        for name, h, m, s in re.findall(r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", render_log):
+        for name, h, m, s in re.findall(
+            r"\[INFO\] \| \[(.*?)\] finished in ([0-9]+):([0-9]+):([0-9]+)", render_log
+        ):
             timedelta_obj = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
             if timedelta_obj.total_seconds() < 1:
                 continue
@@ -59,10 +64,14 @@ def main(dir: Path):
     render_stats = make_stats(pd.DataFrame.from_dict(render_data, orient="index"))
 
     for column in coarse_stats:
-        coarse_stats[column] = coarse_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        coarse_stats[column] = (
+            coarse_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        )
 
     for column in coarse_stats:
-        render_stats[column] = render_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        render_stats[column] = (
+            render_stats[column].dt.round("1s").map(lambda x: td_to_str(x))
+        )
 
     print(coarse_stats.sort_values("median", ascending=False))
     print(render_stats.sort_values("median", ascending=False))

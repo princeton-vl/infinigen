@@ -5,12 +5,9 @@
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=dCIKH649gac by Hey Pictures
 
 import logging
-import pdb
 import warnings
 
-import bmesh
 import bpy
-import mathutils
 import numpy as np
 from scipy.spatial import KDTree
 
@@ -50,7 +47,8 @@ def as_hair_bsdf(mat, hair_bsdf_params):
     new_mat.name = f"as_hair_bsdf({mat.name})"
     ng = new_mat.node_tree
 
-    child = lambda inp: next(link.from_node for link in ng.links if link.to_socket == inp)
+    def child(inp):
+        return next(link.from_node for link in ng.links if link.to_socket == inp)
 
     try:
         out = ng.nodes["Material Output"]
@@ -58,11 +56,15 @@ def as_hair_bsdf(mat, hair_bsdf_params):
         rgb = child(shader.inputs["Base Color"])
     except StopIteration:
         # shader didnt match expected structure, abort and use original shader
-        warnings.warn(f"as_hair_bsdf failed for {mat.name=}, did not match expected structure")
+        warnings.warn(
+            f"as_hair_bsdf failed for {mat.name=}, did not match expected structure"
+        )
         return new_mat
 
     nw = NodeWrangler(ng)
-    hair_bsdf = nw.new_node(Nodes.PrincipledHairBSDF, input_kwargs={"Color": rgb, **hair_bsdf_params})
+    hair_bsdf = nw.new_node(
+        Nodes.PrincipledHairBSDF, input_kwargs={"Color": rgb, **hair_bsdf_params}
+    )
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": hair_bsdf})
 
     return new_mat
@@ -93,12 +95,16 @@ def compute_hair_placement_vertgroup(obj, root, avoid_features_dist):
     idxs = np.where((dists > avoid_features_dist) & (tag_bald_mask < 0.5))[0]
 
     group = obj.vertex_groups.new(name="hair_placement")
-    group.add(idxs.tolist(), 1.0, "ADD")  # .tolist() necessary to avoid np.int64 type error
+    group.add(
+        idxs.tolist(), 1.0, "ADD"
+    )  # .tolist() necessary to avoid np.int64 type error
 
     return group
 
 
-@node_utils.to_nodegroup("nodegroup_decode_noise", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_decode_noise", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_decode_noise(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -111,9 +117,14 @@ def nodegroup_decode_noise(nw: NodeWrangler):
         ],
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["MinMaxScale"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["MinMaxScale"]}
+    )
 
-    noise_texture = nw.new_node(Nodes.MusgraveTexture, input_kwargs={"Scale": separate_xyz.outputs["Z"], "Detail": 5.0})
+    noise_texture = nw.new_node(
+        Nodes.MusgraveTexture,
+        input_kwargs={"Scale": separate_xyz.outputs["Z"], "Detail": 5.0},
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
@@ -133,10 +144,14 @@ def nodegroup_decode_noise(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Attribute": (transfer_attribute, "Value")})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Attribute": (transfer_attribute, "Value")}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_hair_grooming", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_hair_grooming", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_hair_grooming(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -160,9 +175,14 @@ def nodegroup_hair_grooming(nw: NodeWrangler):
         ],
     )
 
-    hairposition = nw.new_node(nodegroup_hair_position().name, input_kwargs={"Curves": group_input.outputs["Geometry"]})
+    hairposition = nw.new_node(
+        nodegroup_hair_position().name,
+        input_kwargs={"Curves": group_input.outputs["Geometry"]},
+    )
 
-    object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": group_input.outputs["Object"]})
+    object_info = nw.new_node(
+        Nodes.ObjectInfo, input_kwargs={"Object": group_input.outputs["Object"]}
+    )
 
     combdirection = nw.new_node(
         nodegroup_comb_direction().name,
@@ -227,41 +247,63 @@ def nodegroup_hair_grooming(nw: NodeWrangler):
     )
 
     random_value = nw.new_node(
-        Nodes.RandomValue, input_kwargs={0: (-1.0, -1.0, -1.0)}, attrs={"data_type": "FLOAT_VECTOR"}
+        Nodes.RandomValue,
+        input_kwargs={0: (-1.0, -1.0, -1.0)},
+        attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: random_value.outputs["Value"], "Scale": group_input.outputs["Post Clump Noise Mag"]},
+        input_kwargs={
+            0: random_value.outputs["Value"],
+            "Scale": group_input.outputs["Post Clump Noise Mag"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": duplicatetoclumps, "Offset": scale.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": duplicatetoclumps, "Offset": scale.outputs["Vector"]},
     )
 
     hairlengthrescale = nw.new_node(
         nodegroup_hair_length_rescale().name,
-        input_kwargs={"Curves": set_position, "Min": group_input.outputs["Hair Length Pct Min"]},
+        input_kwargs={
+            "Curves": set_position,
+            "Min": group_input.outputs["Hair Length Pct Min"],
+        },
     )
 
     snaprootstosurface = nw.new_node(
         nodegroup_snap_roots_to_surface().name,
-        input_kwargs={"Target": object_info.outputs["Geometry"], "Curves": hairlengthrescale},
+        input_kwargs={
+            "Target": object_info.outputs["Geometry"],
+            "Curves": hairlengthrescale,
+        },
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": spline_parameter.outputs["Factor"], 3: group_input.outputs["Root Radius"], 4: 0.0},
+        input_kwargs={
+            "Value": spline_parameter.outputs["Factor"],
+            3: group_input.outputs["Root Radius"],
+            4: 0.0,
+        },
     )
 
     set_curve_radius = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": snaprootstosurface, "Radius": map_range.outputs["Result"]}
+        Nodes.SetCurveRadius,
+        input_kwargs={
+            "Curve": snaprootstosurface,
+            "Radius": map_range.outputs["Result"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_curve_radius})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_curve_radius}
+    )
 
 
 def mat_attr_dependencies(node_tree):
@@ -278,13 +320,16 @@ def mat_attr_dependencies(node_tree):
 def geo_transfer_hair_attributes(nw, obj, attrs):
     group_input = nw.new_node(Nodes.GroupInput)
 
-    hairposition = nw.new_node(nodegroup_hair_position().name, input_kwargs={"Curves": group_input.outputs["Geometry"]})
+    hairposition = nw.new_node(
+        nodegroup_hair_position().name,
+        input_kwargs={"Curves": group_input.outputs["Geometry"]},
+    )
 
     object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": obj})
 
     attrs_out = {}
     for attr_name in attrs:
-        if not attr_name in obj.data.attributes:
+        if attr_name not in obj.data.attributes:
             logger.warn(
                 f"Attempted to geo_transfer_hair_attributes() including {attr_name=} which is not present on {obj=}. Available are {list(obj.data.attributes.keys())}"
             )
@@ -293,7 +338,9 @@ def geo_transfer_hair_attributes(nw, obj, attrs):
         obj_attr = obj.data.attributes[attr_name]
 
         named_attr = nw.new_node(
-            Nodes.NamedAttribute, attrs={"data_type": obj_attr.data_type}, input_kwargs={"Name": attr_name}
+            Nodes.NamedAttribute,
+            attrs={"data_type": obj_attr.data_type},
+            input_kwargs={"Name": attr_name},
         )
         transfer = nw.new_node(
             Nodes.SampleNearestSurface,
@@ -306,7 +353,10 @@ def geo_transfer_hair_attributes(nw, obj, attrs):
         )
         attrs_out[attr_name] = (transfer, "Value")
 
-    nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": group_input.outputs["Geometry"], **attrs_out})
+    nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": group_input.outputs["Geometry"], **attrs_out},
+    )
 
 
 def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
@@ -319,13 +369,19 @@ def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
     n_guide_hairs = count // hair_genome["clump_n"]
     hair_genome["grooming"]["Tuft Amount"] = hair_genome["clump_n"]
 
-    logger.debug(f"Computing hair placement vertex group")
-    avoid_group = compute_hair_placement_vertgroup(obj, root, avoid_features_dist=hair_genome["avoid_features_dist"])
+    logger.debug("Computing hair placement vertex group")
+    avoid_group = compute_hair_placement_vertgroup(
+        obj, root, avoid_features_dist=hair_genome["avoid_features_dist"]
+    )
 
     logger.debug(f"Add particle system with {n_guide_hairs=}")
-    add_hair_particles(obj, params={"count": n_guide_hairs}, props={"vertex_group_density": avoid_group.name})
+    add_hair_particles(
+        obj,
+        params={"count": n_guide_hairs},
+        props={"vertex_group_density": avoid_group.name},
+    )
 
-    logger.debug(f"Converting particles to curves")
+    logger.debug("Converting particles to curves")
     with butil.SelectObjects(obj):
         for m in obj.modifiers:
             if m.type == "PARTICLE_SYSTEM":
@@ -336,7 +392,7 @@ def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
     with butil.SelectObjects(obj):
         bpy.ops.object.particle_system_remove()
 
-    logger.debug(f"Performing geonodes hair grooming")
+    logger.debug("Performing geonodes hair grooming")
     with butil.DisableModifiers(obj):
         _, mod = butil.modify_mesh(curves, "NODES", apply=False, return_mod=True)
         mod.node_group = nodegroup_hair_grooming()
@@ -346,7 +402,9 @@ def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
             butil.apply_modifiers(curves, mod=mod)
 
     curves.parent = obj
-    curves.matrix_parent_inverse = obj.matrix_world.inverted()  # keep prexisting transform
+    curves.matrix_parent_inverse = (
+        obj.matrix_world.inverted()
+    )  # keep prexisting transform
     curves.data.surface = obj
 
     if len(obj.material_slots) == 0:
@@ -355,7 +413,7 @@ def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
     if obj.active_material is not None:
         hair_mat = as_hair_bsdf(obj.active_material, hair_genome["material"])
 
-        logger.debug(f"Transfer material attr dependencies from surf to curves")
+        logger.debug("Transfer material attr dependencies from surf to curves")
         attr_deps = mat_attr_dependencies(hair_mat.node_tree)
         attr_deps = [a for a in attr_deps if a in obj.data.attributes]
         surface.add_geomod(
@@ -390,7 +448,9 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
     )
 
     object_info = nw.new_node(
-        Nodes.ObjectInfo, input_kwargs={"Object": group_input.outputs["Object"]}, attrs={"transform_space": "RELATIVE"}
+        Nodes.ObjectInfo,
+        input_kwargs={"Object": group_input.outputs["Object"]},
+        attrs={"transform_space": "RELATIVE"},
     )
     obj = object_info.outputs["Geometry"]
 
@@ -398,7 +458,9 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
     uvtype = "FLOAT_VECTOR"
 
     uv = nw.new_node(
-        Nodes.NamedAttribute, input_kwargs={"Name": group_input.outputs["from_uv"]}, attrs={"data_type": uvtype}
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": group_input.outputs["from_uv"]},
+        attrs={"data_type": uvtype},
     )
 
     capture = nw.new_node(
@@ -407,11 +469,16 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
         attrs={"data_type": uvtype, "domain": domain},
     )
 
-    root_pos = nw.new_node(nodegroup_hair_position().name, [group_input.outputs["Geometry"]])
+    root_pos = nw.new_node(
+        nodegroup_hair_position().name, [group_input.outputs["Geometry"]]
+    )
 
     nearest_idx = nw.new_node(
         Nodes.SampleNearest,
-        input_kwargs={"Geometry": capture.outputs["Geometry"], "Sample Position": root_pos},
+        input_kwargs={
+            "Geometry": capture.outputs["Geometry"],
+            "Sample Position": root_pos,
+        },
         attrs={"domain": domain},
     )
     # transfer_attribute = nw.new_node(Nodes.SampleNearest,
@@ -441,7 +508,9 @@ def nodegroup_transfer_uvs_to_curves_vec3(nw: NodeWrangler):
         attrs={"data_type": "FLOAT_VECTOR", "domain": "CURVE"},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute}
+    )
 
 
 def transfer_uvs_to_curves(curves, target, uv_name):
@@ -475,13 +544,18 @@ def transfer_uvs_to_curves(curves, target, uv_name):
 def nodegroup_deform_curves_on_surface(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-
-    deform_curves_on_surface = nw.new_node(
-        "GeometryNodeDeformCurvesOnSurface", input_kwargs={"Curves": group_input.outputs["Geometry"]}
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": deform_curves_on_surface})
+    deform_curves_on_surface = nw.new_node(
+        "GeometryNodeDeformCurvesOnSurface",
+        input_kwargs={"Curves": group_input.outputs["Geometry"]},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": deform_curves_on_surface}
+    )
 
 
 def attach_hair_to_surface(curves, target):
@@ -489,7 +563,9 @@ def attach_hair_to_surface(curves, target):
     # curves obj needs surface_uv_coordinate attribute
     # defined in https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/curve/deform_curves_on_surface.html
 
-    surface.write_attribute(target, lambda nw: nw.new_node(Nodes.InputPosition), "rest_position", apply=True)
+    surface.write_attribute(
+        target, lambda nw: nw.new_node(Nodes.InputPosition), "rest_position", apply=True
+    )
     with butil.ViewportMode(target, mode="EDIT"):
         bpy.ops.mesh.select_all(action="SELECT")
         bpy.ops.uv.smart_project(island_margin=0.03)
@@ -499,4 +575,10 @@ def attach_hair_to_surface(curves, target):
     curves.data.surface_uv_map = target.data.uv_layers[-1].name
     transfer_uvs_to_curves(curves, target, curves.data.surface_uv_map)
 
-    butil.modify_mesh(curves, "NODES", apply=False, show_viewport=True, node_group=nodegroup_deform_curves_on_surface())
+    butil.modify_mesh(
+        curves,
+        "NODES",
+        apply=False,
+        show_viewport=True,
+        node_group=nodegroup_deform_curves_on_surface(),
+    )

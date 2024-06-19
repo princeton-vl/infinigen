@@ -6,16 +6,11 @@
 
 import colorsys
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import choice
 from numpy.random import normal as N
-from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
@@ -24,7 +19,9 @@ def shader_snake_plant(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     r = 2.0 * np.random.choice([0, 1], p=(0.4, 0.6))
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: 0.001, 1: r}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: 0.001, 1: r}, attrs={"operation": "MULTIPLY"}
+    )
 
     colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": multiply})
     e = U(0.34, 0.42)
@@ -35,10 +32,13 @@ def shader_snake_plant(nw: NodeWrangler):
 
     texture_coordinate_1 = nw.new_node(Nodes.TextureCoord)
 
-    mapping_1 = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": texture_coordinate_1.outputs["Object"]})
+    mapping_1 = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate_1.outputs["Object"]}
+    )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": mapping_1, "Scale": U(0.2, 1.0), "Roughness": 1.0}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": mapping_1, "Scale": U(0.2, 1.0), "Roughness": 1.0},
     )
 
     multiply_1 = nw.new_node(
@@ -47,7 +47,9 @@ def shader_snake_plant(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: multiply_1.outputs["Vector"], 1: mapping_1})
+    add = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: multiply_1.outputs["Vector"], 1: mapping_1}
+    )
 
     wave_texture = nw.new_node(
         Nodes.WaveTexture,
@@ -63,17 +65,27 @@ def shader_snake_plant(nw: NodeWrangler):
 
     w = U(0.2, 0.7)
     greater_than = nw.new_node(
-        Nodes.Math, input_kwargs={0: wave_texture.outputs["Fac"], 1: w}, attrs={"operation": "GREATER_THAN"}
+        Nodes.Math,
+        input_kwargs={0: wave_texture.outputs["Fac"], 1: w},
+        attrs={"operation": "GREATER_THAN"},
     )
 
     mapping_2 = nw.new_node(
-        Nodes.Mapping, input_kwargs={"Vector": texture_coordinate_1.outputs["Object"], "Scale": (7.0, 7.0, 0.05)}
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate_1.outputs["Object"],
+            "Scale": (7.0, 7.0, 0.05),
+        },
     )
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping_2, "Scale": U(20.0, 40.0)})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": mapping_2, "Scale": U(20.0, 40.0)}
+    )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: greater_than, 1: noise_texture_1.outputs["Fac"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: greater_than, 1: noise_texture_1.outputs["Fac"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     colorramp_8 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": multiply_2})
@@ -83,7 +95,9 @@ def shader_snake_plant(nw: NodeWrangler):
     colorramp_8.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
     r = 0.6 + (w - 0.2) * 0.6
-    colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Fac"]})
+    colorramp_4 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": wave_texture.outputs["Fac"]}
+    )
     colorramp_4.color_ramp.elements[0].position = 0.6 + (w - 0.2) * 0.6
     colorramp_4.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
     colorramp_4.color_ramp.elements[1].position = np.minimum(1.0, r + U(0.02, 0.15))
@@ -113,16 +127,26 @@ def shader_snake_plant(nw: NodeWrangler):
         Nodes.MixRGB,
         input_kwargs={
             "Fac": colorramp_1.outputs["Color"],
-            "Color1": (*colorsys.hsv_to_rgb(*[U(0.16, 0.23), U(0.8, 0.95), U(0.35, 0.8)]), 1.0),
+            "Color1": (
+                *colorsys.hsv_to_rgb(*[U(0.16, 0.23), U(0.8, 0.95), U(0.35, 0.8)]),
+                1.0,
+            ),
             "Color2": colorramp_3.outputs["Color"],
         },
     )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": U(8.0, 15.0), "Clearcoat Roughness": 0.0}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": mix,
+            "Roughness": U(8.0, 15.0),
+            "Clearcoat Roughness": 0.0,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

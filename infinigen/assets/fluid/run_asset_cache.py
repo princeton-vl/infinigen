@@ -8,7 +8,6 @@ import importlib
 import os
 import sys
 import time
-from pathlib import Path
 
 import gin
 import numpy as np
@@ -31,7 +30,9 @@ if __name__ == "__main__":
     parser.add_argument("--dom_scale", type=float, default=1)
 
     args = init.parse_args_blender(parser)
-    init.apply_gin_configs(configs=[], overrides=[], configs_folder="infinigen_examples/configs_nature")
+    init.apply_gin_configs(
+        configs=[], overrides=[], configs_folder="infinigen_examples/configs_nature"
+    )
     surface.registry.initialize_from_gin()
 
     factory_name = args.asset

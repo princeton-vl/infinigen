@@ -10,29 +10,49 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.placement.instance_scatter import bucketed_instance, camera_cull_points
+from infinigen.core.placement.instance_scatter import (
+    bucketed_instance,
+    camera_cull_points,
+)
 
 
 def select_points(nw: NodeWrangler, geometry, density, selection, radius, min_distance):
     keypoint_density = density / 5
     keypoints = nw.new_node(
         Nodes.DistributePointsOnFaces,
-        input_kwargs={"Mesh": geometry, "Selection": selection, "Density": keypoint_density},
+        input_kwargs={
+            "Mesh": geometry,
+            "Selection": selection,
+            "Density": keypoint_density,
+        },
     ).outputs["Points"]
-    distance = nw.new_node(Nodes.Proximity, [keypoints], attrs={"target_element": "POINTS"}).outputs["Distance"]
-    selection = nw.boolean_math("AND", nw.compare("LESS_THAN", distance, radius), selection)
+    distance = nw.new_node(
+        Nodes.Proximity, [keypoints], attrs={"target_element": "POINTS"}
+    ).outputs["Distance"]
+    selection = nw.boolean_math(
+        "AND", nw.compare("LESS_THAN", distance, radius), selection
+    )
     points, normal = nw.new_node(
-        Nodes.DistributePointsOnFaces, input_kwargs={"Mesh": geometry, "Selection": selection, "Density": density}
+        Nodes.DistributePointsOnFaces,
+        input_kwargs={"Mesh": geometry, "Selection": selection, "Density": density},
     ).outputs[:2]
     if min_distance > 0:
-        points = nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": points, "Distance": min_distance})
+        points = nw.new_node(
+            Nodes.MergeByDistance,
+            input_kwargs={"Geometry": points, "Distance": min_distance},
+        )
     return points, distance, normal
 
 
-def instance_rotation(nw: NodeWrangler, normal, delta_normal=0.1, z_rotation="musgrave"):
+def instance_rotation(
+    nw: NodeWrangler, normal, delta_normal=0.1, z_rotation="musgrave"
+):
     perturbed_normal = nw.new_node(
         Nodes.VectorRotate,
-        input_kwargs={"Vector": normal, "Rotation": nw.uniform([-delta_normal] * 3, [delta_normal] * 3)},
+        input_kwargs={
+            "Vector": normal,
+            "Rotation": nw.uniform([-delta_normal] * 3, [delta_normal] * 3),
+        },
         attrs={"rotation_type": "EULER_XYZ"},
     )
     if z_rotation == "musgrave":
@@ -45,7 +65,9 @@ def instance_rotation(nw: NodeWrangler, normal, delta_normal=0.1, z_rotation="mu
         Nodes.RotateEuler,
         input_kwargs={
             "Rotation": nw.new_node(
-                Nodes.AlignEulerToVector, input_kwargs={"Vector": perturbed_normal}, attrs={"axis": "Z"}
+                Nodes.AlignEulerToVector,
+                input_kwargs={"Vector": perturbed_normal},
+                attrs={"axis": "Z"},
             ),
             "Axis": perturbed_normal,
             "Angle": z_rotation,
@@ -75,9 +97,13 @@ def cluster_scatter(
     transform_space="ORIGINAL",
     reset_children=True,
 ):
-    geometry = nw.new_node(Nodes.ObjectInfo, [base_obj], attrs={"transform_space": transform_space}).outputs["Geometry"]
+    geometry = nw.new_node(
+        Nodes.ObjectInfo, [base_obj], attrs={"transform_space": transform_space}
+    ).outputs["Geometry"]
     selection = surface.eval_argument(nw, selection, geometry=geometry)
-    points, distance, default_normal = select_points(nw, geometry, density, selection, radius, min_distance)
+    points, distance, default_normal = select_points(
+        nw, geometry, density, selection, radius, min_distance
+    )
     if normal is None:
         normal = default_normal
     visible, vis_distance = camera_cull_points(nw)
@@ -85,7 +111,16 @@ def cluster_scatter(
     scale = surface.eval_argument(nw, scaling, distance=distance)
     rotation = instance_rotation(nw, normal, perturb_normal, z_rotation)
     instanced = bucketed_instance(
-        nw, points, collection, vis_distance, buckets, visible, scale, rotation, instance_index, reset_children
+        nw,
+        points,
+        collection,
+        vis_distance,
+        buckets,
+        visible,
+        scale,
+        rotation,
+        instance_index,
+        reset_children,
     )
 
     if ground_offset != 0:
@@ -93,12 +128,17 @@ def cluster_scatter(
             Nodes.TranslateInstances,
             [instanced],
             input_kwargs={
-                "Translation": nw.combine(0, 0, surface.eval_argument(nw, ground_offset)),
+                "Translation": nw.combine(
+                    0, 0, surface.eval_argument(nw, ground_offset)
+                ),
                 "Local Space": True,
             },
         )
     if realize_instances:
         instanced = nw.new_node(Nodes.RealizeInstances, [instanced])
     if material is not None:
-        instanced = nw.new_node(Nodes.SetMaterial, input_kwargs={"Geometry": instanced, "Material": material})
+        instanced = nw.new_node(
+            Nodes.SetMaterial,
+            input_kwargs={"Geometry": instanced, "Material": material},
+        )
     nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": instanced})

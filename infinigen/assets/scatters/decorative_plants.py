@@ -9,16 +9,16 @@ from numpy.random import uniform as U
 
 from infinigen.assets.scatters.utils.wind import wind
 from infinigen.assets.small_plants import succulent
-from infinigen.core.nodes import node_utils
-from infinigen.core.placement import detail
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 
 def apply(obj, n=4, selection=None, **kwargs):
     fac_class = np.random.choice([succulent.SucculentFactory])
 
-    monocots = make_asset_collection(fac_class(np.random.randint(1e5)), n=n, verbose=True, **kwargs)
+    monocots = make_asset_collection(
+        fac_class(np.random.randint(1e5)), n=n, verbose=True, **kwargs
+    )
 
     scatter_obj = scatter_instances(
         base_obj=obj,

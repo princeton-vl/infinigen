@@ -5,22 +5,17 @@
 
 
 import numpy as np
-from mathutils import Vector
-from numpy.random import normal, uniform
 
 from infinigen.assets.grassland.flowerplant import FlowerPlantFactory
-from infinigen.assets.materials import simple_greenery
 from infinigen.assets.scatters.utils.wind import wind
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.core.util import blender as butil
 
 
 def apply(obj, selection=None, density=1.0):
-    flowerplant_col = make_asset_collection(FlowerPlantFactory(np.random.randint(1e5)), n=12, verbose=True)
+    flowerplant_col = make_asset_collection(
+        FlowerPlantFactory(np.random.randint(1e5)), n=12, verbose=True
+    )
 
     avg_vol = np.mean([np.prod(list(o.dimensions)) for o in flowerplant_col.objects])
     density = np.clip(density / avg_vol, 0, 200)

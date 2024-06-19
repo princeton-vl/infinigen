@@ -11,9 +11,13 @@ import os
 import sys
 
 if "pyrender" in sys.modules:
-    raise ImportError("The mesh_to_sdf package must be imported before pyrender is imported.")
+    raise ImportError(
+        "The mesh_to_sdf package must be imported before pyrender is imported."
+    )
 if "OpenGL" in sys.modules:
-    raise ImportError("The mesh_to_sdf package must be imported before OpenGL is imported.")
+    raise ImportError(
+        "The mesh_to_sdf package must be imported before OpenGL is imported."
+    )
 
 # ruff: noqa: E402
 # Disable antialiasing:
@@ -35,11 +39,15 @@ OpenGL.GL.glEnable = new_gl_enable
 old_glRenderbufferStorageMultisample = OpenGL.GL.glRenderbufferStorageMultisample
 
 
-def new_glRenderbufferStorageMultisample(target, samples, internalformat, width, height):
+def new_glRenderbufferStorageMultisample(
+    target, samples, internalformat, width, height
+):
     if suppress_multisampling:
         OpenGL.GL.glRenderbufferStorage(target, internalformat, width, height)
     else:
-        old_glRenderbufferStorageMultisample(target, samples, internalformat, width, height)
+        old_glRenderbufferStorageMultisample(
+            target, samples, internalformat, width, height
+        )
 
 
 OpenGL.GL.glRenderbufferStorageMultisample = new_glRenderbufferStorageMultisample
@@ -52,7 +60,9 @@ class CustomShaderCache:
     def __init__(self):
         self.program = None
 
-    def get_program(self, vertex_shader, fragment_shader, geometry_shader=None, defines=None):
+    def get_program(
+        self, vertex_shader, fragment_shader, geometry_shader=None, defines=None
+    ):
         if self.program is None:
             shaders_directory = os.path.join(os.path.dirname(__file__), "shaders")
             self.program = pyrender.shader_program.ShaderProgram(

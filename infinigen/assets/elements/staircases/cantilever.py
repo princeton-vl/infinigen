@@ -26,9 +26,13 @@ class CantileverStaircaseFactory(StraightStaircaseFactory):
         if self.mirror:
             co[:, 0] = -co[:, 0]
         points = [
-            shapely.affinity.translate(shapely.affinity.rotate(p, self.rot_z, (0, 0)), *offset)
+            shapely.affinity.translate(
+                shapely.affinity.rotate(p, self.rot_z, (0, 0)), *offset
+            )
             for p in shapely.points(co)
         ]
         others = [shapely.ops.nearest_points(p, contour.boundary)[0] for p in points]
-        distance = np.array([np.abs(p.x - o.x) + np.abs(p.y - o.y) for p, o in zip(points, others)])
+        distance = np.array(
+            [np.abs(p.x - o.x) + np.abs(p.y - o.y) for p, o in zip(points, others)]
+        )
         return (distance < 0.1).sum() / len(distance) > 0.5

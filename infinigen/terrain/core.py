@@ -27,16 +27,27 @@ from infinigen.core.util.organization import (
     SelectionCriterions,
     SurfaceTypes,
     Tags,
-    Task,
     TerrainNames,
     Transparency,
 )
 from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
 from infinigen.terrain.assets.ocean import ocean_asset
-from infinigen.terrain.mesher import OpaqueSphericalMesher, TransparentSphericalMesher, UniformMesher
+from infinigen.terrain.mesher import (
+    OpaqueSphericalMesher,
+    TransparentSphericalMesher,
+    UniformMesher,
+)
 from infinigen.terrain.scene import scene, transfer_scene_info
 from infinigen.terrain.surface_kernel.core import SurfaceKernel
-from infinigen.terrain.utils import AttributeType, FieldsType, Mesh, Vars, get_caminfo, move_modifier, write_attributes
+from infinigen.terrain.utils import (
+    AttributeType,
+    FieldsType,
+    Mesh,
+    Vars,
+    get_caminfo,
+    move_modifier,
+    write_attributes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +87,9 @@ class CollectiveOcMesher(UntexturedOcMesher):
         UntexturedOcMesher.__init__(self, get_caminfo(cameras)[0], bounds, **kwargs)
 
     def __call__(self, kernels):
-        sdf_kernels = [lambda x: np.stack([k(x)[Vars.SDF] for k in kernels], -1).min(axis=-1)]
+        sdf_kernels = [
+            lambda x: np.stack([k(x)[Vars.SDF] for k in kernels], -1).min(axis=-1)
+        ]
         mesh, in_view_tag = UntexturedOcMesher.__call__(self, sdf_kernels)
         mesh = mesh[0]
         with Timer("compute attributes"):
@@ -122,17 +135,25 @@ class Terrain:
 
         with Timer("Create terrain"):
             if asset_folder is None:
-                if not ASSET_ENV_VAR in os.environ:
-                    raise ValueError(f"Terrain recieved {asset_folder=} yet {ASSET_ENV_VAR} was not set")
+                if ASSET_ENV_VAR not in os.environ:
+                    raise ValueError(
+                        f"Terrain recieved {asset_folder=} yet {ASSET_ENV_VAR} was not set"
+                    )
                 asset_folder = os.environ[ASSET_ENV_VAR]
 
             if asset_folder != "":
                 if not os.path.exists(asset_folder):
-                    raise ValueError(f"Could not find non-empty user-specified {asset_folder=}")
+                    raise ValueError(
+                        f"Could not find non-empty user-specified {asset_folder=}"
+                    )
                 asset_path = Path(asset_folder) / asset_version
                 if not asset_path.exists():
-                    raise ValueError(f"{asset_folder=} did not contain {asset_version=}, please download it")
-                logger.info(f"Terrain using pre-generated {asset_path=} and on the fly {on_the_fly_asset_folder=}")
+                    raise ValueError(
+                        f"{asset_folder=} did not contain {asset_version=}, please download it"
+                    )
+                logger.info(
+                    f"Terrain using pre-generated {asset_path=} and on the fly {on_the_fly_asset_folder=}"
+                )
             else:
                 logger.info(f"Terrain using only on the fly {on_the_fly_asset_folder=}")
                 asset_path = Path("")
@@ -140,9 +161,13 @@ class Terrain:
             self.on_the_fly_asset_folder = Path(on_the_fly_asset_folder)
             self.reused_asset_folder = asset_path
 
-            self.elements, scene_infos = scene(seed, Path(on_the_fly_asset_folder), asset_path, device)
+            self.elements, scene_infos = scene(
+                seed, Path(on_the_fly_asset_folder), asset_path, device
+            )
             self.elements_list = list(self.elements.values())
-            logger.info(f"Terrain elements: {[x.__class__.name for x in self.elements_list]}")
+            logger.info(
+                f"Terrain elements: {[x.__class__.name for x in self.elements_list]}"
+            )
             transfer_scene_info(self, scene_infos)
             Terrain.instance = self
 
@@ -170,7 +195,11 @@ class Terrain:
         meshes_dict = {}
         attributes_dict = {}
         if not main_terrain_only or TerrainNames.OpaqueTerrain == self.main_terrain:
-            opaque_elements = [element for element in self.elements_list if element.transparency == Transparency.Opaque]
+            opaque_elements = [
+                element
+                for element in self.elements_list
+                if element.transparency == Transparency.Opaque
+            ]
             if opaque_elements != []:
                 attributes_dict[TerrainNames.OpaqueTerrain] = set()
                 if dynamic:
@@ -184,10 +213,14 @@ class Terrain:
                     mesh = mesher([element for element in opaque_elements])
                     meshes_dict[TerrainNames.OpaqueTerrain] = mesh
                 for element in opaque_elements:
-                    attributes_dict[TerrainNames.OpaqueTerrain].update(element.attributes)
+                    attributes_dict[TerrainNames.OpaqueTerrain].update(
+                        element.attributes
+                    )
 
         individual_transparent_elements = [
-            element for element in self.elements_list if element.transparency == Transparency.IndividualTransparent
+            element
+            for element in self.elements_list
+            if element.transparency == Transparency.IndividualTransparent
         ]
         for element in individual_transparent_elements:
             if not main_terrain_only or element.__class__.name == self.main_terrain:
@@ -197,9 +230,16 @@ class Terrain:
                         special_args["pixels_per_cube"] = 100
                         special_args["inv_scale"] = 1
                     if spherical:
-                        mesher = TransparentSphericalMesher(cameras, self.bounds, **special_args)
+                        mesher = TransparentSphericalMesher(
+                            cameras, self.bounds, **special_args
+                        )
                     else:
-                        mesher = OcMesher(cameras, self.bounds, simplify_occluded=False, **special_args)
+                        mesher = OcMesher(
+                            cameras,
+                            self.bounds,
+                            simplify_occluded=False,
+                            **special_args,
+                        )
                 else:
                     mesher = UniformMesher(self.populated_bounds, enclosed=True)
                 with Timer(f"meshing {element.__class__.name}"):
@@ -207,9 +247,14 @@ class Terrain:
                     meshes_dict[element.__class__.name] = mesh
                 attributes_dict[element.__class__.name] = element.attributes
 
-        if not main_terrain_only or TerrainNames.CollectiveTransparentTerrain == self.main_terrain:
+        if (
+            not main_terrain_only
+            or TerrainNames.CollectiveTransparentTerrain == self.main_terrain
+        ):
             collective_transparent_elements = [
-                element for element in self.elements_list if element.transparency == Transparency.CollectiveTransparent
+                element
+                for element in self.elements_list
+                if element.transparency == Transparency.CollectiveTransparent
             ]
             if collective_transparent_elements != []:
                 attributes_dict[TerrainNames.CollectiveTransparentTerrain] = set()
@@ -217,14 +262,20 @@ class Terrain:
                     if spherical:
                         mesher = TransparentSphericalMesher(cameras, self.bounds)
                     else:
-                        mesher = CollectiveOcMesher(cameras, self.bounds, simplify_occluded=False)
+                        mesher = CollectiveOcMesher(
+                            cameras, self.bounds, simplify_occluded=False
+                        )
                 else:
                     mesher = UniformMesher(self.populated_bounds)
                 with Timer(f"meshing {TerrainNames.CollectiveTransparentTerrain}"):
-                    mesh = mesher([element for element in collective_transparent_elements])
+                    mesh = mesher(
+                        [element for element in collective_transparent_elements]
+                    )
                     meshes_dict[TerrainNames.CollectiveTransparentTerrain] = mesh
                 for element in collective_transparent_elements:
-                    attributes_dict[TerrainNames.CollectiveTransparentTerrain].update(element.attributes)
+                    attributes_dict[TerrainNames.CollectiveTransparentTerrain].update(
+                        element.attributes
+                    )
 
         if main_terrain_only or dynamic:
             for mesh_name in meshes_dict:
@@ -236,12 +287,15 @@ class Terrain:
                     surface = self.surfaces[attribute]
                     if get_surface_type(surface) == SurfaceTypes.Displacement:
                         assert (
-                            surface.mod_name in bpy.data.objects[mesh_name_unapplied].modifiers
+                            surface.mod_name
+                            in bpy.data.objects[mesh_name_unapplied].modifiers
                         ), "please make sure you include one of the scene config in your configs and the same in all tasks"
                         surface_kernel = SurfaceKernel(
                             surface.name,
                             attribute,
-                            bpy.data.objects[mesh_name_unapplied].modifiers[surface.mod_name],
+                            bpy.data.objects[mesh_name_unapplied].modifiers[
+                                surface.mod_name
+                            ],
                             self.device,
                         )
                         surface_kernel(meshes_dict[mesh_name])
@@ -250,15 +304,22 @@ class Terrain:
                 for attribute in sorted(attributes_dict[mesh_name]):
                     surface = self.surfaces[attribute]
                     if get_surface_type(surface) == SurfaceTypes.BlenderDisplacement:
-                        meshes_dict[mesh_name].blender_displacements.append(surface.mod_name)
+                        meshes_dict[mesh_name].blender_displacements.append(
+                            surface.mod_name
+                        )
 
         if dynamic:
             if remove_redundant_attrs:
                 for mesh_name in meshes_dict:
                     if len(attributes_dict[mesh_name]) == 1:
-                        meshes_dict[mesh_name].vertex_attributes.pop(list(attributes_dict[mesh_name])[0])
+                        meshes_dict[mesh_name].vertex_attributes.pop(
+                            list(attributes_dict[mesh_name])[0]
+                        )
         else:
-            self.bounding_box = np.array(self.populated_bounds)[::2], np.array(self.populated_bounds)[1::2]
+            self.bounding_box = (
+                np.array(self.populated_bounds)[::2],
+                np.array(self.populated_bounds)[1::2],
+            )
 
         return meshes_dict, attributes_dict
 
@@ -275,7 +336,15 @@ class Terrain:
     def apply_surface_templates(self, attributes_dict):
         for mesh_name in attributes_dict:
             for attribute in sorted(attributes_dict[mesh_name]):
-                with FixedSeed(int_hash(["terrain surface instantiate", self.seed, self.surfaces[attribute].__name__])):
+                with FixedSeed(
+                    int_hash(
+                        [
+                            "terrain surface instantiate",
+                            self.seed,
+                            self.surfaces[attribute].__name__,
+                        ]
+                    )
+                ):
                     if len(attributes_dict[mesh_name]) == 1:
                         self.surfaces[attribute].apply(
                             bpy.data.objects[mesh_name],
@@ -283,7 +352,9 @@ class Terrain:
                             ocean_folder=self.on_the_fly_asset_folder / Assets.Ocean,
                         )
                     else:
-                        self.surfaces[attribute].apply(bpy.data.objects[mesh_name], selection=attribute)
+                        self.surfaces[attribute].apply(
+                            bpy.data.objects[mesh_name], selection=attribute
+                        )
 
     def surfaces_into_sdf(self):
         for element in self.elements_list:
@@ -305,7 +376,10 @@ class Terrain:
                     ), f"{surface.mod_name} not in {corresponding_mesh.modifiers.keys()} please make sure you include one of the scene config in your configs and the same in all tasks"
                     element.displacement.append(
                         SurfaceKernel(
-                            surface.name, attribute, corresponding_mesh.modifiers[surface.mod_name], self.device
+                            surface.name,
+                            attribute,
+                            corresponding_mesh.modifiers[surface.mod_name],
+                            self.device,
                         )
                     )
 
@@ -330,13 +404,18 @@ class Terrain:
         # WaterCovered annotation
         if ElementNames.Liquid in self.elements:
             main_mesh.vertex_attributes[Tags.LiquidCovered] = (
-                self.elements[ElementNames.Liquid](main_mesh.vertices, sdf_only=1)[Vars.SDF] < 0
+                self.elements[ElementNames.Liquid](main_mesh.vertices, sdf_only=1)[
+                    Vars.SDF
+                ]
+                < 0
             ).astype(np.float32)
         main_unapplied = bpy.data.objects[self.main_terrain]
         main_unapplied.name = self.main_terrain + "_unapplied"
         main_unapplied.hide_render = True
         main_unapplied.hide_viewport = True
-        terrain_objs[self.main_terrain] = main_obj = main_mesh.export_blender(self.main_terrain)
+        terrain_objs[self.main_terrain] = main_obj = main_mesh.export_blender(
+            self.main_terrain
+        )
         mat = main_unapplied.data.materials[0]
         main_obj.data.materials.append(mat)
 
@@ -366,21 +445,32 @@ class Terrain:
             if not optimize_terrain_diskusage:
                 object_to_copy_from = bpy.data.objects[mesh_name]
                 self.copy_materials_and_displacements(
-                    mesh_name, obj, object_to_copy_from, fine_meshes[mesh_name].blender_displacements
+                    mesh_name,
+                    obj,
+                    object_to_copy_from,
+                    fine_meshes[mesh_name].blender_displacements,
                 )
             else:
                 Mesh(obj=obj).save(output_folder / f"{mesh_name}.glb")
-                np.save(output_folder / f"{mesh_name}.b_displacement", fine_meshes[mesh_name].blender_displacements)
+                np.save(
+                    output_folder / f"{mesh_name}.b_displacement",
+                    fine_meshes[mesh_name].blender_displacements,
+                )
                 delete(obj)
 
-    def copy_materials_and_displacements(self, mesh_name, object_to_copy_to, object_to_copy_from, displacements):
+    def copy_materials_and_displacements(
+        self, mesh_name, object_to_copy_to, object_to_copy_from, displacements
+    ):
         mat = object_to_copy_from.data.materials[0]
         object_to_copy_to.data.materials.append(mat)
         mesh_name_unapplied = mesh_name
         if mesh_name + "_unapplied" in bpy.data.objects.keys():
             mesh_name_unapplied = mesh_name + "_unapplied"
         for mod_name in displacements:
-            move_modifier(object_to_copy_to, bpy.data.objects[mesh_name_unapplied].modifiers[mod_name])
+            move_modifier(
+                object_to_copy_to,
+                bpy.data.objects[mesh_name_unapplied].modifiers[mod_name],
+            )
         object_to_copy_from.hide_render = True
         object_to_copy_from.hide_viewport = True
         if mesh_name in hidden_in_viewport:
@@ -391,10 +481,14 @@ class Terrain:
             if not mesh_name.endswith(".glb"):
                 continue
             mesh_name = mesh_name[:-4]
-            object_to_copy_to = Mesh(path=output_folder / f"{mesh_name}.glb").export_blender(mesh_name + "_fine")
+            object_to_copy_to = Mesh(
+                path=output_folder / f"{mesh_name}.glb"
+            ).export_blender(mesh_name + "_fine")
             object_to_copy_from = bpy.data.objects[mesh_name]
             displacements = np.load(output_folder / f"{mesh_name}.b_displacement.npy")
-            self.copy_materials_and_displacements(mesh_name, object_to_copy_to, object_to_copy_from, displacements)
+            self.copy_materials_and_displacements(
+                mesh_name, object_to_copy_to, object_to_copy_from, displacements
+            )
 
     def compute_camera_space_sdf(self, XYZ):
         sdf = np.ones(len(XYZ), dtype=np.float32) * 1e9
@@ -419,10 +513,13 @@ class Terrain:
 
     @gin.configurable
     def build_terrain_bvh_and_attrs(
-        self, terrain_tags_queries, avoid_border=False, looking_at_center_region_of_size=None
+        self,
+        terrain_tags_queries,
+        avoid_border=False,
+        looking_at_center_region_of_size=None,
     ):
         exclude_list = [ElementNames.Atmosphere, ElementNames.Clouds]
-        terrain_objs = [t for t in self.terrain_objs if not t in exclude_list]
+        terrain_objs = [t for t in self.terrain_objs if t not in exclude_list]
 
         for mesh in terrain_objs:
             with SelectObjects(bpy.data.objects[mesh]):
@@ -431,12 +528,18 @@ class Terrain:
             with SelectObjects(bpy.data.objects[f"{mesh}.001"]):
                 for m in bpy.data.objects[f"{mesh}.001"].modifiers:
                     bpy.ops.object.modifier_apply(modifier=m.name)
-        far_ocean = self.under_water and self.surfaces[Materials.LiquidCollection].info["is_ocean"]
+        far_ocean = (
+            self.under_water
+            and self.surfaces[Materials.LiquidCollection].info["is_ocean"]
+        )
         if far_ocean:
             obj = bpy.data.objects[f"{ElementNames.Liquid}.001"]
-            obj.data.attributes.new(name="vertexwise_min_dist", type=AttributeType.Float, domain="POINT")
+            obj.data.attributes.new(
+                name="vertexwise_min_dist", type=AttributeType.Float, domain="POINT"
+            )
             obj.data.attributes["vertexwise_min_dist"].data.foreach_set(
-                FieldsType.Value, np.zeros(len(obj.data.vertices), dtype=np.float32) + 20
+                FieldsType.Value,
+                np.zeros(len(obj.data.vertices), dtype=np.float32) + 20,
             )
 
         with SelectObjects(bpy.data.objects[f"{terrain_objs[0]}.001"]):
@@ -462,13 +565,18 @@ class Terrain:
                     (altitude > min_altitude) & (altitude < max_altitude)
                 )
             else:
-                camera_selection_answers[q0] = np.zeros(len(terrain_mesh.faces), dtype=bool)
+                camera_selection_answers[q0] = np.zeros(
+                    len(terrain_mesh.faces), dtype=bool
+                )
                 for key in self.tag_dict:
                     if set(q).issubset(set(key.split("."))):
                         camera_selection_answers[q0] |= (
-                            terrain_mesh.face_attributes["MaskTag"] == self.tag_dict[key]
+                            terrain_mesh.face_attributes["MaskTag"]
+                            == self.tag_dict[key]
                         ).reshape(-1)
-                camera_selection_answers[q0] = camera_selection_answers[q0].astype(np.float64)
+                camera_selection_answers[q0] = camera_selection_answers[q0].astype(
+                    np.float64
+                )
 
         if np.abs(np.asarray(terrain_obj.matrix_world) - np.eye(4)).max() > 1e-4:
             raise ValueError(
@@ -491,15 +599,23 @@ class Terrain:
                 )
             dist_to_bbox = np.maximum(dist_to_bbox, 0)
             terrain_mesh.vertex_attributes["vertexwise_min_dist"] = np.maximum(
-                terrain_mesh.vertex_attributes["vertexwise_min_dist"], 30 / (dist_to_bbox + 1e-9)
+                terrain_mesh.vertex_attributes["vertexwise_min_dist"],
+                30 / (dist_to_bbox + 1e-9),
             )
         if looking_at_center_region_of_size is not None:
             center_region_dist = np.zeros((len(terrain_mesh.vertices), 1))
             for i in range(2):
-                center_region_dist[terrain_mesh.vertices[:, i] > looking_at_center_region_of_size / 2, 0] = 1e9
-                center_region_dist[terrain_mesh.vertices[:, i] < -looking_at_center_region_of_size / 2, 0] = 1e9
+                center_region_dist[
+                    terrain_mesh.vertices[:, i] > looking_at_center_region_of_size / 2,
+                    0,
+                ] = 1e9
+                center_region_dist[
+                    terrain_mesh.vertices[:, i] < -looking_at_center_region_of_size / 2,
+                    0,
+                ] = 1e9
             terrain_mesh.vertex_attributes["vertexwise_min_dist"] = np.maximum(
-                terrain_mesh.vertex_attributes["vertexwise_min_dist"], center_region_dist
+                terrain_mesh.vertex_attributes["vertexwise_min_dist"],
+                center_region_dist,
             )
 
         vertexwise_min_dist = terrain_mesh.facewise_mean(
@@ -520,14 +636,20 @@ class Terrain:
         first_time = 1
         # initialize with element tag
         element_tag = np.zeros(len(obj.data.vertices), dtype=np.int32)
-        obj.data.attributes[Attributes.ElementTag].data.foreach_get("value", element_tag)
+        obj.data.attributes[Attributes.ElementTag].data.foreach_get(
+            "value", element_tag
+        )
         element_tag_f = mesh.facewise_intmax(element_tag)
 
         for i in range(ElementTag.total_cnt):
             mask_i = element_tag_f == i
             if mask_i.any():
-                obj.data.attributes.new(name=f"TAG_{ElementTag.map[i]}", type="FLOAT", domain="FACE")
-                obj.data.attributes[f"TAG_{ElementTag.map[i]}"].data.foreach_set("value", AC(mask_i.astype(np.float32)))
+                obj.data.attributes.new(
+                    name=f"TAG_{ElementTag.map[i]}", type="FLOAT", domain="FACE"
+                )
+                obj.data.attributes[f"TAG_{ElementTag.map[i]}"].data.foreach_set(
+                    "value", AC(mask_i.astype(np.float32))
+                )
                 if first_time:
                     # "landscape" is a collective name for terrain and water
                     tag_object(obj, Tags.Landscape)
@@ -556,8 +678,12 @@ class Terrain:
                 if to_remove:
                     obj.data.attributes.remove(obj.data.attributes[tag_name])
                 if tag_f.any():
-                    obj.data.attributes.new(name=f"TAG_{tag_name}", type="FLOAT", domain="FACE")
-                    obj.data.attributes[f"TAG_{tag_name}"].data.foreach_set("value", AC(tag_f.astype(np.float32)))
+                    obj.data.attributes.new(
+                        name=f"TAG_{tag_name}", type="FLOAT", domain="FACE"
+                    )
+                    obj.data.attributes[f"TAG_{tag_name}"].data.foreach_set(
+                        "value", AC(tag_f.astype(np.float32))
+                    )
                     tag_object(obj)
 
         self.tag_dict = tag_system.tag_dict

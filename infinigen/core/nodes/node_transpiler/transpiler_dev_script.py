@@ -19,16 +19,10 @@
 7. You should see one python function printed for each material/geonodes on your object
 """
 
-import importlib
-import os
-import pdb
-import sys
 from pathlib import Path
 
 import bpy
-import mathutils
 
-from infinigen.core.nodes import node_info, node_wrangler
 from infinigen.core.nodes.node_transpiler import transpiler
 
 mode = "make_script"

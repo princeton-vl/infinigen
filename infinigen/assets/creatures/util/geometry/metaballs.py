@@ -28,7 +28,9 @@ class MBallStructure:
         mball.render_resolution = self.resolution
 
         mball_obj = bpy.data.objects.new(self.name + "_element", mball)
-        bpy.context.view_layer.active_layer_collection.collection.objects.link(mball_obj)
+        bpy.context.view_layer.active_layer_collection.collection.objects.link(
+            mball_obj
+        )
 
         mball_obj.parent = self.root
         mball_obj.location = pos
@@ -72,7 +74,9 @@ class MBallStructure:
         ele = mball_obj.data.elements.new()
         ele.type = "CAPSULE"
         ele.size_x = length / 2
-        ele.radius = rad  # / 1.15 # blender always seems to overshoot what I ask for by 15%
+        ele.radius = (
+            rad  # / 1.15 # blender always seems to overshoot what I ask for by 15%
+        )
 
         self.apply_flags(ele, flags)
 
@@ -111,7 +115,9 @@ class MBallStructure:
             obj.rotation_euler = first.rotation_euler
             obj.scale = np.full(3, self.resolution)
             with butil.SelectObjects(obj):
-                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+                bpy.ops.object.transform_apply(
+                    location=False, rotation=False, scale=True
+                )
 
         return obj
 

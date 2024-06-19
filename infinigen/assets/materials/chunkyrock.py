@@ -9,14 +9,14 @@ import os
 
 import bpy
 import gin
-import mathutils
-from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials.utils.surface_utils import sample_color, sample_range, sample_ratio
+from infinigen.assets.materials.utils.surface_utils import (
+    sample_color,
+    sample_range,
+    sample_ratio,
+)
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 
@@ -38,9 +38,13 @@ def shader_rocks(nw, rand=True, random_seed=0, **input_kwargs):
     colorramp_3.color_ramp.elements[1].position = 0.1347
     colorramp_3.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
 
-    mapping = nw.new_node(Nodes.Mapping, input_kwargs={"Vector": position, "Scale": (0.2, 0.2, 0.2)})
+    mapping = nw.new_node(
+        Nodes.Mapping, input_kwargs={"Vector": position, "Scale": (0.2, 0.2, 0.2)}
+    )
 
-    noise_texture_1 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Detail": 15.0})
+    noise_texture_1 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Detail": 15.0}
+    )
 
     rock_color1 = nw.new_node(
         Nodes.MixRGB,
@@ -55,7 +59,9 @@ def shader_rocks(nw, rand=True, random_seed=0, **input_kwargs):
         sample_color(rock_color1.inputs[6].default_value)
         sample_color(rock_color1.inputs[7].default_value)
 
-    noise_texture_2 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Detail": 15.0})
+    noise_texture_2 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": mapping, "Detail": 15.0}
+    )
 
     rock_color2 = nw.new_node(
         Nodes.MixRGB,
@@ -71,16 +77,30 @@ def shader_rocks(nw, rand=True, random_seed=0, **input_kwargs):
         sample_color(rock_color2.inputs[7].default_value)
 
     mix_1 = nw.new_node(
-        Nodes.MixRGB, input_kwargs={"Fac": colorramp_3.outputs["Color"], "Color1": rock_color1, "Color2": rock_color2}
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": colorramp_3.outputs["Color"],
+            "Color1": rock_color1,
+            "Color2": rock_color2,
+        },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix_1})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix_1}
+    )
 
     return principled_bsdf
 
 
 @gin.configurable
-def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geometry=True, **input_kwargs):
+def geo_rocks(
+    nw: NodeWrangler,
+    rand=True,
+    selection=None,
+    random_seed=0,
+    geometry=True,
+    **input_kwargs,
+):
     nw.force_input_consistency()
     if nw.node_group.type == "SHADER":
         position = nw.new_node("ShaderNodeNewGeometry")
@@ -92,23 +112,36 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
     with FixedSeed(random_seed):
         # Code generated using version 2.4.3 of the node_transpiler
 
-        noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": position})
+        noise_texture = nw.new_node(
+            Nodes.NoiseTexture, input_kwargs={"Vector": position}
+        )
 
         mix = nw.new_node(
-            Nodes.MixRGB, input_kwargs={"Fac": 0.8, "Color1": noise_texture.outputs["Color"], "Color2": position}
+            Nodes.MixRGB,
+            input_kwargs={
+                "Fac": 0.8,
+                "Color1": noise_texture.outputs["Color"],
+                "Color2": position,
+            },
         )
 
         if rand:
             sample_max = 2
             sample_min = 1 / 2
-            voronoi_texture_scale = nw.new_value(sample_ratio(1, sample_min, sample_max), "voronoi_texture_scale")
+            voronoi_texture_scale = nw.new_value(
+                sample_ratio(1, sample_min, sample_max), "voronoi_texture_scale"
+            )
             voronoi_texture_w = nw.new_value(sample_range(0, 5), "voronoi_texture_w")
         else:
             voronoi_texture_scale = 1.0
             voronoi_texture_w = 0
         voronoi_texture = nw.new_node(
             Nodes.VoronoiTexture,
-            input_kwargs={"Vector": mix, "Scale": voronoi_texture_scale, "W": voronoi_texture_w},
+            input_kwargs={
+                "Vector": mix,
+                "Scale": voronoi_texture_scale,
+                "W": voronoi_texture_w,
+            },
             attrs={"feature": "DISTANCE_TO_EDGE", "voronoi_dimensions": "4D"},
         )
 
@@ -122,20 +155,28 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
         colorramp.color_ramp.elements[1].position = 0.3
         colorramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
         if rand:
-            colorramp.color_ramp.elements[0].position = sample_ratio(colorramp.color_ramp.elements[0].position, 0.5, 2)
-            colorramp.color_ramp.elements[1].position = sample_ratio(colorramp.color_ramp.elements[1].position, 0.5, 2)
+            colorramp.color_ramp.elements[0].position = sample_ratio(
+                colorramp.color_ramp.elements[0].position, 0.5, 2
+            )
+            colorramp.color_ramp.elements[1].position = sample_ratio(
+                colorramp.color_ramp.elements[1].position, 0.5, 2
+            )
 
         depth = colorramp
 
         multiply = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: colorramp.outputs["Color"], 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: colorramp.outputs["Color"], 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value = nw.new_node(Nodes.Value)
         value.outputs[0].default_value = 0.4
 
         offset = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: multiply.outputs["Vector"], 1: value}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: multiply.outputs["Vector"], 1: value},
+            attrs={"operation": "MULTIPLY"},
         )
 
     if geometry:
@@ -149,7 +190,9 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
         offset = nw.add(offset, geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}))
         if selection is not None:
             offset = nw.multiply(offset, surface.eval_argument(nw, selection))
-        set_position = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset})
+        set_position = nw.new_node(
+            Nodes.SetPosition, input_kwargs={"Geometry": groupinput, "Offset": offset}
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
     else:
         return depth
@@ -157,7 +200,9 @@ def geo_rocks(nw: NodeWrangler, rand=True, selection=None, random_seed=0, geomet
 
 def apply(obj, selection=None, geo_kwargs=None, shader_kwargs=None, **kwargs):
     surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
-    surface.add_material(obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs)
+    surface.add_material(
+        obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs
+    )
 
 
 if __name__ == "__main__":
@@ -166,9 +211,15 @@ if __name__ == "__main__":
         os.mkdir(os.path.join("outputs", mat))
     for i in range(10):
         bpy.ops.wm.open_mainfile(filepath="test.blend")
-        apply(bpy.data.objects["SolidModel"], geo_kwargs={"rand": True}, shader_kwargs={"rand": True})
+        apply(
+            bpy.data.objects["SolidModel"],
+            geo_kwargs={"rand": True},
+            shader_kwargs={"rand": True},
+        )
         # fn = os.path.join(os.path.abspath(os.curdir), 'giraffe_geo_test.blend')
         # bpy.ops.wm.save_as_mainfile(filepath=fn)
-        bpy.context.scene.render.filepath = os.path.join("outputs", mat, "%s_%d.jpg" % (mat, i))
+        bpy.context.scene.render.filepath = os.path.join(
+            "outputs", mat, "%s_%d.jpg" % (mat, i)
+        )
         bpy.context.scene.render.image_settings.file_format = "JPEG"
         bpy.ops.render.render(write_still=True)

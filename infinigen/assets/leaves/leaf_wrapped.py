@@ -5,34 +5,39 @@
 
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import randint, uniform
 
 from infinigen.assets.leaves.leaf_broadleaf import LeafFactoryBroadleaf
 from infinigen.assets.leaves.leaf_ginko import LeafFactoryGinko
 from infinigen.assets.leaves.leaf_maple import LeafFactoryMaple
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.color import color_category
 
 
 def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
     angle = nw.new_node(Nodes.Value, label="angle")
     angle.outputs[0].default_value = kwargs["angle"]
 
-    radians = nw.new_node(Nodes.Math, input_kwargs={0: angle}, attrs={"operation": "RADIANS"})
+    radians = nw.new_node(
+        Nodes.Math, input_kwargs={0: angle}, attrs={"operation": "RADIANS"}
+    )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": radians})
 
     transform_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Rotation": combine_xyz_2}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Rotation": combine_xyz_2,
+        },
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -66,20 +71,34 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
     attribute_statistic = nw.new_node(
-        Nodes.AttributeStatistic, input_kwargs={"Geometry": transform_2, 2: separate_xyz_1.outputs["Y"]}
+        Nodes.AttributeStatistic,
+        input_kwargs={"Geometry": transform_2, 2: separate_xyz_1.outputs["Y"]},
     )
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: attribute_statistic.outputs["Max"], 1: attribute_statistic.outputs["Min"]},
+        input_kwargs={
+            0: attribute_statistic.outputs["Max"],
+            1: attribute_statistic.outputs["Min"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: curve_length, 1: subtract}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: curve_length, 1: subtract},
+        attrs={"operation": "DIVIDE"},
+    )
 
-    divide_1 = nw.new_node(Nodes.Math, input_kwargs={0: value, 1: divide}, attrs={"operation": "DIVIDE"})
+    divide_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: value, 1: divide}, attrs={"operation": "DIVIDE"}
+    )
 
-    divide_2 = nw.new_node(Nodes.Math, input_kwargs={0: end_radius, 1: divide}, attrs={"operation": "DIVIDE"})
+    divide_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: end_radius, 1: divide},
+        attrs={"operation": "DIVIDE"},
+    )
 
     spiral_1 = nw.new_node(
         "GeometryNodeCurveSpiral",
@@ -92,7 +111,10 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
         },
     )
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": spiral_1, "Rotation": (0.0, 1.5708, 3.1416)})
+    transform = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": spiral_1, "Rotation": (0.0, 1.5708, 3.1416)},
+    )
 
     noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 2.0})
 
@@ -112,7 +134,8 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
     )
 
     set_position_2 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": transform, "Offset": multiply.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": transform, "Offset": multiply.outputs["Vector"]},
     )
 
     map_range = nw.new_node(
@@ -130,7 +153,9 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
         attrs={"mode": "FACTOR"},
     )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": sample_curve.outputs["Position"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": sample_curve.outputs["Position"]}
+    )
 
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ,
@@ -142,7 +167,9 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
     )
 
     normalize = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: sample_curve.outputs["Position"]}, attrs={"operation": "NORMALIZE"}
+        Nodes.VectorMath,
+        input_kwargs={0: sample_curve.outputs["Position"]},
+        attrs={"operation": "NORMALIZE"},
     )
 
     multiply_1 = nw.new_node(
@@ -151,23 +178,36 @@ def nodegroup_nodegroup_apply_wrap(nw: NodeWrangler, **kwargs):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: multiply_1.outputs["Vector"]})
-
-    set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": transform_2, "Position": add.outputs["Vector"]}
+    add = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: combine_xyz, 1: multiply_1.outputs["Vector"]}
     )
 
-    subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: 0.0, 1: radians}, attrs={"operation": "SUBTRACT"})
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": transform_2, "Position": add.outputs["Vector"]},
+    )
+
+    subtract_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: 0.0, 1: radians}, attrs={"operation": "SUBTRACT"}
+    )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": subtract_2})
 
-    transform_3 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": set_position, "Rotation": combine_xyz_3})
+    transform_3 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": set_position, "Rotation": combine_xyz_3},
+    )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": divide_1})
 
-    transform_4 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": transform_3, "Translation": combine_xyz_4})
+    transform_4 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": transform_3, "Translation": combine_xyz_4},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": transform_4})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": transform_4}
+    )
 
 
 class LeafFactoryWrapped(AssetFactory):
@@ -191,7 +231,9 @@ class LeafFactoryWrapped(AssetFactory):
         }
 
         obj = fac.create_asset()
-        surface.add_geomod(obj, nodegroup_nodegroup_apply_wrap, apply=False, input_kwargs=wrap_params)
+        surface.add_geomod(
+            obj, nodegroup_nodegroup_apply_wrap, apply=False, input_kwargs=wrap_params
+        )
 
         bpy.ops.object.convert(target="MESH")
 

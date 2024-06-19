@@ -6,7 +6,6 @@
 
 import copy
 import itertools
-import pdb
 import typing
 from dataclasses import dataclass, field
 
@@ -116,15 +115,21 @@ def interp_attachment(a: Attachment, b: Attachment, t: float):
 
     joint = Joint(rest=lerp(a.joint.rest, b.joint.rest, t), bounds=s.joint.bounds)
 
-    att = Attachment(coord=lerp(a.coord, b.coord, t), joint=joint, bridge=s.bridge, side=s.side)
+    att = Attachment(
+        coord=lerp(a.coord, b.coord, t), joint=joint, bridge=s.bridge, side=s.side
+    )
 
     return att
 
 
 def interp_creature_node(a: CreatureNode, b: CreatureNode, t):
-    s = b if t > 0.5 else a  # which of a,b should we take non-interpolatable things from
+    s = (
+        b if t > 0.5 else a
+    )  # which of a,b should we take non-interpolatable things from
     fac = copy.copy(s.part_factory)
-    fac.params = interp_dict(a.part_factory.params, b.part_factory.params, t, keys="switch", lerp=lerp_any)
+    fac.params = interp_dict(
+        a.part_factory.params, b.part_factory.params, t, keys="switch", lerp=lerp_any
+    )
 
     # att = interp_attachment(a.att, b.att, t)
     att = a.att  # TODO: Enable attachment interp later, debug symmetry
@@ -162,7 +167,9 @@ def interp_genome(a: CreatureGenome, b: CreatureGenome, t: float) -> CreatureGen
     # TODO a.postprocess_params
     postprocess = a.postprocess_params
 
-    return CreatureGenome(parts=interp_part_tree(a.parts, b.parts, t), postprocess_params=postprocess)
+    return CreatureGenome(
+        parts=interp_part_tree(a.parts, b.parts, t), postprocess_params=postprocess
+    )
 
 
 ################
@@ -190,6 +197,8 @@ def attach(
         coord = np.array([0, 0, 0])
     if joint is None:
         joint = Joint((0, 0, 0))
-    child.item.att = Attachment(coord, joint, bridge, side, rotation_basis, bridge_rad, smooth_rad)
+    child.item.att = Attachment(
+        coord, joint, bridge, side, rotation_basis, bridge_rad, smooth_rad
+    )
     parent.children.append(child)
     return parent

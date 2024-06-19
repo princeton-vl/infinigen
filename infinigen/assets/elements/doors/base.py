@@ -6,7 +6,6 @@
 # - Lingjie Mei: primary author
 
 import bpy
-import gin
 import numpy as np
 from numpy.random import uniform
 
@@ -16,7 +15,13 @@ from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import mirror, read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.nodegroup import geo_radius
-from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_cube, new_line
+from infinigen.assets.utils.object import (
+    data2mesh,
+    join_objects,
+    mesh2obj,
+    new_cube,
+    new_line,
+)
 from infinigen.core import surface
 from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.placement.factory import AssetFactory
@@ -54,7 +59,15 @@ class BaseDoorFactory(AssetFactory):
             self.knob_radius = uniform(0.03, 0.04)
             base_radius = uniform(1.1, 1.2)
             mid_radius = uniform(0.4, 0.5)
-            self.knob_radius_mid = base_radius, base_radius, mid_radius, mid_radius, 1, uniform(0.6, 0.8), 0
+            self.knob_radius_mid = (
+                base_radius,
+                base_radius,
+                mid_radius,
+                mid_radius,
+                1,
+                uniform(0.6, 0.8),
+                0,
+            )
             self.knob_depth = uniform(0.08, 0.1)
             self.knob_depth_mid = [
                 0,
@@ -127,7 +140,9 @@ class BaseDoorFactory(AssetFactory):
         if self.has_glass:
             self.glass_surface.apply(assets, selection="glass", clear=True)
         if self.has_louver:
-            self.louver_surface.apply(assets, selection="louver", metal_color=self.metal_color)
+            self.louver_surface.apply(
+                assets, selection="louver", metal_color=self.metal_color
+            )
         self.handle_surface.apply(assets, selection="handle", metal_color="natural")
 
     def make_knobs(self):
@@ -151,8 +166,17 @@ class BaseDoorFactory(AssetFactory):
         return [obj, other]
 
     def make_levers(self):
-        x_anchors = self.lever_radius, self.lever_radius, self.lever_mid_radius, self.lever_mid_radius, 0
-        y_anchors = np.array([0, self.lever_mid_depth, self.lever_mid_depth, 1, 1 + 1e-3]) * self.lever_depth
+        x_anchors = (
+            self.lever_radius,
+            self.lever_radius,
+            self.lever_mid_radius,
+            self.lever_mid_radius,
+            0,
+        )
+        y_anchors = (
+            np.array([0, self.lever_mid_depth, self.lever_mid_depth, 1, 1 + 1e-3])
+            * self.lever_depth
+        )
         obj = spin([x_anchors, y_anchors, 0], [0, 1, 2, 3], axis=(0, 1, 0))
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
@@ -174,17 +198,29 @@ class BaseDoorFactory(AssetFactory):
         with butil.ViewportMode(lever, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (0, 0, self.lever_mid_radius * 2)})
-        butil.modify_mesh(lever, "SOLIDIFY", lever, thickness=self.lever_mid_radius, offset=0)
+            bpy.ops.mesh.extrude_edges_move(
+                TRANSFORM_OT_translate={"value": (0, 0, self.lever_mid_radius * 2)}
+            )
+        butil.modify_mesh(
+            lever, "SOLIDIFY", lever, thickness=self.lever_mid_radius, offset=0
+        )
         butil.modify_mesh(lever, "SUBSURF", render_levels=1, levels=1)
-        lever.location = -self.lever_mid_radius, self.lever_depth, -self.lever_mid_radius
+        lever.location = (
+            -self.lever_mid_radius,
+            self.lever_depth,
+            -self.lever_mid_radius,
+        )
         butil.apply_transform(lever, loc=True)
         obj = join_objects([obj, lever])
         return self.make_handles(obj)
 
     def make_pulls(self):
         if self.pull_type == "u":
-            vertices = (0, 0, self.pull_size), (0, self.pull_depth, self.pull_size), (0, self.pull_depth, 0)
+            vertices = (
+                (0, 0, self.pull_size),
+                (0, self.pull_depth, self.pull_size),
+                (0, self.pull_depth, 0),
+            )
             edges = (0, 1), (1, 2)
         elif self.pull_type == "tee":
             vertices = (
@@ -205,16 +241,24 @@ class BaseDoorFactory(AssetFactory):
         obj = mesh2obj(data2mesh(vertices, edges))
         butil.modify_mesh(obj, "MIRROR", use_axis=(False, False, True))
         if self.to_pull_bevel:
-            butil.modify_mesh(obj, "BEVEL", width=self.pull_bevel_width, segments=4, affect="VERTICES")
+            butil.modify_mesh(
+                obj, "BEVEL", width=self.pull_bevel_width, segments=4, affect="VERTICES"
+            )
         if self.is_pull_circular:
             surface.add_geomod(
-                obj, geo_radius, apply=True, input_args=[self.pull_radius, 32], input_kwargs={"to_align_tilt": False}
+                obj,
+                geo_radius,
+                apply=True,
+                input_args=[self.pull_radius, 32],
+                input_kwargs={"to_align_tilt": False},
             )
         else:
             with butil.ViewportMode(obj, "EDIT"):
                 bpy.ops.mesh.select_mode(type="EDGE")
                 bpy.ops.mesh.select_all(action="SELECT")
-                bpy.ops.mesh.extrude_edges_move(TRANSFORM_OT_translate={"value": (self.pull_radius * 2, 0, 0)})
+                bpy.ops.mesh.extrude_edges_move(
+                    TRANSFORM_OT_translate={"value": (self.pull_radius * 2, 0, 0)}
+                )
                 bpy.ops.mesh.select_all(action="SELECT")
                 bpy.ops.mesh.normals_make_consistent(inside=False)
             obj.location = -self.pull_radius, -self.pull_radius, -self.pull_radius

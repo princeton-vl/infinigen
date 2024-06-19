@@ -4,11 +4,9 @@
 # Authors: Alexander Raistrick
 
 
-from mathutils import Vector
 from numpy.random import uniform as U
 
 from infinigen.assets.trees.generate import random_leaf_collection
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 

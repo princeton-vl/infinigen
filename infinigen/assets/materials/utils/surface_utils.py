@@ -7,47 +7,72 @@
 import math
 import random
 
-import numpy as np
 
-from infinigen.core import surface
 from infinigen.core.nodes import Nodes, node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_norm_value", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_norm_value", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_norm_value(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketFloat", "Attribute", 0.0000), ("NodeSocketGeometry", "Geometry", None)],
+        expose_input=[
+            ("NodeSocketFloat", "Attribute", 0.0000),
+            ("NodeSocketGeometry", "Geometry", None),
+        ],
     )
 
     attribute_statistic_1 = nw.new_node(
         Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], 2: group_input.outputs["Attribute"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            2: group_input.outputs["Attribute"],
+        },
     )
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Attribute"], 1: attribute_statistic_1.outputs["Min"]},
+        input_kwargs={
+            0: group_input.outputs["Attribute"],
+            1: attribute_statistic_1.outputs["Min"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
     subtract_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: attribute_statistic_1.outputs["Max"], 1: attribute_statistic_1.outputs["Min"]},
+        input_kwargs={
+            0: attribute_statistic_1.outputs["Max"],
+            1: attribute_statistic_1.outputs["Min"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: subtract_1}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: subtract_1},
+        attrs={"operation": "DIVIDE"},
+    )
 
-    subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "SUBTRACT"})
+    subtract_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "SUBTRACT"}
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: subtract_2, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_2, 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": multiply}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Value": multiply},
+        attrs={"is_active_output": True},
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_norm_vec", singleton=False, type="GeometryNodeTree")
@@ -63,33 +88,53 @@ def nodegroup_norm_vec(nw: NodeWrangler):
         ],
     )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["Vector"]}
+    )
 
     normvalue = nw.new_node(
         nodegroup_norm_value().name,
-        input_kwargs={"Attribute": separate_xyz_1.outputs["X"], "Geometry": group_input.outputs["Geometry"]},
+        input_kwargs={
+            "Attribute": separate_xyz_1.outputs["X"],
+            "Geometry": group_input.outputs["Geometry"],
+        },
     )
 
     normvalue_1 = nw.new_node(
         nodegroup_norm_value().name,
-        input_kwargs={"Attribute": separate_xyz_1.outputs["Y"], "Geometry": group_input.outputs["Geometry"]},
+        input_kwargs={
+            "Attribute": separate_xyz_1.outputs["Y"],
+            "Geometry": group_input.outputs["Geometry"],
+        },
     )
 
     normvalue_2 = nw.new_node(
         nodegroup_norm_value().name,
-        input_kwargs={"Attribute": separate_xyz_1.outputs["Z"], "Geometry": group_input.outputs["Geometry"]},
+        input_kwargs={
+            "Attribute": separate_xyz_1.outputs["Z"],
+            "Geometry": group_input.outputs["Geometry"],
+        },
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": normvalue, "Y": normvalue_1, "Z": normvalue_2})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": normvalue, "Y": normvalue_1, "Z": normvalue_2},
+    )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Name": group_input.outputs["Name"], 2: combine_xyz},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Name": group_input.outputs["Name"],
+            2: combine_xyz,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": store_named_attribute},
+        attrs={"is_active_output": True},
     )
 
 
@@ -147,7 +192,10 @@ def geo_voronoi_noise(nw, rand=False, **input_kwargs):
 
     subdivide_mesh = nw.new_node(
         "GeometryNodeSubdivideMesh",
-        input_kwargs={"Mesh": group_input.outputs["Geometry"], "Level": input_kwargs.get("subdivide_mesh_level", 0)},
+        input_kwargs={
+            "Mesh": group_input.outputs["Geometry"],
+            "Level": input_kwargs.get("subdivide_mesh_level", 0),
+        },
     )
 
     position = nw.new_node(Nodes.InputPosition)
@@ -155,44 +203,73 @@ def geo_voronoi_noise(nw, rand=False, **input_kwargs):
     scale = nw.new_node(Nodes.Value)
     scale.outputs["Value"].default_value = input_kwargs.get("scale", 2)
 
-    vector_math = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: scale}, attrs={"operation": "MULTIPLY"})
+    vector_math = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: scale},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": vector_math.outputs["Vector"], "Scale": 10.0}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": vector_math.outputs["Vector"], "Scale": 10.0},
     )
     if rand:
-        sample_max = input_kwargs["noise_scale_max"] if "noise_scale_max" in input_kwargs else 3
-        sample_min = input_kwargs["noise_scale_min"] if "noise_scale_min" in input_kwargs else 1 / sample_max
+        sample_max = (
+            input_kwargs["noise_scale_max"] if "noise_scale_max" in input_kwargs else 3
+        )
+        sample_min = (
+            input_kwargs["noise_scale_min"]
+            if "noise_scale_min" in input_kwargs
+            else 1 / sample_max
+        )
         noise_texture.inputs["Scale"].default_value = sample_ratio(
             noise_texture.inputs["Scale"].default_value, sample_min, sample_max
         )
 
     mix = nw.new_node(
         Nodes.MixRGB,
-        input_kwargs={"Fac": 0.8, "Color1": noise_texture.outputs["Color"], "Color2": vector_math.outputs["Vector"]},
+        input_kwargs={
+            "Fac": 0.8,
+            "Color1": noise_texture.outputs["Color"],
+            "Color2": vector_math.outputs["Vector"],
+        },
     )
     if rand:
         mix.inputs["Fac"].default_value = sample_range(0.7, 0.9)
 
     voronoi_texture = nw.new_node(
-        Nodes.VoronoiTexture, input_kwargs={"Vector": mix}, attrs={"voronoi_dimensions": "4D"}
+        Nodes.VoronoiTexture,
+        input_kwargs={"Vector": mix},
+        attrs={"voronoi_dimensions": "4D"},
     )
     if rand:
-        sample_max = input_kwargs["voronoi_scale_max"] if "voronoi_scale_max" in input_kwargs else 3
-        sample_min = input_kwargs["voronoi_scale_min"] if "voronoi_scale_min" in input_kwargs else 1 / sample_max
+        sample_max = (
+            input_kwargs["voronoi_scale_max"]
+            if "voronoi_scale_max" in input_kwargs
+            else 3
+        )
+        sample_min = (
+            input_kwargs["voronoi_scale_min"]
+            if "voronoi_scale_min" in input_kwargs
+            else 1 / sample_max
+        )
         voronoi_texture.inputs["Scale"].default_value = sample_ratio(
             voronoi_texture.inputs["Scale"].default_value, sample_min, sample_max
         )
         voronoi_texture.inputs["W"].default_value = sample_range(-5, 5)
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: voronoi_texture.outputs["Distance"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: voronoi_texture.outputs["Distance"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     normal = nw.new_node(Nodes.InputNormal)
 
     vector_math_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: subtract, 1: normal}, attrs={"operation": "MULTIPLY"}
+        Nodes.VectorMath,
+        input_kwargs={0: subtract, 1: normal},
+        attrs={"operation": "MULTIPLY"},
     )
 
     offsetscale = nw.new_node(Nodes.Value)
@@ -205,7 +282,11 @@ def geo_voronoi_noise(nw, rand=False, **input_kwargs):
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": subdivide_mesh, "Offset": vector_math_2.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": subdivide_mesh,
+            "Offset": vector_math_2.outputs["Vector"],
+        },
     )
 
     capture_attribute = nw.new_node(
@@ -233,7 +314,10 @@ def perturb_coordinates(nw, node, location, rotation):
             shifted = nw.new_node(
                 Nodes.Mapping,
                 [node_socket],
-                input_kwargs={"Location": location, "Rotation": nw.combine(0, 0, rotation)},
+                input_kwargs={
+                    "Location": location,
+                    "Rotation": nw.combine(0, 0, rotation),
+                },
             ).outputs[0]
             to_sockets = [tl.to_socket for tl in to_links]
             for to_link in to_links:

@@ -4,21 +4,23 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
-from infinigen.assets.materials.leather_and_fabrics.leather import shader_leather
 from infinigen.assets.tables.table_top import nodegroup_capped_cylinder
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("generate_round_seats", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "generate_round_seats", singleton=False, type="GeometryNodeTree"
+)
 def generate_round_seats(
-    nw: NodeWrangler, thickness=None, radius=None, cap_radius=None, bevel_factor=None, seat_material=None
+    nw: NodeWrangler,
+    thickness=None,
+    radius=None,
+    cap_radius=None,
+    bevel_factor=None,
+    seat_material=None,
 ):
     # Code generated using version 2.6.4 of the node_transpiler
     if thickness is None:
@@ -30,9 +32,15 @@ def generate_round_seats(
     if bevel_factor is None:
         bevel_factor = uniform(0.01, 0.04)
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: thickness, 1: 1.0}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: thickness, 1: 1.0}, attrs={"operation": "MULTIPLY"}
+    )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: bevel_factor, 1: thickness}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: bevel_factor, 1: thickness},
+        attrs={"operation": "DIVIDE"},
+    )
 
     cappedcylinder = nw.new_node(
         nodegroup_capped_cylinder().name,
@@ -47,6 +55,13 @@ def generate_round_seats(
         },
     )
 
-    seat = nw.new_node(Nodes.SetMaterial, input_kwargs={"Geometry": cappedcylinder, "Material": seat_material})
+    seat = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": cappedcylinder, "Material": seat_material},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": seat}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": seat},
+        attrs={"is_active_output": True},
+    )

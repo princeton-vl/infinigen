@@ -12,7 +12,6 @@ from infinigen.assets.utils.object import origin2lowest
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
-from infinigen.core.util.random import log_uniform  # imported by other files
 
 # Authors: Lingjie Mei
 
@@ -44,7 +43,9 @@ def sample_direction(min_z):
 
 
 def subclasses(cls):
-    return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in subclasses(c)])
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in subclasses(c)]
+    )
 
 
 def make_normalized_factory(cls):
@@ -141,5 +142,10 @@ character_set_weights /= character_set_weights.sum()
 
 def generate_text():
     return "".join(
-        np.random.choice(character_set, size=int(clip_gaussian(3, 7, 2, 15)), replace=True, p=character_set_weights)
+        np.random.choice(
+            character_set,
+            size=int(clip_gaussian(3, 7, 2, 15)),
+            replace=True,
+            p=character_set_weights,
+        )
     )

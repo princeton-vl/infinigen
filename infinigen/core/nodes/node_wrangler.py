@@ -8,7 +8,6 @@
 # - Karhan Kayan: geometry_node_group_empty_new()
 
 
-import itertools
 import logging
 import re
 import sys
@@ -20,7 +19,7 @@ import bpy
 import numpy as np
 
 from infinigen.core.nodes import node_info
-from infinigen.core.nodes.node_info import NODE_ATTRS_AVAILABLE, Nodes
+from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.util.random import random_vector3
 
 from .compatibility import COMPATIBILITY_MAPPINGS
@@ -56,16 +55,22 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
     traceback_str = " ".join(traceback.format_stack())
     traceback_files = re.findall('/([^/]*\.py)", line ([0-9]+)', traceback_str)
     traceback_files = [
-        f"{f}:{l}" for f, l in traceback_files if all(s not in f for s in {"warnings.py", "node_wrangler.py"})
+        f"{f}:{l}"
+        for f, l in traceback_files
+        if all(s not in f for s in {"warnings.py", "node_wrangler.py"})
     ]
     if len(traceback_files):
-        message.args = (f"{message.args[0]}. The issue is probably coming from {traceback_files.pop()}",)
+        message.args = (
+            f"{message.args[0]}. The issue is probably coming from {traceback_files.pop()}",
+        )
     log = file if hasattr(file, "write") else sys.stderr
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
 
 
 def isnode(x):
-    return isinstance(x, (bpy.types.ShaderNode, bpy.types.NodeInternal, bpy.types.GeometryNode))
+    return isinstance(
+        x, (bpy.types.ShaderNode, bpy.types.NodeInternal, bpy.types.GeometryNode)
+    )
 
 
 def infer_output_socket(item):
@@ -81,7 +86,9 @@ def infer_output_socket(item):
         try:
             res = next(o for o in item.outputs if o.enabled)
         except StopIteration:
-            raise ValueError(f"Attempted to get output socket for {item} but none are enabled!")
+            raise ValueError(
+                f"Attempted to get output socket for {item} but none are enabled!"
+            )
     elif isinstance(item, tuple) and isnode(item[0]):
         node, socket_name = item
         if isinstance(socket_name, int):
@@ -89,7 +96,9 @@ def infer_output_socket(item):
         try:
             res = next(o for o in node.outputs if o.enabled and o.name == socket_name)
         except StopIteration:
-            raise ValueError(f"Couldnt find an enabled socket on {node} corresponding to requested tuple {item}")
+            raise ValueError(
+                f"Couldnt find an enabled socket on {node} corresponding to requested tuple {item}"
+            )
     else:
         return None
 
@@ -105,7 +114,9 @@ def infer_output_socket(item):
 def infer_input_socket(node, input_socket_name):
     if isinstance(input_socket_name, str):
         try:
-            input_socket = next(i for i in node.inputs if i.name == input_socket_name and i.enabled)
+            input_socket = next(
+                i for i in node.inputs if i.name == input_socket_name and i.enabled
+            )
         except:
             input_socket = node.inputs[input_socket_name]
     else:
@@ -133,7 +144,9 @@ class NodeWrangler:
             self.modifier = node_group
             self.node_group = self.modifier.node_group
         else:
-            raise ValueError(f"Couldnt initialize NodeWrangler with {node_group=}, {type(node_group)=}")
+            raise ValueError(
+                f"Couldnt initialize NodeWrangler with {node_group=}, {type(node_group)=}"
+            )
 
         self.nodes = self.node_group.nodes
         self.links = self.node_group.links
@@ -154,7 +167,14 @@ class NodeWrangler:
         return node
 
     def new_node(
-        self, node_type, input_args=None, attrs=None, input_kwargs=None, label=None, expose_input=None, compat_mode=True
+        self,
+        node_type,
+        input_args=None,
+        attrs=None,
+        input_kwargs=None,
+        label=None,
+        expose_input=None,
+        compat_mode=True,
     ):
         if input_args is None:
             input_args = []
@@ -184,7 +204,9 @@ class NodeWrangler:
                 try:
                     setattr(node, key, val)
                 except AttributeError:
-                    exec(f"node.{key} = {repr(val)}")  # I don't know of a way around this
+                    exec(
+                        f"node.{key} = {repr(val)}"
+                    )  # I don't know of a way around this
 
         if node_type in [
             Nodes.VoronoiTexture,
@@ -196,7 +218,9 @@ class NodeWrangler:
             if not (input_args != [] or "Vector" in input_kwargs):
                 w = f"{self.node_group=}, no vector input for noise texture in specified"
                 if self.input_consistency_forced:
-                    logger.debug(f"{w}, it is fixed automatically by using position for consistency")
+                    logger.debug(
+                        f"{w}, it is fixed automatically by using position for consistency"
+                    )
                     if self.node_group.type == "SHADER":
                         input_kwargs["Vector"] = self.new_node("ShaderNodeNewGeometry")
                     else:
@@ -214,11 +238,16 @@ class NodeWrangler:
                     f"name, integer name "
                     f"{input_socket_name} will not suffice"
                 )
-                assert not isinstance(input_item, list), "Multi-input sockets to GroupOutput nodes are impossible"
+                assert not isinstance(
+                    input_item, list
+                ), "Multi-input sockets to GroupOutput nodes are impossible"
                 if input_socket_name not in node.inputs:
                     nodeclass = infer_output_socket(input_item).bl_idname
                     self.node_group.outputs.new(nodeclass, input_socket_name)
-                    assert input_socket_name in node.inputs and node.inputs[input_socket_name].enabled
+                    assert (
+                        input_socket_name in node.inputs
+                        and node.inputs[input_socket_name].enabled
+                    )
 
             input_socket = infer_input_socket(node, input_socket_name)
             self.connect_input(input_socket, input_item)
@@ -227,14 +256,18 @@ class NodeWrangler:
             names = [v[1] for v in expose_input]
             uniq, counts = np.unique(names, return_counts=True)
             if (counts > 1).any():
-                raise ValueError(f"expose_input with {names} features duplicate entries. in bl3.5 this is invalid.")
+                raise ValueError(
+                    f"expose_input with {names} features duplicate entries. in bl3.5 this is invalid."
+                )
             for inp in expose_input:
                 nodeclass, name, val = inp
                 self.expose_input(name, val=val, dtype=nodeclass)
 
         return node
 
-    def expose_input(self, name, val=None, attribute=None, dtype=None, use_namednode=False):
+    def expose_input(
+        self, name, val=None, attribute=None, dtype=None, use_namednode=False
+    ):
         """
         Expose an input to the nodegroups interface, making it able to be specified externally
 
@@ -252,7 +285,9 @@ class NodeWrangler:
 
         if use_namednode:
             assert dtype is not None
-            return self.new_node(Nodes.NamedAttribute, [name], attrs={"data_type": dtype})
+            return self.new_node(
+                Nodes.NamedAttribute, [name], attrs={"data_type": dtype}
+            )
 
         group_input = self.new_node(Nodes.GroupInput)  # will reuse singleton
 
@@ -272,7 +307,9 @@ class NodeWrangler:
 
         if val is not None:
             if not hasattr(inp, "default_value") or inp.default_value is None:
-                raise ValueError(f"expose_input() recieved {val=} but inp {inp} does not expect a default_value")
+                raise ValueError(
+                    f"expose_input() recieved {val=} but inp {inp} does not expect a default_value"
+                )
             inp.default_value = prepare_cast(type(inp.default_value), val)
 
         if self.modifier is not None:
@@ -326,13 +363,17 @@ class NodeWrangler:
                 input_socket.default_value = input_item
                 return
             except TypeError as e:
-                print(f"TypeError while assigning {input_item=} as default_value for {input_socket.name}")
+                print(
+                    f"TypeError while assigning {input_item=} as default_value for {input_socket.name}"
+                )
                 raise e
 
         self.links.new(output_socket, input_socket)
 
     def connect_input(self, input_socket, input_item):
-        if isinstance(input_item, list) and any(infer_output_socket(i) is not None for i in input_item):
+        if isinstance(input_item, list) and any(
+            infer_output_socket(i) is not None for i in input_item
+        ):
             if not input_socket.is_multi_input:
                 raise ValueError(
                     f"list of sockets {input_item} is not valid to connect to {input_socket} as it is not a "
@@ -351,8 +392,11 @@ class NodeWrangler:
             except StopIteration:
                 node = self.nodes.new(node_type)
         elif node_type in bpy.data.node_groups:
-            assert node_type not in [getattr(Nodes, k) for k in dir(Nodes) if not k.startswith("__")], (
-                f"Someone has made a node_group named {node_type}, which is also the name of a " f"regular node"
+            assert node_type not in [
+                getattr(Nodes, k) for k in dir(Nodes) if not k.startswith("__")
+            ], (
+                f"Someone has made a node_group named {node_type}, which is also the name of a "
+                f"regular node"
             )
 
             nodegroup_type = {
@@ -369,7 +413,7 @@ class NodeWrangler:
         return node
 
     def get_position_translation_seed(self, i):
-        if not i in self.position_translation_seed:
+        if i not in self.position_translation_seed:
             self.position_translation_seed[i] = random_vector3()
         return self.position_translation_seed[i]
 
@@ -378,7 +422,12 @@ class NodeWrangler:
 
     def find_recursive(self, name):
         return [(self, n) for n in self.find(name)] + sum(
-            (NodeWrangler(n.node_tree).find_recursive(name) for n in self.nodes if n.type == "GROUP"), []
+            (
+                NodeWrangler(n.node_tree).find_recursive(name)
+                for n in self.nodes
+                if n.type == "GROUP"
+            ),
+            [],
         )
 
     def find_from(self, to_socket):
@@ -386,7 +435,12 @@ class NodeWrangler:
 
     def find_from_recursive(self, name):
         return [(self, n) for n in self.find(name)] + sum(
-            (NodeWrangler(n.node_tree).find_from_recursive(name) for n in self.nodes if n.type == "GROUP"), []
+            (
+                NodeWrangler(n.node_tree).find_from_recursive(name)
+                for n in self.nodes
+                if n.type == "GROUP"
+            ),
+            [],
         )
 
     def find_to(self, from_socket):
@@ -394,12 +448,19 @@ class NodeWrangler:
 
     def find_to_recursive(self, name):
         return [(self, n) for n in self.find(name)] + sum(
-            (NodeWrangler(n.node_tree).find_to_recursive(name) for n in self.nodes if n.type == "GROUP"), []
+            (
+                NodeWrangler(n.node_tree).find_to_recursive(name)
+                for n in self.nodes
+                if n.type == "GROUP"
+            ),
+            [],
         )
 
     @staticmethod
     def is_socket(node):
-        return isinstance(node, bpy.types.NodeSocket) or isinstance(node, bpy.types.Node)
+        return isinstance(node, bpy.types.NodeSocket) or isinstance(
+            node, bpy.types.Node
+        )
 
     @staticmethod
     def is_vector_socket(node):
@@ -485,22 +546,36 @@ class NodeWrangler:
             x, y = y, x
         elif isinstance(y, Iterable):
             x, y = y, x
-        return self.new_node(Nodes.VectorMath, input_kwargs={"Vector": x, "Scale": y}, attrs={"operation": "SCALE"})
+        return self.new_node(
+            Nodes.VectorMath,
+            input_kwargs={"Vector": x, "Scale": y},
+            attrs={"operation": "SCALE"},
+        )
 
     def dot(self, *nodes):
-        return self.new_node(Nodes.VectorMath, attrs={"operation": "DOT_PRODUCT"}, input_args=nodes)
+        return self.new_node(
+            Nodes.VectorMath, attrs={"operation": "DOT_PRODUCT"}, input_args=nodes
+        )
 
     def math(self, node_type, *nodes):
-        return self.new_node(Nodes.Math, attrs={"operation": node_type}, input_args=nodes)
+        return self.new_node(
+            Nodes.Math, attrs={"operation": node_type}, input_args=nodes
+        )
 
     def vector_math(self, node_type, *nodes):
-        return self.new_node(Nodes.VectorMath, attrs={"operation": node_type}, input_args=nodes)
+        return self.new_node(
+            Nodes.VectorMath, attrs={"operation": node_type}, input_args=nodes
+        )
 
     def boolean_math(self, node_type, *nodes):
-        return self.new_node(Nodes.BooleanMath, attrs={"operation": node_type}, input_args=nodes)
+        return self.new_node(
+            Nodes.BooleanMath, attrs={"operation": node_type}, input_args=nodes
+        )
 
     def compare(self, node_type, *nodes):
-        return self.new_node(Nodes.Compare, attrs={"operation": node_type}, input_args=nodes)
+        return self.new_node(
+            Nodes.Compare, attrs={"operation": node_type}, input_args=nodes
+        )
 
     def compare_direction(self, node_type, x, y, angle):
         return self.new_node(
@@ -513,7 +588,9 @@ class NodeWrangler:
         if seed is None:
             seed = np.random.randint(1e5)
         return self.new_node(
-            Nodes.RandomValue, input_kwargs={"Probability": prob, "Seed": seed}, attrs={"data_type": "BOOLEAN"}
+            Nodes.RandomValue,
+            input_kwargs={"Probability": prob, "Seed": seed},
+            attrs={"data_type": "BOOLEAN"},
         )
 
     def uniform(self, low=0.0, high=1.0, seed=None, data_type="FLOAT"):
@@ -522,7 +599,9 @@ class NodeWrangler:
         if isinstance(low, Iterable):
             data_type = "FLOAT_VECTOR"
         return self.new_node(
-            Nodes.RandomValue, input_kwargs={"Min": low, "Max": high, "Seed": seed}, attrs={"data_type": data_type}
+            Nodes.RandomValue,
+            input_kwargs={"Min": low, "Max": high, "Seed": seed},
+            attrs={"data_type": data_type},
         )
 
     def combine(self, x, y, z):
@@ -533,36 +612,61 @@ class NodeWrangler:
 
     def switch(self, pred, true, false, input_type="FLOAT"):
         return self.new_node(
-            Nodes.Switch, input_kwargs={"Switch": pred, "True": true, "False": false}, attrs={"input_type": input_type}
+            Nodes.Switch,
+            input_kwargs={"Switch": pred, "True": true, "False": false},
+            attrs={"input_type": input_type},
         )
 
     def vector_switch(self, pred, true, false):
         return self.new_node(
-            Nodes.Switch, input_kwargs={"Switch": pred, "True": true, "False": false}, attrs={"input_type": "VECTOR"}
+            Nodes.Switch,
+            input_kwargs={"Switch": pred, "True": true, "False": false},
+            attrs={"input_type": "VECTOR"},
         )
 
     def geometry2point(self, geometry):
-        return self.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": geometry, "Distance": 100.0})
+        return self.new_node(
+            Nodes.MergeByDistance,
+            input_kwargs={"Geometry": geometry, "Distance": 100.0},
+        )
 
     def position2point(self, position):
-        return self.new_node(Nodes.MeshLine, input_kwargs={"Count": 1, "Start Location": position})
+        return self.new_node(
+            Nodes.MeshLine, input_kwargs={"Count": 1, "Start Location": position}
+        )
 
     def capture(self, geometry, attribute, attrs=None):
         if attrs is None:
             attrs = {}
         capture = self.new_node(
-            Nodes.CaptureAttribute, input_kwargs={"Geometry": geometry, "Value": attribute}, attrs=attrs
+            Nodes.CaptureAttribute,
+            input_kwargs={"Geometry": geometry, "Value": attribute},
+            attrs=attrs,
         )
         return capture.outputs["Geometry"], capture.outputs["Attribute"]
 
     def musgrave(self, scale=10, vector=None):
         return self.new_node(
-            Nodes.MapRange, [self.new_node(Nodes.MusgraveTexture, [vector], input_kwargs={"Scale": scale}), -1, 1, 0, 1]
+            Nodes.MapRange,
+            [
+                self.new_node(
+                    Nodes.MusgraveTexture, [vector], input_kwargs={"Scale": scale}
+                ),
+                -1,
+                1,
+                0,
+                1,
+            ],
         )
 
     def curve2mesh(self, curve, profile_curve=None):
         return self.new_node(
-            Nodes.SetShadeSmooth, [self.new_node(Nodes.CurveToMesh, [curve, profile_curve, True]), None, False]
+            Nodes.SetShadeSmooth,
+            [
+                self.new_node(Nodes.CurveToMesh, [curve, profile_curve, True]),
+                None,
+                False,
+            ],
         )
 
     def build_float_curve(self, x, anchors, handle="VECTOR"):
@@ -584,4 +688,6 @@ class NodeWrangler:
         return node
 
     def build_index_case(self, inputs):
-        return self.build_case(self.new_node(Nodes.Index), inputs + [-1], [True] * len(inputs) + [False])
+        return self.build_case(
+            self.new_node(Nodes.Index), inputs + [-1], [True] * len(inputs) + [False]
+        )

@@ -4,15 +4,14 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.assets.fruits.fruit_utils import nodegroup_manhattan, nodegroup_point_on_mesh, nodegroup_surface_bump
+from infinigen.assets.fruits.fruit_utils import (
+    nodegroup_manhattan,
+    nodegroup_point_on_mesh,
+    nodegroup_surface_bump,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
@@ -22,14 +21,27 @@ def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 0.8, "Detail": 10.0, "Roughness": 0.7},
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Scale": 0.8,
+            "Detail": 10.0,
+            "Roughness": 0.7,
+        },
     )
 
-    separate_rgb = nw.new_node(Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]})
+    separate_rgb = nw.new_node(
+        Nodes.SeparateColor, input_kwargs={"Color": noise_texture.outputs["Color"]}
+    )
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": separate_rgb.outputs["Green"], 1: 0.4, 2: 0.7, 3: 0.48, 4: 0.55},
+        input_kwargs={
+            "Value": separate_rgb.outputs["Green"],
+            1: 0.4,
+            2: 0.7,
+            3: 0.48,
+            4: 0.55,
+        },
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
@@ -39,9 +51,13 @@ def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
         attrs={"interpolation_type": "SMOOTHSTEP"},
     )
 
-    attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "durian thorn coordiante"})
+    attribute = nw.new_node(
+        Nodes.Attribute, attrs={"attribute_name": "durian thorn coordiante"}
+    )
 
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Fac"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": attribute.outputs["Fac"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0
     colorramp.color_ramp.elements[0].color = peak_color
     colorramp.color_ramp.elements[1].position = 0.2705
@@ -57,13 +73,22 @@ def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
     )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": hue_saturation_value, "Specular": 0.1205, "Roughness": 0.5068}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": hue_saturation_value,
+            "Specular": 0.1205,
+            "Roughness": 0.5068,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_durian_surface", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_durian_surface", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_durian_surface(
     nw: NodeWrangler,
     thorn_control_points=[(0.0, 0.0), (0.7318, 0.4344), (1.0, 1.0)],
@@ -86,7 +111,11 @@ def nodegroup_durian_surface(
 
     surfacebump = nw.new_node(
         nodegroup_surface_bump().name,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Displacement": 0.5, "Scale": 0.5},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Displacement": 0.5,
+            "Scale": 0.5,
+        },
     )
 
     normal = nw.new_node(Nodes.InputNormal)
@@ -106,7 +135,10 @@ def nodegroup_durian_surface(
 
     geometry_proximity = nw.new_node(
         Nodes.Proximity,
-        input_kwargs={"Target": pointonmesh.outputs["Geometry"], "Source Position": position_1},
+        input_kwargs={
+            "Target": pointonmesh.outputs["Geometry"],
+            "Source Position": position_1,
+        },
         attrs={"target_element": "POINTS"},
     )
 
@@ -117,38 +149,59 @@ def nodegroup_durian_surface(
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["distance Min"], 1: 2.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["distance Min"], 1: 2.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": manhattan, 2: multiply, 3: 1.0, 4: 0.0})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": manhattan, 2: multiply, 3: 1.0, 4: 0.0}
+    )
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]})
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}
+    )
     node_utils.assign_curve(float_curve.mapping.curves[0], thorn_control_points)
 
-    scale = nw.new_node(Nodes.VectorMath, input_kwargs={0: normal, "Scale": float_curve}, attrs={"operation": "SCALE"})
+    scale = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: normal, "Scale": float_curve},
+        attrs={"operation": "SCALE"},
+    )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], "Scale": group_input.outputs["displacement"]},
+        input_kwargs={
+            0: scale.outputs["Vector"],
+            "Scale": group_input.outputs["displacement"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": surfacebump, "Offset": scale_1.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": surfacebump, "Offset": scale_1.outputs["Vector"]},
     )
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": set_position_1, 2: map_range.outputs["Result"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={"Geometry": set_position_1, 2: map_range.outputs["Result"]},
     )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "Material": surface.shaderfunc_to_material(shader_durian_shader, peak_color, base_color),
+            "Material": surface.shaderfunc_to_material(
+                shader_durian_shader, peak_color, base_color
+            ),
         },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_material, "distance to center": capture_attribute.outputs[2]}
+        Nodes.GroupOutput,
+        input_kwargs={
+            "Geometry": set_material,
+            "distance to center": capture_attribute.outputs[2],
+        },
     )

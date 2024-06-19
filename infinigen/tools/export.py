@@ -6,10 +6,8 @@
 import argparse
 import logging
 import math
-import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import bpy
@@ -106,13 +104,18 @@ def handle_geo_modifiers(obj, export_usd):
 def split_glass_mats():
     split_objs = []
     for obj in bpy.data.objects:
-        if any(exclude in obj.name for exclude in ["BowlFactory", "CupFactory", "OvenFactory", "BottleFactory"]):
+        if any(
+            exclude in obj.name
+            for exclude in ["BowlFactory", "CupFactory", "OvenFactory", "BottleFactory"]
+        ):
             continue
         for slot in obj.material_slots:
             mat = slot.material
             if mat is None:
                 continue
-            if ("shader_glass" in mat.name or "shader_lamp_bulb" in mat.name) and len(obj.material_slots) >= 2:
+            if ("shader_glass" in mat.name or "shader_lamp_bulb" in mat.name) and len(
+                obj.material_slots
+            ) >= 2:
                 logging.info(f"Splitting {obj}")
                 obj.select_set(True)
                 bpy.context.view_layer.objects.active = obj
@@ -123,7 +126,12 @@ def split_glass_mats():
                 split_objs.append(obj.name)
                 break
 
-    matches = [obj for split_obj in split_objs for obj in bpy.data.objects if split_obj in obj.name]
+    matches = [
+        obj
+        for split_obj in split_objs
+        for obj in bpy.data.objects
+        if split_obj in obj.name
+    ]
     for match in matches:
         mat = match.material_slots[0].material
         if mat is None:
@@ -161,7 +169,9 @@ def clean_names(obj=None):
 
         if obj.type == "MESH":
             for uv_map in obj.data.uv_layers:
-                uv_map.name = uv_map.name.replace(".", "_")  # if uv has '.' in name the node will export wrong in USD
+                uv_map.name = uv_map.name.replace(
+                    ".", "_"
+                )  # if uv has '.' in name the node will export wrong in USD
 
     for mat in bpy.data.materials:
         if mat is None:
@@ -272,7 +282,9 @@ def bakeVertexColors(obj):
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    vertColor = bpy.context.object.data.color_attributes.new(name="VertColor", domain="CORNER", type="BYTE_COLOR")
+    vertColor = bpy.context.object.data.color_attributes.new(
+        name="VertColor", domain="CORNER", type="BYTE_COLOR"
+    )
     bpy.context.object.data.attributes.active_color = vertColor
     bpy.ops.object.bake(type="DIFFUSE", pass_filter={"COLOR"}, target="VERTEX_COLORS")
     obj.select_set(False)
@@ -299,7 +311,9 @@ def apply_baked_tex(obj, paramDict={}):
         excludedNodes.extend(["Material Output", "Principled BSDF"])
         for n in nodes:
             if n.name not in excludedNodes:
-                nodes.remove(n)  # deletes an arbitrary principled BSDF in the case of a mix, which is handled below
+                nodes.remove(
+                    n
+                )  # deletes an arbitrary principled BSDF in the case of a mix, which is handled below
 
         output = nodes["Material Output"]
 
@@ -309,7 +323,8 @@ def apply_baked_tex(obj, paramDict={}):
             principled_bsdf_node = nodes.new("ShaderNodeBsdfPrincipled")
         elif (
             len(output.inputs[0].links) != 0
-            and output.inputs[0].links[0].from_node.bl_idname == "ShaderNodeBsdfPrincipled"
+            and output.inputs[0].links[0].from_node.bl_idname
+            == "ShaderNodeBsdfPrincipled"
         ):  # trivial bsdf graph
             logging.info("Trivial shader graph, using old BSDF")
             principled_bsdf_node = nodes["Principled BSDF"]
@@ -329,15 +344,23 @@ def apply_baked_tex(obj, paramDict={}):
             if type == "NORMAL":
                 normal_node = nodes.new("ShaderNodeNormalMap")
                 links.new(normal_node.inputs["Color"], tex_node.outputs[0])
-                links.new(principled_bsdf_node.inputs[ALL_BAKE[type]], normal_node.outputs[0])
+                links.new(
+                    principled_bsdf_node.inputs[ALL_BAKE[type]], normal_node.outputs[0]
+                )
                 continue
             links.new(principled_bsdf_node.inputs[ALL_BAKE[type]], tex_node.outputs[0])
 
         # bring back cleared param values
         if mat.name in paramDict:
-            principled_bsdf_node.inputs["Metallic"].default_value = paramDict[mat.name]["Metallic"]
-            principled_bsdf_node.inputs["Sheen"].default_value = paramDict[mat.name]["Sheen"]
-            principled_bsdf_node.inputs["Clearcoat"].default_value = paramDict[mat.name]["Clearcoat"]
+            principled_bsdf_node.inputs["Metallic"].default_value = paramDict[mat.name][
+                "Metallic"
+            ]
+            principled_bsdf_node.inputs["Sheen"].default_value = paramDict[mat.name][
+                "Sheen"
+            ]
+            principled_bsdf_node.inputs["Clearcoat"].default_value = paramDict[
+                mat.name
+            ]["Clearcoat"]
 
 
 def create_glass_shader(node_tree, export_usd):
@@ -362,7 +385,9 @@ def create_glass_shader(node_tree, export_usd):
     principled_bsdf_node.inputs["Transmission"].default_value = 1
     if export_usd:
         principled_bsdf_node.inputs["Alpha"].default_value = 0
-    node_tree.links.new(principled_bsdf_node.outputs[0], nodes["Material Output"].inputs[0])
+    node_tree.links.new(
+        principled_bsdf_node.outputs[0], nodes["Material Output"].inputs[0]
+    )
 
 
 def process_glass_materials(obj, export_usd):
@@ -373,10 +398,15 @@ def process_glass_materials(obj, export_usd):
         nodes = mat.node_tree.nodes
         outputNode = nodes["Material Output"]
         if nodes.get("Glass BSDF"):
-            if outputNode.inputs[0].links[0].from_node.bl_idname == "ShaderNodeBsdfGlass":
+            if (
+                outputNode.inputs[0].links[0].from_node.bl_idname
+                == "ShaderNodeBsdfGlass"
+            ):
                 logging.info(f"Creating glass material on {obj.name}")
             else:
-                logging.info(f"Non-trivial glass material on {obj.name}, material export will be inaccurate")
+                logging.info(
+                    f"Non-trivial glass material on {obj.name}, material export will be inaccurate"
+                )
             create_glass_shader(mat.node_tree, export_usd)
         elif "glass" in mat.name or "shader_lamp_bulb" in mat.name:
             logging.info(f"Creating glass material on {obj.name}")
@@ -424,7 +454,9 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
             and surface_node.bl_idname == "ShaderNodeBsdfPrincipled"
             and len(surface_node.inputs[ALL_BAKE[bake_type]].links) == 0
         ):  # trivial bsdf graph
-            logging.info(f"{mat.name} has no procedural input for {bake_type}, not using baked textures")
+            logging.info(
+                f"{mat.name} has no procedural input for {bake_type}, not using baked textures"
+            )
             bake_exclude_mats[mat] = img_node
             continue
 
@@ -437,7 +469,9 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
 
     if bake_obj:
         logging.info(f"Baking {bake_type} pass")
-        bpy.ops.object.bake(type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL")
+        bpy.ops.object.bake(
+            type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
+        )
         img.filepath_raw = str(file_path)
         if not export_usd:
             img.save()
@@ -449,7 +483,9 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
         mat.node_tree.nodes.remove(img_node)
 
 
-def bake_metal(obj, dest, img_size, export_usd):  # metal baking is not really set up for node graphs w/ 2 mixed BSDFs.
+def bake_metal(
+    obj, dest, img_size, export_usd
+):  # metal baking is not really set up for node graphs w/ 2 mixed BSDFs.
     metal_map_mats = []
     for slot in obj.material_slots:
         mat = slot.material
@@ -511,12 +547,21 @@ def remove_params(mat, node_tree):
     else:
         raise ValueError("Could not find material output node")
 
-    if nodes.get("Principled BSDF") and output.inputs[0].links[0].from_node.bl_idname == "ShaderNodeBsdfPrincipled":
+    if (
+        nodes.get("Principled BSDF")
+        and output.inputs[0].links[0].from_node.bl_idname == "ShaderNodeBsdfPrincipled"
+    ):
         principled_bsdf_node = nodes["Principled BSDF"]
-        metal = principled_bsdf_node.inputs["Metallic"].default_value  # store metallic value and set to 0
+        metal = principled_bsdf_node.inputs[
+            "Metallic"
+        ].default_value  # store metallic value and set to 0
         sheen = principled_bsdf_node.inputs["Sheen"].default_value
         clearcoat = principled_bsdf_node.inputs["Clearcoat"].default_value
-        paramDict[mat.name] = {"Metallic": metal, "Sheen": sheen, "Clearcoat": clearcoat}
+        paramDict[mat.name] = {
+            "Metallic": metal,
+            "Sheen": sheen,
+            "Clearcoat": clearcoat,
+        }
         principled_bsdf_node.inputs["Metallic"].default_value = 0
         principled_bsdf_node.inputs["Sheen"].default_value = 0
         principled_bsdf_node.inputs["Clearcoat"].default_value = 0
@@ -560,8 +605,8 @@ def triangulate_meshes():
             obj.hide_viewport = False
             bpy.context.view_layer.objects.active = obj
             obj.select_set(True)
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.object.mode_set(mode="EDIT")
+            bpy.ops.mesh.select_all(action="SELECT")
             logging.debug(f"Triangulating {obj}")
             bpy.ops.mesh.quads_convert_to_tris()
             bpy.ops.object.mode_set(mode="OBJECT")
@@ -578,7 +623,9 @@ def adjust_wattages():
                 X = light.energy
                 r = light.shadow_soft_size
                 # candelas * 1000 / (4 * math.pi * r**2). additionally units come out of blender at 1/100 scale
-                new_wattage = (X * 20 / (4 * math.pi)) * 1000 / (4 * math.pi * r**2) * 100
+                new_wattage = (
+                    (X * 20 / (4 * math.pi)) * 1000 / (4 * math.pi * r**2) * 100
+                )
                 light.energy = new_wattage
 
 
@@ -605,7 +652,9 @@ def bake_object(obj, dest, img_size, export_usd):
     for slot in obj.material_slots:
         mat = slot.material
         if mat is not None:
-            slot.material = mat.copy()  # we duplicate in the case of distinct meshes sharing materials
+            slot.material = (
+                mat.copy()
+            )  # we duplicate in the case of distinct meshes sharing materials
 
     process_glass_materials(obj, export_usd)
 
@@ -649,7 +698,9 @@ def bake_scene(folderPath: Path, image_res, vertex_colors, export_usd):
         obj.hide_viewport = True
 
 
-def run_blender_export(exportPath: Path, format: str, vertex_colors: bool, individual_export: bool):
+def run_blender_export(
+    exportPath: Path, format: str, vertex_colors: bool, individual_export: bool
+):
     assert exportPath.parent.exists()
     exportPath = str(exportPath)
 
@@ -673,17 +724,24 @@ def run_blender_export(exportPath: Path, format: str, vertex_colors: bool, indiv
 
     if format == "fbx":
         if vertex_colors:
-            bpy.ops.export_scene.fbx(filepath=exportPath, colors_type="SRGB", use_selection=individual_export)
+            bpy.ops.export_scene.fbx(
+                filepath=exportPath, colors_type="SRGB", use_selection=individual_export
+            )
         else:
             bpy.ops.export_scene.fbx(
-                filepath=exportPath, path_mode="COPY", embed_textures=True, use_selection=individual_export
+                filepath=exportPath,
+                path_mode="COPY",
+                embed_textures=True,
+                use_selection=individual_export,
             )
 
     if format == "stl":
         bpy.ops.export_mesh.stl(filepath=exportPath, use_selection=individual_export)
 
     if format == "ply":
-        bpy.ops.wm.ply_export(filepath=exportPath, export_selected_objects=individual_export)
+        bpy.ops.wm.ply_export(
+            filepath=exportPath, export_selected_objects=individual_export
+        )
 
     if format in ["usda", "usdc"]:
         bpy.ops.wm.usd_export(
@@ -715,7 +773,13 @@ def export_scene(
 
 
 # side effects: will remove parents of inputted obj and clean its name, hides viewport of all objects
-def export_single_obj(obj: bpy.types.Object, output_folder: Path, format="usdc", image_res=1024, vertex_colors=False):
+def export_single_obj(
+    obj: bpy.types.Object,
+    output_folder: Path,
+    format="usdc",
+    image_res=1024,
+    vertex_colors=False,
+):
     export_usd = format in ["usda", "usdc"]
 
     export_folder = output_folder
@@ -854,7 +918,10 @@ def export_curr_scene(
 
     # iterate through all objects and bake them
     bake_scene(
-        folderPath=export_folder / "textures", image_res=image_res, vertex_colors=vertex_colors, export_usd=export_usd
+        folderPath=export_folder / "textures",
+        image_res=image_res,
+        vertex_colors=vertex_colors,
+        export_usd=export_usd,
     )
 
     for collection, status in collection_views.items():
@@ -908,7 +975,11 @@ def export_curr_scene(
 
 def main(args):
     args.output_folder.mkdir(exist_ok=True)
-    logging.basicConfig(filename=args.output_folder / "export_logs.log", level=logging.DEBUG, filemode="w+")
+    logging.basicConfig(
+        filename=args.output_folder / "export_logs.log",
+        level=logging.DEBUG,
+        filemode="w+",
+    )
 
     targets = sorted(list(args.input_folder.iterdir()))
     for blendfile in targets:

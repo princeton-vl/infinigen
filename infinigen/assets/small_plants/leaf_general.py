@@ -3,18 +3,17 @@
 
 # Authors: Beining Han
 
-import pdb
 
 import bpy
 import numpy as np
 
-from infinigen.assets.trees.utils import helper, materials, mesh
+from infinigen.assets.trees.utils import mesh
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
 C = bpy.context
 D = bpy.data
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 class LeafFactory(AssetFactory):
@@ -23,7 +22,13 @@ class LeafFactory(AssetFactory):
     def __init__(self, factory_seed, genome: dict = None, coarse=False):
         super(LeafFactory, self).__init__(factory_seed, coarse=coarse)
         self.genome = dict(
-            leaf_width=0.5, alpha=0.3, use_wave=True, x_offset=0, flip_leaf=False, z_scaling=0, width_rand=0.33
+            leaf_width=0.5,
+            alpha=0.3,
+            use_wave=True,
+            x_offset=0,
+            flip_leaf=False,
+            z_scaling=0,
+            width_rand=0.33,
         )
         if genome:
             for k, g in genome.items():
@@ -32,7 +37,9 @@ class LeafFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         # bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.mesh.primitive_circle_add(
+            enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+        )
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.edge_face_add()
 
@@ -49,14 +56,22 @@ class LeafFactory(AssetFactory):
         if self.genome["flip_leaf"]:
             a = a[::-1]
         x = (
-            np.sin(a) * (self.genome["leaf_width"] + np.random.randn() * self.genome["width_rand"])
+            np.sin(a)
+            * (
+                self.genome["leaf_width"]
+                + np.random.randn() * self.genome["width_rand"]
+            )
             + self.genome["x_offset"]
         )
         y = -np.cos(0.9 * (a - self.genome["alpha"]))
         z = x**2 * self.genome["z_scaling"]
 
         full_coords = np.concatenate(
-            [np.stack([x, y, z], 1), np.stack([-x[::-1], y[::-1], z], 1), np.array([[0, y[0], 0]])]
+            [
+                np.stack([x, y, z], 1),
+                np.stack([-x[::-1], y[::-1], z], 1),
+                np.array([[0, y[0], 0]]),
+            ]
         ).flatten()
         bpy.ops.object.mode_set(mode="OBJECT")
         obj.data.vertices.foreach_set("co", full_coords)

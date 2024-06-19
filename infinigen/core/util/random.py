@@ -6,17 +6,15 @@
 
 import colorsys
 import json
-import random
 
-import gin
 import mathutils
 import numpy as np
 from matplotlib import colors
-from numpy.random import normal, uniform
+from numpy.random import uniform
 
 from infinigen.core.init import repo_root
 from infinigen.core.util.color import color_category
-from infinigen.core.util.math import clip_gaussian, md5_hash
+from infinigen.core.util.math import clip_gaussian
 
 
 def log_uniform(low, high, size=None):
@@ -43,12 +41,15 @@ def sample_json_palette(pallette_name, n_sample=1):
     color_samples = []
     for j in range(n_sample):
         color = np.array(means[i]) + np.matmul(
-            np.array(stds[i]).reshape((3, 3)), np.clip(np.random.randn(3), a_min=-1, a_max=1)
+            np.array(stds[i]).reshape((3, 3)),
+            np.clip(np.random.randn(3), a_min=-1, a_max=1),
         )
         color[2] = max(min(color[2], 0.9), 0.1)
         color = colorsys.hsv_to_rgb(*color)
         color = np.clip(color, a_min=0, a_max=1)
-        color = np.where(color >= 0.04045, ((color + 0.055) / 1.055) ** 2.4, color / 12.92)
+        color = np.where(
+            color >= 0.04045, ((color + 0.055) / 1.055) ** 2.4, color / 12.92
+        )
         color = np.concatenate((color, np.ones(1)))
         color_samples.append(color)
     if n_sample == 1:
@@ -105,7 +106,9 @@ def random_general(var):
 
 
 def random_vector3():
-    return mathutils.Vector((np.random.randint(999), np.random.randint(999), np.random.randint(999)))
+    return mathutils.Vector(
+        (np.random.randint(999), np.random.randint(999), np.random.randint(999))
+    )
 
 
 def _rgb_to_hsv(rgb):

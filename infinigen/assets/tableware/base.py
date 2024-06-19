@@ -54,12 +54,16 @@ class TablewareFactory(AssetFactory):
             selection = False
 
         def geo_guard(nw: NodeWrangler):
-            geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+            geometry = nw.new_node(
+                Nodes.GroupInput,
+                expose_input=[("NodeSocketGeometry", "Geometry", None)],
+            )
             normal = nw.new_node(Nodes.InputNormal)
             x = nw.separate(nw.new_node(Nodes.InputPosition))[0]
             sel = surface.eval_argument(nw, selection, x=x, normal=normal)
             geometry, top, side = nw.new_node(
-                Nodes.ExtrudeMesh, input_args=[geometry, sel, None, self.guard_depth, False]
+                Nodes.ExtrudeMesh,
+                input_args=[geometry, sel, None, self.guard_depth, False],
             ).outputs[:3]
             guard = nw.boolean_math("OR", top, side)
             geometry = nw.new_node(
@@ -76,16 +80,22 @@ class TablewareFactory(AssetFactory):
         return lambda nw, x, normal: nw.boolean_math(
             "AND",
             surface.eval_argument(nw, selection, x=x, normal=normal),
-            nw.compare("GREATER_THAN", nw.math("ABSOLUTE", nw.separate(normal)[-1]), 0.8),
+            nw.compare(
+                "GREATER_THAN", nw.math("ABSOLUTE", nw.separate(normal)[-1]), 0.8
+            ),
         )
 
     def finalize_assets(self, assets):
         assign_material(assets, [])
         self.surface.apply(assets, metal_color=self.metal_color)
         if self.has_inside:
-            self.inside_surface.apply(assets, selection="inside", clear=True, metal_color="bw+natural")
+            self.inside_surface.apply(
+                assets, selection="inside", clear=True, metal_color="bw+natural"
+            )
         if self.has_guard:
-            self.guard_surface.apply(assets, selection="guard", metal_color=self.metal_color)
+            self.guard_surface.apply(
+                assets, selection="guard", metal_color=self.metal_color
+            )
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:
@@ -94,14 +104,20 @@ class TablewareFactory(AssetFactory):
     def solidify_with_inside(self, obj, thickness):
         max_z = np.max(read_co(obj)[:, -1])
         obj.vertex_groups.new(name="inside_")
-        butil.modify_mesh(obj, "SOLIDIFY", thickness=thickness, offset=1, shell_vertex_group="inside_")
+        butil.modify_mesh(
+            obj, "SOLIDIFY", thickness=thickness, offset=1, shell_vertex_group="inside_"
+        )
         write_attribute(obj, "inside_", "inside", "FACE")
 
         def inside(nw: NodeWrangler):
             lower = nw.compare(
-                "LESS_THAN", nw.separate(nw.new_node(Nodes.InputPosition))[-1], max_z * self.lower_thresh
+                "LESS_THAN",
+                nw.separate(nw.new_node(Nodes.InputPosition))[-1],
+                max_z * self.lower_thresh,
             )
-            inside = nw.compare("GREATER_THAN", surface.eval_argument(nw, "inside"), 0.8)
+            inside = nw.compare(
+                "GREATER_THAN", surface.eval_argument(nw, "inside"), 0.8
+            )
             return nw.boolean_math("AND", inside, lower)
 
         write_attribute(obj, inside, "lower_inside", "FACE")

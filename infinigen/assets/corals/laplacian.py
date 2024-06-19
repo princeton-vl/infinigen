@@ -11,7 +11,7 @@ from infinigen.assets.utils.decorate import geo_extension
 from infinigen.assets.utils.laplacian import build_laplacian_3d
 from infinigen.assets.utils.object import mesh2obj
 from infinigen.core import surface
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
 class CauliflowerBaseCoralFactory(BaseCoralFactory):

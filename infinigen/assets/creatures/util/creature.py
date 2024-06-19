@@ -5,8 +5,6 @@
 
 
 import logging
-import pdb
-import typing
 import warnings
 from dataclasses import dataclass, field
 
@@ -15,12 +13,11 @@ import mathutils
 import numpy as np
 from mathutils.bvhtree import BVHTree
 
-from infinigen.assets.creatures.util import genome, join_smoothing, tree
+from infinigen.assets.creatures.util import genome, tree
 from infinigen.assets.creatures.util.creature_util import euler, interp_dict
-from infinigen.assets.creatures.util.geometry import lofting, skin_ops
+from infinigen.assets.creatures.util.geometry import lofting
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.core.placement import detail
 from infinigen.core.util import blender as butil
 from infinigen.core.util import logging as logging_util
 from infinigen.core.util.math import homogenize, lerp, lerp_sample
@@ -35,7 +32,9 @@ def infer_skeleton_from_mesh(obj):
         v_xmax = vs[vs[:, 0].argmax()]
         return np.array([v_xmin, v_xmax])
     except ValueError:
-        warnings.warn(f"infer_skeleton_from_mesh({obj=}) failed, returning null skeleton")
+        warnings.warn(
+            f"infer_skeleton_from_mesh({obj=}) failed, returning null skeleton"
+        )
         return np.array([[0, 0, 0], [0.1, 0, 0]])
 
 
@@ -107,7 +106,9 @@ class PartFactory:
         part = self.make_part(params)
 
         if part is None:
-            raise ValueError(f"{self}.make_part() returned None, did you forget a return?")
+            raise ValueError(
+                f"{self}.make_part() returned None, did you forget a return?"
+            )
 
         return part
 
@@ -128,7 +129,9 @@ def quat_align_vecs(a, b):
     return mathutils.Quaternion(a.cross(b), a.angle(b))
 
 
-def raycast_surface(part: Part, idx_pct, dir_rot: mathutils.Quaternion, r=1, debug=False):
+def raycast_surface(
+    part: Part, idx_pct, dir_rot: mathutils.Quaternion, r=1, debug=False
+):
     # figure out axis of rotation
     idx = np.array([idx_pct]) * (len(part.skeleton) - 1)
     tangents = lofting.skeleton_to_tangents(part.skeleton)
@@ -136,13 +139,17 @@ def raycast_surface(part: Part, idx_pct, dir_rot: mathutils.Quaternion, r=1, deb
 
     # raycast to find surface of the part
     origin = mathutils.Vector(lerp_sample(part.skeleton, idx).reshape(-1))
-    basis = part.obj.rotation_euler.to_quaternion() @ quat_align_vecs((1, 0, 0), forward.reshape(-1))
+    basis = part.obj.rotation_euler.to_quaternion() @ quat_align_vecs(
+        (1, 0, 0), forward.reshape(-1)
+    )
     direction = basis @ dir_rot @ mathutils.Vector([1, 0, 0])
 
     location, normal, index, dist = part.bvh().ray_cast(origin, direction)
 
     if location is None:
-        logger.warning(f"Raycast did not intersect {part} with {dist=} {dir_rot=} {idx_pct=}")
+        logger.warning(
+            f"Raycast did not intersect {part} with {dist=} {dir_rot=} {idx_pct=}"
+        )
         location = origin
         dist = 0
         normal = (1, 0, 0)
@@ -171,7 +178,12 @@ def write_local_attributes(part, idx, tags):
     n = len(part.obj.data.vertices)
 
     # local position
-    surface.write_attribute(part.obj, lambda nw: nw.new_node(Nodes.InputPosition), name="local_pos", apply=True)
+    surface.write_attribute(
+        part.obj,
+        lambda nw: nw.new_node(Nodes.InputPosition),
+        name="local_pos",
+        apply=True,
+    )
 
     # float repr of integer part idx, useful after join/remesh
     part_idx_attr = part.obj.data.attributes.new("part_idx", "FLOAT", "POINT")
@@ -186,7 +198,9 @@ def write_global_attributes(part):
     skeleton = part.skeleton_global()
     verts = np.array([part.obj.matrix_world @ v.co for v in part.obj.data.vertices])
 
-    dists = np.linalg.norm(skeleton.reshape(1, -1, 3) - verts.reshape(-1, 1, 3), axis=-1)
+    dists = np.linalg.norm(
+        skeleton.reshape(1, -1, 3) - verts.reshape(-1, 1, 3), axis=-1
+    )
     closest_idx = dists.argmin(axis=1)
 
     rads = dists[np.arange(dists.shape[0]), closest_idx]
@@ -194,14 +208,18 @@ def write_global_attributes(part):
     rad_attr.data.foreach_set("value", rads)
 
     # location of nearest skeleton point
-    skeleton_loc_attr = part.obj.data.attributes.new("skeleton_loc", "FLOAT_VECTOR", "POINT")
+    skeleton_loc_attr = part.obj.data.attributes.new(
+        "skeleton_loc", "FLOAT_VECTOR", "POINT"
+    )
     skeleton_loc_attr.data.foreach_set("vector", skeleton[closest_idx].reshape(-1))
 
     # location of the parent of the nearest skeleton point
     parent_loc = skeleton[np.clip(closest_idx - 1, 0, len(skeleton))]
     if skeleton.shape[0] > 1:
         parent_loc[closest_idx == 0] = skeleton[0] - (skeleton[1] - skeleton[0])
-    parent_skeleton_loc_attr = part.obj.data.attributes.new("parent_skeleton_loc", "FLOAT_VECTOR", "POINT")
+    parent_skeleton_loc_attr = part.obj.data.attributes.new(
+        "parent_skeleton_loc", "FLOAT_VECTOR", "POINT"
+    )
     parent_skeleton_loc_attr.data.foreach_set("vector", parent_loc.reshape(-1))
 
 
@@ -223,7 +241,11 @@ def apply_attach_transform(part, target, att):
     u, v, rad = att.coord
 
     loc, normal, tangent = raycast_surface(
-        target, idx_pct=u, dir_rot=euler(180 * v, 0, 0) @ euler(0, 90, 0), r=rad, debug=False
+        target,
+        idx_pct=u,
+        dir_rot=euler(180 * v, 0, 0) @ euler(0, 90, 0),
+        r=rad,
+        debug=False,
     )
 
     if att.rotation_basis == "global":
@@ -235,7 +257,9 @@ def apply_attach_transform(part, target, att):
     else:
         raise ValueError(f"Unrecognized {att.rotation_basis=}")
     rot = basis_rot @ euler(*att.joint.rest)
-    att.joint.rest = np.rad2deg(np.array(rot.to_euler()))  # write back so subsequent steps can use updated global pose
+    att.joint.rest = np.rad2deg(
+        np.array(rot.to_euler())
+    )  # write back so subsequent steps can use updated global pose
 
     part.obj.parent = target.obj
     part.obj.location = loc
@@ -271,7 +295,14 @@ def attach(part: Part, target: Part, att: genome.Attachment):
     cutter_extras = [o for o in butil.iter_object_tree(part.obj) if "Cutter" in o.name]
     for o in cutter_extras:
         sanitize_for_boolean(o)
-        butil.modify_mesh(target.obj, "BOOLEAN", object=o, operation="DIFFERENCE", apply=True, solver="FAST")
+        butil.modify_mesh(
+            target.obj,
+            "BOOLEAN",
+            object=o,
+            operation="DIFFERENCE",
+            apply=True,
+            solver="FAST",
+        )
         butil.delete(o)
 
 
@@ -290,13 +321,14 @@ def genome_to_creature(genome: genome.CreatureGenome, name: str):
             extra["index"] = i
 
     # write attribute values that must come before posing/arrangement
-    logger.debug(f"Writing local attributes")
+    logger.debug("Writing local attributes")
     for i, (part, genode) in enumerate(tree.tzip(parts, genome.parts)):
         tags = genode.part_factory.tags
         write_local_attributes(part, i, tags)
 
     for genome, (parent, part) in zip(
-        tree.iter_items(genome.parts, postorder=True), tree.iter_parent_child(parts, postorder=True)
+        tree.iter_items(genome.parts, postorder=True),
+        tree.iter_parent_child(parts, postorder=True),
     ):
         if parent is None:
             continue  # root object doesnt need attaching
@@ -304,7 +336,7 @@ def genome_to_creature(genome: genome.CreatureGenome, name: str):
         attach(part, parent, genome.att)
 
     # write any attributes that must come after posign/arrangement
-    logger.debug(f"Writing global attributes")
+    logger.debug("Writing global attributes")
     for part in parts:
         write_global_attributes(part)
 

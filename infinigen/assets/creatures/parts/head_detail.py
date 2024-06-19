@@ -4,17 +4,16 @@
 # Authors: Alexander Raistrick
 
 
-from platform import node
-
-import bpy
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
 from infinigen.assets.creatures.util.creature import PartFactory
-from infinigen.assets.creatures.util.genome import IKParams, Joint
-from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_surface_muscle
-from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_polar_bezier, nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.genome import Joint
+from infinigen.assets.creatures.util.nodegroups.curve import (
+    nodegroup_polar_bezier,
+    nodegroup_simple_tube_v2,
+)
 from infinigen.assets.creatures.util.nodegroups.geometry import (
     nodegroup_solidify,
     nodegroup_symmetric_clone,
@@ -23,7 +22,7 @@ from infinigen.assets.creatures.util.nodegroups.geometry import (
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 
@@ -48,25 +47,44 @@ def nodegroup_cat_ear(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]},
+    )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: 3.0}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["X"], 1: 3.0},
+        attrs={"operation": "DIVIDE"},
+    )
 
     polarbezier = nw.new_node(
         nodegroup_polar_bezier().name,
-        input_kwargs={"Origin": (-0.07, 0.0, 0.0), "angles_deg": multiply.outputs["Vector"], "Seg Lengths": divide},
+        input_kwargs={
+            "Origin": (-0.07, 0.0, 0.0),
+            "angles_deg": multiply.outputs["Vector"],
+            "Seg Lengths": divide,
+        },
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0, 0.0), (0.3236, 0.98), (0.7462, 0.63), (1.0, 0.0)])
-
-    set_curve_radius = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": polarbezier.outputs["Curve"], "Radius": float_curve}
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0],
+        [(0.0, 0.0), (0.3236, 0.98), (0.7462, 0.63), (1.0, 0.0)],
     )
 
-    set_curve_tilt = nw.new_node(Nodes.SetCurveTilt, input_kwargs={"Curve": set_curve_radius})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": polarbezier.outputs["Curve"], "Radius": float_curve},
+    )
+
+    set_curve_tilt = nw.new_node(
+        Nodes.SetCurveTilt, input_kwargs={"Curve": set_curve_radius}
+    )
 
     multiply_1 = nw.new_node(
         Nodes.VectorMath,
@@ -96,22 +114,34 @@ def nodegroup_cat_ear(nw: NodeWrangler):
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": set_curve_tilt, "Profile Curve": quadratic_bezier}
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": set_curve_tilt, "Profile Curve": quadratic_bezier},
     )
 
     solidify = nw.new_node(
-        nodegroup_solidify().name, input_kwargs={"Mesh": curve_to_mesh, "Distance": group_input.outputs["Thickness"]}
+        nodegroup_solidify().name,
+        input_kwargs={
+            "Mesh": curve_to_mesh,
+            "Distance": group_input.outputs["Thickness"],
+        },
     )
 
-    merge_by_distance = nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": solidify, "Distance": 0.005})
+    merge_by_distance = nw.new_node(
+        Nodes.MergeByDistance, input_kwargs={"Geometry": solidify, "Distance": 0.005}
+    )
 
-    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": merge_by_distance})
+    subdivision_surface = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": merge_by_distance}
+    )
 
     set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth, input_kwargs={"Geometry": subdivision_surface, "Shade Smooth": False}
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": subdivision_surface, "Shade Smooth": False},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_shade_smooth})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_shade_smooth}
+    )
 
 
 class CatEar(PartFactory):
@@ -146,17 +176,30 @@ def nodegroup_cat_nose(nw: NodeWrangler):
         ],
     )
 
-    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": group_input.outputs["Nose Radius"]})
+    cube = nw.new_node(
+        Nodes.MeshCube, input_kwargs={"Size": group_input.outputs["Nose Radius"]}
+    )
 
     subdivision_surface = nw.new_node(
-        Nodes.SubdivisionSurface, input_kwargs={"Mesh": cube, "Level": 4, "Edge Crease": group_input.outputs["Crease"]}
+        Nodes.SubdivisionSurface,
+        input_kwargs={
+            "Mesh": cube,
+            "Level": 4,
+            "Edge Crease": group_input.outputs["Crease"],
+        },
     )
 
     transform = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": subdivision_surface, "Scale": group_input.outputs["Scale"]}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": subdivision_surface,
+            "Scale": group_input.outputs["Scale"],
+        },
     )
 
-    uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={"Radius": group_input.outputs["Nostril Size"]})
+    uv_sphere = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Radius": group_input.outputs["Nostril Size"]}
+    )
 
     transform_1 = nw.new_node(
         Nodes.Transform,
@@ -168,11 +211,17 @@ def nodegroup_cat_nose(nw: NodeWrangler):
         },
     )
 
-    symmetric_clone = nw.new_node(nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_1})
+    symmetric_clone = nw.new_node(
+        nodegroup_symmetric_clone().name, input_kwargs={"Geometry": transform_1}
+    )
 
     difference = nw.new_node(
         Nodes.MeshBoolean,
-        input_kwargs={"Mesh 1": transform, "Mesh 2": symmetric_clone.outputs["Both"], "Self Intersection": True},
+        input_kwargs={
+            "Mesh 1": transform,
+            "Mesh 2": symmetric_clone.outputs["Both"],
+            "Self Intersection": True,
+        },
     )
 
     taper = nw.new_node(nodegroup_taper().name, input_kwargs={"Geometry": difference})

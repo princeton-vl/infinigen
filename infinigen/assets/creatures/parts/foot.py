@@ -4,23 +4,29 @@
 # Authors: Alexander Raistrick
 
 
-import bpy
 import numpy as np
 from numpy.random import normal as N
-from numpy.random import uniform
 
-from infinigen.assets.creatures.util.creature import Part, PartFactory
-from infinigen.assets.creatures.util.genome import IKParams, Joint
-from infinigen.assets.creatures.util.nodegroups.attach import nodegroup_attach_part, nodegroup_surface_muscle
-from infinigen.assets.creatures.util.nodegroups.curve import nodegroup_simple_tube, nodegroup_simple_tube_v2
+from infinigen.assets.creatures.util.creature import PartFactory
+from infinigen.assets.creatures.util.genome import IKParams
+from infinigen.assets.creatures.util.nodegroups.attach import (
+    nodegroup_attach_part,
+    nodegroup_surface_muscle,
+)
+from infinigen.assets.creatures.util.nodegroups.curve import (
+    nodegroup_simple_tube,
+    nodegroup_simple_tube_v2,
+)
 from infinigen.assets.creatures.util.nodegroups.math import nodegroup_deg2_rad
 from infinigen.assets.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 
 
-@node_utils.to_nodegroup("nodegroup_tiger_toe", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_tiger_toe", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_tiger_toe(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -37,14 +43,22 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (-50.0, 25.0, 35.0), "Scale": group_input.outputs["Toe Curl Scalar"]},
+        input_kwargs={
+            0: (-50.0, 25.0, 35.0),
+            "Scale": group_input.outputs["Toe Curl Scalar"],
+        },
         attrs={"operation": "SCALE"},
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]},
+    )
 
     scale_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: separate_xyz.outputs["X"], "Scale": 0.18}, attrs={"operation": "SCALE"}
+        Nodes.VectorMath,
+        input_kwargs={0: separate_xyz.outputs["X"], "Scale": 0.18},
+        attrs={"operation": "SCALE"},
     )
 
     toe = nw.new_node(
@@ -60,10 +74,17 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
     )
 
     uv_sphere = nw.new_node(
-        Nodes.MeshUVSphere, input_kwargs={"Segments": 16, "Rings": 8, "Radius": group_input.outputs["Toebean Radius"]}
+        Nodes.MeshUVSphere,
+        input_kwargs={
+            "Segments": 16,
+            "Rings": 8,
+            "Radius": group_input.outputs["Toebean Radius"],
+        },
     )
 
-    transform_1 = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": uv_sphere, "Scale": (1.5, 1.0, 0.6)})
+    transform_1 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": uv_sphere, "Scale": (1.5, 1.0, 0.6)}
+    )
 
     attach_part = nw.new_node(
         nodegroup_attach_part().name,
@@ -77,7 +98,9 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
         },
     )
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": uv_sphere, "Scale": (1.0, 0.7, 0.6)})
+    transform = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": uv_sphere, "Scale": (1.0, 0.7, 0.6)}
+    )
 
     attach_part_1 = nw.new_node(
         nodegroup_attach_part().name,
@@ -92,7 +115,12 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
     )
 
     combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": separate_xyz.outputs["Z"], "Y": separate_xyz.outputs["Z"], "Z": 3.0}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": separate_xyz.outputs["Z"],
+            "Y": separate_xyz.outputs["Z"],
+            "Z": 3.0,
+        },
     )
 
     toe_top = nw.new_node(
@@ -123,17 +151,25 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
 
     scale_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (1.0, -2.0, -1.0), "Scale": group_input.outputs["Claw Curl Deg"]},
+        input_kwargs={
+            0: (1.0, -2.0, -1.0),
+            "Scale": group_input.outputs["Claw Curl Deg"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["length_rad1_rad2"], 1: group_input.outputs["Claw Pct Length Rad1 Rad2"]},
+        input_kwargs={
+            0: group_input.outputs["length_rad1_rad2"],
+            1: group_input.outputs["Claw Pct Length Rad1 Rad2"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]}
+    )
 
     scale_3 = nw.new_node(
         Nodes.VectorMath,
@@ -201,26 +237,45 @@ def nodegroup_foot(nw: NodeWrangler):
         },
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ,
+        input_kwargs={"Vector": group_input.outputs["length_rad1_rad2"]},
+    )
 
     multiply_add = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: separate_xyz.outputs["Z"], 1: (0.0000, -0.4500, 0.1000), 2: (-0.0700, 0.0000, 0.0000)},
+        input_kwargs={
+            0: separate_xyz.outputs["Z"],
+            1: (0.0000, -0.4500, 0.1000),
+            2: (-0.0700, 0.0000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
     add = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: simple_tube_v2.outputs["Endpoint"], 1: multiply_add.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: simple_tube_v2.outputs["Endpoint"],
+            1: multiply_add.outputs["Vector"],
+        },
     )
 
     multiply_add_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: separate_xyz.outputs["Z"], 1: (0.0000, 0.4500, 0.1000), 2: (-0.0700, 0.0000, 0.0000)},
+        input_kwargs={
+            0: separate_xyz.outputs["Z"],
+            1: (0.0000, 0.4500, 0.1000),
+            2: (-0.0700, 0.0000, 0.0000),
+        },
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
     add_1 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: simple_tube_v2.outputs["Endpoint"], 1: multiply_add_1.outputs["Vector"]}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: simple_tube_v2.outputs["Endpoint"],
+            1: multiply_add_1.outputs["Vector"],
+        },
     )
 
     mesh_line = nw.new_node(
@@ -239,70 +294,112 @@ def nodegroup_foot(nw: NodeWrangler):
             "length_rad1_rad2": group_input.outputs["Toe Length Rad1 Rad2"],
             "Toebean Radius": group_input.outputs["Toebean Radius"],
             "Claw Curl Deg": group_input.outputs["Claw Curl Deg"],
-            "Claw Pct Length Rad1 Rad2": group_input.outputs["Claw Pct Length Rad1 Rad2"],
+            "Claw Pct Length Rad1 Rad2": group_input.outputs[
+                "Claw Pct Length Rad1 Rad2"
+            ],
             "Toe Curl Scalar": group_input.outputs["Toe Curl Scalar"],
         },
     )
 
     instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": mesh_line, "Instance": tigertoe.outputs["Geometry"]}
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": mesh_line, "Instance": tigertoe.outputs["Geometry"]},
     )
 
     rotate_instances_1 = nw.new_node(
         Nodes.RotateInstances,
-        input_kwargs={"Instances": instance_on_points, "Rotation": group_input.outputs["Toe Rotate"]},
+        input_kwargs={
+            "Instances": instance_on_points,
+            "Rotation": group_input.outputs["Toe Rotate"],
+        },
     )
 
     index = nw.new_node(Nodes.Index)
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Num Toes"], 1: -1.0000})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Num Toes"], 1: -1.0000}
+    )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={0: index, 1: add_2}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math, input_kwargs={0: index, 1: add_2}, attrs={"operation": "DIVIDE"}
+    )
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (0.0000, 0.0000, -1.0000), "Scale": group_input.outputs["Toe Splay"]},
+        input_kwargs={
+            0: (0.0000, 0.0000, -1.0000),
+            "Scale": group_input.outputs["Toe Splay"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: (0.0000, 0.0000, 1.0000), "Scale": group_input.outputs["Toe Splay"]},
+        input_kwargs={
+            0: (0.0000, 0.0000, 1.0000),
+            "Scale": group_input.outputs["Toe Splay"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Vector": divide, 9: scale.outputs["Vector"], 10: scale_1.outputs["Vector"]},
+        input_kwargs={
+            "Vector": divide,
+            9: scale.outputs["Vector"],
+            10: scale_1.outputs["Vector"],
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    deg2rad = nw.new_node(nodegroup_deg2_rad().name, input_kwargs={"Deg": map_range.outputs["Vector"]})
-
-    rotate_instances = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": rotate_instances_1, "Rotation": deg2rad}
+    deg2rad = nw.new_node(
+        nodegroup_deg2_rad().name, input_kwargs={"Deg": map_range.outputs["Vector"]}
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances})
+    rotate_instances = nw.new_node(
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": rotate_instances_1, "Rotation": deg2rad},
+    )
 
-    uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={"Segments": 16, "Rings": 8, "Radius": 0.01500})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances}
+    )
+
+    uv_sphere = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Segments": 16, "Rings": 8, "Radius": 0.01500}
+    )
 
     add_3 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: simple_tube_v2.outputs["Endpoint"], 1: (-0.0200, 0.0000, 0.0000)}
+        Nodes.VectorMath,
+        input_kwargs={
+            0: simple_tube_v2.outputs["Endpoint"],
+            1: (-0.0200, 0.0000, 0.0000),
+        },
     )
 
     transform = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": uv_sphere, "Translation": add_3.outputs["Vector"], "Scale": (0.7000, 1.0000, 1.0000)},
+        input_kwargs={
+            "Geometry": uv_sphere,
+            "Translation": add_3.outputs["Vector"],
+            "Scale": (0.7000, 1.0000, 1.0000),
+        },
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": simple_tube_v2.outputs["Geometry"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": simple_tube_v2.outputs["Geometry"]}
+    )
 
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": simple_tube_v2.outputs["Skeleton Curve"]})
+    reroute_1 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": simple_tube_v2.outputs["Skeleton Curve"]}
+    )
 
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Toe Length Rad1 Rad2"], 1: group_input.outputs["Thumb Pct"]},
+        input_kwargs={
+            0: group_input.outputs["Toe Length Rad1 Rad2"],
+            1: group_input.outputs["Thumb Pct"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -312,7 +409,9 @@ def nodegroup_foot(nw: NodeWrangler):
             "length_rad1_rad2": multiply.outputs["Vector"],
             "Toebean Radius": group_input.outputs["Toebean Radius"],
             "Claw Curl Deg": group_input.outputs["Claw Curl Deg"],
-            "Claw Pct Length Rad1 Rad2": group_input.outputs["Claw Pct Length Rad1 Rad2"],
+            "Claw Pct Length Rad1 Rad2": group_input.outputs[
+                "Claw Pct Length Rad1 Rad2"
+            ],
             "Toe Curl Scalar": group_input.outputs["Toe Curl Scalar"],
         },
     )
@@ -356,19 +455,26 @@ def nodegroup_foot(nw: NodeWrangler):
     )
 
     instance_on_points_1 = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": mesh_line, "Instance": tigertoe.outputs["Claw"]}
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": mesh_line, "Instance": tigertoe.outputs["Claw"]},
     )
 
     rotate_instances_2 = nw.new_node(
         Nodes.RotateInstances,
-        input_kwargs={"Instances": instance_on_points_1, "Rotation": group_input.outputs["Toe Rotate"]},
+        input_kwargs={
+            "Instances": instance_on_points_1,
+            "Rotation": group_input.outputs["Toe Rotate"],
+        },
     )
 
     rotate_instances_3 = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": rotate_instances_2, "Rotation": deg2rad}
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": rotate_instances_2, "Rotation": deg2rad},
     )
 
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances_3})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances_3}
+    )
 
     attach_part_1 = nw.new_node(
         nodegroup_attach_part().name,
@@ -385,7 +491,10 @@ def nodegroup_foot(nw: NodeWrangler):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [realize_instances_1, attach_part_1.outputs["Geometry"]]}
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [realize_instances_1, attach_part_1.outputs["Geometry"]]
+        },
     )
 
     group_output = nw.new_node(
@@ -408,7 +517,8 @@ class Foot(PartFactory):
 
     def sample_params(self):
         return {
-            "length_rad1_rad2": np.array((0.27, 0.04, 0.09)) * N(1, (0.2, 0.05, 0.05), 3),
+            "length_rad1_rad2": np.array((0.27, 0.04, 0.09))
+            * N(1, (0.2, 0.05, 0.05), 3),
             "Num Toes": max(int(N(4, 1)), 2),
             "Toe Length Rad1 Rad2": np.array((0.3, 0.045, 0.025)) * N(1, 0.1, 3),
             "Toe Rotate": (0.0, -N(0.7, 0.15), 0.0),
@@ -420,7 +530,9 @@ class Foot(PartFactory):
 
     def make_part(self, params):
         part = nodegroup_to_part(nodegroup_foot, params, split_extras=True)
-        part.iks = {1.0: IKParams("foot", rotation_weight=0.1, chain_parts=2, chain_length=-1)}
+        part.iks = {
+            1.0: IKParams("foot", rotation_weight=0.1, chain_parts=2, chain_length=-1)
+        }
         part.settings["rig_extras"] = True
         tag_object(part.obj, "foot")
         return part

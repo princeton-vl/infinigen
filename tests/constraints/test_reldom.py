@@ -4,10 +4,6 @@
 
 # Authors: Alexander Raistrick
 
-import copy
-from pprint import pprint
-
-import pytest
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -18,13 +14,26 @@ def test_reldom_compatible_floorwall():
     room = r.Domain({t.Semantics.Room, -t.Semantics.Object}, [])
 
     nofloorrel = (
-        -cl.StableAgainst({}, {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Ceiling, -t.Subpart.Wall}),
+        -cl.StableAgainst(
+            {},
+            {
+                t.Subpart.SupportSurface,
+                t.Subpart.Visible,
+                -t.Subpart.Ceiling,
+                -t.Subpart.Wall,
+            },
+        ),
         room,
     )
 
     against = cl.StableAgainst(
         {t.Subpart.Back, -t.Subpart.Top, -t.Subpart.Front},
-        {t.Subpart.Visible, t.Subpart.Wall, -t.Subpart.SupportSurface, -t.Subpart.Ceiling},
+        {
+            t.Subpart.Visible,
+            t.Subpart.Wall,
+            -t.Subpart.SupportSurface,
+            -t.Subpart.Ceiling,
+        },
     )
     wallrel = (against, room)
 
@@ -34,13 +43,26 @@ def test_reldom_compatible_floorwall():
 
 def test_reldom_compatible_negation():
     nofloorrel = (
-        -cl.StableAgainst({}, {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Ceiling, -t.Subpart.Wall}),
+        -cl.StableAgainst(
+            {},
+            {
+                t.Subpart.SupportSurface,
+                t.Subpart.Visible,
+                -t.Subpart.Ceiling,
+                -t.Subpart.Wall,
+            },
+        ),
         r.Domain({t.Semantics.Room, -t.Semantics.Object}, []),
     )
 
     on = cl.StableAgainst(
         {t.Subpart.Bottom, -t.Subpart.Front, -t.Subpart.Top, -t.Subpart.Back},
-        {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Wall, -t.Subpart.Ceiling},
+        {
+            t.Subpart.SupportSurface,
+            t.Subpart.Visible,
+            -t.Subpart.Wall,
+            -t.Subpart.Ceiling,
+        },
     )
     specific_floorrel = (on, r.Domain({t.Semantics.Room, -t.Semantics.Object}, []))
 
@@ -53,7 +75,12 @@ def test_reldom_intersects():
     onroom = (
         cl.StableAgainst(
             {t.Subpart.Bottom, -t.Subpart.Front, -t.Subpart.Top, -t.Subpart.Back},
-            {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Wall, -t.Subpart.Ceiling},
+            {
+                t.Subpart.SupportSurface,
+                t.Subpart.Visible,
+                -t.Subpart.Wall,
+                -t.Subpart.Ceiling,
+            },
         ),
         r.Domain({t.Semantics.Room, -t.Semantics.Object}, []),
     )
@@ -61,7 +88,12 @@ def test_reldom_intersects():
     onlivingroom = (
         cl.StableAgainst(
             {t.Subpart.Bottom, -t.Subpart.Front, -t.Subpart.Top, -t.Subpart.Back},
-            {t.Subpart.SupportSurface, t.Subpart.Visible, -t.Subpart.Wall, -t.Subpart.Ceiling},
+            {
+                t.Subpart.SupportSurface,
+                t.Subpart.Visible,
+                -t.Subpart.Wall,
+                -t.Subpart.Ceiling,
+            },
         ),
         r.Domain(
             {

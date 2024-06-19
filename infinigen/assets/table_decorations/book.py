@@ -8,15 +8,13 @@ import bmesh
 # Authors: Lingjie Mei
 import bpy
 import numpy as np
-import trimesh
 from numpy.random import uniform
-from trimesh import proximity
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.mesh import longest_ray
-from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube, obj2trimesh
+from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube
 from infinigen.assets.utils.uv import wrap_front_back_side
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -97,7 +95,13 @@ class BookFactory(AssetFactory):
         paper = self.make_paper(depth, height, width)
         obj = new_cube()
         count = 8
-        butil.modify_mesh(obj, "ARRAY", count=count, relative_offset_displace=(0, 0, 1), use_merge_vertices=True)
+        butil.modify_mesh(
+            obj,
+            "ARRAY",
+            count=count,
+            relative_offset_displace=(0, 0, 1),
+            use_merge_vertices=True,
+        )
         obj.location = 1, 1, 1
         butil.apply_transform(obj, loc=True)
         with butil.ViewportMode(obj, "EDIT"):
@@ -108,7 +112,11 @@ class BookFactory(AssetFactory):
                     geom.append(v)
             bmesh.ops.delete(bm, geom=geom, context="VERTS")
         obj.location = 0, -self.margin, 0
-        obj.scale = (width + self.margin) / 2, height / 2 + self.margin, depth / 2 / count
+        obj.scale = (
+            (width + self.margin) / 2,
+            height / 2 + self.margin,
+            depth / 2 / count,
+        )
         butil.apply_transform(obj, True)
         x, y, z = read_co(obj).T
         ratio = np.minimum(z / depth, 1 - z / depth)
@@ -132,7 +140,10 @@ class BookColumnFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(BookColumnFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            self.base_factories = [BookFactory(np.random.randint(1e5)) for _ in range(np.random.randint(1, 4))]
+            self.base_factories = [
+                BookFactory(np.random.randint(1e5))
+                for _ in range(np.random.randint(1, 4))
+            ]
             self.n_books = np.random.randint(10, 20)
             self.max_angle = uniform(0, np.pi / 9) if uniform() < 0.7 else 0
             self.max_rel_scale = max(f.rel_scale for f in self.base_factories)
@@ -142,7 +153,9 @@ class BookColumnFactory(AssetFactory):
         height = 0.15 * self.max_rel_scale * self.max_skewness
         return new_bbox(
             0,
-            (0.02 + np.sin(self.max_angle) * height) * self.n_books * self.max_rel_scale,
+            (0.02 + np.sin(self.max_angle) * height)
+            * self.n_books
+            * self.max_rel_scale,
             -0.15 * self.max_rel_scale,
             0,
             0,
@@ -158,11 +171,19 @@ class BookColumnFactory(AssetFactory):
             obj.location = [-np.max(x), -np.min(y), -np.min(z)]
             butil.apply_transform(obj, True)
             if uniform() < 0.5:
-                obj.rotation_euler = np.pi / 2 - uniform(0, self.max_angle), 0, np.pi / 2
+                obj.rotation_euler = (
+                    np.pi / 2 - uniform(0, self.max_angle),
+                    0,
+                    np.pi / 2,
+                )
             else:
                 obj.location[-1] = -np.max(z)
                 butil.apply_transform(obj, True)
-                obj.rotation_euler = np.pi / 2 + uniform(0, self.max_angle), 0, np.pi / 2
+                obj.rotation_euler = (
+                    np.pi / 2 + uniform(0, self.max_angle),
+                    0,
+                    np.pi / 2,
+                )
             butil.apply_transform(obj)
             if i > 0:
                 obj.location[0] = 10
@@ -180,14 +201,19 @@ class BookColumnFactory(AssetFactory):
 
 
 def rotate(theta, x, y):
-    return x * math.cos(theta) - y * math.sin(theta), x * math.sin(theta) + y * math.cos(theta)
+    return x * math.cos(theta) - y * math.sin(theta), x * math.sin(
+        theta
+    ) + y * math.cos(theta)
 
 
 class BookStackFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(BookStackFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            self.base_factories = [BookFactory(np.random.randint(1e5)) for _ in range(np.random.randint(1, 4))]
+            self.base_factories = [
+                BookFactory(np.random.randint(1e5))
+                for _ in range(np.random.randint(1, 4))
+            ]
             self.n_books = int(log_uniform(5, 15))
             self.max_angle = uniform(np.pi / 9, np.pi / 6) if uniform() < 0.7 else 0
             self.max_rel_scale = max(f.rel_scale for f in self.base_factories)

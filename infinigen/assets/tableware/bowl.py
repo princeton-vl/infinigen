@@ -37,13 +37,22 @@ class BowlFactory(TablewareFactory):
         return new_bbox(-radius, radius, -radius, radius, 0, self.z_length * self.scale)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        x_anchors = 0, self.x_bottom, self.x_bottom + 1e-3, self.x_bottom, self.x_mid, self.x_end
+        x_anchors = (
+            0,
+            self.x_bottom,
+            self.x_bottom + 1e-3,
+            self.x_bottom,
+            self.x_mid,
+            self.x_end,
+        )
         z_anchors = 0, 0, 0, self.z_bottom, self.z_length / 2, self.z_length
         anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
         obj = spin(anchors, [2, 3], 16, 64)
         subsurf(obj, 1)
         self.solidify_with_inside(obj, self.thickness)
-        butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=np.random.randint(2, 5))
+        butil.modify_mesh(
+            obj, "BEVEL", width=self.thickness / 2, segments=np.random.randint(2, 5)
+        )
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
         subsurf(obj, 1)

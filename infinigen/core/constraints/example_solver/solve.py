@@ -11,22 +11,17 @@ from pathlib import Path
 import bpy
 import gin
 import numpy as np
-from tqdm import tqdm, trange
+from tqdm import trange
 
-from infinigen.core import surface, tagging
-from infinigen.core import tags as t
-from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import evaluator
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.constraint_language.util import delete_obj
 from infinigen.core.constraints.evaluator import domain_contains
-from infinigen.core.constraints.example_solver import greedy, propose_continous, propose_discrete
-from infinigen.core.constraints.example_solver.geometry import parse_scene, planes
+from infinigen.core.constraints.example_solver import (
+    greedy,
+    propose_continous,
+    propose_discrete,
+)
 from infinigen.core.constraints.example_solver.state_def import State
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.placement import parse_asset_name
 from infinigen.core.util import blender as butil
 
 from .annealing import SimulatedAnnealingSolver
@@ -58,7 +53,9 @@ class LinearDecaySchedule:
 
 @gin.configurable
 class Solver:
-    def __init__(self, output_folder: Path, multistory: bool = False, restrict_moves: list = None):
+    def __init__(
+        self, output_folder: Path, multistory: bool = False, restrict_moves: list = None
+    ):
         """Initialize the solver
 
         Parameters
@@ -115,7 +112,9 @@ class Solver:
 
         if restrict_moves is not None:
             schedules = {k: v for k, v in schedules.items() if k in restrict_moves}
-            logger.info(f"Restricting {self.__class__.__name__} moves to {list(schedules.keys())}")
+            logger.info(
+                f"Restricting {self.__class__.__name__} moves to {list(schedules.keys())}"
+            )
 
         return schedules
 
@@ -132,7 +131,9 @@ class Solver:
         return np.random.choice(funcs, p=weights / weights.sum())
 
     def solve_rooms(self, scene_seed, consgraph: cl.Problem, filter: r.Domain):
-        self.state, self.all_roomtypes, self.dimensions = self.room_solver_fn(scene_seed).solve()
+        self.state, self.all_roomtypes, self.dimensions = self.room_solver_fn(
+            scene_seed
+        ).solve()
         return self.state
 
     @gin.configurable
@@ -150,14 +151,21 @@ class Solver:
 
         desc_full = (desc, *var_assignments.values())
 
-        dom_assignments = {k: r.Domain(self.state.objs[objkey].tags) for k, objkey in var_assignments.items()}
+        dom_assignments = {
+            k: r.Domain(self.state.objs[objkey].tags)
+            for k, objkey in var_assignments.items()
+        }
         filter_domain = r.substitute_all(filter_domain, dom_assignments)
 
         if not r.domain_finalized(filter_domain):
-            raise ValueError(f"Cannot solve {desc_full=} with non-finalized domain {filter_domain}")
+            raise ValueError(
+                f"Cannot solve {desc_full=} with non-finalized domain {filter_domain}"
+            )
 
         orig_bounds = r.constraint_bounds(consgraph)
-        bounds = propose_discrete.preproc_bounds(orig_bounds, self.state, filter_domain, print_bounds=print_bounds)
+        bounds = propose_discrete.preproc_bounds(
+            orig_bounds, self.state, filter_domain, print_bounds=print_bounds
+        )
 
         if len(bounds) == 0:
             logger.info(f"No objects to be added for {desc_full=}, skipping")
@@ -185,7 +193,9 @@ class Solver:
 
         logger.info(self.optim.curr_result.to_df())
 
-        violations = {k: v for k, v in self.optim.curr_result.violations.items() if v > 0}
+        violations = {
+            k: v for k, v in self.optim.curr_result.violations.items() if v > 0
+        }
 
         if len(violations):
             msg = f"Solver has failed to satisfy constraints for stage {desc_full}. {violations=}."

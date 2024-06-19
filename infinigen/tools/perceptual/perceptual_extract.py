@@ -25,7 +25,9 @@ if __name__ == "__main__":
             for file_name in os.listdir(folder_path):
                 if any(file_name.lower().endswith(ext) for ext in image_formats):
                     old_file_path = os.path.join(folder_path, file_name)
-                    new_file_name = f"{folder_name}.png"  # Change the extension if needed
+                    new_file_name = (
+                        f"{folder_name}.png"  # Change the extension if needed
+                    )
                     new_file_path = os.path.join(output_directory, new_file_name)
 
                     # Move and rename the image file

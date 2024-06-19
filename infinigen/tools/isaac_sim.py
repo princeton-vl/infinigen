@@ -24,7 +24,6 @@ from pxr import Sdf, Usd, UsdGeom, UsdLux
 
 enable_extension("omni.isaac.examples")
 from omni.isaac.core.controllers import BaseController
-from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.wheeled_robots.robots import WheeledRobot
 from omni.physx.scripts import utils
@@ -41,7 +40,9 @@ class RobotController(BaseController):
 class InfinigenIsaacScene(object):
     def __init__(self, cfg):
         self.cfg = cfg
-        self.world = World(stage_units_in_meters=1.0, backend="numpy", physics_dt=1 / 400.0)
+        self.world = World(
+            stage_units_in_meters=1.0, backend="numpy", physics_dt=1 / 400.0
+        )
         self.world._physics_context.set_gravity(-9.8)
         self.scene = self.world.scene
         self._support = None
@@ -53,7 +54,11 @@ class InfinigenIsaacScene(object):
         self._add_robot()
 
     def _add_infinigen_scene(self):
-        create_prim(prim_path="/World/Support", usd_path=self.cfg.scene_path, semantic_label="scene")
+        create_prim(
+            prim_path="/World/Support",
+            usd_path=self.cfg.scene_path,
+            semantic_label="scene",
+        )
         self._support = XFormPrim(prim_path="/World/Support", name="Support")
 
         stage = omni.usd.get_context().get_stage()
@@ -72,14 +77,18 @@ class InfinigenIsaacScene(object):
         for key, value in relations.items():
             obj = value.get("obj")
             if obj:
-                obj_to_target[obj.replace("(", "_").replace(")", "_").replace(".", "_")] = key
+                obj_to_target[
+                    obj.replace("(", "_").replace(")", "_").replace(".", "_")
+                ] = key
 
         for prim in prims:
             prim_name = prim.GetName()
             target = obj_to_target.get(prim_name)
 
             if "SPLIT" in prim_name:
-                do_not_cast_shadows = prim.CreateAttribute("primvars:doNotCastShadows", Sdf.ValueTypeNames.Bool)
+                do_not_cast_shadows = prim.CreateAttribute(
+                    "primvars:doNotCastShadows", Sdf.ValueTypeNames.Bool
+                )
                 do_not_cast_shadows.Set(True)
 
             if "terrain" in prim_name:
@@ -107,7 +116,10 @@ class InfinigenIsaacScene(object):
             prim_path="/World/DomeLight",
             prim_type="DomeLight",
             select_new_prim=False,
-            attributes={UsdLux.Tokens.inputsIntensity: 5000, UsdLux.Tokens.inputsColor: (0.7, 0.88, 1.0)},
+            attributes={
+                UsdLux.Tokens.inputsIntensity: 5000,
+                UsdLux.Tokens.inputsColor: (0.7, 0.88, 1.0),
+            },
             create_default_xform=True,
         )
         omni_exec(

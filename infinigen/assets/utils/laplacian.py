@@ -5,14 +5,12 @@
 
 
 import bmesh
-import bpy
 import numpy as np
 from numpy.random import uniform
 from scipy.ndimage import convolve
-from skimage.measure import find_contours, marching_cubes
+from skimage.measure import marching_cubes
 
 from infinigen.assets.utils.object import data2mesh
-from infinigen.core.util import blender as butil
 
 
 def mesh_grid(n, sizes):
@@ -21,13 +19,16 @@ def mesh_grid(n, sizes):
 
 
 def init_mesh_3d(n, sizes):
-    fn = (
-        lambda x, y, z: uniform(0.5, 1) * (x - uniform(-0.2, 0.2)) ** 2
-        + uniform(0.5, 1) * (y - uniform(-0.2, 0.2)) ** 2
-        + uniform(0.1, 0.2) * z**2
-        < 0.2 * 0.2
-    )
-    extend = lambda f: uniform(0, 1, f.shape) < convolve(f, np.ones((3, 3, 3)))
+    def fn(x, y, z):
+        return (
+            uniform(0.5, 1) * (x - uniform(-0.2, 0.2)) ** 2
+            + uniform(0.5, 1) * (y - uniform(-0.2, 0.2)) ** 2
+            + uniform(0.1, 0.2) * z**2
+            < 0.2 * 0.2
+        )
+
+    def extend(f):
+        return uniform(0, 1, f.shape) < convolve(f, np.ones((3, 3, 3)))
 
     x, y, z = mesh_grid(n, sizes)
     f = fn(x, y, z)
@@ -37,7 +38,9 @@ def init_mesh_3d(n, sizes):
 
 
 def init_mesh_2d(n, sizes):
-    fn = lambda x, y: x <= 2 / n
+    def fn(x, y):
+        return x <= 2 / n
+
     x, y = mesh_grid(n, sizes)
     f = fn(x, y)
     a = np.where(f, 0.99, 0) + uniform(0, 0.01, x.shape)
@@ -57,7 +60,9 @@ def build_laplacian(st, a, b, t, k, dt, tau, eps, alpha, gamma, teq):
     return a, b
 
 
-def build_laplacian_3d(n=32, t=800, k=2.0, dt=0.0005, tau=0.0003, eps=0.01, alpha=0.9, gamma=10.0, teq=1.0):
+def build_laplacian_3d(
+    n=32, t=800, k=2.0, dt=0.0005, tau=0.0003, eps=0.01, alpha=0.9, gamma=10.0, teq=1.0
+):
     stencil = (
         np.array(
             [
@@ -82,12 +87,26 @@ def build_laplacian_3d(n=32, t=800, k=2.0, dt=0.0005, tau=0.0003, eps=0.01, alph
     vertices[:, :-1] -= 1
     x, y, z = vertices.T
     vertices[:, :-1] *= np.expand_dims(
-        np.maximum(np.abs(x), np.abs(y)) / (np.sqrt(x**2 + y**2) + 1e-6) * (1 - z / height) + z / height, -1
+        np.maximum(np.abs(x), np.abs(y))
+        / (np.sqrt(x**2 + y**2) + 1e-6)
+        * (1 - z / height)
+        + z / height,
+        -1,
     )
     return data2mesh(vertices, [], faces)
 
 
-def build_laplacian_2d(n=128, t=10000, k=1.5, dt=0.0002, tau=0.0003, eps=0.01, alpha=0.9, gamma=10.0, teq=1.0):
+def build_laplacian_2d(
+    n=128,
+    t=10000,
+    k=1.5,
+    dt=0.0002,
+    tau=0.0003,
+    eps=0.01,
+    alpha=0.9,
+    gamma=10.0,
+    teq=1.0,
+):
     stencil = np.array([[1, 4, 1], [4, -20, 4], [1, 4, 1]]) / 20
     sizes = [0, 1], [0, 1]
 

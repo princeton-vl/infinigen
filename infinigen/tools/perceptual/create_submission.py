@@ -11,7 +11,11 @@ import sys
 
 def select_random_files_to_csv(folder_path, k, output_directory):
     # Get all files in the folder
-    files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    files = [
+        f
+        for f in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, f))
+    ]
 
     # Select k random files
     selected_files = random.sample(files, min(k, len(files)))

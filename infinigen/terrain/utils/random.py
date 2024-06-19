@@ -33,7 +33,14 @@ def chance(x):
 def perlin_noise(positions, device, freq, octaves, seed):
     dll = load_cdll(f"terrain/lib/{device}/utils/FastNoiseLite.so")
     func = dll.perlin_call
-    func.argtypes = [c_size_t, POINTER(c_float), POINTER(c_float), c_int32, c_int32, c_float]
+    func.argtypes = [
+        c_size_t,
+        POINTER(c_float),
+        POINTER(c_float),
+        c_int32,
+        c_int32,
+        c_float,
+    ]
     func.restype = None
     values = np.zeros(len(positions), dtype=np.float32)
     func(

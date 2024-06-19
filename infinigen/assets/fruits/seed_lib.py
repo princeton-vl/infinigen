@@ -4,14 +4,9 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_seed_shader(nw: NodeWrangler):
@@ -20,7 +15,8 @@ def shader_seed_shader(nw: NodeWrangler):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 7.8}
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": texture_coordinate.outputs["Object"], "Scale": 7.8},
     )
 
     mix = nw.new_node(
@@ -32,16 +28,24 @@ def shader_seed_shader(nw: NodeWrangler):
         },
     )
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": 0.5114})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": 0.5114}
+    )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_strawberry_seed", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_strawberry_seed", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_strawberry_seed(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 8)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 8)]
+    )
 
     quadratic_bezier = nw.new_node(
         Nodes.QuadraticBezier,
@@ -55,23 +59,47 @@ def nodegroup_strawberry_seed(nw: NodeWrangler):
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
 
-    float_curve_1 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]})
-    node_utils.assign_curve(float_curve_1.mapping.curves[0], [(0.0, 0.0281), (0.7023, 0.2781), (1.0, 0.0281)])
+    float_curve_1 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve_1.mapping.curves[0],
+        [(0.0, 0.0281), (0.7023, 0.2781), (1.0, 0.0281)],
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: float_curve_1, 1: 0.9}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve_1, 1: 0.9},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": quadratic_bezier, "Radius": multiply})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": quadratic_bezier, "Radius": multiply},
+    )
 
-    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Resolution": group_input.outputs["Resolution"]})
+    curve_circle = nw.new_node(
+        Nodes.CurveCircle,
+        input_kwargs={"Resolution": group_input.outputs["Resolution"]},
+    )
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": curve_to_mesh, "Material": surface.shaderfunc_to_material(shader_seed_shader)},
+        input_kwargs={
+            "Geometry": curve_to_mesh,
+            "Material": surface.shaderfunc_to_material(shader_seed_shader),
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_material_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_material_1}
+    )

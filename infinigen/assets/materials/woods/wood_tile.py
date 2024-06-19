@@ -6,9 +6,21 @@ import numpy as np
 
 
 def get_wood_tiles():
-    from . import composite_wood_tile, crossed_wood_tile, hexagon_wood_tile, square_wood_tile, staggered_wood_tile
+    from . import (
+        composite_wood_tile,
+        crossed_wood_tile,
+        hexagon_wood_tile,
+        square_wood_tile,
+        staggered_wood_tile,
+    )
 
-    return [square_wood_tile, staggered_wood_tile, crossed_wood_tile, composite_wood_tile, hexagon_wood_tile]
+    return [
+        square_wood_tile,
+        staggered_wood_tile,
+        crossed_wood_tile,
+        composite_wood_tile,
+        hexagon_wood_tile,
+    ]
 
 
 def apply(obj, selection=None, vertical=False, scale=None, alternating=None, **kwargs):

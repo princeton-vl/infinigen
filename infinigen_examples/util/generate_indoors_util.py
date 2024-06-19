@@ -10,9 +10,8 @@ import typing
 import bpy
 import gin
 import numpy as np
-import trimesh
 from mathutils import Vector
-from numpy.random import normal, randint, uniform
+from numpy.random import uniform
 
 from infinigen.assets import weather
 from infinigen.assets.materials import invisible_to_camera
@@ -43,7 +42,13 @@ def within_bbox_2d(verts, bbox):
     )
 
 
-def create_outdoor_backdrop(terrain: Terrain, house_bbox: tuple, cam, p: pipeline.RandomStageExecutor, params: dict):
+def create_outdoor_backdrop(
+    terrain: Terrain,
+    house_bbox: tuple,
+    cam,
+    p: pipeline.RandomStageExecutor,
+    params: dict,
+):
     all_vertices = []
     for name in terrain.terrain_objs:
         if name not in hidden_in_viewport:
@@ -95,14 +100,19 @@ def create_outdoor_backdrop(terrain: Terrain, house_bbox: tuple, cam, p: pipelin
     def add_grass(target):
         select_max = params.get("grass_select_max", 0.5)
         selection = density.placement_mask(
-            normal_dir=(0, 0, 1), scale=0.1, return_scalar=True, select_thresh=uniform(select_max / 2, select_max)
+            normal_dir=(0, 0, 1),
+            scale=0.1,
+            return_scalar=True,
+            select_thresh=uniform(select_max / 2, select_max),
         )
         grass.apply(target, selection=selection)
 
     p.run_stage("grass", add_grass, terrain_inview)
 
     def add_rocks(target):
-        selection = density.placement_mask(scale=0.15, select_thresh=0.5, normal_thresh=0.7, return_scalar=True)
+        selection = density.placement_mask(
+            scale=0.15, select_thresh=0.5, normal_thresh=0.7, return_scalar=True
+        )
         _, rock_col = pebbles.apply(target, selection=selection)
         return rock_col
 
@@ -155,7 +165,11 @@ def hide_other_rooms(state, rooms_split, keep_rooms: list[str]):
         o
         for k, os in state.objs.items()
         if t.Semantics.Cutter in os.tags
-        and not any(rel.target_name == roomname for rel in os.relations for roomname in keep_rooms)
+        and not any(
+            rel.target_name == roomname
+            for rel in os.relations
+            for roomname in keep_rooms
+        )
         for o in butil.iter_object_tree(os.obj)
     ]
     for o in hide_cutters:
@@ -174,8 +188,12 @@ def apply_greedy_restriction(
     for k, d in stages.items():
         if scope_domain is not None and not d.intersects(scope_domain):
             continue
-        stages[k], match = r.domain_tag_substitute(d, var, r.Domain(filter_tags).with_tags(var), return_match=True)
-        logger.info(f"{apply_greedy_restriction.__name__} restricting {k=} to {filter_tags=} for {var=}")
+        stages[k], match = r.domain_tag_substitute(
+            d, var, r.Domain(filter_tags).with_tags(var), return_match=True
+        )
+        logger.info(
+            f"{apply_greedy_restriction.__name__} restricting {k=} to {filter_tags=} for {var=}"
+        )
 
 
 @gin.configurable
@@ -213,8 +231,12 @@ def restrict_solving(
     """
 
     obj_domain = r.Domain({t.Semantics.Object})
-    primary_obj_domain = r.Domain({t.Semantics.Object}, [(-cl.AnyRelation(), obj_domain)])
-    secondary_obj_domain = r.Domain({t.Semantics.Object}, [(cl.AnyRelation(), obj_domain)])
+    primary_obj_domain = r.Domain(
+        {t.Semantics.Object}, [(-cl.AnyRelation(), obj_domain)]
+    )
+    secondary_obj_domain = r.Domain(
+        {t.Semantics.Object}, [(cl.AnyRelation(), obj_domain)]
+    )
 
     if restrict_parent_rooms is not None:
         apply_greedy_restriction(stages, restrict_parent_rooms, cu.variable_room)
@@ -223,7 +245,9 @@ def restrict_solving(
         apply_greedy_restriction(stages, restrict_parent_objs, cu.variable_obj)
 
     if restrict_child_primary is not None:
-        restrict_child_primary = t.to_tag_set(restrict_child_primary, fac_context=usage_lookup._factory_lookup)
+        restrict_child_primary = t.to_tag_set(
+            restrict_child_primary, fac_context=usage_lookup._factory_lookup
+        )
         for k, d in stages.items():
             if d.intersects(primary_obj_domain):
                 logger.info(
@@ -232,7 +256,9 @@ def restrict_solving(
                 stages[k] = d.intersection(r.Domain(restrict_child_primary))
 
     if restrict_child_secondary is not None:
-        restrict_child_secondary = t.to_tag_set(restrict_child_secondary, fac_context=usage_lookup._factory_lookup)
+        restrict_child_secondary = t.to_tag_set(
+            restrict_child_secondary, fac_context=usage_lookup._factory_lookup
+        )
         for k, d in stages.items():
             if d.intersects(secondary_obj_domain):
                 logger.info(
@@ -240,7 +266,10 @@ def restrict_solving(
                 )
                 stages[k] = d.intersection(r.Domain(restrict_child_secondary))
 
-    quantity_limits = {cu.variable_room: solve_max_rooms, cu.variable_obj: solve_max_parent_obj}
+    quantity_limits = {
+        cu.variable_room: solve_max_rooms,
+        cu.variable_obj: solve_max_parent_obj,
+    }
 
     if consgraph_filters is not None:
         if isinstance(consgraph_filters, str):
@@ -248,10 +277,16 @@ def restrict_solving(
         assert isinstance(consgraph_filters, typing.Iterable)
         old_counts = (len(problem.constraints), len(problem.score_terms))
 
-        filter = lambda d: {k: v for k, v in d.items() if any(fi in k for fi in consgraph_filters)}
+        def filter(d):
+            return {
+                k: v for k, v in d.items() if any(fi in k for fi in consgraph_filters)
+            }
+
         problem = cl.Problem(filter(problem.constraints), filter(problem.score_terms))
 
         new_counts = (len(problem.constraints), len(problem.score_terms))
-        logger.info(f"restrict_solving filtered consgraph from {old_counts=} {new_counts=} using {consgraph_filters=}")
+        logger.info(
+            f"restrict_solving filtered consgraph from {old_counts=} {new_counts=} using {consgraph_filters=}"
+        )
 
     return stages, problem, quantity_limits

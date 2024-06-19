@@ -14,5 +14,16 @@ from .generate import (
     ScallopFactory,
     VoluteFactory,
 )
-from .shell import ClamBaseFactory, MusselBaseFactory, ScallopBaseFactory, ShellBaseFactory
-from .snail import AugerBaseFactory, ConchBaseFactory, NautilusBaseFactory, SnailBaseFactory, VoluteBaseFactory
+from .shell import (
+    ClamBaseFactory,
+    MusselBaseFactory,
+    ScallopBaseFactory,
+    ShellBaseFactory,
+)
+from .snail import (
+    AugerBaseFactory,
+    ConchBaseFactory,
+    NautilusBaseFactory,
+    SnailBaseFactory,
+    VoluteBaseFactory,
+)

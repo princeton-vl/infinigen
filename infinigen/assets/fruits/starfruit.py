@@ -4,19 +4,11 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import normal, uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category, hsv2rgba
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.color import hsv2rgba
 
 
 class FruitFactoryStarfruit(FruitFactoryGeneralFruit):
@@ -33,7 +25,9 @@ class FruitFactoryStarfruit(FruitFactoryGeneralFruit):
                 "radius": normal(1.3, 0.05),
                 "Resolution": surface_resolution,
             },
-            "cross_section_output_args": {"star parameters": "noderef-crosssection-curve parameters"},
+            "cross_section_output_args": {
+                "star parameters": "noderef-crosssection-curve parameters"
+            },
         }
 
     def sample_shape_params(self, surface_resolution=256):
@@ -105,7 +99,11 @@ class FruitFactoryStarfruit(FruitFactoryGeneralFruit):
             "stem_name": "basic_stem",
             "stem_func_args": {"stem_color": stem_color_rgba},
             "stem_input_args": {
-                "quad_mid": (uniform(-0.1, 0.1), uniform(-0.1, 0.1), uniform(0.15, 0.2)),
+                "quad_mid": (
+                    uniform(-0.1, 0.1),
+                    uniform(-0.1, 0.1),
+                    uniform(0.15, 0.2),
+                ),
                 "quad_end": (uniform(-0.2, 0.2), uniform(-0.2, 0.2), uniform(0.3, 0.4)),
                 "cross_radius": uniform(0.03, 0.05),
                 "Translation": (0.0, 0.0, 0.8),

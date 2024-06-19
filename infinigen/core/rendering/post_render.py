@@ -29,10 +29,22 @@ def load_exr(path):
 
 
 load_flow = load_exr
-load_depth = lambda p: load_exr(p)[..., 0]
-load_normals = lambda p: load_exr(p)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
-load_seg_mask = lambda p: load_exr(p)[..., 2].astype(np.int64)
-load_uniq_inst = lambda p: load_exr(p).view(np.int32)
+
+
+def load_depth(p):
+    return load_exr(p)[..., 0]
+
+
+def load_normals(p):
+    return load_exr(p)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
+
+
+def load_seg_mask(p):
+    return load_exr(p)[..., 2].astype(np.int64)
+
+
+def load_uniq_inst(p):
+    return load_exr(p).view(np.int32)
 
 
 def colorize_flow(optical_flow):
@@ -65,9 +77,17 @@ def colorize_int_array(data, color_seed=0):
     H, W, *_ = data.shape
     data = data.reshape((H * W, -1))
     uniq, indices = np.unique(data, return_inverse=True, axis=0)
-    random_states = [np.random.RandomState(e[:2].astype(np.uint32) + color_seed) for e in uniq]
+    random_states = [
+        np.random.RandomState(e[:2].astype(np.uint32) + color_seed) for e in uniq
+    ]
     unique_colors = (
-        np.asarray([colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1) for s in random_states]) * 255
+        np.asarray(
+            [
+                colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)
+                for s in random_states
+            ]
+        )
+        * 255
     ).astype(np.uint8)
     return unique_colors[indices].reshape((H, W, 3))
 
@@ -88,7 +108,9 @@ if __name__ == "__main__":
             imwrite(output_path, flow_color)
             print(f"Wrote {output_path}")
         except ModuleNotFoundError:
-            print("Flow visualization requires the 'flow_vis' package. Install it with 'pip install flow_vis'")
+            print(
+                "Flow visualization requires the 'flow_vis' package. Install it with 'pip install flow_vis'"
+            )
             pass
 
     if args.normals_path is not None:

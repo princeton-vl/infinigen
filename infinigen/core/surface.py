@@ -18,7 +18,6 @@ import numpy as np
 from mathutils import Vector
 from tqdm import trange
 
-from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_info
 from infinigen.core.nodes.node_wrangler import (
@@ -29,7 +28,6 @@ from infinigen.core.nodes.node_wrangler import (
     isnode,
 )
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import set_geomod_inputs  # got moved, left here for import compatibility
 
 
 def remove_materials(obj):
@@ -56,10 +54,20 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
             input_kwargs={"Geometry": nw.new_node(Nodes.GroupInput), "Value": value},
         )
         output = nw.new_node(
-            Nodes.GroupOutput, input_kwargs={"Geometry": (capture, "Geometry"), name: (capture, "Attribute")}
+            Nodes.GroupOutput,
+            input_kwargs={
+                "Geometry": (capture, "Geometry"),
+                name: (capture, "Attribute"),
+            },
         )
 
-    mod = add_geomod(objs, attr_writer, name=f"write_attribute({name})", apply=apply, attributes=[name])
+    mod = add_geomod(
+        objs,
+        attr_writer,
+        name=f"write_attribute({name})",
+        apply=apply,
+        attributes=[name],
+    )
     return name
 
 
@@ -94,7 +102,9 @@ def read_attr_data(obj, attr, domain="POINT", result_dtype=None) -> np.array:
 
 def set_active(obj, name):
     attributes = obj.data.attributes
-    attributes.active_index = next((i for i, a in enumerate(attributes) if a.name == name))
+    attributes.active_index = next(
+        (i for i, a in enumerate(attributes) if a.name == name)
+    )
     attributes.active = attributes[attributes.active_index]
 
 
@@ -203,7 +213,9 @@ def shaderfunc_to_material(shader_func, *args, name=None, **kwargs):
 
     material = bpy.data.materials.new(name=name)
     material.use_nodes = True
-    material.node_tree.nodes.remove(material.node_tree.nodes["Principled BSDF"])  # remove the default BSDF
+    material.node_tree.nodes.remove(
+        material.node_tree.nodes["Principled BSDF"]
+    )  # remove the default BSDF
 
     nw = NodeWrangler(material.node_tree)
 
@@ -222,7 +234,15 @@ def seed_generator(size=8, chars=string.ascii_uppercase):
     return "".join(np.random.choice(list(chars)) for _ in range(size))
 
 
-def add_material(objs, shader_func, selection=None, input_args=None, input_kwargs=None, name=None, reuse=False):
+def add_material(
+    objs,
+    shader_func,
+    selection=None,
+    input_args=None,
+    input_kwargs=None,
+    name=None,
+    reuse=False,
+):
     if input_args is None:
         input_args = []
     if input_kwargs is None:
@@ -245,33 +265,45 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
         else:
             material = bpy.data.materials.new(name=name)
             material.use_nodes = True
-            material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (1, 0, 1, 1)  # Set Magenta
+            material.node_tree.nodes["Principled BSDF"].inputs[
+                "Base Color"
+            ].default_value = (1, 0, 1, 1)  # Set Magenta
             objs[0].active_material = material
 
         nw = NodeWrangler(material.node_tree)
 
-        new_attribute_node = nw.new_node(Nodes.Attribute, [], {"attribute_name": selection})
+        new_attribute_node = nw.new_node(
+            Nodes.Attribute, [], {"attribute_name": selection}
+        )
         if "Attribute Sum" in material.node_tree.nodes:
             old_attribute_sum_node = material.node_tree.nodes["Attribute Sum"]
             if old_attribute_sum_node.type == "ATTRIBUTE":
                 socket_index_old = 2
             else:
                 socket_index_old = 0
-            new_attribute_sum_node = nw.scalar_add((old_attribute_sum_node, socket_index_old), (new_attribute_node, 2))
+            new_attribute_sum_node = nw.scalar_add(
+                (old_attribute_sum_node, socket_index_old), (new_attribute_node, 2)
+            )
             old_attribute_sum_node.name = "Attribute Sum Old"
             new_attribute_sum_node.name = "Attribute Sum"
         else:
             new_attribute_node.name = "Attribute Sum"
             new_attribute_sum_node = new_attribute_node
         # grab a reference to whatever is currently linked to output
-        links_to_output = [link for link in nw.links if (link.to_node.bl_idname == Nodes.MaterialOutput)]
+        links_to_output = [
+            link
+            for link in nw.links
+            if (link.to_node.bl_idname == Nodes.MaterialOutput)
+        ]
         assert len(links_to_output) == 1, links_to_output
         penultimate_node = links_to_output.pop().from_node
         if new_attribute_sum_node.type == "ATTRIBUTE":
             socket_index_new = 2
         else:
             socket_index_new = 0
-        selection_weight = nw.divide2((new_attribute_node, 2), (new_attribute_sum_node, socket_index_new))
+        selection_weight = nw.divide2(
+            (new_attribute_node, 2), (new_attribute_sum_node, socket_index_new)
+        )
 
         # spawn in the node tree to mix with it
         new_node_tree = shader_func(nw, **input_kwargs)
@@ -285,7 +317,9 @@ def add_material(objs, shader_func, selection=None, input_args=None, input_kwarg
             nw.new_node(Nodes.MaterialOutput, input_kwargs={"Volume": volume})
 
         # mix the two together
-        mix_shader = nw.new_node(Nodes.MixShader, [selection_weight, penultimate_node, new_node_tree])
+        mix_shader = nw.new_node(
+            Nodes.MixShader, [selection_weight, penultimate_node, new_node_tree]
+        )
         nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
@@ -358,7 +392,11 @@ def add_geomod(
             mod.node_group = ng
 
         outputs = mod.node_group.outputs
-        identifiers = [outputs[i].identifier for i in range(len(outputs)) if outputs[i].type != "GEOMETRY"]
+        identifiers = [
+            outputs[i].identifier
+            for i in range(len(outputs))
+            if outputs[i].type != "GEOMETRY"
+        ]
         if len(identifiers) != len(attributes):
             raise Exception(
                 f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, "
@@ -404,11 +442,15 @@ class Registry:
         if name == "":
             return NoApply
 
-        prefixes = ["infinigen.infinigen_gpl.surfaces", "infinigen.assets.materials", "infinigen.assets.scatters"]
+        prefixes = [
+            "infinigen.infinigen_gpl.surfaces",
+            "infinigen.assets.materials",
+            "infinigen.assets.scatters",
+        ]
         for prefix in prefixes:
             try:
                 return importlib.import_module("." + name, prefix)
-            except ModuleNotFoundError as e:
+            except ModuleNotFoundError:
                 continue
 
         raise ValueError(f"Could not find {name=} in any of {prefixes}")
@@ -426,7 +468,9 @@ class Registry:
         with gin.unlock_config():
             self._registry = defaultdict(list)
             for k, v in gin_category_info.items():
-                self._registry[k] = [(self.get_surface(name), weight) for name, weight in v]
+                self._registry[k] = [
+                    (self.get_surface(name), weight) for name, weight in v
+                ]
 
     def __call__(self, category_key):
         if self._registry is None:

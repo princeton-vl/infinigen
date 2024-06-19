@@ -4,17 +4,13 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_star_profile", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_star_profile", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_star_profile(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -37,63 +33,100 @@ def nodegroup_star_profile(nw: NodeWrangler):
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": star.outputs["Curve"], "Count": group_input.outputs["Resolution"]}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": star.outputs["Curve"],
+            "Count": group_input.outputs["Resolution"],
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Curve": resample_curve}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Curve": resample_curve},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_flip_index", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_flip_index", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_flip_index(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     index = nw.new_node(Nodes.Index)
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketInt", "V Resolution", 0), ("NodeSocketInt", "U Resolution", 0)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketInt", "V Resolution", 0),
+            ("NodeSocketInt", "U Resolution", 0),
+        ],
     )
 
     modulo = nw.new_node(
-        Nodes.Math, input_kwargs={0: index, 1: group_input.outputs["V Resolution"]}, attrs={"operation": "MODULO"}
+        Nodes.Math,
+        input_kwargs={0: index, 1: group_input.outputs["V Resolution"]},
+        attrs={"operation": "MODULO"},
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: modulo, 1: group_input.outputs["U Resolution"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: modulo, 1: group_input.outputs["U Resolution"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: index, 1: group_input.outputs["V Resolution"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: index, 1: group_input.outputs["V Resolution"]},
+        attrs={"operation": "DIVIDE"},
     )
 
-    floor = nw.new_node(Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "FLOOR"})
+    floor = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "FLOOR"}
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: floor})
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Index": add}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Index": add}, attrs={"is_active_output": True}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_cylinder_side", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_cylinder_side", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_cylinder_side(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketInt", "U Resolution", 32), ("NodeSocketInt", "V Resolution", 0)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketInt", "U Resolution", 32),
+            ("NodeSocketInt", "V Resolution", 0),
+        ],
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["V Resolution"], 1: 1.0000}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["V Resolution"], 1: 1.0000},
+        attrs={"operation": "SUBTRACT"},
     )
 
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Vertices": group_input.outputs["U Resolution"], "Side Segments": subtract},
+        input_kwargs={
+            "Vertices": group_input.outputs["U Resolution"],
+            "Side Segments": subtract,
+        },
     )
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Name": "uv_map", 3: cylinder.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Name": "uv_map",
+            3: cylinder.outputs["UV Map"],
+        },
         attrs={"data_type": "FLOAT_VECTOR", "domain": "CORNER"},
     )
 
@@ -109,7 +142,9 @@ def nodegroup_cylinder_side(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_shifted_circle", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_shifted_circle", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_shifted_circle(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -125,12 +160,21 @@ def nodegroup_shifted_circle(nw: NodeWrangler):
 
     curve_circle_3 = nw.new_node(
         Nodes.CurveCircle,
-        input_kwargs={"Resolution": group_input.outputs["Resolution"], "Radius": group_input.outputs["Radius"]},
+        input_kwargs={
+            "Resolution": group_input.outputs["Resolution"],
+            "Radius": group_input.outputs["Radius"],
+        },
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Z"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Z"]}
+    )
 
-    radians = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Rot Z"]}, attrs={"operation": "RADIANS"})
+    radians = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Rot Z"]},
+        attrs={"operation": "RADIANS"},
+    )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": radians})
 
@@ -144,7 +188,9 @@ def nodegroup_shifted_circle(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_3}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_3},
+        attrs={"is_active_output": True},
     )
 
 
@@ -173,29 +219,45 @@ def nodegroup_lofting(nw: NodeWrangler):
     index = nw.new_node(Nodes.Index)
 
     evaluate_on_domain = nw.new_node(
-        Nodes.EvaluateonDomain, input_kwargs={1: index}, attrs={"data_type": "INT", "domain": "CURVE"}
+        Nodes.EvaluateonDomain,
+        input_kwargs={1: index},
+        attrs={"data_type": "INT", "domain": "CURVE"},
     )
 
     equal = nw.new_node(
-        Nodes.Compare, input_kwargs={2: evaluate_on_domain.outputs[1]}, attrs={"data_type": "INT", "operation": "EQUAL"}
+        Nodes.Compare,
+        input_kwargs={2: evaluate_on_domain.outputs[1]},
+        attrs={"data_type": "INT", "operation": "EQUAL"},
     )
 
     curve_line = nw.new_node(Nodes.CurveLine)
 
     domain_size = nw.new_node(
-        Nodes.DomainSize, input_kwargs={"Geometry": group_input.outputs["Profile Curves"]}, attrs={"component": "CURVE"}
+        Nodes.DomainSize,
+        input_kwargs={"Geometry": group_input.outputs["Profile Curves"]},
+        attrs={"component": "CURVE"},
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": curve_line, "Count": domain_size.outputs["Spline Count"]}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": curve_line,
+            "Count": domain_size.outputs["Spline Count"],
+        },
     )
 
     instance_on_points_1 = nw.new_node(
         Nodes.InstanceOnPoints,
-        input_kwargs={"Points": group_input.outputs["Profile Curves"], "Selection": equal, "Instance": resample_curve},
+        input_kwargs={
+            "Points": group_input.outputs["Profile Curves"],
+            "Selection": equal,
+            "Instance": resample_curve,
+        },
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -209,28 +271,49 @@ def nodegroup_lofting(nw: NodeWrangler):
 
     sample_index_2 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": group_input.outputs["Profile Curves"], 3: position, "Index": flipindex},
+        input_kwargs={
+            "Geometry": group_input.outputs["Profile Curves"],
+            3: position,
+            "Index": flipindex,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": realize_instances, "Position": sample_index_2.outputs[2]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": realize_instances,
+            "Position": sample_index_2.outputs[2],
+        },
     )
 
     set_spline_type_1 = nw.new_node(
-        Nodes.SplineType, input_kwargs={"Curve": set_position}, attrs={"spline_type": "CATMULL_ROM"}
+        Nodes.SplineType,
+        input_kwargs={"Curve": set_position},
+        attrs={"spline_type": "CATMULL_ROM"},
     )
 
     set_spline_type = nw.new_node(
-        Nodes.SplineType, input_kwargs={"Curve": set_position}, attrs={"spline_type": "NURBS"}
+        Nodes.SplineType,
+        input_kwargs={"Curve": set_position},
+        attrs={"spline_type": "NURBS"},
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Use Nurb"], 14: set_spline_type_1, 15: set_spline_type}
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input.outputs["Use Nurb"],
+            14: set_spline_type_1,
+            15: set_spline_type,
+        },
     )
 
     resample_curve_1 = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": switch.outputs[6], "Count": group_input.outputs["V Resolution"]}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": switch.outputs[6],
+            "Count": group_input.outputs["V Resolution"],
+        },
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -245,13 +328,20 @@ def nodegroup_lofting(nw: NodeWrangler):
 
     sample_index_3 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": resample_curve_1, 3: position_1, "Index": flipindex_1},
+        input_kwargs={
+            "Geometry": resample_curve_1,
+            3: position_1,
+            "Index": flipindex_1,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     set_position_1 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": cylinderside.outputs["Geometry"], "Position": sample_index_3.outputs[2]},
+        input_kwargs={
+            "Geometry": cylinderside.outputs["Geometry"],
+            "Position": sample_index_3.outputs[2],
+        },
     )
 
     group_output = nw.new_node(
@@ -266,7 +356,9 @@ def nodegroup_lofting(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_lofting_poly", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_lofting_poly", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_lofting_poly(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -280,39 +372,60 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
         ],
     )
 
-    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["V Resolution"]})
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["V Resolution"]}
+    )
 
     cylinderside_001 = nw.new_node(
         nodegroup_cylinder_side().name,
-        input_kwargs={"U Resolution": group_input.outputs["U Resolution"], "V Resolution": reroute_2},
+        input_kwargs={
+            "U Resolution": group_input.outputs["U Resolution"],
+            "V Resolution": reroute_2,
+        },
     )
 
     index = nw.new_node(Nodes.Index)
 
     evaluate_on_domain = nw.new_node(
-        Nodes.EvaluateonDomain, input_kwargs={1: index}, attrs={"domain": "CURVE", "data_type": "INT"}
+        Nodes.EvaluateonDomain,
+        input_kwargs={1: index},
+        attrs={"domain": "CURVE", "data_type": "INT"},
     )
 
     equal = nw.new_node(
-        Nodes.Compare, input_kwargs={2: evaluate_on_domain.outputs[1]}, attrs={"operation": "EQUAL", "data_type": "INT"}
+        Nodes.Compare,
+        input_kwargs={2: evaluate_on_domain.outputs[1]},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
     curve_line = nw.new_node(Nodes.CurveLine)
 
     domain_size = nw.new_node(
-        Nodes.DomainSize, input_kwargs={"Geometry": group_input.outputs["Profile Curves"]}, attrs={"component": "CURVE"}
+        Nodes.DomainSize,
+        input_kwargs={"Geometry": group_input.outputs["Profile Curves"]},
+        attrs={"component": "CURVE"},
     )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": curve_line, "Count": domain_size.outputs["Spline Count"]}
+        Nodes.ResampleCurve,
+        input_kwargs={
+            "Curve": curve_line,
+            "Count": domain_size.outputs["Spline Count"],
+        },
     )
 
     instance_on_points_1 = nw.new_node(
         Nodes.InstanceOnPoints,
-        input_kwargs={"Points": group_input.outputs["Profile Curves"], "Selection": equal, "Instance": resample_curve},
+        input_kwargs={
+            "Points": group_input.outputs["Profile Curves"],
+            "Selection": equal,
+            "Instance": resample_curve,
+        },
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
@@ -326,42 +439,72 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
 
     sample_index_2 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": group_input.outputs["Profile Curves"], 3: position, "Index": flipindex_001},
+        input_kwargs={
+            "Geometry": group_input.outputs["Profile Curves"],
+            3: position,
+            "Index": flipindex_001,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": realize_instances, "Position": sample_index_2.outputs[2]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": realize_instances,
+            "Position": sample_index_2.outputs[2],
+        },
     )
 
-    set_spline_type_1 = nw.new_node(Nodes.SplineType, input_kwargs={"Curve": set_position})
+    set_spline_type_1 = nw.new_node(
+        Nodes.SplineType, input_kwargs={"Curve": set_position}
+    )
 
     set_spline_type = nw.new_node(
-        Nodes.SplineType, input_kwargs={"Curve": set_position}, attrs={"spline_type": "NURBS"}
+        Nodes.SplineType,
+        input_kwargs={"Curve": set_position},
+        attrs={"spline_type": "NURBS"},
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Use Nurb"], 14: set_spline_type_1, 15: set_spline_type}
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input.outputs["Use Nurb"],
+            14: set_spline_type_1,
+            15: set_spline_type,
+        },
     )
 
-    resample_curve_1 = nw.new_node(Nodes.ResampleCurve, input_kwargs={"Curve": switch.outputs[6], "Count": reroute_2})
+    resample_curve_1 = nw.new_node(
+        Nodes.ResampleCurve,
+        input_kwargs={"Curve": switch.outputs[6], "Count": reroute_2},
+    )
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
     flipindex_001_1 = nw.new_node(
         nodegroup_flip_index().name,
-        input_kwargs={"V Resolution": group_input.outputs["U Resolution"], "U Resolution": reroute_2},
+        input_kwargs={
+            "V Resolution": group_input.outputs["U Resolution"],
+            "U Resolution": reroute_2,
+        },
     )
 
     sample_index_3 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": resample_curve_1, 3: position_1, "Index": flipindex_001_1},
+        input_kwargs={
+            "Geometry": resample_curve_1,
+            3: position_1,
+            "Index": flipindex_001_1,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     set_position_1 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": cylinderside_001.outputs["Geometry"], "Position": sample_index_3.outputs[2]},
+        input_kwargs={
+            "Geometry": cylinderside_001.outputs["Geometry"],
+            "Position": sample_index_3.outputs[2],
+        },
     )
 
     group_output = nw.new_node(
@@ -376,7 +519,9 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_warp_around_curve", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_warp_around_curve", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_warp_around_curve(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -389,10 +534,13 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Curve Resolution"], 1: 1.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Curve Resolution"], 1: 1.0000}
+    )
 
     resample_curve = nw.new_node(
-        Nodes.ResampleCurve, input_kwargs={"Curve": group_input.outputs["Curve"], "Count": add}
+        Nodes.ResampleCurve,
+        input_kwargs={"Curve": group_input.outputs["Curve"], "Count": add},
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -401,11 +549,17 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_2})
 
-    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": group_input.outputs["Geometry"]})
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox, input_kwargs={"Geometry": group_input.outputs["Geometry"]}
+    )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Min"]})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Min"]}
+    )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Max"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Max"]}
+    )
 
     map_range = nw.new_node(
         Nodes.MapRange,
@@ -418,11 +572,16 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Curve Resolution"], 1: map_range.outputs["Result"]},
+        input_kwargs={
+            0: group_input.outputs["Curve Resolution"],
+            1: map_range.outputs["Result"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    round = nw.new_node(Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "ROUND"})
+    round = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "ROUND"}
+    )
 
     sample_index_3 = nw.new_node(
         Nodes.SampleIndex,
@@ -464,19 +623,33 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: cross_product.outputs["Vector"], "Scale": separate_xyz.outputs["Y"]},
+        input_kwargs={
+            0: cross_product.outputs["Vector"],
+            "Scale": separate_xyz.outputs["Y"],
+        },
         attrs={"operation": "SCALE"},
     )
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]})
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]},
+    )
 
-    add_2 = nw.new_node(Nodes.VectorMath, input_kwargs={0: sample_index_3.outputs[2], 1: add_1.outputs["Vector"]})
+    add_2 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: sample_index_3.outputs[2], 1: add_1.outputs["Vector"]},
+    )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Position": add_2.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Position": add_2.outputs["Vector"],
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_position},
+        attrs={"is_active_output": True},
     )

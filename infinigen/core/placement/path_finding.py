@@ -4,14 +4,11 @@
 # Authors: Zeyu Ma
 
 import itertools
-import os
 
 import mathutils
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from scipy.sparse import csr_matrix
-from tqdm import tqdm
 
 
 def camera_rotation_matrix(pointing_direction, up_vector):
@@ -23,9 +20,13 @@ def camera_rotation_matrix(pointing_direction, up_vector):
     return np.column_stack((right, up, forward))
 
 
-def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000, margin=0.1):
+def path_finding(
+    bvhtree, bounding_box, start_pose, end_pose, resolution=100000, margin=0.1
+):
     volume = np.product(bounding_box[1] - bounding_box[0])
-    N = np.floor((bounding_box[1] - bounding_box[0]) * (resolution / volume) ** (1 / 3)).astype(np.int32)
+    N = np.floor(
+        (bounding_box[1] - bounding_box[0]) * (resolution / volume) ** (1 / 3)
+    ).astype(np.int32)
     NN = np.product(N)
     # print(f"{N=}")
     start_location, start_rotation = start_pose
@@ -61,19 +62,36 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
     def index(i, j, k):
         return i * N[1] * N[2] + j * N[2] + k
 
-    x, y, z = np.meshgrid(np.arange(N[0]), np.arange(N[1]), np.arange(N[2]), indexing="ij")
-    x = bounding_box[0][0] + (bounding_box[1][0] - bounding_box[0][0]) * (x + 0.5) / N[0]
-    y = bounding_box[0][1] + (bounding_box[1][1] - bounding_box[0][1]) * (y + 0.5) / N[1]
-    z = bounding_box[0][2] + (bounding_box[1][2] - bounding_box[0][2]) * (z + 0.5) / N[2]
+    x, y, z = np.meshgrid(
+        np.arange(N[0]), np.arange(N[1]), np.arange(N[2]), indexing="ij"
+    )
+    x = (
+        bounding_box[0][0]
+        + (bounding_box[1][0] - bounding_box[0][0]) * (x + 0.5) / N[0]
+    )
+    y = (
+        bounding_box[0][1]
+        + (bounding_box[1][1] - bounding_box[0][1]) * (y + 0.5) / N[1]
+    )
+    z = (
+        bounding_box[0][2]
+        + (bounding_box[1][2] - bounding_box[0][2]) * (z + 0.5) / N[2]
+    )
     x, y, z = x.reshape(-1), y.reshape(-1), z.reshape(-1)
 
     start_index = index(
-        *np.floor((np.array(start_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(
-            np.int32
-        )
+        *np.floor(
+            (np.array(start_location) - bounding_box[0])
+            / (bounding_box[1] - bounding_box[0])
+            * N
+        ).astype(np.int32)
     )
     end_index = index(
-        *np.floor((np.array(end_location) - bounding_box[0]) / (bounding_box[1] - bounding_box[0]) * N).astype(np.int32)
+        *np.floor(
+            (np.array(end_location) - bounding_box[0])
+            / (bounding_box[1] - bounding_box[0])
+            * N
+        ).astype(np.int32)
     )
     if end_index == start_index:
         return None
@@ -101,7 +119,14 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
             [1, 0, -1],
         ]:
             ni, nj, nk = i + di, j + dj, k + dk
-            if ni >= 0 and nj >= 0 and nk >= 0 and ni < N[0] and nj < N[1] and nk < N[2]:
+            if (
+                ni >= 0
+                and nj >= 0
+                and nk >= 0
+                and ni < N[0]
+                and nj < N[1]
+                and nk < N[2]
+            ):
                 index_nijk = index(ni, nj, nk)
                 pos_to = mathutils.Vector([x[index_nijk], y[index_nijk], z[index_nijk]])
                 connected = freespace_ray_check(pos_from, pos_to)
@@ -151,7 +176,9 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
     for p in path[1:]:
         back = 0
         while freespace_ray_check(
-            mathutils.Vector([x[stack[-1 - back]], y[stack[-1 - back]], z[stack[-1 - back]]]),
+            mathutils.Vector(
+                [x[stack[-1 - back]], y[stack[-1 - back]], z[stack[-1 - back]]]
+            ),
             mathutils.Vector([x[p], y[p], z[p]]),
             margin=margin,
         ):
@@ -183,7 +210,9 @@ def path_finding(bvhtree, bounding_box, start_pose, end_pose, resolution=100000,
                 rotation_euler = end_pose[1]
             else:
                 rotation_matrix = mathutils.Matrix(
-                    camera_rotation_matrix(np.array(locations[i] - locations[i - 1]), np.array([0, 0, 1]))
+                    camera_rotation_matrix(
+                        np.array(locations[i] - locations[i - 1]), np.array([0, 0, 1])
+                    )
                 ) @ mathutils.Matrix([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
                 rotation_euler = rotation_matrix.to_euler()
                 if rotation_euler.y != 0:

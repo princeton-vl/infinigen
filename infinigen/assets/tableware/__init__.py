@@ -1,6 +1,8 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: Lingjie Mei
+
 from .bottle import BottleFactory
 from .bowl import BowlFactory
 from .can import CanFactory
@@ -17,7 +19,5 @@ from .pan import PanFactory
 from .plant_container import LargePlantContainerFactory, PlantContainerFactory
 from .plate import PlateFactory
 from .pot import PotFactory
-
-# Authors: Lingjie Mei
 from .spoon import SpoonFactory
 from .wineglass import WineglassFactory

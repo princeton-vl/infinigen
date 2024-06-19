@@ -4,12 +4,10 @@
 
 # Authors: Alexander Raistrick, Karhan Kayan
 
-import copy
 import logging
 import os
 import time
 import typing
-from collections import defaultdict
 from pprint import pprint
 
 import bpy
@@ -17,7 +15,6 @@ import gin
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import tqdm
 
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import evaluator
@@ -109,31 +106,41 @@ class SimulatedAnnealingSolver:
             ratio = self.final_temp / self.initial_temp
             self.cooling_rate = np.power(ratio, 1 / steps)
 
-        logger.debug(f"Reset solver with {max_iters=} cooling_rate={self.cooling_rate:.4f}")
+        logger.debug(
+            f"Reset solver with {max_iters=} cooling_rate={self.cooling_rate:.4f}"
+        )
 
     def checkpoint(self, state):
-        filename = os.path.join(self.output_folder, f"checkpoint_state.pkl")
+        filename = os.path.join(self.output_folder, "checkpoint_state.pkl")
         state.save(filename)
 
         if self.visualize:
             # save score plot
             plt.plot(self.score_history)
-            plt.savefig(os.path.join(self.output_folder, f"scores.png"))
+            plt.savefig(os.path.join(self.output_folder, "scores.png"))
             plt.close()
 
             # render image
             i = 1
             while os.path.exists(os.path.join(self.output_folder, f"{i:04}.png")):
                 i += 1
-            bpy.context.scene.render.filepath = os.path.join(self.output_folder, f"{i:04}.png")
+            bpy.context.scene.render.filepath = os.path.join(
+                self.output_folder, f"{i:04}.png"
+            )
             bpy.ops.render.render(write_still=True)
 
     def validate_lazy_eval(
-        self, state: State, consgraph: cl.Problem, prop_result: evaluator.EvalResult, filter_domain: r.Domain
+        self,
+        state: State,
+        consgraph: cl.Problem,
+        prop_result: evaluator.EvalResult,
+        filter_domain: r.Domain,
     ):
         test_memo = {}
         impl_util.DISABLE_BVH_CACHE = True
-        real_result = evaluator.evaluate_problem(consgraph, state, filter_domain, memo=test_memo)
+        real_result = evaluator.evaluate_problem(
+            consgraph, state, filter_domain, memo=test_memo
+        )
         impl_util.DISABLE_BVH_CACHE = False
 
         if real_result.loss() == prop_result.loss():
@@ -164,9 +171,13 @@ class SimulatedAnnealingSolver:
     ):
         if do_lazy_eval:
             evaluator.evict_memo_for_move(consgraph, state, self.eval_memo, move)
-            prop_result = evaluator.evaluate_problem(consgraph, state, filter_domain, self.eval_memo)
+            prop_result = evaluator.evaluate_problem(
+                consgraph, state, filter_domain, self.eval_memo
+            )
         else:
-            prop_result = evaluator.evaluate_problem(consgraph, state, filter_domain, memo={})
+            prop_result = evaluator.evaluate_problem(
+                consgraph, state, filter_domain, memo={}
+            )
 
         if validate_lazy_eval:
             self.validate_lazy_eval(state, consgraph, prop_result, filter_domain)
@@ -188,7 +199,9 @@ class SimulatedAnnealingSolver:
         retry = None
         for retry, move in enumerate(move_gen):
             if retry == self.max_invalid_candidates:
-                logger.debug(f"{move_gen=} reached {self.max_invalid_candidates=} without succeeding an apply()")
+                logger.debug(
+                    f"{move_gen=} reached {self.max_invalid_candidates=} without succeeding an apply()"
+                )
                 break
 
             succeeded = move.apply(state)
@@ -236,19 +249,34 @@ class SimulatedAnnealingSolver:
 
     def step(self, consgraph, state, move_gen_func, filter_domain):
         if self.curr_result is None:
-            self.curr_result = evaluator.evaluate_problem(consgraph, state, filter_domain)
+            self.curr_result = evaluator.evaluate_problem(
+                consgraph, state, filter_domain
+            )
 
         move_start_time = time.perf_counter()
 
-        is_log_step = self.print_report_freq != 0 and self.curr_iteration % self.print_report_freq == 0
-        is_report_step = self.print_breakdown_freq != 0 and self.curr_iteration % self.print_breakdown_freq == 0
+        is_log_step = (
+            self.print_report_freq != 0
+            and self.curr_iteration % self.print_report_freq == 0
+        )
+        is_report_step = (
+            self.print_breakdown_freq != 0
+            and self.curr_iteration % self.print_breakdown_freq == 0
+        )
 
         temp = self.curr_temp()
-        move, prop_result, retry = self.retry_attempt_proposals(move_gen_func, consgraph, state, temp, filter_domain)
+        move, prop_result, retry = self.retry_attempt_proposals(
+            move_gen_func, consgraph, state, temp, filter_domain
+        )
 
         if prop_result is None:
             # set null values for logging purposes
-            accept_result = {"accept": None, "diff": 0, "log_prob": 0, "viol_diff": None}
+            accept_result = {
+                "accept": None,
+                "diff": 0,
+                "log_prob": 0,
+                "viol_diff": None,
+            }
         else:
             accept_result = self.metrop_hastings_with_viol(prop_result, temp)
             if accept_result["accept"]:
@@ -294,7 +322,11 @@ class SimulatedAnnealingSolver:
                     accept=accept,
                     move_gen=move_gen_func.__name__,
                     move_type=(move.__class__.__name__ if move is not None else None),
-                    move_target=(move.name if move is not None and hasattr(move, "name") else None),
+                    move_target=(
+                        move.name
+                        if move is not None and hasattr(move, "name")
+                        else None
+                    ),
                     move_dur=dt,
                     elapsed=elapsed,
                     retry=retry,
@@ -311,10 +343,17 @@ class SimulatedAnnealingSolver:
                     for c in df.columns
                     if (
                         not last_df[c].equals(df[c])
-                        or (df[c]["viol_count"] is not None and last_df[c]["viol_count"] > 0)
+                        or (
+                            df[c]["viol_count"] is not None
+                            and last_df[c]["viol_count"] > 0
+                        )
                     )
                 ]
-                print(self.last_eval_result.viol_count(), self.curr_result.viol_count(), prop_result.viol_count())
+                print(
+                    self.last_eval_result.viol_count(),
+                    self.curr_result.viol_count(),
+                    prop_result.viol_count(),
+                )
                 last_df.index = ["prev_" + x for x in last_df.index]
                 df = pd.concat([last_df[diff_cols], df[diff_cols]])
 

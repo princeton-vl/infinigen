@@ -5,10 +5,8 @@
 # Authors: Alexander Raistrick
 
 import functools
-import math
 import operator
 import typing
-from dataclasses import dataclass
 
 from .types import Node, nodedataclass
 

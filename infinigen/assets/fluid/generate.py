@@ -6,13 +6,6 @@
 import bpy
 import gin
 
-from infinigen.assets.fluid.flip_fluid import (
-    create_flip_fluid_domain,
-    create_flip_fluid_inflow,
-    get_objs_inside_domain,
-    set_flip_fluid_domain,
-    set_flip_fluid_obstacle,
-)
 from infinigen.assets.fluid.fluid import (
     add_field,
     create_gas_domain,
@@ -22,7 +15,6 @@ from infinigen.assets.fluid.fluid import (
 )
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.logging import Timer
 
 
 @gin.configurable
@@ -43,7 +35,9 @@ class FluidFactory(AssetFactory):
         self.called_once = False
 
     def cull(self, distance: float, vis_distance: float):
-        return distance > self.max_distance or vis_distance > self.max_expected_radius * 2
+        return (
+            distance > self.max_distance or vis_distance > self.max_expected_radius * 2
+        )
 
     def finalize_assets(self, assets):
         cache_dirs = dict()
@@ -129,8 +123,12 @@ class FluidFactory(AssetFactory):
         if self.fluid_type in ["fire_and_smoke", "fire", "smoke"]:
             print("creating gas flow")
             turbulence = add_field((0, 0, 3))
-            obj = create_gas_flow(location=(0, 0, 1), fluid_type=self.fluid_type, size=0.5)
-            dom = create_gas_domain(location=(0, 0, 1), fluid_type=self.fluid_type, size=8, resolution=100)
+            obj = create_gas_flow(
+                location=(0, 0, 1), fluid_type=self.fluid_type, size=0.5
+            )
+            dom = create_gas_domain(
+                location=(0, 0, 1), fluid_type=self.fluid_type, size=8, resolution=100
+            )
         elif self.fluid_type in ["water", "lava"]:
             obj = create_liquid_flow(
                 location=(0, 0, 0.2),
@@ -139,7 +137,9 @@ class FluidFactory(AssetFactory):
                 flow_behavior="INFLOW",
             )
 
-            dom = create_liquid_domain(location=(0, 0, 0), fluid_type=self.fluid_type, size=22, resolution=800)
+            dom = create_liquid_domain(
+                location=(0, 0, 0), fluid_type=self.fluid_type, size=22, resolution=800
+            )
 
         emp = butil.spawn_empty("fluid")
         obj.parent = emp
@@ -168,7 +168,9 @@ class FlipFluidFactory(AssetFactory):
         self.dom = None
 
     def cull(self, distance: float, vis_distance: float):
-        return distance > self.max_distance or vis_distance > self.max_expected_radius * 2
+        return (
+            distance > self.max_distance or vis_distance > self.max_expected_radius * 2
+        )
 
     def finalize_assets(self, assets):
         return self.fluid_collection

@@ -7,16 +7,14 @@
 import logging
 from math import cos, exp, pi, sin, sqrt
 
-import bpy
 import numpy as np
 from scipy.interpolate import interp1d
 
 from infinigen.assets.creatures.util import part_util
-from infinigen.assets.creatures.util.creature import Part, PartFactory
+from infinigen.assets.creatures.util.creature import PartFactory
 from infinigen.assets.creatures.util.genome import IKParams, Joint
 from infinigen.assets.creatures.util.geometry import nurbs as nurbs_util
 from infinigen.core import surface
-from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +172,9 @@ class nurbs_ReptileTail:
                 if self.breast > 0.5:
                     if 0.10 < p and p < 0.25:
                         if abs(sin(theta)) < 0.5:
-                            ctrls[i][j][1] *= 40 * (0.1 - abs(0.15 - p)) * (1 - abs(sin(theta)))
+                            ctrls[i][j][1] *= (
+                                40 * (0.1 - abs(0.15 - p)) * (1 - abs(sin(theta)))
+                            )
                         else:
                             ctrls[i][j][2] *= 0.8
                 if p > self.wrist:
@@ -214,12 +214,16 @@ class nurbs_ReptileUpperHead:
         return 0
 
     def init_local_scale_y(self):
-        lrp = lambda p: lr_scale(-1 / 4, 1, p)
+        def lrp(p):
+            return lr_scale(-1 / 4, 1, p)
+
         return lambda p, theta: sqrt(1 - abs(lrp(p)) ** 1)
 
     def init_local_scale_z(self):
         def f1(p, theta):
-            lrp = lambda p: lr_scale(-1 / 3, 1, p)
+            def lrp(p):
+                return lr_scale(-1 / 3, 1, p)
+
             return sqrt(1 - lrp(p) ** 2)
 
         def f2(p, theta):
@@ -249,7 +253,9 @@ class nurbs_ReptileUpperHead:
         ry = round(self.m * boundy[1])
         for i in range(cx - lx, cx + rx + 1):
             for j in range(cy - ly, cy + ry + 1):
-                self.ctrls[i][j][2] *= 1 + max(0, degree * lrlr_scale(0, 1, 5 * 1.4, 0, dist((cx, cy), (i, j))))
+                self.ctrls[i][j][2] *= 1 + max(
+                    0, degree * lrlr_scale(0, 1, 5 * 1.4, 0, dist((cx, cy), (i, j)))
+                )
 
     def get_ctrls(self):
         self.n = int(self.n)
@@ -261,7 +267,9 @@ class nurbs_ReptileUpperHead:
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p)
                 ctrls[i][j][1] = self.local_scale_y(p, theta) * cos(theta)
-                ctrls[i][j][2] = self.local_scale_z(p, theta) * (sin(theta) + self.local_offset_z(p, theta))
+                ctrls[i][j][2] = self.local_scale_z(p, theta) * (
+                    sin(theta) + self.local_offset_z(p, theta)
+                )
 
                 ctrls[i][j][0] *= self.scale_x
                 ctrls[i][j][1] *= self.scale_y
@@ -313,7 +321,9 @@ class nurbs_ReptileUpperHead:
                 p = i / (self.n - 1)
                 theta = 2 * pi * j / (self.m)
                 if p >= self.up_head_position:
-                    self.ctrls[i][j][2] += self.up_head_degree * (p - self.up_head_position)
+                    self.ctrls[i][j][2] += self.up_head_degree * (
+                        p - self.up_head_position
+                    )
                 if sin(theta) < -0.6:
                     self.ctrls[i][j][2] += 0.3 * (-sin(theta) - 0.6)
         # self.bump((0.8, 0.2), 0.2, (0.15, 0.15), (0.15, 0.02))
@@ -330,7 +340,9 @@ class nurbs_ReptileUpperHead:
         method = "blender" if False else "geomdl"
         obj = nurbs_util.nurbs(ctrls, method, face_size=0.05)
         surface.new_attr_data(obj, "corner", "FLOAT", "POINT", corner_vertices(obj))
-        surface.new_attr_data(obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(obj))
+        surface.new_attr_data(
+            obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(obj)
+        )
         return obj
 
 
@@ -352,7 +364,9 @@ class nurbs_ReptileLowerHead:
         return 0
 
     def init_local_scale_y(self):
-        lrp = lambda p: lr_scale(-1 / 4, 1, p)
+        def lrp(p):
+            return lr_scale(-1 / 4, 1, p)
+
         return lambda p, theta: sqrt(1 - abs(lrp(p)) ** 1)
 
     def init_local_scale_z(self):
@@ -381,7 +395,9 @@ class nurbs_ReptileLowerHead:
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p)
                 ctrls[i][j][1] = self.local_scale_y(p, theta) * cos(theta)
-                ctrls[i][j][2] = self.local_scale_z(p, theta) * (sin(theta) + self.local_offset_z(p, theta))
+                ctrls[i][j][2] = self.local_scale_z(p, theta) * (
+                    sin(theta) + self.local_offset_z(p, theta)
+                )
 
                 ctrls[i][j][0] *= self.scale_x
                 ctrls[i][j][1] *= self.scale_y
@@ -403,7 +419,9 @@ class nurbs_ReptileLowerHead:
         method = "blender" if False else "geomdl"
         obj = nurbs_util.nurbs(ctrls, method, face_size=0.01)
         surface.new_attr_data(obj, "corner", "FLOAT", "POINT", corner_vertices(obj))
-        surface.new_attr_data(obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(obj))
+        surface.new_attr_data(
+            obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(obj)
+        )
         return obj
 
 
@@ -425,12 +443,16 @@ class nurbs_ReptileHead:
         return 0
 
     def init_local_scale_y(self):
-        lrp = lambda p: lr_scale(-1 / 2, 1, p)
+        def lrp(p):
+            return lr_scale(-1 / 2, 1, p)
+
         return lambda p, theta: sqrt(1 - abs(lrp(p)) ** 1)
 
     def init_local_scale_z(self):
         def f1(p, theta):
-            lrp = lambda p: lr_scale(-1 / 3, 1, p)
+            def lrp(p):
+                return lr_scale(-1 / 3, 1, p)
+
             return sqrt(1 - lrp(p) ** 2)
 
         def f2(p, theta):
@@ -478,7 +500,9 @@ class nurbs_ReptileHead:
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p)
                 ctrls[i][j][1] = self.local_scale_y(p, theta) * cos(theta)
-                ctrls[i][j][2] = self.local_scale_z(p, theta) * (sin(theta) + self.local_offset_z(p, theta))
+                ctrls[i][j][2] = self.local_scale_z(p, theta) * (
+                    sin(theta) + self.local_offset_z(p, theta)
+                )
 
                 ctrls[i][j][0] *= self.scale_x
                 ctrls[i][j][1] *= self.scale_y
@@ -500,7 +524,9 @@ class nurbs_ReptileHead:
                 p = i / (self.n - 1)
                 theta = 2 * pi * j / (self.m)
                 if p >= self.up_head_position:
-                    self.ctrls[i][j][2] += self.up_head_degree * (p - self.up_head_position)
+                    self.ctrls[i][j][2] += self.up_head_degree * (
+                        p - self.up_head_position
+                    )
                 if sin(theta) < -0.6:
                     self.ctrls[i][j][2] += 0.3 * (-sin(theta) - 0.6)
 
@@ -602,7 +628,9 @@ class nurbs_LizardFrontLeg:
                 p = i / (self.n - 1)
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p, theta)
-                ctrls[i][j][1] = self.local_scale_y(p, theta) * (cos(theta) + self.local_offset_y(p, theta))
+                ctrls[i][j][1] = self.local_scale_y(p, theta) * (
+                    cos(theta) + self.local_offset_y(p, theta)
+                )
                 ctrls[i][j][2] = self.local_scale_z(p, theta) * sin(theta)
 
                 ctrls[i][j][0] *= self.scale_x
@@ -707,7 +735,9 @@ class nurbs_LizardBackLeg:
                 p = i / (self.n - 1)
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p, theta)
-                ctrls[i][j][1] = self.local_scale_y(p, theta) * (cos(theta) + self.local_offset_y(p, theta))
+                ctrls[i][j][1] = self.local_scale_y(p, theta) * (
+                    cos(theta) + self.local_offset_y(p, theta)
+                )
                 ctrls[i][j][2] = self.local_scale_z(p, theta) * sin(theta)
 
                 ctrls[i][j][0] *= self.scale_x
@@ -778,7 +808,9 @@ class nurbs_LizardToe:
                 p = i / (self.n - 1)
                 theta = 2 * pi * j / (self.m)
                 ctrls[i][j][0] = p + self.local_offset_x(p, theta)
-                ctrls[i][j][1] = self.local_scale_y(p, theta) * (cos(theta) + self.local_offset_y(p, theta))
+                ctrls[i][j][1] = self.local_scale_y(p, theta) * (
+                    cos(theta) + self.local_offset_y(p, theta)
+                )
                 ctrls[i][j][2] = self.local_scale_z(p, theta) * sin(theta)
 
                 ctrls[i][j][0] *= self.scale_x
@@ -870,8 +902,11 @@ class ReptileHeadBody(PartFactory):
         # weights = part_util.random_convex_coord(param_templates.keys(), select=select)
         # params = part_util.rdict_comb(param_templates, weights)
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
 
         for key in params["tail"]:
             l, r = params["trange"][key]
@@ -895,9 +930,15 @@ class ReptileHeadBody(PartFactory):
         part = part_util.nurbs_to_part(handles)
         part.skeleton = handles.mean(axis=1)
         part.joints = {
-            0.1: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # head
-            0.73: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # neck
-            0.80: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # waist
+            0.1: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # head
+            0.73: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # neck
+            0.80: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # waist
             0.85: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [30, 0, 30]])),
             0.88: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [30, 0, 30]])),
             0.92: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [30, 0, 30]])),
@@ -908,7 +949,9 @@ class ReptileHeadBody(PartFactory):
         if self.type == "snake":
             part.iks = {
                 0.1: IKParams("snake_head", rotation_weight=0.1, chain_parts=2),
-                0.73: IKParams(name="snake_shoulder", rotation_weight=0.1, target_size=0.4),
+                0.73: IKParams(
+                    name="snake_shoulder", rotation_weight=0.1, target_size=0.4
+                ),
                 0.85: IKParams(name="snake_hip", target_size=0.3),
                 1.0: IKParams(name="snake_tail", chain_parts=1),
             }
@@ -919,8 +962,16 @@ class ReptileHeadBody(PartFactory):
                 0.85: IKParams(name="hip", target_size=0.3),
                 1.0: IKParams(name="reptile_tail", chain_parts=1),
             }
-        surface.new_attr_data(part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj))
-        surface.new_attr_data(part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj, bodycheck=True))
+        surface.new_attr_data(
+            part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj)
+        )
+        surface.new_attr_data(
+            part.obj,
+            "inside_mouth",
+            "FLOAT",
+            "POINT",
+            ventral_vertices(part.obj, bodycheck=True),
+        )
         return part
 
 
@@ -929,7 +980,9 @@ class ReptileBody(PartFactory):
     tags = ["body"]
     unit_scale = (0.5, 0.5, 0.5)
 
-    def __init__(self, params=None, type="lizard", n_bones=None, shoulder_ik_ts=None, mod=None):
+    def __init__(
+        self, params=None, type="lizard", n_bones=None, shoulder_ik_ts=None, mod=None
+    ):
         self.type = type
         self.n_bones = n_bones
         self.shoulder_ik_ts = shoulder_ik_ts
@@ -939,8 +992,11 @@ class ReptileBody(PartFactory):
     def sample_params(self, select=None, var=1):
         params = self.param_templates[self.type]
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
 
         for key in params["tail"]:
             l, r = params["trange"][key]
@@ -970,11 +1026,24 @@ class ReptileBody(PartFactory):
             for i in np.linspace(0, 1, self.n_bones, endpoint=True)
         }
         part.iks = {
-            t: IKParams(name=f"body_{i+1}", mode="pin" if i == 0 else "iksolve", rotation_weight=0, target_size=0.3)
+            t: IKParams(
+                name=f"body_{i+1}",
+                mode="pin" if i == 0 else "iksolve",
+                rotation_weight=0,
+                target_size=0.3,
+            )
             for i, t in enumerate(self.shoulder_ik_ts)
         }
-        surface.new_attr_data(part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj))
-        surface.new_attr_data(part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj, bodycheck=True))
+        surface.new_attr_data(
+            part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj)
+        )
+        surface.new_attr_data(
+            part.obj,
+            "inside_mouth",
+            "FLOAT",
+            "POINT",
+            ventral_vertices(part.obj, bodycheck=True),
+        )
         return part
 
 
@@ -992,8 +1061,12 @@ class ReptileUpperHead(PartFactory):
         # params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
+
         for key in params["head"]:
             if key in params["range"]:
                 l, r = params["range"][key]
@@ -1018,8 +1091,12 @@ class ReptileUpperHead(PartFactory):
         part = part_util.nurbs_to_part(handles, 0.01)
         part.skeleton = handles.mean(axis=1)
         # part.iks = {1.0: IKParams('body_0', rotation_weight=0.1, chain_parts=1)}
-        surface.new_attr_data(part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj))
-        surface.new_attr_data(part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj))
+        surface.new_attr_data(
+            part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj)
+        )
+        surface.new_attr_data(
+            part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj)
+        )
         return part
 
 
@@ -1037,8 +1114,12 @@ class ReptileLowerHead(PartFactory):
         # params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
+
         for key in params["head"]:
             if key in params["range"]:
                 l, r = params["range"][key]
@@ -1062,8 +1143,12 @@ class ReptileLowerHead(PartFactory):
         part = part_util.nurbs_to_part(handles, 0.015)
         part.skeleton = handles.mean(axis=1)
         # part.iks = {1.0: IKParams('body_0', rotation_weight=0.1, chain_parts=1)}
-        surface.new_attr_data(part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj))
-        surface.new_attr_data(part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj))
+        surface.new_attr_data(
+            part.obj, "corner", "FLOAT", "POINT", corner_vertices(part.obj)
+        )
+        surface.new_attr_data(
+            part.obj, "inside_mouth", "FLOAT", "POINT", ventral_vertices(part.obj)
+        )
         return part
 
 
@@ -1081,8 +1166,11 @@ class LizardFrontLeg(PartFactory):
         # params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
 
         for key in params["leg"]:
             l, r = params["range"][key]
@@ -1102,9 +1190,15 @@ class LizardFrontLeg(PartFactory):
         part = part_util.nurbs_to_part(handles, 0.015)
         part.skeleton = handles.mean(axis=1)
         part.joints = {
-            0: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [100, 0, 100]])),  # shoulder
-            0.4: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # knee
-            0.9: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # ankle
+            0: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [100, 0, 100]])
+            ),  # shoulder
+            0.4: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # knee
+            0.9: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # ankle
         }
         # part.obj.scale = (0.5, 0.5, 0.5)
         # butil.apply_transform(part.obj, scale=True)
@@ -1129,8 +1223,11 @@ class LizardBackLeg(PartFactory):
         # params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
 
         for key in params["leg"]:
             l, r = params["range"][key]
@@ -1150,9 +1247,15 @@ class LizardBackLeg(PartFactory):
         part = part_util.nurbs_to_part(handles, 0.015)
         part.skeleton = handles.mean(axis=1)
         part.joints = {
-            0: Joint(rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [100, 0, 100]])),  # shoulder
-            0.4: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # knee
-            0.9: Joint(rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])),  # ankle
+            0: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-30, 0, -30], [100, 0, 100]])
+            ),  # shoulder
+            0.4: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # knee
+            0.9: Joint(
+                rest=(0, 0, 0), bounds=np.array([[-35, 0, -70], [35, 0, 70]])
+            ),  # ankle
         }
         # part.iks = {
         #             0.1: IKParams('knee', rotation_weight=0.1, chain_parts=1),
@@ -1166,12 +1269,18 @@ class LizardToe(PartFactory):
     tags = ["foot_detail"]
 
     def sample_params(self, select=None, var=1):
-        weights = part_util.random_convex_coord(self.param_templates.keys(), select=select)
+        weights = part_util.random_convex_coord(
+            self.param_templates.keys(), select=select
+        )
         params = part_util.rdict_comb(self.param_templates, weights)
         # params = np.random.choice(list(self.param_templates.values()))
 
-        N = lambda m, v: np.random.normal(m, v * var)
-        U = lambda l, r: np.random.uniform(l, r)
+        def N(m, v):
+            return np.random.normal(m, v * var)
+
+        def U(l, r):
+            return np.random.uniform(l, r)
+
         return params
 
     def rescale(self, params, scale):
@@ -1398,9 +1507,15 @@ ReptileBody.param_templates = {
     },
 }
 
-ReptileLowerHead.param_templates = {"head": lizard_lower_head, "range": lizard_lower_head_range}
+ReptileLowerHead.param_templates = {
+    "head": lizard_lower_head,
+    "range": lizard_lower_head_range,
+}
 
-ReptileUpperHead.param_templates = {"head": lizard_upper_head, "range": lizard_upper_head_range}
+ReptileUpperHead.param_templates = {
+    "head": lizard_upper_head,
+    "range": lizard_upper_head_range,
+}
 
 LizardFrontLeg.param_templates = {
     # 'lizard': {'leg': {}, 'range': {}},

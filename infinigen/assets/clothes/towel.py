@@ -11,7 +11,6 @@ from scipy.optimize import fsolve
 
 from infinigen.assets.elements.rug import ArtRug
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import rug
 from infinigen.assets.utils.decorate import (
     geo_extension,
     mirror,
@@ -22,11 +21,10 @@ from infinigen.assets.utils.decorate import (
     write_co,
 )
 from infinigen.assets.utils.object import center, new_plane
-from infinigen.assets.utils.uv import unwrap_faces, wrap_sides
+from infinigen.assets.utils.uv import wrap_sides
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import normalize
 from infinigen.core.util.random import log_uniform
 
 
@@ -64,20 +62,34 @@ class TowelFactory(AssetFactory):
             bm.edges.ensure_lookup_table()
             selected = np.abs(read_edge_direction(obj)[:, 0]) > 1 - 1e-3
             edges = [bm.edges[i] for i in np.nonzero(selected)[0]]
-            bmesh.ops.subdivide_edgering(bm, edges=edges, cuts=self.fold_count, smooth=2)
+            bmesh.ops.subdivide_edgering(
+                bm, edges=edges, cuts=self.fold_count, smooth=2
+            )
             bmesh.update_edit_mesh(obj.data)
         co = read_co(obj)
-        order = np.where(co[n :: self.fold_count, 0] < co[n + 1 :: self.fold_count, 0], 1, -1)
-        x_ = np.linspace(-self.thickness * order, self.thickness * order, self.fold_count).T.ravel()
+        order = np.where(
+            co[n :: self.fold_count, 0] < co[n + 1 :: self.fold_count, 0], 1, -1
+        )
+        x_ = np.linspace(
+            -self.thickness * order, self.thickness * order, self.fold_count
+        ).T.ravel()
         co[n:, 0] = x_
         x, y, z = co.T
         max_z = np.max(z) + self.extra_thickness
         theta = x / self.thickness * np.pi / 2
         x__ = np.where(
-            x < -self.thickness, x, np.where(x > self.thickness, -x, -self.thickness + (max_z - z) * np.cos(theta))
+            x < -self.thickness,
+            x,
+            np.where(
+                x > self.thickness, -x, -self.thickness + (max_z - z) * np.cos(theta)
+            ),
         )
         z_ = np.where(
-            x < -self.thickness, z, np.where(x > self.thickness, max_z * 2 - z, max_z + (max_z - z) * np.sin(theta))
+            x < -self.thickness,
+            z,
+            np.where(
+                x > self.thickness, max_z * 2 - z, max_z + (max_z - z) * np.sin(theta)
+            ),
         )
         write_co(obj, np.stack([x__, y, z_], -1))
         if uniform() < 0.5:
@@ -86,7 +98,10 @@ class TowelFactory(AssetFactory):
 
     def compute_roll_total(self):
         c = self.length / (self.thickness + self.extra_thickness) * (4 * np.pi)
-        f = lambda t: t * np.sqrt(1 + t * t) + np.log(t + np.sqrt(1 + t * t)) - c
+
+        def f(t):
+            return t * np.sqrt(1 + t * t) + np.log(t + np.sqrt(1 + t * t)) - c
+
         return fsolve(f, np.zeros(1))[0]
 
     def pre_roll(self, obj):
@@ -130,7 +145,11 @@ class TowelFactory(AssetFactory):
                 self.fold(obj)
             subdivide_edge_ring(obj, 16, (1, 0, 0))
             subdivide_edge_ring(obj, 16, (0, 1, 0))
-        butil.modify_mesh(obj, "BEVEL", width=self.thickness * uniform(0.4, 0.8), segments=2)
-        surface.add_geomod(obj, geo_extension, apply=True, input_args=[uniform(0.05, 0.1)])
+        butil.modify_mesh(
+            obj, "BEVEL", width=self.thickness * uniform(0.4, 0.8), segments=2
+        )
+        surface.add_geomod(
+            obj, geo_extension, apply=True, input_args=[uniform(0.05, 0.1)]
+        )
         subsurf(obj, 1)
         return obj

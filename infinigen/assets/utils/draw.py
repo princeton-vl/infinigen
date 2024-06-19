@@ -13,7 +13,12 @@ import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
-from infinigen.assets.utils.decorate import read_co, remove_vertices, write_attribute, write_co
+from infinigen.assets.utils.decorate import (
+    read_co,
+    remove_vertices,
+    write_attribute,
+    write_co,
+)
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import make_circular, make_circular_angle
 from infinigen.assets.utils.object import data2mesh, mesh2obj, separate_loose
@@ -49,11 +54,18 @@ def shape_by_xs(obj, xs, displacements, method="quadratic"):
 
 
 def surface_from_func(fn, div_x=16, div_y=16, size_x=2, size_y=2):
-    x, y = np.meshgrid(np.linspace(-size_x / 2, size_x / 2, div_x + 1), np.linspace(-size_y / 2, size_y / 2, div_y + 1))
+    x, y = np.meshgrid(
+        np.linspace(-size_x / 2, size_x / 2, div_x + 1),
+        np.linspace(-size_y / 2, size_y / 2, div_y + 1),
+    )
     z = fn(x, y)
     vertices = np.stack([x.flatten(), y.flatten(), z.flatten()]).T
     faces = np.array([[0, div_y + 1, div_y + 2, 1]]) + np.expand_dims(
-        (np.expand_dims(np.arange(div_y), 0) + np.expand_dims(np.arange(div_x) * (div_y + 1), 1)).flatten(), -1
+        (
+            np.expand_dims(np.arange(div_y), 0)
+            + np.expand_dims(np.arange(div_x) * (div_y + 1), 1)
+        ).flatten(),
+        -1,
     )
 
     mesh = bpy.data.meshes.new("z_function_surface")
@@ -64,7 +76,12 @@ def surface_from_func(fn, div_x=16, div_y=16, size_x=2, size_y=2):
 
 def bezier_curve(anchors, vector_locations=(), resolution=64, to_mesh=True):
     n = [len(r) for r in anchors if isinstance(r, Sized)][0]
-    anchors = np.array([np.array(r, dtype=float) if isinstance(r, Sized) else np.full(n, r) for r in anchors])
+    anchors = np.array(
+        [
+            np.array(r, dtype=float) if isinstance(r, Sized) else np.full(n, r)
+            for r in anchors
+        ]
+    )
     bpy.ops.curve.primitive_bezier_curve_add(location=(0, 0, 0))
     obj = bpy.context.active_object
 
@@ -95,7 +112,9 @@ def curve2mesh(obj):
     return obj
 
 
-def align_bezier(anchors, axes=None, scale=None, vector_locations=(), resolution=64, to_mesh=True):
+def align_bezier(
+    anchors, axes=None, scale=None, vector_locations=(), resolution=64, to_mesh=True
+):
     obj = bezier_curve(anchors, vector_locations, resolution, False)
     points = obj.data.splines[0].bezier_points
     if scale is None:
@@ -112,12 +131,19 @@ def align_bezier(anchors, axes=None, scale=None, vector_locations=(), resolution
         p.handle_right_type = "FREE"
         proj_left = np.array(p.handle_left - p.co) @ a * a
         p.handle_left = (
-            np.array(p.co) + proj_left / np.linalg.norm(proj_left) * np.linalg.norm(p.handle_left - p.co) * scale[2 * i]
+            np.array(p.co)
+            + proj_left
+            / np.linalg.norm(proj_left)
+            * np.linalg.norm(p.handle_left - p.co)
+            * scale[2 * i]
         )
         proj_right = np.array(p.handle_right - p.co) @ a * a
         p.handle_right = (
             np.array(p.co)
-            + proj_right / np.linalg.norm(proj_right) * np.linalg.norm(p.handle_right - p.co) * scale[2 * i + 1]
+            + proj_right
+            / np.linalg.norm(proj_right)
+            * np.linalg.norm(p.handle_right - p.co)
+            * scale[2 * i + 1]
         )
     if to_mesh:
         return curve2mesh(obj)
@@ -127,7 +153,11 @@ def align_bezier(anchors, axes=None, scale=None, vector_locations=(), resolution
 def remesh_fill(obj, resolution=0.005):
     n = len(obj.data.vertices)
     butil.modify_mesh(obj, "SOLIDIFY", thickness=0.1)
-    write_attribute(obj, lambda nw, position: nw.compare("GREATER_EQUAL", nw.new_node(Nodes.Index), n), "top")
+    write_attribute(
+        obj,
+        lambda nw, position: nw.compare("GREATER_EQUAL", nw.new_node(Nodes.Index), n),
+        "top",
+    )
     sharp_remesh_with_attrs(obj, resolution)
     is_top = read_attr_data(obj, "top") > 1e-3
     remove_vertices(obj, lambda x, y, z: is_top)
@@ -135,10 +165,22 @@ def remesh_fill(obj, resolution=0.005):
     return obj
 
 
-def spin(anchors, vector_locations=(), subdivision=64, resolution=None, axis=(0, 0, 1), loop=False, dupli=False):
+def spin(
+    anchors,
+    vector_locations=(),
+    subdivision=64,
+    resolution=None,
+    axis=(0, 0, 1),
+    loop=False,
+    dupli=False,
+):
     obj = bezier_curve(anchors, vector_locations, subdivision)
     co = read_co(obj)
-    max_radius = np.amax(np.linalg.norm(co - (co @ np.array(axis))[:, np.newaxis] * np.array(axis), axis=-1))
+    max_radius = np.amax(
+        np.linalg.norm(
+            co - (co @ np.array(axis))[:, np.newaxis] * np.array(axis), axis=-1
+        )
+    )
     if resolution is None:
         resolution = min(int(2 * np.pi * max_radius / 0.005), 128)
     butil.modify_mesh(obj, "WELD", merge_threshold=1e-4)
@@ -188,7 +230,9 @@ def cut_plane(obj, cut_center, cut_normal, clear_outer=True):
             clear_outer=clear_outer,
             clear_inner=not clear_outer,
         )
-        edges = [e for e in bisect_plane["geom_cut"] if isinstance(e, bmesh.types.BMEdge)]
+        edges = [
+            e for e in bisect_plane["geom_cut"] if isinstance(e, bmesh.types.BMEdge)
+        ]
         face = bmesh.ops.edgeloop_fill(bm, edges=edges)["faces"][0]
 
         locations = np.array([v.co for v in face.verts])

@@ -129,22 +129,11 @@ test-extras = ["dev"]
 test-command = "pytest tests"
 
 [tool.ruff]
-lint.select = [
-    "E9", 
-    "F63", 
-    "F7", 
-    "F82"
-    #"E", 
-    #"F", 
-    #"B", 
-    #"C901",
-]
 target-version = "py310"
-line-length = 120 # will be reduced to 88 to match black soon
 
 exclude = [
     "*/dependencies/",
-    "infinigen/OcMesher",
+    "infinigen/OcMesher"
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -4,7 +4,6 @@
 
 # Authors: Mingzhe Wang, Lingjie Mei
 
-import colorsys
 
 from numpy.random import uniform
 
@@ -18,7 +17,9 @@ from infinigen.core.util.random import log_uniform
 def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    layer_weight = nw.new_node("ShaderNodeLayerWeight", input_kwargs={"Blend": sample_range(0.2, 0.4)})
+    layer_weight = nw.new_node(
+        "ShaderNodeLayerWeight", input_kwargs={"Blend": sample_range(0.2, 0.4)}
+    )
 
     rgb = nw.new_node(Nodes.RGB)
 
@@ -31,15 +32,25 @@ def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = sample_range(1.2, 1.6)
 
-    glass_bsdf = nw.new_node("ShaderNodeBsdfGlass", input_kwargs={"Color": rgb, "Roughness": 0.2, "IOR": value})
+    glass_bsdf = nw.new_node(
+        "ShaderNodeBsdfGlass",
+        input_kwargs={"Color": rgb, "Roughness": 0.2, "IOR": value},
+    )
 
     glossy_bsdf = nw.new_node("ShaderNodeBsdfGlossy", input_kwargs={"Roughness": 0.2})
 
     mix_shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": layer_weight.outputs["Fresnel"], 1: glass_bsdf, 2: glossy_bsdf}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": layer_weight.outputs["Fresnel"],
+            1: glass_bsdf,
+            2: glossy_bsdf,
+        },
     )
 
-    material_output = nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
+    material_output = nw.new_node(
+        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
+    )
 
 
 def apply(obj, selection=None, **kwargs):

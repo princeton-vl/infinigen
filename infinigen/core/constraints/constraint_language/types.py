@@ -4,10 +4,7 @@
 
 # Authors: Alexander Raistrick
 
-import functools
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any
 
 nodedataclass_kwargs = dict(eq=False, order=False)
 

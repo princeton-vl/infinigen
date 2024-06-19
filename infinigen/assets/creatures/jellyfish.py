@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from mathutils import Vector
@@ -26,20 +24,17 @@ from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.nodegroup import geo_base_selection
 from infinigen.assets.utils.object import (
-    data2mesh,
     join_objects,
-    mesh2obj,
     new_circle,
     new_empty,
     new_icosphere,
-    origin2highest,
 )
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.surface import read_attr_data, shaderfunc_to_material, write_attr_data
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.surface import shaderfunc_to_material, write_attr_data
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
@@ -51,8 +46,12 @@ class JellyfishFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.base_hue = np.random.normal(0.57, 0.15)
-            self.outside_material = self.make_transparent() if uniform(0, 1) < 0.8 else self.make_dotted()
-            self.inside_material = self.make_transparent() if uniform(0, 1) < 0.8 else self.make_opaque()
+            self.outside_material = (
+                self.make_transparent() if uniform(0, 1) < 0.8 else self.make_dotted()
+            )
+            self.inside_material = (
+                self.make_transparent() if uniform(0, 1) < 0.8 else self.make_opaque()
+            )
             self.tentacle_material = self.make_transparent()
             self.arm_mat_transparent = self.make_transparent()
             self.arm_mat_opaque = self.make_opaque()
@@ -88,22 +87,34 @@ class JellyfishFactory(AssetFactory):
         assign_material(obj, [self.outside_material, self.inside_material])
         for axis in "XY":
             butil.modify_mesh(
-                obj, "SIMPLE_DEFORM", deform_method="TWIST", angle=uniform(-np.pi / 3, np.pi / 3), deform_axis=axis
+                obj,
+                "SIMPLE_DEFORM",
+                deform_method="TWIST",
+                angle=uniform(-np.pi / 3, np.pi / 3),
+                deform_axis=axis,
             )
         for axis in "XY":
             butil.modify_mesh(
-                obj, "SIMPLE_DEFORM", deform_method="BEND", angle=uniform(-np.pi / 3, np.pi / 3), deform_axis=axis
+                obj,
+                "SIMPLE_DEFORM",
+                deform_method="BEND",
+                angle=uniform(-np.pi / 3, np.pi / 3),
+                deform_axis=axis,
             )
 
         def selection(nw: NodeWrangler):
             x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
-            r = nw.math("POWER", nw.add(nw.math("POWER", x, 2), nw.math("POWER", y, 2)), 0.5)
+            r = nw.math(
+                "POWER", nw.add(nw.math("POWER", x, 2), nw.math("POWER", y, 2)), 0.5
+            )
             center = nw.boolean_math(
                 "AND",
                 nw.compare("GREATER_THAN", r, self.arm_radius_range[0] * radius),
                 nw.compare("LESS_THAN", r, self.arm_radius_range[1] * radius),
             )
-            down = nw.compare("LESS_THAN", nw.separate(nw.new_node(Nodes.InputNormal))[-1], 0)
+            down = nw.compare(
+                "LESS_THAN", nw.separate(nw.new_node(Nodes.InputNormal))[-1], 0
+            )
             inside = nw.new_node(Nodes.NamedAttribute, ["inside"])
             return nw.boolean_math("AND", nw.boolean_math("AND", center, down), inside)
 
@@ -119,7 +130,14 @@ class JellyfishFactory(AssetFactory):
             )
             for a in long_arms:
                 assign_material(
-                    a, np.random.choice([self.arm_mat_opaque, self.arm_mat_transparent, self.arm_mat_solid])
+                    a,
+                    np.random.choice(
+                        [
+                            self.arm_mat_opaque,
+                            self.arm_mat_transparent,
+                            self.arm_mat_solid,
+                        ]
+                    ),
                 )
         else:
             long_arms = []
@@ -147,18 +165,33 @@ class JellyfishFactory(AssetFactory):
         offset = uniform(0, 1)
         seed = np.random.randint(1e5)
         driver_x, driver_y, driver_z = [_.driver for _ in obj.driver_add("location")]
-        driver_x.expression = repeated_driver(uniform(-0.2, 0.2), uniform(-0.2, 0.2), self.move_freq, offset, seed)
-        driver_y.expression = repeated_driver(uniform(-0.2, 0.2), uniform(-0.2, 0.2), self.move_freq, offset, seed)
-        driver_z.expression = repeated_driver(uniform(-1.5, -0.5), uniform(0.5, 1.5), self.move_freq, offset, seed)
+        driver_x.expression = repeated_driver(
+            uniform(-0.2, 0.2), uniform(-0.2, 0.2), self.move_freq, offset, seed
+        )
+        driver_y.expression = repeated_driver(
+            uniform(-0.2, 0.2), uniform(-0.2, 0.2), self.move_freq, offset, seed
+        )
+        driver_z.expression = repeated_driver(
+            uniform(-1.5, -0.5), uniform(0.5, 1.5), self.move_freq, offset, seed
+        )
         driver_rot = obj.driver_add("rotation_euler")[-1].driver
         twist_range = uniform(0, np.pi / 60)
-        driver_rot.expression = repeated_driver(-twist_range, twist_range, self.move_freq, offset, seed)
+        driver_rot.expression = repeated_driver(
+            -twist_range, twist_range, self.move_freq, offset, seed
+        )
 
         obj, mod = butil.modify_mesh(
-            obj, "SIMPLE_DEFORM", False, deform_method="TWIST", deform_axis="Z", return_mod=True
+            obj,
+            "SIMPLE_DEFORM",
+            False,
+            deform_method="TWIST",
+            deform_axis="Z",
+            return_mod=True,
         )
         twist_driver = mod.driver_add("angle").driver
-        twist_driver.expression = repeated_driver(-np.pi / 30, np.pi / 30, self.move_freq, offset, seed)
+        twist_driver.expression = repeated_driver(
+            -np.pi / 30, np.pi / 30, self.move_freq, offset, seed
+        )
 
     def animate_expansion(self, obj, head_z, tail_z):
         obj.shape_key_add(name="Base")
@@ -178,7 +211,9 @@ class JellyfishFactory(AssetFactory):
         co = np.stack([x, y, z_curve(z) * z], -1)
         key_block_z.data.foreach_set("co", co.reshape(-1))
         dr = key_block_z.driver_add("value").driver
-        dr.expression = repeated_driver(0, 1, self.anim_freq, offset + uniform(0.05, 0.15), seed)
+        dr.expression = repeated_driver(
+            0, 1, self.anim_freq, offset + uniform(0.05, 0.15), seed
+        )
 
     def animate_radius(self, obj, offset, seed, head_z, tail_z):
         obj.active_shape_key_index = 0
@@ -194,20 +229,33 @@ class JellyfishFactory(AssetFactory):
 
     def animate_arms(self, obj, tail_z):
         def geo_musgrave_texture(nw: NodeWrangler, axis):
-            geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+            geometry = nw.new_node(
+                Nodes.GroupInput,
+                expose_input=[("NodeSocketGeometry", "Geometry", None)],
+            )
             z = nw.separate(nw.new_node(Nodes.InputPosition))[-1]
             musgrave = nw.new_node(
-                Nodes.MusgraveTexture, input_kwargs={"Scale": uniform(1, 2)}, attrs={"musgrave_dimensions": "2D"}
+                Nodes.MusgraveTexture,
+                input_kwargs={"Scale": uniform(1, 2)},
+                attrs={"musgrave_dimensions": "2D"},
             )
             offset = nw.scalar_multiply(
                 log_uniform(0.1, 0.4),
                 nw.new_node(
-                    Nodes.CombineXYZ, input_kwargs={axis: nw.scalar_divide(nw.scalar_multiply(musgrave, z), -tail_z)}
+                    Nodes.CombineXYZ,
+                    input_kwargs={
+                        axis: nw.scalar_divide(nw.scalar_multiply(musgrave, z), -tail_z)
+                    },
                 ),
             )
             geometry = nw.new_node(
                 Nodes.SetPosition,
-                [geometry, nw.boolean_math("NOT", nw.new_node(Nodes.NamedAttribute, ["pin"])), None, offset],
+                [
+                    geometry,
+                    nw.boolean_math("NOT", nw.new_node(Nodes.NamedAttribute, ["pin"])),
+                    None,
+                    offset,
+                ],
             )
             nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
@@ -216,24 +264,37 @@ class JellyfishFactory(AssetFactory):
             key_block_r = obj.shape_key_add(name=f"Arm_{i}")
             temp = deep_clone_obj(obj)
             temp.shape_key_clear()
-            surface.add_geomod(temp, geo_musgrave_texture, apply=True, input_args=[axis])
+            surface.add_geomod(
+                temp, geo_musgrave_texture, apply=True, input_args=[axis]
+            )
             key_block_r.data.foreach_set("co", read_co(temp).reshape(-1))
             butil.delete(temp)
             dr = key_block_r.driver_add("value").driver
             dr.expression = repeated_driver(0, 1, self.anim_freq)
 
-    def place_tentacles(self, obj, selection, min_distance, size, length, bend_angle, displace=False):
+    def place_tentacles(
+        self, obj, selection, min_distance, size, length, bend_angle, displace=False
+    ):
         temp = butil.spawn_vert("temp")
-        surface.add_geomod(temp, geo_base_selection, apply=True, input_args=[obj, selection, min_distance])
+        surface.add_geomod(
+            temp,
+            geo_base_selection,
+            apply=True,
+            input_args=[obj, selection, min_distance],
+        )
         locations = read_co(temp)
         if displace:
             locations[:, -1] -= uniform(*self.arm_displace_range, len(locations))
         butil.delete(temp)
         n = min(10, len(locations))
         arms = [self.build_arm(size, length, bend_angle) for _ in range(n)]
-        arms += [deep_clone_obj(np.random.choice(arms)) for _ in range(len(locations) - n)]
+        arms += [
+            deep_clone_obj(np.random.choice(arms)) for _ in range(len(locations) - n)
+        ]
         for arm, loc in zip(arms, locations):
-            arm.rotation_euler[-1] = np.arctan2(loc[1], loc[0]) + uniform(-np.pi / 6, np.pi / 6) + np.pi
+            arm.rotation_euler[-1] = (
+                np.arctan2(loc[1], loc[0]) + uniform(-np.pi / 6, np.pi / 6) + np.pi
+            )
             arm.location = loc
         return arms
 
@@ -260,7 +321,10 @@ class JellyfishFactory(AssetFactory):
             self.apply_cap_dent(obj)
 
         surface.add_geomod(
-            obj, geo_extension, apply=True, input_args=[log_uniform(0.2, 0.4), log_uniform(0.5, 1.0), "2D"]
+            obj,
+            geo_extension,
+            apply=True,
+            input_args=[log_uniform(0.2, 0.4), log_uniform(0.5, 1.0), "2D"],
         )
         obj.scale *= Vector(uniform(0.4, 0.6, 3))
         obj.scale[-1] *= self.cap_z_scale
@@ -284,7 +348,9 @@ class JellyfishFactory(AssetFactory):
         index = np.argmin(difference, 1) % n_dent
         dent_ = np.take(dent, index)
         margin_ = np.take(margin, index)
-        s = np.exp(np.log(dent_) / margin_ * np.clip(margin_ - np.min(difference, 1), 0, None))
+        s = np.exp(
+            np.log(dent_) / margin_ * np.clip(margin_ - np.min(difference, 1), 0, None)
+        )
         co = np.stack([s * x, s * y, z]).T
         write_co(obj, co)
 
@@ -306,15 +372,37 @@ class JellyfishFactory(AssetFactory):
             render_steps=steps,
         )
         butil.delete(empty)
-        butil.modify_mesh(obj, "SIMPLE_DEFORM", deform_method="TAPER", factor=uniform(0.5, 1.0), deform_axis="Z")
+        butil.modify_mesh(
+            obj,
+            "SIMPLE_DEFORM",
+            deform_method="TAPER",
+            factor=uniform(0.5, 1.0),
+            deform_axis="Z",
+        )
         texture = bpy.data.textures.new(name="arm", type="MARBLE")
         texture.noise_scale = log_uniform(0.1, 0.2)
-        butil.modify_mesh(obj, "DISPLACE", texture=texture, strength=uniform(0.01, 0.02), direction="Y")
+        butil.modify_mesh(
+            obj,
+            "DISPLACE",
+            texture=texture,
+            strength=uniform(0.01, 0.02),
+            direction="Y",
+        )
         texture = bpy.data.textures.new(name="arm", type="MARBLE")
         texture.noise_scale = log_uniform(0.1, 2.0)
-        butil.modify_mesh(obj, "DISPLACE", texture=texture, strength=log_uniform(0.1, 0.2), direction="X")
         butil.modify_mesh(
-            obj, "SIMPLE_DEFORM", deform_method="BEND", angle=bend_angle * log_uniform(0.5, 1.5), deform_axis="Y"
+            obj,
+            "DISPLACE",
+            texture=texture,
+            strength=log_uniform(0.1, 0.2),
+            direction="X",
+        )
+        butil.modify_mesh(
+            obj,
+            "SIMPLE_DEFORM",
+            deform_method="BEND",
+            angle=bend_angle * log_uniform(0.5, 1.5),
+            deform_axis="Y",
         )
         co = read_co(obj)
         x, y, z = co.T
@@ -334,31 +422,44 @@ class JellyfishFactory(AssetFactory):
         emission_color = hsv2rgba(base_hue, uniform(0.4, 0.6), 1)
         transparent_color = hsv2rgba((base_hue + uniform(-0.1, 0.1)) % 1, saturation, 1)
         emission = nw.new_node(Nodes.Emission, [emission_color])
-        glossy = nw.new_node(Nodes.GlossyBSDF, input_kwargs={"Color": transparent_color, "Roughness": uniform(0.8, 1)})
+        glossy = nw.new_node(
+            Nodes.GlossyBSDF,
+            input_kwargs={"Color": transparent_color, "Roughness": uniform(0.8, 1)},
+        )
         transparent = nw.new_node(Nodes.TransparentBSDF, [transparent_color])
         mix_shader = nw.new_node(Nodes.MixShader, [0.5, glossy, transparent])
         mix_shader = nw.new_node(Nodes.MixShader, [layerweight, emission, mix_shader])
         transparent = nw.new_node(Nodes.TransparentBSDF, [transparent_color])
         transparency = surface.eval_argument(nw, transparency)
-        mix_shader = nw.new_node(Nodes.MixShader, [transparency, mix_shader, transparent])
+        mix_shader = nw.new_node(
+            Nodes.MixShader, [transparency, mix_shader, transparent]
+        )
         return mix_shader
 
     def make_transparent(self):
         hue = (self.base_hue + uniform(-0.1, 0.1)) % 1
-        return shaderfunc_to_material(self.shader_jellyfish, hue, uniform(0.1, 0.3), uniform(0.88, 0.92))
+        return shaderfunc_to_material(
+            self.shader_jellyfish, hue, uniform(0.1, 0.3), uniform(0.88, 0.92)
+        )
 
     def make_opaque(self):
         hue = (self.base_hue + uniform(-0.1, 0.1)) % 1
-        return shaderfunc_to_material(self.shader_jellyfish, hue, uniform(0.3, 0.6), uniform(0.75, 0.8))
+        return shaderfunc_to_material(
+            self.shader_jellyfish, hue, uniform(0.3, 0.6), uniform(0.75, 0.8)
+        )
 
     def make_solid(self):
         hue = (self.base_hue + uniform(-0.1, 0.1)) % 1
-        return shaderfunc_to_material(self.shader_jellyfish, hue, uniform(0.5, 0.8), uniform(0.4, 0.5))
+        return shaderfunc_to_material(
+            self.shader_jellyfish, hue, uniform(0.5, 0.8), uniform(0.4, 0.5)
+        )
 
     def make_dotted(self):
         def transparency(nw: NodeWrangler):
             return nw.build_float_curve(
-                nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": uniform(20, 50)}),
+                nw.new_node(
+                    Nodes.NoiseTexture, input_kwargs={"Scale": uniform(20, 50)}
+                ),
                 [
                     (0, uniform(0.92, 0.96)),
                     (0.62, uniform(0.92, 0.96)),
@@ -368,4 +469,6 @@ class JellyfishFactory(AssetFactory):
             )
 
         hue = (self.base_hue + uniform(-0.1, 0.1)) % 1
-        return shaderfunc_to_material(self.shader_jellyfish, hue, uniform(0.5, 0.8), transparency)
+        return shaderfunc_to_material(
+            self.shader_jellyfish, hue, uniform(0.5, 0.8), transparency
+        )

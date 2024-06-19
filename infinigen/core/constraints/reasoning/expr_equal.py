@@ -42,7 +42,11 @@ def expr_equal(n1: Node, n2: Node, name: str = None) -> bool | FalseEqualityResu
         name = n1.__class__.__name__
 
     if type(n1) is not type(n2):
-        return FalseEqualityResult(n1, n2, f"Unequal types for {name}: {type(n1).__name__} != {type(n2).__name__}")
+        return FalseEqualityResult(
+            n1,
+            n2,
+            f"Unequal types for {name}: {type(n1).__name__} != {type(n2).__name__}",
+        )
 
     n1_child_keys = [k for k, _ in n1.children()]
     n2_child_keys = [k for k, _ in n1.children()]
@@ -50,7 +54,9 @@ def expr_equal(n1: Node, n2: Node, name: str = None) -> bool | FalseEqualityResu
     n2_children = [v for _, v in n1.children()]
 
     if n1_child_keys != n2_child_keys:
-        return FalseEqualityResult(n1, n2, f"Unequal child keys for {name}: {n1_children}!={n2_children}")
+        return FalseEqualityResult(
+            n1, n2, f"Unequal child keys for {name}: {n1_children}!={n2_children}"
+        )
 
     for f in dataclasses.fields(n1):
         v1 = getattr(n1, f.name)
@@ -60,6 +66,8 @@ def expr_equal(n1: Node, n2: Node, name: str = None) -> bool | FalseEqualityResu
             if not res:
                 return res
         elif v1 != v2:
-            return FalseEqualityResult(n1, n2, f"Unequal attr {repr(f.name)}, {v1} != {v2}")
+            return FalseEqualityResult(
+                n1, n2, f"Unequal attr {repr(f.name)}, {v1} != {v2}"
+            )
 
     return True

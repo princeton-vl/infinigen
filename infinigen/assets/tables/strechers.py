@@ -4,15 +4,9 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
 from infinigen.assets.tables.table_utils import nodegroup_n_gon_cylinder
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 @node_utils.to_nodegroup("nodegroup_strecher", singleton=False, type="GeometryNodeTree")
@@ -20,11 +14,19 @@ def nodegroup_strecher(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     curve_line = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": (1.0000, 0.0000, 1.0000), "End": (1.0000, 0.0000, -1.0000)}
+        Nodes.CurveLine,
+        input_kwargs={
+            "Start": (1.0000, 0.0000, 1.0000),
+            "End": (1.0000, 0.0000, -1.0000),
+        },
     )
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketInt", "N-gon", 32), ("NodeSocketFloat", "Profile Width", 0.200)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketInt", "N-gon", 32),
+            ("NodeSocketFloat", "Profile Width", 0.200),
+        ],
     )
 
     ngoncylinder = nw.new_node(
@@ -40,5 +42,7 @@ def nodegroup_strecher(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": ngoncylinder.outputs["Mesh"]}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": ngoncylinder.outputs["Mesh"]},
+        attrs={"is_active_output": True},
     )

@@ -4,17 +4,13 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_random_rotation_scale", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_random_rotation_scale", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_random_rotation_scale(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -32,10 +28,17 @@ def nodegroup_random_rotation_scale(nw: NodeWrangler):
 
     position_3 = nw.new_node(Nodes.InputPosition)
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: position_3, 1: group_input.outputs["random seed"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position_3, 1: group_input.outputs["random seed"]},
+    )
 
     noise_texture_2 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": add.outputs["Vector"], "Scale": group_input.outputs["noise scale"]}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": add.outputs["Vector"],
+            "Scale": group_input.outputs["noise scale"],
+        },
     )
 
     value_2 = nw.new_node(Nodes.Value)
@@ -47,32 +50,50 @@ def nodegroup_random_rotation_scale(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": subtract.outputs["Vector"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": subtract.outputs["Vector"]}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: separate_xyz_2.outputs["X"], 1: group_input.outputs["rot std"]},
+        input_kwargs={
+            0: separate_xyz_2.outputs["X"],
+            1: group_input.outputs["rot std"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["rot mean"], 1: combine_xyz})
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["rot mean"], 1: combine_xyz},
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: separate_xyz_2.outputs["Y"], 1: group_input.outputs["scale std"]},
+        input_kwargs={
+            0: separate_xyz_2.outputs["Y"],
+            1: group_input.outputs["scale std"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     add_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_1, 1: group_input.outputs["scale mean"]}, attrs={"use_clamp": True}
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: group_input.outputs["scale mean"]},
+        attrs={"use_clamp": True},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": add_1.outputs["Vector"], "Value": add_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Vector": add_1.outputs["Vector"], "Value": add_2},
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_surface_bump", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_surface_bump", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_surface_bump(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -87,25 +108,44 @@ def nodegroup_surface_bump(nw: NodeWrangler):
 
     normal = nw.new_node(Nodes.InputNormal)
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": group_input.outputs["Scale"]})
-
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"]}, attrs={"operation": "SUBTRACT"})
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: group_input.outputs["Displacement"]}, attrs={"operation": "MULTIPLY"}
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Scale": group_input.outputs["Scale"]}
     )
 
-    multiply_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: normal, 1: multiply}, attrs={"operation": "MULTIPLY"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"]},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: group_input.outputs["Displacement"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: normal, 1: multiply},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": multiply_1.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": multiply_1.outputs["Vector"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_point_on_mesh", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_point_on_mesh", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_point_on_mesh(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -134,53 +174,86 @@ def nodegroup_point_on_mesh(nw: NodeWrangler):
 
     greater_than = nw.new_node(
         Nodes.Compare,
-        input_kwargs={0: group_input.outputs["spline parameter"], 1: group_input.outputs["parameter min"]},
+        input_kwargs={
+            0: group_input.outputs["spline parameter"],
+            1: group_input.outputs["parameter min"],
+        },
     )
 
     less_than = nw.new_node(
         Nodes.Compare,
-        input_kwargs={0: group_input.outputs["spline parameter"], 1: group_input.outputs["parameter max"]},
+        input_kwargs={
+            0: group_input.outputs["spline parameter"],
+            1: group_input.outputs["parameter max"],
+        },
         attrs={"operation": "LESS_THAN"},
     )
 
-    nand = nw.new_node(Nodes.BooleanMath, input_kwargs={0: greater_than, 1: less_than}, attrs={"operation": "NAND"})
-
-    delete_geometry = nw.new_node(
-        Nodes.DeleteGeometry, input_kwargs={"Geometry": distribute_points_on_faces.outputs["Points"], "Selection": nand}
+    nand = nw.new_node(
+        Nodes.BooleanMath,
+        input_kwargs={0: greater_than, 1: less_than},
+        attrs={"operation": "NAND"},
     )
 
-    noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": group_input.outputs["noise scale"]})
+    delete_geometry = nw.new_node(
+        Nodes.DeleteGeometry,
+        input_kwargs={
+            "Geometry": distribute_points_on_faces.outputs["Points"],
+            "Selection": nand,
+        },
+    )
+
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Scale": group_input.outputs["noise scale"]}
+    )
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.5
 
     subtract = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: noise_texture.outputs["Color"], 1: value}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: noise_texture.outputs["Color"], 1: value},
+        attrs={"operation": "SUBTRACT"},
     )
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: subtract.outputs["Vector"], "Scale": group_input.outputs["noise amount"]},
+        input_kwargs={
+            0: subtract.outputs["Vector"],
+            "Scale": group_input.outputs["noise amount"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": delete_geometry, "Offset": scale.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": delete_geometry, "Offset": scale.outputs["Vector"]},
     )
 
-    geometry_proximity = nw.new_node(Nodes.Proximity, input_kwargs={"Target": group_input.outputs["Mesh"]})
+    geometry_proximity = nw.new_node(
+        Nodes.Proximity, input_kwargs={"Target": group_input.outputs["Mesh"]}
+    )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": set_position, "Position": geometry_proximity.outputs["Position"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": set_position,
+            "Position": geometry_proximity.outputs["Position"],
+        },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": set_position_1, "Rotation": distribute_points_on_faces.outputs["Rotation"]},
+        input_kwargs={
+            "Geometry": set_position_1,
+            "Rotation": distribute_points_on_faces.outputs["Rotation"],
+        },
     )
 
 
-@node_utils.to_nodegroup("nodegroup_instance_on_points", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_instance_on_points", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_instance_on_points(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -217,14 +290,23 @@ def nodegroup_instance_on_points(nw: NodeWrangler):
 
     translate_instances = nw.new_node(
         Nodes.TranslateInstances,
-        input_kwargs={"Instances": instance_on_points_1, "Translation": group_input.outputs["translation"]},
+        input_kwargs={
+            "Instances": instance_on_points_1,
+            "Translation": group_input.outputs["translation"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Instances": translate_instances})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Instances": translate_instances}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_shape_quadratic", singleton=False, type="GeometryNodeTree")
-def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5), (1.0, 0.5)]):
+@node_utils.to_nodegroup(
+    "nodegroup_shape_quadratic", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_shape_quadratic(
+    nw: NodeWrangler, radius_control_points=[(0.0, 0.5), (1.0, 0.5)]
+):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -257,24 +339,37 @@ def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5
     spline_parameter_2 = nw.new_node(Nodes.SplineParameter)
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": quadratic_bezier, 2: spline_parameter_2.outputs["Factor"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={
+            "Geometry": quadratic_bezier,
+            2: spline_parameter_2.outputs["Factor"],
+        },
     )
 
     curve_tangent = nw.new_node(Nodes.CurveTangent)
 
     capture_attribute_1 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], 1: curve_tangent},
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            1: curve_tangent,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     position = nw.new_node(Nodes.InputPosition)
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: group_input.outputs["random seed pos"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: group_input.outputs["random seed pos"]},
+    )
 
     noise_texture_3 = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": add.outputs["Vector"], "Scale": group_input.outputs["noise scale pos"]},
+        input_kwargs={
+            "Vector": add.outputs["Vector"],
+            "Scale": group_input.outputs["noise scale pos"],
+        },
     )
 
     value_1 = nw.new_node(Nodes.Value)
@@ -288,25 +383,38 @@ def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: subtract.outputs["Vector"], "Scale": spline_parameter_2.outputs["Factor"]},
+        input_kwargs={
+            0: subtract.outputs["Vector"],
+            "Scale": spline_parameter_2.outputs["Factor"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], "Scale": group_input.outputs["noise amount pos"]},
+        input_kwargs={
+            0: scale.outputs["Vector"],
+            "Scale": group_input.outputs["noise amount pos"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": capture_attribute_1.outputs["Geometry"], "Offset": scale_1.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": capture_attribute_1.outputs["Geometry"],
+            "Offset": scale_1.outputs["Vector"],
+        },
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     add_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: spline_parameter.outputs["Factor"], 1: group_input.outputs["random seed tilt"]}
+        Nodes.Math,
+        input_kwargs={
+            0: spline_parameter.outputs["Factor"],
+            1: group_input.outputs["random seed tilt"],
+        },
     )
 
     noise_texture_1 = nw.new_node(
@@ -316,7 +424,9 @@ def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5
     )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: noise_texture_1.outputs["Fac"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: noise_texture_1.outputs["Fac"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply = nw.new_node(
@@ -325,15 +435,20 @@ def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5
         attrs={"operation": "MULTIPLY"},
     )
 
-    set_curve_tilt = nw.new_node(Nodes.SetCurveTilt, input_kwargs={"Curve": set_position, "Tilt": multiply})
+    set_curve_tilt = nw.new_node(
+        Nodes.SetCurveTilt, input_kwargs={"Curve": set_position, "Tilt": multiply}
+    )
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
 
-    float_curve_2 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]})
+    float_curve_2 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]}
+    )
     node_utils.assign_curve(float_curve_2.mapping.curves[0], radius_control_points)
 
     set_curve_radius = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": set_curve_tilt, "Radius": float_curve_2}
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": set_curve_tilt, "Radius": float_curve_2},
     )
 
     curve_to_mesh = nw.new_node(
@@ -346,11 +461,15 @@ def nodegroup_shape_quadratic(nw: NodeWrangler, radius_control_points=[(0.0, 0.5
     )
 
     curve_to_points = nw.new_node(
-        Nodes.CurveToPoints, input_kwargs={"Curve": set_position}, attrs={"mode": "EVALUATED"}
+        Nodes.CurveToPoints,
+        input_kwargs={"Curve": set_position},
+        attrs={"mode": "EVALUATED"},
     )
 
     geometry_proximity = nw.new_node(
-        Nodes.Proximity, input_kwargs={"Target": curve_to_points.outputs["Points"]}, attrs={"target_element": "POINTS"}
+        Nodes.Proximity,
+        input_kwargs={"Target": curve_to_points.outputs["Points"]},
+        attrs={"target_element": "POINTS"},
     )
 
     group_output = nw.new_node(
@@ -381,9 +500,13 @@ def nodegroup_add_dent(nw: NodeWrangler, dent_control_points):
         ],
     )
 
-    greater_than = nw.new_node(Nodes.Compare, input_kwargs={0: group_input.outputs["spline parameter"], 1: 0.5})
+    greater_than = nw.new_node(
+        Nodes.Compare, input_kwargs={0: group_input.outputs["spline parameter"], 1: 0.5}
+    )
 
-    op_not = nw.new_node(Nodes.BooleanMath, input_kwargs={0: greater_than}, attrs={"operation": "NOT"})
+    op_not = nw.new_node(
+        Nodes.BooleanMath, input_kwargs={0: greater_than}, attrs={"operation": "NOT"}
+    )
 
     switch = nw.new_node(
         Nodes.Switch,
@@ -393,17 +516,27 @@ def nodegroup_add_dent(nw: NodeWrangler, dent_control_points):
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": group_input.outputs["distance to center"], 2: group_input.outputs["max radius"]},
+        input_kwargs={
+            "Value": group_input.outputs["distance to center"],
+            2: group_input.outputs["max radius"],
+        },
     )
 
-    float_curve_3 = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]})
+    float_curve_3 = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": map_range.outputs["Result"]}
+    )
     node_utils.assign_curve(float_curve_3.mapping.curves[0], dent_control_points)
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": float_curve_3, 3: -1.0})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": float_curve_3, 3: -1.0}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: map_range_1.outputs["Result"], 1: group_input.outputs["intensity"]},
+        input_kwargs={
+            0: map_range_1.outputs["Result"],
+            1: group_input.outputs["intensity"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -422,10 +555,14 @@ def nodegroup_add_dent(nw: NodeWrangler, dent_control_points):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position_2}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_add_crater", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_add_crater", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_add_crater(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -441,36 +578,62 @@ def nodegroup_add_crater(nw: NodeWrangler):
     normal = nw.new_node(Nodes.InputNormal)
 
     geometry_proximity = nw.new_node(
-        Nodes.Proximity, input_kwargs={"Target": group_input.outputs["Points"]}, attrs={"target_element": "POINTS"}
+        Nodes.Proximity,
+        input_kwargs={"Target": group_input.outputs["Points"]},
+        attrs={"target_element": "POINTS"},
     )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": geometry_proximity.outputs["Distance"], 2: 0.08, 3: -0.04, 4: 0.0}
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": geometry_proximity.outputs["Distance"],
+            2: 0.08,
+            3: -0.04,
+            4: 0.0,
+        },
     )
 
     smooth_min = nw.new_node(
-        Nodes.Math, input_kwargs={0: map_range_1.outputs["Result"], 1: 0.0, 2: 0.05}, attrs={"operation": "SMOOTH_MIN"}
+        Nodes.Math,
+        input_kwargs={0: map_range_1.outputs["Result"], 1: 0.0, 2: 0.05},
+        attrs={"operation": "SMOOTH_MIN"},
     )
 
-    scale = nw.new_node(Nodes.VectorMath, input_kwargs={0: normal, "Scale": smooth_min}, attrs={"operation": "SCALE"})
+    scale = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: normal, "Scale": smooth_min},
+        attrs={"operation": "SCALE"},
+    )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], "Scale": group_input.outputs["Strength"]},
+        input_kwargs={
+            0: scale.outputs["Vector"],
+            "Scale": group_input.outputs["Strength"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position_1 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": scale_1.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": scale_1.outputs["Vector"],
+        },
     )
 
-    subdivision_surface = nw.new_node(Nodes.SubdivisionSurface, input_kwargs={"Mesh": set_position_1})
+    subdivision_surface = nw.new_node(
+        Nodes.SubdivisionSurface, input_kwargs={"Mesh": set_position_1}
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": subdivision_surface})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": subdivision_surface}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_mix_vector", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_mix_vector", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_mix_vector(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -484,7 +647,9 @@ def nodegroup_mix_vector(nw: NodeWrangler):
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: 1.0, 1: group_input.outputs["alpha"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: 1.0, 1: group_input.outputs["alpha"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     scale = nw.new_node(
@@ -495,16 +660,26 @@ def nodegroup_mix_vector(nw: NodeWrangler):
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: group_input.outputs["Vector 2"], "Scale": group_input.outputs["alpha"]},
+        input_kwargs={
+            0: group_input.outputs["Vector 2"],
+            "Scale": group_input.outputs["alpha"],
+        },
         attrs={"operation": "SCALE"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": add.outputs["Vector"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Vector": add.outputs["Vector"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_add_noise_scalar", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_add_noise_scalar", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_add_noise_scalar(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -520,24 +695,41 @@ def nodegroup_add_noise_scalar(nw: NodeWrangler):
         ],
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: group_input.outputs["noise random seed"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: group_input.outputs["noise random seed"]},
+    )
 
     noise_texture = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": add.outputs["Vector"], "Scale": group_input.outputs["noise scale"]}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": add.outputs["Vector"],
+            "Scale": group_input.outputs["noise scale"],
+        },
     )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: noise_texture.outputs["Fac"]}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: noise_texture.outputs["Fac"]},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: group_input.outputs["noise amount"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: group_input.outputs["noise amount"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["value"]})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply, 1: group_input.outputs["value"]}
+    )
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"value": add_1})
 
 
-@node_utils.to_nodegroup("nodegroup_attach_to_nearest", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_attach_to_nearest", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_attach_to_nearest(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -554,25 +746,38 @@ def nodegroup_attach_to_nearest(nw: NodeWrangler):
 
     position = nw.new_node(Nodes.InputPosition)
 
-    geometry_proximity = nw.new_node(Nodes.Proximity, input_kwargs={"Target": group_input.outputs["Target"]})
+    geometry_proximity = nw.new_node(
+        Nodes.Proximity, input_kwargs={"Target": group_input.outputs["Target"]}
+    )
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["threshold"], 1: geometry_proximity.outputs["Distance"]},
+        input_kwargs={
+            0: group_input.outputs["threshold"],
+            1: geometry_proximity.outputs["Distance"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: group_input.outputs["multiplier"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: group_input.outputs["multiplier"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    exponent = nw.new_node(Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "EXPONENT"})
+    exponent = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "EXPONENT"}
+    )
 
     clamp = nw.new_node(Nodes.Clamp, input_kwargs={"Value": exponent})
 
     mixvector = nw.new_node(
         nodegroup_mix_vector().name,
-        input_kwargs={"Vector 1": position, "Vector 2": geometry_proximity.outputs["Position"], "alpha": clamp},
+        input_kwargs={
+            "Vector 1": position,
+            "Vector 2": geometry_proximity.outputs["Position"],
+            "alpha": clamp,
+        },
     )
 
     set_position = nw.new_node(
@@ -584,21 +789,32 @@ def nodegroup_attach_to_nearest(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_manhattan", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_manhattan", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_manhattan(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketVector", "v1", (0.0, 0.0, 0.0)), ("NodeSocketVector", "v2", (0.0, 0.0, 0.0))],
+        expose_input=[
+            ("NodeSocketVector", "v1", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "v2", (0.0, 0.0, 0.0)),
+        ],
     )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["v1"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["v1"]}
+    )
 
-    separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["v2"]})
+    separate_xyz_1 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": group_input.outputs["v2"]}
+    )
 
     subtract = nw.new_node(
         Nodes.Math,
@@ -606,7 +822,9 @@ def nodegroup_manhattan(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    absolute = nw.new_node(Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"})
+    absolute = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract}, attrs={"operation": "ABSOLUTE"}
+    )
 
     subtract_1 = nw.new_node(
         Nodes.Math,
@@ -614,7 +832,9 @@ def nodegroup_manhattan(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    absolute_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1}, attrs={"operation": "ABSOLUTE"})
+    absolute_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_1}, attrs={"operation": "ABSOLUTE"}
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: absolute, 1: absolute_1})
 
@@ -624,22 +844,34 @@ def nodegroup_manhattan(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    absolute_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_2}, attrs={"operation": "ABSOLUTE"})
+    absolute_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: subtract_2}, attrs={"operation": "ABSOLUTE"}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: absolute_2})
 
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": add_1})
 
 
-@node_utils.to_nodegroup("nodegroup_rot_semmetry", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_rot_semmetry", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_rot_semmetry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketInt", "N", 0), ("NodeSocketFloat", "spline parameter", 0.5)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketInt", "N", 0),
+            ("NodeSocketFloat", "spline parameter", 0.5),
+        ],
     )
 
-    divide = nw.new_node(Nodes.Math, input_kwargs={1: group_input.outputs["N"]}, attrs={"operation": "DIVIDE"})
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={1: group_input.outputs["N"]},
+        attrs={"operation": "DIVIDE"},
+    )
 
     pingpong = nw.new_node(
         Nodes.Math,
@@ -649,15 +881,23 @@ def nodegroup_rot_semmetry(nw: NodeWrangler):
 
     map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": pingpong, 2: divide})
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Result": map_range.outputs["Result"]})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Result": map_range.outputs["Result"]}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_scale_mesh", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_scale_mesh", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_scale_mesh(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None), ("NodeSocketFloat", "Scale", 1.0)]
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketGeometry", "Geometry", None),
+            ("NodeSocketFloat", "Scale", 1.0),
+        ],
     )
 
     position = nw.new_node(Nodes.InputPosition)
@@ -670,10 +910,15 @@ def nodegroup_scale_mesh(nw: NodeWrangler):
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": group_input.outputs["Geometry"], "Position": scale.outputs["Vector"]},
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Position": scale.outputs["Vector"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_hair", singleton=False, type="GeometryNodeTree")
@@ -706,13 +951,20 @@ def nodegroup_hair(nw: NodeWrangler):
         },
     )
 
-    subdivide_curve = nw.new_node(Nodes.SubdivideCurve, input_kwargs={"Curve": quadratic_bezier_1})
+    subdivide_curve = nw.new_node(
+        Nodes.SubdivideCurve, input_kwargs={"Curve": quadratic_bezier_1}
+    )
 
     position = nw.new_node(Nodes.InputPosition)
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: position, 1: group_input.outputs["shape noise random seed"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position, 1: group_input.outputs["shape noise random seed"]},
+    )
 
-    noise_texture_3 = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Vector": add.outputs["Vector"], "Scale": 1.0})
+    noise_texture_3 = nw.new_node(
+        Nodes.NoiseTexture, input_kwargs={"Vector": add.outputs["Vector"], "Scale": 1.0}
+    )
 
     value_1 = nw.new_node(Nodes.Value)
     value_1.outputs[0].default_value = 0.5
@@ -727,18 +979,25 @@ def nodegroup_hair(nw: NodeWrangler):
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: subtract.outputs["Vector"], "Scale": spline_parameter_2.outputs["Factor"]},
+        input_kwargs={
+            0: subtract.outputs["Vector"],
+            "Scale": spline_parameter_2.outputs["Factor"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     scale_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], "Scale": group_input.outputs["shape noise amount"]},
+        input_kwargs={
+            0: scale.outputs["Vector"],
+            "Scale": group_input.outputs["shape noise amount"],
+        },
         attrs={"operation": "SCALE"},
     )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": subdivide_curve, "Offset": scale_1.outputs["Vector"]}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": subdivide_curve, "Offset": scale_1.outputs["Vector"]},
     )
 
     curve_circle_1 = nw.new_node(
@@ -751,21 +1010,37 @@ def nodegroup_hair(nw: NodeWrangler):
 
     curve_to_mesh_1 = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_position_1, "Profile Curve": curve_circle_1.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_position_1,
+            "Profile Curve": curve_circle_1.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     transform_1 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh_1, "Scale": group_input.outputs["scale"]}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": curve_to_mesh_1,
+            "Scale": group_input.outputs["scale"],
+        },
     )
 
     set_material_1 = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": transform_1, "Material": group_input.outputs["Material"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": transform_1,
+            "Material": group_input.outputs["Material"],
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_material_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_material_1}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_random_rotation_scale", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_random_rotation_scale", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_random_rotation_scale(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -783,10 +1058,17 @@ def nodegroup_random_rotation_scale(nw: NodeWrangler):
 
     position_3 = nw.new_node(Nodes.InputPosition)
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: position_3, 1: group_input.outputs["random seed"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position_3, 1: group_input.outputs["random seed"]},
+    )
 
     noise_texture_2 = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"Vector": add.outputs["Vector"], "Scale": group_input.outputs["noise scale"]}
+        Nodes.NoiseTexture,
+        input_kwargs={
+            "Vector": add.outputs["Vector"],
+            "Scale": group_input.outputs["noise scale"],
+        },
     )
 
     value_2 = nw.new_node(Nodes.Value)
@@ -798,49 +1080,81 @@ def nodegroup_random_rotation_scale(nw: NodeWrangler):
         attrs={"operation": "SUBTRACT"},
     )
 
-    separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": subtract.outputs["Vector"]})
+    separate_xyz_2 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": subtract.outputs["Vector"]}
+    )
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: separate_xyz_2.outputs["X"], 1: group_input.outputs[" rot std z"]},
+        input_kwargs={
+            0: separate_xyz_2.outputs["X"],
+            1: group_input.outputs[" rot std z"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
-    add_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["rot mean"], 1: combine_xyz})
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["rot mean"], 1: combine_xyz},
+    )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: separate_xyz_2.outputs["Y"], 1: group_input.outputs["scale std"]},
+        input_kwargs={
+            0: separate_xyz_2.outputs["Y"],
+            1: group_input.outputs["scale std"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     add_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_1, 1: group_input.outputs["scale mean"]}, attrs={"use_clamp": True}
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: group_input.outputs["scale mean"]},
+        attrs={"use_clamp": True},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": add_1.outputs["Vector"], "Value": add_2})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Vector": add_1.outputs["Vector"], "Value": add_2},
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_align_top_to_horizon", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_align_top_to_horizon", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_align_top_to_horizon(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
 
-    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": group_input.outputs["Geometry"]})
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox, input_kwargs={"Geometry": group_input.outputs["Geometry"]}
+    )
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Max"]})
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box.outputs["Max"]}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz.outputs["Z"], 1: -1.0}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Z"], 1: -1.0},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": group_input.outputs["Geometry"], "Offset": combine_xyz}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": group_input.outputs["Geometry"],
+            "Offset": combine_xyz,
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
+    )

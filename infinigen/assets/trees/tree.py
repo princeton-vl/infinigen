@@ -4,7 +4,6 @@
 # Authors: Alejandro Newell
 
 
-import pdb
 import warnings
 from dataclasses import dataclass
 
@@ -12,7 +11,6 @@ import bpy
 import numpy as np
 from scipy.interpolate import interp1d
 
-from infinigen.assets.leaves import leaf
 from infinigen.assets.utils.object import data2mesh, mesh2obj
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util import blender as butil
@@ -113,9 +111,13 @@ def parse_tree_attributes(vtx):
         children = np.array([v for v in edge_ref[idx] if v != parents[idx]])
         if len(children) >= 2:
             child_depths = rev_depth[children]
-            deepest_child_idx = children[child_depths.argmax()]  # we keep this untouched
+            deepest_child_idx = children[
+                child_depths.argmax()
+            ]  # we keep this untouched
 
-            children_idxs_to_deal = np.setdiff1d(children, np.array([deepest_child_idx]))
+            children_idxs_to_deal = np.setdiff1d(
+                children, np.array([deepest_child_idx])
+            )
             for child_idx_to_deal in children_idxs_to_deal:
                 new_p_pos = vtx_pos[idx]  # len-3
                 new_p_parent = parents[idx]
@@ -269,7 +271,16 @@ def get_spawn_pt(
     return rnd_idx, path[rnd_idx], init_vec
 
 
-def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, n=1, symmetry=False, children=None):
+def recursive_path(
+    tree,
+    parent_idxs,
+    level,
+    path_kargs=None,
+    spawn_kargs=None,
+    n=1,
+    symmetry=False,
+    children=None,
+):
     if path_kargs is None:
         return
 
@@ -283,7 +294,9 @@ def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, 
         if symmetry:
             curr_spawn["ang_sign"] = 2 * (branch_idx % 2) - 1
 
-        parent_idx, init_pt, init_vec = get_spawn_pt(tree.vtxs[parent_idxs], **curr_spawn)
+        parent_idx, init_pt, init_vec = get_spawn_pt(
+            tree.vtxs[parent_idxs], **curr_spawn
+        )
         parent_idx = parent_idxs[parent_idx]
 
         path = rand_path(**curr_path, init_pt=init_pt, init_vec=init_vec)
@@ -297,7 +310,9 @@ def recursive_path(tree, parent_idxs, level, path_kargs=None, spawn_kargs=None, 
                 recursive_path(tree, node_idxs, level + 1, **c)
 
 
-def remove_matched_atts(atts, vtxs, dist_thr, curr_min, curr_match, idx_offset=0, prev_deltas=None):
+def remove_matched_atts(
+    atts, vtxs, dist_thr, curr_min, curr_match, idx_offset=0, prev_deltas=None
+):
     dists, deltas = helper.compute_dists(atts, vtxs)
     if prev_deltas is not None:
         deltas = np.append(prev_deltas, deltas, axis=1)
@@ -321,7 +336,16 @@ def remove_matched_atts(atts, vtxs, dist_thr, curr_min, curr_match, idx_offset=0
 
 
 def space_colonization(
-    tree, atts, D=0.1, d=10.0, s=0.1, pull_dir=None, dir_rand=0.1, mag_rand=0.15, n_steps=200, level=0
+    tree,
+    atts,
+    D=0.1,
+    d=10.0,
+    s=0.1,
+    pull_dir=None,
+    dir_rand=0.1,
+    mag_rand=0.15,
+    n_steps=200,
+    level=0,
 ):
     # D: length of each growing step
     # d: init value for distance between attractors and points. safe to set to a very large value (e.g., 10)
@@ -336,10 +360,14 @@ def space_colonization(
 
     curr_min = np.zeros(len(atts)) + d
     curr_match = -np.ones(len(atts)).astype(int)
-    atts, deltas, curr_min, curr_match = remove_matched_atts(atts, tree.vtxs, s, curr_min, curr_match)
+    atts, deltas, curr_min, curr_match = remove_matched_atts(
+        atts, tree.vtxs, s, curr_min, curr_match
+    )
 
     if np.all(curr_match == -1):
-        warnings.warn("Space colonization attractor matching failed, all curr_match == -1")
+        warnings.warn(
+            "Space colonization attractor matching failed, all curr_match == -1"
+        )
         return
 
     for i in range(n_steps):
@@ -383,7 +411,9 @@ class TreeParams:
     skinning: dict
 
 
-def tree_skeleton(skeleton_params: dict, trunk_spacecol: dict, roots_spacecol: dict, init_pos, scale):
+def tree_skeleton(
+    skeleton_params: dict, trunk_spacecol: dict, roots_spacecol: dict, init_pos, scale
+):
     vtx = TreeVertices(np.array(init_pos).reshape(-1, 3))
     recursive_path(vtx, vtx.get_idxs(), level=0, **skeleton_params)
 
@@ -436,15 +466,24 @@ def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
     depth_range = params.pop("depth_range", None)
     if depth_range is not None:
         min, max = depth_range
-        lt = nw.new_node(Nodes.Math, [rev_depth, max + 0.01], attrs={"operation": "LESS_THAN"})
-        gt = nw.new_node(Nodes.Math, [rev_depth, min - 0.01], attrs={"operation": "GREATER_THAN"})
+        lt = nw.new_node(
+            Nodes.Math, [rev_depth, max + 0.01], attrs={"operation": "LESS_THAN"}
+        )
+        gt = nw.new_node(
+            Nodes.Math, [rev_depth, min - 0.01], attrs={"operation": "GREATER_THAN"}
+        )
         selection = nw.new_node(Nodes.BooleanMath, [lt, gt], attrs={"operation": "AND"})
     else:
         selection = None
 
     children = nw.new_node(
         gn.coll_distribute(merge_dist=merge_dist).name,
-        input_kwargs={"Geometry": base_geo, "Collection": child_col, "Selection": selection, **params},
+        input_kwargs={
+            "Geometry": base_geo,
+            "Collection": child_col,
+            "Selection": selection,
+            **params,
+        },
     )
 
     if realize:
@@ -454,11 +493,16 @@ def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
 
 
 class FineTreeVertices(TreeVertices):
-    def __init__(self, vtxs=None, parent=None, level=None, radius_fn=None, resolution=1):
+    def __init__(
+        self, vtxs=None, parent=None, level=None, radius_fn=None, resolution=1
+    ):
         super(FineTreeVertices, self).__init__(vtxs, parent, level)
         self.resolution = resolution
         if radius_fn is None:
-            radius_fn = lambda base_radius, size, resolution: [1] * size
+
+            def radius_fn(base_radius, size, resolution):
+                return [1] * size
+
         self.radius_fn = radius_fn
         self.detailed_locations = [[0, 0, 0]]
         self.radius = [1]
@@ -466,23 +510,37 @@ class FineTreeVertices(TreeVertices):
 
     def append(self, v, p, l=None):
         super(FineTreeVertices, self).append(v, p, l)
-        f = interp1d(np.arange(len(v) + 1), np.concatenate([self.vtxs[p[0] : p[0] + 1], v]), axis=0, kind="quadratic")
-        self.detailed_locations.extend(f(np.linspace(0, len(v), len(v) * self.resolution + 1))[1:])
+        f = interp1d(
+            np.arange(len(v) + 1),
+            np.concatenate([self.vtxs[p[0] : p[0] + 1], v]),
+            axis=0,
+            kind="quadratic",
+        )
+        self.detailed_locations.extend(
+            f(np.linspace(0, len(v), len(v) * self.resolution + 1))[1:]
+        )
         base_radius = self.radius[p[0] * self.resolution]
         self.radius.extend(self.radius_fn(base_radius, len(v), self.resolution))
         self.detailed_parents.append(p[0] * self.resolution)
-        self.detailed_parents.extend(np.arange(0, len(v) * self.resolution - 1) + len(self.detailed_parents) - 1)
+        self.detailed_parents.extend(
+            np.arange(0, len(v) * self.resolution - 1) + len(self.detailed_parents) - 1
+        )
 
     @property
     def edges(self):
-        edges = np.stack([np.arange(len(self.detailed_locations)), np.array(self.detailed_parents)], 1)
+        edges = np.stack(
+            [np.arange(len(self.detailed_locations)), np.array(self.detailed_parents)],
+            1,
+        )
         return edges[edges[:, 1] != -1]
 
     def fix_first(self):
         self.radius[0] = self.radius[1]
 
 
-def build_radius_tree(radius_fn, branch_config, base_radius=0.002, resolution=1, fix_first=False):
+def build_radius_tree(
+    radius_fn, branch_config, base_radius=0.002, resolution=1, fix_first=False
+):
     vtx = FineTreeVertices(np.zeros((1, 3)), radius_fn=radius_fn, resolution=resolution)
     recursive_path(vtx, vtx.get_idxs(), level=0, **branch_config)
     if fix_first:

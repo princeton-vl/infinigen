@@ -3,8 +3,6 @@
 
 # Authors: Hongyu Wen
 
-from numpy.random import normal as N
-from numpy.random import randint as RI
 from numpy.random import uniform as U
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -14,11 +12,14 @@ def shader_metal(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     anisotropic_bsdf = nw.new_node(
-        "ShaderNodeBsdfAnisotropic", input_kwargs={"Color": (0.3224, 0.3224, 0.3224, 1.0000), "Roughness": 0.1000}
+        "ShaderNodeBsdfAnisotropic",
+        input_kwargs={"Color": (0.3224, 0.3224, 0.3224, 1.0000), "Roughness": 0.1000},
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": anisotropic_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": anisotropic_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -37,7 +38,11 @@ def shader_lampshade(nw: NodeWrangler):
 
     mix = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.9000, 6: white_noise_texture.outputs["Color"], 7: (0.5000, 0.4444, 0.3669, 1.0000)},
+        input_kwargs={
+            0: 0.9000,
+            6: white_noise_texture.outputs["Color"],
+            7: (0.5000, 0.4444, 0.3669, 1.0000),
+        },
         attrs={"data_type": "RGBA"},
     )
 
@@ -65,19 +70,30 @@ def shader_lampshade(nw: NodeWrangler):
 
     mix_shader = nw.new_node(
         Nodes.MixShader,
-        input_kwargs={"Fac": light_path.outputs["Is Camera Ray"], 1: principled_bsdf, 2: translucent_bsdf},
+        input_kwargs={
+            "Fac": light_path.outputs["Is Camera Ray"],
+            1: principled_bsdf,
+            2: translucent_bsdf,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": mix_shader},
+        attrs={"is_active_output": True},
     )
 
 
 def shader_black(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.0039, 0.0039, 0.0039, 1.0000)})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.0039, 0.0039, 0.0039, 1.0000)},
+    )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )

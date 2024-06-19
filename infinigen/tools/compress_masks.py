@@ -15,7 +15,9 @@ def show(x):
 
 def compress(arr):
     H, W, *_ = arr.shape
-    vals, indices = np.unique(np.squeeze(arr.reshape((H * W, -1))), return_inverse=True, axis=0)
+    vals, indices = np.unique(
+        np.squeeze(arr.reshape((H * W, -1))), return_inverse=True, axis=0
+    )
     max_ind = vals.shape[0] - 1
     if max_ind < 2**8:
         indices = indices.astype(np.uint8)

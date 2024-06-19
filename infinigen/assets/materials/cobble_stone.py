@@ -26,15 +26,25 @@ def shader_cobblestone(nw: NodeWrangler, random_seed=0):
     stone_color = geo_cobblestone(nw, random_seed=random_seed, geometry=False)
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
-        input_kwargs={"Vector": nw.new_node("ShaderNodeNewGeometry"), "Scale": N(10, 1.5) / 25, "W": U(-5, 5)},
+        input_kwargs={
+            "Vector": nw.new_node("ShaderNodeNewGeometry"),
+            "Scale": N(10, 1.5) / 25,
+            "W": U(-5, 5),
+        },
         attrs={"noise_dimensions": "4D"},
     )
 
-    colorramp_1 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]})
+    colorramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
     colorramp_1.color_ramp.elements[0].position = 0.0
-    colorramp_1.color_ramp.elements[0].color = random_color_neighbour((0.014, 0.013, 0.014, 1.0), 0.2, 0.1, 0.1)
+    colorramp_1.color_ramp.elements[0].color = random_color_neighbour(
+        (0.014, 0.013, 0.014, 1.0), 0.2, 0.1, 0.1
+    )
     colorramp_1.color_ramp.elements[1].position = 1.0
-    colorramp_1.color_ramp.elements[1].color = random_color_neighbour((0.047, 0.068, 0.069, 1.0), 0.2, 0.1, 0.1)
+    colorramp_1.color_ramp.elements[1].color = random_color_neighbour(
+        (0.047, 0.068, 0.069, 1.0), 0.2, 0.1, 0.1
+    )
 
     mix = nw.new_node(
         Nodes.MixRGB,
@@ -47,14 +57,27 @@ def shader_cobblestone(nw: NodeWrangler, random_seed=0):
 
     roughness_low = N(0.25, 0.05)
     roughness_high = N(0.75, 0.05)
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": stone_color.outputs["Color"]})
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": stone_color.outputs["Color"]}
+    )
     colorramp.color_ramp.elements[0].position = 0.0
-    colorramp.color_ramp.elements[0].color = (roughness_high, roughness_high, roughness_high, 1.0)
+    colorramp.color_ramp.elements[0].color = (
+        roughness_high,
+        roughness_high,
+        roughness_high,
+        1.0,
+    )
     colorramp.color_ramp.elements[1].position = 1.0
-    colorramp.color_ramp.elements[1].color = (roughness_low, roughness_low, roughness_low, 1.0)
+    colorramp.color_ramp.elements[1].color = (
+        roughness_low,
+        roughness_low,
+        roughness_low,
+        1.0,
+    )
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": mix, "Roughness": colorramp.outputs["Color"]}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": mix, "Roughness": colorramp.outputs["Color"]},
     )
 
     return principled_bsdf
@@ -79,7 +102,9 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
         # depth of stone
         dep_sto = nw.new_value(U(0.02, 0.04), "dep_sto")
 
-        group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        group_input = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
 
         noise_texture = nw.new_node(
             Nodes.NoiseTexture,
@@ -93,16 +118,25 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
 
         voronoi_texture_2 = nw.new_node(
             Nodes.VoronoiTexture,
-            input_kwargs={"W": nw.new_value(U(-5, 5), "W2"), "Scale": sca_sto, "Randomness": uni_sto},
+            input_kwargs={
+                "W": nw.new_value(U(-5, 5), "W2"),
+                "Scale": sca_sto,
+                "Randomness": uni_sto,
+            },
             attrs={"voronoi_dimensions": "4D"},
         )
 
         noise_texture_3 = nw.new_node(
             Nodes.NoiseTexture,
-            input_kwargs={"Vector": voronoi_texture_2.outputs["Position"], "Scale": nw.new_value(N(20, 2), "Scale2")},
+            input_kwargs={
+                "Vector": voronoi_texture_2.outputs["Position"],
+                "Scale": nw.new_value(N(20, 2), "Scale2"),
+            },
         )
 
-        colorramp_4 = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]})
+        colorramp_4 = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": noise_texture_3.outputs["Fac"]}
+        )
         colorramp_4.color_ramp.interpolation = "CONSTANT"
         colorramp_4.color_ramp.elements[0].position = 0.1159
         colorramp_4.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
@@ -120,7 +154,11 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
             attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
         )
 
-        multiply = nw.new_node(Nodes.Math, input_kwargs={0: 1.5, 1: sca_sto}, attrs={"operation": "MULTIPLY"})
+        multiply = nw.new_node(
+            Nodes.Math,
+            input_kwargs={0: 1.5, 1: sca_sto},
+            attrs={"operation": "MULTIPLY"},
+        )
 
         voronoi_texture_3 = nw.new_node(
             Nodes.VoronoiTexture,
@@ -142,9 +180,14 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
             },
         )
 
-        mix = nw.new_node(Nodes.MixRGB, input_kwargs={"Fac": noise_texture.outputs["Fac"], "Color1": mix_3})
+        mix = nw.new_node(
+            Nodes.MixRGB,
+            input_kwargs={"Fac": noise_texture.outputs["Fac"], "Color1": mix_3},
+        )
 
-        colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={"Fac": mix}, label="colorramp_VAR")
+        colorramp = nw.new_node(
+            Nodes.ColorRamp, input_kwargs={"Fac": mix}, label="colorramp_VAR"
+        )
         colorramp.color_ramp.elements[0].position = U(0.26, 0.29)
         colorramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
         colorramp.color_ramp.elements[1].position = 0.377
@@ -154,7 +197,9 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
             return colorramp
 
         multiply_1 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: colorramp.outputs["Color"], 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: colorramp.outputs["Color"], 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         multiply_2 = nw.new_node(
@@ -165,7 +210,11 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
 
         noise_texture_4 = nw.new_node(
             Nodes.NoiseTexture,
-            input_kwargs={"Scale": nw.new_value(N(20, 2), "Scale3"), "Detail": 10.0, "Distortion": 2.0},
+            input_kwargs={
+                "Scale": nw.new_value(N(20, 2), "Scale3"),
+                "Detail": 10.0,
+                "Distortion": 2.0,
+            },
         )
 
         subtract = nw.new_node(
@@ -175,7 +224,9 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
         )
 
         multiply_5 = nw.new_node(
-            Nodes.VectorMath, input_kwargs={0: subtract.outputs["Vector"], 1: normal}, attrs={"operation": "MULTIPLY"}
+            Nodes.VectorMath,
+            input_kwargs={0: subtract.outputs["Vector"], 1: normal},
+            attrs={"operation": "MULTIPLY"},
         )
 
         value_8 = nw.new_value(U(0.01, 0.02), "value_8")
@@ -187,10 +238,16 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
         )
 
         set_position_1 = nw.new_node(
-            Nodes.SetPosition, input_kwargs={"Geometry": group_input, "Offset": nw.add(multiply_6, multiply_2)}
+            Nodes.SetPosition,
+            input_kwargs={
+                "Geometry": group_input,
+                "Offset": nw.add(multiply_6, multiply_2),
+            },
         )
 
-        group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1})
+        group_output = nw.new_node(
+            Nodes.GroupOutput, input_kwargs={"Geometry": set_position_1}
+        )
 
 
 def apply(obj, selection=None, **kwargs):

@@ -23,18 +23,20 @@ from infinigen.assets.creatures.util.animation.driver_wiggle import animate_wigg
 from infinigen.assets.creatures.util.boid_swarm import BoidSwarmFactory
 from infinigen.assets.creatures.util.creature_util import offset_center
 from infinigen.assets.creatures.util.genome import Joint
-from infinigen.assets.materials import eyeball, fish_eye_shader, fishfin
+from infinigen.assets.materials import fish_eye_shader, fishfin
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 
 
 def fin_params(scale=(1, 1, 1), dorsal=False):
     # scale = np.array((0.2, 1, 0.4)) * np.array((l / l_mean, 1, rad/r_mean)) * np.array(scale)
-    noise = np.array((clip_gaussian(1, 0.1, 0.8, 1.2), 1, 0.8 * clip_gaussian(1, 0.1, 0.8, 1.2)))
+    noise = np.array(
+        (clip_gaussian(1, 0.1, 0.8, 1.2), 1, 0.8 * clip_gaussian(1, 0.1, 0.8, 1.2))
+    )
     scale *= noise
     scale = scale.astype(np.float32)
     if dorsal:
@@ -69,7 +71,9 @@ def fin_params(scale=(1, 1, 1), dorsal=False):
 
 
 def fish_postprocessing(body_parts, extras, params):
-    get_extras = lambda k: [o for o in extras if k in o.name]
+    def get_extras(k):
+        return [o for o in extras if k in o.name]
+
     main_template = surface.registry.sample_registry(params["surface_registry"])
     main_template.apply(body_parts + get_extras("BodyExtra"))
 
@@ -103,7 +107,9 @@ def fish_fin_cloth_sim_params():
 
 
 def fish_genome():
-    temp_dict = defaultdict(lambda: 0.1, {"body_fish_eel": 0.01, "body_fish_puffer": 0.001})
+    temp_dict = defaultdict(
+        lambda: 0.1, {"body_fish_eel": 0.01, "body_fish_puffer": 0.001}
+    )
     body = genome.part(
         parts.generic_nurbs.NurbsBody(
             prefix="body_fish",
@@ -120,44 +126,88 @@ def fish_genome():
         n_dorsal = 1  # if U() < 0.6 else randint(1, 4)
         coord = (U(0.3, 0.45), 1, 0.7)
         for i in range(n_dorsal):
-            dorsal_fin = parts.ridged_fin.FishFin(fin_params((U(0.4, 0.6), 0.5, 0.2), dorsal=True), rig=False)
-            genome.attach(genome.part(dorsal_fin), body, coord=coord, joint=Joint(rest=(0, -100, 0)))
+            dorsal_fin = parts.ridged_fin.FishFin(
+                fin_params((U(0.4, 0.6), 0.5, 0.2), dorsal=True), rig=False
+            )
+            genome.attach(
+                genome.part(dorsal_fin),
+                body,
+                coord=coord,
+                joint=Joint(rest=(0, -100, 0)),
+            )
 
-    rot = lambda r: np.array((20, r, -205)) + N(0, 7, 3)
+    def rot(r):
+        return np.array((20, r, -205)) + N(0, 7, 3)
 
     if U() < 0.8:
         pectoral_fin = parts.ridged_fin.FishFin(fin_params((0.1, 0.5, 0.3)))
         coord = (U(0.65, 0.8), U(55, 65) / 180, 0.9)
         for side in [-1, 1]:
-            genome.attach(genome.part(pectoral_fin), body, coord=coord, joint=Joint(rest=rot(-13)), side=side)
+            genome.attach(
+                genome.part(pectoral_fin),
+                body,
+                coord=coord,
+                joint=Joint(rest=rot(-13)),
+                side=side,
+            )
 
     if U() < 0.8:
         pelvic_fin = parts.ridged_fin.FishFin(fin_params((0.08, 0.5, 0.25)))
         coord = (U(0.5, 0.65), U(8, 15) / 180, 0.8)
         for side in [-1, 1]:
-            genome.attach(genome.part(pelvic_fin), body, coord=coord, joint=Joint(rest=rot(28)), side=side)
+            genome.attach(
+                genome.part(pelvic_fin),
+                body,
+                coord=coord,
+                joint=Joint(rest=rot(28)),
+                side=side,
+            )
 
     if U() < 0.8:
         hind_fin = parts.ridged_fin.FishFin(fin_params((0.1, 0.5, 0.3)))
         coord = (U(0.2, 0.3), N(36, 5) / 180, 0.9)
         for side in [-1, 1]:
-            genome.attach(genome.part(hind_fin), body, coord=coord, joint=Joint(rest=rot(28)), side=side)
+            genome.attach(
+                genome.part(hind_fin),
+                body,
+                coord=coord,
+                joint=Joint(rest=rot(28)),
+                side=side,
+            )
 
     angle = U(140, 170)
     tail_fin = parts.ridged_fin.FishFin(fin_params((0.12, 0.5, 0.35)), rig=False)
     for vdir in [-1, 1]:
-        genome.attach(genome.part(tail_fin), body, coord=(0.05, 0, 0), joint=Joint((0, -angle * vdir, 0)))
+        genome.attach(
+            genome.part(tail_fin),
+            body,
+            coord=(0.05, 0, 0),
+            joint=Joint((0, -angle * vdir, 0)),
+        )
 
     eye_fac = parts.eye.MammalEye({"Eyelids": False, "Radius": N(0.036, 0.01)})
     coord = (0.9, 0.6, 0.9)
     for side in [-1, 1]:
         genome.attach(
-            genome.part(eye_fac), body, coord=coord, joint=Joint(rest=(0, 0, 0)), side=side, rotation_basis="normal"
+            genome.part(eye_fac),
+            body,
+            coord=coord,
+            joint=Joint(rest=(0, 0, 0)),
+            side=side,
+            rotation_basis="normal",
         )
 
     if U() < 0:
-        jaw = genome.part(parts.head.CarnivoreJaw({"length_rad1_rad2": (0.2, 0.1, 0.06)}))
-        genome.attach(jaw, body, coord=(0.8, 0, 0.7), joint=Joint(rest=(0, U(-30, -80), 0)), rotation_basis="normal")
+        jaw = genome.part(
+            parts.head.CarnivoreJaw({"length_rad1_rad2": (0.2, 0.1, 0.06)})
+        )
+        genome.attach(
+            jaw,
+            body,
+            coord=(0.8, 0, 0.7),
+            joint=Joint(rest=(0, U(-30, -80), 0)),
+            rotation_basis="normal",
+        )
 
     return genome.CreatureGenome(
         parts=body,
@@ -214,10 +264,14 @@ def simulate_fish_cloth(joined, extras, cloth_params, rigidity="cloth_pin_rigidi
         if "Fin" in e.name:
             assert rigidity in e.data.attributes
         else:
-            surface.write_attribute(joined, lambda nw: 1, data_type="FLOAT", name=rigidity, apply=True)
+            surface.write_attribute(
+                joined, lambda nw: 1, data_type="FLOAT", name=rigidity, apply=True
+            )
     joined = butil.join_objects([joined] + extras)
 
-    cloth_sim.bake_cloth(joined, settings=cloth_params, attributes=dict(vertex_group_mass=rigidity))
+    cloth_sim.bake_cloth(
+        joined, settings=cloth_params, attributes=dict(vertex_group_mass=rigidity)
+    )
 
     return joined
 
@@ -244,13 +298,19 @@ class FishFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.species_genome = fish_genome()
             self.species_variety = (
-                species_variety if species_variety is not None else clip_gaussian(0.2, 0.1, 0.05, 0.45)
+                species_variety
+                if species_variety is not None
+                else clip_gaussian(0.2, 0.1, 0.05, 0.45)
             )
 
     def create_asset(self, i, **kwargs):
-        instance_genome = genome.interp_genome(self.species_genome, fish_genome(), self.species_variety)
+        instance_genome = genome.interp_genome(
+            self.species_genome, fish_genome(), self.species_variety
+        )
 
-        root, parts = creature.genome_to_creature(instance_genome, name=f"fish({self.factory_seed}, {i})")
+        root, parts = creature.genome_to_creature(
+            instance_genome, name=f"fish({self.factory_seed}, {i})"
+        )
         offset_center(root, x=True, z=False)
 
         # Force material consistency across a whole species of fish
@@ -276,7 +336,9 @@ class FishFactory(AssetFactory):
                 raise ValueError(f"Unrecognized {self.animation_mode=}")
 
         if self.clothsim_skin:
-            joined = simulate_fish_cloth(joined, extras, instance_genome.postprocess_params["cloth"])
+            joined = simulate_fish_cloth(
+                joined, extras, instance_genome.postprocess_params["cloth"]
+            )
         else:
             joined = butil.join_objects([joined] + extras)
             joined.parent = root
@@ -323,7 +385,9 @@ class FishSchoolFactory(BoidSwarmFactory):
     def __init__(self, factory_seed, bvh=None, coarse=False):
         with FixedSeed(factory_seed):
             settings = self.fish_school_params()
-            col = make_asset_collection(FishFactory(factory_seed=randint(1e7), animation_mode="idle"), n=3)
+            col = make_asset_collection(
+                FishFactory(factory_seed=randint(1e7), animation_mode="idle"), n=3
+            )
         super().__init__(
             factory_seed,
             child_col=col,
@@ -343,4 +407,6 @@ if __name__ == "__main__":
         root = factory.create_asset(i)
         root.location[0] = i * 3
 
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(os.path.abspath(os.curdir), "dev_fish5.blend"))
+    bpy.ops.wm.save_as_mainfile(
+        filepath=os.path.join(os.path.abspath(os.curdir), "dev_fish5.blend")
+    )

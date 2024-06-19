@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension, setup
 
 cwd = Path(__file__).parent
 
@@ -32,11 +32,15 @@ def ensure_submodules():
 
     with (cwd / ".gitmodules").open() as f:
         submodule_folders = [
-            cwd / line.split("=", 1)[1].strip() for line in f.readlines() if line.strip().startswith("path")
+            cwd / line.split("=", 1)[1].strip()
+            for line in f.readlines()
+            if line.strip().startswith("path")
         ]
 
     if any(not p.exists() or not any(p.iterdir()) for p in submodule_folders):
-        subprocess.run(["git", "submodule", "update", "--init", "--recursive"], cwd=cwd, check=True)
+        subprocess.run(
+            ["git", "submodule", "update", "--init", "--recursive"], cwd=cwd, check=True
+        )
 
 
 ensure_submodules()
@@ -63,7 +67,9 @@ if not MINIMAL_INSTALL:
         cython_extensions.append(
             Extension(
                 name="infinigen.terrain.marching_cubes",
-                sources=["infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"],
+                sources=[
+                    "infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
+                ],
                 include_dirs=[numpy.get_include()],
             )
         )

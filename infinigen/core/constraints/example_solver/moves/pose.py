@@ -5,16 +5,12 @@
 # Authors: Alexander Raistrick, Karhan Kayan
 
 import logging
-import typing
 from dataclasses import dataclass
 
-import bpy
-import mathutils
 import numpy as np
 
 from infinigen.core.constraints.constraint_language import util as iu
 from infinigen.core.constraints.example_solver.geometry import dof, validity
-from infinigen.core.util import blender as butil
 
 from ..state_def import State
 from . import moves

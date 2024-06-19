@@ -5,7 +5,7 @@
 
 import bpy
 import numpy as np
-from numpy.random import normal, randint, uniform
+from numpy.random import randint, uniform
 
 from infinigen.assets.materials import shader_brushed_metal, shader_rough_plastic
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
@@ -27,11 +27,19 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
     hook_gap = nw.new_node(Nodes.Value, label="hook_gap")
     hook_gap.outputs[0].default_value = kwargs["hook_gap"]
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: hook_gap, 1: add}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: hook_gap, 1: add}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "MULTIPLY"})
+    multiply_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply}, attrs={"operation": "MULTIPLY"}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2})
 
@@ -39,7 +47,11 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
 
     mesh_line = nw.new_node(
         Nodes.MeshLine,
-        input_kwargs={"Count": add, "Start Location": combine_xyz_2, "Offset": combine_xyz_1},
+        input_kwargs={
+            "Count": add,
+            "Start Location": combine_xyz_2,
+            "Offset": combine_xyz_1,
+        },
         attrs={"mode": "END_POINTS"},
     )
 
@@ -55,19 +67,32 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
 
     curve_line = nw.new_node(Nodes.CurveLine)
 
-    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [bezier_segment, curve_line]})
+    join_geometry_3 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [bezier_segment, curve_line]}
+    )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Factor": spline_parameter.outputs["Factor"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], [(0.0000, 0.8), (0.5, 0.8), (1.0000, 0.8)])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Factor": spline_parameter.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0], [(0.0000, 0.8), (0.5, 0.8), (1.0000, 0.8)]
+    )
 
     raduis = nw.new_node(Nodes.Value, label="raduis")
     raduis.outputs[0].default_value = kwargs["hook_radius"]
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: float_curve, 1: raduis}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_curve, 1: raduis},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": join_geometry_3, "Radius": multiply_3})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius,
+        input_kwargs={"Curve": join_geometry_3, "Radius": multiply_3},
+    )
 
     curve_circle = nw.new_node(
         Nodes.CurveCircle,
@@ -83,32 +108,49 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
     hook_reshape.vector = (1.0000, 1.0000, 1.0000)
 
     transform_geometry_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_circle.outputs["Curve"], "Scale": hook_reshape}
+        Nodes.Transform,
+        input_kwargs={"Geometry": curve_circle.outputs["Curve"], "Scale": hook_reshape},
     )
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": transform_geometry_2, "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": transform_geometry_2,
+            "Fill Caps": True,
+        },
     )
 
     hook_size = nw.new_node(Nodes.Value, label="hook_size")
     hook_size.outputs[0].default_value = kwargs["hook_size"]
 
-    transform_geometry = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh, "Scale": hook_size})
-
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": transform_geometry})
-
-    merge_by_distance_1 = nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": realize_instances_1})
-
-    instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints, input_kwargs={"Points": mesh_line, "Instance": merge_by_distance_1}
+    transform_geometry = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh, "Scale": hook_size}
     )
 
-    scale_instances = nw.new_node(Nodes.ScaleInstances, input_kwargs={"Instances": instance_on_points})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": transform_geometry}
+    )
+
+    merge_by_distance_1 = nw.new_node(
+        Nodes.MergeByDistance, input_kwargs={"Geometry": realize_instances_1}
+    )
+
+    instance_on_points = nw.new_node(
+        Nodes.InstanceOnPoints,
+        input_kwargs={"Points": mesh_line, "Instance": merge_by_distance_1},
+    )
+
+    scale_instances = nw.new_node(
+        Nodes.ScaleInstances, input_kwargs={"Instances": instance_on_points}
+    )
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": scale_instances, "Material": surface.shaderfunc_to_material(shader_brushed_metal)},
+        input_kwargs={
+            "Geometry": scale_instances,
+            "Material": surface.shaderfunc_to_material(shader_brushed_metal),
+        },
     )
 
     board_side_gap = nw.new_node(Nodes.Value, label="board_side_gap")
@@ -122,20 +164,36 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
     board_height = nw.new_node(Nodes.Value, label="board_height")
     board_height.outputs[0].default_value = kwargs["board_height"]
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add_1, "Y": board_thickness, "Z": board_height})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": add_1, "Y": board_thickness, "Z": board_height},
+    )
 
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz})
 
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: board_thickness, 1: -0.5000}, attrs={"operation": "MULTIPLY"})
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: board_thickness, 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: board_height}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: board_height}, attrs={"operation": "MULTIPLY"}
+    )
 
-    subtract = nw.new_node(Nodes.Math, input_kwargs={0: hook_size, 1: multiply_5}, attrs={"operation": "SUBTRACT"})
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: hook_size, 1: multiply_5},
+        attrs={"operation": "SUBTRACT"},
+    )
 
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4, "Z": subtract})
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_4, "Z": subtract}
+    )
 
     transform_geometry_1 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_3}
+        Nodes.Transform,
+        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_3},
     )
 
     set_material_1 = nw.new_node(
@@ -146,18 +204,27 @@ def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
+    )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_2})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry_2}
+    )
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances}
+    )
 
     transform_geometry_3 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": triangulate, "Rotation": (0.0000, 0.0000, -1.5708)}
+        Nodes.Transform,
+        input_kwargs={"Geometry": triangulate, "Rotation": (0.0000, 0.0000, -1.5708)},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": transform_geometry_3}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_geometry_3},
+        attrs={"is_active_output": True},
     )
 
 
@@ -170,7 +237,9 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": handle_length})
 
     mesh_line = nw.new_node(
-        Nodes.MeshLine, input_kwargs={"Count": 64, "Offset": combine_xyz}, attrs={"mode": "END_POINTS"}
+        Nodes.MeshLine,
+        input_kwargs={"Count": 64, "Offset": combine_xyz},
+        attrs={"mode": "END_POINTS"},
     )
 
     mesh_to_curve = nw.new_node(Nodes.MeshToCurve, input_kwargs={"Mesh": mesh_line})
@@ -180,34 +249,57 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
-    float_curve = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]})
-    node_utils.assign_curve(float_curve.mapping.curves[0], kwargs["handle_control_points"])
+    float_curve = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
+    )
+    node_utils.assign_curve(
+        float_curve.mapping.curves[0], kwargs["handle_control_points"]
+    )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: handle_radius, 1: float_curve}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: handle_radius, 1: float_curve},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    set_curve_radius = nw.new_node(Nodes.SetCurveRadius, input_kwargs={"Curve": mesh_to_curve, "Radius": multiply})
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius, input_kwargs={"Curve": mesh_to_curve, "Radius": multiply}
+    )
 
     curve_circle = nw.new_node(Nodes.CurveCircle)
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_curve_radius, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
     transform_geometry = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": curve_to_mesh, "Scale": (kwargs["handle_ratio"], 1.0, 1.0)}
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": curve_to_mesh,
+            "Scale": (kwargs["handle_ratio"], 1.0, 1.0),
+        },
     )
 
     hole_radius = nw.new_node(Nodes.Value, label="hole_radius")
     hole_radius.outputs[0].default_value = kwargs["hole_radius"]
 
-    cylinder = nw.new_node("GeometryNodeMeshCylinder", input_kwargs={"Radius": hole_radius, "Depth": 0.1000})
+    cylinder = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Radius": hole_radius, "Depth": 0.1000},
+    )
 
     hole_place_ratio = nw.new_node(Nodes.Value, label="hole_placement")
     hole_place_ratio.outputs[0].default_value = kwargs["hole_placement"]
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: handle_length, 1: hole_place_ratio}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: handle_length, 1: hole_place_ratio},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
@@ -223,13 +315,18 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
     )
 
     difference = nw.new_node(
-        Nodes.MeshBoolean, input_kwargs={"Mesh 1": transform_geometry, "Mesh 2": transform_geometry_1}
+        Nodes.MeshBoolean,
+        input_kwargs={"Mesh 1": transform_geometry, "Mesh 2": transform_geometry_1},
     )
 
     cube = nw.new_node(
         Nodes.MeshCube,
         input_kwargs={
-            "Size": (kwargs["plate_thickness"], kwargs["plate_width"], kwargs["plate_length"]),
+            "Size": (
+                kwargs["plate_thickness"],
+                kwargs["plate_width"],
+                kwargs["plate_length"],
+            ),
             "Vertices X": 4,
             "Vertices Y": 4,
             "Vertices Z": 4,
@@ -238,23 +335,36 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
 
     transform_geometry_3 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": (0.0000, 0.0000, -kwargs["plate_length"] / 2.0)},
+        input_kwargs={
+            "Geometry": cube.outputs["Mesh"],
+            "Translation": (0.0000, 0.0000, -kwargs["plate_length"] / 2.0),
+        },
     )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [difference.outputs["Mesh"], transform_geometry_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [difference.outputs["Mesh"], transform_geometry_3]},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": join_geometry}
+    )
 
-    triangulate = nw.new_node("GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances})
+    triangulate = nw.new_node(
+        "GeometryNodeTriangulate", input_kwargs={"Mesh": realize_instances}
+    )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
 
     transform_geometry_2 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": triangulate, "Translation": combine_xyz_2}
+        Nodes.Transform,
+        input_kwargs={"Geometry": triangulate, "Translation": combine_xyz_2},
     )
 
     set_material = nw.new_node(
@@ -266,7 +376,9 @@ def spatula_geometry_nodes(nw: NodeWrangler, **kwargs):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_material},
+        attrs={"is_active_output": True},
     )
 
 
@@ -308,9 +420,15 @@ class HookBaseFactory(AssetFactory):
         x = alpha2 * params["curve_handle"][-2] + alpha3 * params["curve_end_point"][-2]
 
         ys = []
-        total_length = params["board_side_gap"] + (params["num_hook"] - 1) * params["hook_gap"]
+        total_length = (
+            params["board_side_gap"] + (params["num_hook"] - 1) * params["hook_gap"]
+        )
         for i in range(params["num_hook"]):
-            y = -total_length / 2.0 + params["board_side_gap"] / 2.0 + i * params["hook_gap"]
+            y = (
+                -total_length / 2.0
+                + params["board_side_gap"] / 2.0
+                + i * params["hook_gap"]
+            )
             ys.append(y)
 
         hang_points = []
@@ -350,12 +468,18 @@ class HookBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
-        surface.add_geomod(obj, hook_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params)
+        surface.add_geomod(
+            obj, hook_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params
+        )
         tagging.tag_system.relabel_obj(obj)
 
         hang_points = self.get_hang_points(obj_params)
@@ -387,11 +511,15 @@ class SpatulaBaseFactory(AssetFactory):
         if params.get("handle_ratio", None) is None:
             params["handle_ratio"] = uniform(0.1, 0.4)
         if params.get("handle_control_points", None) is None:
-            params["handle_control_points"] = [(0, 0.5), (0.5, uniform(0.45, 0.65)), (1.0, uniform(0.4, 0.6))]
+            params["handle_control_points"] = [
+                (0, 0.5),
+                (0.5, uniform(0.45, 0.65)),
+                (1.0, uniform(0.4, 0.6)),
+            ]
         if params.get("handle_radius", None) is None:
-            params["handle_radius"] = (params["hole_radius"] / params["handle_control_points"][0][1]) / uniform(
-                0.6, 0.8
-            )
+            params["handle_radius"] = (
+                params["hole_radius"] / params["handle_control_points"][0][1]
+            ) / uniform(0.6, 0.8)
 
         if params.get("plate_thickness", None) is None:
             params["plate_thickness"] = uniform(0.005, 0.01)
@@ -404,12 +532,22 @@ class SpatulaBaseFactory(AssetFactory):
 
     def create_asset(self, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=1, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=1,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         obj_params = self.get_asset_params(i)
-        surface.add_geomod(obj, spatula_geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params)
+        surface.add_geomod(
+            obj,
+            spatula_geometry_nodes,
+            attributes=[],
+            apply=True,
+            input_kwargs=obj_params,
+        )
         tagging.tag_system.relabel_obj(obj)
 
         return obj

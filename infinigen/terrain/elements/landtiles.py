@@ -74,9 +74,9 @@ class LandTiles(Element):
         nonpython_seed = random_int()
         self.assets_seed = random_int_large()
         self.tiles = tiles
-        self.attribute_modification_start_height = attribute_modification_start_height = rg(
+        self.attribute_modification_start_height = (
             attribute_modification_start_height
-        )
+        ) = rg(attribute_modification_start_height)
         self.attribute_modification_end_height = attribute_modification_end_height = rg(
             attribute_modification_end_height
         )
@@ -178,23 +178,43 @@ class LandTiles(Element):
         if on_the_fly_instances > 0:
             for t, tile in enumerate(self.tiles):
                 for i in range(on_the_fly_instances):
-                    if not (self.on_the_fly_asset_folder / tile / str(i) / AssetFile.Finish).exists():
+                    if not (
+                        self.on_the_fly_asset_folder / tile / str(i) / AssetFile.Finish
+                    ).exists():
                         with FixedSeed(int_hash(("LandTiles", self.assets_seed, t, i))):
-                            landtile_asset(self.on_the_fly_asset_folder / tile / f"{i}", tile, device=self.device)
+                            landtile_asset(
+                                self.on_the_fly_asset_folder / tile / f"{i}",
+                                tile,
+                                device=self.device,
+                            )
         for tile in self.tiles:
             for i in range(on_the_fly_instances):
                 asset_paths.append(self.on_the_fly_asset_folder / tile / f"{i}")
             if reused_instances > 0:
                 assert self.reused_asset_folder is not None
-                assert (self.reused_asset_folder / tile).exists(), f"{self.reused_asset_folder / tile} does not exists"
-                all_instances = len([x for x in os.listdir(str(self.reused_asset_folder / tile)) if x[0] != "."])
-                sample = np.random.choice(all_instances, reused_instances, replace=reused_instances > all_instances)
+                assert (
+                    self.reused_asset_folder / tile
+                ).exists(), f"{self.reused_asset_folder / tile} does not exists"
+                all_instances = len(
+                    [
+                        x
+                        for x in os.listdir(str(self.reused_asset_folder / tile))
+                        if x[0] != "."
+                    ]
+                )
+                sample = np.random.choice(
+                    all_instances,
+                    reused_instances,
+                    replace=reused_instances > all_instances,
+                )
                 for i in range(reused_instances):
                     asset_paths.append(self.reused_asset_folder / tile / f"{sample[i]}")
 
         datas = {"direction": [np.zeros(0)]}
         for asset_path in asset_paths:
-            tile_size, N, data = assets_to_data(asset_path, self.land_process, do_smooth=self.smooth)
+            tile_size, N, data = assets_to_data(
+                asset_path, self.land_process, do_smooth=self.smooth
+            )
             for key in data:
                 if key in datas:
                     datas[key].append(data[key])
@@ -202,7 +222,9 @@ class LandTiles(Element):
                     datas[key] = [data[key]]
         for key in datas:
             datas[key] = np.concatenate(datas[key])
-        float_params = np.concatenate((datas["heightmap"], datas["mask"], datas["direction"])).astype(np.float32)
+        float_params = np.concatenate(
+            (datas["heightmap"], datas["mask"], datas["direction"])
+        ).astype(np.float32)
         return on_the_fly_instances + reused_instances, tile_size, N, float_params
 
 

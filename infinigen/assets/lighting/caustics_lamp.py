@@ -15,9 +15,7 @@ from numpy.random import uniform as U
 
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement import placement
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.placement.placement import placeholder_locs
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
@@ -41,7 +39,9 @@ def nodegroup_caustics(nw: NodeWrangler):
     w.outputs[0].default_value = 0.0
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={1: group_input.outputs["AnimSpeed"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={1: group_input.outputs["AnimSpeed"]},
+        attrs={"operation": "MULTIPLY"},
     )
     driver = multiply.inputs[0].driver_add("default_value").driver
     driver.expression = f"frame / {log_uniform(100, 200)}"
@@ -60,11 +60,17 @@ def nodegroup_caustics(nw: NodeWrangler):
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: noise_texture.outputs["Color"], "Scale": group_input.outputs["Prewarp"]},
+        input_kwargs={
+            0: noise_texture.outputs["Color"],
+            "Scale": group_input.outputs["Prewarp"],
+        },
         attrs={"operation": "SCALE"},
     )
 
-    add = nw.new_node(Nodes.VectorMath, input_kwargs={0: group_input.outputs["Vector"], 1: scale.outputs["Vector"]})
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: group_input.outputs["Vector"], 1: scale.outputs["Vector"]},
+    )
 
     voronoi_texture_1 = nw.new_node(
         Nodes.VoronoiTexture,
@@ -77,7 +83,10 @@ def nodegroup_caustics(nw: NodeWrangler):
         attrs={"voronoi_dimensions": "4D", "feature": "SMOOTH_F1"},
     )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Smoothness"], 1: U(0.04, 0.08)})
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Smoothness"], 1: U(0.04, 0.08)},
+    )
 
     voronoi_texture = nw.new_node(
         Nodes.VoronoiTexture,
@@ -90,13 +99,20 @@ def nodegroup_caustics(nw: NodeWrangler):
         attrs={"voronoi_dimensions": "4D", "feature": "SMOOTH_F1"},
     )
 
-    difference = nw.scalar_multiply(nw.math("ABSOLUTE", nw.scalar_sub(voronoi_texture, voronoi_texture_1)), 20.0)
+    difference = nw.scalar_multiply(
+        nw.math("ABSOLUTE", nw.scalar_sub(voronoi_texture, voronoi_texture_1)), 20.0
+    )
 
     noise = nw.math(
-        "ABSOLUTE", nw.scalar_sub(nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": uniform(2, 5)}), 0.5)
+        "ABSOLUTE",
+        nw.scalar_sub(
+            nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": uniform(2, 5)}), 0.5
+        ),
     )
     noise = nw.new_node(Nodes.MapRange, [noise, 0, 1, 0.6, 1.0])
-    ramp = nw.new_node(Nodes.FloatCurve, input_kwargs={"Value": nw.scalar_multiply(difference, noise)})
+    ramp = nw.new_node(
+        Nodes.FloatCurve, input_kwargs={"Value": nw.scalar_multiply(difference, noise)}
+    )
     node_utils.assign_curve(
         ramp.mapping.curves[0],
         [(0.0, 0.0), (0.19, 0.08), (0.34, 1.0), (1.0, 1.0)],
@@ -108,7 +124,10 @@ def nodegroup_caustics(nw: NodeWrangler):
 
 def shader_caustic_lamp(nw: NodeWrangler, params: dict):
     coord = nw.new_node(Nodes.TextureCoord)
-    caustics = nw.new_node(nodegroup_caustics().name, input_kwargs={"Vector": coord.outputs["Normal"], **params})
+    caustics = nw.new_node(
+        nodegroup_caustics().name,
+        input_kwargs={"Vector": coord.outputs["Normal"], **params},
+    )
     emission = nw.new_node(Nodes.Emission, input_kwargs={"Strength": caustics})
     nw.new_node(Nodes.LightOutput, [emission])
 

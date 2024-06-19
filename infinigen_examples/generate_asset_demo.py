@@ -5,8 +5,6 @@
 
 import argparse
 import logging
-import os
-import sys
 from copy import copy
 from pathlib import Path
 
@@ -20,39 +18,29 @@ import bpy
 import gin
 import numpy as np
 from mathutils import Matrix, Vector, bvhtree
-from tqdm import tqdm, trange
+from tqdm import trange
 
 from infinigen.assets.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.materials import (
-    atmosphere_light_haze,
-    chunkyrock,
-    cobble_stone,
-    cracked_ground,
-    dirt,
-    ice,
-    lava,
-    mountain,
-    mud,
-    sand,
-    sandstone,
-    snow,
-    soil,
-    stone,
-    water,
-)
 from infinigen.assets.scatters import grass, pebbles, pine_needle, pinecone
-from infinigen.assets.small_plants.fern import FernFactory
 from infinigen.assets.weather import kole_clouds
 from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util
-from infinigen.core.placement import density, placement
+from infinigen.core.placement import placement
 from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core.util import blender as butil
 from infinigen.terrain import Terrain
 
 
-def find_flat_location(mesh, bvh: bvhtree.BVHTree, rad: float, alt: float, retries=100, margin_pct=0.2, ang_samples=36):
+def find_flat_location(
+    mesh,
+    bvh: bvhtree.BVHTree,
+    rad: float,
+    alt: float,
+    retries=100,
+    margin_pct=0.2,
+    ang_samples=36,
+):
     for i in trange(retries):
         ground_loc = copy(np.random.choice(mesh.data.vertices).co)
         origin = ground_loc + Vector((0, 0, alt))
@@ -69,7 +57,10 @@ def find_flat_location(mesh, bvh: bvhtree.BVHTree, rad: float, alt: float, retri
                 break
 
             *_, sample_alt = bvh.ray_cast(sample_loc, Vector((0, 0, -1)))
-            if sample_alt is None or abs(center_alt - sample_alt) > margin_pct * center_alt:
+            if (
+                sample_alt is None
+                or abs(center_alt - sample_alt) > margin_pct * center_alt
+            ):
                 break
 
         else:  # triggered if no `break` statement
@@ -116,11 +107,23 @@ def compose_scene(
     cam = cam_util.get_camera(0, 0)
 
     # find a flat spot on the terrain to do the demo\
-    terrain = Terrain(scene_seed, surface.registry, task="coarse", on_the_fly_asset_folder=output_folder / "assets")
+    terrain = Terrain(
+        scene_seed,
+        surface.registry,
+        task="coarse",
+        on_the_fly_asset_folder=output_folder / "assets",
+    )
     terrain_mesh = terrain.coarse_terrain()
-    scene_bvh = bvhtree.BVHTree.FromObject(terrain_mesh, bpy.context.evaluated_depsgraph_get())
+    scene_bvh = bvhtree.BVHTree.FromObject(
+        terrain_mesh, bpy.context.evaluated_depsgraph_get()
+    )
     if asset_factory is not None:
-        center = find_flat_location(terrain_mesh, scene_bvh, rad=camera_circle_radius * 1.5, alt=camera_altitude * 1.5)
+        center = find_flat_location(
+            terrain_mesh,
+            scene_bvh,
+            rad=camera_circle_radius * 1.5,
+            alt=camera_altitude * 1.5,
+        )
     else:
         center = (0, 0, 0)
     # move camera in a circle around that location
@@ -160,7 +163,9 @@ def compose_scene(
             o.scale = asset_scale
 
     # apply a procedural backdrop on all visible parts of the terrain
-    terrain_inview, *_ = split_inview(terrain_mesh, cam=cam, dist_max=params["inview_distance"], vis_margin=2)
+    terrain_inview, *_ = split_inview(
+        terrain_mesh, cam=cam, dist_max=params["inview_distance"], vis_margin=2
+    )
     if background is None:
         pass
     elif background == "grass":
@@ -180,33 +185,51 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_folder", type=Path, required=True)
     parser.add_argument("--input_folder", type=Path, default=None)
-    parser.add_argument("-s", "--seed", default=None, help="The seed used to generate the scene")
+    parser.add_argument(
+        "-s", "--seed", default=None, help="The seed used to generate the scene"
+    )
     parser.add_argument(
         "-t",
         "--task",
         nargs="+",
         default=["coarse"],
-        choices=["coarse", "populate", "fine_terrain", "ground_truth", "render", "mesh_save"],
+        choices=[
+            "coarse",
+            "populate",
+            "fine_terrain",
+            "ground_truth",
+            "render",
+            "mesh_save",
+        ],
     )
     parser.add_argument(
         "-g",
         "--configs",
         nargs="+",
         default=["base"],
-        help="Set of config files for gin (separated by spaces) " "e.g. --configs file1 file2 (exclude .gin from path)",
+        help="Set of config files for gin (separated by spaces) "
+        "e.g. --configs file1 file2 (exclude .gin from path)",
     )
     parser.add_argument(
         "-p",
         "--overrides",
         nargs="+",
         default=[],
-        help="Parameter settings that override config defaults " "e.g. --overrides module_1.a=2 module_2.b=3",
+        help="Parameter settings that override config defaults "
+        "e.g. --overrides module_1.a=2 module_2.b=3",
     )
     parser.add_argument("--task_uniqname", type=str, default=None)
     parser.add_argument(
-        "-d", "--debug", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO
+        "-d",
+        "--debug",
+        action="store_const",
+        dest="loglevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
     )
-    parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO)
+    parser.add_argument(
+        "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
+    )
 
     args = init.parse_args_blender(parser)
 

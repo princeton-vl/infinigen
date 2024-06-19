@@ -5,7 +5,16 @@
 import numpy as np
 
 
-def apply(obj, selection=None, vertical=False, shader_func=None, scale=None, alternating=None, shape=None, **kwargs):
+def apply(
+    obj,
+    selection=None,
+    vertical=False,
+    shader_func=None,
+    scale=None,
+    alternating=None,
+    shape=None,
+    **kwargs,
+):
     from .. import tile
     from .wood import shader_wood
 
@@ -17,4 +26,6 @@ def apply(obj, selection=None, vertical=False, shader_func=None, scale=None, alt
         shader_func = np.random.choice(funcs, p=weights)
     if shape is None:
         shape = np.random.choice(["square", "hexagon", "rectangle"])
-    tile.apply(obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs)
+    tile.apply(
+        obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs
+    )

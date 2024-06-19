@@ -3,12 +3,9 @@
 
 # Authors: Yiming Zuo
 
-from collections.abc import Iterable
 
 import bpy
-import mathutils
-import numpy as np
-from numpy.random import choice, normal, randint, uniform
+from numpy.random import choice, normal, uniform
 
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.tables.legs.single_stand import nodegroup_generate_single_stand
@@ -16,7 +13,10 @@ from infinigen.assets.tables.legs.square import nodegroup_generate_leg_square
 from infinigen.assets.tables.legs.straight import nodegroup_generate_leg_straight
 from infinigen.assets.tables.strechers import nodegroup_strecher
 from infinigen.assets.tables.table_top import nodegroup_generate_table_top
-from infinigen.assets.tables.table_utils import nodegroup_create_anchors, nodegroup_create_legs_and_strechers
+from infinigen.assets.tables.table_utils import (
+    nodegroup_create_anchors,
+    nodegroup_create_legs_and_strechers,
+)
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
@@ -26,18 +26,19 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import NoApply
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
 
 
-@node_utils.to_nodegroup("geometry_create_legs", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "geometry_create_legs", singleton=False, type="GeometryNodeTree"
+)
 def geometry_create_legs(nw: NodeWrangler, **kwargs):
     createanchors = nw.new_node(
         nodegroup_create_anchors().name,
         input_kwargs={
             "Profile N-gon": kwargs["Leg Number"],
-            "Profile Width": kwargs["Leg Placement Top Relative Scale"] * kwargs["Top Profile Width"],
+            "Profile Width": kwargs["Leg Placement Top Relative Scale"]
+            * kwargs["Top Profile Width"],
             "Profile Aspect Ratio": kwargs["Top Profile Aspect Ratio"],
         },
     )
@@ -45,7 +46,11 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
     if kwargs["Leg Style"] == "single_stand":
         leg = nw.new_node(
             nodegroup_generate_single_stand(**kwargs).name,
-            input_kwargs={"Leg Height": kwargs["Leg Height"], "Leg Diameter": kwargs["Leg Diameter"], "Resolution": 64},
+            input_kwargs={
+                "Leg Height": kwargs["Leg Height"],
+                "Leg Diameter": kwargs["Leg Diameter"],
+                "Resolution": 64,
+            },
         )
 
         leg = nw.new_node(
@@ -55,7 +60,9 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
                 "Keep Legs": True,
                 "Leg Instance": leg,
                 "Table Height": kwargs["Top Height"],
-                "Leg Bottom Relative Scale": kwargs["Leg Placement Bottom Relative Scale"],
+                "Leg Bottom Relative Scale": kwargs[
+                    "Leg Placement Bottom Relative Scale"
+                ],
                 "Align Leg X rot": True,
             },
         )
@@ -72,7 +79,10 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
             },
         )
 
-        strecher = nw.new_node(nodegroup_strecher().name, input_kwargs={"Profile Width": kwargs["Leg Diameter"] * 0.5})
+        strecher = nw.new_node(
+            nodegroup_strecher().name,
+            input_kwargs={"Profile Width": kwargs["Leg Diameter"] * 0.5},
+        )
 
         leg = nw.new_node(
             nodegroup_create_legs_and_strechers().name,
@@ -84,7 +94,9 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
                 "Strecher Instance": strecher,
                 "Strecher Index Increment": kwargs["Strecher Increament"],
                 "Strecher Relative Position": kwargs["Strecher Relative Pos"],
-                "Leg Bottom Relative Scale": kwargs["Leg Placement Bottom Relative Scale"],
+                "Leg Bottom Relative Scale": kwargs[
+                    "Leg Placement Bottom Relative Scale"
+                ],
                 "Align Leg X rot": True,
             },
         )
@@ -110,7 +122,9 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
                 "Keep Legs": True,
                 "Leg Instance": leg,
                 "Table Height": kwargs["Top Height"],
-                "Leg Bottom Relative Scale": kwargs["Leg Placement Bottom Relative Scale"],
+                "Leg Bottom Relative Scale": kwargs[
+                    "Leg Placement Bottom Relative Scale"
+                ],
                 "Align Leg X rot": True,
             },
         )
@@ -118,9 +132,16 @@ def geometry_create_legs(nw: NodeWrangler, **kwargs):
     else:
         raise NotImplementedError
 
-    leg = nw.new_node(Nodes.SetMaterial, input_kwargs={"Geometry": leg, "Material": kwargs["LegMaterial"]})
+    leg = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": leg, "Material": kwargs["LegMaterial"]},
+    )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": leg}, attrs={"is_active_output": True})
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": leg},
+        attrs={"is_active_output": True},
+    )
 
 
 def geometry_assemble_table(nw: NodeWrangler, **kwargs):
@@ -140,19 +161,27 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
 
     tabletop_instance = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": generatetabletop, "Translation": (0.0000, 0.0000, kwargs["Top Height"])},
+        input_kwargs={
+            "Geometry": generatetabletop,
+            "Translation": (0.0000, 0.0000, kwargs["Top Height"]),
+        },
     )
 
     tabletop_instance = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": tabletop_instance, "Material": kwargs["TopMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": tabletop_instance, "Material": kwargs["TopMaterial"]},
     )
 
     legs = nw.new_node(geometry_create_legs(**kwargs).name)
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [tabletop_instance, legs]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [tabletop_instance, legs]}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": join_geometry}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry},
+        attrs={"is_active_output": True},
     )
 
 
@@ -164,13 +193,13 @@ class TableDiningFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
-            from infinigen.assets.clothes import blanket
-            from infinigen.assets.scatters.clothes import ClothesCover
 
             # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
             #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
             self.clothes_scatter = NoApply()
-            self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+            self.material_params, self.scratch, self.edge_wear = (
+                self.get_material_params()
+            )
 
         self.params.update(self.material_params)
 
@@ -180,7 +209,9 @@ class TableDiningFactory(AssetFactory):
             "TopMaterial": material_assignments["top"].assign_material(),
             "LegMaterial": material_assignments["leg"].assign_material(),
         }
-        wrapped_params = {k: surface.shaderfunc_to_material(v) for k, v in params.items()}
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
 
         scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
         scratch, edge_wear = material_assignments["wear_tear"]
@@ -245,7 +276,11 @@ class TableDiningFactory(AssetFactory):
 
             leg_number = 4
 
-            leg_curve_ctrl_pts = [(0.0, 1.0), (0.4, uniform(0.85, 0.95)), (1.0, uniform(0.4, 0.6))]
+            leg_curve_ctrl_pts = [
+                (0.0, 1.0),
+                (0.4, uniform(0.85, 0.95)),
+                (1.0, uniform(0.4, 0.6)),
+            ]
 
             top_scale = 0.8
             bottom_scale = uniform(1.0, 1.2)
@@ -282,12 +317,18 @@ class TableDiningFactory(AssetFactory):
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
-            size=2, enter_editmode=False, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+            size=2,
+            enter_editmode=False,
+            align="WORLD",
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
 
         # surface.add_geomod(obj, geometry_assemble_table, apply=False, input_kwargs=self.params)
-        surface.add_geomod(obj, geometry_assemble_table, apply=True, input_kwargs=self.params)
+        surface.add_geomod(
+            obj, geometry_assemble_table, apply=True, input_kwargs=self.params
+        )
         tagging.tag_system.relabel_obj(obj)
         assert tagging.tagged_face_mask(obj, {t.Subpart.SupportSurface}).sum() != 0
 

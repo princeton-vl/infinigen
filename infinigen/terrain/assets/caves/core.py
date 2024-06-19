@@ -4,8 +4,6 @@
 # Authors: Lahav Lipson, Zeyu Ma
 
 
-from pathlib import Path
-
 import bpy
 import gin
 import numpy as np
@@ -13,7 +11,6 @@ from numpy import ascontiguousarray as AC
 
 import infinigen.terrain.mesh_to_sdf as mesh_to_sdf
 from infinigen.core.util.blender import SelectObjects, ViewportMode
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import AssetFile
 from infinigen.terrain.utils import Mesh
 
@@ -36,8 +33,8 @@ def select_vert(idx: int):
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
     # assert False, [len(bpy.context.active_object.data.vertices), len(get_all_verts())]
-    assert idx < len(
-        obj.data.vertices
+    assert (
+        idx < len(obj.data.vertices)
     ), f"There are only {len(obj.data.vertices)} {len(get_all_verts())} verts, cannot select {idx}"
     obj.data.vertices[idx].select = True
     bpy.ops.object.mode_set(mode="EDIT")
@@ -138,7 +135,9 @@ class Cave:
         np.random.shuffle(self.path_verts)
         for single_vert in self.path_verts[:num_lights]:
             # print("LIGHT AT", single_vert)
-            bpy.ops.object.light_add(type="POINT", align="WORLD", location=single_vert, scale=(1, 1, 1))
+            bpy.ops.object.light_add(
+                type="POINT", align="WORLD", location=single_vert, scale=(1, 1, 1)
+            )
             bpy.context.object.data.energy = power
             self.add_to_collection("AllPointLights")
 
@@ -204,7 +203,9 @@ def caves_asset(
         query_points[:, j, :, 1] = y[j]
         query_points[:, :, j, 2] = z[j]
     query_points = query_points.reshape(-1, 3)
-    voxels = mesh_to_sdf.mesh_to_sdf(cave_mesh, query_points, surface_point_method="sample").reshape((N, N, N))
+    voxels = mesh_to_sdf.mesh_to_sdf(
+        cave_mesh, query_points, surface_point_method="sample"
+    ).reshape((N, N, N))
     np.save(folder / "occupancy.npy", voxels)
     np.save(folder / "boundingbox.npy", bounding_box)
     (folder / AssetFile.Finish).touch()

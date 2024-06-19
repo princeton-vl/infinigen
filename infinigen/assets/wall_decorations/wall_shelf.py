@@ -10,7 +10,11 @@ from numpy.random import uniform
 
 from infinigen.assets.materials import metal, plastic
 from infinigen.assets.materials.woods import wood
-from infinigen.assets.utils.decorate import read_edge_center, read_edge_direction, select_edges
+from infinigen.assets.utils.decorate import (
+    read_edge_center,
+    read_edge_direction,
+    select_edges,
+)
 from infinigen.assets.utils.object import join_objects, new_bbox, new_bbox_2d
 from infinigen.assets.utils.shapes import polygon2obj
 from infinigen.core import tagging as t
@@ -24,13 +28,27 @@ from infinigen.core.util.random import random_general as rg
 
 
 class WallShelfFactory(AssetFactory):
-    support_sides_ = "weighted_choice", (0.5, "none"), (1, "bottom"), (1, "top"), (1.5, "both")
+    support_sides_ = (
+        "weighted_choice",
+        (0.5, "none"),
+        (1, "bottom"),
+        (1, "top"),
+        (1.5, "both"),
+    )
     support_margins = "weighted_choice", (2, 0), (1, ("uniform", 0.0, 0.2))
     support_ratios = "weighted_choice", (2, 1), (1, ("uniform", 0.5, 0.9))
     support_alphas = (
         "weighted_choice",
         (1, 1),
-        (1, ("weighted_choice", (1, ("log_uniform", 0.4, 0.7)), (2, ("log_uniform", 1.5, 3)), (1, 10))),
+        (
+            1,
+            (
+                "weighted_choice",
+                (1, ("log_uniform", 0.4, 0.7)),
+                (2, ("log_uniform", 1.5, 3)),
+                (1, 10),
+            ),
+        ),
     )
     support_joins = "mitre", "round", "bevel"
     plate_bevels = "weighted_choice", (1, "none"), (1, "front"), (1, "side")
@@ -46,7 +64,9 @@ class WallShelfFactory(AssetFactory):
             n_support = np.random.choice([2, 3, 4], p=[0.7, 0.2, 0.1])
         else:
             n_support = np.random.choice([2, 3], p=[0.8, 0.2])
-        self.support_locs = np.linspace(-0.5 + self.support_margin, 0.5 - self.support_margin, n_support)
+        self.support_locs = np.linspace(
+            -0.5 + self.support_margin, 0.5 - self.support_margin, n_support
+        )
         self.length = log_uniform(0.3, 0.8)
         self.width = log_uniform(0.1, 0.2)
         match self.support_side:
@@ -63,9 +83,24 @@ class WallShelfFactory(AssetFactory):
         self.support_surface = rg(self.support_surfaces)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
-        box = new_bbox(0, self.width, -self.length / 2, self.length / 2, -self.support_length, self.support_length)
-        plane = new_bbox_2d(0, self.width, -self.length / 2, self.length / 2, self.thickness / 2)
-        write_attr_data(plane, f"{t.PREFIX}{Subpart.SupportSurface.value}", np.ones(1).astype(bool), "INT", "FACE")
+        box = new_bbox(
+            0,
+            self.width,
+            -self.length / 2,
+            self.length / 2,
+            -self.support_length,
+            self.support_length,
+        )
+        plane = new_bbox_2d(
+            0, self.width, -self.length / 2, self.length / 2, self.thickness / 2
+        )
+        write_attr_data(
+            plane,
+            f"{t.PREFIX}{Subpart.SupportSurface.value}",
+            np.ones(1).astype(bool),
+            "INT",
+            "FACE",
+        )
         return join_objects([box, plane])
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -73,7 +108,9 @@ class WallShelfFactory(AssetFactory):
         self.plate_surface.apply(obj)
         if self.support_side != "none":
             support = self.make_support()
-            supports = [support] + [deep_clone_obj(support) for _ in range(len(self.support_locs) - 1)]
+            supports = [support] + [
+                deep_clone_obj(support) for _ in range(len(self.support_locs) - 1)
+            ]
             for s, l in zip(supports, self.support_locs):
                 s.location[1] = self.length * l
             self.support_surface.apply(supports)
@@ -81,7 +118,14 @@ class WallShelfFactory(AssetFactory):
         return obj
 
     def make_plate(self):
-        obj = new_bbox(0, self.width, -self.length / 2, self.length / 2, -self.thickness / 2, self.thickness / 2)
+        obj = new_bbox(
+            0,
+            self.width,
+            -self.length / 2,
+            self.length / 2,
+            -self.thickness / 2,
+            self.thickness / 2,
+        )
         c = read_edge_center(obj)
         d = read_edge_direction(obj)
         front = (np.abs(d[:, 1]) > 0.5) & (c[:, 0] > 0.1)
@@ -95,14 +139,19 @@ class WallShelfFactory(AssetFactory):
                 selection = np.zeros_like(front)
         with butil.ViewportMode(obj, "EDIT"):
             select_edges(obj, selection)
-            bpy.ops.mesh.bevel(offset=uniform(0.3, 0.5) * self.thickness, segments=np.random.randint(4, 9))
+            bpy.ops.mesh.bevel(
+                offset=uniform(0.3, 0.5) * self.thickness,
+                segments=np.random.randint(4, 9),
+            )
         return obj
 
     def make_support_contour(self):
         l = shapely.LineString(np.array([(1, 0), (0, 0), (0, 1)]) * self.support_length)
         theta = np.linspace(0, np.pi / 2, 31)
         alpha = rg(self.support_alphas)
-        r = 1 / ((np.cos(theta) + 1e-6) ** alpha + (np.sin(theta) + 1e-6) ** alpha) ** (1 / alpha)
+        r = 1 / ((np.cos(theta) + 1e-6) ** alpha + (np.sin(theta) + 1e-6) ** alpha) ** (
+            1 / alpha
+        )
         xy = r[:, np.newaxis] * np.stack([np.cos(theta), np.sin(theta)], -1)
         d = shapely.LineString(xy * self.support_length * rg(self.support_ratios))
         return shapely.union(l, d)
@@ -112,14 +161,20 @@ class WallShelfFactory(AssetFactory):
         if self.support_side in ["top", "both"]:
             lines.append(self.make_support_contour())
         if self.support_side in ["bottom", "both"]:
-            lines.append(shapely.affinity.scale(self.make_support_contour(), 1, -1, 1, (0, 0, 0)))
+            lines.append(
+                shapely.affinity.scale(self.make_support_contour(), 1, -1, 1, (0, 0, 0))
+            )
 
-        contour = shapely.union_all(lines).buffer(self.support_thickness / 2, join_style=self.support_join)
+        contour = shapely.union_all(lines).buffer(
+            self.support_thickness / 2, join_style=self.support_join
+        )
         obj = polygon2obj(contour)
         obj.rotation_euler[0] = np.pi / 2
         obj.location = self.support_thickness / 2, -self.support_width / 2, 0
         butil.apply_transform(obj, True)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, self.support_width, 0)})
+            bpy.ops.mesh.extrude_region_move(
+                TRANSFORM_OT_translate={"value": (0, self.support_width, 0)}
+            )
         return obj

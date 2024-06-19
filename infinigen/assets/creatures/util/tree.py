@@ -4,7 +4,6 @@
 # Authors: Alexander Raistrick
 
 
-import itertools
 import typing
 from dataclasses import dataclass, field
 
@@ -55,12 +54,19 @@ def map(t: Tree, func) -> Tree:
 def map_parent_child(t, func, parent_node=None, parent_res=None, **opts) -> Tree:
     arg = (t, parent_node) if opts.get("include_parent_node", False) else t
     res = func(arg, parent_res)
-    return Tree(res, children=[map_parent_child(c, func, parent_node=t, parent_res=res, **opts) for c in t.children])
+    return Tree(
+        res,
+        children=[
+            map_parent_child(c, func, parent_node=t, parent_res=res, **opts)
+            for c in t.children
+        ],
+    )
 
 
 def tzip(*trees):
     return Tree(
-        tuple(t.item for t in trees), children=[tzip(*children) for children in zip(*[t.children for t in trees])]
+        tuple(t.item for t in trees),
+        children=[tzip(*children) for children in zip(*[t.children for t in trees])],
     )
 
 
@@ -68,7 +74,8 @@ def to_node_parent(t):
     nodes = list(iter_items(t))
     parents = {}
 
-    index = lambda x: next(i for i, v in enumerate(nodes) if v is x)
+    def index(x):
+        return next(i for i, v in enumerate(nodes) if v is x)
 
     for parent, child in iter_parent_child(t):
         if parent is None:

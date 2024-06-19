@@ -5,18 +5,17 @@
 
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal, uniform
 from scipy.ndimage import distance_transform_edt
 from skimage import measure
-from tqdm import tqdm, trange
 
 from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.weather.cloud.node import geometry_func, scatter_func, shader_material
+from infinigen.assets.weather.cloud.node import (
+    geometry_func,
+    scatter_func,
+    shader_material,
+)
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
 
@@ -348,11 +347,17 @@ class Altocumulus(Cumulus):
         densities = np.random.uniform(*cls.DENSITY_RANGE, size=cls.NUM_SUBCLOUDS)
         anisotropies = np.random.uniform(*cls.ANISOTROPY_RANGE, size=cls.NUM_SUBCLOUDS)
         noise_scales = np.random.uniform(*cls.NOISE_SCALE_RANGE, size=cls.NUM_SUBCLOUDS)
-        noise_details = np.random.uniform(*cls.NOISE_DETAIL_RANGE, size=cls.NUM_SUBCLOUDS)
-        voronoi_scales = np.random.uniform(*cls.VORONOI_SCALE_RANGE, size=cls.NUM_SUBCLOUDS)
+        noise_details = np.random.uniform(
+            *cls.NOISE_DETAIL_RANGE, size=cls.NUM_SUBCLOUDS
+        )
+        voronoi_scales = np.random.uniform(
+            *cls.VORONOI_SCALE_RANGE, size=cls.NUM_SUBCLOUDS
+        )
         mix_factors = np.random.uniform(*cls.MIX_FACTOR_RANGE, size=cls.NUM_SUBCLOUDS)
         emissions = np.random.uniform(*cls.EMISSION_RANGE, size=cls.NUM_SUBCLOUDS)
-        rotate_angles = np.random.uniform(*cls.ANGLE_ROTATE_RANGE, size=cls.NUM_SUBCLOUDS)
+        rotate_angles = np.random.uniform(
+            *cls.ANGLE_ROTATE_RANGE, size=cls.NUM_SUBCLOUDS
+        )
 
         # Scatter Params
         voronoi_scale = np.random.uniform(*cls.SCATTER_VORONOI_SCALE_RANGE)
@@ -434,7 +439,10 @@ class Altocumulus(Cumulus):
         shader_params = self.shader_params
         points_only = apply = marching_cubes
 
-        mats = [surface.shaderfunc_to_material(shader_material, **shader_param) for shader_param in shader_params]
+        mats = [
+            surface.shaderfunc_to_material(shader_material, **shader_param)
+            for shader_param in shader_params
+        ]
 
         geo_params["materials"] = mats
         surface.add_geomod(

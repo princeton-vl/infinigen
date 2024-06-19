@@ -10,7 +10,10 @@ from pathlib import Path
 
 root = Path(__file__).parent.parent
 
-BLENDER_BINARY_RELATIVE = [root / "blender/blender", root / "Blender.app/Contents/MacOS/Blender"]
+BLENDER_BINARY_RELATIVE = [
+    root / "blender/blender",
+    root / "Blender.app/Contents/MacOS/Blender",
+]
 IMPORT_INFINIGEN_SCRIPT = root / "infinigen/tools/blendscript_import_infinigen.py"
 APPEND_SYSPATH_SCRIPT = root / "infinigen/tools/blendscript_path_append.py"
 

@@ -65,7 +65,9 @@ def add_bevel(obj, edges, offset=0.03, segments=8):
         for edge in bm.edges:
             if edge.index in edges:
                 edge.select_set(True)
-        bpy.ops.mesh.bevel(offset=offset, offset_pct=0, segments=segments, release_confirm=True)
+        bpy.ops.mesh.bevel(
+            offset=offset, offset_pct=0, segments=segments, release_confirm=True
+        )
     return obj
 
 
@@ -78,7 +80,9 @@ def complete_bevel(nw, geometry, preprocess):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": (geometry, 0),
-            "Offset": nw.new_node(Nodes.Vector, attrs={"vector": mathutils.Vector((inf, 0, 0))}),
+            "Offset": nw.new_node(
+                Nodes.Vector, attrs={"vector": mathutils.Vector((inf, 0, 0))}
+            ),
         },
     )
 
@@ -92,6 +96,8 @@ def complete_no_bevel(nw, geometry, preprocess):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": (geometry, 0),
-            "Offset": nw.new_node(Nodes.Vector, attrs={"vector": mathutils.Vector((2 * inf, 0, 0))}),
+            "Offset": nw.new_node(
+                Nodes.Vector, attrs={"vector": mathutils.Vector((2 * inf, 0, 0))}
+            ),
         },
     )

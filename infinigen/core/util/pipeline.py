@@ -49,7 +49,17 @@ class RandomStageExecutor:
     def save_results(self, path):
         pd.DataFrame.from_records(self.results).to_csv(path)
 
-    def run_stage(self, name, fn, *args, use_chance=True, gc=True, default=None, prereq=None, **kwargs):
+    def run_stage(
+        self,
+        name,
+        fn,
+        *args,
+        use_chance=True,
+        gc=True,
+        default=None,
+        prereq=None,
+        **kwargs,
+    ):
         mem_usage = psutil.Process(os.getpid()).memory_info().rss
 
         will_run = self._should_run_stage(name, use_chance, prereq)

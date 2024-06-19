@@ -5,8 +5,6 @@
 # Authors: Lingjie Mei
 
 
-import colorsys
-
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -22,7 +20,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -33,8 +31,12 @@ class SeaweedFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.base_hue = uniform(0.0, 0.1) if uniform(0, 1) < 0.5 else uniform(0.3, 0.4)
-            self.material = surface.shaderfunc_to_material(self.shader_seaweed, self.base_hue)
+            self.base_hue = (
+                uniform(0.0, 0.1) if uniform(0, 1) < 0.5 else uniform(0.3, 0.4)
+            )
+            self.material = surface.shaderfunc_to_material(
+                self.shader_seaweed, self.base_hue
+            )
             self.freq = 1 / log_uniform(200, 500)
 
     def create_asset(self, face_size=0.01, **params):
@@ -67,7 +69,9 @@ class SeaweedFactory(AssetFactory):
         texture_type = np.random.choice(["STUCCI", "MARBLE"])
         texture = bpy.data.textures.new(name="seaweed", type=texture_type)
         texture.noise_scale = log_uniform(0.05, 0.2)
-        butil.modify_mesh(obj, "DISPLACE", True, strength=uniform(0.0, 0.03), texture=texture)
+        butil.modify_mesh(
+            obj, "DISPLACE", True, strength=uniform(0.0, 0.03), texture=texture
+        )
         assign_material(obj, self.material)
         self.animate_bend(obj)
         tag_object(obj, "seaweed")
@@ -75,18 +79,29 @@ class SeaweedFactory(AssetFactory):
 
     def animate_bend(self, obj):
         obj, mod = butil.modify_mesh(
-            obj, "SIMPLE_DEFORM", False, deform_method="BEND", deform_axis="Y", return_mod=True
+            obj,
+            "SIMPLE_DEFORM",
+            False,
+            deform_method="BEND",
+            deform_axis="Y",
+            return_mod=True,
         )
         driver = mod.driver_add("angle").driver
         start_angle = uniform(-np.pi / 4, 0)
-        driver.expression = repeated_driver(start_angle, start_angle + uniform(np.pi * 0.2, np.pi * 0.8), self.freq)
+        driver.expression = repeated_driver(
+            start_angle, start_angle + uniform(np.pi * 0.2, np.pi * 0.8), self.freq
+        )
 
     @staticmethod
     def differential_growth_make(**kwargs):
         n_base = np.random.randint(5, 7)
         angles = polygon_angles(n_base)
-        vertices = np.block([[np.cos(angles), 0], [np.sin(angles), 0], [np.zeros(n_base + 1)]]).T
-        faces = np.stack([np.arange(n_base), np.roll(np.arange(n_base), 1), np.full(n_base, n_base)]).T
+        vertices = np.block(
+            [[np.cos(angles), 0], [np.sin(angles), 0], [np.zeros(n_base + 1)]]
+        ).T
+        faces = np.stack(
+            [np.arange(n_base), np.roll(np.arange(n_base), 1), np.full(n_base, n_base)]
+        ).T
         obj = mesh2obj(data2mesh(vertices, [], faces, "diff_growth"))
 
         boundary = obj.vertex_groups.new(name="Boundary")
@@ -98,19 +113,25 @@ class SeaweedFactory(AssetFactory):
     def geo_seaweed_waves(nw: NodeWrangler):
         translation_scale = uniform(0.0, 0.25)
         expand_scale = uniform(0.2, 0.3)
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+        geometry = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
         x, y, z = nw.separate(nw.new_node(Nodes.InputPosition))
         angle = np.random.uniform(0, 2 * np.pi)
         displacement = nw.scale(
             nw.add(
                 nw.scale(
-                    nw.combine(np.cos(angle), np.sin(angle), 0), nw.scalar_multiply(nw.musgrave(10), translation_scale)
+                    nw.combine(np.cos(angle), np.sin(angle), 0),
+                    nw.scalar_multiply(nw.musgrave(10), translation_scale),
                 ),
                 nw.scale(nw.combine(x, y, 0), expand_scale),
             ),
             z,
         )
-        geometry = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": geometry, "Offset": displacement})
+        geometry = nw.new_node(
+            Nodes.SetPosition,
+            input_kwargs={"Geometry": geometry, "Offset": displacement},
+        )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     @staticmethod
@@ -129,7 +150,12 @@ class SeaweedFactory(AssetFactory):
 
         color_1 = map_perturb(base_hue, uniform(0.6, 0.8), 0.25)
         color_2 = map_perturb(base_hue - uniform(0.05, 0.1), uniform(0.6, 0.8), 0.15)
-        cr = build_color_ramp(nw, nw.musgrave(uniform(5, 10)), [0, 0.3, 0.7, 1.0], [color_1, color_1, color_2, color_2])
+        cr = build_color_ramp(
+            nw,
+            nw.musgrave(uniform(5, 10)),
+            [0, 0.3, 0.7, 1.0],
+            [color_1, color_1, color_2, color_2],
+        )
 
         principled_bsdf = nw.new_node(
             Nodes.PrincipledBSDF,
@@ -143,7 +169,11 @@ class SeaweedFactory(AssetFactory):
             },
         )
 
-        translucent_bsdf = nw.new_node(Nodes.TransparentBSDF, input_kwargs={"Color": cr})
+        translucent_bsdf = nw.new_node(
+            Nodes.TransparentBSDF, input_kwargs={"Color": cr}
+        )
 
-        mix_shader = nw.new_node(Nodes.MixShader, [mix_ratio, principled_bsdf, translucent_bsdf])
+        mix_shader = nw.new_node(
+            Nodes.MixShader, [mix_ratio, principled_bsdf, translucent_bsdf]
+        )
         return mix_shader

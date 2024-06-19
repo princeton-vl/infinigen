@@ -79,15 +79,21 @@ def make_palette(keyword, num_images, num_colors, overwrite=False):
     diagrams = np.clip(diagrams * 256, a_min=0, a_max=255).astype(np.int32)
     diagrams = diagrams.reshape((2 * S, num_colors * S, 3))
 
-    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/images").mkdir(parents=True, exist_ok=True)
-    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/json").mkdir(parents=True, exist_ok=True)
+    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/images").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path(f"{os.path.split(os.path.abspath(__file__))[0]}/json").mkdir(
+        parents=True, exist_ok=True
+    )
 
     plt.figure(figsize=(20, 5))
     plt.imshow(diagrams)
     plt.savefig(f"{os.path.split(os.path.abspath(__file__))[0]}/images/{keyword}.png")
 
     colors_rgb = np.clip(colors_rgb * 256, a_min=0, a_max=255).astype(np.int32)
-    with open(f"{os.path.split(os.path.abspath(__file__))[0]}/json/{keyword}.json", "w") as f:
+    with open(
+        f"{os.path.split(os.path.abspath(__file__))[0]}/json/{keyword}.json", "w"
+    ) as f:
         f.write("{\n")
         f.write('    "color": {\n')
         for i, color in enumerate(colors_rgb):

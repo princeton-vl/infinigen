@@ -8,36 +8,30 @@
 
 
 import logging
-import sys
 import typing
-import warnings
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from random import sample
 
 import bpy
-import bpy_extras
 import gin
 import imageio
 import numpy as np
-from mathutils import Euler, Matrix, Vector
+from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 from numpy.random import uniform as U
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.placement import placement
 from infinigen.core.rendering.post_render import colorize_depth
 from infinigen.core.tagging import tag_system
 from infinigen.core.util import blender as butil
 from infinigen.core.util import camera
 from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
-from infinigen.core.util.math import clip_gaussian, lerp
 from infinigen.core.util.organization import SelectionCriterions
 from infinigen.core.util.random import random_general
 from infinigen.tools.suffixes import get_suffix
@@ -60,13 +54,20 @@ def get_sensor_coords(cam, H, W, sparse=False):
     scale = scene.render.resolution_percentage / 100
     sensor_width_in_m = camd.sensor_width / 1000
     sensor_height_in_m = camd.sensor_height / 1000
-    assert abs(sensor_width_in_m / sensor_height_in_m - W / H) < 1e-4, (sensor_width_in_m, sensor_height_in_m, W, H)
+    assert abs(sensor_width_in_m / sensor_height_in_m - W / H) < 1e-4, (
+        sensor_width_in_m,
+        sensor_height_in_m,
+        W,
+        H,
+    )
 
     pixel_aspect_ratio = scene.render.pixel_aspect_x / scene.render.pixel_aspect_y
     if camd.sensor_fit == "VERTICAL":
         # the sensor height is fixed (sensor fit is horizontal),
         # the sensor width is effectively changed with the pixel aspect ratio
-        s_u = resolution_x_in_px * scale / sensor_width_in_m / pixel_aspect_ratio  # pixels per milimeter
+        s_u = (
+            resolution_x_in_px * scale / sensor_width_in_m / pixel_aspect_ratio
+        )  # pixels per milimeter
         s_v = resolution_y_in_px * scale / sensor_height_in_m
 
     else:  # 'HORIZONTAL' and 'AUTO'
@@ -164,20 +165,29 @@ def get_camera(rig_id, subcam_id, checkonly=False):
         return col.objects[name]
     if checkonly:
         return None
-    raise ValueError(f"Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}")
+    raise ValueError(
+        f"Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}"
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_camera_info", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_camera_info", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_active_cam_info(nw: NodeWrangler):
     info = nw.new_node(Nodes.ObjectInfo, [bpy.context.scene.camera])
-    nw.new_node(Nodes.GroupOutput, input_kwargs={k: info.outputs[k] for k in info.outputs.keys()})
+    nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={k: info.outputs[k] for k in info.outputs.keys()},
+    )
 
 
 def set_active_camera(rig_id, subcam_id):
     camera = get_camera(rig_id, subcam_id)
     bpy.context.scene.camera = camera
 
-    ng = nodegroup_active_cam_info()  # does not create a new node group, retrieves singleton
+    ng = (
+        nodegroup_active_cam_info()
+    )  # does not create a new node group, retrieves singleton
     ng.nodes["Object Info"].inputs["Object"].default_value = camera
 
     return bpy.context.scene.camera
@@ -200,7 +210,9 @@ def set_camera(
     camera.location = location
     camera.rotation_euler = rotation
     if focus_dist is not None:
-        camera.data.dof.focus_distance = focus_dist  # this should come before view_layer.update()
+        camera.data.dof.focus_distance = (
+            focus_dist  # this should come before view_layer.update()
+        )
     bpy.context.view_layer.update()
 
     camera.keyframe_insert(data_path="location", frame=frame)
@@ -209,7 +221,9 @@ def set_camera(
         camera.data.dof.keyframe_insert(data_path="focus_distance", frame=frame)
 
 
-def terrain_camera_query(cam, scene_bvh, terrain_tags_queries, vertexwise_min_dist, min_dist=0):
+def terrain_camera_query(
+    cam, scene_bvh, terrain_tags_queries, vertexwise_min_dist, min_dist=0
+):
     dists = []
     sensor_coords, pix_it = get_sensor_coords(cam, sparse=True)
     terrain_tags_queries_counts = {q: 0 for q in terrain_tags_queries}
@@ -220,7 +234,9 @@ def terrain_camera_query(cam, scene_bvh, terrain_tags_queries, vertexwise_min_di
         if dist is None:
             continue
         dists.append(dist)
-        if dist < min_dist or (vertexwise_min_dist is not None and dist < vertexwise_min_dist[index]):
+        if dist < min_dist or (
+            vertexwise_min_dist is not None and dist < vertexwise_min_dist[index]
+        ):
             logger.debug(f"Found {dist=} < {min_dist=}")
             dists = None  # means dist < min
             break
@@ -257,7 +273,9 @@ def camera_pose_proposal(
 ):
     if isinstance(location_sample, tuple):
         location_sample = Vector(location_sample)
-        location_sample = lambda: location_sample
+
+        def location_sample():
+            return location_sample
 
     if override_loc is not None:
         loc = Vector(random_general(override_loc))
@@ -268,7 +286,7 @@ def camera_pose_proposal(
         curr_alt = animation_policy.get_altitude(loc, scene_bvh)
         if curr_alt is None:
             logger.debug(f"camera_pose_proposal got {curr_alt=} for {loc=}")
-            butil.spawn_empty(f"fail")
+            butil.spawn_empty("fail")
             return None
         desired_alt = random_general(altitude)
         loc[2] = loc[2] + desired_alt - curr_alt
@@ -292,7 +310,9 @@ def keep_cam_pose_proposal(
     terrain_coverage_range=(0.5, 1),
 ):
     if terrain is not None:  # TODO refactor
-        terrain_sdf = terrain.compute_camera_space_sdf(np.array(cam.location).reshape((1, 3)))
+        terrain_sdf = terrain.compute_camera_space_sdf(
+            np.array(cam.location).reshape((1, 3))
+        )
 
     if not cam.type == "CAMERA":
         cam = cam.children[0]
@@ -308,7 +328,11 @@ def keep_cam_pose_proposal(
         return None
 
     dists, camera_selection_answers_counts, n_pix = terrain_camera_query(
-        cam, scene_bvh, camera_selection_answers, vertexwise_min_dist, min_dist=min_terrain_distance
+        cam,
+        scene_bvh,
+        camera_selection_answers,
+        vertexwise_min_dist,
+        min_dist=min_terrain_distance,
     )
 
     if dists is None:
@@ -317,7 +341,9 @@ def keep_cam_pose_proposal(
 
     coverage = len(dists) / n_pix
     if coverage < terrain_coverage_range[0] or coverage > terrain_coverage_range[1]:
-        logger.debug(f"keep_cam_pose_proposal rejects {coverage=} for {terrain_coverage_range=}")
+        logger.debug(
+            f"keep_cam_pose_proposal rejects {coverage=} for {terrain_coverage_range=}"
+        )
         return None
 
     if terrain is not None and terrain_sdf <= 0:
@@ -336,7 +362,9 @@ def keep_cam_pose_proposal(
                 if q in camera_selection_answers_counts:
                     ratio = camera_selection_answers_counts[q] / n_pix
                     if ratio < minv or ratio > maxv:
-                        logger.debug(f"keep_cam_pose_proposal rejects {ratio=} for {q=}")
+                        logger.debug(
+                            f"keep_cam_pose_proposal rejects {ratio=} for {q=}"
+                        )
                         return None
 
     return np.std(dists) + 1.5 * np.min(dists)
@@ -344,7 +372,9 @@ def keep_cam_pose_proposal(
 
 @gin.configurable
 class AnimPolicyGoToProposals:
-    def __init__(self, speed=("uniform", 1.5, 2.5), min_dist=4, max_dist=10, retries=30):
+    def __init__(
+        self, speed=("uniform", 1.5, 2.5), min_dist=4, max_dist=10, retries=30
+    ):
         self.speed = speed
         self.min_dist = min_dist
         self.max_dist = max_dist
@@ -363,7 +393,9 @@ class AnimPolicyGoToProposals:
                 continue
             break
         else:
-            raise animation_policy.PolicyError(f"{__name__} found no keyframe after {self.retries=}")
+            raise animation_policy.PolicyError(
+                f"{__name__} found no keyframe after {self.retries=}"
+            )
 
         time = dist / random_general(self.speed)
         return Vector(res.loc), Vector(res.rot), time, "BEZIER"
@@ -388,10 +420,14 @@ def compute_base_views(
     n_min_candidates = int(min_candidates_ratio * n_views)
     with tqdm(total=n_min_candidates, desc="Searching for camera viewpoints") as pbar:
         for it in range(1, max_tries):
-            props = camera_pose_proposal(scene_bvh=scene_bvh, location_sample=location_sample)
+            props = camera_pose_proposal(
+                scene_bvh=scene_bvh, location_sample=location_sample
+            )
 
             if props is None:
-                logger.debug(f"{camera_pose_proposal.__name__} returned {props=} for {it=}")
+                logger.debug(
+                    f"{camera_pose_proposal.__name__} returned {props=} for {it=}"
+                )
                 continue
 
             props.apply(cam)
@@ -446,7 +482,9 @@ def build_bvh_and_attrs(objs, tags_queries):
     for obj in dup_objs:
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
     with SelectObjects(dup_objs[0]):
         for obj in dup_objs[1:]:
             obj.select_set(True)
@@ -471,7 +509,9 @@ def build_bvh_and_attrs(objs, tags_queries):
         if q[0] == SelectionCriterions.Altitude:
             min_altitude, max_altitude = q[1:3]
             altitude = mesh.vertices[:, 2]
-            camera_selection_answers[q0] = mesh.facewise_mean((altitude > min_altitude) & (altitude < max_altitude))
+            camera_selection_answers[q0] = mesh.facewise_mean(
+                (altitude > min_altitude) & (altitude < max_altitude)
+            )
         else:
             camera_selection_answers[q0] = np.zeros(len(mesh.faces), dtype=bool)
             for key in tag_system.tag_dict:
@@ -497,25 +537,36 @@ def camera_selection_preprocessing(
         anim_criterion_keys = {}
 
     # preprocessing code adapted from mazeyu's original gin-oriented solution
-    tags_ratio = {k: (*v, anim_criterion_keys.get(k, False)) for k, v in tags_ratio.items()}
-    ranges_ratio = {v[:-2]: (v[-2], v[-1], anim_criterion_keys.get(k, False)) for k, v in ranges_ratio.items()}
+    tags_ratio = {
+        k: (*v, anim_criterion_keys.get(k, False)) for k, v in tags_ratio.items()
+    }
+    ranges_ratio = {
+        v[:-2]: (v[-2], v[-1], anim_criterion_keys.get(k, False))
+        for k, v in ranges_ratio.items()
+    }
 
     all_selection_ratios = {**tags_ratio, **ranges_ratio}
 
     with Timer("Building placeholders KDTree"):
         placeholders = list(
-            chain.from_iterable(c.all_objects for c in bpy.data.collections if c.name.startswith("placeholders:"))
+            chain.from_iterable(
+                c.all_objects
+                for c in bpy.data.collections
+                if c.name.startswith("placeholders:")
+            )
         )
         placeholders = [p for p in placeholders if p.type == "MESH"]
         logger.info(f"Building placeholder kd for {len(placeholders)} objects")
         placeholders_kd = butil.joined_kd(placeholders, include_origins=True)
 
     if terrain is None:
-        scene_bvh, camera_selection_answers = build_bvh_and_attrs(scene_objs, all_selection_ratios.keys())
+        scene_bvh, camera_selection_answers = build_bvh_and_attrs(
+            scene_objs, all_selection_ratios.keys()
+        )
         vertexwise_min_dist = None
     else:
-        scene_bvh, camera_selection_answers, vertexwise_min_dist = terrain.build_terrain_bvh_and_attrs(
-            all_selection_ratios.keys()
+        scene_bvh, camera_selection_answers, vertexwise_min_dist = (
+            terrain.build_terrain_bvh_and_attrs(all_selection_ratios.keys())
         )
 
     return dict(
@@ -530,9 +581,12 @@ def camera_selection_preprocessing(
 
 @node_utils.to_nodegroup("geo_distrib", singleton=True, type="GeometryNodeTree")
 def geo_distrib_random_points(nw: NodeWrangler):
-    input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
+    input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
     distribute = nw.new_node(
-        Nodes.DistributePointsOnFaces, input_kwargs={"Mesh": input.outputs["Geometry"], "Density": 500}
+        Nodes.DistributePointsOnFaces,
+        input_kwargs={"Mesh": input.outputs["Geometry"], "Density": 500},
     )
     verts = nw.new_node(Nodes.PointsToVertices, [distribute])
     output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": verts})
@@ -542,7 +596,9 @@ def sample_random_locs(surface: bpy.types.Object, eps=0.01):
     # HACK implementation - uses blender geonodes' uniform surface sample, im fairly sure theres a numpy impl somewhere in the repo
     surface = butil.copy(surface)
     butil.apply_transform(surface, loc=True, rot=True, scale=True)
-    butil.modify_mesh(surface, "NODES", node_group=geo_distrib_random_points(), apply=True)
+    butil.modify_mesh(
+        surface, "NODES", node_group=geo_distrib_random_points(), apply=True
+    )
     locs = np.array([v.co for v in surface.data.vertices])
     locs[:, -1] += eps
     butil.delete(surface)
@@ -560,7 +616,9 @@ def configure_cameras(
     dummy_camera = spawn_camera()
 
     if init_bounding_box is not None:
-        location_sample = lambda: np.random.uniform(*init_bounding_box)
+
+        def location_sample():
+            return np.random.uniform(*init_bounding_box)
     elif init_surfaces is not None:
         random_locs = sample_random_locs(init_surfaces)
 
@@ -572,7 +630,10 @@ def configure_cameras(
         raise ValueError("Either init_bounding_box or init_surfaces must be provided")
 
     base_views = compute_base_views(
-        dummy_camera, n_views=len(cam_rigs), location_sample=location_sample, **scene_preprocessed
+        dummy_camera,
+        n_views=len(cam_rigs),
+        location_sample=location_sample,
+        **scene_preprocessed,
     )
 
     for view, cam_rig in zip(base_views, cam_rigs):
@@ -654,14 +715,20 @@ def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
             camera_obj.data.dof.use_dof = use_dof
         # Saving camera parameters
         K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        suffix = get_suffix(dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id))
+        suffix = get_suffix(
+            dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id)
+        )
         output_file = output_folder / f"camview{suffix}.npz"
 
-        height_width = np.array((
-            bpy.context.scene.render.resolution_y, 
-            bpy.context.scene.render.resolution_x
-        ))
-        T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag((1.,-1.,-1.,1.)) # Y down Z forward (aka opencv)
+        height_width = np.array(
+            (
+                bpy.context.scene.render.resolution_y,
+                bpy.context.scene.render.resolution_x,
+            )
+        )
+        T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag(
+            (1.0, -1.0, -1.0, 1.0)
+        )  # Y down Z forward (aka opencv)
         np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 
@@ -694,9 +761,12 @@ if __name__ == "__main__":
         location, normal, index, dist = bvhtree.ray_cast(cam.location, direction)
         if dist is not None:
             dist_diff = (destination - cam.location).length
-            assert dist > (location - destination).length, (dist, (location - destination).length)
+            assert dist > (location - destination).length, (
+                dist,
+                (location - destination).length,
+            )
             assert dist > dist_diff
             depth_output[H - y - 1, x] = dist - dist_diff
 
     color_depth = colorize_depth(depth_output)
-    imageio.imwrite(f"color_depth.png", color_depth)
+    imageio.imwrite("color_depth.png", color_depth)

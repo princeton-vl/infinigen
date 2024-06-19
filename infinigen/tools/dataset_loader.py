@@ -10,7 +10,7 @@ from pathlib import Path
 import imageio
 import numpy as np
 
-from .suffixes import get_suffix, parse_suffix
+from .suffixes import parse_suffix
 
 # import torch.utils.data IMPORTED ONLY IF USING get_infinigen_dataset
 
@@ -69,7 +69,10 @@ def get_framebounds_inclusive(scene_folder):
 
 
 def get_cameras_available(scene_folder):
-    return [int(p.name.split("_")[-1]) for p in (scene_folder / "frames" / "Image").iterdir()]
+    return [
+        int(p.name.split("_")[-1])
+        for p in (scene_folder / "frames" / "Image").iterdir()
+    ]
 
 
 def get_imagetypes_available(scene_folder):
@@ -107,7 +110,9 @@ class InfinigenSceneDataset:
             )
         for t in data_types:
             if t not in ALLOWED_IMAGE_TYPES:
-                raise ValueError(f"Recieved data_types containing {t} which is not in ALLOWED_IMAGE_TYPES")
+                raise ValueError(
+                    f"Recieved data_types containing {t} which is not in ALLOWED_IMAGE_TYPES"
+                )
         self.data_types = data_types
 
         if cameras is None:
@@ -140,7 +145,12 @@ class InfinigenSceneDataset:
     def _imagetypes_to_load(self, cam: int):
         for data_type in self.data_types:
             dtypename = data_type[0]
-            if self.gt_for_first_camera_only and cam != 0 and dtypename != "Image" and dtypename != "camview":
+            if (
+                self.gt_for_first_camera_only
+                and cam != 0
+                and dtypename != "Image"
+                and dtypename != "camview"
+            ):
                 continue
             yield data_type
 
@@ -151,7 +161,9 @@ class InfinigenSceneDataset:
                     frame = self.framebounds_inclusive[0]
                     p = self.frame_path(frame + i, cam, dtype)
                     if not p.exists():
-                        raise ValueError(f"validate() failed for {self.scene_folder}, could not find {p}")
+                        raise ValueError(
+                            f"validate() failed for {self.scene_folder}, could not find {p}"
+                        )
 
     def frame_path(self, i: int, cam: int, dtype: str):
         frame_num = self.framebounds_inclusive[0] + i
@@ -178,7 +190,9 @@ def get_infinigen_dataset(data_folder: Path, mode="concat", validate=False, **kw
 
     data_folder = Path(data_folder)
 
-    scene_datasets = [InfinigenSceneDataset(f, **kwargs) for f in data_folder.iterdir() if f.is_dir()]
+    scene_datasets = [
+        InfinigenSceneDataset(f, **kwargs) for f in data_folder.iterdir() if f.is_dir()
+    ]
 
     if validate:
         for d in scene_datasets:

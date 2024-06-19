@@ -11,7 +11,6 @@
 import logging
 import os
 import sys
-import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -83,7 +82,9 @@ class LogLevel:
 def save_polycounts(file):
     for col in bpy.data.collections:
         polycount = sum(
-            len(obj.data.polygons) for obj in col.all_objects if (obj.type == "MESH" and obj.data is not None)
+            len(obj.data.polygons)
+            for obj in col.all_objects
+            if (obj.type == "MESH" and obj.data is not None)
         )
         file.write(f"{col.name}: {polycount:,}\n")
     for stat in bpy.context.scene.statistics(bpy.context.view_layer).split(" | ")[2:]:

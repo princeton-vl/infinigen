@@ -5,25 +5,10 @@
 # Authors: Alexander Raistrick
 
 import json
-import os
-import sys
-from functools import partial
-from itertools import chain
 
 # import pytest
-import bpy
-import numpy as np
 from mathutils import Vector
 from test_stable_against import make_scene
-
-from infinigen.core import tagging
-from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import example_solver as solver
-from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.geometry import dof, parse_scene, planes, stability, validity
-from infinigen.core.util import blender as butil
 
 
 def test_state_to_json(tmp_path):

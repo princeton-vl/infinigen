@@ -4,11 +4,9 @@
 # Authors: Lingjie Mei
 from collections.abc import Iterable
 
-import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials import common
-from infinigen.assets.utils.object import new_plane
 from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_utils import build_color_ramp
@@ -29,20 +27,32 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
         back_color = hsv2rgba(hue + uniform(-0.1, 0.1), 0, back_value)
     uv_map = nw.new_node(Nodes.UVMap)
     musgrave = nw.new_node(
-        Nodes.MusgraveTexture, [uv_map], input_kwargs={"Detail": log_uniform(15, 30), "Dimension": 0}
+        Nodes.MusgraveTexture,
+        [uv_map],
+        input_kwargs={"Detail": log_uniform(15, 30), "Dimension": 0},
     )
     noise = nw.new_node(
-        Nodes.NoiseTexture, [uv_map], input_kwargs={"Detail": log_uniform(15, 30), "Distortion": log_uniform(4, 8)}
+        Nodes.NoiseTexture,
+        [uv_map],
+        input_kwargs={"Detail": log_uniform(15, 30), "Distortion": log_uniform(4, 8)},
     )
-    noise = build_color_ramp(nw, noise, [0, uniform(0.3, 0.5)], [(0, 0, 0, 1), (1, 1, 1, 1)])
-    difference = nw.new_node(Nodes.MixRGB, [musgrave, noise], attrs={"blend_type": "DIFFERENCE"})
-    base_color = build_color_ramp(nw, difference, [uniform(0.2, 0.3), 1], [back_color, front_color])
+    noise = build_color_ramp(
+        nw, noise, [0, uniform(0.3, 0.5)], [(0, 0, 0, 1), (1, 1, 1, 1)]
+    )
+    difference = nw.new_node(
+        Nodes.MixRGB, [musgrave, noise], attrs={"blend_type": "DIFFERENCE"}
+    )
+    base_color = build_color_ramp(
+        nw, difference, [uniform(0.2, 0.3), 1], [back_color, front_color]
+    )
 
     displacement = nw.new_node(
         Nodes.Displacement,
         input_kwargs={
             "Scale": log_uniform(0.0001, 0.0003),
-            "Height": nw.new_node(Nodes.MusgraveTexture, input_kwargs={"Scale": uniform(1e3, 2e3)}),
+            "Height": nw.new_node(
+                Nodes.MusgraveTexture, input_kwargs={"Scale": uniform(1e3, 2e3)}
+            ),
         },
     )
 
@@ -54,7 +64,10 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
         },
     )
 
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf, "Displacement": displacement})
+    nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
+    )
 
 
 def apply(obj, selection=None, plaster_colored=None, **kwargs):
@@ -62,4 +75,6 @@ def apply(obj, selection=None, plaster_colored=None, **kwargs):
         plaster_colored = uniform() < 0.4
     for o in obj if isinstance(obj, Iterable) else [obj]:
         unwrap_normal(o, selection)
-    common.apply(obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs)
+    common.apply(
+        obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
+    )

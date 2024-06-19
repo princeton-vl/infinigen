@@ -8,9 +8,7 @@
 import random
 
 import bpy
-import mathutils
 import numpy as np
-from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform
 from numpy.random import uniform as U
@@ -38,16 +36,26 @@ def shader_window_glass(nw: NodeWrangler):
     # non-refractive glass
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF)
     shader = nw.new_node(Nodes.GlossyBSDF, input_kwargs={"Roughness": roughness})
-    shader = nw.new_node(Nodes.MixShader, input_kwargs={"Fac": transmission, 1: transparent_bsdf, 2: shader})
+    shader = nw.new_node(
+        Nodes.MixShader,
+        input_kwargs={"Fac": transmission, 1: transparent_bsdf, 2: shader},
+    )
 
     # complete pass-through for non-camera rays, for render efficiency
     light_path = nw.new_node(Nodes.LightPath)
     shader = nw.new_node(
-        Nodes.MixShader, input_kwargs={"Fac": light_path.outputs["Is Camera Ray"], 1: transparent_bsdf, 2: shader}
+        Nodes.MixShader,
+        input_kwargs={
+            "Fac": light_path.outputs["Is Camera Ray"],
+            1: transparent_bsdf,
+            2: shader,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": shader}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": shader},
+        attrs={"is_active_output": True},
     )
 
 
@@ -97,14 +105,22 @@ class WindowFactory(AssetFactory):
             "ShutterThickness": shutter_thickness,
             "ShutterRotation": shutter_rotation,
             "ShutterInterval": shutter_inverval,
-            "FrameMaterial": surface.shaderfunc_to_material(shader_frame_material_choice, vertical=True),
-            "CurtainFrameMaterial": surface.shaderfunc_to_material(shader_curtain_frame_material_choice),
-            "CurtainMaterial": surface.shaderfunc_to_material(shader_curtain_material_choice),
+            "FrameMaterial": surface.shaderfunc_to_material(
+                shader_frame_material_choice, vertical=True
+            ),
+            "CurtainFrameMaterial": surface.shaderfunc_to_material(
+                shader_curtain_frame_material_choice
+            ),
+            "CurtainMaterial": surface.shaderfunc_to_material(
+                shader_curtain_material_choice
+            ),
             "Material": surface.shaderfunc_to_material(shader_window_glass),
         }
         return params
 
-    def sample_asset_params(self, dimensions=None, open=None, curtain=None, shutter=None):
+    def sample_asset_params(
+        self, dimensions=None, open=None, curtain=None, shutter=None
+    ):
         if dimensions is None:
             width = U(1, 4)
             height = U(1, 4)
@@ -136,7 +152,10 @@ class WindowFactory(AssetFactory):
             if frame_thickness < sub_frame_thickness * 2:
                 open_type = RI(1, 2)
             else:
-                oe_offset = U(sub_frame_thickness / 2, (frame_thickness - 2 * sub_frame_thickness) / 2)
+                oe_offset = U(
+                    sub_frame_thickness / 2,
+                    (frame_thickness - 2 * sub_frame_thickness) / 2,
+                )
                 if open:
                     open_offset = U(0, width / panel_h_amount)
                 else:
@@ -173,7 +192,9 @@ class WindowFactory(AssetFactory):
             obj,
             "NODES",
             node_group=nodegroup_window_geometry(),
-            ng_inputs=self.sample_asset_params(dimensions, open, self.curtain, self.shutter),
+            ng_inputs=self.sample_asset_params(
+                dimensions, open, self.curtain, self.shutter
+            ),
             apply=realized,
         )
 
@@ -187,7 +208,9 @@ class WindowFactory(AssetFactory):
         else:
             butil.delete(obj_)
 
-        bpy.ops.object.light_add(type="AREA", radius=1, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.object.light_add(
+            type="AREA", radius=1, align="WORLD", location=(0, 0, 0), scale=(1, 1, 1)
+        )
         portal = bpy.context.active_object
 
         w, _, h = obj.dimensions
@@ -200,7 +223,9 @@ class WindowFactory(AssetFactory):
         return obj
 
 
-@node_utils.to_nodegroup("nodegroup_window_geometry", singleton=True, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_window_geometry", singleton=True, type="GeometryNodeTree"
+)
 def nodegroup_window_geometry(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -260,30 +285,44 @@ def nodegroup_window_geometry(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input_1.outputs["FrameWidth"], 1: group_input_1.outputs["PanelVAmount"]},
+        input_kwargs={
+            0: group_input_1.outputs["FrameWidth"],
+            1: group_input_1.outputs["PanelVAmount"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["Width"], 1: multiply}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["Width"], 1: multiply},
+        attrs={"operation": "SUBTRACT"},
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract, 1: group_input_1.outputs["PanelVAmount"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: group_input_1.outputs["PanelVAmount"]},
+        attrs={"operation": "DIVIDE"},
     )
 
     subtract_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: divide, 1: group_input_1.outputs["SubFrameWidth"]}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: divide, 1: group_input_1.outputs["SubFrameWidth"]},
+        attrs={"operation": "SUBTRACT"},
     )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input_1.outputs["FrameWidth"], 1: group_input_1.outputs["PanelHAmount"]},
+        input_kwargs={
+            0: group_input_1.outputs["FrameWidth"],
+            1: group_input_1.outputs["PanelHAmount"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
     subtract_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["Height"], 1: multiply_1}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["Height"], 1: multiply_1},
+        attrs={"operation": "SUBTRACT"},
     )
 
     divide_1 = nw.new_node(
@@ -334,46 +373,73 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input_1.outputs["Shutter"], 14: windowpanel_1, 15: windowshutter}
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input_1.outputs["Shutter"],
+            14: windowpanel_1,
+            15: windowshutter,
+        },
     )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["Width"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["Width"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     divide_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input_1.outputs["Width"], 1: group_input_1.outputs["PanelVAmount"]},
+        input_kwargs={
+            0: group_input_1.outputs["Width"],
+            1: group_input_1.outputs["PanelVAmount"],
+        },
         attrs={"operation": "DIVIDE"},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: divide_2}, attrs={"operation": "MULTIPLY"})
+    multiply_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_2}, attrs={"operation": "MULTIPLY"}
+    )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: multiply_3})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["Height"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["Height"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
     divide_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input_1.outputs["Height"], 1: group_input_1.outputs["PanelHAmount"]},
+        input_kwargs={
+            0: group_input_1.outputs["Height"],
+            1: group_input_1.outputs["PanelHAmount"],
+        },
         attrs={"operation": "DIVIDE"},
     )
 
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: divide_3}, attrs={"operation": "MULTIPLY"})
+    multiply_5 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_3}, attrs={"operation": "MULTIPLY"}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_5})
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add, "Y": add_1})
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": switch.outputs[6], "Translation": combine_xyz})
+    transform = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": switch.outputs[6], "Translation": combine_xyz},
+    )
 
-    geometry_to_instance = nw.new_node("GeometryNodeGeometryToInstance", input_kwargs={"Geometry": transform})
+    geometry_to_instance = nw.new_node(
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": transform}
+    )
 
     multiply_6 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input_1.outputs["PanelHAmount"], 1: group_input_1.outputs["PanelVAmount"]},
+        input_kwargs={
+            0: group_input_1.outputs["PanelHAmount"],
+            1: group_input_1.outputs["PanelVAmount"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -383,7 +449,9 @@ def nodegroup_window_geometry(nw: NodeWrangler):
         attrs={"domain": "INSTANCE"},
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input_1.outputs["PanelHAmount"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input_1.outputs["PanelHAmount"]}
+    )
 
     divide_4 = nw.new_node(
         Nodes.Math,
@@ -391,11 +459,17 @@ def nodegroup_window_geometry(nw: NodeWrangler):
         attrs={"operation": "DIVIDE"},
     )
 
-    floor = nw.new_node(Nodes.Math, input_kwargs={0: divide_4}, attrs={"operation": "FLOOR"})
+    floor = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_4}, attrs={"operation": "FLOOR"}
+    )
 
-    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide, 1: group_input_1.outputs["FrameWidth"]})
+    add_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide, 1: group_input_1.outputs["FrameWidth"]}
+    )
 
-    multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: floor, 1: add_2}, attrs={"operation": "MULTIPLY"})
+    multiply_7 = nw.new_node(
+        Nodes.Math, input_kwargs={0: floor, 1: add_2}, attrs={"operation": "MULTIPLY"}
+    )
 
     modulo = nw.new_node(
         Nodes.Math,
@@ -403,39 +477,72 @@ def nodegroup_window_geometry(nw: NodeWrangler):
         attrs={"operation": "MODULO"},
     )
 
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: divide_1, 1: group_input_1.outputs["FrameWidth"]})
+    add_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide_1, 1: group_input_1.outputs["FrameWidth"]}
+    )
 
-    multiply_8 = nw.new_node(Nodes.Math, input_kwargs={0: modulo, 1: add_3}, attrs={"operation": "MULTIPLY"})
+    multiply_8 = nw.new_node(
+        Nodes.Math, input_kwargs={0: modulo, 1: add_3}, attrs={"operation": "MULTIPLY"}
+    )
 
-    power = nw.new_node(Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"})
+    power = nw.new_node(
+        Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"}
+    )
 
     multiply_9 = nw.new_node(
-        Nodes.Math, input_kwargs={0: power, 1: group_input_1.outputs["OEOffset"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: power, 1: group_input_1.outputs["OEOffset"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": multiply_8, "Z": multiply_9})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": multiply_7, "Y": multiply_8, "Z": multiply_9},
+    )
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": duplicate_elements.outputs["Geometry"], "Offset": combine_xyz_1}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": duplicate_elements.outputs["Geometry"],
+            "Offset": combine_xyz_1,
+        },
     )
 
-    power_1 = nw.new_node(Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"})
+    power_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"}
+    )
 
     multiply_10 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["OpenVAngle"], 1: power_1}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["OpenVAngle"], 1: power_1},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_10})
 
-    modulo_1 = nw.new_node(Nodes.Math, input_kwargs={0: floor, 1: 2.0000}, attrs={"operation": "MODULO"})
+    modulo_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: floor, 1: 2.0000}, attrs={"operation": "MODULO"}
+    )
 
-    multiply_11 = nw.new_node(Nodes.Math, input_kwargs={0: divide, 1: modulo_1}, attrs={"operation": "MULTIPLY"})
+    multiply_11 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: divide, 1: modulo_1},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     add_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: multiply_11})
 
-    modulo_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_8, 1: 2.0000}, attrs={"operation": "MODULO"})
+    modulo_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_8, 1: 2.0000},
+        attrs={"operation": "MODULO"},
+    )
 
-    multiply_12 = nw.new_node(Nodes.Math, input_kwargs={0: divide_1, 1: modulo_2}, attrs={"operation": "MULTIPLY"})
+    multiply_12 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: divide_1, 1: modulo_2},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     add_5 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_12})
 
@@ -443,43 +550,68 @@ def nodegroup_window_geometry(nw: NodeWrangler):
 
     rotate_instances = nw.new_node(
         Nodes.RotateInstances,
-        input_kwargs={"Instances": set_position, "Rotation": combine_xyz_3, "Pivot Point": combine_xyz_2},
+        input_kwargs={
+            "Instances": set_position,
+            "Rotation": combine_xyz_3,
+            "Pivot Point": combine_xyz_2,
+        },
     )
 
     multiply_13 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["OpenHAngle"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["OpenHAngle"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_13})
 
-    multiply_14 = nw.new_node(Nodes.Math, input_kwargs={0: add_3, 1: -0.5000}, attrs={"operation": "MULTIPLY"})
+    multiply_14 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add_3, 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+    )
 
     combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_14})
 
     rotate_instances_1 = nw.new_node(
         Nodes.RotateInstances,
-        input_kwargs={"Instances": rotate_instances, "Rotation": combine_xyz_5, "Pivot Point": combine_xyz_6},
+        input_kwargs={
+            "Instances": rotate_instances,
+            "Rotation": combine_xyz_5,
+            "Pivot Point": combine_xyz_6,
+        },
     )
 
-    power_2 = nw.new_node(Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"})
+    power_2 = nw.new_node(
+        Nodes.Math, input_kwargs={0: -1.0000, 1: floor}, attrs={"operation": "POWER"}
+    )
 
     multiply_15 = nw.new_node(
-        Nodes.Math, input_kwargs={0: power_2, 1: group_input_1.outputs["OpenOffset"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: power_2, 1: group_input_1.outputs["OpenOffset"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_15})
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": rotate_instances_1, "Offset": combine_xyz_4}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": rotate_instances_1, "Offset": combine_xyz_4},
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [windowpanel, set_position_1]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [windowpanel, set_position_1]}
+    )
 
     multiply_16 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["Width"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["Width"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_17 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_16, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply_17 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_16, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_18 = nw.new_node(
         Nodes.Math,
@@ -506,28 +638,51 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     )
 
     multiply_19 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input_1.outputs["FrameThickness"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["FrameThickness"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    add_6 = nw.new_node(Nodes.Math, input_kwargs={0: group_input_1.outputs["CurtainFrameDepth"], 1: multiply_19})
+    add_6 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["CurtainFrameDepth"], 1: multiply_19},
+    )
 
     combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": add_6})
 
-    transform_geometry = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": curtain, "Translation": combine_xyz_7})
-
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_geometry, join_geometry]})
-
-    switch_1 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input_1.outputs["Curtain"], 14: join_geometry, 15: join_geometry_1}
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": curtain, "Translation": combine_xyz_7},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1.outputs[6]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry, join_geometry]},
+    )
 
-    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": realize_instances})
+    switch_1 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input_1.outputs["Curtain"],
+            14: join_geometry,
+            15: join_geometry_1,
+        },
+    )
+
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1.outputs[6]}
+    )
+
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox, input_kwargs={"Geometry": realize_instances}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": realize_instances, "Bounding Box": bounding_box.outputs["Bounding Box"]},
+        input_kwargs={
+            "Geometry": realize_instances,
+            "Bounding Box": bounding_box.outputs["Bounding Box"],
+        },
         attrs={"is_active_output": True},
     )
 
@@ -545,48 +700,82 @@ def nodegroup_line_seq(nw: NodeWrangler):
         ],
     )
 
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Width"]}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"]},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Height"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": multiply_1})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply, "Y": multiply_1}
+    )
 
     multiply_2 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Width"], 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"], 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Y": multiply_1})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Y": multiply_1}
+    )
 
-    curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1})
+    curve_line = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1}
+    )
 
-    geometry_to_instance = nw.new_node("GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line})
+    geometry_to_instance = nw.new_node(
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line}
+    )
 
     duplicate_elements = nw.new_node(
         Nodes.DuplicateElements,
-        input_kwargs={"Geometry": geometry_to_instance, "Amount": group_input.outputs["Amount"]},
+        input_kwargs={
+            "Geometry": geometry_to_instance,
+            "Amount": group_input.outputs["Amount"],
+        },
         attrs={"domain": "INSTANCE"},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: duplicate_elements.outputs["Duplicate Index"], 1: 1.0000})
-
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["Amount"], 1: 1.0000})
-
-    divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: add_1}, attrs={"operation": "DIVIDE"}
+    add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: duplicate_elements.outputs["Duplicate Index"], 1: 1.0000},
     )
 
-    multiply_3 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: divide}, attrs={"operation": "MULTIPLY"})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["Amount"], 1: 1.0000}
+    )
+
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Height"], 1: add_1},
+        attrs={"operation": "DIVIDE"},
+    )
+
+    multiply_3 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: divide}, attrs={"operation": "MULTIPLY"}
+    )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_3})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": duplicate_elements.outputs["Geometry"], "Offset": combine_xyz_2}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": duplicate_elements.outputs["Geometry"],
+            "Offset": combine_xyz_2,
+        },
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Curve": set_position}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Curve": set_position},
+        attrs={"is_active_output": True},
     )
 
 
@@ -612,116 +801,193 @@ def nodegroup_curtain(nw: NodeWrangler):
         ],
     )
 
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Radius"]})
-
-    multiply = nw.new_node(Nodes.Math, input_kwargs={0: reroute_1, 1: 2.0000}, attrs={"operation": "MULTIPLY"})
-
-    ico_sphere = nw.new_node(Nodes.MeshIcoSphere, input_kwargs={"Radius": multiply, "Subdivisions": 4})
-
-    multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Width"]}, attrs={"operation": "MULTIPLY"}
+    reroute_1 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Radius"]}
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: -1.0000}, attrs={"operation": "MULTIPLY"})
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_1, 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    ico_sphere = nw.new_node(
+        Nodes.MeshIcoSphere, input_kwargs={"Radius": multiply, "Subdivisions": 4}
+    )
+
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Width"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_1, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2})
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_1})
 
-    curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1})
+    curve_line = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1}
+    )
 
-    sample_curve_1 = nw.new_node(Nodes.SampleCurve, input_kwargs={"Curves": curve_line, "Factor": 1.0000})
+    sample_curve_1 = nw.new_node(
+        Nodes.SampleCurve, input_kwargs={"Curves": curve_line, "Factor": 1.0000}
+    )
 
     set_position_2 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": ico_sphere.outputs["Mesh"], "Offset": sample_curve_1.outputs["Position"]},
+        input_kwargs={
+            "Geometry": ico_sphere.outputs["Mesh"],
+            "Offset": sample_curve_1.outputs["Position"],
+        },
     )
 
     combine_xyz_9 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": multiply_1, "Z": group_input.outputs["FrameDepth"]}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": multiply_1, "Z": group_input.outputs["FrameDepth"]},
     )
 
-    curve_line_4 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz_1, "End": combine_xyz_9})
+    curve_line_4 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz_1, "End": combine_xyz_9}
+    )
 
     combine_xyz_8 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": multiply_2, "Z": group_input.outputs["FrameDepth"]}
+        Nodes.CombineXYZ,
+        input_kwargs={"X": multiply_2, "Z": group_input.outputs["FrameDepth"]},
     )
 
-    curve_line_3 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_8})
+    curve_line_3 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_8}
+    )
 
     join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_line, curve_line_4, curve_line_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [curve_line, curve_line_4, curve_line_3]},
     )
 
-    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["Radius"]})
+    curve_circle = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Radius": group_input.outputs["Radius"]}
+    )
 
     curve_to_mesh_1 = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": join_geometry_3, "Profile Curve": curve_circle.outputs["Curve"], "Fill Caps": True},
+        input_kwargs={
+            "Curve": join_geometry_3,
+            "Profile Curve": curve_circle.outputs["Curve"],
+            "Fill Caps": True,
+        },
     )
 
-    ico_sphere_1 = nw.new_node(Nodes.MeshIcoSphere, input_kwargs={"Radius": multiply, "Subdivisions": 4})
+    ico_sphere_1 = nw.new_node(
+        Nodes.MeshIcoSphere, input_kwargs={"Radius": multiply, "Subdivisions": 4}
+    )
 
     sample_curve = nw.new_node(Nodes.SampleCurve, input_kwargs={"Curves": curve_line})
 
     set_position_3 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": ico_sphere_1.outputs["Mesh"], "Offset": sample_curve.outputs["Position"]},
+        input_kwargs={
+            "Geometry": ico_sphere_1.outputs["Mesh"],
+            "Offset": sample_curve.outputs["Position"],
+        },
     )
 
     join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_position_2, curve_to_mesh_1, set_position_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [set_position_2, curve_to_mesh_1, set_position_3]},
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["Height"], 1: -0.4700}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Height"], 1: -0.4700},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_3})
 
-    set_position_1 = nw.new_node(Nodes.SetPosition, input_kwargs={"Geometry": join_geometry_2, "Offset": combine_xyz_3})
+    set_position_1 = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": join_geometry_2, "Offset": combine_xyz_3},
+    )
 
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": set_position_1, "Material": group_input.outputs["CurtainFrameMaterial"]},
+        input_kwargs={
+            "Geometry": set_position_1,
+            "Material": group_input.outputs["CurtainFrameMaterial"],
+        },
     )
 
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["L1"]})
+    combine_xyz_4 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["L1"]}
+    )
 
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["R1"]})
+    combine_xyz_5 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["R1"]}
+    )
 
-    curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz_4, "End": combine_xyz_5})
+    curve_line_1 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz_4, "End": combine_xyz_5}
+    )
 
-    resample_curve = nw.new_node(Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_1, "Count": 200})
+    resample_curve = nw.new_node(
+        Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_1, "Count": 200}
+    )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["L2"]})
+    combine_xyz_6 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["L2"]}
+    )
 
-    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["R2"]})
+    combine_xyz_7 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["R2"]}
+    )
 
-    curve_line_2 = nw.new_node(Nodes.CurveLine, input_kwargs={"Start": combine_xyz_6, "End": combine_xyz_7})
+    curve_line_2 = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz_6, "End": combine_xyz_7}
+    )
 
-    resample_curve_1 = nw.new_node(Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_2, "Count": 200})
+    resample_curve_1 = nw.new_node(
+        Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_2, "Count": 200}
+    )
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [resample_curve, resample_curve_1]})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [resample_curve, resample_curve_1]},
+    )
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
 
     capture_attribute = nw.new_node(
-        Nodes.CaptureAttribute, input_kwargs={"Geometry": join_geometry_1, 2: spline_parameter_1.outputs["Factor"]}
+        Nodes.CaptureAttribute,
+        input_kwargs={
+            "Geometry": join_geometry_1,
+            2: spline_parameter_1.outputs["Factor"],
+        },
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["IntervalNumber"], 1: 6.2800}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["IntervalNumber"], 1: 6.2800},
+        attrs={"operation": "MULTIPLY"},
     )
 
     divide = nw.new_node(
-        Nodes.Math, input_kwargs={0: multiply_4, 1: group_input.outputs["Width"]}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: multiply_4, 1: group_input.outputs["Width"]},
+        attrs={"operation": "DIVIDE"},
     )
 
     multiply_5 = nw.new_node(
-        Nodes.Math, input_kwargs={0: spline_parameter.outputs["Length"], 1: divide}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: spline_parameter.outputs["Length"], 1: divide},
+        attrs={"operation": "MULTIPLY"},
     )
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_5, 1: 1.6800})
@@ -729,19 +995,28 @@ def nodegroup_curtain(nw: NodeWrangler):
     sine = nw.new_node(Nodes.Math, input_kwargs={0: add}, attrs={"operation": "SINE"})
 
     multiply_6 = nw.new_node(
-        Nodes.Math, input_kwargs={0: sine, 1: group_input.outputs["Depth"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: sine, 1: group_input.outputs["Depth"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_6})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": capture_attribute.outputs["Geometry"], "Offset": combine_xyz_2}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": capture_attribute.outputs["Geometry"],
+            "Offset": combine_xyz_2,
+        },
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]}
+    )
 
     quadrilateral = nw.new_node(
-        "GeometryNodeCurvePrimitiveQuadrilateral", input_kwargs={"Width": reroute, "Height": 0.0020}
+        "GeometryNodeCurvePrimitiveQuadrilateral",
+        input_kwargs={"Width": reroute, "Height": 0.0020},
     )
 
     position = nw.new_node(Nodes.InputPosition)
@@ -749,18 +1024,29 @@ def nodegroup_curtain(nw: NodeWrangler):
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
     divide_1 = nw.new_node(
-        Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: reroute}, attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["X"], 1: reroute},
+        attrs={"operation": "DIVIDE"},
     )
 
-    capture_attribute_1 = nw.new_node(Nodes.CaptureAttribute, input_kwargs={"Geometry": quadrilateral, 2: divide_1})
+    capture_attribute_1 = nw.new_node(
+        Nodes.CaptureAttribute, input_kwargs={"Geometry": quadrilateral, 2: divide_1}
+    )
 
     curve_to_mesh = nw.new_node(
         Nodes.CurveToMesh,
-        input_kwargs={"Curve": set_position, "Profile Curve": capture_attribute_1.outputs["Geometry"]},
+        input_kwargs={
+            "Curve": set_position,
+            "Profile Curve": capture_attribute_1.outputs["Geometry"],
+        },
     )
 
     combine_xyz_12 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": capture_attribute_1.outputs[2], "Y": capture_attribute.outputs[2]}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": capture_attribute_1.outputs[2],
+            "Y": capture_attribute.outputs[2],
+        },
     )
 
     store_named_attribute = nw.new_node(
@@ -771,41 +1057,64 @@ def nodegroup_curtain(nw: NodeWrangler):
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": store_named_attribute, "Material": group_input.outputs["CurtainMaterial"]},
+        input_kwargs={
+            "Geometry": store_named_attribute,
+            "Material": group_input.outputs["CurtainMaterial"],
+        },
     )
 
-    multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_1, 1: 1.3000}, attrs={"operation": "MULTIPLY"})
+    multiply_7 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_1, 1: 1.3000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
     curve_circle_1 = nw.new_node(Nodes.CurveCircle, input_kwargs={"Radius": multiply_7})
 
     curve_to_mesh_2 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": curve_line, "Profile Curve": curve_circle_1.outputs["Curve"]}
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": curve_line,
+            "Profile Curve": curve_circle_1.outputs["Curve"],
+        },
     )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_3, 1: group_input.outputs["Radius"]})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply_3, 1: group_input.outputs["Radius"]}
+    )
 
     combine_xyz_10 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": add_1})
 
     set_position_4 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": curve_to_mesh_2, "Offset": combine_xyz_10}
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": curve_to_mesh_2, "Offset": combine_xyz_10},
     )
 
-    difference = nw.new_node(Nodes.MeshBoolean, input_kwargs={"Mesh 1": set_material, "Mesh 2": set_position_4})
+    difference = nw.new_node(
+        Nodes.MeshBoolean,
+        input_kwargs={"Mesh 1": set_material, "Mesh 2": set_position_4},
+    )
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_1, difference.outputs["Mesh"]]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [set_material_1, difference.outputs["Mesh"]]},
     )
 
     set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth, input_kwargs={"Geometry": join_geometry, "Shade Smooth": False}
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": join_geometry, "Shade Smooth": False},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_shade_smooth}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_shade_smooth},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_window_shutter", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_window_shutter", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_window_shutter(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -828,27 +1137,41 @@ def nodegroup_window_shutter(nw: NodeWrangler):
 
     quadrilateral = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
-        input_kwargs={"Width": group_input.outputs["Width"], "Height": group_input.outputs["Height"]},
+        input_kwargs={
+            "Width": group_input.outputs["Width"],
+            "Height": group_input.outputs["Height"],
+        },
     )
 
-    sqrt = nw.new_node(Nodes.Math, input_kwargs={0: 2.0000}, attrs={"operation": "SQRT"})
+    sqrt = nw.new_node(
+        Nodes.Math, input_kwargs={0: 2.0000}, attrs={"operation": "SQRT"}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["FrameWidth"], 1: sqrt}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["FrameWidth"], 1: sqrt},
+        attrs={"operation": "MULTIPLY"},
     )
 
     quadrilateral_1 = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
-        input_kwargs={"Width": multiply, "Height": group_input.outputs["FrameThickness"]},
+        input_kwargs={
+            "Width": multiply,
+            "Height": group_input.outputs["FrameThickness"],
+        },
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": quadrilateral, "Profile Curve": quadrilateral_1}
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": quadrilateral, "Profile Curve": quadrilateral_1},
     )
 
     subtract = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Width"], 1: group_input.outputs["FrameWidth"]},
+        input_kwargs={
+            0: group_input.outputs["Width"],
+            1: group_input.outputs["FrameWidth"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -864,12 +1187,16 @@ def nodegroup_window_shutter(nw: NodeWrangler):
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz})
 
     geometry_to_instance = nw.new_node(
-        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": cube.outputs["Mesh"]}
+        "GeometryNodeGeometryToInstance",
+        input_kwargs={"Geometry": cube.outputs["Mesh"]},
     )
 
     subtract_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: group_input.outputs["Height"], 1: group_input.outputs["FrameWidth"]},
+        input_kwargs={
+            0: group_input.outputs["Height"],
+            1: group_input.outputs["FrameWidth"],
+        },
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -879,10 +1206,15 @@ def nodegroup_window_shutter(nw: NodeWrangler):
         attrs={"operation": "DIVIDE"},
     )
 
-    floor = nw.new_node(Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "FLOOR"})
+    floor = nw.new_node(
+        Nodes.Math, input_kwargs={0: divide}, attrs={"operation": "FLOOR"}
+    )
 
     shutter_number = nw.new_node(
-        Nodes.Math, input_kwargs={0: floor, 1: 1.0000}, label="ShutterNumber", attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: floor, 1: 1.0000},
+        label="ShutterNumber",
+        attrs={"operation": "SUBTRACT"},
     )
 
     duplicate_elements = nw.new_node(
@@ -892,40 +1224,65 @@ def nodegroup_window_shutter(nw: NodeWrangler):
     )
 
     shutter_true_interval = nw.new_node(
-        Nodes.Math, input_kwargs={0: subtract_1, 1: floor}, label="ShutterTrueInterval", attrs={"operation": "DIVIDE"}
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: floor},
+        label="ShutterTrueInterval",
+        attrs={"operation": "DIVIDE"},
     )
 
     multiply_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: duplicate_elements.outputs["Duplicate Index"], 1: shutter_true_interval},
+        input_kwargs={
+            0: duplicate_elements.outputs["Duplicate Index"],
+            1: shutter_true_interval,
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
-    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: -0.5000}, attrs={"operation": "MULTIPLY"})
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
+    )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: shutter_true_interval})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: multiply_2, 1: shutter_true_interval}
+    )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: add})
 
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": add_1})
 
     set_position = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": duplicate_elements.outputs["Geometry"], "Offset": combine_xyz_1}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": duplicate_elements.outputs["Geometry"],
+            "Offset": combine_xyz_1,
+        },
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShutterRotation"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShutterRotation"]}
+    )
 
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": reroute})
 
     rotate_instances = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": set_position, "Rotation": combine_xyz_5}
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": set_position, "Rotation": combine_xyz_5},
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={0: shutter_true_interval, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: shutter_true_interval, 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    subtract_2 = nw.new_node(Nodes.Math, input_kwargs={0: subtract_1, 1: multiply_3}, attrs={"operation": "SUBTRACT"})
+    subtract_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract_1, 1: multiply_3},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     combine_xyz_2 = nw.new_node(
         Nodes.CombineXYZ,
@@ -939,47 +1296,74 @@ def nodegroup_window_shutter(nw: NodeWrangler):
     cube_1 = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_2})
 
     multiply_4 = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["ShutterWidth"]}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["ShutterWidth"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4})
 
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz_3})
 
-    geometry_to_instance_1 = nw.new_node("GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line})
+    geometry_to_instance_1 = nw.new_node(
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": curve_line}
+    )
 
     combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": reroute})
 
     rotate_instances_1 = nw.new_node(
-        Nodes.RotateInstances, input_kwargs={"Instances": geometry_to_instance_1, "Rotation": combine_xyz_4}
+        Nodes.RotateInstances,
+        input_kwargs={"Instances": geometry_to_instance_1, "Rotation": combine_xyz_4},
     )
 
-    realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances_1})
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": rotate_instances_1}
+    )
 
-    sample_curve = nw.new_node(Nodes.SampleCurve, input_kwargs={"Curves": realize_instances, "Factor": 1.0000})
+    sample_curve = nw.new_node(
+        Nodes.SampleCurve, input_kwargs={"Curves": realize_instances, "Factor": 1.0000}
+    )
 
     set_position_1 = nw.new_node(
-        Nodes.SetPosition, input_kwargs={"Geometry": cube_1.outputs["Mesh"], "Offset": sample_curve.outputs["Position"]}
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": cube_1.outputs["Mesh"],
+            "Offset": sample_curve.outputs["Position"],
+        },
     )
 
     join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh, rotate_instances, set_position_1]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [curve_to_mesh, rotate_instances, set_position_1]},
     )
 
     set_material = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": join_geometry_2, "Material": group_input.outputs["FrameMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": join_geometry_2,
+            "Material": group_input.outputs["FrameMaterial"],
+        },
     )
 
-    set_shade_smooth = nw.new_node(Nodes.SetShadeSmooth, input_kwargs={"Geometry": set_material, "Shade Smooth": False})
+    set_shade_smooth = nw.new_node(
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": set_material, "Shade Smooth": False},
+    )
 
-    realize_instances_1 = nw.new_node(Nodes.RealizeInstances, input_kwargs={"Geometry": set_shade_smooth})
+    realize_instances_1 = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": set_shade_smooth}
+    )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": realize_instances_1}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": realize_instances_1},
+        attrs={"is_active_output": True},
     )
 
 
-@node_utils.to_nodegroup("nodegroup_window_panel", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_window_panel", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_window_panel(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
@@ -1003,68 +1387,117 @@ def nodegroup_window_panel(nw: NodeWrangler):
 
     quadrilateral = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
-        input_kwargs={"Width": group_input.outputs["Width"], "Height": group_input.outputs["Height"]},
+        input_kwargs={
+            "Width": group_input.outputs["Width"],
+            "Height": group_input.outputs["Height"],
+        },
     )
 
-    sqrt = nw.new_node(Nodes.Math, input_kwargs={0: 2.0000}, attrs={"operation": "SQRT"})
+    sqrt = nw.new_node(
+        Nodes.Math, input_kwargs={0: 2.0000}, attrs={"operation": "SQRT"}
+    )
 
     multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["FrameWidth"], 1: sqrt}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["FrameWidth"], 1: sqrt},
+        attrs={"operation": "MULTIPLY"},
     )
 
     quadrilateral_1 = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
-        input_kwargs={"Width": multiply, "Height": group_input.outputs["FrameThickness"]},
+        input_kwargs={
+            "Width": multiply,
+            "Height": group_input.outputs["FrameThickness"],
+        },
     )
 
     curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": quadrilateral, "Profile Curve": quadrilateral_1}
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": quadrilateral, "Profile Curve": quadrilateral_1},
     )
 
-    add = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["PanelHAmount"], 1: -1.0000})
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["PanelHAmount"], 1: -1.0000}
+    )
 
     lineseq = nw.new_node(
         nodegroup_line_seq().name,
-        input_kwargs={"Width": group_input.outputs["Width"], "Height": group_input.outputs["Height"], "Amount": add},
+        input_kwargs={
+            "Width": group_input.outputs["Width"],
+            "Height": group_input.outputs["Height"],
+            "Amount": add,
+        },
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["PanelWidth"]})
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["PanelWidth"]}
+    )
 
     subtract = nw.new_node(
-        Nodes.Math, input_kwargs={0: group_input.outputs["PanelThickness"], 1: 0.0010}, attrs={"operation": "SUBTRACT"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["PanelThickness"], 1: 0.0010},
+        attrs={"operation": "SUBTRACT"},
     )
 
     quadrilateral_2 = nw.new_node(
-        "GeometryNodeCurvePrimitiveQuadrilateral", input_kwargs={"Width": reroute, "Height": subtract}
+        "GeometryNodeCurvePrimitiveQuadrilateral",
+        input_kwargs={"Width": reroute, "Height": subtract},
     )
 
-    curve_to_mesh_1 = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": lineseq, "Profile Curve": quadrilateral_2})
+    curve_to_mesh_1 = nw.new_node(
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": lineseq, "Profile Curve": quadrilateral_2},
+    )
 
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: group_input.outputs["PanelVAmount"], 1: -1.0000})
+    add_1 = nw.new_node(
+        Nodes.Math, input_kwargs={0: group_input.outputs["PanelVAmount"], 1: -1.0000}
+    )
 
     lineseq_1 = nw.new_node(
         nodegroup_line_seq().name,
-        input_kwargs={"Width": group_input.outputs["Height"], "Height": group_input.outputs["Width"], "Amount": add_1},
+        input_kwargs={
+            "Width": group_input.outputs["Height"],
+            "Height": group_input.outputs["Width"],
+            "Amount": add_1,
+        },
     )
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": lineseq_1, "Rotation": (0.0000, 0.0000, 1.5708)})
+    transform = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": lineseq_1, "Rotation": (0.0000, 0.0000, 1.5708)},
+    )
 
-    subtract_1 = nw.new_node(Nodes.Math, input_kwargs={0: subtract, 1: 0.0010}, attrs={"operation": "SUBTRACT"})
+    subtract_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: subtract, 1: 0.0010},
+        attrs={"operation": "SUBTRACT"},
+    )
 
     quadrilateral_3 = nw.new_node(
-        "GeometryNodeCurvePrimitiveQuadrilateral", input_kwargs={"Width": reroute, "Height": subtract_1}
+        "GeometryNodeCurvePrimitiveQuadrilateral",
+        input_kwargs={"Width": reroute, "Height": subtract_1},
     )
 
     curve_to_mesh_2 = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": transform, "Profile Curve": quadrilateral_3}
+        Nodes.CurveToMesh,
+        input_kwargs={"Curve": transform, "Profile Curve": quadrilateral_3},
     )
 
-    join_geometry_3 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh_1, curve_to_mesh_2]})
+    join_geometry_3 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [curve_to_mesh_1, curve_to_mesh_2]},
+    )
 
-    join_geometry_2 = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh, join_geometry_3]})
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [curve_to_mesh, join_geometry_3]}
+    )
 
     set_material_1 = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": join_geometry_2, "Material": group_input.outputs["FrameMaterial"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": join_geometry_2,
+            "Material": group_input.outputs["FrameMaterial"],
+        },
     )
 
     combine_xyz = nw.new_node(
@@ -1080,26 +1513,44 @@ def nodegroup_window_panel(nw: NodeWrangler):
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cube.outputs["Mesh"], "Name": "uv_map", 3: cube.outputs["UV Map"]},
+        input_kwargs={
+            "Geometry": cube.outputs["Mesh"],
+            "Name": "uv_map",
+            3: cube.outputs["UV Map"],
+        },
         attrs={"domain": "CORNER", "data_type": "FLOAT_VECTOR"},
     )
 
     set_material = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": store_named_attribute, "Material": group_input.outputs["Material"]}
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": store_named_attribute,
+            "Material": group_input.outputs["Material"],
+        },
     )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
+    )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["WithGlass"], 14: set_material_1, 15: join_geometry}
+        Nodes.Switch,
+        input_kwargs={
+            1: group_input.outputs["WithGlass"],
+            14: set_material_1,
+            15: join_geometry,
+        },
     )
 
     set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth, input_kwargs={"Geometry": switch.outputs[6], "Shade Smooth": False}
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": switch.outputs[6], "Shade Smooth": False},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": set_shade_smooth}, attrs={"is_active_output": True}
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": set_shade_smooth},
+        attrs={"is_active_output": True},
     )
 
 
@@ -1116,27 +1567,39 @@ def shader_curtain_material(nw: NodeWrangler):
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
 def shader_curtain_frame_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.1840, 0.0000, 0.8000, 1.0000)})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.1840, 0.0000, 0.8000, 1.0000)},
+    )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
 def shader_frame_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.8000, 0.5033, 0.0057, 1.0000)})
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.8000, 0.5033, 0.0057, 1.0000)},
+    )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )
 
 
@@ -1144,9 +1607,15 @@ def shader_glass_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Base Color": (0.0094, 0.0055, 0.8000, 1.0000), "Roughness": 0.0000}
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": (0.0094, 0.0055, 0.8000, 1.0000),
+            "Roughness": 0.0000,
+        },
     )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
     )

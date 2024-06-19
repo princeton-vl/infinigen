@@ -33,12 +33,21 @@ class CrabLegFactory(PartFactory):
     def make_segments(self, params):
         x_cuts = [0, params["x_mid_first"], params["x_mid_second"], 1]
         y_cuts = [1, params["y_mid_first"], params["y_mid_second"], 0.01]
-        x_anchors = lambda u, v: (u, u + 1e-2, (u + v) / 2, v - 1e-2, v)
-        y_anchors = lambda u, v: (u * 0.9, u, (u + v) / 2 * params["y_expand"], v, v * 0.9)
+
+        def x_anchors(u, v):
+            return u, u + 0.01, (u + v) / 2, v - 0.01, v
+
+        def y_anchors(u, v):
+            return u * 0.9, u, (u + v) / 2 * params["y_expand"], v, v * 0.9
+
         segments = make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params)
         for obj in segments:
             z = read_co(obj).T[-1]
-            write_attr_data(obj, "ratio", 1 + np.where(z > 0, 0, uniform(0.8, 1.5) * z / params["y_length"]))
+            write_attr_data(
+                obj,
+                "ratio",
+                1 + np.where(z > 0, 0, uniform(0.8, 1.5) * z / params["y_length"]),
+            )
         return segments, x_cuts
 
     def sample_params(self):
@@ -75,11 +84,17 @@ class CrabLegFactory(PartFactory):
 
     @staticmethod
     def animate_bones(arma, bones, params):
-        bend_bones_lerp(arma, bones, params["leg_curl"], params["freq"], rot=params["leg_rot"])
+        bend_bones_lerp(
+            arma, bones, params["leg_curl"], params["freq"], rot=params["leg_rot"]
+        )
 
 
 class LobsterLegFactory(CrabLegFactory):
     def sample_params(self):
         y_length = uniform(0.01, 0.015)
         z_length = y_length * log_uniform(1, 1.2)
-        return {**super(LobsterLegFactory, self).sample_params(), "y_length": y_length, "z_length": z_length}
+        return {
+            **super(LobsterLegFactory, self).sample_params(),
+            "y_length": y_length,
+            "z_length": z_length,
+        }

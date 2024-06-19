@@ -9,16 +9,13 @@
 import argparse
 import logging
 import os
-import re
 import subprocess
-import sys
 import time
 import types
 from itertools import product
 from multiprocessing import Pool
 from pathlib import Path
 
-import gin
 import submitit
 from tqdm import tqdm
 
@@ -61,7 +58,9 @@ def pathlib_to_smb(p: Path):
 
 
 def remove(remote_path: Path):
-    run_command(f"recurse ON; cd {pathlib_to_smb(remote_path.parent)}; deltree {remote_path.name}")
+    run_command(
+        f"recurse ON; cd {pathlib_to_smb(remote_path.parent)}; deltree {remote_path.name}"
+    )
 
 
 def download(remote_path: Path, dest_folder=None, verbose=False):
@@ -128,7 +127,7 @@ def globdir(remote_path: Path, extras=False):
 
     try:
         data = run_command_stdout(f"ls {search_path}")
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         return []
 
     yield from yield_dirfiles(data, extras, parent=remote_path.parent)
@@ -157,7 +156,9 @@ def listdir(remote_path: Path, extras=False):
 def run_command_stdout(command: str):
     smb_str = os.environ[SMB_AUTH_VARNAME]
     time.sleep(_SMB_RATELIMIT_DELAY)
-    return subprocess.check_output(f'smbclient {smb_str} -c "{command}"', text=True, shell=True)
+    return subprocess.check_output(
+        f'smbclient {smb_str} -c "{command}"', text=True, shell=True
+    )
 
 
 def run_command(command: str, check=True, verbose=False):
@@ -168,7 +169,11 @@ def run_command(command: str, check=True, verbose=False):
     with Path("/dev/null").open("w") as devnull:
         outstream = None if verbose else devnull
         return subprocess.run(
-            f'smbclient {smb_str} -c "{command}"', shell=True, stderr=outstream, stdout=outstream, check=check
+            f'smbclient {smb_str} -c "{command}"',
+            shell=True,
+            stderr=outstream,
+            stdout=outstream,
+            check=check,
         )
 
 

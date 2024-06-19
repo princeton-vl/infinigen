@@ -5,8 +5,6 @@
 # Authors: Lingjie Mei
 
 
-from collections.abc import Iterable
-
 import numpy as np
 from numpy.random import uniform
 
@@ -20,28 +18,44 @@ from infinigen.assets.utils.shortest_path import geo_shortest_path
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.surface import shaderfunc_to_material
-from infinigen.core.tagging import tag_nodegroup, tag_object
+from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
 def geo_leaf(nw: NodeWrangler, leaves):
     leaf_up_prob = uniform(0.0, 0.2)
-    geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-    normal = nw.new_node(Nodes.NamedAttribute, ["custom_normal"], attrs={"data_type": "FLOAT_VECTOR"})
-    tangent = nw.new_node(Nodes.NamedAttribute, ["tangent"], attrs={"data_type": "FLOAT_VECTOR"})
+    geometry = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+    )
+    normal = nw.new_node(
+        Nodes.NamedAttribute, ["custom_normal"], attrs={"data_type": "FLOAT_VECTOR"}
+    )
+    tangent = nw.new_node(
+        Nodes.NamedAttribute, ["tangent"], attrs={"data_type": "FLOAT_VECTOR"}
+    )
     cotangent = nw.vector_math("CROSS_PRODUCT", tangent, normal)
     switch = nw.compare("LESS_THAN", nw.separate(cotangent)[-1], 0)
-    cotangent = nw.scale(nw.switch(nw.bernoulli(leaf_up_prob), -1, 1), nw.scale(nw.switch(switch, 1, -1), cotangent))
+    cotangent = nw.scale(
+        nw.switch(nw.bernoulli(leaf_up_prob), -1, 1),
+        nw.scale(nw.switch(switch, 1, -1), cotangent),
+    )
 
     perturb = np.pi / 6
     points, _, rotation = nw.new_node(
-        Nodes.DistributePointsOnFaces, input_kwargs={"Mesh": geometry, "Density": uniform(500, 1000)}
+        Nodes.DistributePointsOnFaces,
+        input_kwargs={"Mesh": geometry, "Density": uniform(500, 1000)},
     ).outputs[:3]
-    rotation = nw.new_node(Nodes.AlignEulerToVector, [rotation, 1.0, normal], attrs={"axis": "Z"})
+    rotation = nw.new_node(
+        Nodes.AlignEulerToVector, [rotation, 1.0, normal], attrs={"axis": "Z"}
+    )
     # Leaves have primary axes Y
-    rotation = nw.new_node(Nodes.AlignEulerToVector, [rotation, 1.0, cotangent], attrs={"axis": "Y", "pivot_axis": "Z"})
+    rotation = nw.new_node(
+        Nodes.AlignEulerToVector,
+        [rotation, 1.0, cotangent],
+        attrs={"axis": "Y", "pivot_axis": "Z"},
+    )
     rotation = nw.add(rotation, nw.uniform([-perturb] * 3, [perturb] * 3))
 
     leaves = nw.new_node(Nodes.CollectionInfo, [leaves, True, True])
@@ -80,24 +94,40 @@ class Ivy:
 
     def apply(self, obj, selection=None):
         scatter_obj = butil.spawn_vert("scatter:" + "ivy")
-        surface.add_geomod(scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection, 0.05])
-
-        end_index = lambda nw: nw.compare(
-            "EQUAL", nw.new_node(Nodes.Index), np.random.randint(len(scatter_obj.data.vertices))
+        surface.add_geomod(
+            scatter_obj,
+            geo_base_selection,
+            apply=True,
+            input_args=[obj, selection, 0.05],
         )
-        weight = lambda nw: nw.scalar_multiply(
-            nw.uniform(0.8, 1),
-            nw.scalar_sub(
-                2,
-                nw.math(
-                    "ABSOLUTE",
-                    nw.dot(
-                        nw.vector_math("NORMALIZE", nw.sub(*nw.new_node(Nodes.InputEdgeVertices).outputs[2:])),
-                        (0, 0, 1),
+
+        def end_index(nw):
+            return nw.compare(
+                "EQUAL",
+                nw.new_node(Nodes.Index),
+                np.random.randint(len(scatter_obj.data.vertices)),
+            )
+
+        def weight(nw):
+            return nw.scalar_multiply(
+                nw.uniform(0.8, 1),
+                nw.scalar_sub(
+                    2,
+                    nw.math(
+                        "ABSOLUTE",
+                        nw.dot(
+                            nw.vector_math(
+                                "NORMALIZE",
+                                nw.sub(
+                                    *nw.new_node(Nodes.InputEdgeVertices).outputs[2:]
+                                ),
+                            ),
+                            (0, 0, 1),
+                        ),
                     ),
                 ),
-            ),
-        )
+            )
+
         surface.add_geomod(
             scatter_obj,
             geo_shortest_path,
@@ -117,23 +147,35 @@ def apply(obj, selection=None):
     col = make_asset_collection(factory, 5)
 
     scatter_obj = butil.spawn_vert("scatter:" + "ivy")
-    surface.add_geomod(scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection, 0.05])
-
-    end_index = lambda nw: nw.compare(
-        "EQUAL", nw.new_node(Nodes.Index), np.random.randint(len(scatter_obj.data.vertices))
+    surface.add_geomod(
+        scatter_obj, geo_base_selection, apply=True, input_args=[obj, selection, 0.05]
     )
-    weight = lambda nw: nw.scalar_multiply(
-        nw.uniform(0.8, 1),
-        nw.scalar_sub(
-            2,
-            nw.math(
-                "ABSOLUTE",
-                nw.dot(
-                    nw.vector_math("NORMALIZE", nw.sub(*nw.new_node(Nodes.InputEdgeVertices).outputs[2:])), (0, 0, 1)
+
+    def end_index(nw):
+        return nw.compare(
+            "EQUAL",
+            nw.new_node(Nodes.Index),
+            np.random.randint(len(scatter_obj.data.vertices)),
+        )
+
+    def weight(nw):
+        return nw.scalar_multiply(
+            nw.uniform(0.8, 1),
+            nw.scalar_sub(
+                2,
+                nw.math(
+                    "ABSOLUTE",
+                    nw.dot(
+                        nw.vector_math(
+                            "NORMALIZE",
+                            nw.sub(*nw.new_node(Nodes.InputEdgeVertices).outputs[2:]),
+                        ),
+                        (0, 0, 1),
+                    ),
                 ),
             ),
-        ),
-    )
+        )
+
     surface.add_geomod(
         scatter_obj,
         geo_shortest_path,

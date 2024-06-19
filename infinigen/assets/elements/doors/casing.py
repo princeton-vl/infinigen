@@ -34,7 +34,11 @@ class DoorCasingFactory(AssetFactory):
         butil.apply_transform(obj, True)
         w = constants.DOOR_WIDTH
         s = constants.DOOR_SIZE
-        obj.scale = w / 2 + self.margin, constants.WALL_THICKNESS / 2 + self.extrude, s / 2 + self.margin / 2
+        obj.scale = (
+            w / 2 + self.margin,
+            constants.WALL_THICKNESS / 2 + self.extrude,
+            s / 2 + self.margin / 2,
+        )
         butil.apply_transform(obj)
         cutter = new_cube()
         cutter.location = 0, 0, 1 - 1e-3

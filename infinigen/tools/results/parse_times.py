@@ -10,20 +10,40 @@ import os
 import re
 import subprocess
 from collections import defaultdict
-from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
 
-REGEX_PATTERN = f"(\[.*\]) *([^ ]+) -> ([^ ]+) \| ([0-9\.]+)h:([0-9\.]+)m:([0-9\.]+)s"
+REGEX_PATTERN = "(\[.*\]) *([^ ]+) -> ([^ ]+) \| ([0-9\.]+)h:([0-9\.]+)m:([0-9\.]+)s"
 
 if __name__ == "__main__":
-    *_, pvl_users = subprocess.check_output("/usr/bin/getent group pvl".split()).decode().rstrip("\n").split(":")
+    *_, pvl_users = (
+        subprocess.check_output("/usr/bin/getent group pvl".split())
+        .decode()
+        .rstrip("\n")
+        .split(":")
+    )
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--stage", required=True, choices=["coarse", "fine", "fine_terrain"], type=str)
-    parser.add_argument("-o", "--output_folder", type=Path, required=True, help="Output directory of experiments.")
     parser.add_argument(
-        "--user", type=str, default=os.environ["USER"], choices=pvl_users.split(","), help="User who ran the jobs."
+        "-s",
+        "--stage",
+        required=True,
+        choices=["coarse", "fine", "fine_terrain"],
+        type=str,
+    )
+    parser.add_argument(
+        "-o",
+        "--output_folder",
+        type=Path,
+        required=True,
+        help="Output directory of experiments.",
+    )
+    parser.add_argument(
+        "--user",
+        type=str,
+        default=os.environ["USER"],
+        choices=pvl_users.split(","),
+        help="User who ran the jobs.",
     )
     parser.add_argument(
         "-d",
@@ -34,13 +54,26 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    date_since = (datetime.datetime.now() - datetime.timedelta(days=args.days_since)).strftime("%Y-%m-%d")
-    cmd = ["sacct", "--noheader", "--starttime", date_since, "-u", args.user, "-o", "jobname%50,ElapsedRaw%50,stat%50"]
+    date_since = (
+        datetime.datetime.now() - datetime.timedelta(days=args.days_since)
+    ).strftime("%Y-%m-%d")
+    cmd = [
+        "sacct",
+        "--noheader",
+        "--starttime",
+        date_since,
+        "-u",
+        args.user,
+        "-o",
+        "jobname%50,ElapsedRaw%50,stat%50",
+    ]
     out = subprocess.check_output(cmd).decode("utf-8")
     job_times = {}
     for l in out.splitlines():
         job_name, job_sec, status, *_ = l.strip().split()
-        regex = re.compile(f"{args.output_folder.stem}_({'[A-Z]'*8}_.+)").fullmatch(job_name)
+        regex = re.compile(f"{args.output_folder.stem}_({'[A-Z]'*8}_.+)").fullmatch(
+            job_name
+        )
         if regex is not None:
             (seed_stage,) = regex.groups()
             job_times[seed_stage] = (int(job_sec), (status == "COMPLETED"))

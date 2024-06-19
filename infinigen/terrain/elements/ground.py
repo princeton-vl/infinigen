@@ -8,7 +8,13 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.core.util.organization import ElementNames, ElementTag, Materials, Tags, Transparency
+from infinigen.core.util.organization import (
+    ElementNames,
+    ElementTag,
+    Materials,
+    Tags,
+    Transparency,
+)
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.utils import random_int
 

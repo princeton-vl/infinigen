@@ -64,12 +64,16 @@ class ToiletFactory(AssetFactory):
             self.hardware_on_side = uniform() < 0.5
             material_assignments = AssetList["ToiletFactory"]()
             self.surface = material_assignments["surface"].assign_material()
-            self.hardware_surface = material_assignments["hardware_surface"].assign_material()
+            self.hardware_surface = material_assignments[
+                "hardware_surface"
+            ].assign_material()
 
             is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
             is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
             self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
-            self.edge_wear = material_assignments["wear_tear"][1] if is_edge_wear else None
+            self.edge_wear = (
+                material_assignments["wear_tear"][1] if is_edge_wear else None
+            )
 
     @property
     def mid_offset(self):
@@ -84,7 +88,8 @@ class ToiletFactory(AssetFactory):
             -self.height,
             max(
                 self.tank_height,
-                -np.sin(self.cover_rotation) * (self.seat_size + self.size + self.thickness + self.thickness),
+                -np.sin(self.cover_rotation)
+                * (self.seat_size + self.size + self.thickness + self.thickness),
             ),
         )
 
@@ -96,7 +101,11 @@ class ToiletFactory(AssetFactory):
         butil.apply_transform(lower, True)
         bottom = deep_clone_obj(upper)
         bottom.scale = [self.stand_scale] * 3
-        bottom.location = 0, self.tube_scale * (1 - self.size_mid) * self.size / 2 * self.bottom_offset, -self.height
+        bottom.location = (
+            0,
+            self.tube_scale * (1 - self.size_mid) * self.size / 2 * self.bottom_offset,
+            -self.height,
+        )
         butil.apply_transform(bottom, True)
 
         obj = self.make_tube(lower, upper)
@@ -130,7 +139,9 @@ class ToiletFactory(AssetFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.bridge_edge_loops(
-                number_cuts=np.random.randint(12, 16), profile_shape_factor=uniform(0.1, 0.2), interpolation="SURFACE"
+                number_cuts=np.random.randint(12, 16),
+                profile_shape_factor=uniform(0.1, 0.2),
+                interpolation="SURFACE",
             )
         butil.modify_mesh(
             obj,
@@ -144,7 +155,9 @@ class ToiletFactory(AssetFactory):
         select_faces(obj, normal[:, -1] > 0.9)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.extrude_region_move(
-                TRANSFORM_OT_translate={"value": (0, 0, self.thickness + self.extrude_height)}
+                TRANSFORM_OT_translate={
+                    "value": (0, 0, self.thickness + self.extrude_height)
+                }
             )
         x, y, z = read_co(obj).T
         write_co(obj, np.stack([x, y, np.clip(z, None, self.extrude_height)], -1))
@@ -173,10 +186,18 @@ class ToiletFactory(AssetFactory):
             bpy.ops.mesh.loop_multi_select()
             bpy.ops.mesh.fill_grid()
         butil.modify_mesh(cover, "SOLIDIFY", thickness=self.extrude_height, offset=1)
-        cover.location = [0, -self.mid_offset - self.seat_size + self.extrude_height / 2, -self.extrude_height / 2]
+        cover.location = [
+            0,
+            -self.mid_offset - self.seat_size + self.extrude_height / 2,
+            -self.extrude_height / 2,
+        ]
         butil.apply_transform(cover, True)
         cover.rotation_euler[0] = self.cover_rotation
-        cover.location = [0, self.mid_offset + self.seat_size - self.extrude_height / 2, self.extrude_height * 1.5]
+        cover.location = [
+            0,
+            self.mid_offset + self.seat_size - self.extrude_height / 2,
+            self.extrude_height * 1.5,
+        ]
         butil.apply_transform(cover, True)
         butil.modify_mesh(cover, "BEVEL", segments=2)
         return seat, cover
@@ -191,10 +212,15 @@ class ToiletFactory(AssetFactory):
         select_vertices(seat, lambda x, y, z: y > self.mid_offset + self.seat_thickness)
         with butil.ViewportMode(seat, "EDIT"):
             bpy.ops.mesh.extrude_edges_move(
-                TRANSFORM_OT_translate={"value": (0, self.seat_size + self.thickness * 2, 0)}
+                TRANSFORM_OT_translate={
+                    "value": (0, self.seat_size + self.thickness * 2, 0)
+                }
             )
         x, y, z = read_co(seat).T
-        write_co(seat, np.stack([x, np.clip(y, None, self.mid_offset + self.seat_size), z], -1))
+        write_co(
+            seat,
+            np.stack([x, np.clip(y, None, self.mid_offset + self.seat_size), z], -1),
+        )
         return seat
 
     def make_stand(self, obj, bottom):
@@ -216,7 +242,8 @@ class ToiletFactory(AssetFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.bridge_edge_loops(
-                number_cuts=np.random.randint(12, 16), profile_shape_factor=uniform(0.0, 0.15)
+                number_cuts=np.random.randint(12, 16),
+                profile_shape_factor=uniform(0.0, 0.15),
             )
         return stand
 
@@ -235,20 +262,29 @@ class ToiletFactory(AssetFactory):
         with butil.ViewportMode(back, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.extrude_edges_move(
-                TRANSFORM_OT_translate={"value": (0, self.back_size + self.thickness * 2, 0)}
+                TRANSFORM_OT_translate={
+                    "value": (0, self.back_size + self.thickness * 2, 0)
+                }
             )
             bpy.ops.transform.resize(value=(self.back_scale, 1, 1))
             bpy.ops.mesh.edge_face_add()
         back.location[1] -= 0.01
         butil.apply_transform(back, True)
         x, y, z = read_co(back).T
-        write_co(back, np.stack([x, np.clip(y, None, self.mid_offset + self.back_size), z], -1))
+        write_co(
+            back,
+            np.stack([x, np.clip(y, None, self.mid_offset + self.back_size), z], -1),
+        )
         return back
 
     def make_tank(self):
         tank = new_cube()
         tank.scale = self.tank_width / 2, self.tank_size / 2, self.tank_height / 2
-        tank.location = 0, self.mid_offset + self.back_size - self.tank_size / 2, self.tank_height / 2
+        tank.location = (
+            0,
+            self.mid_offset + self.back_size - self.tank_size / 2,
+            self.tank_height / 2,
+        )
         butil.apply_transform(tank, True)
         subsurf(tank, 2, True)
         butil.modify_mesh(tank, "BEVEL", segments=2)
@@ -258,16 +294,30 @@ class ToiletFactory(AssetFactory):
             self.tank_size / 2 + self.tank_cap_extrude,
             self.tank_cap_height / 2,
         )
-        cap.location = 0, self.mid_offset + self.back_size - self.tank_size / 2, self.tank_height
+        cap.location = (
+            0,
+            self.mid_offset + self.back_size - self.tank_size / 2,
+            self.tank_height,
+        )
         butil.apply_transform(cap, True)
-        butil.modify_mesh(cap, "BEVEL", width=uniform(0, self.extrude_height), segments=4)
+        butil.modify_mesh(
+            cap, "BEVEL", width=uniform(0, self.extrude_height), segments=4
+        )
         tank = join_objects([tank, cap])
         return tank
 
     def add_button(self):
         obj = new_cylinder()
-        obj.scale = self.hardware_radius, self.hardware_radius, self.tank_cap_height / 2 + 1e-3
-        obj.location = 0, self.mid_offset + self.back_size - self.tank_size / 2, self.tank_height
+        obj.scale = (
+            self.hardware_radius,
+            self.hardware_radius,
+            self.tank_cap_height / 2 + 1e-3,
+        )
+        obj.location = (
+            0,
+            self.mid_offset + self.back_size - self.tank_size / 2,
+            self.tank_height,
+        )
         butil.apply_transform(obj, True)
         return obj
 
@@ -277,7 +327,11 @@ class ToiletFactory(AssetFactory):
         obj.rotation_euler[0] = np.pi / 2
         butil.apply_transform(obj, True)
         lever = new_cylinder()
-        lever.scale = self.hardware_radius / 2, self.hardware_radius / 2, self.hardware_length
+        lever.scale = (
+            self.hardware_radius / 2,
+            self.hardware_radius / 2,
+            self.hardware_length,
+        )
         lever.rotation_euler[1] = np.pi / 2
         lever.location = [
             -self.hardware_radius * uniform(0, 0.5),
@@ -295,7 +349,11 @@ class ToiletFactory(AssetFactory):
         else:
             obj.location = [
                 -self.tank_width / 2,
-                self.mid_offset + self.back_size - self.tank_size + self.hardware_radius + uniform(0.01, 0.02),
+                self.mid_offset
+                + self.back_size
+                - self.tank_size
+                + self.hardware_radius
+                + uniform(0.01, 0.02),
                 self.tank_height - self.hardware_radius - uniform(0.02, 0.03),
             ]
             obj.rotation_euler[-1] = -np.pi / 2

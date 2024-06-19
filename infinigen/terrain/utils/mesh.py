@@ -17,7 +17,7 @@ from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import Attributes
 
 from .camera import getK
-from .ctype_util import ASDOUBLE, ASINT, load_cdll, register_func
+from .ctype_util import ASDOUBLE, ASINT, load_cdll
 from .kernelizer_util import ATTRTYPE_DIMS, ATTRTYPE_FIELDS, NPTYPEDIM_ATTR, Vars
 
 
@@ -31,11 +31,13 @@ def object_to_vertex_attributes(obj, specified=None, skip_internal=True):
     for attr in obj.data.attributes.keys():
         if skip_internal and butil.blender_internal_attr(attr):
             continue
-        if ((specified is None) or (specified is not None and attr in specified)) and obj.data.attributes[
-            attr
-        ].domain == "POINT":
+        if (
+            (specified is None) or (specified is not None and attr in specified)
+        ) and obj.data.attributes[attr].domain == "POINT":
             type_key = obj.data.attributes[attr].data_type
-            tmp = np.zeros(len(obj.data.vertices) * ATTRTYPE_DIMS[type_key], dtype=np.float32)
+            tmp = np.zeros(
+                len(obj.data.vertices) * ATTRTYPE_DIMS[type_key], dtype=np.float32
+            )
             obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
             vertex_attributes[attr] = tmp.reshape((len(obj.data.vertices), -1))
     return vertex_attributes
@@ -46,11 +48,13 @@ def object_to_face_attributes(obj, specified=None, skip_internal=True):
     for attr in obj.data.attributes.keys():
         if skip_internal and butil.blender_internal_attr(attr):
             continue
-        if ((specified is None) or (specified is not None and attr in specified)) and obj.data.attributes[
-            attr
-        ].domain == "FACE":
+        if (
+            (specified is None) or (specified is not None and attr in specified)
+        ) and obj.data.attributes[attr].domain == "FACE":
             type_key = obj.data.attributes[attr].data_type
-            tmp = np.zeros(len(obj.data.polygons) * ATTRTYPE_DIMS[type_key], dtype=np.float32)
+            tmp = np.zeros(
+                len(obj.data.polygons) * ATTRTYPE_DIMS[type_key], dtype=np.float32
+            )
             obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
             face_attributes[attr] = tmp.reshape((len(obj.data.polygons), -1))
     return face_attributes
@@ -65,7 +69,9 @@ def objectdata_from_VF(vertices, faces):
     loop_total = np.ones(len(faces), np.int32) * 3
     new_mesh.polygons.foreach_set("loop_total", loop_total)
     if len(loop_total) >= 1:
-        loop_start = np.concatenate((np.zeros(1, dtype=np.int32), np.cumsum(loop_total[:-1])))
+        loop_start = np.concatenate(
+            (np.zeros(1, dtype=np.int32), np.cumsum(loop_total[:-1]))
+        )
         new_mesh.polygons.foreach_set("loop_start", loop_start)
     new_mesh.polygons.foreach_set("vertices", faces.reshape(-1))
     new_mesh.update(calc_edges=True)
@@ -132,7 +138,10 @@ class Mesh:
             _trimesh = trimesh.Trimesh(verts, faces)
         elif vertices is not None:
             _trimesh = trimesh.Trimesh(
-                vertices=vertices, faces=faces.astype(np.int32), vertex_attributes=vertex_attributes, process=False
+                vertices=vertices,
+                faces=faces.astype(np.int32),
+                vertex_attributes=vertex_attributes,
+                process=False,
             )
         elif mesh is not None:
             _trimesh = mesh
@@ -153,7 +162,9 @@ class Mesh:
             for key in kwargs:
                 setattr(self, key, kwargs[key])
         else:
-            _trimesh = trimesh.Trimesh(vertices=np.zeros((0, 3)), faces=np.zeros((0, 3), np.int32))
+            _trimesh = trimesh.Trimesh(
+                vertices=np.zeros((0, 3)), faces=np.zeros((0, 3), np.int32)
+            )
 
         self._trimesh = _trimesh
 
@@ -186,7 +197,9 @@ class Mesh:
 
     def save(self, path):
         for attr in self._trimesh.vertex_attributes:
-            self._trimesh.vertex_attributes[attr] = self._trimesh.vertex_attributes[attr].astype(np.float32)
+            self._trimesh.vertex_attributes[attr] = self._trimesh.vertex_attributes[
+                attr
+            ].astype(np.float32)
         self._trimesh.export(path)
 
     def make_unique(self):
@@ -195,7 +208,9 @@ class Mesh:
         self.vertices = self.vertices[sorted_indices]
         self.faces = np.argsort(sorted_indices)[self.faces]
         for attr_name in self.vertex_attributes:
-            self.vertex_attributes[attr_name] = self.vertex_attributes[attr_name][sorted_indices]
+            self.vertex_attributes[attr_name] = self.vertex_attributes[attr_name][
+                sorted_indices
+            ]
         self.faces = convert_face_array(self.faces)
         transposed_array = self.faces.T
         sorted_indices = np.lexsort(transposed_array)
@@ -206,11 +221,20 @@ class Mesh:
         new_object = object_from_VF(name, self.vertices, self.faces)
         for attr_name in self.vertex_attributes:
             attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
-            dim = self.vertex_attributes[attr_name].shape[1] if self.vertex_attributes[attr_name].ndim != 1 else 1
-            type_key = NPTYPEDIM_ATTR[(str(self.vertex_attributes[attr_name].dtype), dim)]
-            new_object.data.attributes.new(name=attr_name_ls, type=type_key, domain="POINT")
+            dim = (
+                self.vertex_attributes[attr_name].shape[1]
+                if self.vertex_attributes[attr_name].ndim != 1
+                else 1
+            )
+            type_key = NPTYPEDIM_ATTR[
+                (str(self.vertex_attributes[attr_name].dtype), dim)
+            ]
+            new_object.data.attributes.new(
+                name=attr_name_ls, type=type_key, domain="POINT"
+            )
             new_object.data.attributes[attr_name_ls].data.foreach_set(
-                ATTRTYPE_FIELDS[type_key], AC(self.vertex_attributes[attr_name].reshape(-1))
+                ATTRTYPE_FIELDS[type_key],
+                AC(self.vertex_attributes[attr_name].reshape(-1)),
             )
         if material is not None:
             new_object.data.materials.append(material)
@@ -226,19 +250,32 @@ class Mesh:
     def vertex_normals(self):
         if self.normal_mode == NormalMode.Mean:
             mean_normals = trimesh.geometry.weighted_vertex_normals(
-                len(self.vertices), self.faces, self.face_normals, np.ones((len(self.faces), 3)), use_loop=False
+                len(self.vertices),
+                self.faces,
+                self.face_normals,
+                np.ones((len(self.faces), 3)),
+                use_loop=False,
             )
             return mean_normals
         elif self.normal_mode == NormalMode.AngleWeighted:
             w_normals = trimesh.geometry.weighted_vertex_normals(
-                len(self.vertices), self.faces, self.face_normals, self._trimesh.face_angles, use_loop=False
+                len(self.vertices),
+                self.faces,
+                self.face_normals,
+                self._trimesh.face_angles,
+                use_loop=False,
             )
             return w_normals
 
     def facewise_mean(self, attr):
         dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         facewise_mean = dll.facewise_mean
-        facewise_mean.argtypes = [POINTER(c_double), POINTER(c_int32), c_int32, POINTER(c_double)]
+        facewise_mean.argtypes = [
+            POINTER(c_double),
+            POINTER(c_int32),
+            c_int32,
+            POINTER(c_double),
+        ]
         facewise_mean.restype = None
         result = AC(np.zeros(len(self.faces), dtype=np.float64))
         facewise_mean(
@@ -252,11 +289,19 @@ class Mesh:
     def facewise_intmax(self, attr):
         dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         facewise_intmax = dll.facewise_intmax
-        facewise_intmax.argtypes = [POINTER(c_int32), POINTER(c_int32), c_int32, POINTER(c_int32)]
+        facewise_intmax.argtypes = [
+            POINTER(c_int32),
+            POINTER(c_int32),
+            c_int32,
+            POINTER(c_int32),
+        ]
         facewise_intmax.restype = None
         result = AC(np.zeros(len(self.faces), dtype=np.int32))
         facewise_intmax(
-            ASINT(AC(attr.astype(np.int32))), ASINT(AC(self.faces.astype(np.int32))), len(self.faces), ASINT(result)
+            ASINT(AC(attr.astype(np.int32))),
+            ASINT(AC(self.faces.astype(np.int32))),
+            len(self.faces),
+            ASINT(result),
         )
         return result
 
@@ -272,13 +317,21 @@ class Mesh:
 
     @property
     def face_normals(self):
-        dll = load_cdll(f"terrain/lib/cpu/meshing/utils.so")
+        dll = load_cdll("terrain/lib/cpu/meshing/utils.so")
         compute_face_normals = dll.compute_face_normals
-        compute_face_normals.argtypes = [POINTER(c_double), POINTER(c_int32), c_int32, POINTER(c_double)]
+        compute_face_normals.argtypes = [
+            POINTER(c_double),
+            POINTER(c_int32),
+            c_int32,
+            POINTER(c_double),
+        ]
         compute_face_normals.restype = None
         normals = AC(np.zeros((len(self.faces), 3), dtype=np.float64))
         compute_face_normals(
-            ASDOUBLE(AC(self.vertices)), ASINT(AC(self.faces.astype(np.int32))), len(self.faces), ASDOUBLE(normals)
+            ASDOUBLE(AC(self.vertices)),
+            ASINT(AC(self.faces.astype(np.int32))),
+            len(self.faces),
+            ASDOUBLE(normals),
         )
         return normals
 
@@ -293,11 +346,14 @@ class Mesh:
 
             for attr in mesh.vertex_attributes:
                 if mesh.vertex_attributes[attr].ndim == 1:
-                    mesh.vertex_attributes[attr] = mesh.vertex_attributes[attr].reshape((-1, 1))
+                    mesh.vertex_attributes[attr] = mesh.vertex_attributes[attr].reshape(
+                        (-1, 1)
+                    )
                 mesh_va = mesh.vertex_attributes[attr]
                 if attr not in vertex_attributes:
                     va = np.zeros(
-                        (lenv, mesh.vertex_attributes[attr].shape[1]), dtype=mesh.vertex_attributes[attr].dtype
+                        (lenv, mesh.vertex_attributes[attr].shape[1]),
+                        dtype=mesh.vertex_attributes[attr].dtype,
                     )
                 else:
                     va = vertex_attributes[attr]
@@ -307,15 +363,22 @@ class Mesh:
             for attr in vertex_attributes:
                 if len(vertex_attributes[attr]) != lenv:
                     fillup = np.zeros(
-                        (lenv - len(vertex_attributes[attr]), vertex_attributes[attr].shape[1]),
+                        (
+                            lenv - len(vertex_attributes[attr]),
+                            vertex_attributes[attr].shape[1],
+                        ),
                         dtype=vertex_attributes[attr].dtype,
                     )
-                    vertex_attributes[attr] = np.concatenate((vertex_attributes[attr], fillup))
+                    vertex_attributes[attr] = np.concatenate(
+                        (vertex_attributes[attr], fillup)
+                    )
         return Mesh(vertices=verts, faces=faces, vertex_attributes=vertex_attributes)
 
     def camera_annotation(self, cameras, fs, fe, relax=0.01):
         cam_poses = []
-        coords_trans_matrix = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        coords_trans_matrix = np.array(
+            [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+        )
         fc = bpy.context.scene.frame_current
         for f in range(fs, fe + 1):
             bpy.context.scene.frame_set(f)
@@ -326,7 +389,10 @@ class Mesh:
                 fov_rad = cam.data.angle
         bpy.context.scene.frame_set(fc)
 
-        H, W = bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x
+        H, W = (
+            bpy.context.scene.render.resolution_y,
+            bpy.context.scene.render.resolution_x,
+        )
         fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
         fov = (fov0, fov_rad)
         K = getK(fov, H, W)
@@ -338,7 +404,9 @@ class Mesh:
                 K,
                 np.matmul(
                     np.linalg.inv(cam_pose),
-                    np.concatenate((self.vertices.transpose(), np.ones((1, len(self.vertices)))), 0),
+                    np.concatenate(
+                        (self.vertices.transpose(), np.ones((1, len(self.vertices)))), 0
+                    ),
                 )[:3, :],
             )
             coords[:2, :] /= coords[2]
@@ -350,7 +418,9 @@ class Mesh:
                 & (coords[1] < (1 + relax) * H)
             )
 
-        self.vertex_attributes["invisible"] = (~self.vertex_attributes["invisible"]).astype(np.float32)
+        self.vertex_attributes["invisible"] = (
+            ~self.vertex_attributes["invisible"]
+        ).astype(np.float32)
 
 
 def move_modifier(target_obj, m):
@@ -376,12 +446,16 @@ def write_attributes(elements, mesh=None, meshes=[]):
         for element in elements:
             ret = element(mesh.vertices)
             returns.append(ret)
-        surface_element = np.stack([ret[Vars.SDF] for ret in returns], -1).argmin(axis=-1)
+        surface_element = np.stack([ret[Vars.SDF] for ret in returns], -1).argmin(
+            axis=-1
+        )
 
         attributes = {}
         for i in range(n_elements):
             if hasattr(elements[i], "tag"):
-                returns[i][Attributes.ElementTag] = np.zeros(N, dtype=np.int32) + elements[i].tag
+                returns[i][Attributes.ElementTag] = (
+                    np.zeros(N, dtype=np.int32) + elements[i].tag
+                )
             for output in returns[i]:
                 if output == Vars.SDF or output == Vars.Offset:
                     continue
@@ -408,5 +482,7 @@ def write_attributes(elements, mesh=None, meshes=[]):
                     continue
                 attributes[output] = returns[output]
             if hasattr(elements[i], "tag"):
-                attributes[Attributes.ElementTag] = np.zeros(N, dtype=np.int32) + elements[i].tag
+                attributes[Attributes.ElementTag] = (
+                    np.zeros(N, dtype=np.int32) + elements[i].tag
+                )
             meshes[i].vertex_attributes = attributes

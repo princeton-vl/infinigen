@@ -4,32 +4,46 @@
 # Authors: Yiming Zuo
 
 
-import bpy
-import mathutils
-from numpy.random import normal, randint, uniform
-
-from infinigen.assets.creatures.insects.parts.hair.principled_hair import nodegroup_principled_hair
-from infinigen.assets.creatures.insects.utils.geom_utils import nodegroup_shape_quadratic, nodegroup_surface_bump
-from infinigen.assets.creatures.insects.utils.shader_utils import shader_black_w_noise_shader
+from infinigen.assets.creatures.insects.parts.hair.principled_hair import (
+    nodegroup_principled_hair,
+)
+from infinigen.assets.creatures.insects.utils.geom_utils import (
+    nodegroup_shape_quadratic,
+    nodegroup_surface_bump,
+)
+from infinigen.assets.creatures.insects.utils.shader_utils import (
+    shader_black_w_noise_shader,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
-@node_utils.to_nodegroup("nodegroup_leg_control", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_leg_control", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_leg_control(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Openness", 1.0)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Openness", 1.0)]
+    )
 
-    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Openness"]})
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Openness"]}
+    )
 
-    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: 0.6, 4: 1.44})
+    map_range = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: 0.6, 4: 1.44}
+    )
 
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: -0.26, 4: 0.16})
+    map_range_1 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: -0.26, 4: 0.16}
+    )
 
-    map_range_2 = nw.new_node(Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: 1.68, 4: 1.88})
+    map_range_2 = nw.new_node(
+        Nodes.MapRange, input_kwargs={"Value": reroute_2, 3: 1.68, 4: 1.88}
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -41,7 +55,9 @@ def nodegroup_leg_control(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_dragonfly_leg", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_dragonfly_leg", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_dragonfly_leg(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
@@ -49,7 +65,13 @@ def nodegroup_dragonfly_leg(nw: NodeWrangler):
 
     shapequadraticclaw = nw.new_node(
         nodegroup_shape_quadratic(
-            radius_control_points=[(0.0, 0.0031), (0.2682, 0.1906), (0.6364, 0.3594), (0.8091, 0.5031), (1.0, 0.5375)]
+            radius_control_points=[
+                (0.0, 0.0031),
+                (0.2682, 0.1906),
+                (0.6364, 0.3594),
+                (0.8091, 0.5031),
+                (1.0, 0.5375),
+            ]
         ).name,
         input_kwargs={
             "Profile Curve": legcrosssection,
@@ -88,7 +110,8 @@ def nodegroup_dragonfly_leg(nw: NodeWrangler):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [shapequadraticclaw, transform_2, transform_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [shapequadraticclaw, transform_2, transform_3]},
     )
 
     group_input = nw.new_node(
@@ -133,10 +156,13 @@ def nodegroup_dragonfly_leg(nw: NodeWrangler):
     )
 
     surfacebump = nw.new_node(
-        nodegroup_surface_bump().name, input_kwargs={"Geometry": legpart_2, "Displacement": 0.03, "Scale": 5.0}
+        nodegroup_surface_bump().name,
+        input_kwargs={"Geometry": legpart_2, "Displacement": 0.03, "Scale": 5.0},
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": surfacebump})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": surfacebump}
+    )
 
 
 @node_utils.to_nodegroup("nodegroup_leg_part", singleton=False, type="GeometryNodeTree")
@@ -195,29 +221,46 @@ def nodegroup_leg_part(nw: NodeWrangler):
 
     capture_attribute_1 = nw.new_node(
         Nodes.CaptureAttribute,
-        input_kwargs={"Geometry": shapequadratictarsus.outputs["Mesh"], 2: spline_parameter_1.outputs["Factor"]},
+        input_kwargs={
+            "Geometry": shapequadratictarsus.outputs["Mesh"],
+            2: spline_parameter_1.outputs["Factor"],
+        },
     )
 
     curve_to_points_1 = nw.new_node(
         Nodes.CurveToPoints,
-        input_kwargs={"Curve": capture_attribute_1.outputs["Geometry"], "Count": group_input.outputs["Num Hairs"]},
+        input_kwargs={
+            "Curve": capture_attribute_1.outputs["Geometry"],
+            "Count": group_input.outputs["Num Hairs"],
+        },
     )
 
-    greater_than = nw.new_node(Nodes.Compare, input_kwargs={0: capture_attribute_1.outputs[2], 1: 0.9})
+    greater_than = nw.new_node(
+        Nodes.Compare, input_kwargs={0: capture_attribute_1.outputs[2], 1: 0.9}
+    )
 
     delete_geometry_1 = nw.new_node(
-        Nodes.DeleteGeometry, input_kwargs={"Geometry": curve_to_points_1.outputs["Points"], "Selection": greater_than}
+        Nodes.DeleteGeometry,
+        input_kwargs={
+            "Geometry": curve_to_points_1.outputs["Points"],
+            "Selection": greater_than,
+        },
     )
 
     leghair = nw.new_node(nodegroup_principled_hair().name)
 
     random_value_3 = nw.new_node(Nodes.RandomValue, input_kwargs={2: 0.88})
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": random_value_3.outputs[1]})
+    combine_xyz_1 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": random_value_3.outputs[1]}
+    )
 
     random_value_2 = nw.new_node(
         Nodes.RandomValue,
-        input_kwargs={2: group_input.outputs["Hair Scale Min"], 3: group_input.outputs["Hair Scale Max"]},
+        input_kwargs={
+            2: group_input.outputs["Hair Scale Min"],
+            3: group_input.outputs["Hair Scale Max"],
+        },
     )
 
     instance_on_points_1 = nw.new_node(
@@ -231,10 +274,14 @@ def nodegroup_leg_part(nw: NodeWrangler):
     )
 
     subtract = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: tarsus_end, 1: (0.0, 0.0, 0.05)}, attrs={"operation": "SUBTRACT"}
+        Nodes.VectorMath,
+        input_kwargs={0: tarsus_end, 1: (0.0, 0.0, 0.05)},
+        attrs={"operation": "SUBTRACT"},
     )
 
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": group_input.outputs["NextJoint Y rot"]})
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": group_input.outputs["NextJoint Y rot"]}
+    )
 
     transform_5 = nw.new_node(
         Nodes.Transform,
@@ -247,11 +294,13 @@ def nodegroup_leg_part(nw: NodeWrangler):
     )
 
     join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [shapequadratictarsus.outputs["Mesh"], transform_5]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [shapequadratictarsus.outputs["Mesh"], transform_5]},
     )
 
     join_geometry_4 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [instance_on_points_1, join_geometry_3]}
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [instance_on_points_1, join_geometry_3]},
     )
 
     set_material = nw.new_node(
@@ -262,14 +311,20 @@ def nodegroup_leg_part(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": set_material})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": set_material}
+    )
 
 
-@node_utils.to_nodegroup("nodegroup_leg_cross_section", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_leg_cross_section", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_leg_cross_section(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 8)])
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 8)]
+    )
 
     bezier_segment = nw.new_node(
         Nodes.CurveBezierSegment,
@@ -282,19 +337,35 @@ def nodegroup_leg_cross_section(nw: NodeWrangler):
 
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": bezier_segment})
 
-    transform = nw.new_node(Nodes.Transform, input_kwargs={"Geometry": reroute, "Scale": (1.0, -1.0, 1.0)})
+    transform = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": reroute, "Scale": (1.0, -1.0, 1.0)}
+    )
 
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, reroute]})
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [transform, reroute]}
+    )
 
-    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": join_geometry})
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh, input_kwargs={"Curve": join_geometry}
+    )
 
-    merge_by_distance = nw.new_node(Nodes.MergeByDistance, input_kwargs={"Geometry": curve_to_mesh})
+    merge_by_distance = nw.new_node(
+        Nodes.MergeByDistance, input_kwargs={"Geometry": curve_to_mesh}
+    )
 
-    mesh_to_curve = nw.new_node(Nodes.MeshToCurve, input_kwargs={"Mesh": merge_by_distance})
+    mesh_to_curve = nw.new_node(
+        Nodes.MeshToCurve, input_kwargs={"Mesh": merge_by_distance}
+    )
 
     transform_1 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": mesh_to_curve, "Rotation": (0.0, 0.0, 1.5708), "Scale": (0.6, 1.0, 0.6)},
+        input_kwargs={
+            "Geometry": mesh_to_curve,
+            "Rotation": (0.0, 0.0, 1.5708),
+            "Scale": (0.6, 1.0, 0.6),
+        },
     )
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": transform_1})
+    group_output = nw.new_node(
+        Nodes.GroupOutput, input_kwargs={"Geometry": transform_1}
+    )

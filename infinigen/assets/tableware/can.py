@@ -62,15 +62,28 @@ class CanFactory(AssetFactory):
 
     @staticmethod
     def geo_cap(nw: NodeWrangler):
-        geometry = nw.new_node(Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)])
-        selection = nw.compare(
-            "GREATER_THAN", nw.math("ABSOLUTE", nw.separate(nw.new_node(Nodes.InputNormal))[-1]), 1 - 1e-3
-        )
-        geometry, top = nw.new_node(Nodes.ExtrudeMesh, [geometry, selection, None, 0]).outputs[:2]
         geometry = nw.new_node(
-            Nodes.ScaleElements, input_kwargs={"Geometry": geometry, "Selection": top, "Scale": uniform(0.96, 0.98)}
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
         )
-        geometry = nw.new_node(Nodes.ExtrudeMesh, [geometry, top, None, -uniform(0.005, 0.01)]).outputs[0]
+        selection = nw.compare(
+            "GREATER_THAN",
+            nw.math("ABSOLUTE", nw.separate(nw.new_node(Nodes.InputNormal))[-1]),
+            1 - 1e-3,
+        )
+        geometry, top = nw.new_node(
+            Nodes.ExtrudeMesh, [geometry, selection, None, 0]
+        ).outputs[:2]
+        geometry = nw.new_node(
+            Nodes.ScaleElements,
+            input_kwargs={
+                "Geometry": geometry,
+                "Selection": top,
+                "Scale": uniform(0.96, 0.98),
+            },
+        )
+        geometry = nw.new_node(
+            Nodes.ExtrudeMesh, [geometry, top, None, -uniform(0.005, 0.01)]
+        ).outputs[0]
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     def make_coords(self):
@@ -79,7 +92,9 @@ class CanFactory(AssetFactory):
                 p = Point(0, 0).buffer(self.x_length, quad_segs=64)
             case _:
                 side = self.x_length * uniform(0.2, 0.8)
-                p = shapely.box(-side, -side, side, side).buffer(self.x_length - side, quad_segs=16)
+                p = shapely.box(-side, -side, side, side).buffer(
+                    self.x_length - side, quad_segs=16
+                )
         p = affinity.scale(p, yfact=1 / self.skewness)
         coords = p.boundary.segmentize(0.01).coords[:][:-1]
         return coords
@@ -91,8 +106,16 @@ class CanFactory(AssetFactory):
             geom = [f for f in bm.faces if len(f.verts) > 4]
             bmesh.ops.delete(bm, geom=geom, context="FACES_ONLY")
             bmesh.update_edit_mesh(obj.data)
-        lowest, highest = self.z_length * uniform(0, 0.1), self.z_length * uniform(0.9, 1.0)
-        write_co(obj, np.concatenate([np.array([[x, y, lowest], [x, y, highest]]) for x, y in coords]))
+        lowest, highest = (
+            self.z_length * uniform(0, 0.1),
+            self.z_length * uniform(0.9, 1.0),
+        )
+        write_co(
+            obj,
+            np.concatenate(
+                [np.array([[x, y, lowest], [x, y, highest]]) for x, y in coords]
+            ),
+        )
         obj.scale = 1 + 1e-3, 1 + 1e-3, 1
         butil.apply_transform(obj)
         wrap_four_sides(obj, self.wrap_surface, self.texture_shared)

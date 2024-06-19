@@ -3,7 +3,6 @@
 
 # Authors: Karhan Kayan
 
-import bpy
 import pytest
 
 pytest.main(["fluid/unit_tests.py", "-rP"])

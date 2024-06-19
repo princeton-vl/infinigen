@@ -24,7 +24,17 @@ class Materials:
     Atmosphere = "atmosphere"
     Clouds = "clouds"
     Beach = "beach"
-    all = [GroundCollection, MountainCollection, Eroded, LiquidCollection, Lava, Snow, Atmosphere, Clouds, Beach]
+    all = [
+        GroundCollection,
+        MountainCollection,
+        Eroded,
+        LiquidCollection,
+        Lava,
+        Snow,
+        Atmosphere,
+        Clouds,
+        Beach,
+    ]
 
 
 class LandTile:

@@ -12,16 +12,14 @@ from typing import Union
 import bpy
 import fcl
 import gin
-import mathutils
 import numpy as np
 import trimesh
 from mathutils import Matrix, Vector
 from shapely import LineString, MultiPolygon, Point, Polygon
 from sklearn.decomposition import PCA
-from trimesh import Scene, Trimesh
+from trimesh import Scene
 
 from infinigen.core import tagging
-from infinigen.core import tags as t
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
@@ -180,7 +178,12 @@ def ensure_correct_order(points):
     # Calculate signed area
     n = len(points)
     area = (
-        sum((points[i][0] * points[(i + 1) % n][1]) - (points[(i + 1) % n][0] * points[i][1]) for i in range(n)) / 2.0
+        sum(
+            (points[i][0] * points[(i + 1) % n][1])
+            - (points[(i + 1) % n][0] * points[i][1])
+            for i in range(n)
+        )
+        / 2.0
     )
     # Return the points in reverse order if area is negative
     return points[::-1] if area < 0 else points
@@ -233,7 +236,9 @@ def is_planar(obj, tolerance=1e-6):
 
     # Check if all vertices lie on the plane defined by the reference vertex and the global normal
     for vertex in obj.data.vertices:
-        distance = (global_vertex_coordinates(obj, vertex) - ref_vertex).dot(global_normal)
+        distance = (global_vertex_coordinates(obj, vertex) - ref_vertex).dot(
+            global_normal
+        )
         if not math.isclose(distance, 0, abs_tol=tolerance):
             return False
 
@@ -253,7 +258,9 @@ def planes_parallel(plane_obj_a, plane_obj_b, tolerance=1e-6):
 
     dot_product = global_normal_a.dot(global_normal_b)
 
-    return math.isclose(dot_product, 1, abs_tol=tolerance) or math.isclose(dot_product, -1, abs_tol=tolerance)
+    return math.isclose(dot_product, 1, abs_tol=tolerance) or math.isclose(
+        dot_product, -1, abs_tol=tolerance
+    )
 
 
 def distance_to_plane(point, plane_point, plane_normal):

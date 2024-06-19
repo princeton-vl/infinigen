@@ -8,7 +8,7 @@
 
 import logging
 from collections import defaultdict, deque
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 
 import bmesh
 import bpy
@@ -25,14 +25,11 @@ from infinigen.assets.utils.decorate import (
     read_co,
     read_edge_direction,
     read_edge_length,
-    read_edges,
-    remove_edges,
     remove_faces,
-    select_faces,
     write_attribute,
     write_co,
 )
-from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_cube, new_line
+from infinigen.assets.utils.object import join_objects, new_cube, new_line
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -40,7 +37,6 @@ from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.room.configs import (
     COMBINED_ROOM_TYPES,
     PANORAMIC_ROOM_TYPES,
-    TYPICAL_AREA_ROOM_TYPES,
     WINDOW_ROOM_TYPES,
 )
 from infinigen.core.constraints.example_solver.room.constants import (
@@ -54,7 +50,11 @@ from infinigen.core.constraints.example_solver.room.constants import (
     WINDOW_HEIGHT,
     WINDOW_SIZE,
 )
-from infinigen.core.constraints.example_solver.room.types import RoomGraph, RoomType, get_room_type
+from infinigen.core.constraints.example_solver.room.types import (
+    RoomGraph,
+    RoomType,
+    get_room_type,
+)
 from infinigen.core.constraints.example_solver.room.utils import (
     SIMPLIFY_THRESH,
     WELD_THRESH,
@@ -62,7 +62,11 @@ from infinigen.core.constraints.example_solver.room.utils import (
     canonicalize,
     polygon2obj,
 )
-from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
+from infinigen.core.constraints.example_solver.state_def import (
+    ObjectState,
+    RelationState,
+    State,
+)
 from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
@@ -96,11 +100,17 @@ class BlueprintSolidifier:
         return (
             None
             if self.graph.entrance is None
-            else {k for k, n in names.items() if n == self.graph.rooms[self.graph.entrance]}.pop()
+            else {
+                k
+                for k, n in names.items()
+                if n == self.graph.rooms[self.graph.entrance]
+            }.pop()
         )
 
     def get_staircase(self, names):
-        return {k for k, n in names.items() if get_room_type(n) == RoomType.Staircase}.pop()
+        return {
+            k for k, n in names.items() if get_room_type(n) == RoomType.Staircase
+        }.pop()
 
     @staticmethod
     def unroll(x):
@@ -122,14 +132,19 @@ class BlueprintSolidifier:
         exterior_edges = info["exterior_edges"]
 
         names = {k: self.graph.rooms[assignment.index(k)] for k in segments}
-        rooms = {k: self.make_room(p, exterior_edges.get(k, None)) for k, p in segments.items()}
+        rooms = {
+            k: self.make_room(p, exterior_edges.get(k, None))
+            for k, p in segments.items()
+        }
         for k, o in rooms.items():
             o.name = f"{names[k]}-{self.level}"
         # if segments[k].area > 2.5 * TYPICAL_AREA_ROOM_TYPES[get_room_type(names[k])] + 5:
         #     raise BadSeedError()
         #
 
-        open_cutters, door_cutters = self.make_interior_cutters(neighbours, shared_edges, segments, names)
+        open_cutters, door_cutters = self.make_interior_cutters(
+            neighbours, shared_edges, segments, names
+        )
         exterior_cutters = self.make_exterior_cutters(exterior_edges, names)
 
         for k, r in rooms.items():
@@ -140,7 +155,9 @@ class BlueprintSolidifier:
 
         butil.put_in_collection(rooms.values(), "placeholders:room_shells")
 
-        state = self.convert_solver_state(rooms, segments, shared_edges, open_cutters, door_cutters, exterior_cutters)
+        state = self.convert_solver_state(
+            rooms, segments, shared_edges, open_cutters, door_cutters, exterior_cutters
+        )
 
         def clone_as_meshed(o):
             new = butil.copy(o)
@@ -157,10 +174,17 @@ class BlueprintSolidifier:
                     butil.put_in_collection(c, cutter_col)
                     before = len(rooms[k_].data.polygons)
                     butil.modify_mesh(
-                        rooms[k_], "BOOLEAN", object=c, operation="DIFFERENCE", use_self=True, use_hole_tolerant=True
+                        rooms[k_],
+                        "BOOLEAN",
+                        object=c,
+                        operation="DIFFERENCE",
+                        use_self=True,
+                        use_hole_tolerant=True,
                     )
                     after = len(rooms[k_].data.polygons)
-                    logger.debug(f"Cutting {c.name} from {rooms[k_].name}, {before=} {after=}")
+                    logger.debug(
+                        f"Cutting {c.name} from {rooms[k_].name}, {before=} {after=}"
+                    )
 
         for r in rooms.values():
             butil.modify_mesh(r, "TRIANGULATE", min_vertices=3)
@@ -170,7 +194,11 @@ class BlueprintSolidifier:
                 bpy.ops.mesh.dissolve_limited(angle_limit=0.001)
             x, y, z = read_co(r).T
             z = np.where(np.abs(z - WALL_THICKNESS / 2) < 0.01, WALL_THICKNESS / 2, z)
-            z = np.where(np.abs(z - WALL_HEIGHT + WALL_THICKNESS / 2) < 0.01, WALL_HEIGHT - WALL_THICKNESS / 2, z)
+            z = np.where(
+                np.abs(z - WALL_HEIGHT + WALL_THICKNESS / 2) < 0.01,
+                WALL_HEIGHT - WALL_THICKNESS / 2,
+                z,
+            )
             write_co(r, np.stack([x, y, z], -1))
             butil.modify_mesh(r, "WELD", merge_threshold=WALL_THICKNESS / 10)
 
@@ -183,7 +211,12 @@ class BlueprintSolidifier:
                 for f in bm.faces:
                     for e in f.edges:
                         edge_faces[e.index] += 1
-            orthogonal = (z_edges < 0.1) | (z_edges > 0.9) | (edge_faces != 1) | (read_edge_length(r) < 0.5)
+            orthogonal = (
+                (z_edges < 0.1)
+                | (z_edges > 0.9)
+                | (edge_faces != 1)
+                | (read_edge_length(r) < 0.5)
+            )
             if not orthogonal.all():
                 raise BadSeedError("No orthogonal edges")
 
@@ -191,7 +224,15 @@ class BlueprintSolidifier:
 
         return state, rooms
 
-    def convert_solver_state(self, rooms, segments, shared_edges, open_cutters, door_cutters, exterior_cutters):
+    def convert_solver_state(
+        self,
+        rooms,
+        segments,
+        shared_edges,
+        open_cutters,
+        door_cutters,
+        exterior_cutters,
+    ):
         obj_states = {}
         for k, o in rooms.items():
             tags = {t.Semantics.Room, t.Semantics(o.name.split("_")[0])}
@@ -207,9 +248,13 @@ class BlueprintSolidifier:
                     ct = cl.ConnectorType.Door
                 else:
                     ct = cl.ConnectorType.Wall
-                relations.append(RelationState(cl.RoomNeighbour({ct}), rooms[other].name))
+                relations.append(
+                    RelationState(cl.RoomNeighbour({ct}), rooms[other].name)
+                )
 
-        cut_state = lambda x: RelationState(cl.CutFrom(), rooms[x].name)
+        def cut_state(x):
+            return RelationState(cl.CutFrom(), rooms[x].name)
+
         for cutters in [door_cutters, open_cutters, exterior_cutters]:
             for k, c in self.unroll(cutters):
                 tags = set({t.Semantics.Cutter, t.SpecificObject(c.name)})
@@ -224,7 +269,9 @@ class BlueprintSolidifier:
                     # include full possible swing extent of door in state to prevent objects blocking
                     c.scale.x *= (DOOR_WIDTH + WALL_THICKNESS) / DOOR_WIDTH
 
-                obj_states[c.name] = ObjectState(obj=c, tags=tags, relations=list(cut_state(k_) for k_ in k))
+                obj_states[c.name] = ObjectState(
+                    obj=c, tags=tags, relations=list(cut_state(k_) for k_ in k)
+                )
 
         return State(objs=obj_states)
 
@@ -236,12 +283,19 @@ class BlueprintSolidifier:
         if exterior_edges is not None:
             center = read_center(obj)
             exterior_centers = []
-            for ls in exterior_edges.geoms if exterior_edges.geom_type == "MultiLineString" else [exterior_edges]:
+            for ls in (
+                exterior_edges.geoms
+                if exterior_edges.geom_type == "MultiLineString"
+                else [exterior_edges]
+            ):
                 for u, v in zip(ls.coords[:-1], ls.coords[1:]):
                     exterior_centers.append(((u[0] + v[0]) / 2, (u[1] + v[1]) / 2))
             exterior = (
                 (
-                    np.abs(center[:, np.newaxis, :2] - np.array(exterior_centers)[np.newaxis]).sum(-1)
+                    np.abs(
+                        center[:, np.newaxis, :2]
+                        - np.array(exterior_centers)[np.newaxis]
+                    ).sum(-1)
                     < WALL_THICKNESS * 4
                 )
                 .any(-1)
@@ -249,8 +303,12 @@ class BlueprintSolidifier:
             )
         else:
             exterior = np.zeros(len(obj.data.polygons), dtype=int)
-        write_attr_data(obj, f"{PREFIX}{t.Subpart.Exterior.value}", exterior, "INT", "FACE")
-        write_attr_data(obj, f"{PREFIX}{t.Subpart.Interior.value}", 1 - exterior, "INT", "FACE")
+        write_attr_data(
+            obj, f"{PREFIX}{t.Subpart.Exterior.value}", exterior, "INT", "FACE"
+        )
+        write_attr_data(
+            obj, f"{PREFIX}{t.Subpart.Interior.value}", 1 - exterior, "INT", "FACE"
+        )
 
         assert len(obj.data.vertices) > 0
 
@@ -264,7 +322,9 @@ class BlueprintSolidifier:
             shell_vertex_group="visible_",
             use_quality_normals=True,
         )
-        write_attribute(obj, "visible_", f"{PREFIX}{t.Subpart.Visible.value}", "FACE", "INT")
+        write_attribute(
+            obj, "visible_", f"{PREFIX}{t.Subpart.Visible.value}", "FACE", "INT"
+        )
         obj.vertex_groups.remove(obj.vertex_groups["visible_"])
         tagging.tag_object(obj, t.Semantics.Room)
         return obj
@@ -272,7 +332,11 @@ class BlueprintSolidifier:
     def make_interior_cutters(self, neighbours, shared_edges, segments, names):
         name_groups = {}
         for k, n in names.items():
-            name_groups[k] = set(i for i, rt in enumerate(self.combined_room_types) if get_room_type(n) in rt)
+            name_groups[k] = set(
+                i
+                for i, rt in enumerate(self.combined_room_types)
+                if get_room_type(n) in rt
+            )
         dist2entrance = self.compute_dist2entrance(neighbours, names)
         centroids = {k: np.array(s.centroid.coords[0]) for k, s in segments.items()}
         open_cutters, door_cutters = defaultdict(dict), defaultdict(dict)
@@ -280,11 +344,18 @@ class BlueprintSolidifier:
             for l, se in ses.items():
                 if l not in neighbours[k] or k >= l:
                     continue
-                if len(name_groups[k].intersection(name_groups[l])) > 0 and self.enable_open:
+                if (
+                    len(name_groups[k].intersection(name_groups[l])) > 0
+                    and self.enable_open
+                ):
                     open_cutters[k][l] = open_cutters[l][k] = self.make_open_cutter(se)
                 else:
-                    direction = (centroids[k] - centroids[l]) * (1 if dist2entrance[k] > dist2entrance[l] else -1)
-                    door_cutters[k][l] = door_cutters[l][k] = self.make_door_cutter(se, direction)
+                    direction = (centroids[k] - centroids[l]) * (
+                        1 if dist2entrance[k] > dist2entrance[l] else -1
+                    )
+                    door_cutters[k][l] = door_cutters[l][k] = self.make_door_cutter(
+                        se, direction
+                    )
         return open_cutters, door_cutters
 
     def compute_dist2entrance(self, neighbours, names):
@@ -322,8 +393,13 @@ class BlueprintSolidifier:
             for ls in lss:
                 coords = LineString(ls).segmentize(MAX_WINDOW_LENGTH).coords[:]
                 for seg in zip(coords[:-1], coords[1:]):
-                    length = np.linalg.norm([seg[1][1] - seg[0][1], seg[1][0] - seg[0][0]])
-                    if length >= DOOR_WIDTH + WALL_THICKNESS and uniform() < WINDOW_ROOM_TYPES[get_room_type(names[k])]:
+                    length = np.linalg.norm(
+                        [seg[1][1] - seg[0][1], seg[1][0] - seg[0][0]]
+                    )
+                    if (
+                        length >= DOOR_WIDTH + WALL_THICKNESS
+                        and uniform() < WINDOW_ROOM_TYPES[get_room_type(names[k])]
+                    ):
                         cutter = self.make_window_cutter(seg, is_panoramic)
                         cutters[k].append(cutter)
         return cutters
@@ -335,7 +411,9 @@ class BlueprintSolidifier:
                 if get_room_type(name) == RoomType.Staircase:
                     with np.errstate(invalid="ignore"):
                         cutter = polygon2obj(buffer(staircase, -WALL_THICKNESS / 2))
-                    butil.modify_mesh(cutter, "SOLIDIFY", thickness=WALL_THICKNESS * 1.2, offset=0)
+                    butil.modify_mesh(
+                        cutter, "SOLIDIFY", thickness=WALL_THICKNESS * 1.2, offset=0
+                    )
                     self.tag(cutter)
                     cutter.name = "staircase_cutter"
                     cutters[k].append(cutter)
@@ -371,7 +449,11 @@ class BlueprintSolidifier:
         lam = uniform(d, 1 - d)
         cutter.scale = DOOR_WIDTH / 2, DOOR_WIDTH / 2, DOOR_SIZE / 2
         butil.apply_transform(cutter, True)
-        cutter.location = lam * x + (1 - lam) * x_, lam * y + (1 - lam) * y_, DOOR_SIZE / 2 + WALL_THICKNESS / 2 + _eps
+        cutter.location = (
+            lam * x + (1 - lam) * x_,
+            lam * y + (1 - lam) * y_,
+            DOOR_SIZE / 2 + WALL_THICKNESS / 2 + _eps,
+        )
         cutter.rotation_euler = 0, 0, np.arctan2(y_ - y, x_ - x)
         self.tag(cutter)
         tagging.tag_object(cutter, t.Semantics.Entrance)
@@ -403,7 +485,9 @@ class BlueprintSolidifier:
         return cutter
 
     def make_open_cutter(self, es):
-        es = remove_repeated_points(simplify(es, SIMPLIFY_THRESH).normalize(), WELD_THRESH)
+        es = remove_repeated_points(
+            simplify(es, SIMPLIFY_THRESH).normalize(), WELD_THRESH
+        )
         es = linemerge(es) if not isinstance(es, LineString) else es
         es = [es] if isinstance(es, LineString) else es.geoms
         lines = []
@@ -417,8 +501,12 @@ class BlueprintSolidifier:
             coords = coords[start : end + 1] if end < -1 else coords[start:]
             if len(coords) < 2:
                 continue
-            coords[0] = line_interpolate_point(LineString(coords[0:2]), WALL_THICKNESS / 2 + _eps).coords[0]
-            coords[-1] = line_interpolate_point(LineString(coords[-1:-3:-1]), WALL_THICKNESS / 2 + _eps).coords[0]
+            coords[0] = line_interpolate_point(
+                LineString(coords[0:2]), WALL_THICKNESS / 2 + _eps
+            ).coords[0]
+            coords[-1] = line_interpolate_point(
+                LineString(coords[-1:-3:-1]), WALL_THICKNESS / 2 + _eps
+            ).coords[0]
             line = new_line(len(coords) - 1)
             write_co(line, np.concatenate([coords, np.zeros((len(coords), 1))], -1))
             lines.append(line)
@@ -430,7 +518,9 @@ class BlueprintSolidifier:
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.extrude_edges_move(
-                TRANSFORM_OT_translate={"value": (0, 0, WALL_HEIGHT - WALL_THICKNESS - 2 * _eps)}
+                TRANSFORM_OT_translate={
+                    "value": (0, 0, WALL_HEIGHT - WALL_THICKNESS - 2 * _eps)
+                }
             )
             bpy.ops.mesh.select_mode(type="FACE")
             bpy.ops.mesh.select_all(action="SELECT")
@@ -438,7 +528,13 @@ class BlueprintSolidifier:
 
         cutter.location[-1] += WALL_THICKNESS / 2 + _eps
         butil.apply_transform(cutter, True)
-        butil.modify_mesh(cutter, "SOLIDIFY", thickness=WALL_THICKNESS * 3, offset=0, use_even_offset=True)
+        butil.modify_mesh(
+            cutter,
+            "SOLIDIFY",
+            thickness=WALL_THICKNESS * 3,
+            offset=0,
+            use_even_offset=True,
+        )
         self.tag(cutter)
         tagging.tag_object(cutter, t.Semantics.Open)
         cutter.name = t.Semantics.Open.value
@@ -450,8 +546,12 @@ class BlueprintSolidifier:
         ceiling = center[:, -1] > WALL_HEIGHT - WALL_THICKNESS / 2 - 0.1
         floor = center[:, -1] < WALL_THICKNESS / 2 + 0.1
         wall = ~(ceiling | floor)
-        write_attr_data(obj, f"{PREFIX}{t.Subpart.Ceiling.value}", ceiling, "INT", "FACE")
-        write_attr_data(obj, f"{PREFIX}{t.Subpart.SupportSurface.value}", floor, "INT", "FACE")
+        write_attr_data(
+            obj, f"{PREFIX}{t.Subpart.Ceiling.value}", ceiling, "INT", "FACE"
+        )
+        write_attr_data(
+            obj, f"{PREFIX}{t.Subpart.SupportSurface.value}", floor, "INT", "FACE"
+        )
         write_attr_data(obj, f"{PREFIX}{t.Subpart.Wall.value}", wall, "INT", "FACE")
         write_attr_data(obj, "segment_id", np.arange(len(center)), "INT", "FACE")
         write_attr_data(

@@ -30,7 +30,11 @@ class PotFactory(PanFactory):
             self.bar_x = 1 + uniform(-self.bar_radius, self.bar_radius) * 0.05
             self.bar_inner_radius = log_uniform(0.2, 0.4) * self.bar_radius
             scale = log_uniform(0.6, 1.5)
-            self.bar_scale = log_uniform(0.6, 1.0) * scale, 1 * scale, log_uniform(0.6, 1.2) * scale
+            self.bar_scale = (
+                log_uniform(0.6, 1.0) * scale,
+                1 * scale,
+                log_uniform(0.6, 1.2) * scale,
+            )
             self.bar_taper = log_uniform(0.3, 0.8)
             self.bar_y_rotation = uniform(-np.pi / 6, 0)
             self.bar_x_offset = self.bar_radius * uniform(-0.1, 0.1)
@@ -57,8 +61,21 @@ class PotFactory(PanFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         if self.has_bar:
-            radius_ = 1 + self.bar_x_offset + self.bar_radius + self.bar_inner_radius + self.thickness
-            obj = new_bbox(-radius_, radius_, -1 - self.thickness, 1 + self.thickness, 0, self.depth)
+            radius_ = (
+                1
+                + self.bar_x_offset
+                + self.bar_radius
+                + self.bar_inner_radius
+                + self.thickness
+            )
+            obj = new_bbox(
+                -radius_,
+                radius_,
+                -1 - self.thickness,
+                1 + self.thickness,
+                0,
+                self.depth,
+            )
         elif self.has_handle:
             obj = new_bbox(
                 -1 - self.thickness,
@@ -70,7 +87,12 @@ class PotFactory(PanFactory):
             )
         else:
             obj = new_bbox(
-                -1 - self.thickness, 1 + self.thickness, -1 - self.thickness, 1 + self.thickness, 0, self.depth
+                -1 - self.thickness,
+                1 + self.thickness,
+                -1 - self.thickness,
+                1 + self.thickness,
+                0,
+                self.depth,
             )
         obj.scale = (self.scale,) * 3
         butil.apply_transform(obj)
@@ -86,7 +108,13 @@ class PotFactory(PanFactory):
             )
             bar = bpy.context.active_object
             bar.scale = self.bar_scale
-            butil.modify_mesh(bar, "SIMPLE_DEFORM", deform_method="TAPER", angle=self.bar_taper, deform_axis="X")
+            butil.modify_mesh(
+                bar,
+                "SIMPLE_DEFORM",
+                deform_method="TAPER",
+                angle=self.bar_taper,
+                deform_axis="X",
+            )
             bar.rotation_euler = 0, self.bar_y_rotation, 0 if side == 1 else np.pi
             butil.apply_transform(bar)
 

@@ -2,15 +2,12 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-import colorsys
 
-import bpy
 from numpy.random import uniform
 
 from infinigen.assets.materials import common
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
-from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 
 
@@ -27,15 +24,24 @@ def shader_glass(nw: NodeWrangler, color=None, is_window=False, **kwargs):
 
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF)
 
-    shader = nw.new_node(Nodes.GlassBSDF, input_kwargs={"Roughness": 0.0200, "IOR": ior})
+    shader = nw.new_node(
+        Nodes.GlassBSDF, input_kwargs={"Roughness": 0.0200, "IOR": ior}
+    )
 
     if is_window:
         shader = nw.new_node(
-            Nodes.MixShader, input_kwargs={"Fac": light_path.outputs["Is Camera Ray"], 1: transparent_bsdf, 2: shader}
+            Nodes.MixShader,
+            input_kwargs={
+                "Fac": light_path.outputs["Is Camera Ray"],
+                1: transparent_bsdf,
+                2: shader,
+            },
         )
 
     material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": shader}, attrs={"is_active_output": True}
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": shader},
+        attrs={"is_active_output": True},
     )
 
 
