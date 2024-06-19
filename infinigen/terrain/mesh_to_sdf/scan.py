@@ -3,11 +3,11 @@
 # Original files authored by Marian Kleineberg: https://github.com/marian42/mesh_to_sdf/tree/master
 
 import numpy as np
-import pyrender
 from scipy.spatial.transform import Rotation
 from skimage import io
 
 from .pyrender_wrapper import render_normal_and_depth_buffers
+import pyrender  # isort: skip
 
 if hasattr(Rotation, "as_matrix"):  # scipy>=1.4.0
 

@@ -88,7 +88,7 @@ def duck_genome(mode):
         prefix="body_bird", tags=["body", "rigid"], var=U(0.3, 1)
     )
     body = genome.part(body_fac)
-    l = body_fac.params["length"][0]
+    body_length = body_fac.params["length"][0]
 
     tail = genome.part(parts.wings.BirdTail())
     genome.attach(
@@ -98,10 +98,10 @@ def duck_genome(mode):
     shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
     foot_fac = parts.foot.Foot(
         {
-            "length_rad1_rad2": np.array((l * 0.1, 0.025, 0.04))
+            "length_rad1_rad2": np.array((body_length * 0.1, 0.025, 0.04))
             * N(1, 0.1)
             * N(1, 0.1, 3),
-            "Toe Length Rad1 Rad2": np.array((l * N(0.4, 0.07), 0.03, 0.02))
+            "Toe Length Rad1 Rad2": np.array((body_length * N(0.4, 0.07), 0.03, 0.02))
             * N(1, 0.1)
             * N(1, 0.1, 3),
             "Toe Splay": 35 * N(1, 0.2),
@@ -118,7 +118,13 @@ def duck_genome(mode):
     )
 
     leg_fac = parts.leg.BirdLeg(
-        {"length_rad1_rad2": (l * 0.5 * N(1, 0.05), 0.09 * N(1, 0.1), 0.06 * N(1, 0.1))}
+        {
+            "length_rad1_rad2": (
+                body_length * 0.5 * N(1, 0.05),
+                0.09 * N(1, 0.1),
+                0.06 * N(1, 0.1),
+            )
+        }
     )
     leg_coord = (N(0.5, 0.05), N(0.7, 0.05), N(0.95, 0.05))
     for side in [-1, 1]:
@@ -137,7 +143,7 @@ def duck_genome(mode):
         )
 
     extension = U(0.7, 1) if mode == "flying" else U(0.01, 0.1)
-    wing_len = l * 0.5 * clip_gaussian(1.2, 0.7, 0.5, 2.5)
+    wing_len = body_length * 0.5 * clip_gaussian(1.2, 0.7, 0.5, 2.5)
     wing_fac = parts.wings.BirdWing(
         {
             "length_rad1_rad2": np.array((wing_len, 0.1 * N(1, 0.1), 0.02 * N(1, 0.2))),
@@ -197,7 +203,7 @@ def duck_genome(mode):
 def flying_bird_genome(mode):
     body_lrr = np.array((0.95, 0.13, 0.18)) * N(1.0, 0.05, size=(3,))
     body = genome.part(parts.body.BirdBody({"length_rad1_rad2": body_lrr}))
-    l = body_lrr[0]
+    body_length = body_lrr[0]
 
     tail = genome.part(parts.wings.FlyingBirdTail())
     genome.attach(
@@ -210,8 +216,9 @@ def flying_bird_genome(mode):
     shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
     foot_fac = parts.foot.Foot(
         {
-            "length_rad1_rad2": np.array((l * 0.2, 0.01, 0.02)) * N(1, 0.1, 3),
-            "Toe Length Rad1 Rad2": np.array((l * N(0.4, 0.02), 0.02, 0.01))
+            "length_rad1_rad2": np.array((body_length * 0.2, 0.01, 0.02))
+            * N(1, 0.1, 3),
+            "Toe Length Rad1 Rad2": np.array((body_length * N(0.4, 0.02), 0.02, 0.01))
             * N(1, 0.1)
             * N(1, 0.1, 3),
             "Toe Splay": 8 * N(1, 0.2),
@@ -230,7 +237,7 @@ def flying_bird_genome(mode):
     leg_fac = parts.leg.BirdLeg(
         {
             "length_rad1_rad2": (
-                l * 0.5 * N(1, 0.05),
+                body_length * 0.5 * N(1, 0.05),
                 0.04 * N(1, 0.1),
                 0.02 * N(1, 0.1),
             ),
@@ -255,7 +262,7 @@ def flying_bird_genome(mode):
         )
 
     extension = U(0.8, 1)
-    wing_len = l * clip_gaussian(1.0, 0.2, 0.6, 1.5) * 0.8
+    wing_len = body_length * clip_gaussian(1.0, 0.2, 0.6, 1.5) * 0.8
     wing_fac = parts.wings.FlyingBirdWing(
         {
             "length_rad1_rad2": np.array((wing_len, U(0.08, 0.15), 0.02 * N(1, 0.2))),

@@ -11,7 +11,8 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.fruits.general_fruit import FruitFactoryGeneralFruit
-from infinigen.assets.tableware import BowlFactory, PotFactory
+from infinigen.assets.tableware.bowl import BowlFactory
+from infinigen.assets.tableware.pot import PotFactory
 from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.misc import make_normalized_factory, subclasses
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection

@@ -12,17 +12,16 @@ from numpy.random import uniform
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
+from infinigen.core import surface
+from infinigen.core.util.blender import deep_clone_obj
 
-from ...core import surface
-from ...core.util.blender import deep_clone_obj
-from ..scatters import clothes
-from ..scatters.clothes import ClothesCover
-from ..utils.decorate import decimate, read_co, subsurf
-from ..utils.object import obj2trimesh
-from . import BedFrameFactory, MattressFactory, PillowFactory
+from infinigen.assets.scatters import clothes
+from infinigen.assets.utils.decorate import decimate, read_co, subsurf
+from infinigen.assets.utils.object import obj2trimesh
+from infinigen.assets.seating import bedframe, mattress, pillow
 
 
-class BedFactory(BedFrameFactory):
+class BedFactory(bedframe.BedFrameFactory):
     mattress_types = "weighted_choice", (1, "coiled"), (3, "wrapped")
     sheet_types = (
         "weighted_choice",
@@ -37,13 +36,10 @@ class BedFactory(BedFrameFactory):
         self.sheet_type = rg(self.sheet_types)
         self.sheet_folded = uniform() < 0.5
         self.has_cover = uniform() < 0.5
-        self.clothes_scatter = (
-            ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.2 else surface.NoApply
-        )
 
     @cached_property
     def mattress_factory(self):
-        factory = MattressFactory(self.factory_seed, self.coarse)
+        factory = mattress.MattressFactory(self.factory_seed, self.coarse)
         factory.type = rg(self.mattress_types)
         factory.width = self.width * uniform(0.88, 0.96)
         factory.size = self.size * uniform(0.88, 0.96)
@@ -92,14 +88,8 @@ class BedFactory(BedFrameFactory):
         return TowelFactory(self.factory_seed)
 
     @cached_property
-    def cloth_scatter(self):
-        return (
-            ClothesCover((0.3, 0.7, 0.3, 0.7)) if uniform() < 0.0 else surface.NoApply
-        )
-
-    @cached_property
     def pillow_factory(self):
-        return PillowFactory(self.factory_seed, self.coarse)
+        return pillow.PillowFactory(self.factory_seed, self.coarse)
 
     def create_asset(self, i, **params) -> bpy.types.Object:
         frame = super().create_asset(i=i, **params)

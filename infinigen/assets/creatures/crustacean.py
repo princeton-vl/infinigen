@@ -242,16 +242,18 @@ def crustacean_postprocessing(body_parts, extras, params):
     materials.append(shaderfunc_to_material(shader_eye))
     assign_material(body_parts + extras, materials)
 
-    for part in body_parts:
-        material_indices = read_material_index(part)
+    for part_obj in body_parts:
+        material_indices = read_material_index(part_obj)
         for i, tag_name in enumerate(tag_list):
-            if f"tag_{tag_name}" in part.data.attributes.keys():
-                part.data.attributes.active = part.data.attributes[f"tag_{tag_name}"]
-                with butil.SelectObjects(part):
+            if f"tag_{tag_name}" in part_obj.data.attributes.keys():
+                part_obj.data.attributes.active = part_obj.data.attributes[
+                    f"tag_{tag_name}"
+                ]
+                with butil.SelectObjects(part_obj):
                     bpy.ops.geometry.attribute_convert(domain="FACE")
-                has_tag = read_attr_data(part, f"tag_{tag_name}", "FACE")
+                has_tag = read_attr_data(part_obj, f"tag_{tag_name}", "FACE")
                 material_indices[np.nonzero(has_tag)[0]] = i
-        write_material_index(part, material_indices)
+        write_material_index(part_obj, material_indices)
     for extra in extras:
         material_indices = read_material_index(extra)
         material_indices.fill(tag_list.index("claw"))

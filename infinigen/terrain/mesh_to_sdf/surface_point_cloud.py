@@ -13,12 +13,12 @@ import logging
 import math
 
 import numpy as np
-import pyrender
 import trimesh
 from sklearn.neighbors import KDTree
 
 from .scan import Scan, get_camera_transform_looking_at_origin
 from .utils import check_voxels, get_raster_points, sample_uniform_points_in_unit_sphere
+import pyrender  # isort: skip
 
 logging.getLogger("trimesh").setLevel(9000)
 

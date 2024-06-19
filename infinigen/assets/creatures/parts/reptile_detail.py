@@ -34,22 +34,22 @@ def interpolate(coords):
     return f
 
 
-def lr_scale(l, r, p):
-    p = p * (r - l) + l
+def lr_scale(lower, upper, p):
+    p = p * (upper - lower) + lower
     return p
 
 
-def lrlr_scale(l, r, L, R, p):
-    p = (p - L) / (R - L)
-    p = p * (r - l) + l
+def lrlr_scale(lower, upper, from_lower, from_upper, p):
+    p = (p - from_lower) / (from_upper - from_lower)
+    p = p * (upper - lower) + lower
     return p
 
 
-def sunk(l, r, gr, p):
-    if p < l or p > r:
+def sunk(lower, upper, gr, p):
+    if p < lower or p > upper:
         return 1
 
-    p = (p - l) / (r - l)
+    p = (p - lower) / (upper - lower)
     return lrlr_scale(gr, 1, 0, 0.5, abs(p - 0.5))
 
 
