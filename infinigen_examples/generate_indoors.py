@@ -464,7 +464,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 def main(args):
     scene_seed = init.apply_scene_seed(args.seed)
     init.apply_gin_configs(
-        configs=args.configs,
+        configs=["base_indoors.gin"] + args.configs,
         overrides=args.overrides,
         configs_folder="infinigen_examples/configs_indoor",
     )

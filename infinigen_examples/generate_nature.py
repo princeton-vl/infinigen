@@ -721,7 +721,7 @@ def main(args):
     scene_seed = init.apply_scene_seed(args.seed)
     mandatory_exclusive = [Path("infinigen_examples/configs_nature/scene_types")]
     init.apply_gin_configs(
-        configs=args.configs,
+        configs=["base_nature.gin"] + args.configs,
         overrides=args.overrides,
         configs_folder="infinigen_examples/configs_nature",
         mandatory_folders=mandatory_exclusive,

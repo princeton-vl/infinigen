@@ -1,6 +1,4 @@
 include 'infinigen_examples/configs_nature/base.gin'
-include 'infinigen_examples/configs_nature/base_surface_registry.gin'
-include 'infinigen_examples/configs_nature/natural.gin'
 include 'infinigen_examples/configs_nature/performance/fast_terrain_assets.gin'
 
 # overriden in fast_solve.gin if present
