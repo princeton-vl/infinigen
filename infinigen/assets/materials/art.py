@@ -5,6 +5,9 @@
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
+from . import rug
+
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
@@ -84,16 +87,12 @@ class ArtComposite(DarkArt):
 class ArtRug(ArtComposite):
     @property
     def base_shader(self):
-        from . import rug
-
         return rug.shader_rug
 
 
 class ArtFabric(ArtComposite):
     @property
     def base_shader(self):
-        from .leather_and_fabrics import fabric_shader_list
-
         return rg(fabric_shader_list)
 
 

@@ -396,7 +396,7 @@ def configure_hair(obj, root, hair_genome: dict, apply=True, is_dynamic=None):
     with butil.DisableModifiers(obj):
         _, mod = butil.modify_mesh(curves, "NODES", apply=False, return_mod=True)
         mod.node_group = nodegroup_hair_grooming()
-        surface.set_geomod_inputs(mod, {"Object": obj, **hair_genome["grooming"]})
+        butil.set_geomod_inputs(mod, {"Object": obj, **hair_genome["grooming"]})
 
         if apply:
             butil.apply_modifiers(curves, mod=mod)

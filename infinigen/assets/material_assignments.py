@@ -20,7 +20,6 @@ from infinigen.assets.materials import (
     glass,
     glass_volume,
     lamp_shaders,
-    leather,
     metal,
     microwave_shaders,
     mirror,
@@ -44,6 +43,7 @@ from infinigen.assets.materials.wear_tear import (
     procedural_edge_wear,
     procedural_scratch,
 )
+from infinigen.assets.materials import fabrics
 
 DEFAULT_EDGE_WEAR_PROB = 0.5
 DEFAULT_SCRATCH_PROB = 0.5
@@ -98,8 +98,8 @@ def plastic_furniture():
 
 def get_all_fabric_shaders():
     return [
-        fabrics.shader_coarse_fabric_random,
-        fabrics.shader_fine_fabric_random,
+        fabrics.shader_coarse_knit_fabric,
+        fabrics.shader_fine_knit_fabric,
         fabrics.shader_fabric,
         fabrics.shader_leather,
         fabrics.shader_sofa_fabric,
@@ -210,13 +210,13 @@ def hardware_materials():
 
 def blanket_materials():
     return {
-        "surface": TextureAssignments([ArtFabric, fabrics], [1.0, 1.0]),
+        "surface": TextureAssignments([ArtFabric, fabrics.fabric_random], [1.0, 1.0]),
     }
 
 
 def pants_materials():
     return {
-        "surface": TextureAssignments([ArtFabric, fabrics], [1.0, 1.0]),
+        "surface": TextureAssignments([ArtFabric, fabrics.fabric_random], [1.0, 1.0]),
     }
 
 
@@ -319,7 +319,7 @@ def bar_chair_materials(leg_style=None):
     else:
         probs = [1.0 / len(metal_shaders)] * len(metal_shaders)
     return {
-        "seat": TextureAssignments([leather.shader_leather], [1.0]),
+        "seat": TextureAssignments([fabrics.shader_leather], [1.0]),
         "leg": TextureAssignments([wood.shader_wood, *metal_shaders], [1.0] + probs),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, 0.0],
@@ -328,10 +328,16 @@ def bar_chair_materials(leg_style=None):
 
 def chair_materials():
     return {
-        "limb": TextureAssignments([metal, wood, fabrics], [2.0, 2.0, 2]),
-        "surface": TextureAssignments([plastic_rough, wood, fabrics], [0.3, 0.5, 0.7]),
-        "panel": TextureAssignments([plastic_rough, wood, fabrics], [0.3, 0.5, 0.7]),
-        "arm": TextureAssignments([plastic, wood, fabrics], [0.3, 0.5, 0.7]),
+        "limb": TextureAssignments([metal, wood, fabrics.fabric_random], [2.0, 2.0, 2]),
+        "surface": TextureAssignments(
+            [plastic_rough, wood, fabrics.fabric_random], [0.3, 0.5, 0.7]
+        ),
+        "panel": TextureAssignments(
+            [plastic_rough, wood, fabrics.fabric_random], [0.3, 0.5, 0.7]
+        ),
+        "arm": TextureAssignments(
+            [plastic, wood, fabrics.fabric_random], [0.3, 0.5, 0.7]
+        ),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
@@ -346,7 +352,7 @@ def office_chair_materials(leg_style=None):
     return {
         "top": TextureAssignments(
             [
-                leather.shader_leather,
+                fabrics.shader_leather,
                 wood.shader_wood,
                 shader_rough_plastic,
                 glass_volume.shader_glass_volume,
@@ -392,7 +398,7 @@ def sofa_materials():
             [
                 (velvet.shader_velvet, 0.5),
                 (sofa_fabric.shader_sofa_fabric, 0.3),
-                (leather.shader_leather, 0.2),
+                (fabrics.shader_leather, 0.2),
             ]
         ),
     }
@@ -587,7 +593,7 @@ def rug_materials():
             [
                 (rug, 3.0),
                 (ArtRug, 2.0),
-                (fabrics, 5.0),
+                (fabrics.fabric_random, 5.0),
             ]
         )
     }

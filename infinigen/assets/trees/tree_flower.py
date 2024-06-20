@@ -955,7 +955,7 @@ class TreeFlowerFactory(AssetFactory):
 
         inst_params = self.get_flower_params(self.rad * normal(1, 0.05))
         params = dict_lerp(self.species_params, inst_params, 0.25)
-        surface.set_geomod_inputs(mod, params)
+        butil.set_geomod_inputs(mod, params)
 
         butil.apply_modifiers(vert, mod)
 

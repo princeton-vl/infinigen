@@ -66,10 +66,10 @@ class Beak:
     def hook(self, scale, a, b, p, t, x, theta):
         return scale * self.exp(a, b, x - p - (1 - x) * t * sin(theta))
 
-    def bump(self, scale, x, l, r):
-        if x < l or x > r:
+    def bump(self, scale, x, lower, upper):
+        if x < lower or x > upper:
             return 0
-        x = (x - l) / (r - l) * pi
+        x = (x - lower) / (upper - lower) * pi
         return scale * sin(x)
 
     def crown(self, scale, a, b, p, x, theta):

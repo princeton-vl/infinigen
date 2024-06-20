@@ -22,7 +22,7 @@ from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 
 # from infinigen.assets.materials import metal, metal_shader_list
-# from infinigen.assets.materials.leather_and_fabrics import fabric
+# from infinigen.assets.materials.fabrics import fabric
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import NoApply

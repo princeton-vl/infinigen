@@ -142,7 +142,7 @@ def shader_material(
     )
 
 
-def shader_fabric_random(nw: NodeWrangler, **kwargs):
+def shader_fine_knit_fabric(nw: NodeWrangler, **kwargs):
     fabric_params = get_texture_params()
     fabric_params["_map"] = "Object"
     return shader_material(nw, **fabric_params)
@@ -150,4 +150,4 @@ def shader_fabric_random(nw: NodeWrangler, **kwargs):
 
 def apply(obj, selection=None, **kwargs):
     unwrap_faces(obj, selection)
-    common.apply(obj, shader_fabric_random, selection, **kwargs)
+    common.apply(obj, shader_fine_knit_fabric, selection, **kwargs)

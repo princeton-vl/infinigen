@@ -82,7 +82,7 @@ class MattressFactory(AssetFactory):
             self.dot_size = uniform(0.005, 0.02)
             self.dot_depth = uniform(0.04, 0.08)
             self.wrap_distance = 0.05
-            self.surface = fabrics
+            self.surface = fabrics.fabric_random
             self.type = rg(self.types)
             materials = AssetList["MattressFactory"]()
             self.surface = materials["surface"].assign_material()

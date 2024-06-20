@@ -24,7 +24,7 @@ from .woods.wood import shader_wood
 from .glass import shader_glass
 
 from .art import Art, ArtFabric, ArtRug, DarkArt
-from .leather_and_fabrics import (
+from .fabrics import (
     coarse_knit_fabric,
     fine_knit_fabric,
     general_fabric,
