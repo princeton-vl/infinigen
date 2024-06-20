@@ -42,9 +42,6 @@ from infinigen.assets.scatters import (
     ground_mushroom,
     ground_twigs,
     jellyfish,
-)
-from infinigen.assets.scatters import monocot as monocots
-from infinigen.assets.scatters import (
     pebbles,
     pine_needle,
     pinecone,
@@ -52,6 +49,7 @@ from infinigen.assets.scatters import (
     seaweed,
     urchin,
 )
+from infinigen.assets.scatters import monocot as monocots
 from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.placement import (

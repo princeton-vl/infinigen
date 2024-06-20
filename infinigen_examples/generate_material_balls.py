@@ -24,14 +24,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.assets.materials.woods import tiled_wood
-from infinigen_examples.generate_individual_assets import (
-    adjust_cam_distance,
-    make_args,
-    setup_camera,
-)
-from infinigen_examples.util.test_utils import load_txt_list
-
 import bpy
 import gin
 import numpy as np
@@ -42,6 +34,7 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
+from infinigen.assets.materials.woods import tiled_wood
 from infinigen.assets.utils.decorate import read_base_co
 from infinigen.assets.utils.misc import subclasses
 from infinigen.core import init, surface
@@ -51,6 +44,12 @@ from infinigen.core.rendering.render import enable_gpu
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen_examples.generate_individual_assets import (
+    adjust_cam_distance,
+    make_args,
+    setup_camera,
+)
+from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

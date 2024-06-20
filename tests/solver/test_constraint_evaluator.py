@@ -4,7 +4,6 @@
 from functools import partial
 
 # Authors: Karhan Kayan
-
 import bpy
 import numpy as np
 import pytest

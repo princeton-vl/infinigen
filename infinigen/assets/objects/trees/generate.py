@@ -29,6 +29,7 @@ from infinigen.assets.objects.leaves import (
     leaf_v2,
 )
 from infinigen.assets.objects.trees import branch, tree, treeconfigs
+from infinigen.assets.utils.misc import toggle_hide, toggle_show
 from infinigen.assets.weather.cloud.generate import CloudFactory
 from infinigen.core import surface
 from infinigen.core.placement import detail
@@ -39,7 +40,6 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 
-from infinigen.assets.utils.misc import toggle_hide, toggle_show
 from . import tree_flower
 
 logger = logging.getLogger(__name__)

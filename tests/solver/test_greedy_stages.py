@@ -10,11 +10,9 @@ import pytest
 
 from infinigen.assets.objects.tableware import PlantContainerFactory
 from infinigen.core import tags as t
-from infinigen.core.constraints import checks
+from infinigen.core.constraints import checks, evaluator, usage_lookup
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import evaluator
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints import usage_lookup
 from infinigen.core.constraints.example_solver import (
     greedy,
     propose_discrete,

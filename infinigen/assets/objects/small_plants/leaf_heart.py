@@ -9,9 +9,8 @@ import numpy as np
 
 from infinigen.assets.objects.trees.utils import mesh
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util import blender as butil
-
 from infinigen.core.tagging import tag_object
+from infinigen.core.util import blender as butil
 
 
 class LeafHeartFactory(AssetFactory):

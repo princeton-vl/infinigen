@@ -9,9 +9,8 @@ import logging
 import bpy
 import numpy as np
 
-from infinigen.assets.objects.creatures.util import join_smoothing
+from infinigen.assets.objects.creatures.util import join_smoothing, tree
 from infinigen.assets.objects.creatures.util import rigging as creature_rigging
-from infinigen.assets.objects.creatures.util import tree
 from infinigen.core import surface
 from infinigen.core.placement import detail
 from infinigen.core.util import blender as butil

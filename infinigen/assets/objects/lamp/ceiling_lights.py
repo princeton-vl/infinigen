@@ -11,6 +11,7 @@ import numpy as np
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
+from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
@@ -19,8 +20,6 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
-
-from infinigen.assets.lighting.indoor_lights import PointLampFactory
 
 
 class CeilingLightFactory(AssetFactory):

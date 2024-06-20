@@ -9,7 +9,6 @@ from __future__ import annotations
 import copy
 import logging
 
-
 from infinigen.core import tags as t
 
 from .constraint_domain import Domain

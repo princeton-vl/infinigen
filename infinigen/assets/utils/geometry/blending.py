@@ -16,7 +16,10 @@ from typing import Callable, Iterable, Tuple
 import bpy
 import mathutils
 import numpy as np
+import rtree
+import shapely
 from geomdl import NURBS
+from shapely.geometry import LineString, Point, Polygon
 
 from infinigen.assets.utils.geometry import lofting, nurbs, skin_ops
 from infinigen.assets.utils.geometry.nurbs import (
@@ -33,10 +36,6 @@ from infinigen.core.util.math import (
     rotate_match_directions,
     wrap_around_cyclic_coord,
 )
-
-import rtree
-import shapely
-from shapely.geometry import LineString, Point, Polygon
 
 
 class CurveND:

@@ -9,8 +9,8 @@ import numpy as np
 from numpy.random import uniform
 from scipy.optimize import fsolve
 
-from infinigen.assets.objects.elements.rug import ArtRug
 from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.objects.elements.rug import ArtRug
 from infinigen.assets.utils.decorate import (
     geo_extension,
     mirror,

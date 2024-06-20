@@ -6,6 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.objects import (
     cactus,
     corals,
@@ -14,8 +15,6 @@ from infinigen.assets.objects import (
     rocks,
     underwater,
 )
-
-from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.utils.decorate import read_co, write_attribute
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube, new_plane
 from infinigen.core.placement.factory import AssetFactory

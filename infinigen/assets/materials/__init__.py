@@ -6,6 +6,17 @@
 from infinigen.infinigen_gpl.surfaces import *
 
 from . import *
+from .art import Art, ArtFabric, ArtRug, DarkArt
+from .fabrics import (
+    coarse_knit_fabric,
+    fine_knit_fabric,
+    general_fabric,
+    leather,
+    lined_fabric,
+    sofa_fabric,
+    velvet,
+)
+from .glass import shader_glass
 from .metal import (
     brushed_metal,
     galvanized_metal,
@@ -18,21 +29,7 @@ from .metal.galvanized_metal import shader_galvanized_metal
 from .metal.grained_and_polished_metal import shader_grained_metal
 from .metal.hammered_metal import shader_hammered_metal
 from .metal.metal_basic import shader_metal
-
 from .plastic import shader_rough_plastic, shader_translucent_plastic
-from .woods.wood import shader_wood
-from .glass import shader_glass
-
-from .art import Art, ArtFabric, ArtRug, DarkArt
-from .fabrics import (
-    coarse_knit_fabric,
-    fine_knit_fabric,
-    general_fabric,
-    leather,
-    lined_fabric,
-    sofa_fabric,
-    velvet,
-)
 from .stone_and_concrete import concrete
 from .woods import (
     composite_wood_tile,
@@ -46,6 +43,7 @@ from .woods import (
     wood_old,
     wood_tile,
 )
+from .woods.wood import shader_wood
 
 metal_shader_list = [
     shader_brushed_metal,

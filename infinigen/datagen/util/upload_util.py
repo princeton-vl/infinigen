@@ -16,7 +16,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-
 from infinigen.core.util.logging import Suppress
 
 from . import smb_client

@@ -6,8 +6,8 @@
 
 import numpy as np
 
-from infinigen.assets.scatters.utils.wind import wind
 from infinigen.assets.objects.small_plants.fern import FernFactory
+from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import random_general as rg

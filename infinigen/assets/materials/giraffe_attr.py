@@ -9,11 +9,11 @@ import os
 import bpy
 from numpy.random import uniform as U
 
-from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.assets.materials.utils.surface_utils import (
     sample_range,
     sample_ratio,
 )
+from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba

@@ -13,8 +13,8 @@ from infinigen.assets.objects.creatures.util.creature import (
     Part,
     infer_skeleton_from_mesh,
 )
-from infinigen.assets.utils.geometry import nurbs
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
+from infinigen.assets.utils.geometry import nurbs
 from infinigen.core.util import blender as butil
 
 

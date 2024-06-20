@@ -11,7 +11,6 @@ import itertools
 import logging
 from dataclasses import dataclass, field
 
-
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 

@@ -8,9 +8,8 @@
 import os
 
 import bpy
-from numpy.random import normal
+from numpy.random import normal, uniform
 from numpy.random import normal as N
-from numpy.random import uniform
 from numpy.random import uniform as U
 
 from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask

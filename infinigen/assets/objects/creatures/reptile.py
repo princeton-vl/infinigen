@@ -19,13 +19,13 @@ import infinigen.assets.materials.scale
 import infinigen.assets.materials.snake_scale
 import infinigen.assets.materials.snake_shaders
 import infinigen.assets.materials.spot_sparse_attr
+from infinigen.assets.materials import bone, eyeball, nose, tongue
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import animation as creature_animation
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util.animation import curve_slither
 from infinigen.assets.objects.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.assets.materials import bone, eyeball, nose, tongue
 from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory

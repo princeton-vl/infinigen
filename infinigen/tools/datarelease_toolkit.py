@@ -18,8 +18,8 @@ import imageio
 import numpy as np
 from tqdm import tqdm
 
-from infinigen.tools.suffixes import get_suffix, parse_suffix
 from infinigen.datagen.util import smb_client
+from infinigen.tools.suffixes import get_suffix, parse_suffix
 
 from . import compress_masks, dataset_loader
 

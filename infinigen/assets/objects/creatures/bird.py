@@ -17,17 +17,16 @@ import infinigen.assets.materials.bird
 import infinigen.assets.materials.reptile_brown_circle_attr
 import infinigen.assets.materials.reptile_two_color_attr
 import infinigen.assets.materials.spot_sparse_attr
+from infinigen.assets.materials import beak, bone, eyeball, tongue
 from infinigen.assets.objects.creatures import parts
-from infinigen.assets.objects.creatures.util import creature, genome
+from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
-from infinigen.assets.objects.creatures.util import joining
 from infinigen.assets.objects.creatures.util.animation import idle, run_cycle
 from infinigen.assets.objects.creatures.util.animation.driver_wiggle import (
     animate_wiggle_bones,
 )
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.assets.materials import beak, bone, eyeball, tongue
 from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory

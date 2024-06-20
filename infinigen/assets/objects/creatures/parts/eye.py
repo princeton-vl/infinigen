@@ -6,6 +6,7 @@
 
 from numpy.random import normal as N
 
+from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_vec
 from infinigen.assets.objects.creatures.util import part_util
 from infinigen.assets.objects.creatures.util.creature import PartFactory
 from infinigen.assets.utils.nodegroups.curve import (
@@ -15,7 +16,6 @@ from infinigen.assets.utils.nodegroups.curve import (
     nodegroup_warped_circle_curve,
 )
 from infinigen.assets.utils.nodegroups.math import nodegroup_aspect_to_dim
-from infinigen.assets.materials.utils.surface_utils import nodegroup_norm_vec
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_nodegroup, tag_object

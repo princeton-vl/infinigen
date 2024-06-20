@@ -6,8 +6,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.objects.elements.warehouses.pallet import PalletFactory
 from infinigen.assets.materials import metal
+from infinigen.assets.objects.elements.warehouses.pallet import PalletFactory
 from infinigen.assets.utils.decorate import (
     read_co,
     remove_faces,

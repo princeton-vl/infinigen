@@ -12,14 +12,13 @@ from numpy.random import uniform as U
 import infinigen.assets.materials.giraffe_attr
 import infinigen.assets.materials.spot_sparse_attr
 import infinigen.assets.materials.tiger_attr
+from infinigen.assets.materials import bone, eyeball, nose, tongue
 from infinigen.assets.objects.creatures import parts
-from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome
+from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
-from infinigen.assets.objects.creatures.util import joining
 from infinigen.assets.objects.creatures.util.animation import idle, run_cycle
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.assets.materials import bone, eyeball, nose, tongue
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil

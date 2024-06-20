@@ -7,7 +7,6 @@
 import logging
 from dataclasses import dataclass
 
-
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry import parse_scene
 from infinigen.core.constraints.example_solver.moves import Move

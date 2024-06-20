@@ -6,7 +6,6 @@
 
 import typing
 
-
 from .expression import BoolExpression, ScalarExpression, nodedataclass
 from .geometry import ObjectSetExpression
 

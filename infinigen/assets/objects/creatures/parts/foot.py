@@ -9,6 +9,7 @@ from numpy.random import normal as N
 
 from infinigen.assets.objects.creatures.util.creature import PartFactory
 from infinigen.assets.objects.creatures.util.genome import IKParams
+from infinigen.assets.objects.creatures.util.part_util import nodegroup_to_part
 from infinigen.assets.utils.nodegroups.attach import (
     nodegroup_attach_part,
     nodegroup_surface_muscle,
@@ -18,7 +19,6 @@ from infinigen.assets.utils.nodegroups.curve import (
     nodegroup_simple_tube_v2,
 )
 from infinigen.assets.utils.nodegroups.math import nodegroup_deg2_rad
-from infinigen.assets.objects.creatures.util.part_util import nodegroup_to_part
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object

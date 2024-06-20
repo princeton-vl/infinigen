@@ -8,7 +8,6 @@ import logging
 import typing
 from dataclasses import dataclass
 
-
 from infinigen.core.constraints.example_solver import state_def
 
 logger = logging.getLogger(__name__)

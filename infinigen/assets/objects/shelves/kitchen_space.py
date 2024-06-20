@@ -10,8 +10,8 @@ from numpy.random import choice, uniform
 from infinigen.assets.materials.table_materials import shader_marble
 from infinigen.assets.objects.shelves.kitchen_cabinet import KitchenCabinetFactory
 from infinigen.assets.objects.tables.table_top import nodegroup_generate_table_top
-from infinigen.assets.utils.object import new_bbox
 from infinigen.assets.objects.wall_decorations.range_hood import RangeHoodFactory
+from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver.room.constants import (

@@ -43,7 +43,6 @@ from infinigen.assets.materials.wear_tear import (
     procedural_edge_wear,
     procedural_scratch,
 )
-from infinigen.assets.materials import fabrics
 
 DEFAULT_EDGE_WEAR_PROB = 0.5
 DEFAULT_SCRATCH_PROB = 0.5

@@ -19,8 +19,8 @@ from frozendict import frozendict
 from numpy.random import uniform
 
 import infinigen.assets.scatters
+from infinigen.assets import fluid, weather
 from infinigen.assets.objects import cactus, creatures, rocks, trees
-from infinigen.assets import weather, fluid
 from infinigen.assets.objects.monocot import kelp
 from infinigen.tools.export import export_scene, triangulate_meshes
 from infinigen.assets.scatters import (

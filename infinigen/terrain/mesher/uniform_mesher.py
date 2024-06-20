@@ -10,9 +10,16 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh
+from infinigen.terrain.utils import (
+    ASDOUBLE,
+    ASINT,
+    Mesh,
+    Vars,
+    load_cdll,
+    register_func,
+    write_attributes,
+)
 from infinigen.terrain.utils import Timer as tTimer
-from infinigen.terrain.utils import Vars, load_cdll, register_func, write_attributes
 
 logger = logging.getLogger(__name__)
 

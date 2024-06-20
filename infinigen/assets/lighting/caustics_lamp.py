@@ -9,8 +9,7 @@ import bpy
 import numpy as np
 from mathutils import Vector
 from numpy.random import normal as N
-from numpy.random import randint
-from numpy.random import uniform
+from numpy.random import randint, uniform
 from numpy.random import uniform as U
 
 from infinigen.core.nodes import node_utils

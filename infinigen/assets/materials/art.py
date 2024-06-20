@@ -6,15 +6,13 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
-from . import rug
-
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
 from ...core.nodes import Nodes, NodeWrangler
 from ..utils.decorate import read_uv, write_uv
-from . import text
+from . import rug, text
 
 
 class Art(text.Text):

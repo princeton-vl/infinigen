@@ -7,7 +7,6 @@ from dataclasses import field
 
 import numpy as np
 
-
 from .expression import ScalarExpression, nodedataclass
 from .set_reasoning import ObjectSetExpression
 

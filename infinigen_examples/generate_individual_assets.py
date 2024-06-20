@@ -35,8 +35,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.core.init import configure_cycles_devices
-
 from infinigen.assets.lighting import (
     hdri_lighting,
     holdout_lighting,
@@ -48,6 +46,7 @@ from infinigen.assets.lighting import (
 from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material, subclasses
 from infinigen.core import init, surface
+from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import density, factory
 from infinigen.core.tagging import tag_system
 

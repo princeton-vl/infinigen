@@ -11,9 +11,8 @@ from test_greedy_substitutions import make_dummy_state
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import evaluator
+from infinigen.core.constraints import evaluator, usage_lookup
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints import usage_lookup
 from infinigen.core.constraints.example_solver import (
     greedy,
     propose_discrete,

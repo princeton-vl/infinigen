@@ -12,9 +12,15 @@ import numpy as np
 from numpy import ascontiguousarray as AC
 from tqdm import tqdm
 
-from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh
+from infinigen.terrain.utils import (
+    ASDOUBLE,
+    ASINT,
+    Mesh,
+    load_cdll,
+    register_func,
+    write_attributes,
+)
 from infinigen.terrain.utils import Timer as tTimer
-from infinigen.terrain.utils import load_cdll, register_func, write_attributes
 
 logger = logging.getLogger(__name__)
 

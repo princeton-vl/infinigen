@@ -10,7 +10,6 @@ import logging
 from dataclasses import dataclass
 from functools import partial
 
-
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 

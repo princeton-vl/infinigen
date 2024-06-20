@@ -22,9 +22,8 @@ import numpy as np
 
 from infinigen.assets import lighting
 from infinigen.assets.materials import invisible_to_camera
-from infinigen.assets.utils.decorate import read_co
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
-
+from infinigen.assets.utils.decorate import read_co
 from infinigen.core import execute_tasks, init, placement, surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import checks

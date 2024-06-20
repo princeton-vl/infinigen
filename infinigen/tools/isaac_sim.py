@@ -5,17 +5,16 @@
 
 # Acknowledgement: This file draws inspiration from https://docs.omniverse.nvidia.com/isaacsim/latest/index.html
 
-import numpy as np
-from omni.isaac.kit import SimulationApp
-
 import json
 
+import numpy as np
 import omni
 from omni.isaac.core import World
 from omni.isaac.core.prims import XFormPrim
 from omni.isaac.core.utils.extensions import enable_extension
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.prims import create_prim
+from omni.isaac.kit import SimulationApp
 from omni.kit.commands import execute as omni_exec
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 

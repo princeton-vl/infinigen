@@ -6,7 +6,6 @@
 
 import logging
 
-
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r

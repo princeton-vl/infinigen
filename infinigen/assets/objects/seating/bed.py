@@ -9,16 +9,15 @@ import numpy as np
 import trimesh
 from numpy.random import uniform
 
-from infinigen.core.util import blender as butil
-from infinigen.core.util.random import log_uniform
-from infinigen.core.util.random import random_general as rg
-from infinigen.core import surface
-from infinigen.core.util.blender import deep_clone_obj
-
+from infinigen.assets.objects.seating import bedframe, mattress, pillow
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import decimate, read_co, subsurf
 from infinigen.assets.utils.object import obj2trimesh
-from infinigen.assets.objects.seating import bedframe, mattress, pillow
+from infinigen.core import surface
+from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import deep_clone_obj
+from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
 
 
 class BedFactory(bedframe.BedFrameFactory):

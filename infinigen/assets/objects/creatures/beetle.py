@@ -15,9 +15,8 @@ from numpy.random import uniform as U
 
 import infinigen.assets.materials.chitin
 from infinigen.assets.objects.creatures import parts
-from infinigen.assets.objects.creatures.util import creature, genome
+from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
-from infinigen.assets.objects.creatures.util import joining
 from infinigen.assets.objects.creatures.util.animation import (
     run_cycle as creature_animation,
 )

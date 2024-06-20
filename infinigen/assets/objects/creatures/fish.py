@@ -17,6 +17,8 @@ from numpy.random import uniform as U
 
 import infinigen.assets.materials.fishbody
 import infinigen.assets.materials.scale
+from infinigen.assets.materials import fish_eye_shader, fishfin
+from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util.animation.driver_wiggle import (
@@ -25,8 +27,6 @@ from infinigen.assets.objects.creatures.util.animation.driver_wiggle import (
 from infinigen.assets.objects.creatures.util.boid_swarm import BoidSwarmFactory
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.assets.materials import fish_eye_shader, fishfin
-from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.tagging import tag_object

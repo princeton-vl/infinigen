@@ -9,7 +9,6 @@
 import copy
 from dataclasses import dataclass
 
-
 from infinigen.core.constraints.constraint_language.util import sync_trimesh
 from infinigen.core.constraints.example_solver.geometry import dof
 

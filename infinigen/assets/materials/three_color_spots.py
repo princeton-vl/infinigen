@@ -6,7 +6,6 @@
 
 import math as ma
 
-
 from infinigen.assets.materials.utils.surface_utils import (
     geo_voronoi_noise,
     sample_color,

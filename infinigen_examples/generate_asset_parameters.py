@@ -26,15 +26,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.assets.materials.woods import non_wood_tile, wood_tile
-from infinigen.assets.utils.object import center, new_cube, origin2lowest
-from infinigen.core.init import configure_cycles_devices
-from infinigen.core.surface import write_attr_data
-from infinigen.core.util.blender import deep_clone_obj
-from infinigen_examples.asset_parameters import parameters
-from infinigen_examples.generate_individual_assets import make_args, setup_camera
-from infinigen_examples.util.test_utils import load_txt_list
-
 import bpy
 import numpy as np
 from PIL import Image
@@ -46,16 +37,24 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
+from infinigen.assets.materials.woods import non_wood_tile, wood_tile
 from infinigen.assets.utils.decorate import read_base_co, read_co, read_normal
 from infinigen.assets.utils.misc import subclasses
+from infinigen.assets.utils.object import center, new_cube, origin2lowest
 from infinigen.core import init, surface
+from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import factory
+from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
+from infinigen_examples.asset_parameters import parameters
+from infinigen_examples.generate_individual_assets import make_args, setup_camera
+from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

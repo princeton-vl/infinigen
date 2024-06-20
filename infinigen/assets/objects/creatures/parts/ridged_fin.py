@@ -9,8 +9,8 @@ import random
 import bpy
 import numpy as np
 
-from infinigen.assets.objects.creatures.util.creature import Part, PartFactory
 from infinigen.assets.materials.utils.surface_utils import sample_range
+from infinigen.assets.objects.creatures.util.creature import Part, PartFactory
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object

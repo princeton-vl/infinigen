@@ -5,6 +5,7 @@
 
 from numpy.random import randint, uniform
 
+from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.materials.ceiling_light_shaders import (
     shader_lamp_bulb_nonemissive,
 )
@@ -15,8 +16,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
-
-from infinigen.assets.lighting.indoor_lights import PointLampFactory
 
 
 def shader_lamp_material(nw: NodeWrangler):
