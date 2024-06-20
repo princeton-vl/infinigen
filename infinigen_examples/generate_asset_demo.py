@@ -8,17 +8,19 @@ import logging
 from copy import copy
 from pathlib import Path
 
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
-
 import bpy
 import gin
 import numpy as np
 from mathutils import Matrix, Vector, bvhtree
 from tqdm import trange
+
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 
 from infinigen.assets.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.lighting import sky_lighting
@@ -30,6 +32,12 @@ from infinigen.core.placement import placement
 from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core.util import blender as butil
 from infinigen.terrain import Terrain
+
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.WARNING,
+)
 
 
 def find_flat_location(

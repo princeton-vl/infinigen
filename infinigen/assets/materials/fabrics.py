@@ -4,8 +4,6 @@
 # Authors: Lingjie Mei
 from infinigen.assets.materials import leather_and_fabrics
 
-from .leather_and_fabrics import *
-
 
 def apply(obj, selection=None, **kwargs):
     leather_and_fabrics.apply(obj, selection=selection, **kwargs)

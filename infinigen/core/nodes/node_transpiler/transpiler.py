@@ -310,7 +310,7 @@ def represent_label_value_expression(expression):
 
         try:
             return float(arg)
-        except:
+        except ValueError:
             pass
 
         if arg.startswith("["):

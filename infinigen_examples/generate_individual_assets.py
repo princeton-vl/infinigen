@@ -21,19 +21,21 @@ from itertools import product
 from multiprocessing import Pool
 from pathlib import Path
 
-from infinigen.core.init import configure_cycles_devices
-
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
-
 import bpy
 import gin
 import numpy as np
 import submitit
 from PIL import Image
+
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
+
+from infinigen.core.init import configure_cycles_devices
 
 from infinigen.assets.lighting import (
     hdri_lighting,
@@ -55,6 +57,12 @@ from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
 from infinigen.tools import export
 from infinigen_examples.util.test_utils import load_txt_list
+
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.WARNING,
+)
 
 
 def build_scene_asset(args, factory_name, idx):
@@ -172,7 +180,7 @@ def build_scene_surface(factory_name, idx):
                     template = importlib.import_module(
                         f"infinigen.assets.materials.{factory_name}"
                     )
-                except:
+                except ImportError:
                     for subdir in os.listdir("infinigen/assets/materials"):
                         with gin.unlock_config():
                             module = importlib.import_module(
@@ -391,12 +399,6 @@ def setup_camera(args):
     if cam_info_ng is not None:
         cam_info_ng.nodes["Object Info"].inputs["Object"].default_value = camera
     return camera, camera.parent
-
-
-def subclasses(cls):
-    return set(cls.__subclasses__()).union(
-        [s for c in cls.__subclasses__() for s in subclasses(c)]
-    )
 
 
 def mapfunc(f, its, args):

@@ -117,7 +117,7 @@ def infer_input_socket(node, input_socket_name):
             input_socket = next(
                 i for i in node.inputs if i.name == input_socket_name and i.enabled
             )
-        except:
+        except StopIteration:
             input_socket = node.inputs[input_socket_name]
     else:
         input_socket = node.inputs[input_socket_name]

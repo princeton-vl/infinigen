@@ -41,7 +41,7 @@ def main(dir: Path):
             render_log = open(
                 next((dir / seed / "logs").glob("shortrender*.err"))
             ).read()
-        except:
+        except FileNotFoundError:
             continue
 
         for name, h, m, s in re.findall(

@@ -7,9 +7,7 @@
 import math
 import random
 
-
-from infinigen.core.nodes import Nodes, node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes import Nodes, node_utils, NodeWrangler
 
 
 @node_utils.to_nodegroup(

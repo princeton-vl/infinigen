@@ -11,7 +11,7 @@ from pathlib import Path
 
 import bpy
 
-# ruff: noqa: F402
+# ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 

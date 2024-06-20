@@ -11,8 +11,6 @@ from infinigen.assets.trees.utils import mesh
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
-C = bpy.context
-D = bpy.data
 from infinigen.core.tagging import tag_object
 
 
@@ -76,7 +74,7 @@ class LeafHeartFactory(AssetFactory):
             bpy.context.object.modifiers["Wave"].speed = 40 + np.random.uniform(-10, 20)
 
         mesh.finalize_obj(obj)
-        C.scene.cursor.location = obj.data.vertices[-1].co
+        bpy.context.scene.cursor.location = obj.data.vertices[-1].co
 
         bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
 

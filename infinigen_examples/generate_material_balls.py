@@ -16,6 +16,14 @@ from pathlib import Path
 from numpy.random import uniform
 from tqdm import tqdm
 
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
+
 from infinigen.assets.materials.woods import tiled_wood
 from infinigen_examples.generate_individual_assets import (
     adjust_cam_distance,
@@ -23,12 +31,6 @@ from infinigen_examples.generate_individual_assets import (
     setup_camera,
 )
 from infinigen_examples.util.test_utils import load_txt_list
-
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
 
 import bpy
 import gin
@@ -50,6 +52,12 @@ from infinigen.core.rendering.render import enable_gpu
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.WARNING,
+)
+
 
 def build_scene_surface(factory_name, idx):
     try:
@@ -58,7 +66,7 @@ def build_scene_surface(factory_name, idx):
                 template = importlib.import_module(
                     f"infinigen.assets.materials.{factory_name}"
                 )
-            except:
+            except ImportError:
                 for subdir in os.listdir("infinigen/assets/materials"):
                     with gin.unlock_config():
                         module = importlib.import_module(

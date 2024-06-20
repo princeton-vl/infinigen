@@ -6,12 +6,6 @@ import itertools
 import logging
 from pathlib import Path
 
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
-
 import bpy
 import gin
 import mathutils
@@ -19,7 +13,13 @@ import numpy as np
 from mathutils import Vector
 from numpy.random import randint, uniform
 
-logging.basicConfig(level=logging.INFO)
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 
 from infinigen.assets import (
     cactus,
@@ -68,6 +68,12 @@ from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Tags
 from infinigen.core.util.random import random_general, sample_registry
 from infinigen.terrain import Terrain
+
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.WARNING,
+)
 
 
 @gin.configurable

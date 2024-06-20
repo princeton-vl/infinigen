@@ -35,8 +35,8 @@ def factories_for_usage(tags: set[t.Tag]):
         tags = list(tags)
 
     res = _tag_lookup[tags[0]]
-    for t in tags[1:]:
-        res.intersection_update(_tag_lookup[t])
+    for tag in tags[1:]:
+        res.intersection_update(_tag_lookup[tag])
     return res
 
 

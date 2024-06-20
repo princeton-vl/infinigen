@@ -18,6 +18,14 @@ from collections.abc import Callable
 from itertools import product
 from pathlib import Path
 
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
+
 from infinigen.assets.materials.woods import non_wood_tile, wood_tile
 from infinigen.assets.utils.object import center, new_cube, origin2lowest
 from infinigen.core.init import configure_cycles_devices
@@ -26,12 +34,6 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen_examples.asset_parameters import parameters
 from infinigen_examples.generate_individual_assets import make_args, setup_camera
 from infinigen_examples.util.test_utils import load_txt_list
-
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
 
 import bpy
 import numpy as np
@@ -54,6 +56,12 @@ from infinigen.core.tagging import tag_system
 from infinigen.core.util import blender as butil
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
+
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.WARNING,
+)
 
 
 def build_scene_asset(args, factory_name, idx):

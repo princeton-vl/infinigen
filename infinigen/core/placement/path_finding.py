@@ -168,7 +168,7 @@ def path_finding(
 
     try:
         path = nx.shortest_path(G, start_index, end_index, weight="weight")
-    except:
+    except Exception:
         return None
 
     stack = [start_index]

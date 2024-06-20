@@ -8,11 +8,13 @@ from pathlib import Path
 
 from numpy import deg2rad
 
-# logging.basicConfig(
-#    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
-#    datefmt="%H:%M:%S",
-#    level=logging.INFO,
-# )
+# ruff: noqa: E402
+# NOTE: logging config has to be before imports that use logging
+logging.basicConfig(
+    format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 
 import bpy
 import gin

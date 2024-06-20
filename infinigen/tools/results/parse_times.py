@@ -69,8 +69,8 @@ if __name__ == "__main__":
     ]
     out = subprocess.check_output(cmd).decode("utf-8")
     job_times = {}
-    for l in out.splitlines():
-        job_name, job_sec, status, *_ = l.strip().split()
+    for line in out.splitlines():
+        job_name, job_sec, status, *_ = line.strip().split()
         regex = re.compile(f"{args.output_folder.stem}_({'[A-Z]'*8}_.+)").fullmatch(
             job_name
         )

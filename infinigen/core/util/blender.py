@@ -982,15 +982,6 @@ def count_objects():
     return count
 
 
-def count_objects():
-    count = 0
-    for obj in bpy.context.scene.objects:
-        if obj.type != "MESH":
-            continue
-        count += 1
-    return count
-
-
 def count_instance():
     depsgraph = bpy.context.evaluated_depsgraph_get()
     return len([inst for inst in depsgraph.object_instances if inst.is_instance])

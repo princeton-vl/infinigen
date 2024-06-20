@@ -8,9 +8,6 @@
 import numpy as np
 from omni.isaac.kit import SimulationApp
 
-CONFIG = {"renderer": "RayTracedLighting", "headless": False}
-simulation_app = SimulationApp(launch_config=CONFIG)
-
 import json
 
 import omni
@@ -22,11 +19,15 @@ from omni.isaac.core.utils.prims import create_prim
 from omni.kit.commands import execute as omni_exec
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
+# ruff: noqa: E402
 enable_extension("omni.isaac.examples")
 from omni.isaac.core.controllers import BaseController
 from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.wheeled_robots.robots import WheeledRobot
 from omni.physx.scripts import utils
+
+CONFIG = {"renderer": "RayTracedLighting", "headless": False}
+simulation_app = SimulationApp(launch_config=CONFIG)
 
 
 class RobotController(BaseController):

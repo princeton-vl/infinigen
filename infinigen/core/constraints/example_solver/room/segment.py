@@ -50,7 +50,7 @@ class SegmentMaker:
             try:
                 segments, shared_edges = self.filter_segments()
                 break
-            except:
+            except Exception:
                 pass
         exterior_edges = update_exterior_edges(segments, shared_edges)
         neighbours_all = {

@@ -28,9 +28,9 @@ OPS_UNIT_VALUE = {
 
 def _get_op_unit_value(node: cl.BoolExpression | cl.ScalarExpression):
     match node:
-        case cl.BoolOperatorExpression(func, operands):
+        case cl.BoolOperatorExpression(func, _):
             return True
-        case cl.ScalarOperatorExpression(func, operands) if func in OPS_UNIT_VALUE:
+        case cl.ScalarOperatorExpression(func, _) if func in OPS_UNIT_VALUE:
             return OPS_UNIT_VALUE[func]
         case _:
             raise ValueError(f"Found no unit value for  {node.__class__} {node.func}")

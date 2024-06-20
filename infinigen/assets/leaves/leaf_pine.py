@@ -506,23 +506,6 @@ def nodegroup_pine_twig(nw):
     )
 
 
-def shader_twig(nw):
-    # Code generated using version 2.3.2 of the node_transpiler
-
-    principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF,
-        input_kwargs={
-            "Base Color": (0.08, 0.0329, 0.0414, 1.0),
-            "Specular": 0.0527,
-            "Roughness": 0.4491,
-        },
-    )
-
-    material_output = nw.new_node(
-        Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
-    )
-
-
 def geometry_node_pine_twig(
     nw,
     needle_name="Needle",

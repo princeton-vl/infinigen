@@ -92,7 +92,7 @@ class ContourFactory:
                 segments=np.random.randint(2, 5),
                 width=width,
             )
-        except:
+        except Exception:
             pass
         obj.vertex_groups.remove(obj.vertex_groups["corner"])
 

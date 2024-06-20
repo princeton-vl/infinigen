@@ -144,7 +144,7 @@ def evaluate_known_vars(node: cl.Node, known_vars) -> cl.constant:
 
 def expression_map_bound(node: cl.Node, bound: Bound) -> list[Bound]:
     match node:
-        case cl.ScalarOperatorExpression(f, (lhs, rhs)) if f in int_inverse_op.keys():
+        case cl.ScalarOperatorExpression(f, (_, _)) if f in int_inverse_op.keys():
             return _expression_map_bound_binop(node, bound)
         case cl.count(objs):
             return expression_map_bound(objs, bound)

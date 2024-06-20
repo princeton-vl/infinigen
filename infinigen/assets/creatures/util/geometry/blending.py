@@ -34,10 +34,6 @@ from infinigen.core.util.math import (
     wrap_around_cyclic_coord,
 )
 
-raise NotImplementedError(
-    "blending.py not currently used, please re-add shapely as a dependency and delete this line"
-)
-
 import rtree
 import shapely
 from shapely.geometry import LineString, Point, Polygon

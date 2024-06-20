@@ -19,25 +19,9 @@ from .metal.grained_and_polished_metal import shader_grained_metal
 from .metal.hammered_metal import shader_hammered_metal
 from .metal.metal_basic import shader_metal
 
-metal_shader_list = [
-    shader_brushed_metal,
-    shader_galvanized_metal,
-    shader_grained_metal,
-    shader_hammered_metal,
-    shader_metal,
-]
-
 from .plastic import shader_rough_plastic, shader_translucent_plastic
-
-plastic_shader_list = [shader_rough_plastic, shader_translucent_plastic]
-
 from .woods.wood import shader_wood
-
-wood_shader_list = [shader_wood]
-
 from .glass import shader_glass
-
-glass_shader_list = [shader_glass]
 
 from .art import Art, ArtFabric, ArtRug, DarkArt
 from .leather_and_fabrics import (
@@ -62,3 +46,17 @@ from .woods import (
     wood_old,
     wood_tile,
 )
+
+metal_shader_list = [
+    shader_brushed_metal,
+    shader_galvanized_metal,
+    shader_grained_metal,
+    shader_hammered_metal,
+    shader_metal,
+]
+
+plastic_shader_list = [shader_rough_plastic, shader_translucent_plastic]
+
+wood_shader_list = [shader_wood]
+
+glass_shader_list = [shader_glass]

@@ -411,7 +411,7 @@ def apply_relations_surfacesample(
                 state, obj_name, parent_obj.name, face_mask, parent_plane
             )
             match relation_state.relation:
-                case cl.StableAgainst(child_tags, parent_tags, margin):
+                case cl.StableAgainst(_, parent_tags, margin):
                     stability.snap_against(
                         state.trimesh_scene,
                         obj_name,
@@ -420,7 +420,7 @@ def apply_relations_surfacesample(
                         parent_plane,
                         margin=margin,
                     )
-                case cl.SupportedBy(child_tags, parent_tags):
+                case cl.SupportedBy(_, parent_tags):
                     stability.snap_against(
                         state.trimesh_scene,
                         obj_name,

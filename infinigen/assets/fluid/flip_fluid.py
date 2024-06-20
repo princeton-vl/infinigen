@@ -9,6 +9,7 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
+# ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 
 import subprocess

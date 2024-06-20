@@ -148,7 +148,7 @@ class BlueprintSolver:
                     resp = self.extrude_room_in(assignment, info, k)
                 else:
                     resp = self.swap_room(assignment, info, k)
-            except:
+            except Exception:
                 info, assignment = info_, assignment_
             else:
                 break
@@ -169,7 +169,7 @@ class BlueprintSolver:
                     info["staircase_occupancies"],
                     c,
                 )
-        except:
+        except Exception:
             return RoomSolverMsg("Exception")
         info["neighbours_all"] = {
             k: set(compute_neighbours(se, SEGMENT_MARGIN))
