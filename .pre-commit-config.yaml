@@ -4,6 +4,6 @@ repos:
   rev: v0.4.9
   hooks:
     # Run the linter.
-    # - id: ruff
+    - id: ruff
     # Run the formatter.
     - id: ruff-format
