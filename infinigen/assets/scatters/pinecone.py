@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.monocot.pinecone import PineconeFactory
+from infinigen.assets.objects.monocot.pinecone import PineconeFactory
 from infinigen.assets.scatters.chopped_trees import approx_settle_transform
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances

@@ -3,10 +3,10 @@
 
 # Authors: Karhan Kayan
 
-from infinigen.assets.cactus import CactusFactory
-from infinigen.assets.creatures import CarnivoreFactory
-from infinigen.assets.rocks.boulder import BoulderFactory
-from infinigen.assets.trees import BushFactory, TreeFactory
+from infinigen.assets.objects.cactus import CactusFactory
+from infinigen.assets.objects.creatures import CarnivoreFactory
+from infinigen.assets.objects.rocks.boulder import BoulderFactory
+from infinigen.assets.objects.trees import BushFactory, TreeFactory
 
 
 class CachedBoulderFactory(BoulderFactory):

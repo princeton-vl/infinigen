@@ -6,7 +6,7 @@
 
 from numpy.random import uniform as U
 
-from infinigen.assets.trees.generate import random_leaf_collection
+from infinigen.assets.objects.trees.generate import random_leaf_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
 

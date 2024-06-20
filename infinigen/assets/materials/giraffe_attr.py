@@ -9,7 +9,7 @@ import os
 import bpy
 from numpy.random import uniform as U
 
-from infinigen.assets.creatures.util.nodegroups.shader import nodegroup_color_mask
+from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.assets.materials.utils.surface_utils import (
     sample_range,
     sample_ratio,

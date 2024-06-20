@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import normal as N
 
-from infinigen.assets.debris import LichenFactory
+from infinigen.assets.objects.debris import LichenFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 

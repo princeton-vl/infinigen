@@ -8,7 +8,7 @@ from pprint import pprint
 
 import pytest
 
-from infinigen.assets.tableware import PlantContainerFactory
+from infinigen.assets.objects.tableware import PlantContainerFactory
 from infinigen.core import tags as t
 from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl

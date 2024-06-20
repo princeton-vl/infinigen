@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.debris import PineNeedleFactory
+from infinigen.infinigen.assets.objects.debris import PineNeedleFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 

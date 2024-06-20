@@ -10,7 +10,7 @@ Copy this file into blender's scripting window and run it whenever you open a ne
 
 It will configure the sys.path and load gin. This is necessary before any other procgen files can be imported/used within blender.
 
-Once this is done, you can do things like `from infinigen.assets.creatures.util.genomes.carnivore import CarnivoreFactory` then `CarnivoreFactory(0).spawn_asset(0)` directly in the blender commandline
+Once this is done, you can do things like `from infinigen.assets.objects.creatures.util.genomes.carnivore import CarnivoreFactory` then `CarnivoreFactory(0).spawn_asset(0)` directly in the blender commandline
 """
 
 # ruff: noqa

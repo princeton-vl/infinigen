@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 from mathutils import Vector
 
-from infinigen.assets.seating.chairs import ChairFactory
-from infinigen.assets.tables.dining_table import TableDiningFactory
+from infinigen.assets.objects.seating.chairs import ChairFactory
+from infinigen.assets.objects.tables.dining_table import TableDiningFactory
 from infinigen.assets.utils.bbox_from_mesh import bbox_mesh_from_hipoly
 from infinigen.core import tagging
 from infinigen.core import tags as t

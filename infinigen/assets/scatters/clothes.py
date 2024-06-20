@@ -9,7 +9,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.creatures.util.cloth_sim import bake_cloth
+from infinigen.assets.objects.creatures.util.cloth_sim import bake_cloth
 from infinigen.assets.utils.decorate import read_co, subsurf
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.util import blender as butil

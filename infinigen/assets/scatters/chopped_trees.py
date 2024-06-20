@@ -11,7 +11,7 @@ import mathutils
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.trees.generate import GenericTreeFactory, random_species
+from infinigen.assets.objects.trees.generate import GenericTreeFactory, random_species
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.detail import (

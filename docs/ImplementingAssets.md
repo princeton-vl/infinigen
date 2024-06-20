@@ -144,7 +144,7 @@ class MyAssetFactory(AssetFactory):
 
 You can implement the `create_asset` function however you wish so long as it produces a Blender Object as a result. Many existing assets use various different strategies, which you can use as examples:
 - `assets/flower.py` uses mostly auto-generated code from transpiling a hand-designed geometry node-graph.
-- `assets/grassland/grass_tuft.py` uses pure NumPy code to create and define a mesh.
+- `assets.objects.grassland/grass_tuft.py` uses pure NumPy code to create and define a mesh.
 - `assets/trees/infinigen_examples/generate_nature.py` combines transpiled materials & leaves with a python-only space colonization algorithm.
 
 The simplest implementation for a new asset is to create a geometry nodes equivelant, transpile it similarly to as shown above, copy the code into the same file as the template shown above, and implement the `create_asset` function as shown:

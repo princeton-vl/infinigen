@@ -22,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.assets.creatures.util.animation.run_cycle import follow_path
+from infinigen.assets.objects.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.lighting import sky_lighting
 from infinigen.assets.scatters import grass, pebbles, pine_needle, pinecone
 from infinigen.assets.weather import kole_clouds

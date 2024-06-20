@@ -13,7 +13,7 @@ from numpy.random import normal as N
 from numpy.random import uniform
 from numpy.random import uniform as U
 
-from infinigen.assets.creatures.util.nodegroups.shader import nodegroup_color_mask
+from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler

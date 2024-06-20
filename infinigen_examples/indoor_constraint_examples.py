@@ -8,12 +8,12 @@ from collections import OrderedDict
 
 from numpy.random import uniform
 
-from infinigen.assets import (
+from infinigen.assets.objects import (
     appliances,
     bathroom,
     decor,
     elements,
-    lighting,
+    lamp,
     seating,
     shelves,
     table_decorations,
@@ -265,7 +265,7 @@ def home_constraints():
 
     lights = obj[Semantics.Lighting]
     floor_lamps = (
-        lights[lighting.FloorLampFactory]
+        lights[lamp.FloorLampFactory]
         .related_to(rooms, cu.on_floor)
         .related_to(rooms, cu.against_wall)
     )
@@ -277,7 +277,7 @@ def home_constraints():
     # endregion
 
     # region CEILING LIGHTS
-    ceillights = lights[lighting.CeilingLightFactory]
+    ceillights = lights[lamp.CeilingLightFactory]
 
     constraints["ceiling_lights"] = rooms.all(
         lambda r: (ceillights.related_to(r, cu.hanging).count().in_range(1, 4))
@@ -296,7 +296,7 @@ def home_constraints():
     # endregion
 
     # region LAMPS
-    lamps = lights[lighting.DeskLampFactory].related_to(furniture, cu.ontop)
+    lamps = lights[lamp.DeskLampFactory].related_to(furniture, cu.ontop)
     constraints["lamps"] = rooms.all(
         lambda r: (
             # allow 0-2 lamps per room, placed on any sensible object

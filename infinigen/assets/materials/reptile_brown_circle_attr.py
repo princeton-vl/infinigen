@@ -8,7 +8,7 @@ import os
 
 import bpy
 
-from infinigen.assets.creatures.util.nodegroups.shader import nodegroup_color_mask
+from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 

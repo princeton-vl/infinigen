@@ -3,13 +3,13 @@
 
 # Authors: Alexander Raistrick
 
-from infinigen.assets import (
+from infinigen.assets.objects import (
     appliances,
     bathroom,
     clothes,
     decor,
     elements,
-    lighting,
+    lamp,
     seating,
     shelves,
     table_decorations,
@@ -205,15 +205,15 @@ def home_asset_usage():
     used_as[Semantics.Window] = {windows.WindowFactory}
 
     used_as[Semantics.CeilingLight] = {
-        lighting.CeilingLightFactory,
+        lamp.CeilingLightFactory,
     }
 
     used_as[Semantics.Lighting] = set().union(
         used_as[Semantics.CeilingLight],
         {
-            lighting.LampFactory,
-            lighting.FloorLampFactory,
-            lighting.DeskLampFactory,
+            lamp.LampFactory,
+            lamp.FloorLampFactory,
+            lamp.DeskLampFactory,
         },
     )
 
@@ -295,8 +295,8 @@ def home_asset_usage():
             used_as[Semantics.Dishware],
             used_as[Semantics.Utensils],
             {
-                lighting.CeilingLightFactory,
-                lighting.CeilingClassicLampFactory,
+                lamp.CeilingLightFactory,
+                lamp.CeilingClassicLampFactory,
                 seating.ChairFactory,
                 seating.BarChairFactory,
                 seating.OfficeChairFactory,
@@ -309,7 +309,7 @@ def home_asset_usage():
         used_as[Semantics.WallDecoration],
         {
             bathroom.HardwareFactory,
-            lighting.CeilingLightFactory,  # rotationally symetric
+            lamp.CeilingLightFactory,  # rotationally symetric
         },
     )
 
@@ -321,7 +321,7 @@ def home_asset_usage():
         elements.RugFactory,
         wall_decorations.MirrorFactory,
         wall_decorations.WallArtFactory,
-        lighting.CeilingLightFactory,
+        lamp.CeilingLightFactory,
     }
 
     # endregion

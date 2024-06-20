@@ -3,8 +3,12 @@
 
 # Authors: Lingjie Mei
 
-from infinigen.assets.seating import ChairFactory
-from infinigen.assets.tableware import FruitContainerFactory, PanFactory, PotFactory
+from infinigen.assets.objects.seating import ChairFactory
+from infinigen.assets.objects.tableware import (
+    FruitContainerFactory,
+    PanFactory,
+    PotFactory,
+)
 
 parameters = {
     "ChairFactory": {

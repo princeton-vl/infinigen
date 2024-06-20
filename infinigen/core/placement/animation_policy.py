@@ -20,7 +20,7 @@ from numpy.random import uniform as U
 from tqdm import tqdm
 
 import infinigen.assets.utils.mesh
-from infinigen.assets.creatures.util.geometry.curve import Curve
+from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import lerp

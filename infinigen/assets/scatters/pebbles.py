@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.rocks.blender_rock import BlenderRockFactory
+from infinigen.assets.objects.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances

@@ -12,7 +12,7 @@ import numpy as np
 from mathutils import Matrix
 from numpy.random import uniform
 
-from infinigen.assets.mushroom import MushroomFactory
+from infinigen.assets.objects.mushroom import MushroomFactory
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil

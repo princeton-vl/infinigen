@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.creatures.jellyfish import JellyfishFactory
+from infinigen.assets.objects.creatures.jellyfish import JellyfishFactory
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances

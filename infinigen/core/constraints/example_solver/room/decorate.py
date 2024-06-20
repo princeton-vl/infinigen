@@ -22,8 +22,8 @@ from tqdm import trange
 from trimesh.transformations import translation_matrix
 
 import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.assets.elements import PillarFactory, random_staircase_factory
-from infinigen.assets.elements.doors import random_door_factory
+from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
+from infinigen.assets.objects.elements.doors import random_door_factory
 from infinigen.assets.materials import plaster, tile
 from infinigen.assets.utils.decorate import (
     read_area,
@@ -36,7 +36,7 @@ from infinigen.assets.utils.decorate import (
     remove_vertices,
 )
 from infinigen.assets.utils.object import obj2trimesh
-from infinigen.assets.windows import WindowFactory
+from infinigen.assets.objects.windows import WindowFactory
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl

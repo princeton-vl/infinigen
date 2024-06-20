@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.assets.scatters.utils.wind import wind
-from infinigen.assets.small_plants import succulent
+from infinigen.assets.objects.small_plants import succulent
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 

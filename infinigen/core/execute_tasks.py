@@ -19,26 +19,10 @@ from frozendict import frozendict
 from numpy.random import uniform
 
 import infinigen.assets.scatters
-from infinigen.assets import cactus, creatures, fluid, rocks, trees, weather
-from infinigen.assets.materials import (
-    atmosphere_light_haze,
-    chunkyrock,
-    cobble_stone,
-    cracked_ground,
-    dirt,
-    ice,
-    lava,
-    mountain,
-    mud,
-    sand,
-    sandstone,
-    snow,
-    soil,
-    stone,
-    water,
-)
+from infinigen.assets.objects import cactus, creatures, rocks, trees
+from infinigen.assets import weather, fluid
+from infinigen.assets.objects.monocot import kelp
 from infinigen.tools.export import export_scene, triangulate_meshes
-from infinigen.assets.monocot import kelp
 from infinigen.assets.scatters import (
     ground_mushroom,
     ivy,

@@ -8,7 +8,7 @@
 import bpy
 import pytest
 
-from infinigen.assets.mollusk import MolluskFactory
+from infinigen.assets.objects.mollusk import MolluskFactory
 from infinigen.core.util import blender as butil
 from infinigen.tools import export
 

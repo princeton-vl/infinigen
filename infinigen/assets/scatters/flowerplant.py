@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from infinigen.assets.grassland.flowerplant import FlowerPlantFactory
+from infinigen.assets.objects.grassland.flowerplant import FlowerPlantFactory
 from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances

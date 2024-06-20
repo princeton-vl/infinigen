@@ -8,7 +8,7 @@ import numpy as np
 from mathutils import Vector
 from numpy.random import uniform as U
 
-from infinigen.assets.grassland.grass_tuft import GrassTuftFactory
+from infinigen.assets.objects.grassland.grass_tuft import GrassTuftFactory
 from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import make_asset_collection

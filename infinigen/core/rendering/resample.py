@@ -7,8 +7,7 @@
 import bpy
 
 from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.rocks.glowing_rocks import GlowingRocksFactory
-from infinigen.assets.trees.generate import BushFactory, TreeFactory
+from infinigen.assets.objects import rocks, trees
 from infinigen.core.nodes.node_utils import resample_node_group
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
@@ -47,9 +46,9 @@ def resample_scene(scene_seed):
         FixedSeed(scene_seed),
         Timer("Resample all placeholders"),
     ):  # CloudFactory too expensive
-        resample_all(GlowingRocksFactory)
-        resample_all(TreeFactory)
-        resample_all(BushFactory)
+        resample_all(rocks.GlowingRocksFactory)
+        resample_all(trees.TreeFactory)
+        resample_all(trees.BushFactory)
         # resample_all(CreatureFactory)
     with FixedSeed(scene_seed):
         sky_lighting.add_lighting()

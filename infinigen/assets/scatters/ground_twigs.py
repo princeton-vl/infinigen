@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.trees.generate import make_twig_collection, random_species
+from infinigen.assets.objects.trees.generate import make_twig_collection, random_species
 from infinigen.core import surface
 from infinigen.core.placement.instance_scatter import scatter_instances
 
