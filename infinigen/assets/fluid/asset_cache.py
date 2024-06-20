@@ -31,7 +31,7 @@ class FireCachingSystem:
     def __init__(
         self, asset_folder=None, create=False, max_fire_assets=3, max_per_kind=1
     ) -> None:
-        if asset_folder == None:
+        if asset_folder is None:
             raise ValueError("asset_folder not set for Fire")
 
         cache_folder = os.path.join(asset_folder, "Fire")

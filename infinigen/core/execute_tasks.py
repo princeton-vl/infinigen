@@ -444,7 +444,7 @@ def execute_tasks(
         with open(outpath / "info.pickle", "wb") as f:
             pickle.dump(info, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    camera = cam_util.set_active_camera(*camera_id)
+    cam_util.set_active_camera(*camera_id)
 
     group_collections()
 

@@ -286,7 +286,7 @@ def compose_nature(output_folder, scene_seed, **params):
         suffix="center",
     )
     deps = bpy.context.evaluated_depsgraph_get()
-    terrain_center_bvh = mathutils.bvhtree.BVHTree.FromObject(terrain_center, deps)
+    mathutils.bvhtree.BVHTree.FromObject(terrain_center, deps)
 
     pois = []  # objects / points of interest, for the camera to look at
 

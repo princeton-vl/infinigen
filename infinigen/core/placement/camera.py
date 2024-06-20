@@ -589,7 +589,7 @@ def geo_distrib_random_points(nw: NodeWrangler):
         input_kwargs={"Mesh": input.outputs["Geometry"], "Density": 500},
     )
     verts = nw.new_node(Nodes.PointsToVertices, [distribute])
-    output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": verts})
+    nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": verts})
 
 
 def sample_random_locs(surface: bpy.types.Object, eps=0.01):

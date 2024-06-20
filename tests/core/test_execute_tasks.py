@@ -17,7 +17,7 @@ def test_compose_cube():
     setup_gin("infinigen_examples/configs_nature")
 
     def compose_cube(output_folder, scene_seed, **params):
-        camera_rigs = camera.spawn_camera_rigs()
+        camera.spawn_camera_rigs()
         bpy.ops.mesh.primitive_cube_add()
 
     output = Path("/tmp/test_compose_cube")

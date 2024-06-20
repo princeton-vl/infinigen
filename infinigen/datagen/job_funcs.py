@@ -144,7 +144,7 @@ def queue_coarse(
     Generating the coarse scene
     """
 
-    input_suffix = get_suffix(input_indices)
+    get_suffix(input_indices)
     output_suffix = get_suffix(output_indices)
 
     output_folder = Path(f"{folder}/coarse{output_suffix}")
@@ -194,7 +194,7 @@ def queue_populate(
     """
 
     input_suffix = get_suffix(input_indices)
-    output_suffix = get_suffix(output_indices)
+    get_suffix(output_indices)
 
     input_folder = folder / f"{input_prefix}{input_suffix}"
     output_folder = input_folder

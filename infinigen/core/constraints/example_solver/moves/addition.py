@@ -142,8 +142,8 @@ class Resample(moves.Move):
         os.obj, os.generator = sample_rand_placeholder(os.generator.__class__)
 
         if self.align_corner is not None:
-            c_old = self._backup_obj.bound_box[self.align_corner]
-            c_new = os.obj.bound_box[self.align_corner]
+            self._backup_obj.bound_box[self.align_corner]
+            os.obj.bound_box[self.align_corner]
             raise NotImplementedError(f"{self.align_corner=}")
 
         parse_scene.add_to_scene(state.trimesh_scene, os.obj, preprocess=True)

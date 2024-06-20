@@ -99,7 +99,7 @@ def test_greedy_partition_bathroom():
 
 def test_greedy_partition_multilevel():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    ex.home_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     bathroom = cl.scene()[{t.Semantics.Room, t.Semantics.Bathroom}].excludes(
@@ -487,7 +487,7 @@ def test_forall_narrow_loopvar():
 def test_forall_sumconst():
     scene = cl.scene()
     rooms = scene[t.Semantics.Room]
-    furniture = scene[t.Semantics.Furniture]
+    scene[t.Semantics.Furniture]
 
     sumcons = rooms.sum(lambda r: cl.constant(1))
     assert greedy.filter_constraints(sumcons, r.Domain({t.Semantics.Room}))[1]

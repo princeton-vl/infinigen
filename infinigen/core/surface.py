@@ -53,7 +53,7 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
             attrs={"data_type": data_type},
             input_kwargs={"Geometry": nw.new_node(Nodes.GroupInput), "Value": value},
         )
-        output = nw.new_node(
+        nw.new_node(
             Nodes.GroupOutput,
             input_kwargs={
                 "Geometry": (capture, "Geometry"),
@@ -61,7 +61,7 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
             },
         )
 
-    mod = add_geomod(
+    add_geomod(
         objs,
         attr_writer,
         name=f"write_attribute({name})",
@@ -381,7 +381,7 @@ def add_geomod(
                 mod.node_group = bpy.data.node_groups[name]
             else:
                 # print("input_kwargs", input_kwargs, geo_func.__name__)
-                if mod.node_group == None:
+                if mod.node_group is None:
                     group = geometry_node_group_empty_new()
                     mod.node_group = group
                 nw = NodeWrangler(mod)

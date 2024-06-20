@@ -31,7 +31,7 @@ def check_pre_move_validity(scene, a, parent_dict, dx, dy):
     parent = parent_dict[a]
     a_mesh = meshes_from_names(scene, a)[0]
     parent_mesh = meshes_from_names(scene, parent)[0]
-    blender_mesh = blender_objs_from_names(a)[0]
+    blender_objs_from_names(a)[0]
 
     # move a mesh by dx, dy and check if the projection of a_mesh is contained in parent_mesh
     # a_mesh.apply_transform(trimesh.transformations.compose_matrix(translate=[dx,dy,0]))

@@ -1088,7 +1088,7 @@ def accessibility_cost(scene, a, b, normal, visualize=False, fast=True):
     b_trimeshes = iu.meshes_from_names(scene, b)
 
     a_objs = iu.blender_objs_from_names(a)
-    b_objs = iu.blender_objs_from_names(b)
+    iu.blender_objs_from_names(b)
 
     score = 0
     for a_name, a_obj, a_trimesh in zip(a, a_objs, a_trimeshes):
@@ -1171,7 +1171,7 @@ def center_stable_surface(scene, a, state):
             parent_all_planes = state.planes.get_tagged_planes(parent_obj, parent_tags)
             obj_all_planes = state.planes.get_tagged_planes(obj, obj_tags)
             parent_plane = parent_all_planes[relation_state.parent_plane_idx]
-            obj_plane = obj_all_planes[relation_state.child_plane_idx]
+            obj_all_planes[relation_state.child_plane_idx]
 
             if relation_state.parent_plane_idx >= len(parent_all_planes):
                 logging.warning(
@@ -1212,11 +1212,11 @@ def reflectional_asymmetry_score(
     if b is None or len(b) == 0:
         return 0
 
-    a_trimeshes = iu.meshes_from_names(scene, a)
+    iu.meshes_from_names(scene, a)
     b_trimesh = iu.meshes_from_names(scene, b)[0]
 
     a_objs = iu.blender_objs_from_names(a)
-    b_obj = iu.blender_objs_from_names(b)[0]
+    iu.blender_objs_from_names(b)[0]
 
     bbox = b_trimesh.bounding_box_oriented
     vertices = bbox.vertices
@@ -1237,8 +1237,8 @@ def coplanarity_cost_pair(scene, a: str, b: str):
     a_trimesh = iu.meshes_from_names(scene, a)[0]
     b_trimesh = iu.meshes_from_names(scene, b)[0]
 
-    a_obj = iu.blender_objs_from_names(a)[0]
-    b_obj = iu.blender_objs_from_names(b)[0]
+    iu.blender_objs_from_names(a)[0]
+    iu.blender_objs_from_names(b)[0]
 
     a_trimesh_bbox = a_trimesh.bounding_box_oriented
     b_trimesh_bbox = b_trimesh.bounding_box_oriented
@@ -1299,7 +1299,7 @@ def coplanarity_cost(scene, a: Union[str, list[str]]):
     if isinstance(a, str):
         a = [a]
 
-    a_trimeshes = iu.meshes_from_names(scene, a)
+    iu.meshes_from_names(scene, a)
     a_objs = iu.blender_objs_from_names(a)
 
     # Order objects by principal axis

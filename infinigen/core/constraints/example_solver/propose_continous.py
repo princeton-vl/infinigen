@@ -118,7 +118,7 @@ def propose_reinit_pose(
 
     while True:
         obj_state_name = np.random.choice(candidates)
-        obj_state = state.objs[obj_state_name]
+        state.objs[obj_state_name]
 
         yield moves.ReinitPoseMove(
             names=[obj_state_name],

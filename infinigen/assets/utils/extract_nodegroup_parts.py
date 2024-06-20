@@ -21,7 +21,7 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
     vert = butil.spawn_vert("extract_nodegroup_geo.temp")
 
     butil.modify_mesh(vert, type="NODES", apply=False)
-    if vert.modifiers[0].node_group == None:
+    if vert.modifiers[0].node_group is None:
         group = geometry_node_group_empty_new()
         vert.modifiers[0].node_group = group
     ng = vert.modifiers[0].node_group

@@ -451,7 +451,7 @@ def home_constraints():
     sink_flush_on_counter = cl.StableAgainst(
         cu.bottom, {Subpart.SupportSurface}, margin=0.001
     )
-    sink_against_wall = cl.StableAgainst(cu.back, cu.walltags, margin=0.1)
+    cl.StableAgainst(cu.back, cu.walltags, margin=0.1)
     kitchen_sink = obj[Semantics.Sink][table_decorations.SinkFactory].related_to(
         countertops, sink_flush_on_counter
     )
@@ -622,9 +622,7 @@ def home_constraints():
     sofa_back_near_wall = cl.StableAgainst(
         cu.back, cu.walltags, margin=uniform(0.1, 0.3)
     )
-    sofa_side_near_wall = cl.StableAgainst(
-        cu.side, cu.walltags, margin=uniform(0.1, 0.3)
-    )
+    cl.StableAgainst(cu.side, cu.walltags, margin=uniform(0.1, 0.3))
 
     def freestanding(o, r):
         return o.related_to(r).related_to(r, -sofa_back_near_wall)

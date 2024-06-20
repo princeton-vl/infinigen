@@ -123,7 +123,7 @@ def bucketed_instance(
         upper_val = nw.expose_input(f"Cutoff_{idx + 1}", val=cutoff)
 
         distance_thresh = _in_bucket(distance, prev_upper_val, upper_val, nw)
-        lower_res_collection = nw.new_node(
+        nw.new_node(
             Nodes.MergeByDistance,
             [collection_info],
             input_kwargs={

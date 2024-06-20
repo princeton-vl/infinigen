@@ -628,7 +628,6 @@ class FishFin(PartFactory):
             "AffineX": sample_range(0, 0.3),
             "AffineZ": sample_range(0, 1),
             "Value": 0.5,
-            "Value": 0.5,
             "NoiseWeight": 0.0,
             "BumpX": 0.0,
             "BumpZ": 1.0,

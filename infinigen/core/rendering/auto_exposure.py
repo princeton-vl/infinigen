@@ -59,7 +59,7 @@ def nodegroup_auto_exposure(nw: NodeWrangler):
         input_kwargs={"Image": group_input.outputs["Image"], "White Level": multiply_1},
     )
 
-    group_output = nw.new_node(
+    nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Image": rgb_curves},
         attrs={"is_active_output": True},

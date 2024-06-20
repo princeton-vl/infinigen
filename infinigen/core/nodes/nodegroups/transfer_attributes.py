@@ -92,7 +92,7 @@ def transfer_all(source, target, attributes=None, uvs=False):
 def copy_geom_info(nw, source, target):
     # simply copy the geom back to the target from source
     object_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": source})
-    group_output = nw.new_node(
+    nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": object_info.outputs["Geometry"],
@@ -130,4 +130,4 @@ def transfer_att_node(nw, source, target, attribute_to_transfer_list=[]):
 
         group_output_sockets[att_name] = (transfer_attribute, "Value")
 
-    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs=group_output_sockets)
+    nw.new_node(Nodes.GroupOutput, input_kwargs=group_output_sockets)

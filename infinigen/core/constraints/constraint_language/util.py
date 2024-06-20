@@ -116,7 +116,7 @@ def compute_outward_normal(line, polygon):
 
     # Move a tiny bit in the direction of the normals to check which points outside
     test_point_1 = mid_point.coords[0] + 0.01 * normal_vector_1
-    test_point_2 = mid_point.coords[0] + 0.01 * normal_vector_2
+    mid_point.coords[0] + 0.01 * normal_vector_2
 
     # Return the normal for which the test point lies outside the polygon
     if polygon.contains(Point(test_point_1)):

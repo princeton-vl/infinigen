@@ -261,7 +261,7 @@ def tag_canonical_surfaces(obj, rtol=0.01):
     obj.update_from_editmode()
 
     n_vert = len(obj.data.vertices)
-    n_poly = len(obj.data.polygons)
+    len(obj.data.polygons)
 
     verts = np.empty(n_vert * 3, dtype=float)
     obj.data.vertices.foreach_get("co", verts)

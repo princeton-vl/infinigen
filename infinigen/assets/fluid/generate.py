@@ -54,7 +54,7 @@ class FluidFactory(AssetFactory):
                     dom = obj
                 else:
                     flow = obj
-            assert dom != None and flow != None
+            assert dom is not None and flow is not None
 
             bpy.context.view_layer.objects.active = dom
             print(self.fluid_type)
@@ -78,7 +78,7 @@ class FluidFactory(AssetFactory):
                     dom = obj
                 elif obj.modifiers["Fluid"].fluid_type == "FLOW":
                     obj.hide_render = True
-            assert dom != None
+            assert dom is not None
 
             cache_dir = cache_dirs[i]
             mod = dom.modifiers["Fluid"]

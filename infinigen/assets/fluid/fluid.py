@@ -754,7 +754,7 @@ def import_obj_simulate(
 
 
 def find_root(node):
-    if node.parent == None:
+    if node.parent is None:
         return node
     return find_root(node.parent)
 
@@ -898,7 +898,7 @@ def fire_smoke_ground_truth(domain):
     data_dir = os.path.join(cache_dir, "data")
     contents = [f for f in os.listdir(data_dir)]
     filepath = os.path.join(data_dir, contents[0])
-    files = [{"name": f, "name": f} for f in contents]
+    files = [{"name": f} for f in contents]
     bpy.ops.object.volume_import(filepath=filepath, directory=data_dir, files=files)
     vol = bpy.context.object
     vol.location += translation

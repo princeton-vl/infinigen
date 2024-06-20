@@ -222,7 +222,7 @@ def populate_collection(
                 obj = factory.spawn_asset(
                     int(i_chosen), placeholder=p, distance=dist, vis_distance=vis_dist
                 )
-                dom = cache_system.link_fire(full_sim_folder, sim_folder, obj, factory)
+                cache_system.link_fire(full_sim_folder, sim_folder, obj, factory)
             else:
                 break
         else:
