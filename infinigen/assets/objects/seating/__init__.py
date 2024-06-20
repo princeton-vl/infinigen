@@ -5,7 +5,11 @@
 
 from .bed import BedFactory
 from .bedframe import BedFrameFactory
-from .chairs import *
+from .chairs import (
+    ChairFactory,
+    BarChairFactory,
+    OfficeChairFactory,
+)
 from .mattress import MattressFactory
 from .pillow import PillowFactory
 from .sofa import ArmChairFactory, SofaFactory

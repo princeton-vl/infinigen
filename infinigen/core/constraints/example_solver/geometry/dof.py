@@ -291,10 +291,10 @@ def apply_relations_surfacesample(
         parent_planes.append(parent_plane)
         parent_objs.append(parent_obj)
         match relation_state.relation:
-            case cl.StableAgainst(child_tags, parent_tags, margin):
+            case cl.StableAgainst(_child_tags, parent_tags, margin):
                 margins.append(margin)
                 parent_tag_list.append(parent_tags)
-            case cl.SupportedBy(child_tags, parent_tags):
+            case cl.SupportedBy(_parent_tags, parent_tags):
                 margins.append(0)
                 parent_tag_list.append(parent_tags)
             case _:

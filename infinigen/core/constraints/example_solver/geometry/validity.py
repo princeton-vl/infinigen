@@ -69,14 +69,14 @@ def all_relations_valid(state, name):
     rels = state.objs[name].relations
     for i, relation_state in enumerate(rels):
         match relation_state.relation:
-            case cl.StableAgainst(child_tags, parent_tags, margin):
+            case cl.StableAgainst(_child_tags, _parent_tags, _margin):
                 res = stable_against(state, name, relation_state)
                 if not res:
                     logger.debug(
                         f"{name} failed relation {i=}/{len(rels)} {relation_state.relation} on {relation_state.target_name}"
                     )
                     return False
-            case unmatched:
+            case _:
                 raise TypeError(f"Unhandled {relation_state.relation}")
 
     return True

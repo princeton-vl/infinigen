@@ -3,9 +3,12 @@
 
 # Authors: Hongyu Wen
 
-from infinigen.infinigen_gpl.surfaces import *
+from infinigen.infinigen_gpl.surfaces import snow
 
+# too verbose to import all shaders one by one
+# ruff: noqa: F403
 from . import *
+
 from .art import Art, ArtFabric, ArtRug, DarkArt
 from .fabrics import (
     coarse_knit_fabric,

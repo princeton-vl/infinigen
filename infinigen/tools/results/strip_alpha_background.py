@@ -6,8 +6,11 @@
 
 import argparse
 from pathlib import Path
+import logging
 
 import imageio
+
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("folder", type=Path, nargs="+")
@@ -24,7 +27,8 @@ def main(thresh, folder):
         for imgpath in folder.iterdir():
             try:
                 img = imageio.imread(imgpath)
-            except:
+            except FileNotFoundError:
+                logger.warning(f"Could not read {imgpath}")
                 continue
 
             pixs = img.reshape(-1, 4)

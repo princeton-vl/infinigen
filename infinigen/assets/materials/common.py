@@ -36,7 +36,7 @@ def apply(obj, shader_func, selection=None, *args, **kwargs):
                 material_index = np.where(
                     1 - sel if selection.startswith("!") else sel, index, material_index
                 )
-            except:
+            except KeyError:
                 material_index = np.zeros(len(material_index), dtype=int)
         else:
             material_index = np.where(selection, index, material_index)

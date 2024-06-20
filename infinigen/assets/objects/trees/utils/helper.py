@@ -17,7 +17,7 @@ def set_active_obj(obj):
     if not C.active_object == obj:
         try:
             bpy.ops.object.mode_set(mode="OBJECT")
-        except:
+        except Exception:  # TODO narrow
             pass
         bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)

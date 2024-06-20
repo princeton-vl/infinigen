@@ -83,7 +83,7 @@ def read_attr_data(obj, attr, domain="POINT", result_dtype=None) -> np.array:
     elif domain == "FACE":
         n = len(obj.data.polygons)
     else:
-        raise NotImplementedError
+        raise ValueError(f"Unknown domain {domain}")
 
     dim = node_info.DATATYPE_DIMS[attr.data_type]
     field = node_info.DATATYPE_FIELDS[attr.data_type]

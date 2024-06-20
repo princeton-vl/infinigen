@@ -11,13 +11,11 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
+from infinigen.core.nodes.node_wrangler import NodeWrangler
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_ice"
 name = "ice"
-
-
-from infinigen.core.nodes.node_wrangler import NodeWrangler
 
 
 def shader_ice(nw: NodeWrangler):

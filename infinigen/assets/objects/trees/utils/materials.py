@@ -212,7 +212,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
         if img not in D.images:
             try:
                 D.images.load(txt_paths[img_idx])
-            except:
+            except FileNotFoundError:
                 pass
 
     # Initialize and update diff, rough, and disp shader nodes
@@ -223,7 +223,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
             if n_idx > 0:
                 im.colorspace_settings.name = "Non-Color"
             n.image = im
-        except:
+        except KeyError:
             pass
 
     nt = m.node_tree

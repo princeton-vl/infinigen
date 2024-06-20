@@ -34,23 +34,28 @@ def cut_polygon_by_line(polygon, *args):
     return list(polygons)
 
 
-def safe_polygon2obj(p, reversed=False, z=0):
-    ps = [p] if p.geom_type == "Polygon" else p.geoms
-    objs_ = []
-    for p in ps:
-        p = orient(p).segmentize(0.005)
-        try:
-            obj = triangulate_polygon2obj(p)
-            objs_.append(obj)
-        except:
-            try:
-                obj = polygon2obj(p)
-                objs_.append(obj)
-            except:
-                pass
-    if len(objs_) == 0:
+def safe_polygon_to_obj_single(p: Polygon):
+    p = orient(p).segmentize(0.005)
+    try:
+        return triangulate_polygon2obj(p)
+    except Exception:  # TODO narrow this
+        pass
+
+    try:
+        return polygon2obj(p)
+    except Exception:  # TODO narrow this
+        pass
+
+
+def safe_polygon2obj(poly, reversed=False, z=0):
+    ps = [poly] if poly.geom_type == "Polygon" else poly.geoms
+
+    objs = [safe_polygon_to_obj_single(p) for p in ps]
+    objs = [o for o in objs if o is not None]
+
+    if len(objs) == 0:
         return None
-    obj = join_objects(objs_)
+    obj = join_objects(objs)
     obj.location[-1] = z
     butil.apply_transform(obj, True)
     point_normal_up(obj, reversed)
