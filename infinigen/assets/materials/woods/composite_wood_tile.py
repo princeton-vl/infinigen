@@ -3,8 +3,9 @@
 
 # Authors: Lingjie Mei
 
+from infinigen.assets.materials import tile
 
-from .. import shader_wood, tile
+from .wood import shader_wood
 
 
 def apply(

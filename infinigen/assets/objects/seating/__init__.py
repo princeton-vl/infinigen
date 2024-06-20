@@ -6,8 +6,8 @@
 from .bed import BedFactory
 from .bedframe import BedFrameFactory
 from .chairs import (
-    ChairFactory,
     BarChairFactory,
+    ChairFactory,
     OfficeChairFactory,
 )
 from .mattress import MattressFactory

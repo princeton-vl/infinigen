@@ -11,6 +11,7 @@ import gin
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.objects.cloud import CloudFactory
 from infinigen.assets.objects.fruits import (
     apple,
     blackberry,
@@ -30,7 +31,6 @@ from infinigen.assets.objects.leaves import (
 )
 from infinigen.assets.objects.trees import branch, tree, treeconfigs
 from infinigen.assets.utils.misc import toggle_hide, toggle_show
-from infinigen.assets.weather.cloud.generate import CloudFactory
 from infinigen.core import surface
 from infinigen.core.placement import detail
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection

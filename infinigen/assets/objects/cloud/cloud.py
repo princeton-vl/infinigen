@@ -10,7 +10,7 @@ from scipy.ndimage import distance_transform_edt
 from skimage import measure
 
 from infinigen.assets.lighting import sky_lighting
-from infinigen.assets.weather.cloud.node import (
+from infinigen.assets.objects.cloud.node import (
     geometry_func,
     scatter_func,
     shader_material,

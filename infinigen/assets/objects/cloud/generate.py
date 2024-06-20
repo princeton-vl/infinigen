@@ -9,13 +9,6 @@ import gin
 import numpy as np
 
 from infinigen.assets.utils.object import new_cube
-from infinigen.assets.weather.cloud.cloud import (
-    Altocumulus,
-    Cumulonimbus,
-    Cumulus,
-    Stratocumulus,
-    create_3d_grid,
-)
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
@@ -23,6 +16,14 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import random_general as rg
+
+from .cloud import (
+    Altocumulus,
+    Cumulonimbus,
+    Cumulus,
+    Stratocumulus,
+    create_3d_grid,
+)
 
 
 @gin.configurable

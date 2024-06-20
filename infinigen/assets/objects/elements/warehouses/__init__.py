@@ -4,5 +4,4 @@
 # Authors: Lingjie Mei
 
 from .pallet import PalletFactory
-
 from .rack import RackFactory

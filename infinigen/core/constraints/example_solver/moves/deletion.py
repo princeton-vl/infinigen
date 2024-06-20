@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry import parse_scene
-from infinigen.core.constraints.example_solver.moves import Move
+from infinigen.core.constraints.example_solver.moves.moves import Move
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.objects.debris import MossFactory
+from infinigen.assets.objects.particles import MossFactory
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
