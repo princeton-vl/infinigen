@@ -56,9 +56,9 @@ compose_nature.camera_based_lighting_chance = 0.0
 
 compose_nature.wind_chance = 0.5
 compose_nature.turbulence_chance = 0.3
-wind_effector.strength = ('uniform', 0, 0.02)
-turbulence_effector.strength = ('uniform', 0, 0.02)
-turbulence_effector.noise = ('uniform', 0, 0.015)
+WindEffector.strength = ('uniform', 0, 0.02)
+TurbulenceEffector.strength = ('uniform', 0, 0.02)
+TurbulenceEffector.noise = ('uniform', 0, 0.015)
 
 compose_nature.corals_chance = 0.0
 compose_nature.seaweed_chance = 0.0

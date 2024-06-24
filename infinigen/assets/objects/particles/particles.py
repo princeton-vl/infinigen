@@ -5,8 +5,6 @@
 
 
 import bpy
-import gin
-import numpy as np
 from numpy.random import normal as N
 
 from infinigen.assets.materials import dirt
@@ -15,7 +13,6 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
-from infinigen.core.util.random import random_general
 from infinigen.infinigen_gpl.surfaces import snow
 
 
@@ -132,27 +129,3 @@ class SnowflakeFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         snow.apply(assets, subsurface=0)
-
-
-@gin.configurable
-def wind_effector(strength):
-    bpy.ops.object.effector_add(type="WIND")
-    wind = bpy.context.active_object
-
-    yaw = np.random.uniform(0, 360)
-    wind.rotation_euler = np.deg2rad((90, 0, yaw))
-
-    wind.field.strength = random_general(strength)
-    wind.field.flow = 0
-
-    return wind
-
-
-@gin.configurable
-def turbulence_effector(strength, noise, size=1, flow=0):
-    bpy.ops.object.effector_add(type="TURBULENCE")
-    wind = bpy.context.active_object
-    wind.field.strength = random_general(strength)
-    wind.field.noise = random_general(noise)
-    wind.field.flow = random_general(flow)
-    wind.field.size = random_general(size)

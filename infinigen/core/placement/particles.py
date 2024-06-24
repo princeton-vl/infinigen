@@ -12,13 +12,9 @@ from copy import copy
 from typing import Union
 
 import bpy
-from numpy.random import normal as N
-from numpy.random import uniform
-from numpy.random import uniform as U
 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
-from infinigen.core.util.random import log_uniform
 
 logger = logging.getLogger(__name__)
 
@@ -150,96 +146,3 @@ def particle_system(
         setattr(system.settings, k, v)
 
     return emitter, system
-
-
-def falling_leaf_settings():
-    rate = U(0.001, 0.006)
-    dur = max(bpy.context.scene.frame_end - bpy.context.scene.frame_start, 500)
-
-    return dict(
-        warmup_frames=1024,
-        density=rate * dur,
-        particle_size=N(0.5, 0.15),
-        size_random=U(0.1, 0.2),
-        lifetime=dur,
-        use_rotations=True,
-        rotation_factor_random=1.0,
-        use_die_on_collision=False,
-        drag_factor=0.2,
-        damping=0.3,
-        mass=0.01,
-        normal_factor=0.0,
-        angular_velocity_mode="RAND",
-        angular_velocity_factor=U(0, 3),
-        use_dynamic_rotation=True,
-    )
-
-
-def floating_dust_settings():
-    return dict(
-        mass=0.0001,
-        count=int(7000 * U(0.5, 2)),
-        lifetime=1000,
-        warmup_frames=100,
-        particle_size=0.001,
-        size_random=uniform(0.7, 1.0),
-        emit_from="VOLUME",
-        damping=1.0,
-        drag_factor=1.0,
-        effect_gravity=U(0.3, 0.7),  # partially buoyant
-    )
-
-
-def marine_snow_setting():
-    return dict(
-        mass=0.0001,
-        count=int(10000 * U(0.5, 2)),
-        lifetime=1000,
-        warmup_frames=100,
-        particle_size=0.005,
-        size_random=uniform(0.7, 1.0),
-        emit_from="VOLUME",
-        brownian_factor=log_uniform(0.0002, 0.0005),
-        damping=log_uniform(0.95, 0.98),
-        drag_factor=uniform(0.85, 0.95),
-        factor_random=uniform(0.1, 0.2),
-        use_rotations=True,
-        phase_factor_random=uniform(0.2, 0.5),
-        use_dynamic_rotation=True,
-        effect_gravity=U(0, 0.5),
-    )
-
-
-def rain_settings():
-    drops_per_sec_m2 = U(0.05, 1)
-    velocity = U(9, 20)
-    lifetime = 100
-
-    return dict(
-        mass=0.001,
-        warmup_frames=100,
-        density=drops_per_sec_m2 * lifetime,
-        lifetime=lifetime,
-        particle_size=U(0.01, 0.015),
-        size_random=U(0.005, 0.01),
-        normal_factor=-velocity,
-        effect_gravity=0.0,
-        use_die_on_collision=True,
-    )
-
-
-def snow_settings():
-    density = U(2, 26)
-
-    return dict(
-        mass=0.001,
-        density=density,
-        lifetime=2000,
-        warmup_frames=1000,
-        particle_size=0.003,
-        emit_from="FACE",
-        damping=1.0,
-        drag_factor=1.0,
-        use_rotations=True,
-        use_die_on_collision=True,
-    )

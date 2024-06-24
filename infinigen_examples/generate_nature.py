@@ -24,10 +24,13 @@ logging.basicConfig(
 from infinigen.assets import fluid, lighting, weather
 from infinigen.assets.objects import (
     cactus,
+    cloud,
     creatures,
     monocot,
     rocks,
     trees,
+    leaves,
+    particles,
 )
 from infinigen.assets.scatters import (
     chopped_trees,
@@ -73,8 +76,6 @@ from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.placement import (
     density,
-    factory,
-    particles,
     placement,
     split_in_view,
 )
@@ -187,7 +188,7 @@ def compose_nature(output_folder, scene_seed, **params):
     p.run_stage("bushes", add_bushes, terrain_mesh)
 
     def add_clouds(terrain_mesh):
-        cloud_factory = weather.CloudFactory(
+        cloud_factory = cloud.CloudFactory(
             int_hash((scene_seed, 0)), coarse=True, terrain_mesh=terrain_mesh
         )
         placement.scatter_placeholders(cloud_factory.spawn_locations(), cloud_factory)
@@ -644,68 +645,63 @@ def compose_nature(output_folder, scene_seed, **params):
         ),
     )
 
-    p.run_stage("wind", weather.particles.wind_effector)
-    p.run_stage("turbulence", weather.particles.turbulence_effector)
-    emitter_off = Vector((0, 0, 5))  # to allow space to fall into frame from off screen
+    p.run_stage("wind", lambda: weather.WindEffector(np.randint(1e7))(0))
+    p.run_stage("turbulence", lambda: weather.TurbulenceEffector(np.randint(1e7))(0))
 
-    def add_leaf_particles():
-        return particles.particle_system(
-            emitter=butil.spawn_plane(location=emitter_off, size=60),
-            subject=trees.random_leaf_collection(n=5, season=season),
-            settings=particles.falling_leaf_settings(),
+    overhead_emitter = butil.spawn_plane(location=Vector((0, 0, 5)), size=60)
+    butil.constrain_object(
+        overhead_emitter, "COPY_LOCATION", use_offset=True, target=camera_rigs[0]
+    )
+
+    cube_emitter = butil.spawn_cube(location=Vector(), size=30)
+    butil.constrain_object(
+        cube_emitter, "COPY_LOCATION", use_offset=True, target=camera_rigs[0]
+    )
+
+    def leaf_particles():
+        gen = weather.FallingParticles(
+            leaves.LeafFactoryV2(randint(1e7)),
+            distribution=weather.falling_leaf_param_distribution,
         )
+        return gen(overhead_emitter)
 
-    def add_rain_particles():
-        return particles.particle_system(
-            emitter=butil.spawn_plane(location=emitter_off, size=30),
-            subject=factory.make_asset_collection(
-                weather.particles.RaindropFactory(scene_seed), 5
-            ),
-            settings=particles.rain_settings(),
+    p.run_stage("leaf_particles", leaf_particles, prereq="trees")
+
+    def rain_particles():
+        gen = weather.FallingParticles(
+            particles.RaindropFactory(randint(1e7)),
+            distribution=weather.rain_param_distribution,
         )
+        return gen(overhead_emitter)
 
-    def add_dust_particles():
-        return particles.particle_system(
-            emitter=butil.spawn_cube(location=Vector(), size=30),
-            subject=factory.make_asset_collection(
-                weather.particles.DustMoteFactory(scene_seed), 5
-            ),
-            settings=particles.floating_dust_settings(),
+    p.run_stage("rain_particles", rain_particles)
+
+    def dust_particles():
+        gen = weather.FallingParticles(
+            particles.DustMoteFactory(randint(1e7)),
+            distribution=weather.floating_dust_param_distribution,
         )
+        return gen(cube_emitter)
 
-    def add_marine_snow_particles():
-        return particles.particle_system(
-            emitter=butil.spawn_cube(location=Vector(), size=30),
-            subject=factory.make_asset_collection(
-                weather.particles.DustMoteFactory(scene_seed), 5
-            ),
-            settings=particles.marine_snow_setting(),
+    p.run_stage("dust_particles", dust_particles)
+
+    def marine_snow_particles():
+        gen = weather.FallingParticles(
+            particles.MarineSnowFactory(randint(1e7)),
+            distribution=weather.marine_snow_param_distribution,
         )
+        return gen(cube_emitter)
 
-    def add_snow_particles():
-        return particles.particle_system(
-            emitter=butil.spawn_plane(location=emitter_off, size=60),
-            subject=factory.make_asset_collection(
-                weather.particles.SnowflakeFactory(scene_seed), 5
-            ),
-            settings=particles.snow_settings(),
+    p.run_stage("marine_snow_particles", marine_snow_particles)
+
+    def snow_particles():
+        gen = weather.FallingParticles(
+            particles.SnowflakeFactory(randint(1e7)),
+            distribution=weather.snow_param_distribution,
         )
+        return gen(overhead_emitter)
 
-    particle_systems = [
-        p.run_stage("leaf_particles", add_leaf_particles, prereq="trees"),
-        p.run_stage("rain_particles", add_rain_particles),
-        p.run_stage("dust_particles", add_dust_particles),
-        p.run_stage("marine_snow_particles", add_marine_snow_particles),
-        p.run_stage("snow_particles", add_snow_particles),
-    ]
-
-    for emitter, system in filter(lambda s: s is not None, particle_systems):
-        with logging_util.Timer("Baking particle system"):
-            butil.constrain_object(
-                emitter, "COPY_LOCATION", use_offset=True, target=cam.parent
-            )
-            particles.bake(emitter, system)
-        butil.put_in_collection(emitter, butil.get_collection("particles"))
+    p.run_stage("snow_particles", snow_particles)
 
     placeholders = list(
         itertools.chain.from_iterable(

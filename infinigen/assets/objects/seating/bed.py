@@ -13,7 +13,6 @@ from infinigen.assets.objects.seating import bedframe, mattress, pillow
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import decimate, read_co, subsurf
 from infinigen.assets.utils.object import obj2trimesh
-from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
@@ -96,7 +95,6 @@ class BedFactory(bedframe.BedFrameFactory):
         mattress = self.make_mattress(i)
         sheet = self.make_sheet(i, mattress, frame)
         cover = self.make_cover(i, sheet, mattress)
-        self.cloth_scatter.apply(sheet)
 
         n_pillows = np.random.randint(2, 4)
         if n_pillows > 0:

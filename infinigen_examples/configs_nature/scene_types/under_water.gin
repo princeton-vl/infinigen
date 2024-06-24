@@ -76,7 +76,7 @@ scene.waterbody_chance = 1
 Terrain.under_water = 1
 
 compose_nature.turbulence_chance = 0.7
-turbulence_effector.strength = ("uniform", 0, 7)
-turbulence_effector.size = ("uniform", 1.5, 4.5)
-turbulence_effector.flow = 1
-turbulence_effector.noise = 10
+TurbulenceEffector.strength = ("uniform", 0, 7)
+TurbulenceEffector.size = ("uniform", 1.5, 4.5)
+TurbulenceEffector.flow = 1
+TurbulenceEffector.noise = 10
