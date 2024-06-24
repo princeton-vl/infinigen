@@ -34,7 +34,7 @@ dependencies = [
     "landlab>=2.6.0",
     "matplotlib",
     "networkx",
-    "numpy<2",
+    "numpy<3",
     "opencv-python",
     "pandas",
     "psutil",
@@ -69,7 +69,7 @@ dev = [
 
 vis = [
     "numba", # for ground truth visuals
-    "pyglet<2" # for trimesh_scene.show()
+    "pyglet<3" # for trimesh_scene.show()
 ]
 
 wandb = [
