@@ -172,7 +172,7 @@ We recommend this command as a starting point for generating high quality videos
 ````
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config video high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config trailer_video high_quality_terrain
 ````
 
 #### Creating large-scale stereo datasets
@@ -218,7 +218,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 ```
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \
     --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
 ```
 
@@ -228,7 +228,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 ```
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 30000 --config video high_quality_terrain \
+    --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \
     --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
 ```
 
