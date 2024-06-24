@@ -57,7 +57,7 @@ def nodegroup_pineapple_surface(
         nodegroup_random_rotation_scale().name,
         input_kwargs={
             "random seed": group_input.outputs["random seed"],
-            " rot std z": 0.3,
+            "rot std": 0.3,
             "scale mean": group_input.outputs["cell scale"],
         },
     )

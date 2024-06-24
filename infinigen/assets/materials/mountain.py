@@ -218,7 +218,7 @@ def shader_MOUNTAIN(
     is_rock=False,
     spherical=False,
     preset_zrange=(0, 120),
-    color=None,
+    color=("palette", "mountain soil"),
     shader_roughness=1,
     num_layers=16,
     random_seed=0,

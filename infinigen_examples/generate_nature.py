@@ -21,15 +21,13 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.assets import (
+from infinigen.assets import fluid, lighting, weather
+from infinigen.assets.objects import (
     cactus,
     creatures,
-    fluid,
-    lighting,
     monocot,
     rocks,
     trees,
-    weather,
 )
 from infinigen.assets.scatters import (
     chopped_trees,
@@ -49,6 +47,27 @@ from infinigen.assets.scatters import (
     seaweed,
     urchin,
 )
+
+# unused imports required for gin to find modules currently, # TODO remove
+# ruff: noqa: F401
+from infinigen.assets.materials import (
+    mountain,
+    sand,
+    water,
+    atmosphere_light_haze,
+    sandstone,
+    cracked_ground,
+    soil,
+    dirt,
+    cobble_stone,
+    chunkyrock,
+    stone,
+    lava,
+    ice,
+    mud,
+    snow,
+)
+
 from infinigen.assets.scatters import monocot as monocots
 from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util

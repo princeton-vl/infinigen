@@ -1,6 +1,5 @@
 include 'infinigen_examples/configs_nature/base.gin'
 include 'infinigen_examples/configs_nature/surface_registry.gin'
-include 'infinigen_examples/configs_nature/natural.gin'
 
 placement.populate_all.dist_cull = 70
 compose_nature.inview_distance = 70
@@ -18,7 +17,7 @@ compose_nature.terrain_surface_enabled = True
 
 compose_nature.simulated_river_enabled=False
 compose_nature.tilted_river_enabled=False
-
+    
 compose_nature.fancy_clouds_chance = 0.6
 
 compose_nature.trees_chance = 0.85

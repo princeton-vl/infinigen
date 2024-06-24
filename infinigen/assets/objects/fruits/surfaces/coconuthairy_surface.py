@@ -112,7 +112,7 @@ def nodegroup_coconuthairy_surface(
         input_kwargs={
             "noise scale": 100.0,
             "rot mean": (0.47, 0.0, 4.8),
-            " rot std z": 100.0,
+            "rot std": 100.0,
             "scale mean": 0.2,
             "scale std": 0.0,
         },
@@ -159,7 +159,7 @@ def nodegroup_coconuthairy_surface(
         nodegroup_random_rotation_scale().name,
         input_kwargs={
             "rot mean": (1.3, 0.0, 0.0),
-            " rot std z": 3.0,
+            "rot std": 3.0,
             "scale mean": 0.3,
             "scale std": 0.5,
         },

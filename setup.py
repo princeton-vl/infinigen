@@ -59,7 +59,7 @@ if not MINIMAL_INSTALL:
     cython_extensions.append(
         Extension(
             name="bnurbs",
-            sources=["infinigen/assets/creatures/util/geometry/cpp_utils/bnurbs.pyx"],
+            sources=["infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
             include_dirs=[numpy.get_include()],
         )
     )

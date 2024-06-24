@@ -9,7 +9,7 @@ import gin
 from numpy.random import uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils
+from infinigen.core.nodes import node_utils, NodeWrangler
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
@@ -308,7 +308,7 @@ def nodegroup_displacement_to_offset(nw):
 
 
 @gin.configurable
-def shader(nw, color=None):
+def shader(nw: NodeWrangler, color=("palette", "sandstone")):
     nw.force_input_consistency()
     per_dark_1 = uniform(-0.1, 0.1)
     per_dark_2 = uniform(-0.1, 0.1)

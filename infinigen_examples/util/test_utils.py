@@ -14,7 +14,7 @@ from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.util import math as mutil
 
 
-def setup_gin(configs_folder, configs=None, overrides=None):
+def setup_gin(configs_folder, configs, overrides=None):
     gin.clear_config()
     init.apply_gin_configs(
         configs_folder=Path(configs_folder),

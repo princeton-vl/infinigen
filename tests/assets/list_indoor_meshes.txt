@@ -31,11 +31,11 @@ infinigen.assets.objects.elements.warehouses.PalletFactory
 infinigen.assets.objects.elements.RugFactory
 infinigen.assets.objects.elements.NatureShelfTrinketsFactory
 
-infinigen.assets.objects.lighting.CeilingLightFactory
-infinigen.assets.objects.lighting.LampFactory
-infinigen.assets.objects.lighting.DeskLampFactory
-infinigen.assets.objects.lighting.FloorLampFactory
-infinigen.assets.objects.lighting.ceiling_classic_lamp.CeilingClassicLampFactory
+infinigen.assets.objects.lamp.CeilingLightFactory
+infinigen.assets.objects.lamp.LampFactory
+infinigen.assets.objects.lamp.DeskLampFactory
+infinigen.assets.objects.lamp.FloorLampFactory
+infinigen.assets.objects.lamp.ceiling_classic_lamp.CeilingClassicLampFactory
 
 infinigen.assets.objects.seating.chairs.BarChairFactory
 infinigen.assets.objects.seating.chairs.ChairFactory
@@ -58,35 +58,35 @@ infinigen.assets.objects.shelves.KitchenSpaceFactory
 infinigen.assets.objects.shelves.KitchenIslandFactory
 infinigen.assets.objects.shelves.TVStandFactory
 
-infinigen.assets.objects.objects.table_decorations.BookColumnFactory
-infinigen.assets.objects.objects.table_decorations.BookFactory
-infinigen.assets.objects.objects.table_decorations.BookStackFactory
-infinigen.assets.objects.objects.table_decorations.SinkFactory
-infinigen.assets.objects.objects.table_decorations.TapFactory
-infinigen.assets.objects.objects.table_decorations.VaseFactory
+infinigen.assets.objects.table_decorations.BookColumnFactory
+infinigen.assets.objects.table_decorations.BookFactory
+infinigen.assets.objects.table_decorations.BookStackFactory
+infinigen.assets.objects.table_decorations.SinkFactory
+infinigen.assets.objects.table_decorations.TapFactory
+infinigen.assets.objects.table_decorations.VaseFactory
 
-infinigen.assets.objects.objects.tables.TableCocktailFactory
-infinigen.assets.objects.objects.tables.TableDiningFactory
+infinigen.assets.objects.tables.TableCocktailFactory
+infinigen.assets.objects.tables.TableDiningFactory
 
-infinigen.assets.objects.objects.tableware.BottleFactory
-infinigen.assets.objects.objects.tableware.BowlFactory
-infinigen.assets.objects.objects.tableware.CanFactory
-infinigen.assets.objects.objects.tableware.ChopsticksFactory
-infinigen.assets.objects.objects.tableware.CupFactory
-infinigen.assets.objects.objects.tableware.FoodBagFactory
-infinigen.assets.objects.objects.tableware.FoodBoxFactory
-infinigen.assets.objects.objects.tableware.ForkFactory
-infinigen.assets.objects.objects.tableware.FruitContainerFactory
-infinigen.assets.objects.objects.tableware.JarFactory
-infinigen.assets.objects.objects.tableware.KnifeFactory
-infinigen.assets.objects.objects.tableware.LidFactory
-infinigen.assets.objects.objects.tableware.PanFactory
-infinigen.assets.objects.objects.tableware.PlateFactory
-infinigen.assets.objects.objects.tableware.PotFactory
-infinigen.assets.objects.objects.tableware.SpoonFactory
-infinigen.assets.objects.objects.tableware.WineglassFactory
-infinigen.assets.objects.objects.tableware.PlantContainerFactory
-infinigen.assets.objects.objects.tableware.LargePlantContainerFactory
+infinigen.assets.objects.tableware.BottleFactory
+infinigen.assets.objects.tableware.BowlFactory
+infinigen.assets.objects.tableware.CanFactory
+infinigen.assets.objects.tableware.ChopsticksFactory
+infinigen.assets.objects.tableware.CupFactory
+infinigen.assets.objects.tableware.FoodBagFactory
+infinigen.assets.objects.tableware.FoodBoxFactory
+infinigen.assets.objects.tableware.ForkFactory
+infinigen.assets.objects.tableware.FruitContainerFactory
+infinigen.assets.objects.tableware.JarFactory
+infinigen.assets.objects.tableware.KnifeFactory
+infinigen.assets.objects.tableware.LidFactory
+infinigen.assets.objects.tableware.PanFactory
+infinigen.assets.objects.tableware.PlateFactory
+infinigen.assets.objects.tableware.PotFactory
+infinigen.assets.objects.tableware.SpoonFactory
+infinigen.assets.objects.tableware.WineglassFactory
+infinigen.assets.objects.tableware.PlantContainerFactory
+infinigen.assets.objects.tableware.LargePlantContainerFactory
 
 infinigen.assets.objects.wall_decorations.WallArtFactory
 infinigen.assets.objects.wall_decorations.BalloonFactory

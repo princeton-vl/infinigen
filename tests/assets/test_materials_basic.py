@@ -33,7 +33,7 @@ def check_material_runs(pathspec):
     "pathspec", load_txt_list("tests/assets/list_nature_materials.txt")
 )
 def test_nature_material_runs(pathspec, **kwargs):
-    setup_gin("infinigen_examples/configs_nature")
+    setup_gin("infinigen_examples/configs_nature", ["base_nature.gin"])
     check_material_runs(pathspec)
 
 
@@ -41,5 +41,5 @@ def test_nature_material_runs(pathspec, **kwargs):
     "pathspec", load_txt_list("tests/assets/list_indoor_materials.txt")
 )
 def test_indoor_material_runs(pathspec, **kwargs):
-    setup_gin("infinigen_examples/configs_indoor")
+    setup_gin("infinigen_examples/configs_indoor", ["base_indoors.gin"])
     check_material_runs(pathspec)

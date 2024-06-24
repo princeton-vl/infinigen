@@ -101,7 +101,7 @@ exclude = [
     "terrain/lib/**/*.so", # created by terrain compilation
     "terrain/lib/**/*.o", # created by terrain compilation
     "datagen/customgt/build/customgt", # created during opengl compilation
-    "assets/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
+    "assets/objects/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
 ]
 
 [tool.setuptools.dynamic]

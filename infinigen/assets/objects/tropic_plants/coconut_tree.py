@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.objects.fruits.coconutgreen import FruitFactoryCoconutgreen
-from infinigen.assets.tropic_plants.leaf_palm_tree import LeafPalmTreeFactory
+from infinigen.assets.objects.tropic_plants.leaf_palm_tree import LeafPalmTreeFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler

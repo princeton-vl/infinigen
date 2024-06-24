@@ -19,7 +19,7 @@ from infinigen_examples.util.test_utils import setup_gin
 def test_terrain_runs():
     setup_gin(
         "infinigen_examples/configs_nature",
-        configs=["fast_terrain_assets"],
+        configs=["base_nature.gin", "fast_terrain_assets"],
         overrides=[
             "scene.caves_chance=1",
             "scene.landtiles_chance=1",

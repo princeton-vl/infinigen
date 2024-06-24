@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from infinigen.assets.mollusk import MolluskFactory
+from infinigen.assets.objects.mollusk import MolluskFactory
 from infinigen.assets.utils.misc import CountInstance
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances

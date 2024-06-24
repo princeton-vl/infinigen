@@ -14,7 +14,7 @@ from infinigen_examples.util.test_utils import setup_gin
 
 
 def test_compose_cube():
-    setup_gin("infinigen_examples/configs_nature")
+    setup_gin("infinigen_examples/configs_nature", configs=["base_nature.gin"])
 
     def compose_cube(output_folder, scene_seed, **params):
         camera.spawn_camera_rigs()

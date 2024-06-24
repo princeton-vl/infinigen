@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.tropic_plants.tropic_plant_utils import (
+from infinigen.assets.objects.tropic_plants.tropic_plant_utils import (
     nodegroup_nodegroup_leaf_gen,
     nodegroup_nodegroup_leaf_rotate_x,
     nodegroup_nodegroup_leaf_shader,

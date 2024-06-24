@@ -9,7 +9,7 @@ from numpy.random import uniform as U
 
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
-from infinigen.infinigen.assets.objects.debris import PineNeedleFactory
+from infinigen.assets.objects.particles import PineNeedleFactory
 
 
 def apply(obj, scale=1, density=2e3, n=3, selection=None):
