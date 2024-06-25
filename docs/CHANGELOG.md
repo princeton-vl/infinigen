@@ -56,3 +56,7 @@ v1.4.0 - Infinigen Indoors
 - Add library of procedural generators for indoor objects & materials
 - Add indoor scene generation system, including constraint language and solver
 - Add HelloRoom.md & ExportingToSimulators.md
+
+v1.4.1
+- bugfix gin file names in example commands
+- disable cieling skirtingboard temporarily
