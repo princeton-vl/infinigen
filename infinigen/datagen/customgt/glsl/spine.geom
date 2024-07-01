@@ -3,10 +3,7 @@
 layout (lines_adjacency) in;
 layout (line_strip, max_vertices = 2) out;
 
-uniform mat4 wc2img;
-
-out vec3 normal;
-out vec3 interp_pos_wc;
+uniform mat4 cc2img;
 
 in VS_OUT {
     vec3 pos_wc;
@@ -19,7 +16,7 @@ in VS_OUT {
 } gs_in[];
 
 vec2 proj(vec3 v){
-    vec4 h = wc2img * vec4(v, 1.0);
+    vec4 h = cc2img * vec4(v, 1.0);
     return vec2(h[0] / abs(h[2]), h[1] / abs(h[2]));
 }
 
@@ -38,10 +35,10 @@ bool is_frontfacing(vec3 v1, vec3 v2, vec3 v3){
 }
 
 void main() {
-    vec3 v1 = gs_in[0].pos_wc; // A
-    vec3 v2 = gs_in[1].pos_wc; // B
-    vec3 v3 = gs_in[2].pos_wc;
-    vec3 v4 = gs_in[3].pos_wc;
+    vec3 v1 = gs_in[0].pos_cc; // A
+    vec3 v2 = gs_in[1].pos_cc; // B
+    vec3 v3 = gs_in[2].pos_cc;
+    vec3 v4 = gs_in[3].pos_cc;
 
     bool draw_boundary = (is_frontfacing(v1, v2, v3) != is_frontfacing(v2, v1, v4));
 

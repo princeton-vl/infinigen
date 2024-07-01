@@ -519,7 +519,7 @@ def skipBake(obj):
     return False
 
 def triangulate_meshes():
-    logging.info("Triangulating Meshes")
+    logging.debug("Triangulating Meshes")
     for obj in bpy.context.scene.objects:
         if obj.type == 'MESH':
             view_state = obj.hide_viewport
@@ -528,7 +528,7 @@ def triangulate_meshes():
             obj.select_set(True)
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
-            logging.info(f"Triangulating {obj}")
+            logging.debug(f"Triangulating {obj}")
             bpy.ops.mesh.quads_convert_to_tris()
             bpy.ops.object.mode_set(mode='OBJECT')
             obj.select_set(False)

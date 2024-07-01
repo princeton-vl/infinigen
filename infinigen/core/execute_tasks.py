@@ -81,7 +81,7 @@ from infinigen.core.util import (
     pipeline, 
     exporting
 )
-from infinigen.tools.export import export_scene
+from infinigen.tools.export import export_scene, triangulate_meshes
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.logging import Timer, save_polycounts, create_text_file
 from infinigen.core.util.pipeline import RandomStageExecutor
@@ -228,29 +228,14 @@ def render(scene_seed, output_folder, camera_id, render_image_func=render_image,
     with Timer('Render Frames'):
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
 
-def triangulate_meshes():
-    for obj in bpy.context.scene.objects:
-        if obj.type == 'MESH':
-            view_state = obj.hide_viewport
-            obj.hide_viewport = False
-            bpy.context.view_layer.objects.active = obj
-            obj.select_set(True)
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='SELECT')
-            logging.info(f"Triangulating {obj}")
-            bpy.ops.mesh.quads_convert_to_tris()
-            bpy.ops.object.mode_set(mode='OBJECT')
-            obj.select_set(False)
-            obj.hide_viewport = view_state
-
 @gin.configurable
 def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
 
     if resample_idx is not None and resample_idx > 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
-    
+
     triangulate_meshes()
-    
+
     for obj in bpy.data.objects:
         obj.hide_viewport = obj.hide_render
 
