@@ -4,6 +4,9 @@
 #     but some are still explicitly included in the .whl via
 
 include .gitmodules
+include Makefile
+
+recursive-include scripts *.*
 
 recursive-include infinigen *.*
 recursive-include tests *.*
@@ -14,4 +17,4 @@ prune */__pycache__
 prune infinigen/datagen/customgt/build/*
 prune infinigen/datagen/customgt/dependencies/*
 
-global-exclude *.o *.so *.pyc .git  *.png
+global-exclude *.o *.so *.pyc *.png
