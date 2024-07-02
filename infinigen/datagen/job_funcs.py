@@ -18,8 +18,8 @@ from uuid import uuid4
 
 import gin
 
-from infinigen.core.init import repo_root
-from infinigen.datagen.states import get_suffix
+import infinigen
+from infinigen.tools.suffixes import get_suffix
 from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
 from infinigen.datagen.util.upload_util import upload_job_folder
@@ -508,7 +508,7 @@ def queue_opengl(
         ]
 
         lines.append(
-            f"{sys.executable} {repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"
+            f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"
         )
 
         lines.append(

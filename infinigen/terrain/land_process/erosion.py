@@ -11,7 +11,7 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.core.init import repo_root
+import infinigen
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.terrain.utils import ASFLOAT, load_cdll, read, smooth
 
@@ -49,7 +49,8 @@ def run_erosion(
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
 
     soil_config_path = (
-        repo_root() / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
+        infinigen.repo_root()
+        / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
     )
 
     for i, N, n_iter in zip(list(range(len(Ns))), Ns, n_iters):

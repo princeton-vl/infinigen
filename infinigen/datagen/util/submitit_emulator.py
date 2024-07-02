@@ -158,7 +158,8 @@ class LocalScheduleHandler:
         if self.use_gpu:
             if which(NVIDIA_SMI_PATH) is None:
                 raise ValueError(
-                    f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}"
+                    f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}, "
+                    "please use --pipeline_overrides LocalScheduleHandler.use_gpu=False if your machine does not have a supported GPU"
                 )
 
             result = subprocess.check_output(f"{NVIDIA_SMI_PATH} -L".split()).decode()

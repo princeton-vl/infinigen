@@ -12,7 +12,7 @@ import numpy as np
 from matplotlib import colors
 from numpy.random import uniform
 
-from infinigen.core.init import repo_root
+import infinigen
 from infinigen.core.util.color import color_category
 from infinigen.core.util.math import clip_gaussian
 
@@ -24,7 +24,7 @@ def log_uniform(low, high, size=None):
 def sample_json_palette(pallette_name, n_sample=1):
     rel = f"infinigen_examples/configs_nature/palette/{pallette_name}.json"
 
-    with (repo_root() / rel).open("r") as f:
+    with (infinigen.repo_root() / rel).open("r") as f:
         color_template = json.load(f)
 
     colors = color_template["color"]

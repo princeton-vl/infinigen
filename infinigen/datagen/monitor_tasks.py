@@ -19,10 +19,10 @@ from infinigen.datagen.states import (
     JobState,
     SceneState,
     get_scene_state,
-    get_suffix,
 )
 from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.cleanup import cleanup
+from infinigen.tools.suffixes import get_suffix
 
 logger = logging.getLogger(__name__)
 

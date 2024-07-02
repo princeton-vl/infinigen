@@ -38,6 +38,8 @@ import infinigen.core.init
 
 BPY_SYS_PATH = list(sys.path)  # Make instance of `bpy`'s modified sys.path
 
+# ruff: noqa: F401
+from infinigen.datagen.job_funcs import get_cmd
 from infinigen.datagen.monitor_tasks import iterate_scene_tasks, on_scene_termination
 from infinigen.datagen.states import (
     CONCLUDED_JOBSTATES,
@@ -333,7 +335,7 @@ def get_disk_usage(folder):
 
 
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
-    template_path = infinigen.core.init.repo_root() / "infinigen/datagen/util"
+    template_path = infinigen.repo_root() / "infinigen/datagen/util"
     assert template_path.exists(), template_path
     env = Environment(
         loader=FileSystemLoader(template_path),
@@ -732,6 +734,9 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
         )
         manage_datagen_jobs(all_scenes, elapsed=(now - start_time).total_seconds())
         time.sleep(2)
+
+    any_crashed = any(j.get("any_fatal_crash", False) for j in all_scenes)
+    sys.exit(1 if any_crashed else 0)
 
 
 if __name__ == "__main__":

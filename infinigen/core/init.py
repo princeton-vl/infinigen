@@ -19,6 +19,7 @@ import gin
 import numpy as np
 from numpy.random import randint
 
+import infinigen
 from infinigen.core.util.logging import LogLevel, Suppress
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
@@ -88,10 +89,6 @@ def sanitize_override(override: list):
     return override
 
 
-def repo_root():
-    return Path(__file__).parent.parent.parent
-
-
 def contained_stems(filenames: list[str], folder: Path):
     assert folder.exists()
     names = [p.stem for p in folder.iterdir()]
@@ -148,7 +145,7 @@ def apply_gin_configs(
         mutually_exclusive_folders = []
     configs_folder = Path(configs_folder)
 
-    root = repo_root()
+    root = infinigen.repo_root()
 
     configs_folder_rel = root / configs_folder
     if configs_folder_rel.exists():
