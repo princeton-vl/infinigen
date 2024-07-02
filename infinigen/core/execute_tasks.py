@@ -19,9 +19,8 @@ from frozendict import frozendict
 from numpy.random import uniform
 
 import infinigen.assets.scatters
-from infinigen.assets import fluid, weather
-from infinigen.assets.objects import cactus, creatures, rocks, trees
-from infinigen.assets.objects.monocot import kelp
+from infinigen.assets import fluid
+from infinigen.assets.objects import cactus, creatures, rocks, trees, cloud, monocot
 from infinigen.tools.export import export_scene, triangulate_meshes
 from infinigen.assets.scatters import (
     ground_mushroom,
@@ -87,7 +86,9 @@ def populate_scene(output_folder, scene_seed, **params):
     p.run_stage(
         "populate_kelp",
         use_chance=False,
-        fn=lambda: placement.populate_all(kelp.KelpMonocotFactory, camera, vis_cull=5),
+        fn=lambda: placement.populate_all(
+            monocot.KelpMonocotFactory, camera, vis_cull=5
+        ),
     )
     populated["cactus"] = p.run_stage(
         "populate_cactus",
@@ -98,7 +99,7 @@ def populate_scene(output_folder, scene_seed, **params):
         "populate_clouds",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            weather.CloudFactory, camera, dist_cull=None, vis_cull=None
+            cloud.CloudFactory, camera, dist_cull=None, vis_cull=None
         ),
     )
     p.run_stage(

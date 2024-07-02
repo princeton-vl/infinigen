@@ -367,7 +367,7 @@ def queue_render(
         if (Path(input_folder) / "scene.blend").exists():
             break
     else:
-        raise ValueError(
+        logger.warning(
             f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}"
         )
 

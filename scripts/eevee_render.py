@@ -23,7 +23,11 @@ def get_override(area_type, region_type):
                     return override
     # error message if the area or region wasn't found
     raise RuntimeError(
-        "Wasn't able to find", region_type, " in area ", area_type, "\n Make sure it's open while executing script."
+        "Wasn't able to find",
+        region_type,
+        " in area ",
+        area_type,
+        "\n Make sure it's open while executing script.",
     )
 
 
@@ -46,7 +50,13 @@ def process(scene_folder: Path):
     cam = bpy.context.scene.camera
     t = mathutils.Matrix.Translation(room.location)
     s = mathutils.Matrix.Scale(1.5, 4)
-    cam.matrix_world = t @ s @ mathutils.Euler((0.42, 0, 0.2)).to_matrix().to_4x4() @ t.inverted() @ cam.matrix_world
+    cam.matrix_world = (
+        t
+        @ s
+        @ mathutils.Euler((0.42, 0, 0.2)).to_matrix().to_4x4()
+        @ t.inverted()
+        @ cam.matrix_world
+    )
 
     bpy.context.scene.render.filepath = str(scene_folder / "Image_EEVEE")
     enable_gpu()

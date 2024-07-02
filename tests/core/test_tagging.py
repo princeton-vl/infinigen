@@ -21,14 +21,19 @@ def test_tagging_basic():
     tag_name = tag.desc
     tagging.tag_object(cube, tag)
 
-    assert len([n for n in cube.data.attributes.keys() if n.startswith(tagging.PREFIX)]) == 0
+    assert (
+        len([n for n in cube.data.attributes.keys() if n.startswith(tagging.PREFIX)])
+        == 0
+    )
     assert list(tagging.tag_system.tag_dict.keys()) == [tag_name]
 
     tagint_attr = cube.data.attributes.get(tagging.COMBINED_ATTR_NAME)
     assert tagint_attr is not None
     assert tagint_attr.domain == "FACE"
 
-    tagint_vals = surface.read_attr_data(cube, tagging.COMBINED_ATTR_NAME, domain="FACE")
+    tagint_vals = surface.read_attr_data(
+        cube, tagging.COMBINED_ATTR_NAME, domain="FACE"
+    )
 
     cubey_tag_int = tagging.tag_system.tag_dict.get(tag_name)
     assert cubey_tag_int == 1

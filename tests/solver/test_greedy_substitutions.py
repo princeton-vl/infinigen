@@ -16,7 +16,10 @@ def make_dummy_state(type_counts: dict[tuple[t.Tag], int]):
         for i in range(count):
             name = "_".join([t.value for t in tags]) + f"_{i}"
             objs[name] = state_def.ObjectState(
-                obj=None, generator=None, tags=set(tags).union([t.SpecificObject(name)]), relations=[]
+                obj=None,
+                generator=None,
+                tags=set(tags).union([t.SpecificObject(name)]),
+                relations=[],
             )
 
     return state_def.State(objs=objs)
@@ -58,7 +61,10 @@ def test_substitutions_child():
         }
     )
 
-    var_dom = r.Domain({t.Semantics.Object}, [(cl.AnyRelation(), r.Domain({t.Semantics.Room, t.Variable("room")}, []))])
+    var_dom = r.Domain(
+        {t.Semantics.Object},
+        [(cl.AnyRelation(), r.Domain({t.Semantics.Room, t.Variable("room")}, []))],
+    )
 
     subs = list(greedy.substitutions(var_dom, state))
     assert len(subs) == 4
@@ -75,14 +81,18 @@ def test_substitutions_child_complex():
         obj=None,
         generator=None,
         tags={t.Semantics.Object, t.SpecificObject("obj_0")},
-        relations=[state_def.RelationState(relation=cl.Touching(), target_name="room_0")],
+        relations=[
+            state_def.RelationState(relation=cl.Touching(), target_name="room_0")
+        ],
     )
 
     state.objs["obj_1"] = state_def.ObjectState(
         obj=None,
         generator=None,
         tags={t.Semantics.Object, t.SpecificObject("obj_1")},
-        relations=[state_def.RelationState(relation=cl.Touching(), target_name="room_1")],
+        relations=[
+            state_def.RelationState(relation=cl.Touching(), target_name="room_1")
+        ],
     )
 
     var_dom = r.Domain(
