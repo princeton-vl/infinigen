@@ -29,8 +29,9 @@ def shader_metal(nw: NodeWrangler, color=None, **kwargs):
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 
 
-def apply(obj, selection=None, **kwargs):
-    from infinigen.assets.materials.metal import sample_metal_color
 
-    color = sample_metal_color(**kwargs)
-    common.apply(obj, shader_metal, selection, color, **kwargs)
+class Metal_Basic():
+    def apply(self, obj, selection=None, **kwargs):
+        from infinigen.assets.materials.metal import sample_metal_color
+        color = sample_metal_color(**kwargs)
+        common.apply(obj, shader_metal, selection, color, **kwargs)

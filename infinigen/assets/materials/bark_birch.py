@@ -370,9 +370,7 @@ def geo_bark_birch(nw, selection=None):
         },
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(
-        obj, geo_bark_birch, selection=selection, attributes=["initial_position"]
-    )
-    surface.add_material(obj, shader_birch_mat)
+class Bark_Birch():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geo_bark_birch, selection=selection, attributes=['initial_position'])
+        surface.add_material(obj, shader_birch_mat)

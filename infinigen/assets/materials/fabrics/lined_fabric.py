@@ -155,11 +155,11 @@ def shader_lined_fur_base(
     )
 
 
-def shader_fabric_random(nw: NodeWrangler, **kwargs):
+def shader_lined_fur_random(nw: NodeWrangler, **kwargs):
     fabric_params = get_texture_params()
     return shader_lined_fur_base(nw, **fabric_params)
 
-
-def apply(obj, selection=None, **kwargs):
-    unwrap_faces(obj, selection)
-    common.apply(obj, shader_fabric_random, selection, **kwargs)
+class Lined_Fabric:
+    def apply(self, obj, selection=None, **kwargs):
+        unwrap_faces(obj, selection)
+        common.apply(obj, shader_lined_fur_random, selection, **kwargs)

@@ -114,24 +114,16 @@ def shader_giraffe_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_material(
-        obj, shader_giraffe_attr, reuse=False, input_kwargs=shader_kwargs
-    )
-
+class Giraffe_Attr():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_material(obj, shader_giraffe_attr, reuse=False, input_kwargs=shader_kwargs)
 
 if __name__ == "__main__":
     for i in range(1):
-        bpy.ops.wm.open_mainfile(filepath="dev_scene_1019.blend")
-        # creature(73349, 0).parts(0, factory=QuadrupedBody)
-        apply(
-            bpy.data.objects["creature(73349, 0).parts(0, factory=QuadrupedBody)"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True},
-        )
-        fn = os.path.join(
-            os.path.abspath(os.curdir), "dev_scene_test_giraffe_attr.blend"
-        )
+        bpy.ops.wm.open_mainfile(filepath='dev_scene_1019.blend')
+        #creature(73349, 0).parts(0, factory=QuadrupedBody)
+        Giraffe_Attr.apply(bpy.data.objects['creature(73349, 0).parts(0, factory=QuadrupedBody)'], geo_kwargs={'rand': True}, shader_kwargs={'rand': True})
+        fn = os.path.join(os.path.abspath(os.curdir), 'dev_scene_test_giraffe_attr.blend')
         bpy.ops.wm.save_as_mainfile(filepath=fn)
         # bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
         # bpy.context.scene.render.image_settings.file_format='JPEG'

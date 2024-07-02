@@ -1578,22 +1578,24 @@ def shader_stripe_fish(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
     )
 
+class Fishbody():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    attributes = ["Color variations", "offset2"]
+        attributes = [
+            'Color variations',
+            'offset2'
+        ]
 
-    x = random.random()
-    if x < 0.2:
-        shader = shader_fish_body_gold
-    elif x < 0.5:
-        shader = shader_stripe_fish
-    else:
-        shader = shader_fish_body_regular
+        x = random.random()
+        if x < 0.2:
+            shader = shader_fish_body_gold
+        elif x < 0.5:
+            shader = shader_stripe_fish
+        else:
+            shader = shader_fish_body_regular
 
-    surface.add_geomod(
-        obj, geometry_fish_body, input_kwargs=geo_kwargs, attributes=attributes
-    )
-    surface.add_material(obj, shader, input_kwargs=shader_kwargs)
+        surface.add_geomod(obj, geometry_fish_body, input_kwargs=geo_kwargs, attributes=attributes)
+        surface.add_material(obj, shader, input_kwargs=shader_kwargs)
 
 
 if __name__ == "__main__":
@@ -1601,12 +1603,8 @@ if __name__ == "__main__":
         bpy.ops.wm.open_mainfile(filepath="dev_scene_fish_nurb.blend")
         i = 0
         for obj in bpy.data.objects:
-            if obj.name.find("Nurb") >= 0:
-                apply(
-                    obj,
-                    geo_kwargs={"rand": True},
-                    shader_kwargs={"rand": True, "stripefish": True},
-                )
+            if obj.name.find('Nurb') >= 0:
+                Fishbody.apply(obj, geo_kwargs={'rand': True}, shader_kwargs={'rand': True, 'stripefish':True})
                 i += 1
         fn = os.path.join(os.path.abspath(os.curdir), "dev_scene_test_fish_nurb2.blend")
         bpy.ops.wm.save_as_mainfile(filepath=fn)

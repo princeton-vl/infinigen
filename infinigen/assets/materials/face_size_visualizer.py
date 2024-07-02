@@ -45,7 +45,7 @@ def geo_face_colors(nw: NodeWrangler):
         Nodes.GroupOutput, input_kwargs={"Geometry": store_named_attribute}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geo_face_colors, selection=selection, attributes=[])
-    surface.add_material(obj, shader_material, selection=selection)
+class Face_Size_Visualizer():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geo_face_colors, selection=selection, attributes=[])
+        surface.add_material(obj, shader_material, selection=selection)

@@ -46,6 +46,6 @@ def shader_nose(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_nose, selection=selection)
+class Nose():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_nose, selection=selection)

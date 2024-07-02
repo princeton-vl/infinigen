@@ -69,12 +69,12 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
         input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
     )
 
+class Plaster():
+    def apply(self, obj, selection=None, plaster_colored=None, **kwargs):
+        if plaster_colored is None:
+            plaster_colored = uniform() < .4
+        for o in obj if isinstance(obj, Iterable) else [obj]:
+            unwrap_normal(o, selection)
+        common.apply(obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs)
 
-def apply(obj, selection=None, plaster_colored=None, **kwargs):
-    if plaster_colored is None:
-        plaster_colored = uniform() < 0.4
-    for o in obj if isinstance(obj, Iterable) else [obj]:
-        unwrap_normal(o, selection)
-    common.apply(
-        obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
-    )
+

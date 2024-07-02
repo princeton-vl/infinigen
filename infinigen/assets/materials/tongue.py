@@ -34,5 +34,6 @@ def shader_tongue(nw: NodeWrangler):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_tongue, selection=selection)
+class Tongue():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_tongue, selection=selection)

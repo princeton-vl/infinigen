@@ -222,15 +222,17 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs={}, shader_kwargs={}, **kwargs):
-    if "goldfish" in shader_kwargs:
-        if shader_kwargs["goldfish"]:
-            shader = shader_fin_gold
+
+class Fishfin():
+    def apply(self, obj, geo_kwargs={}, shader_kwargs={}, **kwargs):
+        if 'goldfish' in shader_kwargs:
+            if shader_kwargs['goldfish']:
+                shader = shader_fin_gold
+            else:
+                shader = shader_fin_regular
         else:
-            shader = shader_fin_regular
-    else:
-        if random.random() < 0.5:
-            shader = shader_fin_gold
-        else:
-            shader = shader_fin_regular
-    surface.add_material(obj, shader, input_kwargs=shader_kwargs)
+            if random.random() < 0.5:
+                shader = shader_fin_gold
+            else:
+                shader = shader_fin_regular
+        surface.add_material(obj, shader, input_kwargs=shader_kwargs)

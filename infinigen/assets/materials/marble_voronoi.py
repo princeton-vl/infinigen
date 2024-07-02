@@ -79,6 +79,6 @@ def shader_material(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_material, selection=selection)
+class Marble_Voronoi():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_material, selection=selection)

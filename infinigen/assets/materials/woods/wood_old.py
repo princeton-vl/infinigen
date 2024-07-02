@@ -102,6 +102,6 @@ def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwa
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1}
     )
 
-
-def apply(obj, selection=None, scale=1, **kwargs):
-    common.apply(obj, shader_wood_old, selection, scale=scale, **kwargs)
+class Wood_Old():
+    def apply(self, obj, selection=None, scale=1, **kwargs):
+        common.apply(obj, shader_wood_old, selection, scale=scale, **kwargs)

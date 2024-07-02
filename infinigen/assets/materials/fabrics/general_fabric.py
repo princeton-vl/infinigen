@@ -5,11 +5,15 @@
 # Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=umrARvXC_MI by Ryan King Art
 
 
+import bpy
+import mathutils
 import numpy as np
-from numpy.random import uniform
+from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials import common
-from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.assets.utils.uv import ensure_uv, unwrap_faces
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import color_category
 
@@ -236,9 +240,10 @@ def shader_fabric(
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    if not isinstance(obj, list):
-        obj = [obj]
-    for o in obj:
-        unwrap_faces(o, selection)
-    common.apply(obj, shader_fabric, selection, **kwargs)
+class General_Fabric:
+    def apply(self, obj, selection=None, **kwargs):
+        if not isinstance(obj, list):
+            obj = [obj]
+        for o in obj:
+            unwrap_faces(o, selection)
+        common.apply(obj, shader_fabric, selection, **kwargs)

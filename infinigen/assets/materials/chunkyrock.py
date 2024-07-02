@@ -197,29 +197,20 @@ def geo_rocks(
     else:
         return depth
 
-
-def apply(obj, selection=None, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
-    surface.add_material(
-        obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs
-    )
-
+class Chunky_Rock():
+    def apply(self, obj, selection=None, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
+        surface.add_material(obj, shader_rocks, selection=selection, input_kwargs=shader_kwargs)
 
 if __name__ == "__main__":
     mat = "rock"
     if not os.path.isdir(os.path.join("outputs", mat)):
         os.mkdir(os.path.join("outputs", mat))
     for i in range(10):
-        bpy.ops.wm.open_mainfile(filepath="test.blend")
-        apply(
-            bpy.data.objects["SolidModel"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True},
-        )
-        # fn = os.path.join(os.path.abspath(os.curdir), 'giraffe_geo_test.blend')
-        # bpy.ops.wm.save_as_mainfile(filepath=fn)
-        bpy.context.scene.render.filepath = os.path.join(
-            "outputs", mat, "%s_%d.jpg" % (mat, i)
-        )
-        bpy.context.scene.render.image_settings.file_format = "JPEG"
+        bpy.ops.wm.open_mainfile(filepath='test.blend')
+        Chunky_Rock.apply(bpy.data.objects['SolidModel'], geo_kwargs={'rand':True}, shader_kwargs={'rand': True})
+        #fn = os.path.join(os.path.abspath(os.curdir), 'giraffe_geo_test.blend')
+        #bpy.ops.wm.save_as_mainfile(filepath=fn)
+        bpy.context.scene.render.filepath = os.path.join('outputs', mat, '%s_%d.jpg'%(mat, i))
+        bpy.context.scene.render.image_settings.file_format='JPEG'
         bpy.ops.render.render(write_still=True)

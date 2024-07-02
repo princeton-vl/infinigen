@@ -44,5 +44,6 @@ def shader_simple_brown(nw: NodeWrangler):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_simple_brown, selection=selection)
+class Simple_Brownish():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_simple_brown, selection=selection)

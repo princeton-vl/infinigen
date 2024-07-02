@@ -615,31 +615,33 @@ def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(objs, shader_kwargs={}, **kwargs):
-    x = random.random()
-    if x < 0.4:
-        kind = "eagle"
-    else:
-        kind = "duck"
-    shader_kwargs["kind"] = kind
-    if not isinstance(objs, list):
-        objs = [objs]
-    for obj in objs:
-        if "Tail" in obj.name:
-            shader_kwargs["tail"] = True
-            surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
+
+class Bird():
+    def apply(self, objs, shader_kwargs={}, **kwargs):
+        x = random.random()
+        if x < 0.4:
+            kind = 'eagle'
         else:
-            shader_kwargs["tail"] = False
-        if "Body" in obj.name:
-            surface.add_material(obj, shader_bird_body, input_kwargs=shader_kwargs)
-        if "Feather" in obj.name and "Tail" not in obj.name:
-            surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
-        if "Claw" in obj.name:
-            surface.add_material(obj, shader_bird_claw, input_kwargs=shader_kwargs)
-        if "Eyeball" in obj.name:
-            surface.add_material(obj, shader_bird_eyeball, input_kwargs=shader_kwargs)
-        if "Beak" in obj.name:
-            surface.add_material(obj, shader_bird_beak, input_kwargs=shader_kwargs)
+            kind = 'duck'
+        shader_kwargs['kind'] = kind
+        if not isinstance(objs, list):
+            objs = [objs]
+        for obj in objs:
+            if "Tail" in obj.name:
+                shader_kwargs['tail'] = True
+                surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
+            else:
+                shader_kwargs['tail'] = False
+            if "Body" in obj.name:
+                surface.add_material(obj, shader_bird_body, input_kwargs=shader_kwargs)
+            if "Feather" in obj.name and "Tail" not in obj.name:
+                surface.add_material(obj, shader_bird_feather, input_kwargs=shader_kwargs)
+            if "Claw" in obj.name:
+                surface.add_material(obj, shader_bird_claw, input_kwargs=shader_kwargs)
+            if "Eyeball" in obj.name:
+                surface.add_material(obj, shader_bird_eyeball, input_kwargs=shader_kwargs)
+            if "Beak" in obj.name:
+                surface.add_material(obj, shader_bird_beak, input_kwargs=shader_kwargs)
 
 
 if __name__ == "__main__":
@@ -666,9 +668,10 @@ if __name__ == "__main__":
             "creature(98047, 0).parts(9).extra(BeakUpper, 9)",
         ]
         objs = [bpy.data.objects[x] for x in objs]
-        apply(objs)
-        fn_blend = os.path.join(os.path.abspath(os.curdir), "dev_scene_eagle.blend")
-        fn = os.path.join(os.path.abspath(os.curdir), "test_bird%d.jpg" % (i))
+        bird = Bird()
+        bird.apply(objs)
+        fn_blend = os.path.join(os.path.abspath(os.curdir), 'dev_scene_eagle.blend')
+        fn = os.path.join(os.path.abspath(os.curdir), 'test_bird%d.jpg'%(i))
         bpy.ops.wm.save_as_mainfile(filepath=fn_blend)
         bpy.context.scene.render.filepath = fn
         bpy.context.scene.render.image_settings.file_format = "JPEG"

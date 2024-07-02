@@ -14,7 +14,7 @@ from infinigen.core.util.random import random_color_neighbour
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_ice"
-name = "ice"
+name = "ice" 
 
 
 def shader_ice(nw: NodeWrangler):
@@ -157,7 +157,8 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
             attrs={"is_active_output": True},
         )
 
+class Ice():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geo_ice, selection=selection)
+        surface.add_material(obj, shader_ice, selection=selection)
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geo_ice, selection=selection)
-    surface.add_material(obj, shader_ice, selection=selection)

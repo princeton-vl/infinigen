@@ -400,44 +400,24 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(
-        obj,
-        geometry_reptile_vor_attr,
-        input_kwargs=geo_kwargs,
-        attributes=["value", "index"],
-    )
-    surface.add_geomod(
-        obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[]
-    )
-    surface.add_material(obj, shader_brown_circle, input_kwargs=shader_kwargs)
+
+class Reptile_Brown_Circle_Attr():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geometry_reptile_vor_attr, input_kwargs=geo_kwargs, attributes=['value', 'index'])
+        surface.add_geomod(obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[])
+        surface.add_material(obj, shader_brown_circle, input_kwargs=shader_kwargs)
 
 
 if __name__ == "__main__":
     for i in range(1):
-        bpy.ops.wm.open_mainfile(filepath="dev_scene_1019.blend")
-        # creature(73349, 0).parts(0, factory=QuadrupedBody)
-        import generated_surface_script_replile_gray as gray
-        import generated_surface_script_replile_two_color as two_color
-
-        apply(
-            bpy.data.objects["creature(73349, 0).parts(0, factory=QuadrupedBody)"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True, "mat_name": "brown_circle"},
-        )
-        gray.apply(
-            bpy.data.objects["creature(19946, 0).parts(0, factory=QuadrupedBody)"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True, "mat_name": "two_color"},
-        )
-        two_color.apply(
-            bpy.data.objects["creature(51668, 0).parts(0, factory=QuadrupedBody)"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True, "mat_name": "gray"},
-        )
-        fn = os.path.join(
-            os.path.abspath(os.curdir), "dev_scene_test_brown_circle_attr.blend"
-        )
+        bpy.ops.wm.open_mainfile(filepath='dev_scene_1019.blend')
+        #creature(73349, 0).parts(0, factory=QuadrupedBody)
+        import reptile_gray_attr as gray
+        import reptile_two_color_attr as two_color
+        Reptile_Brown_Circle_Attr.apply(bpy.data.objects['creature(73349, 0).parts(0, factory=QuadrupedBody)'], geo_kwargs={'rand': True}, shader_kwargs={'rand': True, 'mat_name':'brown_circle'})
+        gray.apply(bpy.data.objects['creature(19946, 0).parts(0, factory=QuadrupedBody)'], geo_kwargs={'rand': True}, shader_kwargs={'rand': True, 'mat_name':'two_color'})
+        two_color.apply(bpy.data.objects['creature(51668, 0).parts(0, factory=QuadrupedBody)'], geo_kwargs={'rand': True}, shader_kwargs={'rand': True, 'mat_name':'gray'})
+        fn = os.path.join(os.path.abspath(os.curdir), 'dev_scene_test_brown_circle_attr.blend')
         bpy.ops.wm.save_as_mainfile(filepath=fn)
         # bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
         # bpy.context.scene.render.image_settings.file_format='JPEG'

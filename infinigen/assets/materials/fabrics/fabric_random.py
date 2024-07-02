@@ -20,7 +20,7 @@ fabric_shader_list = (
     (1, shader_sofa_fabric),
 )
 
-
-def apply(obj, selection=None, **kwargs):
-    unwrap_faces(obj, selection)
-    common.apply(obj, rg(fabric_shader_list), selection=selection, **kwargs)
+class FabricRandom:
+    def apply(self, obj, selection=None, **kwargs):
+        unwrap_faces(obj, selection)
+        common.apply(obj, rg(fabric_shader_list), selection=selection, **kwargs)

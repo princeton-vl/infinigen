@@ -5,6 +5,6 @@
 from infinigen.assets.materials import common
 from infinigen.assets.materials.table_materials import shader_marble
 
-
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_marble, selection, **kwargs)
+class Marble():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_marble, selection, **kwargs)

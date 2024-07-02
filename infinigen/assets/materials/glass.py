@@ -45,9 +45,10 @@ def shader_glass(nw: NodeWrangler, color=None, is_window=False, **kwargs):
     )
 
 
-def apply(obj, selection=None, clear=False, **kwargs):
-    color = get_glass_color(clear)
-    common.apply(obj, shader_glass, selection, color, **kwargs)
+class Glass():
+    def apply(self, obj, selection=None, clear=False, **kwargs):
+        color = get_glass_color(clear)
+        common.apply(obj, shader_glass, selection, color, **kwargs)
 
 
 def get_glass_color(clear):

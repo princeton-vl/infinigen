@@ -329,64 +329,58 @@ def shader_edge_tear_free_node_group(
 MARKER_LABEL = "wear_tear"
 
 
-def apply_over(obj, selection=None, **shader_kwargs):
-    # get all materials
-    # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
-    materials = obj.data.materials.items()
-    if len(materials) == 0:
-        logging.warning(
-            f"No material exist for {obj.name}! Scratches can only be applied over some existing material."
-        )
+class Procedural_Edge_Wear():
+    def apply_over(obj, selection=None, **shader_kwargs):
+        
+        # get all materials
+        # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
+        materials = obj.data.materials.items()
+        if len(materials) == 0:
+            logging.warning(f"No material exist for {obj.name}! Scratches can only be applied over some existing material.")
+            return
+
+        if len(shader_kwargs) == 0:
+            logging.debug("Obtaining Randomized Scratch Parameters")
+            shader_kwargs = get_edge_wear_params()
+
+        for material_name, material in materials:
+
+            # get material node tree
+            # https://blender.stackexchange.com/questions/240278/how-to-access-shader-node-via-python-script
+            material_node_tree = material.node_tree
+
+            if any([node.label == MARKER_LABEL for node in material_node_tree.nodes]):
+                continue
+
+            nw = NodeWrangler(material_node_tree)
+            
+            result = nw.find("ShaderNodeOutputMaterial")
+            if len(result) == 0:
+                logger.warning("No Material Output Node found in the object's materials! Returning")
+                continue
+            
+            # get nodes and links connected to specific inputs
+            # https://blender.stackexchange.com/questions/5462/is-it-possible-to-find-the-nodes-connected-to-a-node-in-python
+            initial_bsdf = result[0].inputs['Surface'].links[0].from_node
+            displacement_links = result[0].inputs['Displacement'].links
+            
+            if len(displacement_links) == 0:
+                initial_displacement = None
+            else:
+                initial_displacement = result[0].inputs['Displacement'].links[0].from_node
+            
+            final_bsdf, final_displacement = shader_edge_tear_free_node_group(nw, initial_bsdf, initial_displacement, **shader_kwargs)
+            # connecting nodes
+            # https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
+            material_node_tree.links.new(final_bsdf.outputs[0], result[0].inputs['Surface'])
+            material_node_tree.links.new(final_displacement.outputs[0], result[0].inputs['Displacement'])
+
+            final_bsdf.label = MARKER_LABEL
+            
         return
 
-    if len(shader_kwargs) == 0:
-        logging.debug("Obtaining Randomized Scratch Parameters")
-        shader_kwargs = get_edge_wear_params()
-
-    for material_name, material in materials:
-        # get material node tree
-        # https://blender.stackexchange.com/questions/240278/how-to-access-shader-node-via-python-script
-        material_node_tree = material.node_tree
-
-        if any([node.label == MARKER_LABEL for node in material_node_tree.nodes]):
-            continue
-
-        nw = NodeWrangler(material_node_tree)
-
-        result = nw.find("ShaderNodeOutputMaterial")
-        if len(result) == 0:
-            logger.warning(
-                "No Material Output Node found in the object's materials! Returning"
-            )
-            continue
-
-        # get nodes and links connected to specific inputs
-        # https://blender.stackexchange.com/questions/5462/is-it-possible-to-find-the-nodes-connected-to-a-node-in-python
-        initial_bsdf = result[0].inputs["Surface"].links[0].from_node
-        displacement_links = result[0].inputs["Displacement"].links
-
-        if len(displacement_links) == 0:
-            initial_displacement = None
-        else:
-            initial_displacement = result[0].inputs["Displacement"].links[0].from_node
-
-        final_bsdf, final_displacement = shader_edge_tear_free_node_group(
-            nw, initial_bsdf, initial_displacement, **shader_kwargs
-        )
-        # connecting nodes
-        # https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
-        material_node_tree.links.new(final_bsdf.outputs[0], result[0].inputs["Surface"])
-        material_node_tree.links.new(
-            final_displacement.outputs[0], result[0].inputs["Displacement"]
-        )
-
-        final_bsdf.label = MARKER_LABEL
-
-    return
-
-
-def apply(obj):
-    if not isinstance(obj, Iterable):
-        obj = [obj]
-    for o in obj:
-        apply_over(o)
+    def apply(obj):
+        if not isinstance(obj, Iterable):
+            obj = [obj]
+        for o in obj:
+            Procedural_Edge_Wear.apply_over(o)

@@ -72,5 +72,6 @@ def shader_rug(nw: NodeWrangler, strength=1.0, **kwargs):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_rug, selection, **kwargs)
+class Rug():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_rug, selection, **kwargs)

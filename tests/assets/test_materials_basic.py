@@ -17,9 +17,14 @@ def check_material_runs(pathspec):
     bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=5)
     asset = bpy.context.active_object
 
-    mat = import_item(pathspec)
-    if type(mat) is type:
-        mat = mat(0)
+    MaterialClass = import_item(pathspec)
+    if pathspec == "infinigen.assets.materials.ArtRug" or pathspec == "infinigen.assets.materials.ArtFabric":
+        mat = MaterialClass(0)
+    else:
+        mat = MaterialClass()
+    # if type(mat) is type:
+    #     mat = mat(0)
+    # # mat = mat()
     mat.apply(asset)
 
     # should not crash for input LIST of objects

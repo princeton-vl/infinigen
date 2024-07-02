@@ -22,7 +22,7 @@ def get_wood_tiles():
         hexagon_wood_tile,
     ]
 
-
-def apply(obj, selection=None, vertical=False, scale=None, alternating=None, **kwargs):
-    func = np.random.choice(get_wood_tiles())
-    func.apply(obj, selection, vertical, scale, alternating, **kwargs)
+class Wood_Tiles():
+    def apply(self, obj, selection=None, vertical=False, scale=None, alternating=None, **kwargs):
+        func = np.random.choice(get_wood_tiles())
+        func.apply(obj, selection, vertical, scale, alternating, **kwargs)

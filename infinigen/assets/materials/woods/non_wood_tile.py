@@ -5,28 +5,20 @@
 import numpy as np
 
 
-def apply(
-    obj,
-    selection=None,
-    vertical=False,
-    shader_func=None,
-    scale=None,
-    alternating=None,
-    shape=None,
-    **kwargs,
-):
-    from infinigen.assets.materials import tile
 
-    from .wood import shader_wood
-
-    shader_funcs = tile.get_shader_funcs()
-    shader_funcs = [(f, w) for f, w in shader_funcs if f != shader_wood]
-    funcs, weights = zip(*shader_funcs)
-    weights = np.array(weights) / sum(weights)
-    if shader_func is None:
-        shader_func = np.random.choice(funcs, p=weights)
-    if shape is None:
-        shape = np.random.choice(["square", "hexagon", "rectangle"])
-    tile.apply(
-        obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs
-    )
+class Non_Wood_Tile():
+    def apply(
+        self, obj, selection=None, vertical=False, shader_func=None, scale=None, alternating=None, shape=None,
+        **kwargs
+    ):
+        from .. import tile
+        from .wood import shader_wood
+        shader_funcs = tile.get_shader_funcs()
+        shader_funcs = [(f, w) for f, w in shader_funcs if f != shader_wood]
+        funcs, weights = zip(*shader_funcs)
+        weights = np.array(weights) / sum(weights)
+        if shader_func is None:
+            shader_func = np.random.choice(funcs, p=weights)
+        if shape is None:
+            shape = np.random.choice(['square', 'hexagon', 'rectangle'])
+        tile.apply(obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs)

@@ -52,6 +52,6 @@ def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_translucent_plastic, selection, **kwargs)
+class Plastic_Translucent():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_translucent_plastic, selection, **kwargs)

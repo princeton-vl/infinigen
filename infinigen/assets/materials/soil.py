@@ -349,7 +349,9 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
     else:
         return big_stone
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geometry_soil, selection=selection)
-    surface.add_material(obj, shader_soil, selection=selection)
+class Soil():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(
+            obj, geometry_soil, selection=selection
+        )
+        surface.add_material(obj, shader_soil, selection=selection)

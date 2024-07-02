@@ -149,5 +149,6 @@ def shader_snake_plant(nw: NodeWrangler):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_snake_plant, selection=selection)
+class Snake_Plant():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_snake_plant, selection=selection)

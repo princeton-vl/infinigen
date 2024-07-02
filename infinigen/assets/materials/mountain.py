@@ -379,13 +379,10 @@ def shader_MOUNTAIN(
     return bsdf_mountain
 
 
-def apply(objs, selection=None, **kwargs):
-    if isinstance(objs, list) and len(objs) == 0:
-        return
-    surface.add_geomod(objs, geo_MOUNTAIN, selection=selection)
-    surface.add_material(
-        objs,
-        shader_MOUNTAIN,
-        selection=selection,
-        input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs, **kwargs},
-    )
+class Mountain():
+    def apply(self, objs, selection=None, **kwargs):
+        if isinstance(objs, list) and len(objs) == 0:
+            return
+        surface.add_geomod(objs, geo_MOUNTAIN, selection=selection)
+        surface.add_material(objs, shader_MOUNTAIN, selection=selection, 
+            input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs, **kwargs})

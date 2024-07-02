@@ -172,8 +172,7 @@ def geo_slimy(nw, rand=False, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(
-        obj, geo_slimy, apply=False, input_kwargs=geo_kwargs, attributes=["offset"]
-    )
-    surface.add_material(obj, shader_slimy, reuse=False, input_kwargs=shader_kwargs)
+class Slimy():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geo_slimy, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
+        surface.add_material(obj, shader_slimy, reuse=False, input_kwargs=shader_kwargs)

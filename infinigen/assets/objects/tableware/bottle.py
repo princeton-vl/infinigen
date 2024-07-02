@@ -168,7 +168,7 @@ class BottleFactory(AssetFactory):
             self.surface = material_assignments["surface"].assign_material()
             self.wrap_surface = material_assignments["wrap_surface"].assign_material()
             if self.wrap_surface == text.Text:
-                self.wrap_surface = text.Text(self.factory_seed, False)
+                self.wrap_surface = text.Text(False)
 
             self.cap_surface = material_assignments["cap_surface"].assign_material()
             scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]

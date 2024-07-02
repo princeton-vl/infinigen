@@ -323,9 +323,9 @@ def get_random_light_wood_params():
     color_factory = [hex_to_rgb(c) for c in color_fac]
     return color_factory[randint(len(color_fac))]
 
-
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
+class Tiled_Wood():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
 
 
 # def make_sphere():

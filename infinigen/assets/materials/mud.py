@@ -226,6 +226,7 @@ def geo_mud(nw: NodeWrangler, random_seed=0, selection=None):
         )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geo_mud, selection=selection)
-    surface.add_material(obj, shader_mud, selection=selection)
+class Mud():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geo_mud, selection=selection)
+        surface.add_material(obj, shader_mud, selection=selection)

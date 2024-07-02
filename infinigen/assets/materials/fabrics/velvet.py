@@ -4,9 +4,13 @@
 # Authors: Stamatis Alexandropoulos
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=55MMAnTYhWI by Dikko
 
-from numpy.random import uniform
+import bpy
+import mathutils
+from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials import common
+from infinigen.core import surface
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import color_category
 
@@ -139,8 +143,10 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_velvet, selection, **kwargs)
+class Velvet:
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_velvet, selection, **kwargs)
+
     # surface.add_material(obj, shader_velvet, selection=selection)
 
 

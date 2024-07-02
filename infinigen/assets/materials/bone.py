@@ -144,6 +144,6 @@ def shader_bone(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_bone, selection=selection)
+class Bone():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_bone, selection=selection)

@@ -137,7 +137,7 @@ def geometry_geo_water(nw: NodeWrangler):
         Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geometry_geo_water, selection=selection, attributes=[])
-    surface.add_material(obj, waterfall_shader, selection=selection)
+class Waterfall_Material():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geometry_geo_water, selection=selection, attributes=[])
+        surface.add_material(obj, waterfall_shader, selection=selection)

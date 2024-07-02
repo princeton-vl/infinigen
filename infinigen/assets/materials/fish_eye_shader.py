@@ -419,6 +419,6 @@ def shader_eyeball_fish(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_eyeball_fish, selection=selection)
+class Fish_Eye_Shader():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_eyeball_fish, selection=selection)

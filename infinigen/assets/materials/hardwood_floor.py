@@ -42,11 +42,11 @@ def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
     nw.links.remove(nw.find_from(principled_bsdf.inputs[0])[0])
     nw.connect_input(principled_bsdf.inputs[0], color)
 
-
-def apply(obj, selection=None, rotation=None, **kwargs):
-    if rotation is None:
-        rotation = (0, 0, 0) if uniform() < 0.1 else (0, 0, np.pi / 2)
-    return common.apply(obj, shader_hardwood_floor, selection, rotation, **kwargs)
+class Hardwood_Floor():
+    def apply(self, obj, selection=None, rotation=None, **kwargs):
+        if rotation is None:
+            rotation = (0,0,0) if uniform() < .1 else (0,0,np.pi / 2)
+        return common.apply(obj, shader_hardwood_floor, selection, rotation, **kwargs)
 
 
 def make_sphere():

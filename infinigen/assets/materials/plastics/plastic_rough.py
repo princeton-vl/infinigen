@@ -129,5 +129,7 @@ def shader_rough_plastic(
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_rough_plastic, selection, **kwargs)
+
+class Plastic_Rough():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_rough_plastic, selection, **kwargs)

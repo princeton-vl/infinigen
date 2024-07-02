@@ -25,6 +25,6 @@ def smoke_material(nw):
         Nodes.MaterialOutput, input_kwargs={"Volume": principled_volume}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, smoke_material, selection=selection)
+class Smoke_Material():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, smoke_material, selection=selection)

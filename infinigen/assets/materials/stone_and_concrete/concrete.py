@@ -482,5 +482,7 @@ def shader_concrete(
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_concrete, selection=selection, **kwargs)
+
+class Concrete():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_concrete, selection=selection, **kwargs)

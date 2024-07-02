@@ -48,6 +48,6 @@ def shader_simple_white(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_simple_white, selection=selection)
+class Simple_Whitish():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_simple_white, selection=selection)

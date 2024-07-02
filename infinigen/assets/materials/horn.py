@@ -125,6 +125,6 @@ def shader_horn(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_horn, selection=selection)
+class Horn():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_horn, selection=selection)

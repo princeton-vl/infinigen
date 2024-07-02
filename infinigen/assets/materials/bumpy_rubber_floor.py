@@ -386,5 +386,6 @@ def shader_bumpy_rubber(nw: NodeWrangler, scale=2.0, base_color=None, seed=None)
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_bumpy_rubber, selection=selection)
+class Bumpy_Rubber_Floor():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_bumpy_rubber, selection=selection)

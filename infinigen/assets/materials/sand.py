@@ -185,12 +185,8 @@ def geo_SAND(
         Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
     )
 
-
-def apply(objs, selection=None, **kwargs):
-    surface.add_geomod(objs, geo_SAND, selection=selection)
-    surface.add_material(
-        objs,
-        shader_SAND,
-        selection=selection,
-        input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs},
-    )
+class Sand():
+    def apply(self, objs, selection=None, **kwargs):
+        surface.add_geomod(objs, geo_SAND, selection=selection)
+        surface.add_material(objs, shader_SAND, selection=selection, 
+            input_kwargs={"obj": objs[0] if isinstance(objs, list) else objs})

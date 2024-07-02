@@ -5,13 +5,19 @@
 # Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=In9V4-ih16o by Ryan King Art
 
 
-from numpy.random import uniform
+import functools
+
+import bpy
+import mathutils
+from numpy.random import normal, randint, uniform
 
 from infinigen.assets.color_fits import real_color_distribution
 from infinigen.assets.materials import common
 from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import color_category, hsv2rgba
 
 
 @node_utils.to_nodegroup("nodegroup_leather", singleton=False, type="ShaderNodeTree")
@@ -188,6 +194,7 @@ def shader_leather(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kw
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    unwrap_faces(obj, selection)
-    common.apply(obj, shader_leather, selection=selection, **kwargs)
+class Leather:
+    def apply(self, obj, selection=None, **kwargs):
+        unwrap_faces(obj, selection)
+        common.apply(obj, shader_leather, selection=selection, **kwargs)

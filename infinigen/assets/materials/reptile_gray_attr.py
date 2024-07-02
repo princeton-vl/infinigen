@@ -252,14 +252,9 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(
-        obj,
-        geometry_reptile_vor_attr,
-        input_kwargs=geo_kwargs,
-        attributes=["value", "index"],
-    )
-    surface.add_geomod(
-        obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[]
-    )
-    surface.add_material(obj, shader_gray, input_kwargs=shader_kwargs)
+class Reptile_Gray_Attr():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geometry_reptile_vor_attr, input_kwargs=geo_kwargs, attributes=['value', 'index'])
+        surface.add_geomod(obj, geometry_reptile_vor, input_kwargs=geo_kwargs, attributes=[])
+        surface.add_material(obj, shader_gray, input_kwargs=shader_kwargs)
+

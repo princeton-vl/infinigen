@@ -31,7 +31,7 @@ class WallArtFactory(AssetFactory):
             self.assign_materials()
 
     def assign_materials(self):
-        # self.surface = Art(self.factory_seed)
+        # self.surface = Art()
         assignments = self.material_assignments
         self.surface = assignments["surface"].assign_material()
         if self.surface == Art:

@@ -1015,14 +1015,10 @@ def get_random_bark_params(seed):
 
     return geo_params, color_params
 
+class Bark_Random():
+    def apply(self, obj, selection=None, **kwargs):
 
-def apply(obj, selection=None, **kwargs):
-    geo_params, color_params = get_random_bark_params(seed=np.random.randint(1e5))
+        geo_params, color_params = get_random_bark_params(seed=np.random.randint(1e5))
 
-    surface.add_geomod(
-        obj,
-        geo_bark_random,
-        selection=selection,
-        input_kwargs={"base_color": color_params["Color"], "geo_params": geo_params},
-        attributes=["initial_position"],
-    )
+        surface.add_geomod(obj, geo_bark_random, selection=selection, 
+            input_kwargs={'base_color': color_params['Color'], 'geo_params': geo_params}, attributes=['initial_position'])

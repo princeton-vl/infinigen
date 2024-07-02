@@ -121,5 +121,6 @@ def shader_eyeball_old(nw: NodeWrangler):
     )
 
 
-def apply(obj, shader_kwargs={}, **kwargs):
-    surface.add_material(obj, shader_eyeball, input_kwargs=shader_kwargs)
+class Eyeball():
+    def apply(self, obj, shader_kwargs={}, **kwargs):
+        surface.add_material(obj, shader_eyeball, input_kwargs=shader_kwargs)

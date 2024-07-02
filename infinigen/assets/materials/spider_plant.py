@@ -37,6 +37,6 @@ def shader_spider_plant(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_spider_plant, selection=selection)
+class Spider_Plant():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_spider_plant, selection=selection)

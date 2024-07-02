@@ -472,8 +472,9 @@ def geometry_snake_scale(nw: NodeWrangler):
     )
 
 
-def apply(obj, **kwargs):
-    shader = snake_shaders.shaders.choose()
-    rand = uniform() > 0.3
-    surface.add_geomod(obj, geometry_snake_scale)
-    surface.add_material(obj, shader, input_kwargs={"rand": rand})
+class Snake_Scale():
+    def apply(self, obj, **kwargs):
+        shader = snake_shaders.shaders.choose()
+        rand = uniform() > 0.3
+        surface.add_geomod(obj, geometry_snake_scale)
+        surface.add_material(obj, shader, input_kwargs={'rand': rand})

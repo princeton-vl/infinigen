@@ -284,9 +284,11 @@ def geometry_chitin(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(obj, geometry_chitin, input_kwargs=geo_kwargs)
-    surface.add_material(obj, shader_chitin, reuse=False, input_kwargs=shader_kwargs)
+
+class Chitin():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geometry_chitin, input_kwargs=geo_kwargs)
+        surface.add_material(obj, shader_chitin, reuse=False, input_kwargs=shader_kwargs)
 
 
 if __name__ == "__main__":
@@ -294,15 +296,9 @@ if __name__ == "__main__":
         bpy.ops.wm.open_mainfile(filepath="dev_scene_1019.blend")
         # creature(73349, 0).parts(0, factory=QuadrupedBody)
         obj = "creature(36230, 0).parts(0, factory=BeetleBody)"
-        # obj = "creature(73349, 0).parts(0, factory=QuadrupedBody)"
-        apply(
-            bpy.data.objects[obj],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True},
-        )
-        fn = os.path.join(
-            os.path.abspath(os.curdir), "dev_scene_test_beetle_attr.blend"
-        )
+        #obj = "creature(73349, 0).parts(0, factory=QuadrupedBody)"
+        Chitin.apply(bpy.data.objects[obj], geo_kwargs={'rand': True}, shader_kwargs={'rand': True})
+        fn = os.path.join(os.path.abspath(os.curdir), 'dev_scene_test_beetle_attr.blend')
         bpy.ops.wm.save_as_mainfile(filepath=fn)
         # bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
         # bpy.context.scene.render.image_settings.file_format='JPEG'

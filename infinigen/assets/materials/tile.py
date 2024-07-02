@@ -516,67 +516,44 @@ def get_shader_funcs():
         (shader_wood, 5),
     ]
 
+class Tile():
+    def apply(self, obj, selection=None, vertical=False, shader_func=None, scale=None, alternating=None, shape=None,
+            **kwargs):
+        funcs, weights = zip(*get_shader_funcs())
+        weights = np.array(weights) / sum(weights)
+        if shader_func is None:
+            shader_func = np.random.choice(funcs, p=weights)
+        name = shader_func.__name__
 
-def apply(
-    obj,
-    selection=None,
-    vertical=False,
-    shader_func=None,
-    scale=None,
-    alternating=None,
-    shape=None,
-    **kwargs,
-):
-    funcs, weights = zip(*get_shader_funcs())
-    weights = np.array(weights) / sum(weights)
-    if shader_func is None:
-        shader_func = np.random.choice(funcs, p=weights)
-    name = shader_func.__name__
+        if scale is None:
+            scale = log_uniform(1., 2.)
 
-    if scale is None:
-        scale = log_uniform(1.0, 2.0)
+        if shader_func == ceramic.shader_ceramic:
+            low = uniform(.1, .3)
+            high = uniform(.6, .8)
+            shader_func = partial(ceramic.shader_ceramic, roughness_min=low, roughness_max=high)
+        match shape:
+            case 'square':
+                method = shader_square_tile
+            case 'rectangle':
+                method = shader_rectangle_tile
+            case 'hexagon':
+                method = shader_hexagon_tile
+            case 'staggered':
+                method = shader_staggered_tile
+            case 'crossed':
+                method = shader_crossed_tile
+            case 'composite':
+                method = shader_composite_tile
+            case _:
+                method = np.random.choice(
+                    [shader_hexagon_tile, shader_square_tile, shader_rectangle_tile, shader_staggered_tile,
+                        shader_crossed_tile]
+                )
 
-    if shader_func == ceramic.shader_ceramic:
-        low = uniform(0.1, 0.3)
-        high = uniform(0.6, 0.8)
-        shader_func = partial(
-            ceramic.shader_ceramic, roughness_min=low, roughness_max=high
-        )
-    match shape:
-        case "square":
-            method = shader_square_tile
-        case "rectangle":
-            method = shader_rectangle_tile
-        case "hexagon":
-            method = shader_hexagon_tile
-        case "staggered":
-            method = shader_staggered_tile
-        case "crossed":
-            method = shader_crossed_tile
-        case "composite":
-            method = shader_composite_tile
-        case _:
-            method = np.random.choice(
-                [
-                    shader_hexagon_tile,
-                    shader_square_tile,
-                    shader_rectangle_tile,
-                    shader_staggered_tile,
-                    shader_crossed_tile,
-                ]
-            )
-
-    return common.apply(
-        obj,
-        method,
-        selection,
-        shader_func,
-        vertical,
-        alternating,
-        name=f"{name}_{method.__name__}_tile",
-        scale=scale,
-        **kwargs,
-    )
+        return common.apply(
+            obj, method, selection, shader_func, vertical, alternating, name=f'{name}_{method.__name__}_tile',
+                            scale=scale, **kwargs)
 
 
 def make_sphere():

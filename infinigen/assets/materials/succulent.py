@@ -441,6 +441,6 @@ def shader_whitish_green_succulent(nw: NodeWrangler):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader_2}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_green_transition_succulent, selection=selection)
+class Succulent():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_green_transition_succulent, selection=selection)

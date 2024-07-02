@@ -584,12 +584,14 @@ def geo_scale(nw, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    attributes = ["Color variations", "offset2"]
-    surface.add_geomod(
-        obj, geo_scale, apply=False, input_kwargs=geo_kwargs, attributes=attributes
-    )
-    surface.add_material(obj, shader_scale, reuse=False, input_kwargs=shader_kwargs)
+class Scale():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        attributes = [
+            'Color variations',
+            'offset2'
+        ]
+        surface.add_geomod(obj, geo_scale, apply=False, input_kwargs=geo_kwargs, attributes=attributes)
+        surface.add_material(obj, shader_scale, reuse=False, input_kwargs=shader_kwargs)
 
 
 if __name__ == "__main__":
@@ -598,13 +600,9 @@ if __name__ == "__main__":
     # if not os.path.isdir(outpath):
     #    os.mkdir(outpath)
     for i in range(1):
-        bpy.ops.wm.open_mainfile(filepath="scale_new2.blend")
-        apply(
-            bpy.data.objects["creature_16_aquatic_0_root_mesh.001"],
-            geo_kwargs={"rand": False},
-            shader_kwargs={"rand": True},
-        )
-        fn = os.path.join(os.path.abspath(os.curdir), "dev_test_scale_new2.blend")
+        bpy.ops.wm.open_mainfile(filepath='scale_new2.blend')
+        Scale.apply(bpy.data.objects['creature_16_aquatic_0_root_mesh.001'], geo_kwargs={'rand': False}, shader_kwargs={'rand': True})
+        fn = os.path.join(os.path.abspath(os.curdir), 'dev_test_scale_new2.blend')
         bpy.ops.wm.save_as_mainfile(filepath=fn)
         # bpy.context.scene.render.filepath = os.path.join(outpath, 'scale_%d.jpg'%(i))
         # bpy.context.scene.render.image_settings.file_format='JPEG'

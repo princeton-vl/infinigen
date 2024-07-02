@@ -320,7 +320,7 @@ def geometry_river_water(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(obj, geometry_river_water, selection=selection, attributes=[])
-    surface.add_material(obj, shader_river_water, selection=selection)
+class River_Water():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(obj, geometry_river_water, selection=selection, attributes=[])
+        surface.add_material(obj, shader_river_water, selection=selection)

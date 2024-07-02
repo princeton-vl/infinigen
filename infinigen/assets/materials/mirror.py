@@ -17,6 +17,6 @@ def shader_mirror(nw: NodeWrangler, **kwargs):
 
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": glossy_bsdf})
 
-
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_mirror, selection, **kwargs)
+class Mirror():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_mirror, selection, **kwargs)

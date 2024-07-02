@@ -90,12 +90,7 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(
-        obj,
-        geo_voronoi_noise,
-        apply=False,
-        input_kwargs=geo_kwargs,
-        attributes=["offset"],
-    )
-    surface.add_material(obj, shader_twocolorz, reuse=False, input_kwargs=shader_kwargs)
+class Two_Colorz():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geo_voronoi_noise, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
+        surface.add_material(obj, shader_twocolorz, reuse=False, input_kwargs=shader_kwargs)

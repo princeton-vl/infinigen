@@ -622,19 +622,19 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
         Nodes.GroupOutput, input_kwargs={"Geometry": set_position}
     )
 
-
-def apply(obj, selection=None, **kwargs):
-    if not isinstance(obj, list):
-        obj = [obj]
-    if not len(obj):
-        return
-    geomod_args = {"is_rock": max(obj[0].dimensions) < 5}
-    geomod_args.update(kwargs)
-    surface.add_geomod(
-        obj,
-        geometry_sandstone,
-        selection=selection,
-        attributes=[],
-        input_kwargs=geomod_args,
-    )
-    surface.add_material(obj, shader, selection=selection)
+class Sandstone():
+    def apply(self, obj, selection=None, **kwargs):
+        if not isinstance(obj, list):
+            obj = [obj]
+        if not len(obj):
+            return
+        geomod_args = {"is_rock": max(obj[0].dimensions) < 5}
+        geomod_args.update(kwargs)
+        surface.add_geomod(
+            obj,
+            geometry_sandstone,
+            selection=selection,
+            attributes=[],
+            input_kwargs=geomod_args,
+        )
+        surface.add_material(obj, shader, selection=selection)

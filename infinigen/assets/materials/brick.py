@@ -73,10 +73,11 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 
 
-def apply(obj, selection=None, height=None, **kwargs):
-    for o in obj if isinstance(obj, Iterable) else [obj]:
-        unwrap_normal(o, selection, axis_="z")
-    common.apply(obj, shader_brick, selection, height, **kwargs)
+class Brick():
+    def apply(self, obj, selection=None, height=None, **kwargs):
+        for o in obj if isinstance(obj, Iterable) else [obj]:
+            unwrap_normal(o, selection, axis_='z')
+        common.apply(obj, shader_brick, selection, height, **kwargs)
 
 
 def make_sphere():

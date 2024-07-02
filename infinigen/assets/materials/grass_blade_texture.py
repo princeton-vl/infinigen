@@ -257,6 +257,6 @@ def shader_grass_texture_original(nw: NodeWrangler):
 
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": shader})
 
-
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_grass_texture_original, selection=selection)
+class Grass_Blade_Texture():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_grass_texture_original, selection=selection)

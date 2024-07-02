@@ -68,30 +68,29 @@ class Text:
     font_weights = ["normal", "bold", "heavy"]
     font_styles = ["normal", "italic", "oblique"]
 
-    def __init__(self, factory_seed, has_barcode=True, emission=0):
-        self.factory_seed = factory_seed
-        with FixedSeed(self.factory_seed):
-            self.size = 4
-            self.dpi = 100
-            self.colormap = (
-                self.build_sequential_colormap()
-                if uniform() < 0.5
-                else self.build_diverging_colormap()
-            )
-            self.white_chance = 0.03
-            self.black_chance = 0.05
+    def __init__(self, has_barcode=True, emission=0):
+        
+        self.size = 4
+        self.dpi = 100
+        self.colormap = (
+            self.build_sequential_colormap()
+            if uniform() < 0.5
+            else self.build_diverging_colormap()
+        )
+        self.white_chance = 0.03
+        self.black_chance = 0.05
 
-            self.n_patches = np.random.randint(5, 8)
-            self.force_horizontal = uniform() < 0.75
+        self.n_patches = np.random.randint(5, 8)
+        self.force_horizontal = uniform() < 0.75
 
-            self.n_texts = np.random.randint(2, 4)
+        self.n_texts = np.random.randint(2, 4)
 
-            self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
-            self.barcode_scale = uniform(0.3, 0.6)
-            self.barcode_length = np.random.randint(25, 40)
-            self.barcode_aspect = log_uniform(1.5, 3)
+        self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
+        self.barcode_scale = uniform(0.3, 0.6)
+        self.barcode_length = np.random.randint(25, 40)
+        self.barcode_aspect = log_uniform(1.5, 3)
 
-            self.emission = emission
+        self.emission = emission
 
     @staticmethod
     def build_diverging_colormap():
@@ -445,16 +444,12 @@ class Text:
     def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
         common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
 
-
-def apply(
-    obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs
-):
-    Text(np.random.randint(1e5), has_barcode, emission).apply(
-        obj, selection, bbox, **kwargs
-    )
+class TextGeneral():
+    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs):
+            Text(has_barcode, emission).apply(obj, selection, bbox, **kwargs)
 
 
-def make_sphere():
+def make_sphere():  
     obj = new_plane()
     obj.rotation_euler[0] = np.pi / 2
     butil.apply_transform(obj)

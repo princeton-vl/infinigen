@@ -57,6 +57,6 @@ def shader_ceramic(
         input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
     )
 
-
-def apply(obj, selection=None, clear=False, **kwargs):
-    common.apply(obj, shader_ceramic, selection, clear, **kwargs)
+class Ceramic():
+    def apply(self, obj, selection=None, clear=False, **kwargs):
+        common.apply(obj, shader_ceramic, selection, clear, **kwargs)

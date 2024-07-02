@@ -34,5 +34,6 @@ def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_glass_volume, selection, **kwargs)
+class Glass_Volume():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_glass_volume, selection, **kwargs)

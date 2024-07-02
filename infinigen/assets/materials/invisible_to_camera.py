@@ -37,11 +37,14 @@ def shader_invisible(nw: NodeWrangler):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    if not isinstance(obj, list):
-        obj = [obj]
 
-    for o in obj:
-        for i in range(len(o.material_slots)):
-            bpy.ops.object.material_slot_remove({"object": o})
-    surface.add_material(obj, shader_invisible, selection=selection)
+class Invisible_to_Camera():
+    def apply(self, obj, selection=None, **kwargs):
+
+        if not isinstance(obj, list):
+            obj = [obj]
+
+        for o in obj:
+            for i in range(len(o.material_slots)):
+                bpy.ops.object.material_slot_remove({'object': o})  
+        surface.add_material(obj, shader_invisible, selection=selection)

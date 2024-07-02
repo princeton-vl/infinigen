@@ -61,6 +61,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    unwrap_faces(obj, selection)
-    common.apply(obj, shader_sofa_fabric, selection, **kwargs)
+class Sofa_Fabric:
+    def apply(self, obj, selection=None, **kwargs):
+        unwrap_faces(obj, selection)
+        common.apply(obj, shader_sofa_fabric, selection, **kwargs)

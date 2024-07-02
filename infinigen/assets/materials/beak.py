@@ -89,5 +89,7 @@ def shader_beak(nw: NodeWrangler):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_material(obj, shader_beak, selection=selection)
+
+class Beak():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_beak, selection=selection)

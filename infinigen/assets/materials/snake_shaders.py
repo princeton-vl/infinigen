@@ -499,7 +499,7 @@ class shaders:
         # choices = [shader_green]
         return random.choice(choices)
 
-
-def apply(obj, selection=None, **kwargs):
-    shader = shaders.choose()
-    surface.add_material(obj, shader, selection=selection)
+class Snake_Shaders():
+    def apply(self, obj, selection=None, **kwargs):
+        shader = shaders.choose()
+        surface.add_material(obj, shader, selection=selection)

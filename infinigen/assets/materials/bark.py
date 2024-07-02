@@ -210,8 +210,8 @@ def geo_bark(nw: NodeWrangler):
     )
 
 
-def apply(obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
-    surface.add_geomod(
-        obj, geo_bark, apply=False, input_kwargs=geo_kwargs, attributes=["offset"]
-    )
-    surface.add_material(obj, shader_bark, reuse=False, input_kwargs=shader_kwargs)
+
+class Bark():
+    def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
+        surface.add_geomod(obj, geo_bark, apply=False, input_kwargs=geo_kwargs, attributes=['offset'])
+        surface.add_material(obj, shader_bark, reuse=False, input_kwargs=shader_kwargs)

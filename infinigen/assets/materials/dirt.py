@@ -330,13 +330,14 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         return dirt_base_color, dirt_roughness
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(
-        obj,
-        geo_dirt,
-        selection=selection,
-    )
-    surface.add_material(obj, shader_dirt, selection=selection)
+class Dirt():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(
+            obj,
+            geo_dirt,
+            selection=selection,
+        )
+        surface.add_material(obj, shader_dirt, selection=selection)
 
 
 if __name__ == "__main__":
@@ -344,12 +345,10 @@ if __name__ == "__main__":
     if not os.path.isdir(os.path.join("outputs", mat)):
         os.mkdir(os.path.join("outputs", mat))
     for i in range(10):
-        bpy.ops.wm.open_mainfile(filepath="landscape_surface_dev.blend")
-        apply(bpy.data.objects["Plane.002"])
-        bpy.context.scene.render.filepath = os.path.join(
-            "outputs", mat, "%s_%d.jpg" % (mat, i)
-        )
-        bpy.context.scene.render.image_settings.file_format = "JPEG"
+        bpy.ops.wm.open_mainfile(filepath='landscape_surface_dev.blend')
+        Dirt.apply(bpy.data.objects['Plane.002'])
+        bpy.context.scene.render.filepath = os.path.join('outputs', mat, '%s_%d.jpg'%(mat, i))
+        bpy.context.scene.render.image_settings.file_format='JPEG'
         bpy.ops.render.render(write_still=True)
         bpy.ops.wm.save_as_mainfile(
             filepath=os.path.join("outputs", mat, "landscape_surface_dev_dirt.blend")

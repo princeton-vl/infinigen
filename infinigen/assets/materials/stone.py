@@ -361,10 +361,12 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         return stone_base_color, stone_roughness
 
 
-def apply(obj, selection=None, **kwargs):
-    surface.add_geomod(
-        obj,
-        geo_stone,
-        selection=selection,
-    )
-    surface.add_material(obj, shader_stone, selection=selection)
+class Stone():
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(
+            obj,
+            geo_stone,
+            selection=selection,
+        )
+        surface.add_material(obj, shader_stone, selection=selection)
+

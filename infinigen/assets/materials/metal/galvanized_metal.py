@@ -118,5 +118,7 @@ def shader_galvanized_metal(
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_galvanized_metal, selection=selection, **kwargs)
+
+class Galvanized_Metal():
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_galvanized_metal, selection=selection,**kwargs)
