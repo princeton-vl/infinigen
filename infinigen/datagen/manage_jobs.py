@@ -739,6 +739,11 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
     sys.exit(1 if any_crashed else 0)
 
 
+mandatory_exclusive_configs = [
+    "infinigen/datagen/configs/compute_platform",
+    "infinigen/datagen/configs/data_schema",
+]
+
 if __name__ == "__main__":
     os.umask(0o007)
 
@@ -866,16 +871,12 @@ if __name__ == "__main__":
         random.seed(args.meta_seed)
         np.random.seed(args.meta_seed)
 
-    mandatory_exclusive = [
-        "infinigen/datagen/configs/compute_platform",
-        "infinigen/datagen/configs/data_schema",
-    ]
     infinigen.core.init.apply_gin_configs(
         configs_folder=Path("infinigen/datagen/configs"),
         configs=args.pipeline_configs,
         overrides=args.pipeline_overrides,
-        mandatory_folders=mandatory_exclusive,
-        mutually_exclusive_folders=mandatory_exclusive,
+        mandatory_folders=mandatory_exclusive_configs,
+        mutually_exclusive_folders=mandatory_exclusive_configs,
     )
 
     main(args)
