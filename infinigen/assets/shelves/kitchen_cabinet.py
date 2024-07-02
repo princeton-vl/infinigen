@@ -325,4 +325,4 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         x,y,z = self.dimensions
-        return new_bbox(-x/2 * 1.2, x/2 * 1.2, 0, y * 1.1, 0, (z + 0.06) * 1.03)
+        return new_bbox(-x/2 * 1.2, x/2 * 1.2, 0, y * 1.1, 0, (z + 0.06))

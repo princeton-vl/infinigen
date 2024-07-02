@@ -19,7 +19,7 @@ private:
     // float calc_resolution_scale(const npz &camview) const;
     unsigned int create_framebuffer();
 
-    glm::mat4 wc2img, projection, current_frame_view_matrix, next_frame_view_matrix;
+    glm::mat4 cc2img, projection, current_frame_view_matrix, next_frame_view_matrix;
     glm::vec3 position;
     double fx, fy, cx, cy;
     float buffer_over_image; // should be >= 1

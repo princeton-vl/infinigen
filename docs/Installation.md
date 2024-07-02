@@ -98,7 +98,7 @@ INFINIGEN_MINIMAL_INSTALL=True bash scripts/install/interactive_blender.sh
 bash scripts/install/interactive_blender.sh
 
 # Enable OpenGL GT
-INFINIGEN_INSTALL_CUSTOMGT=True scripts/install/interactive_blender.sh
+INFINIGEN_INSTALL_CUSTOMGT=True bash scripts/install/interactive_blender.sh
 ```
 
 :exclamation: If you encounter any issues with the above, please add ` > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.

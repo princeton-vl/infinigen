@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "io.hpp"
 
-#define VERSION "1.43"
+#define VERSION "1.44"
 
 using std::cout, std::cerr, std::endl;
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     const fs::path input_dir(program.get<std::string>("--input_dir"));
     const fs::path output_dir(program.get<std::string>("--output_dir"));
     if (input_dir.stem().string() == "x")
-        exit(174); // Custom error code for checking if EGL is working
+        exit(0); // Custom error code for checking if EGL is working
     assert_exists(input_dir);
     if (!fs::exists(output_dir))
         fs::create_directory(output_dir);

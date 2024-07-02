@@ -20,10 +20,10 @@ camera_pose_proposal.pitch = -120
 camera_pose_proposal.roll = 180
 camera_pose_proposal.yaw = -178
 
-assets.boulder.create_placeholder.boulder_scale = 1
+boulder.create_placeholder.boulder_scale = 1
 LandTiles.land_process = None
 
-core.render.hide_water = True
+render.hide_water = True
 compute_base_views.min_candidates_ratio = 1
 walk_same_altitude.ignore_missed_rays = True
 
