@@ -45,7 +45,6 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import Task
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.terrain import Terrain
-from infinigen.tools.export import export_scene
 
 logger = logging.getLogger(__name__)
 
