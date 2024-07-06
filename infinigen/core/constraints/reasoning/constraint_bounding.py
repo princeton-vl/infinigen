@@ -14,7 +14,6 @@ from functools import partial
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
-
 from .constraint_constancy import is_constant
 from .constraint_domain import constraint_domain
 from .domain import Domain
@@ -72,20 +71,28 @@ class Bound:
             raise ValueError(f"Expected exactly one of {lhs=} {rhs=} to be provided")
 
         if lhs is not None:
-            return Bound(low=func(lhs, self.low), high=func(lhs, self.high))
+            return Bound(
+                low=func(lhs, self.low),
+                high=func(lhs, self.high)
+            )
         else:
-            return Bound(low=func(self.low, rhs), high=func(self.high, rhs))
+            return Bound(
+                low=func(self.low, rhs),
+                high=func(self.high, rhs)
+            )
 
 
 int_inverse_op = {
     operator.add: operator.sub,
     operator.mul: operator.floordiv,
+    operator.truediv: operator.mul
 }
 int_inverse_op.update({v: k for k, v in int_inverse_op.items()})
 
 
 def _expression_map_bound_binop(
-    node: cl.ScalarOperatorExpression, bound: Bound
+    node: cl.ScalarOperatorExpression,
+    bound: Bound
 ) -> list[Bound]:
     lhs, rhs = node.operands
     inv_func = int_inverse_op.get(node.func)
@@ -166,7 +173,10 @@ def update_var(var, scene_state):
     return var
 
 
-def constraint_bounds(node: cl.Node, state=None) -> list[Bound]:
+def constraint_bounds(
+    node: cl.Node,
+    state=None
+) -> list[Bound]:
     recurse = partial(constraint_bounds, state=state)
 
     match node:

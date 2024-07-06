@@ -6,172 +6,61 @@
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix constants
 
-from collections import defaultdict
-
-import bpy
 import numpy as np
 import shapely
-from shapely import (
-    LineString,
-    MultiLineString,
-    Polygon,
-    remove_repeated_points,
-    simplify,
-)
-from shapely.ops import linemerge, orient, polygonize, shared_paths, unary_union
+from shapely import MultiLineString
+from shapely.ops import shared_paths
 
-import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.assets.utils.decorate import write_co
-from infinigen.assets.utils.object import new_circle
-from infinigen.assets.utils.shapes import simplify_polygon
-from infinigen.core.util import blender as butil
+from .base import room_level, room_name, valid_rooms
+from ..state_def import State
+from infinigen.core.tags import Semantics
 
-SIMPLIFY_THRESH = 1e-6
-ANGLE_SIMPLIFY_THRESH = 0.2
-WELD_THRESH = 0.01
+def update_shared(state: State, i: str):
+    for r in state[i].relations:
+        r.value = shared(state[i].polygon, state[r.target_name].polygon)
+    for k, o in valid_rooms(state):
+        if room_level(k) == room_level(i) and k != i:
+            r = next(r for r in o.relations if r.target_name == i)
+            r.value = shared(o.polygon, state[i].polygon)
 
 
-def is_valid_polygon(p):
-    if isinstance(p, Polygon) and p.area > 0 and p.is_valid:
-        if len(p.interiors) == 0:
-            return True
-    return False
+def update_contour(state_: State, state:State, indices: set[str]):
+    i = next(iter(indices))
+    exterior = room_name(Semantics.Exterior, room_level(i))
+    minus = shapely.union_all([state[k].polygon for k in indices])
+    plus = shapely.union_all([state_[k].polygon for k in indices])
+    state_[exterior].polygon = state[exterior].polygon.difference(minus).union(plus)
 
 
-def canonicalize(p):
-    p = p.buffer(0)
-    try:
-        while True:
-            p_ = shapely.force_2d(simplify_polygon(p))
-            l = len(p.boundary.coords)
-            if p.area == 0:
-                raise NotImplementedError("Polygon empty.")
-            p = orient(p_)
-            coords = np.array(p.boundary.coords[:])
-            rounded = np.round(coords / constants.UNIT) * constants.UNIT
-            coords = np.where(
-                np.all(np.abs(coords - rounded) < 1e-3, -1)[:, np.newaxis],
-                rounded,
-                coords,
-            )
-            diff = coords[1:] - coords[:-1]
-            diff = diff / (np.linalg.norm(diff, axis=-1, keepdims=True) + 1e-6)
-            product = (diff[[-1] + list(range(len(diff) - 1))] * diff).sum(-1)
-            valid_indices = list(range(len(coords) - 1))
-            invalid_indices = np.nonzero((product < -0.8) | (product > 1 - 1e-6))[
-                0
-            ].tolist()
-            if len(invalid_indices) > 0:
-                i = invalid_indices[len(invalid_indices) // 2]
-                valid_indices.remove(i)
-            p = shapely.Polygon(coords[valid_indices + [valid_indices[0]]])
-            if len(p.exterior.coords) == l:
-                break
-        if not is_valid_polygon(p):
-            raise NotImplementedError("Invalid polygon")
-        return p
-    except AttributeError:
-        raise NotImplementedError("Invalid multi polygon")
+def update_exterior(state: State, i: str):
+    exterior = room_name(Semantics.Exterior, room_level(i))
+    r = next(r for r in state[exterior].relations if r.target_name == i)
+    v = state[i].polygon.exterior
+    for q in state[i].relations:
+        if q.value.length > 1e-6:
+            v = v.difference(q.value)
+    v = shapely.force_2d(v)
+    if v.geom_type == 'MultiLineString':
+        r.value = v
+    elif v.length > 0:
+        r.value = MultiLineString([v])
+    else:
+        r.value = MultiLineString(v)
 
 
-def unit_cast(x, unit=None):
-    if unit is None:
-        unit = constants.UNIT
-    return int(x / unit) * unit
+def update_staircase(state: State, i: str):
+    pholder = room_name(Semantics.Staircase, room_level(i))
+    r = next(r for r in state[pholder].relations if r.target_name == i)
+    inter = state[i].polygon.intersection(state[pholder].polygon).area
+    r.value = inter / state[pholder].polygon.area
 
 
-def abs_distance(x, y):
-    z = [0] * 4
-    z[0 if y[0] > x[0] else 1] = np.abs(y[0] - x[0])
-    z[2 if y[1] > x[1] else 3] = np.abs(y[1] - x[1])
-    return np.array(z)
-
-
-def update_exterior_edges(segments, shared_edges, exterior_edges=None, i=None):
-    if exterior_edges is None:
-        exterior_edges = {}
-    for k, s in segments.items():
-        if i is None or k == i:
-            l = s.boundary
-            for ls in shared_edges[k].values():
-                l = l.difference(ls)
-            if l.length > 0:
-                exterior_edges[k] = (
-                    MultiLineString([l]) if isinstance(l, LineString) else l
-                )
-            elif k in exterior_edges:
-                exterior_edges.pop(k)
-    return exterior_edges
-
-
-def update_shared_edges(segments, shared_edges=None, i=None):
-    if shared_edges is None:
-        shared_edges = defaultdict(dict)
-    for k, s in segments.items():
-        for l, t in segments.items():
-            if k != l and (i is None or k == i or l == i):
-                with np.errstate(invalid="ignore"):
-                    forward, backward = shared_paths(s.boundary, t.boundary).geoms
-                if forward.length > 0:
-                    shared_edges[k][l] = forward
-                elif backward.length > 0:
-                    shared_edges[k][l] = backward
-                elif l in shared_edges[k]:
-                    shared_edges[k].pop(l)
-    return shared_edges
-
-
-def update_staircase_occupancies(
-    segments, staircase, staircase_occupancies=None, i=None
-):
-    if staircase is None:
-        return None
-    if staircase_occupancies is None:
-        staircase_occupancies = defaultdict(dict)
-    for k, s in segments.items():
-        if i is None or k == i:
-            staircase_occupancies[k] = s.intersection(staircase).area / staircase.area
-    return staircase_occupancies
-
-
-def compute_neighbours(ses, margin):
-    return list(
-        l for l, se in ses.items() if any(ls.length >= margin for ls in se.geoms)
-    )
-
-
-def linear_extend_x(base, target, new_x):
-    return target[1] + (new_x - target[0]) * (base[1] - target[1]) / (
-        base[0] - target[0]
-    )
-
-
-def linear_extend_y(base, target, new_y):
-    return target[0] + (new_y - target[1]) * (base[0] - target[0]) / (
-        base[1] - target[1]
-    )
-
-
-def cut_polygon_by_line(polygon, *args):
-    merged = linemerge([polygon.boundary, *args])
-    borders = unary_union(merged)
-    polygons = polygonize(borders)
-    return list(polygons)
-
-
-def polygon2obj(p, reversed=False):
-    x, y = orient(p).exterior.xy
-    obj = new_circle(vertices=len(x) - 1)
-    with butil.ViewportMode(obj, "EDIT"):
-        bpy.ops.mesh.edge_face_add()
-        if reversed:
-            bpy.ops.mesh.flip_normals()
-    write_co(obj, np.stack([x[:-1], y[:-1], np.zeros_like(x[:-1])], -1))
-    return obj
-
-
-def buffer(p, distance):
+def shared(s, t):
     with np.errstate(invalid="ignore"):
-        return remove_repeated_points(
-            simplify(p.buffer(distance, join_style="mitre"), SIMPLIFY_THRESH)
-        )
+        forward, backward = shared_paths(s.boundary, t.boundary).geoms
+    if forward.length > 0:
+        return forward
+    elif backward.length > 0:
+        return backward
+    else:
+        return shapely.MultiLineString()

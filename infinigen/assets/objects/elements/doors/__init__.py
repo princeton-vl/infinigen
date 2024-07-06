@@ -27,10 +27,10 @@ def random_door_factory():
 
 
 class DoorFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         super(DoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            self.base_factory = random_door_factory()(factory_seed, coarse)
+            self.base_factory = random_door_factory()(factory_seed, coarse, constants)
 
     def create_asset(self, **params) -> bpy.types.Object:
         return self.base_factory.create_asset(**params)

@@ -14,10 +14,7 @@ from infinigen.assets.objects.wall_decorations.range_hood import RangeHoodFactor
 from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
-from infinigen.core.constraints.example_solver.room.constants import (
-    WALL_HEIGHT,
-    WALL_THICKNESS,
-)
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil

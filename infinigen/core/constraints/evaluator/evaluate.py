@@ -75,7 +75,8 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
 
 def relevant(node: cl.Node, filter: r.Domain | None) -> bool:
     if filter is None:
-        raise ValueError()
+        # TODO filter can be None in room graph
+        # raise ValueError()
         return True
 
     if not isinstance(node, cl.Node):
@@ -153,9 +154,19 @@ def viol_count(node: cl.Node, state: State, memo: dict, filter: r.Domain = None)
                 res = _viol_count_binop(node, l_res, r_res)
             else:
                 res = 0
-
         case cl.constant(val) if isinstance(val, bool):
             res = 0 if val else 1
+        case (
+            cl.BoolOperatorExpression(operator.or_, [lhs, rhs])
+        ):
+            res = min(viol_count(rhs, state, memo), viol_count(lhs, state, memo))
+        case (
+            cl.BoolOperatorExpression(operator.not_, [lhs])
+        ):
+            lhs_res = evaluate_node(lhs, state, memo)
+            res = 1 if lhs_res is True else 0
+        case cl.Node():
+            return evaluate_node(node, state, memo)
         case _:
             raise NotImplementedError(
                 f"{node.__class__.__name__}(...) is not supported for hard constraints. Please use an alternative. Full node was {node}"
@@ -207,9 +218,17 @@ class EvalResult:
             }
         )
 
+    def __iter__(self):
+        yield self.loss()
+        yield self.viol_count()
 
 def evaluate_problem(
-    problem: cl.Problem, state: State, filter: r.Domain = None, memo=None
+    problem: cl.Problem, 
+    state: State, 
+    filter: r.Domain = None, 
+    memo=None,
+    enable_loss=True,
+    enable_violated=True,
 ):
     logger.debug(
         f"Evaluating problem {len(problem.constraints)=} {len(problem.score_terms)=}"
@@ -219,15 +238,17 @@ def evaluate_problem(
         memo = {}
 
     scores = {}
-    for name, score_node in problem.score_terms.items():
-        logger.debug(f"Evaluating score for {name=}")
-        scores[name] = evaluate_node(score_node, state, memo)
-        logger.debug(f"Evaluator got score {scores[name]} for {name=}")
+    if enable_loss:
+        for name, score_node in problem.score_terms.items():
+            logger.debug(f"Evaluating score for {name=}")
+            scores[name] = evaluate_node(score_node, state, memo)
+            logger.debug(f"Evaluator got score {scores[name]} for {name=}")
 
     violated = {}
-    for name, node in problem.constraints.items():
-        logger.debug(f"Evaluating constraint {name=}")
-        violated[name] = viol_count(node, state, memo, filter=filter)
-        logger.debug(f"Evaluator found {violated[name]} violations for {name=}")
+    if enable_violated:
+        for name, node in problem.constraints.items():
+            logger.debug(f"Evaluating constraint {name=}")
+            violated[name] = viol_count(node, state, memo, filter=filter)
+            logger.debug(f"Evaluator found {violated[name]} violations for {name=}")
 
     return EvalResult(loss_vals=scores, violations=violated)

@@ -3,16 +3,24 @@
 # of this source tree.
 
 # Authors: Alexander Raistrick
+import re
+import typing
+from dataclasses import dataclass, field
+from string import digits
 
+import numpy as np
 
-from .expression import BoolExpression, ScalarExpression, nodedataclass
+from .constants import RoomConstants
 from .types import Node
+from .expression import BoolExpression, ScalarExpression, nodedataclass
+from ...util.math import int_hash
 
 
 @nodedataclass()
 class Problem(Node):
     constraints: dict[str, BoolExpression]
-    score_terms: dict[str, ScalarExpression]
+    score_terms: dict[str, ScalarExpression]    
+    constants: RoomConstants = field(default_factory=RoomConstants)
 
     def __post_init__(self):
         if isinstance(self.constraints, list):
@@ -24,4 +32,12 @@ class Problem(Node):
         for i, v in enumerate(self.constraints.values()):
             yield f"constraints[{i}]", v
         for i, v in enumerate(self.score_terms.values()):
-            yield f"score_terms[{i}]", v
+            yield f'score_terms[{i}]', v
+
+    def filter(self, name):
+        constraints = {k: v for k, v in self.constraints.items() if re.match(name, k)}
+        score_terms = {k: v for k, v in self.score_terms.items() if re.match(name, k)}
+        return Problem(constraints, score_terms, self.constants)
+    
+    def __hash__(self):
+        return int_hash(re.sub("[0-9]", "", re.sub(r'<[^)]*>', "", str(self))))

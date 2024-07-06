@@ -91,7 +91,7 @@ def home_constraints():
     params = sample_home_constraint_params()
 
     for k, v in params.items():
-        print(f"{home_constraints.__name__} params - {k}: {v}")
+        print(f"{indoor_constraints.__name__} params - {k}: {v}")
 
     score_terms["furniture_fullness"] = rooms.mean(
         lambda r: (

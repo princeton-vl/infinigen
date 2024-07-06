@@ -37,16 +37,34 @@ class Semantics(EnumTag):
 
     # Room types
     Kitchen = "kitchen"
-    Bedroom = "bedroom"
-    LivingRoom = "living-room"
-    Closet = "closet"
-    Hallway = "hallway"
-    Bathroom = "bathroom"
-    Garage = "garage"
-    Balcony = "balcony"
-    DiningRoom = "dining-room"
-    Utility = "utility"
+    Bedroom = 'bedroom'
+    LivingRoom = 'living-room'
+    Closet = 'closet'
+    Hallway = 'hallway'
+    Bathroom = 'bathroom'
+    Garage = 'garage'
+    Balcony = 'balcony'
+    DiningRoom = 'dining-room'
+    Utility = 'utility'
+    StaircaseRoom = 'staircase-room'
+    Warehouse = 'warehouse'
+    Office = 'office'
+    MeetingRoom = 'meeting-room'
+    OpenOffice = 'open-office'
+    BreakRoom = 'break-room'
+    Restroom = 'restroom'
+    FactoryOffice = 'factory-office'
+
+    Root = 'root'
+    New = 'new'
+    RoomNode = 'room-node'
+    GroundFloor = 'ground'
+    SecondFloor = 'second-floor'
+    ThirdFloor = 'third-floor'
+    Exterior = 'exterior'
     Staircase = "staircase"
+    Visited = 'visited'
+    RoomContour = 'room-contour'
 
     # Object types
     Furniture = "furniture"
@@ -96,15 +114,15 @@ class Semantics(EnumTag):
 
     # Special Case Objects
     Chair = "chair"
-    Window = "window"
-    Open = "open"
-    Entrance = "entrance"
-    Door = "door"
-    StaircaseWall = "staircase-wall"
-
+    Window = 'window'
+    Open = 'open'
+    Entrance = 'entrance'
+    Door = 'door'
+        
     # Solver feature flags
-    # TODO these should not be in Semantics
+    # Per-Asset Behavior Config
     RealPlaceholder = "real-placeholder"
+    OversizePlaceholder = "oversize-placeholder"
     AssetAsPlaceholder = "asset-as-placeholder"
     AssetPlaceholderForChildren = "asset-placeholder-for-children"
     PlaceholderBBox = "placeholder-bbox"
@@ -117,15 +135,22 @@ class Semantics(EnumTag):
         return f"{self.__class__.__name__}({self.value})"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}.{self.name}"
+        return f'{self.__class__.__name__}.{self.name}'
+    
+    def __lt__(self, other):
+        return self.name < other.name
 
+    @classmethod
+    @property
+    def floors(cls):
+        return [
+            Semantics.GroundFloor, Semantics.SecondFloor, Semantics.ThirdFloor
+        ]
 
 class Subpart(EnumTag):
     SupportSurface = "support"
     Interior = "interior"
-    Exterior = "exterior"
     Visible = "visible"
-    Invisible = "invisible"
     Bottom = "bottom"
     Top = "top"
     Side = "side"

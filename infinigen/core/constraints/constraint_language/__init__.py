@@ -1,4 +1,8 @@
-from infinigen.core.tags import Negated, Semantics
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Alexander Raistrick, Karhan Kayan
 
 from .expression import (
     ArithmethicExpression,
@@ -12,7 +16,15 @@ from .expression import (
     max_expr,
     min_expr,
 )
-from .gather import ForAll, MeanOver, SumOver, all, item, mean, sum
+from .gather import (
+    sum,
+    mean,
+    all,
+    item,
+    ForAll,
+    SumOver,
+    MeanOver,
+)
 from .geometry import (
     ObjectSetExpression,
     accessibility_cost,
@@ -20,13 +32,16 @@ from .geometry import (
     center_stable_surface_dist,
     coplanarity_cost,
     distance,
+    min_distance_internal,
     focus_score,
     freespace_2d,
     min_dist_2d,
-    min_distance_internal,
-    reflectional_asymmetry,
     rotational_asymmetry,
+    center_stable_surface_dist,
+    accessibility_cost,
+    reflectional_asymmetry,
     volume,
+    coplanarity_cost,
 )
 from .relations import (
     AnyRelation,
@@ -38,8 +53,38 @@ from .relations import (
     RoomNeighbour,
     StableAgainst,
     SupportedBy,
-    Touching,
+    StableAgainst,
+    SharedEdge,
+    Traverse,
+    Touching
 )
 from .result import Problem
-from .set_reasoning import count, excludes, in_range, related_to, scene, tagged
+from .rooms import (
+    shortest_path,
+    direct_access,
+    typical_area,
+    aspect_ratio,
+    convexity,
+    n_verts,
+    exterior_corner,
+    grid_line_count,
+    narrowness,
+    intersection,
+    graph_coherent,
+    same_level,
+    area,
+    shared_length,
+    shared_n_verts,
+    length,
+    rand,
+)
+from .set_reasoning import (
+    scene,
+    tagged,
+    union,
+    excludes,
+    count,
+    in_range,
+    related_to,
+)
 from .types import Node

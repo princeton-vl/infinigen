@@ -24,8 +24,17 @@ from infinigen.core.constraints.example_solver.state_def import (
     state_from_dummy_scene,
 )
 from infinigen.core.util import blender as butil
+from infinigen.core.constraints.example_solver.propose_discrete import lookup_generator
+from infinigen.core import tagging, tags as t
+import infinigen.core.constraints.example_solver.moves.addition as addition
+
+from infinigen.assets.objects.tables.dining_table import TableDiningFactory
+from infinigen.assets.objects.seating.chairs import ChairFactory
+from infinigen.assets.utils.bbox_from_mesh import bbox_mesh_from_hipoly
+
+from infinigen_examples.constraint_examples.home import home_constraints
 from infinigen_examples.indoor_asset_semantics import home_asset_usage
-from infinigen_examples.indoor_constraint_examples import home_constraints
+
 
 
 def test_home_constraints_implemented():

@@ -4,6 +4,7 @@
 
 # Authors: Alexander Raistrick
 
+import copy
 import itertools
 import logging
 import typing
@@ -16,6 +17,12 @@ from infinigen.core.constraints.example_solver import (
     propose_discrete,
     propose_relations,
 )
+from infinigen.core import tags as t
+from infinigen.core.constraints import (
+    constraint_language as cl,
+    reasoning as r,
+)
+from infinigen.core.constraints.example_solver import propose_discrete, propose_relations
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +36,7 @@ def iter_domains(node: cl.Node) -> typing.Iterator[r.Domain]:
                 yield from iter_domains(c)
         case _:
             raise ValueError(f"iter_domains found unmatched {type(node)=} {node=}")
+
 
 
 def bound_coverage(b: r.Bound, stages: dict[str, r.Domain]) -> list[str]:
@@ -48,9 +56,12 @@ def check_coverage_errors(b: r.Bound, coverage: list, stages: dict[str, r.Domain
             f"Object class {b} was covered in more than one greedy stage! Got {coverage=}. Greedy stages must be non-overlapping"
         )
 
+    if t.Semantics.Room in b.domain.tags:
+        return  # rooms are handled separately by Lingjie's room solver, does not need bounds
+
     gen_options = propose_discrete.lookup_generator(b.domain.tags)
     if len(gen_options) < 1:
-        raise ValueError(f"Object class {b=} had {gen_options=}")
+        raise ValueError(f'Object class {b=} had {gen_options=}')
 
     for k in coverage:
         logger.debug(f"Checking coverage {k=} {b.domain=} {stages[k]=}")
@@ -98,6 +109,7 @@ def check_contradictory_domains(prob: cl.Problem):
             )
 
 
+
 def validate_stages(stages: dict[str, r.Domain]):
     for k, d in stages.items():
         if d.is_recursive():
@@ -113,8 +125,23 @@ def validate_stages(stages: dict[str, r.Domain]):
 
 
 def check_all(
-    prob: cl.Problem, greedy_stages: dict[str, r.Domain], all_vars: list[str]
+    prob: cl.Problem,
+    greedy_stages: dict[str, r.Domain],
+    all_vars: list[str]
 ):
+    prob = copy.deepcopy(prob)
+
+    # room constraints are handled separately and will not be tested in checks
+    room_constraint_keys = [
+        'node_gen', 'node', 'room'
+    ]
+
+    for k in room_constraint_keys:
+        if k in prob.constraints:
+            prob.constraints.pop(k)
+        if k in prob.score_terms:
+            prob.score_terms.pop(k)
+
     for k, v in greedy_stages.items():
         if not isinstance(v, r.Domain):
             raise TypeError(f"Greedy stage {k=} had non-domain value {v=}")

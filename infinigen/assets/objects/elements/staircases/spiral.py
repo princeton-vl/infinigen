@@ -12,19 +12,18 @@ from numpy.random import uniform
 import infinigen.core.util.blender as butil
 from infinigen.assets.objects.elements.staircases.curved import CurvedStaircaseFactory
 from infinigen.assets.utils.decorate import read_co, remove_vertices, write_attribute
+from infinigen.core.util.random import log_uniform
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import new_line, separate_loose
 from infinigen.core import surface
-from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
 
 
 class SpiralStaircaseFactory(CurvedStaircaseFactory):
     support_types = "column"
 
-    def __init__(self, factory_seed, coarse=False):
-        super(SpiralStaircaseFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(SpiralStaircaseFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.column_radius = self.radius - self.step_width + uniform(0.05, 0.08)
             self.has_column = True
@@ -34,7 +33,7 @@ class SpiralStaircaseFactory(CurvedStaircaseFactory):
         while True:
             self.full_angle = np.random.randint(1, 5) * np.pi / 2
             self.n = np.random.randint(13, 21)
-            self.step_height = constants.WALL_HEIGHT / self.n
+            self.step_height = self.constants.wall_height / self.n
             self.theta = self.full_angle / self.n
             self.step_length = self.step_height * log_uniform(1, 1.2)
             self.radius = self.step_length / self.theta

@@ -6,8 +6,9 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.core.surface import write_attr_data, read_attr_data
 from infinigen.assets.objects.elements.doors.base import BaseDoorFactory
-from infinigen.assets.utils.decorate import read_area, select_faces, write_attribute
+from infinigen.assets.utils.decorate import write_attribute, select_faces, read_area
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
@@ -15,8 +16,8 @@ from infinigen.core.util.math import FixedSeed
 
 
 class PanelDoorFactory(BaseDoorFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(PanelDoorFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(PanelDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.x_subdivisions = 1 if uniform() < 0.5 else 2
             self.y_subdivisions = np.clip(np.random.binomial(5, 0.45), 1, None)
@@ -78,8 +79,9 @@ class PanelDoorFactory(BaseDoorFactory):
 
 
 class GlassPanelDoorFactory(PanelDoorFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse)
+
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.x_subdivisions = 2
             self.y_subdivisions = np.clip(np.random.binomial(5, 0.5), 2, None)

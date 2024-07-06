@@ -1,0 +1,4 @@
+include 'infinigen_examples/configs_indoor/common.gin'
+compose_scene.type = 'warehouse'
+RoomConstants.global_params.wall_height = ('uniform', 5.6, 6.4)
+restrict_solving.restrict_parent_rooms = ('Warehouse', )

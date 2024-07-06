@@ -4,225 +4,249 @@
 # Authors: Lingjie Mei
 from collections import defaultdict, deque
 from collections.abc import Sequence
+import operator
+from copy import deepcopy
+from functools import cached_property
 
 import gin
 import networkx as nx
 import numpy as np
+import scipy.special
+import shapely
 from numpy.random import uniform
+from tqdm import tqdm
+from matplotlib import pyplot as plt
 
-from infinigen.core.constraints.example_solver.room.configs import (
-    LOOP_ROOM_TYPES,
-    ROOM_CHILDREN,
-    ROOM_NUMBERS,
-    STUDIO_ROOM_CHILDREN,
-    TYPICAL_AREA_ROOM_TYPES,
-    UPSTAIRS_ROOM_CHILDREN,
-)
-from infinigen.core.constraints.example_solver.room.types import (
-    RoomGraph,
-    RoomType,
-    get_room_type,
-)
-from infinigen.core.constraints.example_solver.room.utils import unit_cast
+from infinigen.core.constraints.constraint_language import Problem
+from infinigen.core.constraints.evaluator import evaluate_problem, evaluate_node, viol_count
+from infinigen.core.constraints.example_solver.room.base import room_type, room_name, RoomGraph
+from infinigen.core.constraints.example_solver.room.utils import update_exterior
+from infinigen.core.constraints.example_solver.state_def import State, ObjectState, RelationState
+
+from infinigen.core.constraints import constraint_language as cl
+
+from infinigen.core.tags import Semantics
 from infinigen.core.util.math import FixedSeed
+
 from infinigen.core.util.random import log_uniform
-from infinigen.core.util.random import random_general as rg
 
 
-@gin.configurable(denylist=["factory_seed", "level"])
+@gin.configurable
 class GraphMaker:
-    def __init__(
-        self,
-        factory_seed,
-        level=0,
-        requires_staircase=False,
-        room_children="home",
-        typical_area_room_types=TYPICAL_AREA_ROOM_TYPES,
-        loop_room_types=LOOP_ROOM_TYPES,
-        room_numbers=ROOM_NUMBERS,
-        max_cycle_basis=1,
-        requires_bathroom_privacy=True,
-        entrance_type=("weighted_choice", (0.5, "porch"), (0.5, "hallway")),
-        hallway_alpha=1,
-        no_hallway_children_prob=0.4,
-    ):
+    def __init__(self, factory_seed, consgraph, level, fast=False):
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
-            self.requires_staircase = requires_staircase
-            match room_children:
-                case "home":
-                    self.room_children = (
-                        ROOM_CHILDREN if level == 0 else UPSTAIRS_ROOM_CHILDREN
-                    )
-                case _:
-                    self.room_children = STUDIO_ROOM_CHILDREN
-            self.hallway_room_types = [
-                r for r, m in self.room_children.items() if RoomType.Hallway in m
-            ]
-            self.typical_area_room_types = typical_area_room_types
-            self.loop_room_types = loop_room_types
-            self.room_numbers = room_numbers
+            self.level = level
+            self.constants = consgraph.constants
+            self.typical_areas = self.get_typical_areas(consgraph)
+            consgraph = consgraph.filter('node')
+            self.fast = fast
+            self.consgraph = Problem(
+                {'node': consgraph.constraints['node']},
+                {'node_gen': self.inject(consgraph.constraints['node_gen'])},
+                consgraph.constants
+            )
             self.max_samples = 1000
-            self.slackness = log_uniform(1.5, 1.8)
-            self.max_cycle_basis = max_cycle_basis
-            self.requires_bathroom_privacy = requires_bathroom_privacy
-            self.entrance_type = rg(entrance_type)
-            self.hallway_prob = lambda x: 1 / (x + hallway_alpha)
-            self.no_hallway_children_prob = no_hallway_children_prob
-            self.skewness_min = 0.7
+            self.slackness = log_uniform(1.1, 1.3)
+
+    @property
+    def semantics_floor(self):
+        return Semantics.floors[self.level]
+    
+    def inject(self, node, on=False):
+        match node:
+            case cl.in_range(count, low, high, mean) if mean > 0:
+                size = high - low
+                if size > 0:
+                    p = (mean - low) / size
+                    if self.fast:
+                        p /= 2
+                    return cl.rand(
+                        self.inject(count, True), 'cat',
+                        [0] * low + [p ** i * (1 - p) ** (size - i) * scipy.special.comb(size, i) for i in
+                            range(size + 1)]
+                    )
+                else:
+                    assert low == int(low)
+                    return cl.rand(self.inject(count, True), 'cat', [0] * int(low) + [1])
+            case cl.scene():
+                return cl.scene() if on else cl.scene()[-Semantics.New]
+            case cl.ForAll(objs, var, pred):
+                return cl.SumOver(self.inject(objs), var, self.inject(pred, on))
+            case cl.SumOver(objs, var, pred) | cl.MeanOver(objs, var, pred):
+                return node.__class__(self.inject(objs), var, self.inject(pred, on))
+            case cl.BoolOperatorExpression(operator.and_, operands):
+                return cl.ScalarOperatorExpression(operator.add, self.inject(operands))
+            case cl.Node():
+                first = next(iter(node.__dict__))
+                return node.__class__(
+                    **{k: self.inject(v, on and k == first) for k, v in node.__dict__.items()}
+                )
+            case _ if isinstance(node, list):
+                return list(self.inject(n, on) for n in node)
+            case _ if isinstance(node, dict):
+                return {k: self.inject(n, on) for k, n in node.items()}
+            case _:
+                return node
 
     def make_graph(self, i):
         with FixedSeed(i):
-            for _ in range(self.max_samples):
-                room_type_counts = defaultdict(int)
-                rooms = []
-                children = defaultdict(list)
-                queue = deque()
-
-                def add_room(t, p):
-                    i = len(rooms)
-                    name = f"{t}_{room_type_counts[t]}"
-                    room_type_counts[t] += 1
-                    if p is not None:
-                        children[p].append(i)
-                    rooms.append(name)
-                    queue.append(i)
-
-                add_room(RoomType.LivingRoom, None)
-                while len(queue) > 0:
-                    i = queue.popleft()
-                    for rt, spec in self.room_children[get_room_type(rooms[i])].items():
-                        for _ in range(rg(spec)):
-                            add_room(rt, i)
-
-                if self.requires_bathroom_privacy and not self.has_bathroom_privacy:
-                    continue
-
-                for i, r in enumerate(rooms):
-                    for j, s in enumerate(rooms):
-                        if (rt := get_room_type(r)) in self.loop_room_types:
-                            if (rt_ := get_room_type(s)) in self.loop_room_types[rt]:
-                                if (
-                                    uniform() < self.loop_room_types[rt][rt_]
-                                    and j not in children[i]
-                                ):
-                                    children[i].append(j)
-
-                for i, r in enumerate(rooms):
-                    if get_room_type(r) in self.hallway_room_types:
-                        hallways = [
-                            j
-                            for j in children[i]
-                            if get_room_type(rooms[j]) == RoomType.Hallway
-                        ]
-                        other_rooms = [
-                            j
-                            for j in children[i]
-                            if get_room_type(rooms[j]) != RoomType.Hallway
-                        ]
-                        children[i] = hallways.copy()
-                        for k, o in enumerate(other_rooms):
-                            if (
-                                uniform() < self.no_hallway_children_prob
-                                or len(hallways) == 0
-                            ):
-                                children[i].append(o)
+            while True:
+                name = room_name(Semantics.Root, self.level)
+                state = State({name: ObjectState(tags={Semantics.Root, Semantics.RoomContour, self.semantics_floor})})
+                for _ in tqdm(range(40), desc=f"Generating graphs for {self.level}: "):
+                    unvisited = list(sorted(k for k, obj_st in state.objs.items() if Semantics.Visited not in obj_st.tags))
+                    if len(unvisited) == 0:
+                        break
+                    n = unvisited[np.random.randint(len(unvisited))]
+                    score, _ = evaluate_problem(self.consgraph, state, {}, enable_violated=False)
+                    scores = [score]
+                    states = [state]
+                    for t in list(sorted(self.constants.room_types)) + [Semantics.Entrance, Semantics.Exterior]:
+                        count = len(list(k for k in state.objs if room_type(k) == t))
+                        for i in range(1, 3):
+                            st = deepcopy(state)
+                            for j in range(i):
+                                name = room_name(t, self.level, count + j)
+                                st[name] = ObjectState(
+                                    tags={t, Semantics.RoomContour, Semantics.New, self.semantics_floor},
+                                    relations=[RelationState(cl.Traverse(), n)]
+                                )
+                                st[n].relations.append(RelationState(cl.Traverse(), name))
+                            score, _ = evaluate_problem(self.consgraph, st, {}, enable_violated=False)
+                            states.append(st)
+                            scores.append(score)
+                        scores_ = np.array(scores) - np.min(scores)
+                        if np.all(scores_ < .01):
+                            i = 0
+                        else:
+                            i = np.random.choice(np.arange(len(scores)), p=np.exp(-scores_) / np.exp(-scores_).sum())
+                        state = states[i]
+                        scores = [scores[i]]
+                        states = [state]
+                    for k, obj_st in state.objs.items():
+                        if Semantics.New in obj_st.tags:
+                            obj_st.tags.remove(Semantics.New)
+                    if room_type(n) == Semantics.Root:
+                        state.objs.pop(n)
+                        first = next(iter(state.objs))
+                        for k, obj_st in state.objs.items():
+                            if k == first:
+                                obj_st.relations = [RelationState(cl.Traverse(), l) for l in state.objs if l != first]
                             else:
-                                children[
-                                    hallways[np.random.randint(len(hallways))]
-                                ].append(o)
+                                obj_st.relations = [RelationState(cl.Traverse(), first)]
+                    else:
+                        state[n].tags.add(Semantics.Visited)
+                _, viol = evaluate_problem(self.consgraph, state)
+                if viol == 0:
+                    return self.state2graph(state)
 
-                hallways = [
-                    i
-                    for i, r in enumerate(rooms)
-                    if get_room_type(r) == RoomType.Hallway
-                ]
-                if len(hallways) == 0:
-                    entrance = 0
-                else:
-                    if self.requires_staircase:
-                        prob = np.array(
-                            [self.hallway_prob(len(children[h])) for h in hallways]
-                        )
-                        add_room(
-                            RoomType.Staircase,
-                            np.random.choice(hallways, p=prob / prob.sum()),
-                        )
-                    prob = np.array(
-                        [self.hallway_prob(len(children[h])) for h in hallways]
-                    )
-                    entrance = np.random.choice(hallways, p=prob / prob.sum())
-                    if self.entrance_type == "porch":
-                        add_room(RoomType.Balcony, entrance)
-                        entrance = queue.pop()
-                    elif self.entrance_type == "none":
-                        entrance = None
+    def state2graph(self, state):
+        state = self.merge_exterior(state)
+        state, entrance = self.merge_entrance(state)
+        names = [k for k in state.objs.keys() if room_type(k) != Semantics.Exterior] + [
+            room_name(Semantics.Exterior, self.level)]
+        return RoomGraph(
+            [[names.index(r.target_name) for r in state[n].relations] for n in names], names,
+            None if entrance is None else names.index(entrance)
+        )
 
-                children_ = [children[i] for i in range(len(rooms))]
-                room_graph = RoomGraph(children_, rooms, entrance)
-                if self.satisfies_constraint(room_graph):
-                    return room_graph
+    def merge_exterior(self, state):
+        exterior_connected = set()
+        for k, obj_st in state.objs.items():
+            if room_type(k) == Semantics.Exterior:
+                for r in obj_st.relations:
+                    exterior_connected.add(r.target_name)
+        exterior_name = room_name(Semantics.Exterior, self.level)
+        state = State({k: obj_st for k, obj_st in state.objs.items() if room_type(k) != Semantics.Exterior})
+        for k in exterior_connected:
+            state[k].relations = [r for r in state[k].relations if room_type(r.target_name) != Semantics.Exterior]
+            state[k].relations.append(RelationState(cl.Traverse(), exterior_name))
+        state[exterior_name] = ObjectState(
+            tags={Semantics.Exterior, Semantics.RoomContour, self.semantics_floor},
+            relations=[RelationState(cl.Traverse(), k) for k in
+                exterior_connected]
+        )
+        return state
+
+    def merge_entrance(self, state):
+        entrance_connected = set()
+        for k, obj_st in state.objs.items():
+            if room_type(k) == Semantics.Entrance:
+                for r in obj_st.relations:
+                    entrance_connected.add(r.target_name)
+        state = State({k: obj_st for k, obj_st in state.objs.items() if room_type(k) != Semantics.Entrance})
+        for k in entrance_connected:
+            state[k].relations = [r for r in state[k].relations if room_type(r.target_name) != Semantics.Entrance]
+        if len(entrance_connected) == 0:
+            entrance = None
+        else:
+            entrance = np.random.choice(list(entrance_connected))
+            exterior_name = room_name(Semantics.Exterior, self.level)
+            state[entrance].relations.append(RelationState(cl.Traverse(), exterior_name))
+            if exterior_name not in state.objs:
+                state[exterior_name] = ObjectState(tags={Semantics.Exterior, Semantics.RoomContour, self.semantics_floor})
+            state[exterior_name].relations.append(RelationState(cl.Traverse(), entrance))
+        return state, entrance
 
     __call__ = make_graph
 
-    def satisfies_constraint(self, graph):
-        if not graph.is_planar or len(graph.cycle_basis) > self.max_cycle_basis:
-            return False
-        for room_type, constraint in self.room_numbers.items():
-            if isinstance(constraint, Sequence):
-                n_min, n_max = constraint
-            else:
-                n_min, n_max = constraint, constraint
-            if not n_min <= len(graph[room_type]) <= n_max:
-                return False
-        return True
-
-    def has_bathroom_privacy(self, rooms, children):
-        for i, r in rooms:
-            if get_room_type(r) == RoomType.LivingRoom:
-                has_public_bathroom = any(
-                    get_room_type(rooms[j]) == RoomType.Bathroom for j in children[i]
-                )
-                if not has_public_bathroom:
-                    for j in children[i]:
-                        if get_room_type(rooms[j] == RoomType.Bedroom):
-                            if not any(get_room_type(rooms[k]) for k in children[j]):
-                                return False
-        return True
-
     def suggest_dimensions(self, graph, width=None, height=None):
-        area = (
-            sum([self.typical_area_room_types[get_room_type(r)] for r in graph.rooms])
-            * self.slackness
-        )
+        area = sum(
+            [self.typical_areas[room_type(r)] for r in graph.names if room_type(r) != Semantics.Exterior]
+        ) * self.slackness
         if width is None and height is None:
-            skewness = uniform(self.skewness_min, 1 / self.skewness_min)
-            width = unit_cast(np.sqrt(area * skewness).item())
-            height = unit_cast(np.sqrt(area / skewness).item())
-        elif uniform(0, 1) < 0.5:
-            height_ = unit_cast(area / width)
-            height = (
-                None
-                if height_ > height
-                and self.skewness_min < height_ / width < 1 / self.skewness_min
-                else height_
-            )
+            aspect_ratio = uniform(*self.constants.aspect_ratio_range)
         else:
-            width_ = unit_cast(area / height)
-            width = (
-                None
-                if width_ > width
-                and self.skewness_min < width_ / height < 1 / self.skewness_min
-                else width_
-            )
-
+            aspect_ratio = width / height
+        width = self.constants.unit_cast(np.sqrt(area * aspect_ratio).item())
+        height = self.constants.unit_cast(np.sqrt(area / aspect_ratio).item())
         return width, height
 
-    def draw(self, graph):
-        g = nx.Graph()
-        shortnames = [r[:3].upper() + r.split("_")[-1] for r in graph.rooms]
-        g.add_nodes_from(shortnames)
-        for k in range(len(shortnames)):
-            for l in graph.neighbours[k]:
-                g.add_edge(shortnames[k], shortnames[l])
-        nx.draw_planar(g, with_labels=True)
+    def draw(self, state):
+        graph = self.state2graph(state)
+        graph.draw()
+
+    def get_typical_areas(self, consgraph):
+        consgraph = consgraph.filter('room')
+        typical_areas = {}
+        undecided = set()
+        for t in tqdm(self.constants.room_types, 'Computing typical areas: '):
+            name = room_name(t, self.level)
+            holder = room_name(Semantics.Staircase, self.level)
+            exterior = room_name(Semantics.Exterior, self.level)
+            state = State(
+                {
+                    name: ObjectState(tags={Semantics.RoomContour, t, self.semantics_floor}),
+                    holder: ObjectState(
+                        tags={Semantics.RoomContour, Semantics.Staircase, self.semantics_floor}
+                    ),
+                    exterior: ObjectState(
+                        tags={Semantics.RoomContour, Semantics.Exterior, Semantics.Garage},
+                        relations=[RelationState(cl.SharedEdge(), name)]
+                    )
+                },
+                graphs=[RoomGraph([[]], [name], 0)] * (self.level + 1)
+            )
+            scores = []
+            lengths = np.exp(np.linspace(np.log(1.5), np.log(25), 20))
+            for l in lengths:
+                state.objs[name].polygon = shapely.box(0, 0, l, l)
+                state.objs[holder].polygon = shapely.box(-l, -l, 0, 0)
+                state.objs[exterior].polygon = shapely.box(-l, -l, 0, 0)
+                update_exterior(state, name)
+                score, _ = evaluate_problem(consgraph, state)
+                scores.append(score)
+            scores = np.array(scores)
+            selection = (scores - np.min(scores)) < 1
+            if np.sum(selection) > len(selection) / 2:
+                undecided.add(t)
+            else:
+                typical_areas[t] = np.exp(np.log(lengths[selection]).mean()) ** 2
+        if len(typical_areas) > 0:
+            m = np.mean([v for t, v in typical_areas.items()])
+        else:
+            m = 10
+        for t in undecided:
+            typical_areas[t] = m
+        return typical_areas

@@ -7,6 +7,7 @@
 from pprint import pprint
 
 import pytest
+import shapely
 
 from infinigen.assets.objects.tableware import PlantContainerFactory
 from infinigen.core import tags as t
@@ -18,9 +19,11 @@ from infinigen.core.constraints.example_solver import (
     propose_discrete,
     state_def,
 )
+from infinigen.core.constraints.example_solver.room.base import room_name
 from infinigen.core.util import blender as butil
+
+from infinigen_examples.indoor_constraint_examples import home_constraints as ex
 from infinigen_examples import generate_indoors
-from infinigen_examples import indoor_constraint_examples as ex
 from infinigen_examples.util import constraint_util as cu
 
 
@@ -360,7 +363,7 @@ def test_contradiction_home():
 def test_room_has_viols_at_init(rtype):
     prob = ex.home_constraints()
 
-    ostate_name = str(rtype)
+    ostate_name = room_name(rtype, 0)
     state = state_def.State(
         {
             ostate_name: state_def.ObjectState(

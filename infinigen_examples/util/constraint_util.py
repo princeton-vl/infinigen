@@ -7,7 +7,9 @@
 import numpy as np
 
 from infinigen.core import tags as t
-from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints import (
+    constraint_language as cl,
+)
 
 room_types = {
     t.Semantics.Kitchen,
@@ -20,7 +22,7 @@ room_types = {
     t.Semantics.Balcony,
     t.Semantics.DiningRoom,
     t.Semantics.Utility,
-    t.Semantics.Staircase,
+    t.Semantics.StaircaseRoom,
 }
 
 all_sides = {t.Subpart.Bottom, t.Subpart.Top, t.Subpart.Front, t.Subpart.Back}

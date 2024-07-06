@@ -401,19 +401,40 @@ class StableAgainst(GeometryRelation):
     __repr__ = no_frozenset_repr
 
 
-@dataclass(frozen=True)
-class CutFrom(Relation):
+class IdentityCompareRelation(Relation):
+    
     def implies(self, other: Relation) -> bool:
-        return isinstance(other, AnyRelation) or isinstance(other, CutFrom)
-
+        return (
+            isinstance(other, AnyRelation) 
+            or isinstance(other, self.__class__)
+        )
+    
     def satisfies(self, other: Relation) -> bool:
         return self.implies(other)
 
     def intersects(self, other: Relation, strict=False) -> bool:
-        return isinstance(other, AnyRelation) or isinstance(other, CutFrom)
-
+        return (
+            isinstance(other, AnyRelation)
+            or isinstance(other, self.__class__)
+        )
+    
     def intersection(self, other: Relation) -> Relation:
         return deepcopy(self)
 
     def difference(self, other: Relation) -> Relation:
         return -AnyRelation()
+    
+    
+@dataclass(frozen=True)
+class CutFrom(IdentityCompareRelation):
+    pass
+
+
+@dataclass(frozen=True)
+class SharedEdge(IdentityCompareRelation):
+    pass
+
+
+@dataclass(frozen=True)
+class Traverse(IdentityCompareRelation):
+    pass
