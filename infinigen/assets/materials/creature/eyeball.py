@@ -6,10 +6,10 @@
 
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.utils.surface_utils import sample_color
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
@@ -105,9 +105,9 @@ def shader_eyeball_old(nw: NodeWrangler):
     colorramp.color_ramp.interpolation = "CONSTANT"
     colorramp.color_ramp.elements.new(0)
     colorramp.color_ramp.elements[0].position = 0.8982
-    colorramp.color_ramp.elements[0].color = color_category("eye_schlera")
+    colorramp.color_ramp.elements[0].color = colors.eye_schlera_hsv()
     colorramp.color_ramp.elements[1].position = 0.9473
-    colorramp.color_ramp.elements[1].color = color_category("eye_pupil")
+    colorramp.color_ramp.elements[1].color = colors.eye_pupil_hsv()
     colorramp.color_ramp.elements[2].position = 0.9636
     colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
 

@@ -9,7 +9,7 @@ import functools
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.color_fits import real_color_distribution
+from infinigen.assets import colors
 from infinigen.assets.materials import (
     ceiling_light_shaders,
     lamp_shaders,
@@ -128,7 +128,7 @@ def get_all_metal_shaders():
 
 def plastic_furniture():
     new_shader = functools.partial(
-        shader_rough_plastic, base_color=real_color_distribution("sofa_leather")
+        shader_rough_plastic, base_color=colors.leather_hsv()
     )
     new_shader.__name__ = shader_rough_plastic.__name__
     return new_shader

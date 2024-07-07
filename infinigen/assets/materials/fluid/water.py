@@ -236,7 +236,7 @@ def shader(
     nw,
     asset_paths,
     coastal,
-    color=("color_category", "water"),
+    color=None,
     enable_scatter=True,
     colored=False,
     emissive_foam=False,

@@ -6,9 +6,9 @@
 
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_velvet(nw: NodeWrangler, **kwargs):
@@ -67,7 +67,7 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
     color_ramp.color_ramp.elements[1].color = [0.0000, 0.0000, 0.0000, 1.0000]
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = color_category("textile")
+    rgb.outputs[0].default_value = colors.textile_hsv()
     # (0.3547, 0.3018, 0.3087, 1.0000)
 
     brightness_contrast = nw.new_node(

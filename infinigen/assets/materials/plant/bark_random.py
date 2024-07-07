@@ -9,10 +9,10 @@ from typing import Tuple
 
 import numpy as np
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.core.util.color import hex2rgba
 from infinigen.core.util.math import FixedSeed
 
 
@@ -928,60 +928,6 @@ def geo_bark_random(nw, base_color, geo_params, selection=None):
 
 def get_random_bark_params(seed):
     with FixedSeed(seed):
-        color_factory = [
-            0x4C2F27,
-            0x69432D,
-            0x371803,
-            0x7F4040,
-            0xCC9576,
-            0x9E8170,
-            0x3D2B1F,
-            0x8D6A58,
-            0x8B3325,
-            0x79443C,
-            0x88540B,
-            0x9B5F43,
-            0x4E3828,
-            0x4E3828,
-            0xC09A6B,
-            0x944536,
-            0x3F0110,
-            0x773C12,
-            0x6E4E37,
-            0x5C4033,
-            0x5C4033,
-            0x3C3034,
-            0x96704C,
-            0x371B1A,
-            0x483B32,
-            0x43141A,
-            0x471713,
-            0xC3B090,
-            0x6B4423,
-            0x674D46,
-            0x5D2E1A,
-            0x331C1F,
-            0x7A5640,
-            0xB99984,
-            0x71543D,
-            0x8F4B28,
-            0x491A00,
-            0x836446,
-            0x7F461B,
-            0x6A3208,
-            0x724115,
-            0xA0522B,
-            0x832A0C,
-            0x371B1A,
-            0xC7A373,
-            0x483B32,
-            0x635147,
-            0x664228,
-            0x5C5248,
-        ]
-
-        color_factory = [hex2rgba(c) for c in color_factory]
-
         geo_params = {
             "Displacement Scale": np.random.uniform(0.03, 0.07),
             "Z Noise Scale": np.random.uniform(1.0, 3.0),
@@ -995,7 +941,7 @@ def get_random_bark_params(seed):
             "Noise Texture Detail": 16.0,
             "Noise Texture Weight": 2.0,
         }
-        color_params = {"Color": color_factory[np.random.randint(len(color_factory))]}
+        color_params = {"Color": colors.bark_hsv()}
 
     return geo_params, color_params
 

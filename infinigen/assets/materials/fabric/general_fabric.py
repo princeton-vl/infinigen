@@ -8,10 +8,10 @@
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def func_fabric(nw: NodeWrangler, **kwargs):
@@ -210,9 +210,9 @@ def shader_fabric(
     if color_scale is None:
         color_scale = np.random.choice([0.0, uniform(5.0, 20.0)])
     if color_1 is None:
-        color_1 = color_category("fabric")
+        color_1 = colors.fabric_hsv()
     if color_2 is None:
-        color_2 = color_category("white")
+        color_2 = colors.white_hsv()
 
     group = func_fabric(
         nw,

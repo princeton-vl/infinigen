@@ -5,6 +5,7 @@
 
 from numpy.random import randint, uniform
 
+from infinigen.assets import colors
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.materials.ceiling_light_shaders import (
     shader_lamp_bulb_nonemissive,
@@ -14,7 +15,6 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
@@ -22,7 +22,7 @@ def shader_lamp_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = color_category("textile")
+    rgb.outputs[0].default_value = colors.textile_hsv()
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,

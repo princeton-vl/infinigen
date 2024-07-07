@@ -6,9 +6,9 @@
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_simple_greenery(nw: NodeWrangler):
@@ -36,8 +36,8 @@ def shader_simple_greenery(nw: NodeWrangler):
         Nodes.MixRGB,
         input_kwargs={
             "Fac": fac_color.outputs["Result"],
-            "Color1": color_category("greenery"),
-            "Color2": color_category("greenery"),
+            "Color1": colors.greenery_hsv(),
+            "Color2": colors.greenery_hsv(),
         },
     )
 

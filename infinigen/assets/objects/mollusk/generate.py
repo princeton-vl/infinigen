@@ -10,7 +10,6 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-import infinigen.core.util.blender as butil
 from infinigen.assets.utils.decorate import subsurface2face_size
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import surface
@@ -18,6 +17,7 @@ from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
+from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 

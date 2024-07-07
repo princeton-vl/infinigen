@@ -7,7 +7,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.color_fits import real_color_distribution
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes import node_utils
@@ -167,9 +167,7 @@ def shader_leather(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kw
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
 
-    # if base_color is None:
-    #     base_color = color_category('leather')
-    base_color = real_color_distribution("sofa_leather")
+    base_color = colors.leather_hsv()
 
     group = nw.new_node(
         nodegroup_leather().name,

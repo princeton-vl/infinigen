@@ -9,13 +9,13 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util import color
 from infinigen.core.util.math import FixedSeed, dict_lerp
 
 
@@ -639,11 +639,11 @@ def shader_petal(nw):
     translucent_amt = normal(0.3, 0.05)
 
     petal_color = nw.new_node(Nodes.RGB)
-    petal_color.outputs[0].default_value = color.color_category("petal")
+    petal_color.outputs[0].default_value = colors.petal_hsv()
 
     translucent_color = nw.new_node(
         Nodes.MixRGB,
-        [translucent_color_change, petal_color, color.color_category("petal")],
+        [translucent_color_change, petal_color, colors.petal_hsv()],
     )
 
     translucent_bsdf = nw.new_node(

@@ -6,9 +6,9 @@
 
 import gin
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
-from infinigen.core.util import color
 from infinigen.core.util.random import random_general as rg
 
 type = None
@@ -23,7 +23,7 @@ def shader_atmosphere(
     principled_volume = nw.new_node(
         Nodes.PrincipledVolume,
         input_kwargs={
-            "Color": color.color_category("fog"),
+            "Color": colors.fog_hsv(),
             "Density": rg(density),
             "Anisotropy": rg(anisotropy),
         },

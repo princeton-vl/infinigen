@@ -85,9 +85,9 @@ from infinigen.core.util import logging as logging_util
 from infinigen.core.util import pipeline
 from infinigen.core.util.imu import save_imu_tum_files
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.organization import Tags, Task
+from infinigen.core.util.organization import Tags
 from infinigen.core.util.pipeline import RandomStageExecutor
-from infinigen.core.util.random import random_general, sample_registry
+from infinigen.core.util.random import random_general, weighted_sample
 from infinigen.terrain import Terrain
 
 logger = logging.getLogger(__name__)
@@ -314,7 +314,7 @@ def compose_nature(output_folder, scene_seed, **params):
     pois = []  # objects / points of interest, for the camera to look at
 
     def add_ground_creatures(target):
-        fac_class = sample_registry(params["ground_creature_registry"])
+        fac_class = weighted_sample(params["ground_creature_registry"])
         fac = fac_class(int_hash((scene_seed, 0)), bvh=scene_bvh, animation_mode="idle")
         n = params.get("max_ground_creatures", randint(1, 4))
         selection = (
@@ -339,7 +339,7 @@ def compose_nature(output_folder, scene_seed, **params):
     )
 
     def flying_creatures():
-        fac_class = sample_registry(params["flying_creature_registry"])
+        fac_class = weighted_sample(params["flying_creature_registry"])
         fac = fac_class(randint(1e7), bvh=scene_bvh, animation_mode="idle")
         n = params.get("max_flying_creatures", randint(2, 7))
         col = placement.scatter_placeholders_mesh(

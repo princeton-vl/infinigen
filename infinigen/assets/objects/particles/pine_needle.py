@@ -5,13 +5,13 @@
 
 from numpy.random import normal as N
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 
 
 def shader_material(nw: NodeWrangler):
@@ -23,9 +23,9 @@ def shader_material(nw: NodeWrangler):
         Nodes.ColorRamp, input_kwargs={"Fac": object_info.outputs["Random"]}
     )
     colorramp.color_ramp.elements[0].position = 0.0000
-    colorramp.color_ramp.elements[0].color = color_category("pine_needle")
+    colorramp.color_ramp.elements[0].color = colors.hsv2rgba(colors.pine_needle_hsv())
     colorramp.color_ramp.elements[1].position = 1.0000
-    colorramp.color_ramp.elements[1].color = color_category("pine_needle")
+    colorramp.color_ramp.elements[1].color = colors.hsv2rgba(colors.pine_needle_hsv())
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp}

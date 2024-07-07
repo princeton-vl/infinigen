@@ -4,10 +4,10 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
@@ -19,7 +19,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     )
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = color_category("fabric")
+    rgb.outputs[0].default_value = colors.fabric_hsv()
 
     brightness_contrast = nw.new_node(
         "ShaderNodeBrightContrast",

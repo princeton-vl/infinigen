@@ -8,6 +8,7 @@
 import gin
 from mathutils import Vector
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
@@ -46,11 +47,11 @@ def shader_SAND(
             )
             sand_color = nw.new_node(Nodes.ColorRamp, [factor])
             sand_color.color_ramp.elements[0].position = rg(wet_part)
-            sand_color.color_ramp.elements[0].color = rg(("color_category", "wet_sand"))
+            sand_color.color_ramp.elements[0].color = colors.wet_sand_hsv()
             sand_color.color_ramp.elements[1].position = (
                 sand_color.color_ramp.elements[0].position + 0.11
             )
-            sand_color.color_ramp.elements[1].color = rg(("color_category", "dry_sand"))
+            sand_color.color_ramp.elements[1].color = colors.dry_sand_hsv()
             roughness = nw.new_node(Nodes.ColorRamp, [factor])
             roughness.color_ramp.elements[0].position = (
                 sand_color.color_ramp.elements[0].position / 2

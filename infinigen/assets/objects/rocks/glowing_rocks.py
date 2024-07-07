@@ -8,13 +8,13 @@ import bpy
 import gin
 import numpy as np
 
+from infinigen.assets import colors
 from infinigen.assets.objects.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 
 
 def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
@@ -25,7 +25,7 @@ def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
         input_kwargs={"Vector": (object_info, "Random")},
     )
     mix_rgb = nw.new_node(
-        Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(color_category("gem"))]
+        Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(colors.gem_hsv())]
     )
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, [mix_rgb])
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF, [mix_rgb])

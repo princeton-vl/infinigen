@@ -15,7 +15,7 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-from infinigen.assets.creatures import (
+from infinigen.assets.materials.creature import (
     fish_eye_shader,
     fishbody,
     fishfin,

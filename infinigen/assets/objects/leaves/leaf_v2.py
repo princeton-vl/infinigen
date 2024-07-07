@@ -10,13 +10,13 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
@@ -1584,13 +1584,13 @@ class LeafFactoryV2(AssetFactory):
             t = uniform(0.0, 1.0)
 
             if t < 0.8:
-                self.blade_color = color_category("greenery")
+                self.blade_color = colors.greenery_hsv()
             elif t < 0.9:
-                self.blade_color = color_category("yellowish")
+                self.blade_color = colors.yellowish_hsv()
             else:
-                self.blade_color = color_category("red")
+                self.blade_color = colors.red_hsv()
 
-            self.blight_color = color_category("yellowish")
+            self.blight_color = colors.yellowish_hsv()
             self.vein_color_mix_factor = uniform(0.2, 0.6)
 
     @staticmethod

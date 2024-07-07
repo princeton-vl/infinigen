@@ -7,10 +7,10 @@
 
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
 
 
 @node_utils.to_nodegroup("nodegroup_crack", singleton=False, type="ShaderNodeTree")
@@ -451,7 +451,7 @@ def shader_concrete(
     if snake_crack is None:
         snake_crack = uniform(0.0, 1.0)
     if base_color is None:
-        base_color = color_category("concrete")
+        base_color = colors.concrete_hsv()
 
     group = nw.new_node(
         nodegroup_concrete().name,
