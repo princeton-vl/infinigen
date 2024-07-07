@@ -329,8 +329,8 @@ def shader_edge_tear_free_node_group(
 MARKER_LABEL = "wear_tear"
 
 
-class Procedural_Edge_Wear:
-    def apply_over(obj, selection=None, **shader_kwargs):
+class EdgeWear:
+    def apply_over(self, obj, selection=None, **shader_kwargs):
         # get all materials
         # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
         materials = obj.data.materials.items()
@@ -389,8 +389,8 @@ class Procedural_Edge_Wear:
 
         return
 
-    def apply(obj):
+    def apply(self, obj):
         if not isinstance(obj, Iterable):
             obj = [obj]
         for o in obj:
-            Procedural_Edge_Wear.apply_over(o)
+            self.apply_over(o)

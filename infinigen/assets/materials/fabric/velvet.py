@@ -67,7 +67,7 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
     color_ramp.color_ramp.elements[1].color = [0.0000, 0.0000, 0.0000, 1.0000]
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = colors.textile_hsv()
+    rgb.outputs[0].default_value = colors.hsv2rgba(colors.textile_hsv())
     # (0.3547, 0.3018, 0.3087, 1.0000)
 
     brightness_contrast = nw.new_node(

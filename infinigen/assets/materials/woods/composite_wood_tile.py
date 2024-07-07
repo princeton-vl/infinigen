@@ -8,7 +8,7 @@ from infinigen.assets.materials.ceramic import tile
 from .wood import shader_wood
 
 
-class Composite_Wood_Tile:
+class CompositeWoodTile:
     def apply(
         self,
         obj,

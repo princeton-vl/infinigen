@@ -162,16 +162,22 @@ def nodegroup_leather(nw: NodeWrangler):
     )
 
 
-def shader_leather(nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kwargs):
+def shader_leather(
+    nw: NodeWrangler, scale=1.0, base_color_hsv=None, seed=None, **kwargs
+):
     # Code generated using version 2.6.4 of the node_transpiler
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
 
-    base_color = colors.leather_hsv()
+    base_color_hsv = colors.leather_hsv()
 
     group = nw.new_node(
         nodegroup_leather().name,
-        input_kwargs={"Seed": seed, "Scale": scale, "Base Color": base_color},
+        input_kwargs={
+            "Seed": seed,
+            "Scale": scale,
+            "Base Color": colors.hsv2rgba(base_color_hsv),
+        },
     )
 
     displacement = nw.new_node(

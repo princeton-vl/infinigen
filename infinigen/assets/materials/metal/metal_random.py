@@ -23,8 +23,8 @@ def get_shader():
     )
 
 
-def apply(obj, selection=None, color=None, **kwargs):
-    if color is None:
-        color = colors.metal_hsv()
+def apply(obj, selection=None, color_hsv=None, **kwargs):
+    if color_hsv is None:
+        color_hsv = colors.metal_hsv()
     shader = get_shader()
-    common.apply(obj, shader, selection, base_color=hsv2rgba(color), **kwargs)
+    common.apply(obj, shader, selection, base_color=hsv2rgba(color_hsv), **kwargs)

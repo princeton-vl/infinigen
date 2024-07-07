@@ -4,10 +4,6 @@
 # Authors: Mingzhe Wang
 # Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=FY0lR96Mwas by Sam Bowman
 
-import os
-
-import bpy
-
 from infinigen.assets.materials.utils.surface_utils import (
     sample_color,
     sample_range,
@@ -246,7 +242,7 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     )
 
 
-class Aluminum_Disp2Tut:
+class Aluminum:
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(
             obj,
@@ -258,23 +254,3 @@ class Aluminum_Disp2Tut:
         surface.add_material(
             obj, shader_aluminumdisp2tut, reuse=False, input_kwargs=shader_kwargs
         )
-
-
-if __name__ == "__main__":
-    mat = "aluminumdisp2tut"
-    if not os.path.isdir(os.path.join("outputs", mat)):
-        os.mkdir(os.path.join("outputs", mat))
-    for i in range(10):
-        bpy.ops.wm.open_mainfile(filepath="test.blend")
-        Aluminum_Disp2Tut.apply(
-            bpy.data.objects["SolidModel"],
-            geo_kwargs={"rand": True, "subdivide_mesh_level": 3},
-            shader_kwargs={"rand": True},
-        )
-        # fn = os.path.join(os.path.abspath(os.curdir), 'giraffe_geo_test.blend')
-        # bpy.ops.wm.save_as_mainfile(filepath=fn)
-        bpy.context.scene.render.filepath = os.path.join(
-            "outputs", mat, "%s_%d.jpg" % (mat, i)
-        )
-        bpy.context.scene.render.image_settings.file_format = "JPEG"
-        bpy.ops.render.render(write_still=True)

@@ -148,7 +148,7 @@ def shader_fine_knit_fabric(nw: NodeWrangler, **kwargs):
     return shader_material(nw, **fabric_params)
 
 
-class Fine_Knit_Fabric:
+class FineKnitFabric:
     def apply(self, obj, selection=None, **kwargs):
         unwrap_faces(obj, selection)
         common.apply(obj, shader_fine_knit_fabric, selection, **kwargs)

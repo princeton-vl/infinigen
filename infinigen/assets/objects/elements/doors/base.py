@@ -102,7 +102,7 @@ class BaseDoorFactory(AssetFactory):
             self.auto_bevel = BevelSharp()
             self.side_bevel = log_uniform(0.005, 0.015)
 
-            self.metal_color = colors.metal_hsv()
+            self.metal_color_hsv = colors.metal_hsv()
 
     def create_asset(self, **params) -> bpy.types.Object:
         for _ in range(100):
@@ -139,12 +139,12 @@ class BaseDoorFactory(AssetFactory):
         return []
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets, metal_color=self.metal_color, vertical=True)
+        self.surface.apply(assets, metal_color=self.metal_color_hsv, vertical=True)
         if self.has_glass:
             self.glass_surface.apply(assets, selection="glass", clear=True)
         if self.has_louver:
             self.louver_surface.apply(
-                assets, selection="louver", metal_color=self.metal_color
+                assets, selection="louver", metal_color=self.metal_color_hsv
             )
         self.handle_surface.apply(assets, selection="handle", metal_color="natural")
 
@@ -275,5 +275,5 @@ class BaseDoorFactory(AssetFactory):
 
         factory = DoorCasingFactory(self.factory_seed, self.coarse)
         factory.surface = self.surface
-        factory.metal_color = self.metal_color
+        factory.metal_color = self.metal_color_hsv
         return factory

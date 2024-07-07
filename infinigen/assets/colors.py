@@ -34,8 +34,8 @@ def leather_hsv():
     return mixture_of_gaussian(
         means=np.array([[0.07, 0.45, 0.40], [0.6, 0.3, 0.40]]),
         stds=0.7 * np.array([[0.0035, 0.0063, 0.2], [0.0105, 0.028, 0.2]]),
-        min_val=[0, 0, 0.06],
-        max_val=[1, 1, 0.93],
+        clamp_min=[0, 0, 0.06],
+        clamp_max=[1, 1, 0.93],
         weights=[0.7, 0.3],
     )
 

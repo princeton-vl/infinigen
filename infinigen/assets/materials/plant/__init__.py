@@ -4,7 +4,7 @@ from .bark_random import BarkRandom
 from .grass_blade import GrassBlade
 from .simple_brownish import SimpleBrownish
 from .simple_greenery import SimpleGreenery
-from .simple_whitish import SimpleWhitish
+from .simple_whitish import SimpleWhiteish
 from .snake_plant import SnakePlant
 from .spider_plant import SpiderPlant
 from .succulent import Succulent

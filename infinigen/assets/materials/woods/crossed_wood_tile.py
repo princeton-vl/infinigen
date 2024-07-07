@@ -8,7 +8,7 @@ from infinigen.assets.materials.ceramic import tile
 from .wood import shader_wood
 
 
-class Crossed_Wood_Tile:
+class CrossedWoodTile:
     def apply(
         self,
         obj,

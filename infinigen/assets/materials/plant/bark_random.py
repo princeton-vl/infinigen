@@ -654,7 +654,7 @@ def nodegroup_apply_geo_matv2(nw):
     )
 
 
-def shader_random_bark_mat(nw, base_color: Tuple, geo_params, selection=None):
+def shader_random_bark_mat(nw, base_color_hsv: Tuple, geo_params, selection=None):
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={0: geo_params["Noise Texture Scale"], 1: 4.0},
@@ -737,7 +737,7 @@ def shader_random_bark_mat(nw, base_color: Tuple, geo_params, selection=None):
     )
 
     rgb_1 = nw.new_node(Nodes.RGB)
-    rgb_1.outputs[0].default_value = base_color
+    rgb_1.outputs[0].default_value = colors.hsv2rgba(base_color_hsv)
 
     # todo: this value needs to be assigned
 
@@ -800,7 +800,7 @@ def shader_random_bark_mat(nw, base_color: Tuple, geo_params, selection=None):
     )
 
 
-def geo_bark_random(nw, base_color, geo_params, selection=None):
+def geo_bark_random(nw, base_color_hsv, geo_params, selection=None):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -912,7 +912,9 @@ def geo_bark_random(nw, base_color, geo_params, selection=None):
             ),
             "Displacement Scale": 0.5,
             "Material": surface.shaderfunc_to_material(
-                shader_random_bark_mat, geo_params=geo_params, base_color=base_color
+                shader_random_bark_mat,
+                geo_params=geo_params,
+                base_color_hsv=base_color_hsv,
             ),
         },
     )
@@ -955,7 +957,7 @@ class BarkRandom:
             geo_bark_random,
             selection=selection,
             input_kwargs={
-                "base_color": color_params["Color"],
+                "base_color_hsv": color_params["Color"],
                 "geo_params": geo_params,
             },
             attributes=["initial_position"],

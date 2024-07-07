@@ -41,7 +41,7 @@ def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
     nw.connect_input(principled_bsdf.inputs[0], color)
 
 
-class Hardwood_Floor:
+class HardwoodFloor:
     def apply(self, obj, selection=None, rotation=None, **kwargs):
         if rotation is None:
             rotation = (0, 0, 0) if uniform() < 0.1 else (0, 0, np.pi / 2)

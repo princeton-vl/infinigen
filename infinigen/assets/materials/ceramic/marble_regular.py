@@ -87,6 +87,6 @@ def shader_material_001(nw: NodeWrangler):
     )
 
 
-class Marble_Regular:
+class MarbleRegular:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_material_001, selection=selection)

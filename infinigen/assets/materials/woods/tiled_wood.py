@@ -324,7 +324,7 @@ def get_random_light_wood_params():
     return color_factory[randint(len(color_fac))]
 
 
-class Tiled_Wood:
+class TiledWood:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
 

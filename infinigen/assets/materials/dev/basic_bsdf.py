@@ -34,6 +34,6 @@ def shader_basic_bsdf(nw):
     return principled_bsdf
 
 
-class Basic_BSDF:
+class BasicBSDF:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_basic_bsdf, reuse=False)

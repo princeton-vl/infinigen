@@ -9,7 +9,7 @@ import shapely.affinity
 from numpy.random import uniform
 
 from infinigen.assets.materials import metal
-from infinigen.assets.materials.plastics import plastic
+from infinigen.assets.materials.plastic import plastic
 from infinigen.assets.materials.woods import wood
 from infinigen.assets.utils.decorate import (
     read_edge_center,

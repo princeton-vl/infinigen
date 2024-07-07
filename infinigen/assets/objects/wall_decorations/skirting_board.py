@@ -14,7 +14,7 @@ from shapely.ops import unary_union
 
 import infinigen.core.util.blender as butil
 from infinigen.assets import colors
-from infinigen.assets.materials.plastics import plastic_rough
+from infinigen.assets.materials.plastic import plastic_rough
 from infinigen.assets.utils.decorate import (
     read_co,
 )

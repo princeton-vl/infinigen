@@ -101,7 +101,7 @@ def shader_grained_metal(
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
     if base_color_hsv is None:
-        base_color_nsv = colors.metal_hsv()
+        base_color_hsv = colors.metal_hsv()
 
     group = nw.new_node(
         nodegroup_grained_metal().name,
@@ -125,7 +125,7 @@ def shader_grained_metal(
     )
 
 
-class Grained_and_Polished_Metal:
+class GrainedAndPolishedMetal:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(
             obj, shader_grained_metal, selection=selection, input_kwargs=kwargs

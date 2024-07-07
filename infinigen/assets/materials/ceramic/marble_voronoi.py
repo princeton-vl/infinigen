@@ -80,6 +80,6 @@ def shader_material(nw: NodeWrangler):
     )
 
 
-class Marble_Voronoi:
+class MarbleVoronoi:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_material, selection=selection)

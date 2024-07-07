@@ -29,10 +29,9 @@ from infinigen.assets.objects.creatures.util.animation.run_cycle import follow_p
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.random import weighted_sample
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
-from infinigen.core.util.random import random_general
+from infinigen.core.util.random import random_general, weighted_sample
 
 
 def dinosaur():

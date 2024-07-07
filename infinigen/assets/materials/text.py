@@ -465,6 +465,6 @@ def make_sphere():
     return obj
 
 
-class Text_No_Barcode:
+class TextNoBarcode:
     def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):
         Text(False, emission).apply(obj, selection, bbox, **kwargs)

@@ -13,7 +13,6 @@ import infinigen.assets.materials.creature
 import infinigen.assets.materials.fluid
 import infinigen.assets.materials.plant
 import infinigen.assets.materials.terrain
-
 from infinigen.assets import colors
 from infinigen.assets.materials import (
     ceiling_light_shaders,
@@ -55,16 +54,16 @@ from infinigen.assets.materials.metal import (
     mirror,
     oven_shaders,
 )
-from infinigen.assets.materials.plastics import (
+from infinigen.assets.materials.plastic import (
     plastic,
     plastic_rough,
     plastic_translucent,
 )
-from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
+from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plastic
 from infinigen.assets.materials.terrain import dirt
 from infinigen.assets.materials.wear_tear import (
-    procedural_edge_wear,
-    procedural_scratch,
+    edge_wear,
+    scratches,
 )
 from infinigen.assets.materials.woods import tiled_wood, wood
 
@@ -110,23 +109,20 @@ wood_shader_list = [wood.shader_wood]
 
 glass_shader_list = [glass.shader_glass]
 
+metal_shaders = [
+    brushed_metal.shader_brushed_metal,
+    galvanized_metal.shader_galvanized_metal,
+    grained_and_polished_metal.shader_grained_metal,
+    hammered_metal.shader_hammered_metal,
+]
 
-def get_all_metal_shaders():
-    metal_shaders_list = [
-        brushed_metal.shader_brushed_metal,
-        galvanized_metal.shader_galvanized_metal,
-        grained_and_polished_metal.shader_grained_metal,
-        hammered_metal.shader_hammered_metal,
-    ]
-    color = colors.metal_hsv()
-    new_shaders = [
-        functools.partial(shader, base_color=color) for shader in metal_shaders_list
-    ]
-    for idx, ns in enumerate(new_shaders):
-        # fix taken from: https://github.com/elastic/apm-agent-python/issues/293
-        ns.__name__ = metal_shaders_list[idx].__name__
-
-    return new_shaders
+fabric_shaders = [
+    coarse_knit_fabric.shader_coarse_knit_fabric,
+    fine_knit_fabric.shader_fine_knit_fabric,
+    general_fabric.shader_fabric,
+    leather.shader_leather,
+    sofa_fabric.shader_sofa_fabric,
+]
 
 
 def plastic_furniture():
@@ -137,18 +133,7 @@ def plastic_furniture():
     return new_shader
 
 
-def get_all_fabric_shaders():
-    return [
-        coarse_knit_fabric.shader_coarse_knit_fabric,
-        fine_knit_fabric.shader_fine_knit_fabric,
-        general_fabric.shader_fabric,
-        leather.shader_leather,
-        sofa_fabric.shader_sofa_fabric,
-    ]
-
-
 def beverage_fridge_materials():
-    metal_shaders = get_all_metal_shaders()
     return {
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "front": TextureAssignments([beverage_fridge_shaders.shader_glass_001], [1.0]),
@@ -158,26 +143,24 @@ def beverage_fridge_materials():
         "back": TextureAssignments(
             [beverage_fridge_shaders.shader_black_medal_001], [1.0]
         ),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def dishwasher_materials():
-    metal_shaders = get_all_metal_shaders()
     return {
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "front": TextureAssignments([dishwasher_shaders.shader_glass_002], [1.0]),
         "white_metal": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "top": TextureAssignments([dishwasher_shaders.shader_black_medal_002], [1.0]),
         "name_material": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def microwave_materials():
-    metal_shaders = get_all_metal_shaders()
     return {
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "back": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
@@ -185,13 +168,12 @@ def microwave_materials():
             [microwave_shaders.shader_black_glass], [1.0]
         ),
         "glass": TextureAssignments([microwave_shaders.shader_glass], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def oven_materials():
-    metal_shaders = get_all_metal_shaders()
     return {
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "back": TextureAssignments([oven_shaders.shader_black_medal], [1.0]),
@@ -200,7 +182,7 @@ def oven_materials():
             [oven_shaders.shader_super_black_glass], [1.0]
         ),
         "glass": TextureAssignments([oven_shaders.shader_glass], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -210,7 +192,7 @@ def tv_materials():
         "surface": TextureAssignments([metal_random, plastic_rough], [1.0, 0.2]),
         "screen_surface": TextureAssignments([text.Text], [1.0]),
         "support": TextureAssignments([metal_random, plastic_rough], [1.0, 0.2]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -220,7 +202,7 @@ def bathtub_materials():
         "surface": TextureAssignments([ceramic], [1]),
         "leg": TextureAssignments([metal_random], [1.0]),
         "hole": TextureAssignments([metal_random], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -236,7 +218,7 @@ def toilet_materials():
     return {
         "surface": TextureAssignments([ceramic, metal_random], [0.9, 0.1]),
         "hardware_surface": TextureAssignments([metal_random], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -244,7 +226,7 @@ def toilet_materials():
 def hardware_materials():
     return {
         "surface": TextureAssignments([metal_random], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -276,7 +258,7 @@ def acquarium_materials():
         "glass_surface": TextureAssignments([glass], [1.0]),
         "belt_surface": TextureAssignments([galvanized_metal], [1.0]),
         "water_surface": TextureAssignments([water], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [0, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -289,7 +271,7 @@ def ceiling_light_materials():
         "white_material": TextureAssignments(
             [ceiling_light_shaders.shader_lamp_bulb_nonemissive], [1.0]
         ),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -299,7 +281,7 @@ def lamp_materials():
         "black_material": TextureAssignments([lamp_shaders.shader_black], [1.0]),
         "metal": TextureAssignments([lamp_shaders.shader_metal], [1.0]),
         "lampshade": TextureAssignments([lamp_shaders.shader_lampshade], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [0, 0],
     }
 
@@ -307,7 +289,7 @@ def lamp_materials():
 def table_cocktail_materials():
     # top materials are: choice(['marble', 'tiled_wood', 'plastic', 'glass']),
     # choice(['brushed_metal', 'grained_metal', 'galvanized_metal', 'wood', 'glass']),
-    metal_shaders = get_all_metal_shaders()
+
     return {
         "top": TextureAssignments(
             [
@@ -322,14 +304,12 @@ def table_cocktail_materials():
             [*metal_shaders, wood.shader_wood, glass_volume.shader_glass_volume],
             [1.0] * len(metal_shaders) + [1.0, 1.0],
         ),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def table_dining_materials():
-    metal_shaders = get_all_metal_shaders()
-    fabric_shaders = get_all_fabric_shaders()
     probs = [1.0 / len(metal_shaders)] * len(metal_shaders)
 
     return {
@@ -352,13 +332,12 @@ def table_dining_materials():
                 *(zip(metal_shaders, probs)),
             ]
         ),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def bar_chair_materials(leg_style=None):
-    metal_shaders = get_all_metal_shaders()
     if leg_style == "wheeled":
         probs = [0.01 / len(metal_shaders)] * len(metal_shaders)
     else:
@@ -366,7 +345,7 @@ def bar_chair_materials(leg_style=None):
     return {
         "seat": TextureAssignments([leather.shader_leather], [1.0]),
         "leg": TextureAssignments([wood.shader_wood, *metal_shaders], [1.0] + probs),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, 0.0],
     }
 
@@ -381,13 +360,12 @@ def chair_materials():
             [plastic_rough, wood, fabric_random], [0.3, 0.5, 0.7]
         ),
         "arm": TextureAssignments([plastic, wood, fabric_random], [0.3, 0.5, 0.7]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def office_chair_materials(leg_style=None):
-    metal_shaders = get_all_metal_shaders()
     if leg_style == "wheeled":
         probs = [0.01 / len(metal_shaders)] * len(metal_shaders)
     else:
@@ -403,7 +381,7 @@ def office_chair_materials(leg_style=None):
             [1.0, 1.0, 1.0, 1.0],
         ),
         "leg": TextureAssignments([wood.shader_wood, *metal_shaders], [1.0] + probs),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -418,7 +396,7 @@ def bedframe_materials():
             ],
         ),
         "limb_surface": TextureAssignments([wood, plaster], [2.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -451,7 +429,7 @@ def book_materials():
     return {
         "surface": TextureAssignments([plaster], [1.0]),
         "cover_surface": TextureAssignments([text.Text], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [0, 0],
     }
 
@@ -461,7 +439,7 @@ def vase_materials():
         "surface": TextureAssignments(
             [vase_shaders.shader_ceramic, glass_volume.shader_glass_volume], [1.0, 1.0]
         ),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -486,7 +464,7 @@ def bottle_materials():
         "surface": TextureAssignments([glass, plastic], [1.0, 1.0]),
         "wrap_surface": TextureAssignments([text.Text], [1.0]),
         "cap_surface": TextureAssignments([metal_basic, plastic], [1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, 0.0],
     }
 
@@ -505,7 +483,7 @@ def tableware_materials(fragile=False, transparent=False):
         "surface": surface_materials,
         "guard": TextureAssignments([wood, plastic], [1.0, 1.0]),
         "inside": TextureAssignments([ceramic, metal_basic], [1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -514,7 +492,7 @@ def can_materials():
     return {
         "surface": TextureAssignments([metal_random], [1.0]),
         "wrap_surface": TextureAssignments([text.Text], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -523,7 +501,7 @@ def jar_materials():
     return {
         "surface": TextureAssignments([glass], [1.0]),
         "cap_surface": TextureAssignments([metal_basic], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -539,7 +517,7 @@ def lid_materials():
         "surface": TextureAssignments([ceramic, metal_random], [0.5, 0.5]),
         "rim_surface": TextureAssignments([metal_random], [1.0]),
         "handle_surface": TextureAssignments([metal_random, ceramic], [1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, 0.0],
     }
 
@@ -549,7 +527,7 @@ def glasslid_materials():
         "surface": TextureAssignments([glass], [1.0]),
         "rim_surface": TextureAssignments([metal_random], [1.0]),
         "handle_surface": TextureAssignments([metal_random, ceramic], [1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, 0.0],
     }
 
@@ -570,7 +548,7 @@ def balloon_materials():
 def range_hood_materials():
     return {
         "surface": TextureAssignments([metal_random], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -579,7 +557,7 @@ def wall_art_materials():
     return {
         "frame": TextureAssignments([wood, metal_random], [1.0, 1.0]),
         "surface": TextureAssignments([Art], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
@@ -588,13 +566,12 @@ def mirror_materials():
     return {
         "frame": TextureAssignments([wood, metal_random], [1.0, 1.0]),
         "surface": TextureAssignments([mirror], [1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def kitchen_sink_materials():
-    shaders = get_all_metal_shaders()
     sink_color = colors.metal_natural_hsv()
     if uniform() < 0.5:
         tap_color = colors.metal_plain_hsv()
@@ -602,31 +579,33 @@ def kitchen_sink_materials():
         tap_color = colors.metal_natural_hsv()
 
     sink_shaders = [
-        lambda nw, *args: shader(nw, *args, base_color=sink_color) for shader in shaders
+        lambda nw, *args: shader(nw, *args, base_color_hsv=sink_color)
+        for shader in metal_shader_list
     ]
     tap_shaders = [
-        lambda nw, *args: shader(nw, *args, base_color=tap_color) for shader in shaders
+        lambda nw, *args: shader(nw, *args, base_color_hsv=tap_color)
+        for shader in metal_shader_list
     ]
     return {
         "sink": TextureAssignments(sink_shaders, [1.0, 1.0, 1.0, 1.0]),
         "tap": TextureAssignments(tap_shaders, [1.0, 1.0, 1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 
 
 def kitchen_tap_materials():
-    shaders = get_all_metal_shaders()
     if uniform() < 0.5:
         tap_color = colors.metal_plain_hsv()
     else:
         tap_color = colors.metal_natural_hsv()
     tap_shaders = [
-        lambda nw, *args: shader(nw, *args, base_color=tap_color) for shader in shaders
+        lambda nw, *args: shader(nw, *args, base_color_hsv=tap_color)
+        for shader in metal_shader_list
     ]
     return {
         "tap": TextureAssignments(tap_shaders, [1.0, 1.0, 1.0, 1.0]),
-        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
 

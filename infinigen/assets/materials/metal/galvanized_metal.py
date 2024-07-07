@@ -121,6 +121,6 @@ def shader_galvanized_metal(
     )
 
 
-class Galvanized_Metal:
+class GalvanizedMetal:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_galvanized_metal, selection=selection, **kwargs)

@@ -19,7 +19,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     )
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = colors.fabric_hsv()
+    rgb.outputs[0].default_value = colors.hsv2rgba(colors.fabric_hsv())
 
     brightness_contrast = nw.new_node(
         "ShaderNodeBrightContrast",
@@ -61,7 +61,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     )
 
 
-class Sofa_Fabric:
+class SofaFabric:
     def apply(self, obj, selection=None, **kwargs):
         unwrap_faces(obj, selection)
         common.apply(obj, shader_sofa_fabric, selection, **kwargs)

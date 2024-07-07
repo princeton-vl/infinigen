@@ -28,9 +28,9 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.random import weighted_sample
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
+from infinigen.core.util.random import weighted_sample
 
 
 def herbivore_hair():

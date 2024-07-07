@@ -37,7 +37,7 @@ def shader_invisible(nw: NodeWrangler):
     )
 
 
-class Invisible_to_Camera:
+class InvisibleToCamera:
     def apply(self, obj, selection=None, **kwargs):
         if not isinstance(obj, list):
             obj = [obj]

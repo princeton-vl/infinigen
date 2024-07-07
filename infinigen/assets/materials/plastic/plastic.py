@@ -7,8 +7,8 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
-from infinigen.assets.materials.plastics.plastic_translucent import (
+from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plastic
+from infinigen.assets.materials.plastic.plastic_translucent import (
     shader_translucent_plastic,
 )
 from infinigen.assets.materials.utils import common

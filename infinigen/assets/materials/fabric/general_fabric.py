@@ -201,26 +201,26 @@ def shader_fabric(
     nw: NodeWrangler,
     weave_scale=500.0,
     color_scale=None,
-    color_1=None,
-    color_2=None,
+    color_1_hsv=None,
+    color_2_hsv=None,
     **kwargs,
 ):
     # Code generated using version 2.6.4 of the node_transpiler
 
     if color_scale is None:
         color_scale = np.random.choice([0.0, uniform(5.0, 20.0)])
-    if color_1 is None:
-        color_1 = colors.fabric_hsv()
-    if color_2 is None:
-        color_2 = colors.white_hsv()
+    if color_1_hsv is None:
+        color_1_hsv = colors.fabric_hsv()
+    if color_2_hsv is None:
+        color_2_hsv = colors.white_hsv()
 
     group = func_fabric(
         nw,
         **{
             "Weave Scale": weave_scale,
             "Color Pattern Scale": color_scale,
-            "Color1": color_1,
-            "Color2": color_2,
+            "Color1": colors.hsv2rgba(color_1_hsv),
+            "Color2": colors.hsv2rgba(color_2_hsv),
         },
     )
 
@@ -236,7 +236,7 @@ def shader_fabric(
     )
 
 
-class General_Fabric:
+class GeneralFabric:
     def apply(self, obj, selection=None, **kwargs):
         if not isinstance(obj, list):
             obj = [obj]

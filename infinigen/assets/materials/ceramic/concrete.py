@@ -431,7 +431,7 @@ def nodegroup_concrete(nw: NodeWrangler):
 def shader_concrete(
     nw: NodeWrangler,
     scale=1.0,
-    base_color=None,
+    base_color_hsv=None,
     seed=None,
     roughness=None,
     crack_amount=None,
@@ -450,13 +450,13 @@ def shader_concrete(
         crack_scale = uniform(1.0, 3.0)
     if snake_crack is None:
         snake_crack = uniform(0.0, 1.0)
-    if base_color is None:
-        base_color = colors.concrete_hsv()
+    if base_color_hsv is None:
+        base_color_hsv = colors.concrete_hsv()
 
     group = nw.new_node(
         nodegroup_concrete().name,
         input_kwargs={
-            "Base Color": base_color,
+            "Base Color": colors.hsv2rgba(base_color_hsv),
             "Scale": scale,
             "Seed": seed,
             "Roughness": roughness,

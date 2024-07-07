@@ -9,7 +9,7 @@ from infinigen.assets.materials.ceramic import tile
 from .wood import shader_wood
 
 
-class Staggered_Wood_Tile:
+class StaggeredWoodTile:
     def apply(
         self,
         obj,

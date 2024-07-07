@@ -1392,7 +1392,7 @@ def shader_leaf_new(nw, **kwargs):
     )
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = kwargs["blade_color"]
+    rgb.outputs[0].default_value = colors.hsv2rgba(kwargs["blade_color_hsv"])
 
     mix = nw.new_node(
         Nodes.MixRGB,
@@ -1424,7 +1424,7 @@ def shader_leaf_new(nw, **kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
     rgb_1 = nw.new_node(Nodes.RGB)
-    rgb_1.outputs[0].default_value = kwargs["blight_color"]
+    rgb_1.outputs[0].default_value = colors.hsv2rgba(kwargs["blight_color_hsv"])
 
     group_1 = nw.new_node(
         nodegroup_dotted_blight().name,
@@ -1584,13 +1584,13 @@ class LeafFactoryV2(AssetFactory):
             t = uniform(0.0, 1.0)
 
             if t < 0.8:
-                self.blade_color = colors.greenery_hsv()
+                self.blade_color_hsv = colors.greenery_hsv()
             elif t < 0.9:
-                self.blade_color = colors.yellowish_hsv()
+                self.blade_color_hsv = colors.yellowish_hsv()
             else:
-                self.blade_color = colors.red_hsv()
+                self.blade_color_hsv = colors.red_hsv()
 
-            self.blight_color = colors.yellowish_hsv()
+            self.blight_color_hsv = colors.yellowish_hsv()
             self.vein_color_mix_factor = uniform(0.2, 0.6)
 
     @staticmethod
@@ -1657,12 +1657,12 @@ class LeafFactoryV2(AssetFactory):
         ]
 
         material_kwargs = phenome.copy()
-        material_kwargs["blade_color"] = self.blade_color
+        material_kwargs["blade_color"] = self.blade_color_hsv
         material_kwargs["blade_color"][0] += np.random.normal(0.0, 0.03)
         material_kwargs["blade_color"][1] += np.random.normal(0.0, 0.03)
         material_kwargs["blade_color"][2] += np.random.normal(0.0, 0.03)
 
-        material_kwargs["blight_color"] = self.blight_color
+        material_kwargs["blight_color"] = self.blight_color_hsv
 
         material_kwargs["vein_color_mix_factor"] = self.vein_color_mix_factor
         material_kwargs["blight_weight"] = np.random.binomial(1, 0.1)

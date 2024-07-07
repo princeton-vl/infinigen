@@ -23,7 +23,7 @@ def get_wood_tiles():
     ]
 
 
-class Wood_Tiles:
+class WoodTiles:
     def apply(
         self,
         obj,

@@ -8,7 +8,7 @@ from infinigen.assets.materials.ceramic import tile
 from .wood import shader_wood
 
 
-class Hexagon_Wood_Tile:
+class HexagonWoodTile:
     def apply(
         self,
         obj,

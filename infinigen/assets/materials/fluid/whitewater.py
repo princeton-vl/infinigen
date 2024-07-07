@@ -10,7 +10,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import random_color_neighbour
 
 
-def new_whitewater(nw: NodeWrangler):
+def whitewater(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler
 
     principled_bsdf = nw.new_node(
@@ -44,4 +44,4 @@ def new_whitewater(nw: NodeWrangler):
 
 class Whitewater:
     def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, new_whitewater, selection=selection)
+        surface.add_material(obj, whitewater, selection=selection)

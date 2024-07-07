@@ -103,6 +103,6 @@ def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwa
     )
 
 
-class Wood_Old:
+class WoodOld:
     def apply(self, obj, selection=None, scale=1, **kwargs):
         common.apply(obj, shader_wood_old, selection, scale=scale, **kwargs)

@@ -11,6 +11,7 @@ import numpy as np
 from mathutils import Vector
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
@@ -249,7 +250,11 @@ def shader(
     position = nw.new_node("ShaderNodeNewGeometry", [])
     # Code generated using version 2.3.1 of the node_transpiler (partly)
     with FixedSeed(random_seed):
+        if color is None:
+            color = colors.hsv2rgba(colors.water_hsv())
+
         color = rg(color)
+
         light_path = nw.new_node(Nodes.LightPath)
 
         if colored:

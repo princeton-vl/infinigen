@@ -3,10 +3,10 @@
 
 # Authors: Lingjie Mei
 
-from .coarse_knit_fabric import Coarse_Knit_Fabric, shader_coarse_knit_fabric
+from .coarse_knit_fabric import CoarseKnitFabric, shader_coarse_knit_fabric
 from .fabric_random import FabricRandom
-from .fine_knit_fabric import Fine_Knit_Fabric, shader_fine_knit_fabric
-from .general_fabric import General_Fabric, shader_fabric
+from .fine_knit_fabric import FineKnitFabric, shader_fine_knit_fabric
+from .general_fabric import GeneralFabric, shader_fabric
 from .leather import Leather, shader_leather
-from .lined_fabric import Lined_Fabric, shader_lined_fur_base
-from .sofa_fabric import Sofa_Fabric, shader_sofa_fabric
+from .lined_fabric import LinedFabric, shader_lined_fur_base
+from .sofa_fabric import SofaFabric, shader_sofa_fabric

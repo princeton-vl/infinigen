@@ -188,8 +188,8 @@ def find_normal_input(bsdf):
 MARKER_LABEL = "scratch"
 
 
-class Procedural_Scratch:
-    def apply_over(obj, selection=None, **shader_kwargs):
+class Scratches:
+    def apply_over(self, obj, selection=None, **shader_kwargs):
         # get all materials
         # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
         materials = obj.data.materials.items()
@@ -231,8 +231,8 @@ class Procedural_Scratch:
 
             nw_bsdf.label = MARKER_LABEL
 
-    def apply(obj):
+    def apply(self, obj):
         if not isinstance(obj, Iterable):
             obj = [obj]
         for o in obj:
-            Procedural_Scratch.apply_over(o)
+            self.apply_over(o)

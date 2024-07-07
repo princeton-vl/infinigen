@@ -30,7 +30,7 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 
 
-class Metal_Basic:
+class MetalBasic:
     def apply(self, obj, selection=None, **kwargs):
         base_color_hsv = colors.metal_hsv()
         common.apply(obj, shader_metal, selection, base_color_hsv, **kwargs)

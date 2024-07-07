@@ -160,7 +160,7 @@ def shader_lined_fur_random(nw: NodeWrangler, **kwargs):
     return shader_lined_fur_base(nw, **fabric_params)
 
 
-class Lined_Fabric:
+class LinedFabric:
     def apply(self, obj, selection=None, **kwargs):
         unwrap_faces(obj, selection)
         common.apply(obj, shader_lined_fur_random, selection, **kwargs)

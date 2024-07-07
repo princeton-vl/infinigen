@@ -31,10 +31,10 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
-from infinigen.core.util.random import weighted_sample
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
+from infinigen.core.util.random import weighted_sample
 
 
 def fin_params(scale=(1, 1, 1), dorsal=False):

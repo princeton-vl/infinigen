@@ -488,14 +488,15 @@ def shader_shining_golden(nw: NodeWrangler, rand=True):
     )
 
 
+all_shaders = [
+    shader_black_white_snake,
+    shader_shining_golden,
+    shader_golden,
+    shader_green,
+]
+
+
 class Snake:
     def apply(self, obj, selection=None, **kwargs):
-        shader = random.choice(
-            [
-                shader_black_white_snake,
-                shader_shining_golden,
-                shader_golden,
-                shader_green,
-            ]
-        )
+        shader = random.choice(all_shaders)
         surface.add_material(obj, shader, selection=selection)

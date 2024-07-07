@@ -7,18 +7,16 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.plant.bark_random import get_random_bark_params
+from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.nodes import Nodes, NodeWrangler
-from infinigen.core.util.color import hsv2rgba, rgb2hsv
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
 
 def get_color():
-
-    _, color_params = get_random_bark_params(np.random.randint(1e7))
-    h, s, v = rgb2hsv(color_params["Color"][:-1])
+    h, s, v = colors.bark_hsv()
     return hsv2rgba(
         h + uniform(-0.0, 0.05), s + uniform(-0.3, 0.2), v * log_uniform(0.2, 20)
     )

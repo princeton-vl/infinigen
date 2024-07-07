@@ -19,7 +19,7 @@ import gin
 from numpy.random import normal as N
 
 from infinigen.assets.fluid.fluid import find_available_cache, obj_bb_minmax
-from infinigen.assets.materials.fluid import new_whitewater, river_water, water
+from infinigen.assets.materials.fluid import river_water, water, whitewater
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import AssetFile, LandTile, Materials, Process
@@ -145,13 +145,13 @@ def set_flip_fluid_domain(
         river_water.apply(surface)
     bpy.ops.flip_fluid_operators.helper_select_spray()
     spray = bpy.context.object
-    new_whitewater.apply(spray)
+    whitewater.apply(spray)
     bpy.ops.flip_fluid_operators.helper_select_foam()
     foam = bpy.context.object
-    new_whitewater.apply(foam)
+    whitewater.apply(foam)
     bpy.ops.flip_fluid_operators.helper_select_bubble()
     bubble = bpy.context.object
-    new_whitewater.apply(bubble)
+    whitewater.apply(bubble)
 
     if bpy.context.scene.frame_end < start_frame + simulation_duration:
         bpy.context.scene.frame_end = start_frame + simulation_duration

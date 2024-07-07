@@ -53,6 +53,6 @@ def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
     )
 
 
-class Plastic_Translucent:
+class PlasticTranslucent:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_translucent_plastic, selection, **kwargs)

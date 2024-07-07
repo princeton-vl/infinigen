@@ -23,7 +23,7 @@ def shader_atmosphere(
     principled_volume = nw.new_node(
         Nodes.PrincipledVolume,
         input_kwargs={
-            "Color": colors.fog_hsv(),
+            "Color": colors.hsv2rgba(colors.fog_hsv()),
             "Density": rg(density),
             "Anisotropy": rg(anisotropy),
         },
