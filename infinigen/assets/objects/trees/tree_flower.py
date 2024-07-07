@@ -907,7 +907,7 @@ class TreeFlowerFactory(AssetFactory):
         self.diversity_fac = diversity_fac
 
         with FixedSeed(factory_seed):
-            self.petal_colors_hsv = colors.tree_petal_hsv()
+            self.petal_color_hsv = colors.tree_petal_hsv()
             self.petal_material = surface.shaderfunc_to_material(
                 shader_petal, self.petal_color_hsv
             )

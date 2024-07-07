@@ -36,8 +36,8 @@ def shader_simple_greenery(nw: NodeWrangler):
         Nodes.MixRGB,
         input_kwargs={
             "Fac": fac_color.outputs["Result"],
-            "Color1": colors.greenery_hsv(),
-            "Color2": colors.greenery_hsv(),
+            "Color1": colors.hsv2rgba(colors.plant_green()),
+            "Color2": colors.hsv2rgba(colors.plant_green()),
         },
     )
 

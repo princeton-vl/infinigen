@@ -639,15 +639,10 @@ def shader_petal(nw):
     translucent_amt = normal(0.3, 0.05)
 
     petal_color = nw.new_node(Nodes.RGB)
-    petal_color.outputs[0].default_value = colors.petal_hsv()
-
-    translucent_color = nw.new_node(
-        Nodes.MixRGB,
-        [translucent_color_change, petal_color, colors.petal_hsv()],
-    )
+    petal_color.outputs[0].default_value = colors.hsv2rgba(colors.petal_hsv())
 
     translucent_bsdf = nw.new_node(
-        Nodes.TranslucentBSDF, input_kwargs={"Color": translucent_color}
+        Nodes.TranslucentBSDF, input_kwargs={"Color": petal_color}
     )
 
     principled_bsdf = nw.new_node(

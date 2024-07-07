@@ -22,7 +22,7 @@ def shader_lamp_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     rgb = nw.new_node(Nodes.RGB)
-    rgb.outputs[0].default_value = colors.textile_hsv()
+    rgb.outputs[0].default_value = colors.hsv2rgba(colors.textile_hsv())
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,

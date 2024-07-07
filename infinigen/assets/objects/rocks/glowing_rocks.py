@@ -24,9 +24,9 @@ def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
         attrs={"noise_dimensions": "4D"},
         input_kwargs={"Vector": (object_info, "Random")},
     )
-    mix_rgb = nw.new_node(
-        Nodes.MixRGB, [0.6, (white_noise, "Color"), tuple(colors.gem_hsv())]
-    )
+
+    color = colors.hsv2rgba(colors.gem_hsv())
+    mix_rgb = nw.new_node(Nodes.MixRGB, [0.6, (white_noise, "Color"), color])
     translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF, [mix_rgb])
     transparent_bsdf = nw.new_node(Nodes.TransparentBSDF, [mix_rgb])
     is_camera_ray = nw.new_node(Nodes.LightPath) if transparent_for_bounce else 1

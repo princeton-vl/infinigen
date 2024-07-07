@@ -53,7 +53,7 @@ class BoulderFactory(AssetFactory):
         self.weights = [0.8, 0.2]
         self.configs = ["boulder", "slab"]
         with FixedSeed(factory_seed):
-            self.rock_surface = weighted_sample(material_assignments.rock)
+            self.rock_surface = weighted_sample(material_assignments.rock)()
             method = np.random.choice(self.configs, p=self.weights)
             self.has_horizontal_cut, self.is_slab = self.config_mappings[method]
 
