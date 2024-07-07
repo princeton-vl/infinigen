@@ -38,7 +38,7 @@ from infinigen.assets.utils.uv import compute_uv_direction
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed, clip_gaussian
+from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
@@ -69,7 +69,6 @@ class Text:
     font_styles = ["normal", "italic", "oblique"]
 
     def __init__(self, has_barcode=True, emission=0):
-        
         self.size = 4
         self.dpi = 100
         self.colormap = (
@@ -444,14 +443,28 @@ class Text:
     def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
         common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
 
-class TextGeneral():
-    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs):
-            Text(has_barcode, emission).apply(obj, selection, bbox, **kwargs)
+
+class TextGeneral:
+    def apply(
+        self,
+        obj,
+        selection=None,
+        bbox=(0, 1, 0, 1),
+        has_barcode=True,
+        emission=0,
+        **kwargs,
+    ):
+        Text(has_barcode, emission).apply(obj, selection, bbox, **kwargs)
 
 
-def make_sphere():  
+def make_sphere():
     obj = new_plane()
     obj.rotation_euler[0] = np.pi / 2
     butil.apply_transform(obj)
     compute_uv_direction(obj, "x", "z")
     return obj
+
+
+class Text_No_Barcode:
+    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):
+        Text(False, emission).apply(obj, selection, bbox, **kwargs)
