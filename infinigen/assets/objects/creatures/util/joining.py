@@ -16,6 +16,8 @@ from infinigen.core.placement import detail
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress, Timer
 
+from . import genome
+
 logger = logging.getLogger(__name__)
 
 
@@ -99,11 +101,23 @@ def select_large_component(o, thresh=0.95, tries=5):
     return 0
 
 
+def get_parts(root: bpy.types.Object, main_body=True, filter_name=None):
+    if main_body:
+        parts = [o for o in root.children if o.type == "MESH"]
+    else:
+        parts = [o for o in butil.iter_object_tree(root) if o.type == "MESH"]
+
+    if filter_name is not None:
+        parts = [o for o in parts if filter_name in o.name]
+
+    return parts
+
+
 def join_and_rig_parts(
-    root,
-    parts,
-    genome,
-    face_size,
+    root: bpy.types.Object,
+    parts: genome.Tree,  # TODO: remove redundant param, access via genome.parts
+    genome: genome.CreatureGenome,
+    face_size: float,
     postprocess_func,
     adaptive_resolution=True,
     adapt_mode="remesh",
@@ -232,7 +246,7 @@ def join_and_rig_parts(
     if materials:
         logger.debug("Applying postprocess func")
         with butil.DisableModifiers(body_parts):
-            postprocess_func(body_parts, extras, genome.postprocess_params)
+            postprocess_func(root)
 
         logger.debug("Finalizing material geomods")
         for o in body_parts:

@@ -16,10 +16,7 @@ from numpy.random import randint
 from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.creature import (
-    fish_eye,
-    fish_fin,
-)
+from infinigen.assets import materials
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
@@ -73,22 +70,6 @@ def fin_params(scale=(1, 1, 1), dorsal=False):
         "OffsetWeightY": OffsetWeightY,
         "Freq": Freq,
     }
-
-
-def fish_postprocessing(body_parts, extras, params):
-    def get_extras(k):
-        return [o for o in extras if k in o.name]
-
-    main_template = weighted_sample(material_assignments.fish)
-    main_template.apply(body_parts + get_extras("BodyExtra"))
-
-    mat = body_parts[0].active_material
-    gold = mat is not None and "gold" in mat.name
-    body_parts[0].active_material.name.lower() or U() < 0.1
-    fish_fin.apply(get_extras("Fin"), shader_kwargs={"goldfish": gold})
-
-    fish_eye.apply(get_extras("Eyeball"))
-    # eyeball.apply(get_extras('Eyeball'), shader_kwargs={"coord": "X"})
 
 
 def fish_fin_cloth_sim_params():
@@ -303,6 +284,23 @@ class FishFactory(AssetFactory):
                 else clip_gaussian(0.2, 0.1, 0.05, 0.45)
             )
 
+            body_material_fac = weighted_sample(material_assignments.fish)
+            self.body_material = body_material_fac()
+            self.fin_material = materials.creature.FishFin()
+            self.eye_material = materials.creature.FishEye()
+
+    def apply_materials(self, obj):
+        self.body_material.apply(
+            joining.get_parts(obj) + joining.get_parts(obj, False, "BodyExtra")
+        )
+
+        mat = joining.get_parts(obj)[0].active_material
+        gold = mat is not None and "gold" in mat.name.lower()
+        self.fin_material.apply(
+            joining.get_parts(obj, False, "Fin"), shader_kwargs={"goldfish": gold}
+        )
+        self.eye_material.apply(joining.get_parts(obj, False, "Eyeball"))
+
     def create_asset(self, i, **kwargs):
         instance_genome = genome.interp_genome(
             self.species_genome, fish_genome(), self.species_variety
@@ -317,7 +315,7 @@ class FishFactory(AssetFactory):
         # TODO: Replace once Generator class is stnadardized
         def seeded_fish_postprocess(*args, **kwargs):
             with FixedSeed(self.factory_seed):
-                fish_postprocessing(*args, **kwargs)
+                self.apply_materials(*args, **kwargs)
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root,

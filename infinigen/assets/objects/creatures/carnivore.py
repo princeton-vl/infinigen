@@ -74,19 +74,6 @@ def tiger_skin_sim_params():
     }
 
 
-def carnivore_postprocessing(body_parts, extras, params):
-    def get_extras(k):
-        return [o for o in extras if k in o.name]
-
-    main_template = weighted_sample(material_assignments.carnivore)
-    main_template.apply(body_parts + get_extras("BodyExtra"))
-
-    materials.tongue.apply(get_extras("Tongue"))
-    materials.bone.apply(get_extras("Teeth") + get_extras("Claws"))
-    materials.eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    materials.nose.apply(get_extras("Nose"))
-
-
 def tiger_genome():
     body_fac = parts.generic_nurbs.NurbsBody(
         prefix="body_feline", tags=["body"], var=0.7, temperature=0.2
@@ -258,8 +245,30 @@ class CarnivoreFactory(AssetFactory):
                 "Please disable either hair or both of animation/clothsim"
             )
 
+        body_material_fac = weighted_sample(material_assignments.carnivore)
+        self.body_material = body_material_fac()
+        self.tongue_material = materials.creature.Tongue()
+        self.teeth_material = materials.creature.Bone()
+        self.nose_material = materials.creature.Nose()
+
     def create_placeholder(self, **kwargs):
         return butil.spawn_cube(size=4)
+
+    def apply_materials(self, root):
+        self.body_material.apply(
+            joining.get_parts(root, True) + joining.get_parts(root, False, "BodyExtra")
+        )
+        self.body_material.apply(joining.get_parts(root, False, "Tongue"))
+
+        # TODO move these into the individual part generators
+        self.tongue_material.apply(
+            joining.get_parts(root, False, "Teeth")
+            + joining.get_parts(root, False, "Claws")
+        )
+        self.teeth_material.apply(
+            joining.get_parts(root, False, "Eyeball"), shader_kwargs={"coord": "X"}
+        )
+        self.nose_material.apply(joining.get_parts(root, False, "Nose"))
 
     def create_asset(self, i, placeholder, **kwargs):
         genome = tiger_genome()
@@ -276,7 +285,7 @@ class CarnivoreFactory(AssetFactory):
             parts,
             genome,
             rigging=dynamic,
-            postprocess_func=carnivore_postprocessing,
+            postprocess_func=self.apply_materials,
             **kwargs,
         )
 

@@ -13,13 +13,7 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.creature import (
-    bone,
-    eyeball,
-    horn,
-    nose,
-    tongue,
-)
+from infinigen.assets import materials
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -29,7 +23,7 @@ from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian
+from infinigen.core.util.math import clip_gaussian, FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
@@ -67,20 +61,6 @@ def herbivore_hair():
             "IOR": 1.55,
         },
     }
-
-
-def herbivore_postprocessing(body_parts, extras, params):
-    def get_extras(k):
-        return [o for o in extras if k in o.name]
-
-    main_template = weighted_sample(material_assignments.herbivore)
-    main_template.apply(body_parts + get_extras("BodyExtra"))
-
-    tongue.apply(get_extras("Tongue"))
-    bone.apply(get_extras("Teeth") + get_extras("Claws"))
-    horn.apply(get_extras("Horn"))
-    eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    nose.apply(get_extras("Nose"))
 
 
 def herbivore_genome():
@@ -284,8 +264,31 @@ class HerbivoreFactory(AssetFactory):
                 "Please disable either hair or both of animation/clothsim"
             )
 
+        with FixedSeed(self.factory_seed):
+            body_material_fac = weighted_sample(material_assignments.herbivore)
+            self.body_material = body_material_fac()
+            self.tongue_material = materials.creature.Tongue()
+            self.teeth_material = materials.creature.Bone()
+            self.nose_material = materials.creature.Nose()
+
     def create_placeholder(self, **kwargs):
         return butil.spawn_cube(size=4)
+
+    def apply_materials(self, root):
+        self.body_material.apply(
+            joining.get_parts(root, True) + joining.get_parts(root, False, "BodyExtra")
+        )
+        self.body_material.apply(joining.get_parts(root, False, "Tongue"))
+
+        # TODO move these into the individual part generators
+        self.tongue_material.apply(
+            joining.get_parts(root, False, "Teeth")
+            + joining.get_parts(root, False, "Claws")
+        )
+        self.teeth_material.apply(
+            joining.get_parts(root, False, "Eyeball"), shader_kwargs={"coord": "X"}
+        )
+        self.nose_material.apply(joining.get_parts(root, False, "Nose"))
 
     def create_asset(self, i, placeholder, **kwargs):
         genome = herbivore_genome()
@@ -302,7 +305,7 @@ class HerbivoreFactory(AssetFactory):
             parts,
             genome,
             rigging=dynamic,
-            postprocess_func=herbivore_postprocessing,
+            postprocess_func=self.apply_materials,
             **kwargs,
         )
 

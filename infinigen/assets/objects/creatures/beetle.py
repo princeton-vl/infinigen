@@ -67,10 +67,6 @@ def insect_hair_params():
     }
 
 
-def beetle_postprocessing(body_parts, extras, params):
-    main_template = weighted_sample(material_assignments.beetle)
-
-
 def beetle_genome():
     fac = parts.generic_nurbs.NurbsBody(
         prefix="body_insect", tags=["body", "rigid"], var=2
@@ -135,6 +131,12 @@ class BeetleFactory(AssetFactory):
         self.bvh = bvh
         self.animation_mode = animation_mode
 
+        with FixedSeed(factory_seed):
+            self.body_material = weighted_sample(material_assignments.beetle)()
+
+    def apply_materials(self, obj):
+        self.body_material.apply(joining.get_parts(obj))
+
     def create_asset(self, i, hair=False, **kwargs):
         genome = beetle_genome()
         root, parts = creature.genome_to_creature(
@@ -147,7 +149,7 @@ class BeetleFactory(AssetFactory):
             parts,
             genome,
             rigging=(self.animation_mode is not None),
-            postprocess_func=beetle_postprocessing,
+            postprocess_func=self.apply_materials,
             **kwargs,
         )
         if self.animation_mode == "walk_cycle":
