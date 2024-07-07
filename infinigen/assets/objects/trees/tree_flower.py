@@ -11,13 +11,13 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util import color
 from infinigen.core.util.math import FixedSeed, dict_lerp
 
 
@@ -634,22 +634,17 @@ def shader_flower_center(nw):
     )
 
 
-def shader_petal(nw, petal_color_name):
+def shader_petal(nw, color_hsv):
     translucent_color_change = uniform(0.1, 0.6)
     specular = normal(0.6, 0.1)
     roughness = normal(0.4, 0.05)
     translucent_amt = normal(0.3, 0.05)
 
     petal_color = nw.new_node(Nodes.RGB)
-    petal_color.outputs[0].default_value = color.color_category(petal_color_name)
-
-    translucent_color = nw.new_node(
-        Nodes.MixRGB,
-        [translucent_color_change, petal_color, color.color_category(petal_color_name)],
-    )
+    petal_color.outputs[0].default_value = colors.hsv2rgba(color_hsv)
 
     translucent_bsdf = nw.new_node(
-        Nodes.TranslucentBSDF, input_kwargs={"Color": translucent_color}
+        Nodes.TranslucentBSDF, input_kwargs={"Color": petal_color}
     )
 
     principled_bsdf = nw.new_node(
@@ -911,13 +906,10 @@ class TreeFlowerFactory(AssetFactory):
         self.rad = rad
         self.diversity_fac = diversity_fac
 
-        self.petal_color = np.random.choice(
-            ["pink", "white", "red", "yellowish"], p=[0.4, 0.2, 0.2, 0.2]
-        )
-
         with FixedSeed(factory_seed):
+            self.petal_colors_hsv = colors.tree_petal_hsv()
             self.petal_material = surface.shaderfunc_to_material(
-                shader_petal, self.petal_color
+                shader_petal, self.petal_color_hsv
             )
             self.center_material = surface.shaderfunc_to_material(shader_flower_center)
             self.species_params = self.get_flower_params(self.rad)

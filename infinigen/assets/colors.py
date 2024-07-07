@@ -102,36 +102,37 @@ def greenery_hsv():
     )
 
 
-def yellowish_hsv():
-    return (
-        wrap_gaussian(0.15, 0.005),
-        normal(0.95, 0.02),
-        normal(0.9, 0.02),
-    )
+def tree_petal_hsv():
+    r = uniform()
 
-
-def red_hsv():
-    return (
-        wrap_gaussian(0.0, 0.05),
-        normal(0.9, 0.03),
-        normal(0.6, 0.05),
-    )
-
-
-def pink_hsv():
-    return (
-        wrap_gaussian(0.88, 0.06),
-        normal(0.6, 0.05),
-        normal(0.8, 0.05),
-    )
-
-
-def white_hsv():
-    return (
-        wrap_gaussian(0.0, 0.06),
-        uniform(0.0, 0.2),
-        normal(0.95, 0.02),
-    )
+    if r < 0.4:
+        pink = (
+            wrap_gaussian(0.88, 0.06),
+            normal(0.6, 0.05),
+            normal(0.8, 0.05),
+        )
+        return pink
+    elif r < 0.6:
+        white = (
+            wrap_gaussian(0.0, 0.06),
+            uniform(0.0, 0.2),
+            normal(0.95, 0.02),
+        )
+        return white
+    elif r < 0.8:
+        red = (
+            wrap_gaussian(0.0, 0.05),
+            normal(0.9, 0.03),
+            normal(0.6, 0.05),
+        )
+        return red
+    else:
+        yellow = (
+            wrap_gaussian(0.15, 0.005),
+            normal(0.95, 0.02),
+            normal(0.9, 0.02),
+        )
+        return yellow
 
 
 def fog_hsv():
