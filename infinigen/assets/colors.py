@@ -8,8 +8,14 @@
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.core.util.color import hex2rgba, rgb2hsv
-from infinigen.core.util.random import mixture_of_gaussian, wrap_gaussian
+# ruff: noqa: F401
+from infinigen.core.util.color import hex2rgba, rgb2hsv, hsv2rgba
+from infinigen.core.util.random import (
+    mixture_of_gaussian,
+    wrap_gaussian,
+    weighted_sample,
+    log_uniform,
+)
 
 
 def sofa_fabric_hsv():
@@ -297,3 +303,65 @@ wood_colors = [
 def bark_hsv():
     hexval = np.random.choice(wood_colors)
     return rgb2hsv(hex2rgba(hexval)[:-1])
+
+
+plain_base_colors = [
+    (0xFDD017, 0.5),
+    (0xC0C0C0, 1),
+    (0x8C7853, 1),
+    (0xB87333, 0.5),
+    (0xB5A642, 0.5),
+    (0xBDBAAE, 1),
+    (0xA9ACB6, 1),
+    (0xB6AFA9, 1),
+]
+
+natural_base_colors = [
+    (0xC0C0C0, 1),
+    (0x8C7853, 1),
+    (0xBDBAAE, 1),
+    (0xA9ACB6, 1),
+    (0xB6AFA9, 1),
+]
+
+
+def metal_plain_hsv():
+    hexval = weighted_sample(plain_base_colors)
+    h, s, v = rgb2hsv(hex2rgba(hexval)[:-1])
+    return (
+        h + uniform(-0.1, 0.1),
+        s + uniform(-0.1, 0.1),
+        v * log_uniform(0.5, 0.2),
+    )
+
+
+def metal_natural_hsv():
+    hexval = weighted_sample(natural_base_colors)
+    h, s, v = rgb2hsv(hex2rgba(hexval)[:-1])
+    return (
+        h + uniform(-0.1, 0.1),
+        s + uniform(-0.1, 0.1),
+        v * log_uniform(0.5, 0.2),
+    )
+
+
+def metal_bw_hsv():
+    return (
+        uniform(0, 1),
+        uniform(0.0, 0.2),
+        log_uniform(0.01, 0.2),
+    )
+
+
+def metal_bw_natural_hsv():
+    return metal_bw_hsv() if uniform() < 0.5 else metal_natural_hsv()
+
+
+def metal_hsv():
+    if uniform() < 0.2:
+        return metal_natural_hsv()
+    return (
+        uniform(0, 1),
+        uniform(0.3, 0.6),
+        log_uniform(0.02, 0.5),
+    )

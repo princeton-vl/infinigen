@@ -115,7 +115,7 @@ def get_all_metal_shaders():
         grained_and_polished_metal.shader_grained_metal,
         hammered_metal.shader_hammered_metal,
     ]
-    color = metal_random.sample_metal_color()
+    color = colors.metal_hsv()
     new_shaders = [
         functools.partial(shader, base_color=color) for shader in metal_shaders_list
     ]
@@ -592,11 +592,12 @@ def mirror_materials():
 
 def kitchen_sink_materials():
     shaders = get_all_metal_shaders()
-    sink_color = metal_random.sample_metal_color(metal_color="natural")
+    sink_color = colors.metal_natural_hsv()
     if uniform() < 0.5:
-        tap_color = metal_random.sample_metal_color(metal_color="plain")
+        tap_color = colors.metal_plain_hsv()
     else:
-        tap_color = metal_random.sample_metal_color(metal_color="natural")
+        tap_color = colors.metal_natural_hsv()
+
     sink_shaders = [
         lambda nw, *args: shader(nw, *args, base_color=sink_color) for shader in shaders
     ]
@@ -614,9 +615,9 @@ def kitchen_sink_materials():
 def kitchen_tap_materials():
     shaders = get_all_metal_shaders()
     if uniform() < 0.5:
-        tap_color = metal_random.sample_metal_color(metal_color="plain")
+        tap_color = colors.metal_plain_hsv()
     else:
-        tap_color = metal_random.sample_metal_color(metal_color="natural")
+        tap_color = colors.metal_natural_hsv()
     tap_shaders = [
         lambda nw, *args: shader(nw, *args, base_color=tap_color) for shader in shaders
     ]

@@ -9,6 +9,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.assets.materials.ceramic import glass
 from infinigen.assets.materials.metal import metal_random
 from infinigen.assets.materials.utils.common import unique_surface
@@ -101,7 +102,7 @@ class BaseDoorFactory(AssetFactory):
             self.auto_bevel = BevelSharp()
             self.side_bevel = log_uniform(0.005, 0.015)
 
-            self.metal_color = metal_random.sample_metal_color()
+            self.metal_color = colors.metal_hsv()
 
     def create_asset(self, **params) -> bpy.types.Object:
         for _ in range(100):

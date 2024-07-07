@@ -6,6 +6,7 @@
 
 from numpy.random import uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -118,21 +119,23 @@ def nodegroup_hammered_metal(nw: NodeWrangler):
 
 
 def shader_hammered_metal(
-    nw: NodeWrangler, scale=None, base_color=None, seed=None, **kwargs
+    nw: NodeWrangler, scale=None, base_color_hsv=None, seed=None, **kwargs
 ):
     # Code generated using version 2.6.4 of the node_transpiler
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
-    if base_color is None:
-        from infinigen.assets.materials.metal import sample_metal_color
-
-        base_color = sample_metal_color(**kwargs)
+    if base_color_hsv is None:
+        base_color_hsv = colors.metal_hsv()
     if scale is None:
         scale = log_uniform(0.8, 1.2)
 
     group = nw.new_node(
         nodegroup_hammered_metal().name,
-        input_kwargs={"Base Color": base_color, "Scale": scale, "Seed": seed},
+        input_kwargs={
+            "Base Color": colors.hsv2rgba(base_color_hsv),
+            "Scale": scale,
+            "Seed": seed,
+        },
     )
 
     displacement = nw.new_node(
