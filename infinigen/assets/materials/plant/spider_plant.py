@@ -38,6 +38,6 @@ def shader_spider_plant(nw: NodeWrangler):
     )
 
 
-class Spider_Plant:
+class SpiderPlant:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_spider_plant, selection=selection)

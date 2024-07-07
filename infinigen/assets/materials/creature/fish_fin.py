@@ -222,7 +222,7 @@ def shader_fin_gold(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-class Fishfin:
+class FishFin:
     def apply(self, obj, geo_kwargs={}, shader_kwargs={}, **kwargs):
         if "goldfish" in shader_kwargs:
             if shader_kwargs["goldfish"]:

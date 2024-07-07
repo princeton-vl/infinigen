@@ -90,7 +90,7 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
     )
 
 
-class Two_Colorz:
+class TwoColorZ:
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(
             obj,

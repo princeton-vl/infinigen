@@ -260,7 +260,7 @@ def shader_spot(nw, rand=True, **input_kwargs):
     )
 
 
-class Three_Color_Spots:
+class ThreeColorSpots:
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(
             obj,

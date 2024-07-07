@@ -420,6 +420,6 @@ def shader_eyeball_fish(nw: NodeWrangler):
     )
 
 
-class Fish_Eye_Shader:
+class FishEye:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_eyeball_fish, selection=selection)

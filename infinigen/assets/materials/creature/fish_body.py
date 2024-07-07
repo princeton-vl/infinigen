@@ -5,10 +5,8 @@
 # Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=mJVuodaPHTQ and https://www.youtube.com/watch?v=v7a4ouBLIow by Lance Phan
 
 
-import os
 import random
 
-import bpy
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
@@ -1579,7 +1577,7 @@ def shader_stripe_fish(nw: NodeWrangler, rand=True, **input_kwargs):
     )
 
 
-class Fishbody:
+class FishBody:
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         attributes = ["Color variations", "offset2"]
 
@@ -1595,19 +1593,3 @@ class Fishbody:
             obj, geometry_fish_body, input_kwargs=geo_kwargs, attributes=attributes
         )
         surface.add_material(obj, shader, input_kwargs=shader_kwargs)
-
-
-if __name__ == "__main__":
-    for i in range(1):
-        bpy.ops.wm.open_mainfile(filepath="dev_scene_fish_nurb.blend")
-        i = 0
-        for obj in bpy.data.objects:
-            if obj.name.find("Nurb") >= 0:
-                Fishbody.apply(
-                    obj,
-                    geo_kwargs={"rand": True},
-                    shader_kwargs={"rand": True, "stripefish": True},
-                )
-                i += 1
-        fn = os.path.join(os.path.abspath(os.curdir), "dev_scene_test_fish_nurb2.blend")
-        bpy.ops.wm.save_as_mainfile(filepath=fn)

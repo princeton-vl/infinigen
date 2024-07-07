@@ -2,7 +2,6 @@ import numpy as np
 
 from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
-
 from infinigen.core.util.color import hsv2rgba
 
 from . import (

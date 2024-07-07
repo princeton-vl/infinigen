@@ -348,7 +348,7 @@ def geo_cracked_ground(nw: NodeWrangler, selection=None, random_seed=0):
     )
 
 
-class Cracked_Ground:
+class CrackedGround:
     def apply(self, obj, selection=None, **kwargs):
         # seed = randint(10000000)
         surface.add_geomod(

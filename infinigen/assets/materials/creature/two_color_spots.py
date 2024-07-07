@@ -180,7 +180,7 @@ def geo_two_color_spots(nw, rand=True, **input_kwargs):
     )
 
 
-class Two_Color_Spots:
+class TwoColorSpots:
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(
             obj,

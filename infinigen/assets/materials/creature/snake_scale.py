@@ -6,7 +6,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.creature import snake_shaders
+from infinigen.assets.materials.creature import snake
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -472,9 +472,9 @@ def geometry_snake_scale(nw: NodeWrangler):
     )
 
 
-class Snake_Scale:
+class SnakeScale:
     def apply(self, obj, **kwargs):
-        shader = snake_shaders.shaders.choose()
+        shader = snake.shaders.choose()
         rand = uniform() > 0.3
         surface.add_geomod(obj, geometry_snake_scale)
         surface.add_material(obj, shader, input_kwargs={"rand": rand})

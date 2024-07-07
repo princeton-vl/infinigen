@@ -250,7 +250,7 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
         )
 
 
-class Cobble_Stone:
+class CobbleStone:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(obj, geo_cobblestone, selection=selection)
         surface.add_material(obj, shader_cobblestone, selection=selection, reuse=False)

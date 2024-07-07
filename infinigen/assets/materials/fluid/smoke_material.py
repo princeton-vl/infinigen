@@ -26,6 +26,6 @@ def smoke_material(nw):
     )
 
 
-class Smoke_Material:
+class Smoke:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, smoke_material, selection=selection)

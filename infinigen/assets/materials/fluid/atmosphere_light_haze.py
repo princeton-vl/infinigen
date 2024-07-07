@@ -32,6 +32,6 @@ def shader_atmosphere(
     return (None, principled_volume)
 
 
-class Atmosphere_Light_Haze:
+class AtmosphereLightHaze:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_atmosphere, selection=selection)

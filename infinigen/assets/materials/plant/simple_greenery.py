@@ -71,6 +71,6 @@ def shader_simple_greenery(nw: NodeWrangler):
     )
 
 
-class Simple_Greenery:
+class SimpleGreenery:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_simple_greenery, selection=selection)

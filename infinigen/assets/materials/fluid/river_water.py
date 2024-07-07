@@ -321,7 +321,7 @@ def geometry_river_water(nw: NodeWrangler):
     )
 
 
-class River_Water:
+class RiverWater:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(
             obj, geometry_river_water, selection=selection, attributes=[]

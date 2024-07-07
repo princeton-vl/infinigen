@@ -946,7 +946,7 @@ def get_random_bark_params(seed):
     return geo_params, color_params
 
 
-class Bark_Random:
+class BarkRandom:
     def apply(self, obj, selection=None, **kwargs):
         geo_params, color_params = get_random_bark_params(seed=np.random.randint(1e5))
 

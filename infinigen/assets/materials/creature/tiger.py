@@ -5,9 +5,6 @@
 # Acknowledgment: This file draws inspiration from https://www.youtube.com/watch?v=b9lukB7cWag by Sam Bowman
 
 
-import os
-
-import bpy
 from numpy.random import normal, uniform
 from numpy.random import normal as N
 from numpy.random import uniform as U
@@ -219,22 +216,6 @@ def shader_tiger_attr(nw: NodeWrangler):
     )
 
 
-class Tiger_Attr:
+class Tiger:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, shader_tiger_attr, selection=selection)
-
-
-if __name__ == "__main__":
-    for i in range(1):
-        bpy.ops.wm.open_mainfile(filepath="dev_scene_1019.blend")
-        # creature(73349, 0).parts(0, factory=QuadrupedBody)
-        Tiger_Attr.apply(
-            bpy.data.objects["creature(73349, 0).parts(0, factory=QuadrupedBody)"],
-            geo_kwargs={"rand": True},
-            shader_kwargs={"rand": True},
-        )
-        fn = os.path.join(os.path.abspath(os.curdir), "dev_scene_test_tiger_attr.blend")
-        bpy.ops.wm.save_as_mainfile(filepath=fn)
-        # bpy.context.scene.render.filepath = os.path.join('surfaces/surface_thumbnails', 'bone%d.jpg'%(i))
-        # bpy.context.scene.render.image_settings.file_format='JPEG'
-        # bpy.ops.render.render(write_still=True)

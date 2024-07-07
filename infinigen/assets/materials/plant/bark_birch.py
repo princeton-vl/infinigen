@@ -371,7 +371,7 @@ def geo_bark_birch(nw, selection=None):
     )
 
 
-class Bark_Birch:
+class BarkBirch:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(
             obj, geo_bark_birch, selection=selection, attributes=["initial_position"]

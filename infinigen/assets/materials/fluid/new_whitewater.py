@@ -42,6 +42,6 @@ def new_whitewater(nw: NodeWrangler):
     )
 
 
-class New_Whitewater:
+class Whitewater:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(obj, new_whitewater, selection=selection)
