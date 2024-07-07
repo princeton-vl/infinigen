@@ -7,7 +7,6 @@
 
 import random
 
-
 from infinigen.assets.materials.utils.surface_utils import (
     sample_color,
     sample_range,

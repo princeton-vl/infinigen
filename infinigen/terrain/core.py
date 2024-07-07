@@ -15,6 +15,13 @@ import numpy as np
 from mathutils.bvhtree import BVHTree
 from numpy import ascontiguousarray as AC
 
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials import (
+    fluid as fluid_materials,
+)
+from infinigen.assets.materials import (
+    terrain as terrain_materials,
+)
 from infinigen.core.tagging import tag_object, tag_system
 from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
@@ -111,7 +118,6 @@ class Terrain:
     def __init__(
         self,
         seed,
-        surface_registry,
         task,
         asset_folder,
         asset_version,
@@ -141,12 +147,22 @@ class Terrain:
         assert terrain_element_version == 1
         self.seed = seed
         self.device = device
-        self.surface_registry = surface_registry
         self.main_terrain = main_terrain
         self.under_water = under_water
         self.min_distance = min_distance
         self.populated_bounds = populated_bounds
         self.bounds = bounds
+
+        self.surface_registry = {
+            "atmosphere": [(fluid_materials.tmosphere, 1)],
+            "beach": material_assignments.beach,
+            "eroded": material_assignments.eroded,
+            "ground_collection": material_assignments.ground,
+            "lava": [(fluid_materials.Lava, 1)],
+            "liquid_collection": material_assignments.liquid,
+            "mountain_collection": material_assignments.mountain,
+            "snow": [(terrain_materials.Snow, 1)],
+        }
 
         if Terrain.instance is not None:
             self.__dict__ = Terrain.instance.__dict__.copy()

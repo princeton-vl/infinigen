@@ -10,6 +10,7 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 
 from infinigen.assets import materials
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -18,6 +19,7 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.random import weighted_sample
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 
@@ -72,11 +74,11 @@ def tiger_skin_sim_params():
     }
 
 
-def tiger_postprocessing(body_parts, extras, params):
+def carnivore_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.carnivore)
     main_template.apply(body_parts + get_extras("BodyExtra"))
 
     materials.tongue.apply(get_extras("Tongue"))
@@ -228,11 +230,6 @@ def tiger_genome():
         postprocess_params=dict(
             hair=tiger_hair_params(),
             skin=tiger_skin_sim_params(),
-            surface_registry=[
-                (materials.tiger_attr, 3),
-                (materials.giraffe_attr, 0.2),
-                (materials.spot_sparse_attr, 2),
-            ],
         ),
     )
 
@@ -279,7 +276,7 @@ class CarnivoreFactory(AssetFactory):
             parts,
             genome,
             rigging=dynamic,
-            postprocess_func=tiger_postprocessing,
+            postprocess_func=carnivore_postprocessing,
             **kwargs,
         )
 

@@ -46,7 +46,7 @@ from infinigen.assets.lighting import (
 # from infinigen.core.rendering.render import enable_gpu
 from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material, subclasses
-from infinigen.core import init, surface
+from infinigen.core import init
 from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import AssetFactory, density
 from infinigen.core.tagging import tag_system
@@ -454,7 +454,6 @@ def main(args):
         ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
         skip_unknown=True,
     )
-    surface.registry.initialize_from_gin()
 
     if args.debug is not None:
         for name in logging.root.manager.loggerDict:

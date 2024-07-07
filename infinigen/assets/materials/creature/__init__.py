@@ -3,8 +3,8 @@ from .bird import Bird
 from .bone import Bone
 from .chitin import Chitin
 from .eyeball import Eyeball
-from .fish_eye import FishEye
 from .fish_body import FishBody
+from .fish_eye import FishEye
 from .fish_fin import FishFin
 from .giraffe import Giraffe
 from .horn import Horn
@@ -14,8 +14,8 @@ from .reptile_gray import ReptileGray
 from .reptile_two_color import ReptileTwoColor
 from .scale import Scale
 from .slimy import Slimy
-from .snake_scale import SnakeScale
 from .snake import Snake
+from .snake_scale import SnakeScale
 from .spot_sparse import SpotSparse
 from .three_color_spots import ThreeColorSpots
 from .tiger import Tiger

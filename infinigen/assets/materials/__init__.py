@@ -4,5 +4,3 @@
 # Authors: Hongyu Wen
 
 from infinigen.infinigen_gpl.surfaces import snow
-
-from .fluid import lava, new_whitewater, river_water

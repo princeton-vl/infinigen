@@ -7,17 +7,19 @@
 import numpy as np
 from numpy.random import uniform as U
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.rocks.blender_rock import BlenderRockFactory
-from infinigen.core import surface
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.util.random import weighted_sample
 
 
 def apply(obj, n=5, detail=3, selection=None, **kwargs):
     fac = BlenderRockFactory(np.random.randint(1e5), detail=detail)
     rocks = make_asset_collection(fac, n=n)
 
-    surface.registry("rock_collection").apply(list(rocks.objects))
+    mat = weighted_sample(material_assignments.rock)()
+    mat.apply(list(rocks.objects))
 
     scatter_obj = scatter_instances(
         base_obj=obj,

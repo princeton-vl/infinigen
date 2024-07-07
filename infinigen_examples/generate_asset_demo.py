@@ -26,7 +26,7 @@ from infinigen.assets.lighting import sky_lighting
 from infinigen.assets.objects.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.scatters import grass, pebbles, pine_needle, pinecone
 from infinigen.assets.weather import kole_clouds
-from infinigen.core import execute_tasks, init, surface
+from infinigen.core import execute_tasks, init
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.placement import placement
 from infinigen.core.placement.split_in_view import split_inview
@@ -117,7 +117,6 @@ def compose_scene(
     # find a flat spot on the terrain to do the demo\
     terrain = Terrain(
         scene_seed,
-        surface.registry,
         task="coarse",
         on_the_fly_asset_folder=output_folder / "assets",
     )

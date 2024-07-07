@@ -13,6 +13,7 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 
 from infinigen.assets import materials
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -22,9 +23,9 @@ from infinigen.assets.objects.creatures.util.animation.driver_wiggle import (
 )
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.random import weighted_sample
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
@@ -69,7 +70,7 @@ def bird_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.bird)
     main_template.apply(body_parts + get_extras("BodyExtra") + get_extras("Feather"))
 
     materials.tongue.apply(get_extras("Tongue"))
@@ -186,12 +187,6 @@ def duck_genome(mode):
         postprocess_params=dict(
             animation=dict(),
             hair=bird_hair_params(flying=False),
-            surface_registry=[
-                (materials.spot_sparse_attr, 4),
-                (materials.reptile_brown_circle_attr, 0.5),
-                (materials.reptile_two_color_attr, 0.5),
-                (materials.creature.bird, 5),
-            ],
         ),
     )
 
@@ -311,12 +306,6 @@ def flying_bird_genome(mode):
         postprocess_params=dict(
             animation=dict(),
             hair=bird_hair_params(flying=True),
-            surface_registry=[
-                # (materials.spot_sparse_attr, 4),
-                # (materials.reptile_brown_circle_attr, 0.5),
-                # (materials.reptile_two_color_attr, 0.5),
-                (materials.creature.bird, 5)
-            ],
         ),
     )
 

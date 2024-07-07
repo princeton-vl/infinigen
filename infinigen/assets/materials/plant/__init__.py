@@ -1,6 +1,6 @@
+from .bark import Bark
 from .bark_birch import BarkBirch
 from .bark_random import BarkRandom
-from .bark import Bark
 from .grass_blade import GrassBlade
 from .simple_brownish import SimpleBrownish
 from .simple_greenery import SimpleGreenery

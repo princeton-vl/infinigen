@@ -41,7 +41,7 @@ from infinigen.assets.materials.woods import non_wood_tile, wood_tile
 from infinigen.assets.utils.decorate import read_base_co, read_co, read_normal
 from infinigen.assets.utils.misc import subclasses
 from infinigen.assets.utils.object import center, new_cube, origin2lowest
-from infinigen.core import init, surface
+from infinigen.core import init
 from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import factory
 from infinigen.core.surface import write_attr_data
@@ -304,7 +304,6 @@ def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
     init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
-    surface.registry.initialize_from_gin()
 
     extras = "[%(filename)s:%(lineno)d] " if args.loglevel == logging.DEBUG else ""
     logging.basicConfig(

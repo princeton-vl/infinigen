@@ -11,6 +11,7 @@ import mathutils
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.trees.generate import GenericTreeFactory, random_species
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
@@ -23,6 +24,7 @@ from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util import blender as butil
 from infinigen.core.util import math as mutil
 from infinigen.core.util.math import randomspacing, rotate_match_directions
+from infinigen.core.util.random import weighted_sample
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +118,7 @@ def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
     )
     trees = [factory.spawn_placeholder(i, (0, 0, 0), (0, 0, 0)) for i in range(n)]
 
-    bark = surface.registry("bark")
+    bark = weighted_sample(material_assignments.bark)
     face_size = target_face_size(scatter_res_distance())
 
     attr_name = "original_surface"

@@ -15,7 +15,7 @@ import numpy as np
 sys.path.append(os.getcwd())
 
 from infinigen.assets.fluid.asset_cache import FireCachingSystem
-from infinigen.core import init, surface
+from infinigen.core import init
 
 if __name__ == "__main__":
     time.sleep(np.random.uniform(0, 3))
@@ -33,7 +33,6 @@ if __name__ == "__main__":
     init.apply_gin_configs(
         configs=[], overrides=[], config_folders=["infinigen_examples/configs_nature"]
     )
-    surface.registry.initialize_from_gin()
 
     factory_name = args.asset
     factory = None

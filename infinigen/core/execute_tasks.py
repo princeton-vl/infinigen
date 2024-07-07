@@ -19,7 +19,18 @@ import gin
 from frozendict import frozendict
 
 import infinigen.assets.scatters
-from infinigen.core import init, surface
+from infinigen.assets import fluid
+from infinigen.assets.objects import cactus, cloud, creatures, monocot, rocks, trees
+from infinigen.assets.scatters import (
+    ground_mushroom,
+    ivy,
+    lichen,
+    moss,
+    slime_mold,
+    snow_layer,
+)
+from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
+from infinigen.core import init
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
@@ -234,7 +245,6 @@ def execute_tasks(
     bpy.context.scene.render.resolution_y = generate_resolution[1]
     bpy.context.view_layer.update()
 
-    surface.registry.initialize_from_gin()
     init.configure_blender()
 
     if Task.Coarse in task:
@@ -260,7 +270,6 @@ def execute_tasks(
             info = pickle.load(f)
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task=task,
             on_the_fly_asset_folder=output_folder / "assets",
             height_offset=info["height_offset"],
@@ -312,7 +321,6 @@ def execute_tasks(
     ):
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task=task,
             on_the_fly_asset_folder=output_folder / "assets",
         )

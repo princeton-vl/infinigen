@@ -13,7 +13,7 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.creature.chitin
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -23,10 +23,10 @@ from infinigen.assets.objects.creatures.util.animation import (
 from infinigen.assets.objects.creatures.util.boid_swarm import BoidSwarmFactory
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed, clip_gaussian, lerp
+from infinigen.core.util.random import weighted_sample
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +68,7 @@ def insect_hair_params():
 
 
 def beetle_postprocessing(body_parts, extras, params):
-    main_template = surface.registry.sample_registry(params["surface_registry"])
-    main_template.apply(body_parts)
+    main_template = weighted_sample(material_assignments.beetle)
 
 
 def beetle_genome():
@@ -122,7 +121,6 @@ def beetle_genome():
     return genome.CreatureGenome(
         parts=body,
         postprocess_params=dict(
-            surface_registry=[(infinigen.assets.materials.creature.chitin, 1)],
             hair=insect_hair_params(),
         ),
     )

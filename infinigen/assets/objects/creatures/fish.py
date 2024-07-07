@@ -15,10 +15,10 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.creature import (
-    fish_eye_shader,
-    fishbody,
-    fishfin,
+    fish_eye,
+    fish_fin,
 )
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
@@ -31,6 +31,7 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.util.random import weighted_sample
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
@@ -78,15 +79,15 @@ def fish_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.fish)
     main_template.apply(body_parts + get_extras("BodyExtra"))
 
     mat = body_parts[0].active_material
     gold = mat is not None and "gold" in mat.name
     body_parts[0].active_material.name.lower() or U() < 0.1
-    fishfin.apply(get_extras("Fin"), shader_kwargs={"goldfish": gold})
+    fish_fin.apply(get_extras("Fin"), shader_kwargs={"goldfish": gold})
 
-    fish_eye_shader.apply(get_extras("Eyeball"))
+    fish_eye.apply(get_extras("Eyeball"))
     # eyeball.apply(get_extras('Eyeball'), shader_kwargs={"coord": "X"})
 
 
@@ -216,12 +217,7 @@ def fish_genome():
     return genome.CreatureGenome(
         parts=body,
         postprocess_params=dict(
-            cloth=fish_fin_cloth_sim_params(),
-            anim=fish_swim_params(),
-            surface_registry=[
-                (fishbody, 3),
-                # (scale, 1),
-            ],
+            cloth=fish_fin_cloth_sim_params(), anim=fish_swim_params()
         ),
     )
 

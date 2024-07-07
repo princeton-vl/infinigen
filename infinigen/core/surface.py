@@ -7,13 +7,10 @@
 # - Lahav Lipson: Surface mixing
 # - Lingjie Mei: attributes and geo nodes
 
-import importlib
 import string
-from collections import defaultdict
 from inspect import signature
 
 import bpy
-import gin
 import numpy as np
 from mathutils import Vector
 from tqdm import trange
@@ -431,61 +428,3 @@ class NoApply:
     @staticmethod
     def apply(objs, *args, **kwargs):
         return objs, []
-
-
-class Registry:
-    def __init__(self):
-        self._registry = None
-
-    @staticmethod
-    def get_surface(name):
-        if name == "":
-            return NoApply
-
-        prefixes = [
-            "infinigen.infinigen_gpl.surfaces",
-            "infinigen.assets.materials",
-            "infinigen.assets.scatters",
-        ]
-        for prefix in prefixes:
-            try:
-                return importlib.import_module("." + name, prefix)
-            except ModuleNotFoundError:
-                continue
-
-        raise ValueError(f"Could not find {name=} in any of {prefixes}")
-
-    @staticmethod
-    def sample_registry(registry):
-        mods, probs = zip(*registry)
-        return np.random.choice(mods, p=np.array(probs) / sum(probs))
-
-    @gin.configurable("registry")
-    def initialize_from_gin(self, smooth_categories=0, **gin_category_info):
-        if smooth_categories != 0:
-            raise NotImplementedError
-
-        with gin.unlock_config():
-            self._registry = defaultdict(list)
-            for k, v in gin_category_info.items():
-                self._registry[k] = [
-                    (self.get_surface(name), weight) for name, weight in v
-                ]
-
-    def __call__(self, category_key):
-        if self._registry is None:
-            raise ValueError(
-                "Surface registry has not been initialized! Have you loaded gin and called .initialize()?"
-                "Note, this step cannot happen at module initialization time, as gin is not yet loaded"
-            )
-
-        if category_key not in self._registry:
-            raise KeyError(
-                f"registry recieved request with {category_key=}, but no gin_config for this key was "
-                f"provided. {self._registry.keys()=}"
-            )
-
-        return self.sample_registry(self._registry[category_key])
-
-
-registry = Registry()

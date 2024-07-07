@@ -100,7 +100,6 @@ def compose_nature(output_folder, scene_seed, **params):
     def add_coarse_terrain():
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task="coarse",
             on_the_fly_asset_folder=output_folder / "assets",
         )

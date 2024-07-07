@@ -9,6 +9,11 @@ import functools
 import numpy as np
 from numpy.random import uniform
 
+import infinigen.assets.materials.creature
+import infinigen.assets.materials.fluid
+import infinigen.assets.materials.plant
+import infinigen.assets.materials.terrain
+
 from infinigen.assets import colors
 from infinigen.assets.materials import (
     ceiling_light_shaders,
@@ -56,9 +61,7 @@ from infinigen.assets.materials.plastics import (
     plastic_translucent,
 )
 from infinigen.assets.materials.plastics.plastic_rough import shader_rough_plastic
-from infinigen.assets.materials.terrain import (
-    dirt,
-)
+from infinigen.assets.materials.terrain import dirt
 from infinigen.assets.materials.wear_tear import (
     procedural_edge_wear,
     procedural_scratch,
@@ -750,3 +753,77 @@ AssetList = {
     "WindowFactory": window_materials,
     "RugFactory": rug_materials,
 }
+
+ground = [
+    (infinigen.assets.materials.terrain.Mud, 2),
+    (infinigen.assets.materials.terrain.Sand, 1),
+    (infinigen.assets.materials.terrain.CobbleStone, 1),
+    (infinigen.assets.materials.terrain.CrackedGround, 1),
+    (infinigen.assets.materials.terrain.Dirt, 1),
+    (infinigen.assets.materials.terrain.Stone, 1),
+    (infinigen.assets.materials.terrain.Soil, 1),
+    (infinigen.assets.materials.terrain.ChunkyRock, 0),
+]
+
+beach = [
+    (infinigen.assets.materials.terrain.Sand, 10),
+    (infinigen.assets.materials.terrain.CrackedGround, 1),
+    (infinigen.assets.materials.terrain.Dirt, 1),
+    (infinigen.assets.materials.terrain.Stone, 1),
+    (infinigen.assets.materials.terrain.Soil, 1),
+]
+
+eroded = [
+    (infinigen.assets.materials.terrain.Sand, 1),
+    (infinigen.assets.materials.terrain.CrackedGround, 1),
+    (infinigen.assets.materials.terrain.Dirt, 1),
+    (infinigen.assets.materials.terrain.Stone, 1),
+    (infinigen.assets.materials.terrain.Soil, 1),
+]
+
+mountain = [
+    (infinigen.assets.materials.terrain.Mountain, 10),
+    (infinigen.assets.materials.terrain.Sandstone, 2),
+]
+
+rock = [
+    (infinigen.assets.materials.terrain.Mountain, 5),
+    (infinigen.assets.materials.terrain.Stone, 1),
+]
+
+bark = [
+    (infinigen.assets.materials.plant.BarkBirch, 0.1),
+    (infinigen.assets.materials.plant.BarkRandom, 0.9),
+    # ('wood', 0.01),
+]
+
+bird = [
+    (infinigen.assets.materials.creature.SpotSparse, 4),
+    (infinigen.assets.materials.creature.ReptileBrownCircle, 0.5),
+    (infinigen.assets.materials.creature.ReptileTwoColor, 0.5),
+    (infinigen.assets.materials.creature.Bird, 5),
+]
+
+carnivore = [
+    (infinigen.assets.materials.creature.Tiger, 3),
+    (infinigen.assets.materials.creature.Giraffe, 0.2),
+    (infinigen.assets.materials.creature.SpotSparse, 2),
+]
+
+reptile = [
+    (infinigen.assets.materials.creature.SnakeScale, 1),
+]
+
+fish = [
+    (infinigen.assets.materials.creature.FishBody, 3),
+    # (scale, 1),
+]
+
+herbivore = [
+    (infinigen.assets.materials.creature.Giraffe, 1),
+    (infinigen.assets.materials.creature.SpotSparse, 3),
+]
+
+beetle = [
+    (infinigen.assets.materials.creature.Chitin, 1),
+]

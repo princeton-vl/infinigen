@@ -26,7 +26,7 @@ from infinigen.assets.materials.dev import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
-from infinigen.core import execute_tasks, init, placement, surface, tagging
+from infinigen.core import execute_tasks, init, placement, tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl
@@ -130,7 +130,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     def add_coarse_terrain():
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task="coarse",
             on_the_fly_asset_folder=output_folder / "assets",
         )

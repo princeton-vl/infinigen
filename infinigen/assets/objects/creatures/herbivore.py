@@ -12,15 +12,12 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.creature import (
     bone,
     eyeball,
-    giraffe_attr,
     horn,
     nose,
-    reptile_brown_circle_attr,
-    reptile_gray_attr,
-    spot_sparse_attr,
     tongue,
 )
 from infinigen.assets.objects.creatures import parts
@@ -31,6 +28,7 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.random import weighted_sample
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 
@@ -75,7 +73,7 @@ def herbivore_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.herbivore)
     main_template.apply(body_parts + get_extras("BodyExtra"))
 
     tongue.apply(get_extras("Tongue"))
@@ -251,22 +249,12 @@ def herbivore_genome():
 
     genome.attach(head, body, coord=(0.97, 0, 0.2), joint=Joint(rest=(0, 20, 0)))
 
-    if U() < 1:
-        hair = herbivore_hair()
-        registry = [
-            (giraffe_attr, 1),
-            (spot_sparse_attr, 3),
-        ]
-    else:
-        hair = None
-        registry = [
-            (reptile_brown_circle_attr, 1),
-            (reptile_gray_attr, 1),
-        ]
-
     return genome.CreatureGenome(
         parts=body,
-        postprocess_params=dict(animation=dict(), hair=hair, surface_registry=registry),
+        postprocess_params=dict(
+            animation=dict(),
+            hair=herbivore_hair(),
+        ),
     )
 
 

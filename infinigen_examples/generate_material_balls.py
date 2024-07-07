@@ -37,7 +37,7 @@ from infinigen.assets.lighting import (
 from infinigen.assets.materials.woods import tiled_wood
 from infinigen.assets.utils.decorate import read_base_co
 from infinigen.assets.utils.misc import subclasses
-from infinigen.core import init, surface
+from infinigen.core import init
 from infinigen.core.placement import factory
 from infinigen.core.rendering.render import enable_gpu
 
@@ -174,7 +174,6 @@ def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
     init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
-    surface.registry.initialize_from_gin()
 
     extras = "[%(filename)s:%(lineno)d] " if args.loglevel == logging.DEBUG else ""
     logging.basicConfig(

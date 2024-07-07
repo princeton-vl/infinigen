@@ -13,6 +13,7 @@ import numpy as np
 import trimesh.convex
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import geo_extension
 from infinigen.assets.utils.object import trimesh2obj
 from infinigen.core import surface
@@ -24,7 +25,7 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class BoulderFactory(AssetFactory):
         self.weights = [0.8, 0.2]
         self.configs = ["boulder", "slab"]
         with FixedSeed(factory_seed):
-            self.rock_surface = surface.registry("rock_collection")
+            self.rock_surface = weighted_sample(material_assignments.rock)
             method = np.random.choice(self.configs, p=self.weights)
             self.has_horizontal_cut, self.is_slab = self.config_mappings[method]
 

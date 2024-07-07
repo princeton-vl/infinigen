@@ -121,11 +121,6 @@ For most steps of `infinigen_examples/generate_nature.py`'s `compose_nature` fun
 
 A common request is to just turn off things you don't want to see, which can be achieved by adding `compose_nature.trees_chance=0.0` or similar to your `-p` argument or a loaded config file. To conveniently turn off lots of things at the same time, we provide configs in `infinigen_examples/configs_nature/disable_assets` to disable things like all creatures, or all particles.
 
-You will also encounter configs using what we term a "registry pattern", e.g. `infinigen_examples/configs_nature/base_surface_registry.gin`'s `ground_collection`. "Registries", in this project, are a list of discrete generators, with weights indicating how relatively likely they are to be chosen each time the registry is sampled. 
-   - For example, in `base_surface_registry.gin`, `surface.registry.beach` specifies `("sand", 10)` to indicate that sand has high weight to be chosen to be assigned for the beach category. 
-   - Weights are normalized by their overall sum to obtain a probability distribution. 
-   - Name strings undergo lookup in the relevant source code folders, e.g. the name "sand" in a surface registry maps to `infinigen/assets/materials/sand.py`.
-
 ### Config Overrides for mesh detail and performance
 
 The quantity, diversity and detail of assets in a scene drastically affects RAM/VRAM requirements and runtime. This section will highlight configurable parameters that may help tune Infinigen to run better on limited hardware, or that could be increased to create larger more detailed scenes.

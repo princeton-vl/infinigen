@@ -13,7 +13,6 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import clip_hsv, random_color, random_color_neighbour
 from infinigen.core.util.random import random_general as rg
-from infinigen.terrain.land_process.snowfall import snowfall_params
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_MOUNTAIN"
@@ -345,9 +344,12 @@ def shader_MOUNTAIN(
         )
         if snowy:
             if not is_rock:
-                normal_params = snowfall_params()["detailed_normal_params"]
+                # previosuly was "detailed_normal_params" in snowfall_params but it caused circular
+                normal_params = [((0, 0, 1), (0.80, 0.801))]
             else:
-                normal_params = snowfall_params()["on_rock_normal_params"]
+                # previosuly was "on_rock_normal_params" in snowfall_params but it caused circular
+                normal_params = [((0, 0, 1), (0.50, 0.501))]  #
+
             normal = (nw.new_node("ShaderNodeNewGeometry"), 1)
             weights = [0]
             for normal_preference, (th0, th1) in normal_params:

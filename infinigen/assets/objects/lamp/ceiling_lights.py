@@ -11,8 +11,8 @@ import numpy as np
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
-from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
