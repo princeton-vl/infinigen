@@ -9,8 +9,10 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import glass, metal, wood
-from infinigen.assets.materials.common import unique_surface
+from infinigen.assets.materials.ceramic import glass
+from infinigen.assets.materials.metal import metal_random
+from infinigen.assets.materials.utils.common import unique_surface
+from infinigen.assets.materials.woods import wood
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import mirror, read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin
@@ -44,15 +46,15 @@ class BaseDoorFactory(AssetFactory):
             self.out_bevel = uniform() < 0.7
             self.shrink_width = log_uniform(0.005, 0.06)
 
-            surface_fn = np.random.choice([metal, wood], p=[0.2, 0.8])
+            surface_fn = np.random.choice([metal_random, wood], p=[0.2, 0.8])
             self.surface = unique_surface(surface_fn, self.factory_seed)
             self.has_glass = False
             self.glass_surface = glass
             self.has_louver = False
-            self.louver_surface = np.random.choice([metal, wood], p=[0.2, 0.8])
+            self.louver_surface = np.random.choice([metal_random, wood], p=[0.2, 0.8])
 
             self.handle_type = np.random.choice(["knob", "lever", "pull"])
-            self.handle_surface = np.random.choice([metal, wood], p=[0.2, 0.8])
+            self.handle_surface = np.random.choice([metal_random, wood], p=[0.2, 0.8])
             self.handle_offset = self.panel_margin * 0.5
             self.handle_height = self.height * uniform(0.45, 0.5)
 
@@ -99,7 +101,7 @@ class BaseDoorFactory(AssetFactory):
             self.auto_bevel = BevelSharp()
             self.side_bevel = log_uniform(0.005, 0.015)
 
-            self.metal_color = metal.sample_metal_color()
+            self.metal_color = metal_random.sample_metal_color()
 
     def create_asset(self, **params) -> bpy.types.Object:
         for _ in range(100):

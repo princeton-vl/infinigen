@@ -13,6 +13,8 @@ import numpy as np
 from mathutils import Vector
 from numpy.random import randint, uniform
 
+from infinigen.assets.materials.fluid import atmosphere_light_haze
+
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
 logging.basicConfig(
@@ -25,7 +27,6 @@ logging.basicConfig(
 # ruff: noqa: F401
 from infinigen.assets import fluid, lighting, weather
 from infinigen.assets.materials import (
-    atmosphere_light_haze,
     chunkyrock,
     cobble_stone,
     cracked_ground,

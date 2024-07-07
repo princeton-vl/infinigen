@@ -147,7 +147,8 @@ def shader_hammered_metal(
     )
 
 
-
-class Hammered_Metal():
+class Hammered_Metal:
     def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, shader_hammered_metal, selection=selection, input_kwargs=kwargs)
+        surface.add_material(
+            obj, shader_hammered_metal, selection=selection, input_kwargs=kwargs
+        )

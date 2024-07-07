@@ -7,7 +7,7 @@ import numpy as np
 import shapely
 from numpy.random import uniform
 
-from infinigen.assets.materials import ceramic, marble
+from infinigen.assets.materials.ceramic import ceramic, marble
 from infinigen.assets.materials.woods import wood_tile
 from infinigen.assets.utils.decorate import read_center, read_normal, select_faces
 from infinigen.assets.utils.mesh import separate_selected, snap_mesh

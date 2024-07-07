@@ -22,7 +22,7 @@ import numpy as np
 
 from infinigen import repo_root
 from infinigen.assets import lighting
-from infinigen.assets.materials import invisible_to_camera
+from infinigen.assets.materials.dev import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co

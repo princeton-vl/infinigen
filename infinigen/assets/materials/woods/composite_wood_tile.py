@@ -3,12 +3,30 @@
 
 # Authors: Lingjie Mei
 
-from infinigen.assets.materials import tile
+from infinigen.assets.materials.ceramic import tile
 
 from .wood import shader_wood
 
 
-class Composite_Wood_Tile():
-    def apply(self, obj, selection=None, vertical=False, scale=None, alternating=None, shape=None, **kwargs):
+class Composite_Wood_Tile:
+    def apply(
+        self,
+        obj,
+        selection=None,
+        vertical=False,
+        scale=None,
+        alternating=None,
+        shape=None,
+        **kwargs,
+    ):
         shader_func = shader_wood
-        tile.apply(obj, selection, vertical, shader_func, scale, alternating, 'composite', **kwargs)
+        tile.apply(
+            obj,
+            selection,
+            vertical,
+            shader_func,
+            scale,
+            alternating,
+            "composite",
+            **kwargs,
+        )

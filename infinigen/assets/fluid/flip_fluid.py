@@ -19,11 +19,7 @@ import gin
 from numpy.random import normal as N
 
 from infinigen.assets.fluid.fluid import find_available_cache, obj_bb_minmax
-from infinigen.assets.materials import (
-    new_whitewater,
-    river_water,
-    water,
-)
+from infinigen.assets.materials.fluid import new_whitewater, river_water, water
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import AssetFile, LandTile, Materials, Process

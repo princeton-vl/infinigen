@@ -3,6 +3,7 @@ Python-*.tgz
 blender
 blender.tar.xz
 Blender.app
+build/
 
 *.c
 

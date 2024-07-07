@@ -8,7 +8,7 @@ import math as ma
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.utils.surface_utils import (
     sample_color,
     sample_range,
@@ -102,6 +102,7 @@ def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwa
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf_1}
     )
 
-class Wood_Old():
+
+class Wood_Old:
     def apply(self, obj, selection=None, scale=1, **kwargs):
         common.apply(obj, shader_wood_old, selection, scale=scale, **kwargs)

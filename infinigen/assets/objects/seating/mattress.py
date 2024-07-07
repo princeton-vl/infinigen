@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import fabrics
+from infinigen.assets.materials import fabric
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring
 from infinigen.assets.utils.object import new_bbox, new_cube
@@ -82,7 +82,7 @@ class MattressFactory(AssetFactory):
             self.dot_size = uniform(0.005, 0.02)
             self.dot_depth = uniform(0.04, 0.08)
             self.wrap_distance = 0.05
-            self.surface = fabrics.fabric_random
+            self.surface = fabric.fabric_random
             self.type = rg(self.types)
             materials = AssetList["MattressFactory"]()
             self.surface = materials["surface"].assign_material()

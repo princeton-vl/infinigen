@@ -5,14 +5,15 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
+from infinigen.assets.materials.fabric.fabric_random import fabric_shader_list
 from infinigen.assets.utils.decorate import read_uv, write_uv
 from infinigen.core.nodes import Nodes, NodeWrangler
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
-from . import rug, text
+from . import text
+from .fabric import rug
+
 
 class Art(text.Text):
     def __init__(self):
@@ -27,7 +28,6 @@ class Art(text.Text):
 
 
 class DarkArt(Art):
-
     def __init__(self):
         super().__init__()
         self.darken_scale = uniform(5, 10)
@@ -76,10 +76,6 @@ class ArtComposite(DarkArt):
 
         return shader_art_composite
 
-    def make_sphere(self):
-        return make_sphere()
-
-
 class ArtRug(ArtComposite):
     @property
     def base_shader(self):
@@ -90,13 +86,11 @@ class ArtFabric(ArtComposite):
     @property
     def base_shader(self):
         return rg(fabric_shader_list)
-    
-class ArtGeneral():
+
+
+class ArtGeneral:
     def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
         if scale is not None:
             write_uv(obj, read_uv(obj) * scale)
         Art().apply(obj, selection, bbox, **kwargs)
 
-
-def make_sphere():
-    return text.make_sphere()

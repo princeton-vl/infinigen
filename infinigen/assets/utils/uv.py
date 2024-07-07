@@ -10,7 +10,7 @@ import bpy
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.decorate import (
     read_co,
     read_edges,

@@ -22,7 +22,7 @@ from tqdm import trange
 from trimesh.transformations import translation_matrix
 
 import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.assets.materials import plaster, tile
+from infinigen.assets.materials.ceramic import plaster, tile
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
 from infinigen.assets.objects.elements.doors import random_door_factory
 from infinigen.assets.objects.windows import WindowFactory

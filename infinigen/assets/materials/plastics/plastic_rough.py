@@ -6,7 +6,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
@@ -129,7 +129,6 @@ def shader_rough_plastic(
     )
 
 
-
-class Plastic_Rough():
+class Plastic_Rough:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_rough_plastic, selection, **kwargs)

@@ -9,10 +9,7 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.giraffe_attr
-import infinigen.assets.materials.spot_sparse_attr
-import infinigen.assets.materials.tiger_attr
-from infinigen.assets.materials import bone, eyeball, nose, tongue
+from infinigen.assets import materials
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -82,10 +79,10 @@ def tiger_postprocessing(body_parts, extras, params):
     main_template = surface.registry.sample_registry(params["surface_registry"])
     main_template.apply(body_parts + get_extras("BodyExtra"))
 
-    tongue.apply(get_extras("Tongue"))
-    bone.apply(get_extras("Teeth") + get_extras("Claws"))
-    eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    nose.apply(get_extras("Nose"))
+    materials.tongue.apply(get_extras("Tongue"))
+    materials.bone.apply(get_extras("Teeth") + get_extras("Claws"))
+    materials.eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
+    materials.nose.apply(get_extras("Nose"))
 
 
 def tiger_genome():
@@ -232,9 +229,9 @@ def tiger_genome():
             hair=tiger_hair_params(),
             skin=tiger_skin_sim_params(),
             surface_registry=[
-                (infinigen.assets.materials.tiger_attr, 3),
-                (infinigen.assets.materials.giraffe_attr, 0.2),
-                (infinigen.assets.materials.spot_sparse_attr, 2),
+                (materials.tiger_attr, 3),
+                (materials.giraffe_attr, 0.2),
+                (materials.spot_sparse_attr, 2),
             ],
         ),
     )

@@ -30,7 +30,7 @@ from numpy.random import rand, uniform
 from PIL import Image
 
 from infinigen import repo_root
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane

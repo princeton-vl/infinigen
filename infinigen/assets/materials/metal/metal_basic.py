@@ -4,7 +4,7 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
@@ -29,9 +29,9 @@ def shader_metal(nw: NodeWrangler, color=None, **kwargs):
     nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
 
 
-
-class Metal_Basic():
+class Metal_Basic:
     def apply(self, obj, selection=None, **kwargs):
         from infinigen.assets.materials.metal import sample_metal_color
+
         color = sample_metal_color(**kwargs)
         common.apply(obj, shader_metal, selection, color, **kwargs)

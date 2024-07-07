@@ -13,7 +13,7 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.chitin
+import infinigen.assets.materials.creature.chitin
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -122,7 +122,7 @@ def beetle_genome():
     return genome.CreatureGenome(
         parts=body,
         postprocess_params=dict(
-            surface_registry=[(infinigen.assets.materials.chitin, 1)],
+            surface_registry=[(infinigen.assets.materials.creature.chitin, 1)],
             hair=insect_hair_params(),
         ),
     )

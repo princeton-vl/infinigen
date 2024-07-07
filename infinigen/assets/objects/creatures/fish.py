@@ -15,9 +15,11 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.fishbody
-import infinigen.assets.materials.scale
-from infinigen.assets.materials import fish_eye_shader, fishfin
+from infinigen.assets.creatures import (
+    fish_eye_shader,
+    fishbody,
+    fishfin,
+)
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
@@ -217,8 +219,8 @@ def fish_genome():
             cloth=fish_fin_cloth_sim_params(),
             anim=fish_swim_params(),
             surface_registry=[
-                (infinigen.assets.materials.fishbody, 3),
-                # (infinigen.assets.materials.scale, 1),
+                (fishbody, 3),
+                # (scale, 1),
             ],
         ),
     )

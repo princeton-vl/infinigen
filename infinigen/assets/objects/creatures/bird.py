@@ -12,12 +12,7 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.basic_bsdf
-import infinigen.assets.materials.bird
-import infinigen.assets.materials.reptile_brown_circle_attr
-import infinigen.assets.materials.reptile_two_color_attr
-import infinigen.assets.materials.spot_sparse_attr
-from infinigen.assets.materials import beak, bone, eyeball, tongue
+from infinigen.assets import materials
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -77,10 +72,10 @@ def bird_postprocessing(body_parts, extras, params):
     main_template = surface.registry.sample_registry(params["surface_registry"])
     main_template.apply(body_parts + get_extras("BodyExtra") + get_extras("Feather"))
 
-    tongue.apply(get_extras("Tongue"))
-    bone.apply(get_extras("Teeth") + get_extras("Claws"))
-    eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    beak.apply(get_extras("Beak"))
+    materials.tongue.apply(get_extras("Tongue"))
+    materials.bone.apply(get_extras("Teeth") + get_extras("Claws"))
+    materials.eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
+    materials.beak.apply(get_extras("Beak"))
 
 
 def duck_genome(mode):
@@ -192,10 +187,10 @@ def duck_genome(mode):
             animation=dict(),
             hair=bird_hair_params(flying=False),
             surface_registry=[
-                (infinigen.assets.materials.spot_sparse_attr, 4),
-                (infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
-                (infinigen.assets.materials.reptile_two_color_attr, 0.5),
-                (infinigen.assets.materials.bird, 5),
+                (materials.spot_sparse_attr, 4),
+                (materials.reptile_brown_circle_attr, 0.5),
+                (materials.reptile_two_color_attr, 0.5),
+                (materials.creature.bird, 5),
             ],
         ),
     )
@@ -317,10 +312,10 @@ def flying_bird_genome(mode):
             animation=dict(),
             hair=bird_hair_params(flying=True),
             surface_registry=[
-                # (infinigen.assets.materials.spot_sparse_attr, 4),
-                # (infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
-                # (infinigen.assets.materials.reptile_two_color_attr, 0.5),
-                (infinigen.assets.materials.bird, 5)
+                # (materials.spot_sparse_attr, 4),
+                # (materials.reptile_brown_circle_attr, 0.5),
+                # (materials.reptile_two_color_attr, 0.5),
+                (materials.creature.bird, 5)
             ],
         ),
     )

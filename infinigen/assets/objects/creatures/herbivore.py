@@ -12,12 +12,17 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.giraffe_attr
-import infinigen.assets.materials.reptile_brown_circle_attr
-import infinigen.assets.materials.reptile_gray_attr
-import infinigen.assets.materials.spot_sparse_attr
-import infinigen.assets.materials.tiger_attr
-from infinigen.assets.materials import bone, eyeball, horn, nose, tongue
+from infinigen.assets.materials.creature import (
+    bone,
+    eyeball,
+    giraffe_attr,
+    horn,
+    nose,
+    reptile_brown_circle_attr,
+    reptile_gray_attr,
+    spot_sparse_attr,
+    tongue,
+)
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -249,14 +254,14 @@ def herbivore_genome():
     if U() < 1:
         hair = herbivore_hair()
         registry = [
-            (infinigen.assets.materials.giraffe_attr, 1),
-            (infinigen.assets.materials.spot_sparse_attr, 3),
+            (giraffe_attr, 1),
+            (spot_sparse_attr, 3),
         ]
     else:
         hair = None
         registry = [
-            (infinigen.assets.materials.reptile_brown_circle_attr, 1),
-            (infinigen.assets.materials.reptile_gray_attr, 1),
+            (reptile_brown_circle_attr, 1),
+            (reptile_gray_attr, 1),
         ]
 
     return genome.CreatureGenome(

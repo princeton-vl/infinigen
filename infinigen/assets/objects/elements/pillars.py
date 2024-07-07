@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import marble_regular, marble_voronoi
+from infinigen.assets.materials.ceramic import marble_regular, marble_voronoi
 from infinigen.assets.utils.decorate import (
     read_co,
     read_edge_center,

@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import snake_plant
+from infinigen.assets.materials.plant import snake_plant
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler

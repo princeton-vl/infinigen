@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import simple_greenery
+from infinigen.assets.materials.plant import simple_greenery
 from infinigen.assets.objects.small_plants.leaf_general import LeafFactory
 from infinigen.assets.objects.small_plants.leaf_heart import LeafHeartFactory
 from infinigen.core import surface

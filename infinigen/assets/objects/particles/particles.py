@@ -7,7 +7,7 @@
 import bpy
 from numpy.random import normal as N
 
-from infinigen.assets.materials import dirt
+from infinigen.assets.materials.terrain import dirt
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes

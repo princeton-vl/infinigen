@@ -8,7 +8,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal, wood
+from infinigen.assets.materials.metal import metal_random
+from infinigen.assets.materials.woods import wood
 from infinigen.assets.utils.decorate import read_edge_center, read_edge_direction
 from infinigen.assets.utils.mesh import bevel
 from infinigen.assets.utils.object import new_cube
@@ -25,8 +26,8 @@ class DoorCasingFactory(AssetFactory):
             self.margin = constants.DOOR_SIZE * uniform(0.05, 0.1)
             self.extrude = uniform(0.02, 0.08)
             self.bevel_all_sides = uniform() < 0.3
-            self.surface = np.random.choice([metal, wood])
-            self.metal_color = metal.sample_metal_color()
+            self.surface = np.random.choice([metal_random, wood])
+            self.metal_color = metal_random.sample_metal_color()
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = new_cube()

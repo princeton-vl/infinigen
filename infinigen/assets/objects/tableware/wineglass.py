@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import glass
+from infinigen.assets.materials.ceramic import glass
 from infinigen.assets.objects.tableware.base import TablewareFactory
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.draw import spin

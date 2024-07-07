@@ -18,7 +18,10 @@ def check_material_runs(pathspec):
     asset = bpy.context.active_object
 
     MaterialClass = import_item(pathspec)
-    if pathspec == "infinigen.assets.materials.ArtRug" or pathspec == "infinigen.assets.materials.ArtFabric":
+    if (
+        pathspec == "infinigen.assets.materials.ArtRug"
+        or pathspec == "infinigen.assets.materials.ArtFabric"
+    ):
         mat = MaterialClass(0)
     else:
         mat = MaterialClass()

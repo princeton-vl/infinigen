@@ -4,8 +4,8 @@
 # Authors: Lingjie Mei
 from collections import defaultdict
 
-from infinigen.assets.materials import brick, plaster, rug, tile
-from infinigen.assets.materials.stone_and_concrete import concrete
+from infinigen.assets.materials.ceramic import brick, concrete, plaster, tile
+from infinigen.assets.materials.fabric import rug
 from infinigen.assets.materials.tiles import advanced_tiles
 from infinigen.assets.materials.woods import tiled_wood
 from infinigen.core.constraints.example_solver.room.types import RoomType

@@ -7,11 +7,11 @@
 
 from numpy.random import randint, uniform
 
-from infinigen.assets.materials import common
-from infinigen.assets.materials.bark_random import hex_to_rgb
+from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.woods.wood import get_color
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import hex2rgba
 from infinigen.core.util.random import clip_gaussian
 
 
@@ -320,10 +320,11 @@ def shader_wood_tiled(
 
 def get_random_light_wood_params():
     color_fac = [0xDEB887, 0xCDAA7D, 0xFFF8DC]
-    color_factory = [hex_to_rgb(c) for c in color_fac]
+    color_factory = [hex2rgba(c) for c in color_fac]
     return color_factory[randint(len(color_fac))]
 
-class Tiled_Wood():
+
+class Tiled_Wood:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
 

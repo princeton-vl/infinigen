@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import wood
+from infinigen.assets.materials.woods import wood
 from infinigen.assets.utils.decorate import read_normal
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube
 from infinigen.core import tags as t

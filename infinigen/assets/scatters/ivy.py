@@ -8,7 +8,7 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.simple_brownish import shader_simple_brown
+from infinigen.assets.materials.plant.simple_brownish import shader_simple_brown
 from infinigen.assets.objects.leaves.leaf_maple import LeafFactoryMaple
 from infinigen.assets.objects.trees.generate import random_season
 from infinigen.assets.utils.mesh import fix_tree

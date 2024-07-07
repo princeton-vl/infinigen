@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.materials import grass_blade_texture
+from infinigen.assets.materials.plant import grass_blade_texture
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object

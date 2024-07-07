@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials import metal
-from infinigen.assets.materials.shelf_shaders import (
+from infinigen.assets.materials.woods.shelf_shaders import (
     shader_shelves_black_wood,
     shader_shelves_black_wood_sampler,
     shader_shelves_white,

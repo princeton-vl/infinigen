@@ -2,7 +2,7 @@ infinigen.assets.materials.aluminumdisp2tut.Aluminum_Disp2Tut
 infinigen.assets.materials.atmosphere_light_haze.Atmosphere_Light_Haze
 infinigen.assets.materials.bark_birch.Bark_Birch
 infinigen.assets.materials.bark.Bark
-infinigen.assets.materials.bark_random.Bark_Random
+infinigen.assets.materials.woods.bark_random.Bark_Random
 infinigen.assets.materials.basic_bsdf.Basic_BSDF
 infinigen.assets.materials.beak.Beak
 infinigen.assets.materials.bird.Bird

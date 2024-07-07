@@ -14,7 +14,7 @@ from mathutils import Vector
 from numpy.random import uniform
 
 from infinigen.assets.fluid import duplication_geomod
-from infinigen.assets.materials import (
+from infinigen.assets.materials.fluid import (
     blackbody_shader,
     lava,
     smoke_material,

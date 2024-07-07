@@ -188,22 +188,22 @@ def find_normal_input(bsdf):
 MARKER_LABEL = "scratch"
 
 
-class Procedural_Scratch():
+class Procedural_Scratch:
     def apply_over(obj, selection=None, **shader_kwargs):
-        
         # get all materials
         # https://blenderartists.org/t/finding-out-if-an-object-has-a-material/512570/6
         materials = obj.data.materials.items()
         if len(materials) == 0:
-            logging.warning(f"No material exist for {obj.name}! Scratches can only be applied over some existing material.")
+            logging.warning(
+                f"No material exist for {obj.name}! Scratches can only be applied over some existing material."
+            )
             return
-        
+
         if len(shader_kwargs) == 0:
             logging.debug("Obtaining Randomized Scratch Parameters")
             shader_kwargs = get_scratch_params()
-        
+
         for material_name, material in materials:
-        
             # get material node tree
             # https://blender.stackexchange.com/questions/240278/how-to-access-shader-node-via-python-script
             material_node_tree = material.node_tree
@@ -213,21 +213,21 @@ class Procedural_Scratch():
                 continue
 
             nw = NodeWrangler(material_node_tree)
-            
+
             result = nw.find_recursive("ShaderNodeBsdf")
             if len(result) == 0:
                 logging.debug("No BSDF found in the object's materials! Returning")
                 continue
-            
+
             nw_bsdf, bsdf = result[-1]
             # final_bsdf = scratch_shader(nw_bsdf, bsdf, **shader_kwargs)
-            
-            if 'Normal' in bsdf.inputs.keys():
-                if len(nw_bsdf.find_from(bsdf.inputs['Normal'])) == 0:
-                    bump = scratch_shader(nw_bsdf, None, **shader_kwargs)['Normal']
-                    
+
+            if "Normal" in bsdf.inputs.keys():
+                if len(nw_bsdf.find_from(bsdf.inputs["Normal"])) == 0:
+                    bump = scratch_shader(nw_bsdf, None, **shader_kwargs)["Normal"]
+
                     # connecting nodes: https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
-                    nw_bsdf.links.new(bump.outputs[0], bsdf.inputs['Normal'])
+                    nw_bsdf.links.new(bump.outputs[0], bsdf.inputs["Normal"])
 
             nw_bsdf.label = MARKER_LABEL
 

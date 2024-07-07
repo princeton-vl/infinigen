@@ -14,12 +14,13 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.bird
-import infinigen.assets.materials.scale
-import infinigen.assets.materials.snake_scale
-import infinigen.assets.materials.snake_shaders
-import infinigen.assets.materials.spot_sparse_attr
-from infinigen.assets.materials import bone, eyeball, nose, tongue
+from infinigen.assets.materials.creature import (
+    bone,
+    eyeball,
+    nose,
+    snake_scale,
+    tongue,
+)
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import animation as creature_animation
 from infinigen.assets.objects.creatures.util import creature, genome, joining
@@ -100,7 +101,7 @@ def dinosaur():
         postprocess_params=dict(
             animation=dict(),
             surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
+                (snake_scale, 1),
             ],
         ),
     )
@@ -163,7 +164,7 @@ def lizard_genome():
         postprocess_params=dict(
             anim=lizard_run_params(),
             surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
+                (snake_scale, 1),
             ],
         ),
     )
@@ -257,7 +258,7 @@ def snake_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
+                (snake_scale, 1),
             ],
         ),
     )
@@ -274,7 +275,7 @@ def chameleon_genome():
         postprocess_params=dict(
             anim=snake_swim_params(),
             surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
+                (snake_scale, 1),
             ],
         ),
     )
@@ -333,7 +334,7 @@ def frog_genome():
         postprocess_params=dict(
             animation=dict(mode="swim", speed_m_s=0.5),
             surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
+                (snake_scale, 1),
             ],
         ),
     )

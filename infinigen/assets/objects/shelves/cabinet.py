@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials.shelf_shaders import get_shelf_material
+from infinigen.assets.materials.woods.shelf_shaders import get_shelf_material
 from infinigen.assets.objects.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils

@@ -7,7 +7,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
@@ -52,6 +52,7 @@ def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
         Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader}
     )
 
-class Plastic_Translucent():
+
+class Plastic_Translucent:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_translucent_plastic, selection, **kwargs)

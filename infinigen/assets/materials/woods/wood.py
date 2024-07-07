@@ -7,7 +7,8 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.plant.bark_random import get_random_bark_params
+from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
@@ -15,7 +16,6 @@ from infinigen.core.util.random import log_uniform
 
 
 def get_color():
-    from infinigen.assets.materials.bark_random import get_random_bark_params
 
     _, color_params = get_random_bark_params(np.random.randint(1e7))
     h, s, v = rgb2hsv(color_params["Color"][:-1])
@@ -191,11 +191,14 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
     )
 
 
-class Wood():
+class Wood:
     def apply(self, obj, selection=None, **kwargs):
-
         # TODO HACK - avoiding circular imports for now
-        from infinigen.assets.materials.shelf_shaders import shader_shelves_white, shader_shelves_black_wood, shader_shelves_wood
+        from infinigen.assets.materials.woods.shelf_shaders import (
+            shader_shelves_black_wood,
+            shader_shelves_white,
+            shader_shelves_wood,
+        )
 
         r = uniform()
         if r < 1 / 12:

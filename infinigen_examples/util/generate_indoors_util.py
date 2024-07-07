@@ -14,7 +14,7 @@ from mathutils import Vector
 from numpy.random import uniform
 
 from infinigen.assets import weather
-from infinigen.assets.materials import invisible_to_camera
+from infinigen.assets.materials.dev import invisible_to_camera
 from infinigen.assets.scatters import grass, pebbles
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
