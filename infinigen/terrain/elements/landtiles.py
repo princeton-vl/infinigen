@@ -10,27 +10,39 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.organization import (
+    AssetFile,
+    ElementNames,
+    ElementTag,
+    LandTile,
+    Materials,
+    Process,
+    Tags,
+    Transparency,
+)
+from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.assets.landtiles import assets_to_data, landtile_asset
 from infinigen.terrain.utils import random_int, random_int_large
-from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.organization import Tags, Materials, LandTile, Process, Transparency, ElementNames, ElementTag, AssetFile
-from infinigen.core.util.random import random_general as rg
 
 from .core import Element
 
 
 def none_to_0(x):
-    if x is None: return 0
+    if x is None:
+        return 0
     return x
+
 
 @gin.configurable
 class LandTiles(Element):
     name = ElementNames.LandTiles
+
     def __init__(
         self,
         device,
         caves,
-        on_the_fly_asset_folder, # for tiledlandscape the folder is the containing folder not specific type folder
+        on_the_fly_asset_folder,  # for tiledlandscape the folder is the containing folder not specific type folder
         reused_asset_folder,
         n_lattice=1,
         tiles=[LandTile.MultiMountains],
@@ -41,7 +53,8 @@ class LandTiles(Element):
         island_probability=0,
         tile_heights=[-0.1],
         land_process=("choice", [Process.Erosion, None], [0.65, 0.35]),
-        height_modification_start=None, height_modification_end=None,
+        height_modification_start=None,
+        height_modification_end=None,
         attribute_modification_start_height=None,
         attribute_modification_end_height=None,
         attribute_modification_distort_freq=1,
@@ -61,8 +74,12 @@ class LandTiles(Element):
         nonpython_seed = random_int()
         self.assets_seed = random_int_large()
         self.tiles = tiles
-        self.attribute_modification_start_height = attribute_modification_start_height = rg(attribute_modification_start_height)
-        self.attribute_modification_end_height = attribute_modification_end_height = rg(attribute_modification_end_height)
+        self.attribute_modification_start_height = (
+            attribute_modification_start_height
+        ) = rg(attribute_modification_start_height)
+        self.attribute_modification_end_height = attribute_modification_end_height = rg(
+            attribute_modification_end_height
+        )
         self.smooth = smooth
         self.aux_names = []
         land_process = rg(land_process)
@@ -98,19 +115,55 @@ class LandTiles(Element):
 
         frequency = 1 / (tile_size * 0.67) * tile_density
 
-        self.int_params = AC(np.concatenate((np.array([
-            nonpython_seed, n_lattice, len(tiles), height_modification_start is not None,
-            attribute_modification_start_height is not None, n_instances, N, use_cblerp,
-        ]), )).astype(np.int32))
-        self.float_params = AC(np.concatenate((np.array([
-            randomness, frequency, attribute_probability, attribute_distance_range, island_probability, tile_size,
-            none_to_0(height_modification_start), none_to_0(height_modification_end),
-            none_to_0(attribute_modification_start_height), none_to_0(attribute_modification_end_height),
-            attribute_modification_distort_freq, attribute_modification_distort_mag, empty_below, y_tilt, y_tilt_clip, sharpen,
-            mask_random_freq, direction_deg,
-            *tile_heights,
-        ]), float_data)).astype(np.float32))
-    
+        self.int_params = AC(
+            np.concatenate(
+                (
+                    np.array(
+                        [
+                            nonpython_seed,
+                            n_lattice,
+                            len(tiles),
+                            height_modification_start is not None,
+                            attribute_modification_start_height is not None,
+                            n_instances,
+                            N,
+                            use_cblerp,
+                        ]
+                    ),
+                )
+            ).astype(np.int32)
+        )
+        self.float_params = AC(
+            np.concatenate(
+                (
+                    np.array(
+                        [
+                            randomness,
+                            frequency,
+                            attribute_probability,
+                            attribute_distance_range,
+                            island_probability,
+                            tile_size,
+                            none_to_0(height_modification_start),
+                            none_to_0(height_modification_end),
+                            none_to_0(attribute_modification_start_height),
+                            none_to_0(attribute_modification_end_height),
+                            attribute_modification_distort_freq,
+                            attribute_modification_distort_mag,
+                            empty_below,
+                            y_tilt,
+                            y_tilt_clip,
+                            sharpen,
+                            mask_random_freq,
+                            direction_deg,
+                            *tile_heights,
+                        ]
+                    ),
+                    float_data,
+                )
+            ).astype(np.float32)
+        )
+
         self.meta_params = [caves is not None]
         Element.__init__(self, "landtiles", material, transparency)
         self.tag = ElementTag.Terrain
@@ -125,23 +178,43 @@ class LandTiles(Element):
         if on_the_fly_instances > 0:
             for t, tile in enumerate(self.tiles):
                 for i in range(on_the_fly_instances):
-                    if not (self.on_the_fly_asset_folder / tile / str(i) / AssetFile.Finish).exists():
+                    if not (
+                        self.on_the_fly_asset_folder / tile / str(i) / AssetFile.Finish
+                    ).exists():
                         with FixedSeed(int_hash(("LandTiles", self.assets_seed, t, i))):
-                            landtile_asset(self.on_the_fly_asset_folder / tile / f"{i}", tile, device=self.device)
+                            landtile_asset(
+                                self.on_the_fly_asset_folder / tile / f"{i}",
+                                tile,
+                                device=self.device,
+                            )
         for tile in self.tiles:
             for i in range(on_the_fly_instances):
                 asset_paths.append(self.on_the_fly_asset_folder / tile / f"{i}")
             if reused_instances > 0:
                 assert self.reused_asset_folder is not None
-                assert (self.reused_asset_folder / tile).exists(), f"{self.reused_asset_folder / tile} does not exists"
-                all_instances = len([x for x in os.listdir(str(self.reused_asset_folder / tile)) if x[0] != '.'])
-                sample = np.random.choice(all_instances, reused_instances, replace=reused_instances > all_instances)
+                assert (
+                    self.reused_asset_folder / tile
+                ).exists(), f"{self.reused_asset_folder / tile} does not exists"
+                all_instances = len(
+                    [
+                        x
+                        for x in os.listdir(str(self.reused_asset_folder / tile))
+                        if x[0] != "."
+                    ]
+                )
+                sample = np.random.choice(
+                    all_instances,
+                    reused_instances,
+                    replace=reused_instances > all_instances,
+                )
                 for i in range(reused_instances):
                     asset_paths.append(self.reused_asset_folder / tile / f"{sample[i]}")
 
         datas = {"direction": [np.zeros(0)]}
         for asset_path in asset_paths:
-            tile_size, N, data = assets_to_data(asset_path, self.land_process, do_smooth=self.smooth)
+            tile_size, N, data = assets_to_data(
+                asset_path, self.land_process, do_smooth=self.smooth
+            )
             for key in data:
                 if key in datas:
                     datas[key].append(data[key])
@@ -149,12 +222,15 @@ class LandTiles(Element):
                     datas[key] = [data[key]]
         for key in datas:
             datas[key] = np.concatenate(datas[key])
-        float_params = np.concatenate((datas["heightmap"], datas["mask"], datas["direction"])).astype(np.float32)
+        float_params = np.concatenate(
+            (datas["heightmap"], datas["mask"], datas["direction"])
+        ).astype(np.float32)
         return on_the_fly_instances + reused_instances, tile_size, N, float_params
 
 
 class Volcanos(LandTiles):
     name = ElementNames.Volcanos
+
     def __init__(
         self,
         device,
@@ -175,15 +251,18 @@ class Volcanos(LandTiles):
             attribute_probability=0.5,
             attribute_distance_range=150,
             land_process=Process.Eruption,
-            height_modification_start=-0.5, height_modification_end=-1.5,
+            height_modification_start=-0.5,
+            height_modification_end=-1.5,
             attribute_modification_start_height=None,
             attribute_modification_end_height=None,
             randomness=1,
         )
         self.tag = ElementTag.Volcanos
 
+
 class FloatingIce(LandTiles):
     name = ElementNames.FloatingIce
+
     def __init__(
         self,
         device,
@@ -203,7 +282,8 @@ class FloatingIce(LandTiles):
             tile_heights=[-12.15],
             land_process=Process.IceErosion,
             transparency=Transparency.CollectiveTransparent,
-            height_modification_start=None, height_modification_end=None,
+            height_modification_start=None,
+            height_modification_end=None,
             attribute_modification_start_height=None,
             attribute_modification_end_height=None,
             empty_below=-0.4,

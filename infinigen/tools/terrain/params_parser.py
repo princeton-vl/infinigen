@@ -7,7 +7,7 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-f', '--file_path', type=str)
+parser.add_argument("-f", "--file_path", type=str)
 args = parser.parse_args()
 
 output = ""
@@ -16,11 +16,13 @@ current_vars = []
 
 code = ""
 
+
 def get_code(current_type, variables):
     code = ""
     for i, v in enumerate(variables):
         code += f"    {current_type} {v} = {current_type[0]}_params[{i}];\n"
     return code
+
 
 with open(args.file_path, "r") as f:
     lines = f.readlines()
@@ -43,7 +45,13 @@ with open(args.file_path, "r") as f:
                     code += get_code(current_type, current_vars)
                     break
                 else:
-                    current_vars.extend([x.lstrip().rstrip() for x in lines[i].lstrip().rstrip().rstrip(',').split(",") if x.lstrip().rstrip() != ""])
+                    current_vars.extend(
+                        [
+                            x.lstrip().rstrip()
+                            for x in lines[i].lstrip().rstrip().rstrip(",").split(",")
+                            if x.lstrip().rstrip() != ""
+                        ]
+                    )
         i += 1
-                        
+
 print(code)

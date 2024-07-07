@@ -5,7 +5,6 @@
 import numpy as np
 
 from .text import Text
-from .text import make_sphere
 
 
 def apply(obj, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):

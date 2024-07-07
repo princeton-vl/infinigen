@@ -9,24 +9,24 @@ import networkx as nx
 
 class RoomType:
     Kitchen = "kitchen"
-    Bedroom = 'bedroom'
-    LivingRoom = 'living-room'
-    Closet = 'closet'
-    Hallway = 'hallway'
-    Bathroom = 'bathroom'
-    Garage = 'garage'
-    Balcony = 'balcony'
-    DiningRoom = 'dining-room'
-    Utility = 'utility'
-    Staircase = 'staircase'
+    Bedroom = "bedroom"
+    LivingRoom = "living-room"
+    Closet = "closet"
+    Hallway = "hallway"
+    Bathroom = "bathroom"
+    Garage = "garage"
+    Balcony = "balcony"
+    DiningRoom = "dining-room"
+    Utility = "utility"
+    Staircase = "staircase"
 
 
 def get_room_type(name):
-    return name.split('_')[0]
+    return name.split("_")[0]
 
 
 def get_room_level(name):
-    return int(name.split('-')[-1])
+    return int(name.split("-")[-1])
 
 
 class RoomGraph:
@@ -67,13 +67,48 @@ class RoomGraph:
         return len(self.rooms)
 
     def __str__(self):
-        return {'neighbours': self.neighbours, 'rooms': self.rooms, 'entrance': self.entrance}
+        return {
+            "neighbours": self.neighbours,
+            "rooms": self.rooms,
+            "entrance": self.entrance,
+        }
 
 
 def make_demo_tree():
-    children = [[1, 2], [], [3, 4], [5, 6], [7], [8, 9], [10, 11], [], [], [12], [], [13], [], [14], []]
-    rooms = ['hallway_0', 'closet_0', 'kitchen_0', 'dining-room_0', 'utility_0', 'hallway_1', 'living-room_0',
-        'utility_1', 'bathroom_0', 'bedroom_0', 'balcony_0', 'bedroom_1', 'closet_1', 'bathroom_1', 'closet_2']
+    children = [
+        [1, 2],
+        [],
+        [3, 4],
+        [5, 6],
+        [7],
+        [8, 9],
+        [10, 11],
+        [],
+        [],
+        [12],
+        [],
+        [13],
+        [],
+        [14],
+        [],
+    ]
+    rooms = [
+        "hallway_0",
+        "closet_0",
+        "kitchen_0",
+        "dining-room_0",
+        "utility_0",
+        "hallway_1",
+        "living-room_0",
+        "utility_1",
+        "bathroom_0",
+        "bedroom_0",
+        "balcony_0",
+        "bedroom_1",
+        "closet_1",
+        "bathroom_1",
+        "closet_2",
+    ]
     return RoomGraph(children, rooms, 0)
 
 

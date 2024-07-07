@@ -7,7 +7,6 @@
 import bpy
 import gin
 import numpy as np
-from infinigen.core.placement.camera import get_camera
 from scipy.spatial.transform import Rotation as R
 
 
@@ -15,6 +14,7 @@ def getK(fov, H, W):
     fx = W / 2 / np.tan(fov[1] / 2)
     fy = fx
     return np.array([[fx, 0, W / 2], [0, fy, H / 2], [0, 0, 1]])
+
 
 def pose_average(poses):
     translation = poses[:, :3, 3].mean(axis=0)
@@ -30,6 +30,7 @@ def pose_average(poses):
     res[:3, 3] = translation
     return res
 
+
 def get_expanded_fov(cam_pose0, cam_poses, fov):
     rot0 = cam_pose0[:3, :3]
     bounds = np.array([1e9, -1e9, 1e9, -1e9])
@@ -43,7 +44,10 @@ def get_expanded_fov(cam_pose0, cam_poses, fov):
                 bounds[1] = max(bounds[1], p[0] / p[2])
                 bounds[2] = min(bounds[2], p[1] / p[2])
                 bounds[3] = max(bounds[3], p[1] / p[2])
-    return (np.arctan(max(-bounds[2], bounds[3])) * 2, np.arctan(max(-bounds[0], bounds[1])) * 2)
+    return (
+        np.arctan(max(-bounds[2], bounds[3])) * 2,
+        np.arctan(max(-bounds[0], bounds[1])) * 2,
+    )
 
 
 @gin.configurable
@@ -53,7 +57,9 @@ def get_caminfo(cameras, relax=1.05):
     Ks = []
     Hs = []
     Ws = []
-    coords_trans_matrix = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+    coords_trans_matrix = np.array(
+        [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+    )
     fs, fe = bpy.context.scene.frame_start, bpy.context.scene.frame_end
     fc = bpy.context.scene.frame_current
     for f in range(fs, fe + 1):
@@ -62,9 +68,12 @@ def get_caminfo(cameras, relax=1.05):
             cam_pose = np.array(c.matrix_world)
             cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
             cam_poses.append(cam_pose)
-            fov_rad  = c.data.angle
+            fov_rad = c.data.angle
             fov_rad *= relax
-            H, W = bpy.context.scene.render.resolution_y, bpy.context.scene.render.resolution_x
+            H, W = (
+                bpy.context.scene.render.resolution_y,
+                bpy.context.scene.render.resolution_x,
+            )
             fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
             fov = np.array([fov0, fov_rad])
             fovs.append(fov)

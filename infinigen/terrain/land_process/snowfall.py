@@ -9,17 +9,19 @@ import gin
 import numpy as np
 from landlab import RasterModelGrid
 from landlab.components import FlowDirectorSteepest, TransportLengthHillslopeDiffuser
-
-from infinigen.terrain.utils import get_normal, read, smooth
 from tqdm import tqdm
+
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.core.util.random import random_general as rg
+from infinigen.terrain.utils import get_normal, read, smooth
 
 snowfall_params_ = {}
+
+
 @gin.configurable
 def snowfall_params(
     normal_params=[
-        ((np.cos(np.pi/6), 0, np.sin(np.pi/6)), (0.80, 0.801)),
+        ((np.cos(np.pi / 6), 0, np.sin(np.pi / 6)), (0.80, 0.801)),
         ((0, 0, 1), (0.90, 0.901)),
     ],
     detailed_normal_params=[((0, 0, 1), (0.80, 0.801))],
@@ -33,6 +35,7 @@ def snowfall_params(
             "on_rock_normal_params": rg(on_rock_normal_params),
         }
     return snowfall_params_
+
 
 @gin.configurable
 def run_snowfall(
@@ -54,13 +57,17 @@ def run_snowfall(
         mg.set_closed_boundaries_at_grid_edges(False, False, False, False)
         _ = mg.add_field("topographic__elevation", snow, at="node")
         fdir = FlowDirectorSteepest(mg)
-        tl_diff = TransportLengthHillslopeDiffuser(mg, erodibility=0.001, slope_crit=0.6)
-        if verbose: range_t = tqdm(range(n_iters))
-        else: range_t = range(n_iters)
+        tl_diff = TransportLengthHillslopeDiffuser(
+            mg, erodibility=0.001, slope_crit=0.6
+        )
+        if verbose:
+            range_t = tqdm(range(n_iters))
+        else:
+            range_t = range(n_iters)
         for t in range_t:
             fdir.run_one_step()
-            tl_diff.run_one_step(1.)
-        snow = mg.at_node['topographic__elevation']
+            tl_diff.run_one_step(1.0)
+        snow = mg.at_node["topographic__elevation"]
         snow = snow.reshape((N, N))
         snow = cv2.resize(snow, (M, M))
         snow = smooth(snow, smoothing_kernel)
@@ -72,9 +79,35 @@ def run_snowfall(
             reference_snow = rocks * blending + snows * (1 - blending)
             normal_map = get_normal(reference_snow, tile_size / snows.shape[0])
             mask_sharpening = 1 / (th1 - th0)
-            mask += np.clip(((normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(axis=-1) - th0) * mask_sharpening, a_min=0, a_max=1)
-            mask -= np.clip(((-normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(axis=-1) - th0) * mask_sharpening, a_min=0, a_max=1)
+            mask += np.clip(
+                (
+                    (normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(
+                        axis=-1
+                    )
+                    - th0
+                )
+                * mask_sharpening,
+                a_min=0,
+                a_max=1,
+            )
+            mask -= np.clip(
+                (
+                    (-normal_map * np.array(normal_preference).reshape((1, 1, 3))).sum(
+                        axis=-1
+                    )
+                    - th0
+                )
+                * mask_sharpening,
+                a_min=0,
+                a_max=1,
+            )
             mask = np.clip(mask, a_min=0, a_max=1)
     heightmap = snows * mask + rocks * (1 - mask)
-    cv2.imwrite(str(folder/f'{Process.Snowfall}.{AssetFile.Heightmap}.exr'), heightmap.astype(np.float32))
-    cv2.imwrite(str(folder/f'{Process.Snowfall}.{AssetFile.Mask}.exr'), mask.astype(np.float32))
+    cv2.imwrite(
+        str(folder / f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"),
+        heightmap.astype(np.float32),
+    )
+    cv2.imwrite(
+        str(folder / f"{Process.Snowfall}.{AssetFile.Mask}.exr"),
+        mask.astype(np.float32),
+    )

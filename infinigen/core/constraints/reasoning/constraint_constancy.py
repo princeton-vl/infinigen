@@ -4,12 +4,9 @@
 
 # Authors: Alexander Raistrick
 
-import operator
-import typing
-
-import numpy as np
 
 from infinigen.core.constraints import constraint_language as cl
+
 
 def is_constant(node: cl.Node):
     match node:

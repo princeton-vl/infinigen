@@ -4,33 +4,30 @@
 # Authors: Karhan Kayan
 
 import os
-import sys
 from pathlib import Path
-from numpy.random import uniform
-from mathutils import Vector
 
 import bpy
+from mathutils import Vector
 
+# ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 
-from infinigen.assets.materials import water, lava, river_water, new_whitewater
-from infinigen.assets.materials import blackbody_shader, waterfall_material, smoke_material
-from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.logging import Timer
-
-from infinigen.core.util import blender as butil
-from infinigen.core.util.organization import AssetFile, Materials, Process  
-from infinigen.core.util.blender import object_from_trimesh, SelectObjects
-from infinigen.terrain.utils import Mesh
-import cv2
 import subprocess
 
-from infinigen.assets.fluid.fluid import find_available_cache, obj_bb_minmax
-import infinigen.assets.fluid.liquid_particle_material as liquid_particle_material
+import cv2
+import gin
 from numpy.random import normal as N
 
-import gin
-from infinigen.core.util.organization import Assets, LandTile
+from infinigen.assets.fluid.fluid import find_available_cache, obj_bb_minmax
+from infinigen.assets.materials import (
+    new_whitewater,
+    river_water,
+    water,
+)
+from infinigen.core.util import blender as butil
+from infinigen.core.util.logging import Timer
+from infinigen.core.util.organization import AssetFile, LandTile, Materials, Process
+from infinigen.terrain.utils import Mesh
 
 
 def get_objs_inside_domain(dom, objects):

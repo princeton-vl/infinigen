@@ -7,24 +7,23 @@
 # - Lahav Lipson: quickly_resample
 
 
+import logging
 import typing
 
 import bpy
-import mathutils
 import numpy as np
-import logging
 from tqdm import trange
 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
-from . import detail
+
 from ...assets.utils.object import center
+from . import detail
 
 logger = logging.getLogger(__name__)
 
 
 class AssetFactory:
-
     def __init__(self, factory_seed=None, coarse=False):
         self.factory_seed = factory_seed
         if self.factory_seed is None:
@@ -32,10 +31,10 @@ class AssetFactory:
 
         self.coarse = coarse
 
-        logger.debug(f'{self}.__init__()')
+        logger.debug(f"{self}.__init__()")
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.factory_seed})'
+        return f"{self.__class__.__name__}({self.factory_seed})"
 
     @staticmethod
     def quickly_resample(obj):
@@ -54,9 +53,9 @@ class AssetFactory:
     def asset_parameters(self, distance: float, vis_distance: float) -> dict:
         # Optionally, override to determine the **params input of create_asset w.r.t. camera distance
         return {
-            'face_size': detail.target_face_size(distance),
-            'distance': distance,
-            'vis_distance': vis_distance
+            "face_size": detail.target_face_size(distance),
+            "distance": distance,
+            "vis_distance": vis_distance,
         }
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -71,41 +70,55 @@ class AssetFactory:
     def spawn_placeholder(self, i, loc, rot):
         # Not intended to be overridden - override create_placeholder instead
 
-        logger.debug(f'{self}.spawn_placeholder({i}...)')
+        logger.debug(f"{self}.spawn_placeholder({i}...)")
 
         with FixedSeed(int_hash((self.factory_seed, i))):
             obj = self.create_placeholder(i=i, loc=loc, rot=rot)
 
-        has_sensitive_constraint = any(c.type in ['FOLLOW_PATH'] for c in obj.constraints)
+        has_sensitive_constraint = any(
+            c.type in ["FOLLOW_PATH"] for c in obj.constraints
+        )
 
         if not has_sensitive_constraint:
             obj.location = loc
             obj.rotation_euler = rot
         else:
-            logger.debug(f'Not assigning placeholder {obj.name=} location due to presence of'
-                         'location-sensitive constraint, typically a follow curve')
-        obj.name = f'{repr(self)}.spawn_placeholder({i})'
+            logger.debug(
+                f"Not assigning placeholder {obj.name=} location due to presence of"
+                "location-sensitive constraint, typically a follow curve"
+            )
+        obj.name = f"{repr(self)}.spawn_placeholder({i})"
 
         if obj.parent is not None:
             logger.warning(
-                f'{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated')
+                f"{obj.name=} has no-none parent {obj.parent.name=}, this may cause it not to get populated"
+            )
 
         return obj
 
-    def spawn_asset(self, i, placeholder=None, distance=None, vis_distance=0, loc=(0, 0, 0), rot=(0, 0, 0),
-                    **kwargs):
-
+    def spawn_asset(
+        self,
+        i,
+        placeholder=None,
+        distance=None,
+        vis_distance=0,
+        loc=(0, 0, 0),
+        rot=(0, 0, 0),
+        **kwargs,
+    ):
         if not isinstance(i, int):
-            raise TypeError(f'{i=} {type(i)=}, expected int')
+            raise TypeError(f"{i=} {type(i)=}, expected int")
         # Not intended to be overridden - override create_asset instead
 
-        logger.debug(f'{self}.spawn_asset({i}...)')
+        logger.debug(f"{self}.spawn_asset({i}...)")
 
         if distance is None:
             distance = detail.scatter_res_distance()
 
         if self.coarse:
-            raise ValueError('Attempted to spawn_asset() on an AssetFactory(coarse=True)')
+            raise ValueError(
+                "Attempted to spawn_asset() on an AssetFactory(coarse=True)"
+            )
 
         user_provided_placeholder = placeholder is not None
 
@@ -114,16 +127,23 @@ class AssetFactory:
         else:
             placeholder = self.spawn_placeholder(i=i, loc=loc, rot=rot)
             self.finalize_placeholders([placeholder])
-            
 
-        gc_targets = [bpy.data.meshes, bpy.data.textures, bpy.data.node_groups, bpy.data.materials]
+        gc_targets = [
+            bpy.data.meshes,
+            bpy.data.textures,
+            bpy.data.node_groups,
+            bpy.data.materials,
+        ]
 
-        with FixedSeed(int_hash((self.factory_seed, i))), butil.GarbageCollect(gc_targets, verbose=False):
+        with (
+            FixedSeed(int_hash((self.factory_seed, i))),
+            butil.GarbageCollect(gc_targets, verbose=False),
+        ):
             params = self.asset_parameters(distance, vis_distance)
             params.update(kwargs)
             obj = self.create_asset(i=i, placeholder=placeholder, **params)
 
-        obj.name = f'{repr(self)}.spawn_asset({i})'
+        obj.name = f"{repr(self)}.spawn_asset({i})"
 
         if user_provided_placeholder:
             if obj is not placeholder:
@@ -144,8 +164,17 @@ class AssetFactory:
     def post_init(self):
         pass
 
-def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, verbose=True, centered=False,
-                          **kwargs):
+
+def make_asset_collection(
+    spawn_fns,
+    n,
+    name=None,
+    weights=None,
+    as_list=False,
+    verbose=True,
+    centered=False,
+    **kwargs,
+):
     if not isinstance(spawn_fns, list):
         spawn_fns = [spawn_fns]
     if weights is None:
@@ -153,10 +182,10 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
     weights /= sum(weights)
 
     if name is None:
-        name = ','.join([repr(f) for f in spawn_fns])
+        name = ",".join([repr(f) for f in spawn_fns])
 
     if verbose:
-        logger.info(f'Generating collection of {n} assets from {name}')
+        logger.info(f"Generating collection of {n} assets from {name}")
 
     objs = [[] for _ in range(len(spawn_fns))]
     r = trange(n) if verbose else range(n)
@@ -169,7 +198,7 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
         objs[fn_idx].append(obj)
 
     for os, f in zip(objs, spawn_fns):
-        if hasattr(f, 'finalize_assets'):
+        if hasattr(f, "finalize_assets"):
             f.finalize_assets(os)
 
     objs = sum(objs, start=[])
@@ -177,8 +206,7 @@ def make_asset_collection(spawn_fns, n, name=None, weights=None, as_list=False, 
     if as_list:
         return objs
     else:
-        col = butil.group_in_collection(objs, name=f'assets:{name}', reuse=False)
+        col = butil.group_in_collection(objs, name=f"assets:{name}", reuse=False)
         col.hide_viewport = True
         col.hide_render = True
         return col
-

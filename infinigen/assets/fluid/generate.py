@@ -3,29 +3,18 @@
 
 # Authors: Karhan Kayan
 
-import gin
 import bpy
-from infinigen.core.placement.factory import AssetFactory
-
-
-from infinigen.core.util import blender as butil
+import gin
 
 from infinigen.assets.fluid.fluid import (
-    create_liquid_domain,
-    create_liquid_flow,
+    add_field,
     create_gas_domain,
     create_gas_flow,
-    add_field,
+    create_liquid_domain,
+    create_liquid_flow,
 )
-from infinigen.assets.fluid.flip_fluid import (
-    create_flip_fluid_domain,
-    set_flip_fluid_domain,
-    create_flip_fluid_inflow,
-    set_flip_fluid_obstacle,
-    get_objs_inside_domain,
-)
-
-from infinigen.core.util.logging import Timer
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 
 
 @gin.configurable
@@ -65,7 +54,7 @@ class FluidFactory(AssetFactory):
                     dom = obj
                 else:
                     flow = obj
-            assert dom != None and flow != None
+            assert dom is not None and flow is not None
 
             bpy.context.view_layer.objects.active = dom
             print(self.fluid_type)
@@ -89,7 +78,7 @@ class FluidFactory(AssetFactory):
                     dom = obj
                 elif obj.modifiers["Fluid"].fluid_type == "FLOW":
                     obj.hide_render = True
-            assert dom != None
+            assert dom is not None
 
             cache_dir = cache_dirs[i]
             mod = dom.modifiers["Fluid"]

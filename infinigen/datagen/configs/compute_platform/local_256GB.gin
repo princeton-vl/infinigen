@@ -8,8 +8,6 @@ LocalScheduleHandler.jobs_per_gpu = 1
 jobs_to_launch_next.max_queued_total = 1
 jobs_to_launch_next.max_stuck_at_task = 4
 
-# get_cmd.blender_thread_limit = 8 # no longer supported with pip bpy
-
 # All will run locally, LocalScheduleHandler doesnt actually enforce cpu/ram constraints currently
 queue_coarse.submit_cmd = @local_submit_cmd
 queue_fine_terrain.submit_cmd = @local_submit_cmd

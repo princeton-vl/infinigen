@@ -5,27 +5,20 @@
 # Authors: Alexander Raistrick
 
 from __future__ import annotations
+
 import logging
-import itertools
+from dataclasses import dataclass
 from functools import partial
 
-from dataclasses import dataclass, field
-import copy
-import typing
-
-import numpy as np
-
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+
 from .domain import Domain
 
 logger = logging.getLogger(__name__)
 
-def constraint_domain(
-    node: cl.ObjectSetExpression,
-    finalize_variables=False
-) -> Domain:
 
+def constraint_domain(node: cl.ObjectSetExpression, finalize_variables=False) -> Domain:
     """Given an expression, find a compact representation of what types of objects it is applying to.
 
     User can compared the resulting Domain against their State and see what objects fit.
@@ -40,7 +33,9 @@ def constraint_domain(
             d = recurse(objs)
             d.tags.update(tags)
             if t.contradiction(d.tags):
-                raise ValueError(f'Contradictory tags {tags=} for {d=} while parsing constraint {node=}')
+                raise ValueError(
+                    f"Contradictory tags {tags=} for {d=} while parsing constraint {node=}"
+                )
             return d
         case cl.related_to(children, parents, relation):
             c_d = recurse(children)
@@ -51,24 +46,26 @@ def constraint_domain(
             return Domain()
         case cl.item(x):
             if finalize_variables:
-                return recurse(node.member_of) # TODO - worried about infinite recursion somehow
+                return recurse(
+                    node.member_of
+                )  # TODO - worried about infinite recursion somehow
             else:
                 return Domain(tags={t.Variable(x)})
         case FilterByDomain(objs, filter):
             return filter.intersection(recurse(objs))
         case _:
             raise NotImplementedError(node)
-        
+
+
 @dataclass
 class FilterByDomain(cl.ObjectSetExpression):
+    """Constraint node which says to return all objects matching a domain.
 
-    """ Constraint node which says to return all objects matching a domain.
-    
     Used as a compacted representation of the filtering performed many cl.tagged and cl.related_to calls.
     One r.Domain is sufficient to represent the effect of and combination of intersection-style filtering.
 
     Introduced (currently) only by greedy.filter_constraints, since that function needs to work
-    with domains in order to narrow the scope of some constraints. 
+    with domains in order to narrow the scope of some constraints.
     """
 
     objs: cl.ObjectSetExpression

@@ -60,3 +60,8 @@ v1.4.0 - Infinigen Indoors
 v1.4.1
 - bugfix gin file names in example commands
 - disable cieling skirtingboard temporarily
+
+v1.5.0
+- ruff & auto-lint-fix the entire codebase
+- move mesh assets into infinigen/assets/objects
+

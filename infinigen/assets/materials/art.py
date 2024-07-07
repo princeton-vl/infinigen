@@ -5,12 +5,14 @@
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
-from . import text
-from ..utils.decorate import read_uv, write_uv
-from ...core.nodes import NodeWrangler, Nodes
 from infinigen.core.util.random import random_general as rg
+
+from ...core.nodes import Nodes, NodeWrangler
+from ..utils.decorate import read_uv, write_uv
+from . import rug, text
 
 
 class Art(text.Text):
@@ -23,16 +25,15 @@ class Art(text.Text):
 
     @staticmethod
     def scale_uniform(min_, max_):
-        return (max_ - min_) * log_uniform(.1, .5)
+        return (max_ - min_) * log_uniform(0.1, 0.5)
 
 
 class DarkArt(Art):
-
     def __init__(self, factory_seed):
         super().__init__(factory_seed)
         with FixedSeed(self.factory_seed):
             self.darken_scale = uniform(5, 10)
-            self.darken_ratio = uniform(.5, 1)
+            self.darken_ratio = uniform(0.5, 1)
 
     def make_shader_func(self, bbox):
         art_shader_func = super(DarkArt, self).make_shader_func(bbox)
@@ -41,10 +42,13 @@ class DarkArt(Art):
             art_shader_func(nw)
             art_bsdf = nw.find(Nodes.PrincipledBSDF)[0]
             art_color = nw.find_from(art_bsdf.inputs[0])[0].from_socket
-            dark_color = nw.new_node(Nodes.NoiseTexture, input_kwargs={'Scale': self.darken_scale}).outputs[0]
+            dark_color = nw.new_node(
+                Nodes.NoiseTexture, input_kwargs={"Scale": self.darken_scale}
+            ).outputs[0]
             art_color = nw.new_node(
-                Nodes.MixRGB, [self.darken_ratio, art_color, dark_color],
-                attrs={'blend_type': 'DARKEN'}
+                Nodes.MixRGB,
+                [self.darken_ratio, art_color, dark_color],
+                attrs={"blend_type": "DARKEN"},
             ).outputs[2]
             nw.connect_input(art_color, art_bsdf.inputs[0])
 
@@ -52,7 +56,6 @@ class DarkArt(Art):
 
 
 class ArtComposite(DarkArt):
-
     @property
     def base_shader(self):
         raise NotImplementedError
@@ -68,7 +71,10 @@ class ArtComposite(DarkArt):
             art_color = nw_.find_from(art_bsdf.inputs[0])[0].from_socket
             nw_.nodes.remove(art_bsdf)
             nw_.connect_input(art_color, base_bsdf.inputs[0])
-            nw_.connect_input(base_bsdf.outputs[0], nw_.find(Nodes.MaterialOutput)[0].inputs['Surface'])
+            nw_.connect_input(
+                base_bsdf.outputs[0],
+                nw_.find(Nodes.MaterialOutput)[0].inputs["Surface"],
+            )
 
         return shader_art_composite
 
@@ -79,14 +85,12 @@ class ArtComposite(DarkArt):
 class ArtRug(ArtComposite):
     @property
     def base_shader(self):
-        from . import rug
         return rug.shader_rug
 
 
 class ArtFabric(ArtComposite):
     @property
     def base_shader(self):
-        from .leather_and_fabrics import fabric_shader_list
         return rg(fabric_shader_list)
 
 

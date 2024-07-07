@@ -11,17 +11,17 @@ import cv2
 import gin
 import numpy as np
 
+from infinigen.core.util.organization import AssetFile
+from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.elements.core import Element
 from infinigen.terrain.elements.mountains import Mountains
 from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall
 from infinigen.terrain.utils import grid_distance, perlin_noise, random_int
-from infinigen.core.util.organization import AssetFile
-from infinigen.core.util.random import random_general as rg
-
 
 coast_params_ = {}
 multi_mountains_params_ = {}
+
 
 @gin.configurable
 def coast_params(
@@ -34,11 +34,11 @@ def coast_params(
 ):
     """_summary_
 
-        coast_freq: base frequency of coast line
-        beach_size: size of beach
-        beach_slope: slope of beach
-        steep_slope_size: size of the steep part between beach and sea floor
-        sea_depth: sea depth
+    coast_freq: base frequency of coast line
+    beach_size: size of beach
+    beach_slope: slope of beach
+    steep_slope_size: size of the steep part between beach and sea floor
+    sea_depth: sea depth
     """
     if raw:
         d = {
@@ -59,7 +59,7 @@ def coast_params(
             "sea_depth": rg(sea_depth),
         }
     return coast_params_
-    
+
 
 @gin.configurable
 def multi_mountains_params(
@@ -73,12 +73,12 @@ def multi_mountains_params(
 ):
     """_summary_
 
-        min_freq: min base frequency of all mountains
-        max_freq: max base frequency of all mountains
-        height: mountain height
-        coverage: mountain coverage
-        slope_freq: base frequency of the slope the mountains sit on
-        slope_height: height of such slope
+    min_freq: min base frequency of all mountains
+    max_freq: max base frequency of all mountains
+    height: mountain height
+    coverage: mountain coverage
+    slope_freq: base frequency of the slope the mountains sit on
+    slope_height: height of such slope
     """
     if raw:
         d = {
@@ -111,13 +111,18 @@ def coast_heightmapping(heightmap):
     steep_slope_size = params["steep_slope_size"]
     sea_depth = params["sea_depth"]
     seafloor_loc = beach_size / 2 + steep_slope_size
-    mapped[(heightmap > -beach_size/2) & (heightmap < beach_size/2)] *= beach_slope
-    mapped[heightmap > beach_size/2] = beach_size/2 * beach_slope
-    steep_slope = (sea_depth - beach_size/2 * beach_slope) / (seafloor_loc - beach_size/2)
-    steep_mask = (heightmap < -beach_size/2) & (heightmap > -seafloor_loc)
-    mapped[steep_mask] = (-beach_size/2 * beach_slope - (-beach_size/2 - heightmap) * steep_slope)[steep_mask]
+    mapped[(heightmap > -beach_size / 2) & (heightmap < beach_size / 2)] *= beach_slope
+    mapped[heightmap > beach_size / 2] = beach_size / 2 * beach_slope
+    steep_slope = (sea_depth - beach_size / 2 * beach_slope) / (
+        seafloor_loc - beach_size / 2
+    )
+    steep_mask = (heightmap < -beach_size / 2) & (heightmap > -seafloor_loc)
+    mapped[steep_mask] = (
+        -beach_size / 2 * beach_slope - (-beach_size / 2 - heightmap) * steep_slope
+    )[steep_mask]
     mapped[heightmap < -seafloor_loc] = -sea_depth
     return mapped
+
 
 @gin.configurable
 def multi_mountains_asset(
@@ -145,14 +150,17 @@ def multi_mountains_asset(
     heightmap = mountains.get_heightmap(X, Y)
     mountains.cleanup()
     Element.called_time.pop("mountains")
-    cv2.imwrite(str(folder / f'{AssetFile.Heightmap}.exr'), heightmap)
-    with open(folder/f'{AssetFile.TileSize}.txt', "w") as f:
+    cv2.imwrite(str(folder / f"{AssetFile.Heightmap}.exr"), heightmap)
+    with open(folder / f"{AssetFile.TileSize}.txt", "w") as f:
         f.write(f"{tile_size}\n")
-    with open(folder/f'{AssetFile.Params}.txt', "w") as f:
+    with open(folder / f"{AssetFile.Params}.txt", "w") as f:
         json.dump(multi_mountains_params(raw=1), f)
-    if erosion: run_erosion(folder)
-    if snowfall: run_snowfall(folder)
-    
+    if erosion:
+        run_erosion(folder)
+    if snowfall:
+        run_snowfall(folder)
+
+
 @gin.configurable
 def coast_asset(
     folder,
@@ -181,22 +189,45 @@ def coast_asset(
     Element.called_time.pop("mountains")
 
     params2 = coast_params()
-    positions = np.stack((X.reshape(-1), Y.reshape(-1), np.zeros(resolution * resolution)), -1)
-    coast_mask = perlin_noise(
-        device=device,
-        positions=positions,
-        seed=random_int(),
-        freq=params2["coast_freq"],
-        octaves=9,
-    ).reshape((resolution, resolution)) > 0
-    coast_distance = (grid_distance(~coast_mask, downsample=512) - grid_distance(coast_mask, downsample=512)) * tile_size
-    mask = np.clip((coast_distance - 0.2 * params2["beach_size"]) / (0.4 * params2["beach_size"]), a_min=0, a_max=1)
+    positions = np.stack(
+        (X.reshape(-1), Y.reshape(-1), np.zeros(resolution * resolution)), -1
+    )
+    coast_mask = (
+        perlin_noise(
+            device=device,
+            positions=positions,
+            seed=random_int(),
+            freq=params2["coast_freq"],
+            octaves=9,
+        ).reshape((resolution, resolution))
+        > 0
+    )
+    coast_distance = (
+        grid_distance(~coast_mask, downsample=512)
+        - grid_distance(coast_mask, downsample=512)
+    ) * tile_size
+    mask = np.clip(
+        (coast_distance - 0.2 * params2["beach_size"]) / (0.4 * params2["beach_size"]),
+        a_min=0,
+        a_max=1,
+    )
     coast_heightmap = coast_heightmapping(coast_distance)
     heightmap = (coast_heightmap + heightmap * mask).astype(np.float32)
-    cv2.imwrite(str(folder / f'{AssetFile.Heightmap}.exr'), heightmap)
-    with open(folder/f'{AssetFile.TileSize}.txt', "w") as f:
+    cv2.imwrite(str(folder / f"{AssetFile.Heightmap}.exr"), heightmap)
+    with open(folder / f"{AssetFile.TileSize}.txt", "w") as f:
         f.write(f"{tile_size}\n")
-    with open(folder/f'{AssetFile.Params}.txt', "w") as f:
-        json.dump({"multi_mountains_params": multi_mountains_params(raw=1), "coast_params": coast_params(raw=1)}, f)
-    if erosion: run_erosion(folder, mask_height_range=(0, 0.1 * params2["beach_size"] * params2["beach_slope"]))
-    if snowfall: run_snowfall(folder)
+    with open(folder / f"{AssetFile.Params}.txt", "w") as f:
+        json.dump(
+            {
+                "multi_mountains_params": multi_mountains_params(raw=1),
+                "coast_params": coast_params(raw=1),
+            },
+            f,
+        )
+    if erosion:
+        run_erosion(
+            folder,
+            mask_height_range=(0, 0.1 * params2["beach_size"] * params2["beach_slope"]),
+        )
+    if snowfall:
+        run_snowfall(folder)

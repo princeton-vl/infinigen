@@ -4,9 +4,11 @@
 # Authors: Zeyu Ma
 
 
-import psutil
 import os
+
 import gin
+import psutil
+
 from infinigen.core.util.logging import Timer as oTimer
 
 

@@ -6,8 +6,7 @@
 import os
 import sys
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Set the directory containing your files
     directory = sys.argv[1]
 
@@ -21,5 +20,5 @@ if __name__ == '__main__':
     for i, filename in enumerate(files, start=1):
         old_path = os.path.join(directory, filename)
         _, file_extension = os.path.splitext(filename)
-        new_path = os.path.join(directory, f'{i}{file_extension}')
+        new_path = os.path.join(directory, f"{i}{file_extension}")
         os.rename(old_path, new_path)

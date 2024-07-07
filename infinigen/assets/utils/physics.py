@@ -11,7 +11,7 @@ from infinigen.core.util.logging import Suppress
 
 
 def free_fall(actives, passives, place_fn, t=100):
-    height = 0.
+    height = 0.0
     for o in sorted(actives, key=lambda o: -o.dimensions[-1]):
         height = place_fn(o, height)
     with EnablePhysics(actives, passives):
@@ -24,7 +24,6 @@ def free_fall(actives, passives, place_fn, t=100):
 
 
 class EnablePhysics:
-
     def __init__(self, actives, passives):
         self.actives = actives
         self.passives = passives
@@ -35,12 +34,12 @@ class EnablePhysics:
         self.frame_end = bpy.context.scene.frame_start
         for a in self.actives:
             with butil.SelectObjects(a):
-                bpy.ops.rigidbody.objects_add(type='ACTIVE')
+                bpy.ops.rigidbody.objects_add(type="ACTIVE")
                 bpy.ops.rigidbody.mass_calculate()
         for p in self.passives:
             with butil.SelectObjects(p):
-                bpy.ops.rigidbody.objects_add(type='PASSIVE')
-                bpy.context.object.rigid_body.collision_shape = 'MESH'
+                bpy.ops.rigidbody.objects_add(type="PASSIVE")
+                bpy.context.object.rigid_body.collision_shape = "MESH"
 
     def __exit__(self, *_):
         bpy.ops.rigidbody.world_remove()

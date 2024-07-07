@@ -5,18 +5,19 @@
 
 
 import re
-import time
 import subprocess
-from datetime import datetime
+import time
 from collections import defaultdict
+from datetime import datetime
 from itertools import chain
 from shutil import which
 
 gres_regex = re.compile(".*gpu:([^:]+):([0-9]+).*").fullmatch
 cpu_regex = re.compile(".+/([0-9]+)[^/]+").fullmatch
 
+
 def sinfo():
-    sinfo_command = f'/usr/bin/sinfo --Node --format=%12N%22P%C%30G%10m --noheader'
+    sinfo_command = "/usr/bin/sinfo --Node --format=%12N%22P%C%30G%10m --noheader"
     while True:
         try:
             return subprocess.check_output(sinfo_command.split()).decode()
@@ -24,6 +25,7 @@ def sinfo():
             current_time_str = datetime.now().strftime("%m/%d %I:%M%p")
             print(f"[{current_time_str}] sinfo failed with error:\n{e}")
             time.sleep(60)
+
 
 def get_gpu_nodes():
     sinfo_output = sinfo()
@@ -45,22 +47,26 @@ def get_gpu_nodes():
 
     return gpu_table, dict(node_type_lookup), shared_node_mem
 
+
 # e.g. nodes_with_gpus('gtx_1080', 'k80')
 def nodes_with_gpus(*gpu_names):
-    if not which('sinfo'):
+    if not which("sinfo"):
         return []
     if len(gpu_names) == 0:
         return []
     _, node_type_lookup, _ = get_gpu_nodes()
-    return sorted(chain.from_iterable(node_type_lookup.get(n, set()) for n in gpu_names))
+    return sorted(
+        chain.from_iterable(node_type_lookup.get(n, set()) for n in gpu_names)
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     gpu_table, node_type_lookup, shared_node_mem = get_gpu_nodes()
     for group, lookup in gpu_table.items():
         print(f"{group.ljust(10)} {dict(lookup)} Total: {sum(lookup.values())}")
     print()
 
-    for k,v in sorted(node_type_lookup.items()):
+    for k, v in sorted(node_type_lookup.items()):
         print(f"{k.ljust(10)} {','.join(v)}")
     print()
 

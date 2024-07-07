@@ -4,21 +4,22 @@
 # Authors: Zeyu Ma
 
 
+import os
+import shutil
 from pathlib import Path
 
 import bpy
 import gin
-import os
-import shutil
-from infinigen.terrain.utils import random_int
+
 from infinigen.core.util.blender import ViewportMode
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.random import random_general as rg
-
+from infinigen.terrain.utils import random_int
 
 spatial_size = 40
 resolution = 64
 buffered_frames = 10
+
 
 @gin.configurable
 def ocean_asset(
@@ -30,16 +31,19 @@ def ocean_asset(
     choppiness=("uniform", 0.5, 1),
     wave_alignment=("uniform", 0, 0.1),
     verbose=0,
-    spectrum="PHILLIPS", #("choice", ["PHILLIPS", "PIERSON_MOSKOWITZ", "JONSWAP", "TEXEL_MARSEN_ARSLOE"], [0.5, 0.5/3, 0.5/3, 0.5/3]),
+    spectrum="PHILLIPS",  # ("choice", ["PHILLIPS", "PIERSON_MOSKOWITZ", "JONSWAP", "TEXEL_MARSEN_ARSLOE"], [0.5, 0.5/3, 0.5/3, 0.5/3]),
     bake_foam_fade=0.8,
     link_folder=None,
 ):
     tmp_start, tmp_end = bpy.context.scene.frame_start, bpy.context.scene.frame_end
-    bpy.context.scene.frame_start, bpy.context.scene.frame_end = frame_start, frame_end + buffered_frames
+    bpy.context.scene.frame_start, bpy.context.scene.frame_end = (
+        frame_start,
+        frame_end + buffered_frames,
+    )
     spectrum = rg(spectrum)
-    params={
+    params = {
         "random_seed": max(0, random_int()),
-        "geometry_mode": 'DISPLACE',
+        "geometry_mode": "DISPLACE",
         "spatial_size": spatial_size,
         "wave_scale": wave_scale if spectrum == "PHILLIPS" else 0.5,
         "resolution": resolution,
@@ -60,8 +64,10 @@ def ocean_asset(
         obj = bpy.context.active_object
         obj.name = "ocean"
         with ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.select_all(action='SELECT')
-            bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.quads_convert_to_tris(
+                quad_method="BEAUTY", ngon_method="BEAUTY"
+            )
             bpy.ops.mesh.subdivide(number_cuts=256)
             bpy.ops.mesh.subdivide(number_cuts=16)
         mod = obj.modifiers.new(name="ocean", type="OCEAN")
@@ -73,16 +79,20 @@ def ocean_asset(
             shutil.rmtree(folder / "cache")
         (folder / "cache").mkdir(parents=True)
         mod.filepath = str(folder / "cache")
-        for t, f in [(time_scale * frame_start, frame_start), (time_scale * (frame_end + buffered_frames), frame_end + buffered_frames)]:
+        for t, f in [
+            (time_scale * frame_start, frame_start),
+            (time_scale * (frame_end + buffered_frames), frame_end + buffered_frames),
+        ]:
             mod.time = t
             mod.keyframe_insert("time", frame=f)
-        obj.animation_data.action.fcurves[0].keyframe_points[0].interpolation = 'LINEAR'
-        obj.animation_data.action.fcurves[0].keyframe_points[1].interpolation = 'LINEAR'
+        obj.animation_data.action.fcurves[0].keyframe_points[0].interpolation = "LINEAR"
+        obj.animation_data.action.fcurves[0].keyframe_points[1].interpolation = "LINEAR"
     with Timer("bake ocean", disable_timer=not verbose):
         bpy.ops.object.ocean_bake(modifier="ocean")
         while True:
-            if (folder / f"cache/foam_{frame_end + buffered_frames:04d}.exr").exists(): break
-    
+            if (folder / f"cache/foam_{frame_end + buffered_frames:04d}.exr").exists():
+                break
+
     bpy.data.objects.remove(obj, do_unlink=True)
     bpy.context.scene.frame_start, bpy.context.scene.frame_end = tmp_start, tmp_end
 

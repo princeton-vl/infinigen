@@ -3,45 +3,45 @@
 
 # Authors: Alexander Raistrick
 
-from pathlib import Path
 from copy import copy
+from pathlib import Path
 
-SUFFIX_ORDERING = ['cam_rig', 'resample', 'frame', 'subcam']
+SUFFIX_ORDERING = ["cam_rig", "resample", "frame", "subcam"]
+
 
 def get_suffix(indices):
-
-    suffix = ''
+    suffix = ""
 
     if indices is None:
         return suffix
-    
+
     indices = copy(indices)
 
     for key in SUFFIX_ORDERING:
         val = indices.get(key, 0)
-        if key == 'frame' and isinstance(val, int):
-            suffix += '_' + f'{val:04d}'
+        if key == "frame" and isinstance(val, int):
+            suffix += "_" + f"{val:04d}"
         else:
-            suffix += '_' + str(val)
+            suffix += "_" + str(val)
 
     return suffix
 
-def parse_suffix(s):
 
+def parse_suffix(s):
     if isinstance(s, Path):
         s = s.name
 
-    if '.' in s:
-        s = s[:s.index('.')]
+    if "." in s:
+        s = s[: s.index(".")]
 
-    s = s.strip('_')
-    
-    s_parts = s.split('_')
+    s = s.strip("_")
+
+    s_parts = s.split("_")
     if len(s_parts) > len(SUFFIX_ORDERING) + 1:
-        raise ValueError(f'Couldnt parse {s=} with {len(s_parts)=}')
-    
+        raise ValueError(f"Couldnt parse {s=} with {len(s_parts)=}")
+
     if len(s_parts) == len(SUFFIX_ORDERING) + 1:
-        s_parts = s_parts[1:] # discard leading filename / description etc
+        s_parts = s_parts[1:]  # discard leading filename / description etc
 
     if len(s_parts) != len(SUFFIX_ORDERING):
         return None

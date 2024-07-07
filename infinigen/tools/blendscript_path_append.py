@@ -4,6 +4,8 @@
 
 # Authors: Alexander Raistrick
 
-import os, sys
+import os
+import sys
+
 pwd = os.getcwd()
 sys.path.append(pwd)

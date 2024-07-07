@@ -2,39 +2,36 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
-# Authors: 
+# Authors:
 # - Alexander Raistrick: state, print, to_json
 # - Karhan Kayan: add dof / trimesh
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-import typing
-import pickle
-import copy
-import importlib
-import logging
-from collections import OrderedDict
-import json
-from pathlib import Path
-import enum
-from collections.abc import Collection
 
-import numpy as np
+import enum
+import importlib
+import json
+import logging
+import pickle
+import typing
+from collections import OrderedDict
+from dataclasses import dataclass, field
+from pathlib import Path
+
 import bpy
+import numpy as np
 import shapely
 import trimesh
-from infinigen.core.constraints.example_solver.geometry.planes import Planes
 
-from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.constraints import (
-    constraint_language as cl,
-    reasoning as r
-)
-from .geometry import parse_scene
-import trimesh
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints.example_solver.geometry.planes import Planes
+from infinigen.core.placement.factory import AssetFactory
+
+from .geometry import parse_scene
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class RelationState:
@@ -43,9 +40,9 @@ class RelationState:
     child_plane_idx: int = None
     parent_plane_idx: int = None
 
+
 @dataclass
 class ObjectState:
-
     obj: bpy.types.Object
     generator: typing.Optional[AssetFactory] = None
     tags: set = field(default_factory=set)
@@ -53,7 +50,7 @@ class ObjectState:
 
     dof_matrix_translation: np.array = None
     dof_rotation_axis: np.array = None
-    contour : shapely.Geometry = None
+    contour: shapely.Geometry = None
     _pose_affects_score = None
 
     fcl_obj = None
@@ -62,11 +59,13 @@ class ObjectState:
     # store whether this object is active for the current greedy stage
     # inactive objects arent returned by scene() and arent accessible through blender (for perf)
     # updated by greedy.update_active_flags()
-    active: bool = True 
+    active: bool = True
 
     def __post_init__(self):
         assert not t.contradiction(self.tags)
-        assert not any(isinstance(r.relation, cl.NegatedRelation) for r in self.relations), self.relations
+        assert not any(
+            isinstance(r.relation, cl.NegatedRelation) for r in self.relations
+        ), self.relations
 
     def __repr__(self):
         obj = self.obj
@@ -76,36 +75,32 @@ class ObjectState:
         name = obj.name if obj is not None else None
         return f"{self.__class__.__name__}(obj.name={name}, {tags=}, {relations=})"
 
+
 @dataclass
 class State:
-
     objs: OrderedDict[str, ObjectState]
 
     trimesh_scene: trimesh.Scene = None
-    bvh_cache : dict = field(default_factory=dict)
+    bvh_cache: dict = field(default_factory=dict)
     planes: Planes = None
-    
-    def print(self):
 
+    def print(self):
         print(f"State ({len(self.objs)} objs)")
-        order = sorted(
-            self.objs.keys(),
-            key=lambda s: s.split('_')[-1]
-        )
+        order = sorted(self.objs.keys(), key=lambda s: s.split("_")[-1])
         for k in order:
             v = self.objs[k]
-            relations = ', '.join(
-                f'{r.relation.__class__.__name__}({r.target_name})' 
-                for r in v.relations
+            relations = ", ".join(
+                f"{r.relation.__class__.__name__}({r.target_name})" for r in v.relations
             )
-            semantics = {tg for tg in t.decompose_tags(v.tags)[0] if not isinstance(tg, t.SpecificObject)}
+            semantics = {
+                tg
+                for tg in t.decompose_tags(v.tags)[0]
+                if not isinstance(tg, t.SpecificObject)
+            }
             print(f"  {v.obj.name} {semantics} [{relations}]")
 
     def to_json(self, path: Path):
-
-        JSON_SUPPORTED_TYPES = (
-            int, float, str, bool, list, dict
-        )
+        JSON_SUPPORTED_TYPES = (int, float, str, bool, list, dict)
 
         def preprocess_field(x):
             match x:
@@ -120,7 +115,7 @@ class State:
                 case enum.Enum():
                     return x.name
                 case type():
-                    return x.__module__ + '.' + x.__name__
+                    return x.__module__ + "." + x.__name__
                 case set() | frozenset():
                     return list(x)
                 case val if isinstance(val, JSON_SUPPORTED_TYPES):
@@ -131,23 +126,23 @@ class State:
                     return x.__dict__
                 case cl.Relation():
                     res = x.__dict__
-                    res['relation_type'] = x.__class__.__name__
+                    res["relation_type"] = x.__class__.__name__
                     return res
                 case _:
                     return "<not-serialized>"
 
         data = {
-            'objs': self.objs,
+            "objs": self.objs,
         }
 
-        with path.open('w') as f:
+        with path.open("w") as f:
             json.dump(
                 data,
-                f, 
+                f,
                 default=preprocess_field,
-                sort_keys=True, 
+                sort_keys=True,
                 indent=4,
-                check_circular=True
+                check_circular=True,
             )
 
     def __post_init__(self):
@@ -161,23 +156,23 @@ class State:
         for os in self.objs.values():
             os.obj = os.obj.name
             if os.generator is not None:
-                path = os.generator.__module__ + '.' + os.generator.__name__
+                path = os.generator.__module__ + "." + os.generator.__name__
                 os.generator = path
 
-        with open(filename, 'wb') as file:
+        with open(filename, "wb") as file:
             pickle.dump(self, file)
 
         for os in self.objs.values():
             os.obj = bpy.data.objects[os.obj]
 
             if os.generator is not None:
-                *mod, name = os.generator.split('.')
-                mod = importlib.import_module('.'.join(mod))
+                *mod, name = os.generator.split(".")
+                mod = importlib.import_module(".".join(mod))
                 os.generator = getattr(mod, name)
 
     @classmethod
     def load(cls, filename: str):
-        with open(filename, 'rb') as file:
+        with open(filename, "rb") as file:
             state = pickle.load(file)
 
         # all objs were serialized as strings, unpack them
@@ -192,16 +187,10 @@ class State:
 
 
 def state_from_dummy_scene(col: bpy.types.Collection) -> State:
-
     objs = {}
     for obj in col.all_objects:
-        obj.rotation_mode = 'AXIS_ANGLE'
+        obj.rotation_mode = "AXIS_ANGLE"
         tags = {t.Semantics(c.name) for c in col.children if obj.name in c.objects}
         tags.add(t.SpecificObject(obj.name))
-        objs[obj.name] = ObjectState(
-            obj=obj,
-            generator=None,
-            tags=tags
-        )
+        objs[obj.name] = ObjectState(obj=obj, generator=None, tags=tags)
     return State(objs=objs)
-

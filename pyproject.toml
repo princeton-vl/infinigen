@@ -65,6 +65,7 @@ dev = [
     "ruff",
     "isort",
     "tabulate", # for integration test results
+    "pre-commit"
 ]
 
 vis = [
@@ -100,7 +101,7 @@ exclude = [
     "terrain/lib/**/*.so", # created by terrain compilation
     "terrain/lib/**/*.o", # created by terrain compilation
     "datagen/customgt/build/customgt", # created during opengl compilation
-    "assets/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
+    "assets/objects/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
 ]
 
 [tool.setuptools.dynamic]
@@ -128,34 +129,19 @@ test-extras = ["dev"]
 test-command = "pytest tests"
 
 [tool.ruff]
-lint.select = [
-    "E9", 
-    "F63", 
-    "F7", 
-    "F82"
-    #"E", 
-    #"F", 
-    #"B", 
-    #"C901",
-]
 target-version = "py310"
-line-length = 120 # will be reduced to 88 to match black soon
+
+lint.ignore = ["E741"]
 
 exclude = [
-    "*/dependencies/"
+    # exclude known submodules 
+    "*/dependencies/",
+    "infinigen/OcMesher",
+    "infinigen/infinigen_gpl",
 ]
-lint.ignore = [
-    "E402", # we have lots of sys.path and opencv statements that must preceed imports, ignore for now
-    "E501", # ignore line length for now
-    "E701", # disable multi line statements until we enable black
-    "F401", # unused imports are sometimes necessary for gin to work
-    "E712", # some people think `if x == True` is more explicit, not going to force it
-]
-
-lint.mccabe.max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = []
+"__init__.py" = ["F401"]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 [tool.pytype]
