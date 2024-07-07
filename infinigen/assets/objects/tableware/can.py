@@ -10,7 +10,7 @@ import shapely
 from numpy.random import uniform
 from shapely import Point, affinity
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import write_co
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder

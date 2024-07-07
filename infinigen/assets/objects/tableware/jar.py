@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core.placement.factory import AssetFactory

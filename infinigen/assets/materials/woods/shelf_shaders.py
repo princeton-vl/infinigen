@@ -8,7 +8,7 @@
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.material_assignments import (
+from infinigen.assets.composition.material_assignments import (
     metal_shader_list,
     shader_rough_plastic,
 )

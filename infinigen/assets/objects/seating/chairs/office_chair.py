@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import choice, uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.seating.chairs.seats.curvy_seats import (
     generate_curvy_seats,
 )

@@ -12,7 +12,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 from infinigen.core import surface, tagging

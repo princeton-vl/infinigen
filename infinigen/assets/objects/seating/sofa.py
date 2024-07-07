@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils

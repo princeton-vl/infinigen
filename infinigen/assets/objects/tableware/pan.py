@@ -11,7 +11,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import (
     join_objects,

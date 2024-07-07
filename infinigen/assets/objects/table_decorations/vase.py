@@ -7,7 +7,7 @@ import bpy
 from numpy.random import choice, randint, uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.table_decorations.utils import (
     nodegroup_lofting,
     nodegroup_star_profile,

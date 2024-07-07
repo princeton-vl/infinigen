@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.table_decorations.utils import nodegroup_lofting_poly
 from infinigen.assets.objects.tables.table_utils import nodegroup_n_gon_profile
 from infinigen.core import surface

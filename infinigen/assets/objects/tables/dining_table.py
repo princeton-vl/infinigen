@@ -7,7 +7,7 @@
 import bpy
 from numpy.random import choice, normal, uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.tables.legs.single_stand import (
     nodegroup_generate_single_stand,
 )

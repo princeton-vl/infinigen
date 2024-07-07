@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials.art import Art
 from infinigen.assets.utils.object import join_objects, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides

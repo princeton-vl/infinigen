@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.seating.chairs.chair import ChairFactory
 from infinigen.assets.objects.seating.mattress import make_coiled
 from infinigen.assets.utils.decorate import (

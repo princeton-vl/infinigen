@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import art
 from infinigen.assets.materials.fabrics import fabric_random
 from infinigen.assets.scatters import clothes

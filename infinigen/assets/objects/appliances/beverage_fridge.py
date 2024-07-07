@@ -9,7 +9,7 @@ from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
