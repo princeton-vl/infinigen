@@ -11,10 +11,16 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from einops import pack, rearrange
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
 from tqdm import tqdm
+
+try:
+    from einops import pack, rearrange
+except ImportError:
+    raise ImportError(
+        "GT visualization requires `einops`. Please install optional extras via `pip install .[vis]`."
+    )
 
 from ..compress_masks import recover
 from ..dataset_loader import get_frame_path

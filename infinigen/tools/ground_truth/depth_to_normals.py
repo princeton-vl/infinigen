@@ -10,11 +10,17 @@ from pathlib import Path
 import cv2
 import imageio
 import numpy as np
-from einops import einsum
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
 
 from ..dataset_loader import get_frame_path
+
+try:
+    from einops import einsum
+except ImportError:
+    raise ImportError(
+        "GT visualization requires `einops`. Please install optional extras via `pip install .[vis]`."
+    )
 
 """
 Usage: python -m tools.ground_truth.depth_to_normals <scene-folder> <frame-index>

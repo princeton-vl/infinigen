@@ -23,25 +23,16 @@ classifiers = [
 requires-python = "==3.10.*"
 dependencies = [
     "bpy==3.6.0",
-    "einops",
-    "flow_vis",
-    "frozendict",
-    "geomdl",
+    "frozendict", # TODO remove
+    "geomdl", # used only for creatures
     "gin_config>=0.5.0",
     "imageio",
-    "ipython",
-    "json5",
-    "landlab>=2.6.0",
     "matplotlib",
     "networkx",
     "numpy<2",
     "opencv-python",
     "pandas",
     "psutil",
-    "pycparser==2.22",
-    "pyrender",
-    "python-fcl",
-    "Rtree",
     "scikit-image",
     "scikit-learn",
     "scipy",
@@ -49,12 +40,23 @@ dependencies = [
     "submitit",
     "tqdm",
     "trimesh",
-    "vnoise",
-    "zarr",
-    "networkx",
+
+    # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
+    "python-fcl", 
+    "rtree", 
 ]
 
 [project.optional-dependencies]
+terrain = [
+    "landlab>=2.6.0",
+    "pyrender",
+]
+vis = [
+    "einops",
+    "flow_vis",
+    "numba", # for ground truth visuals
+    "pyglet<2" # for trimesh_scene.show()
+]
 dev = [
     "pytest",
     "pytest-ordering",
@@ -66,11 +68,6 @@ dev = [
     "isort",
     "tabulate", # for integration test results
     "pre-commit"
-]
-
-vis = [
-    "numba", # for ground truth visuals
-    "pyglet<2" # for trimesh_scene.show()
 ]
 
 wandb = [

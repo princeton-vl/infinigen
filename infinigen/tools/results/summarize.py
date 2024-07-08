@@ -13,13 +13,19 @@ from itertools import chain
 from pathlib import Path
 
 import cv2
-import flow_vis  # run pip install flow_vis
 import numpy as np
 import skimage.measure
-from einops import repeat
 from imageio.v3 import imread
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+
+try:
+    import flow_vis  # run pip install flow_vis
+    from einops import repeat
+except ImportError:
+    raise ImportError(
+        "GT visualization requires extra dependencies. Please install optional extras via `pip install .[vis]`."
+    )
 
 
 def make_defaultdict(inner):

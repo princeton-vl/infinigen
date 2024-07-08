@@ -264,10 +264,13 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     flow_dst_path = frames_folder / f"Vector{output_stem}.exr"
     flow_array = load_flow(flow_dst_path)
     np.save(flow_dst_path.with_name(f"Flow{output_stem}.npy"), flow_array)
-    imwrite(
-        flow_dst_path.with_name(f"Flow{output_stem}.png"), colorize_flow(flow_array)
-    )
-    flow_dst_path.unlink()
+
+    flow_color = colorize_flow(flow_array)
+    if flow_color is not None:
+        imwrite(
+            flow_dst_path.with_name(f"Flow{output_stem}.png"),
+        )
+        flow_dst_path.unlink()
 
     # Save surface normal visualization
     normal_dst_path = frames_folder / f"Normal{output_stem}.exr"

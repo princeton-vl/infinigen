@@ -15,7 +15,6 @@ import colorsys
 from pathlib import Path
 
 import cv2
-import flow_vis
 import numpy as np
 from imageio import imwrite
 from matplotlib import pyplot as plt
@@ -48,6 +47,14 @@ def load_uniq_inst(p):
 
 
 def colorize_flow(optical_flow):
+    try:
+        import flow_vis
+    except ImportError:
+        logger.warning(
+            "Flow visualization requires the 'flow_vis' package. Please install via `pip install .[vis]."
+        )
+        return None
+
     flow_uv = optical_flow[..., :2]
     flow_color = flow_vis.flow_to_color(flow_uv, convert_to_bgr=False)
     return flow_color
@@ -104,9 +111,10 @@ if __name__ == "__main__":
     if args.flow_path is not None:
         try:
             flow_color = colorize_flow(load_flow(args.flow_path))
-            output_path = args.flow_path.with_suffix(".png")
-            imwrite(output_path, flow_color)
-            print(f"Wrote {output_path}")
+            if flow_color is not None:
+                output_path = args.flow_path.with_suffix(".png")
+                imwrite(output_path, flow_color)
+                print(f"Wrote {output_path}")
         except ModuleNotFoundError:
             print(
                 "Flow visualization requires the 'flow_vis' package. Install it with 'pip install flow_vis'"

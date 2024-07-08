@@ -12,12 +12,18 @@ from pathlib import Path
 import cv2
 import numba as nb
 import numpy as np
-from einops import pack, rearrange, repeat
 from imageio.v3 import imread, imwrite
 from numba.types import bool_
 
 from ..compress_masks import recover
 from ..dataset_loader import get_frame_path
+
+try:
+    from einops import pack, rearrange, repeat
+except ImportError:
+    raise ImportError(
+        "GT visualization requires `einops`. Please install optional extras via `pip install .[vis]`."
+    )
 
 """
 Usage: python -m tools.ground_truth.segmentation_lookup <scene-folder> <frame-index> [--query <query>] [--boxes]
