@@ -182,7 +182,7 @@ def evaluate_node(node: cl.Node, state: State, memo=None):
     val = _compute_node_val(node, state, memo)
 
     memo[k] = val
-    logger.debug(f"Evaluated {node.__class__} to {val}")
+    #logger.debug("Evaluated %s to %s", node.__class__, val)
 
     return val
 

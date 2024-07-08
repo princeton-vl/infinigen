@@ -63,6 +63,14 @@ class ScalarExpression(ArithmethicExpression):
 
     __truediv__ = div
 
+    def safediv(self, other):
+        def safediv_impl(a, b):
+            if b == 0:
+                return 0 if a == 0 else 1
+            return a / b
+
+        return ScalarOperatorExpression(safediv_impl, [self, other])
+
     def pow(self, other):
         return ScalarOperatorExpression(operator.pow, [self, other])
 

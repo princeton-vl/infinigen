@@ -97,7 +97,7 @@ def home_constraints():
         lambda r: (
             furniture.related_to(r)
             .volume(dims=(0, 1))
-            .div(r.volume(dims=(0, 1)))
+            .safediv(r.volume(dims=(0, 1)))
             .sub(params["furniture_fullness_pct"])
             .abs()
             .minimize(weight=15)
@@ -110,7 +110,7 @@ def home_constraints():
                 lambda f: (
                     obj.related_to(f, cu.on)
                     .volume()
-                    .div(f.volume())
+                    .safediv(f.volume())
                     .sub(params["obj_interior_obj_pct"])
                     .abs()
                     .minimize(weight=10)
@@ -121,7 +121,9 @@ def home_constraints():
 
     def top_fullness_pct(f):
         return (
-            obj.related_to(f, cu.ontop).volume(dims=(0, 1)).div(f.volume(dims=(0, 1)))
+            obj.related_to(f, cu.ontop)
+            .volume(dims=(0, 1))
+            .safediv(f.volume(dims=(0, 1)))
         )
 
     score_terms["obj_ontop_storage_fullness"] = rooms.mean(
@@ -415,7 +417,7 @@ def home_constraints():
                 .count()
                 .in_range(0, 2)
             )
-            * rugs.related_to(r).count().in_range(0, 2)
+            * rugs.related_to(r).count().in_range(0, 1)
             * desks.related_to(r).count().in_range(0, 1)
             * storage.related_to(r).count().in_range(2, 5)
             * floor_lamps.related_to(r).count().in_range(0, 1)
