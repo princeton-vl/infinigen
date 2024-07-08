@@ -50,6 +50,7 @@ def apply_cutter(state, objkey, cutter):
 def populate_state_placeholders(state: State, filter=None, final=True):
     logger.info(f"Populating placeholders {final=} {filter=}")
     unique_assets = butil.get_collection("unique_assets")
+    unique_assets.hide_viewport = True
 
     if final:
         for os in state.objs.values():
@@ -107,6 +108,8 @@ def populate_state_placeholders(state: State, filter=None, final=True):
                 f"{populate_state_placeholders.__name__} cut {cutter.name=} from {cut_objs=}"
             )
             update_state_mesh_objs += cut_objs
+
+    unique_assets.hide_viewport = False
 
     if final:
         return
