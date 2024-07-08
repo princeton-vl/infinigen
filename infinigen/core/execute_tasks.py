@@ -62,22 +62,64 @@ def render(
         render_image_func(frames_folder=Path(output_folder), camera_id=camera_id)
 
 
+def is_static(obj):
+    while True:
+        if obj.animation_data is not None:
+            return False
+        for modifier in obj.modifiers:
+            if modifier.type == "NODES":
+                if modifier.node_group.animation_data is not None:
+                    return False
+            elif modifier.type == "ARMATURE":
+                return False
+
+        if obj.parent is None:
+            break
+        obj = obj.parent
+    return True
+
+
 @gin.configurable
-def save_meshes(scene_seed, output_folder, frame_range, resample_idx=False):
+def save_meshes(
+    scene_seed,
+    output_folder,
+    frame_range,
+    resample_idx=False,
+    point_trajectory_src_frame=1,
+):
     if resample_idx is not None and resample_idx > 0:
         resample_scene(int_hash((scene_seed, resample_idx)))
 
     triangulate_meshes()
-
-    for obj in bpy.data.objects:
-        obj.hide_viewport = obj.hide_render
 
     for col in bpy.data.collections:
         col.hide_viewport = col.hide_render
 
     previous_frame_mesh_id_mapping = frozendict()
     current_frame_mesh_id_mapping = defaultdict(dict)
-    for frame_idx in range(int(frame_range[0]), int(frame_range[1] + 2)):
+
+    # save static meshes
+    for obj in bpy.data.objects:
+        obj.hide_viewport = not (not obj.hide_render and is_static(obj))
+    frame_idx = point_trajectory_src_frame
+    frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
+    frame_info_folder.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Working on static objects")
+    exporting.save_obj_and_instances(
+        frame_info_folder / "static_mesh",
+        previous_frame_mesh_id_mapping,
+        current_frame_mesh_id_mapping,
+    )
+    previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+    current_frame_mesh_id_mapping.clear()
+
+    for obj in bpy.data.objects:
+        obj.hide_viewport = not (not obj.hide_render and not is_static(obj))
+
+    for frame_idx in set(
+        [point_trajectory_src_frame]
+        + list(range(int(frame_range[0]), int(frame_range[1] + 2)))
+    ):
         bpy.context.scene.frame_set(frame_idx)
         bpy.context.view_layer.update()
         frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
@@ -143,6 +185,7 @@ def execute_tasks(
     reset_assets=True,
     dryrun=False,
     optimize_terrain_diskusage=False,
+    point_trajectory_src_frame=1,
 ):
     if input_folder != output_folder:
         if reset_assets:
@@ -283,9 +326,10 @@ def execute_tasks(
 
     if Task.MeshSave in task:
         save_meshes(
-            scene_seed,
-            output_folder=output_folder,
-            frame_range=frame_range,
+            scene_seed, 
+            output_folder=output_folder, 
+            frame_range=frame_range, 
+            point_trajectory_src_frame=point_trajectory_src_frame, 
         )
 
 

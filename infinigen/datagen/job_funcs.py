@@ -496,11 +496,28 @@ def queue_opengl(
         return states.JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
+    
+    input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
+    # dst_output_indices = dict(output_indices)
+    start_frame, end_frame = output_indices['frame'], output_indices['last_cam_frame']
 
-    input_folder = (
-        Path(folder) / f"savemesh{output_suffix}"
-    )  # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
-    if gt_testing:
+    key = "execute_tasks.point_trajectory_src_frame="
+    point_trajectory_src_frame = None
+    for item in overrides:
+        if item.startswith(key):
+            point_trajectory_src_frame = int(item[len(key):])
+    assert(point_trajectory_src_frame is not None)
+    # key = "execute_tasks.point_trajectory_src_frame_block_start="
+    # point_trajectory_src_frame_block_start = None
+    # for item in overrides:
+    #     if item.startswith(key):
+    #         point_trajectory_src_frame_block_start = int(item[len(key):])
+    # assert(point_trajectory_src_frame_block_start is not None)
+
+    # dst_output_indices["frame"] = point_trajectory_src_frame_block_start
+    # src_input_folder = Path(folder)/f'savemesh{get_suffix(dst_output_indices)}'
+
+    if (gt_testing):
         copy_folder = Path(folder) / f"frames{output_suffix}"
         output_folder = Path(folder) / f"opengl_frames{output_suffix}"
         copytree(copy_folder, output_folder, dirs_exist_ok=True)
@@ -508,20 +525,60 @@ def queue_opengl(
         output_folder = Path(folder) / f"frames{output_suffix}"
         output_folder.mkdir(exist_ok=True)
 
-    assert input_folder.exists(), input_folder
-    assert isinstance(overrides, list) and ("\n" not in " ".join(overrides))
+    assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
 
     tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
     tmp_script.parent.mkdir(exist_ok=True)
-    start_frame, end_frame = output_indices["frame"], output_indices["last_cam_frame"]
-    with tmp_script.open("w") as f:
-        lines = ["set -e"]
+    with tmp_script.open('w') as f:
 
+        lines = [
+            "set -e",
+            f'''
+                if [ ! -d "{str(input_folder)}" ]; then
+                exit 1
+                fi
+            ''',
+        ]
+        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}")
         lines += [
-            f"{process_mesh_path} -in {input_folder} "
-            f"--frame {frame_idx} -out {output_folder}"
+            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
+            f"--frame {frame_idx} --dst_frame {frame_idx+1} -out {output_folder} "
             for frame_idx in range(start_frame, end_frame + 1)
         ]
+        # point trajectory
+        lines += [
+            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
+            f"--frame {point_trajectory_src_frame} --dst_frame {frame_idx} --flow_only 1 --flow_type 2 -out {output_folder} "
+            for frame_idx in range(start_frame, end_frame + 1)
+        ]
+
+        # depth of block end frame
+        lines += [
+            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
+            f"--frame {end_frame+1} --dst_frame {end_frame+1} --depth_only 1 -out {output_folder} "
+        ]
+        # depth of point trajectory source frame
+        lines += [
+            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
+            f"--frame {point_trajectory_src_frame} --dst_frame {point_trajectory_src_frame} --depth_only 1 -out {output_folder} "
+        ]
+
+        # # inverse flow
+        # lines += [
+        #     f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
+        #     f"--frame {frame_idx+1} --dst_frame {frame_idx} --flow_only 1 --flow_type 1 -out {output_folder} "
+        #     for frame_idx in range(start_frame, end_frame + 1)
+        # ]
+        # # inverse point trajectory
+        # lines += [
+        #     f"{process_mesh_path} -in {input_folder} -dst_in {src_input_folder} "
+        #     f"--frame {frame_idx} --dst_frame {point_trajectory_src_frame} --flow_only 1 --flow_type 3 -out {output_folder} "
+        #     for frame_idx in range(start_frame, end_frame + 1)
+        # ]
+        
+        
+        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
+        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}")
 
         lines.append(
             f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"

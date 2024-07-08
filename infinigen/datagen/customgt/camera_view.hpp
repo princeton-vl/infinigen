@@ -27,10 +27,10 @@ private:
 public:
 
     const int buffer_width, buffer_height, image_width, image_height;
-    const std::string frame_string;
+    const std::string frame_string, dst_frame_string;
     unsigned int framebuffer, framebuffer_ob, framebuffer_next_faceids;
 
-    CameraView(const std::string fstr, const fs::path input_dir, const int width, const int height);
+    CameraView(const std::string fstr, const std::string dst_fstr, const fs::path input_dir, const fs::path dst_input_dir, const int width, const int height);
     void activateShader(Shader &shader) const;
     Eigen::Tensor<double, 3> project(const Eigen::Tensor<double, 3> &cam_coords) const;
     

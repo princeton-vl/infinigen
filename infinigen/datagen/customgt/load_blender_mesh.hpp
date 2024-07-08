@@ -28,7 +28,7 @@ inline std::string truncate(const std::string &str, const size_t width){
     return str + std::string(width - str.length(), ' ');
 }
 
-std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path);
+std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path, const fs::path dst_json_path);
 
 std::vector<unsigned int> generate_buffer(const std::vector<unsigned int> &indices);
 
