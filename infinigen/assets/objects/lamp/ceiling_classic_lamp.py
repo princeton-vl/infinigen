@@ -58,7 +58,7 @@ def shader_lamp_material(nw: NodeWrangler):
     )
 
 
-def shader_inside_medal(nw: NodeWrangler):
+def shader_inside_metal(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     principled_bsdf = nw.new_node(
@@ -282,7 +282,7 @@ def geometry_nodes(nw: NodeWrangler):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": transform_geometry_6,
-            "Material": surface.shaderfunc_to_material(shader_inside_medal),
+            "Material": surface.shaderfunc_to_material(shader_inside_metal),
         },
     )
 

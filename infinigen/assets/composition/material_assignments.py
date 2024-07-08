@@ -141,7 +141,7 @@ def beverage_fridge_materials():
             [beverage_fridge_shaders.shader_white_metal_001], [1.0]
         ),
         "back": TextureAssignments(
-            [beverage_fridge_shaders.shader_black_medal_001], [1.0]
+            [beverage_fridge_shaders.shader_black_metal_001], [1.0]
         ),
         "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
@@ -153,7 +153,7 @@ def dishwasher_materials():
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "front": TextureAssignments([dishwasher_shaders.shader_glass_002], [1.0]),
         "white_metal": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
-        "top": TextureAssignments([dishwasher_shaders.shader_black_medal_002], [1.0]),
+        "top": TextureAssignments([dishwasher_shaders.shader_black_metal_002], [1.0]),
         "name_material": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
@@ -176,7 +176,7 @@ def microwave_materials():
 def oven_materials():
     return {
         "surface": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
-        "back": TextureAssignments([oven_shaders.shader_black_medal], [1.0]),
+        "back": TextureAssignments([oven_shaders.shader_black_metal], [1.0]),
         "white_metal": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
         "black_glass": TextureAssignments(
             [oven_shaders.shader_super_black_glass], [1.0]
@@ -284,6 +284,16 @@ def lamp_materials():
         "wear_tear": [scratches, edge_wear],
         "wear_tear_prob": [0, 0],
     }
+
+
+table_top_shader = [
+    (table_marble.shader_marble, 1.0),
+    (tiled_wood.shader_wood_tiled, 1.0),
+    (shader_rough_plastic, 1.0),
+    (glass_volume.shader_glass_volume, 1.0),
+]
+
+furniture_support_shader = []
 
 
 def table_cocktail_materials():

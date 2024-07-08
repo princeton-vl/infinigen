@@ -19,9 +19,9 @@ from infinigen.core.util.color import hsv2rgba
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_cross_contour_top", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_cross_contour_top", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
+def nodegroup_petal_cross_contour_top(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     normal_2 = nw.new_node(Nodes.InputNormal)
@@ -57,9 +57,9 @@ def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_cross_contour_bottom", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_cross_contour_bottom", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_cross_contour_bottom(nw: NodeWrangler):
+def nodegroup_petal_cross_contour_bottom(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     normal = nw.new_node(Nodes.InputNormal)
@@ -161,37 +161,37 @@ def nodegroup_coutour_cross_geometry(nw: NodeWrangler):
         Nodes.CurveCircle, input_kwargs={"Resolution": 128, "Radius": 0.05}
     )
 
-    pedal_cross_coutour_x = nw.new_node(Nodes.Value, label="pedal_cross_coutour_x")
-    pedal_cross_coutour_x.outputs[0].default_value = 0.3
+    petal_cross_coutour_x = nw.new_node(Nodes.Value, label="petal_cross_coutour_x")
+    petal_cross_coutour_x.outputs[0].default_value = 0.3
 
-    pedal_cross_contour_bottom = nw.new_node(
-        nodegroup_pedal_cross_contour_bottom().name,
-        input_kwargs={"X": pedal_cross_coutour_x},
+    petal_cross_contour_bottom = nw.new_node(
+        nodegroup_petal_cross_contour_bottom().name,
+        input_kwargs={"X": petal_cross_coutour_x},
     )
 
     set_position_1 = nw.new_node(
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": curve_circle.outputs["Curve"],
-            "Selection": pedal_cross_contour_bottom.outputs["Value"],
-            "Offset": pedal_cross_contour_bottom.outputs["Vector"],
+            "Selection": petal_cross_contour_bottom.outputs["Value"],
+            "Offset": petal_cross_contour_bottom.outputs["Vector"],
         },
     )
 
-    pedal_cross_coutour_y = nw.new_node(Nodes.Value, label="pedal_cross_coutour_y")
-    pedal_cross_coutour_y.outputs[0].default_value = 0.3
+    petal_cross_coutour_y = nw.new_node(Nodes.Value, label="petal_cross_coutour_y")
+    petal_cross_coutour_y.outputs[0].default_value = 0.3
 
-    pedal_cross_contour_top = nw.new_node(
-        nodegroup_pedal_cross_contour_top().name,
-        input_kwargs={"Y": pedal_cross_coutour_y, "X": pedal_cross_coutour_x},
+    petal_cross_contour_top = nw.new_node(
+        nodegroup_petal_cross_contour_top().name,
+        input_kwargs={"Y": petal_cross_coutour_y, "X": petal_cross_coutour_x},
     )
 
     set_position_2 = nw.new_node(
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": set_position_1,
-            "Selection": pedal_cross_contour_top.outputs["Value"],
-            "Offset": pedal_cross_contour_top.outputs["Vector"],
+            "Selection": petal_cross_contour_top.outputs["Value"],
+            "Offset": petal_cross_contour_top.outputs["Vector"],
         },
     )
 
@@ -218,9 +218,9 @@ def nodegroup_coutour_cross_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_z_contour", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_z_contour", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_z_contour(nw: NodeWrangler):
+def nodegroup_petal_z_contour(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
@@ -255,9 +255,9 @@ def nodegroup_pedal_z_contour(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_curvature", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_curvature", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_curvature(nw: NodeWrangler):
+def nodegroup_petal_stem_curvature(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     position_3 = nw.new_node(Nodes.InputPosition)
@@ -556,31 +556,31 @@ def nodegroup_truncated_leaf_stem(nw: NodeWrangler):
         Nodes.ResampleCurve, input_kwargs={"Curve": curve_line, "Count": integer}
     )
 
-    pedal_stem_curvature_scale = nw.new_node(
-        Nodes.Value, label="pedal_stem_curvature_scale"
+    petal_stem_curvature_scale = nw.new_node(
+        Nodes.Value, label="petal_stem_curvature_scale"
     )
-    pedal_stem_curvature_scale.outputs[0].default_value = 0.2
+    petal_stem_curvature_scale.outputs[0].default_value = 0.2
 
-    pedal_stem_curvature = nw.new_node(
-        nodegroup_pedal_stem_curvature().name,
-        input_kwargs={"Value": pedal_stem_curvature_scale},
+    petal_stem_curvature = nw.new_node(
+        nodegroup_petal_stem_curvature().name,
+        input_kwargs={"Value": petal_stem_curvature_scale},
     )
 
     set_position_4 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": resample_curve_1, "Offset": pedal_stem_curvature},
+        input_kwargs={"Geometry": resample_curve_1, "Offset": petal_stem_curvature},
     )
 
-    pedal_z_coutour_scale = nw.new_node(Nodes.Value, label="pedal_z_coutour_scale")
-    pedal_z_coutour_scale.outputs[0].default_value = uniform(0.2, 0.4)
+    petal_z_coutour_scale = nw.new_node(Nodes.Value, label="petal_z_coutour_scale")
+    petal_z_coutour_scale.outputs[0].default_value = uniform(0.2, 0.4)
 
-    pedal_z_contour = nw.new_node(
-        nodegroup_pedal_z_contour().name, input_kwargs={"Value": pedal_z_coutour_scale}
+    petal_z_contour = nw.new_node(
+        nodegroup_petal_z_contour().name, input_kwargs={"Value": petal_z_coutour_scale}
     )
 
     set_curve_radius_1 = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": set_position_4, "Radius": pedal_z_contour},
+        input_kwargs={"Curve": set_position_4, "Radius": petal_z_contour},
     )
 
     coutour_cross_geometry = nw.new_node(nodegroup_coutour_cross_geometry().name)

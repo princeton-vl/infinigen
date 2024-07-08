@@ -18,7 +18,7 @@ def shader_glass_001(nw: NodeWrangler):
     )
 
 
-def shader_black_medal_001(nw: NodeWrangler):
+def shader_black_metal_001(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     anisotropic_bsdf = nw.new_node(
