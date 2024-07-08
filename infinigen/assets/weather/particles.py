@@ -1,16 +1,13 @@
-import typing
 import logging
+import typing
 
 import bpy
+from numpy.random import normal, uniform
 
-from numpy.random import normal
-from numpy.random import uniform
-
-from infinigen.core.placement import AssetFactory, make_asset_collection
 from infinigen.core.generator import Generator
-from infinigen.core.placement import particles
-from infinigen.core.util.random import log_uniform
+from infinigen.core.placement import AssetFactory, make_asset_collection, particles
 from infinigen.core.util import butil
+from infinigen.core.util.random import log_uniform
 
 logger = logging.getLogger(__name__)
 

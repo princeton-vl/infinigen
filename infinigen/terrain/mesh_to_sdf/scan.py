@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation
 from skimage import io
 
 from .pyrender_wrapper import render_normal_and_depth_buffers
+
 import pyrender  # isort: skip
 
 if hasattr(Rotation, "as_matrix"):  # scipy>=1.4.0

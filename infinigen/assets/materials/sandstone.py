@@ -9,7 +9,7 @@ import gin
 from numpy.random import uniform
 
 from infinigen.core import surface
-from infinigen.core.nodes import node_utils, NodeWrangler
+from infinigen.core.nodes import NodeWrangler, node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour

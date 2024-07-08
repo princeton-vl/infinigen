@@ -2,8 +2,8 @@ import bpy
 import gin
 import numpy as np
 
-from infinigen.core.util import random_general, FixedSeed
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import FixedSeed, random_general
 
 
 @gin.configurable

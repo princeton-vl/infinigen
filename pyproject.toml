@@ -131,13 +131,19 @@ test-command = "pytest tests"
 [tool.ruff]
 target-version = "py310"
 
-lint.ignore = ["E741"]
-
 exclude = [
     # exclude known submodules 
     "*/dependencies/",
     "infinigen/OcMesher",
     "infinigen/infinigen_gpl",
+]
+
+[tool.ruff.lint]
+
+select = ["E", "I", "F"]
+ignore = [
+    "E501", # over-length lines, formatter should handle it
+    "E741", # ambigous variable name 
 ]
 
 [tool.ruff.lint.per-file-ignores]

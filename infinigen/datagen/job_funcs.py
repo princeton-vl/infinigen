@@ -19,10 +19,10 @@ from uuid import uuid4
 import gin
 
 import infinigen
-from infinigen.tools.suffixes import get_suffix
 from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
 from infinigen.datagen.util.upload_util import upload_job_folder
+from infinigen.tools.suffixes import get_suffix
 
 from . import states
 

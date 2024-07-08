@@ -1,12 +1,12 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
-import pytest
 import gin
+import pytest
 
 import infinigen
-from infinigen.datagen import manage_jobs
 from infinigen.core.init import apply_gin_configs
+from infinigen.datagen import manage_jobs
 
 conf = infinigen.repo_root() / "infinigen/datagen/configs"
 assert conf.exists()

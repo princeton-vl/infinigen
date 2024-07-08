@@ -20,8 +20,7 @@ from numpy.random import uniform
 
 import infinigen.assets.scatters
 from infinigen.assets import fluid
-from infinigen.assets.objects import cactus, creatures, rocks, trees, cloud, monocot
-from infinigen.tools.export import export_scene, triangulate_meshes
+from infinigen.assets.objects import cactus, cloud, creatures, monocot, rocks, trees
 from infinigen.assets.scatters import (
     ground_mushroom,
     ivy,
@@ -44,6 +43,7 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import Task
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.terrain import Terrain
+from infinigen.tools.export import export_scene, triangulate_meshes
 
 logger = logging.getLogger(__name__)
 
