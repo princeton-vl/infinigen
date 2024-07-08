@@ -1,5 +1,4 @@
 include 'infinigen_examples/configs_nature/base.gin'
-include 'infinigen_examples/configs_nature/surface_registry.gin'
 
 placement.populate_all.dist_cull = 70
 compose_nature.inview_distance = 70

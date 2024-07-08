@@ -53,6 +53,8 @@ from infinigen_examples.util.generate_indoors_util import (
     restrict_solving,
 )
 
+from . import generate_nature  # noqa F401 # needed for nature gin configs to load
+
 logger = logging.getLogger(__name__)
 
 
@@ -466,7 +468,10 @@ def main(args):
     init.apply_gin_configs(
         configs=["base_indoors.gin"] + args.configs,
         overrides=args.overrides,
-        configs_folder="infinigen_examples/configs_indoor",
+        config_folders=[
+            "infinigen_examples/configs_indoor",
+            "infinigen_examples/configs_nature",
+        ],
     )
     constants.initialize_constants()
 

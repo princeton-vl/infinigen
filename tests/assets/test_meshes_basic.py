@@ -88,6 +88,9 @@ def test_nature_factory_runs(pathspec, **kwargs):
     "pathspec", load_txt_list(Path(__file__).parent / "list_indoor_meshes.txt")
 )
 def test_indoor_factory_runs(pathspec, **kwargs):
-    setup_gin("infinigen_examples/configs_indoor", configs=["base_indoors.gin"])
+    setup_gin(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        configs=["base_indoors.gin"],
+    )
     fac_class = import_item(pathspec)
     check_factory_runs(fac_class, **kwargs)

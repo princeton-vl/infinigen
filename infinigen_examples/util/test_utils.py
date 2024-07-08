@@ -14,10 +14,10 @@ from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.util import math as mutil
 
 
-def setup_gin(configs_folder, configs, overrides=None):
+def setup_gin(configs_folders, configs, overrides=None):
     gin.clear_config()
     init.apply_gin_configs(
-        configs_folder=Path(configs_folder),
+        config_folders=configs_folders,
         configs=configs,
         overrides=overrides,
         skip_unknown=True,

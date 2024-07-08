@@ -736,7 +736,7 @@ def main(args):
     init.apply_gin_configs(
         configs=["base_nature.gin"] + args.configs,
         overrides=args.overrides,
-        configs_folder="infinigen_examples/configs_nature",
+        config_folders="infinigen_examples/configs_nature",
         mandatory_folders=mandatory_exclusive,
         mutually_exclusive_folders=mandatory_exclusive,
     )

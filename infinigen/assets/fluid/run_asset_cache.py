@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     args = init.parse_args_blender(parser)
     init.apply_gin_configs(
-        configs=[], overrides=[], configs_folder="infinigen_examples/configs_nature"
+        configs=[], overrides=[], config_folders=["infinigen_examples/configs_nature"]
     )
     surface.registry.initialize_from_gin()
 
