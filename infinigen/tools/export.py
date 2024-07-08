@@ -769,7 +769,7 @@ def export_scene(
     if pipeline_folder is not None and task_uniqname is not None:
         (pipeline_folder / "logs" / f"FINISH_{task_uniqname}").touch()
 
-    return result
+    return folder
 
 
 # side effects: will remove parents of inputted obj and clean its name, hides viewport of all objects
