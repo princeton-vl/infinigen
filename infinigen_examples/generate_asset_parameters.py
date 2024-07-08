@@ -37,7 +37,7 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
-from infinigen.assets.materials.woods import non_wood_tile, wood_tile
+from infinigen.assets.materials.wood import non_wood_tile, wood_tile
 from infinigen.assets.utils.decorate import read_base_co, read_co, read_normal
 from infinigen.assets.utils.misc import subclasses
 from infinigen.assets.utils.object import center, new_cube, origin2lowest

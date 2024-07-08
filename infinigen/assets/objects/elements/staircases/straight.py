@@ -16,7 +16,7 @@ from shapely import LineString, Polygon
 from infinigen.assets.materials.ceramic import concrete, glass, plaster
 from infinigen.assets.materials.fabric import fabric_random
 from infinigen.assets.materials.metal import metal_random
-from infinigen.assets.materials.woods import wood
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     mirror,
     read_co,

@@ -10,7 +10,7 @@ from numpy.random import uniform
 
 from infinigen.assets import colors
 from infinigen.assets.materials.metal import metal_random
-from infinigen.assets.materials.woods import wood
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import read_edge_center, read_edge_direction
 from infinigen.assets.utils.mesh import bevel
 from infinigen.assets.utils.object import new_cube

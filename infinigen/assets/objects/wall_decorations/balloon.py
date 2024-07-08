@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import subdivide_edge_ring, subsurf
 from infinigen.assets.utils.draw import remesh_fill
@@ -15,17 +15,28 @@ from infinigen.assets.utils.object import new_bbox
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class BalloonFactory(AssetFactory):
     alpha = 0.8
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(
+        self,
+        factory_seed,
+        material_gen=None,
+        coarse=False,
+    ):
         super(BalloonFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.thickness = uniform(0.06, 0.1)
-            material_assignments = AssetList["BalloonFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
+
+            if material_gen is None:
+                material_gen = weighted_sample(
+                    material_assignments.decorative_metal_shader
+                )()
+            self.material_gen = material_gen
+
             self.rel_scale = uniform(0.2, 0.3) * 4
             self.displace = uniform(0.02, 0.04)
 
@@ -74,7 +85,7 @@ class BalloonFactory(AssetFactory):
         butil.apply_transform(obj, True)
         butil.modify_mesh(obj, "DISPLACE", strength=self.displace)
         butil.modify_mesh(obj, "SMOOTH", iterations=5)
-        return obj
 
-    def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        self.material_gen.apply(obj)
+
+        return obj

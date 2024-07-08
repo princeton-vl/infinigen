@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.woods.shelf_shaders import (
+from infinigen.assets.materials.wood.plywood import (
     shader_glass,
     shader_shelves_black_wood,
     shader_shelves_black_wood_sampler,

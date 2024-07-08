@@ -15,8 +15,8 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-from infinigen.assets.composition import material_assignments
 from infinigen.assets import materials
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining

@@ -8,7 +8,7 @@
 from numpy.random import randint, uniform
 
 from infinigen.assets.materials.utils import common
-from infinigen.assets.materials.woods.wood import get_color
+from infinigen.assets.materials.wood.wood import get_color
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hex2rgba

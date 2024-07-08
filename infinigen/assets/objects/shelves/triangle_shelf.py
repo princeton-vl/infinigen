@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.materials.woods.shelf_shaders import get_shelf_material
+from infinigen.assets.materials.wood.plywood import get_shelf_material
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler

@@ -10,7 +10,7 @@ from numpy.random import uniform
 
 from infinigen.assets.materials import metal
 from infinigen.assets.materials.plastic import plastic
-from infinigen.assets.materials.woods import wood
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     read_edge_center,
     read_edge_direction,

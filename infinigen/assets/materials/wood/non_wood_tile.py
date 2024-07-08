@@ -5,7 +5,7 @@
 import numpy as np
 
 from infinigen.assets.materials.ceramic import tile
-from infinigen.assets.materials.woods.wood import shader_wood
+from infinigen.assets.materials.wood.wood import shader_wood
 
 
 class NonWoodTile:
@@ -20,7 +20,6 @@ class NonWoodTile:
         shape=None,
         **kwargs,
     ):
-
         shader_funcs = tile.get_shader_funcs()
         shader_funcs = [(f, w) for f, w in shader_funcs if f != shader_wood]
         funcs, weights = zip(*shader_funcs)
@@ -29,6 +28,6 @@ class NonWoodTile:
             shader_func = np.random.choice(funcs, p=weights)
         if shape is None:
             shape = np.random.choice(["square", "hexagon", "rectangle"])
-        tile.apply(
+        tile.Tile().apply(
             obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs
         )

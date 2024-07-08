@@ -190,24 +190,9 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
 
 
 class Wood:
+    
     def apply(self, obj, selection=None, **kwargs):
-        # TODO HACK - avoiding circular imports for now
-        from infinigen.assets.materials.woods.shelf_shaders import (
-            shader_shelves_black_wood,
-            shader_shelves_white,
-            shader_shelves_wood,
-        )
-
-        r = uniform()
-        if r < 1 / 12:
-            shader = shader_shelves_white
-        elif r < 2 / 12:
-            shader = shader_shelves_wood
-        elif r < 3 / 12:
-            shader = shader_shelves_black_wood
-        else:
-            shader = shader_wood
-        common.apply(obj, shader, selection, **kwargs)
+        common.apply(obj, shader_wood, selection, **kwargs)
 
 
 def make_sphere():

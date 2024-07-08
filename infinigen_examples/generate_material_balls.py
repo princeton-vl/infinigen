@@ -34,7 +34,7 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
-from infinigen.assets.materials.woods import tiled_wood
+from infinigen.assets.materials.wood import tiled_wood
 from infinigen.assets.utils.decorate import read_base_co
 from infinigen.assets.utils.misc import subclasses
 from infinigen.core import init

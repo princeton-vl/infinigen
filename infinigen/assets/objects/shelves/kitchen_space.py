@@ -7,7 +7,7 @@ import bpy
 from mathutils import Vector
 from numpy.random import choice, uniform
 
-from infinigen.assets.materials.woods.table_materials import shader_marble
+from infinigen.assets.materials.ceramic.marble import shader_marble
 from infinigen.assets.objects.shelves.kitchen_cabinet import KitchenCabinetFactory
 from infinigen.assets.objects.tables.table_top import nodegroup_generate_table_top
 from infinigen.assets.objects.wall_decorations.range_hood import RangeHoodFactory

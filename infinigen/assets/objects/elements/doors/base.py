@@ -13,7 +13,7 @@ from infinigen.assets import colors
 from infinigen.assets.materials.ceramic import glass
 from infinigen.assets.materials.metal import metal_random
 from infinigen.assets.materials.utils.common import unique_surface
-from infinigen.assets.materials.woods import wood
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import mirror, read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin

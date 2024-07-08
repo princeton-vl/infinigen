@@ -20,7 +20,7 @@ class CrossedWoodTile:
         **kwargs,
     ):
         shader_func = shader_wood
-        tile.apply(
+        tile.Tile().apply(
             obj, selection, vertical, shader_func, scale, False, "crossed", **kwargs
         )
 

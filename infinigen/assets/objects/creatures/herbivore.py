@@ -12,8 +12,8 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-from infinigen.assets.composition import material_assignments
 from infinigen.assets import materials
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -23,7 +23,7 @@ from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian, FixedSeed
+from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
 

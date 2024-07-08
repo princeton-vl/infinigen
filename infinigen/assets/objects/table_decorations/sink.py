@@ -36,6 +36,7 @@ class SinkFactory(AssetFactory):
             self.material_params, self.scratch, self.edge_wear = (
                 self.get_material_params()
             )
+            # TODO sink_color = colors.metal_natural_hsv()
         self.params.update(self.material_params)
 
         self.tap_factory = TapFactory(factory_seed)
