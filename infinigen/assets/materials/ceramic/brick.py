@@ -74,6 +74,8 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
 
 
 class Brick:
+    shader = shader_brick
+
     def apply(self, obj, selection=None, height=None, **kwargs):
         for o in obj if isinstance(obj, Iterable) else [obj]:
             unwrap_normal(o, selection, axis_="z")

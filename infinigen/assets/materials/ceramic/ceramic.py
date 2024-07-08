@@ -59,5 +59,7 @@ def shader_ceramic(
 
 
 class Ceramic:
+    shader = shader_ceramic
+
     def apply(self, obj, selection=None, clear=False, **kwargs):
         common.apply(obj, shader_ceramic, selection, clear, **kwargs)

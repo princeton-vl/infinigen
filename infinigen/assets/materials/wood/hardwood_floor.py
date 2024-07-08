@@ -6,7 +6,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials.utils import common, surface_utils
-from infinigen.assets.materials.woods.wood import shader_wood
+from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.assets.utils.object import new_plane
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform

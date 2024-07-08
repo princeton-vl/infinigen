@@ -212,7 +212,7 @@ def shader_fabric(
     if color_1_hsv is None:
         color_1_hsv = colors.fabric_hsv()
     if color_2_hsv is None:
-        color_2_hsv = colors.white_hsv()
+        color_2_hsv = colors.plant_white()
 
     group = func_fabric(
         nw,
@@ -236,7 +236,7 @@ def shader_fabric(
     )
 
 
-class GeneralFabric:
+class PlaidFabric:
     def apply(self, obj, selection=None, **kwargs):
         if not isinstance(obj, list):
             obj = [obj]

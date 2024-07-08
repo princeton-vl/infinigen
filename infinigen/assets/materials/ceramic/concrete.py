@@ -483,5 +483,7 @@ def shader_concrete(
 
 
 class Concrete:
+    shader = shader_concrete
+
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_concrete, selection=selection, **kwargs)

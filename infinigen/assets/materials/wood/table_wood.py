@@ -7,10 +7,11 @@
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.materials.utils import common
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
-from infinigen.assets.materials.utils import common
+
 
 def perturb(hsv):
     return np.array(
@@ -173,8 +174,8 @@ def shader_wood(nw: NodeWrangler, **kwargs):
         attrs={"is_active_output": True},
     )
 
-class TableWood:
 
+class TableWood:
     shader = shader_wood
 
     def apply(self, obj, selection=None, **kwargs):

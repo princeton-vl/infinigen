@@ -5,12 +5,11 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.fabric.fabric_random import fabric_shader_list
 from infinigen.assets.utils.decorate import read_uv, write_uv
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
-from infinigen.core.util.random import random_general as rg
 
+# from infinigen.core.util.random import random_general as rg
 from . import text
 from .fabric import rug
 
@@ -85,7 +84,7 @@ class ArtRug(ArtComposite):
 class ArtFabric(ArtComposite):
     @property
     def base_shader(self):
-        return rg(fabric_shader_list)
+        raise ValueError("TODO")  # return rg(fabric_shader_list)
 
 
 class ArtGeneral:

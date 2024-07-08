@@ -10,7 +10,7 @@ from functools import partial
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import ceramic, tile
+from infinigen.assets.materials import ceramic
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -252,7 +252,7 @@ def tile_of_material(
 
 
 def apply(obj, selection=None, vertical=False, **kwargs):
-    shader_funcs = tile.get_shader_funcs()
+    shader_funcs = ceramic.tile.get_shader_funcs()
     funcs, weights = zip(*shader_funcs)
     weights = np.array(weights) / sum(weights)
     shader_func = np.random.choice(funcs, p=weights)

@@ -260,6 +260,8 @@ def shader_coarse_knit_fabric(nw: NodeWrangler, **kwargs):
 
 
 class CoarseKnitFabric:
+    shader = shader_coarse_knit_fabric
+
     def apply(self, obj, selection=None, **kwargs):
         unwrap_faces(obj, selection)
         common.apply(obj, shader_coarse_knit_fabric, selection, **kwargs)

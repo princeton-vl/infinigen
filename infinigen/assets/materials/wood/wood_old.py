@@ -19,7 +19,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
 
-def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs):
+def shader_wood(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     texture_coordinate_1 = nw.new_node(Nodes.TextureCoord)
@@ -103,6 +103,6 @@ def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwa
     )
 
 
-class WoodOld:
+class Wood:
     def apply(self, obj, selection=None, scale=1, **kwargs):
-        common.apply(obj, shader_wood_old, selection, scale=scale, **kwargs)
+        common.apply(obj, shader_wood, selection, scale=scale, **kwargs)

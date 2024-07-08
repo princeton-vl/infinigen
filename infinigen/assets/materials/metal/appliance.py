@@ -3,22 +3,11 @@
 
 # Authors: Hongyu Wen
 
+from infinigen.assets.materials.utils import common
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
-def shader_glass_001(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
-    glass_bsdf = nw.new_node(Nodes.GlassBSDF, input_kwargs={"IOR": 1.5000})
-
-    material_output = nw.new_node(
-        Nodes.MaterialOutput,
-        input_kwargs={"Surface": glass_bsdf},
-        attrs={"is_active_output": True},
-    )
-
-
-def shader_black_metal_001(nw: NodeWrangler):
+def shader_brushed_black_metal(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     anisotropic_bsdf = nw.new_node(
@@ -33,7 +22,12 @@ def shader_black_metal_001(nw: NodeWrangler):
     )
 
 
-def shader_white_metal_001(nw: NodeWrangler):
+class BrushedBlackMetal:
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_brushed_black_metal, selection, **kwargs)
+
+
+def shader_white_metal(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
@@ -84,3 +78,28 @@ def shader_white_metal_001(nw: NodeWrangler):
         input_kwargs={"Surface": principled_bsdf},
         attrs={"is_active_output": True},
     )
+
+
+class WhiteMetal:
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_white_metal, selection, **kwargs)
+
+
+def shader_black_glass(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
+    glossy_bsdf = nw.new_node(
+        Nodes.GlossyBSDF,
+        input_kwargs={"Color": (0.0068, 0.0068, 0.0068, 1.0000), "Roughness": 0.2000},
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": glossy_bsdf},
+        attrs={"is_active_output": True},
+    )
+
+
+class BlackGlass:
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_black_glass, selection, **kwargs)

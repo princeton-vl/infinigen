@@ -40,6 +40,8 @@ class GrassTuftFactory(AssetFactory):
         self.base_spread = uniform(0, self.length_mean / 4)
         self.base_angle_var = uniform(0, 15)
 
+        self.material_gen = grass_blade.GrassBlade()
+
     def create_asset(self, **params) -> bpy.types.Object:
         n_blades = np.random.randint(30, 60)
 
@@ -97,4 +99,4 @@ class GrassTuftFactory(AssetFactory):
         return parent
 
     def finalize_assets(self, assets):
-        grass_blade.apply(assets)
+        self.material_gen.apply(assets)

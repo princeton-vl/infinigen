@@ -125,7 +125,7 @@ def shader_grained_metal(
     )
 
 
-class GrainedAndPolishedMetal:
+class GrainedMetal:
     def apply(self, obj, selection=None, **kwargs):
         surface.add_material(
             obj, shader_grained_metal, selection=selection, input_kwargs=kwargs

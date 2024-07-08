@@ -11,7 +11,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
-def shader_material_001(nw: NodeWrangler):
+def shader_marble_regular(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     geometry = nw.new_node(Nodes.NewGeometry)
@@ -88,5 +88,7 @@ def shader_material_001(nw: NodeWrangler):
 
 
 class MarbleRegular:
+    shader = shader_marble_regular
+
     def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, shader_material_001, selection=selection)
+        surface.add_material(obj, shader_marble_regular, selection=selection)

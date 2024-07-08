@@ -53,4 +53,3 @@ infinigen.assets.materials.terrain.sand.Sand
 infinigen.assets.materials.terrain.sandstone.Sandstone
 infinigen.assets.materials.terrain.soil.Soil
 infinigen.assets.materials.terrain.stone.Stone
-infinigen.assets.materials.woods.wood.Wood

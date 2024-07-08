@@ -11,7 +11,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
-def shader_material(nw: NodeWrangler):
+def shader_marble_voronoi(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
     geometry = nw.new_node(Nodes.NewGeometry)
@@ -81,5 +81,7 @@ def shader_material(nw: NodeWrangler):
 
 
 class MarbleVoronoi:
+    shader = shader_marble_voronoi
+
     def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, shader_material, selection=selection)
+        surface.add_material(obj, shader_marble_voronoi, selection=selection)

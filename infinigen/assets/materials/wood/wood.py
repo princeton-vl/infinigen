@@ -1,4 +1,4 @@
-# Copyright (C) 2023, Princeton University.
+# Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Yiming Zuo
@@ -10,6 +10,7 @@ from numpy.random import uniform
 from infinigen.assets import colors
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.object import new_cube
+from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
@@ -190,9 +191,15 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
 
 
 class Wood:
-    
+    shader = shader_wood
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_wood)
+
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_wood, selection, **kwargs)
+
+    __call__ = generate
 
 
 def make_sphere():

@@ -9,11 +9,11 @@ from inspect import signature
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.materials.ceramic.marble import shader_marble
 from infinigen.assets.materials.creature import bone
 from infinigen.assets.materials.terrain import cobble_stone, dirt, stone
 from infinigen.assets.materials.utils import common, surface_utils
-from infinigen.assets.materials.woods.table_materials import shader_marble
-from infinigen.assets.materials.woods.wood import shader_wood
+from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.math import FixedSeed

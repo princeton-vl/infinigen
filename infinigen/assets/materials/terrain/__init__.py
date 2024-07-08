@@ -7,6 +7,5 @@ from .mountain import Mountain
 from .mud import Mud
 from .sand import Sand
 from .sandstone import Sandstone
-from .snow import Snow
 from .soil import Soil
 from .stone import Stone

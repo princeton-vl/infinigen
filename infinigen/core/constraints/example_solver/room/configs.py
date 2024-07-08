@@ -7,7 +7,7 @@ from collections import defaultdict
 from infinigen.assets.materials.ceramic import brick, concrete, plaster, tile
 from infinigen.assets.materials.fabric import rug
 from infinigen.assets.materials.tiles import advanced_tiles
-from infinigen.assets.materials.woods import tiled_wood
+from infinigen.assets.materials.wood import tiled_wood
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
