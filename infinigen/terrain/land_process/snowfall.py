@@ -7,9 +7,17 @@
 import cv2
 import gin
 import numpy as np
-from landlab import RasterModelGrid
-from landlab.components import FlowDirectorSteepest, TransportLengthHillslopeDiffuser
 from tqdm import tqdm
+
+try:
+    import landlab
+    from landlab import RasterModelGrid
+    from landlab.components import (
+        FlowDirectorSteepest,
+        TransportLengthHillslopeDiffuser,
+    )
+except ImportError:
+    landlab = None
 
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.core.util.random import random_general as rg
@@ -44,6 +52,12 @@ def run_snowfall(
     diffussion_params=[(256, 10, 9), (1024, 10, 5)],
     verbose=0,
 ):
+    if landlab is None:
+        raise ImportError(
+            "landlab must be installed to use terrain snowfall "
+            "Please install optional terrain dependencies via `pip install .[terrain]`"
+        )
+
     heightmap_path = f"{folder}/{Process.Erosion}.{AssetFile.Heightmap}.exr"
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
     rocks = read(heightmap_path)
