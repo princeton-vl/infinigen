@@ -31,6 +31,7 @@ from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
+from infinigen.core.util.logging import lazydebug
 
 # from infinigen.core.util import blender as butil
 
@@ -215,6 +216,7 @@ def min_dist(
     if b is None and len(a) == 1:
         dist, data = 1e9, None
     elif b is None:
+        lazydebug(logger, lambda: f"min_dist_internal({a=}, {b=})")
         dist, data = col.min_distance_internal(return_data=True)
     elif isinstance(b, str):
         T, g = scene.graph[b]
@@ -223,10 +225,13 @@ def min_dist(
             obj = iu.blender_objs_from_names(b)[0]
             mask = tagging.tagged_face_mask(obj, b_tags)
             if not mask.any():
-                logger.warning(f"{b=} had {mask.sum()=} for {b_tags=}")
+                lazydebug(logger, lambda: f"{b=} had {mask.sum()=} for {b_tags=}")
             geom = geom.submesh(np.where(mask), append=True)
             assert len(geom.faces) == mask.sum()
+
+        lazydebug(logger, lambda: f"min_dist_single({a=}, {b=})")
         dist, data = col.min_distance_single(geom, transform=T, return_data=True)
+
         if "__external" in data.names:
             data.names.remove("__external")
             data.names.add(b)
@@ -234,6 +239,7 @@ def min_dist(
             data._points.pop("__external")
             logging.debug(f"WARNING: swapped __external for {b} to make {data.names}")
     elif isinstance(b, (list, set)):
+        logger.debug(f"min_dist_other({a=}, {b=})")
         col2 = iu.col_from_subset(scene, b, b_tags, bvh_cache)
         dist, data = col.min_distance_other(col2, return_data=True)
     else:
