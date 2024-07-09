@@ -7,7 +7,6 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.utils import common
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -122,5 +121,9 @@ def shader_galvanized_metal(
 
 
 class GalvanizedMetal:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_galvanized_metal, selection=selection, **kwargs)
+    shader = shader_galvanized_metal
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_galvanized_metal)
+
+    __call__ = generate

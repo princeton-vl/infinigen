@@ -421,10 +421,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
 
 
 class Lava:
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_geomod(
-            obj,
-            lava_geo,
-            selection=selection,
-        )
-        surface.add_material(obj, lava_shader, selection=selection)
+    shader = lava_shader
+
+    def generate():
+        return surface.shaderfunc_to_material(lava_shader)
+
+    __call__ = generate

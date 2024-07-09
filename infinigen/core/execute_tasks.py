@@ -19,17 +19,6 @@ import gin
 from frozendict import frozendict
 
 import infinigen.assets.scatters
-from infinigen.assets import fluid
-from infinigen.assets.objects import cactus, cloud, creatures, monocot, rocks, trees
-from infinigen.assets.scatters import (
-    ground_mushroom,
-    ivy,
-    lichen,
-    moss,
-    slime_mold,
-    snow_layer,
-)
-from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 from infinigen.core import init
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.render import render_image

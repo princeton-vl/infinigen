@@ -6,8 +6,6 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
-from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -161,6 +159,9 @@ def shader_lined_fur_random(nw: NodeWrangler, **kwargs):
 
 
 class LinedFabric:
-    def apply(self, obj, selection=None, **kwargs):
-        unwrap_faces(obj, selection)
-        common.apply(obj, shader_lined_fur_random, selection, **kwargs)
+    shader = shader_lined_fur_random
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_lined_fur_random)
+
+    __call__ = generate

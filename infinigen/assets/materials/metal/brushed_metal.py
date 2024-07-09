@@ -167,7 +167,9 @@ def shader_brushed_metal(
 
 
 class BrushedMetal:
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(
-            obj, shader_brushed_metal, selection=selection, input_kwargs=kwargs
-        )
+    shader = shader_brushed_metal
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_brushed_metal)
+
+    __call__ = generate

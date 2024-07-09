@@ -43,5 +43,9 @@ def whitewater(nw: NodeWrangler):
 
 
 class Whitewater:
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, whitewater, selection=selection)
+    shader = whitewater
+
+    def generate():
+        return surface.shaderfunc_to_material(whitewater)
+
+    __call__ = generate

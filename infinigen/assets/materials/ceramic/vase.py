@@ -69,5 +69,10 @@ def shader_colored_glass(nw: NodeWrangler):
 class ColoredGlass:
     shader = shader_colored_glass
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_colored_glass, selection, **kwargs)
+    # def apply(self, obj, selection=None, **kwargs):
+    #     common.apply(obj, shader_colored_glass, selection, **kwargs)
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_colored_glass)
+
+    __class__ = generate

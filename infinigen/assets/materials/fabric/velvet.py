@@ -143,7 +143,7 @@ class Velvet:
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_velvet, selection, **kwargs)
 
-    # surface.add_material(obj, shader_velvet, selection=selection)
+    def generate():
+        return surface.shaderfunc_to_material(shader_velvet)
 
-
-# apply(bpy.context.active_object)
+    __call__ = generate

@@ -101,5 +101,9 @@ def shader_black_glass(nw: NodeWrangler):
 
 
 class BlackGlass:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_black_glass, selection, **kwargs)
+    shader = shader_black_glass
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_black_glass)
+
+    __call__ = generate

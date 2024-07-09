@@ -83,5 +83,7 @@ def shader_marble_voronoi(nw: NodeWrangler):
 class MarbleVoronoi:
     shader = shader_marble_voronoi
 
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, shader_marble_voronoi, selection=selection)
+    def generate():
+        return surface.shaderfunc_to_material(shader_marble_voronoi)
+
+    __call__ = generate

@@ -5,8 +5,7 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.utils import common
-from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 
 
@@ -62,6 +61,9 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
 
 
 class SofaFabric:
-    def apply(self, obj, selection=None, **kwargs):
-        unwrap_faces(obj, selection)
-        common.apply(obj, shader_sofa_fabric, selection, **kwargs)
+    shader = shader_sofa_fabric
+
+    def generate():
+        return surface.shaderfunc_to_material(shader_sofa_fabric)
+
+    __call__ = generate

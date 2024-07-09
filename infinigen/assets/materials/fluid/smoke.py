@@ -27,5 +27,9 @@ def smoke_material(nw):
 
 
 class Smoke:
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, smoke_material, selection=selection)
+    shader = smoke_material
+
+    def generate():
+        return surface.shaderfunc_to_material(smoke_material)
+
+    __call__ = generate

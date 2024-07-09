@@ -2,12 +2,9 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-from collections.abc import Iterable
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
-from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -73,11 +70,15 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
 class Plaster:
     shader = shader_plaster
 
-    def apply(self, obj, selection=None, plaster_colored=None, **kwargs):
-        if plaster_colored is None:
-            plaster_colored = uniform() < 0.4
-        for o in obj if isinstance(obj, Iterable) else [obj]:
-            unwrap_normal(o, selection)
-        common.apply(
-            obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
-        )
+    # def apply(self, obj, selection=None, plaster_colored=None, **kwargs):
+    #     if plaster_colored is None:
+    #         plaster_colored = uniform() < 0.4
+    #     for o in obj if isinstance(obj, Iterable) else [obj]:
+    #         unwrap_normal(o, selection)
+    #     common.apply(
+    #         obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
+    #     )
+    def generate():
+        return surface.shaderfunc_to_material(shader_plaster)
+
+    __call__ = generate

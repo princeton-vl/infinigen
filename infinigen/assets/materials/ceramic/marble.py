@@ -4,7 +4,6 @@
 # Authors: Yiming Zuo
 # Acknowledgement: This file draws inspiration https://www.youtube.com/watch?v=wTzk9T06gdw by Ryan King Arts
 
-from infinigen.assets.materials.utils import common
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -154,5 +153,7 @@ def shader_marble(nw: NodeWrangler, **kwargs):
 class Marble:
     shader = shader_marble
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_marble, selection, **kwargs)
+    def generate():
+        return surface.shaderfunc_to_material(shader_marble)
+
+    __call__ = generate
