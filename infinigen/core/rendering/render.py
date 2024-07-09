@@ -269,6 +269,7 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     if flow_color is not None:
         imwrite(
             flow_dst_path.with_name(f"Flow{output_stem}.png"),
+            flow_color,
         )
         flow_dst_path.unlink()
 

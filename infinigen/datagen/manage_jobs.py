@@ -745,13 +745,10 @@ mandatory_exclusive_configs = [
 ]
 
 if __name__ == "__main__":
-    os.umask(0o007)
-
     slurm_available = which("sbatch") is not None
-    parser = (
-        argparse.ArgumentParser()
-    )  # to guarantee that the render scenes finish, try render_image.time_limit=2000
-    parser.add_argument("-o", "--output_folder", type=Path, required=True)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-o", "--output_folder", type=Path, default=None)  #
     parser.add_argument(
         "--num_scenes",
         type=int,
@@ -859,12 +856,22 @@ if __name__ == "__main__":
 
     assert args.specific_seed is None or args.num_scenes == 1
 
+    if args.output_folder is None:
+        date_str = datetime.now().strftime("%y-%m-%d_%H-%M")
+        hostname = os.uname().nodename
+
+        output_base = Path("outputs")
+        assert output_base.exists(), output_base
+
+        args.output_folder = Path(f"outputs/{date_str}_{hostname}")
+
     overwrite_ok = args.use_existing or args.overwrite
     if args.output_folder.exists() and not overwrite_ok:
         raise FileExistsError(
             f"--output_folder {args.output_folder} already exists! Please delete it,"
             " specify a different --output_folder, or use --overwrite"
         )
+
     args.output_folder.mkdir(parents=True, exist_ok=overwrite_ok)
 
     if args.meta_seed is not None:
