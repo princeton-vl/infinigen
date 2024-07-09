@@ -1,0 +1,27 @@
+# CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# This file specifies only who must review each file, IE, who is the primary maintainer / responsibility holder
+
+# araistrick will review everything except where specified below
+*   @araistrick 
+
+infinigen/datagen/customgt/*  @lahavlipson
+infinigen/tools/ground_truth/* @lahavlipson
+
+infinigen/terrain/*   @mazeyu
+
+# Jerry will review all assets except where specified below
+infinigen/assets/objects/* @JerryLingjieMei
+
+infinigen/assets/utils/* @JerryLingjieMei
+
+infinigen/assets/fluid/*    @karhankayan
+infinigen/assets/objects/*  @JerryLingjieMei
+infinigen/assets/creatures/*    @araistrick
+
+infinigen/core/constraints/evaluator/node_impl/* @karhankayan
+infinigen/core/constraints/example_solver/room/* @JerryLingjieMei
+
+
+
