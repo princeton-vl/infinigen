@@ -3,22 +3,17 @@
 
 # Authors: Karhan Kayan
 
-import bpy
-import trimesh
-from shapely import LineString, Point
-import numpy as np
-from typing import Union
-from trimesh import Trimesh, Scene
-from mathutils import Vector, Matrix
 
-from infinigen.core.util import blender as butil
-from infinigen.core import tagging, tags as t
-from infinigen.core.constraints.constraint_language.util import (
-    translate,
-    rotate,
-    sync_trimesh
-)
+import bpy
 import fcl
+import numpy as np
+import trimesh
+from mathutils import Matrix
+
+from infinigen.core import tagging
+from infinigen.core.constraints.constraint_language.util import sync_trimesh
+from infinigen.core.util import blender as butil
+
 
 def to_trimesh(obj: bpy.types.Object):
     bpy.context.view_layer.update()
@@ -30,19 +25,19 @@ def to_trimesh(obj: bpy.types.Object):
 
 
 def preprocess_obj(obj):
-    with butil.ViewportMode(obj, mode='EDIT'):
+    with butil.ViewportMode(obj, mode="EDIT"):
         butil.select(obj)
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
 
     bpy.context.view_layer.update()
 
     butil.apply_transform(obj, loc=False, rot=False, scale=True)
 
+
 def preprocess_scene(objects):
     for o in objects:
         preprocess_obj(o)
-
 
 
 def parse_scene(objects):
@@ -56,18 +51,19 @@ def parse_scene(objects):
 
     return scene
 
+
 def add_to_scene(scene, obj, preprocess=True):
     if preprocess:
         preprocess_obj(obj)
     obj_matrix_world = Matrix(obj.matrix_world)
     obj.matrix_world = Matrix.Identity(4)
     tmesh = to_trimesh(obj)
-    tmesh.metadata['tags'] = tagging.union_object_tags(obj)
+    tmesh.metadata["tags"] = tagging.union_object_tags(obj)
     scene.add_geometry(
         geometry=tmesh,
         # transform=np.array(obj.matrix_world),
-        geom_name=obj.name + '_mesh',
-        node_name=obj.name
+        geom_name=obj.name + "_mesh",
+        node_name=obj.name,
     )
     col = trimesh.collision.CollisionManager()
     T = trimesh.transformations.identity_matrix()

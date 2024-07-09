@@ -16,7 +16,7 @@ Infinigen generates scenes by running multiple tasks (usually executed automatic
 
 :exclamation: If you encounter any missing .so files, missing dependencies (such as `gin`), or similar crashes, please check again that all steps of installation ran successfully. If you cannot resolve any issues with installation, please see our README and 'Bug Report' Git Issue template for advice on posting Git Issues to get help quickly - you must include the full installation logs in your issue so that we can help debug.
 
-```
+```bash
 mkdir outputs
 
 # Generate a scene layout
@@ -40,7 +40,7 @@ Output logs should indicate what the code is working on. Use `--debug` for even 
 
 We provide `infinigen/datagen/manage_jobs.py`, a utility which runs similar steps automatically.
 
-```
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \
 --configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin blender_gt.gin --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```

@@ -7,27 +7,29 @@
 from __future__ import annotations
 
 from abc import ABCMeta
-from enum import Enum, EnumMeta
 from dataclasses import dataclass
+from enum import Enum, EnumMeta
+
 
 class ABCEnumMeta(EnumMeta, ABCMeta):
     pass
 
-class Tag:
 
+class Tag:
     def __neg__(self) -> Negated:
         return Negated(self)
 
+
 class StringTag(Tag):
-    
     def __init__(self, desc: str):
         self.desc = desc
+
 
 class EnumTag(Tag, Enum, metaclass=ABCEnumMeta):
     pass
 
-class Semantics(EnumTag):
 
+class Semantics(EnumTag):
     # Mesh types
     Room = "room"
     Object = "object"
@@ -35,16 +37,16 @@ class Semantics(EnumTag):
 
     # Room types
     Kitchen = "kitchen"
-    Bedroom = 'bedroom'
-    LivingRoom = 'living-room'
-    Closet = 'closet'
-    Hallway = 'hallway'
-    Bathroom = 'bathroom'
-    Garage = 'garage'
-    Balcony = 'balcony'
-    DiningRoom = 'dining-room'
-    Utility = 'utility'
-    Staircase = 'staircase'
+    Bedroom = "bedroom"
+    LivingRoom = "living-room"
+    Closet = "closet"
+    Hallway = "hallway"
+    Bathroom = "bathroom"
+    Garage = "garage"
+    Balcony = "balcony"
+    DiningRoom = "dining-room"
+    Utility = "utility"
+    Staircase = "staircase"
 
     # Object types
     Furniture = "furniture"
@@ -94,28 +96,29 @@ class Semantics(EnumTag):
 
     # Special Case Objects
     Chair = "chair"
-    Window = 'window'
-    Open = 'open'
-    Entrance = 'entrance'
-    Door = 'door'
-    StaircaseWall = 'staircase-wall'
-        
+    Window = "window"
+    Open = "open"
+    Entrance = "entrance"
+    Door = "door"
+    StaircaseWall = "staircase-wall"
+
     # Solver feature flags
     # TODO these should not be in Semantics
     RealPlaceholder = "real-placeholder"
     AssetAsPlaceholder = "asset-as-placeholder"
     AssetPlaceholderForChildren = "asset-placeholder-for-children"
-    PlaceholderBBox = 'placeholder-bbox'
-    SingleGenerator = 'single-generator'
-    NoRotation = 'no-rotation'
-    NoCollision = 'no-collision'
-    NoChildren = 'no-children'
+    PlaceholderBBox = "placeholder-bbox"
+    SingleGenerator = "single-generator"
+    NoRotation = "no-rotation"
+    NoCollision = "no-collision"
+    NoChildren = "no-children"
 
     def __str__(self):
-        return f'{self.__class__.__name__}({self.value})'
+        return f"{self.__class__.__name__}({self.value})"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}.{self.name}'
+        return f"{self.__class__.__name__}.{self.name}"
+
 
 class Subpart(EnumTag):
     SupportSurface = "support"
@@ -131,29 +134,31 @@ class Subpart(EnumTag):
     Ceiling = "ceiling"
     Wall = "wall"
 
-    StaircaseWall = "staircase-wall" # TODO Lingjie Remove
-    
+    StaircaseWall = "staircase-wall"  # TODO Lingjie Remove
+
     def __str__(self):
-        return f'{self.__class__.__name__}({self.value})'
+        return f"{self.__class__.__name__}({self.value})"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}.{self.name}'
+        return f"{self.__class__.__name__}.{self.name}"
+
 
 @dataclass(frozen=True)
 class FromGenerator(Tag):
     generator: type
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.generator.__name__})'
+        return f"{self.__class__.__name__}({self.generator.__name__})"
+
 
 @dataclass(frozen=True)
 class Negated(Tag):
     tag: Tag
-    
+
     def __str__(self):
         return "-" + str(self.tag)
 
-    def __repr__(self): 
+    def __repr__(self):
         return f"-{repr(self.tag)}"
 
     def __neg__(self):
@@ -161,6 +166,7 @@ class Negated(Tag):
 
     def __post_init__(self):
         assert not isinstance(self.tag, Negated), "dont construct double negative tags"
+
 
 @dataclass(frozen=True)
 class Variable(Tag):
@@ -170,17 +176,18 @@ class Variable(Tag):
         assert isinstance(self.name, str)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.name})'
+        return f"{self.__class__.__name__}({self.name})"
 
     def __str__(self):
         return self.name
+
 
 @dataclass(frozen=True)
 class SpecificObject(Tag):
     name: str
 
+
 def decompose_tags(tags: set[Tag]):
-    
     positive, negative = set(), set()
 
     for t in tags:
@@ -192,44 +199,36 @@ def decompose_tags(tags: set[Tag]):
 
     return positive, negative
 
+
 def contradiction(tags: set[Tag]):
-    
     pos, neg = decompose_tags(tags)
 
     if pos.intersection(neg):
         return True
-    
+
     if len([t for t in pos if isinstance(t, FromGenerator)]) > 1:
         return True
     if len([t for t in tags if isinstance(t, SpecificObject | Variable)]) > 1:
         return True
-    
+
     return False
 
-def implies(t1: set[Tag], t2: set[Tag]):
 
+def implies(t1: set[Tag], t2: set[Tag]):
     p1, n1 = decompose_tags(t1)
     p2, n2 = decompose_tags(t2)
 
-    return (
-        not contradiction(t1)
-        and p1.issuperset(p2)
-        and n1.issuperset(n2)
-    )
+    return not contradiction(t1) and p1.issuperset(p2) and n1.issuperset(n2)
+
 
 def satisfies(t1: set[Tag], t2: set[Tag]):
-
     p1, n1 = decompose_tags(t1)
     p2, n2 = decompose_tags(t2)
 
-    return (
-        p1.issuperset(p2)
-        and not n1.intersection(p2)
-        and not n2.intersection(p1)
-    )
+    return p1.issuperset(p2) and not n1.intersection(p2) and not n2.intersection(p1)
+
 
 def difference(t1: set[Tag], t2: set[Tag]):
-
     """Return a set of predicates representing the difference
 
     If the difference is empty, will return a contradictory set of predicates.
@@ -238,13 +237,13 @@ def difference(t1: set[Tag], t2: set[Tag]):
     p1, n1 = decompose_tags(t1)
     p2, n2 = decompose_tags(t2)
 
-    pos = p1.union(n2 - n1) 
+    pos = p1.union(n2 - n1)
     neg = n1.union(p2 - p1)
 
     return pos.union(Negated(n) for n in neg)
 
-def to_tag(s: str | Tag | type, fac_context=None) -> Tag:
 
+def to_tag(s: str | Tag | type, fac_context=None) -> Tag:
     if isinstance(s, Tag):
         return s
 
@@ -254,18 +253,18 @@ def to_tag(s: str | Tag | type, fac_context=None) -> Tag:
         if s not in fac_context:
             raise ValueError(f"Got {s=} of type=type but it was not in fac_context")
         return FromGenerator(s)
-    
+
     assert isinstance(s, str), s
 
     if s.startswith("-"):
         return Negated(to_tag(s[1:]))
-    
+
     if fac_context is not None:
         fac = next((f for f in fac_context.keys() if f.__name__ == s), None)
         if fac:
             return FromGenerator(fac)
 
-    s = s.strip("\"\'")
+    s = s.strip("\"'")
 
     try:
         return Semantics[s]
@@ -277,10 +276,12 @@ def to_tag(s: str | Tag | type, fac_context=None) -> Tag:
     except KeyError:
         pass
 
-    raise ValueError(f"to_tag got {s=} but could not resolve it. Please see tags.Semantics and tags.Subpart for available tag strings")
-    
-def to_string(tag: Tag | str):
+    raise ValueError(
+        f"to_tag got {s=} but could not resolve it. Please see tags.Semantics and tags.Subpart for available tag strings"
+    )
 
+
+def to_string(tag: Tag | str):
     if isinstance(tag, str):
         return tag
 
@@ -292,10 +293,11 @@ def to_string(tag: Tag | str):
         case FromGenerator():
             return tag.__name__
         case Negated():
-            raise ValueError(f'Negated tag {tag=} is not allowed here')
+            raise ValueError(f"Negated tag {tag=} is not allowed here")
         case _:
-            raise ValueError(f'to_string unhandled {tag=}')
-        
+            raise ValueError(f"to_string unhandled {tag=}")
+
+
 def to_tag_set(x, fac_context=None):
     match x:
         case None:

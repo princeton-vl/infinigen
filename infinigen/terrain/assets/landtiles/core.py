@@ -6,14 +6,19 @@
 
 import json
 
-import cv2
 import gin
 import numpy as np
-from infinigen.terrain.utils import boundary_smooth, read, smooth
+
 from infinigen.core.util.organization import AssetFile, LandTile, Process
+from infinigen.terrain.utils import boundary_smooth, read, smooth
 
 from .ant_landscape import ant_landscape_asset
-from .custom import coast_asset, multi_mountains_asset, coast_params, multi_mountains_params
+from .custom import (
+    coast_asset,
+    coast_params,
+    multi_mountains_asset,
+    multi_mountains_params,
+)
 
 
 @gin.configurable
@@ -79,51 +84,67 @@ def tile_directions(
 
 
 def assets_to_data(
-    folder, land_process,
+    folder,
+    land_process,
     N=2048,
     do_smooth=False,
 ):
     preset_name = str(folder).split("/")[-2]
     data = {}
-    if land_process is None: path = folder/f"{AssetFile.Heightmap}.exr"
-    elif land_process == Process.Snowfall: path = folder/f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"
-    elif land_process == Process.Erosion: path = folder/f"{Process.Erosion}.{AssetFile.Heightmap}.exr"
+    if land_process is None:
+        path = folder / f"{AssetFile.Heightmap}.exr"
+    elif land_process == Process.Snowfall:
+        path = folder / f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"
+    elif land_process == Process.Erosion:
+        path = folder / f"{Process.Erosion}.{AssetFile.Heightmap}.exr"
     heightmap = read(path)
-    assert(heightmap.shape[0] == N)
-    if do_smooth: heightmap = smooth(heightmap, 3)
+    assert heightmap.shape[0] == N
+    if do_smooth:
+        heightmap = smooth(heightmap, 3)
 
     if land_process is None:
         mask = np.zeros(N * N)
     else:
-        if land_process == Process.Snowfall: path = folder/f"{Process.Snowfall}.{AssetFile.Mask}.exr"
-        elif land_process == Process.Erosion: path = folder/f"{Process.Erosion}.{AssetFile.Mask}.exr"
+        if land_process == Process.Snowfall:
+            path = folder / f"{Process.Snowfall}.{AssetFile.Mask}.exr"
+        elif land_process == Process.Erosion:
+            path = folder / f"{Process.Erosion}.{AssetFile.Mask}.exr"
         mask = read(path)
 
     mask = mask.reshape(-1)
     data["mask"] = mask
-    
+
     # compute direction of directional tiles (must be done before smoothing it)
     direction = tile_directions()[preset_name]
     if direction == "dependent":
         data["direction"] = np.arctan2(
             np.mean(heightmap[:, -1] - heightmap[:, 0]),
-            np.mean(heightmap[-1] - heightmap[0])
+            np.mean(heightmap[-1] - heightmap[0]),
         ).reshape(-1)
     elif direction == "initial":
         data["direction"] = np.array([0.0])
-    
-    if direction != "dependent": heightmap = boundary_smooth(heightmap)
+
+    if direction != "dependent":
+        heightmap = boundary_smooth(heightmap)
     data["heightmap"] = heightmap.reshape(-1)
-    L = float(np.loadtxt(folder/f"{AssetFile.TileSize}.txt"))
-    if preset_name == LandTile.MultiMountains and (folder/f"{AssetFile.Params}.txt").exists():
-        with open(folder/f"{AssetFile.Params}.txt", "r") as file:
+    L = float(np.loadtxt(folder / f"{AssetFile.TileSize}.txt"))
+    if (
+        preset_name == LandTile.MultiMountains
+        and (folder / f"{AssetFile.Params}.txt").exists()
+    ):
+        with open(folder / f"{AssetFile.Params}.txt", "r") as file:
             params = json.load(file)
-            assert params == multi_mountains_params(raw=1), "asset should not be reused if you changed settings"
-    if preset_name == LandTile.Coast and (folder/f"{AssetFile.Params}.txt").exists():
-        with open(folder/f"{AssetFile.Params}.txt", "r") as file:
+            assert params == multi_mountains_params(
+                raw=1
+            ), "asset should not be reused if you changed settings"
+    if preset_name == LandTile.Coast and (folder / f"{AssetFile.Params}.txt").exists():
+        with open(folder / f"{AssetFile.Params}.txt", "r") as file:
             params = json.load(file)
-            assert params == {"multi_mountains_params": multi_mountains_params(raw=1), "coast_params": coast_params(raw=1)}, "asset should not be reused if you changed settings"
-    
+            assert params == {
+                "multi_mountains_params": multi_mountains_params(raw=1),
+                "coast_params": coast_params(raw=1),
+            }, "asset should not be reused if you changed settings"
+
     return L, N, data
 
 

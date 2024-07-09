@@ -4,6 +4,8 @@ blender
 blender.tar.xz
 Blender.app
 
+*.c
+
 .coverage
 coverage.xml
 

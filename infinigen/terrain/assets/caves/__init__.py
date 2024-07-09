@@ -4,4 +4,4 @@
 # Authors: Zeyu Ma
 
 
-from .core import caves_asset, assets_to_data
+from .core import assets_to_data, caves_asset

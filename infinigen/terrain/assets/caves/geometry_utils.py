@@ -32,5 +32,5 @@ def pitch_up(current_dir, angle_magnitude):
 def increment_step(current_dir, amount):
     mag = np.sqrt(np.sum(np.power(current_dir, 2)))
     unit_dir = current_dir / mag
-    output = current_dir + unit_dir*amount
+    output = current_dir + unit_dir * amount
     return output if np.sum(np.power(output, 2)) > 0 else current_dir

@@ -5,5 +5,5 @@
 
 import bpy
 
-bpy.ops.preferences.addon_enable(module='flip_fluids_addon')
+bpy.ops.preferences.addon_enable(module="flip_fluids_addon")
 bpy.ops.flip_fluid_operators.complete_installation()

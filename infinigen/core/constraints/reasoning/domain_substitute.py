@@ -5,35 +5,27 @@
 # Authors: Alexander Raistrick
 
 from __future__ import annotations
-import logging
-import itertools
 
-from dataclasses import dataclass, field
 import copy
-import typing
+import logging
 
-import numpy as np
-
-from infinigen.core.constraints import constraint_language as cl
 from infinigen.core import tags as t
+
 from .constraint_domain import Domain
 
 logger = logging.getLogger(__name__)
 
-def domain_tag_substitute(
-    domain: Domain, 
-    vartag: t.Variable, 
-    subst_domain: Domain, 
-    return_match=False
-) -> Domain:
 
-    """Return concrete substitution of `domain`, where `subst_domain` must be satisfied 
+def domain_tag_substitute(
+    domain: Domain, vartag: t.Variable, subst_domain: Domain, return_match=False
+) -> Domain:
+    """Return concrete substitution of `domain`, where `subst_domain` must be satisfied
     whenever `subst_tag` was present in the original.
     """
 
     assert isinstance(vartag, t.Variable), vartag
-    domain = copy.deepcopy(domain) # prevent modification of original
- 
+    domain = copy.deepcopy(domain)  # prevent modification of original
+
     o_match = vartag in domain.tags
 
     rd_sub, rd_matches = [], []
@@ -45,7 +37,7 @@ def domain_tag_substitute(
 
     if not (o_match or rd_match):
         return (domain, False) if return_match else domain
-    
+
     domain.relations = []
     for r, d in rd_sub:
         domain.add_relation(r, d)
@@ -56,6 +48,7 @@ def domain_tag_substitute(
         domain = domain.intersection(subst_domain)
 
     return (domain, True) if return_match else domain
+
 
 def substitute_all(
     dom: Domain,

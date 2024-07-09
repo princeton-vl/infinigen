@@ -4,22 +4,23 @@
 # Authors: Ankit Goyal, Mingzhe Wang, Zeyu Ma
 
 
-
 # Code generated using version v2.0.0 of the node_transpiler
 import gin
-from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes
 from numpy.random import uniform
+
 from infinigen.core import surface
+from infinigen.core.nodes import NodeWrangler, node_utils
+from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
 from infinigen.core.util.random import random_general as rg
+
 from .mountain import geo_MOUNTAIN_general
-from mathutils import Vector
 
 type = SurfaceTypes.SDFPerturb
 mod_name = "geometry_sandstone"
 name = "sandstone"
+
 
 @node_utils.to_nodegroup("nodegroup_roughness", singleton=False)
 def nodegroup_roughness(nw):
@@ -45,10 +46,12 @@ def nodegroup_roughness(nw):
         attrs={"noise_dimensions": "4D"},
     )
 
-
     multiply = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: noise_texture_1.outputs["Color"], 1: group_input.outputs["Normal"]},
+        input_kwargs={
+            0: noise_texture_1.outputs["Color"],
+            1: group_input.outputs["Normal"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -71,10 +74,12 @@ def nodegroup_roughness(nw):
         attrs={"noise_dimensions": "4D"},
     )
 
-
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: noise_texture_2.outputs["Color"], 1: group_input.outputs["Normal"]},
+        input_kwargs={
+            0: noise_texture_2.outputs["Color"],
+            1: group_input.outputs["Normal"],
+        },
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -106,7 +111,9 @@ def nodegroup_roughness(nw):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_cracked_with_mask", singleton=False, type="GeometryNodeTree")
+@node_utils.to_nodegroup(
+    "nodegroup_cracked_with_mask", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_cracked_with_mask(nw):
     nw.force_input_consistency()
     group_input = nw.new_node(
@@ -267,7 +274,6 @@ def nodegroup_add_noise(nw):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": add})
 
 
-
 @node_utils.to_nodegroup("nodegroup_displacement_to_offset", singleton=False)
 def nodegroup_displacement_to_offset(nw):
     nw.force_input_consistency()
@@ -300,8 +306,9 @@ def nodegroup_displacement_to_offset(nw):
         Nodes.GroupOutput, input_kwargs={"Vector": multiply_1.outputs["Vector"]}
     )
 
+
 @gin.configurable
-def shader(nw, color=None):
+def shader(nw: NodeWrangler, color=("palette", "sandstone")):
     nw.force_input_consistency()
     per_dark_1 = uniform(-0.1, 0.1)
     per_dark_2 = uniform(-0.1, 0.1)
@@ -321,7 +328,7 @@ def shader(nw, color=None):
     colorramp_0.color_ramp.elements[1].position = 1.0
     colorramp_0.color_ramp.elements[1].color = (1, 1, 1, 1)
 
-    vector = nw.new_node('ShaderNodeNewGeometry', [])
+    vector = nw.new_node("ShaderNodeNewGeometry", [])
 
     noise_texture = nw.new_node(
         Nodes.NoiseTexture,
@@ -390,6 +397,7 @@ def shader(nw, color=None):
 
     return principled_bsdf
 
+
 @gin.configurable
 def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
     nw.force_input_consistency()
@@ -399,7 +407,9 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
 
     else:
         roug_mag = nw.new_value(uniform(0.3, 0.5), "roug_mag")
-        side_step_displacement_to_offset_magnitude = nw.new_value(uniform(0.5, 1.5), "side_step_displacement_to_offset_magnitude")
+        side_step_displacement_to_offset_magnitude = nw.new_value(
+            uniform(0.5, 1.5), "side_step_displacement_to_offset_magnitude"
+        )
 
     side_step_poly_aplha_x = nw.new_value(uniform(0, 2), "side_step_poly_aplha_x")
     side_step_poly_aplha_y = nw.new_value(uniform(0, 2), "side_step_poly_aplha_y")
@@ -413,7 +423,11 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
 
     group_3 = nw.new_node(
         nodegroup_roughness().name,
-        input_kwargs={"Noise 1 Scale": 200.0, "Noise 1 Magnitude": 0.5, 'Normal': normal},
+        input_kwargs={
+            "Noise 1 Scale": 200.0,
+            "Noise 1 Magnitude": 0.5,
+            "Normal": normal,
+        },
     )
 
     multiply = nw.new_node(
@@ -551,28 +565,37 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
                 input_kwargs={
                     "Vector": position_1,
                     "Scale": nw.new_value(1, "stripe_warp_scale"),
-                }
+                },
             ),
             nw.new_value(0.2, "stripe_warp_mag"),
-        )
+        ),
     )
 
     offset2 = nw.add(
         multiply_3,
         nw.multiply(
-            nw.new_node(Nodes.WaveTexture, input_kwargs={
-                "Vector": warped_position,
-                "Scale": nw.new_value(20, "stripe_scale"),
-            }, attrs={
-                "bands_direction": "Z",
-                "wave_profile": "SAW",
-            }),
+            nw.new_node(
+                Nodes.WaveTexture,
+                input_kwargs={
+                    "Vector": warped_position,
+                    "Scale": nw.new_value(20, "stripe_scale"),
+                },
+                attrs={
+                    "bands_direction": "Z",
+                    "wave_profile": "SAW",
+                },
+            ),
             nw.new_value(0.005, "stripe_mag"),
             normal,
-        )
+        ),
     )
 
-    noise_params = {"scale": ("uniform", 10, 20), "detail": 9, "roughness": 0.6, "zscale": ("log_uniform", 0.05, 0.1)}
+    noise_params = {
+        "scale": ("uniform", 10, 20),
+        "detail": 9,
+        "roughness": 0.6,
+        "zscale": ("log_uniform", 0.05, 0.1),
+    }
 
     offset = nw.add(
         geo_MOUNTAIN_general(nw, 3, noise_params, 0, {}, {}),

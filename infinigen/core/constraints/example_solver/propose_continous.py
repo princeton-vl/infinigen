@@ -4,67 +4,57 @@
 
 # Authors: Alexander Raistrick
 
-import typing
 import logging
+import typing
 
 import numpy as np
-import gin
-
-from .geometry import dof
-from mathutils import Vector
-
-from infinigen.core.constraints import (
-    constraint_language as cl,
-    reasoning as r,
-    usage_lookup
-)
-
-from infinigen.core.constraints.evaluator.domain_contains import domain_contains
-
-from . import (
-    moves,
-    state_def
-) 
 
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints import reasoning as r
+from infinigen.core.constraints.evaluator.domain_contains import domain_contains
+
+from . import moves, state_def
 
 logger = logging.getLogger(__name__)
 
 TRANS_MULT = 8
 TRANS_MIN = 0.01
 ROT_MULT = np.pi
-ROT_MIN = 0 #2 * np.pi / 200
+ROT_MIN = 0  # 2 * np.pi / 200
 
 ANGLE_STEP_SIZE = (2 * np.pi) / 8
 
+
 def get_pose_candidates(
-    consgraph: cl.Node, 
-    state: state_def.State, 
+    consgraph: cl.Node,
+    state: state_def.State,
     filter_domain: r.Domain,
     require_rot_free: bool = False,
 ):
-
     return [
-        k for k, o in state.objs.items() 
+        k
+        for k, o in state.objs.items()
         if o.active
-        and domain_contains(filter_domain, state, o) 
+        and domain_contains(filter_domain, state, o)
         and not (require_rot_free and o.dof_rotation_axis is None)
     ]
 
+
 def propose_translate(
     consgraph: cl.Node,
-    state: state_def.State, 
+    state: state_def.State,
     filter_domain: r.Domain,
-    temperature: float
+    temperature: float,
 ) -> typing.Iterator[moves.TranslateMove]:
-    
     candidates = get_pose_candidates(consgraph, state, filter_domain)
-    candidates = [c for c in candidates if state.objs[c].dof_matrix_translation is not None]
+    candidates = [
+        c for c in candidates if state.objs[c].dof_matrix_translation is not None
+    ]
     if not len(candidates):
         return
-    
-    while True:
 
+    while True:
         obj_state_name = np.random.choice(candidates)
         obj_state = state.objs[obj_state_name]
 
@@ -77,24 +67,26 @@ def propose_translate(
             translation=projected_vector,
         )
 
+
 def propose_rotate(
     consgraph: cl.Node,
-    state: state_def.State, 
+    state: state_def.State,
     filter_domain: r.Domain,
-    temperature: float
+    temperature: float,
 ) -> typing.Iterator[moves.RotateMove]:
-    
     candidates = get_pose_candidates(consgraph, state, filter_domain)
     candidates = [
-        c for c in candidates if (
+        c
+        for c in candidates
+        if (
             t.Semantics.NoRotation not in state.objs[c].tags
-            and state.objs[c].dof_rotation_axis is not None 
-            and state.objs[c].dof_rotation_axis.dot(np.array((0,0,1))) > 0.95
+            and state.objs[c].dof_rotation_axis is not None
+            and state.objs[c].dof_rotation_axis.dot(np.array((0, 0, 1))) > 0.95
         )
     ]
     if not len(candidates):
         return
-    
+
     while True:
         obj_state_name = np.random.choice(candidates)
         obj_state = state.objs[obj_state_name]
@@ -107,42 +99,34 @@ def propose_rotate(
         random_angle = ang * ANGLE_STEP_SIZE
 
         axis = obj_state.dof_rotation_axis
-        yield moves.RotateMove(
-            names=[obj_state_name],
-            axis=axis,
-            angle=random_angle
-        )
+        yield moves.RotateMove(names=[obj_state_name], axis=axis, angle=random_angle)
+
 
 def propose_reinit_pose(
     consgraph: cl.Node,
-    state: state_def.State, 
+    state: state_def.State,
     filter_domain: r.Domain,
-    temperature: float
+    temperature: float,
 ) -> typing.Iterator[moves.ReinitPoseMove]:
-    
     candidates = get_pose_candidates(consgraph, state, filter_domain)
-    candidates = [c for c in candidates if state.objs[c].dof_matrix_translation is not None]
+    candidates = [
+        c for c in candidates if state.objs[c].dof_matrix_translation is not None
+    ]
 
     if len(candidates) == 0:
         return
 
     while True:
         obj_state_name = np.random.choice(candidates)
-        obj_state = state.objs[obj_state_name]
+        state.objs[obj_state_name]
 
         yield moves.ReinitPoseMove(
             names=[obj_state_name],
         )
 
-def propose_scale(
-    consgraph,
-    state, 
-    temperature
-):
+
+def propose_scale(consgraph, state, temperature):
     raise NotImplementedError
     obj_state = np.random.choice(state.objs)
     random_scale = np.random.normal(0, temperature, size=3)
-    return moves.ScaleMove(
-        name=obj_state.name,
-        scale=random_scale
-    )
+    return moves.ScaleMove(name=obj_state.name, scale=random_scale)

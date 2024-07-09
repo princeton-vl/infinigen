@@ -4,24 +4,17 @@
 
 # Authors: Alexander Raistrick
 
-from dataclasses import dataclass
-import numpy as np
-import typing
 import logging
-
-import bpy
-from infinigen.core.constraints.example_solver.geometry import parse_scene
-from mathutils import Vector, Matrix
-import trimesh
+import typing
+from dataclasses import dataclass
 
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class Move:
-
     names: typing.List[str]
 
     def __post_init__(self):
@@ -32,6 +25,6 @@ class Move:
 
     def revert(self, state: state_def.State):
         raise NotImplementedError
-    
+
     def accept(self, state: state_def.State):
         pass

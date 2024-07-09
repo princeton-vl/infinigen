@@ -45,7 +45,7 @@ Our `infinigen_examples/generate_nature.py` driver always loads [`infinigen_exam
 
 Now that you understand the two major python programs and how to configure them, you may notice and wonder about the many configs/overrides provided in our original one-command "Hello World" example:
 
-```
+```bash
 # Original hello world command
 python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world --num_scenes 1 --specific_seed 0 \
 --configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin blender_gt.gin \ 
@@ -169,23 +169,23 @@ All commands below are shown with using `local_256GB` config, but you can attemp
 
 We recommend this command as a starting point for generating high quality videos. Generating multi-view consistent terrain is not computationally tractible without CUDA accelleration, so make sure to follow the CUDA Terrain instructions in Installation.md, and we recommend not to remove the `cuda_terrain` flag below.
 
-````
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 60000 --config trailer_video high_quality_terrain
-````
+```
 
 #### Creating large-scale stereo datasets
 
-````
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_data --num_scenes 10000 \
     --pipeline_config slurm stereo cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
-````
+```
 
 #### Creating a few low-resolution images to your test changes
 
-```
+```bash
 screen python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes 50 \
     --pipeline_config slurm monocular cuda_terrain \
     --cleanup big_files --warmup_sec 1200 --configs dev
@@ -196,7 +196,7 @@ screen python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num
 These commands are intended as inspiration - please read docs above for more advice on customizing all aspects of Infinigen.
 
 <b> Create images that always have rain: </b>
-```
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000  \
@@ -206,7 +206,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 :bulb: You can substitute the `rain_particles` in `rain_particles_chance` for any `run_stage` name argument string in `infinigen_examples/generate_nature.py`, such as `trees` or `ground_creatures`.
 
 <b> Create images that only have terrain: </b>
-```
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config no_assets
@@ -215,7 +215,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 
 <b> Create videos at birds-eye-view camera altitudes: </b>
 
-```
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \
@@ -225,7 +225,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 :bulb: The command shown is overriding `infinigen_examples/configs_nature/base.gin`'s default setting of `camera.camera_pose_proposal.altitude`. You can use a similar syntax to override any number of .gin config entries. Separate multiple entries with spaces. 
 
 <b> Create 1 second video clips: </b>
-```
+```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \

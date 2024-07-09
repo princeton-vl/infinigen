@@ -8,17 +8,15 @@ import hashlib
 import math
 import random
 import warnings
-import sys
 
-import numpy as np
-import gin
 import cv2
+import gin
+import numpy as np
+
 
 @gin.configurable
 class FixedSeed:
-
     def __init__(self, seed):
-        
         self.seed = int(seed)
         self.py_state = None
         self.np_state = None
@@ -37,7 +35,6 @@ class FixedSeed:
 
 @gin.configurable
 class AddedSeed:
-
     def __init__(self, added_seed):
         self.added_seed = added_seed
         self.py_state = None
@@ -56,40 +53,40 @@ class AddedSeed:
 
 
 class BBox:
-
     def __init__(self, mins, maxs):
         self.mins = np.array(mins)
         self.maxs = np.array(maxs)
 
     def __repr__(self):
-        return f'{self.__class__}({self.mins}, {self.maxs})'
+        return f"{self.__class__}({self.mins}, {self.maxs})"
 
     def __contains__(self, p):
         p = np.array(p)
         return np.all((self.mins <= p) * (self.maxs >= p))
 
     def uniform(self):
-        return np.random.uniform(0, 1, len(self.mins)) * (self.maxs - self.mins) + self.mins
+        return (
+            np.random.uniform(0, 1, len(self.mins)) * (self.maxs - self.mins)
+            + self.mins
+        )
 
     def union(self, other):
-
         if isinstance(other, BBox):
             return BBox(
                 mins=np.minimum(self.mins, other.mins),
-                maxs=np.maximum(self.maxs, other.maxs)
+                maxs=np.maximum(self.maxs, other.maxs),
             )
         elif isinstance(other, np.ndarray) and other.shape[-1] == len(self.mins):
             return BBox(
-                mins=np.minimum(self.mins, other),
-                maxs=np.maximum(self.maxs, other)
+                mins=np.minimum(self.mins, other), maxs=np.maximum(self.maxs, other)
             )
         else:
-            raise ValueError(f'Unrecognized arg {other} in BBox.union')
+            raise ValueError(f"Unrecognized arg {other} in BBox.union")
 
     def intersect(self, other):
         return BBox(
             mins=np.maximum(self.mins, other.mins),
-            maxs=np.minimum(self.maxs, other.maxs)
+            maxs=np.minimum(self.maxs, other.maxs),
         )
 
     def empty(self):
@@ -101,7 +98,9 @@ class BBox:
     def linspace(self, n):
         if isinstance(n, int):
             n = [n] * len(self.mins)
-        lins = [np.linspace(self.mins[i], self.maxs[i], n[i]) for i in range(len(self.mins))]
+        lins = [
+            np.linspace(self.mins[i], self.maxs[i], n[i]) for i in range(len(self.mins))
+        ]
         return np.meshgrid(*lins)
 
     def to_local_coords(self, p):
@@ -130,36 +129,29 @@ class BBox:
     def eroded(self, margin):
         if not isinstance(margin, np.ndarray):
             margin = np.array([margin] * len(self))
-        return BBox(
-            mins=self.mins + margin,
-            maxs=self.maxs - margin
-        )
+        return BBox(mins=self.mins + margin, maxs=self.maxs - margin)
 
     def inflated(self, margin):
         if not isinstance(margin, np.ndarray):
             margin = np.array([margin] * len(self))
-        return BBox(
-            mins=self.mins - margin,
-            maxs=self.maxs + margin
-        )
+        return BBox(mins=self.mins - margin, maxs=self.maxs + margin)
 
     @classmethod
     def from_center_dims(cls, center, dims):
-        return cls(
-            mins=center - dims / 2,
-            maxs=center + dims / 2
-        )
+        return cls(mins=center - dims / 2, maxs=center + dims / 2)
 
     @classmethod
     def from_bpy_box(cls, bpy_obj):
         if not (
-                hasattr(bpy_obj, 'empty_display_type') and
-                bpy_obj.empty_display_type == 'CUBE'
+            hasattr(bpy_obj, "empty_display_type")
+            and bpy_obj.empty_display_type == "CUBE"
         ):
-            raise ValueError(f'BBox.from_bpy_box expected a CUBE type blender empty')
+            raise ValueError("BBox.from_bpy_box expected a CUBE type blender empty")
 
         center = bpy_obj.location
-        dims = bpy_obj.scale * bpy_obj.empty_display_size / 2  # default has a RADIUS of 1
+        dims = (
+            bpy_obj.scale * bpy_obj.empty_display_size / 2
+        )  # default has a RADIUS of 1
 
         return cls.from_center_dims(center, dims)
 
@@ -176,19 +168,20 @@ def md5_hash(x):
         m = hashlib.md5()
         for s in x:
             assert isinstance(s, (int, str))
-            m.update(str(s).encode('utf-8'))
+            m.update(str(s).encode("utf-8"))
         return m
     elif isinstance(x, (int, str)):
-        x = str(x).encode('utf-8')
+        x = str(x).encode("utf-8")
         return hashlib.md5(x)
     else:
-        raise ValueError(f'util.md5_hash doesnt currently support type({type(x)}')
+        raise ValueError(f"util.md5_hash doesnt currently support type({type(x)}")
 
 
 def int_hash(x, max=(2**32 - 1)):
     md5 = int(md5_hash(x).hexdigest(), 16)
     h = abs(md5) % max
     return h
+
 
 def round_to_nearest(x, step):
     return step * np.round(x / step)
@@ -213,9 +206,9 @@ def lerp_sample(vec, ts: np.array):
 
 
 def inverse_interpolate(vals, ds):
-    '''
+    """
     Find ts such that lerp_sample(vals, ts) = ds
-    '''
+    """
 
     assert (ds >= vals.min()).all()
     assert (ds <= vals.max()).all()
@@ -235,11 +228,14 @@ def inverse_interpolate(vals, ds):
 def cross_matrix(v):
     o = np.zeros(v.shape[0])
 
-    cross_mat = np.stack([
-        np.stack([o, -v[:, 2], v[:, 1]], axis=-1),
-        np.stack([v[:, 2], o, -v[:, 0]], axis=-1),
-        np.stack([-v[:, 1], v[:, 0], o], axis=-1),
-    ], axis=-1).transpose(0, 2, 1)
+    cross_mat = np.stack(
+        [
+            np.stack([o, -v[:, 2], v[:, 1]], axis=-1),
+            np.stack([v[:, 2], o, -v[:, 0]], axis=-1),
+            np.stack([-v[:, 1], v[:, 0], o], axis=-1),
+        ],
+        axis=-1,
+    ).transpose(0, 2, 1)
 
     return cross_mat
 
@@ -264,7 +260,7 @@ def rotate_match_directions(a, b):
     rots = np.empty((len(a), 3, 3))
     rots[~m] = np.eye(3)[None]
 
-    if np.all(~m): # needed to prevent exceptions if continued
+    if np.all(~m):  # needed to prevent exceptions if continued
         return rots
 
     dots = (a[m] * b[m]).sum(axis=-1)
@@ -278,15 +274,18 @@ def lerp(a, b, x):
     "linear interpolation"
     return (1 - x) * a + x * b
 
+
 def dict_lerp(a, b, t):
     assert list(a.keys()) == list(b.keys())
     return {k: lerp(va, b[k], t) for k, va in a.items()}
+
 
 def dict_convex_comb(dicts, weights):
     assert all(d.keys == dicts[0].keys() for d in dicts[1:])
     weights = np.array(weights)
     vals = {k: np.array([d[k] for d in dicts]) for k in dicts[0]}
     return {k: (v * weights).sum() for k, v in vals.items()}
+
 
 def randomspacing(min, max, n, margin):
     assert 0 <= margin and margin <= 0.5
@@ -312,6 +311,7 @@ def homogenize(points):
 def dehomogenize(points):
     return points[..., :-1] / points[..., [-1]]
 
+
 def clip_gaussian(mean, std, min, max, max_tries=20):
     assert min <= max
     i = 0
@@ -321,10 +321,13 @@ def clip_gaussian(mean, std, min, max, max_tries=20):
             return val
 
         if i == max_tries:
-            warnings.warn(f'clip_gaussian({mean=}, {std=}, {min=}, {max=}) reached {max_tries=}')
+            warnings.warn(
+                f"clip_gaussian({mean=}, {std=}, {min=}, {max=}) reached {max_tries=}"
+            )
             return np.clip(val, min, max)
 
         i += 1
+
 
 def normalize(v, disallow_zero_norm=False, in_place=True):
     n = np.linalg.norm(v, axis=-1)
@@ -342,6 +345,7 @@ def project_to_unit_vector(k, v):
 def wrap_around_cyclic_coord(u, u_start, u_end):
     _, r = np.divmod(u - u_start, u_end - u_start)
     return r + u_start
+
 
 def new_domain_from_affine(old_domain, a=1.0, b=0.0):
     """
@@ -366,5 +370,6 @@ def affine_from_new_domain(old_domain, new_domain):
     b = s[0] - a * t[0]
     return (a, b)
 
+
 def resize(arr, shape):
-    return cv2.resize(arr, shape) #, interpolation=cv2.INTER_LANCZOS4)
+    return cv2.resize(arr, shape)  # , interpolation=cv2.INTER_LANCZOS4)

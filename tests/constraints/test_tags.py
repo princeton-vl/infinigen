@@ -6,10 +6,10 @@
 
 from infinigen.core import tags as t
 
-def test_implies():
 
+def test_implies():
     assert t.implies(set(), set())
     assert t.implies({t.Subpart.Wall}, {t.Subpart.Wall})
     assert t.implies({t.Subpart.Wall}, set())
 
-    assert t.implies({t.Semantics.Room, t.Variable('room')}, {t.Semantics.Room})
+    assert t.implies({t.Semantics.Room, t.Variable("room")}, {t.Semantics.Room})

@@ -61,3 +61,10 @@ v1.4.1
 - @David-Yan1 fix placeholder & ocmesher submodule version
 - @lahavlipson fix bug in surface normals of wall meshes
 - @araistrick bugfix example commands & other typos
+
+v1.5.0
+- ruff & auto-lint-fix the entire codebase
+- move mesh assets into infinigen/assets/objects
+- minimize pip dependences: remove unused packages & move terrain/gt-vis packages into optional \[terrain,vis\] extras.
+- add parameters for object clutter, reduce excessively cluttered / slow indoors scenes
+- minorly improve infinigen-indoors performance via logging & asset hiding

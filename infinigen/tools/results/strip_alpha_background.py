@@ -4,27 +4,31 @@
 # Authors: Alexander Raistrick, Lingjie Mei
 
 
-import imageio
-from pathlib import Path
 import argparse
-import pdb
+import logging
+from pathlib import Path
+
+import imageio
+
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('folder', type=Path, nargs='+')
-parser.add_argument('thresh', type=float, default=0.05)
+parser.add_argument("folder", type=Path, nargs="+")
+parser.add_argument("thresh", type=float, default=0.05)
 
 
 def main(thresh, folder):
-    assert thresh > 1, f'Images are 0-255 you probably didnt want {thresh=}'
+    assert thresh > 1, f"Images are 0-255 you probably didnt want {thresh=}"
 
     for folder in folder:
-        out_folder = folder.parent / (folder.stem + f'_thresh_{thresh}')
+        out_folder = folder.parent / (folder.stem + f"_thresh_{thresh}")
         out_folder.mkdir(exist_ok=True, parents=True)
 
         for imgpath in folder.iterdir():
             try:
                 img = imageio.imread(imgpath)
-            except:
+            except FileNotFoundError:
+                logger.warning(f"Could not read {imgpath}")
                 continue
 
             pixs = img.reshape(-1, 4)
@@ -32,7 +36,7 @@ def main(thresh, folder):
             pixs[mask] = 0
             img = pixs.reshape(img.shape)
 
-            print(f'Stripped {100 * mask.mean()}% from {imgpath}')
+            print(f"Stripped {100 * mask.mean()}% from {imgpath}")
             imageio.imwrite(out_folder / imgpath.name, img)
 
 

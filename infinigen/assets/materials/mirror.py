@@ -3,15 +3,19 @@
 
 # Authors: Lingjie Mei
 from infinigen.assets.materials import common
-from infinigen.core.nodes import NodeWrangler, Nodes
+from infinigen.core.nodes import Nodes, NodeWrangler
 
 
-def shader_mirror(nw: NodeWrangler,**kwargs):
-    glossy_bsdf = nw.new_node('ShaderNodeBsdfGlossy',
-                              input_kwargs={'Color': (1.0, 1.0, 1.0, 1.0), 'Roughness': 0,
-                              })
+def shader_mirror(nw: NodeWrangler, **kwargs):
+    glossy_bsdf = nw.new_node(
+        "ShaderNodeBsdfGlossy",
+        input_kwargs={
+            "Color": (1.0, 1.0, 1.0, 1.0),
+            "Roughness": 0,
+        },
+    )
 
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': glossy_bsdf})
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": glossy_bsdf})
 
 
 def apply(obj, selection=None, **kwargs):

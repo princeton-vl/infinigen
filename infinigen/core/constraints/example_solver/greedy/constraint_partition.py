@@ -4,49 +4,39 @@
 
 # Authors: Alexander Raistrick
 
-import typing
-import operator
 import copy
-from functools import partial
-from dataclasses import dataclass
 import logging
+import operator
+import typing
+from functools import partial
 
-from infinigen.core.constraints import (
-    constraint_language as cl,
-    example_solver as ex,
-    reasoning as r,
-)
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints import reasoning as r
 
 logger = logging.getLogger(__name__)
 
-OPS_COMMUTATIVE = {
-    operator.add, 
-    operator.and_, 
-    operator.mul, 
-    operator.or_
-}
+OPS_COMMUTATIVE = {operator.add, operator.and_, operator.mul, operator.or_}
 
 OPS_UNIT_VALUE = {
-    operator.add: 0, 
+    operator.add: 0,
     operator.mul: 1,
     operator.pow: 0,
-    operator.truediv: 0
+    operator.truediv: 0,
 }
+
 
 def _get_op_unit_value(node: cl.BoolExpression | cl.ScalarExpression):
     match node:
-        case cl.BoolOperatorExpression(func, operands):
+        case cl.BoolOperatorExpression(func, _):
             return True
-        case cl.ScalarOperatorExpression(func, operands) if func in OPS_UNIT_VALUE:
+        case cl.ScalarOperatorExpression(func, _) if func in OPS_UNIT_VALUE:
             return OPS_UNIT_VALUE[func]
         case _:
-            raise ValueError(f'Found no unit value for  {node.__class__} {node.func}')
+            raise ValueError(f"Found no unit value for  {node.__class__} {node.func}")
 
-def _partition_dict(
-    terms: dict[str, cl.Node],
-    recurse: typing.Callable
-):
+
+def _partition_dict(terms: dict[str, cl.Node], recurse: typing.Callable):
     new_terms = {}
     for k, v in terms.items():
         part, relevant = recurse(v)
@@ -55,11 +45,9 @@ def _partition_dict(
         new_terms[k] = part
     return new_terms
 
+
 def _update_item_nodes(
-    node: cl.Node,
-    from_varname: str,
-    to_varname: str,
-    to_objs: cl.ObjectSetExpression
+    node: cl.Node, from_varname: str, to_varname: str, to_objs: cl.ObjectSetExpression
 ):
     for child in node.traverse():
         if not isinstance(child, cl.item):
@@ -71,13 +59,13 @@ def _update_item_nodes(
 
     return node
 
+
 def _filter_gather_constraint(
     node: cl.ForAll | cl.SumOver | cl.MeanOver,
     recurse: typing.Callable,
     filter_dom: r.Domain,
-    var_assignments: dict[t.Variable, r.Domain]
+    var_assignments: dict[t.Variable, r.Domain],
 ) -> tuple[cl.Node, bool]:
-    
     objs, var, pred = node.objs, node.var, node.pred
     var = t.Variable(var)
 
@@ -85,7 +73,7 @@ def _filter_gather_constraint(
 
     obj_dom = r.constraint_domain(objs)
     obj_dom = r.substitute_all(obj_dom, var_assignments)
-    
+
     var_assignments = copy.deepcopy(var_assignments) or {}
     for varname, dom in var_assignments.items():
         assert isinstance(varname, t.Variable)
@@ -109,20 +97,20 @@ def _filter_gather_constraint(
     res.pred = pred_part
 
     relevant = pred_rel
-    return res, relevant  
-        
+    return res, relevant
+
+
 def _filter_object_set(
     node: cl.ObjectSetExpression,
     recurse: typing.Callable,
     filter_dom: r.Domain,
     var_assignments: dict[t.Variable, r.Domain],
 ) -> tuple[cl.Node, bool]:
-    
     new_consnode = copy.deepcopy(node)
 
     dom = r.constraint_domain(node)
     dom_subst = r.substitute_all(dom, var_assignments)
-    
+
     if not r.domain_finalized(dom_subst, check_anyrel=False, check_variable=True):
         raise ValueError(
             "Domain not finalized, unable to check against filter. "
@@ -132,22 +120,26 @@ def _filter_object_set(
 
     relevant = dom_subst.intersects(filter_dom, require_satisfies_right=True)
     if (
-        relevant 
-        and not dom_subst.satisfies(filter_dom) # no need to filter something that is already strict enough
+        relevant
+        and not dom_subst.satisfies(
+            filter_dom
+        )  # no need to filter something that is already strict enough
     ):
-        finalized = r.domain_finalized(filter_dom, check_anyrel=False, check_variable=True)
+        finalized = r.domain_finalized(
+            filter_dom, check_anyrel=False, check_variable=True
+        )
         assert finalized, filter_dom
         new_consnode = r.FilterByDomain(new_consnode, filter_dom)
 
     return new_consnode, relevant
 
+
 def _filter_operator(
     node: cl.BoolOperatorExpression | cl.ScalarOperatorExpression,
     recurse: typing.Callable,
     filter_dom: r.Domain,
-    var_assignments: dict[t.Variable, r.Domain]
+    var_assignments: dict[t.Variable, r.Domain],
 ) -> tuple[cl.Node, bool]:
-    
     operands, func = node.operands, node.func
 
     op_results = [recurse(o) for o in operands]
@@ -159,8 +151,7 @@ def _filter_operator(
         case ([op], f) if f in OPS_COMMUTATIVE:
             return op, True
         case (new_operands, f) if (
-            len(new_operands) == len(operands)
-            or f in OPS_COMMUTATIVE
+            len(new_operands) == len(operands) or f in OPS_COMMUTATIVE
         ):
             return node.__class__(f, new_operands), True
         case _:
@@ -168,40 +159,42 @@ def _filter_operator(
             any_relevant = any(o[1] for o in op_results)
             return res, any_relevant
 
+
 def _filter_node_cases(
     node: cl.Node,
     recurse: typing.Callable,
     filter_dom: r.Domain,
-    var_assignments: dict[t.Variable, r.Domain]
+    var_assignments: dict[t.Variable, r.Domain],
 ) -> tuple[cl.Node, bool]:
     match node:
         case cl.Problem(cons, score_terms):
             prob = cl.Problem(
-                _partition_dict(cons, recurse),
-                _partition_dict(score_terms, recurse)
+                _partition_dict(cons, recurse), _partition_dict(score_terms, recurse)
             )
             relevant = len(prob.constraints) > 0 or len(prob.score_terms) > 0
             return prob, relevant
         case cl.ForAll() | cl.SumOver() | cl.MeanOver():
-            return _filter_gather_constraint(node, recurse, filter_dom, var_assignments)  
+            return _filter_gather_constraint(node, recurse, filter_dom, var_assignments)
         case cl.BoolOperatorExpression() | cl.ScalarOperatorExpression():
             return _filter_operator(node, recurse, filter_dom, var_assignments)
         case cl.ObjectSetExpression():
             return _filter_object_set(node, recurse, filter_dom, var_assignments)
         case _:
-
             result_relevant = False
             result_consnode = copy.deepcopy(node)
-            
+
             for name, child in node.children():
                 res, relevant = recurse(child)
                 if not hasattr(node, name):
-                    raise ValueError(f"Node {node.__class__} has child with {name=} but no attribute {name} to set")
+                    raise ValueError(
+                        f"Node {node.__class__} has child with {name=} but no attribute {name} to set"
+                    )
                 setattr(result_consnode, name, res)
                 result_relevant = result_relevant or relevant
 
             return result_consnode, result_relevant
-            
+
+
 def _check_partition_correctness(
     node: cl.ObjectSetExpression,
     filter_dom: r.Domain,
@@ -209,7 +202,7 @@ def _check_partition_correctness(
 ):
     res_dom = r.constraint_domain(node)
     res_dom = r.substitute_all(res_dom, var_assignments)
-    
+
     if not r.domain_finalized(res_dom, check_anyrel=False, check_variable=True):
         raise ValueError(
             f"While doing {_check_partition_correctness.__name__} for {node=} {filter_dom=}, "
@@ -219,16 +212,16 @@ def _check_partition_correctness(
     if not res_dom.satisfies(filter_dom):
         raise ValueError(f"{res_dom=} does not satisfy {filter_dom=}")
 
+
 def filter_constraints(
     node: cl.Node,
     filter_dom: r.Domain,
     var_assignments: dict[str, r.Domain] = None,
-    check_correctness=True
+    check_correctness=True,
 ) -> tuple[cl.Node, bool]:
-    
-    """ Return a constraint graph representing the component of `node` that is relevant for 
+    """Return a constraint graph representing the component of `node` that is relevant for
     to a particular greedy filter domain.
-    
+
     Parameters
     ----------
     node : cl.Node
@@ -236,14 +229,14 @@ def filter_constraints(
     filter_dom : Domain
         The domain which determines whether a constraint is relevant
     var_assignments : Domain
-        Domains to substitute for any t.Variable(name: str) in the constraint program, typically used for recursive calls. 
+        Domains to substitute for any t.Variable(name: str) in the constraint program, typically used for recursive calls.
 
     Returns
     -------
     partitioned: cl.Node
         The partitioned constraint program
     relevant: bool
-        Was any part of the constraint program relevant? 
+        Was any part of the constraint program relevant?
 
     """
 
@@ -252,18 +245,20 @@ def filter_constraints(
     if var_assignments is None:
         var_assignments = {}
 
-    recurse = partial(filter_constraints, filter_dom=filter_dom, var_assignments=var_assignments)
-    
-    logger.debug(f"{filter_constraints.__name__} for {node.__class__.__name__}, {var_assignments.keys()=}")
+    recurse = partial(
+        filter_constraints, filter_dom=filter_dom, var_assignments=var_assignments
+    )
+
+    logger.debug(
+        f"{filter_constraints.__name__} for {node.__class__.__name__}, {var_assignments.keys()=}"
+    )
     new_node, relevant = _filter_node_cases(node, recurse, filter_dom, var_assignments)
 
-    if (
-        relevant
-        and check_correctness
-        and isinstance(new_node, cl.ObjectSetExpression)
-    ):
+    if relevant and check_correctness and isinstance(new_node, cl.ObjectSetExpression):
         _check_partition_correctness(new_node, filter_dom, var_assignments)
 
-    logger.debug(f"Partitioned {node.__class__.__name__} to {new_node.__class__.__name__}")
+    logger.debug(
+        f"Partitioned {node.__class__.__name__} to {new_node.__class__.__name__}"
+    )
 
     return new_node, relevant

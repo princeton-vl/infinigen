@@ -1,4 +1,4 @@
-include 'infinigen/datagen/data_schema/monocular.gin'
+include 'infinigen/datagen/configs/data_schema/monocular.gin'
 iterate_scene_tasks.frame_range=(1, 2)
 
 

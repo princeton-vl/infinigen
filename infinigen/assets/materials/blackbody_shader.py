@@ -4,15 +4,11 @@
 # Authors: Karhan Kayan
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=zyIJQHlFQs0 by PolyFjord
 
-import bpy
-import mathutils
-from numpy.random import uniform, normal as N, randint
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
-from infinigen.core import surface
-from infinigen.core.util.random import random_color_neighbour
+from numpy.random import normal as N
 
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.random import random_color_neighbour
 
 
 def blackbody_shader(nw: NodeWrangler):
@@ -56,7 +52,9 @@ def blackbody_shader(nw: NodeWrangler):
     principled_volume = nw.new_node(
         Nodes.PrincipledVolume,
         input_kwargs={
-            "Color": random_color_neighbour((0.3568, 0.3568, 0.3568, 1.0000),0.1,0.1,0.1),
+            "Color": random_color_neighbour(
+                (0.3568, 0.3568, 0.3568, 1.0000), 0.1, 0.1, 0.1
+            ),
             "Density": 15.0000 + N(),
             "Blackbody Intensity": multiply_1,
         },

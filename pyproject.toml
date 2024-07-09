@@ -23,25 +23,16 @@ classifiers = [
 requires-python = "==3.10.*"
 dependencies = [
     "bpy==3.6.0",
-    "einops",
-    "flow_vis",
-    "frozendict",
-    "geomdl",
+    "frozendict", # TODO remove
+    "geomdl", # used only for creatures
     "gin_config>=0.5.0",
     "imageio",
-    "ipython",
-    "json5",
-    "landlab>=2.6.0",
     "matplotlib",
     "networkx",
     "numpy<2",
     "opencv-python",
     "pandas",
     "psutil",
-    "pycparser==2.22",
-    "pyrender",
-    "python-fcl",
-    "Rtree",
     "scikit-image",
     "scikit-learn",
     "scipy",
@@ -49,12 +40,23 @@ dependencies = [
     "submitit",
     "tqdm",
     "trimesh",
-    "vnoise",
-    "zarr",
-    "networkx",
+
+    # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
+    "python-fcl", 
+    "rtree", 
 ]
 
 [project.optional-dependencies]
+terrain = [
+    "landlab>=2.6.0",
+    "pyrender",
+]
+vis = [
+    "einops",
+    "flow_vis",
+    "numba", # for ground truth visuals
+    "pyglet<2" # for trimesh_scene.show()
+]
 dev = [
     "pytest",
     "pytest-ordering",
@@ -65,11 +67,7 @@ dev = [
     "ruff",
     "isort",
     "tabulate", # for integration test results
-]
-
-vis = [
-    "numba", # for ground truth visuals
-    "pyglet<2" # for trimesh_scene.show()
+    "pre-commit"
 ]
 
 wandb = [
@@ -100,7 +98,7 @@ exclude = [
     "terrain/lib/**/*.so", # created by terrain compilation
     "terrain/lib/**/*.o", # created by terrain compilation
     "datagen/customgt/build/customgt", # created during opengl compilation
-    "assets/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
+    "assets/objects/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
 ]
 
 [tool.setuptools.dynamic]
@@ -128,34 +126,25 @@ test-extras = ["dev"]
 test-command = "pytest tests"
 
 [tool.ruff]
-lint.select = [
-    "E9", 
-    "F63", 
-    "F7", 
-    "F82"
-    #"E", 
-    #"F", 
-    #"B", 
-    #"C901",
-]
 target-version = "py310"
-line-length = 120 # will be reduced to 88 to match black soon
 
 exclude = [
-    "*/dependencies/"
-]
-lint.ignore = [
-    "E402", # we have lots of sys.path and opencv statements that must preceed imports, ignore for now
-    "E501", # ignore line length for now
-    "E701", # disable multi line statements until we enable black
-    "F401", # unused imports are sometimes necessary for gin to work
-    "E712", # some people think `if x == True` is more explicit, not going to force it
+    # exclude known submodules 
+    "*/dependencies/",
+    "infinigen/OcMesher",
+    "infinigen/infinigen_gpl",
 ]
 
-lint.mccabe.max-complexity = 10
+[tool.ruff.lint]
+
+select = ["E", "I", "F"]
+ignore = [
+    "E501", # over-length lines, formatter should handle it
+    "E741", # ambigous variable name 
+]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = []
+"__init__.py" = ["F401"]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 [tool.pytype]

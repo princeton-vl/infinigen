@@ -3,30 +3,20 @@
 
 # Authors: Karhan Kayan
 
-import argparse
-import os
-import sys
-from pathlib import Path
-from mathutils import Vector
 import importlib
+import json
+import logging
+import os
 from collections import defaultdict
-
+from pathlib import Path
 
 import bpy
 import gin
 import numpy as np
-import json
+from mathutils import Vector
 
-from infinigen.assets.fluid.fluid import (
-    find_available_cache,
-    set_obj_on_fire,
-    fire_smoke_ground_truth,
-)
-
-import time
+from infinigen.assets.fluid.fluid import find_available_cache, set_obj_on_fire
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +25,15 @@ ASSET_ENV_VAR = "ASSET_PATH"
 SPECIES_MAX = 20
 I_MAX = 20
 
+
 @gin.configurable
 class FireCachingSystem:
-    def __init__(self, asset_folder = None, create=False, max_fire_assets = 3, max_per_kind = 1) -> None:
-        if asset_folder == None:
+    def __init__(
+        self, asset_folder=None, create=False, max_fire_assets=3, max_per_kind=1
+    ) -> None:
+        if asset_folder is None:
             raise ValueError("asset_folder not set for Fire")
-        
+
         cache_folder = os.path.join(asset_folder, "Fire")
 
         if not os.path.exists(cache_folder):
@@ -207,5 +200,3 @@ class FireCachingSystem:
         self.n_placed[factory.__class__.__name__] += 1
 
         return dom
-
-

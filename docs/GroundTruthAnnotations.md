@@ -8,6 +8,14 @@
 
 **Want annotations that we don't currently support? [Fill out a request!](https://github.com/princeton-vl/infinigen/issues/new?assignees=&labels=&projects=&template=request.md&title=%5BREQUEST%5D)**
 
+### Visualization dependencies
+
+To run the visualization scripts below you will need to install extra dependencies
+
+```bash
+pip install .[vis]
+```
+
 ## Default Annotations from Blender
 
 Infinigen can produce some dense annotations using Blender's built-in render passes. Users may prefer to use these annotations over our extended annotation system's since it requires only the bare-minimum installation. It is also able to run without a GPU.

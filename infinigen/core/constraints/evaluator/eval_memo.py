@@ -6,15 +6,13 @@
 
 import logging
 
-from infinigen.core.constraints.example_solver.state_def import State, ObjectState
-from infinigen.core.constraints.example_solver import moves
-
-from infinigen.core.constraints import (
-    constraint_language as cl
-)
 from infinigen.core import tags as t
+from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints.example_solver import moves
+from infinigen.core.constraints.example_solver.state_def import ObjectState, State
 
 logger = logging.getLogger(__name__)
+
 
 def memo_key(n: cl.Node):
     match n:
@@ -25,16 +23,9 @@ def memo_key(n: cl.Node):
         case _:
             return id(n)
 
-def evict_memo_for_obj(
-    node: cl.Problem,
-    memo: dict, 
-    obj: ObjectState
-):
 
-    recvals = [
-        evict_memo_for_obj(child, memo, obj)
-        for _, child in node.children()
-    ]
+def evict_memo_for_obj(node: cl.Problem, memo: dict, obj: ObjectState):
+    recvals = [evict_memo_for_obj(child, memo, obj) for _, child in node.children()]
     res = any(recvals)
 
     match node:
@@ -52,29 +43,28 @@ def evict_memo_for_obj(
 
     return res
 
-def reset_bvh_cache(state, filter_name=None):
 
-    '''
+def reset_bvh_cache(state, filter_name=None):
+    """
     filter_name: if specified, only get rid of things containing this
-    '''
+    """
 
     static_tags = {t.Semantics.Room, t.Semantics.Cutter}
 
     def keep_key(k):
-
         names, tags = k
-        
+
         if filter_name is not None:
             obj = state.objs[filter_name].obj
-            return not (obj.name in names)
-        
+            return obj.name not in names
+
         for n in names:
             if n not in state.objs:
                 return False
             ostate = state.objs[n]
             if not ostate.tags.intersection(static_tags):
                 return False
-            
+
         return True
 
     prev_keys = list(state.bvh_cache.keys())
@@ -84,22 +74,22 @@ def reset_bvh_cache(state, filter_name=None):
             continue
         del state.bvh_cache[k]
 
-    logger.debug(f'reset_bvh_cache evicted {len(prev_keys) - len(state.bvh_cache)} out of {len(prev_keys)} orig')
+    logger.debug(
+        f"reset_bvh_cache evicted {len(prev_keys) - len(state.bvh_cache)} out of {len(prev_keys)} orig"
+    )
+
 
 def evict_memo_for_move(
-    problem: cl.Problem, 
-    state: State, 
-    memo: dict, 
-    move: moves.Move
+    problem: cl.Problem, state: State, memo: dict, move: moves.Move
 ):
     match move:
         case (
-            moves.TranslateMove(names) | 
-            moves.RotateMove(names) |
-            moves.Addition(names=names) |
-            moves.ReinitPoseMove(names=names) |
-            moves.RelationPlaneChange(names=names) |
-            moves.Resample(names=names)
+            moves.TranslateMove(names)
+            | moves.RotateMove(names)
+            | moves.Addition(names=names)
+            | moves.ReinitPoseMove(names=names)
+            | moves.RelationPlaneChange(names=names)
+            | moves.Resample(names=names)
         ):
             for name in names:
                 assert name is not None, move
@@ -112,4 +102,4 @@ def evict_memo_for_move(
                 del memo[k]
             reset_bvh_cache(state)
         case _:
-            raise NotImplementedError(f'Unsure what to evict for {move=}')
+            raise NotImplementedError(f"Unsure what to evict for {move=}")

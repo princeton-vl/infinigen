@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
-# Authors: 
+# Authors:
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix constants
 
@@ -14,12 +14,19 @@ from matplotlib import pyplot as plt
 from numpy.random import uniform
 from shapely import LineString, union
 
-from infinigen.assets.utils.shapes import shared
-from infinigen.core.constraints.example_solver.room.utils import compute_neighbours, cut_polygon_by_line, canonicalize, is_valid_polygon, \
-    unit_cast, update_exterior_edges, update_shared_edges, update_staircase_occupancies
 import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.core.util.random import log_uniform
+from infinigen.assets.utils.shapes import shared
+from infinigen.core.constraints.example_solver.room.utils import (
+    canonicalize,
+    compute_neighbours,
+    cut_polygon_by_line,
+    is_valid_polygon,
+    unit_cast,
+    update_exterior_edges,
+    update_staircase_occupancies,
+)
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform
 
 
 class SegmentMaker:
@@ -29,34 +36,39 @@ class SegmentMaker:
             self.n = n
             self.n_boxes = int(self.n * uniform(1.4, 1.6))
 
-            self.box_ratio = .3
+            self.box_ratio = 0.3
             self.min_segment_area = log_uniform(1.5, 2)
-            self.min_segment_size = log_uniform(.5, 1.)
+            self.min_segment_size = log_uniform(0.5, 1.0)
 
-            self.divide_box_fn = lambda x: x.area ** .5
+            self.divide_box_fn = lambda x: x.area**0.5
 
             self.n_box_trials = 200
-            self.merge_fn = lambda x: x ** merge_alpha
+            self.merge_fn = lambda x: x**merge_alpha
 
     def build_segments(self, staircase=None):
         while True:
             try:
                 segments, shared_edges = self.filter_segments()
                 break
-            except:
+            except Exception:
                 pass
         exterior_edges = update_exterior_edges(segments, shared_edges)
-        neighbours_all = {k: set(compute_neighbours(se, constants.SEGMENT_MARGIN)) for k, se in shared_edges.items()}
-        exterior_neighbours = set(compute_neighbours(exterior_edges, constants.SEGMENT_MARGIN))
+        neighbours_all = {
+            k: set(compute_neighbours(se, constants.SEGMENT_MARGIN))
+            for k, se in shared_edges.items()
+        }
+        exterior_neighbours = set(
+            compute_neighbours(exterior_edges, constants.SEGMENT_MARGIN)
+        )
         staircase_occupancies = update_staircase_occupancies(segments, staircase)
         return {
-            'segments': segments,
-            'shared_edges': shared_edges,
-            'exterior_edges': exterior_edges,
-            'neighbours_all': neighbours_all,
-            'exterior_neighbours': exterior_neighbours,
-            'staircase_occupancies': staircase_occupancies,
-            'staircase': staircase,
+            "segments": segments,
+            "shared_edges": shared_edges,
+            "exterior_edges": exterior_edges,
+            "neighbours_all": neighbours_all,
+            "exterior_neighbours": exterior_neighbours,
+            "staircase_occupancies": staircase_occupancies,
+            "staircase": staircase,
         }
 
     def divide_segments(self):
@@ -68,7 +80,7 @@ class SegmentMaker:
                 k = np.random.choice(list(keys), p=prob / prob.sum())
                 x, y, xx, yy = segments[k].bounds
                 w, h = xx - x, yy - y
-                r = uniform(.25, .75)
+                r = uniform(0.25, 0.75)
                 line = None
                 if w >= h:
                     w_ = unit_cast(r * w)
@@ -85,7 +97,10 @@ class SegmentMaker:
                     s, t = cut_polygon_by_line(segments[k], line)
                     s_ = canonicalize(s)
                     t_ = canonicalize(t)
-                    if np.abs(s.area - s_.area) < 1e-3 and np.abs(t.area - t_.area) < 1e-3:
+                    if (
+                        np.abs(s.area - s_.area) < 1e-3
+                        and np.abs(t.area - t_.area) < 1e-3
+                    ):
                         segments[k], segments[i + 1] = s_, t_
                         break
         return {k: v for k, v in segments.items()}
@@ -93,7 +108,8 @@ class SegmentMaker:
     def merge_segment(self, segments, shared_edges, attached, i, j):
         assert i != j
         s = canonicalize(union(segments[i], segments[j]))
-        if not is_valid_polygon(s): return
+        if not is_valid_polygon(s):
+            return
         segments[j] = s
         segments.pop(i)
         shared_edges.pop(i)
@@ -130,8 +146,15 @@ class SegmentMaker:
         while len(segments) > self.n:
             prob = np.array([1 / (len(attached[c]) + 1) for c in shared_edges.keys()])
             k = np.random.choice(list(shared_edges.keys()), p=prob / prob.sum())
-            candidates = list(k for k, se in shared_edges[k].items() if se.length>=1e-6)
-            prob = np.array([len(attached[c].difference(attached[k]))**2 + .5 for c in candidates])
+            candidates = list(
+                k for k, se in shared_edges[k].items() if se.length >= 1e-6
+            )
+            prob = np.array(
+                [
+                    len(attached[c].difference(attached[k])) ** 2 + 0.5
+                    for c in candidates
+                ]
+            )
             n = np.random.choice(candidates, p=prob / prob.sum())
             self.merge_segment(segments, shared_edges, attached, k, n)
         return segments, shared_edges

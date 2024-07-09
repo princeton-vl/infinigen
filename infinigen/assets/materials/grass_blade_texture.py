@@ -4,16 +4,14 @@
 # Authors: Lahav Lipson, Alexander Raistrick
 
 
-import bpy
-import mathutils
-from numpy.random import uniform, normal, randint
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.nodes import node_utils
-from infinigen.core.util.color import color_category
-from infinigen.core import surface
 import numpy as np
+from numpy.random import uniform
 
-pallete1 = [   ((0.2632, 0.1493, 0.0558, 1.0), 0.0),
+from infinigen.core import surface
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+
+pallete1 = [
+    ((0.2632, 0.1493, 0.0558, 1.0), 0.0),
     ((0.2695, 0.1585, 0.064, 1.0), 0.058),
     ((0.829, 0.7488, 0.449, 1.0), 0.0718),
     ((0.3486, 0.223, 0.1024, 1.0), 0.0773),
@@ -43,9 +41,11 @@ pallete1 = [   ((0.2632, 0.1493, 0.0558, 1.0), 0.0),
     ((0.5537, 0.381, 0.2168, 1.0), 0.9309),
     ((0.3119, 0.1916, 0.0883, 1.0), 0.9558),
     ((0.931, 0.7854, 0.5187, 1.0), 0.9613),
-    ((0.9281, 0.7416, 0.4916, 1.0), 1.0)]
+    ((0.9281, 0.7416, 0.4916, 1.0), 1.0),
+]
 
-pallete2 = [   ((0.3586, 0.3253, 0.1285, 1.0), 0.0),
+pallete2 = [
+    ((0.3586, 0.3253, 0.1285, 1.0), 0.0),
     ((0.2603, 0.2268, 0.0725, 1.0), 0.0319),
     ((0.2972, 0.2467, 0.0864, 1.0), 0.0957),
     ((0.4891, 0.4373, 0.1874, 1.0), 0.117),
@@ -75,9 +75,11 @@ pallete2 = [   ((0.3586, 0.3253, 0.1285, 1.0), 0.0),
     ((0.3915, 0.3563, 0.1493, 1.0), 0.9043),
     ((0.1694, 0.1873, 0.0553, 1.0), 0.9574),
     ((0.4335, 0.4064, 0.1848, 1.0), 0.9894),
-    ((0.2195, 0.1946, 0.0561, 1.0), 1.0)]
+    ((0.2195, 0.1946, 0.0561, 1.0), 1.0),
+]
 
-pallete3 = [   ((0.3821, 0.4798, 0.0818, 1.0), 0.0),
+pallete3 = [
+    ((0.3821, 0.4798, 0.0818, 1.0), 0.0),
     ((0.0858, 0.1301, 0.0193, 1.0), 0.0316),
     ((0.1099, 0.1785, 0.0071, 1.0), 0.0842),
     ((0.8128, 0.9357, 0.197, 1.0), 0.1053),
@@ -107,9 +109,11 @@ pallete3 = [   ((0.3821, 0.4798, 0.0818, 1.0), 0.0),
     ((0.8421, 0.9664, 0.3916, 1.0), 0.9263),
     ((0.192, 0.2556, 0.0265, 1.0), 0.9474),
     ((0.4264, 0.5593, 0.0509, 1.0), 0.9579),
-    ((0.1199, 0.1892, 0.004, 1.0), 1.0)]
+    ((0.1199, 0.1892, 0.004, 1.0), 1.0),
+]
 
-pallete4 = [   ((0.0273, 0.0802, 0.0382, 1.0), 0.0),
+pallete4 = [
+    ((0.0273, 0.0802, 0.0382, 1.0), 0.0),
     ((0.0232, 0.0742, 0.0356, 1.0), 0.0323),
     ((0.1095, 0.2159, 0.1221, 1.0), 0.0645),
     ((0.0296, 0.0865, 0.0319, 1.0), 0.0968),
@@ -132,9 +136,11 @@ pallete4 = [   ((0.0273, 0.0802, 0.0382, 1.0), 0.0),
     ((0.0295, 0.0821, 0.0318, 1.0), 0.8387),
     ((0.0184, 0.0643, 0.0211, 1.0), 0.9032),
     ((0.0298, 0.0866, 0.0336, 1.0), 0.9355),
-    ((0.0193, 0.0679, 0.0271, 1.0), 1.0)]
+    ((0.0193, 0.0679, 0.0271, 1.0), 1.0),
+]
 
-pallete5 = [   ((0.1712, 0.2776, 0.0465, 1.0), 0.0),
+pallete5 = [
+    ((0.1712, 0.2776, 0.0465, 1.0), 0.0),
     ((0.0596, 0.1252, 0.0085, 1.0), 0.0732),
     ((0.1746, 0.2918, 0.0561, 1.0), 0.0976),
     ((0.0666, 0.1413, 0.007, 1.0), 0.122),
@@ -159,48 +165,80 @@ pallete5 = [   ((0.1712, 0.2776, 0.0465, 1.0), 0.0),
     ((0.1389, 0.1985, 0.0443, 1.0), 0.878),
     ((0.0646, 0.1021, 0.0119, 1.0), 0.9512),
     ((0.1329, 0.1812, 0.0395, 1.0), 0.9756),
-    ((0.1195, 0.1651, 0.0319, 1.0), 1.0)]
+    ((0.1195, 0.1651, 0.0319, 1.0), 1.0),
+]
 
 pallettes = np.array([pallete1, pallete2, pallete3, pallete4, pallete5], dtype=object)
+
 
 def shader_grass_texture_original(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     texture_coordinate = nw.new_node(Nodes.TextureCoord)
-    
-    coord = nw.new_node(Nodes.VectorMath,
-        input_kwargs={0: texture_coordinate.outputs["UV"], 'Scale': uniform(0.02, 0.2)},
-        attrs={'operation': 'SCALE'})
 
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ,
-        input_kwargs={'Vector': coord})
-    
-    edge_height = nw.new_node(Nodes.Math,
+    coord = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: texture_coordinate.outputs["UV"], "Scale": uniform(0.02, 0.2)},
+        attrs={"operation": "SCALE"},
+    )
+
+    separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": coord})
+
+    edge_height = nw.new_node(
+        Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["X"], 1: 6.0, 2: -10.0},
-        label='edge height',
-        attrs={'operation': 'MULTIPLY_ADD'})
-    
-    combine_xyz = nw.new_node(Nodes.CombineXYZ,
-        input_kwargs={'X': separate_xyz.outputs["Y"], 'Y': edge_height})
-    
-    wave_texture = nw.new_node(Nodes.WaveTexture,
-        input_kwargs={'Vector': separate_xyz.outputs["Y"], 'Scale': 25.0, 'Distortion': 8.0, 'Detail Scale': 6.0})
-    
-    musgrave_texture = nw.new_node(Nodes.MusgraveTexture,
-        input_kwargs={'Vector': combine_xyz, 'Scale': 8.0, 'Detail': 5.0, 'Dimension': 0.1, 'Lacunarity': 3.0})
-    
-    mix_1 = nw.new_node(Nodes.MixRGB,
-        input_kwargs={'Fac': 0.2, 'Color1': wave_texture.outputs["Color"], 'Color2': musgrave_texture})
-    
-    
+        label="edge height",
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": separate_xyz.outputs["Y"], "Y": edge_height},
+    )
+
+    wave_texture = nw.new_node(
+        Nodes.WaveTexture,
+        input_kwargs={
+            "Vector": separate_xyz.outputs["Y"],
+            "Scale": 25.0,
+            "Distortion": 8.0,
+            "Detail Scale": 6.0,
+        },
+    )
+
+    musgrave_texture = nw.new_node(
+        Nodes.MusgraveTexture,
+        input_kwargs={
+            "Vector": combine_xyz,
+            "Scale": 8.0,
+            "Detail": 5.0,
+            "Dimension": 0.1,
+            "Lacunarity": 3.0,
+        },
+    )
+
+    mix_1 = nw.new_node(
+        Nodes.MixRGB,
+        input_kwargs={
+            "Fac": 0.2,
+            "Color1": wave_texture.outputs["Color"],
+            "Color2": musgrave_texture,
+        },
+    )
+
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
-    map_range_1 = nw.new_node(Nodes.MapRange, input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1})
-    colorramp = nw.new_node(Nodes.ColorRamp, input_kwargs={'Fac': map_range_1.outputs["Result"]})
-    
+    map_range_1 = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={0: uniform(), 3: object_info.outputs["Random"], 4: mix_1},
+    )
+    colorramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": map_range_1.outputs["Result"]}
+    )
+
     pallete = np.random.choice(pallettes)
     np.random.shuffle(pallete)
-    pallete = pallete[:np.random.randint(4, len(pallete))]
-    for _ in range(len(pallete)-2):
+    pallete = pallete[: np.random.randint(4, len(pallete))]
+    for _ in range(len(pallete) - 2):
         colorramp.color_ramp.elements.new(0)
     assert len(pallete) == len(colorramp.color_ramp.elements)
     for el, (rgba, pos) in zip(colorramp.color_ramp.elements, pallete):
@@ -209,14 +247,15 @@ def shader_grass_texture_original(nw: NodeWrangler):
 
     rough1, rough2 = uniform(0.2, 0.6, 2)
     roughness = nw.new_node(Nodes.MapRange, [mix_1, 0, 1, rough1, rough2])
-    
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp.outputs["Color"], 'Roughness': roughness})
+
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": colorramp.outputs["Color"], "Roughness": roughness},
+    )
     translucent = nw.new_node(Nodes.TranslucentBSDF, [colorramp.outputs["Color"]])
     shader = nw.new_node(Nodes.MixShader, [0.7, principled_bsdf, translucent])
-    
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': shader})
 
+    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": shader})
 
 
 def apply(obj, selection=None, **kwargs):

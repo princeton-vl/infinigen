@@ -4,105 +4,121 @@
 
 # Authors: Alexander Raistrick
 
-import typing
-import operator
-from dataclasses import dataclass
 import functools
-import math
+import operator
+import typing
 
 from .types import Node, nodedataclass
 
-OPERATOR_ASSOCIATIVE = [
-    operator.add,
-    operator.mul,
-    operator.and_,
-    max,
-    min
-]
+OPERATOR_ASSOCIATIVE = [operator.add, operator.mul, operator.and_, max, min]
+
 
 @nodedataclass()
 class Expression(Node):
-    
     @classmethod
     def register_postfix_func(cls, expr_cls):
         @functools.wraps(expr_cls)
         def postfix_instantiator(self, *args, **kwargs):
             return expr_cls(self, *args, **kwargs)
+
         setattr(cls, expr_cls.__name__, postfix_instantiator)
         return expr_cls
-    
+
+
 @nodedataclass()
 class ArithmethicExpression(Expression):
     pass
 
+
 @nodedataclass()
 class ScalarExpression(ArithmethicExpression):
-
     def minimize(self, *, weight: float):
         return self * constant(weight)
-    
+
     def maximize(self, *, weight: float):
         return self * constant(-weight)
-    
+
     def multiply(self, other):
         return ScalarOperatorExpression(operator.mul, [self, other])
+
     __mul__ = multiply
 
     def abs(self):
         return ScalarOperatorExpression(operator.abs, [self])
+
     __abs__ = abs
-    
+
     def add(self, other):
         return ScalarOperatorExpression(operator.add, [self, other])
+
     __add__ = add
 
     def sub(self, other):
         return ScalarOperatorExpression(operator.sub, [self, other])
+
     __sub__ = sub
-    
+
     def div(self, other):
         return ScalarOperatorExpression(operator.truediv, [self, other])
+
     __truediv__ = div
-        
+
+    def safediv(self, other):
+        def safediv_impl(a, b):
+            if b == 0:
+                return 0 if a == 0 else 1
+            return a / b
+
+        return ScalarOperatorExpression(safediv_impl, [self, other])
+
     def pow(self, other):
         return ScalarOperatorExpression(operator.pow, [self, other])
+
     __pow__ = pow
 
     def equals(self, other):
         return BoolOperatorExpression(operator.eq, [self, other])
-    __eq__  = equals
-    
+
+    __eq__ = equals
+
     def __ge__(self, other):
         return BoolOperatorExpression(operator.ge, [self, other])
+
     def __gt__(self, other):
         return BoolOperatorExpression(operator.gt, [self, other])
+
     def __le__(self, other):
         return BoolOperatorExpression(operator.le, [self, other])
+
     def __lt__(self, other):
         return BoolOperatorExpression(operator.lt, [self, other])
+
     def __ne__(self, other):
         return BoolOperatorExpression(operator.ne, [self, other])
-    
+
     def __neg__(self):
         return self * constant(-1)
 
     def clamp_min(self, other):
         return max_expr(self, other)
+
     def clamp_max(self, other):
         return min_expr(self, other)
+
 
 def max_expr(*args):
     return ScalarOperatorExpression(max, args)
 
+
 def min_expr(*args):
     return ScalarOperatorExpression(min, args)
 
+
 @nodedataclass()
 class BoolExpression(ArithmethicExpression):
-
     def __mul__(self, other):
         return BoolOperatorExpression(operator.and_, [self, other])
-    
+
 
 @nodedataclass()
 class constant(ScalarExpression):
@@ -114,6 +130,7 @@ class constant(ScalarExpression):
     def __call__(self):
         return self.value
 
+
 def _preprocess_operands(operands):
     def cast_to_node(x):
         match x:
@@ -122,11 +139,12 @@ def _preprocess_operands(operands):
             case x if isinstance(x, (bool | float | int)):
                 return constant(x)
             case _:
-                raise ValueError(f'Unsupported operand type {type(x)=} {x=}')
+                raise ValueError(f"Unsupported operand type {type(x)=} {x=}")
+
     return [cast_to_node(x) for x in operands]
 
-def _collapse_associative(self, operands):
 
+def _collapse_associative(self, operands):
     if self.func not in OPERATOR_ASSOCIATIVE:
         return operands
 
@@ -138,9 +156,9 @@ def _collapse_associative(self, operands):
             new_operands.append(op)
     return new_operands
 
+
 @nodedataclass()
 class BoolOperatorExpression(BoolExpression):
-    
     func: typing.Callable
     operands: list[Expression]
 
@@ -150,7 +168,7 @@ class BoolOperatorExpression(BoolExpression):
 
     def children(self):
         for i, v in enumerate(self.operands):
-            yield f'operands[{i}]', v
+            yield f"operands[{i}]", v
 
     def __call__(self) -> typing.Any:
         return self.func(*[x() for x in self.operands])
@@ -158,7 +176,6 @@ class BoolOperatorExpression(BoolExpression):
 
 @nodedataclass()
 class ScalarOperatorExpression(ScalarExpression):
-
     func: typing.Callable
     operands: list[Expression]
 
@@ -169,11 +186,12 @@ class ScalarOperatorExpression(ScalarExpression):
 
     def children(self):
         for i, v in enumerate(self.operands):
-            yield f'operands[{i}]', v
+            yield f"operands[{i}]", v
 
     def __call__(self) -> typing.Any:
         return self.func(*[x() for x in self.operands])
-    
+
+
 @ScalarExpression.register_postfix_func
 @nodedataclass()
 class hinge(ScalarExpression):

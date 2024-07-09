@@ -1,47 +1,46 @@
 # Copyright (c) Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: 
+# Authors:
 # - Lahav Lipson: everything except noted below
 # - Alex Raistrick: dest_folder options, warnings, SMB_AUTH envvar change
 
 
-
-from pathlib import Path
-import subprocess
 import argparse
-from itertools import product
-import types
-import os
-import re
 import logging
-from multiprocessing import Pool
+import os
+import subprocess
 import time
-import sys
+import types
+from itertools import product
+from multiprocessing import Pool
+from pathlib import Path
 
-import gin
 import submitit
 from tqdm import tqdm
 
 logger = logging.getLogger(__file__)
-SMB_AUTH_VARNAME = 'SMB_AUTH'
+SMB_AUTH_VARNAME = "SMB_AUTH"
 
 if SMB_AUTH_VARNAME not in os.environ:
     logging.warning(
-        f'{SMB_AUTH_VARNAME} envvar is not set, smb_client upload '
-        'will not work. Ignore this message if not using upload'
+        f"{SMB_AUTH_VARNAME} envvar is not set, smb_client upload "
+        "will not work. Ignore this message if not using upload"
     )
 
 _SMB_RATELIMIT_DELAY = 0.0
+
 
 def check_exists(folder_path: Path):
     folder_path = str(folder_path).strip("/")
     return run_command(f"ls {folder_path}", False).returncode == 0
 
+
 def mkdir(folder_path: Path):
     assert isinstance(folder_path, Path)
     for path in list(reversed(folder_path.parents))[1:] + [folder_path]:
         run_command(f"mkdir {path}")
+
 
 def upload(local_path: Path, dest_folder: Path):
     assert isinstance(local_path, Path) and isinstance(dest_folder, Path)
@@ -50,18 +49,22 @@ def upload(local_path: Path, dest_folder: Path):
     data = run_command(f"put {local_path} {dest_folder / local_path.name}")
     assert data.returncode == 0
 
+
 def pathlib_to_smb(p: Path):
-    p = str(p).replace('/', '\\')
-    if not p.endswith('\\'):
-        p += '\\'
+    p = str(p).replace("/", "\\")
+    if not p.endswith("\\"):
+        p += "\\"
     return p
 
+
 def remove(remote_path: Path):
-    run_command(f"recurse ON; cd {pathlib_to_smb(remote_path.parent)}; deltree {remote_path.name}")
+    run_command(
+        f"recurse ON; cd {pathlib_to_smb(remote_path.parent)}; deltree {remote_path.name}"
+    )
+
 
 def download(remote_path: Path, dest_folder=None, verbose=False):
-
-    assert ' ' not in str(remote_path), remote_path
+    assert " " not in str(remote_path), remote_path
 
     assert isinstance(remote_path, Path)
     if not check_exists(remote_path):
@@ -75,21 +78,21 @@ def download(remote_path: Path, dest_folder=None, verbose=False):
 
     if dest_folder is not None:
         dest_folder.mkdir(exist_ok=True, parents=True)
-        statements.append(f'lcd {str(dest_folder)}')
+        statements.append(f"lcd {str(dest_folder)}")
         print(f"Downloading {remote_path} to {dest_folder}")
     else:
-        print(f'Downloading {remote_path} to working directory')
+        print(f"Downloading {remote_path} to working directory")
 
     statements.append(f"mget {remote_path.name}")
-    
-    command = str.join('; ', statements)
+
+    command = str.join("; ", statements)
 
     if verbose:
         print(command)
     data = run_command(command, verbose=verbose)
 
     if dest_folder:
-        dest_path = dest_folder/remote_path.name
+        dest_path = dest_folder / remote_path.name
     else:
         dest_path = remote_path.name
 
@@ -97,38 +100,39 @@ def download(remote_path: Path, dest_folder=None, verbose=False):
 
     return dest_path
 
-def yield_dirfiles(data, extras, parent):
 
+def yield_dirfiles(data, extras, parent):
     for line in data.splitlines():
-        if 'blocks of size' in line:
+        if "blocks of size" in line:
             continue
         parts = line.split()
         if not len(parts):
             continue
-        if parts[0].startswith('.'):
+        if parts[0].startswith("."):
             continue
-        parts[0] = parent/parts[0]
-        
+        parts[0] = parent / parts[0]
+
         if extras:
             yield parts
         else:
             yield parts[0]
 
-def globdir(remote_path: Path, extras=False):
 
+def globdir(remote_path: Path, extras=False):
     remote_path = Path(remote_path)
-    assert '*' in remote_path.parts[-1], remote_path
+    assert "*" in remote_path.parts[-1], remote_path
 
     search_path = str(remote_path).strip("/")
-    search_path = search_path.replace('/', '\\')
+    search_path = search_path.replace("/", "\\")
 
     try:
-        data = run_command_stdout(f'ls {search_path}')
-    except subprocess.CalledProcessError as e:
+        data = run_command_stdout(f"ls {search_path}")
+    except subprocess.CalledProcessError:
         return []
 
     yield from yield_dirfiles(data, extras, parent=remote_path.parent)
-    
+
+
 def listdir(remote_path: Path, extras=False):
     """
     Args: str or Path
@@ -136,39 +140,49 @@ def listdir(remote_path: Path, extras=False):
     """
 
     search_path = str(remote_path).strip("/")
-    search_path = search_path.replace('/', '\\')
+    search_path = search_path.replace("/", "\\")
 
-    if '*' in search_path:
-        raise ValueError(f'Found \"*\" in {search_path=}, use smb_client.globdir instead')
+    if "*" in search_path:
+        raise ValueError(f'Found "*" in {search_path=}, use smb_client.globdir instead')
 
     if len(search_path) > 0 and not check_exists(search_path):
         raise FileNotFoundError(search_path)
-    search_path += '\\*'
+    search_path += "\\*"
 
-    data = run_command_stdout(f'ls {search_path}')
+    data = run_command_stdout(f"ls {search_path}")
     yield from yield_dirfiles(data, extras, parent=remote_path)
+
 
 def run_command_stdout(command: str):
     smb_str = os.environ[SMB_AUTH_VARNAME]
     time.sleep(_SMB_RATELIMIT_DELAY)
-    return subprocess.check_output(f'smbclient {smb_str} -c "{command}"', text=True, shell=True)
+    return subprocess.check_output(
+        f'smbclient {smb_str} -c "{command}"', text=True, shell=True
+    )
+
 
 def run_command(command: str, check=True, verbose=False):
     smb_str = os.environ[SMB_AUTH_VARNAME]
 
     time.sleep(_SMB_RATELIMIT_DELAY)
 
-    with Path('/dev/null').open('w') as devnull:
+    with Path("/dev/null").open("w") as devnull:
         outstream = None if verbose else devnull
-        return subprocess.run(f'smbclient {smb_str} -c "{command}"', 
-            shell=True, stderr=outstream, stdout=outstream, check=check)
+        return subprocess.run(
+            f'smbclient {smb_str} -c "{command}"',
+            shell=True,
+            stderr=outstream,
+            stdout=outstream,
+            check=check,
+        )
+
 
 def list_files_recursive(base_path: Path):
     """
     Args: str or Path
     Returns [path, ...]
     """
-    all_paths=[]
+    all_paths = []
     children = listdir(base_path)
     for child, is_dir in children:
         if is_dir:
@@ -177,6 +191,7 @@ def list_files_recursive(base_path: Path):
             all_paths.append(child)
     return all_paths
 
+
 def mapfunc(f, its, args):
     if args.n_workers == 1:
         return [f(i) for i in its]
@@ -184,28 +199,26 @@ def mapfunc(f, its, args):
         with Pool(args.n_workers) as p:
             return list(tqdm(p.imap(f, its), total=len(its)))
     else:
-        executor = submitit.AutoExecutor(
-            folder=args.local_path/"logs"
-        )
+        executor = submitit.AutoExecutor(folder=args.local_path / "logs")
         executor.update_parameters(
             name=args.local_path.name,
-            timeout_min=48*60,
+            timeout_min=48 * 60,
             cpus_per_task=8,
             mem_gb=8,
-            slurm_partition=os.environ['INFINIGEN_SLURMPARTITION'],
-            slurm_array_parallelism=args.n_workers
+            slurm_partition=os.environ["INFINIGEN_SLURMPARTITION"],
+            slurm_array_parallelism=args.n_workers,
         )
         executor.map_array(f, its)
 
-def process_one(p: list[Path]):
 
+def process_one(p: list[Path]):
     res = commands[args.command](*p)
- 
-    p_summary = ' '.join(str(pi) for pi in p)
+
+    p_summary = " ".join(str(pi) for pi in p)
 
     def result(r):
         if args.verbose:
-            print(f'{args.command} {p_summary}: {r}')
+            print(f"{args.command} {p_summary}: {r}")
         else:
             print(r)
 
@@ -215,65 +228,60 @@ def process_one(p: list[Path]):
     else:
         result(res)
 
-def resolve_globs(p: Path, args):
 
+def resolve_globs(p: Path, args):
     def resolved(parts):
-        
         if any(x in str(p) for x in args.exclude):
             return
-        
-        first_glob = next((i for i, pp in enumerate(parts) if '*' in pp), None)
+
+        first_glob = next((i for i, pp in enumerate(parts) if "*" in pp), None)
         if first_glob is None:
             yield p
         else:
-            curr_level = p.parts[:first_glob+1]
-            remainder = p.parts[first_glob+1:]
+            curr_level = p.parts[: first_glob + 1]
+            remainder = p.parts[first_glob + 1 :]
             for child in globdir(Path(*curr_level)):
-                yield from resolve_globs(child/Path(*remainder), args)
+                yield from resolve_globs(child / Path(*remainder), args)
 
-
-    if args.command == 'glob':
+    if args.command == "glob":
         before, after = p.parts[:-1], p.parts[-1:]
         for f in resolved(before):
-            yield f/Path(*after)
+            yield f / Path(*after)
     else:
         yield from resolved(p.parts)
-        
-        
+
+
 commands = {
-    'ls': listdir,
-    'glob': globdir,
-    'rm': remove,
-    'download': download,
-    'upload': upload,
-    'mkdir': mkdir,
-    'exists': check_exists,
+    "ls": listdir,
+    "glob": globdir,
+    "rm": remove,
+    "download": download,
+    "upload": upload,
+    "mkdir": mkdir,
+    "exists": check_exists,
 }
 
+
 def main(args):
-
-    n_globs = len([x for x in args.paths if '*' in str(x)])
+    n_globs = len([x for x in args.paths if "*" in str(x)])
     if n_globs > 1:
-        raise ValueError(f'{args.paths=} had  {n_globs=}, only equipped to handle 1')
+        raise ValueError(f"{args.paths=} had  {n_globs=}, only equipped to handle 1")
 
-    paths = [
-        resolve_globs(p, args)
-        for p in args.paths
-    ]
-    
+    paths = [resolve_globs(p, args) for p in args.paths]
+
     targets = list(product(*paths))
 
     mapfunc(process_one, targets, args)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', type=str, choices=list(commands.keys()))
-    parser.add_argument('paths', type=Path, nargs='+')
-    parser.add_argument('--exclude', type=str, nargs='+', default=[])
-    parser.add_argument('--n_workers', type=int, default=1)
-    parser.add_argument('--slurm', action='store_true')
-    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument("command", type=str, choices=list(commands.keys()))
+    parser.add_argument("paths", type=Path, nargs="+")
+    parser.add_argument("--exclude", type=str, nargs="+", default=[])
+    parser.add_argument("--n_workers", type=int, default=1)
+    parser.add_argument("--slurm", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     main(args)
