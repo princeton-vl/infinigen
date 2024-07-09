@@ -21,10 +21,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from infinigen.assets import fluid, lighting, weather
-
 # unused imports required for gin to find modules currently, # TODO remove
 # ruff: noqa: F401
+from infinigen.assets import fluid, lighting, weather
 from infinigen.assets.materials import (
     atmosphere_light_haze,
     chunkyrock,
@@ -62,35 +61,34 @@ from infinigen.assets.scatters import (
     ground_leaves,
     ground_mushroom,
     ground_twigs,
+    ivy,
     jellyfish,
+    lichen,
+    monocots,
+    moss,
     pebbles,
     pine_needle,
     pinecone,
     seashells,
     seaweed,
+    slime_mold,
+    snow_layer,
     urchin,
 )
-from infinigen.assets.scatters import monocot as monocots
+from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util
-from infinigen.core.placement import (
-    density,
-    placement,
-    split_in_view,
-)
+from infinigen.core.placement import density, placement, split_in_view
 from infinigen.core.util import blender as butil
 from infinigen.core.util import logging as logging_util
 from infinigen.core.util import pipeline
-from infinigen.core.util.math import int_hash
-from infinigen.core.util.organization import Tags
+from infinigen.core.util.math import FixedSeed, int_hash
+from infinigen.core.util.organization import Tags, Task
+from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import random_general, sample_registry
 from infinigen.terrain import Terrain
 
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.WARNING,
-)
+logger = logging.getLogger(__name__)
 
 
 @gin.configurable
