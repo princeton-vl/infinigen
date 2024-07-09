@@ -764,7 +764,7 @@ def export_scene(
     bpy.ops.wm.open_mainfile(filepath=str(input_blend))
     folder = output_folder / f"export_{input_blend.name}"
     folder.mkdir(exist_ok=True, parents=True)
-    result = export_curr_scene(folder, **kwargs)
+    export_curr_scene(folder, **kwargs)
 
     if pipeline_folder is not None and task_uniqname is not None:
         (pipeline_folder / "logs" / f"FINISH_{task_uniqname}").touch()
