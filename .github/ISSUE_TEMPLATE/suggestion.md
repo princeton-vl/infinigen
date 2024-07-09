@@ -1,6 +1,6 @@
 ---
-name: Request
-about: Request a feature!
+name: Suggestion
+about: Suggest a new feature
 title: ""
 labels: 'enhancement'
 assignees: ''

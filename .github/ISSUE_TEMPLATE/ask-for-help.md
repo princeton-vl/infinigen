@@ -1,16 +1,14 @@
 ---
-name: Bug report
-about: Report an issue with using or installing infinigen
+name: Question
+about: Ask for help using the system
 title: ""
-labels: 'bug'
+labels: 'question'
 assignees: ''
 
 ---
 
-# Describe the bug
-A clear and concise description of what the bug is.
-
 ## Steps to Reproduce
+If this relates to running the codebase, please provide steps to reproduce:
 
 ### What version of the code were you using? 
 Tell us the commit & commit hash from `git log`
