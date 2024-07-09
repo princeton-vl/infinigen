@@ -477,6 +477,7 @@ def main(args):
 
     execute_tasks.main(
         compose_scene_func=compose_indoors,
+        populate_scene_func=None,
         input_folder=args.input_folder,
         output_folder=args.output_folder,
         task=args.task,

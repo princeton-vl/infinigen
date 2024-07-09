@@ -25,6 +25,7 @@ def test_compose_cube():
 
     execute_tasks.execute_tasks(
         compose_cube,
+        populate_scene_func=None,
         input_folder=None,
         output_folder=output,
         task="coarse populate",
