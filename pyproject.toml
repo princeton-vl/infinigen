@@ -29,7 +29,7 @@ dependencies = [
     "imageio",
     "matplotlib",
     "networkx",
-    "numpy<2",
+    "numpy<3",
     "opencv-python",
     "pandas",
     "psutil",
@@ -55,7 +55,7 @@ vis = [
     "einops",
     "flow_vis",
     "numba", # for ground truth visuals
-    "pyglet<2" # for trimesh_scene.show()
+    "pyglet<3" # for trimesh_scene.show()
 ]
 dev = [
     "pytest",
