@@ -107,7 +107,7 @@ def resolve_folder_maybe_relative(folder, root):
 
 @gin.configurable
 def apply_gin_configs(
-    configs_folder: Path,
+    config_folders: Path | list[Path],
     configs: list[str] = None,
     overrides: list[str] = None,
     skip_unknown: bool = False,
@@ -143,31 +143,30 @@ def apply_gin_configs(
         mandatory_folders = []
     if mutually_exclusive_folders is None:
         mutually_exclusive_folders = []
-    configs_folder = Path(configs_folder)
+
+    if not isinstance(config_folders, list):
+        config_folders = [config_folders]
 
     root = infinigen.repo_root()
 
-    configs_folder_rel = root / configs_folder
-    if configs_folder_rel.exists():
-        configs_folder = configs_folder_rel
-        gin.add_config_file_search_path(configs_folder)
-    elif configs_folder.exists():
-        gin.add_config_file_search_path(configs_folder)
-    else:
-        raise FileNotFoundError(
-            f"Couldnt find {configs_folder} or {configs_folder_rel}"
-        )
-
-    search_paths = [configs_folder, root, Path(".")]
-
     def find_config(p):
         p = Path(p)
-        for folder in search_paths:
+        for folder_rel in config_folders:
+            folder = root / folder_rel
+
+            if not folder.exists():
+                raise ValueError(
+                    f"{apply_gin_configs.__name__} got bad {folder_rel=}, {folder=} did not exist"
+                )
+
             for file in folder.glob("**/*.gin"):
                 if file.stem == p.stem:
+                    logger.debug(f"Resolved {p} to file {file}")
                     return file
+            logger.debug(f"Could not find {p} in {folder}")
+
         raise FileNotFoundError(
-            f"Could not find {p} or {p.stem} in any of {search_paths}"
+            f"Could not find {p} or {p.stem} in any of {config_folders}"
         )
 
     configs = [find_config(g) for g in ["base.gin"] + configs]

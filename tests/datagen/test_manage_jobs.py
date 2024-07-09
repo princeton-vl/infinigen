@@ -1,12 +1,12 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
-import pytest
 import gin
+import pytest
 
 import infinigen
-from infinigen.datagen import manage_jobs
 from infinigen.core.init import apply_gin_configs
+from infinigen.datagen import manage_jobs
 
 conf = infinigen.repo_root() / "infinigen/datagen/configs"
 assert conf.exists()
@@ -20,7 +20,7 @@ def test_load_gin_compute_platform(compute_platform):
     gin.clear_config()
 
     apply_gin_configs(
-        configs_folder=Path("infinigen/datagen/configs"),
+        config_folders=Path("infinigen/datagen/configs"),
         configs=[compute_platform, "monocular.gin"],
         overrides=[],
         mandatory_folders=manage_jobs.mandatory_exclusive_configs,
@@ -33,7 +33,7 @@ def test_load_gin_data_schema(data_schema):
     gin.clear_config()
 
     apply_gin_configs(
-        configs_folder=Path("infinigen/datagen/configs"),
+        config_folders=Path("infinigen/datagen/configs"),
         configs=["local_256GB.gin", data_schema],
         overrides=[],
         mandatory_folders=manage_jobs.mandatory_exclusive_configs,

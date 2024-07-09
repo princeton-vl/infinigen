@@ -253,7 +253,7 @@ def main():
     init.apply_gin_configs(
         configs=args.configs,
         overrides=args.overrides,
-        configs_folder="infinigen_examples/configs_nature",
+        config_folders=["infinigen_examples/configs_nature"],
         mandatory_folders=["infinigen_examples/configs_nature/scene_types"],
         skip_unknown=True,
     )

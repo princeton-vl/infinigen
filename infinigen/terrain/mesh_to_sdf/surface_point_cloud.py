@@ -18,7 +18,11 @@ from sklearn.neighbors import KDTree
 
 from .scan import Scan, get_camera_transform_looking_at_origin
 from .utils import check_voxels, get_raster_points, sample_uniform_points_in_unit_sphere
-import pyrender  # isort: skip
+
+try:
+    import pyrender  # isort: skip
+except ImportError:
+    pyrender = None
 
 logging.getLogger("trimesh").setLevel(9000)
 
@@ -228,6 +232,9 @@ class SurfacePointCloud:
             return query_points, sdf
 
     def show(self):
+        if pyrender is None:
+            raise ImportError("pyrender is required to show the surface point cloud.")
+
         scene = pyrender.Scene()
         scene.add(pyrender.Mesh.from_points(self.points, normals=self.normals))
         pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)

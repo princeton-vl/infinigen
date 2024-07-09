@@ -29,4 +29,4 @@ indoor_gins = [p.name for p in (infinigen.repo_root() / indoor_folder).glob("**/
 def test_gins_load_indoor(extra_gin):
     # gin must successfully load the config without crashing
     # common failures are misspellings of config fields, renamed functions, etc
-    setup_gin(indoor_folder, configs=[extra_gin])
+    setup_gin([indoor_folder, nature_folder], configs=[extra_gin])

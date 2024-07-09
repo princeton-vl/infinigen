@@ -14,7 +14,7 @@ from infinigen.terrain import Terrain
 from infinigen_examples.util.test_utils import setup_gin
 
 
-@pytest.mark.skip_for_ci
+@pytest.mark.skip
 @pytest.mark.nature
 def test_terrain_runs():
     setup_gin(

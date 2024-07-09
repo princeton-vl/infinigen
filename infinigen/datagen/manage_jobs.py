@@ -872,7 +872,7 @@ if __name__ == "__main__":
         np.random.seed(args.meta_seed)
 
     infinigen.core.init.apply_gin_configs(
-        configs_folder=Path("infinigen/datagen/configs"),
+        config_folders=[Path("infinigen/datagen/configs")],
         configs=args.pipeline_configs,
         overrides=args.pipeline_overrides,
         mandatory_folders=mandatory_exclusive_configs,

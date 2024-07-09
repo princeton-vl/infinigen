@@ -72,10 +72,10 @@ Then, install the infinigen package using one of the options below:
 INFINIGEN_MINIMAL_INSTALL=True pip install -e .
 
 # Full install (Terrain & OpenGL-GT enabled, needed for Infinigen-Nature HelloWorld)
-pip install -e .
+pip install -e .[terrain,vis]
 
 # Developer install (includes pytest, ruff, other recommended dev tools)
-pip install -e ".[dev]"
+pip install -e ".[dev,terrain,vis]"
 pre-commit install
 ```
 
@@ -95,7 +95,7 @@ Then, install using one of the options below:
 # Minimal installation (recommended setting for use in the Blender UI)
 INFINIGEN_MINIMAL_INSTALL=True bash scripts/install/interactive_blender.sh
 
-# Normal install (includes CPU Terrain, and CUDA Terrain if available)
+# Normal install
 bash scripts/install/interactive_blender.sh
 
 # Enable OpenGL GT

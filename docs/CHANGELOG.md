@@ -64,4 +64,4 @@ v1.4.1
 v1.5.0
 - ruff & auto-lint-fix the entire codebase
 - move mesh assets into infinigen/assets/objects
-
+- minimize pip dependences: remove unused packages & move terrain/gt-vis packages into optional \[terrain,vis\] extras.

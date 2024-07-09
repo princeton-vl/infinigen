@@ -9,11 +9,19 @@ from pathlib import Path
 import cv2
 import gin
 import numpy as np
-from landlab import RasterModelGrid
-from landlab.components import FlowDirectorSteepest, TransportLengthHillslopeDiffuser
 from numpy import ascontiguousarray as AC
 from skimage.measure import label
 from tqdm import tqdm
+
+try:
+    import landlab
+    from landlab import RasterModelGrid
+    from landlab.components import (
+        FlowDirectorSteepest,
+        TransportLengthHillslopeDiffuser,
+    )
+except ImportError:
+    landlab = None
 
 from infinigen.core.util.organization import AssetFile
 from infinigen.core.util.random import random_general as rg
@@ -42,6 +50,13 @@ def upsidedown_mountains_asset(
     tile_size: size of the upsidedown mountain tile
 
     """
+
+    if landlab is None:
+        raise ImportError(
+            "landlab must be installed to use terrain mountain simulation "
+            "Please install optional terrain dependencies via `pip install .[terrain]`"
+        )
+
     Path(folder).mkdir(parents=True, exist_ok=True)
     N = resolution
     x = np.linspace(-tile_size / 2, tile_size / 2, N)

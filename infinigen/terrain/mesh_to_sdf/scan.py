@@ -6,8 +6,13 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from skimage import io
 
-from .pyrender_wrapper import render_normal_and_depth_buffers
-import pyrender  # isort: skip
+try:
+    import pyrender_wrapper
+    import pyrender  # isort: skip
+except ImportError:
+    pyrender_wrapper = None
+    pyrender = None
+
 
 if hasattr(Rotation, "as_matrix"):  # scipy>=1.4.0
 
@@ -76,6 +81,12 @@ class Scan:
         z_near=0.1,
         z_far=10,
     ):
+        if pyrender is None or pyrender_wrapper is None:
+            raise ImportError(
+                "pyrender must be installed to use the Scan class "
+                "Please install optional terrain dependencies via `pip install .[terrain]`"
+            )
+
         self.camera_transform = camera_transform
         self.camera_position = np.matmul(self.camera_transform, np.array([0, 0, 0, 1]))[
             :3
@@ -87,7 +98,7 @@ class Scan:
         )
         self.projection_matrix = camera.get_projection_matrix()
 
-        color, depth = render_normal_and_depth_buffers(
+        color, depth = pyrender_wrapper.render_normal_and_depth_buffers(
             mesh, camera, self.camera_transform, resolution
         )
 

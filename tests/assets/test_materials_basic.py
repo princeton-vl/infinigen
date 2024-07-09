@@ -41,5 +41,8 @@ def test_nature_material_runs(pathspec, **kwargs):
     "pathspec", load_txt_list("tests/assets/list_indoor_materials.txt")
 )
 def test_indoor_material_runs(pathspec, **kwargs):
-    setup_gin("infinigen_examples/configs_indoor", ["base_indoors.gin"])
+    setup_gin(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        ["base_indoors.gin"],
+    )
     check_material_runs(pathspec)
