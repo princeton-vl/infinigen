@@ -31,6 +31,17 @@ from .util import constraint_util as cu
 
 def sample_home_constraint_params():
     return dict(
+        # what pct of the room floorplan should we try to fill with furniture?
+        furniture_fullness_pct=uniform(0.6, 0.9),
+        # how many objects in each shelving per unit of volume
+        obj_interior_obj_pct=uniform(0.5, 1),  # uniform(0.6, 0.9),
+        # what pct of top surface of storage furniture should be filled with objects? e.g pct of top surface of shelf
+        obj_on_storage_pct=uniform(0.1, 0.9),
+        # what pct of top surface of NON-STORAGE objects should be filled with objects? e.g pct of countertop/diningtable covered in stuff
+        obj_on_nonstorage_pct=uniform(0.1, 0.6),
+        # meters squared of wall art per approx meters squared of FLOOR area. TODO cant measure wall area currently.
+        painting_area_per_room_area=uniform(20, 60) / 40,
+        # rare objects wont even be added to the constraint graph in most homes
         has_tv=uniform() < 0.5,
         has_aquarium_tank=uniform() < 0.15,
         has_birthday_balloons=uniform() < 0.15,
@@ -82,12 +93,64 @@ def home_constraints():
     for k, v in params.items():
         print(f"{home_constraints.__name__} params - {k}: {v}")
 
-    score_terms["fullness"] = rooms.sum(
+    score_terms["furniture_fullness"] = rooms.mean(
         lambda r: (
-            obj.count().maximize(
-                weight=4
-            )  # TODO re-incorporate more precise fullness scores above
-            + obj.volume().maximize(weight=1)
+            furniture.related_to(r)
+            .volume(dims=(0, 1))
+            .safediv(r.volume(dims=(0, 1)))
+            .sub(params["furniture_fullness_pct"])
+            .abs()
+            .minimize(weight=15)
+        )
+    )
+
+    score_terms["obj_in_obj_fullness"] = rooms.mean(
+        lambda r: (
+            furniture.related_to(r).mean(
+                lambda f: (
+                    obj.related_to(f, cu.on)
+                    .volume()
+                    .safediv(f.volume())
+                    .sub(params["obj_interior_obj_pct"])
+                    .abs()
+                    .minimize(weight=10)
+                )
+            )
+        )
+    )
+
+    def top_fullness_pct(f):
+        return (
+            obj.related_to(f, cu.ontop)
+            .volume(dims=(0, 1))
+            .safediv(f.volume(dims=(0, 1)))
+        )
+
+    score_terms["obj_ontop_storage_fullness"] = rooms.mean(
+        lambda r: (
+            storage.related_to(r).mean(
+                lambda f: (
+                    top_fullness_pct(f)
+                    .sub(params["obj_on_storage_pct"])
+                    .abs()
+                    .minimize(weight=10)
+                )
+            )
+        )
+    )
+
+    score_terms["obj_ontop_nonstorage_fullness"] = rooms.mean(
+        lambda r: (
+            furniture[-Semantics.Storage]
+            .related_to(r)
+            .mean(
+                lambda f: (
+                    top_fullness_pct(f)
+                    .sub(params["obj_on_nonstorage_pct"])
+                    .abs()
+                    .minimize(weight=10)
+                )
+            )
         )
     )
 
@@ -95,7 +158,7 @@ def home_constraints():
 
     # region furniture
 
-    score_terms["furniture_aesthetics"] = wallfurn.sum(
+    score_terms["furniture_aesthetics"] = wallfurn.mean(
         lambda t: (
             t.distance(wallfurn).hinge(0.2, 0.6).maximize(weight=0.6)
             + cl.accessibility_cost(t, furniture).minimize(weight=5)
@@ -106,7 +169,7 @@ def home_constraints():
     constraints["storage"] = rooms.all(
         lambda r: (storage.related_to(r).count().in_range(1, 7))
     )
-    score_terms["storage"] = rooms.sum(
+    score_terms["storage"] = rooms.mean(
         lambda r: (
             cl.accessibility_cost(
                 storage.related_to(r), furniture.related_to(r), dist=0.5
@@ -122,10 +185,10 @@ def home_constraints():
     score_terms["portal_accessibility"] = (
         # make sure the fronts of objects are accessible where applicable
         #### disabled since its generally fine to block floor-to-ceiling windows a little
-        # window.sum(lambda t: (
+        # window.mean(lambda t: (
         #    cl.accessibility_cost(t, furniture, np.array([0, -1, 0]))
         # )).minimize(weight=2) +
-        doors.sum(
+        doors.mean(
             lambda t: (
                 cl.accessibility_cost(t, furniture, cu.front_dir, dist=4)
                 + cl.accessibility_cost(t, furniture, cu.back_dir, dist=4)
@@ -159,9 +222,9 @@ def home_constraints():
             # ))
         )
     )
-    score_terms["wall_decorations"] = rooms.sum(
+    score_terms["wall_decorations"] = rooms.mean(
         lambda r: (
-            walldec.related_to(r).sum(
+            walldec.related_to(r).mean(
                 lambda w: (
                     vertical_diff(w, r).abs().minimize(weight=1)
                     + w.distance(walldec).maximize(weight=1)
@@ -174,7 +237,7 @@ def home_constraints():
         )
     )
 
-    score_terms["floor_covering"] = rugs.sum(
+    score_terms["floor_covering"] = rugs.mean(
         lambda rug: (
             rug.distance(rooms, cu.walltags).maximize(weight=3)
             + cl.angle_alignment_cost(rug, rooms, cu.walltags).minimize(weight=3)
@@ -195,11 +258,13 @@ def home_constraints():
             * small_plants.related_to(storage.related_to(r)).count().in_range(0, 5)
         )
     )
-    score_terms["plants"] = rooms.sum(
+    score_terms["plants"] = rooms.mean(
         lambda r: (
-            big_plants.related_to(r).sum(lambda p: p.distance(doors)).maximize(weight=5)
+            big_plants.related_to(r)
+            .mean(lambda p: p.distance(doors))
+            .maximize(weight=5)
             + (  # small plants should be near window for sunlight
-                small_plants.related_to(storage.related_to(r)).sum(
+                small_plants.related_to(storage.related_to(r)).mean(
                     lambda p: p.distance(window.related_to(r))
                 )
             ).minimize(weight=1)
@@ -210,9 +275,9 @@ def home_constraints():
     # region SIDETABLE
     sidetable = furniture[Semantics.SideTable].related_to(furniture, cu.side_by_side)
 
-    score_terms["sidetable"] = rooms.sum(
+    score_terms["sidetable"] = rooms.mean(
         lambda r: (
-            sidetable.related_to(r).sum(
+            sidetable.related_to(r).mean(
                 lambda t: (t.distance(r, cu.walltags).minimize(weight=1))
             )
         )
@@ -238,14 +303,14 @@ def home_constraints():
         )
     )
 
-    score_terms["desk"] = rooms.sum(
-        lambda r: desks.sum(
+    score_terms["desk"] = rooms.mean(
+        lambda r: desks.mean(
             lambda d: (
                 obj.related_to(d).count().maximize(weight=3)
                 + d.distance(doors.related_to(r)).maximize(weight=0.1)
                 + cl.accessibility_cost(d, furniture.related_to(r)).minimize(weight=3)
                 + cl.accessibility_cost(d, r).minimize(weight=3)
-                + monitors.related_to(d).sum(
+                + monitors.related_to(d).mean(
                     lambda m: (
                         cl.accessibility_cost(m, r, dist=2).minimize(weight=3)
                         + cl.accessibility_cost(
@@ -282,7 +347,7 @@ def home_constraints():
     constraints["ceiling_lights"] = rooms.all(
         lambda r: (ceillights.related_to(r, cu.hanging).count().in_range(1, 4))
     )
-    score_terms["ceiling_lights"] = rooms.sum(
+    score_terms["ceiling_lights"] = rooms.mean(
         lambda r: (
             (ceillights.count() / r.volume(dims=2)).hinge(0.08, 0.15).minimize(weight=5)
             + ceillights.mean(
@@ -311,7 +376,7 @@ def home_constraints():
         )
     )
 
-    score_terms["lamps"] = lamps.sum(
+    score_terms["lamps"] = lamps.mean(
         lambda l: (
             cl.center_stable_surface_dist(l.related_to(sidetable)).minimize(weight=1)
             + l.distance(lamps).maximize(weight=1)
@@ -352,7 +417,7 @@ def home_constraints():
                 .count()
                 .in_range(0, 2)
             )
-            * rugs.related_to(r).count().in_range(0, 2)
+            * rugs.related_to(r).count().in_range(0, 1)
             * desks.related_to(r).count().in_range(0, 1)
             * storage.related_to(r).count().in_range(2, 5)
             * floor_lamps.related_to(r).count().in_range(0, 1)
@@ -364,14 +429,14 @@ def home_constraints():
         )
     )
 
-    score_terms["bedroom"] = bedrooms.sum(
+    score_terms["bedroom"] = bedrooms.mean(
         lambda r: (
             beds.related_to(r).count().maximize(weight=3)
             + beds.related_to(r)
-            .sum(lambda t: cl.distance(r, doors))
+            .mean(lambda t: cl.distance(r, doors))
             .maximize(weight=0.5)
             + sidetable.related_to(r)
-            .sum(lambda t: t.distance(beds.related_to(r)))
+            .mean(lambda t: t.distance(beds.related_to(r)))
             .minimize(weight=3)
         )
     )
@@ -404,7 +469,7 @@ def home_constraints():
             )
         )
 
-    score_terms["kitchen_counters"] = kitchens.sum(
+    score_terms["kitchen_counters"] = kitchens.mean(
         lambda r: (
             # try to fill 40-60% of kitchen floorplan with countertops (additive with typical furniture incentive)
             (
@@ -416,7 +481,7 @@ def home_constraints():
             +
             # cluster countertops together
             countertops.related_to(r)
-            .sum(lambda c: countertops.related_to(r).mean(lambda c2: c.distance(c2)))
+            .mean(lambda c: countertops.related_to(r).mean(lambda c2: c.distance(c2)))
             .minimize(weight=3)
         )
     )
@@ -433,16 +498,16 @@ def home_constraints():
         )
     )
 
-    score_terms["kitchen_island_placement"] = kitchens.sum(
+    score_terms["kitchen_island_placement"] = kitchens.mean(
         lambda r: (
-            island.sum(
+            island.mean(
                 lambda t: (
                     cl.angle_alignment_cost(t, wallcounter)
                     + cl.angle_alignment_cost(t, r, cu.walltags)
                 )
             ).minimize(weight=1)
             + island.distance(r, cu.walltags).hinge(3, 1e7).minimize(weight=10)
-            + wallcounter.sum(
+            + wallcounter.mean(
                 lambda t: cl.focus_score(t, island.related_to(r)).minimize(weight=5)
             )
         )
@@ -472,10 +537,10 @@ def home_constraints():
         )
     )
 
-    score_terms["kitchen_sink"] = kitchens.sum(
+    score_terms["kitchen_sink"] = kitchens.mean(
         lambda r: (
-            countertops.sum(
-                lambda c: kitchen_sink.related_to(c).sum(
+            countertops.mean(
+                lambda c: kitchen_sink.related_to(c).mean(
                     lambda s: (
                         (s.volume(dims=2) / c.volume(dims=2))
                         .hinge(0.2, 0.4)
@@ -483,9 +548,9 @@ def home_constraints():
                     )
                 )
             )
-            + island.related_to(r).sum(
+            + island.related_to(r).mean(
                 lambda isl: (  # sinks on islands must be near to edge and oriented outwards
-                    kitchen_sink.related_to(isl).sum(
+                    kitchen_sink.related_to(isl).mean(
                         lambda s: (
                             cl.angle_alignment_cost(s, isl, cu.side).minimize(weight=10)
                             + cl.distance(s, isl, cu.side)
@@ -525,9 +590,9 @@ def home_constraints():
         )
     )
 
-    score_terms["kitchen_appliance"] = kitchens.sum(
+    score_terms["kitchen_appliance"] = kitchens.mean(
         lambda r: (
-            kitchen_appliances.sum(
+            kitchen_appliances.mean(
                 lambda t: (
                     t.distance(wallcounter.related_to(r)).minimize(weight=1)
                     + cl.accessibility_cost(t, r, dist=1).minimize(weight=10)
@@ -565,11 +630,11 @@ def home_constraints():
         )
     )
 
-    score_terms["kitchen_objects"] = kitchens.sum(
+    score_terms["kitchen_objects"] = kitchens.mean(
         lambda r: (
             (
                 obj.related_to(wallcounter, cu.on)
-                .sum(lambda t: t.distance(r, cu.walltags))
+                .mean(lambda t: t.distance(r, cu.walltags))
                 .minimize(weight=3)
             )
             + cl.center_stable_surface_dist(
@@ -598,7 +663,7 @@ def home_constraints():
             >= 0
         )
     )
-    score_terms["closet_kitchen"] = closet_kitchen.sum(
+    score_terms["closet_kitchen"] = closet_kitchen.mean(
         lambda r: (
             storage.related_to(r).count().maximize(weight=2)
             + obj[Semantics.FoodPantryItem]
@@ -666,10 +731,10 @@ def home_constraints():
         )
     )
 
-    score_terms["sofa"] = livingrooms.sum(
+    score_terms["sofa"] = livingrooms.mean(
         lambda r: (
             sofas.volume().maximize(weight=10)
-            + sofas.related_to(r).sum(
+            + sofas.related_to(r).mean(
                 lambda t: (
                     t.distance(sofas.related_to(r)).hinge(0, 1).minimize(weight=1)
                     + t.distance(tvstands.related_to(r)).hinge(2, 3).minimize(weight=5)
@@ -681,7 +746,7 @@ def home_constraints():
                     + cl.accessibility_cost(t, r, dist=3).minimize(weight=3)
                 )
             )
-            + freestanding(sofas, r).sum(
+            + freestanding(sofas, r).mean(
                 lambda t: (
                     cl.angle_alignment_cost(t, tvstands.related_to(r)).minimize(
                         weight=5
@@ -713,7 +778,7 @@ def home_constraints():
 
     score_terms["tvstand"] = rooms.all(
         lambda r: (
-            tvstands.sum(
+            tvstands.mean(
                 lambda stand: (
                     tvs.related_to(stand).volume().maximize(weight=1)
                     + stand.distance(window).maximize(
@@ -760,9 +825,9 @@ def home_constraints():
         )
     )
 
-    score_terms["livingroom"] = livingrooms.sum(
+    score_terms["livingroom"] = livingrooms.mean(
         lambda r: (
-            coffeetables.related_to(r).sum(
+            coffeetables.related_to(r).mean(
                 lambda t: (
                     # ideal coffeetable-to-tv distance according to google
                     t.distance(sofas.related_to(r)).hinge(0.45, 0.6).minimize(weight=5)
@@ -817,7 +882,7 @@ def home_constraints():
         lambda r: (
             diningchairs.related_to(r).count().maximize(weight=5)
             + diningchairs.related_to(r)
-            .sum(lambda t: t.distance(diningchairs.related_to(r)))
+            .mean(lambda t: t.distance(diningchairs.related_to(r)))
             .maximize(weight=3)
             # cl.reflectional_asymmetry(diningchairs.related_to(r), diningtables.related_to(r)).minimize(weight=1)
             # cl.rotational_asymmetry(diningchairs.related_to(r)).minimize(weight=1)
@@ -844,7 +909,7 @@ def home_constraints():
         )
     )
 
-    score_terms["dining_table_objects"] = rooms.sum(
+    score_terms["dining_table_objects"] = rooms.mean(
         lambda r: (
             cl.center_stable_surface_dist(
                 obj[Semantics.TableDisplayItem].related_to(
@@ -871,7 +936,7 @@ def home_constraints():
             )
         )
     )
-    score_terms["diningroom"] = diningrooms.sum(
+    score_terms["diningroom"] = diningrooms.mean(
         lambda r: (
             diningtables.related_to(r).distance(r, cu.walltags).maximize(weight=10)
             + cl.angle_alignment_cost(
@@ -920,9 +985,9 @@ def home_constraints():
     )
     score_terms["bathtub"] = bathrooms.all(
         lambda r: (
-            bathtub.sum(lambda t: t.distance(hardware)).minimize(weight=0.2)
-            + sink.sum(lambda t: t.distance(hardware)).minimize(weight=0.2)
-            + hardware.sum(
+            bathtub.mean(lambda t: t.distance(hardware)).minimize(weight=0.2)
+            + sink.mean(lambda t: t.distance(hardware)).minimize(weight=0.2)
+            + hardware.mean(
                 lambda t: (
                     t.distance(rooms, cu.floortags).hinge(0.5, 1).minimize(weight=15)
                 )
@@ -960,7 +1025,7 @@ def home_constraints():
         )
         score_terms["birthday_balloons"] = rooms.all(
             lambda r: (
-                balloons.sum(
+                balloons.mean(
                     lambda b: b.distance(r, cu.floortags)
                     .hinge(1.6, 2.5)
                     .minimize(weight=1)
@@ -991,16 +1056,16 @@ def home_constraints():
                 )
             )
         )
-        score_terms["cocktail_tables"] = diningrooms.sum(
+        score_terms["cocktail_tables"] = diningrooms.mean(
             lambda r: (
-                cocktail_table.related_to(r).sum(
+                cocktail_table.related_to(r).mean(
                     lambda t: (
                         t.distance(r, cu.walltags).hinge(0.5, 1).minimize(weight=1)
                         + t.distance(cocktail_table.related_to(r))
                         .hinge(1, 2)
                         .minimize(weight=1)
                         + barchairs.related_to(t)
-                        .sum(lambda c: c.distance(barchairs.related_to(t)))
+                        .mean(lambda c: c.distance(barchairs.related_to(t)))
                         .maximize(weight=1)
                     )
                 )

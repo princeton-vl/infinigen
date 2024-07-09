@@ -31,6 +31,7 @@ def resample_scene(scene_seed):
         for material in bpy.data.materials:
             nw = NodeWrangler(material.node_tree)
             resample_node_group(nw, scene_seed)
+
     with FixedSeed(scene_seed), Timer("Resample noise nodes in scatters"):
         for obj in bpy.data.objects:
             for modifier in obj.modifiers:

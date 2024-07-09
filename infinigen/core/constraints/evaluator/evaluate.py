@@ -182,7 +182,7 @@ def evaluate_node(node: cl.Node, state: State, memo=None):
     val = _compute_node_val(node, state, memo)
 
     memo[k] = val
-    logger.debug(f"Evaluated {node.__class__} to {val}")
+    # logger.debug("Evaluated %s to %s", node.__class__, val)
 
     return val
 
@@ -222,9 +222,11 @@ def evaluate_problem(
     for name, score_node in problem.score_terms.items():
         logger.debug(f"Evaluating score for {name=}")
         scores[name] = evaluate_node(score_node, state, memo)
+        logger.debug(f"Evaluator got score {scores[name]} for {name=}")
 
     violated = {}
     for name, node in problem.constraints.items():
+        logger.debug(f"Evaluating constraint {name=}")
         violated[name] = viol_count(node, state, memo, filter=filter)
         logger.debug(f"Evaluator found {violated[name]} violations for {name=}")
 

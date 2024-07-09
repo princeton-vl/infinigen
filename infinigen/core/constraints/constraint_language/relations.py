@@ -224,13 +224,13 @@ class GeometryRelation(Relation):
                 return False
             case GeometryRelation(ochild, oparent):
                 if not self._compatibility_checks(other):
-                    logger.debug(f"{self.implies} failed compatibility for %s", other)
+                    # logger.debug(f"{self.implies} failed compatibility for %s", other)
                     return False
                 if not t.implies(self.child_tags, ochild):
-                    logger.debug(f"{self.implies} failed child tags for %s", other)
+                    # logger.debug(f"{self.implies} failed child tags for %s", other)
                     return False
                 if not t.implies(self.parent_tags, oparent):
-                    logger.debug(f"{self.implies} failed parent tags for %s", other)
+                    # logger.debug(f"{self.implies} failed parent tags for %s", other)
                     return False
                 return True
             case NegatedRelation(GeometryRelation(ochild, oparent)):
@@ -291,17 +291,26 @@ class GeometryRelation(Relation):
             case GeometryRelation(ochild, oparent):
                 if not self._compatibility_checks(other):
                     logger.debug(
-                        f"{self.intersects} failed compatibility for other=%s", other
+                        "%s failed compatiblity_checks for self=%s, other=%s",
+                        self.intersects.__name__,
+                        self.child_tags,
+                        other,
                     )
                     return False
                 if not tags_compatible(self.child_tags, ochild):
                     logger.debug(
-                        f"{self.intersects} failed child tags for other=%s", other
+                        "%s failed child tags for self=%s, other=%s",
+                        self.intersects.__name__,
+                        self.child_tags,
+                        other,
                     )
                     return False
                 if not tags_compatible(self.parent_tags, oparent):
                     logger.debug(
-                        "{self.intersects} failed parent tags for other=%s", other
+                        "%s failed parent tags for self=%s, other=%s",
+                        self.intersects.__name__,
+                        self.child_tags,
+                        other,
                     )
                     return False
                 return True

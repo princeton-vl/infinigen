@@ -305,7 +305,7 @@ class SimulatedAnnealingSolver:
             viol_diff = accept_result["viol_diff"] or 0
 
             logger.info(
-                f"it={self.curr_iteration} {dt=:.3f} {n=} "
+                f"it={self.curr_iteration}/{self.max_iterations} {dt=:.3f} {n=} "
                 f"{loss=:.3e} {viol=:.1f} "
                 f"{temp=:.2e} {diff=:.2f} {viol_diff=:.1f} {prob=:.2f} {accept=} "
                 f"{move_log}"

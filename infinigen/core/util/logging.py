@@ -11,6 +11,7 @@
 import logging
 import os
 import sys
+import typing
 from datetime import datetime
 from pathlib import Path
 
@@ -18,6 +19,11 @@ import bpy
 import gin
 
 timer_results = logging.getLogger("times")
+
+
+def lazydebug(logger: logging.Logger, msg: typing.Callable, *args, **kwargs):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(msg(), *args, **kwargs)
 
 
 @gin.configurable

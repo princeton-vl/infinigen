@@ -54,7 +54,11 @@ class LinearDecaySchedule:
 @gin.configurable
 class Solver:
     def __init__(
-        self, output_folder: Path, multistory: bool = False, restrict_moves: list = None
+        self,
+        output_folder: Path,
+        multistory: bool = False,
+        restrict_moves: list = None,
+        addition_weight_scalar: float = 1.0,
     ):
         """Initialize the solver
 
@@ -82,13 +86,17 @@ class Solver:
         self.all_roomtypes = None
         self.dimensions = None
 
-        self.moves = self._configure_move_weights(restrict_moves)
+        self.moves = self._configure_move_weights(
+            restrict_moves, addition_weight_scalar=addition_weight_scalar
+        )
 
-    def _configure_move_weights(self, restrict_moves):
+    def _configure_move_weights(self, restrict_moves, addition_weight_scalar=1.0):
         schedules = {
             "addition": (
                 propose_discrete.propose_addition,
-                LinearDecaySchedule(6, 0.1, 0.9),
+                LinearDecaySchedule(
+                    6 * addition_weight_scalar, 0.1 * addition_weight_scalar, 0.9
+                ),
             ),
             "deletion": (
                 propose_discrete.propose_deletion,

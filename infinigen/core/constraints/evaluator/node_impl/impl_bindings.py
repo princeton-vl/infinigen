@@ -86,6 +86,7 @@ def accessibility_impl(
         return 0
 
     if use_collision_impl:
+        logger.debug("accessibility_cost_cuboid_penetration(%s, %s)", objs, others)
         res = trimesh_geometry.accessibility_cost_cuboid_penetration(
             state.trimesh_scene,
             objs,
@@ -95,6 +96,7 @@ def accessibility_impl(
             bvh_cache=state.bvh_cache,
         )
     else:
+        logger.debug("accessibility_cost(%s, %s)", objs, others)
         res = trimesh_geometry.accessibility_cost(
             state.trimesh_scene, objs, others, cons.normal
         )
@@ -111,6 +113,8 @@ def min_distance_impl(
     if len(objs) == 0 or len(others) == 0:
         logger.debug("min_distance had no targets")
         return 0
+
+    logger.debug("min_distance_impl(%s, %s)", objs, others)
 
     res = trimesh_geometry.min_dist(
         state.trimesh_scene,

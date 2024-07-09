@@ -15,6 +15,7 @@ import numpy as np
 import infinigen.core.util.blender as butil
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.logging import lazydebug
 
 from . import tags as t
 
@@ -142,8 +143,9 @@ class AutoTag:
                 ), f"{len(self.tag_dict)=} yet {len(tag_name_lookup)=}, out of sync at {vi=} {new_tag_name=}"
                 assert new_tag_name in tag_name_lookup
 
-                logger.debug(
-                    f"{self._relabel_obj_single.__name__} updating {vi=} to {new_tag_name=} with {affected_mask.mean()=:.2f} for {obj.name=}"
+                lazydebug(
+                    logger,
+                    lambda: f"{self._relabel_obj_single.__name__} updating {vi=} to {new_tag_name=} with {affected_mask.mean()=:.2f} for {obj.name=}",
                 )
 
                 tagint[affected_mask] = tag_value
@@ -209,8 +211,9 @@ def tag_object(obj, name=None, mask=None):
             n_poly = len(o.data.polygons)
 
             if n_poly == 0:
-                logger.debug(
-                    f"{tag_object.__name__} had {n_poly=} for {o.name=} {name=} child of {obj.name=}"
+                lazydebug(
+                    logger,
+                    lambda: f"{tag_object.__name__} had {n_poly=} for {o.name=} {name=} child of {obj.name=}",
                 )
                 continue
 
@@ -219,8 +222,9 @@ def tag_object(obj, name=None, mask=None):
             assert isinstance(mask_o, np.ndarray)
             assert len(mask_o) == n_poly
 
-            logger.debug(
-                f"{tag_object.__name__} applying {name=} {mask_o.mean()=:.2f} to {o.name=}"
+            lazydebug(
+                logger,
+                lambda: f"{tag_object.__name__} applying {name=} {mask_o.mean()=:.2f} to {o.name=}",
             )
             surface.write_attr_data(
                 obj=o, attr=(PREFIX + name), data=mask_o, type="BOOLEAN", domain="FACE"
@@ -281,8 +285,9 @@ def tag_canonical_surfaces(obj, rtol=0.01):
                 f"{tag_canonical_surfaces.__name__} found got {face_mask.mean()=:.2f} for {tag=} on {obj.name=}"
             )
 
-        logger.debug(
-            f"{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}"
+        lazydebug(
+            logger,
+            lambda: f"{tag_canonical_surfaces.__name__} applying {tag=} {face_mask.mean()=:.2f} to {obj.name=}",
         )
         surface.write_attr_data(
             obj, PREFIX + tag.value, face_mask, type="BOOLEAN", domain="FACE"
@@ -373,7 +378,10 @@ def tagged_face_mask(obj: bpy.types.Object, tags: Union[t.Subpart]) -> np.ndarra
 
         face_mask |= v_mask
 
-    logger.debug(f"{obj.name=} had {face_mask.mean()=:.2f} for {pos_tags=} {neg_tags=}")
+    lazydebug(
+        logger,
+        lambda: f"{obj.name=} had {face_mask.mean()=:.2f} for {pos_tags=} {neg_tags=}",
+    )
 
     return face_mask
 

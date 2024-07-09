@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.util.logging import lazydebug
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +41,16 @@ def reldom_compatible(
     match (a_neg, b_neg):
         case True, False:
             if b[0].implies(a[0].rel) and b[1].intersects(a[1]):
-                logger.debug(
-                    "reldom_compatible found contradicting negated %s %s", a[0], b[0]
+                lazydebug(
+                    logger,
+                    lambda: f"reldom_compatible found contradicting negated {a[0]} {b[0]}",
                 )
                 return False
         case False, True:
             if a[0].implies(b[0].rel) and a[1].intersects(b[1]):
-                logger.debug(
-                    "reldom_compatible found contradicting negated %s %s", a[0], b[0]
+                lazydebug(
+                    logger,
+                    lambda: f"reldom_compatible found contradicting negated {a[0]} {b[0]}",
                 )
                 return False
 
@@ -169,8 +172,9 @@ class Domain:
 
         assert new_dom is not self
 
-        logger.debug(
-            "add_relation %s %s to existing %i", new_rel, new_dom, len(self.relations)
+        lazydebug(
+            logger,
+            lambda: f"add_relation {new_rel} {new_dom} to existing {len(self.relations)}",
         )
 
         if not optimize_check_implies:
@@ -189,24 +193,25 @@ class Domain:
             elif reldom_satisfies((er, ed), (new_rel, new_dom)) or reldom_satisfies(
                 (new_rel, new_dom), (er, ed)
             ):
-                logger.debug(
-                    "Tightening existing relation %s with %s",
-                    (er, ed),
-                    (new_rel, new_dom),
+                lazydebug(
+                    logger,
+                    lambda: f"Tightening existing relation {(er, ed)} with {(new_rel, new_dom)}",
                 )
                 self.relations[i] = reldom_intersection((new_rel, new_dom), (er, ed))
                 covered = True
             elif new_dom.intersects(ed, require_satisfies_right=True):
-                logger.debug("Tightening domain %s with %s", ed, new_dom)
+                lazydebug(logger, lambda: f"Tightening domain {ed} with {new_dom}")
                 self.relations[i] = (er, ed.intersection(new_dom))
             else:
-                logger.debug("%s is not relevant for %s", (er, ed), (new_rel, new_dom))
+                lazydebug(
+                    logger,
+                    lambda: f"{(er, ed)} is not relevant for {(new_rel, new_dom)}",
+                )
 
         if not covered:
-            logger.debug(
-                "optimize_check_implies found nothing, adding relation %s %s",
-                new_rel,
-                new_dom,
+            lazydebug(
+                logger,
+                lambda: f"optimize_check_implies found nothing, adding relation {new_rel} {new_dom}",
             )
             self.relations.append((new_rel, new_dom))
 
@@ -238,10 +243,12 @@ class Domain:
         Different from 'intersects' in that
         """
 
-        logger.debug("%s for %s %s", Domain.satisfies.__name__, self, other)
+        lazydebug(logger, lambda: f"{Domain.satisfies.__name__} for {self} {other}")
 
         if not t.satisfies(self.tags, other.tags):
-            logger.debug("failed tag implication %s -> %s", self.tags, other.tags)
+            lazydebug(
+                logger, lambda: f"failed tag implication {self.tags} -> {other.tags}"
+            )
             return False
 
         def bothsat(reldom1, reldom2):
@@ -255,17 +262,16 @@ class Domain:
                     )
 
                     if contradictor is not None:
-                        logger.debug(
-                            "satisfies found %s in self, which contradicts %s because it satisfies %s",
-                            contradictor,
-                            orel,
-                            (n, d),
+                        lazydebug(
+                            logger,
+                            lambda: f"satisfies found {contradictor} in self, which contradicts {orel} because it satisfies {(n, d)}",
                         )
                         return False
                 case _:
                     if not any(bothsat(srel, orel) for srel in self.relations):
-                        logger.debug(
-                            "found unsatisfied %s for %s", orel, self.relations
+                        lazydebug(
+                            logger,
+                            lambda: f"found unsatisfied {orel} for {self.relations}",
                         )
                         return False
 
@@ -289,10 +295,10 @@ class Domain:
             and therefore `self` must imply `other` for the intersection to be non-empty.
         """
 
-        logger.debug("Domain.intersects for \n\t%s \n\t%s", self, other)
+        lazydebug(logger, lambda: f"Domain.intersects for \n\t{self} \n\t{other}")
 
         if t.contradiction(self.tags.union(other.tags)):
-            logger.debug("tag contradiction %s, %s", self.tags, other.tags)
+            lazydebug(logger, lambda: f"tag contradiction {self.tags}, {other.tags}")
             return False
 
         # no relations can contradict eachother
@@ -300,7 +306,7 @@ class Domain:
             if ard is brd:
                 continue
             if not reldom_compatible(ard, brd):
-                logger.debug("found incompatible %s %s", ard, brd)
+                lazydebug(logger, lambda: f"found incompatible {ard} {brd}")
                 return False
 
         # any relations actually known to be present must intersect
@@ -315,8 +321,9 @@ class Domain:
                 return False
             for ard in a_pos:
                 if not any(reldom_intersects(ard, brd) for brd in b_pos):
-                    logger.debug(
-                        "require_satisfies_left found no intersecting %s %s", ard, b_pos
+                    lazydebug(
+                        logger,
+                        lambda: f"require_satisfies_left found no intersecting {ard} {b_pos}",
                     )
                     return False
         if require_satisfies_right:
@@ -324,14 +331,15 @@ class Domain:
                 return False
             for brd in b_pos:
                 if not any(reldom_intersects(ard, brd) for ard in a_pos):
-                    logger.debug(
-                        "require_satisfies_right found no intersecting %s %s",
-                        brd,
-                        a_pos,
+                    lazydebug(
+                        logger,
+                        lambda: f"require_satisfies_right found no intersecting {brd} {a_pos}",
                     )
                     return False
 
-        logger.debug("Domain.intersects for %s %s returning True", self, other)
+        lazydebug(
+            logger, lambda: f"Domain.intersects for {self} {other} returning True"
+        )
 
         return True
 
