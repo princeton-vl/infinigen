@@ -145,7 +145,7 @@ room_floor_fns = defaultdict(
 )
 
 room_wall_fns = defaultdict(
-    lambda: ('weighted_choice', (5, 'plaster'), (2, 'wood_tile'), (2, 'non_wood_tile')), {
+    lambda: ('weighted_choice', (15, 'plaster'), (1, 'wood_tile'), (3, 'non_wood_tile')), {
         t.Semantics.Kitchen: ('weighted_choice', (2, 'non_wood_tile'), (5, 'plaster')),
         t.Semantics.Garage: ('weighted_choice', (5, 'concrete'), (1, 'brick'), (3, 'plaster')),
         t.Semantics.Utility: ('weighted_choice', (1, 'concrete'), (1, 'brick'), (1, 'brick'), (5, 'plaster')),
@@ -194,10 +194,7 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
             wall_fn.apply(rooms__, **kwargs)
 
     for w in walls:
-
         logger.debug(f'{room_walls.__name__} adding materials to {len(walls)=}, using {len(wall_fns)=}')
-
-        dissolve_limited(w)
         fn = rg(room_wall_alternative_fns[room_type(w.name)])
         match fn:
             case 'none':
@@ -253,7 +250,7 @@ def populate_doors(
     casing_chance=0.0,
     all_open=False
 ):
-    factories = [random_door_factory()(np.random.randint(1e7)) for _ in range(3)]
+    factories = [random_door_factory()(np.random.randint(1e7), constants=constants) for _ in range(3)]
 
     logger.debug(
         f"{populate_doors.__name__} populating {len(placeholders)=} with {n_doors=} and {len(factories)=}"

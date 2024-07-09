@@ -57,6 +57,8 @@ class RoomConstants:
         window_size = rg(window_size)
         window_margin = rg(window_margin)
         window_top = self.wall_height - self.wall_thickness - window_height - window_size
+        window_top = max(self.wall_thickness / 2, window_top)
+        window_size = self.wall_height - self.wall_thickness - window_top - window_height
         assert window_size > 0
         return {
             'max_window_length': max_window_length,

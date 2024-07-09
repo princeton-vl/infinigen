@@ -16,37 +16,31 @@ import gin
 import numpy as np
 from numpy.random import uniform
 import shapely
+from numpy.random import uniform
 from shapely import LineString, line_interpolate_point
 from shapely.ops import linemerge
 
-from infinigen.assets.utils.mesh import canonicalize_mls
-from infinigen.core.surface import write_attr_data
-from .base import RoomGraph, room_type, valid_rooms
-from infinigen.core.tags import Semantics
-from infinigen.assets.utils.shapes import buffer, polygon2obj, simplify_polygon
 from infinigen.assets.utils.decorate import (
-    read_center, read_co, write_attribute, write_co, read_normal,
-    read_edge_direction, read_edge_length,
+    read_center, read_co, write_attribute, write_co, read_edge_direction, read_edge_length, remove_faces, read_area,
 )
+from infinigen.assets.utils.mesh import canonicalize_mls
 from infinigen.assets.utils.object import new_cube
-from infinigen.core.tagging import PREFIX, tagged_face_mask
-from infinigen.core.util import blender as butil
+from infinigen.assets.utils.shapes import buffer, polygon2obj, simplify_polygon
 from infinigen.core import tagging, tags as t
-from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
 from infinigen.core.constraints import constraint_language as cl
-
-from infinigen.assets.utils.autobevel import BevelSharp
+from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
+from infinigen.core.surface import write_attr_data
+from infinigen.core.tagging import PREFIX
+from infinigen.core.tags import Semantics
+from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import BadSeedError
-
-logger = logging.getLogger(__name__)
-
-_eps = 0.01
 from infinigen.core.util.random import random_general as rg
+from .base import RoomGraph, room_type, valid_rooms
 
 logger = logging.getLogger(__name__)
 
 _eps = 1e-2
-_snap = 1e-2
+_snap = .3
 
 panoramic_rooms = defaultdict(
     float, {
@@ -169,7 +163,7 @@ class BlueprintSolidifier:
         for cutters in all_cutter_lists:
             for k, c in self.unroll(cutters):
                 c.location[-1] += w * self.level
-        
+
         butil.put_in_collection(rooms.values(), 'placeholders:room_shells')
 
         state = self.convert_solver_state(
@@ -181,11 +175,12 @@ class BlueprintSolidifier:
             new = butil.copy(o)
             new.name = o.name + ".meshed"
             return new
+
         rooms_ = rooms
         rooms = {k: clone_as_meshed(r) for k, r in rooms.items()}
 
         # Cut windows & doors from final room meshes
-        cutter_col = butil.get_collection('placeholders:portal_cutters')    
+        cutter_col = butil.get_collection('placeholders:portal_cutters')
         for cutters in all_cutter_lists:
             for k, c in self.unroll(cutters):
                 butil.put_in_collection(c, cutter_col)
@@ -202,37 +197,48 @@ class BlueprintSolidifier:
                     )
                     after = len(rooms[k_].data.polygons)
                     logger.debug(f'Cutting {c.name} from {rooms[k_].name}, {before=} {after=}')
-                    if cutters is door_cutters or cutters is entrance_cutters:
-                        c.location[-1] -= _snap / 2
-                tagging.tag_object(c)
 
-        for obj in rooms.values():
+        for obj in list(rooms.values()) + list(cutter_col.objects):
+            remove_faces(obj, read_area(obj) < 5e-4)
             co = read_co(obj)
             m = wt / 2 + _snap
-            low = np.abs(co[:, -1] - m) < _eps
-            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps
-            co += np.where(low, -1, np.where(high, 1, 0))[:, np.newaxis] * np.array([[0, 0, _snap]])
+            low = np.abs(co[:, -1] - m) < _eps * 10
+            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps * 10
+            co[:, -1] = np.where(low, wt / 2, co[:, -1])
+            co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
             write_co(obj, co)
             tagging.tag_object(obj)
-    
+
             direction = read_edge_direction(obj)
             z_edges = np.abs(direction[:, -1])
-            orthogonal = (z_edges < .1) | (z_edges > .9)
             with butil.ViewportMode(obj, 'EDIT'):
-                edge_faces = np.zeros(len(orthogonal))
                 bm = bmesh.from_edit_mesh(obj.data)
+                edge_faces = np.zeros(len(bm.edges), dtype=int)
+                overlaps = np.zeros(len(bm.faces), dtype=int)
                 for f in bm.faces:
                     for e in f.edges:
                         edge_faces[e.index] += 1
+                        for g in e.link_faces:
+                            if f.normal @ g.normal < -.9:
+                                overlaps[f.index] += 1
             orthogonal = (z_edges < .1) | (z_edges > .9) | (edge_faces != 1) | (read_edge_length(obj) < .5)
-            if not orthogonal.all():
+            if not (orthogonal.all() & (overlaps == 0).all()):
                 raise BadSeedError('No orthogonal edges')
-        
+
+        for obj in list(rooms.values()) + list(cutter_col.objects):
+            co = read_co(obj) + np.array(obj.location)[np.newaxis, :]
+            m = wt / 2 + _snap
+            low = np.abs(co[:, -1] - m) < _eps * 5
+            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps * 5
+            co[:, -1] = np.where(low, wt / 2, co[:, -1])
+            co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
+            write_co(obj, co - np.array(obj.location)[np.newaxis, :])
+            tagging.tag_object(obj)
+
         for obj in rooms_.values():
             tagging.tag_object(obj)
-        
-        butil.group_in_collection(rooms.values(), 'placeholders:room_meshes')
 
+        butil.group_in_collection(rooms.values(), 'placeholders:room_meshes')
         return state, rooms
 
     def convert_solver_state(
@@ -398,6 +404,7 @@ class BlueprintSolidifier:
         vertical = np.abs(x - x_) < .1
         wt = self.constants.wall_thickness
         cutter.scale = self.constants.door_width / 2, self.constants.door_width / 2 + wt, self.constants.door_size / 2 - _snap / 2
+        cutter.location[-1] += _snap / 2
         butil.apply_transform(cutter, True)
         if vertical:
             y = uniform(min(y, y_) + m, max(y, y_) - m)
@@ -405,7 +412,7 @@ class BlueprintSolidifier:
         else:
             x = uniform(min(x, x_) + m, max(x, x_) - m)
             z_rot = 0 if direction[-1] > 0 else np.pi
-        cutter.location = x, y, self.constants.door_size / 2 + wt / 2 + _snap / 2
+        cutter.location = x, y, self.constants.door_size / 2 + wt / 2
         cutter.rotation_euler[-1] = z_rot
         self.tag(cutter)
         cutter.name = t.Semantics.Door.value
@@ -419,9 +426,10 @@ class BlueprintSolidifier:
         lam = uniform(m / length, 1 - m / length)
         wt = self.constants.wall_thickness
         cutter.scale = self.constants.door_width / 2, self.constants.door_width / 2 + wt, self.constants.door_size / 2 - _snap / 2
+        cutter.location[-1] += _snap / 2
         butil.apply_transform(cutter, True)
         cutter.location = lam * x + (1 - lam) * x_, lam * y + (
-                1 - lam) * y_, self.constants.door_size / 2 + wt / 2 + _snap / 2
+                1 - lam) * y_, self.constants.door_size / 2 + wt / 2
         cutter.rotation_euler = 0, 0, np.arctan2(y_ - y, x_ - x)
         self.tag(cutter)
         cutter.name = t.Semantics.Entrance.value
@@ -496,8 +504,8 @@ class BlueprintSolidifier:
 
     def tag(self, obj, visible=True):
         center = read_center(obj) + obj.location
-        ceiling = center[:, -1] > self.constants.wall_height - self.constants.wall_thickness / 2 - .1
-        floor = center[:, -1] < self.constants.wall_thickness / 2 + .1
+        ceiling = center[:, -1] > self.constants.wall_height - self.constants.wall_thickness / 2 - _snap - .1
+        floor = center[:, -1] < self.constants.wall_thickness / 2 + _snap + .1
         wall = ~(ceiling | floor)
         write_attr_data(obj, f'{PREFIX}{t.Subpart.Ceiling.value}', ceiling, 'BOOLEAN', 'FACE')
         write_attr_data(obj, f'{PREFIX}{t.Subpart.SupportSurface.value}', floor, 'BOOLEAN', 'FACE')

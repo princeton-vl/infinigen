@@ -91,6 +91,8 @@ class BaseDoorFactory(AssetFactory):
             obj = self._create_asset()
             if max(obj.dimensions) < 5:
                 return obj
+            else:
+                butil.delete(obj)
         else:
             raise ValueError('Bad door booleaning')
 
