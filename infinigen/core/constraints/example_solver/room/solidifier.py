@@ -40,7 +40,7 @@ from .base import RoomGraph, room_type, valid_rooms
 logger = logging.getLogger(__name__)
 
 _eps = 1e-2
-_snap = .3
+_snap = .2
 
 panoramic_rooms = defaultdict(
     float, {
@@ -228,8 +228,8 @@ class BlueprintSolidifier:
         for obj in list(rooms.values()) + list(cutter_col.objects):
             co = read_co(obj) + np.array(obj.location)[np.newaxis, :]
             m = wt / 2 + _snap
-            low = np.abs(co[:, -1] - m) < _eps * 5
-            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps * 5
+            low = np.abs(co[:, -1] - m) < _eps 
+            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps 
             co[:, -1] = np.where(low, wt / 2, co[:, -1])
             co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
             write_co(obj, co - np.array(obj.location)[np.newaxis, :])
@@ -266,7 +266,7 @@ class BlueprintSolidifier:
                 )
 
         all_cutters = [door_cutters, open_cutters, window_cutters, interior_cutters, entrance_cutters]
-        tag_cutters = [t.Semantics.Door, t.Semantics.Open, t.Semantics.Window, t.Semantics.Window, t.Semantics.Entrance]
+        tag_cutters = [t.Semantics.Door, t.Semantics.Open, t.Semantics.Window, t.Semantics.Window, t.Semantics.Door]
         for cutters, tag in zip(all_cutters, tag_cutters):
             for k, c in self.unroll(cutters):
                 obj_states[c.name] = ObjectState(
