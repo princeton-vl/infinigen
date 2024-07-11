@@ -40,7 +40,7 @@ from .base import RoomGraph, room_type, valid_rooms
 logger = logging.getLogger(__name__)
 
 _eps = 1e-2
-_snap = .2
+_snap = .5
 
 panoramic_rooms = defaultdict(
     float, {
