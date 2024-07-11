@@ -35,6 +35,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+import infinigen
 from infinigen.assets.lighting import (
     hdri_lighting,
     holdout_lighting,
@@ -47,7 +48,7 @@ from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material, subclasses
 from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
-from infinigen.core.placement import density, factory
+from infinigen.core.placement import AssetFactory, density
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
@@ -63,30 +64,38 @@ logging.basicConfig(
     level=logging.WARNING,
 )
 
+logger = logging.getLogger(__name__)
+
+OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
+assert OBJECTS_PATH.exists(), OBJECTS_PATH
+
 
 def build_scene_asset(args, factory_name, idx):
-    factory = None
-    for subdir in os.listdir("infinigen/assets"):
+    fac = None
+    for subdir in sorted(list(OBJECTS_PATH.iterdir())):
+        clsname = subdir.name.split(".")[0].strip()
         with gin.unlock_config():
-            module = importlib.import_module(f'infinigen.assets.{subdir.split(".")[0]}')
+            module = importlib.import_module(f"infinigen.assets.objects.{clsname}")
         if hasattr(module, factory_name):
-            factory = getattr(module, factory_name)
+            fac = getattr(module, factory_name)
             break
-    if factory is None:
+        logger.info(f"{factory_name} not found in {subdir}")
+    if fac is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
+
     with FixedSeed(idx):
-        factory = factory(idx)
+        fac = fac(idx)
         try:
             if args.spawn_placeholder:
-                ph = factory.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
-                asset = factory.spawn_asset(idx, placeholder=ph)
+                ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
+                asset = fac.spawn_asset(idx, placeholder=ph)
             else:
-                asset = factory.spawn_asset(idx)
+                asset = fac.spawn_asset(idx)
         except Exception as e:
             traceback.print_exc()
-            print(f"{factory}.spawn_asset({idx=}) FAILED!! {e}")
+            print(f"{fac}.spawn_asset({idx=}) FAILED!! {e}")
             raise e
-        factory.finalize_assets(asset)
+        fac.finalize_assets(asset)
         if args.fire:
             from infinigen.assets.fluid.fluid import set_obj_on_fire
 
@@ -424,7 +433,10 @@ def mapfunc(f, its, args):
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
-    init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
+    init.apply_gin_configs(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        skip_unknown=True,
+    )
     surface.registry.initialize_from_gin()
 
     init.configure_blender()
@@ -449,18 +461,26 @@ def main(args):
         args.output_folder = Path(os.getcwd()) / "outputs"
 
     path = Path(args.output_folder) / name
-    path.mkdir(exist_ok=True)
+    path.mkdir(exist_ok=True, parents=True)
 
     factories = list(args.factories)
+
     if "ALL_ASSETS" in factories:
-        factories += [f.__name__ for f in subclasses(factory.AssetFactory)]
+        factories += [f.__name__ for f in subclasses(AssetFactory)]
         factories.remove("ALL_ASSETS")
+        logger.warning(
+            "ALL_ASSETS is deprecated. Use `-f tests/assets/list_nature_meshes.txt` and `-f tests/assets/list_indoor_meshes.txt` instead."
+        )
     if "ALL_SCATTERS" in factories:
-        factories += [f.stem for f in Path("surfaces/scatters").iterdir()]
+        factories += [f.stem for f in Path("infinigen/assets/scatters").iterdir()]
         factories.remove("ALL_SCATTERS")
     if "ALL_MATERIALS" in factories:
         factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
         factories.remove("ALL_MATERIALS")
+        logger.warning(
+            "ALL_MATERIALS is deprecated. Use `-f tests/assets/list_nature_materials.txt` and `-f tests/assets/list_indoor_materials.txt` instead."
+        )
+
     has_txt = ".txt" in factories[0]
     if has_txt:
         factories = [
@@ -476,7 +496,8 @@ def main(args):
 
     for j, fac in enumerate(factories):
         fac_path = args.output_folder / fac
-        assert fac_path.exists()
+        fac_path.mkdir(exist_ok=True, parents=True)
+
         f"{fac_path} does not exist"
         if has_txt:
             for i in range(args.n_images):

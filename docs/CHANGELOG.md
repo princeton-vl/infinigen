@@ -67,3 +67,9 @@ v1.5.0
 - minimize pip dependences: remove unused packages & move terrain/gt-vis packages into optional \[terrain,vis\] extras.
 - add parameters for object clutter, reduce excessively cluttered / slow indoors scenes
 - minorly improve infinigen-indoors performance via logging & asset hiding
+
+v1.5.1
+- Fix "base.gin" crash in generate_individual_assets
+- Fix individual_export in export.py
+- Fix Dockerfile
+- Remove dependabot
