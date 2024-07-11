@@ -12,9 +12,10 @@ from numpy.random import uniform
 from infinigen.assets.materials.ceramic.marble import shader_marble
 from infinigen.assets.materials.creature import bone
 from infinigen.assets.materials.terrain import cobble_stone, dirt, stone
-from infinigen.assets.materials.utils import common, surface_utils
+from infinigen.assets.materials.utils import surface_utils
 from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.assets.utils.object import new_cube
+from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
@@ -518,17 +519,7 @@ def get_shader_funcs():
 
 
 class Tile:
-    def apply(
-        self,
-        obj,
-        selection=None,
-        vertical=False,
-        shader_func=None,
-        scale=None,
-        alternating=None,
-        shape=None,
-        **kwargs,
-    ):
+    def generate(self,selection=None,vertical=False,shader_func=None,scale=None,alternating=None,shape=None,**kwargs):
         funcs, weights = zip(*get_shader_funcs())
         weights = np.array(weights) / sum(weights)
         if shader_func is None:
@@ -567,18 +558,9 @@ class Tile:
                         shader_crossed_tile,
                     ]
                 )
+        return surface.shaderfunc_to_material(shader_func, name=f"{name}_{method.__name__}_tile")
 
-        return common.apply(
-            obj,
-            method,
-            selection,
-            shader_func,
-            vertical,
-            alternating,
-            name=f"{name}_{method.__name__}_tile",
-            scale=scale,
-            **kwargs,
-        )
+    __call__ = generate
 
 
 def make_sphere():

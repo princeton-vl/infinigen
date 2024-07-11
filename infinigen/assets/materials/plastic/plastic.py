@@ -11,11 +11,12 @@ from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plasti
 from infinigen.assets.materials.plastic.plastic_translucent import (
     shader_translucent_plastic,
 )
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 
 
 class Plastic:
-    def apply(self, obj, selection=None, clear=None, **kwargs):
+
+    def generate(self, clear=None, **kwargs):
         is_rough = kwargs.get("rough", uniform(0, 1))
         is_translucent = kwargs.get("translucent", uniform(0, 1))
         if clear is None:
@@ -25,4 +26,6 @@ class Plastic:
             if is_rough > is_translucent
             else shader_translucent_plastic
         )
-        common.apply(obj, shader_func, selection, clear=clear, **kwargs)
+        return surface.shaderfunc_to_material(shader_func)
+    
+    __call__ = generate

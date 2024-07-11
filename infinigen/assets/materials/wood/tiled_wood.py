@@ -7,8 +7,8 @@
 
 from numpy.random import randint, uniform
 
-from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.wood.wood import get_color
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hex2rgba
@@ -325,8 +325,12 @@ def get_random_light_wood_params():
 
 
 class TiledWood:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_wood_tiled, selection=selection, **kwargs)
+     shader = shader_wood_tiled
+
+     def generate(self):
+        return surface.shaderfunc_to_material(shader_wood_tiled)
+
+     __call__ = generate
 
 
 # def make_sphere():

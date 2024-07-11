@@ -4,6 +4,7 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
+from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
@@ -74,7 +75,7 @@ def shader_rug(nw: NodeWrangler, strength=1.0, **kwargs):
 class Rug:
     shader = shader_rug
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_rug)
 
     __call__ = generate

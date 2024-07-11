@@ -3,7 +3,7 @@
 
 # Authors: Hongyu Wen
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -23,8 +23,12 @@ def shader_brushed_black_metal(nw: NodeWrangler):
 
 
 class BrushedBlackMetal:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_brushed_black_metal, selection, **kwargs)
+    shader = shader_brushed_black_metal
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_brushed_black_metal)
+
+    __call__ = generate
 
 
 def shader_white_metal(nw: NodeWrangler):
@@ -81,8 +85,12 @@ def shader_white_metal(nw: NodeWrangler):
 
 
 class WhiteMetal:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_white_metal, selection, **kwargs)
+    shader = shader_white_metal
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_white_metal)
+
+    __call__ = generate
 
 
 def shader_black_glass(nw: NodeWrangler):
@@ -103,7 +111,7 @@ def shader_black_glass(nw: NodeWrangler):
 class BlackGlass:
     shader = shader_black_glass
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_black_glass)
 
     __call__ = generate

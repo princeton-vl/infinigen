@@ -146,9 +146,7 @@ def shader_bone(nw: NodeWrangler):
 
 
 class Bone:
-    shader = shader_bone
+    # shader = shader_bone
 
-    def generate():
-        return surface.shaderfunc_to_material(shader_bone)
-
-    __call__ = generate
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_bone, selection=selection)

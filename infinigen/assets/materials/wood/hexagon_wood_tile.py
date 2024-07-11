@@ -9,24 +9,8 @@ from .wood import shader_wood
 
 
 class HexagonWoodTile:
-    def apply(
-        self,
-        obj,
-        selection=None,
-        vertical=False,
-        scale=None,
-        alternating=None,
-        shape=None,
-        **kwargs,
-    ):
+    def generate(self):
         shader_func = shader_wood
-        tile.Tile().apply(
-            obj,
-            selection,
-            vertical,
-            shader_func,
-            scale,
-            alternating,
-            "hexagon",
-            **kwargs,
-        )
+        return tile.Tile().generate(shader_func, "hexagon")
+    
+    __call__ = generate

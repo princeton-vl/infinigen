@@ -5,6 +5,7 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
@@ -32,7 +33,9 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
 class MetalBasic:
     shader = shader_metal
 
-    def generate():
-        return surface.shaderfunc_to_material(shader_metal)
+    def generate(self, selection =None, **kwargs) :
+        from infinigen.assets.colors import metal_hsv
+        color = metal_hsv(**kwargs)
+        return surface.shaderfunc_to_material(shader_metal, color)
 
     __call__ = generate

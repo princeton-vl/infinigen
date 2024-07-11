@@ -5,9 +5,10 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common, surface_utils
+from infinigen.assets.materials.utils import surface_utils
 from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.assets.utils.object import new_plane
+from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
@@ -42,10 +43,13 @@ def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
 
 
 class HardwoodFloor:
-    def apply(self, obj, selection=None, rotation=None, **kwargs):
-        if rotation is None:
+    shader = shader_hardwood_floor
+    def generate(self, selection=None, rotation=None):
+       if rotation is None:
             rotation = (0, 0, 0) if uniform() < 0.1 else (0, 0, np.pi / 2)
-        return common.apply(obj, shader_hardwood_floor, selection, rotation, **kwargs)
+       return surface.shaderfunc_to_material(shader_hardwood_floor, rotation)
+    
+    __call__ = generate
 
 
 def make_sphere():

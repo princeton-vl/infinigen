@@ -8,7 +8,6 @@ import math as ma
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.utils.surface_utils import (
     sample_color,
     sample_range,
@@ -19,7 +18,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
 
-def shader_wood(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs):
+def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
     texture_coordinate_1 = nw.new_node(Nodes.TextureCoord)
@@ -103,6 +102,10 @@ def shader_wood(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs)
     )
 
 
-class Wood:
-    def apply(self, obj, selection=None, scale=1, **kwargs):
-        common.apply(obj, shader_wood, selection, scale=scale, **kwargs)
+class WoodOld:
+     shader=shader_wood_old
+
+     def generate(self):
+        return surface.shaderfunc_to_material(shader_wood_old)
+
+     __call__ = generate

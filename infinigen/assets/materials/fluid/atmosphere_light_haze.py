@@ -35,7 +35,5 @@ def shader_atmosphere(
 class AtmosphereLightHaze:
     shader = shader_atmosphere
 
-    def generate():
-        return surface.shaderfunc_to_material(shader_atmosphere)
-
-    __call__ = generate
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, shader_atmosphere, selection=selection)

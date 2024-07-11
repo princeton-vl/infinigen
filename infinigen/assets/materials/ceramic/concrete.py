@@ -8,7 +8,7 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -485,5 +485,7 @@ def shader_concrete(
 class Concrete:
     shader = shader_concrete
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_concrete, selection=selection, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_concrete)
+
+    __call__ = generate

@@ -2,14 +2,12 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-from collections.abc import Iterable
 
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.object import new_plane
-from infinigen.assets.utils.uv import unwrap_normal
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
@@ -76,10 +74,11 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
 class Brick:
     shader = shader_brick
 
-    def apply(self, obj, selection=None, height=None, **kwargs):
-        for o in obj if isinstance(obj, Iterable) else [obj]:
-            unwrap_normal(o, selection, axis_="z")
-        common.apply(obj, shader_brick, selection, height, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_brick)
+    
+    __call__ = generate
+    
 
 
 def make_sphere():

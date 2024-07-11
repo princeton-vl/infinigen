@@ -9,8 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.utils import common
-from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -237,9 +236,9 @@ def shader_fabric(
 
 
 class PlaidFabric:
-    def apply(self, obj, selection=None, **kwargs):
-        if not isinstance(obj, list):
-            obj = [obj]
-        for o in obj:
-            unwrap_faces(o, selection)
-        common.apply(obj, shader_fabric, selection, **kwargs)
+    shader = shader_fabric
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_fabric)
+
+    __call__ = generate

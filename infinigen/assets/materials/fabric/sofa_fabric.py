@@ -63,7 +63,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
 class SofaFabric:
     shader = shader_sofa_fabric
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_sofa_fabric)
 
     __call__ = generate

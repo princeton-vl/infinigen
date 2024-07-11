@@ -50,7 +50,7 @@ def test_material_runs_deprecated_interface(pathspec, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "pathspec", load_txt_list("tests/assets/list_indoor_materials.txt")
+    "pathspec", load_txt_list("tests/assets/list_materials.txt")
 )
 def test_material_runs(pathspec, **kwargs):
     setup_gin(

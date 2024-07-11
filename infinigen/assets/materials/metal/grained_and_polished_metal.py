@@ -128,7 +128,7 @@ def shader_grained_metal(
 class GrainedMetal:
     shader = shader_grained_metal
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_grained_metal)
 
     __call__ = generate

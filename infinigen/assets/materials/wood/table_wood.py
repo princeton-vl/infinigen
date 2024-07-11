@@ -7,7 +7,7 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
@@ -178,5 +178,7 @@ def shader_wood(nw: NodeWrangler, **kwargs):
 class TableWood:
     shader = shader_wood
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_wood, selection, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_wood)
+
+    __call__ = generate

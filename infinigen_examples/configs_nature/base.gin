@@ -1,4 +1,4 @@
-include 'infinigen_examples/configs_nature/surface_registry.gin'
+#include 'infinigen_examples/configs_nature/surface_registry.gin'
 
 OVERALL_SEED = 0
 LOG_DIR = '.'

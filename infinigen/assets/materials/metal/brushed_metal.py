@@ -169,7 +169,7 @@ def shader_brushed_metal(
 class BrushedMetal:
     shader = shader_brushed_metal
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_brushed_metal)
 
     __call__ = generate

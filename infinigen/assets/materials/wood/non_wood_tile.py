@@ -9,17 +9,7 @@ from infinigen.assets.materials.wood.wood import shader_wood
 
 
 class NonWoodTile:
-    def apply(
-        self,
-        obj,
-        selection=None,
-        vertical=False,
-        shader_func=None,
-        scale=None,
-        alternating=None,
-        shape=None,
-        **kwargs,
-    ):
+    def generate(self, shader_func=None, shape=None):
         shader_funcs = tile.get_shader_funcs()
         shader_funcs = [(f, w) for f, w in shader_funcs if f != shader_wood]
         funcs, weights = zip(*shader_funcs)
@@ -28,6 +18,7 @@ class NonWoodTile:
             shader_func = np.random.choice(funcs, p=weights)
         if shape is None:
             shape = np.random.choice(["square", "hexagon", "rectangle"])
-        tile.Tile().apply(
-            obj, selection, vertical, shader_func, scale, alternating, shape, **kwargs
-        )
+
+        return tile.Tile().generate(shader_func,shape)
+    
+    __call__ = generate

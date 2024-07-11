@@ -5,7 +5,7 @@
 
 from numpy.random import uniform as U
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
@@ -28,5 +28,9 @@ def shader_black(nw: NodeWrangler):
 
 
 class BlackPlastic:
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_black, selection, **kwargs)
+    shader = shader_black
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_black)
+
+    __call__ = generate

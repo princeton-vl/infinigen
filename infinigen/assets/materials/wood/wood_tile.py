@@ -24,14 +24,20 @@ def get_wood_tiles():
 
 
 class WoodTiles:
-    def apply(
-        self,
-        obj,
-        selection=None,
-        vertical=False,
-        scale=None,
-        alternating=None,
-        **kwargs,
-    ):
+    # def apply(
+    #     self,
+    #     obj,
+    #     selection=None,
+    #     vertical=False,
+    #     scale=None,
+    #     alternating=None,
+    #     **kwargs,
+    # ):
+    #     func = np.random.choice(get_wood_tiles())
+    #     func.apply(obj, selection, vertical, scale, alternating, **kwargs)
+
+    def generate(self):
         func = np.random.choice(get_wood_tiles())
-        func.apply(obj, selection, vertical, scale, alternating, **kwargs)
+        return func.generate()
+    
+    __call__ = generate

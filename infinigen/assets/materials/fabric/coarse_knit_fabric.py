@@ -16,6 +16,7 @@
 
 from numpy.random import choice, uniform
 
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -260,7 +261,7 @@ def shader_coarse_knit_fabric(nw: NodeWrangler, **kwargs):
 class CoarseKnitFabric:
     shader = shader_coarse_knit_fabric
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_coarse_knit_fabric)
 
     __call__ = generate

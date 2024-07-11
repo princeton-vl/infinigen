@@ -6,7 +6,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
@@ -45,9 +45,10 @@ def shader_vase_ceramic(nw: NodeWrangler):
 class VaseCeramic:
     shader = shader_vase_ceramic
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_vase_ceramic, selection, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_vase_ceramic)
 
+    __call__ = generate
 
 def shader_colored_glass(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -72,7 +73,7 @@ class ColoredGlass:
     # def apply(self, obj, selection=None, **kwargs):
     #     common.apply(obj, shader_colored_glass, selection, **kwargs)
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_colored_glass)
 
-    __class__ = generate
+    __call__ = generate

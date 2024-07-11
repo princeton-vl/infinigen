@@ -4,7 +4,7 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
@@ -61,5 +61,7 @@ def shader_ceramic(
 class Ceramic:
     shader = shader_ceramic
 
-    def apply(self, obj, selection=None, clear=False, **kwargs):
-        common.apply(obj, shader_ceramic, selection, clear, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_ceramic)
+
+    __call__ = generate

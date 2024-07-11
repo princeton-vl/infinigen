@@ -90,5 +90,7 @@ def shader_marble_regular(nw: NodeWrangler):
 class MarbleRegular:
     shader = shader_marble_regular
 
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_material(obj, shader_marble_regular, selection=selection)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_marble_regular)
+
+    __call__ = generate

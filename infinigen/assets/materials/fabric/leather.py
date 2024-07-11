@@ -8,6 +8,7 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -193,7 +194,7 @@ def shader_leather(
 class Leather:
     shader = shader_leather
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_leather)
 
     __call__ = generate

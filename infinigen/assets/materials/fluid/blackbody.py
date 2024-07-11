@@ -70,7 +70,5 @@ def blackbody_shader(nw: NodeWrangler):
 class BlackBody:
     shader = blackbody_shader
 
-    def generate():
-        return surface.shaderfunc_to_material(blackbody_shader)
-
-    __call__ = blackbody_shader
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, blackbody_shader, selection=selection)

@@ -5,6 +5,7 @@
 
 from numpy.random import uniform
 
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -78,7 +79,9 @@ class Plaster:
     #     common.apply(
     #         obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
     #     )
-    def generate():
-        return surface.shaderfunc_to_material(shader_plaster)
+    def generate(self, plaster_colored=None):
+        if plaster_colored is None:
+            plaster_colored = uniform() < 0.4
+        return surface.shaderfunc_to_material(shader_plaster,plaster_colored)
 
     __call__ = generate

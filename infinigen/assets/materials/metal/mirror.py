@@ -21,7 +21,7 @@ def shader_mirror(nw: NodeWrangler, **kwargs):
 class Mirror:
     shader = shader_mirror
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_mirror)
 
     __call__ = generate

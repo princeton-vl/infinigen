@@ -6,6 +6,7 @@
 
 from numpy.random import uniform
 
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
@@ -161,7 +162,7 @@ def shader_lined_fur_random(nw: NodeWrangler, **kwargs):
 class LinedFabric:
     shader = shader_lined_fur_random
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_lined_fur_random)
 
     __call__ = generate

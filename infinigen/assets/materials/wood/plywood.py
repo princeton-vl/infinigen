@@ -6,7 +6,7 @@
 
 from numpy.random import normal, uniform
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
@@ -46,8 +46,12 @@ class WhitePlywood:
     def __init__(self):
         self.params = shader_shelves_white_sampler()
 
-    def apply(self, obj):
-        common.apply(obj, shader_shelves_white, **self.params)
+    shader = shader_shelves_white
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_shelves_white)
+
+    __call__ = generate
 
 
 def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
@@ -210,8 +214,12 @@ class BlackPlywood:
     def __init__(self):
         self.params = shader_shelves_black_wood_sampler()
 
-    def apply(self, obj):
-        common.apply(obj, shader_shelves_black_wood, **self.params)
+    shader = shader_shelves_black_wood
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_shelves_black_wood)
+
+    __call__ = generate
 
 
 def shader_shelves_wood(nw: NodeWrangler, **kwargs):
@@ -365,5 +373,9 @@ class BlondePlywood:
     def __init__(self):
         self.params = shader_shelves_wood_sampler()
 
-    def apply(self, obj):
-        common.apply(obj, shader_shelves_wood, **self.params)
+    shader = shader_shelves_wood
+
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_shelves_wood)
+
+    __call__ = generate

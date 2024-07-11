@@ -5,7 +5,7 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
@@ -37,5 +37,7 @@ def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
 class GlassVolume:
     shader = shader_glass_volume
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_glass_volume, selection, **kwargs)
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_glass_volume)
+
+    __call__ = generate

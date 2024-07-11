@@ -153,7 +153,7 @@ def shader_hammered_metal(
 class HammeredMetal:
     shader = shader_hammered_metal
 
-    def generate():
+    def generate(self):
         return surface.shaderfunc_to_material(shader_hammered_metal)
 
     __call__ = generate

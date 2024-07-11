@@ -8,7 +8,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.object import new_cube
 from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
@@ -191,16 +190,12 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
 
 
 class Wood:
-    shader = shader_wood
+     shader = shader_wood
 
-    def generate(self):
+     def generate(self):
         return surface.shaderfunc_to_material(shader_wood)
 
-    def apply(self, obj, selection=None, **kwargs):
-        common.apply(obj, shader_wood, selection, **kwargs)
-
-    __call__ = generate
-
+     __call__ = generate
 
 def make_sphere():
     return new_cube()
