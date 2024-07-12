@@ -595,7 +595,7 @@ def angle_alignment_cost_base(
     b_edges = []
     for b_name, b_mesh in zip(b, b_meshes):
         b_poly = iu.project_to_xy_poly(b_mesh)
-        if b_poly is not None:
+        if (b_poly is not None) and (not b_poly.is_empty):
             if isinstance(b_poly, Polygon):
                 for i, coord in enumerate(b_poly.exterior.coords[:-1]):
                     start, end = coord, b_poly.exterior.coords[i + 1]
