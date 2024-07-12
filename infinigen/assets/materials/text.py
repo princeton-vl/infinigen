@@ -41,7 +41,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
-
+from infinigen.core import surface
 logger = logging.getLogger(__name__)
 
 font_dir = repo_root() / "infinigen/assets/fonts"
@@ -440,22 +440,20 @@ class Text:
 
         return shader_text
 
-    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
-        common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
+    # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
+    #     common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
+    def generate(self, selection=None, bbox=(0,1,0,1), **kwargs):
+        return surface.shaderfunc_to_material(self.make_shader_func(bbox))
+
+    __call__ = generate
 
 
 class TextGeneral:
-    def apply(
-        self,
-        obj,
-        selection=None,
-        bbox=(0, 1, 0, 1),
-        has_barcode=True,
-        emission=0,
-        **kwargs,
-    ):
-        Text(has_barcode, emission).apply(obj, selection, bbox, **kwargs)
 
+    def generate(self, selection=None, bbox=(0,1,0,1), has_barcode=True,emission=0, **kwargs):
+        return Text(has_barcode, emission).generate(selection, bbox, **kwargs)
+    
+    __call__ = generate
 
 def make_sphere():
     obj = new_plane()
@@ -466,5 +464,7 @@ def make_sphere():
 
 
 class TextNoBarcode:
-    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):
-        Text(False, emission).apply(obj, selection, bbox, **kwargs)
+    def generate(self, selection=None, bbox=(0,1,0,1), emission=0,**kwargs):
+        return Text(False, emission).generate(selection, bbox, **kwargs)
+    
+    __call__ = generate
