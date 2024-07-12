@@ -21,6 +21,7 @@ from infinigen.core.placement.detail import (
 )
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util import blender as butil
+from infinigen.core.util import math as mutil
 from infinigen.core.util.math import randomspacing, rotate_match_directions
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def chop_object(obj, n, cutter_size, max_tilt=15, thickness=0.03):
 
     def cutter(t):
         butil.select_none()
-        z = butil.lerp(bbox[:, -1].min(), bbox[:, -1].max(), t)
+        z = mutil.lerp(bbox[:, -1].min(), bbox[:, -1].max(), t)
         loc = (*bbox[:, :-1].mean(axis=0), z)
         bpy.ops.mesh.primitive_plane_add(size=cutter_size, location=loc)
         cut = bpy.context.active_object
