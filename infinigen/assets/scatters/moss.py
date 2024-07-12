@@ -50,3 +50,8 @@ class MossCover:
         )
 
         return scatter_obj
+
+
+def apply(obj):
+    moss_cover = MossCover()
+    return moss_cover.apply(obj)

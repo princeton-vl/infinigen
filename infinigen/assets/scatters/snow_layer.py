@@ -12,6 +12,7 @@ from infinigen.core.util import blender as butil
 
 class Snowlayer:
     def __init__(self):
+        bpy.ops.preferences.addon_enable(module="real_snow")
         pass
 
     def apply(self, obj, **kwargs):
@@ -21,3 +22,9 @@ class Snowlayer:
             snow = bpy.context.active_object
         tag_object(snow, "snow")
         tag_object(snow, "boulder")
+
+
+def apply(obj):
+    snowlayer = Snowlayer()
+    snowlayer.apply(obj)
+    return snowlayer

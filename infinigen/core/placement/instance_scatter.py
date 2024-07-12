@@ -332,7 +332,10 @@ def scatter_instances(
 
     name = "scatter:" + collection.name.split(":")[-1]
 
-    avg_scale = scale * (1 - scale_rand / 2) * (1 - scale_rand_axi / 2)
+    if scale is not None:
+        avg_scale = scale * (1 - scale_rand / 2) * (1 - scale_rand_axi / 2)
+    else:
+        avg_scale = 1
 
     if vol_density is not None:
         assert (

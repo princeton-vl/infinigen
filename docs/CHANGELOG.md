@@ -73,3 +73,5 @@ v1.5.1
 - Fix individual_export in export.py
 - Fix Dockerfile
 - Remove dependabot
+- Add scatter unit tests and fix scatter imports
+- Fix black renders due to non-hidden particle emitter
