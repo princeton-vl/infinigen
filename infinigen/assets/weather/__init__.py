@@ -6,5 +6,6 @@ from .particles import (
     marine_snow_param_distribution,
     rain_param_distribution,
     snow_param_distribution,
+    spawn_emitter,
 )
 from .wind_effectors import TurbulenceEffector, WindEffector
