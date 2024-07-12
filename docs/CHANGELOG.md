@@ -58,8 +58,9 @@ v1.4.0 - Infinigen Indoors
 - Add HelloRoom.md & ExportingToSimulators.md
 
 v1.4.1
-- bugfix gin file names in example commands
-- disable cieling skirtingboard temporarily
+- @David-Yan1 fix placeholder & ocmesher submodule version
+- @lahavlipson fix bug in surface normals of wall meshes
+- @araistrick bugfix example commands & other typos
 
 v1.5.0
 - ruff & auto-lint-fix the entire codebase
