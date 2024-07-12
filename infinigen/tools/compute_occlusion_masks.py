@@ -3,12 +3,13 @@
 
 # Authors: Zeyu Ma
 
+import argparse
+from pathlib import Path
+
+import cv2
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
-from pathlib import Path
-import argparse
-from suffixes import parse_suffix, get_suffix
-import cv2
+from suffixes import get_suffix, parse_suffix
 
 
 def get_mask(depth, flow, dst_depth):

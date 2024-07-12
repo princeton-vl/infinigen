@@ -3,14 +3,10 @@
 
 # Authors: Zeyu Ma
 
-import numpy as np
-from scipy.interpolate import RegularGridInterpolator
-from pathlib import Path
 import argparse
-from suffixes import parse_suffix, get_suffix
 import json
 import os
-
+from pathlib import Path
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

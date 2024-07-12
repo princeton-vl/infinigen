@@ -200,12 +200,6 @@ def save_obj_and_instances(
         if atm_name in bpy.data.objects:
             bpy.data.objects.remove(bpy.data.objects[atm_name])
 
-    # if "scatters" in bpy.data.collections:
-    #     for obj in bpy.data.collections["scatters"].objects:
-    #         if "instance_scatter" in obj.modifiers.keys():
-    #             assert(not obj.hide_viewport)
-    #     assert(not bpy.data.collections["scatters"].hide_viewport)
-
     json_data = []
     instance_mesh_data = get_all_instances()
     singleton_mesh_data = get_all_non_instances()

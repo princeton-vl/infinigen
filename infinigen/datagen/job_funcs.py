@@ -507,15 +507,6 @@ def queue_opengl(
         if item.startswith(key):
             point_trajectory_src_frame = int(item[len(key):])
     assert(point_trajectory_src_frame is not None)
-    # key = "execute_tasks.point_trajectory_src_frame_block_start="
-    # point_trajectory_src_frame_block_start = None
-    # for item in overrides:
-    #     if item.startswith(key):
-    #         point_trajectory_src_frame_block_start = int(item[len(key):])
-    # assert(point_trajectory_src_frame_block_start is not None)
-
-    # dst_output_indices["frame"] = point_trajectory_src_frame_block_start
-    # src_input_folder = Path(folder)/f'savemesh{get_suffix(dst_output_indices)}'
 
     if (gt_testing):
         copy_folder = Path(folder) / f"frames{output_suffix}"
@@ -562,20 +553,6 @@ def queue_opengl(
             f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
             f"--frame {point_trajectory_src_frame} --dst_frame {point_trajectory_src_frame} --depth_only 1 -out {output_folder} "
         ]
-
-        # # inverse flow
-        # lines += [
-        #     f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
-        #     f"--frame {frame_idx+1} --dst_frame {frame_idx} --flow_only 1 --flow_type 1 -out {output_folder} "
-        #     for frame_idx in range(start_frame, end_frame + 1)
-        # ]
-        # # inverse point trajectory
-        # lines += [
-        #     f"{process_mesh_path} -in {input_folder} -dst_in {src_input_folder} "
-        #     f"--frame {frame_idx} --dst_frame {point_trajectory_src_frame} --flow_only 1 --flow_type 3 -out {output_folder} "
-        #     for frame_idx in range(start_frame, end_frame + 1)
-        # ]
-        
         
         lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
         lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}")

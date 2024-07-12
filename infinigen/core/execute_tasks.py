@@ -104,7 +104,7 @@ def save_meshes(
     frame_idx = point_trajectory_src_frame
     frame_info_folder = Path(output_folder) / f"frame_{frame_idx:04d}"
     frame_info_folder.mkdir(parents=True, exist_ok=True)
-    logger.info(f"Working on static objects")
+    logger.info("Working on static objects")
     exporting.save_obj_and_instances(
         frame_info_folder / "static_mesh",
         previous_frame_mesh_id_mapping,
