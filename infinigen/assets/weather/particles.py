@@ -12,6 +12,27 @@ from infinigen.core.util.random import log_uniform
 logger = logging.getLogger(__name__)
 
 
+def spawn_emitter(follow_cam, mesh_type, size, offset, name=None):
+    match mesh_type:
+        case "plane":
+            emitter = butil.spawn_plane(location=offset, size=size)
+        case "cube":
+            emitter = butil.spawn_cube(location=offset, size=size)
+        case _:
+            raise ValueError(f"Unknown mesh type {mesh_type}")
+
+    butil.constrain_object(emitter, "COPY_LOCATION", use_offset=True, target=follow_cam)
+
+    if name is None:
+        name = follow_cam.name
+    emitter.name = f"emitter({name=}, {mesh_type=})"
+
+    emitter.hide_viewport = True
+    emitter.hide_render = True
+
+    return emitter
+
+
 def rain_param_distribution():
     drops_per_sec_m2 = uniform(0.05, 1)
     velocity = uniform(9, 20)

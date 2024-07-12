@@ -9,7 +9,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.deformed_trees.base import BaseDeformedTreeFactory
+from infinigen.assets.objects.deformed_trees.base import BaseDeformedTreeFactory
 from infinigen.assets.utils.decorate import remove_vertices
 from infinigen.assets.utils.draw import cut_plane
 from infinigen.assets.utils.misc import assign_material

@@ -425,13 +425,29 @@ def queue_mesh_save(
 
     output_folder.mkdir(parents=True, exist_ok=True)
 
+    input_folder_priority_options = [
+        f"fine{input_suffix}",
+        "fine",
+        f"coarse{input_suffix}",
+        "coarse",
+    ]
+
+    for option in input_folder_priority_options:
+        input_folder = f"{folder}/{option}"
+        if (Path(input_folder) / "scene.blend").exists():
+            break
+    else:
+        raise ValueError(
+            f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}"
+        )
+
     cmd = (
         get_cmd(
             seed,
             "mesh_save",
             configs,
             taskname,
-            input_folder=f"{folder}/coarse{input_suffix}",
+            input_folder=input_folder,
             output_folder=f"{folder}/savemesh{output_suffix}",
         )
         + f"""

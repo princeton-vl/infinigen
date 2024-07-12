@@ -48,9 +48,15 @@ def load_txt_list(path: Path, skip_sharp=True):
         raise FileNotFoundError(f"{path=} resolved to {pathabs=} which does not exist")
 
     res = pathabs.read_text().splitlines()
+
     res = [
-        f.lstrip("#").lstrip(" ")
+        f.strip()
         for f in res
         if (not f.startswith("#") or not skip_sharp) and len(f) > 0
     ]
+
+    res = [f[: f.index("#")] if "#" in f else f for f in res]
+
+    res = [r for r in res if len(r.strip()) > 0]
+
     return res
