@@ -39,3 +39,8 @@ class Mushrooms:
         )
 
         return scatter_obj
+
+
+def apply(obj):
+    mushrooms = Mushrooms()
+    return mushrooms.apply(obj)

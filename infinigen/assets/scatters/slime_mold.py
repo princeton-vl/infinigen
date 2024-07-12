@@ -86,3 +86,7 @@ class SlimeMold:
         assign_material(scatter_obj, shaderfunc_to_material(shader_mold, base_hue))
 
         return scatter_obj
+
+
+def apply(obj, selection=None):
+    SlimeMold().apply(obj, selection)

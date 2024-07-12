@@ -32,7 +32,6 @@ def apply(obj, scale=0.4, density=1.0, n=10, selection=None):
             )
 
         scatter_obj = scatter_instances(
-            "mollusk",
             base_obj=obj,
             collection=mollusk,
             density=density,

@@ -19,7 +19,6 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 from tqdm import tqdm
 
-import infinigen.assets.utils.mesh
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
 from infinigen.core.util import blender as butil
@@ -603,7 +602,7 @@ def animate_trajectory(
             obj.rotation_euler.z = U(0, 2 * np.pi)
 
         if hasattr(policy_func, "reset"):
-            infinigen.assets.utils.mesh.reset_preset()
+            policy_func.reset()
 
         keyframe(obj, obj.location, obj.rotation_euler, 0, interp="LINEAR")
         try_animate_trajectory_func = (

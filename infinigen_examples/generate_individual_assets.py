@@ -35,6 +35,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+import infinigen
 from infinigen.assets.lighting import (
     hdri_lighting,
     holdout_lighting,
@@ -47,7 +48,7 @@ from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material, subclasses
 from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
-from infinigen.core.placement import density, factory
+from infinigen.core.placement import AssetFactory, density
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
@@ -63,30 +64,42 @@ logging.basicConfig(
     level=logging.WARNING,
 )
 
+logger = logging.getLogger(__name__)
+
+OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
+assert OBJECTS_PATH.exists(), OBJECTS_PATH
+
 
 def build_scene_asset(args, factory_name, idx):
-    factory = None
-    for subdir in os.listdir("infinigen/assets"):
+    fac = None
+    for subdir in sorted(list(OBJECTS_PATH.iterdir())):
+        clsname = subdir.name.split(".")[0].strip()
         with gin.unlock_config():
-            module = importlib.import_module(f'infinigen.assets.{subdir.split(".")[0]}')
+            module = importlib.import_module(f"infinigen.assets.objects.{clsname}")
         if hasattr(module, factory_name):
-            factory = getattr(module, factory_name)
+            fac = getattr(module, factory_name)
+            logger.info(f"Found {factory_name} in {subdir}")
             break
-    if factory is None:
+        logger.debug(f"{factory_name} not found in {subdir}")
+    if fac is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
+
+    if args.dryrun:
+        return
+
     with FixedSeed(idx):
-        factory = factory(idx)
+        fac = fac(idx)
         try:
             if args.spawn_placeholder:
-                ph = factory.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
-                asset = factory.spawn_asset(idx, placeholder=ph)
+                ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
+                asset = fac.spawn_asset(idx, placeholder=ph)
             else:
-                asset = factory.spawn_asset(idx)
+                asset = fac.spawn_asset(idx)
         except Exception as e:
             traceback.print_exc()
-            print(f"{factory}.spawn_asset({idx=}) FAILED!! {e}")
+            print(f"{fac}.spawn_asset({idx=}) FAILED!! {e}")
             raise e
-        factory.finalize_assets(asset)
+        fac.finalize_assets(asset)
         if args.fire:
             from infinigen.assets.fluid.fluid import set_obj_on_fire
 
@@ -144,7 +157,7 @@ def build_scene_asset(args, factory_name, idx):
     return asset
 
 
-def build_scene_surface(factory_name, idx):
+def build_scene_surface(args, factory_name, idx):
     try:
         with gin.unlock_config():
             scatter = importlib.import_module(
@@ -153,6 +166,9 @@ def build_scene_surface(factory_name, idx):
 
             if not hasattr(scatter, "apply"):
                 raise ValueError(f"{scatter} has no apply()")
+
+            if args.dryun:
+                return
 
             bpy.ops.mesh.primitive_grid_add(
                 size=10, x_subdivisions=400, y_subdivisions=400
@@ -190,6 +206,10 @@ def build_scene_surface(factory_name, idx):
                             break
                     else:
                         raise Exception(f"{factory_name} not Found.")
+
+                if args.dryrun:
+                    return
+
                 if hasattr(template, "make_sphere"):
                     asset = template.make_sphere()
                 else:
@@ -210,6 +230,8 @@ def build_and_save_asset(payload: dict):
     args = payload["args"]
     idx = payload["idx"]
 
+    logger.info(f"Building scene for {factory_name} {idx}")
+
     if args.seed > 0:
         idx = args.seed
 
@@ -226,7 +248,6 @@ def build_and_save_asset(payload: dict):
     )
     scene.cycles.samples = args.samples
     butil.clear_scene()
-    configure_cycles_devices()
 
     if not args.fire:
         bpy.context.scene.render.film_transparent = args.film_transparent
@@ -238,7 +259,12 @@ def build_and_save_asset(payload: dict):
     if "Factory" in factory_name:
         asset = build_scene_asset(args, factory_name, idx)
     else:
-        asset = build_scene_surface(factory_name, idx)
+        asset = build_scene_surface(args, factory_name, idx)
+
+    if args.dryrun:
+        return
+
+    configure_cycles_devices()
 
     with FixedSeed(args.lighting + idx):
         if args.hdri:
@@ -424,21 +450,23 @@ def mapfunc(f, its, args):
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
-    init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
+    init.apply_gin_configs(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        skip_unknown=True,
+    )
     surface.registry.initialize_from_gin()
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith("infinigen"):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
 
     init.configure_blender()
 
     if args.gpu:
         init.configure_render_cycles()
-
-    extras = "[%(filename)s:%(lineno)d] " if args.loglevel == logging.DEBUG else ""
-    logging.basicConfig(
-        format=f"[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] {extras}| %(message)s",
-        level=args.loglevel,
-        datefmt="%H:%M:%S",
-    )
-    logging.getLogger("infinigen").setLevel(args.loglevel)
 
     if ".txt" in args.factories[0]:
         name = args.factories[0].split(".")[-2].split("/")[-1]
@@ -449,18 +477,26 @@ def main(args):
         args.output_folder = Path(os.getcwd()) / "outputs"
 
     path = Path(args.output_folder) / name
-    path.mkdir(exist_ok=True)
+    path.mkdir(exist_ok=True, parents=True)
 
     factories = list(args.factories)
+
     if "ALL_ASSETS" in factories:
-        factories += [f.__name__ for f in subclasses(factory.AssetFactory)]
+        factories += [f.__name__ for f in subclasses(AssetFactory)]
         factories.remove("ALL_ASSETS")
+        logger.warning(
+            "ALL_ASSETS is deprecated. Use `-f tests/assets/list_nature_meshes.txt` and `-f tests/assets/list_indoor_meshes.txt` instead."
+        )
     if "ALL_SCATTERS" in factories:
-        factories += [f.stem for f in Path("surfaces/scatters").iterdir()]
+        factories += [f.stem for f in Path("infinigen/assets/scatters").iterdir()]
         factories.remove("ALL_SCATTERS")
     if "ALL_MATERIALS" in factories:
         factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
         factories.remove("ALL_MATERIALS")
+        logger.warning(
+            "ALL_MATERIALS is deprecated. Use `-f tests/assets/list_nature_materials.txt` and `-f tests/assets/list_indoor_materials.txt` instead."
+        )
+
     has_txt = ".txt" in factories[0]
     if has_txt:
         factories = [
@@ -474,9 +510,13 @@ def main(args):
             ]
             mapfunc(build_and_save_asset, targets, args)
 
+    if args.dryrun:
+        return
+
     for j, fac in enumerate(factories):
         fac_path = args.output_folder / fac
-        assert fac_path.exists()
+        fac_path.mkdir(exist_ok=True, parents=True)
+
         f"{fac_path} does not exist"
         if has_txt:
             for i in range(args.n_images):
@@ -630,14 +670,6 @@ def make_args():
         "-D", "--seed", type=int, default=-1, help="Run a specific seed."
     )
     parser.add_argument("-N", "--no-mod", action="store_true", help="No modification")
-    parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_const",
-        dest="loglevel",
-        const=logging.DEBUG,
-        default=logging.INFO,
-    )
     parser.add_argument("-H", "--hdri", action="store_true", help="add_hdri")
     parser.add_argument(
         "-T", "--three_point", action="store_true", help="add three-point lighting"
@@ -655,6 +687,12 @@ def make_args():
         "--export", type=str, default=None, choices=export.FORMAT_CHOICES
     )
     parser.add_argument("--export_texture_res", type=int, default=1024)
+    parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Import assets but do not run them. Used for testing.",
+    )
 
     return init.parse_args_blender(parser)
 

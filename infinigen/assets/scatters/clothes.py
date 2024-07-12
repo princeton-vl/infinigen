@@ -9,6 +9,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.objects.clothes import blanket, pants, shirt
 from infinigen.assets.objects.creatures.util.cloth_sim import bake_cloth
 from infinigen.assets.utils.decorate import read_co, subsurf
 from infinigen.core.placement.factory import make_asset_collection
@@ -49,8 +50,6 @@ class ClothesCover:
     def __init__(
         self, bbox=(0.3, 0.7, 0.3, 0.7), factory_fn=None, width=None, size=None
     ):
-        from infinigen.assets.clothes import blanket, pants, shirt
-
         probs = np.array([2, 1, 1])
         if factory_fn is None:
             factory_fn = np.random.choice(

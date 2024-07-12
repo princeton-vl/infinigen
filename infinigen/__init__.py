@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 
 def repo_root():

@@ -642,15 +642,16 @@ def compose_nature(output_folder, scene_seed, **params):
         ),
     )
 
-    p.run_stage("wind", lambda: weather.WindEffector(np.randint(1e7))(0))
-    p.run_stage("turbulence", lambda: weather.TurbulenceEffector(np.randint(1e7))(0))
+    p.run_stage("wind", lambda: weather.WindEffector(randint(1e7))(0))
+    p.run_stage("turbulence", lambda: weather.TurbulenceEffector(randint(1e7))(0))
 
-    overhead_emitter = butil.spawn_plane(location=Vector((0, 0, 5)), size=60)
-    butil.constrain_object(
-        overhead_emitter, "COPY_LOCATION", use_offset=True, target=camera_rigs[0]
+    overhead_emitter = weather.spawn_emitter(
+        camera_rigs[0], "plane", offset=Vector((0, 0, 5)), size=60
+    )
+    cube_emitter = weather.spawn_emitter(
+        camera_rigs[0], "cube", offset=Vector(), size=30
     )
 
-    cube_emitter = butil.spawn_cube(location=Vector(), size=30)
     butil.constrain_object(
         cube_emitter, "COPY_LOCATION", use_offset=True, target=camera_rigs[0]
     )
