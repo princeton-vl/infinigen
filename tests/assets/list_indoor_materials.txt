@@ -32,3 +32,5 @@ infinigen.assets.materials.tile
 infinigen.assets.materials.tiled_wood
 infinigen.assets.materials.wood
 infinigen.assets.materials.wood_old
+infinigen.assets.materials.bumpy_rubber_floor
+infinigen.assets.materials.tiles.advanced_tiles
