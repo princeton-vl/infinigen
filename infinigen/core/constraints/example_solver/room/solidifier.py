@@ -39,7 +39,7 @@ from .base import RoomGraph, room_type, valid_rooms
 
 logger = logging.getLogger(__name__)
 
-_eps = 1e-2
+_eps = 1e-5
 _snap = .5
 
 panoramic_rooms = defaultdict(
@@ -198,12 +198,12 @@ class BlueprintSolidifier:
                     after = len(rooms[k_].data.polygons)
                     logger.debug(f'Cutting {c.name} from {rooms[k_].name}, {before=} {after=}')
 
-        for obj in list(rooms.values()) + list(cutter_col.objects):
+        for obj in rooms.values():
             remove_faces(obj, read_area(obj) < 5e-4)
             co = read_co(obj)
             m = wt / 2 + _snap
-            low = np.abs(co[:, -1] - m) < _eps * 10
-            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps * 10
+            low = np.abs(co[:, -1] - m) < _eps
+            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps
             co[:, -1] = np.where(low, wt / 2, co[:, -1])
             co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
             write_co(obj, co)
@@ -225,14 +225,16 @@ class BlueprintSolidifier:
             if not (orthogonal.all() & (overlaps == 0).all()):
                 raise BadSeedError('No orthogonal edges')
 
-        for obj in list(rooms.values()) + list(cutter_col.objects):
-            co = read_co(obj) + np.array(obj.location)[np.newaxis, :]
+        for obj in cutter_col.objects:
+            offset = np.array(obj.location)[np.newaxis, :]
+            offset[:, 2] -= w * self.level
+            co = read_co(obj) + offset
             m = wt / 2 + _snap
-            low = np.abs(co[:, -1] - m) < _eps 
-            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps 
+            low = np.abs(co[:, -1] - m) < _eps
+            high = np.abs(co[:, -1] - self.constants.wall_height + m) < _eps
             co[:, -1] = np.where(low, wt / 2, co[:, -1])
             co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
-            write_co(obj, co - np.array(obj.location)[np.newaxis, :])
+            write_co(obj, co - offset)
             tagging.tag_object(obj)
 
         for obj in rooms_.values():
@@ -282,6 +284,7 @@ class BlueprintSolidifier:
         obj = polygon2obj(self.constants.canonicalize(obj_st.polygon), True)
         butil.modify_mesh(obj, "WELD", merge_threshold=.2)
         butil.modify_mesh(obj, 'SOLIDIFY', thickness=self.constants.wall_height, offset=-1)
+        obj.name = name
         self.tag(obj, False)
         center = read_center(obj)
         exterior_centers = []
@@ -307,7 +310,6 @@ class BlueprintSolidifier:
         )
         write_attribute(obj, 'visible_', f'{PREFIX}{t.Subpart.Visible.value}', 'FACE', 'BOOLEAN')
         obj.vertex_groups.remove(obj.vertex_groups['visible_'])
-        obj.name = name
         return obj
 
     def make_interior_cutters(self, neighbours, shared_edges, segments, exterior):
@@ -392,8 +394,8 @@ class BlueprintSolidifier:
                         cutter, 'SOLIDIFY', thickness=self.constants.wall_thickness * 1.2,
                         offset=0
                     )
+                    cutter.name = 'staircase_cutter'
                     self.tag(cutter)
-                    cutter.name = "staircase_cutter"
                     cutters[k].append(cutter)
         return cutters
 
@@ -414,8 +416,8 @@ class BlueprintSolidifier:
             z_rot = 0 if direction[-1] > 0 else np.pi
         cutter.location = x, y, self.constants.door_size / 2 + wt / 2
         cutter.rotation_euler[-1] = z_rot
-        self.tag(cutter)
         cutter.name = t.Semantics.Door.value
+        self.tag(cutter)
         return cutter
 
     def make_entrance_cutter(self, mls):
@@ -431,8 +433,8 @@ class BlueprintSolidifier:
         cutter.location = lam * x + (1 - lam) * x_, lam * y + (
                 1 - lam) * y_, self.constants.door_size / 2 + wt / 2
         cutter.rotation_euler = 0, 0, np.arctan2(y_ - y, x_ - x)
-        self.tag(cutter)
         cutter.name = t.Semantics.Entrance.value
+        self.tag(cutter)
         return cutter
 
     def make_window_cutter(self, mls, is_panoramic):
@@ -460,8 +462,8 @@ class BlueprintSolidifier:
             butil.apply_transform(cutter)
             cutter.location = lam * x + (1 - lam) * x_, lam * y + (1 - lam) * y_, z_loc
             cutter.rotation_euler = 0, 0, np.arctan2(y - y_, x - x_)
-            self.tag(cutter)
             cutter.name = t.Semantics.Window.value
+            self.tag(cutter)
             cutters.append(cutter)
         return cutters
 
@@ -497,15 +499,18 @@ class BlueprintSolidifier:
                 bpy.ops.mesh.select_all(action='SELECT')
                 bpy.ops.mesh.normals_make_consistent(inside=False)
             cutter.location[-1] += wt / 2 + _snap
-            self.tag(cutter)
             cutter.name = t.Semantics.Open.value
+            self.tag(cutter)
             cutters.append(cutter)
         return cutters
 
     def tag(self, obj, visible=True):
         center = read_center(obj) + obj.location
-        ceiling = center[:, -1] > self.constants.wall_height - self.constants.wall_thickness / 2 - _snap - .1
-        floor = center[:, -1] < self.constants.wall_thickness / 2 + _snap + .1
+        high = self.constants.wall_height - self.constants.wall_thickness / 2
+        z = center[:, -1]
+        low = self.constants.wall_thickness / 2
+        ceiling = (z > high - _eps) | (np.abs(z - high + _snap) < _eps)
+        floor = (z < low + _eps) | (np.abs(z - low - _snap) < _eps)
         wall = ~(ceiling | floor)
         write_attr_data(obj, f'{PREFIX}{t.Subpart.Ceiling.value}', ceiling, 'BOOLEAN', 'FACE')
         write_attr_data(obj, f'{PREFIX}{t.Subpart.SupportSurface.value}', floor, 'BOOLEAN', 'FACE')
