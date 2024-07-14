@@ -44,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 
 class Text:
-    font_names_all = matplotlib.font_manager.get_font_names()
     default_font_name = "DejaVu Sans"
     patch_fns = (
         "weighted_choice",
@@ -76,7 +75,7 @@ class Text:
             self.n_patches = np.random.randint(5, 8)
             self.force_horizontal = uniform() < 0.75
 
-            self.font_names = np.random.choice(self.font_names_all, 3)
+            self.font_names = np.random.choice(matplotlib.font_manager.get_font_names(), 2)
             self.n_texts = np.random.randint(2, 4)
 
             self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
