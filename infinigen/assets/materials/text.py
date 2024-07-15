@@ -30,18 +30,18 @@ from numpy.random import rand, uniform
 from PIL import Image
 
 from infinigen import repo_root
-from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane
 from infinigen.assets.utils.uv import compute_uv_direction
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
-from infinigen.core import surface
+
 logger = logging.getLogger(__name__)
 
 font_dir = repo_root() / "infinigen/assets/fonts"

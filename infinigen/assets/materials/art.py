@@ -5,11 +5,9 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.decorate import read_uv, write_uv
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
-# from infinigen.core.util.random import random_general as rg
 from . import text
 from .fabric import rug
 
@@ -88,10 +86,15 @@ class ArtFabric(ArtComposite):
 
 
 class ArtGeneral:
-    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
-        if scale is not None:
-            write_uv(obj, read_uv(obj) * scale)
-        Art().apply(obj, selection, bbox, **kwargs)
-    
+
+    # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
+    #     if scale is not None:
+    #         write_uv(obj, read_uv(obj) * scale)
+    #     Art().apply(obj, selection, bbox, **kwargs)
+
+    def generate(self, selection=None, bbox=(0,1,0,1), **kwargs):
+       return Art().generate(selection,bbox, **kwargs)
+    __call__ = generate
+
 def make_sphere():
     return text.make_sphere()

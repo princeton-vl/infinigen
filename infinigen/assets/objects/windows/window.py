@@ -84,7 +84,59 @@ class WindowFactory(AssetFactory):
         self.params.update(self.material_params)
 
     @staticmethod
-    def sample_parameters(dimensions, open, curtain, shutter):
+    def sample_parameters():
+        frame_width = U(0.05, 0.1)
+        sub_frame_width = U(0.01, frame_width)
+        sub_frame_h_amount = RI(1, 2)
+        sub_frame_v_amount = RI(1, 2)
+        glass_thickness = U(0.01, 0.03)
+
+        shutter_panel_radius = U(0.001, 0.003)
+        shutter_width = U(0.03, 0.05)
+        shutter_thickness = U(0.003, 0.007)
+        shutter_rotation = U(0, 1)
+        shutter_inverval = shutter_width + U(0.001, 0.003)
+
+        curtain_frame_depth = U(0.05, 0.1)
+        curtain_depth = U(0.03, curtain_frame_depth)
+        curtain_frame_radius = U(0.01, 0.02)
+
+        #shader_frame_material_choice = random.choice(wood_shader_list)
+        shader_frame_material_choice = weighted_sample(material_assignments.woods)
+        #shader_curtain_frame_material_choice = random.choice(metal_shader_list)
+        shader_curtain_frame_material_choice = weighted_sample(material_assignments.metals)
+        shader_curtain_material_choice = shader_curtain_material
+
+        params = {
+            "FrameWidth": frame_width,
+            "SubFrameWidth": sub_frame_width,
+            "SubPanelHAmount": sub_frame_h_amount,
+            "SubPanelVAmount": sub_frame_v_amount,
+            "GlassThickness": glass_thickness,
+            "CurtainFrameDepth": curtain_frame_depth,
+            "CurtainDepth": curtain_depth,
+            "CurtainFrameRadius": curtain_frame_radius,
+            "ShutterPanelRadius": shutter_panel_radius,
+            "ShutterWidth": shutter_width,
+            "ShutterThickness": shutter_thickness,
+            "ShutterRotation": shutter_rotation,
+            "ShutterInterval": shutter_inverval,
+            "FrameMaterial": surface.shaderfunc_to_material(
+                shader_frame_material_choice, vertical=True
+            ),
+            "CurtainFrameMaterial": surface.shaderfunc_to_material(
+                shader_curtain_frame_material_choice
+            ),
+            "CurtainMaterial": surface.shaderfunc_to_material(
+                shader_curtain_material_choice
+            ),
+            "Material": surface.shaderfunc_to_material(shader_window_glass),
+        }
+        return params
+
+    def sample_asset_params(
+        self, dimensions=None, open=None, curtain=None, shutter=None
+    ):
         if dimensions is None:
             width = U(1, 4)
             height = U(1, 4)

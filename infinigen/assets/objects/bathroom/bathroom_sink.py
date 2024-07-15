@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.bathroom.bathtub import BathtubFactory
 from infinigen.assets.objects.table_decorations import TapFactory
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsurf
@@ -20,7 +20,7 @@ from infinigen.assets.utils.object import (
 )
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class BathroomSinkFactory(BathtubFactory):
@@ -59,8 +59,10 @@ class BathroomSinkFactory(BathtubFactory):
             self.stand_height = uniform(0.7, 0.9) - self.depth
             self.is_stand_circular = uniform() < 0.5
             self.is_hole_centered = True
-            material_assignments = AssetList["BathroomSinkFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
+            #material_assignments = AssetList["BathroomSinkFactory"]()
+            surface_gen_class = weighted_sample(material_assignments.bathroom_touchsurface)
+            #self.surface = material_assignments["surface"].assign_material()
+            self.surface = surface_gen_class()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -73,6 +75,7 @@ class BathroomSinkFactory(BathtubFactory):
         )
 
     def create_asset(self, **params) -> bpy.types.Object:
+        material = self.surface
         if self.has_base:
             obj = self.make_base()
             cutter = self.make_cutter()

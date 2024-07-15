@@ -7,7 +7,8 @@ import bpy
 import numpy as np
 from numpy.random import randint, uniform
 
-from infinigen.assets.materials import shader_brushed_metal, shader_rough_plastic
+from infinigen.assets.materials.metal.brushed_metal import shader_brushed_metal
+from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plastic
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
