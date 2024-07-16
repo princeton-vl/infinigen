@@ -57,6 +57,102 @@ from . import generate_nature  # noqa F401 # needed for nature gin configs to lo
 
 logger = logging.getLogger(__name__)
 
+import bmesh
+from mathutils.bvhtree import BVHTree
+
+from infinigen.core.placement.factory import AssetFactory
+
+
+def create_bvh_tree_from_object(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    bvh = BVHTree.FromBMesh(bm)
+    bm.free()
+    return bvh
+
+
+
+def check_bvh_intersection(bvh1, bvh2):
+    if type(bvh2) is list: 
+        return any([check_bvh_intersection(bvh1, bvh) for bvh in bvh2])
+    else:
+        return bvh1.overlap(bvh2)
+
+def raycast_sample(min_dist, sensor_coords, pix_it, camera, bvhtree):
+    cam_location = camera.matrix_world.to_translation()
+
+    for _ in range(1500):
+        x = pix_it[np.random.randint(0, pix_it.shape[0])][0]
+        y = pix_it[np.random.randint(0, pix_it.shape[0])][1]
+
+        direction = (sensor_coords[y, x] - camera.matrix_world.translation).normalized()
+
+        location, normal, index, distance = bvhtree.ray_cast(cam_location, direction)
+        
+        if location:
+            if distance <= min_dist:
+                continue
+            random_distance = np.random.uniform(min_dist, distance)
+            sampled_point = cam_location + direction.normalized() * random_distance
+            return sampled_point
+    
+    logger.info('Couldnt find far enough away pixel to raycast to')
+    return None
+
+def bbox_sample(bbox):
+    pass
+
+class FloatingObjectPlacement:
+
+    def __init__(self, asset_factories : list[AssetFactory], camera, room_mesh, existing_objs, bbox = None):
+        
+        self.assets = asset_factories
+        self.room = room_mesh
+        self.obj_meshes = existing_objs
+        self.camera = camera
+        self.bbox = bbox
+        
+    def place_objs(self, num_objs, min_dist = 1.5, sample_retries = 20, raycast = True, collision_placed = False, collision_existing = False):
+
+        room_bvh = create_bvh_tree_from_object(self.room)
+        existing_obj_bvh = create_bvh_tree_from_object(self.obj_meshes)
+
+        placed_obj_bvhs = []
+
+        from infinigen.core.placement.camera import get_sensor_coords
+        sensor_coords, pix_it = get_sensor_coords(self.camera, sparse=False)
+        for i in range(num_objs):
+
+            fac = np.random.choice(self.assets)(np.random.randint(1,2**28))
+            asset = fac.spawn_asset(0)
+
+            for j in range(sample_retries):
+        
+                if raycast:
+                    point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
+                else:
+                    point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
+
+                if point is None:
+                    continue
+                asset.rotation_mode = "XYZ"
+                asset.rotation_euler = np.random.uniform(-np.pi, np.pi, 3)
+                asset.location = point
+
+                bpy.context.view_layer.update() # i can redo this later without view updates if necessary, but currently it doesn't incur significant overhead
+                bvh = create_bvh_tree_from_object(asset) 
+                
+                if check_bvh_intersection(bvh, room_bvh)  or (not collision_existing and check_bvh_intersection(bvh, existing_obj_bvh)) or (not collision_placed and check_bvh_intersection(bvh, placed_obj_bvhs)):
+                    logger.info(f"Sample {j} of asset {i} rejected, resampling...")
+                    if i == sample_retries - 1:
+                        butil.delete(asset)
+                else:
+                    logger.info(f"Placing object {asset.name}")
+                    placed_obj_bvhs.append(bvh)
+                    break
+                
+
 
 def default_greedy_stages():
     """Returns descriptions of what will be covered by each greedy stage of the solver.
@@ -262,83 +358,16 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     joined_objs = butil.join_objects(objs_to_join)
 
-    import bmesh
-    from mathutils.bvhtree import BVHTree
 
-    def create_bvh_tree_from_object(obj):
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-        bm.transform(obj.matrix_world)
-        bvh = BVHTree.FromBMesh(bm)
-        bm.free()
-        return bvh
-    
-    def check_bvh_intersection(bvh1, bvh2):
-        if type(bvh2) is list: 
-            return any([check_bvh_intersection(bvh1, bvh) for bvh in bvh2])
-        else:
-            return bvh1.overlap(bvh2)
+    from infinigen.assets.objects.seating.chairs import ChairFactory
+    from infinigen.assets.objects.tableware.bottle import BottleFactory
 
-    room_bvh = create_bvh_tree_from_object(joined_room)
-    existing_obj_bvh = create_bvh_tree_from_object(joined_objs)
+    placer = FloatingObjectPlacement([ChairFactory, BottleFactory], bpy.data.objects['CameraRigs/0/0'], joined_room, joined_objs)
 
-    def sample_point(camera, bvhtree):
-        from infinigen.core.placement.camera import get_sensor_coords
-        
-        cam_location = camera.matrix_world.to_translation()
-        sensor_coords, pix_it = get_sensor_coords(camera, sparse=False)
+    placer.place_objs(15)
 
-        for _ in range(1500):
-            x = pix_it[np.random.randint(0, pix_it.shape[0])][0]
-            y = pix_it[np.random.randint(0, pix_it.shape[0])][1]
-
-            direction = (sensor_coords[y, x] - camera.matrix_world.translation).normalized()
-
-            location, normal, index, distance = bvhtree.ray_cast(cam_location, direction)
-            
-            if location:
-                if distance <= 2:
-                    continue
-                random_distance = np.random.uniform(2, distance)
-                sampled_point = cam_location + direction.normalized() * random_distance
-                return sampled_point
-            
-        return None
-
-    camera = bpy.data.objects['CameraRigs/0/0']
-
-    from infinigen.assets.objects.seating import chairs
-
-    print('Raycasting...')
-
-    placed_obj_bvhs = []
-
-    num_objs = 25
-    sample_retries = 20
-
-    for i in range(num_objs):
-        fac = chairs.ChairFactory(i)
-        asset = fac.spawn_asset(0)
-
-        for j in range(sample_retries):
-            point = sample_point(camera, room_bvh)
-            if point is None:
-                continue
-            asset.rotation_mode = "XYZ"
-            asset.rotation_euler = np.random.uniform(-np.pi, np.pi, 3)
-            asset.location = point
-
-            bpy.context.view_layer.update() # i can redo this later without view updates if necessary, bit currently it doesn't incur significant overhead
-            bvh = create_bvh_tree_from_object(asset) 
-         
-            if check_bvh_intersection(bvh, existing_obj_bvh) or check_bvh_intersection(bvh, room_bvh) or check_bvh_intersection(bvh, placed_obj_bvhs):
-                print(f"Sample {j} of asset {i} rejected, resampling...")
-                if i == sample_retries - 1:
-                    butil.delete(obj)
-            else:
-                print(f"Placing object {asset.name}")
-                placed_obj_bvhs.append(bvh)
-                break
+    butil.delete(joined_room)
+    butil.delete(joined_objs)
 
     p.run_stage(
         "populate_intermediate_pholders",
