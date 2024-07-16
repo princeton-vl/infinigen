@@ -10,7 +10,6 @@ import logging
 from collections import defaultdict, deque
 from collections.abc import Iterable, Mapping
 
-import bmesh
 import bpy
 import gin
 import numpy as np
@@ -21,9 +20,9 @@ from shapely import LineString, line_interpolate_point
 from shapely.ops import linemerge
 
 from infinigen.assets.utils.decorate import (
-    read_center, read_co, write_attribute, write_co, read_edge_direction, read_edge_length, remove_faces, read_area,
+    read_center, read_co, write_attribute, write_co,
 )
-from infinigen.assets.utils.mesh import canonicalize_mls
+from infinigen.assets.utils.mesh import canonicalize_mls, prepare_for_boolean
 from infinigen.assets.utils.object import new_cube
 from infinigen.assets.utils.shapes import buffer, polygon2obj, simplify_polygon
 from infinigen.core import tagging, tags as t
@@ -33,7 +32,6 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.tags import Semantics
 from infinigen.core.util import blender as butil
-from infinigen.core.util.logging import BadSeedError
 from infinigen.core.util.random import random_general as rg
 from .base import RoomGraph, room_type, valid_rooms
 
@@ -165,19 +163,20 @@ class BlueprintSolidifier:
                 c.location[-1] += w * self.level
 
         butil.put_in_collection(rooms.values(), 'placeholders:room_shells')
-
-        state = self.convert_solver_state(
-            rooms, segments, shared_edges, open_cutters, door_cutters,
-            window_cutters, interior_cutters, entrance_cutters
-        )
+        rooms_ = rooms
 
         def clone_as_meshed(o):
             new = butil.copy(o)
             new.name = o.name + ".meshed"
             return new
 
-        rooms_ = rooms
         rooms = {k: clone_as_meshed(r) for k, r in rooms.items()}
+        state = self.convert_solver_state(
+            rooms_, segments, shared_edges, open_cutters, door_cutters,
+            window_cutters, interior_cutters, entrance_cutters
+        )
+        for obj in rooms_.values():
+            tagging.tag_object(obj)
 
         # Cut windows & doors from final room meshes
         cutter_col = butil.get_collection('placeholders:portal_cutters')
@@ -185,8 +184,11 @@ class BlueprintSolidifier:
             for k, c in self.unroll(cutters):
                 butil.put_in_collection(c, cutter_col)
                 for k_ in k:
-                    logger.debug(f'Cutting {c.name} from {rooms[k_].name}')
-                    before = len(rooms[k_].data.polygons)
+                    obj = rooms[k_]
+                    logger.debug(f'Cutting {c.name} from {obj.name}')
+                    before = len(obj.data.polygons)
+                    prepare_for_boolean(obj)
+                    prepare_for_boolean(c)
                     butil.modify_mesh(
                         rooms[k_],
                         "BOOLEAN",
@@ -195,11 +197,13 @@ class BlueprintSolidifier:
                         use_self=True,
                         use_hole_tolerant=True,
                     )
-                    after = len(rooms[k_].data.polygons)
-                    logger.debug(f'Cutting {c.name} from {rooms[k_].name}, {before=} {after=}')
+                    prepare_for_boolean(obj)
+                    prepare_for_boolean(c)
+                    after = len(obj.data.polygons)
+                    logger.debug(f'Cutting {c.name} from {obj.name}, {before=} {after=}')
 
         for obj in rooms.values():
-            remove_faces(obj, read_area(obj) < 5e-4)
+            butil.modify_mesh(obj, 'TRIANGULATE', min_vertices=3)
             co = read_co(obj)
             m = wt / 2 + _snap
             low = np.abs(co[:, -1] - m) < _eps
@@ -208,23 +212,7 @@ class BlueprintSolidifier:
             co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
             write_co(obj, co)
             tagging.tag_object(obj)
-
-            direction = read_edge_direction(obj)
-            z_edges = np.abs(direction[:, -1])
-            with butil.ViewportMode(obj, 'EDIT'):
-                bm = bmesh.from_edit_mesh(obj.data)
-                edge_faces = np.zeros(len(bm.edges), dtype=int)
-                overlaps = np.zeros(len(bm.faces), dtype=int)
-                for f in bm.faces:
-                    for e in f.edges:
-                        edge_faces[e.index] += 1
-                        for g in e.link_faces:
-                            if f.normal @ g.normal < -.9:
-                                overlaps[f.index] += 1
-            orthogonal = (z_edges < .1) | (z_edges > .9) | (edge_faces != 1) | (read_edge_length(obj) < .5)
-            if not (orthogonal.all() & (overlaps == 0).all()):
-                raise BadSeedError('No orthogonal edges')
-
+            
         for obj in cutter_col.objects:
             offset = np.array(obj.location)[np.newaxis, :]
             offset[:, 2] -= w * self.level
@@ -235,9 +223,6 @@ class BlueprintSolidifier:
             co[:, -1] = np.where(low, wt / 2, co[:, -1])
             co[:, -1] = np.where(high, self.constants.wall_height - wt / 2, co[:, -1])
             write_co(obj, co - offset)
-            tagging.tag_object(obj)
-
-        for obj in rooms_.values():
             tagging.tag_object(obj)
 
         butil.group_in_collection(rooms.values(), 'placeholders:room_meshes')
@@ -281,8 +266,11 @@ class BlueprintSolidifier:
 
     def make_room(self, state, name):
         obj_st = state.objs[name]
-        obj = polygon2obj(self.constants.canonicalize(obj_st.polygon), True)
-        butil.modify_mesh(obj, "WELD", merge_threshold=.2)
+        obj = polygon2obj(
+            shapely.segmentize(self.constants.canonicalize(obj_st.polygon), self.constants.door_width), True,
+            dissolve=False
+        )
+        butil.modify_mesh(obj, "WELD", merge_threshold=.01)
         butil.modify_mesh(obj, 'SOLIDIFY', thickness=self.constants.wall_height, offset=-1)
         obj.name = name
         self.tag(obj, False)
