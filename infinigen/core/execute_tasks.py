@@ -64,6 +64,12 @@ def render(
 
 def is_static(obj):
     while True:
+        if obj.name.startswith("scatter:"):
+            return False
+        if obj.users_collection[0].name.startswith("assets:"):
+            return False
+        if obj.constraints is not None and len(obj.constraints) > 0:
+            return False
         if obj.animation_data is not None:
             return False
         for modifier in obj.modifiers:
