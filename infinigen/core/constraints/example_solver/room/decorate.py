@@ -7,9 +7,9 @@
 # - Karhan Kayan: fix constants
 
 import importlib
+import logging
 import os
 from collections import defaultdict
-import logging
 
 import bmesh
 import bpy
@@ -24,40 +24,21 @@ from shapely.ops import nearest_points
 from tqdm import trange, tqdm
 from trimesh.transformations import translation_matrix
 
-from infinigen.assets.materials import plaster, tile
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
 from infinigen.assets.objects.elements.doors import random_door_factory
-from infinigen.assets.objects.windows import WindowFactory
+from infinigen.assets.materials import plaster
 from infinigen.assets.utils.decorate import (
-    read_area,
-    read_co,
-    read_edge_direction,
-    read_edge_length,
-    read_edges,
-    read_center,
-    remove_edges,
-    remove_faces,
-    remove_vertices,
-    write_attr_data,
+    read_co, read_edge_length, read_edges, read_center,
 )
-from infinigen.assets.utils.shapes import dissolve_limited
 from infinigen.assets.utils.object import obj2trimesh
-from infinigen.core import tagging
-from infinigen.core import tags as t
+from infinigen.assets.utils.shapes import dissolve_limited
+from infinigen.assets.objects.windows import WindowFactory
+from infinigen.core import tags as t, tagging
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.room.base import room_level, room_type
-from infinigen.core.constraints.example_solver.room.configs import (
-    PILLAR_ROOM_TYPES,
-    ROOM_FLOORS,
-    ROOM_WALLS,
-)
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
-from infinigen.core.constraints.example_solver.room.types import (
-    RoomType,
-    get_room_level,
-    get_room_type,
-)
+from infinigen.core.constraints.example_solver import state_def
+from infinigen.core.constraints.example_solver.room.base import room_type, room_level
+from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import int_hash
@@ -475,45 +456,33 @@ def room_pillars(walls: list[bpy.types.Object], constants: RoomConstants):
 
         factory = PillarFactory(np.random.randint(1e7), False, constants)
         interior = tagging.extract_tagged_faces(wall, {t.Subpart.Interior})
-        remove_faces(interior, read_area(interior) < constants.wall_thickness / 2 * constants.wall_height)
-        selection = (read_edge_length(interior) > constants.wall_height / 2) & (
-                np.abs(read_edge_direction(interior))[:, -1] > .9)
-        selection_ = np.bincount(
-            read_edges(interior)[selection].reshape(-1),
-            minlength=len(interior.data.vertices)
-        )
-        remove_vertices(interior, selection_ == 0)
-        remove_vertices(interior, lambda x, y, z: z > constants.wall_thickness)
-        remove_edges(interior, read_edge_length(interior) < constants.wall_thickness)
+        dissolve_limited(interior)
+        cos = []
+        with butil.ViewportMode(interior, 'EDIT'):
+            bm = bmesh.from_edit_mesh(interior.data)
+            for e in bm.edges:
+                u, v = e.verts
+                is_angled = np.pi * .1 < e.calc_face_angle(0) % np.pi < np.pi * .9
+                is_long = e.calc_length() > constants.wall_height * .8
+                is_vertical = np.abs(u.co[-1] - v.co[-1]) / e.calc_length() > .9
+                if is_long and is_vertical and is_angled:
+                    cos.append(u.co)
+        cos = np.array(cos)
+        cos += np.array(interior.location)[np.newaxis, :]
 
-        interiors = butil.split_object(interior)
-        for i in interiors:
-            with butil.ViewportMode(i, "EDIT"):
-                bpy.ops.mesh.select_all(action="SELECT")
-                bpy.ops.mesh.dissolve_limited()
-                bm = bmesh.from_edit_mesh(i.data)
-                geom = [v for v in bm.verts if len(v.link_edges) < 2]
-                bmesh.ops.delete(bm, geom=geom)
-        interiors_ = [i for i in interiors if len(i.data.vertices) > 0]
-        butil.delete([i for i in interiors if len(i.data.vertices) == 0])
-
-        if len(interiors_) > 0:
-            with butil.Suppress():
-                interior = butil.join_objects(interiors_)
-            joins = [read_co(o) + np.array([o.location]) for o in butil.get_collection('staircases').objects] + [
-                read_co(o) + np.array([o.location]) for o in butil.get_collection('doors').objects]
-            if len(joins) == 0:
-                joins = np.zeros((1, 3))
-            placeholders = np.concatenate(joins)
-            cos = read_co(interior) + np.array([interior.location])
-            cos[:, -1] = wall.location[-1] + constants.wall_thickness / 2
-            cos = cos[np.min(
-                np.linalg.norm(cos[:, np.newaxis] - placeholders[np.newaxis], axis=-1),
-                -1
-            ) > constants.door_width / 2 + constants.wall_thickness]
-            for co in cos:
-                obj = factory(np.random.randint(1e7))
-                obj.location = co
-                obj.location[-1] = room_level(wall.name) * constants.wall_height + constants.wall_thickness / 2
-                butil.put_in_collection(obj, col)
-            butil.delete(interior)
+        joins = [read_co(o) + np.array([o.location]) for o in butil.get_collection('staircases').objects] + [
+            read_co(o) + np.array([o.location]) for o in butil.get_collection('doors').objects]
+        if len(joins) == 0:
+            joins = np.zeros((1, 3))
+        placeholders = np.concatenate(joins)
+        cos[:, -1] = wall.location[-1] + constants.wall_thickness / 2
+        cos = cos[np.min(
+            np.linalg.norm(cos[:, np.newaxis] - placeholders[np.newaxis], axis=-1),
+            -1
+        ) > constants.door_width / 2 + constants.wall_thickness]
+        for co in cos:
+            obj = factory(np.random.randint(1e7))
+            obj.location = co
+            obj.location[-1] = room_level(wall.name) * constants.wall_height + constants.wall_thickness / 2
+            butil.put_in_collection(obj, col)
+        butil.delete(interior)
