@@ -8,7 +8,6 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import (
     read_center,
@@ -32,6 +31,10 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 
 class BathtubFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -73,15 +76,22 @@ class BathtubFactory(AssetFactory):
             self.hole_radius = uniform(0.015, 0.02)
 
             # /////////////////// assign materials ///////////////////
-            material_assignments = AssetList["BathtubFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.leg_surface = material_assignments["leg"].assign_material()
-            self.hole_surface = material_assignments["hole"].assign_material()
-            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
-            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
-            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
+
+            
+            surface_gen_class = weighted_sample(material_assignments.marble)
+            self.surface_material_gen = surface_gen_class()
+
+            leg_surface_gen_class = weighted_sample(material_assignments.metals)
+            self.leg_surface_material_gen = leg_surface_gen_class()
+
+            hole_surface_gen_class = weighted_sample(material_assignments.metals)
+            self.hole_surface_material_gen = hole_surface_gen_class()
+
+            is_scratch = uniform() < material_assignments.wear_tear_prob[0]
+            is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
+            self.scratch = scratches if is_scratch else None
             self.edge_wear = (
-                material_assignments["wear_tear"][1] if is_edge_wear else None
+                e_wears if is_edge_wear else None
             )
             # ////////////////////////////////////////////////////////
 
@@ -99,6 +109,10 @@ class BathtubFactory(AssetFactory):
         return new_bbox(-self.size, 0, 0, self.width, 0, self.depth)
 
     def create_asset(self, **params) -> bpy.types.Object:
+        self.surface = self.surface_material_gen()
+        self.leg_surface = self.leg_surface_material_gen()
+        self.hole_surface = self.hole_surface_material_gen()
+
         if self.has_base:
             obj = self.make_base()
             cutter = self.make_cutter()

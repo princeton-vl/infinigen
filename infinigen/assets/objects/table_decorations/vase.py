@@ -7,7 +7,6 @@ import bpy
 from numpy.random import choice, randint, uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.table_decorations.utils import (
     nodegroup_lofting,
     nodegroup_star_profile,
@@ -18,6 +17,11 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 
+
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 
 class VaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=None):
@@ -38,16 +42,15 @@ class VaseFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self):
-        material_assignments = AssetList["VaseFactory"]()
         params = {
-            "Material": material_assignments["surface"].assign_material(),
+            "Material": weighted_sample(material_assignments.marble)(),
         }
         wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+            k: v() for k, v in params.items()
         }
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = scratches, e_wears
 
         is_scratch = uniform() < scratch_prob
         is_edge_wear = uniform() < edge_wear_prob

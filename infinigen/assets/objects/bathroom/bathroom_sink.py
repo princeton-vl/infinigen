@@ -61,8 +61,8 @@ class BathroomSinkFactory(BathtubFactory):
             self.is_hole_centered = True
             #material_assignments = AssetList["BathroomSinkFactory"]()
             surface_gen_class = weighted_sample(material_assignments.bathroom_touchsurface)
-            #self.surface = material_assignments["surface"].assign_material()
-            self.surface = surface_gen_class()
+            self.surface_material_gen = surface_gen_class()
+            
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -75,7 +75,7 @@ class BathroomSinkFactory(BathtubFactory):
         )
 
     def create_asset(self, **params) -> bpy.types.Object:
-        material = self.surface
+        self.surface = self.surface_material_gen()
         if self.has_base:
             obj = self.make_base()
             cutter = self.make_cutter()

@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.utils.decorate import (
     read_center,
     read_co,
@@ -28,7 +28,10 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, normalize
 from infinigen.core.util.random import log_uniform
 
-
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 class ToiletFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
@@ -62,17 +65,20 @@ class ToiletFactory(AssetFactory):
             self.hardware_radius = uniform(0.015, 0.02)
             self.hardware_length = uniform(0.04, 0.05)
             self.hardware_on_side = uniform() < 0.5
-            material_assignments = AssetList["ToiletFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.hardware_surface = material_assignments[
-                "hardware_surface"
-            ].assign_material()
 
-            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
-            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
-            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
+
+
+            surface_gen_class = weighted_sample(material_assignments.metals)
+            self.surface_material_gen = surface_gen_class()
+            
+            hardware_surface_gen_class = weighted_sample(material_assignments.metals)
+            self.hardware_surface_material_gen = hardware_surface_gen_class()
+
+            is_scratch = uniform() < material_assignments.wear_tear_prob[0]
+            is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
+            self.scratch = scratches if is_scratch else None
             self.edge_wear = (
-                material_assignments["wear_tear"][1] if is_edge_wear else None
+                e_wears if is_edge_wear else None
             )
 
     @property

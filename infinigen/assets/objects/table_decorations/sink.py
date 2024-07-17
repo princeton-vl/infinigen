@@ -12,7 +12,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 from infinigen.core import surface, tagging
@@ -22,7 +22,10 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
-
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 class SinkFactory(AssetFactory):
     def __init__(
         self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0], upper_height=None
@@ -42,17 +45,17 @@ class SinkFactory(AssetFactory):
         self.tap_factory = TapFactory(factory_seed)
 
     def get_material_params(self):
-        material_assignments = AssetList["SinkFactory"]()
+        
         params = {
-            "Sink": material_assignments["sink"].assign_material(),
-            "Tap": material_assignments["tap"].assign_material(),
+            "Sink": weighted_sample(material_assignments.metals)(),
+            "Tap": weighted_sample(material_assignments.metals)(),
         }
         wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+            k: v() for k, v in params.items()
         }
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = scratches, e_wears
 
         is_scratch = U() < scratch_prob
         is_edge_wear = U() < edge_wear_prob
@@ -161,13 +164,14 @@ class TapFactory(AssetFactory):
         return params
 
     def get_material_params(self):
-        material_assignments = AssetList["TapFactory"]()
-        tap_material = material_assignments["tap"].assign_material()
+        tap_gen_class = weighted_sample(material_assignments.metals)
+        
+        tap_material_gen = tap_gen_class()
 
-        wrapped_params = {"Tap": surface.shaderfunc_to_material(tap_material)}
+        wrapped_params = {"Tap": tap_material_gen()}
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = scratches, e_wears
 
         is_scratch = U() < scratch_prob
         is_edge_wear = U() < edge_wear_prob
