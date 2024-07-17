@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core.placement.factory import AssetFactory
@@ -28,13 +28,13 @@ class JarFactory(AssetFactory):
             self.z_cap = uniform(0.05, 0.08)
             self.z_neck = uniform(0.15, 0.2)
 
-            material_assignments = AssetList["JarFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.cap_surface = material_assignments["cap_surface"].assign_material()
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            # material_assignments = AssetList["JarFactory"]()
+            # self.surface = material_assignments["surface"].assign_material()
+            # self.cap_surface = material_assignments["cap_surface"].assign_material()
+            # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            # self.scratch, self.edge_wear = material_assignments["wear_tear"]
+            # self.scratch = None if uniform() > scratch_prob else self.scratch
+            # self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.cap_subsurf = uniform() < 0.5
 

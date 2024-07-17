@@ -6,7 +6,11 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
+from infinigen.core.util.random import weighted_sample
+
+
 from infinigen.assets.utils.decorate import read_co, write_attribute
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import surface
@@ -25,19 +29,21 @@ class TablewareFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.thickness = 0.01
-            material_assignments = AssetList["TablewareFactory"](
-                fragile=self.is_fragile, transparent=self.allow_transparent
-            )
+            # material_assignments = AssetList["TablewareFactory"](
+            #     fragile=self.is_fragile, transparent=self.allow_transparent
+            # )
+            self.surface = weighted_sample(material_assignments.plastics)()
+            #self.surface = material_assignments["surface"].assign_material()
+            self.inside_surface = weighted_sample(material_assignments.metals)()
+            #self.inside_surface = material_assignments["inside"].assign_material()
+            #self.guard_surface = material_assignments["guard"].assign_material()
+            self.guard_surface = weighted_sample(material_assignments.woods)()
 
-            self.surface = material_assignments["surface"].assign_material()
-            self.inside_surface = material_assignments["inside"].assign_material()
-            self.guard_surface = material_assignments["guard"].assign_material()
+            # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            # self.scratch, self.edge_wear = material_assignments["wear_tear"]
 
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            # self.scratch = None if uniform() > scratch_prob else self.scratch
+            # self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.guard_depth = self.thickness
             self.has_guard = False

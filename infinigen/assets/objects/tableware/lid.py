@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import read_center, subsurf, write_co
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder, new_line
@@ -34,20 +34,20 @@ class LidFactory(AssetFactory):
             self.handle_width = self.x_length * uniform(0.25, 0.3)
             self.handle_subsurf_level = np.random.randint(0, 3)
 
-            if self.is_glass:
-                material_assignments = AssetList["GlassLidFactory"]()
-            else:
-                material_assignments = AssetList["LidFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.rim_surface = material_assignments["rim_surface"].assign_material()
-            self.handle_surface = material_assignments[
-                "handle_surface"
-            ].assign_material()
+            # if self.is_glass:
+            #     material_assignments = AssetList["GlassLidFactory"]()
+            # else:
+            #     material_assignments = AssetList["LidFactory"]()
+            # self.surface = material_assignments["surface"].assign_material()
+            # self.rim_surface = material_assignments["rim_surface"].assign_material()
+            # self.handle_surface = material_assignments[
+            #     "handle_surface"
+            # ].assign_material()
 
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            # self.scratch, self.edge_wear = material_assignments["wear_tear"]
+            # self.scratch = None if uniform() > scratch_prob else self.scratch
+            # self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = 0, 0.01, self.x_length / 2, self.x_length

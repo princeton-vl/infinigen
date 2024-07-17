@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.objects.tableware.base import TablewareFactory
 from infinigen.assets.utils.decorate import (
@@ -57,12 +57,12 @@ class CupFactory(TablewareFactory):
             self.has_wrap = True
             self.wrap_margin = uniform(0.1, 0.2)
 
-            material_assignments = AssetList["CupFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.wrap_surface = material_assignments["wrap_surface"].assign_material()
-            if self.wrap_surface == text.Text:
-                self.wrap_surface = text.Text(self.factory_seed, False)
-            self.scratch = self.edge_wear = None
+            # material_assignments = AssetList["CupFactory"]()
+            # self.surface = material_assignments["surface"].assign_material()
+            # self.wrap_surface = material_assignments["wrap_surface"].assign_material()
+            # if self.wrap_surface == text.Text:
+            #     self.wrap_surface = text.Text(self.factory_seed, False)
+            # self.scratch = self.edge_wear = None
 
             self.has_inside = uniform(0, 1) < 0.5
             self.scale = log_uniform(0.15, 0.3)

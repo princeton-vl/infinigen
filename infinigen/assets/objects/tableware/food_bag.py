@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import (
     geo_extension,
@@ -41,11 +41,11 @@ class FoodBagFactory(AssetFactory):
                 self.depth = self.width * uniform(0.6, 1.0)
                 self.curve_profile = uniform(4, 8)
             self.extrude_length = uniform(0.05, 0.1)
-            material_assignments = AssetList["FoodBagFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            if self.surface == text.Text:
-                self.surface = self.surface(self.factory_seed)
-            self.texture_shared = uniform() < 0.2
+            # material_assignments = AssetList["FoodBagFactory"]()
+            # self.surface = material_assignments["surface"].assign_material()
+            # if self.surface == text.Text:
+            #     self.surface = self.surface(self.factory_seed)
+            # self.texture_shared = uniform() < 0.2
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.make_base()

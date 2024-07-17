@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.objects.cactus import CactusFactory
 from infinigen.assets.objects.monocot import MonocotFactory
 from infinigen.assets.objects.mushroom import MushroomFactory
@@ -40,9 +40,9 @@ class PlantPotFactory(PotFactory):
             self.r_expand = uniform(1.1, 1.3)
             alpha = uniform(0.5, 0.8)
             self.r_mid = (self.r_expand - 1) * alpha + 1
-            material_assignments = AssetList["PlantContainerFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.scale = log_uniform(0.08, 0.12)
+            # material_assignments = AssetList["PlantContainerFactory"]()
+            # self.surface = material_assignments["surface"].assign_material()
+            # self.scale = log_uniform(0.08, 0.12)
 
 
 class PlantContainerFactory(AssetFactory):
