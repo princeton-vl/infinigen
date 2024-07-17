@@ -143,7 +143,7 @@ class GenericTreeFactory(AssetFactory):
 
         if not self.coarse_mesh_placeholder:
             skin_obj = self._create_coarse_mesh(skeleton_obj)
-            self.trunk_surface.apply(skin_obj)
+            self.trunk_surface.apply(self, skin_obj)
             butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
         else:
             skin_obj = butil.deep_clone_obj(placeholder)
