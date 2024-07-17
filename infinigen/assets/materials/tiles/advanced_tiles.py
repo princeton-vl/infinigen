@@ -67,7 +67,10 @@ def nodegroup_tile(nw: NodeWrangler, scale=None, vertical=False, **kwargs):
 
     # texture_coordinate = nw.new_node(Nodes.TextureCoord)
 
-    vec, normal = map(nw.new_node(Nodes.TextureCoord).outputs.get, ["Object", "Normal"])
+    # vec, normal = map(nw.new_node(Nodes.TextureCoord).outputs.get, ["Object", "Normal"])
+    vec = nw.new_node(Nodes.TextureCoord).outputs["Object"]
+    normal = nw.new_node(Nodes.ShaderNodeNormalMap).outputs["Normal"]
+
     if vertical:
         vec = nw.combine(
             nw.separate(nw.vector_math("CROSS_PRODUCT", vec, normal))[-1],
@@ -145,13 +148,44 @@ def shader_raw_tiles(nw: NodeWrangler, **kwargs):
 
 # this applies masks on existing materials
 def tile_of_material(
-    nw: NodeWrangler, shader_function, vertical=False, displacement_scale=0.01, **kwargs
+    nw: NodeWrangler,
+    shader_function,
+    vertical=False,
+    displacement_scale=0.001,
+    **kwargs,
 ):
     def get_connected_links(nw, input_socket):
         links = [l for l in nw.links if l.to_socket == input_socket]
         return links
 
-    # tile = nw.new_node(nodegroup_tile(**kwargs).name)
+    shader_node = shader_function(nw)
+
+    links_to_output = [
+        link for link in nw.links if (link.to_node.bl_idname == Nodes.MaterialOutput)
+    ]
+
+    if len(links_to_output) == 0:
+        # add an output node
+
+        principled_bsdf = nw.find(Nodes.PrincipledBSDF)[0]
+        material_output = nw.new_node(
+            Nodes.MaterialOutput,
+            input_kwargs={"Surface": principled_bsdf},
+            attrs={"is_active_output": True},
+        )
+        links_to_output = [
+            link
+            for link in nw.links
+            if (link.to_node.bl_idname == Nodes.MaterialOutput)
+        ]
+
+    # get the BSDF socket
+    links_to_surface = get_connected_links(
+        nw, links_to_output[0].to_node.inputs["Surface"]
+    )
+    displacement_out_socket = links_to_output[0].to_node.inputs["Displacement"]
+    links_to_displacement = get_connected_links(nw, displacement_out_socket)
+
     color_value = np.random.choice([0.0, 1.0])  # black or white
     seam_color = hsv2rgba((0.0, 0.0, color_value))
 
@@ -162,23 +196,6 @@ def tile_of_material(
             "Specular": 0.0000,
             "Roughness": 0.9000,
         },
-    )
-
-    shader_node = shader_function(nw, **kwargs)
-
-    links_to_output = [
-        link for link in nw.links if (link.to_node.bl_idname == Nodes.MaterialOutput)
-    ]
-
-    if len(links_to_output) == 0:
-        return
-
-    # get the BSDF socket
-    links_to_surface = get_connected_links(
-        nw, links_to_output[0].to_node.inputs["Surface"]
-    )
-    links_to_displacement = get_connected_links(
-        nw, links_to_output[0].to_node.inputs["Displacement"]
     )
 
     if len(links_to_surface) == 1 and len(links_to_displacement) <= 1:
@@ -212,7 +229,7 @@ def tile_of_material(
         # mix displacement
         if len(links_to_displacement) == 0:
             nw.links.new(
-                links_to_output[0].to_node.inputs["Displacement"],
+                displacement_out_socket,
                 displacement_tile.outputs["Displacement"],
             )
 
@@ -224,9 +241,7 @@ def tile_of_material(
                 input_kwargs={0: original_displacement, 1: displacement_tile},
             )
 
-            nw.links.new(
-                links_to_output[0].to_node.inputs["Displacement"], add.outputs["Vector"]
-            )
+            nw.links.new(displacement_out_socket, add.outputs["Vector"])
 
 
 def apply(obj, selection=None, vertical=False, **kwargs):

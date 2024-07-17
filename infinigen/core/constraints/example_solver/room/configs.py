@@ -178,7 +178,7 @@ ROOM_WALLS = defaultdict(
             (5, plaster),
         ),
         RoomType.Balcony: ("weighted_choice", (1, brick), (5, plaster)),
-        RoomType.Bathroom: ("weighted_choice", (1, tile), (1, advanced_tiles)),
+        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
     },
 )
 
@@ -187,7 +187,7 @@ ROOM_FLOORS = defaultdict(
         "weighted_choice",
         (3, tiled_wood),
         (1, tile),
-        (1, advanced_tiles),
+        (3, advanced_tiles),
         (1, rug),
     ),
     {
@@ -197,10 +197,10 @@ ROOM_FLOORS = defaultdict(
             (1, concrete),
             (1, plaster),
             (1, tile),
-            (1, advanced_tiles),
+            (3, advanced_tiles),
         ),
-        RoomType.Bathroom: ("weighted_choice", (1, tile), (1, advanced_tiles)),
-        RoomType.Balcony: ("weighted_choice", (1, tile), (1, advanced_tiles)),
+        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
+        RoomType.Balcony: ("weighted_choice", (1, tile), (3, advanced_tiles)),
     },
 )
 
