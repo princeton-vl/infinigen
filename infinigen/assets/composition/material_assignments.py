@@ -20,6 +20,10 @@ from infinigen.assets.materials import (
     wood,
 )
 
+
+wear_tear_prob = [0.5,0.5]
+
+
 woods = [
     (wood.Wood, 1.0),
     (wood.WhitePlywood, 0.1),

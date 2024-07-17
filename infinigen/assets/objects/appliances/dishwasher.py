@@ -24,12 +24,10 @@ from infinigen.core.util.bevelling import (
 from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
 
-from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.materials.wear_tear import (
-    edge_wear as edge_wear_,
-    scratches,
-)
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 
 class DishwasherFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
@@ -47,18 +45,18 @@ class DishwasherFactory(AssetFactory):
         #material_assignments = AssetList["DishwasherFactory"]() 
         params = {
             
-            "Surface": weighted_sample(material_assignments.metals),
-            "Front": weighted_sample(material_assignments.appliance_front_maybeglass),
-            "WhiteMetal": weighted_sample(material_assignments.metals),
-            "Top": weighted_sample(material_assignments.metals),
-            "NameMaterial": weighted_sample(material_assignments.metals),
+            "Surface": weighted_sample(material_assignments.metals)(),
+            "Front": weighted_sample(material_assignments.appliance_front_maybeglass)(),
+            "WhiteMetal": weighted_sample(material_assignments.metals)(),
+            "Top": weighted_sample(material_assignments.metals)(),
+            "NameMaterial": weighted_sample(material_assignments.metals)(),
         }
         wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+            k: v() for k, v in params.items()
         }
 
-        scratch_prob, edge_wear_prob = 0.5 #material_assignments["wear_tear_prob"]
-        scratch, edge_wear = scratches, edge_wear_
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = scratches, e_wears
 
         is_scratch = np.random.uniform() < scratch_prob
         is_edge_wear = np.random.uniform() < edge_wear_prob

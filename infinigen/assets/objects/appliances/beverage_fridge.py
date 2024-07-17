@@ -9,7 +9,9 @@ from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
+
+
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -24,6 +26,10 @@ from infinigen.core.util.bevelling import (
 from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 
 class BeverageFridgeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
@@ -38,19 +44,20 @@ class BeverageFridgeFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self):
-        material_assignments = AssetList["BeverageFridgeFactory"]()
+        #material_assignments = AssetList["BeverageFridgeFactory"]()
         params = {
-            "Surface": material_assignments["surface"].assign_material(),
-            "Front": material_assignments["front"].assign_material(),
-            "Handle": material_assignments["handle"].assign_material(),
-            "Back": material_assignments["back"].assign_material(),
+            "Surface": weighted_sample(material_assignments.metals)(),
+            "Front": weighted_sample(material_assignments.appliance_front_maybeglass)(),
+            "Handle": weighted_sample(material_assignments.appliance_handle)(),
+            "Back": weighted_sample(material_assignments.metals)(),
         }
         wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+            k: v() for k, v in params.items()
         }
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch = scratches
+        edge_wear = e_wears
 
         is_scratch = np.random.uniform() < scratch_prob
         is_edge_wear = np.random.uniform() < edge_wear_prob

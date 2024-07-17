@@ -11,7 +11,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials.text import Text
 from infinigen.assets.utils.decorate import (
     mirror,
@@ -43,6 +43,10 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wear_tear import edge_wear as e_wears
+from infinigen.assets.materials.wear_tear import scratches
 
 class TVFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -67,17 +71,17 @@ class TVFactory(AssetFactory):
             self.leg_bevel_width = uniform(0.01, 0.02)
 
             materials = self.get_material_params()
-            self.surface = materials["surface"]
+            self.surface = materials["surface"]()
             self.scratch = materials["scratch"]
             self.edge_wear = materials["edge_wear"]
-            self.screen_surface = materials["screen_surface"]
-            self.support_surface = materials["support"]
+            self.screen_surface = materials["screen_surface"]()
+            self.support_surface = materials["support"]()
 
     def get_material_params(self):
-        material_assignments = AssetList["TVFactory"]()
-        surface = material_assignments["surface"].assign_material()
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        
+        surface = weighted_sample(material_assignments.metals)()
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = scratches, e_wears
 
         is_scratch = np.random.uniform() < scratch_prob
         is_edge_wear = np.random.uniform() < edge_wear_prob
@@ -89,10 +93,10 @@ class TVFactory(AssetFactory):
 
         args = (self.factory_seed, False)
         kwargs = {"emission": 0.01 if uniform() < 0.1 else uniform(2, 3)}
-        screen_surface = material_assignments["screen_surface"].assign_material()
+        screen_surface = weighted_sample(material_assignments.graphicdesign)()
         if screen_surface == Text:
             screen_surface = screen_surface(*args, **kwargs)
-        support = material_assignments["support"].assign_material()
+        support = weighted_sample(material_assignments.metals)()
         return {
             "surface": surface,
             "scratch": scratch,
@@ -164,7 +168,8 @@ class TVFactory(AssetFactory):
         unwrap_faces(obj, screen)
         bbox = compute_uv_direction(obj, "x", "z", screen[fc2f])
         write_attr_data(obj, "screen", screen, domain="FACE", type="INT")
-        self.screen_surface.apply(obj, "screen", bbox)
+        butil.add_material(obj, self.screen_surface)
+        
 
     def make_base(self):
         obj = new_cube()

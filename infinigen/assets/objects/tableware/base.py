@@ -40,6 +40,7 @@ class TablewareFactory(AssetFactory):
             self.guard_surface = weighted_sample(material_assignments.woods)()
 
             # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+            
             # self.scratch, self.edge_wear = material_assignments["wear_tear"]
 
             # self.scratch = None if uniform() > scratch_prob else self.scratch
