@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.materials import fabric
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring
@@ -22,6 +22,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 def make_coiled(obj, dot_distance, dot_depth, dot_size):
     with butil.ViewportMode(obj, "EDIT"):
@@ -82,10 +84,12 @@ class MattressFactory(AssetFactory):
             self.dot_size = uniform(0.005, 0.02)
             self.dot_depth = uniform(0.04, 0.08)
             self.wrap_distance = 0.05
-            self.surface = fabric.fabric_random
+            #self.surface = fabric.fabric_random
             self.type = rg(self.types)
-            materials = AssetList["MattressFactory"]()
-            self.surface = materials["surface"].assign_material()
+            
+            surface_gen_class = weighted_sample(material_assignments.fabrics)
+            self.surface_material_gen = surface_gen_class()
+            self.surface = self.surface_material_gen()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -136,4 +140,5 @@ class MattressFactory(AssetFactory):
         )
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        #self.surface.apply(assets)
+        butil.add_material(assets, self.surface)

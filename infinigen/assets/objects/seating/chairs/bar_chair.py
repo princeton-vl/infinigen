@@ -7,7 +7,7 @@
 import bpy
 from numpy.random import choice, uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.objects.seating.chairs.seats.round_seats import (
     generate_round_seats,
 )
@@ -17,6 +17,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -64,18 +66,17 @@ class BarChairFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self, leg_style):
-        material_assignments = AssetList["BarChairFactory"](leg_style=leg_style)
 
         params = {
-            "SeatMaterial": material_assignments["seat"].assign_material(),
-            "LegMaterial": material_assignments["leg"].assign_material(),
+            "SeatMaterial": weighted_sample(material_assignments.large_seat_fabric)(),
+            "LegMaterial": weighted_sample(material_assignments.furniture_leg)(),
         }
         wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+            k: v() for k, v in params.items()
         }
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
 
         is_scratch = uniform() < scratch_prob
         is_edge_wear = uniform() < edge_wear_prob

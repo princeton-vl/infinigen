@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.utils.decorate import (
     read_co,
     read_edge_center,
@@ -31,6 +31,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 class ChairFactory(AssetFactory):
     back_types = (
@@ -92,16 +94,22 @@ class ChairFactory(AssetFactory):
             self.back_vertical_cuts = np.random.randint(1, 4)
             self.back_partial_scale = uniform(1, 1.4)
 
-            materials = AssetList["ChairFactory"]()
-            self.limb_surface = materials["limb"].assign_material()
-            self.surface = materials["surface"].assign_material()
+
+            limb_surface_gen_class = weighted_sample(material_assignments.furniture_leg)
+            self.limb_surface_material_gen = limb_surface_gen_class()
+            self.limb_surface = self.limb_surface_material_gen()
+
+            surface_gen_class = weighted_sample(material_assignments.furniture_hard_surface)
+            self.surface_material_gen = surface_gen_class()
+            self.surface = self.surface_material_gen()
+
             if uniform() < 0.3:
                 self.panel_surface = self.surface
             else:
-                self.panel_surface = materials["panel"].assign_material()
+                self.panel_surface = weighted_sample(material_assignments.furniture_hard_surface)()()
 
-            scratch_prob, edge_wear_prob = materials["wear_tear_prob"]
-            self.scratch, self.edge_wear = materials["wear_tear"]
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            self.scratch, self.edge_wear = material_assignments.wear_tear
             is_scratch = uniform() < scratch_prob
             is_edge_wear = uniform() < edge_wear_prob
             if not is_scratch:
@@ -185,10 +193,14 @@ class ChairFactory(AssetFactory):
 
         with FixedSeed(self.factory_seed):
             # TODO: wasteful to create unique materials for each individual asset
-            self.surface.apply(obj)
-            self.panel_surface.apply(obj, selection="panel")
-            self.limb_surface.apply(obj, selection="limb")
-
+            # self.surface.apply(obj)
+            
+            # self.panel_surface.apply(obj, selection="panel")
+            # self.limb_surface.apply(obj, selection="limb")
+            butil.add_material(obj, self.surface)
+            butil.add_material(obj, self.panel_surface)
+            butil.add_material(obj, self.limb_surface)
+            
         return obj
 
     def finalize_assets(self, assets):

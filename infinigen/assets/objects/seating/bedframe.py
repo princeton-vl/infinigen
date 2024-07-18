@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.objects.seating.chairs.chair import ChairFactory
 from infinigen.assets.objects.seating.mattress import make_coiled
 from infinigen.assets.utils.decorate import (
@@ -26,6 +26,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 class BedFrameFactory(ChairFactory):
     scale = 1.0
@@ -67,12 +69,16 @@ class BedFrameFactory(ChairFactory):
             self.back_x_offset = 0
             self.back_y_offset = 0
 
-            materials = AssetList["BedFrameFactory"]()
-            self.surface = materials["surface"].assign_material()
-            self.limb_surface = materials["limb_surface"].assign_material()
+            surface_gen_class = weighted_sample(material_assignments.bedframe)
+            self.surface = surface_gen_class()()
 
-            scratch_prob, edge_wear_prob = materials["wear_tear_prob"]
-            self.scratch, self.edge_wear = materials["wear_tear"]
+            limb_surface_gen_class = weighted_sample(material_assignments.furniture_hard_surface)
+            self.limb_surface = limb_surface_gen_class()()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            self.scratch, self.edge_wear = material_assignments.wear_tear
+
+
             self.scratch = None if uniform() > scratch_prob else self.scratch
             self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 

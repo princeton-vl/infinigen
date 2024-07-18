@@ -6,9 +6,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
-from infinigen.assets.materials import art
-from infinigen.assets.materials.fabrics import fabric_random
+
+from infinigen.assets.materials import art, fabric
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import (
     read_normal,
@@ -29,6 +28,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 class PillowFactory(AssetFactory):
     shapes = (
@@ -53,14 +54,13 @@ class PillowFactory(AssetFactory):
         self.extrude_thickness = (
             self.thickness * log_uniform(1, 8) if uniform() < 0.5 else 0
         )
-        self.surface = np.random.choice(
-            [art.ArtFabric(self.factory_seed), fabric_random]
-        )
+        
         self.has_seam = uniform() < 0.3 and not self.shape == "torus"
         self.seam_radius = uniform(0.01, 0.02)
 
-        materials = AssetList["PillowFactory"]()
-        self.surface = materials["surface"].assign_material()
+        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        self.surface = surface_gen_class()()
+        
         if self.surface == art.ArtFabric:
             self.surface = self.surface(self.factory_seed)
 
@@ -145,4 +145,5 @@ class PillowFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+
+        butil.add_material(assets, self.surface)
