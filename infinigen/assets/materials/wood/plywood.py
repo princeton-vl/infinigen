@@ -4,8 +4,19 @@
 # Authors: Beining Han
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=jDEijCwz6to by Lachlan Sarv
 
+import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets.materials.ceramic.glass import shader_glass
+from infinigen.assets.materials.metal import (
+    brushed_metal,
+    galvanized_metal,
+    grained_and_polished_metal,
+    hammered_metal,
+    metal_basic,
+)
+from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plastic
+from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
@@ -379,3 +390,111 @@ class BlondePlywood:
         return surface.shaderfunc_to_material(shader_shelves_wood)
 
     __call__ = generate
+
+def shader_shelves_black_metallic(nw: NodeWrangler, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
+
+    color = (*kwargs.get("rgb", [0.0, 0.0, 0.0]), 1.0)
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": color, "Metallic": kwargs.get("metallic", 0.65)},
+    )
+    material_output = nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
+    )
+
+
+def shader_shelves_black_metallic_sampler():
+    params = dict()
+    base_color = [uniform(0, 0.01), uniform(0, 0.01), uniform(0, 0.01)]
+    params["rgb"] = base_color
+    params["metallic"] = uniform(0.45, 0.75)
+    return params
+
+
+def shader_shelves_white_metallic(nw: NodeWrangler, **kwargs):
+    # Code generated using version 2.6.4 of the node_transpiler
+
+    rgb = kwargs.get("rgb", [0.9, 0.9, 0.9])
+    base_color = (*rgb, 1.0)
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={
+            "Base Color": base_color,
+            "Metallic": kwargs.get("metallic", 0.65),
+        },
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
+    )
+
+
+def shader_shelves_white_metallic_sampler():
+    params = dict()
+    v = uniform(0.7, 1.0)
+    base_color = [
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+    ]
+    params["rgb"] = base_color
+    params["metallic"] = uniform(0.45, 0.75)
+    return params
+
+
+def get_shelf_material(name, **kwargs):
+    match name:
+        case "white":
+            shader_func = np.random.choice(
+                [shader_shelves_white, shader_rough_plastic], p=[0.6, 0.4]
+            )
+        case "black_wood":
+            shader_func = np.random.choice(
+                [shader_shelves_black_wood, shader_wood], p=[0.6, 0.4]
+            )
+        case "wood":
+            shader_func = np.random.choice(
+                [shader_shelves_wood, shader_wood], p=[0.6, 0.4]
+            )
+
+        case "glass":
+            shader_func = shader_glass
+        case _:
+            shader_func = np.random.choice(
+                [
+                    shader_shelves_white,
+                    shader_rough_plastic,
+                    shader_shelves_black_wood,
+                    shader_wood,
+                    shader_shelves_wood,
+                ],
+                p=[0.3, 0.2, 0.3, 0.1, 0.1],
+            )
+    r = uniform()
+    if name == "metal":
+        shader_func = np.random.choice([
+    brushed_metal.shader_brushed_metal,
+    galvanized_metal.shader_galvanized_metal,
+    grained_and_polished_metal.shader_grained_metal,
+    hammered_metal.shader_hammered_metal,
+    metal_basic.shader_metal,
+])
+    else:
+        shader_func = np.random.choice(
+            [
+                shader_shelves_white,
+                shader_rough_plastic,
+                shader_shelves_black_wood,
+                shader_wood,
+                shader_shelves_wood,
+            ],
+            p=[0.3, 0.2, 0.3, 0.1, 0.1],
+        )
+    # elif r < .3:
+    #     shader_func = rg(fabric_shader_list)
+    return surface.shaderfunc_to_material(shader_func, **kwargs)

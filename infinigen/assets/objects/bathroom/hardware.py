@@ -6,16 +6,14 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_cube
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
-from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 class HardwareFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

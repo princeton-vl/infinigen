@@ -7,9 +7,8 @@
 import numpy as np
 from numpy.random import uniform as U
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.misc import generate_text
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -17,9 +16,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, complete_no_bevel, get_bevel_edges
 from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 
 class MicrowaveFactory(AssetFactory):

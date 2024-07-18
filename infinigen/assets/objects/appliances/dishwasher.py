@@ -9,8 +9,9 @@ from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
+from infinigen.assets.composition import material_assignments
+
 #from infinigen.assets.composition.material_assignments import AssetList
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -23,9 +24,7 @@ from infinigen.core.util.bevelling import (
 )
 from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 
 class DishwasherFactory(AssetFactory):

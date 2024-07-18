@@ -8,9 +8,6 @@ from numpy.random import uniform
 
 #from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.composition import material_assignments
-from infinigen.core.util.random import weighted_sample
-
-
 from infinigen.assets.utils.decorate import read_co, write_attribute
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import surface
@@ -19,6 +16,7 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class TablewareFactory(AssetFactory):

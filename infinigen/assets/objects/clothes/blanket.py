@@ -6,14 +6,14 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.art import ArtFabric
 from infinigen.assets.utils.decorate import read_co, select_vertices, write_co
 from infinigen.assets.utils.object import new_grid
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class BlanketFactory(AssetFactory):
@@ -23,10 +23,11 @@ class BlanketFactory(AssetFactory):
         self.size = self.width * log_uniform(0.4, 0.7)
         self.thickness = log_uniform(0.004, 0.008)
 
-        materials = AssetList["BlanketFactory"]()
-        self.surface = materials["surface"].assign_material()
+        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
         if self.surface == ArtFabric:
-            self.surface = self.surface(self.factory_seed)
+            self.surface = self.surface(self.factory_seed)  
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = new_grid(
@@ -35,7 +36,7 @@ class BlanketFactory(AssetFactory):
         obj.scale = self.width / 2, self.size / 2, 1
         butil.apply_transform(obj)
         unwrap_faces(obj)
-        self.surface.apply(obj)
+        butil.add_material(obj, self.surface)
         return obj
 
     def fold(self, obj):

@@ -7,6 +7,7 @@ import bpy
 from numpy.random import choice, randint, uniform
 
 import infinigen.core.util.blender as butil
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.table_decorations.utils import (
     nodegroup_lofting,
     nodegroup_star_profile,
@@ -16,10 +17,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 
 class VaseFactory(AssetFactory):

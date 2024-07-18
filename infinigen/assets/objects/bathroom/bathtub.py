@@ -8,6 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import (
     read_center,
@@ -30,9 +31,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 
 class BathtubFactory(AssetFactory):

@@ -7,7 +7,6 @@ import numpy as np
 from numpy.random import uniform
 
 #from infinigen.assets.composition.material_assignments import AssetList
-from infinigen.assets.materials import text
 from infinigen.assets.objects.tableware.base import TablewareFactory
 from infinigen.assets.utils.decorate import (
     read_co,

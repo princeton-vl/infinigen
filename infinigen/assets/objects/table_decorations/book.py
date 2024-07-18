@@ -10,8 +10,9 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import text
+from infinigen.assets.materials.ceramic import plaster
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.mesh import longest_ray
 from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube
@@ -21,12 +22,6 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
-from infinigen.assets.materials.ceramic import plaster
-
-from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
-
-from infinigen.assets.materials import text
 
 class BookFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

@@ -1,5 +1,4 @@
 
-
 infinigen.assets.objects.bathroom.BathroomSinkFactory
 infinigen.assets.objects.bathroom.BathtubFactory
 infinigen.assets.objects.bathroom.HardwareFactory

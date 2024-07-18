@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.table_decorations.utils import nodegroup_lofting_poly
 from infinigen.assets.objects.tables.table_utils import nodegroup_n_gon_profile
 from infinigen.core import surface
@@ -16,11 +16,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.wear_tear import edge_wear as e_wears
-from infinigen.assets.materials.wear_tear import scratches
+
 
 class RangeHoodFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=None):

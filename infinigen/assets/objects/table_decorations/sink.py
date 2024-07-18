@@ -12,18 +12,17 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
-from infinigen.core import surface, tagging
+from infinigen.core import tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
+
 
 class SinkFactory(AssetFactory):
     def __init__(

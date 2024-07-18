@@ -8,6 +8,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
+
 #from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsurf
@@ -17,11 +19,8 @@ from infinigen.assets.utils.uv import wrap_front_back
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-
-from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
 
-from infinigen.core import surface
 
 class BottleFactory(AssetFactory):
     z_neck_offset = 0.05
