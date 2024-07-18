@@ -24,8 +24,7 @@ from infinigen.core.util.math import FixedSeed
 
 from infinigen.core.util.random import weighted_sample
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.wear_tear import edge_wear as e_wears
-from infinigen.assets.materials.wear_tear import scratches
+
 class SinkFactory(AssetFactory):
     def __init__(
         self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0], upper_height=None
@@ -55,7 +54,7 @@ class SinkFactory(AssetFactory):
         }
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = scratches, e_wears
+        scratch, edge_wear = material_assignments.wear_tear
 
         is_scratch = U() < scratch_prob
         is_edge_wear = U() < edge_wear_prob
@@ -171,7 +170,7 @@ class TapFactory(AssetFactory):
         wrapped_params = {"Tap": tap_material_gen()}
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = scratches, e_wears
+        scratch, edge_wear = material_assignments.wear_tear
 
         is_scratch = U() < scratch_prob
         is_edge_wear = U() < edge_wear_prob

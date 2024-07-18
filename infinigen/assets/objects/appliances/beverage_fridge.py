@@ -28,8 +28,7 @@ from infinigen.core.util.math import FixedSeed
 
 from infinigen.core.util.random import weighted_sample
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.wear_tear import edge_wear as e_wears
-from infinigen.assets.materials.wear_tear import scratches
+
 
 class BeverageFridgeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
@@ -56,8 +55,7 @@ class BeverageFridgeFactory(AssetFactory):
         }
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch = scratches
-        edge_wear = e_wears
+        scratch, edge_wear = material_assignments.wear_tear
 
         is_scratch = np.random.uniform() < scratch_prob
         is_edge_wear = np.random.uniform() < edge_wear_prob

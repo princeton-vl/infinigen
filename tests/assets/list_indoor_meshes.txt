@@ -1,9 +1,4 @@
-infinigen.assets.objects.appliances.BeverageFridgeFactory
-infinigen.assets.objects.appliances.DishwasherFactory
-infinigen.assets.objects.appliances.MicrowaveFactory
-infinigen.assets.objects.appliances.OvenFactory
-infinigen.assets.objects.appliances.MonitorFactory
-infinigen.assets.objects.appliances.TVFactory
+
 
 infinigen.assets.objects.bathroom.BathroomSinkFactory
 infinigen.assets.objects.bathroom.BathtubFactory

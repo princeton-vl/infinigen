@@ -16,8 +16,7 @@ from infinigen.core.util.random import log_uniform
 
 from infinigen.core.util.random import weighted_sample
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.wear_tear import edge_wear as e_wears
-from infinigen.assets.materials.wear_tear import scratches
+
 class HardwareFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(HardwareFactory, self).__init__(factory_seed, coarse)
@@ -43,9 +42,9 @@ class HardwareFactory(AssetFactory):
 
             is_scratch = uniform() < material_assignments.wear_tear_prob[0]
             is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
-            self.scratch = scratches if is_scratch else None
+            self.scratch = material_assignments.wear_tear[0] if is_scratch else None
             self.edge_wear = (
-                e_wears if is_edge_wear else None
+                material_assignments.wear_tear[1] if is_edge_wear else None
             )
 
     def make_attachment(self):

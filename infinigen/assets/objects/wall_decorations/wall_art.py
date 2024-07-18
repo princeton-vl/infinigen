@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials.art import Art
 from infinigen.assets.utils.object import join_objects, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides
@@ -15,6 +15,9 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
+
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 
 class WallArtFactory(AssetFactory):
@@ -27,20 +30,25 @@ class WallArtFactory(AssetFactory):
             self.depth = uniform(0.01, 0.02)
             self.frame_bevel_segments = np.random.choice([0, 1, 4])
             self.frame_bevel_width = uniform(self.depth / 4, self.depth / 2)
-            self.material_assignments = AssetList["WallArtFactory"]()
             self.assign_materials()
 
     def assign_materials(self):
         # self.surface = Art()
-        assignments = self.material_assignments
-        self.surface = assignments["surface"].assign_material()
+
+        surface_gen_class = weighted_sample(material_assignments.decorative_fabric)
+        self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
+
         if self.surface == Art:
             self.surface = self.surface(self.factory_seed)
-        self.frame_surface = assignments["frame"].assign_material()
-        is_scratch = uniform() < assignments["wear_tear_prob"][0]
-        is_edge_wear = uniform() < assignments["wear_tear_prob"][1]
-        self.scratch = assignments["wear_tear"][0] if is_scratch else None
-        self.edge_wear = assignments["wear_tear"][1] if is_edge_wear else None
+
+        frame_surface_gen_class = weighted_sample(material_assignments.frame)
+        self.frame_surface_gen = frame_surface_gen_class()
+
+        is_scratch = uniform() < material_assignments.wear_tear_prob[0]
+        is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
+        self.scratch = material_assignments.wear_tear[0] if is_scratch else None
+        self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
 
     def create_placeholder(self, **params):
         return new_bbox(
@@ -53,6 +61,8 @@ class WallArtFactory(AssetFactory):
         )
 
     def create_asset(self, placeholder, **params) -> bpy.types.Object:
+        self.frame_surface = self.frame_surface_gen()
+        
         obj = new_plane()
         obj.scale = self.width / 2, self.height / 2, 1
         obj.rotation_euler = np.pi / 2, 0, np.pi / 2
@@ -90,5 +100,5 @@ class WallArtFactory(AssetFactory):
 class MirrorFactory(WallArtFactory):
     def __init__(self, factory_seed, coarse=False):
         super(MirrorFactory, self).__init__(factory_seed, coarse)
-        self.material_assignments = AssetList["MirrorFactory"]()
+        #self.material_assignments = AssetList["MirrorFactory"]()
         self.assign_materials()

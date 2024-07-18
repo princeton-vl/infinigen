@@ -19,9 +19,12 @@ from infinigen.assets.materials import (
     text,
     wood,
 )
+from infinigen.assets.materials.wear_tear import edge_wear, scratches
 
 
 wear_tear_prob = [0.5,0.5]
+
+wear_tear = [scratches, edge_wear]
 
 
 woods = [

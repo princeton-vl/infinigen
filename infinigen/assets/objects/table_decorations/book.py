@@ -25,8 +25,8 @@ from infinigen.assets.materials.ceramic import plaster
 
 from infinigen.core.util.random import weighted_sample
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials.wear_tear import edge_wear as e_wears
-from infinigen.assets.materials.wear_tear import scratches
+
+from infinigen.assets.materials import text
 
 class BookFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -42,7 +42,7 @@ class BookFactory(AssetFactory):
         surface_gen_class = plaster.Plaster
         self.surface_material_gen = surface_gen_class()
 
-        cover_surface_gen_class = weighted_sample(material_assignments.graphicdesign)
+        cover_surface_gen_class = text.Text
         self.cover_surface_material_gen = cover_surface_gen_class()
         self.cover_surface = self.cover_surface_material_gen()
         
@@ -50,7 +50,7 @@ class BookFactory(AssetFactory):
             self.cover_surface = self.cover_surface(self.factory_seed)
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        self.scratch, self.edge_wear = scratches, e_wears
+        self.scratch, self.edge_wear = material_assignments.wear_tear
         self.scratch = None if uniform() > scratch_prob else self.scratch
         self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
@@ -58,7 +58,7 @@ class BookFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         self.surface = self.surface_material_gen()
-        
+
 
         width = int(log_uniform(0.08, 0.15) * self.rel_scale / self.unit) * self.unit
         height = int(width * self.skewness / self.unit) * self.unit
@@ -101,7 +101,8 @@ class BookFactory(AssetFactory):
         paper.location = width / 2, height / 2, depth / 2
         paper.scale = width / 2 - 1e-4, height / 2, depth / 2 - 1e-4
         butil.apply_transform(paper, True)
-        self.surface.apply(paper)
+        
+        butil.add_material(paper,self.surface)
         return paper
 
     def make_hardcover(self, width, height, depth):
