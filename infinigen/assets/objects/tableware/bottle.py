@@ -169,7 +169,7 @@ class BottleFactory(AssetFactory):
 
             #material_assignments = AssetList["BottleFactory"]()
             self.surface_fac = weighted_sample(material_assignments.plastics)
-            self.surface = self.surface_fac()
+            self.surface = self.surface_fac()()
             #self.surface = material_assignments["surface"].assign_material()
             #self.wrap_surface = material_assignments["wrap_surface"].assign_material()
             self.wrap_surface_fac = weighted_sample(material_assignments.graphicdesign)
@@ -179,7 +179,7 @@ class BottleFactory(AssetFactory):
 
 
             self.cap_surface_fac = weighted_sample(material_assignments.metals)
-            self.cap_surface = self.cap_surface_fac()
+            self.cap_surface = self.cap_surface_fac()()
             #self.cap_surface = material_assignments["cap_surface"].assign_material()
             # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
             # self.scratch, self.edge_wear = material_assignments["wear_tear"]
@@ -213,7 +213,7 @@ class BottleFactory(AssetFactory):
         if self.bottle_width > 0:
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
         
-        butil.add_material(obj, self.surface())
+        butil.add_material(obj, self.surface)
         #self.surface.apply(obj, translucent=True)
     
         return obj

@@ -11,7 +11,7 @@ import numpy as np
 from numpy.random import randint as RI
 from numpy.random import uniform as U
 
-from infinigen.assets.composition.material_assignments import AssetList
+
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
@@ -21,6 +21,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 class CeilingLightFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
@@ -64,7 +66,8 @@ class CeilingLightFactory(AssetFactory):
         self.beveler = BevelSharp(mult=U(1, 3))
 
     def get_material_params(self):
-        material_assignments = AssetList["CeilingLightFactory"]()
+        
+        
         black_material = material_assignments["black_material"].assign_material()
         white_material = material_assignments["white_material"].assign_material()
 

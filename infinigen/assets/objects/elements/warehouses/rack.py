@@ -197,6 +197,9 @@ class RackFactory(AssetFactory):
         return frames
 
     def finalize_assets(self, assets):
-        self.stand_surface.apply(assets, "stand", metal_color="bw")
-        self.support_surface.apply(assets, "support", metal_color="bw")
-        self.frame_surface.apply(assets, "frame", metal_color="bw")
+        # self.stand_surface.apply(assets, "stand", metal_color="bw")
+        # self.support_surface.apply(assets, "support", metal_color="bw")
+        # self.frame_surface.apply(assets, "frame", metal_color="bw")
+        butil.add_material(assets, self.stand_surface)
+        butil.add_material(assets, self.support_surface)
+        butil.add_material(assets, self.frame_surface)

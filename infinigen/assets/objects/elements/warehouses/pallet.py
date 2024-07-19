@@ -26,7 +26,7 @@ class PalletFactory(AssetFactory):
         self.tile_width = uniform(0.06, 0.1)
         self.tile_slackness = uniform(1.5, 2)
         self.height = uniform(0.2, 0.25)
-        self.surface = wood
+        self.surface = wood.Wood()()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         bbox = new_bbox(0, self.width, 0, self.depth, 0, self.height)
@@ -135,4 +135,6 @@ class PalletFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        #self.surface.apply(assets)
+        for element in assets:
+            butil.add_material(element, self.surface)

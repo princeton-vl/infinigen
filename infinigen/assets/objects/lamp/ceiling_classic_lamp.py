@@ -7,7 +7,7 @@ from numpy.random import randint, uniform
 
 from infinigen.assets import colors
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
-from infinigen.assets.materials.ceiling_light_shaders import (
+from infinigen.assets.materials.lamp_shaders import (
     shader_lamp_bulb_nonemissive,
 )
 from infinigen.core import surface, tagging

@@ -166,14 +166,16 @@ def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwa
     for indices in groupings:
         selected = sum(selections[i] for i in indices)
         try:
-            surface.apply(
-                obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs
-            )
+            # surface.apply(
+            #     obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs
+            # )
+            butil.add_material(obj, selected)
         except TypeError:
             logger.debug(
                 f"apply() for {surface=} with kwarg bbox failed, trying again without"
             )
-            surface.apply(obj, selected, **kwargs)
+            #surface.apply(obj, selected, **kwargs)
+            butil.add_material(obj, surface)
 
 
 def wrap_front_back(obj, surface, shared=True, **kwargs):
