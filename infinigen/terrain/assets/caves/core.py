@@ -41,7 +41,7 @@ def select_vert(idx: int):
 
 
 def move_forward(current_dir):
-    assert type(current_dir) == np.ndarray and current_dir.size == 3
+    assert isinstance(current_dir, np.ndarray) and current_dir.size == 3
     bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": current_dir})
 
 
