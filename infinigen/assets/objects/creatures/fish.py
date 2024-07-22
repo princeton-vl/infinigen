@@ -285,14 +285,12 @@ class FishFactory(AssetFactory):
             )
 
             body_material_fac = weighted_sample(material_assignments.fish)
-            self.body_material = body_material_fac()
+            self.body_material = body_material_fac()()
             self.fin_material = materials.creature.FishFin()
             self.eye_material = materials.creature.FishEye()
 
     def apply_materials(self, obj):
-        self.body_material.apply(
-            joining.get_parts(obj) + joining.get_parts(obj, False, "BodyExtra")
-        )
+        butil.add_material(obj, self.body_material)
 
         mat = joining.get_parts(obj)[0].active_material
         gold = mat is not None and "gold" in mat.name.lower()

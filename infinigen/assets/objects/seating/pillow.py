@@ -143,4 +143,5 @@ class PillowFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        butil.add_material(assets, self.surface)
+        for obj in assets:
+            butil.add_material(obj, self.surface)

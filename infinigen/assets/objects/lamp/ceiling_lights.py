@@ -13,6 +13,10 @@ from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
+from infinigen.assets.materials.lamp_shaders import (
+    shader_black,
+    shader_lamp_bulb_nonemissive,
+)
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -64,15 +68,15 @@ class CeilingLightFactory(AssetFactory):
         self.beveler = BevelSharp(mult=U(1, 3))
 
     def get_material_params(self):
-        black_material = material_assignments["black_material"].assign_material()
-        white_material = material_assignments["white_material"].assign_material()
+        black_material = shader_black
+        white_material = shader_lamp_bulb_nonemissive
 
         wrapped_params = {
             "BlackMaterial": surface.shaderfunc_to_material(black_material),
             "WhiteMaterial": surface.shaderfunc_to_material(white_material),
         }
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
 
         is_scratch = np.random.uniform() < scratch_prob
         is_edge_wear = np.random.uniform() < edge_wear_prob

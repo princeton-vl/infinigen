@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import metal
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_metallic,
     shader_shelves_black_metallic_sampler,
@@ -27,6 +27,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup(
@@ -1394,7 +1395,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": realize_instances_2,
-            "Material": surface.shaderfunc_to_material(metal.get_shader()),
+            "Material": weighted_sample(material_assignments.metals)()(),
         },
     )
     merge_components.append(set_material_2)
