@@ -26,10 +26,24 @@ class TablewareFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.thickness = 0.01
-            self.surface = weighted_sample(material_assignments.plastics)()
-            self.inside_surface = weighted_sample(material_assignments.metals)()
 
-            self.guard_surface = weighted_sample(material_assignments.woods)()
+            surface_gen_class = weighted_sample(material_assignments.plastics)
+            surface_material_gen = surface_gen_class()
+            self.surface = surface_material_gen()
+
+            inside_surface_gen_class = weighted_sample(material_assignments.metals)
+            inside_surface_gen = inside_surface_gen_class()
+            self.inside_surface = inside_surface_gen()
+
+            guard_surface_gen_class = weighted_sample(material_assignments.woods)
+            guard_surface_gen = guard_surface_gen_class()
+            self.guard_surface = guard_surface_gen()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            self.scratch, self.edge_wear = material_assignments.wear_tear
+
+            self.scratch = None if uniform() > scratch_prob else self.scratch
+            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.guard_depth = self.thickness
             self.has_guard = False
@@ -79,15 +93,11 @@ class TablewareFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         assign_material(assets, [])
-        self.surface.apply(assets, metal_color=self.metal_color)
+        butil.add_material(assets, self.surface)
         if self.has_inside:
-            self.inside_surface.apply(
-                assets, selection="inside", clear=True, metal_color="bw+natural"
-            )
+            butil.add_material(assets, self.inside_surface)
         if self.has_guard:
-            self.guard_surface.apply(
-                assets, selection="guard", metal_color=self.metal_color
-            )
+            butil.add_material(assets, self.guard_surface)
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

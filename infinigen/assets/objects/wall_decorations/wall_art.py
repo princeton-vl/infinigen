@@ -30,9 +30,7 @@ class WallArtFactory(AssetFactory):
             self.assign_materials()
 
     def assign_materials(self):
-        # self.surface = Art()
-
-        surface_gen_class = weighted_sample(material_assignments.decorative_fabric)
+        surface_gen_class = weighted_sample(material_assignments.fabrics)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
 
@@ -83,7 +81,8 @@ class WallArtFactory(AssetFactory):
                 width=self.frame_bevel_width,
                 segments=self.frame_bevel_segments,
             )
-        self.frame_surface.apply(frame)
+
+        butil.add_material(frame, self.frame_surface)
         obj = join_objects([obj, frame])
         return obj
 

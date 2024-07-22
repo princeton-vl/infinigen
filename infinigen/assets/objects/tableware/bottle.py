@@ -165,15 +165,14 @@ class BottleFactory(AssetFactory):
                     ]
                     self.is_vector = [0, 1, 0, 1, 1, 0, 1, 1, 0]
 
-            self.surface_fac = weighted_sample(material_assignments.plastics)
-            self.surface = self.surface_fac()()
-            self.wrap_surface_fac = weighted_sample(material_assignments.graphicdesign)
-            self.wrap_surface = self.wrap_surface_fac()
-            if self.wrap_surface_fac == text.Text:
-                self.wrap_surface_fac = text.Text(False)
+            self.surface = weighted_sample(material_assignments.plastics)()()
 
-            self.cap_surface_fac = weighted_sample(material_assignments.metals)
-            self.cap_surface = self.cap_surface_fac()()
+            self.wrap_surface = text.Text()()
+
+            if self.wrap_surface == text.Text:
+                self.wrap_surface = text.Text(False)
+
+            self.cap_surface = weighted_sample(material_assignments.metals)()()
 
             self.texture_shared = uniform() < 0.2
             self.cap_subsurf = uniform() < 0.5
@@ -203,7 +202,6 @@ class BottleFactory(AssetFactory):
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
 
         butil.add_material(obj, self.surface)
-        # self.surface.apply(obj, translucent=True)
 
         return obj
 
@@ -238,5 +236,5 @@ class BottleFactory(AssetFactory):
         obj.location[-1] = (1 - self.z_cap) * self.z_length
         butil.apply_transform(obj, loc=True)
         subsurf(obj, 1, self.cap_subsurf)
-        butil.add_material(obj, self.cap_surface())
+        butil.add_material(obj, self.cap_surface)
         return obj
