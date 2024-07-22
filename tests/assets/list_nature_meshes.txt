@@ -1,0 +1,108 @@
+# infinigen.assets.objects.cactus.KalidiumCactusFactory # slow, fails 120sec timeout
+# infinigen.assets.objects.corals.BrainCoralFactory # slow, fails 120sec timeout
+# infinigen.assets.objects.creatures.CrustaceanFactory # slow, fails 120sec timeout
+# infinigen.assets.objects.creatures.JellyfishFactory
+# infinigen.assets.objects.creatures.SnakeFactory
+# infinigen.assets.objects.tropic_plants.CoconutTreeFactory
+# infinigen.assets.objects.tropic_plants.LeafPalmPlantFactory
+# infinigen.assets.objects.tropic_plants.LeafPalmTreeFactory
+# infinigen.assets.objects.tropic_plants.PalmTreeFactory
+#AntSwarmFactory
+#BoidSwarmFactory
+#ChameleonFactory
+#FanCoralFactory
+#FrogFactory
+#FruitFactoryGeneralFruit
+#GenericTreeFactory
+#HerbivoreFactory
+#infinigen.assets.objects.creatures.CrabFactory # slow
+#infinigen.assets.objects.creatures.DragonflyFactory
+#infinigen.assets.objects.creatures.LobsterFactory # slow
+#infinigen.assets.objects.creatures.SpinyLobsterFactory # slow
+#infinigen.assets.objects.trees.TreeFactory # slow, TODO test with no leaves
+#LeafFactoryIvy
+#LizardFactory
+#OctopusFactory
+#ReedMonocotFactory
+infinigen.assets.objects.cactus.CactusFactory
+infinigen.assets.objects.cactus.ColumnarCactusFactory
+infinigen.assets.objects.cactus.GlobularCactusFactory
+infinigen.assets.objects.cactus.PrickyPearCactusFactory
+infinigen.assets.objects.cloud.AltocumulusFactory
+infinigen.assets.objects.cloud.CloudFactory
+infinigen.assets.objects.cloud.CumulonimbusFactory
+infinigen.assets.objects.cloud.CumulusFactory
+infinigen.assets.objects.cloud.StratocumulusFactory
+infinigen.assets.objects.corals.BushCoralFactory
+infinigen.assets.objects.corals.CauliflowerCoralFactory
+infinigen.assets.objects.corals.CoralFactory
+infinigen.assets.objects.corals.ElkhornCoralFactory
+infinigen.assets.objects.corals.HoneycombCoralFactory
+infinigen.assets.objects.corals.LeatherCoralFactory
+infinigen.assets.objects.corals.StarCoralFactory
+infinigen.assets.objects.corals.TableCoralFactory
+infinigen.assets.objects.corals.TubeCoralFactory
+infinigen.assets.objects.corals.TwigCoralFactory
+infinigen.assets.objects.creatures.BeetleFactory
+infinigen.assets.objects.creatures.BirdFactory
+infinigen.assets.objects.creatures.CarnivoreFactory
+infinigen.assets.objects.creatures.FishFactory
+infinigen.assets.objects.creatures.FlyingBirdFactory
+infinigen.assets.objects.fruits.FruitFactoryApple
+infinigen.assets.objects.fruits.FruitFactoryBlackberry
+infinigen.assets.objects.fruits.FruitFactoryCoconutgreen
+infinigen.assets.objects.fruits.FruitFactoryCoconuthairy
+infinigen.assets.objects.fruits.FruitFactoryCompositional
+infinigen.assets.objects.fruits.FruitFactoryDurian
+infinigen.assets.objects.fruits.FruitFactoryPineapple
+infinigen.assets.objects.fruits.FruitFactoryStarfruit
+infinigen.assets.objects.fruits.FruitFactoryStrawberry
+infinigen.assets.objects.grassland.FlowerFactory
+infinigen.assets.objects.grassland.FlowerPlantFactory
+infinigen.assets.objects.grassland.GrassTuftFactory
+infinigen.assets.objects.leaves.LeafFactory
+infinigen.assets.objects.leaves.LeafFactoryBroadleaf
+infinigen.assets.objects.leaves.LeafFactoryGinko
+infinigen.assets.objects.leaves.LeafFactoryMaple
+infinigen.assets.objects.leaves.LeafFactoryPine
+infinigen.assets.objects.leaves.LeafFactoryV2
+infinigen.assets.objects.mollusk.AugerFactory
+infinigen.assets.objects.mollusk.ClamFactory
+infinigen.assets.objects.mollusk.ConchFactory
+infinigen.assets.objects.mollusk.MolluskFactory
+infinigen.assets.objects.mollusk.MusselFactory
+infinigen.assets.objects.mollusk.NautilusFactory
+infinigen.assets.objects.mollusk.ScallopFactory
+infinigen.assets.objects.mollusk.VoluteFactory
+infinigen.assets.objects.monocot.AgaveMonocotFactory
+infinigen.assets.objects.monocot.BananaMonocotFactory
+infinigen.assets.objects.monocot.GrassesMonocotFactory
+infinigen.assets.objects.monocot.KelpMonocotFactory
+infinigen.assets.objects.monocot.MaizeMonocotFactory
+infinigen.assets.objects.monocot.MonocotFactory
+infinigen.assets.objects.monocot.PineconeFactory
+infinigen.assets.objects.monocot.TaroMonocotFactory
+infinigen.assets.objects.monocot.TussockMonocotFactory
+infinigen.assets.objects.monocot.VeratrumMonocotFactory
+infinigen.assets.objects.monocot.WheatEarMonocotFactory
+infinigen.assets.objects.monocot.WheatMonocotFactory
+infinigen.assets.objects.mushroom.MushroomFactory
+infinigen.assets.objects.particles.DustMoteFactory
+infinigen.assets.objects.particles.LichenFactory
+infinigen.assets.objects.particles.MossFactory
+infinigen.assets.objects.particles.PineNeedleFactory
+infinigen.assets.objects.particles.RaindropFactory
+infinigen.assets.objects.particles.SnowflakeFactory
+infinigen.assets.objects.rocks.BlenderRockFactory
+infinigen.assets.objects.rocks.BoulderFactory
+infinigen.assets.objects.rocks.GlowingRocksFactory
+infinigen.assets.objects.small_plants.FernFactory
+infinigen.assets.objects.small_plants.SnakePlantFactory
+infinigen.assets.objects.small_plants.SpiderPlantFactory
+infinigen.assets.objects.small_plants.SucculentFactory
+infinigen.assets.objects.trees.BushFactory
+infinigen.assets.objects.trees.TreeFlowerFactory
+infinigen.assets.objects.tropic_plants.LeafBananaTreeFactory
+infinigen.assets.objects.tropic_plants.PlantBananaTreeFactory
+infinigen.assets.objects.underwater.SeaweedFactory
+infinigen.assets.objects.underwater.UrchinFactory
