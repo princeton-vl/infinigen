@@ -135,6 +135,6 @@ class PalletFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        #self.surface.apply(assets)
+        # self.surface.apply(assets)
         for element in assets:
             butil.add_material(element, self.surface)

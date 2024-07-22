@@ -63,20 +63,16 @@ class ToiletFactory(AssetFactory):
             self.hardware_length = uniform(0.04, 0.05)
             self.hardware_on_side = uniform() < 0.5
 
-
-
             surface_gen_class = weighted_sample(material_assignments.metals)
             self.surface_material_gen = surface_gen_class()
-            
+
             hardware_surface_gen_class = weighted_sample(material_assignments.metals)
             self.hardware_surface_material_gen = hardware_surface_gen_class()
 
             is_scratch = uniform() < material_assignments.wear_tear_prob[0]
             is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
             self.scratch = material_assignments.wear_tear[0] if is_scratch else None
-            self.edge_wear = (
-                material_assignments.wear_tear[1] if is_edge_wear else None
-            )
+            self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
 
     @property
     def mid_offset(self):

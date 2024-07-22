@@ -7,7 +7,7 @@
 import bpy
 from numpy.random import choice, uniform
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.seating.chairs.seats.round_seats import (
     generate_round_seats,
 )
@@ -16,9 +16,8 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
+
 
 def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
@@ -66,14 +65,11 @@ class BarChairFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self, leg_style):
-
         params = {
             "SeatMaterial": weighted_sample(material_assignments.large_seat_fabric)(),
             "LegMaterial": weighted_sample(material_assignments.furniture_leg)(),
         }
-        wrapped_params = {
-            k: v() for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear

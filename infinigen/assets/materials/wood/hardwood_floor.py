@@ -44,11 +44,12 @@ def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
 
 class HardwoodFloor:
     shader = shader_hardwood_floor
+
     def generate(self, selection=None, rotation=None):
-       if rotation is None:
+        if rotation is None:
             rotation = (0, 0, 0) if uniform() < 0.1 else (0, 0, np.pi / 2)
-       return surface.shaderfunc_to_material(shader_hardwood_floor, rotation)
-    
+        return surface.shaderfunc_to_material(shader_hardwood_floor, rotation)
+
     __call__ = generate
 
 

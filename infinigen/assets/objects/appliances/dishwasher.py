@@ -10,8 +10,6 @@ from numpy.random import randint as RI
 from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
-
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -40,18 +38,14 @@ class DishwasherFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self):
-        #material_assignments = AssetList["DishwasherFactory"]() 
         params = {
-            
             "Surface": weighted_sample(material_assignments.metals)(),
             "Front": weighted_sample(material_assignments.appliance_front_maybeglass)(),
             "WhiteMetal": weighted_sample(material_assignments.metals)(),
             "Top": weighted_sample(material_assignments.metals)(),
             "NameMaterial": weighted_sample(material_assignments.metals)(),
         }
-        wrapped_params = {
-            k: v() for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear

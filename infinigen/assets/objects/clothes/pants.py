@@ -39,7 +39,6 @@ class PantsFactory(AssetFactory):
         self.neck_shrink = uniform(0.1, 0.15)
         self.thickness = log_uniform(0.02, 0.03)
 
-
         surface_gen_class = weighted_sample(material_assignments.fabrics)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()

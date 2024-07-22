@@ -50,6 +50,7 @@ class VaseCeramic:
 
     __call__ = generate
 
+
 def shader_colored_glass(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 

@@ -223,9 +223,7 @@ class TableCocktailFactory(AssetFactory):
             "TopMaterial": weighted_sample(material_assignments.table_top)(),
             "LegMaterial": weighted_sample(material_assignments.tableware)(),
         }
-        wrapped_params = {
-            k: v() for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear

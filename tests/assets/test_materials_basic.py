@@ -49,9 +49,7 @@ def test_material_runs_deprecated_interface(pathspec, **kwargs):
     check_material_runs_deprecated_interface(pathspec)
 
 
-@pytest.mark.parametrize(
-    "pathspec", load_txt_list("tests/assets/list_materials.txt")
-)
+@pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_materials.txt"))
 def test_material_runs(pathspec, **kwargs):
     setup_gin(
         ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],

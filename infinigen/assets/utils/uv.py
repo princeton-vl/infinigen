@@ -174,7 +174,7 @@ def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwa
             logger.debug(
                 f"apply() for {surface=} with kwarg bbox failed, trying again without"
             )
-            #surface.apply(obj, selected, **kwargs)
+            # surface.apply(obj, selected, **kwargs)
             butil.add_material(obj, surface)
 
 

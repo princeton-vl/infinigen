@@ -39,5 +39,5 @@ class WoodTiles:
     def generate(self):
         func = np.random.choice(get_wood_tiles())
         return func.generate()
-    
+
     __call__ = generate

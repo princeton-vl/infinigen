@@ -325,12 +325,12 @@ def get_random_light_wood_params():
 
 
 class TiledWood:
-     shader = shader_wood_tiled
+    shader = shader_wood_tiled
 
-     def generate(self):
+    def generate(self):
         return surface.shaderfunc_to_material(shader_wood_tiled)
 
-     __call__ = generate
+    __call__ = generate
 
 
 # def make_sphere():

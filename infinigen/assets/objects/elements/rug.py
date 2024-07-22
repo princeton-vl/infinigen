@@ -6,17 +6,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.art import ArtRug
 from infinigen.assets.utils.object import new_base_circle, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import clip_gaussian
+from infinigen.core.util.random import clip_gaussian, weighted_sample
 
-from infinigen.assets.composition import material_assignments
-from infinigen.core.util.random import weighted_sample
 
 class RugFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -31,7 +29,7 @@ class RugFactory(AssetFactory):
                 self.length = self.width
             self.rounded_buffer = self.width * uniform(0.1, 0.5)
             self.thickness = uniform(0.01, 0.02)
-            
+
             surface_gen_class = weighted_sample(material_assignments.rug_fabric)
             self.surface = surface_gen_class()()
             if self.surface == ArtRug:

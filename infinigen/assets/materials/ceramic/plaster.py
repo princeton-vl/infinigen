@@ -82,6 +82,6 @@ class Plaster:
     def generate(self, plaster_colored=None):
         if plaster_colored is None:
             plaster_colored = uniform() < 0.4
-        return surface.shaderfunc_to_material(shader_plaster,plaster_colored)
+        return surface.shaderfunc_to_material(shader_plaster, plaster_colored)
 
     __call__ = generate

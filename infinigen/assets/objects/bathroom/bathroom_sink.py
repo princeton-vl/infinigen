@@ -59,10 +59,11 @@ class BathroomSinkFactory(BathtubFactory):
             self.stand_height = uniform(0.7, 0.9) - self.depth
             self.is_stand_circular = uniform() < 0.5
             self.is_hole_centered = True
-            #material_assignments = AssetList["BathroomSinkFactory"]()
-            surface_gen_class = weighted_sample(material_assignments.bathroom_touchsurface)
+
+            surface_gen_class = weighted_sample(
+                material_assignments.bathroom_touchsurface
+            )
             self.surface_material_gen = surface_gen_class()
-            
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -100,7 +101,7 @@ class BathroomSinkFactory(BathtubFactory):
         obj = join_objects([obj, hole])
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
-        #self.surface.apply(obj, clear=True, metal_color="plain")
+        # self.surface.apply(obj, clear=True, metal_color="plain")
         butil.add_material(obj, self.surface)
         if self.has_extrude:
             tap = self.tap_factory(np.random.randint(1e7))

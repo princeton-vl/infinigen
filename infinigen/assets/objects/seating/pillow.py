@@ -6,8 +6,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-
-from infinigen.assets.materials import art, fabric
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials import art
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import (
     read_normal,
@@ -25,11 +25,9 @@ from infinigen.assets.utils.object import (
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
-from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 class PillowFactory(AssetFactory):
     shapes = (
@@ -145,5 +143,4 @@ class PillowFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-
         butil.add_material(assets, self.surface)

@@ -13,5 +13,5 @@ class StaggeredWoodTile:
     def generate(self):
         shader_func = shader_wood
         return tile.Tile().generate(shader_func, "staggered")
-    
+
     __call__ = generate

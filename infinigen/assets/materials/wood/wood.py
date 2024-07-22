@@ -190,12 +190,12 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
 
 
 class Wood:
-     shader = shader_wood
+    shader = shader_wood
 
-     def generate(self):
+    def generate(self):
         return surface.shaderfunc_to_material(shader_wood)
 
-     __call__ = generate
+    __call__ = generate
 
 def make_sphere():
     return new_cube()

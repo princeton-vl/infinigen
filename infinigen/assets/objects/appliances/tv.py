@@ -12,8 +12,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
-
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials.text import Text
 from infinigen.assets.utils.decorate import (
     mirror,
@@ -76,7 +74,6 @@ class TVFactory(AssetFactory):
             self.support_surface = materials["support"]()
 
     def get_material_params(self):
-        
         surface = weighted_sample(material_assignments.metals)()
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
@@ -167,7 +164,6 @@ class TVFactory(AssetFactory):
         bbox = compute_uv_direction(obj, "x", "z", screen[fc2f])
         write_attr_data(obj, "screen", screen, domain="FACE", type="INT")
         butil.add_material(obj, self.screen_surface)
-        
 
     def make_base(self):
         obj = new_cube()

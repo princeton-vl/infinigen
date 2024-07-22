@@ -293,7 +293,7 @@ class FishFactory(AssetFactory):
         self.body_material.apply(
             joining.get_parts(obj) + joining.get_parts(obj, False, "BodyExtra")
         )
-        
+
         mat = joining.get_parts(obj)[0].active_material
         gold = mat is not None and "gold" in mat.name.lower()
         self.fin_material.apply(

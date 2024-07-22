@@ -57,7 +57,7 @@ class ArtComposite(DarkArt):
 
     def make_shader_func(self, bbox):
         art_shader_func = super(ArtComposite, self).make_shader_func(bbox)
-    
+
         def shader_art_composite(nw: NodeWrangler, **kwargs):
             self.base_shader(nw, **kwargs)
             nw_, base_bsdf = nw.find_recursive(Nodes.PrincipledBSDF)[-1]
@@ -91,10 +91,11 @@ class ArtGeneral:
     #     if scale is not None:
     #         write_uv(obj, read_uv(obj) * scale)
     #     Art().apply(obj, selection, bbox, **kwargs)
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), **kwargs):
+        return Art().generate(selection, bbox, **kwargs)
 
-    def generate(self, selection=None, bbox=(0,1,0,1), **kwargs):
-       return Art().generate(selection,bbox, **kwargs)
     __call__ = generate
+
 
 def make_sphere():
     return text.make_sphere()

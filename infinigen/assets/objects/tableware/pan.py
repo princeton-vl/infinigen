@@ -11,7 +11,6 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import (
     join_objects,
@@ -50,13 +49,7 @@ class PanFactory(TablewareFactory):
             self.x_guard = self.r_expand + uniform(0, 0.2) * self.x_handle
             self.guard_type = "round"
             self.guard_depth = log_uniform(1.0, 2.0) * self.thickness
-            # material_assignments = AssetList["PanFactory"]()
-            # self.surface = material_assignments["surface"].assign_material()
-            # self.inside_surface = material_assignments["inside"].assign_material()
-            # if self.surface == self.inside_surface:
-            #     self.has_inside = uniform(0, 1) < 0.5
-            # else:
-            #     self.has_inside = True
+
             self.metal_color = None
             self.scale = log_uniform(0.1, 0.15)
             self.scratch = self.edge_wear = None

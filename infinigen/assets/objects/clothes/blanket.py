@@ -27,7 +27,7 @@ class BlanketFactory(AssetFactory):
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
         if self.surface == ArtFabric:
-            self.surface = self.surface(self.factory_seed)  
+            self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = new_grid(

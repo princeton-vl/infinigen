@@ -9,9 +9,8 @@ from .wood import shader_wood
 
 
 class CompositeWoodTile:
-
     def generate(self):
         shader_func = shader_wood
         return tile.Tile().generate(shader_func, "composite")
-    
+
     __call__ = generate

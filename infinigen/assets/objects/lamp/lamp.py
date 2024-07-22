@@ -12,7 +12,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.composition.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -20,6 +20,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class LampFactory(AssetFactory):
@@ -92,8 +93,10 @@ class LampFactory(AssetFactory):
 
         self.params.update(self.material_params)
 
+        self.lampshade_material = weighted_sample(material_assignments.lampshade)
+        self.metal_material = weighted_sample(material_assignments.furniture_leg)
+
     def get_material_params(self):
-        material_assignments = AssetList["LampFactory"]()
         black_material = material_assignments["black_material"].assign_material()
         white_material = material_assignments["metal"].assign_material()
         lampshade_material = material_assignments["lampshade"].assign_material()

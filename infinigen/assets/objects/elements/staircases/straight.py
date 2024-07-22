@@ -13,9 +13,8 @@ import shapely
 from numpy.random import uniform
 from shapely import LineString, Polygon
 
+from infinigen.assets.materials import fabric, metal
 from infinigen.assets.materials.ceramic import concrete, glass, plaster
-from infinigen.assets.materials import fabric
-from infinigen.assets.materials import metal
 from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     mirror,

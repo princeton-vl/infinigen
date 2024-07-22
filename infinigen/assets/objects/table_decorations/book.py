@@ -40,7 +40,7 @@ class BookFactory(AssetFactory):
         cover_surface_gen_class = text.Text
         self.cover_surface_material_gen = cover_surface_gen_class()
         self.cover_surface = self.cover_surface_material_gen()
-        
+
         if self.cover_surface == text.Text:
             self.cover_surface = self.cover_surface(self.factory_seed)
 
@@ -53,7 +53,6 @@ class BookFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         self.surface = self.surface_material_gen()
-
 
         width = int(log_uniform(0.08, 0.15) * self.rel_scale / self.unit) * self.unit
         height = int(width * self.skewness / self.unit) * self.unit
@@ -96,8 +95,8 @@ class BookFactory(AssetFactory):
         paper.location = width / 2, height / 2, depth / 2
         paper.scale = width / 2 - 1e-4, height / 2, depth / 2 - 1e-4
         butil.apply_transform(paper, True)
-        
-        butil.add_material(paper,self.surface)
+
+        butil.add_material(paper, self.surface)
         return paper
 
     def make_hardcover(self, width, height, depth):

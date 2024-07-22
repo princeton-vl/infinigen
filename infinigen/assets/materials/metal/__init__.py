@@ -4,8 +4,7 @@
 # Authors: Lingjie Mei
 
 
-
-
+import numpy as np
 
 import numpy as np
 
@@ -17,14 +16,3 @@ from .grained_and_polished_metal import GrainedMetal
 from .hammered_metal import HammeredMetal
 from .metal_basic import MetalBasic
 from .mirror import Mirror
-
-
-def get_shader():
-    return np.random.choice(
-        [
-            brushed_metal.shader_brushed_metal,
-            galvanized_metal.shader_galvanized_metal,
-            grained_and_polished_metal.shader_grained_metal,
-            hammered_metal.shader_hammered_metal,
-        ]
-    )

@@ -29,7 +29,10 @@ from matplotlib.patches import (
 from numpy.random import rand, uniform
 from PIL import Image
 
+<<<<<<< HEAD
 from infinigen import repo_root
+=======
+>>>>>>> e9c8c6902 (Ruff format, remove commented code, fix syntax errors, remove)
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane
@@ -442,18 +445,20 @@ class Text:
 
     # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
     #     common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
-    def generate(self, selection=None, bbox=(0,1,0,1), **kwargs):
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), **kwargs):
         return surface.shaderfunc_to_material(self.make_shader_func(bbox))
 
     __call__ = generate
 
 
 class TextGeneral:
-
-    def generate(self, selection=None, bbox=(0,1,0,1), has_barcode=True,emission=0, **kwargs):
+    def generate(
+        self, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs
+    ):
         return Text(has_barcode, emission).generate(selection, bbox, **kwargs)
-    
+
     __call__ = generate
+
 
 def make_sphere():
     obj = new_plane()
@@ -464,7 +469,7 @@ def make_sphere():
 
 
 class TextNoBarcode:
-    def generate(self, selection=None, bbox=(0,1,0,1), emission=0,**kwargs):
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):
         return Text(False, emission).generate(selection, bbox, **kwargs)
-    
+
     __call__ = generate

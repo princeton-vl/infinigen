@@ -7,8 +7,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
-
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials.art import Art
 from infinigen.assets.utils.object import join_objects, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides
@@ -61,7 +59,7 @@ class WallArtFactory(AssetFactory):
 
     def create_asset(self, placeholder, **params) -> bpy.types.Object:
         self.frame_surface = self.frame_surface_gen()
-        
+
         obj = new_plane()
         obj.scale = self.width / 2, self.height / 2, 1
         obj.rotation_euler = np.pi / 2, 0, np.pi / 2
@@ -99,5 +97,4 @@ class WallArtFactory(AssetFactory):
 class MirrorFactory(WallArtFactory):
     def __init__(self, factory_seed, coarse=False):
         super(MirrorFactory, self).__init__(factory_seed, coarse)
-        #self.material_assignments = AssetList["MirrorFactory"]()
         self.assign_materials()

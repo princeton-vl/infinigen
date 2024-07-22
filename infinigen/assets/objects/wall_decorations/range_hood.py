@@ -30,8 +30,6 @@ class RangeHoodFactory(AssetFactory):
             self.surface, self.scratch, self.edge_wear = self.get_material_params()
 
     def get_material_params(self):
-
-        
         surface_gen_class = weighted_sample(material_assignments.metals)()
         self.surface_material_gen = surface_gen_class()
 

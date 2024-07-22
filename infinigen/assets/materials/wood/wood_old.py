@@ -103,9 +103,9 @@ def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwa
 
 
 class WoodOld:
-     shader=shader_wood_old
+    shader = shader_wood_old
 
-     def generate(self):
+    def generate(self):
         return surface.shaderfunc_to_material(shader_wood_old)
 
-     __call__ = generate
+    __call__ = generate

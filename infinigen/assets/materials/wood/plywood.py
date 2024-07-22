@@ -391,6 +391,7 @@ class BlondePlywood:
 
     __call__ = generate
 
+
 def shader_shelves_black_metallic(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -477,13 +478,15 @@ def get_shelf_material(name, **kwargs):
             )
     r = uniform()
     if name == "metal":
-        shader_func = np.random.choice([
-    brushed_metal.shader_brushed_metal,
-    galvanized_metal.shader_galvanized_metal,
-    grained_and_polished_metal.shader_grained_metal,
-    hammered_metal.shader_hammered_metal,
-    metal_basic.shader_metal,
-])
+        shader_func = np.random.choice(
+            [
+                brushed_metal.shader_brushed_metal,
+                galvanized_metal.shader_galvanized_metal,
+                grained_and_polished_metal.shader_grained_metal,
+                hammered_metal.shader_hammered_metal,
+                metal_basic.shader_metal,
+            ]
+        )
     else:
         shader_func = np.random.choice(
             [

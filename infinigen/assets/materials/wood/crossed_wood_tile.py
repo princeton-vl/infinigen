@@ -9,10 +9,9 @@ from .wood import shader_wood
 
 
 class CrossedWoodTile:
-    
     def generate(self):
         shader_func = shader_wood
         return tile.Tile().generate(shader_func, "crossed")
-    
+
     __call__ = generate
     # def make_sphere():e

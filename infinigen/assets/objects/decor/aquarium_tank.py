@@ -6,7 +6,9 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition.material_assignments import AssetList
+import infinigen.assets.materials.ceramic
+import infinigen.assets.materials.fluid
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects import (
     cactus,
     corals,
@@ -21,7 +23,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class AquariumTankFactory(AssetFactory):
@@ -50,19 +52,9 @@ class AquariumTankFactory(AssetFactory):
             self.thickness = uniform(0.01, 0.02)
             self.belt_thickness = log_uniform(0.02, 0.05)
 
-            materials = AssetList["AquariumTankFactory"]()
-            self.glass_surface = materials["glass_surface"].assign_material()
-            self.belt_surface = materials["belt_surface"].assign_material()
-            self.water_surface = materials["water_surface"].assign_material()
-
-            scratch_prob, edge_wear_prob = materials["wear_tear_prob"]
-            self.scratch, self.edge_wear = materials["wear_tear"]
-            is_scratch = uniform() < scratch_prob
-            is_edge_wear = uniform() < edge_wear_prob
-            if not is_scratch:
-                self.scratch = None
-            if not is_edge_wear:
-                self.edge_wear = None
+            self.glass_surface = infinigen.assets.materials.ceramic.Glass()
+            self.belt_surface = weighted_sample(material_assignments.frame)
+            self.water_surface = infinigen.assets.materials.fluid.Water()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(

@@ -130,10 +130,9 @@ def shader_rough_plastic(
 
 
 class PlasticRough:
-   shader = shader_rough_plastic
+    shader = shader_rough_plastic
 
-   def generate(self):
-       return surface.shaderfunc_to_material(shader_rough_plastic)
-    
-   __call__ = generate
-   
+    def generate(self):
+        return surface.shaderfunc_to_material(shader_rough_plastic)
+
+    __call__ = generate

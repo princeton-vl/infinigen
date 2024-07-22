@@ -33,8 +33,9 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
 class MetalBasic:
     shader = shader_metal
 
-    def generate(self, selection =None, **kwargs) :
+    def generate(self, selection=None, **kwargs):
         from infinigen.assets.colors import metal_hsv
+
         color = metal_hsv(**kwargs)
         return surface.shaderfunc_to_material(shader_metal, color)
 

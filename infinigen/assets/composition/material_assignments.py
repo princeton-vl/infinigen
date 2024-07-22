@@ -21,7 +21,7 @@ from infinigen.assets.materials import (
 )
 from infinigen.assets.materials.wear_tear import edge_wear, scratches
 
-wear_tear_prob = [0.5,0.5]
+wear_tear_prob = [0.5, 0.5]
 
 wear_tear = [scratches, edge_wear]
 
@@ -211,6 +211,13 @@ jar = cup
 lid = cup
 
 frame = decorative_metal + woods
+
+potting_soil = [
+    (terrain.Mud, 1),
+    (terrain.Sand, 1),
+    (terrain.Soil, 3),
+    (terrain.Dirt, 6),
+]
 
 ground = [
     (terrain.Mud, 2),

@@ -519,7 +519,16 @@ def get_shader_funcs():
 
 
 class Tile:
-    def generate(self,selection=None,vertical=False,shader_func=None,scale=None,alternating=None,shape=None,**kwargs):
+    def generate(
+        self,
+        selection=None,
+        vertical=False,
+        shader_func=None,
+        scale=None,
+        alternating=None,
+        shape=None,
+        **kwargs,
+    ):
         funcs, weights = zip(*get_shader_funcs())
         weights = np.array(weights) / sum(weights)
         if shader_func is None:
@@ -558,7 +567,9 @@ class Tile:
                         shader_crossed_tile,
                     ]
                 )
-        return surface.shaderfunc_to_material(shader_func, name=f"{name}_{method.__name__}_tile")
+        return surface.shaderfunc_to_material(
+            shader_func, name=f"{name}_{method.__name__}_tile"
+        )
 
     __call__ = generate
 

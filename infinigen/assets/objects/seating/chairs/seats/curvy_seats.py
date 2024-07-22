@@ -340,8 +340,6 @@ def generate_curvy_seats(nw: NodeWrangler):
         },
     )
 
-    # material_func =np.random.choice([plastic.shader_rough_plastic, metal.get_shader(), wood_new.shader_wood, leather.shader_leather])
-
     warparoundcurvealt = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={

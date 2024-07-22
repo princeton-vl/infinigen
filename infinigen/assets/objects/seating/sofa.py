@@ -8,17 +8,16 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.core import surface, tagging
+from infinigen.assets.composition import material_assignments
+from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import clip_gaussian
+from infinigen.core.util.random import clip_gaussian, weighted_sample
 
-from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
 
 @node_utils.to_nodegroup(
     "nodegroup_array_fill_line", singleton=False, type="GeometryNodeTree"
@@ -1439,7 +1438,7 @@ class SofaFactory(AssetFactory):
             # from infinigen.assets.scatters.clothes import ClothesCover
             # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(1, 1.5),
             #                                    size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
-            
+
             sofa_fabric_gen_class = weighted_sample(material_assignments.fabrics)
             self.sofa_fabric = sofa_fabric_gen_class()()
 

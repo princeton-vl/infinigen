@@ -57,6 +57,6 @@ class PlasticTranslucent:
     shader = shader_translucent_plastic
 
     def generate(self):
-       return surface.shaderfunc_to_material(shader_translucent_plastic)
-    
+        return surface.shaderfunc_to_material(shader_translucent_plastic)
+
     __call__ = generate

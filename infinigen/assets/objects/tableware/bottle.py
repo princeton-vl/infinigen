@@ -9,8 +9,6 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
-
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsurf
 from infinigen.assets.utils.draw import spin
@@ -48,7 +46,7 @@ class BottleFactory(AssetFactory):
                         1,
                         1,
                         (neck_ratio + 1) / 2 + (1 - neck_ratio) / 2 * self.x_cap,
-                        neck_ratio + (1 - neck_ratio) * self.x_cap, 
+                        neck_ratio + (1 - neck_ratio) * self.x_cap,
                         self.x_cap,
                         self.x_cap,
                         0,
@@ -167,31 +165,22 @@ class BottleFactory(AssetFactory):
                     ]
                     self.is_vector = [0, 1, 0, 1, 1, 0, 1, 1, 0]
 
-            #material_assignments = AssetList["BottleFactory"]()
             self.surface_fac = weighted_sample(material_assignments.plastics)
             self.surface = self.surface_fac()()
-            #self.surface = material_assignments["surface"].assign_material()
-            #self.wrap_surface = material_assignments["wrap_surface"].assign_material()
             self.wrap_surface_fac = weighted_sample(material_assignments.graphicdesign)
             self.wrap_surface = self.wrap_surface_fac()
             if self.wrap_surface_fac == text.Text:
                 self.wrap_surface_fac = text.Text(False)
 
-
             self.cap_surface_fac = weighted_sample(material_assignments.metals)
             self.cap_surface = self.cap_surface_fac()()
-            #self.cap_surface = material_assignments["cap_surface"].assign_material()
-            # scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            # self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            # self.scratch = None if uniform() > scratch_prob else self.scratchfr
-            # self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
 
             self.texture_shared = uniform() < 0.2
             self.cap_subsurf = uniform() < 0.5
 
     def create_asset(self, **params) -> bpy.types.Object:
         bottle = self.make_bottle()
-        wrap = self.make_wrap(bottle)   
+        wrap = self.make_wrap(bottle)
         cap = self.make_cap()
         obj = join_objects([bottle, wrap, cap])
 
@@ -212,10 +201,10 @@ class BottleFactory(AssetFactory):
         subsurf(obj, 1)
         if self.bottle_width > 0:
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
-        
+
         butil.add_material(obj, self.surface)
-        #self.surface.apply(obj, translucent=True)
-    
+        # self.surface.apply(obj, translucent=True)
+
         return obj
 
     def make_wrap(self, bottle):

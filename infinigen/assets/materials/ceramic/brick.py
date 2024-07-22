@@ -76,9 +76,8 @@ class Brick:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_brick)
-    
+
     __call__ = generate
-    
 
 
 def make_sphere():

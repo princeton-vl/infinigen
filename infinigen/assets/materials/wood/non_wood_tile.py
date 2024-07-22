@@ -19,6 +19,6 @@ class NonWoodTile:
         if shape is None:
             shape = np.random.choice(["square", "hexagon", "rectangle"])
 
-        return tile.Tile().generate(shader_func,shape)
-    
+        return tile.Tile().generate(shader_func, shape)
+
     __call__ = generate

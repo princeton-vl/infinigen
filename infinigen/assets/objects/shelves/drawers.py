@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
     shader_shelves_black_wood_sampler,
@@ -20,6 +20,7 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup(
@@ -690,7 +691,9 @@ class CabinetDrawerBaseFactory(AssetFactory):
                 )
 
         if params["knob_material"] == "metal":
-            params["knob_material"] = metal.get_shader()
+            params["knob_material"] = weighted_sample(
+                material_assignments.decorative_metal
+            )
         else:
             params["knob_material"] = params["frame_material"]
 

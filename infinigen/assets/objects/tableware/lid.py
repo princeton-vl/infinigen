@@ -6,7 +6,6 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-#from infinigen.assets.composition.material_assignments import AssetList
 from infinigen.assets.utils.decorate import read_center, subsurf, write_co
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder, new_line

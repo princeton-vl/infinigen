@@ -10,8 +10,8 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials.ceramic import glass
 from infinigen.assets.materials import metal
+from infinigen.assets.materials.ceramic import glass
 from infinigen.assets.materials.utils.common import unique_surface
 from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.autobevel import BevelSharp
