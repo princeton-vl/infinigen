@@ -73,7 +73,10 @@ class WindowFactory(AssetFactory):
         super(WindowFactory, self).__init__(factory_seed, coarse=coarse)
 
         with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions, open, curtain, shutter)
+            # Leave the parameters sampling to the create_asset function
+            # self.params = self.sample_parameters(dimensions, open, curtain, shutter)
+
+            self.params = {}
             self.material_params, self.scratch, self.edge_wear = (
                 self.get_material_params()
             )
@@ -218,6 +221,11 @@ class WindowFactory(AssetFactory):
         return wrapped_params, scratch, edge_wear
 
     def create_asset(self, dimensions=None, open=None, realized=True, **params):
+        obj_params = self.sample_parameters(
+            dimensions, open, self.curtain, self.shutter
+        )
+        self.params.update(obj_params)
+
         obj = butil.spawn_cube()
         butil.modify_mesh(
             obj,
