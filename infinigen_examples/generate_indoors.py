@@ -21,6 +21,7 @@ import gin
 import numpy as np
 
 from infinigen.assets import lighting
+from infinigen.assets.floating_placement import FloatingObjectPlacement
 from infinigen.assets.materials import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.utils.decorate import read_co
@@ -52,7 +53,6 @@ from infinigen_examples.util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
-from infinigen.assets.floating_placement import FloatingObjectPlacement
 from infinigen_examples.util.test_utils import (
     import_item,
     load_txt_list,

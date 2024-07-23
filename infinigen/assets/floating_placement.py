@@ -1,10 +1,11 @@
 import logging
+
 import bmesh
+import bpy
+import numpy as np
 from mathutils.bvhtree import BVHTree
 
 from infinigen.core.placement.factory import AssetFactory
-import numpy as np
-import bpy 
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
 
@@ -19,7 +20,7 @@ def create_bvh_tree_from_object(obj):
     return bvh
 
 def check_bvh_intersection(bvh1, bvh2):
-    if type(bvh2) is list: 
+    if isinstance(bvh2, list): 
         return any([check_bvh_intersection(bvh1, bvh) for bvh in bvh2])
     else:
         return bvh1.overlap(bvh2)
