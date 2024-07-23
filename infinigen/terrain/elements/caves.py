@@ -4,6 +4,7 @@
 # Authors: Zeyu Ma
 
 
+import logging
 import os
 
 import gin
@@ -89,6 +90,7 @@ class Caves(Element):
                     self.on_the_fly_asset_folder / str(i) / AssetFile.Finish
                 ).exists():
                     with FixedSeed(int_hash(("Caves", self.assets_seed, i))):
+                        logging.info(f"creating cave #{i}")
                         caves_asset(self.on_the_fly_asset_folder / f"{i}")
         for i in range(on_the_fly_instances):
             asset_paths.append(self.on_the_fly_asset_folder / f"{i}")
