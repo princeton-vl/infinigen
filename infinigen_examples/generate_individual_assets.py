@@ -65,30 +65,26 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
 OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
-
 def build_scene_asset(args, factory_name, idx):
-    fac = None
+    factory = None
     for subdir in sorted(list(OBJECTS_PATH.iterdir())):
         clsname = subdir.name.split(".")[0].strip()
         with gin.unlock_config():
             module = importlib.import_module(f"infinigen.assets.objects.{clsname}")
+
         if hasattr(module, factory_name):
-            fac = getattr(module, factory_name)
+            factory = getattr(module, factory_name)
             logger.info(f"Found {factory_name} in {subdir}")
             break
         logger.debug(f"{factory_name} not found in {subdir}")
-    if fac is None:
+    if factory is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
-
-    if args.dryrun:
-        return
-
+    
     with FixedSeed(idx):
-        fac = fac(idx)
+        fac = factory(idx)
         try:
             if args.spawn_placeholder:
                 ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
