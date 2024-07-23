@@ -6,6 +6,7 @@ from infinigen.core.placement.factory import AssetFactory
 import numpy as np
 import bpy 
 from infinigen.core.util import blender as butil
+from infinigen.core.util.random import random_general as rg
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def raycast_sample(min_dist, sensor_coords, pix_it, camera, bvhtree):
     return None
 
 def bbox_sample(bbox):
-    pass
+    raise NotImplementedError
 
 class FloatingObjectPlacement:
 
@@ -56,7 +57,7 @@ class FloatingObjectPlacement:
         self.obj_meshes = existing_objs
         self.camera = camera
         self.bbox = bbox
-        
+    
     def place_objs(self, num_objs, min_dist = 1, sample_retries = 200, raycast = True, normalize = False, collision_placed = False, collision_existing = False):
 
         room_bvh = create_bvh_tree_from_object(self.room)
@@ -66,7 +67,7 @@ class FloatingObjectPlacement:
 
         from infinigen.core.placement.camera import get_sensor_coords
         sensor_coords, pix_it = get_sensor_coords(self.camera, sparse=False)
-        for i in range(num_objs):
+        for i in range(rg(num_objs)):
 
             fac = np.random.choice(self.assets)(np.random.randint(1,2**28))
             asset = fac.spawn_asset(0)
@@ -86,7 +87,7 @@ class FloatingObjectPlacement:
                 if raycast:
                     point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
                 else:
-                    point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
+                    point = bbox_sample()
 
                 if point is None:
                     continue

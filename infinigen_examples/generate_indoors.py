@@ -342,7 +342,8 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
         placer = FloatingObjectPlacement(facs, cam_util.get_camera(0, 0), joined_room, joined_objs)
 
-        placer.place_objs(num_objs = np.random.randint(15, 25), normalize=True)
+        placer.place_objs(num_objs = overrides.get('num_floating', 20), normalize=overrides.get('norm_floating_size', True), 
+                          collision_placed = overrides.get('enable_collision_floating', False), collision_existing=overrides.get('enable_collision_solved', False))
 
         butil.delete(joined_room)
         butil.delete(joined_objs)
