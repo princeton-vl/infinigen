@@ -52,106 +52,16 @@ from infinigen_examples.util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
+from infinigen.assets.floating_placement import FloatingObjectPlacement
+from infinigen_examples.util.test_utils import (
+    import_item,
+    load_txt_list,
+)
 
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
 
 logger = logging.getLogger(__name__)
 
-import bmesh
-from mathutils.bvhtree import BVHTree
-
-from infinigen.core.placement.factory import AssetFactory
-
-
-def create_bvh_tree_from_object(obj):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.transform(obj.matrix_world)
-    bvh = BVHTree.FromBMesh(bm)
-    bm.free()
-    return bvh
-
-
-
-def check_bvh_intersection(bvh1, bvh2):
-    if type(bvh2) is list: 
-        return any([check_bvh_intersection(bvh1, bvh) for bvh in bvh2])
-    else:
-        return bvh1.overlap(bvh2)
-
-def raycast_sample(min_dist, sensor_coords, pix_it, camera, bvhtree):
-    cam_location = camera.matrix_world.to_translation()
-
-    for _ in range(1500):
-        x = pix_it[np.random.randint(0, pix_it.shape[0])][0]
-        y = pix_it[np.random.randint(0, pix_it.shape[0])][1]
-
-        direction = (sensor_coords[y, x] - camera.matrix_world.translation).normalized()
-
-        location, normal, index, distance = bvhtree.ray_cast(cam_location, direction)
-        
-        if location:
-            if distance <= min_dist:
-                continue
-            random_distance = np.random.uniform(min_dist, distance)
-            sampled_point = cam_location + direction.normalized() * random_distance
-            return sampled_point
-    
-    logger.info('Couldnt find far enough away pixel to raycast to')
-    return None
-
-def bbox_sample(bbox):
-    pass
-
-class FloatingObjectPlacement:
-
-    def __init__(self, asset_factories : list[AssetFactory], camera, room_mesh, existing_objs, bbox = None):
-        
-        self.assets = asset_factories
-        self.room = room_mesh
-        self.obj_meshes = existing_objs
-        self.camera = camera
-        self.bbox = bbox
-        
-    def place_objs(self, num_objs, min_dist = 1.5, sample_retries = 20, raycast = True, collision_placed = False, collision_existing = False):
-
-        room_bvh = create_bvh_tree_from_object(self.room)
-        existing_obj_bvh = create_bvh_tree_from_object(self.obj_meshes)
-
-        placed_obj_bvhs = []
-
-        from infinigen.core.placement.camera import get_sensor_coords
-        sensor_coords, pix_it = get_sensor_coords(self.camera, sparse=False)
-        for i in range(num_objs):
-
-            fac = np.random.choice(self.assets)(np.random.randint(1,2**28))
-            asset = fac.spawn_asset(0)
-
-            for j in range(sample_retries):
-        
-                if raycast:
-                    point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
-                else:
-                    point = raycast_sample(min_dist, sensor_coords, pix_it, self.camera, room_bvh)
-
-                if point is None:
-                    continue
-                asset.rotation_mode = "XYZ"
-                asset.rotation_euler = np.random.uniform(-np.pi, np.pi, 3)
-                asset.location = point
-
-                bpy.context.view_layer.update() # i can redo this later without view updates if necessary, but currently it doesn't incur significant overhead
-                bvh = create_bvh_tree_from_object(asset) 
-                
-                if check_bvh_intersection(bvh, room_bvh)  or (not collision_existing and check_bvh_intersection(bvh, existing_obj_bvh)) or (not collision_placed and check_bvh_intersection(bvh, placed_obj_bvhs)):
-                    logger.info(f"Sample {j} of asset {i} rejected, resampling...")
-                    if i == sample_retries - 1:
-                        butil.delete(asset)
-                else:
-                    logger.info(f"Placing object {asset.name}")
-                    placed_obj_bvhs.append(bvh)
-                    break
-                
 
 
 def default_greedy_stages():
@@ -337,37 +247,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
     )
 
-    pholder_rooms = bpy.data.collections.get('placeholders:room_meshes')
-    pholder_cutters = bpy.data.collections.get('placeholders:portal_cutters')
-    
-    meshes_to_join = []
-
-    for obj in pholder_cutters.objects:
-        meshes_to_join.append(butil.copy(obj))
-
-    for obj in pholder_rooms.objects:
-        meshes_to_join.append(butil.copy(obj))
-
-    joined_room = butil.join_objects(meshes_to_join)
-
-    pholder_objs = bpy.data.collections.get('placeholders')
-    objs_to_join = []
-
-    for obj in pholder_objs.objects:
-        objs_to_join.append(butil.copy(obj))
-
-    joined_objs = butil.join_objects(objs_to_join)
-
-
-    from infinigen.assets.objects.seating.chairs import ChairFactory
-    from infinigen.assets.objects.tableware.bottle import BottleFactory
-
-    placer = FloatingObjectPlacement([ChairFactory, BottleFactory], bpy.data.objects['CameraRigs/0/0'], joined_room, joined_objs)
-
-    placer.place_objs(15)
-
-    butil.delete(joined_room)
-    butil.delete(joined_objs)
 
     p.run_stage(
         "populate_intermediate_pholders",
@@ -378,10 +257,98 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         use_chance=False,
     )
 
+    def solve_medium():
+        n_steps = overrides["solve_steps_medium"]
+        for i, vars in enumerate(
+            greedy.iterate_assignments(stages["on_wall"], state, all_vars, limits)
+        ):
+            solver.solve_objects(
+                consgraph, stages["on_wall"], vars, n_steps, desc=f"on_wall_{i}"
+            )
+        for i, vars in enumerate(
+            greedy.iterate_assignments(stages["on_ceiling"], state, all_vars, limits)
+        ):
+            solver.solve_objects(
+                consgraph, stages["on_ceiling"], vars, n_steps, desc=f"on_ceiling_{i}"
+            )
+        for i, vars in enumerate(
+            greedy.iterate_assignments(stages["side_obj"], state, all_vars, limits)
+        ):
+            solver.solve_objects(
+                consgraph, stages["side_obj"], vars, n_steps, desc=f"side_obj_{i}"
+            )
+        return solver.state
+
+    state = p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
+
+    def solve_small():
+        n_steps = overrides["solve_steps_small"]
+        for i, vars in enumerate(
+            greedy.iterate_assignments(stages["obj_ontop_obj"], state, all_vars, limits)
+        ):
+            solver.solve_objects(
+                consgraph,
+                stages["obj_ontop_obj"],
+                vars,
+                n_steps,
+                desc=f"obj_ontop_obj_{i}",
+            )
+        for i, vars in enumerate(
+            greedy.iterate_assignments(
+                stages["obj_on_support"], state, all_vars, limits
+            )
+        ):
+            solver.solve_objects(
+                consgraph,
+                stages["obj_on_support"],
+                vars,
+                n_steps,
+                desc=f"obj_on_support_{i}",
+            )
+        # for i, vars in enumerate(greedy.iterate_assignments(stages['tertiary'], state, all_vars, limits)):
+        #    solver.solve_objects(consgraph, stages['tertiary'], vars, n_steps, desc=f"tertiary_{i}")
+        return solver.state
+
+    state = p.run_stage("solve_small", solve_small, use_chance=False, default=state)
+
     p.run_stage(
         "populate_assets", populate.populate_state_placeholders, state, use_chance=False
     )
 
+    def place_floating():
+        pholder_rooms = bpy.data.collections.get('placeholders:room_meshes')
+        pholder_cutters = bpy.data.collections.get('placeholders:portal_cutters')
+        
+        meshes_to_join = []
+
+        for obj in pholder_cutters.objects:
+            meshes_to_join.append(butil.copy(obj))
+
+        for obj in pholder_rooms.objects:
+            meshes_to_join.append(butil.copy(obj))
+
+        joined_room = butil.join_objects(meshes_to_join)
+
+        pholder_objs = bpy.data.collections.get('placeholders')
+        objs_to_join = []
+
+        for obj in pholder_objs.objects:
+            objs_to_join.append(butil.copy(obj))
+
+        joined_objs = butil.join_objects(objs_to_join)
+        
+        floating_paths = load_txt_list(Path(__file__).parent.parent / 'tests' / 'assets' / "list_indoor_meshes.txt")
+        facs = [import_item(path) for path in floating_paths]
+
+        placer = FloatingObjectPlacement(facs, cam_util.get_camera(0, 0), joined_room, joined_objs)
+
+        placer.place_objs(num_objs = np.random.randint(15, 25), normalize=True)
+
+        butil.delete(joined_room)
+        butil.delete(joined_objs)
+
+    p.run_stage("floating_objs", place_floating, use_chance=False, default=state)
+        
     door_filter = r.Domain({t.Semantics.Door}, [(cl.AnyRelation(), stages["rooms"])])
     window_filter = r.Domain(
         {t.Semantics.Window}, [(cl.AnyRelation(), stages["rooms"])]
@@ -437,7 +404,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         use_chance=False,
     )
 
-    state.print()
+    # state.print()
     state.to_json(output_folder / "solve_state.json")
 
     cam = cam_util.get_camera(0, 0)
