@@ -75,3 +75,7 @@ v1.5.1
 - Remove dependabot
 - Add scatter unit tests and fix scatter imports
 - Fix black renders due to non-hidden particle emitter
+
+
+v1.6.0
+- Add geometric tile pattern materials
