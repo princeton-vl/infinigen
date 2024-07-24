@@ -57,16 +57,23 @@ def bbox_sample(bbox):
 class FloatingObjectPlacement:
     def __init__(
         self,
-        asset_factories: list[AssetFactory],
-        camera,
-        room_mesh,
-        existing_objs,
+        generators: list[AssetFactory],
+        camera: bpy.types.Object,
+        background_objs: bpy.types.Object | list[bpy.types.Object],
+        collision_objs: bpy.types.Object | list[bpy.types.Object],
         bbox=None,
     ):
-        self.assets = asset_factories
-        self.room = room_mesh
-        self.obj_meshes = existing_objs
+        self.generators = generators
         self.camera = camera
+
+        if not isinstance(background_objs, list):
+            background_objs = [background_objs]
+        self.background_objs = background_objs
+
+        if not isinstance(collision_objs, list):
+            collision_objs = [collision_objs]
+        self.collision_objs = collision_objs
+
         self.bbox = bbox
 
     def place_objs(
@@ -79,16 +86,29 @@ class FloatingObjectPlacement:
         collision_placed=False,
         collision_existing=False,
     ):
-        room_bvh = create_bvh_tree_from_object(self.room)
-        existing_obj_bvh = create_bvh_tree_from_object(self.obj_meshes)
+        background_copied = butil.join_objects(
+            [butil.copy(obj) for obj in self.background_objs]
+        )
+        room_bvh = create_bvh_tree_from_object(background_copied)
+        butil.delete(background_copied)
+
+        if len(self.collision_objs) > 0:
+            objs_copied = butil.join_objects(
+                [butil.copy(obj) for obj in self.collision_objs]
+            )
+            existing_obj_bvh = create_bvh_tree_from_object(objs_copied)
+            butil.delete(objs_copied)
+        else:
+            existing_obj_bvh = None
 
         placed_obj_bvhs = []
 
         from infinigen.core.placement.camera import get_sensor_coords
 
         sensor_coords, pix_it = get_sensor_coords(self.camera, sparse=False)
-        for i in range(rg(num_objs)):
-            fac = np.random.choice(self.assets)(np.random.randint(1, 2**28))
+        num_place = rg(num_objs)
+        for i in range(num_place):
+            fac = np.random.choice(self.generators)(np.random.randint(1e7))
             asset = fac.spawn_asset(0)
             fac.finalize_assets([asset])
             max_dim = max(asset.dimensions.x, asset.dimensions.y, asset.dimensions.z)
@@ -125,6 +145,7 @@ class FloatingObjectPlacement:
                     check_bvh_intersection(bvh, room_bvh)
                     or (
                         not collision_existing
+                        and existing_obj_bvh is not None
                         and check_bvh_intersection(bvh, existing_obj_bvh)
                     )
                     or (
@@ -132,10 +153,12 @@ class FloatingObjectPlacement:
                         and check_bvh_intersection(bvh, placed_obj_bvhs)
                     )
                 ):
-                    logger.info(f"Sample {j} of asset {i} rejected, resampling...")
+                    logger.debug(f"Sample {j} of asset {i} rejected, resampling...")
                     if i == sample_retries - 1:
                         butil.delete(asset)
                 else:
-                    logger.info(f"Placing object {asset.name}")
+                    logger.info(
+                        f"{self.__class__.__name__} placing object {i}/{num_place}, {asset.name=}"
+                    )
                     placed_obj_bvhs.append(bvh)
                     break

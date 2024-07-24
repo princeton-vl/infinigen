@@ -20,6 +20,7 @@ import bpy
 import gin
 import numpy as np
 
+from infinigen import repo_root
 from infinigen.assets import lighting
 from infinigen.assets.materials import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
@@ -314,34 +315,20 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
 
     def place_floating():
-        pholder_rooms = bpy.data.collections.get("placeholders:room_meshes")
-        pholder_cutters = bpy.data.collections.get("placeholders:portal_cutters")
+        pholder_rooms = butil.get_collection("placeholders:room_meshes")
+        pholder_cutters = butil.get_collection("placeholders:portal_cutters")
+        pholder_objs = butil.get_collection("placeholders")
 
-        meshes_to_join = []
-
-        for obj in pholder_cutters.objects:
-            meshes_to_join.append(butil.copy(obj))
-
-        for obj in pholder_rooms.objects:
-            meshes_to_join.append(butil.copy(obj))
-
-        joined_room = butil.join_objects(meshes_to_join)
-
-        pholder_objs = bpy.data.collections.get("placeholders")
-        objs_to_join = []
-
-        for obj in pholder_objs.objects:
-            objs_to_join.append(butil.copy(obj))
-
-        joined_objs = butil.join_objects(objs_to_join)
-
-        floating_paths = load_txt_list(
-            Path(__file__).parent.parent / "tests" / "assets" / "list_indoor_meshes.txt"
+        obj_fac_names = load_txt_list(
+            repo_root() / "tests" / "assets" / "list_indoor_meshes.txt"
         )
-        facs = [import_item(path) for path in floating_paths]
+        facs = [import_item(path) for path in obj_fac_names]
 
         placer = FloatingObjectPlacement(
-            facs, cam_util.get_camera(0, 0), joined_room, joined_objs
+            generators=facs,
+            camera=cam_util.get_camera(0, 0),
+            background_objs=list(pholder_cutters.objects) + list(pholder_rooms.objects),
+            collision_objs=list(pholder_objs.objects),
         )
 
         placer.place_objs(
@@ -350,9 +337,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             collision_placed=overrides.get("enable_collision_floating", False),
             collision_existing=overrides.get("enable_collision_solved", False),
         )
-
-        butil.delete(joined_room)
-        butil.delete(joined_objs)
 
     p.run_stage("floating_objs", place_floating, use_chance=False, default=state)
 
