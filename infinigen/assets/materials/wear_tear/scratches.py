@@ -231,7 +231,7 @@ class Scratches:
 
             nw_bsdf.label = MARKER_LABEL
 
-    def apply(self, obj):
+    def apply(self, obj=None):
         if not isinstance(obj, Iterable):
             obj = [obj]
         for o in obj:

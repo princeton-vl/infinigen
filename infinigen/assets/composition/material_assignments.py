@@ -23,7 +23,7 @@ from infinigen.assets.materials.wear_tear import edge_wear, scratches
 
 wear_tear_prob = [0.5, 0.5]
 
-wear_tear = [scratches, edge_wear]
+wear_tear = [scratches.Scratches, edge_wear.EdgeWear]
 
 
 woods = [
@@ -85,8 +85,8 @@ marble = [
 
 kitchen_appliance_hard = metals + [(plastic.PlasticRough, 2.0)]
 appliance_front_maybeglass = metals + [
-    (metal.BlackGlass, 7.0),
-    (ceramic.Glass, 1.0),
+    (metal.BlackGlass, 10.0),
+    (ceramic.Glass, 5.0),
 ]
 
 appliance_handle = metals + [
