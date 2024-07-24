@@ -38,7 +38,7 @@ class MicrowaveFactory(AssetFactory):
             "BlackGlass": weighted_sample(
                 material_assignments.appliance_front_maybeglass
             )(),
-            "Glass": weighted_sample(material_assignments.appliance_front_maybeglass)(),
+            "Glass": weighted_sample(material_assignments.appliance_front_glass)(),
         }
         wrapped_params = {k: v() for k, v in params.items()}
 
@@ -49,9 +49,13 @@ class MicrowaveFactory(AssetFactory):
         is_edge_wear = np.random.uniform() < edge_wear_prob
         if not is_scratch:
             scratch = None
+        else:
+            scratch = scratch()
 
         if not is_edge_wear:
             edge_wear = None
+        else:
+            edge_wear = edge_wear()
 
         return wrapped_params, scratch, edge_wear
 

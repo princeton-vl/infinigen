@@ -88,6 +88,10 @@ appliance_front_maybeglass = metals + [
     (metal.BlackGlass, 4.0),
     (ceramic.Glass, 10.0),
 ]
+appliance_front_glass = [
+    (metal.BlackGlass, 2.0),
+    (ceramic.Glass, 10.0),
+]
 
 appliance_handle = metals + [
     (plastic.PlasticRough, 1.0),
