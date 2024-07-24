@@ -67,14 +67,16 @@ class TVFactory(AssetFactory):
             self.leg_bevel_width = uniform(0.01, 0.02)
 
             materials = self.get_material_params()
-            self.surface = materials["surface"]()
+            self.surface = materials["surface"]
             self.scratch = materials["scratch"]
             self.edge_wear = materials["edge_wear"]
             self.screen_surface = materials["screen_surface"]()
-            self.support_surface = materials["support"]()
+            self.support_surface = materials["support"]
 
     def get_material_params(self):
-        surface = weighted_sample(material_assignments.metals)()
+        import infinigen.assets.materials.metal as metal
+
+        surface = metal
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
 
@@ -82,16 +84,21 @@ class TVFactory(AssetFactory):
         is_edge_wear = np.random.uniform() < edge_wear_prob
         if not is_scratch:
             scratch = None
+        else:
+            scratch = scratch()
 
         if not is_edge_wear:
             edge_wear = None
+        else:
+            edge_wear = edge_wear()
 
         args = (self.factory_seed, False)
         kwargs = {"emission": 0.01 if uniform() < 0.1 else uniform(2, 3)}
+
         screen_surface = weighted_sample(material_assignments.graphicdesign)()
         if screen_surface == Text:
             screen_surface = screen_surface(*args, **kwargs)
-        support = weighted_sample(material_assignments.metals)()
+        support = metal
         return {
             "surface": surface,
             "scratch": scratch,
@@ -278,10 +285,24 @@ class TVFactory(AssetFactory):
         return [leg, base]
 
     def finalize_assets(self, assets):
+        # This part needs to be further implemented (Original version use 'apply' function, which is deleted from this branch)
+        # Original Version
         self.surface.apply(assets, selection="!screen", rough=True, metal_color="bw")
         self.support_surface.apply(
             assets, selection="leg", rough=True, metal_color="bw"
         )
+        # Apply Function (for reference) in metal/__init__.py
+        # def apply(obj, selection=None, metal_color=None, **kwargs):
+        #     color = sample_metal_color(metal_color)
+        #     shader = get_shader()
+        #     common.apply(obj, shader, selection, base_color=color, **kwargs)
+
+        # surface.add_material(assets, self.surface, selection="!screen")
+        # surface.add_material(assets, self.support_surface, selection="leg")
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
 
 
 class MonitorFactory(TVFactory):
