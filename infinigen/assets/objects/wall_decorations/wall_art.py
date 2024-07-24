@@ -31,7 +31,7 @@ class WallArtFactory(AssetFactory):
             self.assign_materials()
 
     def assign_materials(self):
-        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        surface_gen_class = weighted_sample(material_assignments.abstract_art)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
 
@@ -45,6 +45,12 @@ class WallArtFactory(AssetFactory):
         is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
         self.scratch = material_assignments.wear_tear[0] if is_scratch else None
         self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
+
+        if is_scratch:
+            self.scratch = self.scratch()
+
+        if is_edge_wear:
+            self.edge_wear = self.edge_wear()
 
     def create_placeholder(self, **params):
         return new_bbox(
@@ -97,4 +103,25 @@ class WallArtFactory(AssetFactory):
 class MirrorFactory(WallArtFactory):
     def __init__(self, factory_seed, coarse=False):
         super(MirrorFactory, self).__init__(factory_seed, coarse)
-        self.assign_materials()
+
+    def assign_materials(self):
+        surface_gen_class = weighted_sample(material_assignments.mirrors)
+        self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
+
+        if self.surface == Art:
+            self.surface = self.surface(self.factory_seed)
+
+        frame_surface_gen_class = weighted_sample(material_assignments.frame)
+        self.frame_surface_gen = frame_surface_gen_class()
+
+        is_scratch = uniform() < material_assignments.wear_tear_prob[0]
+        is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
+        self.scratch = material_assignments.wear_tear[0] if is_scratch else None
+        self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
+
+        if is_scratch:
+            self.scratch = self.scratch()
+
+        if is_edge_wear:
+            self.edge_wear = self.edge_wear()

@@ -95,6 +95,10 @@ marble = [
     (ceramic.MarbleVoronoi, 0.2),
 ]
 
+mirrors = [
+    (metal.Mirror, 1.0),
+]
+
 kitchen_appliance_hard = metals + [(plastic.PlasticRough, 2.0)]
 appliance_front_maybeglass = metals + [
     (metal.BlackGlass, 4.0),
@@ -117,6 +121,7 @@ bathroom_touchsurface = [
     (metal.MetalBasic, 0.1),
 ]
 
+abstract_art = [(art.Art, 1.0), (art.DarkArt, 0.5)]
 blanket = fabrics + [(art.ArtFabric, 2.0)]
 pants = fabrics + [(art.ArtFabric, 5.0)]
 towel = fabrics + [(art.ArtRug, 2.0), (fabric.Rug, 5.0)]
