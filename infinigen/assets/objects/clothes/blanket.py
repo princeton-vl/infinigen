@@ -23,10 +23,12 @@ class BlanketFactory(AssetFactory):
         self.size = self.width * log_uniform(0.4, 0.7)
         self.thickness = log_uniform(0.004, 0.008)
 
-        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        surface_gen_class = weighted_sample(material_assignments.blanket)
+        print("Surface Gen Class: ", surface_gen_class)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
         if self.surface == ArtFabric:
+            print("Start to Obtain Fabric Material")
             self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:

@@ -29,10 +29,7 @@ from matplotlib.patches import (
 from numpy.random import rand, uniform
 from PIL import Image
 
-<<<<<<< HEAD
 from infinigen import repo_root
-=======
->>>>>>> e9c8c6902 (Ruff format, remove commented code, fix syntax errors, remove)
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane

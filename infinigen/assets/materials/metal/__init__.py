@@ -5,9 +5,13 @@
 
 
 import numpy as np
+from numpy.random import uniform
 
-import numpy as np
+from infinigen.core.util.color import hex2rgb, hsv2rgba, rgb2hsv
+from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
 
+from .. import common
 from .aluminum import Aluminum
 from .appliance import BlackGlass, BrushedBlackMetal, WhiteMetal
 from .brushed_metal import BrushedMetal
@@ -17,14 +21,6 @@ from .hammered_metal import HammeredMetal
 from .metal_basic import MetalBasic
 from .mirror import Mirror
 
-import numpy as np
-from numpy.random import uniform
-from infinigen.core.util.color import hsv2rgba, rgb2hsv, hex2rgb
-from infinigen.core.util.random import log_uniform
-from infinigen.core.util.random import random_general as rg
-
-
-from .. import common
 
 def apply(obj, selection=None, metal_color=None, **kwargs):
     color = sample_metal_color(metal_color)

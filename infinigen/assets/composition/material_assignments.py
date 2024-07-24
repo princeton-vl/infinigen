@@ -111,8 +111,8 @@ bathroom_touchsurface = [
     (metal.MetalBasic, 0.1),
 ]
 
-blanket = fabrics
-pants = fabrics + [(art.ArtFabric, 1.0)]
+blanket = fabrics + [(art.ArtFabric, 2.0)]
+pants = fabrics + [(art.ArtFabric, 5.0)]
 towel = fabrics + [(art.ArtRug, 2.0), (fabric.Rug, 5.0)]
 
 lampshade = fabrics + [

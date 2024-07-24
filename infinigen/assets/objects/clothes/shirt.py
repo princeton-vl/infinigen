@@ -39,7 +39,7 @@ class ShirtFactory(AssetFactory):
         self.sleeve_angle = uniform(np.pi / 6, np.pi / 4)
         self.thickness = log_uniform(0.02, 0.03)
 
-        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        surface_gen_class = weighted_sample(material_assignments.pants)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
 

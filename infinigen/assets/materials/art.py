@@ -7,9 +7,23 @@ from numpy.random import uniform
 
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
 
 from . import text
 from .fabric import rug
+from .fabric.coarse_knit_fabric import shader_coarse_knit_fabric
+from .fabric.fine_knit_fabric import shader_fine_knit_fabric
+from .fabric.leather import shader_leather
+from .fabric.sofa_fabric import shader_sofa_fabric
+
+fabric_shader_list = (
+    "weighted_choice",
+    (1, shader_coarse_knit_fabric),
+    (1, shader_fine_knit_fabric),
+    (2, shader_leather),
+    (1, shader_sofa_fabric),
+)
+
 
 
 class Art(text.Text):
@@ -82,7 +96,7 @@ class ArtRug(ArtComposite):
 class ArtFabric(ArtComposite):
     @property
     def base_shader(self):
-        raise ValueError("TODO")  # return rg(fabric_shader_list)
+        return rg(fabric_shader_list)
 
 
 class ArtGeneral:

@@ -42,7 +42,7 @@ class TowelFactory(AssetFactory):
         self.roll_count = 256
         self.roll_total = self.compute_roll_total()
 
-        surface_gen_class = weighted_sample(material_assignments.fabrics)
+        surface_gen_class = weighted_sample(material_assignments.towel)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
 
