@@ -75,19 +75,19 @@ class BathtubFactory(AssetFactory):
 
             # /////////////////// assign materials ///////////////////
 
-            surface_gen_class = weighted_sample(material_assignments.marble)
-            self.surface_material_gen = surface_gen_class()
+            surface_gen_class = weighted_sample(material_assignments.ceramics)
+            self.surface_material_gen = surface_gen_class
 
-            leg_surface_gen_class = weighted_sample(material_assignments.metals)
-            self.leg_surface_material_gen = leg_surface_gen_class()
+            leg_surface_gen_class = weighted_sample(material_assignments.old_metal)
+            self.leg_surface_material_gen = leg_surface_gen_class
 
-            hole_surface_gen_class = weighted_sample(material_assignments.metals)
-            self.hole_surface_material_gen = hole_surface_gen_class()
+            hole_surface_gen_class = weighted_sample(material_assignments.old_metal)
+            self.hole_surface_material_gen = hole_surface_gen_class
 
             is_scratch = uniform() < material_assignments.wear_tear_prob[0]
             is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
-            self.scratch = material_assignments.wear_tear[0] if is_scratch else None
-            self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
+            self.scratch = material_assignments.wear_tear[0]() if is_scratch else None
+            self.edge_wear = material_assignments.wear_tear[1]() if is_edge_wear else None
             # ////////////////////////////////////////////////////////
 
             self.beveler = BevelSharp(mult=5, segments=5)
@@ -104,9 +104,9 @@ class BathtubFactory(AssetFactory):
         return new_bbox(-self.size, 0, 0, self.width, 0, self.depth)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        self.surface = self.surface_material_gen()
-        self.leg_surface = self.leg_surface_material_gen()
-        self.hole_surface = self.hole_surface_material_gen()
+        self.surface = self.surface_material_gen
+        self.leg_surface = self.leg_surface_material_gen
+        self.hole_surface = self.hole_surface_material_gen
 
         if self.has_base:
             obj = self.make_base()

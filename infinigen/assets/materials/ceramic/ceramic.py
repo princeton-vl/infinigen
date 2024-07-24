@@ -63,5 +63,10 @@ class Ceramic:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_ceramic)
+    
+    @staticmethod
+    def apply(obj, selection=None, clear=False, **kwargs):
+        import infinigen.assets.materials.common as common
+        common.apply(obj, shader_ceramic, selection, clear, **kwargs)
 
     __call__ = generate

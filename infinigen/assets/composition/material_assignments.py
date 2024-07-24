@@ -21,6 +21,8 @@ from infinigen.assets.materials import (
 )
 from infinigen.assets.materials.wear_tear import edge_wear, scratches
 
+old_metal = [(metal, 1.0)]
+
 wear_tear_prob = [0.5, 0.5]
 
 wear_tear = [scratches.Scratches, edge_wear.EdgeWear]
@@ -76,6 +78,10 @@ shelf_board = (
         (wood.BlondePlywood, 10),
     ]
 )
+
+ceramics = [
+    (ceramic.Ceramic, 1.0),
+]
 
 marble = [
     (ceramic.Marble, 1.0),

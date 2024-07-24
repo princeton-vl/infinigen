@@ -74,9 +74,7 @@ class TVFactory(AssetFactory):
             self.support_surface = materials["support"]
 
     def get_material_params(self):
-        import infinigen.assets.materials.metal as metal
-
-        surface = metal
+        surface = weighted_sample(material_assignments.old_metal)
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
 
@@ -98,7 +96,7 @@ class TVFactory(AssetFactory):
         screen_surface = weighted_sample(material_assignments.graphicdesign)()
         if screen_surface == Text:
             screen_surface = screen_surface(*args, **kwargs)
-        support = metal
+        support = weighted_sample(material_assignments.old_metal)
         return {
             "surface": surface,
             "scratch": scratch,
