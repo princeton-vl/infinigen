@@ -21,12 +21,9 @@ from infinigen.assets.materials import (
 )
 from infinigen.assets.materials.wear_tear import edge_wear, scratches
 
-old_metal = [(metal, 1.0)]
-
 wear_tear_prob = [0.5, 0.5]
 
 wear_tear = [scratches.Scratches, edge_wear.EdgeWear]
-
 
 woods = [
     (wood.Wood, 1.0),
@@ -51,6 +48,11 @@ metals = [
     (metal.GrainedMetal, 1.0),
     (metal.HammeredMetal, 0.7),
     (metal.BrushedBlackMetal, 0.3),
+]
+
+metal_neutral = [
+    # TODO: override parameters to be mostly black/white
+    (metal.MetalBasic, 1.0),
 ]
 
 fabrics = [

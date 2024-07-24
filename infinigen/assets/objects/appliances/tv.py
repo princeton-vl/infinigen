@@ -66,44 +66,11 @@ class TVFactory(AssetFactory):
             self.leg_width = uniform(0.5, 0.8)
             self.leg_bevel_width = uniform(0.01, 0.02)
 
-            materials = self.get_material_params()
-            self.surface = materials["surface"]
-            self.scratch = materials["scratch"]
-            self.edge_wear = materials["edge_wear"]
-            self.screen_surface = materials["screen_surface"]()
-            self.support_surface = materials["support"]
-
-    def get_material_params(self):
-        surface = weighted_sample(material_assignments.old_metal)
-        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-
-        is_scratch = np.random.uniform() < scratch_prob
-        is_edge_wear = np.random.uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-        else:
-            scratch = scratch()
-
-        if not is_edge_wear:
-            edge_wear = None
-        else:
-            edge_wear = edge_wear()
-
-        args = (self.factory_seed, False)
-        kwargs = {"emission": 0.01 if uniform() < 0.1 else uniform(2, 3)}
-
-        screen_surface = weighted_sample(material_assignments.graphicdesign)()
-        if screen_surface == Text:
-            screen_surface = screen_surface(*args, **kwargs)
-        support = weighted_sample(material_assignments.old_metal)
-        return {
-            "surface": surface,
-            "scratch": scratch,
-            "edge_wear": edge_wear,
-            "screen_surface": screen_surface,
-            "support": support,
-        }
+            self.surface = weighted_sample(material_assignments.metal_neutral)()
+            self.support_surface = weighted_sample(material_assignments.metal_neutral)()
+            self.screen_surface = weighted_sample(material_assignments.graphicdesign)()
+            if isinstance(self.screen_surface, Text):
+                self.screen_surface.emission = 0.01 if uniform() < 0.1 else uniform(2, 3)
 
     @property
     def height(self):
@@ -147,6 +114,11 @@ class TVFactory(AssetFactory):
             write_attribute(leg_obj, 1, "leg", "FACE", "INT")
         parts.extend(legs)
         obj = join_objects(parts)
+
+        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.support_surface(), selection="leg")
+        surface.assign_material(obj, self.screen_surface(), selection="screen")
+                
         obj.rotation_euler[2] = np.pi / 2
         butil.apply_transform(obj)
         return obj
@@ -168,7 +140,6 @@ class TVFactory(AssetFactory):
         unwrap_faces(obj, screen)
         bbox = compute_uv_direction(obj, "x", "z", screen[fc2f])
         write_attr_data(obj, "screen", screen, domain="FACE", type="INT")
-        butil.add_material(obj, self.screen_surface)
 
     def make_base(self):
         obj = new_cube()
@@ -281,27 +252,6 @@ class TVFactory(AssetFactory):
         butil.apply_transform(base, True)
         butil.modify_mesh(base, "BEVEL", width=self.leg_bevel_width, segments=8)
         return [leg, base]
-
-    def finalize_assets(self, assets):
-        # This part needs to be further implemented (Original version use 'apply' function, which is deleted from this branch)
-        # Original Version
-        self.surface.apply(assets, selection="!screen", rough=True, metal_color="bw")
-        self.support_surface.apply(
-            assets, selection="leg", rough=True, metal_color="bw"
-        )
-        # Apply Function (for reference) in metal/__init__.py
-        # def apply(obj, selection=None, metal_color=None, **kwargs):
-        #     color = sample_metal_color(metal_color)
-        #     shader = get_shader()
-        #     common.apply(obj, shader, selection, base_color=color, **kwargs)
-
-        # surface.add_material(assets, self.surface, selection="!screen")
-        # surface.add_material(assets, self.support_surface, selection="leg")
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
-
 
 class MonitorFactory(TVFactory):
     def __init__(self, factory_seed, coarse=False):
