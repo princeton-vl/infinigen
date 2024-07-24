@@ -21,9 +21,9 @@ import gin
 import numpy as np
 
 from infinigen.assets import lighting
-from infinigen.assets.floating_placement import FloatingObjectPlacement
 from infinigen.assets.materials import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
+from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
 from infinigen.core import execute_tasks, init, placement, surface, tagging
 from infinigen.core import tags as t
@@ -61,7 +61,6 @@ from infinigen_examples.util.test_utils import (
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
 
 logger = logging.getLogger(__name__)
-
 
 
 def default_greedy_stages():
@@ -247,7 +246,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
     )
 
-
     p.run_stage(
         "populate_intermediate_pholders",
         populate.populate_state_placeholders,
@@ -316,9 +314,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
 
     def place_floating():
-        pholder_rooms = bpy.data.collections.get('placeholders:room_meshes')
-        pholder_cutters = bpy.data.collections.get('placeholders:portal_cutters')
-        
+        pholder_rooms = bpy.data.collections.get("placeholders:room_meshes")
+        pholder_cutters = bpy.data.collections.get("placeholders:portal_cutters")
+
         meshes_to_join = []
 
         for obj in pholder_cutters.objects:
@@ -329,27 +327,35 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
         joined_room = butil.join_objects(meshes_to_join)
 
-        pholder_objs = bpy.data.collections.get('placeholders')
+        pholder_objs = bpy.data.collections.get("placeholders")
         objs_to_join = []
 
         for obj in pholder_objs.objects:
             objs_to_join.append(butil.copy(obj))
 
         joined_objs = butil.join_objects(objs_to_join)
-        
-        floating_paths = load_txt_list(Path(__file__).parent.parent / 'tests' / 'assets' / "list_indoor_meshes.txt")
+
+        floating_paths = load_txt_list(
+            Path(__file__).parent.parent / "tests" / "assets" / "list_indoor_meshes.txt"
+        )
         facs = [import_item(path) for path in floating_paths]
 
-        placer = FloatingObjectPlacement(facs, cam_util.get_camera(0, 0), joined_room, joined_objs)
+        placer = FloatingObjectPlacement(
+            facs, cam_util.get_camera(0, 0), joined_room, joined_objs
+        )
 
-        placer.place_objs(num_objs = overrides.get('num_floating', 20), normalize=overrides.get('norm_floating_size', True), 
-                          collision_placed = overrides.get('enable_collision_floating', False), collision_existing=overrides.get('enable_collision_solved', False))
+        placer.place_objs(
+            num_objs=overrides.get("num_floating", 20),
+            normalize=overrides.get("norm_floating_size", True),
+            collision_placed=overrides.get("enable_collision_floating", False),
+            collision_existing=overrides.get("enable_collision_solved", False),
+        )
 
         butil.delete(joined_room)
         butil.delete(joined_objs)
 
     p.run_stage("floating_objs", place_floating, use_chance=False, default=state)
-        
+
     door_filter = r.Domain({t.Semantics.Door}, [(cl.AnyRelation(), stages["rooms"])])
     window_filter = r.Domain(
         {t.Semantics.Window}, [(cl.AnyRelation(), stages["rooms"])]
