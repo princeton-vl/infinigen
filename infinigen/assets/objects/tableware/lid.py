@@ -10,6 +10,7 @@ from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import read_center, subsurf, write_co
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder, new_line
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -71,7 +72,7 @@ class LidFactory(AssetFactory):
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness, offset=0)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
 
-        butil.add_material(obj, self.surface)
+        surface.assign_material(obj, self.surface())
         parts = [obj]
         if self.is_glass:
             parts.append(self.add_rim())
@@ -93,7 +94,7 @@ class LidFactory(AssetFactory):
         obj = bpy.context.active_object
         obj.scale[-1] = self.rim_height / self.thickness
         butil.apply_transform(obj)
-        butil.add_material(obj, self.rim_surface)
+        surface.assign_material(obj, self.rim_surface())
         return obj
 
     def add_handle(self, obj):
@@ -128,7 +129,7 @@ class LidFactory(AssetFactory):
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
         obj.location = 0, -self.thickness, z_offset
         butil.apply_transform(obj, True)
-        butil.add_material(obj, self.handle_surface)
+        surface.assign_material(obj, self.handle_surface())
         return obj
 
     def add_knob(self):
@@ -147,7 +148,7 @@ class LidFactory(AssetFactory):
         butil.apply_transform(top, True)
         butil.modify_mesh(top, "BEVEL", width=self.thickness / 2, segments=4)
         obj = join_objects([obj, top])
-        butil.add_material(obj, self.handle_surface)
+        surface.assign_material(obj, self.handle_surface())
         return obj
 
     def finalize_assets(self, assets):

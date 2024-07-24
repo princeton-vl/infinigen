@@ -14,6 +14,7 @@ from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsur
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder
 from infinigen.assets.utils.uv import wrap_front_back
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -201,7 +202,7 @@ class BottleFactory(AssetFactory):
         if self.bottle_width > 0:
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
 
-        butil.add_material(obj, self.surface)
+        surface.assign_material(obj, self.surface())
 
         return obj
 
@@ -236,5 +237,5 @@ class BottleFactory(AssetFactory):
         obj.location[-1] = (1 - self.z_cap) * self.z_length
         butil.apply_transform(obj, loc=True)
         subsurf(obj, 1, self.cap_subsurf)
-        butil.add_material(obj, self.cap_surface)
+        surface.assign_material(obj, self.cap_surface())
         return obj

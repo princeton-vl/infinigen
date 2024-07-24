@@ -11,6 +11,7 @@ from infinigen.assets.materials.art import ArtFabric
 from infinigen.assets.utils.decorate import read_co, select_vertices, write_co
 from infinigen.assets.utils.object import new_grid
 from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
@@ -38,7 +39,7 @@ class BlanketFactory(AssetFactory):
         obj.scale = self.width / 2, self.size / 2, 1
         butil.apply_transform(obj)
         unwrap_faces(obj)
-        butil.add_material(obj, self.surface)
+        surface.assign_material(obj, self.surface())
         return obj
 
     def fold(self, obj):

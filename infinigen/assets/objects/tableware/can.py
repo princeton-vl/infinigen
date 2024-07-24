@@ -54,7 +54,7 @@ class CanFactory(AssetFactory):
             bpy.ops.mesh.edge_face_add()
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.z_length)
         surface.add_geomod(obj, self.geo_cap, apply=True)
-        butil.add_material(obj, self.surface)
+        surface.assign_material(obj, self.surface())
         wrap = self.make_wrap(coords)
         obj = join_objects([obj, wrap])
         return obj

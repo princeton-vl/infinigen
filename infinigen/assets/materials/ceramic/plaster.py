@@ -3,8 +3,12 @@
 
 # Authors: Lingjie Mei
 
+from typing import Iterable
+
 from numpy.random import uniform
 
+from infinigen.assets.materials import common
+from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_utils import build_color_ramp
@@ -79,6 +83,7 @@ class Plaster:
         common.apply(
             obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
         )
+
     def generate(self, plaster_colored=None):
         if plaster_colored is None:
             plaster_colored = uniform() < 0.4

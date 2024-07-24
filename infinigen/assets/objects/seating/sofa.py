@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
-from infinigen.core import tagging
+from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -1455,7 +1455,7 @@ class SofaFactory(AssetFactory):
         )
         tagging.tag_system.relabel_obj(obj)
 
-        butil.add_material(obj, self.sofa_fabric)
+        surface.assign_material(obj, self.sofa_fabric())
         return obj
 
     def create_asset(self, i, placeholder, face_size, **_):

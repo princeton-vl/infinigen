@@ -93,11 +93,11 @@ class TablewareFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         assign_material(assets, [])
-        butil.add_material(assets, self.surface)
+        surface.assign_material(assets, self.surface())
         if self.has_inside:
-            butil.add_material(assets, self.inside_surface)
+            surface.assign_material(assets, self.inside_surface())
         if self.has_guard:
-            butil.add_material(assets, self.guard_surface)
+            surface.assign_material(assets, self.guard_surface())
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

@@ -12,6 +12,7 @@ from infinigen.assets.utils.decorate import subdivide_edge_ring, subsurf
 from infinigen.assets.utils.draw import remesh_fill
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_bbox
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -84,6 +85,6 @@ class BalloonFactory(AssetFactory):
         butil.modify_mesh(obj, "DISPLACE", strength=self.displace)
         butil.modify_mesh(obj, "SMOOTH", iterations=5)
 
-        butil.add_material(obj, self.material_gen)
+        surface.assign_material(obj, self.material_gen())
 
         return obj

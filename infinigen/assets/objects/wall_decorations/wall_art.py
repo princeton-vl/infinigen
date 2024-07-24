@@ -10,6 +10,7 @@ from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.art import Art
 from infinigen.assets.utils.object import join_objects, new_bbox, new_plane
 from infinigen.assets.utils.uv import wrap_sides
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -82,7 +83,7 @@ class WallArtFactory(AssetFactory):
                 segments=self.frame_bevel_segments,
             )
 
-        butil.add_material(frame, self.frame_surface)
+        surface.assign_material(frame, self.frame_surface())
         obj = join_objects([obj, frame])
         return obj
 

@@ -70,7 +70,9 @@ class TVFactory(AssetFactory):
             self.support_surface = weighted_sample(material_assignments.metal_neutral)()
             self.screen_surface = weighted_sample(material_assignments.graphicdesign)()
             if isinstance(self.screen_surface, Text):
-                self.screen_surface.emission = 0.01 if uniform() < 0.1 else uniform(2, 3)
+                self.screen_surface.emission = (
+                    0.01 if uniform() < 0.1 else uniform(2, 3)
+                )
 
     @property
     def height(self):
@@ -118,7 +120,7 @@ class TVFactory(AssetFactory):
         surface.assign_material(obj, self.surface())
         surface.assign_material(obj, self.support_surface(), selection="leg")
         surface.assign_material(obj, self.screen_surface(), selection="screen")
-                
+
         obj.rotation_euler[2] = np.pi / 2
         butil.apply_transform(obj)
         return obj
@@ -252,6 +254,7 @@ class TVFactory(AssetFactory):
         butil.apply_transform(base, True)
         butil.modify_mesh(base, "BEVEL", width=self.leg_bevel_width, segments=8)
         return [leg, base]
+
 
 class MonitorFactory(TVFactory):
     def __init__(self, factory_seed, coarse=False):

@@ -9,6 +9,7 @@ from numpy.random import uniform
 from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import read_normal
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube
+from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -137,4 +138,4 @@ class PalletFactory(AssetFactory):
     def finalize_assets(self, assets):
         # self.surface.apply(assets)
         for element in assets:
-            butil.add_material(element, self.surface)
+            surface.assign_material(element, self.surface())

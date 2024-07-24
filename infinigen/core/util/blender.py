@@ -722,10 +722,6 @@ def clear_mesh(obj):
         bpy.ops.mesh.delete(type="VERT")
 
 
-def add_material(obj: bpy.types.Object, mat: bpy.types.Material):
-    obj.active_material = mat
-
-
 def apply_modifiers(obj, mod=None, quiet=True):
     if mod is None:
         mod = list(obj.modifiers)

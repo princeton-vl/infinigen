@@ -23,6 +23,7 @@ from infinigen.assets.utils.object import (
     new_grid,
 )
 from infinigen.assets.utils.uv import unwrap_faces
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
@@ -144,4 +145,4 @@ class PillowFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         for obj in assets:
-            butil.add_material(obj, self.surface)
+            surface.assign_material(obj, self.surface())

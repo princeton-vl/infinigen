@@ -18,6 +18,7 @@ from infinigen.assets.utils.object import (
     new_bbox,
     new_cube,
 )
+from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
@@ -102,7 +103,7 @@ class BathroomSinkFactory(BathtubFactory):
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
         # self.surface.apply(obj, clear=True, metal_color="plain")
-        butil.add_material(obj, self.surface)
+        surface.assign_material(obj, self.surface())
         if self.has_extrude:
             tap = self.tap_factory(np.random.randint(1e7))
             min_x = np.min(read_co(tap)[:, 0])

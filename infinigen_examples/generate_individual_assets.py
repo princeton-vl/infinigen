@@ -68,6 +68,7 @@ logger = logging.getLogger(__name__)
 OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
+
 def build_scene_asset(args, factory_name, idx):
     factory = None
     for subdir in sorted(list(OBJECTS_PATH.iterdir())):
@@ -82,7 +83,7 @@ def build_scene_asset(args, factory_name, idx):
         logger.debug(f"{factory_name} not found in {subdir}")
     if factory is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
-    
+
     with FixedSeed(idx):
         fac = factory(idx)
         try:

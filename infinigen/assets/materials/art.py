@@ -25,7 +25,6 @@ fabric_shader_list = (
 )
 
 
-
 class Art(text.Text):
     def __init__(self):
         super().__init__()

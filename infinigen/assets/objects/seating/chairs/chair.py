@@ -198,9 +198,9 @@ class ChairFactory(AssetFactory):
 
             # self.panel_surface.apply(obj, selection="panel")
             # self.limb_surface.apply(obj, selection="limb")
-            butil.add_material(obj, self.surface)
-            butil.add_material(obj, self.panel_surface)
-            butil.add_material(obj, self.limb_surface)
+            surface.assign_material(obj, self.surface())
+            surface.assign_material(obj, self.panel_surface())
+            surface.assign_material(obj, self.limb_surface())
 
         return obj
 

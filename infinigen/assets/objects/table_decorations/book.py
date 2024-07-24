@@ -17,6 +17,7 @@ from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.mesh import longest_ray
 from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube
 from infinigen.assets.utils.uv import wrap_front_back_side
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -96,7 +97,7 @@ class BookFactory(AssetFactory):
         paper.scale = width / 2 - 1e-4, height / 2, depth / 2 - 1e-4
         butil.apply_transform(paper, True)
 
-        butil.add_material(paper, self.surface)
+        surface.assign_material(paper, self.surface())
         return paper
 
     def make_hardcover(self, width, height, depth):

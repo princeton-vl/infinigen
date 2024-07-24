@@ -48,6 +48,7 @@ def hex2rgba(h, alpha=1):
     b = h & 0x0000FF
     return tuple([srgb_to_linearrgb(c / 0xFF) for c in (r, g, b)] + [alpha])
 
+
 def hex2rgb(h, alpha=1):
     r = (h & 0xFF0000) >> 16
     g = (h & 0x00FF00) >> 8
