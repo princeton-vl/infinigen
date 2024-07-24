@@ -43,5 +43,8 @@ extern "C" {
     void cleanup() {
     }
 
-
+    int get_version() {
+        return 1;
+    }
+    
 }
