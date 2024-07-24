@@ -71,17 +71,20 @@ def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
 class Plaster:
     shader = shader_plaster
 
-    # def apply(self, obj, selection=None, plaster_colored=None, **kwargs):
-    #     if plaster_colored is None:
-    #         plaster_colored = uniform() < 0.4
-    #     for o in obj if isinstance(obj, Iterable) else [obj]:
-    #         unwrap_normal(o, selection)
-    #     common.apply(
-    #         obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
-    #     )
+    def apply(self, obj, selection=None, plaster_colored=None, **kwargs):
+        if plaster_colored is None:
+            plaster_colored = uniform() < 0.4
+        for o in obj if isinstance(obj, Iterable) else [obj]:
+            unwrap_normal(o, selection)
+        common.apply(
+            obj, shader_plaster, selection, plaster_colored=plaster_colored, **kwargs
+        )
     def generate(self, plaster_colored=None):
         if plaster_colored is None:
             plaster_colored = uniform() < 0.4
         return surface.shaderfunc_to_material(shader_plaster, plaster_colored)
+
+    # def apply(self, obj, selection=None, plaster_colored=None):
+    #     return surface.add_material(obj, shader_plaster, selection, plaster_colored=plaster_colored)
 
     __call__ = generate

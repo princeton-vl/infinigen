@@ -9,6 +9,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
+from infinigen.assets.materials import common
 
 
 def shader_glass(nw: NodeWrangler, color=None, is_window=False, **kwargs):
@@ -50,6 +51,11 @@ class Glass:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_glass)
+    
+    def apply(self, obj, selection=None, clear=False, **kwargs):
+        color = get_glass_color(clear)
+        common.apply(obj, shader_glass, selection, color, **kwargs)
+
 
     __call__ = generate
 

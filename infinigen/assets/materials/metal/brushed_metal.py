@@ -11,6 +11,7 @@ from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.assets.materials import common
 
 
 @node_utils.to_nodegroup(
@@ -171,5 +172,8 @@ class BrushedMetal:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_brushed_metal)
+    
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_brushed_metal, selection, **kwargs)
 
     __call__ = generate
