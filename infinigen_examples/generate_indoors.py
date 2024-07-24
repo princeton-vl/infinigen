@@ -20,9 +20,11 @@ import bpy
 import gin
 import numpy as np
 
+from infinigen import repo_root
 from infinigen.assets import lighting
 from infinigen.assets.materials import invisible_to_camera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
+from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
 from infinigen.core import execute_tasks, init, placement, surface, tagging
 from infinigen.core import tags as t
@@ -51,6 +53,10 @@ from infinigen_examples.util.generate_indoors_util import (
     hide_other_rooms,
     place_cam_overhead,
     restrict_solving,
+)
+from infinigen_examples.util.test_utils import (
+    import_item,
+    load_txt_list,
 )
 
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
@@ -134,6 +140,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     terrain, terrain_mesh = p.run_stage(
         "terrain", add_coarse_terrain, use_chance=False, default=(None, None)
     )
+
     p.run_stage("sky_lighting", lighting.sky_lighting.add_lighting, use_chance=False)
 
     consgraph = home_constraints()
@@ -306,6 +313,32 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p.run_stage(
         "populate_assets", populate.populate_state_placeholders, state, use_chance=False
     )
+
+    def place_floating():
+        pholder_rooms = butil.get_collection("placeholders:room_meshes")
+        pholder_cutters = butil.get_collection("placeholders:portal_cutters")
+        pholder_objs = butil.get_collection("placeholders")
+
+        obj_fac_names = load_txt_list(
+            repo_root() / "tests" / "assets" / "list_indoor_meshes.txt"
+        )
+        facs = [import_item(path) for path in obj_fac_names]
+
+        placer = FloatingObjectPlacement(
+            generators=facs,
+            camera=cam_util.get_camera(0, 0),
+            background_objs=list(pholder_cutters.objects) + list(pholder_rooms.objects),
+            collision_objs=list(pholder_objs.objects),
+        )
+
+        placer.place_objs(
+            num_objs=overrides.get("num_floating", 20),
+            normalize=overrides.get("norm_floating_size", True),
+            collision_placed=overrides.get("enable_collision_floating", False),
+            collision_existing=overrides.get("enable_collision_solved", False),
+        )
+
+    p.run_stage("floating_objs", place_floating, use_chance=False, default=state)
 
     door_filter = r.Domain({t.Semantics.Door}, [(cl.AnyRelation(), stages["rooms"])])
     window_filter = r.Domain(
