@@ -31,13 +31,13 @@ class HardwareFactory(AssetFactory):
             self.extension_length = self.attachment_radius * uniform(2, 3)
             self.ring_radius = log_uniform(2, 6) * self.attachment_radius
 
-            surface_gen_class = weighted_sample(material_assignments.metals)
-            self.surface_material_gen = surface_gen_class()
+            surface_gen_class = weighted_sample(material_assignments.old_metal)
+            self.surface_material_gen = surface_gen_class
 
             is_scratch = uniform() < material_assignments.wear_tear_prob[0]
             is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
-            self.scratch = material_assignments.wear_tear[0] if is_scratch else None
-            self.edge_wear = material_assignments.wear_tear[1] if is_edge_wear else None
+            self.scratch = material_assignments.wear_tear[0]() if is_scratch else None
+            self.edge_wear = material_assignments.wear_tear[1]() if is_edge_wear else None
 
     def make_attachment(self):
         base = new_base_cylinder() if self.is_circular else new_cube()
@@ -102,7 +102,7 @@ class HardwareFactory(AssetFactory):
         return obj
 
     def create_asset(self, **params) -> bpy.types.Object:
-        self.surface = self.surface_material_gen()
+        self.surface = self.surface_material_gen
 
         match self.hardware_type:
             case "hook":
