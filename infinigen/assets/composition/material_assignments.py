@@ -85,8 +85,8 @@ marble = [
 
 kitchen_appliance_hard = metals + [(plastic.PlasticRough, 2.0)]
 appliance_front_maybeglass = metals + [
-    (metal.BlackGlass, 10.0),
-    (ceramic.Glass, 5.0),
+    (metal.BlackGlass, 4.0),
+    (ceramic.Glass, 10.0),
 ]
 
 appliance_handle = metals + [
