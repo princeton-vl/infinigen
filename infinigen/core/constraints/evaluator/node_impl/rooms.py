@@ -6,8 +6,9 @@ from infinigen.core.constraints import (
 )
 from infinigen.core.constraints.evaluator.node_impl.impl_bindings import register_node_impl
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.room.base import room_type, room_level, room_name, valid_rooms
+from infinigen.core.constraints.example_solver.room.base import room_type, room_level, room_name
 from infinigen.core.tags import Semantics
+from infinigen.core.util.math import normalize
 
 
 def separate_floors(state):
@@ -34,49 +35,9 @@ def reduce(x, reduce_fn):
             return np.nan
 
 
-@register_node_impl(cl.shortest_path)
-def shortest_path_impl(
-    cons: cl.shortest_path,
-    state: state_def.State,
-    child_vals: dict
-):
-    x = child_vals['objs']
-    res = []
-    for s, graph in separate_floors(state):
-        shortest_paths = {}
-        centroids = {k: obj_st.obj.centroid.coords[:][0] for k, obj_st in s.objs.items()}
-        for k, obj_st in valid_rooms(s):
-            for r in obj_st.relations:
-                l = r.target_name
-                min_distance = np.full(4, 100)
-                for ls in r.value.geoms:
-                    for c in ls.coords[:]:
-                        dist = abs_distance(centroids[k], c) + abs_distance(c, centroids[l])
-                        if np.sum(dist) <= np.sum(min_distance):
-                            min_distance = dist
-                shortest_paths[(k, l)] = min_distance
-        root = graph.root
-        disp = {k: np.array([1e3] * 4) for k, obj_st in valid_rooms(s)}
-        disp[root] = np.zeros(4)
-        updated = True
-        while updated:
-            updated = False
-            for k, ns in graph.valid_neighbours.items():
-                for n in ns:
-                    d = disp[k] + shortest_paths[(k, n)]
-                    if np.sum(d) < np.sum(disp[n]):
-                        disp[n] = d
-                        updated = True
-        disps = {k: disp[k] for k in x if k != root}
-        d = np.stack(list(disps.values()))
-        scores = (np.min(d[:, :2], -1) + np.min(d[:, 2:], -1)) / d.sum(1)
-        res.append(reduce(scores, cons.reduce_fn))
-    return sum(res)
-
-
-@register_node_impl(cl.direct_access)
-def direct_access_impl(
-    cons: cl.direct_access,
+@register_node_impl(cl.access_angle)
+def access_angle_impl(
+    cons: cl.access_angle,
     state: state_def.State,
     child_vals: dict
 ):
@@ -84,32 +45,15 @@ def direct_access_impl(
     if len(state.graphs) == 0:
         return 0
     graph = state.graphs[room_level(x)]
+    if graph.root == x:
+        return 0
     root = np.array(state[graph.root].polygon.centroid.coords)[0]
     co = np.array(state[x].polygon.centroid.coords)[0]
+    angles = [np.pi]
     for n in graph.valid_neighbours[x]:
         co_ = np.array(state[n].polygon.centroid.coords)[0]
-        if (co_ - co) @ (root - co) >= np.cos(cons.angle):
-            return 1
-    return 0
-
-
-@register_node_impl(cl.typical_area)
-def typical_area_impl(
-    cons: cl.typical_area,
-    state: state_def.State,
-    child_vals: dict
-):
-    c = child_vals['objs']
-    totals, areas = [], []
-    for k in c:
-        obj_st = state[k]
-        rt = room_type(k)
-        totals.append(cons.types[rt])
-        areas.append(obj_st.polygon.area)
-    totals = np.array(totals)
-    areas = np.array(areas)
-    scores = np.abs(np.log(totals / totals.sum() / areas * areas.sum()))
-    return reduce(scores, cons.reduce_fn)
+        angles.append(np.arccos((1 - 1e-6) * normalize(co_ - co) @ normalize(root - co)))
+    return np.min(angles)
 
 
 @register_node_impl(cl.aspect_ratio)
@@ -120,7 +64,8 @@ def aspect_ratio_impl(
 ):
     c = next(iter(child_vals['objs']))
     x, y, xx, yy = state[c].polygon.bounds
-    return np.abs(np.log((xx - x) / (yy - y)))
+    a = (xx - x) / (yy - y)
+    return max(a, 1 / a)
 
 
 @register_node_impl(cl.convexity)
@@ -181,17 +126,6 @@ def shared_n_verts_impl(
             for ls in mls.geoms:
                 s += len(ls.coords)
     return s
-
-
-@register_node_impl(cl.exterior_corner)
-def exterior_corner_impl(
-    cons: cl.exterior_corner,
-    state: state_def,
-    child_vals: dict
-):
-    corners = sum(len(state[k].polygon.exterior.coords) - 2 for k in child_vals['objs'])
-    total_corners = sum(len(obj_st.polygon.exterior.coords) - 2 for k, obj_st in valid_rooms(state))
-    return corners / total_corners
 
 
 @register_node_impl(cl.grid_line_count)

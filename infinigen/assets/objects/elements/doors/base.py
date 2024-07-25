@@ -6,7 +6,6 @@
 # - Lingjie Mei: primary author
 
 import bpy
-import gin
 import numpy as np
 from numpy.random import uniform
 
@@ -18,6 +17,7 @@ from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_cube, new_line
 from infinigen.core import surface
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
@@ -32,9 +32,7 @@ class BaseDoorFactory(AssetFactory):
         super(BaseDoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             if constants is None:
-                with gin.unlock_config():
-                    from infinigen.core.constraints.constraint_language.constants import RoomConstants
-                    constants = RoomConstants()
+                constants = RoomConstants()
             self.width = constants.door_width
             self.height = constants.door_size
             self.constants = constants

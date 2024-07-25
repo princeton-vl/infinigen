@@ -12,6 +12,7 @@ from infinigen.assets.materials import metal, wood
 from infinigen.assets.utils.decorate import read_edge_center, read_edge_direction
 from infinigen.assets.utils.mesh import bevel
 from infinigen.assets.utils.object import new_cube
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -22,7 +23,6 @@ class DoorCasingFactory(AssetFactory):
         super(DoorCasingFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             if constants is None:
-                from infinigen.core.constraints.constraint_language.constants import RoomConstants
                 constants = RoomConstants()
             self.constants = constants
             self.margin = constants.door_size * uniform(.05, .1)

@@ -1,4 +1,5 @@
 import gin
+import numpy as np
 
 from infinigen.core.constraints import (
     constraint_language as cl,
@@ -194,7 +195,9 @@ def home_constraints(weights=None, fast=False):
     pholder = lambda r: r.same_level()[Semantics.Staircase]
 
     room_term = (
-            rooms[-Semantics.Utility][-Semantics.Bathroom][-Semantics.Closet].sum(lambda r: r.direct_access()).minimize(
+            rooms[-Semantics.Utility][-Semantics.Bathroom][-Semantics.Closet].sum(
+                lambda r: (r.access_angle()-np.pi/2).clip(0)
+            ).minimize(
                 weight=5.
             ) +
             (rooms[Semantics.Kitchen].sum(lambda r: (r.area() / 20).log().hinge(0, .4).pow(2)) +
@@ -210,12 +213,12 @@ def home_constraints(weights=None, fast=False):
                 weight=500.
             ) +
             sum(
-                rooms[tag].sum(lambda r: r.aspect_ratio()) for tag in
+                rooms[tag].sum(lambda r: r.aspect_ratio().log()) for tag in
                     [Semantics.Kitchen, Semantics.Bedroom, Semantics.LivingRoom, Semantics.DiningRoom]
             ).minimize(
                 weight=50.
             ) + sum(
-        rooms[tag].sum(lambda r: r.aspect_ratio()) for tag in
+        rooms[tag].sum(lambda r: r.aspect_ratio().log()) for tag in
             [Semantics.Closet, Semantics.Bathroom]
     ).minimize(
         weight=40.

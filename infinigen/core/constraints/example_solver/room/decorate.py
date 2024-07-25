@@ -464,7 +464,7 @@ def room_pillars(walls: list[bpy.types.Object], constants: RoomConstants):
                 u, v = e.verts
                 is_angled = np.pi * .1 < e.calc_face_angle(0) % np.pi < np.pi * .9
                 is_long = e.calc_length() > constants.wall_height * .8
-                is_vertical = np.abs(u.co[-1] - v.co[-1]) / e.calc_length() > .9
+                is_vertical = np.abs(u.co[-1] - v.co[-1]) / (e.calc_length() + 1e-6) > .9
                 if is_long and is_vertical and is_angled:
                     cos.append(u.co)
         cos = np.array(cos)

@@ -58,8 +58,8 @@ def operator_impl(
 
     try:
         if (len(operands) == 1
-            or 'ufunc' in repr(cons.func)
-            or 'lambda' in repr(cons.func)
+            or 'numpy' in cons.func.__class__.__name__
+            or 'lambda' in cons.func.__name__
         ):
             return cons.func(*operands)
         else:

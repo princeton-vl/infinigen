@@ -10,6 +10,7 @@ import gin
 
 from infinigen.assets.materials import marble_regular, marble_voronoi
 from infinigen.assets.utils.decorate import (
+<<<<<<< HEAD:infinigen/assets/objects/elements/pillars.py
     read_co,
     read_edge_center,
     read_selected,
@@ -19,6 +20,15 @@ from infinigen.assets.utils.decorate import (
     write_co,
 )
 from infinigen.assets.utils.object import join_objects, new_base_circle, new_cylinder
+=======
+    read_co, read_edge_center, read_selected, select_edges,
+    subdivide_edge_ring, subsurf, write_co,
+)
+from infinigen.assets.utils.object import (
+    join_objects, new_base_circle, new_cylinder,
+)
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
+>>>>>>> 94e19f3f4 (Add room constraint descriptions.):infinigen/assets/elements/pillars.py
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -31,9 +41,7 @@ class PillarFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             if constants is None:
-                with gin.unlock_config():
-                    from infinigen.core.constraints.constraint_language.constants import RoomConstants
-                    constants = RoomConstants()
+                constants = RoomConstants()
             self.height = constants.wall_height - constants.wall_thickness
             self.n = np.random.randint(5, 10)
             self.radius = uniform(0.08, 0.12)

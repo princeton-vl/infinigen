@@ -92,7 +92,9 @@ def warehouse_constraints(weights=None, fast=False):
     pholder = lambda r: r.same_level()[Semantics.Staircase]
 
     room_term = (
-            rooms[-Semantics.Utility][-Semantics.Restroom].sum(lambda r: r.direct_access()).minimize(weight=5.) +
+            rooms[-Semantics.Utility][-Semantics.Restroom].sum(
+                lambda r: (r.access_angle() - np.pi / 2).clip(0)
+            ).minimize(weight=5.) +
             (rooms[Semantics.Warehouse].sum(lambda r: (r.area() / 300).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.Garage].sum(lambda r: (r.area() / 80).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.FactoryOffice].sum(lambda r: (r.area() / 20).log().hinge(0, .4).pow(2)) +
@@ -100,9 +102,9 @@ def warehouse_constraints(weights=None, fast=False):
              rooms[Semantics.StaircaseRoom].sum(lambda r: (r.area() / 20).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.Utility].sum(lambda r: (r.area() / 10).log().hinge(0, .4).pow(2))).minimize(weight=500.) +
             rooms.union({Semantics.FactoryOffice, Semantics.Garage, Semantics.Warehouse}).sum(
-                lambda r: r.aspect_ratio()
+                lambda r: r.aspect_ratio().log()
             ).minimize(weight=50.) +
-            rooms.union({Semantics.Utility, Semantics.Restroom}).sum(lambda r: r.aspect_ratio()).minimize(weight=40.) +
+            rooms.union({Semantics.Utility, Semantics.Restroom}).sum(lambda r: r.aspect_ratio().log()).minimize(weight=40.) +
             rooms[-Semantics.Hallway].sum(lambda r: r.convexity().log()).minimize(weight=5.) +
             rooms[-Semantics.Hallway].sum(lambda r: (r.n_verts() - 6).clip(0).pow(1.5)).minimize(weight=1.) +
             rooms.union({Semantics.FactoryOffice, Semantics.Warehouse, Semantics.Garage}).sum(

@@ -1,4 +1,5 @@
 import gin
+import numpy as np
 
 from infinigen.core.constraints import (
     constraint_language as cl,
@@ -99,7 +100,9 @@ def office_constraints(weights=None, fast=False):
     pholder = lambda r: r.same_level()[Semantics.Staircase]
 
     room_term = (
-            rooms[-Semantics.Utility][-Semantics.Restroom].sum(lambda r: r.direct_access()).minimize(weight=5.) +
+            rooms[-Semantics.Utility][-Semantics.Restroom].sum(lambda r: (r.access_angle()-np.pi/2).clip(0)).minimize(
+                weight=5.
+            ) +
             (rooms[Semantics.MeetingRoom].sum(lambda r: (r.area() / 25).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.Office].sum(lambda r: (r.area() / 15).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.OpenOffice].sum(lambda r: (r.area() / 30).log().hinge(0, .4).pow(2)) +
@@ -108,11 +111,11 @@ def office_constraints(weights=None, fast=False):
              rooms[Semantics.StaircaseRoom].sum(lambda r: (r.area() / 25).log().hinge(0, .4).pow(2)) +
              rooms[Semantics.Utility].sum(lambda r: (r.area() / 5).log().hinge(0, .4).pow(2))).minimize(weight=500.) +
             rooms.union({Semantics.MeetingRoom, Semantics.Office, Semantics.OpenOffice, Semantics.BreakRoom}).sum(
-                lambda r: r.aspect_ratio()
+                lambda r: r.aspect_ratio().log()
             ).minimize(
                 weight=50.
             ) +
-            rooms.union({Semantics.Restroom}).sum(lambda r: r.aspect_ratio()).minimize(weight=40.) +
+            rooms.union({Semantics.Restroom}).sum(lambda r: r.aspect_ratio().log()).minimize(weight=40.) +
             rooms[-Semantics.Hallway].sum(lambda r: r.convexity().log()).minimize(weight=5.) +
             rooms[-Semantics.Hallway].sum(lambda r: (r.n_verts() - 6).clip(0).pow(1.5)).minimize(weight=1.) +
             rooms.union({Semantics.MeetingRoom, Semantics.Office, Semantics.OpenOffice, Semantics.BreakRoom}).sum(

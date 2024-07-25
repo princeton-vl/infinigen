@@ -60,13 +60,10 @@ from .relations import (
 )
 from .result import Problem
 from .rooms import (
-    shortest_path,
-    direct_access,
-    typical_area,
+    access_angle,
     aspect_ratio,
     convexity,
     n_verts,
-    exterior_corner,
     grid_line_count,
     narrowness,
     intersection,
