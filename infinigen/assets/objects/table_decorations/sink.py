@@ -128,10 +128,11 @@ class SinkFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
 
 class TapFactory(AssetFactory):
@@ -193,10 +194,11 @@ class TapFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
 
 @node_utils.to_nodegroup("nodegroup_handle", singleton=False, type="GeometryNodeTree")
