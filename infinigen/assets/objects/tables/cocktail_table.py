@@ -336,7 +336,7 @@ class TableCocktailFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         self.clothes_scatter.apply(assets)
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)

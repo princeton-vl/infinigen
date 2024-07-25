@@ -187,10 +187,11 @@ class BottleFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
     def make_bottle(self):
         x_anchors = np.array(self.x_anchors) * self.x_length
@@ -202,7 +203,7 @@ class BottleFactory(AssetFactory):
         if self.bottle_width > 0:
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
 
-        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.surface)
 
         return obj
 
