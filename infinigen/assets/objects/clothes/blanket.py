@@ -25,11 +25,9 @@ class BlanketFactory(AssetFactory):
         self.thickness = log_uniform(0.004, 0.008)
 
         surface_gen_class = weighted_sample(material_assignments.blanket)
-        print("Surface Gen Class: ", surface_gen_class)
         self.surface_material_gen = surface_gen_class()
         self.surface = self.surface_material_gen()
         if self.surface == ArtFabric:
-            print("Start to Obtain Fabric Material")
             self.surface = self.surface(self.factory_seed)
 
     def create_asset(self, **params) -> bpy.types.Object:
@@ -39,7 +37,7 @@ class BlanketFactory(AssetFactory):
         obj.scale = self.width / 2, self.size / 2, 1
         butil.apply_transform(obj)
         unwrap_faces(obj)
-        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.surface)
         return obj
 
     def fold(self, obj):

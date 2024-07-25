@@ -115,8 +115,12 @@ class ChairFactory(AssetFactory):
             is_edge_wear = uniform() < edge_wear_prob
             if not is_scratch:
                 self.scratch = None
+            else:
+                self.scratch = self.scratch()
             if not is_edge_wear:
                 self.edge_wear = None
+            else:
+                self.edge_wear = self.edge_wear()
 
             # from infinigen.assets.clothes import blanket
             # from infinigen.assets.scatters.clothes import ClothesCover
@@ -198,17 +202,18 @@ class ChairFactory(AssetFactory):
 
             # self.panel_surface.apply(obj, selection="panel")
             # self.limb_surface.apply(obj, selection="limb")
-            surface.assign_material(obj, self.surface())
-            surface.assign_material(obj, self.panel_surface())
-            surface.assign_material(obj, self.limb_surface())
+            surface.assign_material(obj, self.surface)
+            surface.assign_material(obj, self.panel_surface)
+            surface.assign_material(obj, self.limb_surface)
 
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
     def make_seat(self):
         x_anchors = (

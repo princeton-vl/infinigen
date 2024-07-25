@@ -92,9 +92,13 @@ class OfficeChairFactory(AssetFactory):
         is_edge_wear = uniform() < edge_wear_prob
         if not is_scratch:
             scratch = None
+        else:
+            scratch = scratch()
 
         if not is_edge_wear:
             edge_wear = None
+        else:
+            edge_wear = edge_wear()
 
         return wrapped_params, scratch, edge_wear
 

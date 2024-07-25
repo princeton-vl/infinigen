@@ -138,4 +138,4 @@ class MattressFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         # self.surface.apply(assets)
-        surface.assign_material(assets, self.surface())
+        surface.assign_material(assets, self.surface)

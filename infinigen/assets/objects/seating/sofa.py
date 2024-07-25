@@ -1455,7 +1455,7 @@ class SofaFactory(AssetFactory):
         )
         tagging.tag_system.relabel_obj(obj)
 
-        surface.assign_material(obj, self.sofa_fabric())
+        surface.assign_material(obj, self.sofa_fabric)
         return obj
 
     def create_asset(self, i, placeholder, face_size, **_):
