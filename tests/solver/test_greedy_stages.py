@@ -22,7 +22,7 @@ from infinigen.core.constraints.example_solver import (
 from infinigen.core.constraints.example_solver.room.base import room_name
 from infinigen.core.util import blender as butil
 
-from infinigen_examples.indoor_constraint_examples import home_constraints as ex
+from infinigen_examples import indoor_constraint_examples as ex
 from infinigen_examples import generate_indoors
 from infinigen_examples.util import constraint_util as cu
 
@@ -52,11 +52,11 @@ def test_stages_relations(key):
 #    stage = stages[key]
 #    stage = r.domain_tag_substitute(stage, t.Variable('room'), r.Domain({roomtype}))
 #
-#    bounds = r.constraint_bounds(ex.home_constraints())
-
+#    bounds = r.constraint_bounds(ex.indoor_constraints())    
 
 def test_validate_bounds():
-    bounds = r.constraint_bounds(ex.home_constraints())
+
+    bounds = r.constraint_bounds(ex.indoor_constraints())
 
     for b in bounds:
         for rel, dom in b.domain.relations:
@@ -350,12 +350,12 @@ def test_obj_on_ceilinglight():
 
 def test_greedy_partition_home():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.indoor_constraints()
     checks.check_problem_greedy_coverage(prob, generate_indoors.default_greedy_stages())
 
 
 def test_contradiction_home():
-    prob = ex.home_constraints()
+    prob = ex.indoor_constraints()
     checks.check_contradictory_domains(prob)
 
 
