@@ -228,6 +228,16 @@ lid = cup
 
 frame = decorative_metal + woods
 
+step = fabrics + woods + marble + [
+    (plastic.Plastic, 1.0),
+    (plastic.PlasticTranslucent, 1.0),
+]
+rail = step
+tread = woods + metals + glasses
+side = rail + metals
+handrail = woods + metals + fabrics
+post = handrail
+
 potting_soil = [
     (terrain.Mud, 1),
     (terrain.Sand, 1),

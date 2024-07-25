@@ -32,7 +32,8 @@ from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-
+from infinigen.assets.composition import material_assignments
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 class RackFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
@@ -49,7 +50,7 @@ class RackFactory(AssetFactory):
             self.frame_height = self.thickness * uniform(3, 4)
             self.frame_count = np.random.randint(20, 30)
 
-            self.stand_surface = self.support_surface = self.frame_surface = metal
+            self.stand_surface = self.support_surface = self.frame_surface = weighted_sample(material_assignments.metals)()
             self.pallet_factory = PalletFactory(self.factory_seed)
             self.margin_range = 0.3, 0.5
 

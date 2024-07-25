@@ -137,5 +137,7 @@ class PalletFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         # self.surface.apply(assets)
+        if isinstance(assets, bpy.types.Object):
+            assets = [assets]
         for element in assets:
-            surface.assign_material(element, self.surface())
+            surface.assign_material(element, self.surface)

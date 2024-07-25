@@ -3,7 +3,7 @@
 # of this source tree.
 
 # Authors:
-# -
+# - Hongyu Wen
 # - Alexander Raistrick: add point light
 
 
@@ -82,9 +82,13 @@ class CeilingLightFactory(AssetFactory):
         is_edge_wear = np.random.uniform() < edge_wear_prob
         if not is_scratch:
             scratch = None
+        else:
+            scratch = scratch()
 
         if not is_edge_wear:
             edge_wear = None
+        else:
+            edge_wear = edge_wear()
 
         return wrapped_params, scratch, edge_wear
 
