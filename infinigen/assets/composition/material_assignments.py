@@ -81,6 +81,10 @@ shelf_board = (
     ]
 )
 
+glasses = [
+    (ceramic.Glass, 1.0),
+]
+
 ceramics = [
     (ceramic.Ceramic, 1.0),
 ]

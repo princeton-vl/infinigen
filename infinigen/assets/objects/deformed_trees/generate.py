@@ -6,9 +6,11 @@
 
 import numpy as np
 
-from infinigen.assets.objects.deformed_trees.fallen import FallenTreeFactory
-from infinigen.assets.objects.deformed_trees.hollow import HollowTreeFactory
-from infinigen.assets.objects.deformed_trees.rotten import RottenTreeFactory
+from infinigen.assets.objects.deformed_trees import (
+    FallenTreeFactory,
+    HollowTreeFactory,
+    RottenTreeFactory,
+)
 from infinigen.assets.objects.deformed_trees.truncated import TruncatedTreeFactory
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
