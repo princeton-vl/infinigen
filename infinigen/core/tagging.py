@@ -480,10 +480,12 @@ def tag_support_surfaces(obj, angle_threshold=0.1):
             if global_normal.dot(up_vector) > 1 - angle_threshold:
                 support_mask[poly.index] = True
 
-        if "support" not in tag_system.tag_dict:
-            tag_system.tag_dict["support"] = len(tag_system.tag_dict) + 1
+        if t.Subpart.SupportSurface.value not in tag_system.tag_dict:
+            tag_system.tag_dict[t.Subpart.SupportSurface.value] = (
+                len(tag_system.tag_dict) + 1
+            )
 
-        tag_object(mesh_obj, name="support", mask=support_mask)
+        tag_object(mesh_obj, name=t.Subpart.SupportSurface.value, mask=support_mask)
 
         print(
             f"Tagged {support_mask.sum()} faces as 'support' in object {mesh_obj.name}"

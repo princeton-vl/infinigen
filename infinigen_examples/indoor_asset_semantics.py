@@ -118,11 +118,12 @@ def home_asset_usage():
     }
 
     used_as[Semantics.Storage] = {
-        shelves.SimpleBookcaseFactory,
-        shelves.CellShelfFactory,
-        shelves.LargeShelfFactory,
+        # shelves.SimpleBookcaseFactory,
+        # shelves.CellShelfFactory,
+        # shelves.LargeShelfFactory,
+        static_assets.StaticShelfFactory,
         shelves.KitchenCabinetFactory,
-        shelves.SingleCabinetFactory,
+        # shelves.SingleCabinetFactory,
     }
 
     used_as[Semantics.SideTable] = {

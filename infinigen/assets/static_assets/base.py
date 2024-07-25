@@ -9,11 +9,12 @@ from typing import Callable, Dict, Optional
 
 import bpy
 
+from infinigen.assets.static_assets.utils import collapse_hierarchy
 from infinigen.core.placement.factory import AssetFactory
 
 
 class StaticAssetFactory(AssetFactory):
-    root_asset_dir = "/home/karhan/vision/infinigen_indoors/infinigen/assets/static_assets/source"  # Class variable to store the root asset directory
+    root_asset_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "source")
 
     import_map: Dict[str, Callable] = {
         "dae": bpy.ops.wm.collada_import,
@@ -105,7 +106,8 @@ class StaticAssetFactory(AssetFactory):
                         "The imported objects do not form a tree structure."
                     )
 
-                return root_object
+                collapsed_object = collapse_hierarchy(root_object)
+                return collapsed_object
             else:
                 return None
         else:
