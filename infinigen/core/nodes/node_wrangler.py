@@ -197,16 +197,7 @@ class NodeWrangler:
 
         if attrs is not None:
             for key, val in attrs.items():
-                # if key not in NODE_ATTRS_AVAILABLE.get(node.bl_idname, []):
-                #    logger.warn(f'Node Wrangler is setting attr {repr(key)} on {node.bl_idname=},
-                #    but it is not in node_info.NODE_ATTRS_AVAILABLE. Please add it so that the transpiler is
-                #    aware')
-                try:
-                    setattr(node, key, val)
-                except AttributeError:
-                    exec(
-                        f"node.{key} = {repr(val)}"
-                    )  # I don't know of a way around this
+                setattr(node, key, val)
 
         if node_type in [
             Nodes.VoronoiTexture,

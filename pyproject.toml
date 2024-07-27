@@ -145,6 +145,7 @@ select = [
     "E", 
     "I", 
     "F",
+    "S102", # no exec()
 
 ]
 ignore = [
@@ -155,7 +156,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [
     "F401", 
-    "CPY001", # no need for copyright on boilerplate/often-empty __init__.py
+    "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
 ]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
