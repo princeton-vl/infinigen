@@ -188,6 +188,7 @@ def home_asset_usage():
             bathroom.BathtubFactory,
             seating.SofaFactory,
             static_assets.StaticSofaFactory,
+            static_assets.StaticVendingMachineFactory,
             shelves.TVStandFactory,
         },
     )
@@ -285,6 +286,7 @@ def home_asset_usage():
         shelves.SingleCabinetFactory,
         shelves.KitchenCabinetFactory,
         shelves.LargeShelfFactory,
+        # static_assets.StaticShelfFactory,
         table_decorations.SinkFactory,
         tables.TableCocktailFactory,
     }

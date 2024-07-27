@@ -45,3 +45,4 @@ def static_category_factory(category) -> StaticAssetFactory:
 StaticSofaFactory = static_category_factory("Sofa")
 StaticTableFactory = static_category_factory("Table")
 StaticShelfFactory = static_category_factory("Shelf")
+StaticVendingMachineFactory = static_category_factory("VendingMachine")
