@@ -12,11 +12,11 @@ from numpy.random import uniform
 import infinigen.core.util.blender as butil
 from infinigen.assets.objects.elements.staircases.curved import CurvedStaircaseFactory
 from infinigen.assets.utils.decorate import read_co, remove_vertices, write_attribute
-from infinigen.core.util.random import log_uniform
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import new_line, separate_loose
 from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform
 
 
 class SpiralStaircaseFactory(CurvedStaircaseFactory):

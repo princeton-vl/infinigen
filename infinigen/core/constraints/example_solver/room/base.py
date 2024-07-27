@@ -18,8 +18,11 @@ class RoomGraph:
                     self.ns[c].append(i)
         self.names = names
         self._entrance = entrance
-        self.invalid_indices = {i for i, n in enumerate(self.names) if
-            room_type(n) in {Semantics.Exterior, Semantics.Entrance}}
+        self.invalid_indices = {
+            i
+            for i, n in enumerate(self.names)
+            if room_type(n) in {Semantics.Exterior, Semantics.Entrance}
+        }
 
     @property
     def is_planar(self):
@@ -49,7 +52,9 @@ class RoomGraph:
         return len(self.names) - 1
 
     def __str__(self):
-        return str({'neighbours': self.ns, 'rooms': self.names, 'entrance': self._entrance})
+        return str(
+            {"neighbours": self.ns, "rooms": self.names, "entrance": self._entrance}
+        )
 
     def __repr__(self):
         return str(self)
@@ -59,17 +64,28 @@ class RoomGraph:
 
     @property
     def neighbours(self):
-        return {self.names[i]: set(self.names[n_] for n_ in n) for i, n in enumerate(self.ns)}
+        return {
+            self.names[i]: set(self.names[n_] for n_ in n)
+            for i, n in enumerate(self.ns)
+        }
 
     @property
     def valid_neighbours(self):
-        return {self.names[i]: set(self.names[n_] for n_ in n if n_ not in self.invalid_indices) for i, n in
-            enumerate(self.ns) if i not in self.invalid_indices}
+        return {
+            self.names[i]: set(
+                self.names[n_] for n_ in n if n_ not in self.invalid_indices
+            )
+            for i, n in enumerate(self.ns)
+            if i not in self.invalid_indices
+        }
 
     @property
     def valid_ns(self):
-        return {i: set(n_ for n_ in n if n_ not in self.invalid_indices) for i, n in enumerate(self.ns) if
-            i not in self.invalid_indices}
+        return {
+            i: set(n_ for n_ in n if n_ not in self.invalid_indices)
+            for i, n in enumerate(self.ns)
+            if i not in self.invalid_indices
+        }
 
     @property
     def entrance(self):
@@ -83,7 +99,7 @@ class RoomGraph:
 
     def draw(self):
         g = nx.Graph()
-        shortnames = [r[:3].upper() + r.split('_')[-1] for r in self.names]
+        shortnames = [r[:3].upper() + r.split("_")[-1] for r in self.names]
         g.add_nodes_from(shortnames)
         for k in range(len(shortnames)):
             for l in self.ns[k]:
@@ -93,15 +109,15 @@ class RoomGraph:
 
 
 def room_type(name):
-    return Semantics(name.split('_')[0])
+    return Semantics(name.split("_")[0])
 
 
 def room_level(name):
-    return int(name.split('/')[0].split('_')[1])
+    return int(name.split("/")[0].split("_")[1])
 
 
 def room_name(t, level, n=0):
-    return f'{t.value}_{level}/{n}'
+    return f"{t.value}_{level}/{n}"
 
 
 def valid_rooms(state):

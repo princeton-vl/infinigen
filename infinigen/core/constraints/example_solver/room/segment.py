@@ -7,28 +7,42 @@
 # - Karhan Kayan: fix constants
 
 from collections import defaultdict
-from itertools import chain
 
 import matplotlib.pyplot as plt
 import numpy as np
 import shapely
+import shapely.plotting
 from numpy.random import uniform
 from shapely import LineString, union
 
-from .utils import shared
-from .base import RoomGraph, room_type, room_name
-from infinigen.core.constraints.constraint_language.constants import RoomConstants
-from infinigen.core.tags import Semantics
-from infinigen.assets.utils.shapes import cut_polygon_by_line, is_valid_polygon, segment_filter
-from infinigen.core.constraints.example_solver.state_def import ObjectState, RelationState, State
+from infinigen.assets.utils.shapes import (
+    cut_polygon_by_line,
+    is_valid_polygon,
+    segment_filter,
+)
 from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
+from infinigen.core.constraints.example_solver.state_def import (
+    ObjectState,
+    RelationState,
+    State,
+)
+from infinigen.core.tags import Semantics
 from infinigen.core.util.math import FixedSeed
-import shapely.plotting
+
+from .base import RoomGraph, room_name, room_type
+from .utils import shared
 
 
 class SegmentMaker:
     def __init__(
-        self, factory_seed, constants: RoomConstants, consgraph, contour, graph: RoomGraph, level
+        self,
+        factory_seed,
+        constants: RoomConstants,
+        consgraph,
+        contour,
+        graph: RoomGraph,
+        level,
     ):
         with FixedSeed(factory_seed):
             self.factory_seed = factory_seed
@@ -37,10 +51,10 @@ class SegmentMaker:
             self.contour = contour
             self.consgraph = consgraph
             self.graph = graph
-            self.n_boxes = int(len(graph) * uniform(1.8, 2.))
+            self.n_boxes = int(len(graph) * uniform(1.8, 2.0))
 
-            self.box_ratio = .15
-            self.divide_box_fn = lambda x: x.area ** .5
+            self.box_ratio = 0.15
+            self.divide_box_fn = lambda x: x.area**0.5
             self.n_box_trials = 100
 
     def build_segments(self, placeholder=None):
@@ -53,7 +67,9 @@ class SegmentMaker:
             except Exception:
                 pass
             seed += 1
-        neighbours_all = {k: set(self.constants.filter(se)) for k, se in shared_edges.items()}
+        neighbours_all = {
+            k: set(self.constants.filter(se)) for k, se in shared_edges.items()
+        }
         exterior_edges = {}
         exterior_neighbours = []
         for k, s in segments.items():
@@ -61,7 +77,9 @@ class SegmentMaker:
             for ls in shared_edges[k].values():
                 l = l.difference(ls)
             if l.length > 0:
-                exterior_edges[k] = shapely.MultiLineString([l]) if isinstance(l, LineString) else l
+                exterior_edges[k] = (
+                    shapely.MultiLineString([l]) if isinstance(l, LineString) else l
+                )
             else:
                 exterior_edges[k] = shapely.MultiLineString([])
             if segment_filter(l, self.constants.segment_margin):
@@ -69,11 +87,16 @@ class SegmentMaker:
         staircase_candidates = []
         if placeholder is not None:
             for k, s in segments.items():
-                if s.intersection(placeholder).area / placeholder.area > self.constants.staircase_thresh:
+                if (
+                    s.intersection(placeholder).area / placeholder.area
+                    > self.constants.staircase_thresh
+                ):
                     staircase_candidates.append(k)
             if len(staircase_candidates) == 0:
                 return None
-        exterior_rooms = self.graph.ns[self.graph.names.index(room_name(Semantics.Exterior, self.level))]
+        exterior_rooms = self.graph.ns[
+            self.graph.names.index(room_name(Semantics.Exterior, self.level))
+        ]
         unassigned = set(neighbours_all.keys())
         assignment = [0] * len(self.graph)
         valid_ns = self.graph.valid_ns
@@ -109,22 +132,26 @@ class SegmentMaker:
                 continue
             st.objs[r] = ObjectState(
                 polygon=self.constants.canonicalize(segments[assignment[i]]),
-                relations=[RelationState(cl.SharedEdge(), names[j], value=se) for j, se in
-                    shared_edges[assignment[i]].items()],
-                tags={room_type(r), Semantics.RoomContour}
+                relations=[
+                    RelationState(cl.SharedEdge(), names[j], value=se)
+                    for j, se in shared_edges[assignment[i]].items()
+                ],
+                tags={room_type(r), Semantics.RoomContour},
             )
         exterior = room_name(Semantics.Exterior, self.level)
-        relations = [RelationState(cl.SharedEdge(), names[j], value=se) for j, se in exterior_edges.items()]
+        relations = [
+            RelationState(cl.SharedEdge(), names[j], value=se)
+            for j, se in exterior_edges.items()
+        ]
         st.objs[exterior] = ObjectState(
             polygon=self.contour,
             relations=relations,
-            tags={Semantics.Exterior, Semantics.RoomContour}
+            tags={Semantics.Exterior, Semantics.RoomContour},
         )
         if placeholder is not None:
             pholder = room_name(Semantics.Staircase, self.level)
             st.objs[pholder] = ObjectState(
-                polygon=placeholder,
-                tags={Semantics.Staircase}
+                polygon=placeholder, tags={Semantics.Staircase}
             )
         return st
 
@@ -154,7 +181,10 @@ class SegmentMaker:
                     s, t = cut_polygon_by_line(segments[k], line)
                     s_ = self.constants.canonicalize(s)
                     t_ = self.constants.canonicalize(t)
-                    if np.abs(s.area - s_.area) < 1e-3 and np.abs(t.area - t_.area) < 1e-3:
+                    if (
+                        np.abs(s.area - s_.area) < 1e-3
+                        and np.abs(t.area - t_.area) < 1e-3
+                    ):
                         segments[k], segments[i + 1] = s_, t_
                         break
         return {k: v for k, v in segments.items()}
@@ -162,7 +192,8 @@ class SegmentMaker:
     def merge_segment(self, segments, shared_edges, attached, i, j):
         assert i != j
         s = self.constants.canonicalize(union(segments[i], segments[j]))
-        if not is_valid_polygon(s): return
+        if not is_valid_polygon(s):
+            return
         segments[j] = s
         segments.pop(i)
         shared_edges.pop(i)
@@ -200,7 +231,12 @@ class SegmentMaker:
             prob = np.array([1 / (len(attached[c]) + 1) for c in shared_edges.keys()])
             k = np.random.choice(list(shared_edges.keys()), p=prob / prob.sum())
             candidates = self.constants.filter(shared_edges[k], 1e-6)
-            prob = np.array([len(attached[c].difference(attached[k]))**2 + .5 for c in candidates])
+            prob = np.array(
+                [
+                    len(attached[c].difference(attached[k])) ** 2 + 0.5
+                    for c in candidates
+                ]
+            )
             n = np.random.choice(candidates, p=prob / prob.sum())
             self.merge_segment(segments, shared_edges, attached, k, n)
         return segments, shared_edges

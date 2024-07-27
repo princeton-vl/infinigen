@@ -3,22 +3,36 @@ import numpy as np
 import shapely
 from shapely.ops import orient
 
-from infinigen.assets.utils.shapes import is_valid_polygon, simplify_polygon, segment_filter
+from infinigen.assets.utils.shapes import (
+    is_valid_polygon,
+    segment_filter,
+    simplify_polygon,
+)
 from infinigen.core import tags as t
 from infinigen.core.util.random import random_general as rg
 
 
 @gin.configurable
 class RoomConstants:
-
     def __init__(
-        self, n_stories=('cat', 0., .5, .4, .1), room_type=None, aspect_ratio_range=(.7, 1.), fixed_contour=('bool', .5)
+        self,
+        n_stories=("cat", 0.0, 0.5, 0.4, 0.1),
+        room_type=None,
+        aspect_ratio_range=(0.7, 1.0),
+        fixed_contour=("bool", 0.5),
     ):
         self.n_stories = rg(n_stories)
-        self.unit, self.segment_margin, self.wall_thickness, self.wall_height = self.global_params().values()
+        self.unit, self.segment_margin, self.wall_thickness, self.wall_height = (
+            self.global_params().values()
+        )
         self.door_width, self.door_margin, self.door_size = self.door_params().values()
-        self.max_window_length, self.window_height, self.window_margin, self.window_size, self.window_top = \
-            self.window_params().values()
+        (
+            self.max_window_length,
+            self.window_height,
+            self.window_margin,
+            self.window_size,
+            self.window_top,
+        ) = self.window_params().values()
         self.staircase_snap, self.staircase_thresh = self.staircase_params().values()
         if room_type is None:
             self.room_types = self.home_room_types
@@ -27,49 +41,67 @@ class RoomConstants:
         self.aspect_ratio_range = aspect_ratio_range
         self.fixed_contour = rg(fixed_contour)
 
-    @gin.configurable(module='RoomConstants')
+    @gin.configurable(module="RoomConstants")
     def global_params(
-        self, unit=.5, segment_margin=1.4, wall_thickness=('uniform', .2, .3),
-        wall_height=('uniform', 2.8, 3.2)
+        self,
+        unit=0.5,
+        segment_margin=1.4,
+        wall_thickness=("uniform", 0.2, 0.3),
+        wall_height=("uniform", 2.8, 3.2),
     ):
         wall_thickness = rg(wall_thickness)
         wall_height = rg(wall_height)
         return {
-            'unit': unit,
-            'segment_margin': segment_margin,
-            'wall_thickness': wall_thickness,
-            'wall_height': wall_height
+            "unit": unit,
+            "segment_margin": segment_margin,
+            "wall_thickness": wall_thickness,
+            "wall_height": wall_height,
         }
 
-    def door_params(self, door_width_ratio=('uniform', .7, .8), door_size=('uniform', 2., 2.4)):
+    def door_params(
+        self, door_width_ratio=("uniform", 0.7, 0.8), door_size=("uniform", 2.0, 2.4)
+    ):
         door_width = (self.segment_margin - self.wall_thickness) * rg(door_width_ratio)
         assert door_width > 0
         door_margin = (self.segment_margin - door_width) / 2
         door_size = rg(door_size)
-        return {'door_width': door_width, 'door_margin': door_margin, 'door_size': door_size, }
+        return {
+            "door_width": door_width,
+            "door_margin": door_margin,
+            "door_size": door_size,
+        }
 
     def window_params(
-        self, max_window_length=('uniform', 6, 8), window_height=('uniform', .8, 1.2),
-        window_margin=('uniform', .2, .25), window_size=('uniform', 1., 1.5)
+        self,
+        max_window_length=("uniform", 6, 8),
+        window_height=("uniform", 0.8, 1.2),
+        window_margin=("uniform", 0.2, 0.25),
+        window_size=("uniform", 1.0, 1.5),
     ):
         max_window_length = rg(max_window_length)
         window_height = rg(window_height)
         window_size = rg(window_size)
         window_margin = rg(window_margin)
-        window_top = self.wall_height - self.wall_thickness - window_height - window_size
+        window_top = (
+            self.wall_height - self.wall_thickness - window_height - window_size
+        )
         window_top = max(self.wall_thickness / 2, window_top)
-        window_size = self.wall_height - self.wall_thickness - window_top - window_height
+        window_size = (
+            self.wall_height - self.wall_thickness - window_top - window_height
+        )
         assert window_size > 0
         return {
-            'max_window_length': max_window_length,
-            'window_height': window_height,
-            'window_margin': window_margin,
-            'window_size': window_size,
-            'window_top': window_top,
+            "max_window_length": max_window_length,
+            "window_height": window_height,
+            "window_margin": window_margin,
+            "window_size": window_size,
+            "window_top": window_top,
         }
 
-    def staircase_params(self, ):
-        return {'staircase_snap': 1.2, 'staircase_thresh': .6}
+    def staircase_params(
+        self,
+    ):
+        return {"staircase_snap": 1.2, "staircase_thresh": 0.6}
 
     def unit_cast(self, x):
         x = np.round(x / self.unit) * self.unit
@@ -83,17 +115,27 @@ class RoomConstants:
             while True:
                 p_ = shapely.force_2d(simplify_polygon(p))
                 if p.area == 0:
-                    raise NotImplementedError('Polygon empty.')
+                    raise NotImplementedError("Polygon empty.")
                 p = orient(p_)
-                coords = np.array(p.boundary.coords[:] if not hasattr(p.boundary, 'geoms') else p.exterior.coords[:])
+                coords = np.array(
+                    p.boundary.coords[:]
+                    if not hasattr(p.boundary, "geoms")
+                    else p.exterior.coords[:]
+                )
                 l = len(coords)
                 rounded = np.round(coords / self.unit) * self.unit
-                coords = np.where(np.all(np.abs(coords - rounded) < 1e-3, -1)[:, np.newaxis], rounded, coords)
+                coords = np.where(
+                    np.all(np.abs(coords - rounded) < 1e-3, -1)[:, np.newaxis],
+                    rounded,
+                    coords,
+                )
                 diff = coords[1:] - coords[:-1]
                 diff = diff / (np.linalg.norm(diff, axis=-1, keepdims=True) + 1e-6)
                 product = (diff[[-1] + list(range(len(diff) - 1))] * diff).sum(-1)
                 valid_indices = list(range(len(coords) - 1))
-                invalid_indices = np.nonzero((product < -.8) | (product > 1 - 1e-6))[0].tolist()
+                invalid_indices = np.nonzero((product < -0.8) | (product > 1 - 1e-6))[
+                    0
+                ].tolist()
                 if len(invalid_indices) > 0:
                     i = invalid_indices[len(invalid_indices) // 2]
                     valid_indices.remove(i)
@@ -101,10 +143,10 @@ class RoomConstants:
                 if len(p.exterior.coords) == l:
                     break
             if not is_valid_polygon(p):
-                raise NotImplementedError('Invalid polygon')
+                raise NotImplementedError("Invalid polygon")
             return p
         except AttributeError:
-            raise NotImplementedError('Invalid multi polygon')
+            raise NotImplementedError("Invalid multi polygon")
 
     def filter(self, ses, margin=None):
         margin = self.segment_margin if margin is None else margin
@@ -129,5 +171,7 @@ class RoomConstants:
     @property
     def floors(self):
         return [
-            t.Semantics.GroundFloor, t.Semantics.SecondFloor, t.Semantics.ThirdFloor
+            t.Semantics.GroundFloor,
+            t.Semantics.SecondFloor,
+            t.Semantics.ThirdFloor,
         ]

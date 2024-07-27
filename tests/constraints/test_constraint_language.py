@@ -9,7 +9,7 @@ from infinigen_examples import indoor_constraint_examples as ex
 
 
 def test_residential():
-    cons = ex.home_constraints()
+    cons = ex.indoor_constraints()
 
     assert isinstance(cons, cl.Node)
     assert isinstance(repr(cons), str)

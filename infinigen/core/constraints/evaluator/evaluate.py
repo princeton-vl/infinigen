@@ -156,13 +156,9 @@ def viol_count(node: cl.Node, state: State, memo: dict, filter: r.Domain = None)
                 res = 0
         case cl.constant(val) if isinstance(val, bool):
             res = 0 if val else 1
-        case (
-            cl.BoolOperatorExpression(operator.or_, [lhs, rhs])
-        ):
+        case cl.BoolOperatorExpression(operator.or_, [lhs, rhs]):
             res = min(viol_count(rhs, state, memo), viol_count(lhs, state, memo))
-        case (
-            cl.BoolOperatorExpression(operator.not_, [lhs])
-        ):
+        case cl.BoolOperatorExpression(operator.not_, [lhs]):
             lhs_res = evaluate_node(lhs, state, memo)
             res = 1 if lhs_res is True else 0
         case cl.Node():
@@ -222,10 +218,11 @@ class EvalResult:
         yield self.loss()
         yield self.viol_count()
 
+
 def evaluate_problem(
-    problem: cl.Problem, 
-    state: State, 
-    filter: r.Domain = None, 
+    problem: cl.Problem,
+    state: State,
+    filter: r.Domain = None,
     memo=None,
     enable_loss=True,
     enable_violated=True,

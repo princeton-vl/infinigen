@@ -17,13 +17,13 @@ from .expression import (
     min_expr,
 )
 from .gather import (
-    sum,
-    mean,
+    ForAll,
+    MeanOver,
+    SumOver,
     all,
     item,
-    ForAll,
-    SumOver,
-    MeanOver,
+    mean,
+    sum,
 )
 from .geometry import (
     ObjectSetExpression,
@@ -32,16 +32,13 @@ from .geometry import (
     center_stable_surface_dist,
     coplanarity_cost,
     distance,
-    min_distance_internal,
     focus_score,
     freespace_2d,
     min_dist_2d,
-    rotational_asymmetry,
-    center_stable_surface_dist,
-    accessibility_cost,
+    min_distance_internal,
     reflectional_asymmetry,
+    rotational_asymmetry,
     volume,
-    coplanarity_cost,
 )
 from .relations import (
     AnyRelation,
@@ -51,37 +48,36 @@ from .relations import (
     NegatedRelation,
     Relation,
     RoomNeighbour,
+    SharedEdge,
     StableAgainst,
     SupportedBy,
-    StableAgainst,
-    SharedEdge,
+    Touching,
     Traverse,
-    Touching
 )
 from .result import Problem
 from .rooms import (
     access_angle,
+    area,
     aspect_ratio,
     convexity,
-    n_verts,
-    grid_line_count,
-    narrowness,
-    intersection,
     graph_coherent,
+    grid_line_count,
+    intersection,
+    length,
+    n_verts,
+    narrowness,
+    rand,
     same_level,
-    area,
     shared_length,
     shared_n_verts,
-    length,
-    rand,
 )
 from .set_reasoning import (
+    count,
+    excludes,
+    in_range,
+    related_to,
     scene,
     tagged,
     union,
-    excludes,
-    count,
-    in_range,
-    related_to,
 )
 from .types import Node

@@ -6,21 +6,21 @@ from shapely.affinity import translate
 from tqdm import tqdm, trange
 
 from infinigen.core.constraints import constraint_language as cl
+from infinigen.core.constraints.evaluator.evaluate import evaluate_problem
 from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.tags import Semantics
 from infinigen.core.util.math import FixedSeed
-from .base import room_type, room_level
+
+from .base import room_level, room_type
 from .contour import ContourFactory
 from .graph import GraphMaker
 from .segment import SegmentMaker
 from .solidifier import BlueprintSolidifier
 from .solver import FloorPlanMoves
-from ...evaluator import evaluate_problem
 
 
 @gin.configurable
 class FloorPlanSolver:
-
     def __init__(self, factory_seed, consgraph, n_divide_trials=100, iters_mult=200):
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
@@ -36,16 +36,26 @@ class FloorPlanSolver:
 
             self.build_graphs()
             self.segment_makers = [
-                SegmentMaker(factory_seed, self.constants, consgraph, self.contours[i], self.graphs[i], i) for i in
-                range(self.n_stories)]
+                SegmentMaker(
+                    factory_seed,
+                    self.constants,
+                    consgraph,
+                    self.contours[i],
+                    self.graphs[i],
+                    i,
+                )
+                for i in range(self.n_stories)
+            ]
 
             self.solver = FloorPlanMoves(self.constants)
-            self.solidifiers = [BlueprintSolidifier(consgraph, g, i) for i, g in enumerate(self.graphs)]
+            self.solidifiers = [
+                BlueprintSolidifier(consgraph, g, i) for i, g in enumerate(self.graphs)
+            ]
 
             self.n_divide_trials = n_divide_trials
             self.iter_per_room = iters_mult
             self.score_scale = 5
-            self.staircase_solver_prob = .1
+            self.staircase_solver_prob = 0.1
 
     def build_graphs(self):
         for i in range(self.n_stories):
@@ -56,12 +66,16 @@ class FloorPlanSolver:
             else:
                 for j in range(self.n_trials):
                     graph = graph_maker.make_graph(np.random.randint(1e6))
-                    args = [self.widths[-1], self.heights[-1]] if len(self.graphs) > 0 else [None, None]
+                    args = (
+                        [self.widths[-1], self.heights[-1]]
+                        if len(self.graphs) > 0
+                        else [None, None]
+                    )
                     width, height = graph_maker.suggest_dimensions(graph, *args)
                     if width is not None and height is not None:
                         break
                 else:
-                    raise Exception('Invalid graph')
+                    raise Exception("Invalid graph")
             self.graphs.append(graph)
             while len(self.contours) <= i:
                 for j in range(self.n_trials):
@@ -70,8 +84,12 @@ class FloorPlanSolver:
                         break
                     contour = shapely.box(0, 0, width, height)
                     if len(self.contours) > 0:
-                        x_offset = self.constants.unit_cast((width - self.widths[0]) * uniform(0, 1))
-                        y_offset = self.constants.unit_cast((height - self.heights[0]) * uniform(0, 1))
+                        x_offset = self.constants.unit_cast(
+                            (width - self.widths[0]) * uniform(0, 1)
+                        )
+                        y_offset = self.constants.unit_cast(
+                            (height - self.heights[0]) * uniform(0, 1)
+                        )
                         contour = translate(contour, -x_offset, -y_offset)
                         if not self.contours[-1].contains(contour):
                             continue
@@ -94,7 +112,10 @@ class FloorPlanSolver:
             state.objs = {}
             states = []
             for j in range(self.n_stories):
-                for _ in trange(self.n_divide_trials * (j + 1) ** 2, desc=f'Dividing segments for {j}'):
+                for _ in trange(
+                    self.n_divide_trials * (j + 1) ** 2,
+                    desc=f"Dividing segments for {j}",
+                ):
                     st = self.segment_makers[j].build_segments(pholder)
                     if st is not None:
                         states.append(st)
@@ -117,15 +138,19 @@ class FloorPlanSolver:
         for graph in self.graphs:
             for s in graph.names:
                 unique_roomtypes.add(Semantics(room_type(s)))
-        dimensions = self.widths[0], self.heights[0], self.constants.wall_height * self.n_stories
+        dimensions = (
+            self.widths[0],
+            self.heights[0],
+            self.constants.wall_height * self.n_stories,
+        )
         return State(obj_states), unique_roomtypes, dimensions
 
     def simulated_anneal(self, state):
-        consgraph = self.consgraph.filter('room')
-        consgraph.constraints['graph'] = cl.graph_coherent(self.consgraph.constants)
+        consgraph = self.consgraph.filter("room")
+        consgraph.constraints["graph"] = cl.graph_coherent(self.consgraph.constants)
         score, _ = evaluate_problem(consgraph, state, memo={})
         it = self.iter_per_room * sum(len(g) for g in self.graphs)
-        with tqdm(total=it, desc='Sampling solutions') as pbar:
+        with tqdm(total=it, desc="Sampling solutions") as pbar:
             while pbar.n < it:
                 state_ = self.solver.perturb_state(state)
                 score_, violated_ = evaluate_problem(consgraph, state_, memo={})

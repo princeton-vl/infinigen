@@ -402,29 +402,22 @@ class StableAgainst(GeometryRelation):
 
 
 class IdentityCompareRelation(Relation):
-    
     def implies(self, other: Relation) -> bool:
-        return (
-            isinstance(other, AnyRelation) 
-            or isinstance(other, self.__class__)
-        )
-    
+        return isinstance(other, AnyRelation) or isinstance(other, self.__class__)
+
     def satisfies(self, other: Relation) -> bool:
         return self.implies(other)
 
     def intersects(self, other: Relation, strict=False) -> bool:
-        return (
-            isinstance(other, AnyRelation)
-            or isinstance(other, self.__class__)
-        )
-    
+        return isinstance(other, AnyRelation) or isinstance(other, self.__class__)
+
     def intersection(self, other: Relation) -> Relation:
         return deepcopy(self)
 
     def difference(self, other: Relation) -> Relation:
         return -AnyRelation()
-    
-    
+
+
 @dataclass(frozen=True)
 class CutFrom(IdentityCompareRelation):
     pass

@@ -37,7 +37,8 @@ from infinigen.core.constraints.example_solver import (
 )
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
 from infinigen.core.placement import camera as cam_util
-from infinigen.core.util import blender as butil, math as mutil
+from infinigen.core.util import blender as butil
+from infinigen.core.util import math as mutil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.imu import save_imu_tum_files
@@ -46,12 +47,13 @@ from infinigen.core.util.test_utils import (
     load_txt_list,
 )
 from infinigen.terrain import Terrain
-from infinigen_examples.indoor_constraint_examples import home_constraints
-
+from infinigen_examples.constraint_examples.home import home_constraints
 from infinigen_examples.constraint_examples.office import office_constraints
 from infinigen_examples.constraint_examples.warehouse import warehouse_constraints
-from infinigen_examples.constraint_examples.home import home_constraints
 
+from . import (
+    generate_nature,  # noqa F401 # needed for nature gin configs to load  # noqa F401 # needed for nature gin configs to load
+)
 from .util import constraint_util as cu
 from .util.generate_indoors_util import (
     apply_greedy_restriction,
@@ -60,9 +62,6 @@ from .util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
-
-from . import generate_nature  # noqa F401 # needed for nature gin configs to load
-
 
 logger = logging.getLogger(__name__)
 
@@ -147,10 +146,10 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p.run_stage("sky_lighting", lighting.sky_lighting.add_lighting, use_chance=False)
 
     with mutil.FixedSeed(scene_seed):
-        match overrides.get('type', None):
-            case 'office':
+        match overrides.get("type", None):
+            case "office":
                 consgraph = office_constraints()
-            case 'warehouse':
+            case "warehouse":
                 consgraph = warehouse_constraints()
             case _:
                 consgraph = home_constraints()
@@ -180,6 +179,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         apply_greedy_restriction(stages, restrict_parent_rooms, cu.variable_room)
 
     solver = Solver(output_folder=output_folder)
+
     def solve_rooms():
         return solver.solve_rooms(scene_seed, consgraph, stages["rooms"])
 
@@ -366,35 +366,42 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
     p.run_stage(
         "room_windows",
-        lambda: room_dec.populate_windows(solver.get_bpy_objects(window_filter), constants),
+        lambda: room_dec.populate_windows(
+            solver.get_bpy_objects(window_filter), constants, state
+        ),
         use_chance=False,
     )
 
     room_meshes = solver.get_bpy_objects(r.Domain({t.Semantics.Room}))
     p.run_stage(
         "room_stairs",
-        lambda: room_dec.room_stairs(state, room_meshes),
+        lambda: room_dec.room_stairs(constants, state, room_meshes),
         use_chance=False,
     )
     p.run_stage(
         "skirting_floor",
-        lambda: make_skirting_board(room_meshes, t.Subpart.SupportSurface),
+        lambda: make_skirting_board(constants, room_meshes, t.Subpart.SupportSurface),
     )
     p.run_stage(
-        "skirting_ceiling", lambda: make_skirting_board(room_meshes, t.Subpart.Ceiling)
+        "skirting_ceiling",
+        lambda: make_skirting_board(constants, room_meshes, t.Subpart.Ceiling),
     )
 
     rooms_meshed = butil.get_collection("placeholders:room_meshes")
     rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
     p.run_stage(
-        "room_walls", room_dec.room_walls, rooms_split["wall"].objects, use_chance=False
+        "room_walls",
+        room_dec.room_walls,
+        rooms_split["wall"].objects,
+        constants,
+        use_chance=False,
     )
     p.run_stage(
         "room_pillars",
         room_dec.room_pillars,
-        state,
         rooms_split["wall"].objects,
+        constants,
         use_chance=False,
     )
     p.run_stage(
@@ -486,20 +493,23 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         camera_rigs[0].location = 0, 0, 0
         camera_rigs[0].rotation_euler = 0, 0, 0
         bpy.context.scene.camera = camera
-        rot_x = np.deg2rad(overrides.get('topview_rot_x', 0))
-        rot_z = np.deg2rad(overrides.get('topview_rot_z', 0))
+        rot_x = np.deg2rad(overrides.get("topview_rot_x", 0))
+        rot_z = np.deg2rad(overrides.get("topview_rot_z", 0))
         camera.rotation_euler = rot_x, 0, rot_z
         cam_x = (np.amax(bbox[:, 0]) + np.amin(bbox[:, 0])) / 2
         cam_y = (np.amax(bbox[:, 1]) + np.amin(bbox[:, 1])) / 2
-        for cam_dist in np.exp(np.linspace(1., 5., 500)):
-            camera.location = cam_x + cam_dist * np.sin(rot_x) * np.sin(rot_z), cam_y - cam_dist * np.sin(
-                rot_x) * np.cos(rot_z), cam_dist * np.cos(rot_x)
+        for cam_dist in np.exp(np.linspace(1.0, 5.0, 500)):
+            camera.location = (
+                cam_x + cam_dist * np.sin(rot_x) * np.sin(rot_z),
+                cam_y - cam_dist * np.sin(rot_x) * np.cos(rot_z),
+                cam_dist * np.cos(rot_x),
+            )
             bpy.context.view_layer.update()
             inview = points_inview(bbox, camera)
             if inview.all():
                 for area in bpy.context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.spaces.active.region_3d.view_perspective = 'CAMERA'
+                    if area.type == "VIEW_3D":
+                        area.spaces.active.region_3d.view_perspective = "CAMERA"
                         break
                 break
 

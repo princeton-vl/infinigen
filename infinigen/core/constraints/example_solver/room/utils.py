@@ -11,9 +11,11 @@ import shapely
 from shapely import MultiLineString
 from shapely.ops import shared_paths
 
-from .base import room_level, room_name, valid_rooms
-from ..state_def import State
+from example_solver.state_def import State
 from infinigen.core.tags import Semantics
+
+from .base import room_level, room_name, valid_rooms
+
 
 def update_shared(state: State, i: str):
     for r in state[i].relations:
@@ -24,7 +26,7 @@ def update_shared(state: State, i: str):
             r.value = shared(o.polygon, state[i].polygon)
 
 
-def update_contour(state_: State, state:State, indices: set[str]):
+def update_contour(state_: State, state: State, indices: set[str]):
     i = next(iter(indices))
     exterior = room_name(Semantics.Exterior, room_level(i))
     minus = shapely.union_all([state[k].polygon for k in indices])
@@ -40,7 +42,7 @@ def update_exterior(state: State, i: str):
         if q.value.length > 1e-6:
             v = v.difference(q.value)
     v = shapely.force_2d(v)
-    if v.geom_type == 'MultiLineString':
+    if v.geom_type == "MultiLineString":
         r.value = v
     elif v.length > 0:
         r.value = MultiLineString([v])

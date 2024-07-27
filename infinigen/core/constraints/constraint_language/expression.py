@@ -108,17 +108,17 @@ class ScalarExpression(ArithmethicExpression):
 
     def clamp_min(self, other):
         return max_expr(self, other)
-    
+
     def clamp_max(self, other):
         return min_expr(self, other)
-    
+
     def clip(self, a_min=-np.inf, a_max=np.inf):
-        return ScalarOperatorExpression((lambda x, y, z: min(max(x, y), z)), [self, a_min, a_max])
+        return ScalarOperatorExpression(
+            (lambda x, y, z: min(max(x, y), z)), [self, a_min, a_max]
+        )
 
     def log(self):
         return ScalarOperatorExpression(np.log, [self])
-
-
 
 
 def max_expr(*args):
@@ -133,12 +133,13 @@ def min_expr(*args):
 class BoolExpression(ArithmethicExpression):
     def __mul__(self, other):
         return BoolOperatorExpression(operator.and_, [self, other])
-    
+
     def __add__(self, other):
         return BoolOperatorExpression(operator.or_, [self, other])
 
     def __invert__(self):
         return BoolOperatorExpression(operator.not_, [self])
+
 
 @nodedataclass()
 class constant(ScalarExpression):

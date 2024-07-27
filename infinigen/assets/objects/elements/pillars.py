@@ -6,15 +6,21 @@ import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
-import gin
 
 from infinigen.assets.materials import marble_regular, marble_voronoi
 from infinigen.assets.utils.decorate import (
-    read_co, read_edge_center, read_selected, select_edges,
-    subdivide_edge_ring, subsurf, write_co,
+    read_co,
+    read_edge_center,
+    read_selected,
+    select_edges,
+    subdivide_edge_ring,
+    subsurf,
+    write_co,
 )
 from infinigen.assets.utils.object import (
-    join_objects, new_base_circle, new_cylinder,
+    join_objects,
+    new_base_circle,
+    new_cylinder,
 )
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory

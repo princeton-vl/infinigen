@@ -9,14 +9,6 @@ import pytest
 
 from infinigen.core import tags as t
 from infinigen.core.constraints import usage_lookup
-from infinigen.core.constraints import (
-    usage_lookup,
-    constraint_language as cl
-)
-
-from infinigen.core.constraints.example_solver.geometry import dof
-
-
 from infinigen.core.util import blender as butil
 from infinigen_examples.indoor_asset_semantics import home_asset_usage
 
@@ -29,11 +21,13 @@ def get_real_placeholder_facs():
     pholder_facs.difference_update(oversize_facs)
     return sorted(list(pholder_facs), key=lambda x: x.__name__)
 
+
 def get_oversize_placeholder_facs():
     used_as = home_asset_usage()
     usage_lookup.initialize_from_dict(used_as)
     pholder_facs = usage_lookup.factories_for_usage({t.Semantics.OversizePlaceholder})
     return sorted(list(pholder_facs), key=lambda _: _.__name__)
+
 
 def get_asset_facs():
     used_as = home_asset_usage()

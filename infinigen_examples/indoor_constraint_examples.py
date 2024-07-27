@@ -50,7 +50,7 @@ def sample_home_constraint_params():
     )
 
 
-def home_constraints():
+def indoor_constraints():
     """Construct a constraint graph which incentivizes realistic home layouts.
 
     Result will contain both hard constraints (`constraints`) and soft constraints (`score_terms`).
@@ -1080,4 +1080,4 @@ def home_constraints():
     )
 
 
-all_constraint_funcs = [home_constraints]
+all_constraint_funcs = [indoor_constraints]

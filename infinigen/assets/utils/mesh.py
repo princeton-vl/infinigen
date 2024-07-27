@@ -14,14 +14,10 @@ from mathutils import Vector
 from numpy.random import normal, uniform
 from shapely import LineString
 
-<<<<<<< HEAD
-from infinigen.assets.utils.decorate import read_co, read_edges
-=======
 from infinigen.assets.utils.decorate import (
-    read_co, read_edges, read_normal,
-    read_center,
+    read_co,
+    read_edges,
 )
->>>>>>> 77d48ad2e (Fix boolean errors.)
 from infinigen.assets.utils.object import obj2trimesh, separate_loose
 from infinigen.assets.utils.shapes import dissolve_limited
 from infinigen.core.util import blender as butil
@@ -273,7 +269,6 @@ def reset_preset(profile, name, n=None):
     if n is None:
         n = np.random.randint(8, 15)
     match name:
-<<<<<<< HEAD
         case "LINE":
             configs = [(1.0, 0.0, 0, "AUTO", "AUTO"), (0.0, 1.0, 0, "AUTO", "AUTO")]
         case "CORNICE":
@@ -321,32 +316,6 @@ def reset_preset(profile, name, n=None):
                 )
                 + [(0.5, 1.0, 0, "VECTOR", "VECTOR"), (0.0, 1.0, 0, "VECTOR", "VECTOR")]
             )
-=======
-        case 'LINE':
-            configs = [(1.0, 0.0, 0, 'AUTO', 'AUTO'), (0.0, 1.0, 0, 'AUTO', 'AUTO')]
-        case 'CORNICE':
-            configs = [(1.0, 0.0, 0, 'VECTOR', 'VECTOR'), (1.0, 0.125, 0, 'VECTOR', 'VECTOR'),
-                (0.92, 0.16, 0, 'AUTO', 'AUTO'), (0.875, 0.25, 0, 'VECTOR', 'VECTOR'),
-                (0.8, 0.25, 0, 'VECTOR', 'VECTOR'), (0.733, 0.433, 0, 'AUTO', 'AUTO'),
-                (0.582, 0.522, 0, 'AUTO', 'AUTO'), (0.4, 0.6, 0, 'AUTO', 'AUTO'),
-                (0.289, 0.727, 0, 'AUTO', 'AUTO'), (0.25, 0.925, 0, 'VECTOR', 'VECTOR'),
-                (0.175, 0.925, 0, 'VECTOR', 'VECTOR'), (0.175, 1.0, 0, 'VECTOR', 'VECTOR'),
-                (0.0, 1.0, 0, 'VECTOR', 'VECTOR')]
-        case 'CROWN':
-            configs = [(1.0, 0.0, 0, 'VECTOR', 'VECTOR'), (1.0, 0.25, 0, 'VECTOR', 'VECTOR'),
-                (0.75, 0.25, 0, 'VECTOR', 'VECTOR'), (0.75, 0.325, 0, 'VECTOR', 'VECTOR'),
-                (0.925, 0.4, 0, 'AUTO', 'AUTO'), (0.975, 0.5, 0, 'AUTO', 'AUTO'),
-                (0.94, 0.65, 0, 'AUTO', 'AUTO'), (0.85, 0.75, 0, 'AUTO', 'AUTO'),
-                (0.75, 0.875, 0, 'AUTO', 'AUTO'), (0.7, 1.0, 0, 'VECTOR', 'VECTOR'),
-                (0.0, 1.0, 0, 'VECTOR', 'VECTOR')]
-        case 'SUPPORTS':
-            configs = [(1.0, 0.0, 0, 'VECTOR', 'VECTOR'), (1.0, 0.5, 0, 'VECTOR', 'VECTOR')] + list(
-                (1 - .5 * (
-                        1 - np.cos(i / (n - 3) * np.pi / 2)), .5 + .5 * np.sin(i / (n - 3) * np.pi / 2), 0, 'AUTO',
-                'AUTO') for i in range(1, n - 2)
-            ) + [(0.5, 1.0, 0, 'VECTOR', 'VECTOR'),
-                          (0.0, 1.0, 0, 'VECTOR', 'VECTOR')]
->>>>>>> 77d48ad2e (Fix boolean errors.)
         case _:
             n_steps_x = n if n % 2 == 0 else n - 1
             n_steps_y = n - 2 if n % 2 == 0 else n - 1
@@ -437,13 +406,10 @@ def snap_mesh(obj, eps=1e-3):
                 bmesh.ops.subdivide_edges(bm, edges=[e], cuts=1, edge_percents={e: p})
             bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=eps * 1.5)
             bmesh.update_edit_mesh(obj.data)
-<<<<<<< HEAD
-=======
 
 
 def prepare_for_boolean(obj):
-    butil.modify_mesh(obj, 'WELD', merge_threshold=1e-3)
-    with butil.ViewportMode(obj, 'EDIT'), butil.Suppress():
-        bpy.ops.mesh.select_all(action='SELECT')
+    butil.modify_mesh(obj, "WELD", merge_threshold=1e-3)
+    with butil.ViewportMode(obj, "EDIT"), butil.Suppress():
+        bpy.ops.mesh.select_all(action="SELECT")
         bpy.ops.mesh.remove_doubles()
->>>>>>> 77d48ad2e (Fix boolean errors.)

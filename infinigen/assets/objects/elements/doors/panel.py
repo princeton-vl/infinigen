@@ -6,10 +6,9 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.utils.mesh import prepare_for_boolean
-from infinigen.core.surface import write_attr_data, read_attr_data
 from infinigen.assets.objects.elements.doors.base import BaseDoorFactory
-from infinigen.assets.utils.decorate import write_attribute, select_faces, read_area
+from infinigen.assets.utils.decorate import read_area, select_faces, write_attribute
+from infinigen.assets.utils.mesh import prepare_for_boolean
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
@@ -38,23 +37,15 @@ class PanelDoorFactory(BaseDoorFactory):
         cutter.scale = (x_max - x_min) / 2 - 2e-3, 0.1, (y_max - y_min) / 2 - 2e-3
         butil.apply_transform(cutter, loc=True)
         # butil.modify_mesh(cutter, 'BEVEL', width=self.bevel_width)
-<<<<<<< HEAD:infinigen/assets/objects/elements/doors/panel.py
         write_attr_data(
             cutter, "cut", np.ones(len(cutter.data.polygons), dtype=int), "INT", "FACE"
         )
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
+        prepare_for_boolean(obj)
         cutter.location[1] += 0.2 + self.depth - self.bevel_width
         butil.apply_transform(cutter, loc=True)
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
-=======
-        write_attr_data(cutter, 'cut', np.ones(len(cutter.data.polygons), dtype=int), 'INT', 'FACE')
-        butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='DIFFERENCE')
         prepare_for_boolean(obj)
-        cutter.location[1] += .2 + self.depth - self.bevel_width 
-        butil.apply_transform(cutter, loc=True)
-        butil.modify_mesh(obj, 'BOOLEAN', object=cutter, operation='DIFFERENCE')
-        prepare_for_boolean(obj)
->>>>>>> 77d48ad2e (Fix boolean errors.):infinigen/assets/elements/doors/panel.py
         butil.delete(cutter)
         select_faces(obj, (read_area(obj) > 0.01) & (read_attr_data(obj, "cut")))
         with butil.ViewportMode(obj, "EDIT"):
@@ -90,7 +81,6 @@ class PanelDoorFactory(BaseDoorFactory):
 
 
 class GlassPanelDoorFactory(PanelDoorFactory):
-
     def __init__(self, factory_seed, coarse=False, constants=None):
         super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):

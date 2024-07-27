@@ -21,6 +21,7 @@ class ObjectSetExpression(Expression):
     def __mod__(self, key):
         return union(self, key)
 
+
 @nodedataclass()
 class scene(ObjectSetExpression):
     pass
@@ -35,6 +36,7 @@ class tagged(ObjectSetExpression):
     def __post_init__(self):
         self.tags = t.to_tag_set(self.tags, fac_context=usage_lookup._factory_lookup)
 
+
 @ObjectSetExpression.register_postfix_func
 @nodedataclass()
 class union(ObjectSetExpression):
@@ -45,7 +47,7 @@ class union(ObjectSetExpression):
         if not isinstance(self.tags, set):
             self.tags = {self.tags}
 
-    
+
 @ObjectSetExpression.register_postfix_func
 def excludes(objs, tags):
     # syntactic helper - assume people wont construct obvious contradictions

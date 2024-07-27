@@ -7,7 +7,6 @@
 from pprint import pprint
 
 import pytest
-import shapely
 
 from infinigen.assets.objects.tableware import PlantContainerFactory
 from infinigen.core import tags as t
@@ -21,9 +20,8 @@ from infinigen.core.constraints.example_solver import (
 )
 from infinigen.core.constraints.example_solver.room.base import room_name
 from infinigen.core.util import blender as butil
-
-from infinigen_examples import indoor_constraint_examples as ex
 from infinigen_examples import generate_indoors
+from infinigen_examples import indoor_constraint_examples as ex
 from infinigen_examples.util import constraint_util as cu
 
 
@@ -52,10 +50,10 @@ def test_stages_relations(key):
 #    stage = stages[key]
 #    stage = r.domain_tag_substitute(stage, t.Variable('room'), r.Domain({roomtype}))
 #
-#    bounds = r.constraint_bounds(ex.indoor_constraints())    
+#    bounds = r.constraint_bounds(ex.indoor_constraints())
+
 
 def test_validate_bounds():
-
     bounds = r.constraint_bounds(ex.indoor_constraints())
 
     for b in bounds:
@@ -334,7 +332,7 @@ def test_stage_intersect_table():
 
 
 def test_obj_on_ceilinglight():
-    bounds = r.constraint_bounds(ex.home_constraints())
+    bounds = r.constraint_bounds(ex.indoor_constraints())
 
     ceilinglight = r.Domain(
         {t.Semantics.Object, t.Semantics.Lighting, -t.Semantics.Room},
@@ -361,7 +359,7 @@ def test_contradiction_home():
 
 @pytest.mark.parametrize("rtype", sorted(cu.room_types, key=lambda x: x.name))
 def test_room_has_viols_at_init(rtype):
-    prob = ex.home_constraints()
+    prob = ex.indoor_constraints()
 
     ostate_name = room_name(rtype, 0)
     state = state_def.State(

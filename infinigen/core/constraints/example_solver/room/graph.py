@@ -2,32 +2,34 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-from collections import defaultdict, deque
-from collections.abc import Sequence
 import operator
 from copy import deepcopy
-from functools import cached_property
 
 import gin
-import networkx as nx
 import numpy as np
 import scipy.special
 import shapely
 from numpy.random import uniform
 from tqdm import tqdm
-from matplotlib import pyplot as plt
-
-from infinigen.core.constraints.constraint_language import Problem
-from infinigen.core.constraints.evaluator import evaluate_problem, evaluate_node, viol_count
-from infinigen.core.constraints.example_solver.room.base import room_type, room_name, RoomGraph
-from infinigen.core.constraints.example_solver.room.utils import update_exterior
-from infinigen.core.constraints.example_solver.state_def import State, ObjectState, RelationState
 
 from infinigen.core.constraints import constraint_language as cl
-
+from infinigen.core.constraints.constraint_language import Problem
+from infinigen.core.constraints.evaluator.evaluate import (
+    evaluate_problem,
+)
+from infinigen.core.constraints.example_solver.room.base import (
+    RoomGraph,
+    room_name,
+    room_type,
+)
+from infinigen.core.constraints.example_solver.room.utils import update_exterior
+from infinigen.core.constraints.example_solver.state_def import (
+    ObjectState,
+    RelationState,
+    State,
+)
 from infinigen.core.tags import Semantics
 from infinigen.core.util.math import FixedSeed
-
 from infinigen.core.util.random import log_uniform
 
 
@@ -39,12 +41,12 @@ class GraphMaker:
             self.level = level
             self.constants = consgraph.constants
             self.typical_areas = self.get_typical_areas(consgraph)
-            consgraph = consgraph.filter('node')
+            consgraph = consgraph.filter("node")
             self.fast = fast
             self.consgraph = Problem(
-                {'node': consgraph.constraints['node']},
-                {'node_gen': self.inject(consgraph.constraints['node_gen'])},
-                consgraph.constants
+                {"node": consgraph.constraints["node"]},
+                {"node_gen": self.inject(consgraph.constraints["node_gen"])},
+                consgraph.constants,
             )
             self.max_samples = 1000
             self.slackness = log_uniform(1.1, 1.3)
@@ -52,7 +54,7 @@ class GraphMaker:
     @property
     def semantics_floor(self):
         return Semantics.floors[self.level]
-    
+
     def inject(self, node, on=False):
         match node:
             case cl.in_range(count, low, high, mean) if mean > 0:
@@ -62,13 +64,19 @@ class GraphMaker:
                     if self.fast:
                         p /= 2
                     return cl.rand(
-                        self.inject(count, True), 'cat',
-                        [0] * low + [p ** i * (1 - p) ** (size - i) * scipy.special.comb(size, i) for i in
-                            range(size + 1)]
+                        self.inject(count, True),
+                        "cat",
+                        [0] * low
+                        + [
+                            p**i * (1 - p) ** (size - i) * scipy.special.comb(size, i)
+                            for i in range(size + 1)
+                        ],
                     )
                 else:
                     assert low == int(low)
-                    return cl.rand(self.inject(count, True), 'cat', [0] * int(low) + [1])
+                    return cl.rand(
+                        self.inject(count, True), "cat", [0] * int(low) + [1]
+                    )
             case cl.scene():
                 return cl.scene() if on else cl.scene()[-Semantics.New]
             case cl.ForAll(objs, var, pred):
@@ -80,7 +88,10 @@ class GraphMaker:
             case cl.Node():
                 first = next(iter(node.__dict__))
                 return node.__class__(
-                    **{k: self.inject(v, on and k == first) for k, v in node.__dict__.items()}
+                    **{
+                        k: self.inject(v, on and k == first)
+                        for k, v in node.__dict__.items()
+                    }
                 )
             case _ if isinstance(node, list):
                 return list(self.inject(n, on) for n in node)
@@ -93,34 +104,67 @@ class GraphMaker:
         with FixedSeed(i):
             while True:
                 name = room_name(Semantics.Root, self.level)
-                state = State({name: ObjectState(tags={Semantics.Root, Semantics.RoomContour, self.semantics_floor})})
+                state = State(
+                    {
+                        name: ObjectState(
+                            tags={
+                                Semantics.Root,
+                                Semantics.RoomContour,
+                                self.semantics_floor,
+                            }
+                        )
+                    }
+                )
                 for _ in tqdm(range(40), desc=f"Generating graphs for {self.level}: "):
-                    unvisited = list(sorted(k for k, obj_st in state.objs.items() if Semantics.Visited not in obj_st.tags))
+                    unvisited = list(
+                        sorted(
+                            k
+                            for k, obj_st in state.objs.items()
+                            if Semantics.Visited not in obj_st.tags
+                        )
+                    )
                     if len(unvisited) == 0:
                         break
                     n = unvisited[np.random.randint(len(unvisited))]
-                    score, _ = evaluate_problem(self.consgraph, state, {}, enable_violated=False)
+                    score, _ = evaluate_problem(
+                        self.consgraph, state, {}, enable_violated=False
+                    )
                     scores = [score]
                     states = [state]
-                    for t in list(sorted(self.constants.room_types)) + [Semantics.Entrance, Semantics.Exterior]:
+                    for t in list(sorted(self.constants.room_types)) + [
+                        Semantics.Entrance,
+                        Semantics.Exterior,
+                    ]:
                         count = len(list(k for k in state.objs if room_type(k) == t))
                         for i in range(1, 3):
                             st = deepcopy(state)
                             for j in range(i):
                                 name = room_name(t, self.level, count + j)
                                 st[name] = ObjectState(
-                                    tags={t, Semantics.RoomContour, Semantics.New, self.semantics_floor},
-                                    relations=[RelationState(cl.Traverse(), n)]
+                                    tags={
+                                        t,
+                                        Semantics.RoomContour,
+                                        Semantics.New,
+                                        self.semantics_floor,
+                                    },
+                                    relations=[RelationState(cl.Traverse(), n)],
                                 )
-                                st[n].relations.append(RelationState(cl.Traverse(), name))
-                            score, _ = evaluate_problem(self.consgraph, st, {}, enable_violated=False)
+                                st[n].relations.append(
+                                    RelationState(cl.Traverse(), name)
+                                )
+                            score, _ = evaluate_problem(
+                                self.consgraph, st, {}, enable_violated=False
+                            )
                             states.append(st)
                             scores.append(score)
                         scores_ = np.array(scores) - np.min(scores)
-                        if np.all(scores_ < .01):
+                        if np.all(scores_ < 0.01):
                             i = 0
                         else:
-                            i = np.random.choice(np.arange(len(scores)), p=np.exp(-scores_) / np.exp(-scores_).sum())
+                            i = np.random.choice(
+                                np.arange(len(scores)),
+                                p=np.exp(-scores_) / np.exp(-scores_).sum(),
+                            )
                         state = states[i]
                         scores = [scores[i]]
                         states = [state]
@@ -132,7 +176,11 @@ class GraphMaker:
                         first = next(iter(state.objs))
                         for k, obj_st in state.objs.items():
                             if k == first:
-                                obj_st.relations = [RelationState(cl.Traverse(), l) for l in state.objs if l != first]
+                                obj_st.relations = [
+                                    RelationState(cl.Traverse(), l)
+                                    for l in state.objs
+                                    if l != first
+                                ]
                             else:
                                 obj_st.relations = [RelationState(cl.Traverse(), first)]
                     else:
@@ -145,10 +193,12 @@ class GraphMaker:
         state = self.merge_exterior(state)
         state, entrance = self.merge_entrance(state)
         names = [k for k in state.objs.keys() if room_type(k) != Semantics.Exterior] + [
-            room_name(Semantics.Exterior, self.level)]
+            room_name(Semantics.Exterior, self.level)
+        ]
         return RoomGraph(
-            [[names.index(r.target_name) for r in state[n].relations] for n in names], names,
-            None if entrance is None else names.index(entrance)
+            [[names.index(r.target_name) for r in state[n].relations] for n in names],
+            names,
+            None if entrance is None else names.index(entrance),
         )
 
     def merge_exterior(self, state):
@@ -158,14 +208,23 @@ class GraphMaker:
                 for r in obj_st.relations:
                     exterior_connected.add(r.target_name)
         exterior_name = room_name(Semantics.Exterior, self.level)
-        state = State({k: obj_st for k, obj_st in state.objs.items() if room_type(k) != Semantics.Exterior})
+        state = State(
+            {
+                k: obj_st
+                for k, obj_st in state.objs.items()
+                if room_type(k) != Semantics.Exterior
+            }
+        )
         for k in exterior_connected:
-            state[k].relations = [r for r in state[k].relations if room_type(r.target_name) != Semantics.Exterior]
+            state[k].relations = [
+                r
+                for r in state[k].relations
+                if room_type(r.target_name) != Semantics.Exterior
+            ]
             state[k].relations.append(RelationState(cl.Traverse(), exterior_name))
         state[exterior_name] = ObjectState(
             tags={Semantics.Exterior, Semantics.RoomContour, self.semantics_floor},
-            relations=[RelationState(cl.Traverse(), k) for k in
-                exterior_connected]
+            relations=[RelationState(cl.Traverse(), k) for k in exterior_connected],
         )
         return state
 
@@ -175,26 +234,53 @@ class GraphMaker:
             if room_type(k) == Semantics.Entrance:
                 for r in obj_st.relations:
                     entrance_connected.add(r.target_name)
-        state = State({k: obj_st for k, obj_st in state.objs.items() if room_type(k) != Semantics.Entrance})
+        state = State(
+            {
+                k: obj_st
+                for k, obj_st in state.objs.items()
+                if room_type(k) != Semantics.Entrance
+            }
+        )
         for k in entrance_connected:
-            state[k].relations = [r for r in state[k].relations if room_type(r.target_name) != Semantics.Entrance]
+            state[k].relations = [
+                r
+                for r in state[k].relations
+                if room_type(r.target_name) != Semantics.Entrance
+            ]
         if len(entrance_connected) == 0:
             entrance = None
         else:
             entrance = np.random.choice(list(entrance_connected))
             exterior_name = room_name(Semantics.Exterior, self.level)
-            state[entrance].relations.append(RelationState(cl.Traverse(), exterior_name))
+            state[entrance].relations.append(
+                RelationState(cl.Traverse(), exterior_name)
+            )
             if exterior_name not in state.objs:
-                state[exterior_name] = ObjectState(tags={Semantics.Exterior, Semantics.RoomContour, self.semantics_floor})
-            state[exterior_name].relations.append(RelationState(cl.Traverse(), entrance))
+                state[exterior_name] = ObjectState(
+                    tags={
+                        Semantics.Exterior,
+                        Semantics.RoomContour,
+                        self.semantics_floor,
+                    }
+                )
+            state[exterior_name].relations.append(
+                RelationState(cl.Traverse(), entrance)
+            )
         return state, entrance
 
     __call__ = make_graph
 
     def suggest_dimensions(self, graph, width=None, height=None):
-        area = sum(
-            [self.typical_areas[room_type(r)] for r in graph.names if room_type(r) != Semantics.Exterior]
-        ) * self.slackness
+        area = (
+            sum(
+                [
+                    self.typical_areas[room_type(r)]
+                    for r in graph.names
+                    if room_type(r) != Semantics.Exterior
+                ]
+            )
+            * self.slackness
+        )
         if width is None and height is None:
             aspect_ratio = uniform(*self.constants.aspect_ratio_range)
         else:
@@ -208,25 +294,35 @@ class GraphMaker:
         graph.draw()
 
     def get_typical_areas(self, consgraph):
-        consgraph = consgraph.filter('room')
+        consgraph = consgraph.filter("room")
         typical_areas = {}
         undecided = set()
-        for t in tqdm(self.constants.room_types, 'Computing typical areas: '):
+        for t in tqdm(self.constants.room_types, "Computing typical areas: "):
             name = room_name(t, self.level)
             holder = room_name(Semantics.Staircase, self.level)
             exterior = room_name(Semantics.Exterior, self.level)
             state = State(
                 {
-                    name: ObjectState(tags={Semantics.RoomContour, t, self.semantics_floor}),
+                    name: ObjectState(
+                        tags={Semantics.RoomContour, t, self.semantics_floor}
+                    ),
                     holder: ObjectState(
-                        tags={Semantics.RoomContour, Semantics.Staircase, self.semantics_floor}
+                        tags={
+                            Semantics.RoomContour,
+                            Semantics.Staircase,
+                            self.semantics_floor,
+                        }
                     ),
                     exterior: ObjectState(
-                        tags={Semantics.RoomContour, Semantics.Exterior, Semantics.Garage},
-                        relations=[RelationState(cl.SharedEdge(), name)]
-                    )
+                        tags={
+                            Semantics.RoomContour,
+                            Semantics.Exterior,
+                            Semantics.Garage,
+                        },
+                        relations=[RelationState(cl.SharedEdge(), name)],
+                    ),
                 },
-                graphs=[RoomGraph([[]], [name], 0)] * (self.level + 1)
+                graphs=[RoomGraph([[]], [name], 0)] * (self.level + 1),
             )
             scores = []
             lengths = np.exp(np.linspace(np.log(1.5), np.log(25), 20))

@@ -25,7 +25,6 @@ def setup_gin(configs_folders, configs, overrides=None):
     gin.unlock_config()
 
 
-
 def import_item(name):
     *path_parts, name = name.split(".")
     with gin.unlock_config():

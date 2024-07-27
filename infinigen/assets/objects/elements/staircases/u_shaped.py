@@ -10,11 +10,12 @@ import bpy
 import numpy as np
 
 import infinigen.core.util.blender as butil
-from .straight import StraightStaircaseFactory
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.object import new_cube, new_line
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
+
+from .straight import StraightStaircaseFactory
 
 
 class UShapedStaircaseFactory(StraightStaircaseFactory):
@@ -27,7 +28,7 @@ class UShapedStaircaseFactory(StraightStaircaseFactory):
     def build_size_config(self):
         self.n = int(np.random.randint(13, 21) / 2) * 2
         self.step_height = self.constants.wall_height / self.n
-        self.step_width = log_uniform(.9, 1.5)
+        self.step_width = log_uniform(0.9, 1.5)
         self.step_length = self.step_height * log_uniform(1, 1.2)
 
     def make_line(self, alpha):

@@ -14,7 +14,6 @@ from infinigen.assets.objects.wall_decorations.range_hood import RangeHoodFactor
 from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
-
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -203,7 +202,7 @@ class KitchenSpaceFactory(AssetFactory):
                     (
                         uniform(0.7, 1),
                         uniform(1.7, 5),
-                        uniform(2.3, WALL_HEIGHT - WALL_THICKNESS),
+                        uniform(2.3, 2.5),
                     )
                 )
 

@@ -13,7 +13,7 @@ import shapely
 from numpy.random import uniform
 from shapely import LineString, Polygon
 
-from infinigen.assets.materials import metal, glass, plaster, wood, fabrics
+from infinigen.assets.materials import fabrics, glass, metal, plaster, wood
 from infinigen.assets.materials.stone_and_concrete import concrete
 from infinigen.assets.utils.decorate import (
     mirror,
@@ -39,14 +39,15 @@ from infinigen.assets.utils.shapes import cut_polygon_by_line
 from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
-from infinigen.core.nodes import NodeWrangler, Nodes
+from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.placement.detail import sharp_remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, normalize
-from infinigen.core.util.random import log_uniform, random_general as rg
+from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
 
 
 class StraightStaircaseFactory(AssetFactory):
@@ -163,8 +164,8 @@ class StraightStaircaseFactory(AssetFactory):
     def build_size_config(self):
         self.n = np.random.randint(13, 21)
         self.step_height = self.constants.wall_height / self.n
-        self.step_width = uniform(.8, 1.6)
-        self.step_length = self.step_height * log_uniform(.8, 1.2)
+        self.step_width = uniform(0.8, 1.6)
+        self.step_length = self.step_height * log_uniform(0.8, 1.2)
 
     def make_line(self, alpha):
         obj = new_line(self.n)
@@ -298,8 +299,11 @@ class StraightStaircaseFactory(AssetFactory):
         tread = new_cube(location=(1, 1, 1))
         butil.apply_transform(tread, loc=True)
         tread.scale = self.tread_width / 2, self.tread_length / 2, self.tread_height / 2
-        tread.location = -(self.tread_width - self.step_width) / 2, -(
-                self.tread_length - self.step_length), self.step_height
+        tread.location = (
+            -(self.tread_width - self.step_width) / 2,
+            -(self.tread_length - self.step_length),
+            self.step_height,
+        )
         butil.apply_transform(tread, loc=True)
         self.triangulate(tread)
         write_attribute(tread, 1, "treads", "FACE")
@@ -432,9 +436,11 @@ class StraightStaircaseFactory(AssetFactory):
             existing = np.concatenate([existing, loc[:1]], 0)
             cos = [0]
             for i, l in enumerate(loc):
-                if i > 0 and np.min(
-                        np.linalg.norm(existing - l[np.newaxis, :], axis=1)
-                ) > self.handrail_width * 2:
+                if (
+                    i > 0
+                    and np.min(np.linalg.norm(existing - l[np.newaxis, :], axis=1))
+                    > self.handrail_width * 2
+                ):
                     cos.append(i)
                     existing = np.concatenate([existing, loc[i : i + 1]], 0)
             obj = mesh2obj(data2mesh(loc[cos]))
@@ -513,8 +519,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.make_spiral(obj)
         self.extend_line(obj, self.end_margin)
         self.decorate_line(
-            obj, self.constants.wall_thickness / 2,
-            self.constants.door_size
+            obj, self.constants.wall_thickness / 2, self.constants.door_size
         )
         if self.mirror:
             mirror(obj)
@@ -657,10 +662,13 @@ class StraightStaircaseFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="INVERT")
             bpy.ops.mesh.delete(type="EDGE")
         remove_vertices(
-            mesh, lambda x, y, z: (z < self.constants.wall_thickness / 4) | (
-                    z > self.constants.wall_thickness * 3 / 4)
+            mesh,
+            lambda x, y, z: (z < self.constants.wall_thickness / 4)
+            | (z > self.constants.wall_thickness * 3 / 4),
         )
-        butil.modify_mesh(mesh, 'WELD', merge_threshold=self.constants.wall_thickness / 4)
+        butil.modify_mesh(
+            mesh, "WELD", merge_threshold=self.constants.wall_thickness / 4
+        )
         name = mesh.name
         mesh = separate_loose(mesh)
         ls = shapely.force_2d(convert2ls(mesh))

@@ -22,16 +22,15 @@ import bpy
 import numpy as np
 import shapely
 import trimesh
+
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints.example_solver.geometry.planes import Planes
 from infinigen.core.placement.factory import AssetFactory
-
-from .geometry import parse_scene
+from infinigen.core.util.math import int_hash
 
 from .geometry import parse_scene
 from .room.base import RoomGraph
-from ...util.math import int_hash
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,6 @@ class RelationState:
     child_plane_idx: int = None
     parent_plane_idx: int = None
     value: typing.Optional[shapely.MultiLineString] = None
-
 
 
 @dataclass
@@ -85,7 +83,7 @@ class State:
 
     trimesh_scene: trimesh.Scene = None
     graphs: list[RoomGraph] = field(default_factory=list)
-    bvh_cache : dict = field(default_factory=dict)
+    bvh_cache: dict = field(default_factory=dict)
     planes: Planes = None
 
     def __getitem__(self, item):
@@ -96,10 +94,10 @@ class State:
 
     def __delitem__(self, key):
         del self.objs[key]
-        
+
     def __len__(self):
         return len(self.objs)
-        
+
     def print(self):
         print(f"State ({len(self.objs)} objs)")
         order = sorted(self.objs.keys(), key=lambda s: s.split("_")[-1])
@@ -163,7 +161,8 @@ class State:
 
     def __post_init__(self):
         bpy_objs = [
-            o.obj for o in self.objs.values() 
+            o.obj
+            for o in self.objs.values()
             if o.obj is not None and isinstance(o.obj, bpy.types.Object)
         ]
         self.trimesh_scene = parse_scene.parse_scene(bpy_objs)
@@ -197,11 +196,13 @@ class State:
         # all objs were serialized as strings, unpack them
         for o in state.objs:
             if o.obj not in bpy.data.objects:
-                raise ValueError(f"While deserializing {filename}, found name {o.obj=} which "
-                                 "isnt present in current blend scene. Did you load the "
-                                 "correct blend before loading the state?")
+                raise ValueError(
+                    f"While deserializing {filename}, found name {o.obj=} which "
+                    "isnt present in current blend scene. Did you load the "
+                    "correct blend before loading the state?"
+                )
             o.obj = bpy.data.objects[o.obj]
-            
+
     def __hash__(self):
         return sum(int_hash(k) * int(o.polygon.area) for k, o in self.objs.items())
 
