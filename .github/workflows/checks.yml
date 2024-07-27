@@ -48,3 +48,7 @@ jobs:
       - name: Test with pytest
         run: |
           pytest tests -k 'not skip_for_ci'
+
+      - name: Check for copyright statements
+        run: |
+          ruff check --output-format=github --preview --select CPY001 .
