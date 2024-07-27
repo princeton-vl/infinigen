@@ -13,7 +13,7 @@ import numpy as np
 from imageio.v3 import imread, imwrite
 from numpy.linalg import inv
 
-from ..dataset_loader import get_frame_path
+from infinigen.tools.dataset_loader import get_frame_path
 
 try:
     from einops import einsum

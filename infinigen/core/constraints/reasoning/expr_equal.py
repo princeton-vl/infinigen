@@ -6,7 +6,7 @@
 
 import dataclasses
 
-from ..constraint_language.types import Node
+from infinigen.core.constraints.constraint_language.types import Node
 
 
 @dataclasses.dataclass

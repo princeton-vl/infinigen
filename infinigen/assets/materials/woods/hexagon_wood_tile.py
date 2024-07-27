@@ -3,7 +3,8 @@
 
 
 # Authors: Lingjie Mei
-from .. import tile
+from infinigen.assets.materials import tile
+
 from .wood import shader_wood
 
 

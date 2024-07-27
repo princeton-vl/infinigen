@@ -7,12 +7,12 @@ from collections.abc import Iterable
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.materials import common
+from infinigen.assets.materials.bark_random import hex_to_rgb
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
-from .. import common
-from ..bark_random import hex_to_rgb
 from . import (
     brushed_metal,
     galvanized_metal,

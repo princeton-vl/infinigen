@@ -45,7 +45,7 @@ class BedFactory(bedframe.BedFrameFactory):
 
     @cached_property
     def quilt_factory(self):
-        from ..clothes.blanket import BlanketFactory
+        from infinigen.assets.objects.clothes.blanket import BlanketFactory
 
         factory = BlanketFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.6)
@@ -54,7 +54,7 @@ class BedFactory(bedframe.BedFrameFactory):
 
     @cached_property
     def comforter_factory(self):
-        from ..clothes.blanket import ComforterFactory
+        from infinigen.assets.objects.clothes.blanket import ComforterFactory
 
         factory = ComforterFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.8)
@@ -63,7 +63,7 @@ class BedFactory(bedframe.BedFrameFactory):
 
     @cached_property
     def box_comforter_factory(self):
-        from ..clothes.blanket import BoxComforterFactory
+        from infinigen.assets.objects.clothes.blanket import BoxComforterFactory
 
         factory = BoxComforterFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.4, 1.8)
@@ -72,7 +72,7 @@ class BedFactory(bedframe.BedFrameFactory):
 
     @cached_property
     def cover_factory(self):
-        from ..clothes.blanket import BlanketFactory
+        from infinigen.assets.objects.clothes.blanket import BlanketFactory
 
         factory = BlanketFactory(self.factory_seed, self.coarse)
         factory.width = self.mattress_factory.width * uniform(1.6, 1.8)
@@ -81,7 +81,7 @@ class BedFactory(bedframe.BedFrameFactory):
 
     @cached_property
     def towel_factory(self):
-        from ..clothes import TowelFactory
+        from infinigen.assets.objects.clothes import TowelFactory
 
         return TowelFactory(self.factory_seed)
 

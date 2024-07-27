@@ -16,7 +16,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from ..node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
+from infinigen.core.nodes.node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
 
 logger = logging.getLogger(__name__)
 

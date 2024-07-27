@@ -8,10 +8,10 @@ import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.assets.objects.trees.generate import make_twig_collection, random_species
+from infinigen.assets.utils.misc import toggle_hide, toggle_show
 from infinigen.core import surface
 from infinigen.core.placement.instance_scatter import scatter_instances
 
-from ..utils.misc import toggle_hide, toggle_show
 from .chopped_trees import approx_settle_transform
 
 

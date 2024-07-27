@@ -22,8 +22,8 @@ except ImportError:
         "GT visualization requires `einops`. Please install optional extras via `pip install .[vis]`."
     )
 
-from ..compress_masks import recover
-from ..dataset_loader import get_frame_path
+from infinigen.tools.compress_masks import recover
+from infinigen.tools.dataset_loader import get_frame_path
 
 """
 Usage: python -m tools.ground_truth.bounding_boxes_3d <scene-folder> <frame-index> [--query <query>]

@@ -15,7 +15,8 @@ def apply(
     shape=None,
     **kwargs,
 ):
-    from .. import tile
+    from infinigen.assets.materials import tile
+
     from .wood import shader_wood
 
     shader_funcs = tile.get_shader_funcs()

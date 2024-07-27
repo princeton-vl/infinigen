@@ -14,10 +14,10 @@ import bpy
 import numpy as np
 from tqdm import trange
 
+from infinigen.assets.utils.object import center
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
 
-from ...assets.utils.object import center
 from . import detail
 
 logger = logging.getLogger(__name__)

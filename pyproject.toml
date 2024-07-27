@@ -145,7 +145,8 @@ select = [
     "E", 
     "I", 
     "F",
-    "S102", # no exec()
+    "S102", # no exec(),
+    "TID252", # relative imports only allowed for siblings
 
 ]
 ignore = [

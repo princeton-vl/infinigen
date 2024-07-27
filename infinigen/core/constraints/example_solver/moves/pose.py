@@ -9,10 +9,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from example_solver.state_def import State
 from infinigen.core.constraints.constraint_language import util as iu
 from infinigen.core.constraints.example_solver.geometry import dof, validity
 
-from ..state_def import State
 from . import moves
 from .reassignment import pose_backup, restore_pose_backup
 

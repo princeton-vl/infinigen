@@ -15,8 +15,8 @@ import numpy as np
 from imageio.v3 import imread, imwrite
 from numba.types import bool_
 
-from ..compress_masks import recover
-from ..dataset_loader import get_frame_path
+from infinigen.tools.compress_masks import recover
+from infinigen.tools.dataset_loader import get_frame_path
 
 try:
     from einops import pack, rearrange, repeat
