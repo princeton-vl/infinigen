@@ -77,7 +77,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.hole_size = log_uniform(0.6, 1.0)
             probs = np.array([3, 2, 2, 2])
             self.step_surface = np.random.choice(
-                [wood, plaster, concrete, fabrics], p=probs / probs.sum()
+                [wood, plaster, concrete, fabrics.fabric_random], p=probs / probs.sum()
             )
 
             self.has_rail = self.support_type in ["single-rail", "double-rail"]
@@ -87,7 +87,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.rail_height = log_uniform(0.08, 0.12)
             probs = np.array([3, 2, 2, 1])
             self.rail_surface = np.random.choice(
-                [metal, plaster, concrete, fabrics], p=probs / probs.sum()
+                [metal, plaster, concrete, fabrics.fabric_random], p=probs / probs.sum()
             )
 
             self.has_tread = not self.has_step or uniform() < 0.75
@@ -111,7 +111,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.side_thickness = uniform(0.03, 0.08)
             probs = np.array([3, 3, 1, 2])
             self.side_surface = np.random.choice(
-                [wood, metal, plaster, fabrics], p=probs / probs.sum()
+                [wood, metal, plaster, fabrics.fabric_random], p=probs / probs.sum()
             )
 
             self.has_column = self.support_type == "chord"
@@ -128,7 +128,7 @@ class StraightStaircaseFactory(AssetFactory):
             ]
             probs = np.array([3, 2, 3])
             self.handrail_surface = np.random.choice(
-                [wood, metal, fabrics], p=probs / probs.sum()
+                [wood, metal, fabrics.fabric_random], p=probs / probs.sum()
             )
 
             self.post_height = log_uniform(0.8, 1.2)
@@ -138,7 +138,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.is_post_circular = uniform() < 0.5
             probs = np.array([3, 3, 2])
             self.post_surface = np.random.choice(
-                [wood, metal, fabrics], p=probs / probs.sum()
+                [wood, metal, fabrics.fabric_random], p=probs / probs.sum()
             )
             self.has_vertical_post = self.handrail_type == "vertical-post"
 
