@@ -52,9 +52,9 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.test_utils import load_txt_list
 from infinigen_examples.asset_parameters import parameters
 from infinigen_examples.generate_individual_assets import make_args, setup_camera
-from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

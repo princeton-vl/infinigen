@@ -55,8 +55,8 @@ from infinigen.core.tagging import tag_system
 from infinigen.core.util import blender as butil
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.test_utils import load_txt_list
 from infinigen.tools import export
-from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

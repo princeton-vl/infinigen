@@ -10,7 +10,7 @@ import bpy
 
 from infinigen.core import execute_tasks
 from infinigen.core.placement import camera
-from infinigen_examples.util.test_utils import setup_gin
+from infinigen.core.util.test_utils import setup_gin
 
 
 def test_compose_cube():

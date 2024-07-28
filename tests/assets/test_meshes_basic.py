@@ -11,7 +11,7 @@ import pytest
 
 from infinigen.core import tagging
 from infinigen.core.util import blender as butil
-from infinigen_examples.util.test_utils import import_item, load_txt_list, setup_gin
+from infinigen.core.util.test_utils import import_item, load_txt_list, setup_gin
 
 
 def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):

@@ -9,7 +9,7 @@ import bpy
 import pytest
 
 from infinigen.core.util import blender as butil
-from infinigen_examples.util.test_utils import import_item, load_txt_list, setup_gin
+from infinigen.core.util.test_utils import import_item, load_txt_list, setup_gin
 
 
 def check_material_runs(pathspec):

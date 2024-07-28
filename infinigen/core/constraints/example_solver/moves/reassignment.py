@@ -9,9 +9,9 @@
 import copy
 from dataclasses import dataclass
 
-from example_solver.state_def import ObjectState, State
 from infinigen.core.constraints.constraint_language.util import sync_trimesh
 from infinigen.core.constraints.example_solver.geometry import dof
+from infinigen.core.constraints.example_solver.state_def import ObjectState, State
 
 from . import moves
 

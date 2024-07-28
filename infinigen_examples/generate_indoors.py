@@ -44,6 +44,10 @@ from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
+from infinigen.core.util.test_utils import (
+    import_item,
+    load_txt_list,
+)
 from infinigen.terrain import Terrain
 from infinigen_examples.indoor_constraint_examples import home_constraints
 from infinigen_examples.util import constraint_util as cu
@@ -53,10 +57,6 @@ from infinigen_examples.util.generate_indoors_util import (
     hide_other_rooms,
     place_cam_overhead,
     restrict_solving,
-)
-from infinigen_examples.util.test_utils import (
-    import_item,
-    load_txt_list,
 )
 
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
