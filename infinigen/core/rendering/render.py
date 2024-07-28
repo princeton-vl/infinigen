@@ -37,8 +37,6 @@ from infinigen.core.util.logging import Timer
 from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder
 from infinigen.tools.suffixes import get_suffix
 
-from .auto_exposure import nodegroup_auto_exposure
-
 TRANSPARENT_SHADERS = {Nodes.TranslucentBSDF, Nodes.TransparentBSDF}
 
 logger = logging.getLogger(__name__)
@@ -110,18 +108,10 @@ def compositor_postprocessing(
     nw,
     source,
     show=True,
-    autoexpose=False,
-    autoexpose_level=-2,
     color_correct=True,
     distort=0,
     glare=False,
 ):
-    if autoexpose:
-        source = nw.new_node(
-            nodegroup_auto_exposure().name,
-            input_kwargs={"Image": source, "EV Comp": autoexpose_level},
-        )
-
     if distort > 0:
         source = nw.new_node(
             Nodes.LensDistortion, input_kwargs={"Image": source, "Dispersion": distort}
