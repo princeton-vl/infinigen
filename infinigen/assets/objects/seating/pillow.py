@@ -52,7 +52,9 @@ class PillowFactory(AssetFactory):
         self.extrude_thickness = (
             self.thickness * log_uniform(1, 8) if uniform() < 0.5 else 0
         )
-        self.surface = np.random.choice([art.ArtFabric(self.factory_seed), fabrics])
+        self.surface = np.random.choice(
+            [art.ArtFabric(self.factory_seed), fabrics.fabric_random]
+        )
         self.has_seam = uniform() < 0.3 and not self.shape == "torus"
         self.seam_radius = uniform(0.01, 0.02)
 

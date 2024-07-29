@@ -82,3 +82,5 @@ v1.6.0
 - Add floating object placement generator and example command
 - Add logging to terrain asset creation & simulations 
 - Add packaged font files to assets/fonts, fix too-many-open-fonts crash
+- Fix fish school disappearing at last frame in video
+- Fix crash from `fabrics.apply`
