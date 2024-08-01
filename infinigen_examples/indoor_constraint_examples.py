@@ -8,7 +8,6 @@ from collections import OrderedDict
 
 from numpy.random import uniform
 
-import infinigen.assets.static_assets as static_assets
 from infinigen.assets.objects import (
     appliances,
     bathroom,
@@ -87,7 +86,7 @@ def home_constraints():
 
     furniture = obj[Semantics.Furniture].related_to(rooms, cu.on_floor)
     wallfurn = furniture.related_to(rooms, cu.against_wall)
-    storage = wallfurn[Semantics.Storage][static_assets.StaticShelfFactory]
+    storage = wallfurn[Semantics.Storage]
 
     params = sample_home_constraint_params()
 
@@ -681,7 +680,7 @@ def home_constraints():
     # region LIVINGROOMS
 
     livingrooms = rooms[Semantics.LivingRoom].excludes(cu.room_types)
-    sofas = furniture[static_assets.StaticVendingMachineFactory]
+    sofas = furniture[seating.SofaFactory]
     tvstands = wallfurn[shelves.TVStandFactory]
     coffeetables = furniture[tables.CoffeeTableFactory]
 
@@ -864,7 +863,7 @@ def home_constraints():
 
     # region DININGROOMS
 
-    diningtables = furniture[Semantics.Table][static_assets.StaticTableFactory]
+    diningtables = furniture[Semantics.Table][tables.TableDiningFactory]
     diningchairs = furniture[Semantics.Chair][seating.ChairFactory]
     constraints["dining_chairs"] = rooms.all(
         lambda r: (

@@ -10,15 +10,17 @@ import random
 import bpy
 
 from infinigen.assets.static_assets.base import StaticAssetFactory
+from infinigen.core.tagging import tag_support_surfaces
 from infinigen.core.util.math import FixedSeed
 
 
-def static_category_factory(category) -> StaticAssetFactory:
+def static_category_factory(category, tag_support=False) -> StaticAssetFactory:
     class StaticCategoryFactory(StaticAssetFactory):
         def __init__(self, factory_seed, coarse=False):
             super().__init__(factory_seed, coarse)
             with FixedSeed(factory_seed):
                 self.category = category
+                self.tag_support = tag_support
                 self.asset_dir = os.path.join(self.root_asset_dir, category)
                 asset_files = [
                     f
@@ -32,6 +34,8 @@ def static_category_factory(category) -> StaticAssetFactory:
         def create_asset(self, **params) -> bpy.types.Object:
             file_path = os.path.join(self.asset_dir, self.asset_file)
             imported_obj = self.import_file(file_path)
+            if self.tag_support:
+                tag_support_surfaces(imported_obj)
 
             if imported_obj:
                 return imported_obj
@@ -44,5 +48,4 @@ def static_category_factory(category) -> StaticAssetFactory:
 # Create factory instances for different categories
 StaticSofaFactory = static_category_factory("Sofa")
 StaticTableFactory = static_category_factory("Table")
-StaticShelfFactory = static_category_factory("Shelf")
-StaticVendingMachineFactory = static_category_factory("VendingMachine")
+StaticShelfFactory = static_category_factory("Shelf", tag_support=True)
