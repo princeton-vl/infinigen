@@ -6,6 +6,7 @@
 
 import logging
 import os
+from ctypes import c_int32
 from pathlib import Path
 
 import bpy
@@ -31,6 +32,7 @@ from infinigen.core.util.organization import (
     Transparency,
 )
 from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
+from infinigen.OcMesher.ocmesher import __version__ as ocmesher_version
 from infinigen.terrain.assets.ocean import ocean_asset
 from infinigen.terrain.mesher import (
     OpaqueSphericalMesher,
@@ -45,9 +47,12 @@ from infinigen.terrain.utils import (
     Mesh,
     Vars,
     get_caminfo,
+    load_cdll,
     move_modifier,
     write_attributes,
 )
+
+assert ocmesher_version == "1.0"
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +125,20 @@ class Terrain:
         populated_bounds=(-75, 75, -75, 75, -25, 55),
         bounds=(-500, 500, -500, 500, -500, 500),
     ):
+        dll = load_cdll(
+            str(
+                Path(__file__).parent.resolve()
+                / "lib"
+                / "cpu"
+                / "elements"
+                / "waterbody.so"
+            )
+        )
+        func = dll.get_version
+        func.argtypes = []
+        func.restype = c_int32
+        terrain_element_version = func()
+        assert terrain_element_version == 1
         self.seed = seed
         self.device = device
         self.surface_registry = surface_registry
