@@ -1,8 +1,3 @@
-# Copyright (c) Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
-
-# Authors: Lingjie Mei
-
 from . import fabric_random
 from .coarse_knit_fabric import shader_coarse_knit_fabric
 from .fine_knit_fabric import shader_fine_knit_fabric

@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 from functools import partial
@@ -9,10 +9,11 @@ from inspect import signature
 import numpy as np
 from numpy.random import uniform
 
-from ...core.nodes import Nodes, NodeWrangler
-from ...core.util.math import FixedSeed
-from ...core.util.random import log_uniform
-from ..utils.object import new_cube
+from infinigen.assets.utils.object import new_cube
+from infinigen.core.nodes import Nodes, NodeWrangler
+from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import log_uniform
+
 from . import ceramic, common
 from .utils.surface_utils import perturb_coordinates
 

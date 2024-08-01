@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
@@ -10,7 +10,7 @@ import bpy
 
 from infinigen.core import execute_tasks
 from infinigen.core.placement import camera
-from infinigen_examples.util.test_utils import setup_gin
+from infinigen.core.util.test_utils import setup_gin
 
 
 def test_compose_cube():

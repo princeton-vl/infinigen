@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Yiming Zuo
@@ -8,11 +8,10 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials import common
+from infinigen.assets.utils.object import new_cube
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
-
-from ...utils.object import new_cube
 
 
 def get_color():

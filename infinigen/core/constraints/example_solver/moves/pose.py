@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
@@ -11,8 +11,8 @@ import numpy as np
 
 from infinigen.core.constraints.constraint_language import util as iu
 from infinigen.core.constraints.example_solver.geometry import dof, validity
+from infinigen.core.constraints.example_solver.state_def import State
 
-from ..state_def import State
 from . import moves
 from .reassignment import pose_backup, restore_pose_backup
 
