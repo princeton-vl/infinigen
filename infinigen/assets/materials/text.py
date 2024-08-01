@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
@@ -10,6 +10,7 @@ import colorsys
 import inspect
 import io
 import logging
+import os
 
 import bpy
 import matplotlib.font_manager
@@ -28,6 +29,7 @@ from matplotlib.patches import (
 from numpy.random import rand, uniform
 from PIL import Image
 
+from infinigen import repo_root
 from infinigen.assets.materials import common
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
@@ -42,9 +44,15 @@ from infinigen.core.util.random import random_general as rg
 
 logger = logging.getLogger(__name__)
 
+font_dir = repo_root() / "infinigen/assets/fonts"
+for f in matplotlib.font_manager.findSystemFonts([font_dir]):
+    matplotlib.font_manager.fontManager.addfont(f)
+font_names = [_.replace("_", " ") for _ in os.listdir(font_dir)]
+all_fonts = matplotlib.font_manager.get_font_names()
+assert [f in all_fonts for f in font_names]
+
 
 class Text:
-    font_names_all = matplotlib.font_manager.get_font_names()
     default_font_name = "DejaVu Sans"
     patch_fns = (
         "weighted_choice",
@@ -76,7 +84,6 @@ class Text:
             self.n_patches = np.random.randint(5, 8)
             self.force_horizontal = uniform() < 0.75
 
-            self.font_names = np.random.choice(self.font_names_all, 3)
             self.n_texts = np.random.randint(2, 4)
 
             self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
@@ -305,7 +312,7 @@ class Text:
         for x, y in locs:
             x = 0.5 + (x - 0.5) * 0.6
             text = generate_text()
-            family = np.random.permutation(self.font_names).tolist() + ["DejaVu Sans"]
+            family = np.random.choice(font_names)
             color, background_color = self.random_colors
             plt.figtext(
                 x,

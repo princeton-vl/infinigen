@@ -1,8 +1,9 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
 
+import logging
 
 import cv2
 import gin
@@ -22,6 +23,8 @@ except ImportError:
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.utils import get_normal, read, smooth
+
+logger = logging.getLogger(__name__)
 
 snowfall_params_ = {}
 
@@ -63,8 +66,10 @@ def run_snowfall(
     rocks = read(heightmap_path)
     M = rocks.shape[0]
 
+    logger.info(f"Running snowfall simulation for {folder}")
+
     snows = np.zeros_like(rocks) - 1e9
-    for N, n_iters, smoothing_kernel in diffussion_params:
+    for N, n_iters, smoothing_kernel in tqdm(diffussion_params):
         snow = rocks.copy()
         snow = cv2.resize(snow, (N, N))
         mg = RasterModelGrid((N, N))
@@ -88,7 +93,7 @@ def run_snowfall(
         snows = np.maximum(snows, snow)
 
     mask = np.zeros_like(rocks)
-    for blending in blending_params:
+    for blending in tqdm(blending_params):
         for normal_preference, (th0, th1) in snowfall_params()["normal_params"]:
             reference_snow = rocks * blending + snows * (1 - blending)
             normal_map = get_normal(reference_snow, tile_size / snows.shape[0])
@@ -116,6 +121,7 @@ def run_snowfall(
                 a_max=1,
             )
             mask = np.clip(mask, a_min=0, a_max=1)
+
     heightmap = snows * mask + rocks * (1 - mask)
     cv2.imwrite(
         str(folder / f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"),

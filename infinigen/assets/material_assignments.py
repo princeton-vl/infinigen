@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Meenal Parakh
@@ -598,6 +598,23 @@ def rug_materials():
     }
 
 
+def window_materials():
+    metal_shaders = get_all_metal_shaders()
+    plastic_shaders = [plastic_rough.shader_rough_plastic]
+    wood_shaders = [wood.shader_wood]
+    glass_shaders = [glass.shader_glass]
+
+    frame_shaders = metal_shaders + plastic_shaders + wood_shaders
+    return {
+        "frame": TextureAssignments(frame_shaders, [1.0] * len(frame_shaders)),
+        "curtain": TextureAssignments(frame_shaders, [1.0] * len(frame_shaders)),
+        "curtain_frame": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
+        "glass": TextureAssignments(metal_shaders, [1.0] * len(metal_shaders)),
+        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
+    }
+
+
 AssetList = {
     # appliances
     "BeverageFridgeFactory": beverage_fridge_materials,  # looks like dishwasher currently
@@ -688,6 +705,6 @@ AssetList = {
     "WallArtFactory": wall_art_materials,
     "MirrorFactory": mirror_materials,
     # window
-    "WindowFactory": None,
+    "WindowFactory": window_materials,
     "RugFactory": rug_materials,
 }

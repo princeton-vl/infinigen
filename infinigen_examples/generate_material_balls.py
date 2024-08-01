@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this
 # source tree.
@@ -44,12 +44,12 @@ from infinigen.core.rendering.render import enable_gpu
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.test_utils import load_txt_list
 from infinigen_examples.generate_individual_assets import (
     adjust_cam_distance,
     make_args,
     setup_camera,
 )
-from infinigen_examples.util.test_utils import load_txt_list
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

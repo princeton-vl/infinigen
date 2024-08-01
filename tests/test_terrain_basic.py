@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
@@ -10,8 +10,8 @@ import pytest
 
 from infinigen.core.surface import registry
 from infinigen.core.util.organization import Task
+from infinigen.core.util.test_utils import setup_gin
 from infinigen.terrain import Terrain
-from infinigen_examples.util.test_utils import setup_gin
 
 
 @pytest.mark.skip

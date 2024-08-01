@@ -76,3 +76,12 @@ v1.5.1
 - Remove dependabot
 - Add scatter unit tests and fix scatter imports
 - Fix black renders due to non-hidden particle emitter
+
+v1.6.0
+- Add geometric tile pattern materials
+- Tune window parameters and materials
+- Add floating object placement generator and example command
+- Add logging to terrain asset creation & simulations 
+- Add packaged font files to assets/fonts, fix too-many-open-fonts crash
+- Fix fish school disappearing at last frame in video
+- Fix crash from `fabrics.apply`

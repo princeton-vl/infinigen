@@ -1,9 +1,10 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
 
 
+import logging
 import os
 
 import gin
@@ -95,6 +96,7 @@ class UpsidedownMountains(Element):
                     with FixedSeed(
                         int_hash(("UpsidedownMountains", self.assets_seed, i))
                     ):
+                        logging.info(f"creating upsidedown_mountains #{i}")
                         upsidedown_mountains_asset(
                             self.on_the_fly_asset_folder / f"{i}", device=self.device
                         )

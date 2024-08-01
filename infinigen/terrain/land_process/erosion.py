@@ -1,19 +1,23 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
 
 
+import logging
 from ctypes import POINTER, c_char_p, c_float, c_int32
 
 import cv2
 import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
+from tqdm import trange
 
 import infinigen
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.terrain.utils import ASFLOAT, load_cdll, read, smooth
+
+logger = logging.getLogger(__name__)
 
 
 @gin.configurable
@@ -53,7 +57,8 @@ def run_erosion(
         / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
     )
 
-    for i, N, n_iter in zip(list(range(len(Ns))), Ns, n_iters):
+    logger.info(f"Running erosion simulation for {folder}")
+    for i, N, n_iter in zip(trange(len(Ns)), Ns, n_iters):
         M = heightmap.shape[0]
         heightmap = cv2.resize(heightmap, (N, N))
         if N > M:

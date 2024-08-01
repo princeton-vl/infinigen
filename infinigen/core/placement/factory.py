@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
@@ -14,10 +14,10 @@ import bpy
 import numpy as np
 from tqdm import trange
 
+from infinigen.assets.utils.object import center
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
 
-from ...assets.utils.object import center
 from . import detail
 
 logger = logging.getLogger(__name__)

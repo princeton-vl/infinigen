@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
@@ -7,7 +7,7 @@
 import pytest
 
 from infinigen.core.util import blender as butil
-from infinigen_examples.util.test_utils import import_item, load_txt_list, setup_gin
+from infinigen.core.util.test_utils import import_item, load_txt_list, setup_gin
 
 
 def check_scatter_runs(pathspec):

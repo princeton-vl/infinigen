@@ -133,18 +133,32 @@ exclude = [
     "*/dependencies/",
     "infinigen/OcMesher",
     "infinigen/infinigen_gpl",
+
+    # exclude copied-in external code
+    "infinigen/terrain/mesh_to_sdf",
+    "infinigen/terrain/mesher/_marching_cubes_lewiner*"
 ]
 
 [tool.ruff.lint]
 
-select = ["E", "I", "F"]
+select = [
+    "E", 
+    "I", 
+    "F",
+    "S102", # no exec(),
+    "TID252", # relative imports only allowed for siblings
+
+]
 ignore = [
     "E501", # over-length lines, formatter should handle it
     "E741", # ambigous variable name 
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"**/__init__.py" = [
+    "F401", 
+    "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
+]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 [tool.pytype]

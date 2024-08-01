@@ -1,9 +1,10 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
 
 
+import logging
 import os
 
 import gin
@@ -181,6 +182,7 @@ class LandTiles(Element):
                     if not (
                         self.on_the_fly_asset_folder / tile / str(i) / AssetFile.Finish
                     ).exists():
+                        logging.info(f"creating {tile} #{i}")
                         with FixedSeed(int_hash(("LandTiles", self.assets_seed, t, i))):
                             landtile_asset(
                                 self.on_the_fly_asset_folder / tile / f"{i}",

@@ -1,9 +1,10 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
 
 
+import logging
 import os
 
 import gin
@@ -89,6 +90,7 @@ class Caves(Element):
                     self.on_the_fly_asset_folder / str(i) / AssetFile.Finish
                 ).exists():
                     with FixedSeed(int_hash(("Caves", self.assets_seed, i))):
+                        logging.info(f"creating cave #{i}")
                         caves_asset(self.on_the_fly_asset_folder / f"{i}")
         for i in range(on_the_fly_instances):
             asset_paths.append(self.on_the_fly_asset_folder / f"{i}")

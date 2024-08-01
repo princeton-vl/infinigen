@@ -1,10 +1,9 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
 # - Hongyu Wen: primary author
 # - Alexander Raistrick: update window glass
-
 import random
 
 import bpy
@@ -13,7 +12,10 @@ from numpy.random import randint as RI
 from numpy.random import uniform
 from numpy.random import uniform as U
 
-from infinigen.assets.materials import metal_shader_list, wood_shader_list
+from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.materials import (
+    glass_shader_list,
+)
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -21,7 +23,6 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 
 
@@ -60,92 +61,73 @@ def shader_window_glass(nw: NodeWrangler):
 
 
 class WindowFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False, curtain=None, shutter=None):
+    def __init__(
+        self,
+        factory_seed,
+        dimensions=None,
+        coarse=False,
+        open=None,
+        curtain=None,
+        shutter=None,
+    ):
         super(WindowFactory, self).__init__(factory_seed, coarse=coarse)
 
         with FixedSeed(factory_seed):
-            self.params = self.sample_parameters()
+            # Leave the parameters sampling to the create_asset function
+            # self.params = self.sample_parameters(dimensions, open, curtain, shutter)
+
+            self.params = {}
+            self.material_params, self.scratch, self.edge_wear = (
+                self.get_material_params()
+            )
             self.beveler = BevelSharp()
+            self.open = open
             self.curtain = curtain
             self.shutter = shutter
+        self.params.update(self.material_params)
 
     @staticmethod
-    def sample_parameters():
-        frame_width = U(0.05, 0.1)
-        sub_frame_width = U(0.01, frame_width)
-        sub_frame_h_amount = RI(1, 2)
-        sub_frame_v_amount = RI(1, 2)
-        glass_thickness = U(0.01, 0.03)
-
-        shutter_panel_radius = U(0.001, 0.003)
-        shutter_width = U(0.03, 0.05)
-        shutter_thickness = U(0.003, 0.007)
-        shutter_rotation = U(0, 1)
-        shutter_inverval = shutter_width + U(0.001, 0.003)
-
-        curtain_frame_depth = U(0.05, 0.1)
-        curtain_depth = U(0.03, curtain_frame_depth)
-        curtain_frame_radius = U(0.01, 0.02)
-
-        shader_frame_material_choice = random.choice(wood_shader_list)
-        shader_curtain_frame_material_choice = random.choice(metal_shader_list)
-        shader_curtain_material_choice = shader_curtain_material
-
-        params = {
-            "FrameWidth": frame_width,
-            "SubFrameWidth": sub_frame_width,
-            "SubPanelHAmount": sub_frame_h_amount,
-            "SubPanelVAmount": sub_frame_v_amount,
-            "GlassThickness": glass_thickness,
-            "CurtainFrameDepth": curtain_frame_depth,
-            "CurtainDepth": curtain_depth,
-            "CurtainFrameRadius": curtain_frame_radius,
-            "ShutterPanelRadius": shutter_panel_radius,
-            "ShutterWidth": shutter_width,
-            "ShutterThickness": shutter_thickness,
-            "ShutterRotation": shutter_rotation,
-            "ShutterInterval": shutter_inverval,
-            "FrameMaterial": surface.shaderfunc_to_material(
-                shader_frame_material_choice, vertical=True
-            ),
-            "CurtainFrameMaterial": surface.shaderfunc_to_material(
-                shader_curtain_frame_material_choice
-            ),
-            "CurtainMaterial": surface.shaderfunc_to_material(
-                shader_curtain_material_choice
-            ),
-            "Material": surface.shaderfunc_to_material(shader_window_glass),
-        }
-        return params
-
-    def sample_asset_params(
-        self, dimensions=None, open=None, curtain=None, shutter=None
-    ):
+    def sample_parameters(dimensions, open, curtain, shutter):
         if dimensions is None:
             width = U(1, 4)
             height = U(1, 4)
-            frame_thickness = U(0.05, 0.15)
+            frame_thickness = U(0.05, 0.15) * min(width, height)
         else:
             width, height, frame_thickness = dimensions
+        frame_width = U(0.02, 0.05) * min(min(width, height), 2)
 
-        panel_h_amount = RI(1, 2)
-        v_ = width / height * panel_h_amount
-        panel_v_amount = int(uniform(v_ * 1.6, v_ * 2.5))
+        panel_width = min(U(0.8, 1.5), width)
+        panel_height = min(U(panel_width, 3), height)
+        panel_v_amount = max(width // panel_width, 1)
+        panel_h_amount = max(height // panel_height, 1)
+
+        glass_thickness = U(0.01, 0.03)
+        sub_frame_width = U(glass_thickness, frame_width)
+        sub_frame_thickness = U(glass_thickness, frame_thickness)
+
+        sub_panel_width = U(0.4, min(panel_width, 1))
+        sub_panel_height = U(0.4, min(panel_height, 1))
+        sub_panel_height = max(
+            min(sub_panel_height, 2 * sub_panel_width), 0.5 * sub_panel_width
+        )
+        sub_frame_v_amount = max(panel_width // sub_panel_width, 1)
+        sub_frame_h_amount = max(panel_height // sub_panel_height, 1)
 
         if open is None:
             open = U(0, 1) < 0.5
-
         if shutter is None:
-            shutter = U(0, 1) < 0.5
-
+            shutter = U(0, 1) < 0.2
         if curtain is None:
-            curtain = U(0, 1) < 0.5
+            curtain = U(0, 1) < 0.3
         if curtain:
             open = False
-        sub_frame_thickness = U(0.01, frame_thickness)
 
         open = False  # keep windows closed on generation, let articulation module handle this later on
         open_type = RI(0, 3)
+        if panel_v_amount % 2 == 1:
+            open_type = RI(1, 3)
+        open_h_angle = 0
+        open_v_angle = 0
         open_offset = 0
         oe_offset = 0
         if open_type == 0:
@@ -160,41 +142,96 @@ class WindowFactory(AssetFactory):
                     open_offset = U(0, width / panel_h_amount)
                 else:
                     open_offset = 0
-        open_h_angle = U(0, 0.3) if open_type == 1 and open else 0
-        open_v_angle = -U(0, 0.3) if open_type == 2 and open else 0
+        if open_type == 1 and open:
+            open_h_angle = U(0.5, 1.2)
+        if open_type == 2 and open:
+            open_v_angle = -U(0.5, 1.2)
 
+        shutter_panel_radius = U(0.001, 0.003)
+        shutter_width = U(0.03, 0.05)
+        shutter_thickness = U(0.003, 0.007)
+        shutter_rotation = U(0, 1)
+        shutter_inverval = shutter_width + U(0.001, 0.003)
+
+        curtain_frame_depth = U(0.05, 0.1)
+        curtain_depth = U(0.03, curtain_frame_depth)
         curtain_interval_number = int(width / U(0.08, 0.2))
+        curtain_frame_radius = U(0.01, 0.02)
         curtain_mid_l = -U(0, width / 2)
         curtain_mid_r = U(0, width / 2)
-        return {
-            **self.params,
+
+        params = {
             "Width": width,
             "Height": height,
+            "FrameWidth": frame_width,
             "FrameThickness": frame_thickness,
             "PanelHAmount": panel_h_amount,
             "PanelVAmount": panel_v_amount,
+            "SubFrameWidth": sub_frame_width,
             "SubFrameThickness": sub_frame_thickness,
+            "SubPanelHAmount": sub_frame_h_amount,
+            "SubPanelVAmount": sub_frame_v_amount,
+            "GlassThickness": glass_thickness,
             "OpenHAngle": open_h_angle,
             "OpenVAngle": open_v_angle,
             "OpenOffset": open_offset,
             "OEOffset": oe_offset,
             "Curtain": curtain,
+            "CurtainFrameDepth": curtain_frame_depth,
+            "CurtainDepth": curtain_depth,
             "CurtainIntervalNumber": curtain_interval_number,
+            "CurtainFrameRadius": curtain_frame_radius,
             "CurtainMidL": curtain_mid_l,
             "CurtainMidR": curtain_mid_r,
             "Shutter": shutter,
+            "ShutterPanelRadius": shutter_panel_radius,
+            "ShutterWidth": shutter_width,
+            "ShutterThickness": shutter_thickness,
+            "ShutterRotation": shutter_rotation,
+            "ShutterInterval": shutter_inverval,
+        }
+        return params
+
+    def get_material_params(self):
+        material_assignments = AssetList["WindowFactory"]()
+        params = {
+            "FrameMaterial": material_assignments["frame"].assign_material(),
+            "CurtainFrameMaterial": material_assignments[
+                "curtain_frame"
+            ].assign_material(),
+            "CurtainMaterial": material_assignments["curtain"].assign_material(),
+            "Material": random.choice(glass_shader_list),
         }
 
-    def create_asset(self, dimensions=None, open=None, realized=True, **params):
-        obj = butil.spawn_cube()
+        wrapped_params = {
+            k: surface.shaderfunc_to_material(v) for k, v in params.items()
+        }
 
+        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
+        scratch, edge_wear = material_assignments["wear_tear"]
+
+        is_scratch = np.random.uniform() < scratch_prob
+        is_edge_wear = np.random.uniform() < edge_wear_prob
+        if not is_scratch:
+            scratch = None
+
+        if not is_edge_wear:
+            edge_wear = None
+
+        return wrapped_params, scratch, edge_wear
+
+    def create_asset(self, dimensions=None, open=None, realized=True, **params):
+        obj_params = self.sample_parameters(
+            dimensions, open, self.curtain, self.shutter
+        )
+        self.params.update(obj_params)
+
+        obj = butil.spawn_cube()
         butil.modify_mesh(
             obj,
             "NODES",
             node_group=nodegroup_window_geometry(),
-            ng_inputs=self.sample_asset_params(
-                dimensions, open, self.curtain, self.shutter
-            ),
+            ng_inputs=self.params,
             apply=realized,
         )
 
@@ -520,6 +557,8 @@ def nodegroup_window_geometry(nw: NodeWrangler):
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_10})
 
+    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_2})
+
     modulo_1 = nw.new_node(
         Nodes.Math, input_kwargs={0: floor, 1: 2.0000}, attrs={"operation": "MODULO"}
     )
@@ -530,7 +569,11 @@ def nodegroup_window_geometry(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add_4 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_2, 1: multiply_11})
+    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_11})
+
+    add_4 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_1, 1: reroute_2})
+
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_4})
 
     modulo_2 = nw.new_node(
         Nodes.Math,
@@ -544,7 +587,7 @@ def nodegroup_window_geometry(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    add_5 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_12})
+    add_5 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_3, 1: multiply_12})
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add_4, "Y": add_5})
 
@@ -566,7 +609,7 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_13})
 
     multiply_14 = nw.new_node(
-        Nodes.Math, input_kwargs={0: add_3, 1: -0.5000}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math, input_kwargs={0: add_3, 1: -1.000}, attrs={"operation": "MULTIPLY"}
     )
 
     combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_14})
@@ -1554,16 +1597,30 @@ def nodegroup_window_panel(nw: NodeWrangler):
     )
 
 
-def shader_curtain_material(nw: NodeWrangler):
+def shader_glass_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
-            "Base Color": color_category("textile"),
-            "Transmission": np.random.uniform(0, 1),
-            "Transmission Roughness": 1.0,
+            "Base Color": (0.0094, 0.0055, 0.8000, 1.0000),
+            "Roughness": 0.0000,
         },
+    )
+
+    material_output = nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf},
+        attrs={"is_active_output": True},
+    )
+
+
+def shader_curtain_material(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
+    principled_bsdf = nw.new_node(
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Base Color": (0.8000, 0.0013, 0.3926, 1.0000)},
     )
 
     material_output = nw.new_node(
@@ -1603,15 +1660,66 @@ def shader_frame_material(nw: NodeWrangler):
     )
 
 
-def shader_glass_material(nw: NodeWrangler):
+def shader_wood(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
+    texture_coordinate = nw.new_node(Nodes.TextureCoord)
+
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 1.0000
+
+    mapping = nw.new_node(
+        Nodes.Mapping,
+        input_kwargs={
+            "Vector": texture_coordinate.outputs["Object"],
+            "Location": value,
+            "Rotation": (5.2370, 5.6072, 6.0194),
+        },
+    )
+
+    mapping_1 = nw.new_node(
+        Nodes.Mapping,
+        input_kwargs={"Vector": mapping, "Scale": (2.9513, 8.5182, 3.9889)},
+    )
+
+    musgrave_texture = nw.new_node(
+        Nodes.MusgraveTexture,
+        input_kwargs={"Vector": mapping_1, "W": 4.2017, "Scale": 2.3442},
+        attrs={"musgrave_dimensions": "4D"},
+    )
+
+    noise_texture = nw.new_node(
+        Nodes.NoiseTexture,
+        input_kwargs={"Vector": musgrave_texture, "W": 1.2453, "Scale": 2.6863},
+        attrs={"noise_dimensions": "4D"},
+    )
+
+    color_ramp = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
+    color_ramp.color_ramp.elements.new(0)
+    color_ramp.color_ramp.elements[0].position = 0.1384
+    color_ramp.color_ramp.elements[0].color = [0.1472, 0.0000, 0.0000, 1.0000]
+    color_ramp.color_ramp.elements[1].position = 0.4108
+    color_ramp.color_ramp.elements[1].color = [0.3093, 0.0934, 0.0000, 1.0000]
+    color_ramp.color_ramp.elements[2].position = 0.6232
+    color_ramp.color_ramp.elements[2].color = [0.1108, 0.0256, 0.0335, 1.0000]
+
+    color_ramp_1 = nw.new_node(
+        Nodes.ColorRamp, input_kwargs={"Fac": noise_texture.outputs["Fac"]}
+    )
+    color_ramp_1.color_ramp.elements[0].position = 0.0000
+    color_ramp_1.color_ramp.elements[0].color = [0.4855, 0.4855, 0.4855, 1.0000]
+    color_ramp_1.color_ramp.elements[1].position = 1.0000
+    color_ramp_1.color_ramp.elements[1].color = [1.0000, 1.0000, 1.0000, 1.0000]
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
-            "Base Color": (0.0094, 0.0055, 0.8000, 1.0000),
-            "Roughness": 0.0000,
+            "Base Color": color_ramp.outputs["Color"],
+            "Roughness": color_ramp_1.outputs["Color"],
         },
+        attrs={"subsurface_method": "BURLEY"},
     )
 
     material_output = nw.new_node(

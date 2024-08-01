@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
@@ -6,12 +6,12 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
+from infinigen.assets.utils.decorate import read_uv, write_uv
+from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
-from ...core.nodes import Nodes, NodeWrangler
-from ..utils.decorate import read_uv, write_uv
 from . import rug, text
 
 

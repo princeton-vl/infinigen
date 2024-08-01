@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Zeyu Ma
@@ -151,10 +151,12 @@ def multi_mountains_asset(
     mountains.cleanup()
     Element.called_time.pop("mountains")
     cv2.imwrite(str(folder / f"{AssetFile.Heightmap}.exr"), heightmap)
+
     with open(folder / f"{AssetFile.TileSize}.txt", "w") as f:
         f.write(f"{tile_size}\n")
     with open(folder / f"{AssetFile.Params}.txt", "w") as f:
         json.dump(multi_mountains_params(raw=1), f)
+
     if erosion:
         run_erosion(folder)
     if snowfall:

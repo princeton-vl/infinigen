@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
@@ -16,7 +16,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from ..node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
+from infinigen.core.nodes.node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
 
 logger = logging.getLogger(__name__)
 

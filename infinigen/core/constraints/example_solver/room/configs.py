@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from infinigen.assets.materials import brick, plaster, rug, tile
 from infinigen.assets.materials.stone_and_concrete import concrete
+from infinigen.assets.materials.tiles import advanced_tiles
 from infinigen.assets.materials.woods import tiled_wood
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.util.color import hsv2rgba
@@ -177,17 +178,29 @@ ROOM_WALLS = defaultdict(
             (5, plaster),
         ),
         RoomType.Balcony: ("weighted_choice", (1, brick), (5, plaster)),
-        RoomType.Bathroom: tile,
+        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
     },
 )
 
 ROOM_FLOORS = defaultdict(
-    lambda: ("weighted_choice", (3, tiled_wood), (1, tile), (1, rug)),
+    lambda: (
+        "weighted_choice",
+        (3, tiled_wood),
+        (1, tile),
+        (3, advanced_tiles),
+        (1, rug),
+    ),
     {
         RoomType.Garage: concrete,
-        RoomType.Utility: ("weighted_choice", (1, concrete), (1, plaster), (1, tile)),
-        RoomType.Bathroom: tile,
-        RoomType.Balcony: tile,
+        RoomType.Utility: (
+            "weighted_choice",
+            (1, concrete),
+            (1, plaster),
+            (1, tile),
+            (3, advanced_tiles),
+        ),
+        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
+        RoomType.Balcony: ("weighted_choice", (1, tile), (3, advanced_tiles)),
     },
 )
 

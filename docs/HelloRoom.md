@@ -120,6 +120,15 @@ These settings are intended for debugging or for generating tailored datasets. I
 
 If you are using the commands from [Creating large datasets](#creating-large-datasets) you will instead add these configs as `--overrides` to the end of your command, rather than `-p`
 
+### Generate Rooms with Floating Objects
+
+To enable floating objects in a room, add the override `compose_indoors.floating_objs_enabled=True`. For example:
+```
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin singleroom.gin -p compose_indoors.floating_objs_enabled=True compose_indoors.terrain_enabled=False restrict_solving.restrict_parent_rooms=\[\"DiningRoom\"\]
+
+```
+By default, between 15 and 25 objects are generated and have their size normalized to fit within a 0.5m cube. The number of objects can be configured with `compose_indoors.num_floating` and normalization can be disabled with `compose_indoors.norm_floating=False`. Collisions/intersections between floating objects and existing solved objects are off by default and can be enabled with `compose_indoors.enable_collision_floating=True` and `compose_indoors.enable_collision_solved=True`.
+
 ## Run unit tests
 ```
 pytest tests/ --disable-warnings

@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lahav Lipson
@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 from imageio.v3 import imread, imwrite
 
-from ..dataset_loader import get_frame_path
+from infinigen.tools.dataset_loader import get_frame_path
 
 """
 Usage: python -m tools.ground_truth.rigid_warp <scene-folder> <frame-index-i>

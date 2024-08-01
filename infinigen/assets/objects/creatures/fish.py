@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
@@ -374,7 +374,7 @@ class FishSchoolFactory(BoidSwarmFactory):
             particle_size=U(0.3, 1),
             size_random=U(0.1, 0.7),
             use_rotation_instance=True,
-            lifetime=bpy.context.scene.frame_end - bpy.context.scene.frame_start,
+            lifetime=bpy.context.scene.frame_end - bpy.context.scene.frame_start + 1,
             warmup_frames=1,
             emit_duration=0,  # all particles appear immediately
             emit_from="VOLUME",

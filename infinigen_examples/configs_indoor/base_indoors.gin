@@ -61,3 +61,9 @@ compose_indoors.fancy_clouds_chance = 0.5
 compose_indoors.grass_chance = 0.5
 compose_indoors.rocks_chance = 0.5
 compose_indoors.near_distance = 20
+
+compose_indoors.floating_objs_enabled = False
+compose_indoors.num_floating = ('discrete_uniform', 15, 25)
+compose_indoors.norm_floating_size = True
+compose_indoors.enable_collision_floating = False
+compose_indoors.enable_collision_solved = False
