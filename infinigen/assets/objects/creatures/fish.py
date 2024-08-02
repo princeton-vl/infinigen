@@ -290,7 +290,7 @@ class FishFactory(AssetFactory):
             self.eye_material = materials.creature.FishEye()
 
     def apply_materials(self, obj):
-        surface.assign_material(obj, self.body_material())
+        surface.assign_material(obj, self.body_material)
 
         mat = joining.get_parts(obj)[0].active_material
         gold = mat is not None and "gold" in mat.name.lower()

@@ -26,22 +26,6 @@ logging.basicConfig(
 # unused imports required for gin to find modules currently, # TODO remove
 # ruff: noqa: F401
 from infinigen.assets import fluid, lighting, weather
-from infinigen.assets.materials import (
-    chunkyrock,
-    cobble_stone,
-    cracked_ground,
-    dirt,
-    ice,
-    lava,
-    mountain,
-    mud,
-    sand,
-    sandstone,
-    snow,
-    soil,
-    stone,
-    water,
-)
 from infinigen.assets.objects import (
     cactus,
     cloud,

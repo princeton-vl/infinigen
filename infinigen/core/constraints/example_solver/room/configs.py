@@ -11,6 +11,7 @@ from infinigen.assets.materials.wood import tiled_wood
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
+from infinigen.assets.composition import material_assignments
 
 EXTERIOR_CONNECTED_ROOM_TYPES = [
     RoomType.Bedroom,
@@ -165,44 +166,54 @@ LOOP_ROOM_TYPES = {
     RoomType.Bedroom: {RoomType.Balcony: 0.1},
 }
 
+# ROOM_WALLS = defaultdict(
+#     lambda: plaster,
+#     {
+#         RoomType.Kitchen: ("weighted_choice", (2, tile), (5, plaster)),
+#         RoomType.Garage: ("weighted_choice", (5, concrete), (1, brick), (3, plaster)),
+#         RoomType.Utility: (
+#             "weighted_choice",
+#             (1, concrete),
+#             (1, brick),
+#             (1, brick),
+#             (5, plaster),
+#         ),
+#         RoomType.Balcony: ("weighted_choice", (1, brick), (5, plaster)),
+#         RoomType.Bathroom: tile,
+#     },
+# )
+
 ROOM_WALLS = defaultdict(
-    lambda: plaster,
+    lambda: material_assignments.wall,
     {
-        RoomType.Kitchen: ("weighted_choice", (2, tile), (5, plaster)),
-        RoomType.Garage: ("weighted_choice", (5, concrete), (1, brick), (3, plaster)),
-        RoomType.Utility: (
-            "weighted_choice",
-            (1, concrete),
-            (1, brick),
-            (1, brick),
-            (5, plaster),
-        ),
-        RoomType.Balcony: ("weighted_choice", (1, brick), (5, plaster)),
-        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
-    },
+        RoomType.Kitchen: material_assignments.kitchen_wall,
+        RoomType.Garage: material_assignments.garage_wall,
+        RoomType.Utility: material_assignments.utility_wall,
+        RoomType.Balcony: material_assignments.balcony_wall,
+        RoomType.Bathroom: material_assignments.bathroom_wall,
+    }
 )
 
+# ROOM_FLOORS = defaultdict(
+#     lambda: ("weighted_choice", (3, tiled_wood), (1, tile), (1, rug)),
+#     {
+#         RoomType.Garage: concrete,
+#         RoomType.Utility: ("weighted_choice", (1, concrete), (1, plaster), (1, tile)),
+#         RoomType.Bathroom: tile,
+#         RoomType.Balcony: tile,
+#     },
+# )
+
 ROOM_FLOORS = defaultdict(
-    lambda: (
-        "weighted_choice",
-        (3, tiled_wood),
-        (1, tile),
-        (3, advanced_tiles),
-        (1, rug),
-    ),
+    lambda: material_assignments.floor,
     {
-        RoomType.Garage: concrete,
-        RoomType.Utility: (
-            "weighted_choice",
-            (1, concrete),
-            (1, plaster),
-            (1, tile),
-            (3, advanced_tiles),
-        ),
-        RoomType.Bathroom: ("weighted_choice", (1, tile), (3, advanced_tiles)),
-        RoomType.Balcony: ("weighted_choice", (1, tile), (3, advanced_tiles)),
-    },
+        RoomType.Garage: material_assignments.garage_floor,
+        RoomType.Utility: material_assignments.utility_floor,
+        RoomType.Bathroom: material_assignments.bathroom_floor,
+        RoomType.Balcony: material_assignments.balcony_floor,
+    }
 )
+
 
 PILLAR_ROOM_TYPES = [
     RoomType.Hallway,

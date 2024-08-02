@@ -243,6 +243,49 @@ side = rail + metals
 handrail = woods + metals + fabrics
 post = handrail
 
+wall = [(ceramic.Plaster, 2.0)]
+kitchen_wall = [
+    (ceramic.Plaster, 5.0),
+    (ceramic.Tile, 2.0)
+]
+garage_wall = [
+    (ceramic.Concrete, 5.0),
+    (ceramic.Brick, 1.0),
+    (ceramic.Plaster, 3.0),
+]
+utility_wall = [
+    (ceramic.Concrete, 1.0),
+    (ceramic.Brick, 2.0),
+    (ceramic.Plaster, 5.0),
+]
+balcony_wall = [
+    (ceramic.Brick, 1.0),
+    (ceramic.Plaster, 5.0),
+]
+bathroom_wall = [
+    (ceramic.Tile, 5.0),
+]
+
+floor = [
+    (ceramic.Tile, 4.0),
+    (fabric.Rug, 1.0)
+]
+garage_floor = [
+    (ceramic.Concrete, 1.0),
+]
+utility_floor = [
+    (ceramic.Concrete, 1.0),
+    (ceramic.plaster, 1.0),
+    (ceramic.tile, 1.0),
+]
+bathroom_floor = [
+    (ceramic.Tile, 1.0),
+]
+balcony_floor = bathroom_floor
+ceiling = wall
+
+
+
 potting_soil = [
     (terrain.Mud, 1),
     (terrain.Sand, 1),

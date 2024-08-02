@@ -22,7 +22,7 @@ import numpy as np
 
 from infinigen import repo_root
 from infinigen.assets import lighting
-from infinigen.assets.materials.dev import invisible_to_camera
+from infinigen.assets.materials.dev import InvisibleToCamera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
@@ -59,6 +59,7 @@ from infinigen_examples.util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
+import infinigen.core.surface as surface
 
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
 
@@ -417,6 +418,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p.run_stage("lights_off", turn_off_lights)
 
     def invisible_room_ceilings():
+        invisible_to_camera = InvisibleToCamera()
         rooms_split["exterior"].hide_viewport = True
         rooms_split["exterior"].hide_render = True
         invisible_to_camera.apply(list(rooms_split["ceiling"].objects))

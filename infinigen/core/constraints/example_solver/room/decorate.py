@@ -20,6 +20,8 @@ from shapely import Point
 from shapely.ops import nearest_points
 from tqdm import trange
 from trimesh.transformations import translation_matrix
+import infinigen.core.surface as surface
+from infinigen.assets.composition import material_assignments
 
 import infinigen.core.constraints.example_solver.room.constants as constants
 from infinigen.assets.materials.ceramic import plaster, tile
@@ -59,6 +61,7 @@ from infinigen.core.constraints.example_solver.room.types import (
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import random_general as rg
+from infinigen.core.util.random import weighted_sample
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +107,7 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
 
 
 def room_walls(wall_objs: list[bpy.types.Object]):
-    wall_fns = list(rg(ROOM_WALLS[get_room_type(r.name)]) for r in wall_objs)
+    wall_fns = list(weighted_sample(ROOM_WALLS[get_room_type(r.name)])() for r in wall_objs)
 
     logger.debug(
         f"{room_walls.__name__} adding materials to {len(wall_objs)=}, using {len(wall_fns)=}"
@@ -112,37 +115,45 @@ def room_walls(wall_objs: list[bpy.types.Object]):
 
     for wall_fn in set(wall_fns):
         rooms_ = [o for o, w in zip(wall_objs, wall_fns) if w == wall_fn]
-        shape = np.random.choice(["square", "rectangle", "hexagon"])
-        kwargs = dict(vertical=True, alternating=False, shape=shape)
-        if wall_fn in [tile, plaster]:
-            indices = np.random.randint(0, 3, len(rooms_))
-            for i in range(3):
-                rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-                wall_fn.apply(rooms__, **kwargs)
-        else:
-            wall_fn.apply(rooms_, **kwargs)
+        for room in rooms_:
+            surface.assign_material(room, wall_fn())
+        # shape = np.random.choice(["square", "rectangle", "hexagon"])
+        # kwargs = dict(vertical=True, alternating=False, shape=shape)
+        # if wall_fn in [tile, plaster]:
+        #     indices = np.random.randint(0, 3, len(rooms_))
+        #     for i in range(3):
+        #         rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+        #         wall_fn.apply(rooms__, **kwargs)
+        # else:
+        #     wall_fn.apply(rooms_, **kwargs)
 
 
 def room_ceilings(ceilings: list[bpy.types.Object]):
     logger.debug(f"{room_ceilings.__name__} adding materials to {len(ceilings)=}")
-    plaster.apply(ceilings, t.Subpart.Ceiling)
+
+    ceiling_fn = weighted_sample(material_assignments.ceiling)()
+    for ceiling in ceilings:
+        surface.assign_material(ceiling, ceiling_fn())
+    # plaster.apply(ceilings, t.Subpart.Ceiling)
 
 
 def room_floors(floors: list[bpy.types.Object]):
-    floor_fns = list(rg(ROOM_FLOORS[get_room_type(r.name)]) for r in floors)
+    floor_fns = list(weighted_sample(ROOM_FLOORS[get_room_type(r.name)])() for r in floors)
     logger.debug(
         f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
     )
     for floor_fn in set(floor_fns):
         rooms_ = [o for o, f in zip(floors, floor_fns) if f == floor_fn]
+        for room in rooms_:
+            surface.assign_material(room, floor_fn())
 
-        if floor_fn in [tile, plaster]:
-            indices = np.random.randint(0, 3, len(rooms_))
-            for i in range(3):
-                rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-                floor_fn.apply(rooms__)
-        else:
-            floor_fn.apply(rooms_)
+        # if floor_fn in [tile, plaster]:
+        #     indices = np.random.randint(0, 3, len(rooms_))
+        #     for i in range(3):
+        #         rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+        #         floor_fn.apply(rooms__)
+        # else:
+        #     floor_fn.apply(rooms_)
 
 
 @gin.configurable
