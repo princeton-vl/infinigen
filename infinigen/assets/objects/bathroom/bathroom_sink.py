@@ -103,7 +103,7 @@ class BathroomSinkFactory(BathtubFactory):
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
         # self.surface.apply(obj, clear=True, metal_color="plain")
-        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.surface)
         if self.has_extrude:
             tap = self.tap_factory(np.random.randint(1e7))
             min_x = np.min(read_co(tap)[:, 0])
