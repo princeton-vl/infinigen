@@ -97,7 +97,7 @@ class BookFactory(AssetFactory):
         paper.scale = width / 2 - 1e-4, height / 2, depth / 2 - 1e-4
         butil.apply_transform(paper, True)
 
-        surface.assign_material(paper, self.surface())
+        surface.assign_material(paper, self.surface)
         return paper
 
     def make_hardcover(self, width, height, depth):

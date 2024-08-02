@@ -34,7 +34,8 @@ class BalloonFactory(AssetFactory):
 
             if material_gen is None:
                 material_gen = weighted_sample(material_assignments.decorative_metal)()
-            self.material_gen = material_gen()
+            self.material_gen = material_gen
+            self.surface = self.material_gen()
 
             self.rel_scale = uniform(0.2, 0.3) * 4
             self.displace = uniform(0.02, 0.04)
@@ -85,6 +86,6 @@ class BalloonFactory(AssetFactory):
         butil.modify_mesh(obj, "DISPLACE", strength=self.displace)
         butil.modify_mesh(obj, "SMOOTH", iterations=5)
 
-        surface.assign_material(obj, self.material_gen())
+        surface.assign_material(obj, self.surface)
 
         return obj

@@ -72,7 +72,7 @@ class LidFactory(AssetFactory):
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness, offset=0)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
 
-        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.surface)
         parts = [obj]
         if self.is_glass:
             parts.append(self.add_rim())
@@ -94,7 +94,7 @@ class LidFactory(AssetFactory):
         obj = bpy.context.active_object
         obj.scale[-1] = self.rim_height / self.thickness
         butil.apply_transform(obj)
-        surface.assign_material(obj, self.rim_surface())
+        surface.assign_material(obj, self.rim_surface)
         return obj
 
     def add_handle(self, obj):
@@ -129,7 +129,7 @@ class LidFactory(AssetFactory):
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
         obj.location = 0, -self.thickness, z_offset
         butil.apply_transform(obj, True)
-        surface.assign_material(obj, self.handle_surface())
+        surface.assign_material(obj, self.handle_surface)
         return obj
 
     def add_knob(self):
@@ -148,7 +148,7 @@ class LidFactory(AssetFactory):
         butil.apply_transform(top, True)
         butil.modify_mesh(top, "BEVEL", width=self.thickness / 2, segments=4)
         obj = join_objects([obj, top])
-        surface.assign_material(obj, self.handle_surface())
+        surface.assign_material(obj, self.handle_surface)
         return obj
 
     def finalize_assets(self, assets):

@@ -238,5 +238,5 @@ class BottleFactory(AssetFactory):
         obj.location[-1] = (1 - self.z_cap) * self.z_length
         butil.apply_transform(obj, loc=True)
         subsurf(obj, 1, self.cap_subsurf)
-        surface.assign_material(obj, self.cap_surface())
+        surface.assign_material(obj, self.cap_surface)
         return obj

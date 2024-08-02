@@ -89,7 +89,7 @@ class WallArtFactory(AssetFactory):
                 segments=self.frame_bevel_segments,
             )
 
-        surface.assign_material(frame, self.frame_surface())
+        surface.assign_material(frame, self.frame_surface)
         obj = join_objects([obj, frame])
         return obj
 
