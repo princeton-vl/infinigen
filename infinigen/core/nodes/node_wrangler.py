@@ -196,8 +196,12 @@ class NodeWrangler:
             node.name = label
 
         if attrs is not None:
-            for key, val in attrs.items():
-                setattr(node, key, val)
+            for key_path, val in attrs.items():
+                keys = key_path.split(".")
+                obj = node
+                for key in keys[:-1]:
+                    obj = getattr(obj, key)
+                setattr(obj, keys[-1], val)
 
         if node_type in [
             Nodes.VoronoiTexture,
