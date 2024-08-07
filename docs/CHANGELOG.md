@@ -84,3 +84,6 @@ v1.6.0
 - Add packaged font files to assets/fonts, fix too-many-open-fonts crash
 - Fix fish school disappearing at last frame in video
 - Fix crash from `fabrics.apply`
+
+v1.7.0
+- Implement camera IMU calculation and export
