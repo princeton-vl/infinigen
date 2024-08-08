@@ -137,6 +137,14 @@ The mask of occluded pixels for the aforementioned optical flow is stored as a H
 
 *Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
+### Point Trajectory & Point Trajectory Occlusion :large_blue_diamond:
+It is similar to Optical Flow and its Occlusion, except that it computes the flow from a specified source frame (the first frame by default) to all the other frames. Customize it by `--pipeline_overrides iterate_scene_tasks.point_trajectory_src_frame=X`.
+
+To visualize point trajectories for a scene, run:
+```
+python infinigen/tools/results/visualize_traj.py path/to/your/scene/frames
+```
+
 ### Camera Intrinsics & Extrinsics
 
 Camera intrinsics and extrinsics are stored as a numpy ".npz" file inside the "camview" folder.

@@ -32,6 +32,11 @@
 #include "utils.hpp"
 #include "io.hpp"
 
+#define FLOW 0
+#define INVFLOW 1
+#define TRAJ 2
+#define INVTRAJ 3
+
 #define VERSION "1.44"
 
 using std::cout, std::cerr, std::endl;
@@ -79,6 +84,10 @@ std::vector<T> read_buffer(GLenum color_attachment, const int width, const int h
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
+bool sortBySecond(const std::pair<fs::path, std::string> &a, const std::pair<fs::path, std::string> &b) {
+    return a.second < b.second;
+}
+
 int main(int argc, char *argv[]) {
 
     const fs::path source_directory = XSTR(PROJECT_SOURCE_DIR) ;
@@ -99,7 +108,13 @@ int main(int argc, char *argv[]) {
 
     argparse::ArgumentParser program("main", VERSION);
     program.add_argument("--frame").required().help("Current frame").scan<'i', int>();
+    program.add_argument("--dst_frame").required().help("destination frame for flow / point trajectory").scan<'i', int>();
+    program.add_argument("--flow_only").default_value(0).help("if flow only").scan<'i', int>();
+    program.add_argument("--depth_only").default_value(0).help("if depth only").scan<'i', int>();
+    program.add_argument("--flow_type").default_value(FLOW).help("flow type").scan<'i', int>();
+
     program.add_argument("-in", "--input_dir").required().help("The input/output dir");
+    program.add_argument("-dst_in", "--dst_input_dir").required().help("The destination input/output dir");
     program.add_argument("-out", "--output_dir").required().help("The input/output dir");
     program.add_argument("-lw", "--line_width").default_value(2).help("The width of the occlusion boundaries").scan<'i', int>();
     program.add_argument("-s", "--subdivide").default_value(2).help("How many times to subdivide").scan<'i', int>();
@@ -109,18 +124,28 @@ int main(int argc, char *argv[]) {
     const int occlusion_boundary_line_width = program.get<int>("--line_width");
 
     const fs::path input_dir(program.get<std::string>("--input_dir"));
+    const fs::path dst_input_dir(program.get<std::string>("--dst_input_dir"));
     const fs::path output_dir(program.get<std::string>("--output_dir"));
-    if (input_dir.stem().string() == "x")
+    if (input_dir.stem().string() == "x" && dst_input_dir.stem().string() == "x")
         exit(0); // Custom error code for checking if EGL is working
     assert_exists(input_dir);
+    assert_exists(dst_input_dir);
     if (!fs::exists(output_dir))
         fs::create_directory(output_dir);
 
+    const int flow_only = program.get<int>("--flow_only");
+    const int depth_only = program.get<int>("--depth_only");
+    const int flow_type = program.get<int>("--flow_type");
+
     const int frame_number = program.get<int>("--frame");
+    const int dst_frame_number = program.get<int>("--dst_frame");
     const std::string frame_str = "frame_" + zfill(4, frame_number);
+    const std::string dst_frame_str = "frame_" + zfill(4, dst_frame_number);
     const auto camera_dir = input_dir / frame_str / "cameras";
+    const auto dst_camera_dir = dst_input_dir / dst_frame_str / "cameras";
     assert_exists(camera_dir);
-    std::vector<std::pair<fs::path, std::string>> camview_files;
+    assert_exists(dst_camera_dir);
+    std::vector<std::pair<fs::path, std::string>> camview_files, dst_camview_files;
     for (const auto &entry : fs::directory_iterator(camera_dir)){
         const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
         const auto output_suffix = matches[1];
@@ -128,6 +153,19 @@ int main(int argc, char *argv[]) {
         camview_files.push_back({entry, output_suffix});
     }
     MRASSERT(!camview_files.empty(), "camview_files is empty");
+    for (const auto &entry : fs::directory_iterator(dst_camera_dir)){
+        const auto matches = match_regex("camview_([0-9]+_[0-9]+_[0-9]+_[0-9]+)", entry.path().stem().string());
+        const auto output_suffix = matches[1];
+        MRASSERT(!matches.empty(), entry.path().string() + " did not match camview regex");
+        dst_camview_files.push_back({entry, output_suffix});
+    }
+    MRASSERT(!dst_camview_files.empty(), "dst_camview_files is empty");
+
+
+
+    std::sort(dst_camview_files.begin(), dst_camview_files.end(), sortBySecond);
+    std::sort(camview_files.begin(), camview_files.end(), sortBySecond);
+
 
     const auto image_shape = npz(camview_files[0].first).read_data<long>("HW");
     const int output_h = image_shape[0];
@@ -224,8 +262,11 @@ int main(int argc, char *argv[]) {
     #endif
 
     std::vector<CameraView> camera_views;
-    for (const auto &entry : camview_files)
-        camera_views.push_back({entry.second, camera_dir, output_w, output_h});
+    for (int i = 0; i < camview_files.size(); i++) {
+        auto &entry = camview_files[i];
+        auto &dst_entry = dst_camview_files[i];
+        camera_views.push_back({entry.second, dst_entry.second, camera_dir, dst_camera_dir, output_w, output_h});
+    }
 
     const auto glsl = source_directory / "glsl";
     Shader spineShader((glsl / "wings.vert").c_str(), (glsl / "spine.frag").c_str(), (glsl / "spine.geom").c_str());
@@ -250,7 +291,7 @@ int main(int argc, char *argv[]) {
     */
    std::vector<json> all_bboxes;
     while (true) {
-        const auto some_object_model = load_blender_mesh(input_dir / frame_str / "mesh" / "saved_mesh.json");
+        const auto some_object_model = load_blender_mesh(input_dir / frame_str / "mesh" / "saved_mesh.json", dst_input_dir / dst_frame_str / "mesh" / "saved_mesh.json");
         if (some_object_model == nullptr)
             break;
 
@@ -314,7 +355,6 @@ int main(int argc, char *argv[]) {
         /*
             Reading/Writing the depth map
         */
-       Eigen::Tensor<double, 3> flow3d;
         {
         auto pixels = read_buffer<float>(GL_COLOR_ATTACHMENT1, buffer_width, buffer_height);
         Eigen::Tensor<double, 2> depth(buffer_height, buffer_width);
@@ -329,11 +369,13 @@ int main(int argc, char *argv[]) {
             }
             o.progressbar();
         }
-        auto depth_color = to_color_map(depth, 0.0, 0.90);
-        imwrite(output_dir / ("Depth_" + cd.frame_string + ".png"), depth_color);
-        save_npy(output_dir / ("Depth_" + cd.frame_string + ".npy"), depth);
-        
-
+        if (depth_only || !flow_only) {
+            auto depth_color = to_color_map(depth, 0.0, 0.90);
+            imwrite(output_dir / ("Depth_" + cd.frame_string + ".png"), depth_color);
+            save_npy(output_dir / ("Depth_" + cd.frame_string + ".npy"), depth);
+        }
+        if (!depth_only) {
+        Eigen::Tensor<double, 3> flow3d;
         /*
             Reading/Writing the 3D optical flow
         */
@@ -349,14 +391,33 @@ int main(int argc, char *argv[]) {
         }
         flow3d = cd.project(next_points_3d) - cd.project(points_3d);
         const auto flow_viz = compute_flow_viz(flow3d);
-        imwrite(output_dir / ("Flow3D_" + cd.frame_string + ".png"), flow_viz);
-        save_npy(output_dir / ("Flow3D_" + cd.frame_string + ".npy"), flow3d);
+        std::string output_png, output_npy;
+        if (flow_type == FLOW) {
+            output_png = "Flow3D_" + cd.frame_string + ".png";
+            output_npy = "Flow3D_" + cd.frame_string + ".npy";
+        }
+        else if (flow_type == INVFLOW) {
+            output_png = "InvFlow3D_" + cd.dst_frame_string + ".png";
+            output_npy = "InvFlow3D_" + cd.dst_frame_string + ".npy";
+        }
+        else if (flow_type == TRAJ) {
+            output_png = "PointTraj3D_" + cd.dst_frame_string + ".png";
+            output_npy = "PointTraj3D_" + cd.dst_frame_string + ".npy";
+        }
+        else if (flow_type == TRAJ) {
+            output_png = "InvPointTraj3D_" + cd.frame_string + ".png";
+            output_npy = "InvPointTraj3D_" + cd.frame_string + ".npy";
+        }
+        else assert(0);
+        imwrite(output_dir / output_png, flow_viz);
+        save_npy(output_dir / output_npy, flow3d);
+        }
         }
 
         /*
             Reading/Writing the geometry normal
         */
-       {
+        if (!flow_only && ! depth_only) {
         const auto pixels = read_buffer<float>(GL_COLOR_ATTACHMENT7, buffer_width, buffer_height);
         Eigen::Tensor<double, 3> geo_normals(output_h, output_w, 3);
         geo_normals.setZero();
@@ -383,7 +444,7 @@ int main(int argc, char *argv[]) {
         /*
             Reading/Writing the instance segmentation map
         */
-        {
+        if (!flow_only && !depth_only) {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT6, buffer_width, buffer_height);
             Eigen::Tensor<int, 3> instance_seg(buffer_height, buffer_width, 3);
             instance_seg.setZero();
@@ -403,7 +464,7 @@ int main(int argc, char *argv[]) {
         /*
             Reading/Writing the object segmentation map
         */
-        {
+        if (!flow_only && !depth_only) {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT4, buffer_width, buffer_height);
             Eigen::Tensor<int, 2> object_seg(buffer_height, buffer_width);
             object_seg.setZero();
@@ -415,7 +476,7 @@ int main(int argc, char *argv[]) {
             imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg.cast<long>()));
         }
 
-        {
+        if (!flow_only && !depth_only) {
             const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT5, buffer_width, buffer_height);
             Eigen::Tensor<int, 2> tag_seg(buffer_height, buffer_width);
             tag_seg.setZero();
@@ -428,53 +489,53 @@ int main(int argc, char *argv[]) {
         }
 
 
-        /*
-            Reading/Writing the face id map
-        */
-        {
-        Eigen::Tensor<int, 4> faceids(2, buffer_height, buffer_width, 3);
-        faceids.setZero();
-        {
-            const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT3, buffer_width, buffer_height);
-            for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from first frame")){
-                for (int k=0; k<3; k++)
-                    faceids(0, o.y, o.x, k) = pixels[o.j+k];
-                o.progressbar();
-            }
-        }
-        glBindFramebuffer(GL_FRAMEBUFFER, cd.framebuffer_next_faceids);
-        {
-            const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT3, buffer_width, buffer_height);
-            for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from second frame")){
-                for (int k=0; k<3; k++)
-                    faceids(1, o.y, o.x, k) = pixels[o.j+k];
-                o.progressbar();
-            }
-        }
-        Eigen::Array<unsigned char, -1, -1> flow_occlusion(buffer_height, buffer_width);
-        for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Calculating flow occlusion")){
-            const float fx = flow3d(o.y, o.x, 0);
-            const float fy = flow3d(o.y, o.x, 1);
-            bool match_exists = false;
-            for (int i=-1; i<=1; i++){
-                for (int j=-1; j<=1; j++){
-                    const int next_x = o.x + lround(fx) + i;
-                    const int next_y = o.y + lround(fy) + j;
-                    if ((0 <= next_y) && (next_y < buffer_height) && (0 <= next_x) && (next_x < buffer_width)){
-                        const bool face_ids_match = (
-                            (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
-                            (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
-                            (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
-                        );
-                        match_exists = match_exists || face_ids_match;
-                    }
-                }
-            }
-            flow_occlusion(o.y, o.x) = ((unsigned char)match_exists) * 255;
-            o.progressbar();
-        }
-        imwrite(output_dir / ("Flow3DMask_" + cd.frame_string + ".png"), flow_occlusion);
-        }
+        // /*
+        //     Reading/Writing the face id map
+        // */
+        // {
+        // Eigen::Tensor<int, 4> faceids(2, buffer_height, buffer_width, 3);
+        // faceids.setZero();
+        // {
+        //     const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT3, buffer_width, buffer_height);
+        //     for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from first frame")){
+        //         for (int k=0; k<3; k++)
+        //             faceids(0, o.y, o.x, k) = pixels[o.j+k];
+        //         o.progressbar();
+        //     }
+        // }
+        // glBindFramebuffer(GL_FRAMEBUFFER, cd.framebuffer_next_faceids);
+        // {
+        //     const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT3, buffer_width, buffer_height);
+        //     for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from second frame")){
+        //         for (int k=0; k<3; k++)
+        //             faceids(1, o.y, o.x, k) = pixels[o.j+k];
+        //         o.progressbar();
+        //     }
+        // }
+        // Eigen::Array<unsigned char, -1, -1> flow_occlusion(buffer_height, buffer_width);
+        // for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Calculating flow occlusion")){
+        //     const float fx = flow3d(o.y, o.x, 0);
+        //     const float fy = flow3d(o.y, o.x, 1);
+        //     bool match_exists = false;
+        //     for (int i=-1; i<=1; i++){
+        //         for (int j=-1; j<=1; j++){
+        //             const int next_x = o.x + lround(fx) + i;
+        //             const int next_y = o.y + lround(fy) + j;
+        //             if ((0 <= next_y) && (next_y < buffer_height) && (0 <= next_x) && (next_x < buffer_width)){
+        //                 const bool face_ids_match = (
+        //                     (faceids(0, o.y, o.x, 0) == faceids(1, next_y, next_x, 0)) &&
+        //                     (faceids(0, o.y, o.x, 1) == faceids(1, next_y, next_x, 1)) &&
+        //                     (faceids(0, o.y, o.x, 2) == faceids(1, next_y, next_x, 2))
+        //                 );
+        //                 match_exists = match_exists || face_ids_match;
+        //             }
+        //         }
+        //     }
+        //     flow_occlusion(o.y, o.x) = ((unsigned char)match_exists) * 255;
+        //     o.progressbar();
+        // }
+        // imwrite(output_dir / ("Flow3DMask_" + cd.frame_string + ".png"), flow_occlusion);
+        // }
 
         /*
         //  Reading/Writing the face size in m^2
@@ -506,7 +567,7 @@ int main(int argc, char *argv[]) {
         /*
             Reading/Writing the occlusion boundaries
         */
-       {
+        if (!flow_only && !depth_only) {
         const auto pixels = read_buffer<int>(GL_COLOR_ATTACHMENT0, buffer_width, buffer_height);
         Eigen::Array<unsigned char, -1, -1> occlusion_boundaries(buffer_height,buffer_width);
         occlusion_boundaries.setZero();

@@ -32,8 +32,9 @@ auto parse_json(const fs::path json_path){
     return output;
 }
 
-std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
-    assert_exists(json_path);
+std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_path, const fs::path dst_json_path){
+    assert_exists(src_json_path);
+    assert_exists(dst_json_path);
 
     // Progress bar
     static int object_idx = 0;
@@ -53,12 +54,12 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
     // Current frame
     static BufferArrays current_buf;
     static ObjectInfo current_obj;
-    static const auto info_lookup = parse_json(json_path);
+    static const auto info_lookup = parse_json(src_json_path);
 
     // Next frame
     static BufferArrays next_buf;
     static ObjectInfo next_obj;
-    static const auto next_info_lookup = parse_json(increment_int_substr({"frame_([0-9]{4})"}, json_path));
+    static const auto next_info_lookup = parse_json(dst_json_path);
 
     static auto it = info_lookup.begin();
 
@@ -70,7 +71,7 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
 
         // Current frame
         current_obj = it->second;
-        const fs::path current_npz_path = json_path.parent_path() / current_obj.npz_filename;
+        const fs::path current_npz_path = src_json_path.parent_path() / current_obj.npz_filename;
         if (npz_lookup.count(current_npz_path.string()) == 0)
             npz_lookup[current_npz_path.string()] = current_npz_path;
         const npz &current_npz = npz_lookup.at(current_npz_path.string());
@@ -80,7 +81,7 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path json_path){
 
         if (next_info_lookup.count(current_mesh_id) > 0){
             next_obj = next_info_lookup.at(current_mesh_id);
-            const fs::path next_npz_path = fs::path(increment_int_substr({"frame_([0-9]{4})"}, json_path.parent_path())) / next_obj.npz_filename;
+            const fs::path next_npz_path = fs::path(dst_json_path.parent_path()) / next_obj.npz_filename;
             if (npz_lookup.count(next_npz_path.string()) == 0)
                 npz_lookup[next_npz_path.string()] = next_npz_path;
             const npz &next_npz = npz_lookup.at(next_npz_path.string());
