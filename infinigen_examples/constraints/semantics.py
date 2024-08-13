@@ -25,7 +25,7 @@ from infinigen.core.tags import Semantics
 def home_asset_usage():
     """Defines what generators are consider to fulfill what roles in a home setting.
 
-    The primary effect of this to determine what types of objects are returned by the square brackets [ ] operator in home_constraints
+    The primary effect of this to determine what types of objects are returned by the square brackets [ ] operator in home_furniture_constraints
 
     You can define these however you like - use
 

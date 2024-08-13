@@ -46,7 +46,7 @@ from infinigen.core.util.test_utils import (
     load_txt_list,
 )
 from infinigen.terrain import Terrain
-from infinigen_examples.constraints.home import home_constraints
+from infinigen_examples.constraints import home as home_constraints
 
 from . import (
     generate_nature,  # noqa F401 # needed for nature gin configs to load  # noqa F401 # needed for nature gin configs to load
@@ -142,8 +142,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     p.run_stage("sky_lighting", lighting.sky_lighting.add_lighting, use_chance=False)
 
-    consgraph = home_constraints()
-    constants = consgraph.constants
+    consgraph = home_constraints.home_furniture_constraints()
+    consgraph_rooms = home_constraints.home_room_constraints()
+    constants = consgraph_rooms.constants
 
     stages = default_greedy_stages()
     checks.check_all(consgraph, stages, all_vars)
@@ -154,9 +155,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         restrict_parent_rooms = {
             np.random.choice(
                 [
-                    # Only these roomtypes have constraints written in home_constraints.
+                    # Only these roomtypes have constraints written in home_furniture_constraints.
                     # Others will be empty-ish besides maybe storage and plants
-                    # TODO: add constraints to home_constraints for garages, offices, balconies, etc
+                    # TODO: add constraints to home_furniture_constraints for garages, offices, balconies, etc
                     t.Semantics.Bedroom,
                     t.Semantics.LivingRoom,
                     t.Semantics.Kitchen,
@@ -171,7 +172,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     solver = Solver(output_folder=output_folder)
 
     def solve_rooms():
-        return solver.solve_rooms(scene_seed, consgraph, stages["rooms"])
+        return solver.solve_rooms(scene_seed, consgraph_rooms, stages["rooms"])
 
     state: state_def.State = p.run_stage("solve_rooms", solve_rooms, use_chance=False)
 

@@ -3,7 +3,7 @@ FloorPlanSolver.iters_mult = 10
 RoomConstants.n_stories = 1
 GraphMaker.fast=True
 
-room_layout_constraints.fast = True
+home_room_constraints.fast = True
 
 Solver.addition_weight_scalar = 3.0
 

@@ -54,7 +54,7 @@ def sample_home_constraint_params():
 
 
 @gin.configurable
-def room_layout_constraints(fast=False):
+def home_room_constraints(fast=False):
     constraints = OrderedDict()
     score_terms = OrderedDict()
 
@@ -471,10 +471,12 @@ def room_layout_constraints(fast=False):
 
     score_terms["room"] = room_term
 
-    return constraints, score_terms
+    return cl.Problem(
+        constraints=constraints, score_terms=score_terms, constants=constants
+    )
 
 
-def home_constraints():
+def home_furniture_constraints():
     """Construct a constraint graph which incentivizes realistic home layouts.
 
     Result will contain both hard constraints (`constraints`) and soft constraints (`score_terms`).
@@ -515,7 +517,7 @@ def home_constraints():
     params = sample_home_constraint_params()
 
     for k, v in params.items():
-        print(f"{home_constraints.__name__} params - {k}: {v}")
+        print(f"{home_furniture_constraints.__name__} params - {k}: {v}")
 
     score_terms["furniture_fullness"] = rooms.mean(
         lambda r: (
@@ -1498,14 +1500,7 @@ def home_constraints():
 
     # endregion
 
-    room_constraints, room_score_terms = room_layout_constraints()
-    constraints.update(room_constraints)
-    score_terms.update(room_score_terms)
-
     return cl.Problem(
         constraints=constraints,
         score_terms=score_terms,
     )
-
-
-all_constraint_funcs = [home_constraints]

@@ -50,11 +50,11 @@ def test_stages_relations(key):
 #    stage = stages[key]
 #    stage = r.domain_tag_substitute(stage, t.Variable('room'), r.Domain({roomtype}))
 #
-#    bounds = r.constraint_bounds(ex.home_constraints())
+#    bounds = r.constraint_bounds(ex.home_furniture_constraints())
 
 
 def test_validate_bounds():
-    bounds = r.constraint_bounds(ex.home_constraints())
+    bounds = r.constraint_bounds(ex.home_furniture_constraints())
 
     for b in bounds:
         for rel, dom in b.domain.relations:
@@ -332,7 +332,7 @@ def test_stage_intersect_table():
 
 
 def test_obj_on_ceilinglight():
-    bounds = r.constraint_bounds(ex.home_constraints())
+    bounds = r.constraint_bounds(ex.home_furniture_constraints())
 
     ceilinglight = r.Domain(
         {t.Semantics.Object, t.Semantics.Lighting, -t.Semantics.Room},
@@ -348,18 +348,18 @@ def test_obj_on_ceilinglight():
 
 def test_greedy_partition_home():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     checks.check_problem_greedy_coverage(prob, generate_indoors.default_greedy_stages())
 
 
 def test_contradiction_home():
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     checks.check_contradictory_domains(prob)
 
 
 @pytest.mark.parametrize("rtype", sorted(cu.room_types, key=lambda x: x.name))
 def test_room_has_viols_at_init(rtype):
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
 
     ostate_name = room_name(rtype, 0)
     state = state_def.State(
