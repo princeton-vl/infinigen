@@ -169,52 +169,52 @@ room_wall_fns = defaultdict(
 )
 
 # noinspection PyTypeChecker
+room_wall_alternative_fns = {
+    t.Semantics.LivingRoom: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+    t.Semantics.Bedroom: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+    t.Semantics.Office: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+    t.Semantics.OpenOffice: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+    t.Semantics.FactoryOffice: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+    t.Semantics.BreakRoom: (
+        "weighted_choice",
+        (2, "none"),
+        (2, "art"),
+        (2, "plaster"),
+        (1, "half"),
+    ),
+}
 room_wall_alternative_fns = defaultdict(
-    lambda: ("weighted_choice", (2, "none"), (1, "half")),
-    {
-        t.Semantics.LivingRoom: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-        t.Semantics.Bedroom: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-        t.Semantics.Office: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-        t.Semantics.OpenOffice: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-        t.Semantics.FactoryOffice: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-        t.Semantics.BreakRoom: (
-            "weighted_choice",
-            (2, "none"),
-            (2, "art"),
-            (2, "plaster"),
-            (2, "half"),
-        ),
-    },
+    lambda: ("weighted_choice", (2, "none"), (0.5, "half")), room_wall_alternative_fns
 )
 
 room_no_curtain = {t.Semantics.Garage, t.Semantics.Warehouse}

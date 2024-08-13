@@ -381,15 +381,15 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
     p.run_stage(
-        "room_walls",
-        room_dec.room_walls,
-        rooms_split["wall"].objects,
-        constants,
-        use_chance=False,
-    )
-    p.run_stage(
         "room_pillars",
         room_dec.room_pillars,
+        rooms_split["wall"].objects,
+        constants,
+    )
+
+    p.run_stage(
+        "room_walls",
+        room_dec.room_walls,
         rooms_split["wall"].objects,
         constants,
         use_chance=False,
