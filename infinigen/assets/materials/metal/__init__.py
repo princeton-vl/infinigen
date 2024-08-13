@@ -11,7 +11,6 @@ from infinigen.core.util.color import hex2rgb, hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
-from .. import common
 from .aluminum import Aluminum
 from .appliance import BlackGlass, BrushedBlackMetal, WhiteMetal
 from .brushed_metal import BrushedMetal

@@ -99,19 +99,19 @@ compose_nature.camera_selection_tags_ratio = {"liquid": (0, 0.5)} # often overri
 compose_nature.camera_selection_anim_criterion_keys = {"liquid": True}
 
 # TERRAIN SEED #
-assets.materials.ice.geo_ice.random_seed = %OVERALL_SEED
-assets.materials.lava.lava_geo.random_seed = %OVERALL_SEED
-assets.materials.mud.geo_mud.random_seed = %OVERALL_SEED
-assets.materials.cobble_stone.geo_cobblestone.random_seed = %OVERALL_SEED
-assets.materials.dirt.geo_dirt.random_seed = %OVERALL_SEED
-assets.materials.stone.geo_stone.random_seed = %OVERALL_SEED
-assets.materials.cracked_ground.geo_cracked_ground.random_seed = %OVERALL_SEED
-assets.materials.soil.geometry_soil.random_seed = %OVERALL_SEED
-assets.materials.chunkyrock.geo_rocks.random_seed = %OVERALL_SEED
+geo_ice.random_seed = %OVERALL_SEED
+lava_geo.random_seed = %OVERALL_SEED
+geo_mud.random_seed = %OVERALL_SEED
+geo_cobblestone.random_seed = %OVERALL_SEED
+geo_dirt.random_seed = %OVERALL_SEED
+geo_stone.random_seed = %OVERALL_SEED
+geo_cracked_ground.random_seed = %OVERALL_SEED
+geometry_soil.random_seed = %OVERALL_SEED
+geo_rocks.random_seed = %OVERALL_SEED
 
-assets.materials.mountain.shader.random_seed = %OVERALL_SEED
-assets.materials.sand.shader.random_seed = %OVERALL_SEED
-assets.materials.water.shader.random_seed = %OVERALL_SEED
+mountain.shader.random_seed = %OVERALL_SEED
+sand.shader.random_seed = %OVERALL_SEED
+water.shader.random_seed = %OVERALL_SEED
 
 compose_nature.ground_creatures_chance = 0.0
 compose_nature.ground_creature_registry = [

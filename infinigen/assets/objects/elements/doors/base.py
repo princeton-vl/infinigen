@@ -10,10 +10,7 @@ import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets import colors
-from infinigen.assets.materials import metal
-from infinigen.assets.materials.ceramic import glass
-from infinigen.assets.materials.utils.common import unique_surface
-from infinigen.assets.materials.wood import wood
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import mirror, read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin
@@ -33,7 +30,6 @@ from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
-from infinigen.assets.composition import material_assignments
 
 
 class BaseDoorFactory(AssetFactory):

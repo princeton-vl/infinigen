@@ -70,18 +70,11 @@ class WindowFactory(AssetFactory):
         super(WindowFactory, self).__init__(factory_seed, coarse=coarse)
 
         with FixedSeed(factory_seed):
-            # Leave the parameters sampling to the create_asset function
-            # self.params = self.sample_parameters(dimensions, open, curtain, shutter)
-
-            self.params = {}
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
+            self.params = self.sample_parameters()
             self.beveler = BevelSharp()
             self.open = open
             self.curtain = curtain
             self.shutter = shutter
-        self.params.update(self.material_params)
 
     @staticmethod
     def sample_parameters():
@@ -252,7 +245,7 @@ class WindowFactory(AssetFactory):
         return params
 
     def create_asset(self, dimensions=None, open=None, realized=True, **params):
-        obj_params = self.sample_parameters(
+        obj_params = self.sample_asset_params(
             dimensions, open, self.curtain, self.shutter
         )
         self.params.update(obj_params)

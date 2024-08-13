@@ -1,4 +1,4 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
@@ -7,7 +7,6 @@
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.materials import common
 from infinigen.assets.materials.ceramic.glass import shader_glass
 from infinigen.assets.materials.metal import (
     brushed_metal,
@@ -17,6 +16,7 @@ from infinigen.assets.materials.metal import (
     metal_basic,
 )
 from infinigen.assets.materials.plastic.plastic_rough import shader_rough_plastic
+from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler

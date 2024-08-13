@@ -1,3 +1,9 @@
+# Copyright (C) 2024, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors:
+# - Alexander Raistrick
+
 from infinigen.assets.materials.dev import BasicBSDF
 from infinigen.assets.utils.decorate import read_center
 from infinigen.core import surface

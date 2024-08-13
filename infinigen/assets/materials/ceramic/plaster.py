@@ -7,7 +7,7 @@ from typing import Iterable
 
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes

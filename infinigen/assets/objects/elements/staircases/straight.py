@@ -14,9 +14,6 @@ from numpy.random import uniform
 from shapely import LineString, Polygon
 
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials import fabric, metal
-from infinigen.assets.materials.ceramic import concrete, glass, plaster
-from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     mirror,
     read_co,
@@ -48,9 +45,9 @@ from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, normalize
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
-from infinigen.core.util.random import weighted_sample
+
 
 class StraightStaircaseFactory(AssetFactory):
     support_types = (

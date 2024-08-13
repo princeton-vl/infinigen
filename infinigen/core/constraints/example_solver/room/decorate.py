@@ -20,11 +20,10 @@ from shapely import Point
 from shapely.ops import nearest_points
 from tqdm import trange
 from trimesh.transformations import translation_matrix
-import infinigen.core.surface as surface
-from infinigen.assets.composition import material_assignments
 
 import infinigen.core.constraints.example_solver.room.constants as constants
-from infinigen.assets.materials.ceramic import plaster, tile
+import infinigen.core.surface as surface
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
 from infinigen.assets.objects.elements.doors import random_door_factory
 from infinigen.assets.objects.windows import WindowFactory
@@ -60,7 +59,6 @@ from infinigen.core.constraints.example_solver.room.types import (
 )
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.random import random_general as rg
 from infinigen.core.util.random import weighted_sample
 
 logger = logging.getLogger(__name__)
@@ -107,7 +105,9 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
 
 
 def room_walls(wall_objs: list[bpy.types.Object]):
-    wall_fns = list(weighted_sample(ROOM_WALLS[get_room_type(r.name)])() for r in wall_objs)
+    wall_fns = list(
+        weighted_sample(ROOM_WALLS[get_room_type(r.name)])() for r in wall_objs
+    )
 
     logger.debug(
         f"{room_walls.__name__} adding materials to {len(wall_objs)=}, using {len(wall_fns)=}"
@@ -138,7 +138,9 @@ def room_ceilings(ceilings: list[bpy.types.Object]):
 
 
 def room_floors(floors: list[bpy.types.Object]):
-    floor_fns = list(weighted_sample(ROOM_FLOORS[get_room_type(r.name)])() for r in floors)
+    floor_fns = list(
+        weighted_sample(ROOM_FLOORS[get_room_type(r.name)])() for r in floors
+    )
     logger.debug(
         f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
     )

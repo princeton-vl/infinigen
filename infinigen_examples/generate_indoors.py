@@ -59,7 +59,6 @@ from infinigen_examples.util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
-import infinigen.core.surface as surface
 
 from . import generate_nature  # noqa F401 # needed for nature gin configs to load
 

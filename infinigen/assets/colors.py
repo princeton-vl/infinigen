@@ -1,9 +1,9 @@
-# Copyright (c) Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
-# - Stamatis Alexandropoulos, Meenal Parakh: original version
-# - Alexander Raistrick: Refactor into MixtureOfGaussians class
+# - Stamatis Alexandropoulos, Meenal Parakh: infinigen indoors version
+# - Alexander Raistrick: refactor, unify all color distributions in repo into this file
 
 import numpy as np
 from numpy.random import normal, uniform

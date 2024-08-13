@@ -9,7 +9,6 @@ from collections.abc import Iterable
 import bpy
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from infinigen.core import surface
 
 from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.decorate import (
@@ -24,6 +23,7 @@ from infinigen.assets.utils.decorate import (
     select_faces,
     write_uv,
 )
+from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)

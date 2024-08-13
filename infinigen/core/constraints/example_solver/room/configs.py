@@ -4,14 +4,10 @@
 # Authors: Lingjie Mei
 from collections import defaultdict
 
-from infinigen.assets.materials.ceramic import brick, concrete, plaster, tile
-from infinigen.assets.materials.fabric import rug
-from infinigen.assets.materials.tiles import advanced_tiles
-from infinigen.assets.materials.wood import tiled_wood
+from infinigen.assets.composition import material_assignments
 from infinigen.core.constraints.example_solver.room.types import RoomType
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
-from infinigen.assets.composition import material_assignments
 
 EXTERIOR_CONNECTED_ROOM_TYPES = [
     RoomType.Bedroom,
@@ -191,7 +187,7 @@ ROOM_WALLS = defaultdict(
         RoomType.Utility: material_assignments.utility_wall,
         RoomType.Balcony: material_assignments.balcony_wall,
         RoomType.Bathroom: material_assignments.bathroom_wall,
-    }
+    },
 )
 
 # ROOM_FLOORS = defaultdict(
@@ -211,7 +207,7 @@ ROOM_FLOORS = defaultdict(
         RoomType.Utility: material_assignments.utility_floor,
         RoomType.Bathroom: material_assignments.bathroom_floor,
         RoomType.Balcony: material_assignments.balcony_floor,
-    }
+    },
 )
 
 
