@@ -44,6 +44,7 @@ from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
+from infinigen.core.util.imu import save_imu_tum_files
 from infinigen.core.util.test_utils import (
     import_item,
     load_txt_list,
@@ -242,6 +243,10 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     def animate_cameras():
         cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
+
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
     p.run_stage(
         "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"

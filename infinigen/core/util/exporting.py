@@ -199,11 +199,6 @@ def save_obj_and_instances(
     for atm_name in ["atmosphere", "atmosphere_fine", "KoleClouds"]:
         if atm_name in bpy.data.objects:
             bpy.data.objects.remove(bpy.data.objects[atm_name])
-    if "scatters" in bpy.data.collections:
-        for obj in bpy.data.collections["scatters"].objects:
-            if "instance_scatter" in obj.modifiers.keys():
-                obj.hide_viewport = False
-        bpy.data.collections["scatters"].hide_viewport = False
 
     json_data = []
     instance_mesh_data = get_all_instances()
@@ -318,6 +313,8 @@ def save_obj_and_instances(
         print(f"Saving to {filename}")
 
     for obj in bpy.data.objects:
+        if obj.hide_viewport:
+            continue
         if obj.type not in {"MESH", "CURVES", "CAMERA"}:
             object_name = obj.name
             if object_name not in object_names_mapping:

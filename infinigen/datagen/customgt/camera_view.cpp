@@ -56,7 +56,7 @@ Eigen::Matrix<T_final, h, w> load_matrix(const npz &camview, const std::string &
     return tmp.transpose().template cast<T_final>();
 }
 
-CameraView::CameraView(const std::string fstr, const fs::path input_dir, const int width, const int height) : frame_string(fstr), image_height(height), image_width(width), buffer_height(height*2), buffer_width(width*2)
+CameraView::CameraView(const std::string fstr, const std::string dst_fstr, const fs::path input_dir, const fs::path dst_input_dir, const int width, const int height) : frame_string(fstr), dst_frame_string(dst_fstr), image_height(height), image_width(width), buffer_height(height*2), buffer_width(width*2)
 {
     // Current Frame
     const fs::path current_frame_cam_path = input_dir / ("camview_"+frame_string+".npz");
@@ -65,7 +65,7 @@ CameraView::CameraView(const std::string fstr, const fs::path input_dir, const i
     current_frame_view_matrix = glm::make_mat4(Matrix4f(opengl_camera_pose.inverse()).data()); // Y up Z back (aka blender/opengl)
 
     // Next Frame
-    const fs::path next_frame_cam_path = increment_int_substr({"frame_([0-9]{4})", "camview_[0-9]+_[0-9]+_([0-9]{4})"}, current_frame_cam_path);
+    const fs::path next_frame_cam_path = dst_input_dir / ("camview_"+dst_frame_string+".npz");
     const npz next_camview(next_frame_cam_path);
     const Matrix4f next_opengl_camera_pose = load_matrix<4, 4>(next_camview, "T") * FLIP_Y_Z;
     next_frame_view_matrix = glm::make_mat4(Matrix4f(next_opengl_camera_pose.inverse()).data());

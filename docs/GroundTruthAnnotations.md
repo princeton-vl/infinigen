@@ -137,7 +137,17 @@ The mask of occluded pixels for the aforementioned optical flow is stored as a H
 
 *Note: This mask is computed by comparing the face-ids on the triangle meshes at either end of each flow vector. Infinigen meshes often contain multiple faces per-pixel, resulting in frequent false-negatives (negative=occluded). These false-negatives are generally distributed uniformly over the image (like salt-and-pepper noise), and can be reduced by max-pooling the occlusion mask down to the image resolution.*
 
-### Camera Intrinsics & Extrinsics
+### Point Trajectory & Point Trajectory Occlusion :large_blue_diamond:
+It is similar to Optical Flow and its Occlusion, except that it computes the flow from a specified source frame (the first frame by default) to all the other frames. Customize it by `--pipeline_overrides iterate_scene_tasks.point_trajectory_src_frame=X`.
+
+To visualize point trajectories for a scene, run:
+```
+python infinigen/tools/results/visualize_traj.py path/to/your/scene/frames
+```
+
+### Camera Pose
+
+##### Intrinsic & Extrinsic Matrices
 
 Camera intrinsics and extrinsics are stored as a numpy ".npz" file inside the "camview" folder.
 
@@ -146,6 +156,27 @@ Infinigen renders images using a pinhole camera model. The resulting camera intr
 The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinates to world coordinates.
 
 As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
+
+##### Camera Velocity / Acceleration (IMU)
+
+Camera velocity / acceleration is stored as ".txt" files inside the "frames/imu_tum" folder.
+
+Inertial Measurement Unit (IMU) records the rotational velocity and linear acceleration of each camera at each frame. Each row contains the timestamp, rotational velocity (x y z), and linear acceleration (x y z) with each value separated by a space:
+
+```
+timestamp rv_x rv_y rv_z a_x a_y a_z
+```
+
+##### TUM Trajectory Format
+
+For convenience, we also save the trajectories of any animated cameras in the [TUM trajectory format](https://github.com/MichaelGrupp/evo/wiki/Formats#tum---tum-rgb-d-dataset-trajectory-format).
+
+
+Each row contains the timestamp, position, and rotation (as quarternion) with each value separated by a space:
+
+```
+timestamp x y z q_x q_y q_z q_w
+```
 
 ### Panoptic Segmentation
 
