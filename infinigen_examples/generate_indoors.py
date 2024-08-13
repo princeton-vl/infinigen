@@ -38,7 +38,6 @@ from infinigen.core.constraints.example_solver import (
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
-from infinigen.core.util import math as mutil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.imu import save_imu_tum_files
@@ -47,14 +46,12 @@ from infinigen.core.util.test_utils import (
     load_txt_list,
 )
 from infinigen.terrain import Terrain
-from infinigen_examples.constraint_examples.home import home_constraints
-from infinigen_examples.constraint_examples.office import office_constraints
-from infinigen_examples.constraint_examples.warehouse import warehouse_constraints
+from infinigen_examples.constraints.home import home_constraints
 
 from . import (
     generate_nature,  # noqa F401 # needed for nature gin configs to load  # noqa F401 # needed for nature gin configs to load
 )
-from .util import constraint_util as cu
+from .constraints import util as cu
 from .util.generate_indoors_util import (
     apply_greedy_restriction,
     create_outdoor_backdrop,
@@ -145,14 +142,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     p.run_stage("sky_lighting", lighting.sky_lighting.add_lighting, use_chance=False)
 
-    with mutil.FixedSeed(scene_seed):
-        match overrides.get("type", None):
-            case "office":
-                consgraph = office_constraints()
-            case "warehouse":
-                consgraph = warehouse_constraints()
-            case _:
-                consgraph = home_constraints()
+    consgraph = home_constraints()
     constants = consgraph.constants
 
     stages = default_greedy_stages()

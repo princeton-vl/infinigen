@@ -10,7 +10,7 @@ import pytest
 from infinigen.core import tags as t
 from infinigen.core.constraints import usage_lookup
 from infinigen.core.util import blender as butil
-from infinigen_examples.indoor_asset_semantics import home_asset_usage
+from infinigen_examples.constraints.semantics import home_asset_usage
 
 
 def get_real_placeholder_facs():

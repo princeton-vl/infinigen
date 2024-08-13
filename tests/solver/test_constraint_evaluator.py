@@ -24,8 +24,8 @@ from infinigen.core.constraints.example_solver.state_def import (
     state_from_dummy_scene,
 )
 from infinigen.core.util import blender as butil
-from infinigen_examples.constraint_examples.home import home_constraints
-from infinigen_examples.indoor_asset_semantics import home_asset_usage
+from infinigen_examples.constraints.home import home_constraints
+from infinigen_examples.constraints.semantics import home_asset_usage
 
 
 def test_home_constraints_implemented():

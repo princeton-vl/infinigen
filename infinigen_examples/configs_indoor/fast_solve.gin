@@ -1,10 +1,9 @@
 FloorPlanSolver.n_divide_trials = 10
 FloorPlanSolver.iters_mult = 10
 RoomConstants.n_stories = 1
-home_constraints.fast = True
-office_constraints.fast = True
-warehouse_constraints.fast = True
 GraphMaker.fast=True
+
+room_layout_constraints.fast = True
 
 Solver.addition_weight_scalar = 3.0
 

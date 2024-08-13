@@ -5,11 +5,11 @@
 # Authors: Alexander Raistrick
 
 from infinigen.core.constraints import constraint_language as cl
-from infinigen_examples import indoor_constraint_examples as ex
+from infinigen_examples.constraints import home as ex
 
 
 def test_residential():
-    cons = ex.indoor_constraints()
+    cons = ex.home_constraints()
 
     assert isinstance(cons, cl.Node)
     assert isinstance(repr(cons), str)

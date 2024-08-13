@@ -11,7 +11,7 @@ import shapely
 from shapely import MultiLineString
 from shapely.ops import shared_paths
 
-from example_solver.state_def import State
+from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.tags import Semantics
 
 from .base import room_level, room_name, valid_rooms

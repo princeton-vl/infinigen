@@ -10,7 +10,7 @@ from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import usage_lookup
 from infinigen.core.util import blender as butil
-from infinigen_examples.indoor_constraint_examples import home_asset_usage
+from infinigen_examples.constraints.home import home_asset_usage
 
 
 def test_canonical_planes_real_placeholders():

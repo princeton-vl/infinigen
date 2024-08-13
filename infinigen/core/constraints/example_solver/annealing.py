@@ -206,7 +206,7 @@ class SimulatedAnnealingSolver:
 
             succeeded = move.apply(state)
             if succeeded:
-                evaluate.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+                eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
                 result = self._move(consgraph, state, move, filter_domain)
                 return move, result, retry
 
@@ -283,7 +283,7 @@ class SimulatedAnnealingSolver:
                 self.curr_result = prop_result
                 move.accept(state)
             else:
-                evaluate.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+                eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
                 move.revert(state)
 
         dt = time.perf_counter() - move_start_time
