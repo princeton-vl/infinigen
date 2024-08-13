@@ -244,13 +244,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     def animate_cameras():
         cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
 
-        save_imu_tum_data = overrides.get("save_imu_tum_data")
-        if save_imu_tum_data:
-            frames_folder = output_folder.parent / "frames"
-            animated_cams = [
-                cam for cam in camera_rigs if cam.animation_data is not None
-            ]
-            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
     p.run_stage(
         "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
