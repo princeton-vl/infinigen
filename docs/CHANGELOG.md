@@ -88,3 +88,6 @@ v1.6.0
 v1.7.0
 - Implement camera IMU calculation and export
 - Add point tracking ground truth
+
+v1.7.1
+- Bugfix fine terrain in arctic scenes
