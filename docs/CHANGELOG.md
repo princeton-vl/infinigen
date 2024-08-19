@@ -91,3 +91,6 @@ v1.7.0
 
 v1.7.1
 - Bugfix fine terrain in arctic scenes
+
+v.1.8.0
+- Implement tools for importing external assets into Indoors
