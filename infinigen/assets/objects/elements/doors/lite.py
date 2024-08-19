@@ -11,8 +11,8 @@ from .panel import PanelDoorFactory
 
 
 class LiteDoorFactory(PanelDoorFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(LiteDoorFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(LiteDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             r = uniform()
             subdivide_glass = False

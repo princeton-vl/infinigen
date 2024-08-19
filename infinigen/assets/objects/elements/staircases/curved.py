@@ -12,7 +12,6 @@ from infinigen.assets.objects.elements.staircases.straight import (
     StraightStaircaseFactory,
 )
 from infinigen.assets.utils.decorate import read_co, write_co
-from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
@@ -29,9 +28,9 @@ class CurvedStaircaseFactory(StraightStaircaseFactory):
 
     handrail_types = "weighted_choice", (2, "horizontal-post"), (2, "vertical-post")
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         self.full_angle, self.radius, self.theta = 0, 0, 0
-        super(CurvedStaircaseFactory, self).__init__(factory_seed, coarse)
+        super(CurvedStaircaseFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.has_spiral = True
 
@@ -39,7 +38,7 @@ class CurvedStaircaseFactory(StraightStaircaseFactory):
         while True:
             self.full_angle = np.random.randint(1, 5) * np.pi / 2
             self.n = np.random.randint(13, 21)
-            self.step_height = constants.WALL_HEIGHT / self.n
+            self.step_height = self.constants.wall_height / self.n
             self.theta = self.full_angle / self.n
             self.step_length = self.step_height * log_uniform(1, 1.5)
             self.step_width = log_uniform(0.9, 1.5)

@@ -10,10 +10,9 @@ infinigen.assets.materials.leather
 infinigen.assets.materials.plastic
 infinigen.assets.materials.rug
 
-infinigen.assets.materials.wood_new
-infinigen.assets.materials.tiled_wood
-infinigen.assets.materials.wood_new
 infinigen.assets.materials.wood
+infinigen.assets.materials.tiled_wood
+infinigen.assets.materials.wood_old
 infinigen.assets.materials.hardwood_floor
 
 infinigen.assets.materials.tile_hexagon

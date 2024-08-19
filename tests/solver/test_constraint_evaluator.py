@@ -24,14 +24,14 @@ from infinigen.core.constraints.example_solver.state_def import (
     state_from_dummy_scene,
 )
 from infinigen.core.util import blender as butil
-from infinigen_examples.indoor_asset_semantics import home_asset_usage
-from infinigen_examples.indoor_constraint_examples import home_constraints
+from infinigen_examples.constraints.home import home_furniture_constraints
+from infinigen_examples.constraints.semantics import home_asset_usage
 
 
-def test_home_constraints_implemented():
+def test_home_furniture_constraints_implemented():
     butil.clear_scene()
 
-    cons = home_constraints()
+    cons = home_furniture_constraints()
 
     for node in cons.traverse():
         if node.__class__ in evaluate.SPECIAL_CASE_NODES:

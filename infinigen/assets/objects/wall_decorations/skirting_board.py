@@ -22,12 +22,7 @@ from infinigen.assets.utils.object import join_objects, new_plane
 from infinigen.assets.utils.shapes import obj2polygon
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
-from infinigen.core.constraints.example_solver.room.constants import (
-    DOOR_WIDTH,
-    WALL_HEIGHT,
-    WALL_THICKNESS,
-)
-from infinigen.core.constraints.example_solver.room.types import get_room_level
+from infinigen.core.constraints.example_solver.room.base import room_level
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import color_category
@@ -231,7 +226,7 @@ def apply_skirtingboard(
     )
 
 
-def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
+def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart, constants):
     # make the outline curve
 
     assert len(objs) > 0
@@ -264,12 +259,12 @@ def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
 
     for b in boundaries:
         lr = b.exterior
-        o = linear_ring2curve(lr)
+        o = linear_ring2curve(lr, constants)
         contours.append(o)
         o.location[-1] += floor_z
         butil.apply_transform(o, True)
         for lr in b.interiors:
-            o = linear_ring2curve(lr, True)
+            o = linear_ring2curve(lr, constants, True)
             contours.append(o)
             o.location[-1] += floor_z
             butil.apply_transform(o, True)
@@ -277,10 +272,11 @@ def make_skirtingboard_contour(objs: list[bpy.types.Object], tag: t.Subpart):
     return contours
 
 
-def make_skirting_board(objs, tag, joined=True):
+def make_skirting_board(constants, objs, tag, joined=True):
     if joined:
         seqs = list(
-            [o for o in objs if get_room_level(o.name.split(".")[0]) == i] for i in [0]
+            [o for o in objs if room_level(o.name.split(".")[0]) == i]
+            for i in range(constants.n_stories)
         )
     else:
         seqs = [[o] for o in objs]
@@ -289,7 +285,7 @@ def make_skirting_board(objs, tag, joined=True):
         logger.debug(f"make_skirting_board for {len(objs)=} {tag=}")
 
         try:
-            contours = make_skirtingboard_contour(s, tag)
+            contours = make_skirtingboard_contour(s, tag, constants)
         except shapely.errors.GEOSException as e:
             logger.warning(
                 f"make_skirting_board({objs=}, {tag=}) failed with {e}, skipping"
@@ -311,9 +307,9 @@ def make_skirting_board(objs, tag, joined=True):
         for p in portal_cutters:
             if (
                 p.name.startswith("entrance")
-                and int(p.location[-1] / WALL_HEIGHT - 1 / 2) == 0
+                and int(p.location[-1] / constants.wall_height - 1 / 2) == 0
             ):
-                p.location[-1] -= WALL_HEIGHT / 2
+                p.location[-1] -= constants.wall_height / 2
                 butil.modify_mesh(
                     obj,
                     "BOOLEAN",
@@ -322,13 +318,13 @@ def make_skirting_board(objs, tag, joined=True):
                     use_self=True,
                     use_hole_tolerant=True,
                 )
-                p.location[-1] += WALL_HEIGHT / 2
+                p.location[-1] += constants.wall_height / 2
         butil.delete_collection(col)
         col = butil.get_collection("skirting")
         butil.put_in_collection(obj, col)
 
 
-def linear_ring2curve(ring, reversed=False):
+def linear_ring2curve(ring, constants, reversed=False):
     coords = ring.coords
     if shapely.is_ccw(ring) == reversed:
         coords = coords[::-1]
@@ -336,8 +332,8 @@ def linear_ring2curve(ring, reversed=False):
     lengths = np.linalg.norm(coords[:-1] - coords[1:], axis=-1)
     invalid = np.sort(
         np.nonzero(
-            (np.abs(lengths - WALL_THICKNESS) < 0.02)
-            | (np.abs(lengths - DOOR_WIDTH) < 0.02)
+            (np.abs(lengths - constants.wall_thickness) < 0.02)
+            | (np.abs(lengths - constants.door_width) < 0.02)
         )[0]
     )
     ranges = -1, *invalid, len(coords)

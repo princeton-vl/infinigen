@@ -54,4 +54,3 @@ infinigen.assets.materials.two_color_spots
 infinigen.assets.materials.twocolorz
 infinigen.assets.materials.waterfall_material
 infinigen.assets.materials.water
-infinigen.assets.materials.wood

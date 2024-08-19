@@ -62,7 +62,7 @@ def safe_polygon2obj(poly, reversed=False, z=0):
     return obj
 
 
-def polygon2obj(p, reversed=False, z=0):
+def polygon2obj(p, reversed=False, z=0, dissolve=True):
     p = orient(p)
     coords = np.array(p.exterior.coords)[:-1, :2]
     obj = new_circle(vertices=len(coords))
@@ -78,7 +78,8 @@ def polygon2obj(p, reversed=False, z=0):
     with butil.ViewportMode(obj, "EDIT"):
         bpy.ops.mesh.select_all(action="SELECT")
         bpy.ops.mesh.fill()
-    dissolve_limited(obj)
+    if dissolve:
+        dissolve_limited(obj)
     obj.location[-1] = z
     butil.apply_transform(obj, True)
     point_normal_up(obj, reversed)

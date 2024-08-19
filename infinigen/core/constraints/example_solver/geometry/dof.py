@@ -20,10 +20,6 @@ from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints.constraint_language import util as iu
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry import stability
-from infinigen.core.constraints.example_solver.room.constants import (
-    WALL_HEIGHT,
-    WALL_THICKNESS,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -462,12 +458,9 @@ def try_apply_relation_constraints(
 
     for retry in range(n_try_resolve):
         obj_state = state.objs[name]
-        if (
-            iu.blender_objs_from_names(obj_state.obj.name)[0].dimensions[2]
-            > WALL_HEIGHT - WALL_THICKNESS
-        ):
+        if iu.blender_objs_from_names(obj_state.obj.name)[0].dimensions[2] > 2.5:
             logger.warning(
-                f"Object {obj_state.obj.name} is too tall for the room: {obj_state.obj.dimensions[2]}, {WALL_HEIGHT=}, {WALL_THICKNESS=}"
+                f"Object {obj_state.obj.name} is too tall for the room: {obj_state.obj.dimensions[2]}, 2.5"
             )
         parent_planes = apply_relations_surfacesample(state, name)
 

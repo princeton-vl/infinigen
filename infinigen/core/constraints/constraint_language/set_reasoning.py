@@ -18,6 +18,9 @@ class ObjectSetExpression(Expression):
     def __getitem__(self, key):
         return tagged(self, key)
 
+    def __mod__(self, key):
+        return union(self, key)
+
 
 @nodedataclass()
 class scene(ObjectSetExpression):
@@ -32,6 +35,17 @@ class tagged(ObjectSetExpression):
 
     def __post_init__(self):
         self.tags = t.to_tag_set(self.tags, fac_context=usage_lookup._factory_lookup)
+
+
+@ObjectSetExpression.register_postfix_func
+@nodedataclass()
+class union(ObjectSetExpression):
+    objs: ObjectSetExpression
+    tags: set[t.Tag] = field(default_factory=set)
+
+    def __post_init__(self):
+        if not isinstance(self.tags, set):
+            self.tags = {self.tags}
 
 
 @ObjectSetExpression.register_postfix_func
@@ -79,6 +93,7 @@ class in_range(BoolExpression):
     val: ScalarExpression
     low: float
     high: float
+    mean: float = 0
 
     def __post_init__(self):
         if not isinstance(self.val, ScalarExpression):
