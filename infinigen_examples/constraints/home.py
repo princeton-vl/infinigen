@@ -512,7 +512,9 @@ def home_furniture_constraints():
 
     furniture = obj[Semantics.Furniture].related_to(rooms, cu.on_floor)
     wallfurn = furniture.related_to(rooms, cu.against_wall)
-    storage = wallfurn[Semantics.Storage]
+
+    storage = furniture[Semantics.Storage]
+    storage_freestanding = storage.related_to(rooms, cu.against_wall)
 
     params = sample_home_constraint_params()
 
@@ -593,7 +595,7 @@ def home_furniture_constraints():
     )
 
     constraints["storage"] = rooms.all(
-        lambda r: (storage.related_to(r).count().in_range(1, 7))
+        lambda r: (storage_freestanding.related_to(r).count().in_range(1, 7))
     )
     score_terms["storage"] = rooms.mean(
         lambda r: (
@@ -833,7 +835,7 @@ def home_furniture_constraints():
     closets = rooms[Semantics.Closet].excludes(cu.room_types)
     constraints["closets"] = closets.all(
         lambda r: (
-            (storage.related_to(r).count() >= 1)
+            (storage_freestanding.related_to(r).count() >= 1)
             * ceillights.related_to(r, cu.hanging).count().in_range(0, 1)
             * (
                 walldec.related_to(r).count() == 0
@@ -860,7 +862,7 @@ def home_furniture_constraints():
             * sidetables.related_to(beds.related_to(r)).count().in_range(0, 2)
             * rugs.related_to(r).count().in_range(0, 1)
             * desks.related_to(r).count().in_range(0, 1)
-            * storage.related_to(r).count().in_range(2, 5)
+            * storage_freestanding.related_to(r).count().in_range(2, 5)
             * floor_lamps.related_to(r).count().in_range(0, 1)
             * storage.related_to(r).all(
                 lambda s: (
@@ -1150,12 +1152,12 @@ def home_furniture_constraints():
                     * cl.accessibility_cost(t, r, dist=1).in_range(0, 0.5)
                 )
             )
-            * (  # allow a storage object behind non-wall sofas
-                storage.related_to(r)
-                .related_to(freestanding(sofas, r), cu.back_to_back)
-                .count()
-                .in_range(0, 1)
-            )
+            # * (  # allow a storage object behind non-wall sofas
+            #     storage.related_to(r, cu.on_floor)
+            #     .related_to(freestanding(sofas, r), cu.back_to_back)
+            #     .count()
+            #     .in_range(0, 1)
+            # )
         )
     )
 
@@ -1238,7 +1240,7 @@ def home_furniture_constraints():
 
     constraints["livingroom"] = livingrooms.all(
         lambda r: (
-            storage.related_to(r).count().in_range(0, 5)
+            storage_freestanding.related_to(r).count().in_range(0, 5)
             * tvstands.related_to(r).count().equals(1)
             * sidetables.related_to(sofas.related_to(r)).count().in_range(0, 2)
             * desks.related_to(r).count().in_range(0, 1)
