@@ -14,8 +14,6 @@ from infinigen.core.placement.factory import AssetFactory
 
 
 class StaticAssetFactory(AssetFactory):
-    root_asset_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "source")
-
     import_map: Dict[str, Callable] = {
         "dae": bpy.ops.wm.collada_import,
         "abc": bpy.ops.wm.alembic_import,
@@ -29,16 +27,8 @@ class StaticAssetFactory(AssetFactory):
         "blend": bpy.ops.wm.append,
     }
 
-    @classmethod
-    def set_root_asset_dir(cls, directory):
-        cls.root_asset_dir = directory
-
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
-        if self.root_asset_dir is None:
-            raise ValueError(
-                "Root asset directory not set. Call StaticAssetFactory.set_root_asset_dir() first."
-            )
 
     def import_single_object_from_blend(self, file_path):
         with bpy.data.libraries.load(file_path, link=False) as (data_from, data_to):
