@@ -13,7 +13,7 @@
 To run the visualization scripts below you will need to install extra dependencies
 
 ```bash
-pip install .[vis]
+pip install ".[vis]"
 ```
 
 ## Default Annotations from Blender
