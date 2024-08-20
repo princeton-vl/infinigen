@@ -5,10 +5,10 @@ GraphMaker.fast=True
 
 home_room_constraints.fast = True
 
-Solver.addition_weight_scalar = 3.0
+solve_objects.addition_weight_scalar = 3.0
 
 compose_indoors.solve_steps_large = 100
 compose_indoors.solve_steps_medium = 40
-compose_indoors.solve_steps_small = 10
+compose_indoors.solve_steps_small = 5
 
 compose_indoors.terrain_enabled = False

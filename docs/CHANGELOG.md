@@ -102,4 +102,6 @@ v1.8.1
 - Fix bug causing livingroom sofa alignment to be incorrect
 - Fix bias in camera trajectory starting direction
 - Improve visual quality of home.py via constraint tweaks and new generate_indoors stages
+- Fix silent output from upload stage, remove export from upload
+- Reduce solving time spent on small objects
 

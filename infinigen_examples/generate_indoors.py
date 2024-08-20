@@ -188,7 +188,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     state: state_def.State = p.run_stage("solve_rooms", solve_rooms, use_chance=False)
 
-    def solve_stage_name(stage_name: str, group: str):
+    def solve_stage_name(stage_name: str, group: str, **kwargs):
         assigments = greedy.iterate_assignments(
             stages[stage_name], state, all_vars, limits
         )
@@ -200,6 +200,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
                 n_steps=overrides[f"solve_steps_{group}"],
                 desc=f"{stage_name}_{i}",
                 abort_unsatisfied=overrides.get(f"abort_unsatisfied_{group}", False),
+                **kwargs,
             )
 
     def solve_large():
@@ -285,8 +286,8 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
 
     def solve_small():
-        solve_stage_name("obj_ontop_obj", "small")
-        solve_stage_name("obj_on_support", "small")
+        solve_stage_name("obj_ontop_obj", "small", addition_weight_scalar=3)
+        solve_stage_name("obj_on_support", "small", restrict_moves=["addition"])
 
     p.run_stage("solve_small", solve_small, use_chance=False, default=state)
 
