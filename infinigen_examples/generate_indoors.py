@@ -108,15 +108,22 @@ def default_greedy_stages():
         cl.AnyRelation(), all_obj_in_room.with_tags(cu.variable_obj)
     )
 
-    greedy_stages["side_obj"] = secondary.with_relation(side, all_obj)
-    nonside = secondary.with_relation(-side, all_obj)
+    greedy_stages["side_obj"] = (
+        secondary.with_relation(side, all_obj)
+        .with_relation(-cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
-    greedy_stages["obj_ontop_obj"] = nonside.with_relation(
-        cu.ontop, all_obj
-    ).with_relation(-cu.on, all_obj)
-    greedy_stages["obj_on_support"] = nonside.with_relation(
-        cu.on, all_obj
-    ).with_relation(-cu.ontop, all_obj)
+    greedy_stages["obj_ontop_obj"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.ontop, all_obj)
+        .with_relation(-cu.on, all_obj)
+    )
+    greedy_stages["obj_on_support"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
     return greedy_stages
 
