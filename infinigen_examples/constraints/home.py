@@ -641,7 +641,7 @@ def home_furniture_constraints():
         lambda r: (
             wall_art.related_to(r).count().in_range(0, 6)
             * mirror.related_to(r).count().in_range(0, 1)
-            * walldec.related_to(r).all(lambda t: t.distance(r, cu.floortags) > 0.6)
+            * walldec.related_to(r).all(lambda t: (t.distance(r, cu.floortags) > 0.6))
             # walldec.all(lambda t: (
             #    (vertical_diff(t, r).abs() < 1.5) *
             #    (t.distance(cutters) > 0.1)
@@ -716,6 +716,7 @@ def home_furniture_constraints():
         desks, cu.front_against
     )
     monitors = obj[appliances.MonitorFactory]
+
     constraints["desk"] = rooms.all(
         lambda r: (
             desks.related_to(r).all(
@@ -1227,7 +1228,8 @@ def home_furniture_constraints():
             storage.related_to(r).count().in_range(1, 5)
             * tvstands.related_to(r).count().equals(1)
             * (  # allow sidetables next to any sofa
-                sidetable.related_to(r)
+                sidetable.related_to(r, cu.on_floor)
+                .related_to(r, cu.against_wall)
                 .related_to(sofas.related_to(r), cu.side_by_side)
                 .count()
                 .in_range(0, 2)
