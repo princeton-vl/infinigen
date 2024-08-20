@@ -628,7 +628,9 @@ def home_furniture_constraints():
     mirror = walldec[wall_decorations.MirrorFactory]
     rugs = obj[elements.RugFactory].related_to(rooms, cu.on_floor)
 
-    constraints["rugs"] = rooms.all(lambda r: (rugs.related_to(r).distance(rugs) >= 1))
+    constraints["rugs"] = rooms.all(
+        lambda r: (cl.min_distance_internal(rugs.related_to(r)) >= 1)
+    )
 
     score_terms["rugs"] = rooms.all(
         lambda r: (cl.center_stable_surface_dist(rugs.related_to(r)).minimize(weight=1))

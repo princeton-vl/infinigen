@@ -98,9 +98,9 @@ def preprocess_collision_query_cases(a, b, a_tags, b_tags):
     if isinstance(b, list):
         b = set(b)
 
-    if len(a) == 1:
+    if a is not None and len(a) == 1:
         a = a.pop()
-    if len(b) == 1:
+    if b is not None and len(b) == 1:
         b = b.pop()
 
     # eliminate symmetrical cases
@@ -196,8 +196,8 @@ class DistanceResult:
 
 def min_dist(
     scene: Scene,
-    a: Union[str, list[str]],
-    b: Union[str, list[str]] = None,
+    a: str | list[str] | None,
+    b: str | list[str] | None = None,
     a_tags: set = None,
     b_tags: set = None,
     bvh_cache: dict = None,
