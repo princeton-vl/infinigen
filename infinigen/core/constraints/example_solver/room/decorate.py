@@ -184,34 +184,6 @@ room_wall_alternative_fns = {
         (2, "plaster"),
         (1, "half"),
     ),
-    t.Semantics.Office: (
-        "weighted_choice",
-        (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
-        (1, "half"),
-    ),
-    t.Semantics.OpenOffice: (
-        "weighted_choice",
-        (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
-        (1, "half"),
-    ),
-    t.Semantics.FactoryOffice: (
-        "weighted_choice",
-        (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
-        (1, "half"),
-    ),
-    t.Semantics.BreakRoom: (
-        "weighted_choice",
-        (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
-        (1, "half"),
-    ),
 }
 room_wall_alternative_fns = defaultdict(
     lambda: ("weighted_choice", (2, "none"), (0.5, "half")), room_wall_alternative_fns

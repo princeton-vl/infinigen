@@ -287,7 +287,10 @@ def apply_relations_surfacesample(
         parent_planes.append(parent_plane)
         parent_objs.append(parent_obj)
         match relation_state.relation:
-            case cl.StableAgainst(_child_tags, parent_tags, margin):
+            case (
+                cl.StableAgainst(_child_tags, parent_tags, margin)
+                | cl.Touching(_child_tags, parent_tags, margin)
+            ):
                 margins.append(margin)
                 parent_tag_list.append(parent_tags)
             case cl.SupportedBy(_parent_tags, parent_tags):
@@ -403,11 +406,9 @@ def apply_relations_surfacesample(
             face_mask = tagging.tagged_face_mask(
                 parent_obj, relation_state.relation.parent_tags
             )
-            stability.move_obj_random_pt(
-                state, obj_name, parent_obj.name, face_mask, parent_plane
-            )
+
             match relation_state.relation:
-                case cl.StableAgainst(_, parent_tags, margin):
+                case cl.CoPlanar:
                     stability.snap_against(
                         state.trimesh_scene,
                         obj_name,
@@ -416,7 +417,24 @@ def apply_relations_surfacesample(
                         parent_plane,
                         margin=margin,
                     )
+
+                case cl.StableAgainst(_, parent_tags, margin):
+                    stability.move_obj_random_pt(
+                        state, obj_name, parent_obj.name, face_mask, parent_plane
+                    )
+                    stability.snap_against(
+                        state.trimesh_scene,
+                        obj_name,
+                        parent_obj.name,
+                        obj_plane,
+                        parent_plane,
+                        margin=margin,
+                    )
+
                 case cl.SupportedBy(_, parent_tags):
+                    stability.move_obj_random_pt(
+                        state, obj_name, parent_obj.name, face_mask, parent_plane
+                    )
                     stability.snap_against(
                         state.trimesh_scene,
                         obj_name,

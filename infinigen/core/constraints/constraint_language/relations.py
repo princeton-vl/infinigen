@@ -387,9 +387,14 @@ class SupportedBy(Touching):
 
 
 @dataclass(frozen=True)
-class StableAgainst(GeometryRelation):
+class CoPlanar(GeometryRelation):
     margin: float = 0
 
+    __repr__ = no_frozenset_repr
+
+
+@dataclass(frozen=True)
+class StableAgainst(GeometryRelation):
     # check_ if False, only check x/z stability, z is allowed to overhand.
     # typical use is chair-against-table relation
     check_z: bool = True
