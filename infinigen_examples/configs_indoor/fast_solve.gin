@@ -1,5 +1,5 @@
-FloorPlanSolver.n_divide_trials = 10
-FloorPlanSolver.iters_mult = 10
+FloorPlanSolver.n_divide_trials = 25
+FloorPlanSolver.iters_mult = 25
 RoomConstants.n_stories = 1
 GraphMaker.fast=True
 
