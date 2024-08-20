@@ -41,7 +41,7 @@ class SimulatedAnnealingSolver:
         checkpoint_best=False,
         output_folder=None,
         visualize=False,
-        print_report_freq=10,
+        print_report_freq=1,
         print_breakdown_freq=0,
     ) -> None:
         self.initial_temp = initial_temp
