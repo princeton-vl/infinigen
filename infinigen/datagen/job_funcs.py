@@ -11,7 +11,6 @@
 import logging
 import re
 import sys
-from functools import partial
 from pathlib import Path
 from shutil import copytree
 from uuid import uuid4
@@ -19,14 +18,18 @@ from uuid import uuid4
 import gin
 
 import infinigen
-from infinigen.datagen.util import upload_util
 from infinigen.datagen.util.show_gpu_table import nodes_with_gpus
-from infinigen.datagen.util.upload_util import upload_job_folder
+from infinigen.datagen.util.upload_util import get_commit_hash
 from infinigen.tools.suffixes import get_suffix
 
 from . import states
 
 logger = logging.getLogger(__name__)
+
+UPLOAD_UTIL_PATH = (
+    infinigen.repo_root() / "infinigen" / "datagen" / "util" / "upload_util.py"
+)
+assert UPLOAD_UTIL_PATH.exists(), f"{UPLOAD_UTIL_PATH=} does not exist"
 
 
 @gin.configurable
@@ -82,8 +85,19 @@ def queue_upload(
     seed=None,
     **kwargs,
 ):
-    func = partial(upload_job_folder, dir_prefix_len=dir_prefix_len, method=method)
-    res = submit_cmd((func, folder, taskname), folder, name, **kwargs)
+    modulepath = str(
+        UPLOAD_UTIL_PATH.with_suffix("").relative_to(infinigen.repo_root())
+    ).replace("/", ".")
+
+    cmd = (
+        f"{sys.executable} -m {modulepath} "
+        "--parent_folder " + str(folder) + " "
+        "--task_uniqname " + taskname + " "
+        f"--dir_prefix_len {dir_prefix_len} "
+        f"--method {method}"
+    ).split()
+
+    res = submit_cmd(cmd, folder, name, **kwargs)
     return res, None
 
 
@@ -157,8 +171,7 @@ def queue_coarse(
         + overrides
     )
 
-    commit = upload_util.get_commit_hash()
-
+    commit = get_commit_hash()
     with (folder / "run_pipeline.sh").open("w") as f:
         f.write(f"# git checkout {commit}\n\n")
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
@@ -496,19 +509,21 @@ def queue_opengl(
         return states.JOB_OBJ_SUCCEEDED, None
 
     output_suffix = get_suffix(output_indices)
-    
-    input_folder = Path(folder)/f'savemesh{output_suffix}' # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
+
+    input_folder = (
+        Path(folder) / f"savemesh{output_suffix}"
+    )  # OUTPUT SUFFIX IS CORRECT HERE. I know its weird. But input suffix really means 'prev tier of the pipeline
     # dst_output_indices = dict(output_indices)
-    start_frame, end_frame = output_indices['frame'], output_indices['last_cam_frame']
+    start_frame, end_frame = output_indices["frame"], output_indices["last_cam_frame"]
 
     key = "execute_tasks.point_trajectory_src_frame="
     point_trajectory_src_frame = None
     for item in overrides:
         if item.startswith(key):
-            point_trajectory_src_frame = int(item[len(key):])
-    assert(point_trajectory_src_frame is not None)
+            point_trajectory_src_frame = int(item[len(key) :])
+    assert point_trajectory_src_frame is not None
 
-    if (gt_testing):
+    if gt_testing:
         copy_folder = Path(folder) / f"frames{output_suffix}"
         output_folder = Path(folder) / f"opengl_frames{output_suffix}"
         copytree(copy_folder, output_folder, dirs_exist_ok=True)
@@ -516,21 +531,22 @@ def queue_opengl(
         output_folder = Path(folder) / f"frames{output_suffix}"
         output_folder.mkdir(exist_ok=True)
 
-    assert isinstance(overrides, list) and ("\n" not in ' '.join(overrides))
+    assert isinstance(overrides, list) and ("\n" not in " ".join(overrides))
 
     tmp_script = Path(folder) / "tmp" / f"opengl_{uuid4().hex}.sh"
     tmp_script.parent.mkdir(exist_ok=True)
-    with tmp_script.open('w') as f:
-
+    with tmp_script.open("w") as f:
         lines = [
             "set -e",
-            f'''
+            f"""
                 if [ ! -d "{str(input_folder)}" ]; then
                 exit 1
                 fi
-            ''',
+            """,
         ]
-        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}")
+        lines.append(
+            f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}"
+        )
         lines += [
             f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
             f"--frame {frame_idx} --dst_frame {frame_idx+1} -out {output_folder} "
@@ -553,9 +569,13 @@ def queue_opengl(
             f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
             f"--frame {point_trajectory_src_frame} --dst_frame {point_trajectory_src_frame} --depth_only 1 -out {output_folder} "
         ]
-        
-        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}")
-        lines.append(f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}")
+
+        lines.append(
+            f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"
+        )
+        lines.append(
+            f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}"
+        )
 
         lines.append(
             f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/compress_masks.py'} {output_folder}"
