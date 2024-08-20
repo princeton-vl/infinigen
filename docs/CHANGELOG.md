@@ -97,3 +97,9 @@ v1.8.0
 - Use constraint language to configure room solving
 - Add pillars, vertically split wall materials
 
+v1.8.1
+- Fix bug causing hard constraints on scalar inequalities (e.g distance > x) to be ignored
+- Fix bug causing livingroom sofa alignment to be incorrect
+- Fix bias in camera trajectory starting direction
+- Improve visual quality of home.py via constraint tweaks and new generate_indoors stages
+
