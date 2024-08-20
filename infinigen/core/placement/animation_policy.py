@@ -184,7 +184,7 @@ class AnimPolicyRandomWalkLookaround:
         yaw_sampler=("uniform", -20, 20),
         step_range=("clip_gaussian", 3, 5, 0.5, 10),
         rot_vars=(5, 0, 5),
-        motion_dir_zoff=("clip_gaussian", 0, 90, 0, 180),
+        motion_dir_zoff=("uniform", 0, 360),
         force_single_keyframe=False,
     ):
         self.speed = random_general(speed)
