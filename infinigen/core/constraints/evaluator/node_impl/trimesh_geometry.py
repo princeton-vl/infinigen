@@ -740,6 +740,7 @@ def angle_alignment_cost(
     return angle_alignment_cost_base(state, a, b, visualize)
 
 
+@gin.configurable
 def focus_score(
     state: state_def.State, a: Union[str, list[str]], b: str, visualize=False
 ):

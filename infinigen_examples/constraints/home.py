@@ -1127,7 +1127,7 @@ def home_furniture_constraints():
     constraints["sofa"] = livingrooms.all(
         lambda r: (
             # sofas.related_to(r).count().in_range(2, 3)
-            sofas.related_to(r, sofa_back_near_wall).count().in_range(2, 4)
+            sofas.related_to(r, sofa_back_near_wall).count().in_range(0, 4)
             * sofas.related_to(r, sofa_side_near_wall).count().in_range(0, 1)
             * sofas.related_to(r, cu.on_floor).count().in_range(0, 1)
             * freestanding(sofas, r).all(
@@ -1157,7 +1157,7 @@ def home_furniture_constraints():
                 lambda s: (
                     (cl.accessibility_cost(s, rooms, dist=3) < 0.5)
                     * (
-                        cl.focus_score(s, tvstands.related_to(r)) > 0.5
+                        cl.focus_score(s, tvstands.related_to(r)) < 0.5
                     )  # must face or perpendicular to TVStand
                 )
             )
@@ -1169,13 +1169,12 @@ def home_furniture_constraints():
             sofas.volume().maximize(weight=10)
             + sofas.related_to(r).mean(
                 lambda t: (
-                    t.distance(sofas.related_to(r)).hinge(0, 1).minimize(weight=1)
+                    t.distance(sofas.related_to(r)).hinge(0, 1).minimize(weight=5)
                     + t.distance(tvstands.related_to(r)).hinge(2, 3).minimize(weight=5)
-                    + cl.focus_score(t, tvstands.related_to(r)).maximize(weight=5)
+                    + cl.focus_score(t, tvstands.related_to(r)).minimize(weight=5)
                     + cl.angle_alignment_cost(
                         t, tvstands.related_to(r), cu.front
                     ).minimize(weight=1)
-                    + cl.focus_score(t, coffeetables.related_to(r)).maximize(weight=2)
                     + cl.accessibility_cost(t, r, dist=3).minimize(weight=3)
                 )
             )
@@ -1231,7 +1230,7 @@ def home_furniture_constraints():
 
     constraints["livingroom"] = livingrooms.all(
         lambda r: (
-            storage.related_to(r).count().in_range(1, 5)
+            storage.related_to(r).count().in_range(0, 5)
             * tvstands.related_to(r).count().equals(1)
             * sofa_sidetable.related_to(r).count().in_range(0, 2)
             * desks.related_to(r).count().in_range(0, 1)
@@ -1262,7 +1261,7 @@ def home_furniture_constraints():
                     + cl.angle_alignment_cost(
                         t, sofas.related_to(r), cu.front
                     ).minimize(weight=5)
-                    + cl.focus_score(sofas.related_to(r), t).maximize(weight=5)
+                    + cl.focus_score(sofas.related_to(r), t).minimize(weight=5)
                 )
             )
         )
