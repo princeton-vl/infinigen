@@ -318,3 +318,9 @@ def filter_by_domain_impl(
         for o in child_vals["objs"]
         if domain_contains.domain_contains(cons.filter, state, state.objs[o])
     }
+
+
+@register_node_impl(cl.debugprint)
+def debugprint_impl(cons: cl.debugprint, state: state_def.State, child_vals: dict):
+    print(cons.msg, child_vals["val"])
+    return child_vals["val"]
