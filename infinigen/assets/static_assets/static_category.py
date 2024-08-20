@@ -15,7 +15,7 @@ from infinigen.core.util.math import FixedSeed
 
 
 def static_category_factory(
-    category,
+    path_to_assets: str,
     tag_support=False,
     x_dim: float = None,
     y_dim: float = None,
@@ -33,9 +33,9 @@ def static_category_factory(
         def __init__(self, factory_seed, coarse=False):
             super().__init__(factory_seed, coarse)
             with FixedSeed(factory_seed):
-                self.category = category
+                self.path_to_assets = path_to_assets
                 self.tag_support = tag_support
-                self.asset_dir = os.path.join(self.root_asset_dir, category)
+                self.asset_dir = path_to_assets
                 self.x_dim, self.y_dim, self.z_dim = x_dim, y_dim, z_dim
                 self.rotation_euler = rotation_euler
                 asset_files = [
@@ -86,6 +86,12 @@ def static_category_factory(
 
 
 # Create factory instances for different categories
-StaticSofaFactory = static_category_factory("Sofa")
-StaticTableFactory = static_category_factory("Table")
-StaticShelfFactory = static_category_factory("Shelf", tag_support=True, z_dim=2)
+StaticSofaFactory = static_category_factory(
+    "infinigen/assets/static_assets/source/Sofa"
+)
+StaticTableFactory = static_category_factory(
+    "infinigen/assets/static_assets/source/Table"
+)
+StaticShelfFactory = static_category_factory(
+    "infinigen/assets/static_assets/source/Shelf", tag_support=True, z_dim=2
+)

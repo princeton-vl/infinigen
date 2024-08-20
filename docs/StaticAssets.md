@@ -22,11 +22,11 @@ I would recommend using .glb or .gltf files since they are the most extensively 
 
 1. Download the following assets in .glb format from Sketchfab: 
 
-    - [Iron Shelf](https://sketchfab.com/3d-models/iron-shelf-fd0cd420ffe04ac08174926f6b175d3f) (Attributed to Thunder and is licensed under CC BY-SA 4.0. We use this asset with modification, i.e. merge parts, scale). 
+    - [Iron Shelf](https://sketchfab.com/3d-models/iron-shelf-fd0cd420ffe04ac08174926f6b175d3f) (Attributed to Thunder and is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). We use this asset with modification, i.e. rendered image). 
 
-    - [Office Couch](https://sketchfab.com/3d-models/office-couch-ca63db1db205476fa6f54e1603b7d15d) (Attributed to Virenimation and is licensed under CC BY 4.0. We use this asset with modification, i.e. merge parts, scale). 
+    - [Office Couch](https://sketchfab.com/3d-models/office-couch-ca63db1db205476fa6f54e1603b7d15d) (Attributed to Virenimation and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
 
-    - [Table](https://sketchfab.com/3d-models/de-table-63e4d8faac73435fa7e9e929baa2c175) (Attributed to DeCloud and is licensed under CC BY 4.0. We use this asset with modification, i.e. merge parts, scale). 
+    - [Table](https://sketchfab.com/3d-models/de-table-63e4d8faac73435fa7e9e929baa2c175) (Attributed to DeCloud and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
 
 <p align="center">
   <img src="images/static_assets/shelf.jpg" width="236" />
@@ -52,7 +52,7 @@ NOTE: Objaverse supports downloads using python [API](https://colab.research.goo
 
 ## Create Static Asset Category
 
-Now, we just need to define `Static{CategoryName}Factory = static_category_factory({CategoryName})`. Add the following lines to `infinigen/assets/static_assets/static_category.py` (This step is already done for this tutorial):
+Now, we just need to define `Static{CategoryName}Factory = static_category_factory(infinigen/assets/static_assets/source/{CategoryName})`. Add the following lines to `infinigen/assets/static_assets/static_category.py` (This step is already done for this tutorial):
 
 ![alt text](images/static_assets/image.jpg)
 
@@ -161,7 +161,7 @@ mkdir infinigen/assets/static_assets/source/MyCategory
 4. Add a line in `infinigen/assets/static_assets/static_category.py` to define the factory for this category. E.g.
     
 ```python
-StaticMyCategoryFactory = static_category_factory("MyCategory")
+StaticMyCategoryFactory = static_category_factory("infinigen/assets/static_assets/source/MyCategory")
 ```
 
 5. Add a line in `infinigen/assets/static_assets/__init__.py` to import the factory from other files.
@@ -195,3 +195,20 @@ Now that you know how to import static assets, you can import all kinds of diffe
   <img src="images/static_assets/vending.jpg" width="500" />
 </p>
 
+The external assets used here are: 
+
+- [St Olaf](https://sketchfab.com/3d-models/st-olaf-the-patron-saint-of-norway-342b6866ba7c46449392acbe27217aa2) (Attributed to Historiska and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Dusty Bookshelves](https://sketchfab.com/3d-models/dusty-bookshelfs-caaf76f4506f4b01a2dffb553bae9342) (Attributed to Meanphrog and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Minotaur Statue](https://sketchfab.com/3d-models/minotaur-statue-d3f9aaecb7e94b12bc28256c85a40ce0) (Attributed to plasmaernst and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Dusty Piano](https://sketchfab.com/3d-models/dusty-piano-fe58e81e5fa940319e79796e23053182) (Attributed to Vincent074 and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Divergence Meter (Steins;Gate)](https://sketchfab.com/3d-models/divergence-meter-steinsgate-b43abf482d30435fa0683b765deee31b) (Attributed to Amatsukast and is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Stone Griffin](https://sketchfab.com/3d-models/stone-griffin-downing-college-cambridge-d94638d6c6ad4119b868567cf8e9fe2b) (Attributed to Thomas Flynn and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [Hologram Console](https://sketchfab.com/3d-models/hologram-console-bfbbb481e98e4be38774b1d0204c192c) (Attributed to TooManyDemons and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
+
+- [vending machine](https://sketchfab.com/3d-models/vending-machine-fb0516c9c6954e5dbeb420aaa48059c0) (Attributed to wilsz95 and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
