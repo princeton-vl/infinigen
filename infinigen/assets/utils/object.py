@@ -205,15 +205,3 @@ def separate_loose(obj):
     objs.remove(obj)
     butil.delete(objs)
     return obj
-
-
-def print3d_clean_up(obj):
-    bpy.ops.preferences.addon_enable(module="object_print3d_utils")
-    with butil.ViewportMode(obj, "EDIT"), butil.Suppress():
-        bpy.ops.mesh.select_all(action="SELECT")
-        bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
-        bpy.ops.mesh.fill_holes()
-        bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
-        bpy.ops.mesh.normals_make_consistent()
-        bpy.ops.mesh.print3d_clean_distorted()
-        bpy.ops.mesh.print3d_clean_non_manifold()

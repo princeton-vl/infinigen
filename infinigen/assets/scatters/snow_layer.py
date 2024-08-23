@@ -11,10 +11,6 @@ from infinigen.core.util import blender as butil
 
 
 class Snowlayer:
-    def __init__(self):
-        bpy.ops.preferences.addon_enable(module="real_snow")
-        pass
-
     def apply(self, obj, **kwargs):
         bpy.context.scene.snow.height = 0.1
         with butil.SelectObjects(obj):

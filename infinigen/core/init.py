@@ -20,7 +20,7 @@ import numpy as np
 from numpy.random import randint
 
 import infinigen
-from infinigen.core.util.logging import LogLevel, Suppress
+from infinigen.core.util.logging import LogLevel
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
 
@@ -198,15 +198,6 @@ def apply_gin_configs(
         )
 
 
-def import_addons(names):
-    for name in names:
-        try:
-            with Suppress():
-                bpy.ops.preferences.addon_enable(module=name)
-        except Exception:
-            logger.warning(f'Could not load addon "{name}"')
-
-
 @gin.configurable
 def configure_render_cycles(
     # supplied by gin.config
@@ -303,4 +294,6 @@ def configure_blender(
         bpy.context.scene.cycles.motion_blur_position = "START"
         bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
 
-    import_addons(["ant_landscape", "real_snow"])
+    bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
+    bpy.ops.preferences.addon_enable(module="real_snow")
+    bpy.ops.preferences.addon_enable(module="ant_landscape")
