@@ -7,6 +7,7 @@ endif()
 
 add_definitions(-D GLM_ENABLE_EXPERIMENTAL)
 add_definitions(-D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR})
+include_directories(include/) 
 include_directories(/usr/include/) # on linux
 include_directories(dependencies) # for cnpy
 include_directories(dependencies/argparse/include)
@@ -34,17 +35,14 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(OpenGL REQUIRED COMPONENTS OpenGL EGL GLX)
 endif()
 
-file(GLOB ADJACENT_SRC_FILES
-     "*.hpp"
-     "*.cpp"
-)
+file(GLOB ADJACENT_SRC_FILES "src/*.cpp")
 
 # This line was taken from https://stackoverflow.com/a/52137618/5057543
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     link_libraries(stdc++fs)
 endif()
 
-add_executable(customgt ${ADJACENT_SRC_FILES} dependencies/glad/src/glad.c dependencies/glad/src/glad_egl.c)
+add_executable(customgt main.cpp ${ADJACENT_SRC_FILES} dependencies/glad/src/glad.c dependencies/glad/src/glad_egl.c)
 
 set_property(TARGET customgt PROPERTY CXX_STANDARD 17)
 
