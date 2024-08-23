@@ -92,3 +92,9 @@ v1.7.0
 
 v1.7.1
 - Bugfix fine terrain in arctic scenes
+
+v1.8.0
+- Implement tools for importing external assets into Indoors
+- Use constraint language to configure room solving
+- Add pillars, vertically split wall materials
+

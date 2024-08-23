@@ -15,8 +15,8 @@ from .straight import StraightStaircaseFactory
 
 
 class LShapedStaircaseFactory(StraightStaircaseFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(LShapedStaircaseFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(LShapedStaircaseFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.m = int(self.n * uniform(0.4, 0.6))
             self.is_rail_circular = True

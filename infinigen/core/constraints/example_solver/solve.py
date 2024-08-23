@@ -25,7 +25,7 @@ from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.util import blender as butil
 
 from .annealing import SimulatedAnnealingSolver
-from .room import MultistoryRoomSolver, RoomSolver
+from .room.floor_plan import FloorPlanSolver
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ class Solver:
     def __init__(
         self,
         output_folder: Path,
-        multistory: bool = False,
         restrict_moves: list = None,
         addition_weight_scalar: float = 1.0,
     ):
@@ -81,9 +80,8 @@ class Solver:
         self.optim = SimulatedAnnealingSolver(
             output_folder=output_folder,
         )
-        self.room_solver_fn = MultistoryRoomSolver if multistory else RoomSolver
+        self.room_solver_fn = FloorPlanSolver
         self.state: State = None
-        self.all_roomtypes = None
         self.dimensions = None
 
         self.moves = self._configure_move_weights(
@@ -139,9 +137,7 @@ class Solver:
         return np.random.choice(funcs, p=weights / weights.sum())
 
     def solve_rooms(self, scene_seed, consgraph: cl.Problem, filter: r.Domain):
-        self.state, self.all_roomtypes, self.dimensions = self.room_solver_fn(
-            scene_seed
-        ).solve()
+        self.state, _, _ = self.room_solver_fn(scene_seed, consgraph).solve()
         return self.state
 
     @gin.configurable

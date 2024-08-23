@@ -23,7 +23,10 @@ class ChannelScheme:
     wrap: bool = False
 
     def sample(self):
-        v = getattr(np.random, self.dist)(*self.args)
+        if self.dist == "log_uniform":
+            v = np.exp(np.random.uniform(np.log(self.args[0]), np.log(self.args[1])))
+        else:
+            v = getattr(np.random, self.dist)(*self.args)
         if self.wrap:
             v = np.mod(v, 1)
         if self.clip is not None:
@@ -33,6 +36,10 @@ class ChannelScheme:
 
 def U(min, max, **kwargs):
     return ChannelScheme([min, max], dist="uniform", **kwargs)
+
+
+def LU(min, max, **kwargs):
+    return ChannelScheme([min, max], dist="log_uniform", **kwargs)
 
 
 def N(m, std, **kwargs):
@@ -78,7 +85,7 @@ HSV_RANGES = {
     "concrete": (
         U(0.0, 1.0),
         U(0.02, 0.12),
-        U(0.3, 0.9),
+        LU(0.1, 0.9),
     ),
     "textile": (
         U(0, 1),

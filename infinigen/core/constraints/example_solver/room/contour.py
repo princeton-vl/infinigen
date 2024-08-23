@@ -2,155 +2,172 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
-import random
 
-import gin
 import numpy as np
+import shapely
 from numpy.random import uniform
-from shapely import Polygon, box
+from shapely import box
 
-from infinigen.assets.utils.decorate import read_co, write_co
-from infinigen.assets.utils.object import new_plane
-from infinigen.core.constraints.example_solver.room.configs import (
-    TYPICAL_AREA_ROOM_TYPES,
+from infinigen.core.constraints.example_solver.room.base import (
+    room_level,
+    room_name,
+    room_type,
 )
-from infinigen.core.constraints.example_solver.room.types import RoomType
-from infinigen.core.constraints.example_solver.room.utils import unit_cast
-from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.constraints.example_solver.room.solidifier import max_mls
+from infinigen.core.constraints.example_solver.room.utils import (
+    update_exterior,
+    update_shared,
+)
+from infinigen.core.tags import Semantics
+from infinigen.core.util.math import normalize
 from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import random_general as rg
 
-LARGE = 100
 
-
-@gin.configurable(denylist=["width", "height"])
 class ContourFactory:
-    def __init__(self, width=17, height=9):
-        self.width = width
-        self.height = height
+    def __init__(self, consgraph):
+        self.consgraph = consgraph
+        self.constants = consgraph.constants
         self.n_trials = 1000
-
-    def make_contour(self, i):
-        with FixedSeed(i):
-            obj = new_plane()
-            obj.location = self.width / 2, self.height / 2, 0
-            obj.scale = self.width / 2, self.height / 2, 1
-            butil.apply_transform(obj, loc=True)
-            corners = list(
-                (x, y)
-                for x in [0, unit_cast(self.width)]
-                for y in [0, unit_cast(self.height)]
-            )
-            random.shuffle(corners)
-            corners = dict(enumerate(corners))
-
-            def nearest(t):
-                if len(corners) == 0:
-                    return -1, np.inf
-                c = np.array(list(corners.values()))
-                dist = np.abs(c - np.array([[t[0], t[1]]])).sum(1)
-                return list(corners.keys())[np.argmin(dist)], np.min(dist)
-
-            while len(corners) > 0:
-                _, (x, y) = corners.popitem()
-                r = uniform(0, 1)
-                if r < 0.2:
-                    axes = []
-                    if nearest((self.width - x, y))[1] < 0.1:
-                        axes.append(0)
-                    elif nearest((x, self.height - y))[1] < 0.1:
-                        axes.append(1)
-                    if len(axes) > 0:
-                        axis = np.random.choice(axes)
-                        self.add_long_corner(obj, x, y, axis)
-                        t = (self.width - x, y) if axis == 0 else (x, self.height - y)
-                        corners.pop(nearest(t)[0])
-                elif r < 0.35:
-                    self.add_round_corner(obj, x, y)
-                elif r < 0.5:
-                    self.add_straight_corner(obj, x, y)
-                elif r < 0.65:
-                    self.add_sharp_corner(obj, x, y)
-
-            vertices = obj.data.polygons[0].vertices
-            p = Polygon(read_co(obj)[:, :2][vertices])
-            butil.delete(obj)
-            return p
-
-    def add_round_corner(self, obj, x, y):
-        vg = obj.vertex_groups.new(name="corner")
-        for i, v in enumerate(obj.data.vertices):
-            vg.add([i], v.co[0] == x and v.co[1] == y, "REPLACE")
-        width = unit_cast(uniform(0.2, 0.3) * min(self.width, self.height))
-        try:
-            butil.modify_mesh(
-                obj,
-                "BEVEL",
-                affect="VERTICES",
-                limit_method="VGROUP",
-                vertex_group="corner",
-                segments=np.random.randint(2, 5),
-                width=width,
-            )
-        except Exception:
-            pass
-        obj.vertex_groups.remove(obj.vertex_groups["corner"])
-
-    def add_straight_corner(self, obj, x, y):
-        vg = obj.vertex_groups.new(name="corner")
-        for i, v in enumerate(obj.data.vertices):
-            vg.add([i], v.co[0] == x and v.co[1] == y, "REPLACE")
-        width = unit_cast(uniform(0.1, 0.3) * min(self.width, self.height))
-        if width > 0:
-            butil.modify_mesh(
-                obj,
-                "BEVEL",
-                affect="VERTICES",
-                limit_method="VGROUP",
-                vertex_group="corner",
-                segments=1,
-                width=width,
-            )
-        obj.vertex_groups.remove(obj.vertex_groups["corner"])
-
-    def add_sharp_corner(self, obj, x, y):
-        cutter = new_plane(size=LARGE)
-        butil.modify_mesh(cutter, "SOLIDIFY", offset=0, thickness=1)
-        x_ratio, y_ratio = uniform(0.1, 0.3, 2)
-        cutter.location = (
-            x + (LARGE / 2 - unit_cast(x_ratio * self.width)) * (-1) ** (x <= 0),
-            y + (LARGE / 2 - unit_cast(y_ratio * self.height)) * (-1) ** (y <= 0),
-            0,
-        )
-        butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
-        butil.delete(cutter)
-
-    def add_long_corner(self, obj, x, y, axis):
-        x_, y_, z_ = read_co(obj).T
-        i = np.nonzero((x_ == x) & (y_ == y))[0]
-        if axis == 0:
-            y_[i] -= self.height * uniform(0.1, 0.3) * (-1) ** (y_[i] <= 0)
-        else:
-            x_[i] -= self.width * uniform(0.1, 0.3) * (-1) ** (x_[i] <= 0)
-        write_co(obj, np.stack([x_, y_, z_], -1))
+        self.long_prob = "bool", 0.5
+        self.corner_prob = "weighted_choice", (1, "round"), (2, "sharp"), (7, "none")
+        self.maximal_radius = 4
 
     def add_staircase(self, contour):
         x, y = contour.boundary.xy
         x_, x__ = np.min(x), np.max(x)
         y_, y__ = np.min(y), np.max(y)
         for _ in range(self.n_trials):
-            area = TYPICAL_AREA_ROOM_TYPES[RoomType.Staircase] * uniform(1.4, 1.6)
-            skewness = log_uniform(0.6, 0.8)
+            area = self.constants.segment_margin * self.constants.wall_height * 6
+            skewness = log_uniform(0.5, 0.8)
             if uniform() < 0.5:
                 skewness = 1 / skewness
             width, height = (
-                unit_cast(np.sqrt(area * skewness).item()),
-                unit_cast(np.sqrt(area / skewness).item()),
+                self.constants.unit_cast(np.sqrt(area * skewness).item()),
+                self.constants.unit_cast(np.sqrt(area / skewness).item()),
             )
-            x = unit_cast(uniform(x_, x__ - width))
-            y = unit_cast(uniform(y_, y__ - height))
+            x = self.constants.unit_cast(uniform(x_, x__ - width))
+            y = self.constants.unit_cast(uniform(y_, y__ - height))
             b = box(x, y, x + width, y + height)
             if contour.contains(b):
                 return b
         else:
             raise ValueError("Invalid staircase")
+
+    @staticmethod
+    def get_length(polygon, point):
+        coords = np.array(polygon.exterior.coords)[:-1]
+        indices = np.nonzero(np.abs(coords - point[np.newaxis]).sum(-1) < 0.1)[0]
+        if len(indices) > 0:
+            i = indices[0]
+            q = np.linalg.norm(coords[i] - coords[(i + 1) % len(coords)])
+            r = np.linalg.norm(coords[i] - coords[(i - 1) % len(coords)])
+            return min(q, r)
+        return None
+
+    def decorate(self, state):
+        if self.constants.fixed_contour:
+            if rg(self.long_prob):
+                slope = uniform(0.05, 0.2)
+                indices = set()
+                for k, obj_st in state.objs.items():
+                    if room_type(k) not in [Semantics.StaircaseRoom]:
+                        p = obj_st.polygon
+                        x, y = np.array(p.exterior.coords).T
+                        y -= np.where(np.abs(x) < 0.1, slope * x, 0)
+                        q = shapely.Polygon(np.stack([x, y], -1))
+                        if np.abs(p.area - q.area) > 1e-6:
+                            state[k].polygon = q
+                            indices.add(k)
+                for k in indices:
+                    update_shared(state, k)
+        else:
+            for i in reversed(range(len(state.graphs))):
+                exterior_name = room_name(Semantics.Exterior, i)
+                exterior = self.constants.canonicalize(state[exterior_name].polygon)
+                c = exterior.centroid.coords[0]
+                coords = np.array(exterior.exterior.coords)
+                for p in coords:
+                    if (
+                        shapely.Point(p)
+                        .buffer(0.1, cap_style="square")
+                        .intersection(exterior)
+                        .area
+                        > 2 * 0.1**2
+                    ):
+                        continue
+                    inside_point = (
+                        p[0] + (c[0] - p[0]) * 1e-2,
+                        p[1] + (c[1] - p[1]) * 1e-2,
+                    )
+                    if not exterior.contains(shapely.Point(inside_point)):
+                        continue
+                    length = self.get_length(exterior, p)
+                    if length is None:
+                        continue
+                    k, l = None, None
+                    for k, obj_st in state.objs.items():
+                        if (
+                            room_type(k)
+                            not in [Semantics.Staircase, Semantics.Exterior]
+                            and room_level(k) == i
+                        ):
+                            l = self.get_length(obj_st.polygon, p)
+                            if l is not None:
+                                break
+                    if k is None or l is None:
+                        continue
+                    length = min(min(length, l), self.maximal_radius)
+                    directions = [
+                        (x_, y_)
+                        for x_ in [-1, 1]
+                        for y_ in [-1, 1]
+                        if exterior.contains(shapely.Point(p[0] + x_, p[1] + y_))
+                    ]
+                    if len(directions) == 0:
+                        continue
+                    direction = directions[0]
+                    corner_func = rg(self.corner_prob)
+                    if corner_func == "none":
+                        continue
+                    length -= self.constants.unit
+                    while length > 0:
+                        q = p[0] + direction[0] * length, p[1] + direction[1] * length
+                        cutter = shapely.box(
+                            min(p[0], q[0]),
+                            min(p[1], q[1]),
+                            max(p[0], q[0]),
+                            max(p[1], q[1]),
+                        )
+                        quad_segs = (
+                            1 if corner_func == "sharp" else np.random.randint(4, 7)
+                        )
+                        exterior_ = (
+                            exterior.difference(cutter)
+                            .union(shapely.Point(q).buffer(length, quad_segs=quad_segs))
+                            .buffer(0)
+                        )
+                        new = state[k].polygon.intersection(exterior_).buffer(0)
+                        if all(
+                            new.buffer(-m + 1e-2).geom_type == "Polygon"
+                            for m in np.linspace(0, 0.75, 4)
+                        ):
+                            x, y, x_, y_ = max_mls(new.exterior)
+                            if np.linalg.norm([x - x_, y - y_]) >= 1:
+                                break
+                        length -= self.constants.unit
+                    if length <= 0:
+                        continue
+                    if i < len(state.graphs) - 1:
+                        if not exterior_.contains(
+                            state[room_name(Semantics.Exterior, i + 1)].polygon
+                        ):
+                            continue
+                    coords = np.array(new.exterior.coords)
+                    diff = normalize(coords[1:] - coords[:-1])
+                    diff_ = diff[list(range(1, len(diff))) + [0]]
+                    if np.any((diff * diff_).sum(-1) < -0.01):
+                        continue
+                    state[k].polygon = new
+                    state[exterior_name].polygon = exterior_
+                    update_exterior(state, k)

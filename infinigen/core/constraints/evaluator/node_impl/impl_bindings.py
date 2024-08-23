@@ -57,7 +57,11 @@ def operator_impl(
     operands = [child_vals[f"operands[{i}]"] for i in range(len(cons.operands))]
 
     try:
-        if isinstance(cons.func, np.ufunc) or len(operands) == 1:
+        if (
+            len(operands) == 1
+            or "numpy" in cons.func.__class__.__name__
+            or "lambda" in cons.func.__name__
+        ):
             return cons.func(*operands)
         else:
             return functools.reduce(cons.func, operands)
@@ -281,7 +285,7 @@ def volume_impl(cons: cl.volume, state: state_def.State, child_vals: dict):
         else:
             raise TypeError(f"Unexpected {type(cons.dims)=}")
 
-        res += math.prod(dims)
+        res += math.prod(dims) + 1e-10
 
     return res
 
@@ -296,6 +300,13 @@ def hinge_impl(cons: cl.hinge, state: state_def.State, child_vals: dict):
         return x - cons.high
     else:
         return 0
+
+
+@register_node_impl(cl.union)
+def union_impl(cons: cl.union, state: state_def.State, child_vals: dict):
+    return {
+        o for o in child_vals["objs"] if not state.objs[o].tags.isdisjoint(cons.tags)
+    }
 
 
 @register_node_impl(r.FilterByDomain)

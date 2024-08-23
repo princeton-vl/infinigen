@@ -19,8 +19,8 @@ from infinigen.core.constraints.example_solver import (
     state_def,
 )
 from infinigen_examples import generate_indoors
-from infinigen_examples import indoor_constraint_examples as ex
-from infinigen_examples.util import constraint_util as cu
+from infinigen_examples.constraints import home as ex
+from infinigen_examples.constraints import util as cu
 
 
 def test_partition_basecase_irrelevant():
@@ -81,7 +81,7 @@ def test_partition_eliminate_irrelevant():
 
 def test_greedy_partition_bathroom():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     bath_cons = prob.constraints["bathroom"]
@@ -98,7 +98,6 @@ def test_greedy_partition_bathroom():
 
 def test_greedy_partition_multilevel():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    ex.home_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     bathroom = cl.scene()[{t.Semantics.Room, t.Semantics.Bathroom}].excludes(
@@ -133,7 +132,7 @@ def test_greedy_partition_multilevel():
 
 def test_greedy_partition_bathroom_nofalsepositive():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     bath_cons = prob.constraints["bathroom"]
@@ -146,7 +145,7 @@ def test_greedy_partition_bathroom_nofalsepositive():
 
 def test_greedy_partition_plants():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     plant_cons = prob.constraints["plants"]
@@ -219,7 +218,7 @@ def test_on_obj_coverage():
 @pytest.mark.skip  # filter_constraints development has been abandoned until a later date
 def test_only_bathcons_coverage():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     bath_cons = prob.constraints["bathroom"]
@@ -244,7 +243,7 @@ def test_only_bathcons_coverage():
 @pytest.fixture
 def precompute_all_coverage():
     usage_lookup.initialize_from_dict(ex.home_asset_usage())
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     stages = generate_indoors.default_greedy_stages()
 
     cons_coverage = {k: set() for k in prob.constraints.keys()}
@@ -319,7 +318,7 @@ def get_on_diningroom_stage():
 @pytest.mark.skip  # filter_constraints development has been abandoned until a later date
 def test_greedy_partition_diningroom():
     on_diningroom = get_on_diningroom_stage()
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     diningroom = prob.constraints["diningroom"]
 
     for node in diningroom.traverse():
@@ -344,7 +343,7 @@ def test_diningroom_bounds_active():
         stages["on_floor"], cu.variable_room, r.Domain({t.Semantics.DiningRoom})
     )
 
-    prob = ex.home_constraints()
+    prob = ex.home_furniture_constraints()
     diningroom = prob.constraints["diningroom"]
 
     bounds_before_preproc = r.constraint_bounds(diningroom)

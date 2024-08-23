@@ -1,7 +1,9 @@
-RoomSolver.n_divide_trials = 60
-MultistoryRoomSolver.n_divide_trials = 60
-RoomSolver.iters_mult = 120
-MultistoryRoomSolver.iters_mult = 120
+FloorPlanSolver.n_divide_trials = 10
+FloorPlanSolver.iters_mult = 10
+RoomConstants.n_stories = 1
+GraphMaker.fast=True
+
+home_room_constraints.fast = True
 
 Solver.addition_weight_scalar = 3.0
 

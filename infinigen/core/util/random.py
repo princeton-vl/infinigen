@@ -90,11 +90,11 @@ def random_general(var):
         return log_uniform(*args)
     elif func == "discrete_uniform":
         return np.random.randint(args[0], args[1] + 1)
-    elif func == "bool":
+    elif func == "bool" or func == "bern":
         return np.random.uniform() < args[0]
     elif func == "choice":
         return np.random.choice(args[0], 1, p=args[1] if len(args) > 1 else None)[0]
-    elif func == "categorical":
+    elif func == "cat" or func == "categorical":
         prob = np.array(args)
         return np.random.choice(np.arange(len(args)), p=prob / prob.sum())
     elif func == "palette":

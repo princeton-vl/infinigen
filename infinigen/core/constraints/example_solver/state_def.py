@@ -27,8 +27,10 @@ from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints.example_solver.geometry.planes import Planes
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.math import int_hash
 
 from .geometry import parse_scene
+from .room.base import RoomGraph
 
 logger = logging.getLogger(__name__)
 
@@ -39,18 +41,19 @@ class RelationState:
     target_name: str
     child_plane_idx: int = None
     parent_plane_idx: int = None
+    value: typing.Optional[shapely.MultiLineString] = None
 
 
 @dataclass
 class ObjectState:
-    obj: bpy.types.Object
+    obj: bpy.types.Object = None
+    polygon: shapely.Polygon = None
     generator: typing.Optional[AssetFactory] = None
     tags: set = field(default_factory=set)
     relations: list[RelationState] = field(default_factory=list)
 
     dof_matrix_translation: np.array = None
     dof_rotation_axis: np.array = None
-    contour: shapely.Geometry = None
     _pose_affects_score = None
 
     fcl_obj = None
@@ -71,18 +74,29 @@ class ObjectState:
         obj = self.obj
         tags = self.tags
         relations = self.relations
-
-        name = obj.name if obj is not None else None
-        return f"{self.__class__.__name__}(obj.name={name}, {tags=}, {relations=})"
+        return f"{self.__class__.__name__}(obj.name={obj.name if obj is not None else obj.name}, polygon={self.polygon}, {tags=}, {relations=})"
 
 
 @dataclass
 class State:
-    objs: OrderedDict[str, ObjectState]
+    objs: OrderedDict[str, ObjectState] = field(default_factory=dict)
 
     trimesh_scene: trimesh.Scene = None
+    graphs: list[RoomGraph] = field(default_factory=list)
     bvh_cache: dict = field(default_factory=dict)
     planes: Planes = None
+
+    def __getitem__(self, item):
+        return self.objs[item]
+
+    def __setitem__(self, key, value):
+        self.objs[key] = value
+
+    def __delitem__(self, key):
+        del self.objs[key]
+
+    def __len__(self):
+        return len(self.objs)
 
     def print(self):
         print(f"State ({len(self.objs)} objs)")
@@ -146,7 +160,11 @@ class State:
             )
 
     def __post_init__(self):
-        bpy_objs = [o.obj for o in self.objs.values() if o.obj is not None]
+        bpy_objs = [
+            o.obj
+            for o in self.objs.values()
+            if o.obj is not None and isinstance(o.obj, bpy.types.Object)
+        ]
         self.trimesh_scene = parse_scene.parse_scene(bpy_objs)
         self.planes = Planes()
 
@@ -184,6 +202,9 @@ class State:
                     "correct blend before loading the state?"
                 )
             o.obj = bpy.data.objects[o.obj]
+
+    def __hash__(self):
+        return sum(int_hash(k) * int(o.polygon.area) for k, o in self.objs.items())
 
 
 def state_from_dummy_scene(col: bpy.types.Collection) -> State:

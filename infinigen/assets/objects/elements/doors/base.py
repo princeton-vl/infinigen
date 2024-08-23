@@ -23,7 +23,7 @@ from infinigen.assets.utils.object import (
     new_line,
 )
 from infinigen.core import surface
-from infinigen.core.constraints.example_solver.room import constants
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
@@ -33,12 +33,15 @@ from infinigen.core.util.random import log_uniform
 
 
 class BaseDoorFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         super(BaseDoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
-            self.width = constants.DOOR_WIDTH
-            self.height = constants.DOOR_SIZE
-            self.depth = uniform(0.04, 0.06)
+            if constants is None:
+                constants = RoomConstants()
+            self.width = constants.door_width
+            self.height = constants.door_size
+            self.constants = constants
+            self.depth = constants.wall_thickness * log_uniform(0.25, 0.5)
             self.panel_margin = log_uniform(0.08, 0.12)
             self.bevel_width = uniform(0.005, 0.01)
             self.out_bevel = uniform() < 0.7
@@ -106,6 +109,8 @@ class BaseDoorFactory(AssetFactory):
             obj = self._create_asset()
             if max(obj.dimensions) < 5:
                 return obj
+            else:
+                butil.delete(obj)
         else:
             raise ValueError("Bad door booleaning")
 
@@ -270,7 +275,7 @@ class BaseDoorFactory(AssetFactory):
     def casing_factory(self):
         from infinigen.assets.objects.elements import DoorCasingFactory
 
-        factory = DoorCasingFactory(self.factory_seed, self.coarse)
+        factory = DoorCasingFactory(self.factory_seed, self.coarse, self.constants)
         factory.surface = self.surface
         factory.metal_color = self.metal_color
         return factory

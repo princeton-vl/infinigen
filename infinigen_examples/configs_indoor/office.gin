@@ -1,0 +1,6 @@
+include 'infinigen_examples/configs_indoor/common.gin'
+compose_scene.type = 'office'
+compose_scene.topview_rot_x=45
+compose_scene.topview_rot_z=-45
+restrict_solving.restrict_parent_rooms = ('OpenOffice', )
+

@@ -5,6 +5,7 @@ infinigen.assets.objects.appliances.OvenFactory
 infinigen.assets.objects.appliances.MonitorFactory
 infinigen.assets.objects.appliances.TVFactory
 
+infinigen.assets.objects.bathroom.StandingSinkFactory
 infinigen.assets.objects.bathroom.BathroomSinkFactory
 infinigen.assets.objects.bathroom.BathtubFactory
 infinigen.assets.objects.bathroom.HardwareFactory
@@ -91,6 +92,8 @@ infinigen.assets.objects.tableware.LargePlantContainerFactory
 infinigen.assets.objects.wall_decorations.WallArtFactory
 infinigen.assets.objects.wall_decorations.BalloonFactory
 infinigen.assets.objects.wall_decorations.MirrorFactory
+infinigen.assets.objects.wall_decorations.RangeHoodFactory
+infinigen.assets.objects.wall_decorations.WallShelfFactory
 
 infinigen.assets.objects.windows.WindowFactory
 

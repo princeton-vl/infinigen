@@ -17,9 +17,9 @@ import numpy as np
 import pandas as pd
 
 from infinigen.core.constraints import constraint_language as cl
-from infinigen.core.constraints import evaluator
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.constraint_language import util as impl_util
+from infinigen.core.constraints.evaluator import eval_memo, evaluate
 from infinigen.core.util import blender as butil
 
 from .moves import Move
@@ -133,12 +133,12 @@ class SimulatedAnnealingSolver:
         self,
         state: State,
         consgraph: cl.Problem,
-        prop_result: evaluator.EvalResult,
+        prop_result: evaluate.EvalResult,
         filter_domain: r.Domain,
     ):
         test_memo = {}
         impl_util.DISABLE_BVH_CACHE = True
-        real_result = evaluator.evaluate_problem(
+        real_result = evaluate.evaluate_problem(
             consgraph, state, filter_domain, memo=test_memo
         )
         impl_util.DISABLE_BVH_CACHE = False
@@ -147,7 +147,7 @@ class SimulatedAnnealingSolver:
             return
 
         for n in consgraph.traverse(inorder=False):
-            key = evaluator.memo_key(n)
+            key = eval_memo.memo_key(n)
             if key not in self.eval_memo:
                 continue
             lazy = self.eval_memo[key]
@@ -160,7 +160,7 @@ class SimulatedAnnealingSolver:
         raise ValueError(f"{real_result.loss()=:.4f} {prop_result.loss()=:.4f}")
 
     @gin.configurable
-    def evaluate_move(
+    def _move(
         self,
         consgraph: cl.Node,
         state: State,
@@ -170,12 +170,12 @@ class SimulatedAnnealingSolver:
         validate_lazy_eval=False,
     ):
         if do_lazy_eval:
-            evaluator.evict_memo_for_move(consgraph, state, self.eval_memo, move)
-            prop_result = evaluator.evaluate_problem(
+            eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+            prop_result = evaluate.evaluate_problem(
                 consgraph, state, filter_domain, self.eval_memo
             )
         else:
-            prop_result = evaluator.evaluate_problem(
+            prop_result = evaluate.evaluate_problem(
                 consgraph, state, filter_domain, memo={}
             )
 
@@ -192,7 +192,7 @@ class SimulatedAnnealingSolver:
         state: State,
         temp: float,
         filter_domain: r.Domain,
-    ) -> typing.Tuple[Move, evaluator.EvalResult, int]:
+    ) -> typing.Tuple[Move, evaluate.EvalResult, int]:
         move_gen = propose_func(consgraph, state, filter_domain, temp)
 
         move = None
@@ -206,12 +206,12 @@ class SimulatedAnnealingSolver:
 
             succeeded = move.apply(state)
             if succeeded:
-                evaluator.evict_memo_for_move(consgraph, state, self.eval_memo, move)
-                result = self.evaluate_move(consgraph, state, move, filter_domain)
+                eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+                result = self._move(consgraph, state, move, filter_domain)
                 return move, result, retry
 
             logger.debug(f"{retry=} reverting {move=}")
-            evaluator.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+            eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
             move.revert(state)
 
         else:
@@ -224,7 +224,7 @@ class SimulatedAnnealingSolver:
         temp = np.clip(temp, self.final_temp, self.initial_temp)
         return temp
 
-    def metrop_hastings_with_viol(self, prop_result: evaluator.EvalResult, temp: float):
+    def metrop_hastings_with_viol(self, prop_result: evaluate.EvalResult, temp: float):
         prop_viol = prop_result.viol_count()
         curr_viol = self.curr_result.viol_count()
 
@@ -249,7 +249,7 @@ class SimulatedAnnealingSolver:
 
     def step(self, consgraph, state, move_gen_func, filter_domain):
         if self.curr_result is None:
-            self.curr_result = evaluator.evaluate_problem(
+            self.curr_result = evaluate.evaluate_problem(
                 consgraph, state, filter_domain
             )
 
@@ -283,7 +283,7 @@ class SimulatedAnnealingSolver:
                 self.curr_result = prop_result
                 move.accept(state)
             else:
-                evaluator.evict_memo_for_move(consgraph, state, self.eval_memo, move)
+                eval_memo.evict_memo_for_move(consgraph, state, self.eval_memo, move)
                 move.revert(state)
 
         dt = time.perf_counter() - move_start_time
