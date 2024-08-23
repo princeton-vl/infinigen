@@ -9,18 +9,13 @@ add_definitions(-D GLM_ENABLE_EXPERIMENTAL)
 add_definitions(-D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR})
 include_directories(/usr/include/) # on linux
 include_directories(dependencies) # for cnpy
-include_directories(dependencies/indicators/include)
 include_directories(dependencies/argparse/include)
 include_directories(dependencies/eigen)
-include_directories(dependencies/tinycolormap/include)
 include_directories(dependencies/glm)
 include_directories(dependencies/json/single_include)
 include_directories(dependencies/glad/include)
-include_directories(dependencies/scharstein_flow_viz)
 
 add_subdirectory(dependencies/cnpy)
-add_subdirectory(dependencies/fast_obj)
-add_subdirectory(dependencies/tinycolormap)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -49,7 +44,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     link_libraries(stdc++fs)
 endif()
 
-add_executable(customgt ${ADJACENT_SRC_FILES} dependencies/scharstein_flow_viz/colorcode.cpp dependencies/fast_obj/fast_obj.h dependencies/fast_obj/fast_obj.c dependencies/glad/src/glad.c dependencies/glad/src/glad_egl.c)
+add_executable(customgt ${ADJACENT_SRC_FILES} dependencies/glad/src/glad.c dependencies/glad/src/glad_egl.c)
 
 set_property(TARGET customgt PROPERTY CXX_STANDARD 17)
 

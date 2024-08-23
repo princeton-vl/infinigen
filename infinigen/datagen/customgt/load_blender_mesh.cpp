@@ -6,18 +6,16 @@
 
 #include <random>
 #include <iostream>
-#include <functional> //without .h
-#include <indicators/progress_bar.hpp>
+#include <functional>
 #include <regex>
 #include <unordered_map>
 #include <unordered_set>
+
 #include "string_tools.hpp"
 #include "load_blender_mesh.hpp"
 #include "buffer_arrays.hpp"
 
 using json = nlohmann::json;
-using namespace indicators;
-using namespace indicators::option;
 
 auto parse_json(const fs::path json_path){
     const json data = json::parse(std::ifstream(json_path));
@@ -38,16 +36,6 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
 
     // Progress bar
     static int object_idx = 0;
-    static ProgressBar bar{
-        BarWidth{20}, Start{"["}, End{"]"},
-        ShowElapsedTime{true}, ShowRemainingTime{true},
-        ForegroundColor{Color::blue},
-        FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-    };
-    if (object_idx == 0){
-        bar.set_option(PrefixText{truncate(std::string("Loading..."), 20)});
-        bar.set_progress(0);
-    }
 
     static std::unordered_map<std::string, npz> npz_lookup;
 
@@ -77,7 +65,8 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
         const npz &current_npz = npz_lookup.at(current_npz_path.string());
         current_buf = BufferArrays(current_npz, current_mesh_id, current_obj.type);
 
-        bar.set_option(PrefixText{"Loading " + truncate(current_obj.name, 20) + " " + std::to_string(object_idx++) + "/" + std::to_string(info_lookup.size())});
+        std::cout << "Loading " << truncate(current_obj.name, 20) << " ";
+        std::cout << std::to_string(object_idx++) << "/" << std::to_string(info_lookup.size()) << std::endl;
 
         if (next_info_lookup.count(current_mesh_id) > 0){
             next_obj = next_info_lookup.at(current_mesh_id);
@@ -103,7 +92,7 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
         new_obj = std::shared_ptr<BaseBlenderObject>(new CurvesBlenderObject(current_buf, next_buf, all_instance_ids, current_obj));
         current_buf.remove_instances(all_instance_ids);
     }
-    bar.set_progress((object_idx * 100)/info_lookup.size());
+    
     RASSERT((object_idx == info_lookup.size()) == (it == info_lookup.end()));
     return new_obj;
 }

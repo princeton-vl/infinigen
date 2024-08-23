@@ -13,7 +13,7 @@
 #include "io.hpp"
 #include "utils.hpp"
 #include "cnpy/cnpy.h"
-#include "colorcode.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 

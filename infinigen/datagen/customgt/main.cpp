@@ -22,7 +22,6 @@
 #include <chrono>
 #include <regex>
 #include <math.h>
-#include <indicators/progress_bar.hpp>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include "shader.hpp"
 #include "blender_object.hpp"
@@ -367,11 +366,8 @@ int main(int argc, char *argv[]) {
                     points_3d(o.y, o.x,k) = pixels[o.j+k];
                 depth(o.y, o.x) = pixels[o.j+2];
             }
-            o.progressbar();
         }
         if (depth_only || !flow_only) {
-            auto depth_color = to_color_map(depth, 0.0, 0.90);
-            imwrite(output_dir / ("Depth_" + cd.frame_string + ".png"), depth_color);
             save_npy(output_dir / ("Depth_" + cd.frame_string + ".npy"), depth);
         }
         if (!depth_only) {
@@ -387,10 +383,9 @@ int main(int argc, char *argv[]) {
                 for (int k=0; k<3; k++)
                     next_points_3d(o.y, o.x,k) = pixels[o.j+k];
             }
-            o.progressbar();
         }
         flow3d = cd.project(next_points_3d) - cd.project(points_3d);
-        const auto flow_viz = compute_flow_viz(flow3d);
+
         std::string output_png, output_npy;
         if (flow_type == FLOW) {
             output_png = "Flow3D_" + cd.frame_string + ".png";
@@ -409,7 +404,7 @@ int main(int argc, char *argv[]) {
             output_npy = "InvPointTraj3D_" + cd.frame_string + ".npy";
         }
         else assert(0);
-        imwrite(output_dir / output_png, flow_viz);
+        
         save_npy(output_dir / output_npy, flow3d);
         }
         }
@@ -424,7 +419,6 @@ int main(int argc, char *argv[]) {
         for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Geometry Surface Normals")){
             for (int k=0; k<3; k++)
                 geo_normals(o.y/2, o.x/2, k) += pixels[o.j+k];
-            o.progressbar();
         }
 
         Eigen::Tensor<unsigned char, 3> geo_normal_color(output_h, output_w, 3);
@@ -451,14 +445,8 @@ int main(int argc, char *argv[]) {
             for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying instance segmentation masks")){
                 for (int k=0; k<3; k++)
                     instance_seg(o.y, o.x, k) = pixels[o.j + k];
-                o.progressbar();
             }
             save_npy(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".npy"), instance_seg);
-
-            Eigen::Tensor<long, 2> instance_seg_2d(buffer_height, buffer_width);
-            for (const loop_obj &o : image_iterator(buffer_width, buffer_height))
-                instance_seg_2d(o.y, o.x) = long(instance_seg(o.y, o.x, 0) % 1000) + 1000 * long(instance_seg(o.y, o.x, 1) % 1000) + 1000000 * long(instance_seg(o.y, o.x, 2) % 1000);
-            imwrite(output_dir / ("InstanceSegmentation_" + cd.frame_string + ".png"), to_color_map(instance_seg_2d));
         }
 
         /*
@@ -470,10 +458,8 @@ int main(int argc, char *argv[]) {
             object_seg.setZero();
             for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying object segmentation masks")){
                 object_seg(o.y, o.x) = pixels[o.j];
-                o.progressbar();
             }
             save_npy(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".npy"), object_seg);
-            imwrite(output_dir / ("ObjectSegmentation_" + cd.frame_string + ".png"), to_color_map(object_seg.cast<long>()));
         }
 
         if (!flow_only && !depth_only) {
@@ -482,10 +468,8 @@ int main(int argc, char *argv[]) {
             tag_seg.setZero();
             for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying tag segmentation mask")){
                 tag_seg(o.y, o.x) = pixels[o.j];
-                o.progressbar();
             }
             save_npy(output_dir / ("TagSegmentation_" + cd.frame_string + ".npy"), tag_seg);
-            imwrite(output_dir / ("TagSegmentation_" + cd.frame_string + ".png"), to_color_map(tag_seg.cast<long>()));
         }
 
 
@@ -500,7 +484,6 @@ int main(int argc, char *argv[]) {
         //     for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from first frame")){
         //         for (int k=0; k<3; k++)
         //             faceids(0, o.y, o.x, k) = pixels[o.j+k];
-        //         o.progressbar();
         //     }
         // }
         // glBindFramebuffer(GL_FRAMEBUFFER, cd.framebuffer_next_faceids);
@@ -509,7 +492,6 @@ int main(int argc, char *argv[]) {
         //     for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying face ids from second frame")){
         //         for (int k=0; k<3; k++)
         //             faceids(1, o.y, o.x, k) = pixels[o.j+k];
-        //         o.progressbar();
         //     }
         // }
         // Eigen::Array<unsigned char, -1, -1> flow_occlusion(buffer_height, buffer_width);
@@ -532,7 +514,6 @@ int main(int argc, char *argv[]) {
         //         }
         //     }
         //     flow_occlusion(o.y, o.x) = ((unsigned char)match_exists) * 255;
-        //     o.progressbar();
         // }
         // imwrite(output_dir / ("Flow3DMask_" + cd.frame_string + ".png"), flow_occlusion);
         // }
@@ -544,10 +525,7 @@ int main(int argc, char *argv[]) {
         face_size.setZero();
         for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying Face-Sizes (in m^2)")){
             face_size(o.y/2, o.x/2) = pixels[o.j]/4;
-            o.progressbar();
         }
-        auto face_size_color = to_color_map(face_size, 0, 0.5, 0);
-        imwrite(output_dir / ("FaceSizeCM" + cd.frame_string + ".png"), face_size_color);
 
         //    Reading/Writing the face size in pixels
         read_buffer<float>(GL_COLOR_ATTACHMENT4, pixels, buffer_width, buffer_height);
@@ -555,10 +533,7 @@ int main(int argc, char *argv[]) {
         pixel_size.setZero();
         for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying Face-Sizes (in pixels)")){
             pixel_size(o.y/2, o.x/2) = pixels[o.j]/4;
-            o.progressbar();
         }
-        auto pixel_size_color = to_color_map(pixel_size, 0, 0.5, 0);
-        imwrite(output_dir / ("FaceSizePX" + cd.frame_string + ".png"), pixel_size_color);
 
         */
 
@@ -573,7 +548,6 @@ int main(int argc, char *argv[]) {
         occlusion_boundaries.setZero();
         for (const loop_obj &o : image_iterator(buffer_width, buffer_height, "Copying Occlusion Boundaries")){
             occlusion_boundaries(o.y, o.x) = pixels[o.j+1]*255;
-            o.progressbar();
         }
         imwrite(output_dir / ("OcclusionBoundaries_" + cd.frame_string + ".png"), occlusion_boundaries);
        }

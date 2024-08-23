@@ -11,9 +11,6 @@
 #include <glad/glad.h>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
-#include <tinycolormap.hpp>
-typedef tinycolormap::ColormapType clrmap;
-#include <indicators/progress_bar.hpp>
 #include "cnpy/cnpy.h"
 #include <array>
 
