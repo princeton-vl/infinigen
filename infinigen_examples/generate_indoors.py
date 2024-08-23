@@ -87,7 +87,12 @@ def default_greedy_stages():
 
     greedy_stages["rooms"] = all_room
 
-    greedy_stages["on_floor"] = primary.with_relation(on_floor, all_room)
+    greedy_stages["on_floor_and_wall"] = primary.with_relation(
+        on_floor, all_room
+    ).with_relation(on_wall, all_room)
+    greedy_stages["on_floor_freestanding"] = primary.with_relation(
+        on_floor, all_room
+    ).with_relation(-on_wall, all_room)
     greedy_stages["on_wall"] = (
         primary.with_relation(-on_floor, all_room)
         .with_relation(-on_ceiling, all_room)
@@ -100,18 +105,25 @@ def default_greedy_stages():
     )
 
     secondary = all_obj.with_relation(
-        cl.AnyRelation(), primary.with_tags(cu.variable_obj)
+        cl.AnyRelation(), all_obj_in_room.with_tags(cu.variable_obj)
     )
 
-    greedy_stages["side_obj"] = secondary.with_relation(side, all_obj)
-    nonside = secondary.with_relation(-side, all_obj)
+    greedy_stages["side_obj"] = (
+        secondary.with_relation(side, all_obj)
+        .with_relation(-cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
-    greedy_stages["obj_ontop_obj"] = nonside.with_relation(
-        cu.ontop, all_obj
-    ).with_relation(-cu.on, all_obj)
-    greedy_stages["obj_on_support"] = nonside.with_relation(
-        cu.on, all_obj
-    ).with_relation(-cu.ontop, all_obj)
+    greedy_stages["obj_ontop_obj"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.ontop, all_obj)
+        .with_relation(-cu.on, all_obj)
+    )
+    greedy_stages["obj_on_support"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
     return greedy_stages
 
@@ -176,27 +188,31 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     state: state_def.State = p.run_stage("solve_rooms", solve_rooms, use_chance=False)
 
-    def solve_large():
-        assignments = greedy.iterate_assignments(
-            stages["on_floor"], state, all_vars, limits, nonempty=True
+    def solve_stage_name(stage_name: str, group: str, **kwargs):
+        assigments = greedy.iterate_assignments(
+            stages[stage_name], state, all_vars, limits
         )
-        for i, vars in enumerate(assignments):
+        for i, vars in enumerate(assigments):
             solver.solve_objects(
                 consgraph,
-                stages["on_floor"],
-                var_assignments=vars,
-                n_steps=overrides["solve_steps_large"],
-                desc=f"on_floor_{i}",
-                abort_unsatisfied=overrides.get("abort_unsatisfied_large", False),
+                stages[stage_name],
+                vars,
+                n_steps=overrides[f"solve_steps_{group}"],
+                desc=f"{stage_name}_{i}",
+                abort_unsatisfied=overrides.get(f"abort_unsatisfied_{group}", False),
+                **kwargs,
             )
-        return solver.state
 
-    state = p.run_stage("solve_large", solve_large, use_chance=False, default=state)
+    def solve_large():
+        solve_stage_name("on_floor_and_wall", "large")
+        solve_stage_name("on_floor_freestanding", "large")
+
+    p.run_stage("solve_large", solve_large, use_chance=False, default=state)
 
     solved_rooms = [
         state.objs[assignment[cu.variable_room]].obj
         for assignment in greedy.iterate_assignments(
-            stages["on_floor"], state, [cu.variable_room], limits
+            stages["on_floor_freestanding"], state, [cu.variable_room], limits
         )
     ]
     solved_bound_points = np.concatenate([butil.bounds(r) for r in solved_rooms])
@@ -263,58 +279,17 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
 
     def solve_medium():
-        n_steps = overrides["solve_steps_medium"]
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["on_wall"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["on_wall"], vars, n_steps, desc=f"on_wall_{i}"
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["on_ceiling"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["on_ceiling"], vars, n_steps, desc=f"on_ceiling_{i}"
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["side_obj"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["side_obj"], vars, n_steps, desc=f"side_obj_{i}"
-            )
-        return solver.state
+        solve_stage_name("on_wall", "medium")
+        solve_stage_name("on_ceiling", "medium")
+        solve_stage_name("side_obj", "medium")
 
-    state = p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
+    p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
 
     def solve_small():
-        n_steps = overrides["solve_steps_small"]
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["obj_ontop_obj"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph,
-                stages["obj_ontop_obj"],
-                vars,
-                n_steps,
-                desc=f"obj_ontop_obj_{i}",
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(
-                stages["obj_on_support"], state, all_vars, limits
-            )
-        ):
-            solver.solve_objects(
-                consgraph,
-                stages["obj_on_support"],
-                vars,
-                n_steps,
-                desc=f"obj_on_support_{i}",
-            )
-        # for i, vars in enumerate(greedy.iterate_assignments(stages['tertiary'], state, all_vars, limits)):
-        #    solver.solve_objects(consgraph, stages['tertiary'], vars, n_steps, desc=f"tertiary_{i}")
-        return solver.state
+        solve_stage_name("obj_ontop_obj", "small", addition_weight_scalar=3)
+        solve_stage_name("obj_on_support", "small", restrict_moves=["addition"])
 
-    state = p.run_stage("solve_small", solve_small, use_chance=False, default=state)
+    p.run_stage("solve_small", solve_small, use_chance=False, default=state)
 
     p.run_stage(
         "populate_assets", populate.populate_state_placeholders, state, use_chance=False

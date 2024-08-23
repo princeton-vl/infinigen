@@ -56,8 +56,6 @@ class Solver:
     def __init__(
         self,
         output_folder: Path,
-        restrict_moves: list = None,
-        addition_weight_scalar: float = 1.0,
     ):
         """Initialize the solver
 
@@ -83,10 +81,6 @@ class Solver:
         self.room_solver_fn = FloorPlanSolver
         self.state: State = None
         self.dimensions = None
-
-        self.moves = self._configure_move_weights(
-            restrict_moves, addition_weight_scalar=addition_weight_scalar
-        )
 
     def _configure_move_weights(self, restrict_moves, addition_weight_scalar=1.0):
         schedules = {
@@ -127,11 +121,12 @@ class Solver:
     @gin.configurable
     def choose_move_type(
         self,
+        moves: dict[str, tuple],
         it: int,
         max_it: int,
     ):
         t = it / max_it
-        names, confs = zip(*self.moves.items())
+        names, confs = zip(*moves.items())
         funcs, scheds = zip(*confs)
         weights = np.array([s if isinstance(s, (float, int)) else s(t) for s in scheds])
         return np.random.choice(funcs, p=weights / weights.sum())
@@ -150,7 +145,13 @@ class Solver:
         desc: str,
         abort_unsatisfied: bool = False,
         print_bounds: bool = False,
+        restrict_moves: list[str] = None,
+        addition_weight_scalar: float = 1.0,
     ):
+        moves = self._configure_move_weights(
+            restrict_moves, addition_weight_scalar=addition_weight_scalar
+        )
+
         filter_domain = copy.deepcopy(filter_domain)
 
         desc_full = (desc, *var_assignments.values())
@@ -186,7 +187,7 @@ class Solver:
         self.optim.reset(max_iters=n_steps)
         ra = trange(n_steps) if self.optim.print_report_freq == 0 else range(n_steps)
         for j in ra:
-            move_gen = self.choose_move_type(j, n_steps)
+            move_gen = self.choose_move_type(moves, j, n_steps)
             self.optim.step(consgraph, self.state, move_gen, filter_domain)
         self.optim.save_stats(self.output_folder / f"optim_{desc}.csv")
 

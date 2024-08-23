@@ -118,10 +118,10 @@ def propose_addition_bound_gen(
         rd for rd in prop_dom.relations if not isinstance(rd[0], cl.NegatedRelation)
     ]
 
+    all_assignments = propose_relations.find_assignments(curr, search_rels)
+
     i = None
-    for i, assignments in enumerate(
-        propose_relations.find_assignments(curr, search_rels)
-    ):
+    for i, assignments in enumerate(all_assignments):
         logger.debug("Found assignments %d %s %s", i, len(assignments), assignments)
 
         yield moves.Addition(

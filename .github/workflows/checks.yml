@@ -43,7 +43,7 @@ jobs:
 
       - name: Install infinigen & dependencies
         run: |
-          pip install .[dev]
+          pip install ".[dev]"
 
       - name: Test with pytest
         run: |

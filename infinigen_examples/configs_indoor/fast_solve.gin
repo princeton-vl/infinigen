@@ -1,14 +1,14 @@
-FloorPlanSolver.n_divide_trials = 10
-FloorPlanSolver.iters_mult = 10
+FloorPlanSolver.n_divide_trials = 25
+FloorPlanSolver.iters_mult = 25
 RoomConstants.n_stories = 1
 GraphMaker.fast=True
 
 home_room_constraints.fast = True
 
-Solver.addition_weight_scalar = 3.0
+solve_objects.addition_weight_scalar = 3.0
 
-compose_indoors.solve_steps_large = 150
+compose_indoors.solve_steps_large = 100
 compose_indoors.solve_steps_medium = 40
-compose_indoors.solve_steps_small = 10
+compose_indoors.solve_steps_small = 5
 
 compose_indoors.terrain_enabled = False
