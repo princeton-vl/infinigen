@@ -1,27 +1,31 @@
 // Copyright (C) 2023, Princeton University.
-// This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+// This source code is licensed under the BSD 3-Clause license found in the
+// LICENSE file in the root directory of this source tree.
 
 // Authors: Lahav Lipson
 
+#include "load_blender_mesh.hpp"
 
-#include <random>
-#include <iostream>
 #include <functional>
+#include <iostream>
+#include <random>
 #include <regex>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "string_tools.hpp"
-#include "load_blender_mesh.hpp"
 #include "buffer_arrays.hpp"
+#include "string_tools.hpp"
 
 using json = nlohmann::json;
 
-auto parse_json(const fs::path json_path){
+auto parse_json(const fs::path json_path)
+{
     const json data = json::parse(std::ifstream(json_path));
     std::unordered_map<std::string, ObjectInfo> output;
-    for (const auto &instance_item : data){
-        if (instance_item.contains("filename") && (instance_item["object_type"] == "MESH")){ // Ignore CURVES objects, for now
+    for (const auto &instance_item : data)
+    {
+        if (instance_item.contains("filename") && (instance_item["object_type"] == "MESH"))
+        { // Ignore CURVES objects, for now
             const ObjectInfo ii(instance_item);
             MRASSERT(output.count(ii.mesh_id) == 0, ii.mesh_id);
             output[ii.mesh_id] = ii;
@@ -30,7 +34,9 @@ auto parse_json(const fs::path json_path){
     return output;
 }
 
-std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_path, const fs::path dst_json_path){
+std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_path,
+                                                     const fs::path dst_json_path)
+{
     assert_exists(src_json_path);
     assert_exists(dst_json_path);
 
@@ -51,8 +57,10 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
 
     static auto it = info_lookup.begin();
 
-    if (current_buf.is_empty()){
-        // while ((it != info_lookup.end()) && match_regex(".*errain.*", it->second.name).empty()) it++;
+    if (current_buf.is_empty())
+    {
+        // while ((it != info_lookup.end()) && match_regex(".*errain.*",
+        // it->second.name).empty()) it++;
         if (it == info_lookup.end())
             return nullptr;
         const std::string current_mesh_id = it->first;
@@ -66,16 +74,21 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
         current_buf = BufferArrays(current_npz, current_mesh_id, current_obj.type);
 
         std::cout << "Loading " << truncate(current_obj.name, 20) << " ";
-        std::cout << std::to_string(object_idx++) << "/" << std::to_string(info_lookup.size()) << std::endl;
+        std::cout << std::to_string(object_idx++) << "/" << std::to_string(info_lookup.size())
+                  << std::endl;
 
-        if (next_info_lookup.count(current_mesh_id) > 0){
+        if (next_info_lookup.count(current_mesh_id) > 0)
+        {
             next_obj = next_info_lookup.at(current_mesh_id);
-            const fs::path next_npz_path = fs::path(dst_json_path.parent_path()) / next_obj.npz_filename;
+            const fs::path next_npz_path =
+                fs::path(dst_json_path.parent_path()) / next_obj.npz_filename;
             if (npz_lookup.count(next_npz_path.string()) == 0)
                 npz_lookup[next_npz_path.string()] = next_npz_path;
             const npz &next_npz = npz_lookup.at(next_npz_path.string());
             next_buf = BufferArrays(next_npz, current_mesh_id, next_obj.type, true);
-        } else {
+        }
+        else
+        {
             next_buf = current_buf;
         }
 
@@ -83,16 +96,21 @@ std::shared_ptr<BaseBlenderObject> load_blender_mesh(const fs::path src_json_pat
     }
 
     std::shared_ptr<BaseBlenderObject> new_obj;
-    if (current_obj.type == "MESH"){
+    if (current_obj.type == "MESH")
+    {
         const auto instance_ids = current_buf.get_some_instance_ids(1e8);
-        new_obj = std::shared_ptr<BaseBlenderObject>(new MeshBlenderObject(current_buf, next_buf, instance_ids, current_obj));
+        new_obj = std::shared_ptr<BaseBlenderObject>(
+            new MeshBlenderObject(current_buf, next_buf, instance_ids, current_obj));
         current_buf.remove_instances(instance_ids);
-    } else if (current_obj.type == "CURVES"){
+    }
+    else if (current_obj.type == "CURVES")
+    {
         const auto all_instance_ids = current_buf.get_some_instance_ids();
-        new_obj = std::shared_ptr<BaseBlenderObject>(new CurvesBlenderObject(current_buf, next_buf, all_instance_ids, current_obj));
+        new_obj = std::shared_ptr<BaseBlenderObject>(
+            new CurvesBlenderObject(current_buf, next_buf, all_instance_ids, current_obj));
         current_buf.remove_instances(all_instance_ids);
     }
-    
+
     RASSERT((object_idx == info_lookup.size()) == (it == info_lookup.end()));
     return new_obj;
 }
