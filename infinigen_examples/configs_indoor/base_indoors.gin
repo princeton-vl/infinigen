@@ -11,7 +11,8 @@ SimulatedAnnealingSolver.final_temp = 0.001
 SimulatedAnnealingSolver.finetune_pct = 0.15
 SimulatedAnnealingSolver.max_invalid_candidates = 5
 
-render_image.use_dof = True
+configure_render_cycles.num_samples = 16000
+
 animate_cameras.follow_poi_chance=0.0
 camera.camera_pose_proposal.altitude = ("clip_gaussian", 1.5, 0.8, 0.5, 2.2)
 camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 15, 60, 95)
