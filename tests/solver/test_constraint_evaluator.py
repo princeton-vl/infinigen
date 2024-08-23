@@ -609,6 +609,34 @@ def test_viol_amounts():
     assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 3
 
 
+def test_viol_integers():
+    a = cl.constant(1)
+    b = cl.constant(3)
+
+    def violsingle(expr):
+        return evaluate.evaluate_problem(cl.Problem([expr], []), State()).viol_count()
+
+    assert violsingle(a < b) == 0
+    assert violsingle(b > a) == 0
+    assert violsingle(a <= b) == 0
+    assert violsingle(b >= a) == 0
+
+    assert violsingle(b <= b) == 0
+    assert violsingle(b >= b) == 0
+
+    assert violsingle(b < b) == 1
+    assert violsingle(b > b) == 1
+
+    assert violsingle(a == b) == 2
+    assert violsingle(b <= a) == 2
+    assert violsingle(a >= b) == 2
+
+    assert violsingle(b < a) == 3
+    assert violsingle(a > b) == 3
+
+    assert violsingle(a >= (b * 2)) == 5
+
+
 def test_min_dist_tagged():
     butil.clear_scene()
     obj_states = {}

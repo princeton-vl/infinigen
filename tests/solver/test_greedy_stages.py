@@ -71,7 +71,7 @@ def test_validate_stages():
     stages = generate_indoors.default_greedy_stages()
 
     wall = stages["on_wall"]
-    floor = stages["on_floor"]
+    floor = stages["on_floor_freestanding"]
     assert not wall.intersects(floor)
 
     onobj = stages["obj_ontop_obj"]
@@ -138,7 +138,7 @@ def test_example_walldec():
     stages = generate_indoors.default_greedy_stages()
 
     assert not propose_discrete.active_for_stage(dom, stages["on_ceiling"])
-    assert not propose_discrete.active_for_stage(dom, stages["on_floor"])
+    assert not propose_discrete.active_for_stage(dom, stages["on_floor_freestanding"])
 
     assert t.satisfies(dom.tags, stages["on_wall"].tags)
     print("ONWALL", stages["on_wall"])
@@ -182,7 +182,7 @@ def test_example_floorwall():
 
     stages = generate_indoors.default_greedy_stages()
 
-    assert propose_discrete.active_for_stage(dom, stages["on_floor"])
+    assert propose_discrete.active_for_stage(dom, stages["on_floor_and_wall"])
     assert not propose_discrete.active_for_stage(dom, stages["on_wall"])
 
 
@@ -218,7 +218,7 @@ def test_example_sideobj():
     )
     stages = generate_indoors.default_greedy_stages()
     assert propose_discrete.active_for_stage(dom, stages["side_obj"])
-    assert not propose_discrete.active_for_stage(dom, stages["on_floor"])
+    assert not propose_discrete.active_for_stage(dom, stages["on_floor_freestanding"])
 
 
 def test_example_monitor():
@@ -275,7 +275,7 @@ def test_example_on_obj():
         {t.Semantics.OfficeShelfItem, t.Semantics.Object}, [(cu.on, bedroom_storage)]
     )
 
-    onfloor = generate_indoors.default_greedy_stages()["on_floor"]
+    onfloor = generate_indoors.default_greedy_stages()["on_floor_freestanding"]
     dining = r.domain_tag_substitute(
         onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom})
     )
@@ -284,7 +284,7 @@ def test_example_on_obj():
 
 
 def test_active_incorrect_room():
-    onfloor = generate_indoors.default_greedy_stages()["on_floor"]
+    onfloor = generate_indoors.default_greedy_stages()["on_floor_freestanding"]
     dining = r.domain_tag_substitute(
         onfloor, cu.variable_room, r.Domain({t.Semantics.DiningRoom})
     )
@@ -307,28 +307,6 @@ def test_active_incorrect_room():
     )
 
     assert not propose_discrete.active_for_stage(sofa, dining)
-
-
-def test_stage_intersect_table():
-    onfloor = generate_indoors.default_greedy_stages()["on_floor"]
-    onfloor_dining = r.domain_tag_substitute(
-        onfloor,
-        cu.variable_room,
-        r.Domain({t.Semantics.DiningRoom, t.SpecificObject("diningroom01")}),
-    )
-
-    dining = r.Domain(
-        {t.Semantics.Room, t.Semantics.DiningRoom, -t.Semantics.Object}, []
-    )
-    table = r.Domain(
-        {t.Semantics.Object, t.Semantics.Table, -t.Semantics.Room},
-        [(cu.on_floor, dining)],
-    )
-
-    inter = onfloor_dining.intersection(table)
-    assert len(inter.relations) == 2
-    assert inter.relations[0][0].__class__ is cl.StableAgainst
-    assert inter.relations[1][0].__class__ is cl.NegatedRelation
 
 
 def test_obj_on_ceilinglight():
@@ -377,7 +355,7 @@ def test_room_has_viols_at_init(rtype):
     print("active", rtype, active_count)
     assert active_count > 0
 
-    filter = generate_indoors.default_greedy_stages()["on_floor"]
+    filter = generate_indoors.default_greedy_stages()["on_floor_freestanding"]
     filter = r.domain_tag_substitute(
         filter, cu.variable_room, r.Domain({rtype, t.Semantics.Room})
     )

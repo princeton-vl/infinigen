@@ -16,8 +16,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from infinigen.core.util.logging import Suppress
-
 from . import smb_client
 
 RCLONE_PREFIX_ENVVAR = "INFINIGEN_RCLONE_PREFIX"
@@ -128,9 +126,8 @@ def get_commit_hash():
     if git is None:
         return None
     try:
-        with Suppress():
-            cmd = f"{git} rev-parse HEAD"
-            return subprocess.check_output(cmd.split()).decode().strip()
+        cmd = f"{git} rev-parse HEAD"
+        return subprocess.check_output(cmd.split()).decode().strip()
     except subprocess.CalledProcessError:
         return None
 
@@ -194,9 +191,8 @@ def get_upload_destfolder(job_folder):
 # DO NOT make gin.configurable
 # this function gets submitted via pickle in some settings, and gin args are not preserved
 def upload_job_folder(
-    parent_folder, task_uniqname, dir_prefix_len=0, method="smbclient"
+    parent_folder: Path, task_uniqname: str, dir_prefix_len=0, method="smbclient"
 ):
-    parent_folder = Path(parent_folder)
     seed = parent_folder.name
 
     print(f"Performing cleanup on {parent_folder}")
@@ -225,6 +221,7 @@ def upload_job_folder(
     for f in upload_paths:
         if f is None:
             continue
+        print(f"Uploading {f}")
         upload_func(f, upload_dest_folder)
         f.unlink()
 
@@ -233,8 +230,15 @@ def upload_job_folder(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("parent_folder", type=Path)
-    parser.add_argument("task_uniqname", type=str)
+    parser.add_argument("--parent_folder", type=Path)
+    parser.add_argument("--task_uniqname", type=str)
+    parser.add_argument("--dir_prefix_len", type=int, default=0)
+    parser.add_argument("--method", type=str, default="smbclient")
     args = parser.parse_args()
 
-    upload_job_folder(args.parent_folder, args.task_uniqname)
+    upload_job_folder(
+        parent_folder=args.parent_folder,
+        task_uniqname=args.task_uniqname,
+        dir_prefix_len=args.dir_prefix_len,
+        method=args.method,
+    )

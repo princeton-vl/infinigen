@@ -12,6 +12,7 @@ from .expression import (
     ScalarExpression,
     ScalarOperatorExpression,
     constant,
+    debugprint,
     hinge,
     max_expr,
     min_expr,

@@ -7,7 +7,7 @@ This documentation details how to run a robotics simulation in an exported Infin
 First, create and export a scene with the commands below:
 
 ```bash
-python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g overhead_singleroom.gin -p compose_indoors.terrain_enabled=False  compose_indoors.solve_max_rooms=1 
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g overhead_singleroom.gin -p compose_indoors.terrain_enabled=False  restrict_solving.solve_max_rooms=1 
 ```
 
 ```bash

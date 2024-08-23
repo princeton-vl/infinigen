@@ -18,7 +18,15 @@ from infinigen.core.constraints.example_solver.state_def import State
 
 logger = logging.getLogger(__name__)
 
-SPECIAL_CASE_NODES = [cl.ForAll, cl.SumOver, cl.MeanOver, cl.item, cl.Problem, cl.scene]
+SPECIAL_CASE_NODES = [
+    cl.ForAll,
+    cl.SumOver,
+    cl.MeanOver,
+    cl.item,
+    cl.Problem,
+    cl.scene,
+    cl.debugprint,
+]
 
 gather_funcs = {
     cl.ForAll: all,
@@ -46,7 +54,7 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
                 memo_sub[var] = {o}
                 results.append(evaluate_node(pred, state, memo=memo_sub))
 
-            logger.debug(f"{node.__class__.__name__} had {len(results)=}")
+            # slogger.debug(f"{node.__class__.__name__} had {len(results)=}")
 
             return gather_funcs[node.__class__](results)
         case cl.item():
@@ -66,6 +74,15 @@ def _compute_node_val(node: cl.Node, state: State, memo: dict):
             raise TypeError(
                 f"evaluate_node is invalid for {node}, please use evaluate_problem"
             )
+        case cl.debugprint(val, msg):
+            res = evaluate_node(val, state, memo)
+            var_assignments = [
+                v
+                for k, v in memo.items()
+                if isinstance(k, str) and k.startswith("var_")
+            ]
+            print(f"cl.debugprint {msg}: {res} {var_assignments}")
+            return res
         case _:
             raise NotImplementedError(
                 f"Couldnt compute value for {type(node)}, please add it to "
@@ -80,14 +97,13 @@ def relevant(node: cl.Node, filter: r.Domain | None) -> bool:
         return True
 
     if not isinstance(node, cl.Node):
-        raise ValueError(f"{node=}")
+        raise TypeError(f"{node=}")
 
     match node:
         case cl.ObjectSetExpression():
             d = r.constraint_domain(node, finalize_variables=True)
-            assert r.domain_finalized(
-                d
-            ), f"{relevant.__name__} encountered unfinalized {d=}"
+            if not r.domain_finalized(d):
+                raise RuntimeError(f"{relevant.__name__} encountered unfinalized {d=}")
             res = d.intersects(filter, require_satisfies_right=True)
             logger.debug(f"{relevant.__name__} got {res=} for {d=}\n {filter=}")
             return res
@@ -95,22 +111,30 @@ def relevant(node: cl.Node, filter: r.Domain | None) -> bool:
             return any(relevant(c, filter) for _, c in node.children())
 
 
-def _viol_count_binop(node: cl.BoolOperatorExpression, lhs, rhs) -> int:
-    if not isinstance(lhs, int) or not isinstance(rhs, int):
-        satisfied = node.func(lhs, rhs)
-        return 1 if not satisfied else 0
-
+def _viol_count_binop_integer(
+    node: cl.BoolOperatorExpression, lhs: int, rhs: int
+) -> int:
     match node.func:
-        case operator.ge:
-            return max(0, rhs - lhs)
-        case operator.le:
-            return max(0, lhs - rhs)
-        case operator.gt:
-            return max(0, rhs - lhs + 1)
-        case operator.lt:
-            return max(0, lhs - rhs + 1)
+        case operator.ge:  # lhs >= rhs
+            err = rhs - lhs
+        case operator.le:  # lhs <= rhs
+            err = lhs - rhs
+        case operator.gt:  # lhs > rhs
+            err = rhs - lhs + 1
+        case operator.lt:  # lhs < rhs
+            err = lhs - rhs + 1
         case _:
             raise ValueError(f"Unhandled {node.func=}")
+
+    return max(err, 0)
+
+
+def _viol_count_binop(node: cl.BoolOperatorExpression, lhs, rhs) -> float:
+    if isinstance(lhs, int) and isinstance(rhs, int):
+        return _viol_count_binop_integer(node, lhs, rhs)
+    else:
+        satisfied = node.func(lhs, rhs)
+        return 1 if not satisfied else 0
 
 
 def viol_count(node: cl.Node, state: State, memo: dict, filter: r.Domain = None):
@@ -142,13 +166,11 @@ def viol_count(node: cl.Node, state: State, memo: dict, filter: r.Domain = None)
                 memo_sub[var] = {o}
                 viol += viol_count(pred, state, memo_sub, filter)
             res = viol
-        case (
-            cl.BoolOperatorExpression(operator.ge, [lhs, rhs])
-            | cl.BoolOperatorExpression(operator.le, [rhs, lhs])
-            | cl.BoolOperatorExpression(operator.gt, [rhs, lhs])
-            | cl.BoolOperatorExpression(operator.lt, [rhs, lhs])
+        case cl.BoolOperatorExpression(
+            operator.ge | operator.le | operator.gt | operator.lt, [lhs, rhs]
         ):
-            if relevant(lhs, filter) or relevant(rhs, filter):
+            either_relevant = relevant(lhs, filter) or relevant(rhs, filter)
+            if either_relevant:
                 l_res = evaluate_node(lhs, state, memo)
                 r_res = evaluate_node(rhs, state, memo)
                 res = _viol_count_binop(node, l_res, r_res)
@@ -246,6 +268,8 @@ def evaluate_problem(
         for name, node in problem.constraints.items():
             logger.debug(f"Evaluating constraint {name=}")
             violated[name] = viol_count(node, state, memo, filter=filter)
-            logger.debug(f"Evaluator found {violated[name]} violations for {name=}")
+
+            if violated[name]:
+                logger.debug(f"Evaluator found {violated[name]} violations for {name=}")
 
     return EvalResult(loss_vals=scores, violations=violated)

@@ -219,3 +219,10 @@ class hinge(ScalarExpression):
     val: ScalarExpression
     low: float
     high: float
+
+
+@Expression.register_postfix_func
+@nodedataclass()
+class debugprint(ScalarExpression, BoolExpression):
+    val: Expression
+    msg: str

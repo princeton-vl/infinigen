@@ -39,11 +39,11 @@ def sample_home_constraint_params():
         # how many objects in each shelving per unit of volume
         obj_interior_obj_pct=uniform(0.5, 1),  # uniform(0.6, 0.9),
         # what pct of top surface of storage furniture should be filled with objects? e.g pct of top surface of shelf
-        obj_on_storage_pct=uniform(0.1, 0.9),
+        obj_on_storage_pct=uniform(0.5, 1.0),
         # what pct of top surface of NON-STORAGE objects should be filled with objects? e.g pct of countertop/diningtable covered in stuff
-        obj_on_nonstorage_pct=uniform(0.1, 0.6),
+        obj_on_nonstorage_pct=uniform(0.2, 1.0),
         # meters squared of wall art per approx meters squared of FLOOR area. TODO cant measure wall area currently.
-        painting_area_per_room_area=uniform(20, 60) / 40,
+        painting_area_per_room_area=uniform(40, 100) / 40,
         # rare objects wont even be added to the constraint graph in most homes
         has_tv=uniform() < 0.5,
         has_aquarium_tank=uniform() < 0.15,
@@ -512,7 +512,9 @@ def home_furniture_constraints():
 
     furniture = obj[Semantics.Furniture].related_to(rooms, cu.on_floor)
     wallfurn = furniture.related_to(rooms, cu.against_wall)
-    storage = wallfurn[Semantics.Storage]
+
+    storage = furniture[Semantics.Storage]
+    storage_freestanding = storage.related_to(rooms, cu.against_wall)
 
     params = sample_home_constraint_params()
 
@@ -593,7 +595,7 @@ def home_furniture_constraints():
     )
 
     constraints["storage"] = rooms.all(
-        lambda r: (storage.related_to(r).count().in_range(1, 7))
+        lambda r: (storage_freestanding.related_to(r).count().in_range(1, 7))
     )
     score_terms["storage"] = rooms.mean(
         lambda r: (
@@ -628,7 +630,9 @@ def home_furniture_constraints():
     mirror = walldec[wall_decorations.MirrorFactory]
     rugs = obj[elements.RugFactory].related_to(rooms, cu.on_floor)
 
-    constraints["rugs"] = rooms.all(lambda r: (rugs.related_to(r).distance(rugs) >= 1))
+    constraints["rugs"] = rooms.all(
+        lambda r: (cl.min_distance_internal(rugs.related_to(r)) >= 1)
+    )
 
     score_terms["rugs"] = rooms.all(
         lambda r: (cl.center_stable_surface_dist(rugs.related_to(r)).minimize(weight=1))
@@ -641,11 +645,12 @@ def home_furniture_constraints():
         lambda r: (
             wall_art.related_to(r).count().in_range(0, 6)
             * mirror.related_to(r).count().in_range(0, 1)
-            * walldec.related_to(r).all(lambda t: t.distance(r, cu.floortags) > 0.6)
-            # walldec.all(lambda t: (
-            #    (vertical_diff(t, r).abs() < 1.5) *
-            #    (t.distance(cutters) > 0.1)
-            # ))
+            * walldec.related_to(r).all(lambda t: (t.distance(r, cu.floortags) > 0.6))
+            * walldec.all(
+                lambda t: (
+                    (vertical_diff(t, r).abs() < 1.5) * (t.distance(cutters) > 0.1)
+                )
+            )
         )
     )
     score_terms["wall_decorations"] = rooms.mean(
@@ -698,24 +703,13 @@ def home_furniture_constraints():
     )
     # endregion
 
-    # region SIDETABLE
-    sidetable = furniture[Semantics.SideTable].related_to(furniture, cu.side_by_side)
-
-    score_terms["sidetable"] = rooms.mean(
-        lambda r: (
-            sidetable.related_to(r).mean(
-                lambda t: (t.distance(r, cu.walltags).minimize(weight=1))
-            )
-        )
-    )
-    # endregion
-
     # region DESKS
     desks = wallfurn[shelves.SimpleDeskFactory]
     deskchair = furniture[seating.OfficeChairFactory].related_to(
-        desks, cu.front_against
+        desks, cu.front_to_front
     )
     monitors = obj[appliances.MonitorFactory]
+
     constraints["desk"] = rooms.all(
         lambda r: (
             desks.related_to(r).all(
@@ -760,10 +754,12 @@ def home_furniture_constraints():
         .related_to(rooms, cu.on_floor)
         .related_to(rooms, cu.against_wall)
     )
-    # constraints['lighting'] = rooms.all(lambda r: (
-    #    # dont put redundant lights close to eachother (including lamps, ceiling lights, etc)
-    #    lights.related_to(r).all(lambda l: l.distance(lights.related_to(r)) >= 2)
-    # ))
+    constraints["lighting"] = rooms.all(
+        lambda r: (
+            # dont put redundant lights close to eachother (including lamps, ceiling lights, etc)
+            cl.min_distance_internal(lights.related_to(r)) >= 1
+        )
+    )
 
     # endregion
 
@@ -792,8 +788,9 @@ def home_furniture_constraints():
         lambda r: (
             # allow 0-2 lamps per room, placed on any sensible object
             lamps.related_to(storage.related_to(r)).count().in_range(0, 2)
-            # * lamps.related_to(sidetable.related_to(r)).count().in_range(0, 2)
-            # * lamps.related_to(desks.related_to(r, cu.on), cu.ontop).count().in_range(0, 1)
+            * lamps.related_to(desks.related_to(r, cu.on), cu.ontop)
+            .count()
+            .in_range(0, 1)
             * (  # pull-string lamps look extremely unnatural when too far off the ground
                 lamps.related_to(storage.related_to(r)).all(
                     lambda l: l.distance(r, cu.floortags).in_range(0.5, 1.5)
@@ -802,19 +799,43 @@ def home_furniture_constraints():
         )
     )
 
-    score_terms["lamps"] = lamps.mean(
-        lambda l: (
-            cl.center_stable_surface_dist(l.related_to(sidetable)).minimize(weight=1)
-            + l.distance(lamps).maximize(weight=1)
+    # endregion
+
+    # region SIDETABLES
+    sidetables = furniture[tables.SideTableFactory].related_to(
+        wallfurn, cu.leftright_leftright
+    )
+
+    constraints["sidetable_objects"] = rooms.all(
+        lambda r: (
+            lamps.related_to(sidetables.related_to(r)).count().in_range(0, 2)
+            * sidetables.all(
+                lambda s: obj[Semantics.OfficeShelfItem].related_to(s, cu.on).count()
+                >= 0
+            )
         )
     )
+
+    score_terms["sidetable"] = rooms.mean(
+        lambda r: (
+            sidetables.related_to(r).mean(
+                lambda t: t.distance(r, cu.walltags).hinge(0, 0.3).minimize(weight=10)
+            )
+            + lamps.mean(
+                lambda l: cl.center_stable_surface_dist(
+                    l.related_to(sidetables)
+                ).minimize(weight=1)
+            )
+        )
+    )
+
     # endregion
 
     # region CLOSETS
     closets = rooms[Semantics.Closet].excludes(cu.room_types)
     constraints["closets"] = closets.all(
         lambda r: (
-            (storage.related_to(r).count() >= 1)
+            (storage_freestanding.related_to(r).count() >= 1)
             * ceillights.related_to(r, cu.hanging).count().in_range(0, 1)
             * (
                 walldec.related_to(r).count() == 0
@@ -833,19 +854,15 @@ def home_furniture_constraints():
 
     # region BEDROOMS
     bedrooms = rooms[Semantics.Bedroom].excludes(cu.room_types)
-    beds = wallfurn[Semantics.Bed][seating.BedFactory]
+    beds = wallfurn[Semantics.Bed]
+
     constraints["bedroom"] = bedrooms.all(
         lambda r: (
             beds.related_to(r).count().in_range(1, 2)
-            * (
-                sidetable.related_to(r)
-                .related_to(beds.related_to(r), cu.leftright_leftright)
-                .count()
-                .in_range(0, 2)
-            )
+            * sidetables.related_to(beds.related_to(r)).count().in_range(0, 2)
             * rugs.related_to(r).count().in_range(0, 1)
             * desks.related_to(r).count().in_range(0, 1)
-            * storage.related_to(r).count().in_range(2, 5)
+            * storage_freestanding.related_to(r).count().in_range(2, 5)
             * floor_lamps.related_to(r).count().in_range(0, 1)
             * storage.related_to(r).all(
                 lambda s: (
@@ -857,13 +874,9 @@ def home_furniture_constraints():
 
     score_terms["bedroom"] = bedrooms.mean(
         lambda r: (
-            beds.related_to(r).count().maximize(weight=3)
-            + beds.related_to(r)
+            beds.related_to(r)
             .mean(lambda t: cl.distance(r, doors))
             .maximize(weight=0.5)
-            + sidetable.related_to(r)
-            .mean(lambda t: t.distance(beds.related_to(r)))
-            .minimize(weight=3)
         )
     )
 
@@ -1113,7 +1126,9 @@ def home_furniture_constraints():
     sofa_back_near_wall = cl.StableAgainst(
         cu.back, cu.walltags, margin=uniform(0.1, 0.3)
     )
-    cl.StableAgainst(cu.side, cu.walltags, margin=uniform(0.1, 0.3))
+    sofa_side_near_wall = cl.StableAgainst(
+        cu.side, cu.walltags, margin=uniform(0.1, 0.3)
+    )
 
     def freestanding(o, r):
         return o.related_to(r).related_to(r, -sofa_back_near_wall)
@@ -1121,11 +1136,12 @@ def home_furniture_constraints():
     constraints["sofa"] = livingrooms.all(
         lambda r: (
             # sofas.related_to(r).count().in_range(2, 3)
-            sofas.related_to(r, sofa_back_near_wall).count().in_range(2, 4)
-            # * sofas.related_to(r, sofa_side_near_wall).count().in_range(0, 1)
+            sofas.related_to(r, sofa_back_near_wall).count().in_range(0, 4)
+            * sofas.related_to(r, sofa_side_near_wall).count().in_range(0, 1)
+            * sofas.related_to(r, cu.on_floor).count().in_range(0, 1)
             * freestanding(sofas, r).all(
                 lambda t: (  # frustrum infront of freestanding sofa must directly contain tvstand
-                    cl.accessibility_cost(t, tvstands.related_to(r), dist=3) > 0.7
+                    cl.accessibility_cost(t, tvstands.related_to(r), dist=3) > 0.4
                 )
             )
             * sofas.all(
@@ -1136,10 +1152,11 @@ def home_furniture_constraints():
                     * cl.accessibility_cost(t, r, dist=1).in_range(0, 0.5)
                 )
             )
-            # * ( # allow a storage object behind non-wall sofas
-            #    storage.related_to(r)
-            #    .related_to(freestanding(sofas, r))
-            #    .count().in_range(0, 1)
+            # * (  # allow a storage object behind non-wall sofas
+            #     storage.related_to(r, cu.on_floor)
+            #     .related_to(freestanding(sofas, r), cu.back_to_back)
+            #     .count()
+            #     .in_range(0, 1)
             # )
         )
     )
@@ -1150,7 +1167,7 @@ def home_furniture_constraints():
                 lambda s: (
                     (cl.accessibility_cost(s, rooms, dist=3) < 0.5)
                     * (
-                        cl.focus_score(s, tvstands.related_to(r)) > 0.5
+                        cl.focus_score(s, tvstands.related_to(r)) < 0.5
                     )  # must face or perpendicular to TVStand
                 )
             )
@@ -1162,13 +1179,12 @@ def home_furniture_constraints():
             sofas.volume().maximize(weight=10)
             + sofas.related_to(r).mean(
                 lambda t: (
-                    t.distance(sofas.related_to(r)).hinge(0, 1).minimize(weight=1)
+                    t.distance(sofas.related_to(r)).hinge(0, 1).minimize(weight=5)
                     + t.distance(tvstands.related_to(r)).hinge(2, 3).minimize(weight=5)
-                    + cl.focus_score(t, tvstands.related_to(r)).maximize(weight=5)
+                    + cl.focus_score(t, tvstands.related_to(r)).minimize(weight=5)
                     + cl.angle_alignment_cost(
                         t, tvstands.related_to(r), cu.front
                     ).minimize(weight=1)
-                    + cl.focus_score(t, coffeetables.related_to(r)).maximize(weight=2)
                     + cl.accessibility_cost(t, r, dist=3).minimize(weight=3)
                 )
             )
@@ -1193,8 +1209,8 @@ def home_furniture_constraints():
                     lambda t: (
                         (tvs.related_to(t).count() == 1)
                         * tvs.related_to(t).all(
-                            lambda tv: cl.accessibility_cost(tv, r, dist=1).in_range(
-                                0, 0.1
+                            lambda tv: (
+                                cl.accessibility_cost(tv, r, dist=1).in_range(0, 0.1)
                             )
                         )
                     )
@@ -1224,14 +1240,9 @@ def home_furniture_constraints():
 
     constraints["livingroom"] = livingrooms.all(
         lambda r: (
-            storage.related_to(r).count().in_range(1, 5)
+            storage_freestanding.related_to(r).count().in_range(0, 5)
             * tvstands.related_to(r).count().equals(1)
-            * (  # allow sidetables next to any sofa
-                sidetable.related_to(r)
-                .related_to(sofas.related_to(r), cu.side_by_side)
-                .count()
-                .in_range(0, 2)
-            )
+            * sidetables.related_to(sofas.related_to(r)).count().in_range(0, 2)
             * desks.related_to(r).count().in_range(0, 1)
             * coffeetables.related_to(r).count().in_range(0, 1)
             * coffeetables.related_to(r).all(
@@ -1260,7 +1271,7 @@ def home_furniture_constraints():
                     + cl.angle_alignment_cost(
                         t, sofas.related_to(r), cu.front
                     ).minimize(weight=5)
-                    + cl.focus_score(sofas.related_to(r), t).maximize(weight=5)
+                    + cl.focus_score(sofas.related_to(r), t).minimize(weight=5)
                 )
             )
         )
@@ -1377,10 +1388,13 @@ def home_furniture_constraints():
 
     # region BATHROOMS
     bathrooms = rooms[Semantics.Bathroom].excludes(cu.room_types)
+
     toilet = wallfurn[bathroom.ToiletFactory]
     bathtub = wallfurn[bathroom.BathtubFactory]
     sink = wallfurn[bathroom.StandingSinkFactory]
+
     hardware = obj[bathroom.HardwareFactory].related_to(bathrooms, cu.against_wall)
+
     constraints["bathroom"] = bathrooms.all(
         lambda r: (
             mirror.related_to(r).related_to(r, cu.flush_wall).count().equals(1)
@@ -1421,8 +1435,8 @@ def home_furniture_constraints():
         )
     )
 
-    score_terms["bathroom"] = mirror.related_to(bathrooms).distance(sink).minimize(
-        weight=0.2
+    score_terms["bathroom"] = (
+        mirror.related_to(bathrooms).distance(sink).minimize(weight=3)
     ) + cl.accessibility_cost(mirror, furniture, cu.down_dir).maximize(weight=3)
     # endregion
 
