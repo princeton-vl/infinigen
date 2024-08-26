@@ -63,6 +63,7 @@ class SimulatedAnnealingSolver:
         self.last_eval_result = None
 
         self.eval_memo = {}
+        self.stats = []
 
     def save_stats(self, path):
         if len(self.stats) == 0:
@@ -76,7 +77,7 @@ class SimulatedAnnealingSolver:
         fig, ax1 = plt.subplots()
         ax1.set_xlabel("Iteration")
         ax1.set_ylabel("Score", color="C0")
-        ax1.plot(df["curr_iteration"], df["loss"], color="C0")
+        ax1.plot(np.arange(len(df)), df["loss"], color="C0")
 
         # ax2 = ax1.twinx()
         # ax2.set_ylabel('Move Time', color='C1')
@@ -91,7 +92,6 @@ class SimulatedAnnealingSolver:
 
     def reset(self, max_iters):
         self.curr_iteration = 0
-        self.stats = []
         self.curr_result = None
         self.best_loss = None
         self.eval_memo = {}
