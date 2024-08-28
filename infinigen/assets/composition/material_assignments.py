@@ -5,12 +5,14 @@
 # - Meenal Parakh: initial assignment system, separate materials from implementations
 # - Alexander Raistrick: refactor
 
+import infinigen.assets.fluid.liquid_particle_material as _fluid
 from infinigen.assets.materials import (
     art,
     ceramic,
     creature,
     dev,
     fabric,
+    fluid,
     lamp_shaders,
     metal,
     plant,
@@ -233,10 +235,15 @@ lid = cup
 
 frame = decorative_metal + woods
 
-step = fabrics + woods + marble + [
-    (plastic.Plastic, 1.0),
-    (plastic.PlasticTranslucent, 1.0),
-]
+step = (
+    fabrics
+    + woods
+    + marble
+    + [
+        (plastic.Plastic, 1.0),
+        (plastic.PlasticTranslucent, 1.0),
+    ]
+)
 rail = step
 tread = woods + metals + glasses
 side = rail + metals
@@ -246,7 +253,7 @@ post = handrail
 wall = [(ceramic.Plaster, 2.0)]
 kitchen_wall = [
     (ceramic.Plaster, 5.0),
-    (ceramic.Tile, 2.0)
+    (ceramic.Tile, 2.0),
 ]
 garage_wall = [
     (ceramic.Concrete, 5.0),
@@ -268,7 +275,7 @@ bathroom_wall = [
 
 floor = [
     (ceramic.Tile, 4.0),
-    (fabric.Rug, 1.0)
+    (fabric.Rug, 1.0),
 ]
 garage_floor = [
     (ceramic.Concrete, 1.0),
@@ -285,12 +292,17 @@ balcony_floor = bathroom_floor
 ceiling = wall
 
 
-
 potting_soil = [
     (terrain.Mud, 1),
     (terrain.Sand, 1),
     (terrain.Soil, 3),
     (terrain.Dirt, 6),
+]
+
+forest_soil = [
+    (terrain.Mud, 2),
+    (terrain.Dirt, 1),
+    (terrain.Soil, 1),
 ]
 
 ground = [
@@ -304,6 +316,13 @@ ground = [
     (terrain.ChunkyRock, 0),
 ]
 
+liquid = [
+    (fluid.water.Water, 7),
+    # (fluid.lava.Lava, 3),     # causes circular import error
+    (_fluid.Liquid, 1),
+    (fluid.whitewater.Whitewater, 1),
+]
+
 beach = [
     (terrain.Sand, 10),
     (terrain.CrackedGround, 1),
@@ -313,16 +332,17 @@ beach = [
 ]
 
 eroded = [
-    (terrain.Sand, 1),
-    (terrain.CrackedGround, 1),
+    (terrain.Sand, 2),
+    (terrain.CrackedGround, 2),
     (terrain.Dirt, 1),
-    (terrain.Stone, 1),
+    (terrain.Stone, 3),
     (terrain.Soil, 1),
 ]
 
 mountain = [
     (terrain.Mountain, 10),
     (terrain.Sandstone, 2),
+    (terrain.Ice, 2),
 ]
 
 rock = [
