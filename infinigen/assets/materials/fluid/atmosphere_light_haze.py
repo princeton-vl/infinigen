@@ -33,6 +33,7 @@ def shader_atmosphere(
 
 
 class AtmosphereLightHaze:
+    type = None
     shader = shader_atmosphere
 
     def apply(self, obj, selection=None, **kwargs):

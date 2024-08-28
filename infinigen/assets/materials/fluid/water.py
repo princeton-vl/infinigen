@@ -354,6 +354,10 @@ def shader(
 
 
 class Water:
+    type = SurfaceTypes.BlenderDisplacement
+    mod_name = "geo_water"
+    name = "water"
+
     @gin.configurable("water")
     def apply(self, objs, is_ocean=False, coastal=0, selection=None, **kwargs):
         info["is_ocean"] = is_ocean = rg(is_ocean)

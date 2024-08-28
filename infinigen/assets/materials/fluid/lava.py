@@ -421,6 +421,9 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
 
 
 class Lava:
+    type = SurfaceTypes.BlenderDisplacement
+    mod_name = "lava_geo"
+    name = "lava"
     shader = lava_shader
 
     def apply(self, obj, selection=None, **kwargs):
