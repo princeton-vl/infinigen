@@ -20,7 +20,7 @@ from infinigen.assets.materials import (
     fluid as fluid_materials,
 )
 from infinigen.assets.materials import (
-    terrain as terrain_materials,
+    snow as snow_materials,
 )
 from infinigen.core.tagging import tag_object, tag_system
 from infinigen.core.util.blender import SelectObjects, delete
@@ -38,6 +38,8 @@ from infinigen.core.util.organization import (
     TerrainNames,
     Transparency,
 )
+from infinigen.core.util.random import weighted_sample
+from infinigen.core.util.test_utils import import_item
 from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
 from infinigen.OcMesher.ocmesher import __version__ as ocmesher_version
 from infinigen.terrain.assets.ocean import ocean_asset
@@ -76,6 +78,17 @@ def get_surface_type(surface, degrade_sdf_to_displacement=True):
         if surface.type == SurfaceTypes.SDFPerturb:
             return SurfaceTypes.Displacement
         return surface.type
+
+
+def process_surface_input(_input, default):
+    if _input is None:
+        return default
+    if isinstance(_input, str):
+        # e.g. 'ground' will return material_assignments.ground
+        return getattr(material_assignments, _input)
+    if isinstance(_input, (list, tuple)):
+        # e.g. [('soil.Soil', 1)] will return [(Soil, 1)]
+        return [(import_item(k), float(v)) for k, v in _input]
 
 
 class OcMesher(UntexturedOcMesher):
@@ -125,6 +138,15 @@ class Terrain:
         device="cpu",
         main_terrain=TerrainNames.OpaqueTerrain,
         under_water=False,
+        atmosphere=None,
+        beach=None,
+        eroded=None,
+        ground_collection=None,
+        lava=None,
+        liquid_collection=None,
+        mountain_collection=None,
+        rock_collection=None,
+        snow=None,
         min_distance=1,
         height_offset=0,
         whole_bbox=None,
@@ -154,14 +176,27 @@ class Terrain:
         self.bounds = bounds
 
         self.surface_registry = {
-            "atmosphere": [(fluid_materials.tmosphere, 1)],
-            "beach": material_assignments.beach,
-            "eroded": material_assignments.eroded,
-            "ground_collection": material_assignments.ground,
-            "lava": [(fluid_materials.Lava, 1)],
-            "liquid_collection": material_assignments.liquid,
-            "mountain_collection": material_assignments.mountain,
-            "snow": [(terrain_materials.Snow, 1)],
+            "atmosphere": process_surface_input(
+                atmosphere, default=[(fluid_materials.AtmosphereLightHaze, 1)]
+            ),
+            "beach": process_surface_input(beach, default=material_assignments.beach),
+            "eroded": process_surface_input(
+                eroded, default=material_assignments.eroded
+            ),
+            "ground_collection": process_surface_input(
+                ground_collection, default=material_assignments.ground
+            ),
+            "lava": process_surface_input(lava, default=[(fluid_materials.Lava, 1)]),
+            "liquid_collection": process_surface_input(
+                liquid_collection, default=material_assignments.liquid
+            ),
+            "mountain_collection": process_surface_input(
+                mountain_collection, default=material_assignments.mountain
+            ),
+            "rock_collection": process_surface_input(
+                rock_collection, default=material_assignments.rock
+            ),
+            "snow": process_surface_input(snow, default=[(snow_materials.Snow, 1)]),
         }
 
         if Terrain.instance is not None:
@@ -364,8 +399,8 @@ class Terrain:
             for element in self.elements_list:
                 for attribute in element.attributes:
                     if attribute not in self.surfaces:
-                        surf = self.surface_registry(attribute)
-                        self.surfaces[attribute] = surf
+                        surf = weighted_sample(self.surface_registry[attribute])
+                        self.surfaces[attribute] = surf()
                         logger.info(f"{attribute=} will use material {surf.__name__}")
 
     def apply_surface_templates(self, attributes_dict):
@@ -376,7 +411,7 @@ class Terrain:
                         [
                             "terrain surface instantiate",
                             self.seed,
-                            self.surfaces[attribute].__name__,
+                            self.surfaces[attribute].__class__.__name__,
                         ]
                     )
                 ):
