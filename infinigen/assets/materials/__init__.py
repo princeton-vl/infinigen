@@ -3,4 +3,20 @@
 
 # Authors: Hongyu Wen
 
+from infinigen.core import surface
 from infinigen.infinigen_gpl.surfaces import snow
+
+
+class Snow:
+    shader = snow.shader_snow
+
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_geomod(
+            obj,
+            snow.geo_snowtexture,
+            selection=selection,
+        )
+        surface.add_material(obj, snow.shader_snow, selection=selection)
+
+
+snow.Snow = Snow
