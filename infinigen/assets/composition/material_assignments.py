@@ -5,7 +5,6 @@
 # - Meenal Parakh: initial assignment system, separate materials from implementations
 # - Alexander Raistrick: refactor
 
-import infinigen.assets.fluid.liquid_particle_material as _fluid
 from infinigen.assets.materials import (
     art,
     ceramic,
@@ -317,10 +316,9 @@ ground = [
 ]
 
 liquid = [
-    (fluid.water.Water, 7),
-    # (fluid.lava.Lava, 3),     # causes circular import error
-    (_fluid.Liquid, 1),
-    (fluid.whitewater.Whitewater, 1),
+    (fluid.Water, 7),
+    (fluid.Lava, 3),
+    (fluid.Whitewater, 1),
 ]
 
 beach = [

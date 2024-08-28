@@ -4,11 +4,15 @@
 # Authors: Hongyu Wen
 
 from infinigen.core import surface
+from infinigen.core.util.organization import SurfaceTypes
 from infinigen.infinigen_gpl.surfaces import snow
 
 
 class Snow:
     shader = snow.shader_snow
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_snowtexture"
+    name = "snow"
 
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(
