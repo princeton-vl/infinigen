@@ -1,9 +1,8 @@
-surface.registry.mountain_collection = [
-    ('ice', 1),
+Terrain.mountain_collection = [
+    ("infinigen.assets.materials.terrain.ice.Ice", 1)
 ]
-
-surface.registry.rock_collection = [
-    ('ice', 1),
+Terrain.rock_collection = [
+    ("infinigen.assets.materials.terrain.ice.Ice", 1)
 ]
 
 compose_nature.ground_creature_registry = [

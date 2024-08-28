@@ -1,10 +1,4 @@
-surface.registry.erosion_collection = [
-    ('sand', 2),
-    ('cracked_ground', 2),
-    ('dirt', 1),
-    ('stone', 3),
-    ('soil', 1),
-]
+Terrain.erosion_collection = "eroded"
 
 compose_nature.ground_creatures_chance = 0.0
 compose_nature.ground_creature_registry = [

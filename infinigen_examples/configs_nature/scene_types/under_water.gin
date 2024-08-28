@@ -53,10 +53,7 @@ compose_nature.caustics_chance = 0.6
 atmosphere_light_haze.shader_atmosphere.enable_scatter = False 
 compose_nature.fancy_clouds_chance=0.0
 
-surface.registry.rock_collection = [
-    ('stone', 1),
-    ('mountain', 0.5),
-]
+Terrain.rock_collection = "rock"
 
 compose_nature.ground_creatures_chance = 0.4
 compose_nature.ground_creature_registry = [
