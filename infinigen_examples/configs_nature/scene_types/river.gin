@@ -1,4 +1,4 @@
-Terrain.erosion_collection = "eroded"
+Terrain.eroded = "eroded"
 
 compose_nature.ground_creatures_chance = 0.0
 compose_nature.ground_creature_registry = [
