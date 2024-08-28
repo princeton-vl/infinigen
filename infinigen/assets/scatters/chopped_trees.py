@@ -118,7 +118,7 @@ def chopped_tree_collection(species_seed, n, boolean_res_mult=5):
     )
     trees = [factory.spawn_placeholder(i, (0, 0, 0), (0, 0, 0)) for i in range(n)]
 
-    bark = weighted_sample(material_assignments.bark)
+    bark = weighted_sample(material_assignments.bark)()
     face_size = target_face_size(scatter_res_distance())
 
     attr_name = "original_surface"
