@@ -196,6 +196,10 @@ def geo_rocks(
 
 
 class ChunkyRock:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_rocks"
+    name = "chunkyrock"
+
     def apply(self, obj, selection=None, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(obj, geo_rocks, selection=selection, input_kwargs=geo_kwargs)
         surface.add_material(

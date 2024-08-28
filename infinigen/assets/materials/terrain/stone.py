@@ -362,6 +362,10 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
 
 
 class Stone:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_stone"
+    name = "stone"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(
             obj,

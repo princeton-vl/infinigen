@@ -331,6 +331,10 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
 
 
 class Dirt:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_dirt"
+    name = "dirt"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(
             obj,

@@ -624,6 +624,10 @@ def geometry_sandstone(nw, selection=None, is_rock=False, **kwargs):
 
 
 class Sandstone:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geometry_sandstone"
+    name = "sandstone"
+
     def apply(self, obj, selection=None, **kwargs):
         if not isinstance(obj, list):
             obj = [obj]

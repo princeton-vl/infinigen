@@ -159,6 +159,10 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
 
 
 class Ice:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_ice"
+    name = "ice"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(obj, geo_ice, selection=selection)
         surface.add_material(obj, shader_ice, selection=selection)

@@ -251,6 +251,10 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
 
 
 class CobbleStone:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_cobblestone"
+    name = "cobble_stone"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(obj, geo_cobblestone, selection=selection)
         surface.add_material(obj, shader_cobblestone, selection=selection, reuse=False)

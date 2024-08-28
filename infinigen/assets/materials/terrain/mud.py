@@ -227,6 +227,10 @@ def geo_mud(nw: NodeWrangler, random_seed=0, selection=None):
 
 
 class Mud:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_mud"
+    name = "mud"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(obj, geo_mud, selection=selection)
         surface.add_material(obj, shader_mud, selection=selection)

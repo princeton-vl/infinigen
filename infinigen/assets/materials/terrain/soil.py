@@ -351,6 +351,10 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
 
 
 class Soil:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geometry_soil"
+    name = "soil"
+
     def apply(self, obj, selection=None, **kwargs):
         surface.add_geomod(obj, geometry_soil, selection=selection)
         surface.add_material(obj, shader_soil, selection=selection)

@@ -192,6 +192,10 @@ def geo_SAND(
 
 
 class Sand:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_SAND"
+    name = "sand"
+
     def apply(self, objs, selection=None, **kwargs):
         surface.add_geomod(objs, geo_SAND, selection=selection)
         surface.add_material(

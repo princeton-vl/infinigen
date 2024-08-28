@@ -382,6 +382,10 @@ def shader_MOUNTAIN(
 
 
 class Mountain:
+    type = SurfaceTypes.SDFPerturb
+    mod_name = "geo_MOUNTAIN"
+    name = "mountain"
+
     def apply(self, objs, selection=None, **kwargs):
         if isinstance(objs, list) and len(objs) == 0:
             return
