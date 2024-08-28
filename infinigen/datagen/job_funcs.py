@@ -31,6 +31,12 @@ UPLOAD_UTIL_PATH = (
 )
 assert UPLOAD_UTIL_PATH.exists(), f"{UPLOAD_UTIL_PATH=} does not exist"
 
+CUSTOMGT_PATH = Path(__file__).parent / "customgt" / "build" / "customgt"
+if not CUSTOMGT_PATH.exists():
+    logger.warning(
+        f"{CUSTOMGT_PATH=} does not exist, if opengl_gt is enabled it will fail"
+    )
+
 
 @gin.configurable
 def get_cmd(
@@ -482,13 +488,6 @@ def queue_mesh_save(
     return res, output_folder
 
 
-process_mesh_path = Path(__file__).parent / "customgt" / "build" / "customgt"
-if not process_mesh_path.exists():
-    logger.warning(
-        f"{process_mesh_path=} does not exist, if opengl_gt is enabled it will fail"
-    )
-
-
 @gin.configurable
 def queue_opengl(
     submit_cmd,
@@ -548,26 +547,26 @@ def queue_opengl(
             f"{sys.executable} {infinigen.repo_root()/'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}"
         )
         lines += [
-            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
-            f"--frame {frame_idx} --dst_frame {frame_idx+1} -out {output_folder} "
+            f"{CUSTOMGT_PATH} --input_dir {input_folder} --dst_input_dir {input_folder} "
+            f"--frame {frame_idx} --dst_frame {frame_idx+1} --output_dir {output_folder} "
             for frame_idx in range(start_frame, end_frame + 1)
         ]
         # point trajectory
         lines += [
-            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
-            f"--frame {point_trajectory_src_frame} --dst_frame {frame_idx} --flow_only 1 --flow_type 2 -out {output_folder} "
+            f"{CUSTOMGT_PATH} --input_dir {input_folder} --dst_input_dir {input_folder} "
+            f"--frame {point_trajectory_src_frame} --dst_frame {frame_idx} --flow_only 1 --flow_type 2 --output_dir {output_folder} "
             for frame_idx in range(start_frame, end_frame + 1)
         ]
 
         # depth of block end frame
         lines += [
-            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
-            f"--frame {end_frame+1} --dst_frame {end_frame+1} --depth_only 1 -out {output_folder} "
+            f"{CUSTOMGT_PATH} --input_dir {input_folder} --dst_input_dir {input_folder} "
+            f"--frame {end_frame+1} --dst_frame {end_frame+1} --depth_only 1 --output_dir {output_folder} "
         ]
         # depth of point trajectory source frame
         lines += [
-            f"{process_mesh_path} -in {input_folder} -dst_in {input_folder} "
-            f"--frame {point_trajectory_src_frame} --dst_frame {point_trajectory_src_frame} --depth_only 1 -out {output_folder} "
+            f"{CUSTOMGT_PATH} --input_dir {input_folder} --dst_input_dir {input_folder} "
+            f"--frame {point_trajectory_src_frame} --dst_frame {point_trajectory_src_frame} --depth_only 1 --output_dir {output_folder} "
         ]
 
         lines.append(

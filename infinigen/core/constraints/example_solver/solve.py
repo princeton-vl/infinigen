@@ -189,7 +189,6 @@ class Solver:
         for j in ra:
             move_gen = self.choose_move_type(moves, j, n_steps)
             self.optim.step(consgraph, self.state, move_gen, filter_domain)
-        self.optim.save_stats(self.output_folder / f"optim_{desc}.csv")
 
         logger.info(
             f"Finished solving {desc_full}, added {len(self.state.objs) - n_start} "
