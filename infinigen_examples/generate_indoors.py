@@ -49,7 +49,7 @@ from infinigen.core.util.test_utils import (
     import_item,
     load_txt_list,
 )
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 from infinigen_examples.indoor_constraint_examples import home_constraints
 from infinigen_examples.util import constraint_util as cu
 from infinigen_examples.util.generate_indoors_util import (

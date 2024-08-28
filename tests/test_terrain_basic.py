@@ -10,7 +10,7 @@ import pytest
 
 from infinigen.core.util.organization import Task
 from infinigen.core.util.test_utils import setup_gin
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 
 
 @pytest.mark.skip

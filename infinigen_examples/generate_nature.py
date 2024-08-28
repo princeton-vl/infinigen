@@ -13,8 +13,6 @@ import numpy as np
 from mathutils import Vector
 from numpy.random import randint, uniform
 
-from infinigen.assets.materials.fluid import atmosphere_light_haze
-
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
 logging.basicConfig(
@@ -72,7 +70,7 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import Tags
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import random_general, weighted_sample
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 
 logger = logging.getLogger(__name__)
 
@@ -338,7 +336,9 @@ def compose_nature(output_folder, scene_seed, **params):
         save_imu_tum_data = params.get("save_imu_tum_data")
         if save_imu_tum_data:
             frames_folder = output_folder.parent / "frames"
-            animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+            animated_cams = [
+                cam for cam in camera_rigs if cam.animation_data is not None
+            ]
             save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
     p.run_stage(
