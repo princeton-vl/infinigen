@@ -177,6 +177,51 @@ def stable_against(
     return True
 
 
+@gin.configurable
+def coplanar(
+    state: state_def.State,
+    obj_name: str,
+    relation_state: state_def.RelationState,
+):
+    """
+    check that the object's tagged surface is coplanar with the target object's tagged surface translated with margin.
+    """
+
+    relation = relation_state.relation
+    assert isinstance(relation, cl.CoPlanar)
+
+    logger.debug(f"coplanar {obj_name=} {relation_state=}")
+    a_blender_obj = state.objs[obj_name].obj
+    b_blender_obj = state.objs[relation_state.target_name].obj
+
+    pa, pb = state.planes.get_rel_state_planes(state, obj_name, relation_state)
+
+    poly_a = state.planes.planerep_to_poly(pa)
+    poly_b = state.planes.planerep_to_poly(pb)
+
+    normal_a = iu.global_polygon_normal(a_blender_obj, poly_a)
+    normal_b = iu.global_polygon_normal(b_blender_obj, poly_b)
+    dot = np.array(normal_a).dot(normal_b)
+    if not (np.isclose(np.abs(dot), 1, atol=1e-2) or np.isclose(dot, -1, atol=1e-2)):
+        logger.debug(f"coplanar failed, not parallel {dot=}")
+        return False
+
+    origin_b = iu.global_vertex_coordinates(
+        b_blender_obj, b_blender_obj.data.vertices[poly_b.vertices[0]]
+    )
+
+    for vertex in poly_a.vertices:
+        vertex_global = iu.global_vertex_coordinates(
+            a_blender_obj, a_blender_obj.data.vertices[vertex]
+        )
+        distance = iu.distance_to_plane(vertex_global, origin_b, normal_b)
+        if not np.isclose(distance, relation_state.relation.margin, atol=1e-2):
+            logger.debug(f"coplanar failed, not close to {distance=}")
+            return False
+
+    return True
+
+
 def snap_against(scene, a, b, a_plane, b_plane, margin=0):
     """
     snap a against b with some margin.

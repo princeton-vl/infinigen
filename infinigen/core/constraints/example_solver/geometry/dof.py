@@ -109,6 +109,11 @@ def rotate_object_around_axis(obj, axis, std, angle=None):
 def check_init_valid(
     state: state_def.State, name: str, obj_planes: list, assigned_planes: list, margins
 ):
+    """
+    Check that the plane assignments to the object is valid. First checks that the rotations can be satisfied, then
+    checks that the translations can be satisfied. Returns a boolean indicating if the assignments are valid, the number
+    of degrees of freedom remaining, and the translation vector if the assignments are valid.
+    """
     if len(obj_planes) == 0:
         raise ValueError(f"{check_init_valid.__name__} for {name=} got {obj_planes=}")
     if len(obj_planes) > 3:
@@ -117,6 +122,9 @@ def check_init_valid(
         )
 
     def get_rot(ind):
+        """
+        Get the rotation axis and angle needed to align the object's plane with the assigned plane.
+        """
         try:
             a = obj_planes[ind][0]
             b = assigned_planes[ind][0]

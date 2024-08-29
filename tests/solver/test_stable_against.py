@@ -52,6 +52,50 @@ def make_scene(loc2):
     return state_def.State(objs=objs)
 
 
+def make_scene_coplanar(loc2):
+    """Create a scene with a table and a cup, and return the state."""
+    butil.clear_scene()
+    objs = {}
+
+    table = butil.spawn_cube(scale=(5, 5, 1), name="table")
+    cup = butil.spawn_cube(scale=(1, 1, 1), name="cup", location=loc2)
+
+    for o in [table, cup]:
+        butil.apply_transform(o)
+        parse_scene.preprocess_obj(o)
+        tagging.tag_canonical_surfaces(o)
+
+    assert table.scale == Vector((1, 1, 1))
+    assert cup.location != Vector((0, 0, 0))
+
+    bpy.context.view_layer.update()
+
+    objs["table"] = state_def.ObjectState(table)
+    objs["cup"] = state_def.ObjectState(cup)
+    objs["cup"].relations.append(
+        state_def.RelationState(
+            cl.StableAgainst({t.Subpart.Bottom}, {t.Subpart.Top}),
+            target_name="table",
+            child_plane_idx=0,
+            parent_plane_idx=0,
+        )
+    )
+    back = {t.Subpart.Back, -t.Subpart.Top, -t.Subpart.Front}
+    back_coplanar_back = cl.CoPlanar(back, back, margin=0)
+
+    objs["cup"].relations.append(
+        state_def.RelationState(
+            back_coplanar_back,
+            target_name="table",
+            child_plane_idx=0,
+            parent_plane_idx=0,
+        )
+    )
+    butil.save_blend("test.blend")
+
+    return state_def.State(objs=objs)
+
+
 def test_stable_against():
     # too low, intersects ground
     assert not validity.check_post_move_validity(make_scene((0, 0, 0.5)), "cup")
@@ -150,5 +194,41 @@ def test_horizontal_stability():
     # butil.save_blend('test.blend')
 
 
+def test_coplanar():
+    # Test case 1: Cup is stable against but not coplanar (should be invalid)
+    assert not validity.check_post_move_validity(make_scene_coplanar((0, 0, 1)), "cup")
+
+    # Test case 2: Cup is stable against and coplanar with the table (should be valid)
+    assert validity.check_post_move_validity(make_scene_coplanar((-2, 0, 1)), "cup")
+
+    # Test case 3: Cup is coplanar but not stable against (should be invalid)
+    assert not validity.check_post_move_validity(
+        make_scene_coplanar((-5.2, 0, 1)), "cup"
+    )
+
+    # Test case 4: Cup is neither stable against nor coplanar (should be invalid)
+    assert not validity.check_post_move_validity(
+        make_scene_coplanar((2, 2, 1.1)), "cup"
+    )
+
+    # Test case 5: Cup is at the back edge, stable against and coplanar (should be valid)
+    assert validity.check_post_move_validity(make_scene_coplanar((-2, 2, 1)), "cup")
+
+    # Test case 6: Cup is slightly off the back edge, not stable against but coplanar (should be invalid)
+    assert not validity.check_post_move_validity(
+        make_scene_coplanar((-2.1, 2, 1)), "cup"
+    )
+
+    # Test case 7: Cup is far from the table (should be invalid)
+    assert not validity.check_post_move_validity(
+        make_scene_coplanar((10, 10, 10)), "cup"
+    )
+
+    # Test case 8: Cup is inside the table, not stable against but coplanar (should be invalid)
+    assert not validity.check_post_move_validity(make_scene_coplanar((-2, 0, 0)), "cup")
+
+    print("All test cases for coplanar constraint passed successfully.")
+
+
 if __name__ == "__main__":
-    test_horizontal_stability()
+    test_coplanar()
