@@ -201,6 +201,8 @@ def coplanar(
 
     normal_a = iu.global_polygon_normal(a_blender_obj, poly_a)
     normal_b = iu.global_polygon_normal(b_blender_obj, poly_b)
+    if relation.rev_normal:
+        normal_b = -normal_b
     dot = np.array(normal_a).dot(normal_b)
     if not (np.isclose(np.abs(dot), 1, atol=1e-2) or np.isclose(dot, -1, atol=1e-2)):
         logger.debug(f"coplanar failed, not parallel {dot=}")

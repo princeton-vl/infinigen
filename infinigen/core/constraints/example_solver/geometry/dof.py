@@ -259,20 +259,30 @@ def apply_relations_surfacesample(
     state: state_def.State,
     name: str,
 ):
+    """
+    Apply the relation constraints to the object. Place it in the scene according to the constraints.
+    """
+
     obj_state = state.objs[name]
     obj_name = obj_state.obj.name
+
+    def relation_sort_key(relation_state):
+        return isinstance(relation_state.relation, cl.CoPlanar)
+
+    obj_state.relations = sorted(obj_state.relations, key=relation_sort_key)
 
     parent_objs = []
     parent_planes = []
     obj_planes = []
     margins = []
     parent_tag_list = []
+    relations = []
 
     if len(obj_state.relations) == 0:
         raise ValueError(f"Object {name} has no relations")
     elif len(obj_state.relations) > 3:
         raise ValueError(
-            f"Object {name} has more than 2 relations, not supported. {obj_state.relations=}"
+            f"Object {name} has more than 3 relations, not supported. {obj_state.relations=}"
         )
 
     for i, relation_state in enumerate(obj_state.relations):
@@ -301,9 +311,15 @@ def apply_relations_surfacesample(
             ):
                 margins.append(margin)
                 parent_tag_list.append(parent_tags)
+                relations.append(relation_state.relation)
             case cl.SupportedBy(_parent_tags, parent_tags):
                 margins.append(0)
                 parent_tag_list.append(parent_tags)
+                relations.append(relation_state.relation)
+            case cl.CoPlanar(_child_tags, parent_tags, margin):
+                margins.append(margin)
+                parent_tag_list.append(parent_tags)
+                relations.append(relation_state.relation)
             case _:
                 raise NotImplementedError
 
@@ -328,6 +344,8 @@ def apply_relations_surfacesample(
         margin2 = margins[1]
         obj_plane1 = obj_planes[0]
         obj_plane2 = obj_planes[1]
+        relation1 = relations[0]
+        relation2 = relations[1]
 
         parent1_trimesh = state.planes.get_tagged_submesh(
             state.trimesh_scene, parent_obj1.name, parent_tags1, parent_plane1
@@ -350,9 +368,13 @@ def apply_relations_surfacesample(
                 f"Failed to project {parent1_trimesh=} {plane_normal_1=} for {name=}"
             )
 
+        if isinstance(relation2, cl.CoPlanar) or isinstance(relation1, cl.CoPlanar):
+            print("Here comes CoPlanar", obj_name)
+            butil.save_blend("debug.blend")
+
         if all(
             [p1_to_p1.buffer(1e-1).contains(Point(pt[0], pt[1])) for pt in projected]
-        ):
+        ) and (not isinstance(relation2, cl.CoPlanar)):
             face_mask = tagging.tagged_face_mask(parent_obj2, parent_tags2)
             stability.move_obj_random_pt(
                 state, obj_name, parent_obj2.name, face_mask, parent_plane2
@@ -396,7 +418,7 @@ def apply_relations_surfacesample(
             )
 
     elif dof == 2:
-        assert len(parent_planes) == 1, (name, len(parent_planes))
+        # assert len(parent_planes) == 1, (name, len(parent_planes))
         for i, relation_state in enumerate(obj_state.relations):
             parent_obj = state.objs[relation_state.target_name].obj
             obj_plane, parent_plane = state.planes.get_rel_state_planes(
@@ -467,7 +489,7 @@ def validate_relations_feasible(state: state_def.State, name: str) -> bool:
 
 @gin.configurable
 def try_apply_relation_constraints(
-    state: state_def.State, name: str, n_try_resolve=10, visualize=False
+    state: state_def.State, name: str, n_try_resolve=10, visualize=True
 ):
     """
     name is in objs.name
@@ -504,10 +526,14 @@ def try_apply_relation_constraints(
             return True
 
         if visualize:
-            vis = butil.copy(obj_state.obj)
-            vis.name = obj_state.obj.name[:30] + "_failure_" + str(retry)
+            if (
+                "monitor" in obj_state.obj.name.lower()
+                or "tv" in obj_state.obj.name.lower()
+            ):
+                vis = butil.copy(obj_state.obj)
+                vis.name = obj_state.obj.name[:30] + "_failure_" + str(retry)
 
-        # butil.save_blend("test.blend")
+        butil.save_blend("test.blend")
 
     logger.debug(f"Exhausted {n_try_resolve=} tries for {name=}")
     return False
