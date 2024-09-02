@@ -42,7 +42,7 @@ Now that you have imported Infinigen into Blender, you can easily access all its
 
 To start, we recommend using Infinigen's sky lighting while you make your asset, so you can get a better sense of what the asset will look like in full scenes. To sample a random sky lighting, run the following two steps in your Blender console:
 ```python
-from infingen.assets.lighting import sky_lighting
+from infinigen.assets.lighting import sky_lighting
 sky_lighting.add_lighting()
 ```
 
