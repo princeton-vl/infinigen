@@ -598,6 +598,7 @@ class Terrain:
             with SelectObjects(bpy.data.objects[f"{mesh}.001"]):
                 for m in bpy.data.objects[f"{mesh}.001"].modifiers:
                     bpy.ops.object.modifier_apply(modifier=m.name)
+
         far_ocean = (
             self.under_water
             and self.surfaces[Materials.LiquidCollection].info["is_ocean"]

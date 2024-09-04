@@ -23,7 +23,6 @@ from infinigen.terrain.utils import drive_param
 type = SurfaceTypes.BlenderDisplacement
 mod_name = "geo_water"
 name = "water"
-info = {}
 
 
 @gin.configurable("geo")
@@ -252,6 +251,8 @@ def shader(
     with FixedSeed(random_seed):
         if color is None:
             color = colors.hsv2rgba(colors.water_hsv())
+        elif isinstance(color, str):
+            color = colors.hsv2rgba(getattr(colors, color)())
 
         color = rg(color)
 
@@ -357,10 +358,11 @@ class Water:
     type = SurfaceTypes.BlenderDisplacement
     mod_name = "geo_water"
     name = "water"
+    info = {}
 
     @gin.configurable("water")
     def apply(self, objs, is_ocean=False, coastal=0, selection=None, **kwargs):
-        info["is_ocean"] = is_ocean = rg(is_ocean)
+        self.info["is_ocean"] = is_ocean = rg(is_ocean)
         asset_paths = []
         if is_ocean:
             ocean_folder = kwargs["ocean_folder"]
