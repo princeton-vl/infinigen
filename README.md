@@ -113,6 +113,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 - [Downloading pre-generated data](docs/PreGeneratedData.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
 - [Exporting to external fileformats (OBJ, OpenUSD, etc)](docs/ExportingToExternalFileFormats.md)
+- [Add external assets to indoor scenes](docs/StaticAssets.md)
 - [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
 - [Generating fluid simulations](docs/GeneratingFluidSimulations.md)

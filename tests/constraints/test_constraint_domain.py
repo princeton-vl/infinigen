@@ -8,7 +8,7 @@
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
-from infinigen.core.constraints.constraint_language import Semantics
+from infinigen.core.tags import Semantics
 
 
 def test_domain_obj():

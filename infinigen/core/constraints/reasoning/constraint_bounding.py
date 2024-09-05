@@ -80,6 +80,7 @@ class Bound:
 int_inverse_op = {
     operator.add: operator.sub,
     operator.mul: operator.floordiv,
+    operator.truediv: operator.mul,
 }
 int_inverse_op.update({v: k for k, v in int_inverse_op.items()})
 

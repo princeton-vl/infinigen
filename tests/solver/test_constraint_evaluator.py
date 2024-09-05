@@ -24,14 +24,14 @@ from infinigen.core.constraints.example_solver.state_def import (
     state_from_dummy_scene,
 )
 from infinigen.core.util import blender as butil
-from infinigen_examples.indoor_asset_semantics import home_asset_usage
-from infinigen_examples.indoor_constraint_examples import home_constraints
+from infinigen_examples.constraints.home import home_furniture_constraints
+from infinigen_examples.constraints.semantics import home_asset_usage
 
 
-def test_home_constraints_implemented():
+def test_home_furniture_constraints_implemented():
     butil.clear_scene()
 
-    cons = home_constraints()
+    cons = home_furniture_constraints()
 
     for node in cons.traverse():
         if node.__class__ in evaluate.SPECIAL_CASE_NODES:
@@ -607,6 +607,34 @@ def test_viol_amounts():
     assert evaluate.evaluate_problem(cons, mk_state(3))[1] == 0
     assert evaluate.evaluate_problem(cons, mk_state(4))[1] == 1
     assert evaluate.evaluate_problem(cons, mk_state(6))[1] == 3
+
+
+def test_viol_integers():
+    a = cl.constant(1)
+    b = cl.constant(3)
+
+    def violsingle(expr):
+        return evaluate.evaluate_problem(cl.Problem([expr], []), State()).viol_count()
+
+    assert violsingle(a < b) == 0
+    assert violsingle(b > a) == 0
+    assert violsingle(a <= b) == 0
+    assert violsingle(b >= a) == 0
+
+    assert violsingle(b <= b) == 0
+    assert violsingle(b >= b) == 0
+
+    assert violsingle(b < b) == 1
+    assert violsingle(b > b) == 1
+
+    assert violsingle(a == b) == 2
+    assert violsingle(b <= a) == 2
+    assert violsingle(a >= b) == 2
+
+    assert violsingle(b < a) == 3
+    assert violsingle(a > b) == 3
+
+    assert violsingle(a >= (b * 2)) == 5
 
 
 def test_min_dist_tagged():

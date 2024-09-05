@@ -88,3 +88,20 @@ v1.6.0
 v1.7.0
 - Implement camera IMU calculation and export
 - Add point tracking ground truth
+
+v1.7.1
+- Bugfix fine terrain in arctic scenes
+
+v1.8.0
+- Implement tools for importing external assets into Indoors
+- Use constraint language to configure room solving
+- Add pillars, vertically split wall materials
+
+v1.8.1
+- Fix bug causing hard constraints on scalar inequalities (e.g distance > x) to be ignored
+- Fix bug causing livingroom sofa alignment to be incorrect
+- Fix bias in camera trajectory starting direction
+- Improve visual quality of home.py via constraint tweaks and new generate_indoors stages
+- Fix silent output from upload stage, remove export from upload
+- Reduce solving time spent on small objects
+

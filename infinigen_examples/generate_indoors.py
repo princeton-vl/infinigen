@@ -6,8 +6,6 @@ import argparse
 import logging
 from pathlib import Path
 
-from numpy import deg2rad
-
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
 logging.basicConfig(
@@ -37,9 +35,7 @@ from infinigen.core.constraints.example_solver import (
     populate,
     state_def,
 )
-from infinigen.core.constraints.example_solver.room import constants
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
-from infinigen.core.constraints.example_solver.room.constants import WALL_HEIGHT
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
@@ -50,8 +46,8 @@ from infinigen.core.util.test_utils import (
     load_txt_list,
 )
 from infinigen.terrain.core import Terrain
-from infinigen_examples.indoor_constraint_examples import home_constraints
-from infinigen_examples.util import constraint_util as cu
+from infinigen_examples.constraints import home as home_constraints
+from infinigen_examples.constraints import util as cu
 from infinigen_examples.util.generate_indoors_util import (
     apply_greedy_restriction,
     create_outdoor_backdrop,
@@ -59,8 +55,6 @@ from infinigen_examples.util.generate_indoors_util import (
     place_cam_overhead,
     restrict_solving,
 )
-
-from . import generate_nature  # noqa F401 # needed for nature gin configs to load
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +83,12 @@ def default_greedy_stages():
 
     greedy_stages["rooms"] = all_room
 
-    greedy_stages["on_floor"] = primary.with_relation(on_floor, all_room)
+    greedy_stages["on_floor_and_wall"] = primary.with_relation(
+        on_floor, all_room
+    ).with_relation(on_wall, all_room)
+    greedy_stages["on_floor_freestanding"] = primary.with_relation(
+        on_floor, all_room
+    ).with_relation(-on_wall, all_room)
     greedy_stages["on_wall"] = (
         primary.with_relation(-on_floor, all_room)
         .with_relation(-on_ceiling, all_room)
@@ -102,18 +101,25 @@ def default_greedy_stages():
     )
 
     secondary = all_obj.with_relation(
-        cl.AnyRelation(), primary.with_tags(cu.variable_obj)
+        cl.AnyRelation(), all_obj_in_room.with_tags(cu.variable_obj)
     )
 
-    greedy_stages["side_obj"] = secondary.with_relation(side, all_obj)
-    nonside = secondary.with_relation(-side, all_obj)
+    greedy_stages["side_obj"] = (
+        secondary.with_relation(side, all_obj)
+        .with_relation(-cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
-    greedy_stages["obj_ontop_obj"] = nonside.with_relation(
-        cu.ontop, all_obj
-    ).with_relation(-cu.on, all_obj)
-    greedy_stages["obj_on_support"] = nonside.with_relation(
-        cu.on, all_obj
-    ).with_relation(-cu.ontop, all_obj)
+    greedy_stages["obj_ontop_obj"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.ontop, all_obj)
+        .with_relation(-cu.on, all_obj)
+    )
+    greedy_stages["obj_on_support"] = (
+        secondary.with_relation(-side, all_obj)
+        .with_relation(cu.on, all_obj)
+        .with_relation(-cu.ontop, all_obj)
+    )
 
     return greedy_stages
 
@@ -143,7 +149,10 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     p.run_stage("sky_lighting", lighting.sky_lighting.add_lighting, use_chance=False)
 
-    consgraph = home_constraints()
+    consgraph = home_constraints.home_furniture_constraints()
+    consgraph_rooms = home_constraints.home_room_constraints()
+    constants = consgraph_rooms.constants
+
     stages = default_greedy_stages()
     checks.check_all(consgraph, stages, all_vars)
 
@@ -153,9 +162,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         restrict_parent_rooms = {
             np.random.choice(
                 [
-                    # Only these roomtypes have constraints written in home_constraints.
+                    # Only these roomtypes have constraints written in home_furniture_constraints.
                     # Others will be empty-ish besides maybe storage and plants
-                    # TODO: add constraints to home_constraints for garages, offices, balconies, etc
+                    # TODO: add constraints to home_furniture_constraints for garages, offices, balconies, etc
                     t.Semantics.Bedroom,
                     t.Semantics.LivingRoom,
                     t.Semantics.Kitchen,
@@ -170,31 +179,35 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     solver = Solver(output_folder=output_folder)
 
     def solve_rooms():
-        return solver.solve_rooms(scene_seed, consgraph, stages["rooms"])
+        return solver.solve_rooms(scene_seed, consgraph_rooms, stages["rooms"])
 
     state: state_def.State = p.run_stage("solve_rooms", solve_rooms, use_chance=False)
 
-    def solve_large():
-        assignments = greedy.iterate_assignments(
-            stages["on_floor"], state, all_vars, limits, nonempty=True
+    def solve_stage_name(stage_name: str, group: str, **kwargs):
+        assigments = greedy.iterate_assignments(
+            stages[stage_name], state, all_vars, limits
         )
-        for i, vars in enumerate(assignments):
+        for i, vars in enumerate(assigments):
             solver.solve_objects(
                 consgraph,
-                stages["on_floor"],
-                var_assignments=vars,
-                n_steps=overrides["solve_steps_large"],
-                desc=f"on_floor_{i}",
-                abort_unsatisfied=overrides.get("abort_unsatisfied_large", False),
+                stages[stage_name],
+                vars,
+                n_steps=overrides[f"solve_steps_{group}"],
+                desc=f"{stage_name}_{i}",
+                abort_unsatisfied=overrides.get(f"abort_unsatisfied_{group}", False),
+                **kwargs,
             )
-        return solver.state
 
-    state = p.run_stage("solve_large", solve_large, use_chance=False, default=state)
+    def solve_large():
+        solve_stage_name("on_floor_and_wall", "large")
+        solve_stage_name("on_floor_freestanding", "large")
+
+    p.run_stage("solve_large", solve_large, use_chance=False, default=state)
 
     solved_rooms = [
         state.objs[assignment[cu.variable_room]].obj
         for assignment in greedy.iterate_assignments(
-            stages["on_floor"], state, [cu.variable_room], limits
+            stages["on_floor_freestanding"], state, [cu.variable_room], limits
         )
     ]
     solved_bound_points = np.concatenate([butil.bounds(r) for r in solved_rooms])
@@ -235,7 +248,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
         )
-
+        butil.delete(solved_floor_surface)
         return scene_preprocessed
 
     scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
@@ -243,13 +256,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     def animate_cameras():
         cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
 
-        save_imu_tum_data = overrides.get("save_imu_tum_data")
-        if save_imu_tum_data:
-            frames_folder = output_folder.parent / "frames"
-            animated_cams = [
-                cam for cam in camera_rigs if cam.animation_data is not None
-            ]
-            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
     p.run_stage(
         "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
@@ -265,58 +274,19 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
 
     def solve_medium():
-        n_steps = overrides["solve_steps_medium"]
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["on_wall"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["on_wall"], vars, n_steps, desc=f"on_wall_{i}"
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["on_ceiling"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["on_ceiling"], vars, n_steps, desc=f"on_ceiling_{i}"
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["side_obj"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph, stages["side_obj"], vars, n_steps, desc=f"side_obj_{i}"
-            )
-        return solver.state
+        solve_stage_name("on_wall", "medium")
+        solve_stage_name("on_ceiling", "medium")
+        solve_stage_name("side_obj", "medium")
 
-    state = p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
+    p.run_stage("solve_medium", solve_medium, use_chance=False, default=state)
 
     def solve_small():
-        n_steps = overrides["solve_steps_small"]
-        for i, vars in enumerate(
-            greedy.iterate_assignments(stages["obj_ontop_obj"], state, all_vars, limits)
-        ):
-            solver.solve_objects(
-                consgraph,
-                stages["obj_ontop_obj"],
-                vars,
-                n_steps,
-                desc=f"obj_ontop_obj_{i}",
-            )
-        for i, vars in enumerate(
-            greedy.iterate_assignments(
-                stages["obj_on_support"], state, all_vars, limits
-            )
-        ):
-            solver.solve_objects(
-                consgraph,
-                stages["obj_on_support"],
-                vars,
-                n_steps,
-                desc=f"obj_on_support_{i}",
-            )
-        # for i, vars in enumerate(greedy.iterate_assignments(stages['tertiary'], state, all_vars, limits)):
-        #    solver.solve_objects(consgraph, stages['tertiary'], vars, n_steps, desc=f"tertiary_{i}")
-        return solver.state
+        solve_stage_name("obj_ontop_obj", "small", addition_weight_scalar=3)
+        solve_stage_name("obj_on_support", "small", restrict_moves=["addition"])
 
-    state = p.run_stage("solve_small", solve_small, use_chance=False, default=state)
+    p.run_stage("solve_small", solve_small, use_chance=False, default=state)
+
+    solver.optim.save_stats(output_folder / "optim_records.csv")
 
     p.run_stage(
         "populate_assets", populate.populate_state_placeholders, state, use_chance=False
@@ -354,40 +324,47 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
     p.run_stage(
         "room_doors",
-        lambda: room_dec.populate_doors(solver.get_bpy_objects(door_filter)),
+        lambda: room_dec.populate_doors(solver.get_bpy_objects(door_filter), constants),
         use_chance=False,
     )
     p.run_stage(
         "room_windows",
-        lambda: room_dec.populate_windows(solver.get_bpy_objects(window_filter)),
+        lambda: room_dec.populate_windows(
+            solver.get_bpy_objects(window_filter), constants, state
+        ),
         use_chance=False,
     )
 
     room_meshes = solver.get_bpy_objects(r.Domain({t.Semantics.Room}))
     p.run_stage(
         "room_stairs",
-        lambda: room_dec.room_stairs(state, room_meshes),
+        lambda: room_dec.room_stairs(constants, state, room_meshes),
         use_chance=False,
     )
     p.run_stage(
         "skirting_floor",
-        lambda: make_skirting_board(room_meshes, t.Subpart.SupportSurface),
+        lambda: make_skirting_board(constants, room_meshes, t.Subpart.SupportSurface),
     )
     p.run_stage(
-        "skirting_ceiling", lambda: make_skirting_board(room_meshes, t.Subpart.Ceiling)
+        "skirting_ceiling",
+        lambda: make_skirting_board(constants, room_meshes, t.Subpart.Ceiling),
     )
 
     rooms_meshed = butil.get_collection("placeholders:room_meshes")
     rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
     p.run_stage(
-        "room_walls", room_dec.room_walls, rooms_split["wall"].objects, use_chance=False
-    )
-    p.run_stage(
         "room_pillars",
         room_dec.room_pillars,
-        state,
         rooms_split["wall"].objects,
+        constants,
+    )
+
+    p.run_stage(
+        "room_walls",
+        room_dec.room_walls,
+        rooms_split["wall"].objects,
+        constants,
         use_chance=False,
     )
     p.run_stage(
@@ -479,21 +456,22 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         camera = camera_rigs[0].children[0]
         camera_rigs[0].location = 0, 0, 0
         camera_rigs[0].rotation_euler = 0, 0, 0
-        bpy.contexScene.camera = camera
-        rot_x = deg2rad(overrides.get("topview_rot_x", 0))
-        rot_z = deg2rad(overrides.get("topview_rot_z", 0))
+        bpy.context.scene.camera = camera
+        rot_x = np.deg2rad(overrides.get("topview_rot_x", 0))
+        rot_z = np.deg2rad(overrides.get("topview_rot_z", 0))
         camera.rotation_euler = rot_x, 0, rot_z
-        mean = np.mean(bbox, 0)
+        cam_x = (np.amax(bbox[:, 0]) + np.amin(bbox[:, 0])) / 2
+        cam_y = (np.amax(bbox[:, 1]) + np.amin(bbox[:, 1])) / 2
         for cam_dist in np.exp(np.linspace(1.0, 5.0, 500)):
             camera.location = (
-                mean[0] + cam_dist * np.sin(rot_x) * np.sin(rot_z),
-                mean[1] - cam_dist * np.sin(rot_x) * np.cos(rot_z),
-                mean[2] - WALL_HEIGHT / 2 + cam_dist * np.cos(rot_x),
+                cam_x + cam_dist * np.sin(rot_x) * np.sin(rot_z),
+                cam_y - cam_dist * np.sin(rot_x) * np.cos(rot_z),
+                cam_dist * np.cos(rot_x),
             )
             bpy.context.view_layer.update()
             inview = points_inview(bbox, camera)
             if inview.all():
-                for area in bpy.contexScreen.areas:
+                for area in bpy.context.screen.areas:
                     if area.type == "VIEW_3D":
                         area.spaces.active.region_3d.view_perspective = "CAMERA"
                         break
@@ -515,7 +493,6 @@ def main(args):
             "infinigen_examples/configs_nature",
         ],
     )
-    constants.initialize_constants()
 
     execute_tasks.main(
         compose_scene_func=compose_indoors,

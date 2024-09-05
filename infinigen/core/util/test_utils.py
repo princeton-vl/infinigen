@@ -10,8 +10,6 @@ from pathlib import Path
 import gin
 
 from infinigen.core import init
-from infinigen.core.constraints.example_solver.room import constants
-from infinigen.core.util import math as mutil
 
 
 def setup_gin(configs_folders, configs, overrides=None):
@@ -24,9 +22,6 @@ def setup_gin(configs_folders, configs, overrides=None):
         finalize_config=False,
     )
     gin.unlock_config()
-
-    with mutil.FixedSeed(0):
-        constants.initialize_constants()
 
 
 def import_item(name):

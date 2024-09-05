@@ -129,8 +129,11 @@ test-command = "pytest tests"
 target-version = "py310"
 
 exclude = [
+
+    "*.ipynb",
+
     # exclude known submodules 
-    "*/dependencies/",
+    "infinigen/datagen/customgt/dependencies/",
     "infinigen/OcMesher",
     "infinigen/infinigen_gpl",
 

@@ -38,7 +38,7 @@ python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_fo
 python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g no_objects.gin overhead.gin -p compose_indoors.terrain_enabled=False
 
 # Single random room with objects, overhead view (~11min. runtime CPU only):
-python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin singleroom.gin -p compose_indoors.terrain_enabled=False compose_indoors.overhead_cam_enabled=True compose_indoors.solve_max_rooms=1 compose_indoors.invisible_room_ceilings_enabled=True compose_indoors.restrict_single_supported_roomtype=True
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin singleroom.gin -p compose_indoors.terrain_enabled=False compose_indoors.overhead_cam_enabled=True restrict_solving.solve_max_rooms=1 compose_indoors.invisible_room_ceilings_enabled=True compose_indoors.restrict_single_supported_roomtype=True
 
 # Whole apartment with objects, overhead view:
 python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin studio.gin -p compose_indoors.terrain_enabled=False
@@ -113,7 +113,7 @@ Each of these commandline args demonstrates a different way in which you can res
 - `restrict_solving.restrict_parent_rooms=[\"Kitchen\"]` specifies to only solve objects in kitchen rooms. You can see `infinigen/core/tags.py` for available options.
 - `restrict_solving.restrict_child_primary=[\"KitchenCounter\"]` specifies that when placing objects directly onto the room, we will only consider placing *KitchenCounter* objects, not other types of objects. You can see `infinigen/core/tags.py` for available options.
 - `restrict_solving.restrict_child_secondary=[\"Sink\"]` specifies that when placing objects onto other objects, we will only consider placing *Sink* objects, not other types of objects. You can see `infinigen/core/tags.py` for available options.
-- `restrict_solving.consgraph_filters=[\"counter\",\"sink\"]` says to throw out any `constraints` or `score_terms` keys from `home_constraints()` that do not contain `counter` or `sink` as substrings, producing a simpler constraint graph. 
+- `restrict_solving.consgraph_filters=[\"counter\",\"sink\"]` says to throw out any `constraints` or `score_terms` keys from `home_furniture_constraints()` that do not contain `counter` or `sink` as substrings, producing a simpler constraint graph. 
 - `compose_indoors.solve_steps_large=30 compose_indoors.solve_steps_small=30` says to spend fewer optimization steps on large/small objects. You can also do the same for medium. These values override the defaults provided in `fast_solve.gin` and `infinigen_examples/configs_indoor/base.gin`
 
 These settings are intended for debugging or for generating tailored datasets. If you want more granular control over what assets are used for what purposes, please customize `infinigen_examples/indoor_asset_semantics.py` which defines this mapping. 

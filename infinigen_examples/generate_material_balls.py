@@ -16,6 +16,9 @@ from pathlib import Path
 from numpy.random import uniform
 from tqdm import tqdm
 
+from infinigen.assets.materials import tile
+from infinigen.assets.materials.ceramic import shader_ceramic
+
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
 logging.basicConfig(
@@ -34,12 +37,10 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
-from infinigen.assets.materials.wood import tiled_wood
 from infinigen.assets.utils.decorate import read_base_co
 from infinigen.assets.utils.misc import subclasses
 from infinigen.core import init
 from infinigen.core.placement import factory
-from infinigen.core.rendering.render import enable_gpu
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
@@ -57,6 +58,8 @@ logging.basicConfig(
     level=logging.WARNING,
 )
 
+scale = 0.4
+
 
 def build_scene_surface(factory_name, idx):
     try:
@@ -67,22 +70,30 @@ def build_scene_surface(factory_name, idx):
                 )
             except ImportError:
                 for subdir in os.listdir("infinigen/assets/materials"):
-                    with gin.unlock_config():
-                        module = importlib.import_module(
-                            f'infinigen.assets.materials.{subdir.split(".")[0]}'
-                        )
-                    if hasattr(module, factory_name):
-                        template = getattr(module, factory_name)
-                        break
+                    if not subdir.endswith(".py"):
+                        with gin.unlock_config():
+                            module = importlib.import_module(
+                                f'infinigen.assets.materials.{subdir.split(".")[0]}'
+                            )
+                        if hasattr(module, factory_name):
+                            template = getattr(module, factory_name)
+                            break
                 else:
                     raise Exception(f"{factory_name} not Found.")
             if type(template) is type:
                 template = template(idx)
             if hasattr(template, "make_sphere"):
                 asset = template.make_sphere()
+                asset.scale = [0.3] * 3
+                butil.apply_transform(asset)
             else:
-                bpy.ops.mesh.primitive_ico_sphere_add(radius=1, subdivisions=7)
+                bpy.ops.mesh.primitive_ico_sphere_add(radius=scale, subdivisions=7)
                 asset = bpy.context.active_object
+                asset.rotation_euler = (
+                    uniform(np.pi / 6, np.pi / 3),
+                    uniform(-np.pi / 12, np.pi / 12),
+                    uniform(-np.pi / 12, np.pi / 12),
+                )
 
             with FixedSeed(idx):
                 if "metal" in factory_name or "sofa_fabric" in factory_name:
@@ -91,6 +102,8 @@ def build_scene_surface(factory_name, idx):
                     template.apply(asset, rotation=(np.pi / 2, 0, 0))
                 elif "brick" in factory_name:
                     template.apply(asset, height=uniform(0.25, 0.3))
+                elif "tile" in factory_name:
+                    template.apply(asset, alternating=idx % 4 in [0, 1])
                 else:
                     template.apply(asset)
     except ModuleNotFoundError:
@@ -114,7 +127,6 @@ def build_scene(path, factory_names, args):
         ] = 0
     camera, center = setup_camera(args)
 
-    scale = 0.3
     assets = []
     with tqdm(total=len(factory_names)) as pbar:
         for idx, factory_name in enumerate(factory_names):
@@ -123,17 +135,15 @@ def build_scene(path, factory_names, args):
             asset.name = factory_name
             pbar.update(1)
     margin = scale * 2.2
-    size = 5
+    size = 3
     for i in range(len(assets)):
-        assets[i].scale = [scale] * 3
-        butil.apply_transform(assets[i])
         assets[i].location = (i // size) * margin, (i % size) * margin, scale
 
     bpy.ops.mesh.primitive_grid_add(size=1, x_subdivisions=400, y_subdivisions=400)
     asset = bpy.context.active_object
     asset.scale = [scale * len(assets) / size * 4] * 3
     asset.location = (len(assets) // size - 1) * margin / 2, size // 2 * margin * 0.8, 0
-    tiled_wood.apply(asset, hscale=10, vscale=3)
+    tile.apply(asset, shader_func=shader_ceramic, alternating=True)
 
     with FixedSeed(args.lighting):
         if args.hdri:
@@ -191,22 +201,31 @@ def main(args):
     path.mkdir(exist_ok=True)
 
     if args.gpu:
-        enable_gpu()
+        init.configure_render_cycles()
 
     factories = list(args.factories)
     if "ALL_ASSETS" in factories:
         factories += [f.__name__ for f in subclasses(factory.AssetFactory)]
         factories.remove("ALL_ASSETS")
-    if "ALL_SCATTERS" in factories:
+    elif "ALL_SCATTERS" in factories:
         factories += [f.stem for f in Path("surfaces/scatters").iterdir()]
         factories.remove("ALL_SCATTERS")
-    if "ALL_MATERIALS" in factories:
+    elif "ALL_MATERIALS" in factories:
         factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
         factories.remove("ALL_MATERIALS")
-    if ".txt" in factories[0]:
+    elif ".txt" in factories[0]:
         factories = [
             f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
         ]
+    elif "woods" in factories[0]:
+        factories = (
+            ["wood"] * 3
+            + ["staggered_wood_tile"] * 3
+            + ["square_wood_tile"] * 3
+            + ["hexagon_wood_tile"] * 3
+            + ["composite_wood_tile"] * 3
+            + ["crossed_wood_tile"] * 3
+        )
 
     try:
         build_scene(path, factories, args)
@@ -217,6 +236,6 @@ def main(args):
 if __name__ == "__main__":
     args = make_args()
     args.no_mod = args.no_mod or args.fire
-    args.film_transparent = args.film_transparent and not args.hdri
+    args.film_transparent = args.film_transparent
     with FixedSeed(1):
         main(args)

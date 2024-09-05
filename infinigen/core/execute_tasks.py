@@ -252,7 +252,7 @@ def execute_tasks(
     if Task.Populate in task and populate_scene_func is not None:
         populate_scene_func(output_folder, scene_seed)
 
-    need_terrain_processing = "OpaqueTerrain" in bpy.data.objects
+    need_terrain_processing = "atmosphere" in bpy.data.objects
 
     if Task.FineTerrain in task and need_terrain_processing:
         with open(output_folder / "assets" / "info.pickle", "rb") as f:

@@ -2,7 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
 
-# Authors: Yihan Wang, Karhan Kayan: face based tagging, canonical surface tagging, mask extraction
+# Authors: Yihan Wang, Karhan Kayan: face based tagging, canonical surface tagging, mask extraction, support tag
 
 
 import json
@@ -11,6 +11,7 @@ from typing import Union
 
 import bpy
 import numpy as np
+from mathutils import Vector
 
 import infinigen.core.util.blender as butil
 from infinigen.core import surface
@@ -451,3 +452,49 @@ def extract_mask(
         return butil.spawn_vert()
 
     return res
+
+
+def tag_support_surfaces(obj, angle_threshold=0.1):
+    """
+    Tags faces of the object (or its mesh children) whose normal is close to the +z direction with the "support" tag.
+
+    Args:
+    obj (bpy.types.Object): The object to tag (can be any type of object).
+    angle_threshold (float): The cosine of the maximum angle deviation from +z to be considered a support surface.
+    """
+
+    def global_polygon_normal(obj, polygon):
+        loc, rot, scale = obj.matrix_world.decompose()
+        rot = rot.to_matrix()
+        normal = rot @ polygon.normal
+        return normal / np.linalg.norm(normal)
+
+    def process_mesh(mesh_obj):
+        up_vector = Vector((0, 0, 1))
+
+        n_poly = len(mesh_obj.data.polygons)
+        support_mask = np.zeros(n_poly, dtype=bool)
+
+        for poly in mesh_obj.data.polygons:
+            global_normal = global_polygon_normal(mesh_obj, poly)
+            if global_normal.dot(up_vector) > 1 - angle_threshold:
+                support_mask[poly.index] = True
+
+        if t.Subpart.SupportSurface.value not in tag_system.tag_dict:
+            tag_system.tag_dict[t.Subpart.SupportSurface.value] = (
+                len(tag_system.tag_dict) + 1
+            )
+
+        tag_object(mesh_obj, name=t.Subpart.SupportSurface.value, mask=support_mask)
+
+        print(
+            f"Tagged {support_mask.sum()} faces as 'support' in object {mesh_obj.name}"
+        )
+
+    def process_object(obj):
+        if obj.type == "MESH":
+            process_mesh(obj)
+        for child in obj.children:
+            process_object(child)
+
+    process_object(obj)

@@ -37,7 +37,7 @@ from infinigen.assets.utils.object import (
 from infinigen.assets.utils.shapes import cut_polygon_by_line
 from infinigen.core import surface
 from infinigen.core import tags as t
-from infinigen.core.constraints.example_solver.room import constants
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.placement.detail import sharp_remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
@@ -65,9 +65,12 @@ class StraightStaircaseFactory(AssetFactory):
         (2, "vertical-post"),
     )
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         super(StraightStaircaseFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
+            if constants is None:
+                constants = RoomConstants()
+            self.constants = constants
             self.support_type = rg(self.support_types)
             self.n, self.step_height, self.step_width, self.step_length = 0, 0, 0, 0
             self.build_size_config()
@@ -148,7 +151,7 @@ class StraightStaircaseFactory(AssetFactory):
 
     def build_size_config(self):
         self.n = np.random.randint(13, 21)
-        self.step_height = constants.WALL_HEIGHT / self.n
+        self.step_height = self.constants.wall_height / self.n
         self.step_width = uniform(0.8, 1.6)
         self.step_length = self.step_height * log_uniform(0.8, 1.2)
 
@@ -503,7 +506,9 @@ class StraightStaircaseFactory(AssetFactory):
         if self.has_spiral:
             self.make_spiral(obj)
         self.extend_line(obj, self.end_margin)
-        self.decorate_line(obj, constants.WALL_THICKNESS / 2, constants.DOOR_SIZE)
+        self.decorate_line(
+            obj, self.constants.wall_thickness / 2, self.constants.door_size
+        )
         if self.mirror:
             mirror(obj)
         obj.rotation_euler[-1] = self.rot_z
@@ -514,10 +519,10 @@ class StraightStaircaseFactory(AssetFactory):
         obj = self.make_line_offset(0.5)
         if self.has_spiral:
             self.make_spiral(obj)
-        self.decorate_line(obj, 0, constants.DOOR_SIZE)
+        self.decorate_line(obj, 0, self.constants.door_size)
         if self.mirror:
             mirror(obj)
-        obj.location[-1] = -constants.WALL_THICKNESS / 2
+        obj.location[-1] = -self.constants.wall_thickness / 2
         obj.rotation_euler[-1] = self.rot_z
         butil.apply_transform(obj, True)
         return obj
@@ -578,7 +583,7 @@ class StraightStaircaseFactory(AssetFactory):
             line, "SOLIDIFY", thickness=self.step_width, offset=0, use_even_offset=True
         )
         self.triangulate(line)
-        line.location[-1] -= constants.WALL_THICKNESS / 2
+        line.location[-1] -= self.constants.wall_thickness / 2
         butil.apply_transform(line, True)
         write_attribute(
             line,
@@ -645,10 +650,12 @@ class StraightStaircaseFactory(AssetFactory):
             bpy.ops.mesh.delete(type="EDGE")
         remove_vertices(
             mesh,
-            lambda x, y, z: (z < constants.WALL_THICKNESS / 4)
-            | (z > constants.WALL_THICKNESS * 3 / 4),
+            lambda x, y, z: (z < self.constants.wall_thickness / 4)
+            | (z > self.constants.wall_thickness * 3 / 4),
         )
-        butil.modify_mesh(mesh, "WELD", merge_threshold=constants.WALL_THICKNESS / 4)
+        butil.modify_mesh(
+            mesh, "WELD", merge_threshold=self.constants.wall_thickness / 4
+        )
         name = mesh.name
         mesh = separate_loose(mesh)
         ls = shapely.force_2d(convert2ls(mesh))

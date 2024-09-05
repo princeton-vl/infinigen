@@ -394,26 +394,36 @@ class StableAgainst(GeometryRelation):
     # typical use is chair-against-table relation
     check_z: bool = True
 
-    # rev_normal: if True, align the normals so they face the SAME direction, rather than two planes facing eachother.
-    # typical use is for sink embedded in countertop
-    rev_normal: bool = False
-
     __repr__ = no_frozenset_repr
 
 
-@dataclass(frozen=True)
-class CutFrom(Relation):
+class IdentityCompareRelation(Relation):
     def implies(self, other: Relation) -> bool:
-        return isinstance(other, AnyRelation) or isinstance(other, CutFrom)
+        return isinstance(other, AnyRelation) or isinstance(other, self.__class__)
 
     def satisfies(self, other: Relation) -> bool:
         return self.implies(other)
 
     def intersects(self, other: Relation, strict=False) -> bool:
-        return isinstance(other, AnyRelation) or isinstance(other, CutFrom)
+        return isinstance(other, AnyRelation) or isinstance(other, self.__class__)
 
     def intersection(self, other: Relation) -> Relation:
         return deepcopy(self)
 
     def difference(self, other: Relation) -> Relation:
         return -AnyRelation()
+
+
+@dataclass(frozen=True)
+class CutFrom(IdentityCompareRelation):
+    pass
+
+
+@dataclass(frozen=True)
+class SharedEdge(IdentityCompareRelation):
+    pass
+
+
+@dataclass(frozen=True)
+class Traverse(IdentityCompareRelation):
+    pass

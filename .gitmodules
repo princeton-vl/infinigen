@@ -10,18 +10,9 @@
 [submodule "infinigen/datagen/customgt/dependencies/cnpy"]
 	path = infinigen/datagen/customgt/dependencies/cnpy
 	url = https://github.com/rogersce/cnpy.git
-[submodule "infinigen/datagen/customgt/dependencies/indicators"]
-	path = infinigen/datagen/customgt/dependencies/indicators
-	url = https://github.com/p-ranav/indicators.git
-[submodule "infinigen/datagen/customgt/dependencies/tinycolormap"]
-	path = infinigen/datagen/customgt/dependencies/tinycolormap
-	url = https://github.com/yuki-koyama/tinycolormap.git
 [submodule "infinigen/datagen/customgt/dependencies/glm"]
 	path = infinigen/datagen/customgt/dependencies/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "infinigen/datagen/customgt/dependencies/fast_obj"]
-	path = infinigen/datagen/customgt/dependencies/fast_obj
-	url = https://github.com/thisistherk/fast_obj.git
 [submodule "infinigen/datagen/customgt/dependencies/json"]
 	path = infinigen/datagen/customgt/dependencies/json
 	url = https://github.com/nlohmann/json.git

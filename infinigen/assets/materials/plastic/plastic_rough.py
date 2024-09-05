@@ -6,6 +6,7 @@
 
 from numpy.random import uniform
 
+from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -134,5 +135,8 @@ class PlasticRough:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_rough_plastic)
+
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_rough_plastic, selection, **kwargs)
 
     __call__ = generate

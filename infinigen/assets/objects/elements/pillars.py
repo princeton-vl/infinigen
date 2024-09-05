@@ -17,8 +17,12 @@ from infinigen.assets.utils.decorate import (
     subsurf,
     write_co,
 )
-from infinigen.assets.utils.object import join_objects, new_base_circle, new_cylinder
-from infinigen.core.constraints.example_solver.room import constants
+from infinigen.assets.utils.object import (
+    join_objects,
+    new_base_circle,
+    new_cylinder,
+)
+from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -27,10 +31,12 @@ from infinigen.core.util.random import log_uniform
 
 
 class PillarFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.height = constants.WALL_HEIGHT - constants.WALL_THICKNESS
+            if constants is None:
+                constants = RoomConstants()
+            self.height = constants.wall_height - constants.wall_thickness
             self.n = np.random.randint(5, 10)
             self.radius = uniform(0.08, 0.12)
             self.outer_radius = self.radius * uniform(1.3, 1.5)

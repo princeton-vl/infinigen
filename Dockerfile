@@ -25,4 +25,4 @@ RUN conda init bash && \
     . ~/.bashrc && \
     conda create --name infinigen python=3.10 -y && \
     conda activate infinigen && \
-    pip install -e .[dev]
+    pip install -e ".[dev]"

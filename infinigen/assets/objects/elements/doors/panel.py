@@ -8,6 +8,7 @@ from numpy.random import uniform
 
 from infinigen.assets.objects.elements.doors.base import BaseDoorFactory
 from infinigen.assets.utils.decorate import read_area, select_faces, write_attribute
+from infinigen.assets.utils.mesh import prepare_for_boolean
 from infinigen.assets.utils.object import new_cube
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
@@ -15,8 +16,8 @@ from infinigen.core.util.math import FixedSeed
 
 
 class PanelDoorFactory(BaseDoorFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(PanelDoorFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(PanelDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.x_subdivisions = 1 if uniform() < 0.5 else 2
             self.y_subdivisions = np.clip(np.random.binomial(5, 0.45), 1, None)
@@ -40,9 +41,11 @@ class PanelDoorFactory(BaseDoorFactory):
             cutter, "cut", np.ones(len(cutter.data.polygons), dtype=int), "INT", "FACE"
         )
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
+        prepare_for_boolean(obj)
         cutter.location[1] += 0.2 + self.depth - self.bevel_width
         butil.apply_transform(cutter, loc=True)
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
+        prepare_for_boolean(obj)
         butil.delete(cutter)
         select_faces(obj, (read_area(obj) > 0.01) & (read_attr_data(obj, "cut")))
         with butil.ViewportMode(obj, "EDIT"):
@@ -78,8 +81,8 @@ class PanelDoorFactory(BaseDoorFactory):
 
 
 class GlassPanelDoorFactory(PanelDoorFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse)
+    def __init__(self, factory_seed, coarse=False, constants=None):
+        super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse, constants)
         with FixedSeed(self.factory_seed):
             self.x_subdivisions = 2
             self.y_subdivisions = np.clip(np.random.binomial(5, 0.5), 2, None)

@@ -14,7 +14,10 @@ from mathutils import Vector
 from numpy.random import normal, uniform
 from shapely import LineString
 
-from infinigen.assets.utils.decorate import read_co, read_edges
+from infinigen.assets.utils.decorate import (
+    read_co,
+    read_edges,
+)
 from infinigen.assets.utils.object import obj2trimesh, separate_loose
 from infinigen.assets.utils.shapes import dissolve_limited
 from infinigen.core.util import blender as butil
@@ -403,3 +406,10 @@ def snap_mesh(obj, eps=1e-3):
                 bmesh.ops.subdivide_edges(bm, edges=[e], cuts=1, edge_percents={e: p})
             bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=eps * 1.5)
             bmesh.update_edit_mesh(obj.data)
+
+
+def prepare_for_boolean(obj):
+    butil.modify_mesh(obj, "WELD", merge_threshold=1e-3)
+    with butil.ViewportMode(obj, "EDIT"), butil.Suppress():
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.remove_doubles()

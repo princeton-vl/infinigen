@@ -8,8 +8,8 @@ import shapely
 import shapely.affinity
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal
-from infinigen.assets.materials.plastic import plastic
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials import plastic
 from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     read_edge_center,
@@ -54,8 +54,17 @@ class WallShelfFactory(AssetFactory):
     support_joins = "mitre", "round", "bevel"
     plate_bevels = "weighted_choice", (1, "none"), (1, "front"), (1, "side")
 
-    plate_surfaces = "weighted_choice", (2, wood), (1, metal)
-    support_surfaces = "weighted_choice", (2, metal), (1, wood), (2, plastic)
+    plate_surfaces = (
+        "weighted_choice",
+        (10, wood.Wood),
+        *[(v, k) for k, v in material_assignments.metals],
+    )
+    support_surfaces = (
+        "weighted_choice",
+        *[(v, k) for k, v in material_assignments.metals],
+        (5, wood.Wood),
+        (5, plastic.PlasticRough),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super(WallShelfFactory, self).__init__(factory_seed, coarse)
@@ -80,8 +89,8 @@ class WallShelfFactory(AssetFactory):
         self.support_length = self.width * uniform(0.7, 1.1)
         self.plate_bevel = rg(self.plate_bevels)
         self.support_join = np.random.choice(self.support_joins)
-        self.plate_surface = rg(self.plate_surfaces)
-        self.support_surface = rg(self.support_surfaces)
+        self.plate_surface = rg(self.plate_surfaces)()
+        self.support_surface = rg(self.support_surfaces)()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         box = new_bbox(

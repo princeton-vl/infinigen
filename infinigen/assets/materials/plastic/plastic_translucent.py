@@ -7,6 +7,7 @@
 
 from numpy.random import uniform
 
+from infinigen.assets.materials.utils import common
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -58,5 +59,8 @@ class PlasticTranslucent:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_translucent_plastic)
+
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_translucent_plastic, selection, **kwargs)
 
     __call__ = generate

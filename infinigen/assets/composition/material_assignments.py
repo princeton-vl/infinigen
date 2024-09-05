@@ -231,7 +231,6 @@ cup = decorative_hard + [
 ]
 jar = cup
 lid = cup
-
 frame = decorative_metal + woods
 
 step = (
@@ -271,8 +270,14 @@ balcony_wall = [
 bathroom_wall = [
     (ceramic.Tile, 5.0),
 ]
+warehouse_wall = [
+    (ceramic.Concrete, 5.0),
+    (ceramic.Brick, 1.0),
+    (ceramic.Plaster, 3.0),
+]
+wall_plaster = [(ceramic.Plaster, 1.0)]
 
-floor = [
+floor = wood_tiles + [
     (ceramic.Tile, 4.0),
     (fabric.Rug, 1.0),
 ]
@@ -288,8 +293,12 @@ bathroom_floor = [
     (ceramic.Tile, 1.0),
 ]
 balcony_floor = bathroom_floor
-ceiling = wall
+office_floor = wood_tiles + [(fabric.Rug, 1.0)]
+warehouse_floor = [(ceramic.Concrete, 1.0)]
 
+ceiling = wall
+warehouse_ceiling = [(ceramic.Concrete, 1.0)]
+garage_ceiling = warehouse_ceiling
 
 potting_soil = [
     (terrain.Mud, 1),

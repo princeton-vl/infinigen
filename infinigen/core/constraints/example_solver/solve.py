@@ -25,7 +25,7 @@ from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.util import blender as butil
 
 from .annealing import SimulatedAnnealingSolver
-from .room import MultistoryRoomSolver, RoomSolver
+from .room.floor_plan import FloorPlanSolver
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +56,6 @@ class Solver:
     def __init__(
         self,
         output_folder: Path,
-        multistory: bool = False,
-        restrict_moves: list = None,
-        addition_weight_scalar: float = 1.0,
     ):
         """Initialize the solver
 
@@ -81,14 +78,9 @@ class Solver:
         self.optim = SimulatedAnnealingSolver(
             output_folder=output_folder,
         )
-        self.room_solver_fn = MultistoryRoomSolver if multistory else RoomSolver
+        self.room_solver_fn = FloorPlanSolver
         self.state: State = None
-        self.all_roomtypes = None
         self.dimensions = None
-
-        self.moves = self._configure_move_weights(
-            restrict_moves, addition_weight_scalar=addition_weight_scalar
-        )
 
     def _configure_move_weights(self, restrict_moves, addition_weight_scalar=1.0):
         schedules = {
@@ -129,19 +121,18 @@ class Solver:
     @gin.configurable
     def choose_move_type(
         self,
+        moves: dict[str, tuple],
         it: int,
         max_it: int,
     ):
         t = it / max_it
-        names, confs = zip(*self.moves.items())
+        names, confs = zip(*moves.items())
         funcs, scheds = zip(*confs)
         weights = np.array([s if isinstance(s, (float, int)) else s(t) for s in scheds])
         return np.random.choice(funcs, p=weights / weights.sum())
 
     def solve_rooms(self, scene_seed, consgraph: cl.Problem, filter: r.Domain):
-        self.state, self.all_roomtypes, self.dimensions = self.room_solver_fn(
-            scene_seed
-        ).solve()
+        self.state, _, _ = self.room_solver_fn(scene_seed, consgraph).solve()
         return self.state
 
     @gin.configurable
@@ -154,7 +145,13 @@ class Solver:
         desc: str,
         abort_unsatisfied: bool = False,
         print_bounds: bool = False,
+        restrict_moves: list[str] = None,
+        addition_weight_scalar: float = 1.0,
     ):
+        moves = self._configure_move_weights(
+            restrict_moves, addition_weight_scalar=addition_weight_scalar
+        )
+
         filter_domain = copy.deepcopy(filter_domain)
 
         desc_full = (desc, *var_assignments.values())
@@ -190,9 +187,8 @@ class Solver:
         self.optim.reset(max_iters=n_steps)
         ra = trange(n_steps) if self.optim.print_report_freq == 0 else range(n_steps)
         for j in ra:
-            move_gen = self.choose_move_type(j, n_steps)
+            move_gen = self.choose_move_type(moves, j, n_steps)
             self.optim.step(consgraph, self.state, move_gen, filter_domain)
-        self.optim.save_stats(self.output_folder / f"optim_{desc}.csv")
 
         logger.info(
             f"Finished solving {desc_full}, added {len(self.state.objs) - n_start} "

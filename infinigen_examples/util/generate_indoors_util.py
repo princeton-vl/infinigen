@@ -26,8 +26,7 @@ from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
 from infinigen.terrain.core import Terrain, hidden_in_viewport
 from infinigen.terrain.utils import Mesh
-
-from . import constraint_util as cu
+from infinigen_examples.constraints import util as cu
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

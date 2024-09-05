@@ -1,4 +1,8 @@
-from infinigen.core.tags import Negated, Semantics
+# Copyright (c) Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors: Alexander Raistrick, Karhan Kayan
 
 from .expression import (
     ArithmethicExpression,
@@ -8,11 +12,20 @@ from .expression import (
     ScalarExpression,
     ScalarOperatorExpression,
     constant,
+    debugprint,
     hinge,
     max_expr,
     min_expr,
 )
-from .gather import ForAll, MeanOver, SumOver, all, item, mean, sum
+from .gather import (
+    ForAll,
+    MeanOver,
+    SumOver,
+    all,
+    item,
+    mean,
+    sum,
+)
 from .geometry import (
     ObjectSetExpression,
     accessibility_cost,
@@ -36,10 +49,36 @@ from .relations import (
     NegatedRelation,
     Relation,
     RoomNeighbour,
+    SharedEdge,
     StableAgainst,
     SupportedBy,
     Touching,
+    Traverse,
 )
 from .result import Problem
-from .set_reasoning import count, excludes, in_range, related_to, scene, tagged
+from .rooms import (
+    access_angle,
+    area,
+    aspect_ratio,
+    convexity,
+    graph_coherent,
+    grid_line_count,
+    intersection,
+    length,
+    n_verts,
+    narrowness,
+    rand,
+    same_level,
+    shared_length,
+    shared_n_verts,
+)
+from .set_reasoning import (
+    count,
+    excludes,
+    in_range,
+    related_to,
+    scene,
+    tagged,
+    union,
+)
 from .types import Node
