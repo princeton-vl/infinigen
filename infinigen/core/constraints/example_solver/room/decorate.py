@@ -24,6 +24,7 @@ from shapely.ops import nearest_points
 from tqdm import tqdm, trange
 from trimesh.transformations import translation_matrix
 
+import infinigen.core.surface as surface
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.ceramic import plaster
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
@@ -47,7 +48,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import int_hash
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
 logger = logging.getLogger(__name__)
@@ -206,9 +207,7 @@ pillar_rooms = {
 
 
 def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=3):
-    wall_fns = list(
-        import_material(rg(room_wall_fns[room_type(r.name)])) for r in walls
-    )
+    wall_fns = list(weighted_sample(room_wall_fns[room_type(r.name)]) for r in walls)
     logger.debug(
         f"{room_walls.__name__} adding materials to {len(walls)=}, using {len(wall_fns)=}"
     )
@@ -218,10 +217,13 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
         shape = np.random.choice(["square", "rectangle", "hexagon"])
         kwargs = dict(vertical=True, alternating=False, shape=shape)
         rooms_ = [o for o, w in zip(walls, wall_fns) if w == wall_fn]
-        indices = np.random.randint(0, n_walls, len(rooms_))
-        for i in range(n_walls):
-            rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-            wall_fn.apply(rooms__, **kwargs)
+        for room in rooms_:
+            surface.assign_material(room, wall_fn())
+
+        # indices = np.random.randint(0, n_walls, len(rooms_))
+        # for i in range(n_walls):
+        #     rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+        #     wall_fn.apply(rooms__, **kwargs)
 
     for w in walls:
         logger.debug(
@@ -275,7 +277,7 @@ def room_ceilings(ceilings):
     logger.debug(f"{room_ceilings.__name__} adding materials to {len(ceilings)=}")
 
     ceiling_fns = list(
-        import_material(rg(room_ceiling_fns[room_type(r.name)])) for r in ceilings
+        weighted_sample(room_ceiling_fns[room_type(r.name)]) for r in ceilings
     )
     for ceiling_fn in set(ceiling_fns):
         rooms_ = [o for o, f in zip(ceilings, ceiling_fns) if f == ceiling_fn]
@@ -283,9 +285,7 @@ def room_ceilings(ceilings):
 
 
 def room_floors(floors, n_floors=3):
-    floor_fns = list(
-        import_material(rg(room_floor_fns[room_type(r.name)])) for r in floors
-    )
+    floor_fns = list(weighted_sample(room_floor_fns[room_type(r.name)]) for r in floors)
     logger.debug(
         f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
     )
