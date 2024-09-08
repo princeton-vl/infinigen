@@ -116,7 +116,7 @@ def nodegroup_shifted_circle(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketInt", "Resolution", 32),
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "Z", 0.0000),
             ("NodeSocketFloat", "Rot Z", 0.0000),
         ],
@@ -168,7 +168,7 @@ def nodegroup_shifted_square(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketInt", "Resolution", 10),
-            ("NodeSocketFloatDistance", "Width", 1.0000),
+            ("NodeSocketFloat", "Width", 1.0000),
             ("NodeSocketFloat", "Z", 0.0000),
             ("NodeSocketFloat", "Rot Z", 0.5000),
         ],

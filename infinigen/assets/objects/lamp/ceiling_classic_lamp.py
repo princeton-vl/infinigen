@@ -30,9 +30,9 @@ def shader_lamp_material(nw: NodeWrangler):
             "Base Color": rgb,
             "Subsurface Radius": (0.1000, 0.1000, 0.1000),
             "Roughness": uniform(0.2, 0.9),
-            "Sheen": 0.2068,
-            "Clearcoat Roughness": 0.1436,
-            "Transmission": 0.4045,
+            "Sheen Weight": 0.2068,
+            "Coat Roughness": 0.1436,
+            "Transmission Weight": 0.4045,
             "Transmission Roughness": 0.6932,
             "Emission": (0.9858, 0.9858, 0.9858, 1.0000),
             "Emission Strength": 0.0000,
@@ -109,7 +109,7 @@ def geometry_nodes(nw: NodeWrangler):
             ("NodeSocketFloat", "bottom_radius", 0.0000),
             ("NodeSocketFloat", "top_radius", 0.0000),
             ("NodeSocketFloat", "Thickness", 0.5000),
-            ("NodeSocketFloatDistance", "Amount", 1.0000),
+            ("NodeSocketFloat", "Amount", 1.0000),
         ],
     )
 

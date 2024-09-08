@@ -278,7 +278,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
     #         ('NodeSocketInt', 'seed', 0),
     #         ('NodeSocketFloat', 'main branch noise amount', 0.3000),
     #         ('NodeSocketFloat', 'main branch noise scale', 1.1000),
-    #         ('NodeSocketFloatDistance', 'overall radius', 0.0200),
+    #         ('NodeSocketFloat', 'overall radius', 0.0200),
     #         ('NodeSocketFloat', 'twig density', 10.0000),
     #         ('NodeSocketFloat', 'twig rotation', 45.0000),
     #         ('NodeSocketFloat', 'twig scale', 5.0000),

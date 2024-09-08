@@ -152,7 +152,7 @@ def nodegroup_cornea(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "ScaleX", 0.5000),
             ("NodeSocketFloat", "Height", 2.0000),
-            ("NodeSocketFloatFactor", "ScaleZ", 0.0000),
+            ("NodeSocketFloat", "ScaleZ", 0.0000),
             ("NodeSocketFloat", "Y", 20.0000),
             ("NodeSocketInt", "Resolution", 128),
         ],
@@ -649,7 +649,7 @@ def nodegroup_eye_ball(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "CorneaScaleX", 0.52),
             ("NodeSocketFloat", "Height", 1.2),
-            ("NodeSocketFloatFactor", "CorneaScaleZ", 0.8),
+            ("NodeSocketFloat", "CorneaScaleZ", 0.8),
             ("NodeSocketFloat", "Y", 20.0),
             ("NodeSocketInt", "EyeballResolution", 32),
             ("NodeSocketInt", "CorneaResolution", 128),
@@ -1337,16 +1337,20 @@ def shader_eyeball_fish(nw: NodeWrangler, rand=True, **input_kwargs):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_2, "Specular": 0.0000, "Roughness": 0.0000},
+        input_kwargs={
+            "Base Color": mix_2,
+            "Specular IOR Level": 0.0000,
+            "Roughness": 0.0000,
+        },
     )
 
     principled_bsdf_1 = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
-            "Specular": 1.0000,
+            "Specular IOR Level": 1.0000,
             "Roughness": 0.0000,
             "IOR": 1.3500,
-            "Transmission": 1.0000,
+            "Transmission Weight": 1.0000,
         },
     )
 
@@ -1705,7 +1709,7 @@ def nodegroup_append_eye(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketVector", "Translation", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Scale", 0.0),
-            ("NodeSocketVectorEuler", "Rotation", (0.1745, 0.0, -1.3963)),
+            ("NodeSocketVector", "Rotation", (0.1745, 0.0, -1.3963)),
             ("NodeSocketVector", "Ray Direction", (-1.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Default Offset", -0.002),
         ],
@@ -2274,7 +2278,7 @@ def nodegroup_profile_part(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Profile Curve", None),
-            ("NodeSocketFloatDistance", "Radius Func", 1.0),
+            ("NodeSocketFloat", "Radius Func", 1.0),
         ],
     )
 
@@ -2450,7 +2454,7 @@ def nodegroup_solidify(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Mesh", None),
-            ("NodeSocketFloatDistance", "Distance", 0.0),
+            ("NodeSocketFloat", "Distance", 0.0),
         ],
     )
 
@@ -2572,7 +2576,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Rotation", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Hit Normal", (0.0, 0.0, 1.0)),
             ("NodeSocketVector", "Curve Tangent", (0.0, 0.0, 1.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -2648,8 +2652,8 @@ def nodegroup_part_surface(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Skin Mesh", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
         ],
     )
@@ -2742,7 +2746,7 @@ def nodegroup_eyeball_eyelid(nw: NodeWrangler):
             ),
             ("NodeSocketVector", "OffsetPreAppending", (0.0120, 0.0000, 0.0000)),
             ("NodeSocketFloat", "Scale", 1.0),
-            ("NodeSocketVectorEuler", "Rotation", (0.1745, 0.0000, -1.3963)),
+            ("NodeSocketVector", "Rotation", (0.1745, 0.0000, -1.3963)),
             ("NodeSocketVector", "RayDirection", (-1.0000, 0.0000, 0.0000)),
             ("NodeSocketFloat", "DefaultAppendDistance", -0.0020),
             ("NodeSocketVector", "EyeSocketRot", (0.0000, 0.0000, 0.0000)),
@@ -3195,11 +3199,11 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
-            ("NodeSocketFloatFactor", "Width Shaping", 0.6764),
+            ("NodeSocketFloat", "Width Shaping", 0.6764),
             ("NodeSocketFloat", "Canine Length", 0.05),
             ("NodeSocketFloat", "Incisor Size", 0.01),
             ("NodeSocketFloat", "Tooth Crookedness", 0.0),
-            ("NodeSocketFloatFactor", "Tongue Shaping", 1.0),
+            ("NodeSocketFloat", "Tongue Shaping", 1.0),
             ("NodeSocketFloat", "Tongue X Scale", 0.9),
         ],
     )
@@ -3598,8 +3602,8 @@ def nodegroup_cat_ear(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Depth", 0.0),
-            ("NodeSocketFloatDistance", "Thickness", 0.0),
-            ("NodeSocketFloatDistance", "Curl Deg", 0.0),
+            ("NodeSocketFloat", "Thickness", 0.0),
+            ("NodeSocketFloat", "Curl Deg", 0.0),
         ],
     )
 
@@ -3752,9 +3756,9 @@ def nodegroup_cat_nose(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Nose Radius", 0.06),
-            ("NodeSocketFloatDistance", "Nostril Size", 0.025),
-            ("NodeSocketFloatFactor", "Crease", 0.008),
+            ("NodeSocketFloat", "Nose Radius", 0.06),
+            ("NodeSocketFloat", "Nostril Size", 0.025),
+            ("NodeSocketFloat", "Crease", 0.008),
             ("NodeSocketVectorXYZ", "Scale", (1.2, 1.0, 1.0)),
         ],
     )
@@ -3821,8 +3825,8 @@ def nodegroup_attach_part(nw: NodeWrangler):
             ("NodeSocketGeometry", "Skin Mesh", None),
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
             ("NodeSocketVector", "Part Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -4255,16 +4259,16 @@ def shader_eyeball_tiger(nw: NodeWrangler, **input_kwargs):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_2, "Specular": 0.0, "Roughness": 0.0},
+        input_kwargs={"Base Color": mix_2, "Specular IOR Level": 0.0, "Roughness": 0.0},
     )
 
     principled_bsdf_1 = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
-            "Specular": 1.0,
+            "Specular IOR Level": 1.0,
             "Roughness": 0.0,
             "IOR": 1.35,
-            "Transmission": 1.0,
+            "Transmission Weight": 1.0,
         },
     )
 

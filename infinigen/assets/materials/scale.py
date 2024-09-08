@@ -134,7 +134,7 @@ def shader_scale(nw, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": colormap,
-            "Subsurface": 0.2,
+            "Subsurface Weight": 0.2,
             "Subsurface Radius": (0.36, 0.46, 0.6),
             "Subsurface Color": (1.0, 0.9405, 0.7747, 1.0),
             "Metallic": 0.8,

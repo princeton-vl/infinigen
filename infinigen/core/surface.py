@@ -24,9 +24,8 @@ from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
     geometry_node_group_empty_new,
-    infer_output_socket,
-    isnode,
 )
+from infinigen.core.nodes.utils import infer_output_socket, isnode
 from infinigen.core.util import blender as butil
 
 
@@ -391,11 +390,13 @@ def add_geomod(
         else:
             mod.node_group = ng
 
-        outputs = mod.node_group.outputs
+        outputs = [
+            s for s in mod.node_group.interface.items_tree if s.in_out == "OUTPUT"
+        ]
         identifiers = [
             outputs[i].identifier
             for i in range(len(outputs))
-            if outputs[i].type != "GEOMETRY"
+            if outputs[i].socket_type != "NodeSocketGeometry"
         ]
         if len(identifiers) != len(attributes):
             raise Exception(
@@ -406,11 +407,15 @@ def add_geomod(
             # attributes are a 1-indexed list, and Geometry is the first element, so we start from 2
             # while f'Output_{i}_attribute_name' not in
             mod[id + "_attribute_name"] = att_name
-        os = [outputs[i] for i in range(len(outputs)) if outputs[i].type != "GEOMETRY"]
+        os = [
+            outputs[i]
+            for i in range(len(outputs))
+            if outputs[i].socket_type != "NodeSocketGeometry"
+        ]
         for o, domain in zip(os, domains):
             o.attribute_domain = domain
 
-        inputs = mod.node_group.inputs
+        inputs = [s for s in mod.node_group.interface.items_tree if s.in_out == "INPUT"]
         if not any(att_name is None for att_name in input_attributes):
             raise Exception("None should be provided for Geometry inputs.")
         for i, att_name in zip(inputs, input_attributes):

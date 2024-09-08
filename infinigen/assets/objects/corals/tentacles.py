@@ -136,8 +136,8 @@ def shader_tentacles(nw: NodeWrangler, base_hue=0.3):
         input_kwargs={
             "Base Color": color,
             "Roughness": roughness,
-            "Specular": specular,
-            "Subsurface": 0.01,
+            "Specular IOR Level": specular,
+            "Subsurface Weight": 0.01,
         },
     )
     fresnel_color = hsv2rgba(uniform(0, 1), 0.6, 0.6)

@@ -137,9 +137,9 @@ def nodegroup_dish_rack(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Depth", 2.0000),
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Radius", 0.0200),
+            ("NodeSocketFloat", "Depth", 2.0000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Radius", 0.0200),
             ("NodeSocketInt", "Amount", 5),
             ("NodeSocketFloat", "Height", 0.5000),
         ],
@@ -344,7 +344,7 @@ def nodegroup_text(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
-            ("NodeSocketFloatDistance", "Size", 0.0500),
+            ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
         ],
     )
@@ -1180,7 +1180,7 @@ def nodegroup_dishwasher_geometry(nw: NodeWrangler, preprocess: bool = False):
             ("NodeSocketFloat", "Height", 1.0000),
             ("NodeSocketFloat", "DoorThickness", 0.0700),
             ("NodeSocketFloat", "DoorRotation", 0.0000),
-            ("NodeSocketFloatDistance", "RackRadius", 0.0100),
+            ("NodeSocketFloat", "RackRadius", 0.0100),
             ("NodeSocketInt", "RackAmount", 2),
             ("NodeSocketString", "BrandName", "BrandName"),
             ("NodeSocketMaterial", "Surface", None),

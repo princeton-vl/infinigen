@@ -23,11 +23,11 @@ def nodegroup_generate_leg_square(nw: NodeWrangler, **kwargs):
         expose_input=[
             ("NodeSocketFloat", "Width", 0.0000),
             ("NodeSocketFloat", "Height", 0.0000),
-            ("NodeSocketFloatDistance", "Fillet Radius", 0.0300),
+            ("NodeSocketFloat", "Fillet Radius", 0.0300),
             ("NodeSocketBool", "Has Bottom Connector", True),
             ("NodeSocketInt", "Profile N-gon", 4),
-            ("NodeSocketFloatDistance", "Profile Width", 0.1000),
-            ("NodeSocketFloatDistance", "Profile Aspect Ratio", 0.5000),
+            ("NodeSocketFloat", "Profile Width", 0.1000),
+            ("NodeSocketFloat", "Profile Aspect Ratio", 0.5000),
             ("NodeSocketFloat", "Profile Fillet Ratio", 0.1000),
         ],
     )

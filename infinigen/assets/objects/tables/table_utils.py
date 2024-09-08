@@ -769,7 +769,7 @@ def nodegroup_create_cap(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketInt", "Resolution", 64),
         ],
     )
@@ -853,7 +853,7 @@ def nodegroup_arc_top(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Diameter", 1.0000),
+            ("NodeSocketFloat", "Diameter", 1.0000),
             ("NodeSocketFloat", "Sweep Angle", 180.0000),
         ],
     )

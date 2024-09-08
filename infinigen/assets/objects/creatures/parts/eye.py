@@ -150,7 +150,7 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.050000000000000003),
+            ("NodeSocketFloat", "Radius", 0.050000000000000003),
             ("NodeSocketFloat", "Eyelid Thickness Ratio", 0.34999999999999998),
             ("NodeSocketFloat", "Eyelid Fullness", 2.0),
             ("NodeSocketBool", "Eyelids", True),

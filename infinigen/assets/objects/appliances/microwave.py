@@ -163,7 +163,7 @@ def nodegroup_text(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
-            ("NodeSocketFloatDistance", "Size", 0.0500),
+            ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
         ],
     )

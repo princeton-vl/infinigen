@@ -243,7 +243,7 @@ def nodegroup_primary_voronoi(nw):
         expose_input=[
             ("NodeSocketVector", "Coordinate", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Texture Scale", 20.0),
-            ("NodeSocketFloatFactor", "Randomness", 1.0),
+            ("NodeSocketFloat", "Randomness", 1.0),
         ],
     )
 
@@ -401,7 +401,7 @@ def nodegroup_voronoi(nw):
         expose_input=[
             ("NodeSocketVector", "Coordinate", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Texture Scale", 5.0),
-            ("NodeSocketFloatFactor", "Randomness", 1.0),
+            ("NodeSocketFloat", "Randomness", 1.0),
         ],
     )
 
@@ -525,7 +525,7 @@ def nodegroup_random_bark_geo(nw):
             ("NodeSocketFloat", "Noise Scale", 2.0),
             ("NodeSocketFloat", "Noise Amount", 1.0),
             ("NodeSocketFloat", "Texture Scale", 30.0),
-            ("NodeSocketFloatFactor", "Randomness", 1.0),
+            ("NodeSocketFloat", "Randomness", 1.0),
             ("NodeSocketFloat", "Value", 0.05),
             ("NodeSocketFloat", "Mix Weight", 0.1),
             ("NodeSocketFloat", "Scale", 15.0),
@@ -814,7 +814,7 @@ def geo_bark_random(nw, base_color, geo_params, selection=None):
                 geo_params["Primary Voronoi Scale"],
             ),
             (
-                "NodeSocketFloatFactor",
+                "NodeSocketFloat",
                 "Primary Voronoi Randomness",
                 geo_params["Primary Voronoi Randomness"],
             ),

@@ -294,7 +294,7 @@ def nodegroup_chameleon_claw_shape(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0000, 1.0472, 0.0000)),
+            ("NodeSocketVector", "Rotation", (0.0000, 1.0472, 0.0000)),
             ("NodeSocketVectorXYZ", "Scale", (0.2000, 0.2000, 0.4000)),
         ],
     )
@@ -383,8 +383,8 @@ def nodegroup_chameleon_foot_shape(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "ouRotation", (0.0000, 1.0472, 0.0000)),
-            ("NodeSocketVectorEuler", "inRotation", (0.0000, 2.0944, 3.1416)),
+            ("NodeSocketVector", "ouRotation", (0.0000, 1.0472, 0.0000)),
+            ("NodeSocketVector", "inRotation", (0.0000, 2.0944, 3.1416)),
             ("NodeSocketVectorXYZ", "ouScale", (1.0000, 1.0000, 1.0000)),
             ("NodeSocketVectorXYZ", "inScale", (1.0000, 1.0000, 1.0000)),
         ],
@@ -2358,7 +2358,7 @@ def shader_chameleon(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": combine_color,
-            "Specular": 0.3000,
+            "Specular IOR Level": 0.3000,
             "Roughness": 0.6000,
         },
     )
@@ -2383,7 +2383,7 @@ def nodegroup_chameleon_leg_shape(nw: NodeWrangler):
             ("NodeSocketFloat", "body_position", 0.1000),
             ("NodeSocketFloat", "body_thickness", 0.0500),
             ("NodeSocketFloat", "body_height", -0.1000),
-            ("NodeSocketVectorEuler", "Rotation", (0.0000, -0.6981, 0.0000)),
+            ("NodeSocketVector", "Rotation", (0.0000, -0.6981, 0.0000)),
             ("NodeSocketFloat", "thigh_length", 0.6000),
             ("NodeSocketFloat", "calf_length", 0.5000),
             ("NodeSocketFloat", "thigh_body_rotation", 25.0000),
@@ -3272,7 +3272,7 @@ def nodegroup_round_bump(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatDistance", "Distance", 0.0200),
+            ("NodeSocketFloat", "Distance", 0.0200),
             ("NodeSocketFloat", "Offset Scale", 0.0100),
             ("NodeSocketInt", "Level", 1),
         ],
@@ -3479,7 +3479,7 @@ def shader_chameleon_eye(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": combine_color,
-            "Specular": 0.3000,
+            "Specular IOR Level": 0.3000,
             "Roughness": 0.6000,
         },
     )
@@ -3504,8 +3504,8 @@ def nodegroup_chameleon(nw: NodeWrangler):
             ("NodeSocketFloat", "head_crown", 0.2000),
             ("NodeSocketFloat", "head_eyebrow", 0.0200),
             ("NodeSocketVectorXYZ", "head_scale", (1.0000, 1.0000, 1.0000)),
-            ("NodeSocketVectorEuler", "left_eye_rotation", (0.0000, 0.0000, -1.5)),
-            ("NodeSocketVectorEuler", "right_eye_rotation", (0.0000, 0.0000, 1.5)),
+            ("NodeSocketVector", "left_eye_rotation", (0.0000, 0.0000, -1.5)),
+            ("NodeSocketVector", "right_eye_rotation", (0.0000, 0.0000, 1.5)),
             ("NodeSocketFloat", "pupil_radius", 0.2200),
             ("NodeSocketFloat", "front_leg_position", 0.0800),
             ("NodeSocketFloat", "back_leg_position", 0.8500),

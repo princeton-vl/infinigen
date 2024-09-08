@@ -433,7 +433,7 @@ class Text:
                     "Base Color": color,
                     "Roughness": roughness,
                     "Metallic": uniform(0, 0.5),
-                    "Specular": uniform(0, 0.2),
+                    "Specular IOR Level": uniform(0, 0.2),
                     "Emission": emission,
                     "Emission Strength": self.emission,
                 },

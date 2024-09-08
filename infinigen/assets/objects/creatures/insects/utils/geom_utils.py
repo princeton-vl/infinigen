@@ -114,8 +114,8 @@ def nodegroup_attach_part(nw: NodeWrangler):
             ("NodeSocketGeometry", "Skin Mesh", None),
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
             ("NodeSocketVector", "Part Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -260,8 +260,8 @@ def nodegroup_instance_on_points(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "rotation base", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorEuler", "rotation delta", (-1.5708, 0.0, 0.0)),
+            ("NodeSocketVector", "rotation base", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "rotation delta", (-1.5708, 0.0, 0.0)),
             ("NodeSocketVectorTranslation", "translation", (0.0, -0.5, 0.0)),
             ("NodeSocketFloat", "scale", 0.0),
             ("NodeSocketGeometry", "Points", None),
@@ -402,7 +402,7 @@ def shader_dragonfly_body_shader(nw: NodeWrangler):
         input_kwargs={
             "Base Color": group_1,
             "Metallic": 0.2182,
-            "Specular": 0.8318,
+            "Specular IOR Level": 0.8318,
             "Roughness": 0.1545,
         },
     )
@@ -599,7 +599,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Rotation", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Hit Normal", (0.0, 0.0, 1.0)),
             ("NodeSocketVector", "Curve Tangent", (0.0, 0.0, 1.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -675,8 +675,8 @@ def nodegroup_part_surface(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Skin Mesh", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
         ],
     )
@@ -1325,7 +1325,7 @@ def nodegroup_profile_part(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Profile Curve", None),
-            ("NodeSocketFloatDistance", "Radius Func", 1.0),
+            ("NodeSocketFloat", "Radius Func", 1.0),
         ],
     )
 

@@ -163,7 +163,7 @@ def shader_two_color(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix_1,
-            "Specular": 0.0,
+            "Specular IOR Level": 0.0,
             "Roughness": colorramp_2.outputs["Color"],
         },
     )

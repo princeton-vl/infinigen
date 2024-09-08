@@ -425,7 +425,7 @@ def nodegroup_profile_part(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Profile Curve", None),
-            ("NodeSocketFloatDistance", "Radius Func", 1.0),
+            ("NodeSocketFloat", "Radius Func", 1.0),
         ],
     )
 

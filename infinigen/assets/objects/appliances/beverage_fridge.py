@@ -128,9 +128,9 @@ def nodegroup_oven_rack(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Height", 2.0000),
-            ("NodeSocketFloatDistance", "Radius", 0.0200),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Height", 2.0000),
+            ("NodeSocketFloat", "Radius", 0.0200),
             ("NodeSocketInt", "Amount", 5),
         ],
     )
@@ -275,7 +275,7 @@ def nodegroup_text(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
-            ("NodeSocketFloatDistance", "Size", 0.0500),
+            ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
         ],
     )
@@ -1111,7 +1111,7 @@ def nodegroup_beverage_fridge_geometry(nw: NodeWrangler, preprocess: bool = Fals
             ("NodeSocketFloat", "Height", 1.0000),
             ("NodeSocketFloat", "DoorThickness", 0.0700),
             ("NodeSocketFloat", "DoorRotation", 0.0000),
-            ("NodeSocketFloatDistance", "RackRadius", 0.0100),
+            ("NodeSocketFloat", "RackRadius", 0.0100),
             ("NodeSocketInt", "RackDAmount", 5),
             ("NodeSocketInt", "RackHAmount", 2),
             ("NodeSocketString", "BrandName", "BrandName"),

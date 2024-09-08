@@ -43,7 +43,7 @@ def nodegroup_make_skirting_board(nw: NodeWrangler, control_points):
             ("NodeSocketCollection", "Parent", None),
             ("NodeSocketFloat", "Thickness", 0.0300),
             ("NodeSocketFloat", "Height", 0.1500),
-            ("NodeSocketFloatDistance", "Resolution", 0.0050),
+            ("NodeSocketFloat", "Resolution", 0.0050),
             ("NodeSocketBool", "Is Ceiling", False),
         ],
     )

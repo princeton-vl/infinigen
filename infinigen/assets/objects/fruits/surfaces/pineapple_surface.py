@@ -36,7 +36,7 @@ def nodegroup_pineapple_surface(
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketFloat", "spline parameter", 0.0),
-            ("NodeSocketFloatDistance", "point distance", 0.22),
+            ("NodeSocketFloat", "point distance", 0.22),
             ("NodeSocketFloat", "cell scale", 0.2),
             ("NodeSocketFloat", "random seed", 0.0),
         ],

@@ -19,7 +19,7 @@ def nodegroup_star_profile(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketInt", "Resolution", 64),
             ("NodeSocketInt", "Points", 64),
-            ("NodeSocketFloatDistance", "Inner Radius", 0.9000),
+            ("NodeSocketFloat", "Inner Radius", 0.9000),
         ],
     )
 
@@ -152,7 +152,7 @@ def nodegroup_shifted_circle(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketInt", "Resolution", 32),
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "Z", 0.0000),
             ("NodeSocketFloat", "Rot Z", 0.0000),
         ],

@@ -132,8 +132,8 @@ def shader_spikes(nw: NodeWrangler):
         input_kwargs={
             "Base Color": color,
             "Roughness": roughness,
-            "Specular": specular,
-            "Subsurface": 0.1,
+            "Specular IOR Level": specular,
+            "Subsurface Weight": 0.1,
         },
     )
     transparent_bsdf = nw.new_node(Nodes.TranslucentBSDF, [color])

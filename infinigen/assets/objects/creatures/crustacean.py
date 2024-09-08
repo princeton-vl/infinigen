@@ -224,9 +224,9 @@ def shader_crustacean(nw: NodeWrangler, params):
             "Base Color": color,
             "Metallic": metallic,
             "Roughness": roughness,
-            "Specular": specular,
-            "Specular Tint": specular_tint,
-            "Clearcoat": clearcoat,
+            "Specular IOR Level": specular,
+            "Specular IOR Level Tint": specular_tint,
+            "Coat Weight": clearcoat,
         },
     )
     return bsdf
@@ -235,7 +235,7 @@ def shader_crustacean(nw: NodeWrangler, params):
 def shader_eye(nw: NodeWrangler):
     return nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": (0.1, 0.1, 0.1, 1), "Specular": 0},
+        input_kwargs={"Base Color": (0.1, 0.1, 0.1, 1), "Specular IOR Level": 0},
     )
 
 

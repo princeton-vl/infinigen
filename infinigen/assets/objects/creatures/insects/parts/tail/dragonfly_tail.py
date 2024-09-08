@@ -154,7 +154,7 @@ def shader_dragonfly_tail_shader(nw: NodeWrangler, base_color, v, ring_length):
         input_kwargs={
             "Base Color": mix_1,
             "Metallic": 0.5,
-            "Specular": 0.5114,
+            "Specular IOR Level": 0.5114,
             "Roughness": 0.2568,
         },
     )
@@ -178,7 +178,7 @@ def nodegroup_dragonfly_tail(
             ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
             ("NodeSocketVectorTranslation", "Middle", (1.84, 0.0, 0.14)),
             ("NodeSocketVectorTranslation", "End", (3.14, 0.0, -0.32)),
-            ("NodeSocketFloatDistance", "Segment Length", 0.44),
+            ("NodeSocketFloat", "Segment Length", 0.44),
             ("NodeSocketFloat", "Segment Scale", 0.25),
             ("NodeSocketFloat", "Random Seed", 3.2),
             ("NodeSocketFloat", "Radius", 0.9),
@@ -641,7 +641,7 @@ def nodegroup_add_vertical_stripes(nw: NodeWrangler):
 #         input_kwargs={'Fac': maximum, 'Color1': group_1, 'Color2': mix_1})
 
 #     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-#         input_kwargs={'Base Color': mix, 'Metallic': 0.9, 'Specular': 0.5114, 'Roughness': 0.2568})
+#         input_kwargs={'Base Color': mix, 'Metallic': 0.9, 'Specular IOR Level': 0.5114, 'Roughness': 0.2568})
 
 #     material_output = nw.new_node(Nodes.MaterialOutput,
 #         input_kwargs={'Surface': principled_bsdf})

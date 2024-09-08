@@ -311,7 +311,7 @@ def nodegroup_node_group_002(nw: NodeWrangler):
             ("NodeSocketColor", "Color", (0.8, 0.8, 0.8, 1.0)),
             ("NodeSocketFloat", "attribute", 0.0),
             ("NodeSocketFloat", "voronoi scale", 50.0),
-            ("NodeSocketFloatFactor", "voronoi randomness", 1.0),
+            ("NodeSocketFloat", "voronoi randomness", 1.0),
             ("NodeSocketFloat", "seed", 0.0),
             ("NodeSocketFloat", "noise scale", 10.0),
             ("NodeSocketFloat", "noise amount", 1.4),
@@ -966,7 +966,11 @@ def shader_coconut_green_shader(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": group_1, "Specular": 0.4773, "Roughness": 0.4455},
+        input_kwargs={
+            "Base Color": group_1,
+            "Specular IOR Level": 0.4773,
+            "Roughness": 0.4455,
+        },
     )
 
     material_output = nw.new_node(

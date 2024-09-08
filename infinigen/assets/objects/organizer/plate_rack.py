@@ -24,7 +24,7 @@ def nodegroup_plate_rack_connect(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "Value1", 0.5000),
             ("NodeSocketFloat", "Value", 0.5000),
         ],
@@ -91,7 +91,7 @@ def nodegroup_rack_cyn(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "Value", 0.5000),
         ],
     )

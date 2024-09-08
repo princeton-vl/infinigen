@@ -20,6 +20,7 @@ import numpy as np
 from numpy.random import randint
 
 import infinigen
+from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import LogLevel
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
@@ -294,6 +295,20 @@ def configure_blender(
         bpy.context.scene.cycles.motion_blur_position = "START"
         bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
 
-    bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
-    bpy.ops.preferences.addon_enable(module="real_snow")
-    bpy.ops.preferences.addon_enable(module="ant_landscape")
+        addons = ["extra_mesh_objects", "real_snow", "antlandscape"]
+        for addon in addons:
+            try:
+                with butil.Suppress():
+                    bpy.ops.extensions.package_mark_clear_all()
+                    bpy.ops.extensions.package_mark_set(pkg_id=addon, repo_index=-1)
+                    bpy.ops.extensions.package_enable_not_installed()
+                logger.info(f"Add-on {addon} enabled.")
+            except ValueError | RuntimeError:
+                with butil.Suppress():
+                    bpy.ops.extensions.userpref_allow_online()
+                logger.info(f"Installing Add-on {addon}.")
+                with butil.Suppress():
+                    bpy.ops.extensions.package_install(
+                        repo_index=0, pkg_id=addon, enable_on_install=True
+                    )
+                logger.info(f"Add-on {addon} Installed.")

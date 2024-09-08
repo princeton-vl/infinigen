@@ -57,7 +57,7 @@ def init_color_material(
         bsdf_node = nt.nodes.get("Principled BSDF")
         bsdf_node.inputs.get("Base Color").default_value = color
         bsdf_node.inputs.get("Roughness").default_value = roughness
-        bsdf_node.inputs.get("Specular").default_value = specular
+        bsdf_node.inputs.get("Specular IOR Level").default_value = specular
 
     return m
 
@@ -231,7 +231,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
     rough_scale = nt.nodes.get("Map Range")
 
     bsdf.inputs.get("Metallic").default_value = 0
-    bsdf.inputs.get("Transmission").default_value = 0
+    bsdf.inputs.get("Transmission Weight").default_value = 0
     bsdf.inputs.get("IOR").default_value = 1.45
     rough_scale.inputs.get("To Max").default_value = 1
 
@@ -240,7 +240,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
         rough_scale.inputs.get("To Max").default_value = 0.5
 
     elif np.random.rand() < transm_prob:
-        bsdf.inputs.get("Transmission").default_value = 1
+        bsdf.inputs.get("Transmission Weight").default_value = 1
         bsdf.inputs.get("IOR").default_value = 1.05 + np.random.rand() * 0.3
         rough_scale.inputs.get("To Max").default_value = 0.2
 

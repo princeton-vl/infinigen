@@ -20,8 +20,8 @@ def nodegroup_star_single(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "Coordinate", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketFloat", "Radius", 0.0000),
-            ("NodeSocketFloatFactor", "Edge", 0.0000),
-            ("NodeSocketFloatFactor", "3D-ness", 0.8333),
+            ("NodeSocketFloat", "Edge", 0.0000),
+            ("NodeSocketFloat", "3D-ness", 0.8333),
         ],
     )
 
@@ -198,8 +198,8 @@ def nodegroup_moon_single(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "Coordinate", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketFloat", "Radius", 0.0000),
-            ("NodeSocketFloatFactor", "Edge", 0.0000),
-            ("NodeSocketFloatFactor", "3D-ness", 0.8333),
+            ("NodeSocketFloat", "Edge", 0.0000),
+            ("NodeSocketFloat", "3D-ness", 0.8333),
         ],
     )
 
@@ -407,8 +407,8 @@ def nodegroup_star(nw: NodeWrangler):
             ("NodeSocketVector", "Coordinate", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketFloat", "Subtiles Number", 1.0000),
             ("NodeSocketFloat", "Aspect Ratio", 5.0000),
-            ("NodeSocketFloatFactor", "border", 0.1000),
-            ("NodeSocketFloatFactor", "Flatness", 0.9000),
+            ("NodeSocketFloat", "border", 0.1000),
+            ("NodeSocketFloat", "Flatness", 0.9000),
         ],
     )
 

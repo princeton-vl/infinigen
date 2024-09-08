@@ -7,7 +7,7 @@
 import logging
 from collections import OrderedDict
 
-from .node_info import Nodes
+from .node_info import DATATYPE_FIELDS, NODETYPE_TO_DATATYPE, Nodes
 
 logger = logging.getLogger(__name__)
 
@@ -100,8 +100,96 @@ def compat_args_sample_curve(nw, orig_type, input_args, attrs, input_kwargs):
     )
 
 
+def compat_musgrave_texture(nw, orig_type, input_args, attrs, input_kwargs):
+    # https://docs.blender.org/manual/en/4.2/render/shader_nodes/textures/musgrave.html
+    old_names = [
+        "Vector",
+        "W",
+        "Scale",
+        "Detail",
+        "Dimension",
+        "Lacunarity",
+        "Offset",
+        "Gain",
+    ]
+    default_values = {"Dimension": 2, "Lacunarity": 2, "Detail": 2}
+    for name, value in zip(old_names, input_args):
+        input_kwargs[name] = value
+    for name, value in default_values.items():
+        if name not in input_kwargs:
+            input_kwargs[name] = value
+    # handle roughness
+    if nw.is_socket(input_kwargs["Dimension"]) or nw.is_socket(
+        input_kwargs["Lacunarity"]
+    ):
+        input_kwargs["Roughness"] = nw.math(
+            "POWER",
+            input_kwargs["Lacunarity"],
+            nw.scalar_sub(0, input_kwargs["Dimension"]),
+        )
+    else:
+        input_kwargs["Roughness"] = input_kwargs["Lacunarity"] ** (
+            -input_kwargs["Dimension"]
+        )
+    input_kwargs.pop("Dimension")
+    # handle detail
+    if nw.is_socket(input_kwargs["Detail"]):
+        input_kwargs["Detail"] = nw.scalar_sub(input_kwargs["Detail"], 1)
+    else:
+        input_kwargs["Detail"] = input_kwargs["Detail"] - 1
+    if "musgrave_dimensions" in attrs:
+        attrs["noise_dimensions"] = attrs.pop("musgrave_dimensions")
+    if "musgrave_type" in attrs:
+        attrs["noise_type"] = attrs.pop("musgrave_type")
+    return nw.new_node(
+        node_type=Nodes.NoiseTexture,
+        input_args=[],
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
+    )
+
+
+def compat_capture_attribute(nw, orig_type, input_args, attrs, input_kwargs):
+    types = ["VECTOR", "VALUE", "RGBA", "BOOLEAN", "INT"]
+    data_type = None
+    if "data_type" in attrs:
+        data_type = attrs.pop("data_type")
+    if len(input_args) > 1:
+        j, i = next((j, i) for j, i in enumerate(input_args[1:]) if i is not None)
+        data_type = NODETYPE_TO_DATATYPE[types[j]]
+        input_kwargs[DATATYPE_FIELDS[NODETYPE_TO_DATATYPE[types[j]]]] = i
+    node = nw.new_node(
+        node_type=orig_type,
+        input_args=[],
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
+    )
+    if data_type is not None:
+        node.capture_items[0].data_type = data_type
+    return node
+
+
+def compat_principled_bsdf(nw, orig_type, input_args, attrs, input_kwargs):
+    input_kwargs["Subsurface Scale"] = 1
+    if "Subsurface Color" in input_kwargs:
+        logger.warning(f"Subsurface Color no longer in use for {orig_type}")
+        input_kwargs.pop("Subsurface Color")
+    return nw.new_node(
+        node_type=orig_type,
+        input_args=input_args,
+        attrs=attrs,
+        input_kwargs=input_kwargs,
+        compat_mode=False,
+    )
+
+
 COMPATIBILITY_MAPPINGS = {
     Nodes.MixRGB: make_virtual_mixrgb,
     Nodes.TransferAttribute: make_virtual_transfer_attribute,
     Nodes.SampleCurve: compat_args_sample_curve,
+    Nodes.MusgraveTexture: compat_musgrave_texture,
+    Nodes.CaptureAttribute: compat_capture_attribute,
+    Nodes.PrincipledBSDF: compat_principled_bsdf,
 }

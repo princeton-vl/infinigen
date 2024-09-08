@@ -200,7 +200,7 @@ def tile_of_material(
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": seam_color,
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": 0.9000,
         },
     )

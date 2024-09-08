@@ -521,7 +521,7 @@ def set_tree_radius(nw):
             ("NodeSocketFloat", "Min radius", 0.02),
             ("NodeSocketFloat", "Max radius", 5.0),
             ("NodeSocketInt", "Profile res", 20),
-            ("NodeSocketFloatDistance", "Merge dist", 0.001),
+            ("NodeSocketFloat", "Merge dist", 0.001),
         ],
     )
 

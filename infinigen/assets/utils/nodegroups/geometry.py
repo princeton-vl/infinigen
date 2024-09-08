@@ -116,7 +116,7 @@ def nodegroup_solidify(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Mesh", None),
-            ("NodeSocketFloatDistance", "Distance", 0.0),
+            ("NodeSocketFloat", "Distance", 0.0),
         ],
     )
 

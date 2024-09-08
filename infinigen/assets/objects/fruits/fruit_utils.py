@@ -154,7 +154,7 @@ def nodegroup_point_on_mesh(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Mesh", None),
             ("NodeSocketFloat", "spline parameter", 0.0),
-            ("NodeSocketFloatDistance", "Distance Min", 0.2),
+            ("NodeSocketFloat", "Distance Min", 0.2),
             ("NodeSocketFloat", "parameter max", 1.0),
             ("NodeSocketFloat", "parameter min", 0.0),
             ("NodeSocketFloat", "noise amount", 1.0),
@@ -260,8 +260,8 @@ def nodegroup_instance_on_points(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "rotation base", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorEuler", "rotation delta", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "rotation base", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "rotation delta", (0.0, 0.0, 0.0)),
             ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "scale", 0.0),
             ("NodeSocketGeometry", "Points", None),
@@ -933,7 +933,7 @@ def nodegroup_hair(nw: NodeWrangler):
             ("NodeSocketIntUnsigned", "length resolution", 8),
             ("NodeSocketInt", "cross section resolution", 4),
             ("NodeSocketFloat", "scale", 0.0),
-            ("NodeSocketFloatDistance", "Radius", 0.01),
+            ("NodeSocketFloat", "Radius", 0.01),
             ("NodeSocketMaterial", "Material", None),
             ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
             ("NodeSocketVectorTranslation", "Middle", (0.0, 0.3, 1.0)),

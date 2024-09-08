@@ -98,7 +98,7 @@ def nodegroup_knob_handle(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.0100),
+            ("NodeSocketFloat", "Radius", 0.0100),
             ("NodeSocketFloat", "thickness_1", 0.5000),
             ("NodeSocketFloat", "thickness_2", 0.5000),
             ("NodeSocketFloat", "length", 0.5000),

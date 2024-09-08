@@ -654,7 +654,7 @@ def shader_petal(nw):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": petal_color,
-            "Specular": specular,
+            "Specular IOR Level": specular,
             "Roughness": roughness,
         },
     )

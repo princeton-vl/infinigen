@@ -837,7 +837,7 @@ def nodegroup_o(nw: NodeWrangler):
     )
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketFloatDistance", "Size", 1.0000)]
+        Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Size", 1.0000)]
     )
 
     curve_circle_1 = nw.new_node(
@@ -1035,9 +1035,9 @@ def nodegroup_oven_rack(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Height", 2.0000),
-            ("NodeSocketFloatDistance", "Radius", 0.0200),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Height", 2.0000),
+            ("NodeSocketFloat", "Radius", 0.0200),
             ("NodeSocketInt", "Amount", 5),
         ],
     )
@@ -1182,7 +1182,7 @@ def nodegroup_text(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
-            ("NodeSocketFloatDistance", "Size", 0.0500),
+            ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
         ],
     )
@@ -1555,13 +1555,13 @@ def nodegroup_oven_geometry(
             ("NodeSocketFloat", "Height", 1.0000),
             ("NodeSocketFloat", "DoorThickness", 0.0700),
             ("NodeSocketFloat", "DoorRotation", 0.0000),
-            ("NodeSocketFloatDistance", "RackRadius", 0.0100),
+            ("NodeSocketFloat", "RackRadius", 0.0100),
             ("NodeSocketInt", "RackHAmount", 2),
             ("NodeSocketInt", "RackDAmount", 5),
             ("NodeSocketFloat", "PanelHeight", 0.3000),
             ("NodeSocketFloat", "PanelThickness", 0.2000),
             ("NodeSocketInt", "BottonAmount", 4),
-            ("NodeSocketFloatDistance", "BottonRadius", 0.0500),
+            ("NodeSocketFloat", "BottonRadius", 0.0500),
             ("NodeSocketFloat", "BottonThickness", 0.0300),
             ("NodeSocketFloat", "HeaterRadiusRatio", 0.1500),
             ("NodeSocketString", "BrandName", "BrandName"),

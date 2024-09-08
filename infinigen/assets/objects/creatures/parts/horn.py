@@ -171,7 +171,7 @@ def nodegroup_horn(nw: NodeWrangler):
             ("NodeSocketFloat", "thickness", 4.0),
             ("NodeSocketFloat", "density_of_ridge", 0.0),
             ("NodeSocketFloat", "depth_of_ridge", 0.2),
-            ("NodeSocketFloatDistance", "height", 2.5),
+            ("NodeSocketFloat", "height", 2.5),
             ("NodeSocketFloat", "rotation_x", 0),
         ],
     )

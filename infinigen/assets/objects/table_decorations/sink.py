@@ -301,11 +301,11 @@ def nodegroup_water_tap(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "base_width", U(0.2, 0.3)),
+            ("NodeSocketFloat", "base_width", U(0.2, 0.3)),
             ("NodeSocketFloat", "tap_head", U(0.7, 1.1)),
             ("NodeSocketFloat", "roation_z", U(5.5, 7.0)),
             ("NodeSocketFloat", "tap_height", U(0.5, 1)),
-            ("NodeSocketFloatDistance", "base_radius", U(0.0, 0.1)),
+            ("NodeSocketFloat", "base_radius", U(0.0, 0.1)),
             ("NodeSocketBool", "Switch", True if U() > 0.5 else False),
             ("NodeSocketFloat", "Y", U(-0.5, -0.06)),
             ("NodeSocketBool", "hand_type", True if U() > 0.2 else False),
@@ -918,12 +918,12 @@ def nodegroup_sink_geometry(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Depth", 2.0000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Depth", 2.0000),
             ("NodeSocketFloat", "Curvature", 0.9500),
             ("NodeSocketFloat", "Upper Height", 1.0000),
             ("NodeSocketFloat", "Lower Height", -0.0500),
-            ("NodeSocketFloatDistance", "HoleRadius", 0.1000),
+            ("NodeSocketFloat", "HoleRadius", 0.1000),
             ("NodeSocketFloat", "Margin", 0.5000),
             ("NodeSocketFloat", "WaterTapMargin", 0.5000),
             ("NodeSocketMaterial", "Tap", None),
