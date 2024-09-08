@@ -102,7 +102,7 @@ def stable_against(
     relation = relation_state.relation
     assert isinstance(relation, cl.StableAgainst)
 
-    logger.debug(f"stable against {obj_name=} {relation_state=}")
+    logger.debug(f"stable against {obj_name=} {relation_state=} {relation.rev_normal=}")
     a_blender_obj = state.objs[obj_name].obj
     b_blender_obj = state.objs[relation_state.target_name].obj
     sa = state.objs[obj_name]
@@ -113,14 +113,16 @@ def stable_against(
     poly_a = state.planes.planerep_to_poly(pa)
     poly_b = state.planes.planerep_to_poly(pb)
 
-    normal_a = iu.global_polygon_normal(a_blender_obj, poly_a)
-    normal_b = iu.global_polygon_normal(b_blender_obj, poly_b)
+    normal_a = butil.global_polygon_normal(a_blender_obj, poly_a)
+    normal_b = butil.global_polygon_normal(
+        b_blender_obj, poly_b, rev_normal=relation.rev_normal
+    )
     dot = np.array(normal_a).dot(normal_b)
     if not (np.isclose(np.abs(dot), 1, atol=1e-2) or np.isclose(dot, -1, atol=1e-2)):
         logger.debug(f"stable against failed, not parallel {dot=}")
         return False
 
-    origin_b = iu.global_vertex_coordinates(
+    origin_b = butil.global_vertex_coordinates(
         b_blender_obj, b_blender_obj.data.vertices[poly_b.vertices[0]]
     )
 
@@ -166,7 +168,7 @@ def stable_against(
         return False
 
     for vertex in poly_a.vertices:
-        vertex_global = iu.global_vertex_coordinates(
+        vertex_global = butil.global_vertex_coordinates(
             a_blender_obj, a_blender_obj.data.vertices[vertex]
         )
         distance = iu.distance_to_plane(vertex_global, origin_b, normal_b)
@@ -199,21 +201,21 @@ def coplanar(
     poly_a = state.planes.planerep_to_poly(pa)
     poly_b = state.planes.planerep_to_poly(pb)
 
-    normal_a = iu.global_polygon_normal(a_blender_obj, poly_a)
-    normal_b = iu.global_polygon_normal(b_blender_obj, poly_b)
-    if relation.rev_normal:
-        normal_b = -normal_b
+    normal_a = butil.global_polygon_normal(a_blender_obj, poly_a)
+    normal_b = butil.global_polygon_normal(
+        b_blender_obj, poly_b, rev_normal=relation.rev_normal
+    )
     dot = np.array(normal_a).dot(normal_b)
     if not (np.isclose(np.abs(dot), 1, atol=1e-2) or np.isclose(dot, -1, atol=1e-2)):
         logger.debug(f"coplanar failed, not parallel {dot=}")
         return False
 
-    origin_b = iu.global_vertex_coordinates(
+    origin_b = butil.global_vertex_coordinates(
         b_blender_obj, b_blender_obj.data.vertices[poly_b.vertices[0]]
     )
 
     for vertex in poly_a.vertices:
-        vertex_global = iu.global_vertex_coordinates(
+        vertex_global = butil.global_vertex_coordinates(
             a_blender_obj, a_blender_obj.data.vertices[vertex]
         )
         distance = iu.distance_to_plane(vertex_global, origin_b, normal_b)
@@ -224,11 +226,11 @@ def coplanar(
     return True
 
 
-def snap_against(scene, a, b, a_plane, b_plane, margin=0):
+def snap_against(scene, a, b, a_plane, b_plane, margin=0, rev_normal=False):
     """
     snap a against b with some margin.
     """
-    logging.debug("snap_against", a, b, a_plane, b_plane, margin)
+    logging.debug("snap_against", a, b, a_plane, b_plane, margin, rev_normal)
 
     a_obj = bpy.data.objects[a]
     b_obj = bpy.data.objects[b]
@@ -237,14 +239,14 @@ def snap_against(scene, a, b, a_plane, b_plane, margin=0):
     a_poly = a_obj.data.polygons[a_poly_index]
     b_poly_index = b_plane[1]
     b_poly = b_obj.data.polygons[b_poly_index]
-    plane_point_a = iu.global_vertex_coordinates(
+    plane_point_a = butil.global_vertex_coordinates(
         a_obj, a_obj.data.vertices[a_poly.vertices[0]]
     )
-    plane_normal_a = iu.global_polygon_normal(a_obj, a_poly)
-    plane_point_b = iu.global_vertex_coordinates(
+    plane_normal_a = butil.global_polygon_normal(a_obj, a_poly)
+    plane_point_b = butil.global_vertex_coordinates(
         b_obj, b_obj.data.vertices[b_poly.vertices[0]]
     )
-    plane_normal_b = iu.global_polygon_normal(b_obj, b_poly)
+    plane_normal_b = butil.global_polygon_normal(b_obj, b_poly, rev_normal)
     plane_normal_b = -plane_normal_b
 
     norm_mag_a = np.linalg.norm(plane_normal_a)
@@ -267,10 +269,10 @@ def snap_against(scene, a, b, a_plane, b_plane, margin=0):
     a_obj = bpy.data.objects[a]
     a_poly = a_obj.data.polygons[a_poly_index]
     # Recalculate vertex_a and normal_a after rotation
-    plane_point_a = iu.global_vertex_coordinates(
+    plane_point_a = butil.global_vertex_coordinates(
         a_obj, a_obj.data.vertices[a_poly.vertices[0]]
     )
-    plane_normal_a = iu.global_polygon_normal(a_obj, a_poly)
+    plane_normal_a = butil.global_polygon_normal(a_obj, a_poly)
 
     distance = (plane_point_a - plane_point_b).dot(plane_normal_b)
 

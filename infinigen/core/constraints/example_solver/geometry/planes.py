@@ -23,22 +23,6 @@ from infinigen.core.constraints.constraint_language.util import (
 logger = logging.getLogger(__name__)
 
 
-def global_vertex_coordinates(obj, local_vertex):
-    return obj.matrix_world @ local_vertex.co
-
-
-def global_polygon_normal(obj, polygon):
-    loc, rot, scale = obj.matrix_world.decompose()
-    rot = rot.to_matrix()
-    normal = rot @ polygon.normal
-    try:
-        return normal / np.linalg.norm(normal)
-    except ZeroDivisionError:
-        raise ZeroDivisionError(
-            f"Zero division error in global_polygon_normal for {obj.name=}, {polygon.index=}, {normal=}"
-        )
-
-
 class Planes:
     def __init__(self):
         self._mesh_hashes = {}  # Dictionary to store mesh hashes for each object
@@ -97,10 +81,10 @@ class Planes:
         # Cache computations
 
         vertex_cache = {
-            v.index: global_vertex_coordinates(obj, v) for v in obj.data.vertices
+            v.index: butil.global_vertex_coordinates(obj, v) for v in obj.data.vertices
         }
         normal_cache = {
-            p.index: global_polygon_normal(obj, p)
+            p.index: butil.global_polygon_normal(obj, p)
             for p in obj.data.polygons
             if face_mask[p.index]
         }
@@ -136,17 +120,17 @@ class Planes:
         for polygon in obj.data.polygons:
             if not face_mask[polygon.index]:
                 continue
-            vertex = global_vertex_coordinates(
+            vertex = butil.global_vertex_coordinates(
                 obj, obj.data.vertices[polygon.vertices[0]]
             )
-            normal = global_polygon_normal(obj, polygon)
+            normal = butil.global_polygon_normal(obj, polygon)
             belongs_to_existing_plane = False
             for name, polygon2_index in unique_planes:
                 polygon2 = obj.data.polygons[polygon2_index]
-                plane_vertex = global_vertex_coordinates(
+                plane_vertex = butil.global_vertex_coordinates(
                     obj, obj.data.vertices[polygon2.vertices[0]]
                 )
-                plane_normal = global_polygon_normal(obj, polygon2)
+                plane_normal = butil.global_polygon_normal(obj, polygon2)
                 if np.allclose(
                     np.cross(normal, plane_normal), 0, rtol=tolerance
                 ) and np.allclose(
@@ -291,10 +275,10 @@ class Planes:
         current_hash = self.calculate_mesh_hash(obj)  # Calculate current mesh hash
         face_mask_hash = self.hash_face_mask(face_mask)  # Calculate hash for face_mask
         ref_poly = self.planerep_to_poly(plane)
-        ref_vertex = global_vertex_coordinates(
+        ref_vertex = butil.global_vertex_coordinates(
             obj, obj.data.vertices[ref_poly.vertices[0]]
         )
-        ref_normal = global_polygon_normal(obj, ref_poly)
+        ref_normal = butil.global_polygon_normal(obj, ref_poly)
         plane_hash = self.hash_plane(
             ref_normal, ref_vertex, hash_tolerance
         )  # Calculate hash for plane
@@ -334,19 +318,19 @@ class Planes:
         """
         plane_mask = np.zeros(len(obj.data.polygons), dtype=bool)
         ref_poly = self.planerep_to_poly(plane)
-        ref_vertex = global_vertex_coordinates(
+        ref_vertex = butil.global_vertex_coordinates(
             obj, obj.data.vertices[ref_poly.vertices[0]]
         )
-        ref_normal = global_polygon_normal(obj, ref_poly)
+        ref_normal = butil.global_polygon_normal(obj, ref_poly)
 
         for candidate_polygon in obj.data.polygons:
             if not face_mask[candidate_polygon.index]:
                 continue
 
-            candidate_vertex = global_vertex_coordinates(
+            candidate_vertex = butil.global_vertex_coordinates(
                 obj, obj.data.vertices[candidate_polygon.vertices[0]]
             )
-            candidate_normal = global_polygon_normal(obj, candidate_polygon)
+            candidate_normal = butil.global_polygon_normal(obj, candidate_polygon)
             diff_vec = ref_vertex - candidate_vertex
             if not np.isclose(np.linalg.norm(diff_vec), 0):
                 diff_vec /= np.linalg.norm(diff_vec)

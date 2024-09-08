@@ -405,6 +405,8 @@ class StableAgainst(GeometryRelation):
     # typical use is chair-against-table relation
     check_z: bool = True
 
+    rev_normal: bool = False
+
     __repr__ = no_frozenset_repr
 
 

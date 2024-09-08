@@ -31,9 +31,8 @@ from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver import state_def
 from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
+from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import lazydebug
-
-# from infinigen.core.util import blender as butil
 
 # import fcl
 
@@ -85,10 +84,10 @@ def get_axis(state: state_def.State, obj: bpy.types.Object, tag=t.Subpart.Front)
     a_front_plane = a_front_planes[0]
     a_front_plane_ind = a_front_plane[1]
     a_poly = obj.data.polygons[a_front_plane_ind]
-    front_plane_pt = iu.global_vertex_coordinates(
+    front_plane_pt = butil.global_vertex_coordinates(
         obj, obj.data.vertices[a_poly.vertices[0]]
     )
-    front_plane_normal = iu.global_polygon_normal(obj, a_poly)
+    front_plane_normal = butil.global_polygon_normal(obj, a_poly)
     return front_plane_pt, front_plane_normal
 
 

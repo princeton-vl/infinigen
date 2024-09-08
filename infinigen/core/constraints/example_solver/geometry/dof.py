@@ -107,7 +107,12 @@ def rotate_object_around_axis(obj, axis, std, angle=None):
 
 
 def check_init_valid(
-    state: state_def.State, name: str, obj_planes: list, assigned_planes: list, margins
+    state: state_def.State,
+    name: str,
+    obj_planes: list,
+    assigned_planes: list,
+    margins: list,
+    rev_normals: list[bool],
 ):
     """
     Check that the plane assignments to the object is valid. First checks that the rotations can be satisfied, then
@@ -133,6 +138,7 @@ def check_init_valid(
 
         a_plane = obj_planes[ind]
         b_plane = assigned_planes[ind]
+        rev_normal = rev_normals[ind]
         a_obj = bpy.data.objects[a]
         b_obj = bpy.data.objects[b]
 
@@ -140,8 +146,8 @@ def check_init_valid(
         a_poly = a_obj.data.polygons[a_poly_index]
         b_poly_index = b_plane[1]
         b_poly = b_obj.data.polygons[b_poly_index]
-        plane_normal_a = iu.global_polygon_normal(a_obj, a_poly)
-        plane_normal_b = iu.global_polygon_normal(b_obj, b_poly)
+        plane_normal_a = butil.global_polygon_normal(a_obj, a_poly)
+        plane_normal_b = butil.global_polygon_normal(b_obj, b_poly, rev_normal)
         plane_normal_b = -plane_normal_b
         rotation_axis = np.cross(plane_normal_a, plane_normal_b)
 
@@ -200,6 +206,7 @@ def check_init_valid(
         a_obj_name, a_poly_index = obj_planes[i]
         b_obj_name, b_poly_index = assigned_planes[i]
         margin = margins[i]
+        rev_normal = rev_normals[i]
 
         a_obj = bpy.data.objects[a_obj_name]
         b_obj = bpy.data.objects[b_obj_name]
@@ -208,13 +215,13 @@ def check_init_valid(
         b_poly = b_obj.data.polygons[b_poly_index]
 
         # Get global coordinates and normals
-        plane_point_a = iu.global_vertex_coordinates(
+        plane_point_a = butil.global_vertex_coordinates(
             a_obj, a_obj.data.vertices[a_poly.vertices[0]]
         )
-        plane_point_b = iu.global_vertex_coordinates(
+        plane_point_b = butil.global_vertex_coordinates(
             b_obj, b_obj.data.vertices[b_poly.vertices[0]]
         )
-        plane_normal_b = iu.global_polygon_normal(b_obj, b_poly)
+        plane_normal_b = butil.global_polygon_normal(b_obj, b_poly, rev_normal)
         plane_point_b += plane_normal_b * margin
 
         # Append to the matrix A and vector b for Ax = c
@@ -277,6 +284,7 @@ def apply_relations_surfacesample(
     margins = []
     parent_tag_list = []
     relations = []
+    rev_normals = []
 
     if len(obj_state.relations) == 0:
         raise ValueError(f"Object {name} has no relations")
@@ -305,25 +313,34 @@ def apply_relations_surfacesample(
         parent_planes.append(parent_plane)
         parent_objs.append(parent_obj)
         match relation_state.relation:
-            case (
-                cl.StableAgainst(_child_tags, parent_tags, margin)
-                | cl.Touching(_child_tags, parent_tags, margin)
+            case cl.StableAgainst(
+                _child_tags, parent_tags, margin, _check_z, rev_normal
             ):
                 margins.append(margin)
                 parent_tag_list.append(parent_tags)
                 relations.append(relation_state.relation)
+                rev_normals.append(rev_normal)
             case cl.SupportedBy(_parent_tags, parent_tags):
                 margins.append(0)
                 parent_tag_list.append(parent_tags)
                 relations.append(relation_state.relation)
-            case cl.CoPlanar(_child_tags, parent_tags, margin):
+                rev_normals.append(False)
+            case cl.CoPlanar(_child_tags, parent_tags, margin, rev_normal):
                 margins.append(margin)
                 parent_tag_list.append(parent_tags)
                 relations.append(relation_state.relation)
+                rev_normals.append(rev_normal)
+            case cl.Touching(_child_tags, parent_tags, margin):
+                margins.append(margin)
+                parent_tag_list.append(parent_tags)
+                relations.append(relation_state.relation)
+                rev_normals.append(False)
             case _:
                 raise NotImplementedError
 
-    valid, dof, T = check_init_valid(state, name, obj_planes, parent_planes, margins)
+    valid, dof, T = check_init_valid(
+        state, name, obj_planes, parent_planes, margins, rev_normals
+    )
     if not valid:
         rels = [(rels.relation, rels.target_name) for rels in obj_state.relations]
         logger.warning(f"Init was invalid for {name=} {rels=}")
@@ -344,8 +361,9 @@ def apply_relations_surfacesample(
         margin2 = margins[1]
         obj_plane1 = obj_planes[0]
         obj_plane2 = obj_planes[1]
-        relation1 = relations[0]
         relation2 = relations[1]
+        rev_normal1 = rev_normals[0]
+        rev_normal2 = rev_normals[1]
 
         parent1_trimesh = state.planes.get_tagged_submesh(
             state.trimesh_scene, parent_obj1.name, parent_tags1, parent_plane1
@@ -356,7 +374,7 @@ def apply_relations_surfacesample(
 
         parent1_poly_index = parent_plane1[1]
         parent1_poly = parent_obj1.data.polygons[parent1_poly_index]
-        plane_normal_1 = iu.global_polygon_normal(parent_obj1, parent1_poly)
+        plane_normal_1 = butil.global_polygon_normal(parent_obj1, parent1_poly)
         pts = parent2_trimesh.vertices
         projected = project(pts, plane_normal_1)
         p1_to_p1 = trimesh.path.polygons.projected(
@@ -367,10 +385,6 @@ def apply_relations_surfacesample(
             raise ValueError(
                 f"Failed to project {parent1_trimesh=} {plane_normal_1=} for {name=}"
             )
-
-        if isinstance(relation2, cl.CoPlanar) or isinstance(relation1, cl.CoPlanar):
-            print("Here comes CoPlanar", obj_name)
-            butil.save_blend("debug.blend")
 
         if all(
             [p1_to_p1.buffer(1e-1).contains(Point(pt[0], pt[1])) for pt in projected]
@@ -386,6 +400,7 @@ def apply_relations_surfacesample(
                 obj_plane2,
                 parent_plane2,
                 margin=margin2,
+                rev_normal=rev_normal2,
             )
             stability.snap_against(
                 state.trimesh_scene,
@@ -394,6 +409,7 @@ def apply_relations_surfacesample(
                 obj_plane1,
                 parent_plane1,
                 margin=margin1,
+                rev_normal=rev_normal1,
             )
         else:
             face_mask = tagging.tagged_face_mask(parent_obj1, parent_tags1)
@@ -407,6 +423,7 @@ def apply_relations_surfacesample(
                 obj_plane1,
                 parent_plane1,
                 margin=margin1,
+                rev_normal=rev_normal1,
             )
             stability.snap_against(
                 state.trimesh_scene,
@@ -415,6 +432,7 @@ def apply_relations_surfacesample(
                 obj_plane2,
                 parent_plane2,
                 margin=margin2,
+                rev_normal=rev_normal2,
             )
 
     elif dof == 2:
@@ -446,9 +464,10 @@ def apply_relations_surfacesample(
                         obj_plane,
                         parent_plane,
                         margin=margin,
+                        rev_normal=relation_state.relation.rev_normal,
                     )
 
-                case cl.StableAgainst(_, parent_tags, margin):
+                case cl.StableAgainst(_, parent_tags, margin, _check_z, rev_normal):
                     stability.move_obj_random_pt(
                         state, obj_name, parent_obj.name, face_mask, parent_plane
                     )
@@ -459,6 +478,7 @@ def apply_relations_surfacesample(
                         obj_plane,
                         parent_plane,
                         margin=margin,
+                        rev_normal=rev_normal,
                     )
 
                 case cl.SupportedBy(_, parent_tags):
@@ -472,6 +492,7 @@ def apply_relations_surfacesample(
                         obj_plane,
                         parent_plane,
                         margin=0,
+                        rev_normal=False,
                     )
                 case _:
                     raise NotImplementedError
@@ -489,7 +510,7 @@ def validate_relations_feasible(state: state_def.State, name: str) -> bool:
 
 @gin.configurable
 def try_apply_relation_constraints(
-    state: state_def.State, name: str, n_try_resolve=10, visualize=True
+    state: state_def.State, name: str, n_try_resolve=10, visualize=False
 ):
     """
     name is in objs.name
@@ -518,6 +539,7 @@ def try_apply_relation_constraints(
             if visualize:
                 vis = butil.copy(obj_state.obj)
                 vis.name = obj_state.obj.name[:30] + "_noneplanes_" + str(retry)
+                butil.save_blend("test.blend")
             return False
 
         if validity.check_post_move_validity(state, name):
@@ -526,14 +548,9 @@ def try_apply_relation_constraints(
             return True
 
         if visualize:
-            if (
-                "monitor" in obj_state.obj.name.lower()
-                or "tv" in obj_state.obj.name.lower()
-            ):
-                vis = butil.copy(obj_state.obj)
-                vis.name = obj_state.obj.name[:30] + "_failure_" + str(retry)
-
-        butil.save_blend("test.blend")
+            vis = butil.copy(obj_state.obj)
+            vis.name = obj_state.obj.name[:30] + "_failure_" + str(retry)
+            butil.save_blend("test.blend")
 
     logger.debug(f"Exhausted {n_try_resolve=} tries for {name=}")
     return False

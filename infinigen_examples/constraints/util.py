@@ -69,8 +69,8 @@ spaced_wall = cl.StableAgainst(back, walltags, margin=0.8)
 hanging = cl.StableAgainst(top, ceilingtags, margin=0.05)
 side_against_wall = cl.StableAgainst(side, walltags, margin=0.05)
 
-front_coplanar_front = cl.CoPlanar(front, front, margin=0.05)
-back_coplanar_back = cl.CoPlanar(back, back, margin=0.05)
+front_coplanar_front = cl.CoPlanar(front, front, margin=0.05, rev_normal=True)
+back_coplanar_back = cl.CoPlanar(back, back, margin=0.05, rev_normal=True)
 
 ontop = cl.StableAgainst(bottom, top)
 on = cl.StableAgainst(bottom, {t.Subpart.SupportSurface})
