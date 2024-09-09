@@ -116,6 +116,12 @@ struct float3_nonbuiltin {
         z *= s;
         return *this;
     }
+    DEVICE_FUNC float norm() const {
+        return sqrt(x*x+y*y+z*z);
+    }
+    DEVICE_FUNC float dot(const float3_nonbuiltin &a) const {
+        return x*a.x+y*a.y+z*a.z;
+    }
 };
 
 DEVICE_FUNC float3_nonbuiltin operator*(float s, const float3_nonbuiltin &b) {

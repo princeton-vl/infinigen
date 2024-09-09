@@ -61,7 +61,7 @@ from infinigen.terrain.utils import (
     write_attributes,
 )
 
-assert ocmesher_version == "1.0"
+assert ocmesher_version == "2.0"
 
 logger = logging.getLogger(__name__)
 
