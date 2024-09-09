@@ -186,7 +186,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
 
     separate_xyz_2 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["X"]})
@@ -568,7 +568,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
     multiply_24 = nw.new_node(
         Nodes.Math,
         input_kwargs={
-            0: capture_attribute_1.outputs[2],
+            0: capture_attribute_1.outputs[1],
             1: capture_z_rigidity.outputs[2],
         },
         attrs={"operation": "MULTIPLY"},
@@ -601,8 +601,8 @@ def nodegroup_fish_fin(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": store_cloth_pin,
-            "Bump": capture_attribute_1.outputs[2],
-            "BumpMask": capture_attribute_2.outputs[2],
+            "Bump": capture_attribute_1.outputs[1],
+            "BumpMask": capture_attribute_2.outputs[1],
         },
     )
 

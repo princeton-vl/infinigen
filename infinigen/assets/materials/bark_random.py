@@ -920,7 +920,7 @@ def geo_bark_random(nw, base_color, geo_params, selection=None):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": group,
-            "initial_position": capture_attribute.outputs["Attribute"],
+            "initial_position": capture_attribute.outputs[1],
         },
     )
 

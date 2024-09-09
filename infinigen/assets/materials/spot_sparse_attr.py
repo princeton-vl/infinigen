@@ -178,7 +178,7 @@ def geometry_spots_sparse(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "Attribute": capture_attribute.outputs["Attribute"],
+            "Attribute": capture_attribute.outputs[1],
         },
     )
 

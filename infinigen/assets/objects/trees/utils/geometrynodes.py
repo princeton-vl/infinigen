@@ -444,7 +444,7 @@ def follow_curve(nw):
 
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     math = nw.new_node(
@@ -897,7 +897,7 @@ def bark_geo_2(nw):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "offset_barkgeo2": capture_attribute.outputs["Attribute"],
+            "offset_barkgeo2": capture_attribute.outputs[1],
         },
     )
 
@@ -981,7 +981,7 @@ def bark_geo_1(nw):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "offset_barkgeo1": capture_attribute.outputs["Attribute"],
+            "offset_barkgeo1": capture_attribute.outputs[1],
         },
     )
 

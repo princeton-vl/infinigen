@@ -700,7 +700,7 @@ def nodegroup_coconut_stem(
     map_range_2 = nw.new_node(
         Nodes.MapRange,
         input_kwargs={
-            "Value": capture_attribute.outputs[2],
+            "Value": capture_attribute.outputs[1],
             3: group_input.outputs["base scale"],
             4: group_input.outputs["top scale"],
         },
@@ -722,7 +722,7 @@ def nodegroup_coconut_stem(
     )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[2], 4: 0.01}
+        Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[1], 4: 0.01}
     )
 
     combine_xyz = nw.new_node(
@@ -759,7 +759,7 @@ def nodegroup_coconut_stem(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": join_geometry,
-            "distance to edge": capture_attribute_1.outputs[2],
+            "distance to edge": capture_attribute_1.outputs[1],
         },
     )
 

@@ -236,7 +236,7 @@ def nodegroup_leg_part(nw: NodeWrangler):
     )
 
     greater_than = nw.new_node(
-        Nodes.Compare, input_kwargs={0: capture_attribute_1.outputs[2], 1: 0.9}
+        Nodes.Compare, input_kwargs={0: capture_attribute_1.outputs[1], 1: 0.9}
     )
 
     delete_geometry_1 = nw.new_node(

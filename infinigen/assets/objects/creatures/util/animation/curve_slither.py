@@ -231,7 +231,7 @@ def nodegroup_wiggles(nw: NodeWrangler):
         nodegroup_add_loopbacks().name,
         input_kwargs={
             "Geometry": addwiggles,
-            "Vector": capture_attribute.outputs["Attribute"],
+            "Vector": capture_attribute.outputs[1],
             "Amount": group_input.outputs["Loopyness"],
             "Randomness": group_input.outputs["LoopRandom"],
         },

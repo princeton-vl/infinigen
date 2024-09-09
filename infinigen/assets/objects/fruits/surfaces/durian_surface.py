@@ -202,6 +202,6 @@ def nodegroup_durian_surface(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_material,
-            "distance to center": capture_attribute.outputs[2],
+            "distance to center": capture_attribute.outputs[1],
         },
     )

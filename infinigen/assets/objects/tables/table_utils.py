@@ -192,7 +192,7 @@ def nodegroup_n_gon_cylinder(nw: NodeWrangler):
         Nodes.SampleCurve,
         input_kwargs={
             "Curves": group_input.outputs["Radius Curve"],
-            "Factor": capture_attribute.outputs[2],
+            "Factor": capture_attribute.outputs[1],
         },
         attrs={"use_all_curves": True},
     )

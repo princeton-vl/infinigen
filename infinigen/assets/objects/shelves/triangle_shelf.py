@@ -172,7 +172,7 @@ def nodegroup_curve_to_board(nw: NodeWrangler):
         Nodes.SampleCurve,
         input_kwargs={
             "Curve": group_input.outputs["Profile Curve"],
-            "Factor": capture_attribute.outputs[2],
+            "Factor": capture_attribute.outputs[1],
         },
         attrs={"mode": "FACTOR"},
     )
@@ -325,7 +325,7 @@ def nodegroup_leg_straight(nw: NodeWrangler):
         Nodes.SampleCurve,
         input_kwargs={
             "Curve": group_input.outputs["Profile Curve"],
-            "Factor": capture_attribute.outputs[2],
+            "Factor": capture_attribute.outputs[1],
         },
         attrs={"mode": "FACTOR"},
     )

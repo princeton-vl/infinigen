@@ -7,7 +7,11 @@
 import logging
 from collections import OrderedDict
 
-from .node_info import DATATYPE_FIELDS, NODETYPE_TO_DATATYPE, Nodes
+from .node_info import (
+    NODECLASS_TO_DATATYPE,
+    Nodes,
+)
+from .utils import infer_output_socket
 
 logger = logging.getLogger(__name__)
 
@@ -151,23 +155,55 @@ def compat_musgrave_texture(nw, orig_type, input_args, attrs, input_kwargs):
 
 
 def compat_capture_attribute(nw, orig_type, input_args, attrs, input_kwargs):
-    types = ["VECTOR", "VALUE", "RGBA", "BOOLEAN", "INT"]
-    data_type = None
+    if "Geometry" in input_kwargs:
+        geometry = input_kwargs.pop("Geometry")
+    elif len(input_args) >= 1:
+        geometry = input_args.pop(0)
+    else:
+        raise ValueError(
+            f"Geometry is not given for {orig_type=} and {input_args=} and {input_kwargs=}"
+        )
+
     if "data_type" in attrs:
         data_type = attrs.pop("data_type")
-    if len(input_args) > 1:
-        j, i = next((j, i) for j, i in enumerate(input_args[1:]) if i is not None)
-        data_type = NODETYPE_TO_DATATYPE[types[j]]
-        input_kwargs[DATATYPE_FIELDS[NODETYPE_TO_DATATYPE[types[j]]]] = i
+    else:
+        data_type = None
+    data_types = {}
+
+    inputs = {}
+
+    def get_name(k):
+        if isinstance(k, int):
+            if "Attribute" in inputs:
+                return f"Attribute_{k}"
+            return "Attribute"
+        return k
+
+    for k, v in input_kwargs.items():
+        k = get_name(k)
+        inputs[k] = v
+        data_types[k] = (
+            NODECLASS_TO_DATATYPE[infer_output_socket(v).bl_idname]
+            if data_type is None
+            else data_type
+        )
+    for k, v in enumerate(input_args):
+        k += 1
+        inputs[k] = v
+        data_types[k] = (
+            NODECLASS_TO_DATATYPE[infer_output_socket(v).bl_idname]
+            if data_type is None
+            else data_type
+        )
     node = nw.new_node(
         node_type=orig_type,
-        input_args=[],
+        input_args=[geometry],
         attrs=attrs,
-        input_kwargs=input_kwargs,
+        input_kwargs=inputs,
         compat_mode=False,
     )
-    if data_type is not None:
-        node.capture_items[0].data_type = data_type
+    for i, d in enumerate(data_types.values()):
+        node.capture_items[i].data_type = d
     return node
 
 

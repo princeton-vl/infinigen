@@ -730,7 +730,7 @@ def nodegroup_tree_cracks(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: capture_attribute.outputs[2], 1: uniform(0.1, 0.25)},
+        input_kwargs={0: capture_attribute.outputs[1], 1: uniform(0.1, 0.25)},
         attrs={"operation": "MULTIPLY"},
     )
 

@@ -165,9 +165,9 @@ class MonocotGrowthFactory(AssetFactory):
                     },
                     attrs={"pivot_axis": "Z"},
                 )
-            points, _, z_rotation = nw.new_node(
-                Nodes.CaptureAttribute, [points, None, z_rotation]
-            ).outputs[:3]
+            points, z_rotation = nw.new_node(
+                Nodes.CaptureAttribute, [points, z_rotation]
+            ).outputs
             leaves = nw.new_node(Nodes.CollectionInfo, [leaves, True, True])
             is_leaf = reduce(
                 lambda *xs: nw.boolean_math("AND", *xs),

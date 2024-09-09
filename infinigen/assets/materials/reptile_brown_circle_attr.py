@@ -394,8 +394,8 @@ def geometry_reptile_vor_attr(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute_1.outputs["Geometry"],
-            "attr1": capture_attribute.outputs["Attribute"],
-            "attr2": capture_attribute_1.outputs["Attribute"],
+            "attr1": capture_attribute.outputs[1],
+            "attr2": capture_attribute_1.outputs[1],
         },
     )
 

@@ -224,7 +224,7 @@ def nodegroup_dragonfly_tail(
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute.outputs[2], 3: 1.0, 4: 0.8},
+        input_kwargs={"Value": capture_attribute.outputs[1], 3: 1.0, 4: 0.8},
     )
 
     multiply = nw.new_node(

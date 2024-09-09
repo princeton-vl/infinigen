@@ -557,8 +557,8 @@ def nodegroup_ginko(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "Vein": capture_attribute_1.outputs[2],
-            "Shape": capture_attribute.outputs[2],
+            "Vein": capture_attribute_1.outputs[1],
+            "Shape": capture_attribute.outputs[1],
             "Wave": multiply_5,
         },
     )

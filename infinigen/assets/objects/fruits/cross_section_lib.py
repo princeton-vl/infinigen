@@ -200,7 +200,7 @@ def nodegroup_star_cross_section(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "curve parameters": capture_attribute.outputs[2],
+            "curve parameters": capture_attribute.outputs[1],
         },
     )
 
@@ -415,6 +415,6 @@ def nodegroup_coconut_cross_section(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "curve parameters": capture_attribute.outputs[2],
+            "curve parameters": capture_attribute.outputs[1],
         },
     )

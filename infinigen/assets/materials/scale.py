@@ -577,8 +577,8 @@ def geo_scale(nw, rand=True, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute_4.outputs["Geometry"],
-            "attr2": capture_attribute_1.outputs["Attribute"],
-            "attr5": capture_attribute_4.outputs["Attribute"],
+            "attr2": capture_attribute_1.outputs[1],
+            "attr5": capture_attribute_4.outputs[1],
         },
         attrs={"is_active_output": True},
     )

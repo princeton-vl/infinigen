@@ -415,7 +415,7 @@ def nodegroup_eyelid_radius(nw: NodeWrangler):
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": transform, "Attribute": capture_attribute.outputs[2]},
+        input_kwargs={"Geometry": transform, "Attribute": capture_attribute.outputs[1]},
     )
 
 
@@ -634,8 +634,8 @@ def nodegroup_eyelid_circle(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "Attribute": capture_attribute.outputs[2],
-            "Attribute1": capture_attribute_1.outputs["Attribute"],
+            "Attribute": capture_attribute.outputs[1],
+            "Attribute1": capture_attribute_1.outputs[1],
         },
     )
 

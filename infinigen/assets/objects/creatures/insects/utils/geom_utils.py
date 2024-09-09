@@ -906,8 +906,8 @@ def nodegroup_shape_quadratic(
         Nodes.GroupOutput,
         input_kwargs={
             "Mesh": curve_to_mesh,
-            "spline parameter": capture_attribute.outputs[2],
-            "spline tangent": capture_attribute_1.outputs["Attribute"],
+            "spline parameter": capture_attribute.outputs[1],
+            "spline tangent": capture_attribute_1.outputs[1],
             "radius to center": geometry_proximity.outputs["Distance"],
         },
     )

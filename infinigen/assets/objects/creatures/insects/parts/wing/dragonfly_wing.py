@@ -170,12 +170,12 @@ def nodegroup_dragonfly_wing(nw: NodeWrangler):
 
     less_than = nw.new_node(
         Nodes.Compare,
-        input_kwargs={0: capture_attribute.outputs[2], 1: 0.65},
+        input_kwargs={0: capture_attribute.outputs[1], 1: 0.65},
         attrs={"operation": "LESS_THAN"},
     )
 
     greater_than = nw.new_node(
-        Nodes.Compare, input_kwargs={0: capture_attribute.outputs[2], 1: 0.84}
+        Nodes.Compare, input_kwargs={0: capture_attribute.outputs[1], 1: 0.84}
     )
 
     op_or = nw.new_node(

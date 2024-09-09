@@ -234,7 +234,7 @@ def nodegroup_leaf_geometry(nw: NodeWrangler):
 
     set_leaf_countour = nw.new_node(
         nodegroup_set_leaf_countour().name,
-        input_kwargs={"Value": capture_attribute_3.outputs[2]},
+        input_kwargs={"Value": capture_attribute_3.outputs[1]},
     )
 
     set_position_8 = nw.new_node(
@@ -253,7 +253,7 @@ def nodegroup_leaf_geometry(nw: NodeWrangler):
         Nodes.ExtrudeMesh,
         input_kwargs={
             "Mesh": curve_to_mesh_2,
-            "Offset": capture_attribute_2.outputs["Attribute"],
+            "Offset": capture_attribute_2.outputs[1],
             "Offset Scale": set_leaf_countour.outputs["Value"],
         },
         attrs={"mode": "EDGES"},

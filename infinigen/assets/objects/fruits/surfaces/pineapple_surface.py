@@ -327,6 +327,6 @@ def nodegroup_pineapple_cell_body(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position_1,
-            "spline parameter": capture_attribute.outputs[2],
+            "spline parameter": capture_attribute.outputs[1],
         },
     )

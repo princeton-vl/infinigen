@@ -1087,8 +1087,8 @@ def nodegroup_curtain(nw: NodeWrangler):
     combine_xyz_12 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={
-            "X": capture_attribute_1.outputs[2],
-            "Y": capture_attribute.outputs[2],
+            "X": capture_attribute_1.outputs[1],
+            "Y": capture_attribute.outputs[1],
         },
     )
 

@@ -318,7 +318,7 @@ def nodegroup_dragonfly_body(
     )
 
     reroute = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": capture_attribute.outputs[2]}
+        Nodes.Reroute, input_kwargs={"Input": capture_attribute.outputs[1]}
     )
 
     less_than = nw.new_node(

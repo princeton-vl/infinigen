@@ -1010,7 +1010,7 @@ def nodegroup_leaf_gen(
         Nodes.GroupOutput,
         input_kwargs={
             "Mesh": capture_attribute,
-            "Attribute": capture_attribute.outputs[2],
+            "Attribute": capture_attribute.outputs[1],
             "X Modulated": midrib.outputs["X Modulated"],
             "Vein Coord": veincoord,
         },
@@ -1567,7 +1567,7 @@ def geo_leaf_v2(nw, **kwargs):
         input_kwargs={
             "Geometry": movetoorigin,
             "Attribute": leafgen.outputs["Attribute"],
-            "Coordinate": capture_attribute.outputs["Attribute"],
+            "Coordinate": capture_attribute.outputs[1],
         },
     )
 

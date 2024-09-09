@@ -537,7 +537,7 @@ def nodegroup_scales(nw: NodeWrangler):
 
     separate_xyz_7 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute_1.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute_1.outputs[1]},
     )
 
     attribute_statistic = nw.new_node(
@@ -595,7 +595,7 @@ def nodegroup_scales(nw: NodeWrangler):
         input_kwargs={
             "Geometry": capture_attribute_4.outputs["Geometry"],
             "attr2": combine_xyz_3,
-            "attr5": capture_attribute_4.outputs["Attribute"],
+            "attr5": capture_attribute_4.outputs[1],
         },
     )
 

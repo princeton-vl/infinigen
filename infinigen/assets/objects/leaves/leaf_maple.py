@@ -1190,7 +1190,7 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[2]},
+        input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[1]},
     )
 
 

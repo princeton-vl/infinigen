@@ -72,7 +72,7 @@ def nodegroup_chameleon_toe(nw: NodeWrangler):
         input_kwargs={
             "Geometry": curve_to_mesh,
             "Name": "Ridge",
-            "Value": capture_attribute.outputs[2],
+            "Value": capture_attribute.outputs[1],
         },
         attrs={"data_type": "FLOAT", "domain": "POINT"},
     )
