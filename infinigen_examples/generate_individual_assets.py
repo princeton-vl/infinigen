@@ -192,7 +192,113 @@ def build_scene_surface(args, factory_name, idx):
             assign_material(plane, material)
             if type(scatter) is type:
                 scatter = scatter(idx)
-            scatter.apply(plane, selection=density.placement_mask(0.15, 0.45))
+
+            if args.use_obj:
+                match scatter.__name__:
+                    case "infinigen.assets.scatters.chopped_trees":
+                        scatter.ChoppedTreesGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.clothes":
+                        scatter.ClothesCover()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.coral_reef":
+                        scatter.CoralReefGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.decorative_plants":
+                        scatter.DecorativePlantsGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.fern":
+                        scatter.FernGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.flowerplant":
+                        scatter.FlowerplantGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.grass":
+                        scatter.GrassGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.ground_leaves":
+                        scatter.GroundLeavesGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.ground_mushroom":
+                        scatter.Mushrooms()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.ground_twigs":
+                        scatter.GroundTwigsGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.ivy":
+                        scatter.Ivy()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.jellyfish":
+                        scatter.JellyfishGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.lichen":
+                        scatter.Lichen()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.mollusk":
+                        scatter.MolluskGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.monocots":
+                        scatter.MonocotsGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.moss":
+                        scatter.MossCover()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.mushroom":
+                        scatter.MushroomGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.pebbles":
+                        scatter.PebblesGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.pine_needle":
+                        scatter.PineNeedleGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.pinecone":
+                        scatter.PineconeGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.seashells":
+                        scatter.SeashellsGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.seaweed":
+                        scatter.SeaweedGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.slime_mold":
+                        scatter.SlimeMold()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.snow_layer":
+                        scatter.Snowlayer()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+                    case "infinigen.assets.scatters.urchin":
+                        scatter.UrchinGenerator()(
+                            plane, selection=density.placement_mask(0.15, 0.45)
+                        )
+            else:
+                scatter.apply(plane, selection=density.placement_mask(0.15, 0.45))
+
+            # scatter.apply(plane, selection=density.placement_mask(0.15, 0.45))
             asset = plane
     except ModuleNotFoundError:
         try:

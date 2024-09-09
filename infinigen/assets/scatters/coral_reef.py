@@ -65,3 +65,71 @@ def apply_horizontal(obj, scale=1, density=5.0, n=4, selection=None):
     )
 
     return scatter_obj, corals
+
+
+class CoralReef:
+    def __init__(self):
+        pass
+
+    def __call__(
+        self,
+        obj,
+        scale=1,
+        density=5.0,
+        n=12,
+        selection=None,
+        horizontal=False,
+        **kwargs,
+    ):
+        if horizontal:
+            return apply_horizontal(obj, scale, density, n, selection)
+        else:
+            return apply_all(obj, scale, density, n, selection)
+
+    def apply_all(self, obj, scale=1, density=5.0, n=12, selection=None):
+        n_species = np.random.randint(5, 10)
+        factories = [CoralFactory(np.random.randint(1e7)) for i in range(n_species)]
+        corals = make_asset_collection(
+            factories, name="coral", weights=U(0.8, 1, len(factories)), n=n
+        )
+
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=corals,
+            density=density,
+            min_spacing=scale * 0.7,
+            scale=scale,
+            scale_rand=0.5,
+            scale_rand_axi=U(0, 0.2),
+            selection=selection,
+        )
+
+        return scatter_obj, corals
+
+    def apply_horizontal(self, obj, scale=1, density=5.0, n=4, selection=None):
+        n_species = np.random.randint(2, 3)
+        factories = [
+            TableCoralFactory(np.random.randint(1e5)) for _ in range(n_species)
+        ]
+        corals = make_asset_collection(
+            factories,
+            name="coral",
+            weights=np.random.uniform(0.8, 1, len(factories)),
+            n=n,
+            verbose=True,
+        )
+        r = np.deg2rad(10)
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=corals,
+            density=density,
+            min_spacing=scale * 0.5,
+            scale=1.5,
+            scale_rand=U(0.2, 0.8),
+            scale_rand_axi=U(0, 0.3),
+            normal=(0, 0, 1),
+            rotation_offset=lambda nw: nw.uniform(3 * (-r,), 3 * (r,)),
+            selection=selection,
+        )
+
+        return scatter_obj, corals
