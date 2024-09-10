@@ -5,6 +5,7 @@
 from numpy.random import uniform
 
 from infinigen.assets import colors
+from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -18,6 +19,7 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
         ),
         [(0, uniform(0, 0.2)), (1, uniform(0.4, 0.7))],
     )
+    color_hsv = color_hsv or colors.metal_hsv()
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={
@@ -36,5 +38,8 @@ class MetalBasic:
     def generate(self, selection=None, **kwargs):
         color = colors.metal_hsv()
         return surface.shaderfunc_to_material(shader_metal, color)
+
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_metal, selection, **kwargs)
 
     __call__ = generate

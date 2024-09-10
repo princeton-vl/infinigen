@@ -3,6 +3,7 @@
 
 # Authors: Hongyu Wen
 
+from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -113,5 +114,8 @@ class BlackGlass:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_black_glass)
+
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_black_glass, selection, **kwargs)
 
     __call__ = generate
