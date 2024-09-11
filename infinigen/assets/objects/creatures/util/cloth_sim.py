@@ -156,6 +156,7 @@ def bake_cloth(obj, settings=None, attributes=None, frame_start=None, frame_end=
             "active_object": obj,
             "point_cache": mod.point_cache,
         }
-        bpy.ops.ptcache.bake(override, bake=True)
+        with bpy.context.temp_override(**override):
+            bpy.ops.ptcache.bake(bake=True)
 
     return mod

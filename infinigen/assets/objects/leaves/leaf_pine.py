@@ -23,7 +23,7 @@ def shader_needle(nw):
     # Code generated using version 2.3.1 of the node_transpiler
 
     velvet_bsdf = nw.new_node(
-        "ShaderNodeBsdfVelvet", input_kwargs={"Color": (0.016, 0.2241, 0.0252, 1.0)}
+        "ShaderNodeBsdfSheen", input_kwargs={"Color": (0.016, 0.2241, 0.0252, 1.0)}
     )
 
     glossy_bsdf = nw.new_node(
@@ -363,7 +363,7 @@ def nodegroup_pine_twig(nw):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 20),
+            ("NodeSocketInt", "Resolution", 20),
             ("NodeSocketFloat", "Middle Y", 0.0),
             ("NodeSocketFloat", "Middle Z", 0.0),
             ("NodeSocketFloat", "Needle Density", 0.9),

@@ -146,7 +146,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorXYZ", "FinScale", (1.0000, 1.0000, 0.5000)),
+            ("NodeSocketVector", "FinScale", (1.0000, 1.0000, 0.5000)),
             ("NodeSocketFloat", "RoundWeight", 1.0000),
             ("NodeSocketFloat", "Freq", 69.1150),
             ("NodeSocketFloat", "OffsetWeightZ", 1.0000),
@@ -649,9 +649,17 @@ class FishFin(PartFactory):
         )
         butil.set_geomod_inputs(mod, params)
 
-        id1 = mod.node_group.outputs["Bump"].identifier
+        id1 = next(
+            s
+            for s in mod.node_group.interface.items_tree
+            if s.in_out == "OUTPUT" and s.name == "Bump"
+        ).identifier
         mod[f"{id1}_attribute_name"] = "Bump"
-        id2 = mod.node_group.outputs["BumpMask"].identifier
+        id2 = next(
+            s
+            for s in mod.node_group.interface.items_tree
+            if s.in_out == "OUTPUT" and s.name == "BumpMask"
+        ).identifier
         mod[f"{id2}_attribute_name"] = "BumpMask"
 
         butil.apply_modifiers(fin, mod)

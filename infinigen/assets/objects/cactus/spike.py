@@ -94,7 +94,7 @@ def geo_spikes(nw: NodeWrangler, spikes, points_fn=None, realize=True):
     rotation = nw.new_node(
         Nodes.RotateEuler,
         input_kwargs={"Rotation": rotation, "Angle": nw.uniform(0, 2 * np.pi)},
-        attrs={"type": "AXIS_ANGLE", "space": "LOCAL"},
+        attrs={"rotation_type": "AXIS_ANGLE", "space": "LOCAL"},
     )
     rotation = nw.new_node(
         Nodes.AlignEulerToVector, [rotation, nw.uniform(0.2, 0.5)], attrs={"axis": "Z"}

@@ -20,7 +20,7 @@ class Snowlayer:
         tag_object(snow, "boulder")
 
 
-def apply(obj):
+def apply(obj, selection=None, **kwargs):
     snowlayer = Snowlayer()
     snowlayer.apply(obj)
     return snowlayer

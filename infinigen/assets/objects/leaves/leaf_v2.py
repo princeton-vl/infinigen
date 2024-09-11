@@ -422,7 +422,6 @@ def shader_nodegroup_leaf_gen(
     input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketGeometry", "Mesh", None),
             ("NodeSocketFloat", "Displancement scale", 0.01),
             ("NodeSocketFloat", "Vein Asymmetry", 0.8),
             ("NodeSocketFloat", "Vein Density", 10.0),

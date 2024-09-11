@@ -172,7 +172,7 @@ def nodegroup_cat_nose(nw: NodeWrangler):
             ("NodeSocketFloat", "Nose Radius", 0.06),
             ("NodeSocketFloat", "Nostril Size", 0.025),
             ("NodeSocketFloat", "Crease", 0.008),
-            ("NodeSocketVectorXYZ", "Scale", (1.2, 1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.2, 1.0, 1.0)),
         ],
     )
 

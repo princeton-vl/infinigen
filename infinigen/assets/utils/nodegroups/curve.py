@@ -286,7 +286,7 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 32),
+            ("NodeSocketInt", "Resolution", 32),
             ("NodeSocketVector", "Origin", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "angles_deg", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Seg Lengths", (0.3, 0.3, 0.3)),
@@ -402,15 +402,15 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Do Bezier"],
-            14: subdivide_curve_1,
-            15: subdivide_curve,
+            0: group_input.outputs["Do Bezier"],
+            1: subdivide_curve_1,
+            2: subdivide_curve,
         },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Curve": switch.outputs[6], "Endpoint": polartocart_2},
+        input_kwargs={"Curve": switch, "Endpoint": polartocart_2},
     )
 
 

@@ -262,7 +262,7 @@ def nodegroup_instance_on_points(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "rotation base", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "rotation delta", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "translation", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "scale", 0.0),
             ("NodeSocketGeometry", "Points", None),
             ("NodeSocketGeometry", "Instance", None),
@@ -319,10 +319,10 @@ def nodegroup_shape_quadratic(
             ("NodeSocketFloat", "random seed pos", 0.0),
             ("NodeSocketFloat", "noise scale pos", 0.0),
             ("NodeSocketFloat", "noise amount pos", 0.0),
-            ("NodeSocketIntUnsigned", "Resolution", 256),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, -1.5)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.0, 1.5)),
+            ("NodeSocketInt", "Resolution", 256),
+            ("NodeSocketVector", "Start", (0.0, 0.0, -1.5)),
+            ("NodeSocketVector", "Middle", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "End", (0.0, 0.0, 1.5)),
         ],
     )
 
@@ -510,7 +510,7 @@ def nodegroup_add_dent(nw: NodeWrangler, dent_control_points):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: group_input.outputs["bottom"], 6: greater_than, 7: op_not},
+        input_kwargs={0: group_input.outputs["bottom"], 1: greater_than, 2: op_not},
         attrs={"input_type": "BOOLEAN"},
     )
 
@@ -550,7 +550,7 @@ def nodegroup_add_dent(nw: NodeWrangler, dent_control_points):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": group_input.outputs["Geometry"],
-            "Selection": switch.outputs[2],
+            "Selection": switch,
             "Offset": scale.outputs["Vector"],
         },
     )
@@ -740,7 +740,7 @@ def nodegroup_attach_to_nearest(nw: NodeWrangler):
             ("NodeSocketGeometry", "Target", None),
             ("NodeSocketFloat", "threshold", 0.0),
             ("NodeSocketFloat", "multiplier", 0.5),
-            ("NodeSocketVectorTranslation", "Offset", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Offset", (0.0, 0.0, 0.0)),
         ],
     )
 
@@ -930,14 +930,14 @@ def nodegroup_hair(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "shape noise random seed", 0.0),
             ("NodeSocketFloat", "shape noise amount", 1.0),
-            ("NodeSocketIntUnsigned", "length resolution", 8),
+            ("NodeSocketInt", "length resolution", 8),
             ("NodeSocketInt", "cross section resolution", 4),
             ("NodeSocketFloat", "scale", 0.0),
             ("NodeSocketFloat", "Radius", 0.01),
             ("NodeSocketMaterial", "Material", None),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, 0.3, 1.0)),
-            ("NodeSocketVectorTranslation", "End", (0.0, -1.4, 2.0)),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (0.0, 0.3, 1.0)),
+            ("NodeSocketVector", "End", (0.0, -1.4, 2.0)),
         ],
     )
 

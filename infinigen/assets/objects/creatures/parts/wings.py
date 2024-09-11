@@ -160,7 +160,7 @@ def nodegroup_bird_tail(nw: NodeWrangler):
             ("NodeSocketVector", "Feather Length Rad1 Rad2", (0.5, 0.08, 0.1)),
             ("NodeSocketVector", "Feather Rot Extent", (136.51, -11.8, 34.0)),
             ("NodeSocketVector", "Feather Rot Rand Bounds", (5.0, 5.0, 5.0)),
-            ("NodeSocketIntUnsigned", "N Feathers", 16),
+            ("NodeSocketInt", "N Feathers", 16),
         ],
     )
 
@@ -718,7 +718,7 @@ def nodegroup_flying_bird_tail(nw: NodeWrangler):
             ("NodeSocketVector", "Feather Length Rad1 Rad2", (0.5000, 0.0800, 0.1000)),
             ("NodeSocketVector", "Feather Rot Extent", (136.5100, -11.8000, 34.0000)),
             ("NodeSocketVector", "Feather Rot Rand Bounds", (5.0000, 5.0000, 5.0000)),
-            ("NodeSocketIntUnsigned", "N Feathers", 16),
+            ("NodeSocketInt", "N Feathers", 16),
         ],
     )
 

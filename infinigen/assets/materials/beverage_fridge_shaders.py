@@ -74,7 +74,7 @@ def shader_white_metal_001(nw: NodeWrangler):
             "Roughness": 0.1000,
             "Anisotropic": 0.9182,
             "Sheen Weight": 0.0455,
-            "Sheen Tint": 0.4948,
+            "Sheen Tint": (0, 0, 0, 0.4948),
         },
         attrs={"subsurface_method": "BURLEY"},
     )

@@ -220,13 +220,13 @@ def nodegroup_lofting(nw: NodeWrangler):
 
     evaluate_on_domain = nw.new_node(
         Nodes.EvaluateonDomain,
-        input_kwargs={1: index},
+        input_kwargs={0: index},
         attrs={"data_type": "INT", "domain": "CURVE"},
     )
 
     equal = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: evaluate_on_domain.outputs[1]},
+        input_kwargs={2: evaluate_on_domain},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
 
@@ -273,7 +273,7 @@ def nodegroup_lofting(nw: NodeWrangler):
         Nodes.SampleIndex,
         input_kwargs={
             "Geometry": group_input.outputs["Profile Curves"],
-            3: position,
+            "Value": position,
             "Index": flipindex,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
@@ -283,7 +283,7 @@ def nodegroup_lofting(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": realize_instances,
-            "Position": sample_index_2.outputs[2],
+            "Position": sample_index_2,
         },
     )
 
@@ -302,16 +302,16 @@ def nodegroup_lofting(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Use Nurb"],
-            14: set_spline_type_1,
-            15: set_spline_type,
+            0: group_input.outputs["Use Nurb"],
+            1: set_spline_type_1,
+            2: set_spline_type,
         },
     )
 
     resample_curve_1 = nw.new_node(
         Nodes.ResampleCurve,
         input_kwargs={
-            "Curve": switch.outputs[6],
+            "Curve": switch,
             "Count": group_input.outputs["V Resolution"],
         },
     )
@@ -330,7 +330,7 @@ def nodegroup_lofting(nw: NodeWrangler):
         Nodes.SampleIndex,
         input_kwargs={
             "Geometry": resample_curve_1,
-            3: position_1,
+            "Value": position_1,
             "Index": flipindex_1,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
@@ -340,7 +340,7 @@ def nodegroup_lofting(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": cylinderside.outputs["Geometry"],
-            "Position": sample_index_3.outputs[2],
+            "Position": sample_index_3,
         },
     )
 
@@ -394,7 +394,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
 
     equal = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: evaluate_on_domain.outputs[1]},
+        input_kwargs={"A": evaluate_on_domain},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -441,7 +441,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
         Nodes.SampleIndex,
         input_kwargs={
             "Geometry": group_input.outputs["Profile Curves"],
-            3: position,
+            "Value": position,
             "Index": flipindex_001,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
@@ -451,7 +451,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": realize_instances,
-            "Position": sample_index_2.outputs[2],
+            "Position": sample_index_2,
         },
     )
 
@@ -468,15 +468,15 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Use Nurb"],
-            14: set_spline_type_1,
-            15: set_spline_type,
+            0: group_input.outputs["Use Nurb"],
+            1: set_spline_type_1,
+            2: set_spline_type,
         },
     )
 
     resample_curve_1 = nw.new_node(
         Nodes.ResampleCurve,
-        input_kwargs={"Curve": switch.outputs[6], "Count": reroute_2},
+        input_kwargs={"Curve": switch, "Count": reroute_2},
     )
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -493,7 +493,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
         Nodes.SampleIndex,
         input_kwargs={
             "Geometry": resample_curve_1,
-            3: position_1,
+            "Value": position_1,
             "Index": flipindex_001_1,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
@@ -503,7 +503,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": cylinderside_001.outputs["Geometry"],
-            "Position": sample_index_3.outputs[2],
+            "Position": sample_index_3,
         },
     )
 
@@ -585,7 +585,7 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     sample_index_3 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": resample_curve, 3: position_1, "Index": round},
+        input_kwargs={"Geometry": resample_curve, "Value": position_1, "Index": round},
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
@@ -593,7 +593,7 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     sample_index_5 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": resample_curve, 3: normal, "Index": round},
+        input_kwargs={"Geometry": resample_curve, "Value": normal, "Index": round},
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
@@ -603,7 +603,7 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     scale = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: sample_index_5.outputs[2], "Scale": separate_xyz.outputs["X"]},
+        input_kwargs={0: sample_index_5, "Scale": separate_xyz.outputs["X"]},
         attrs={"operation": "SCALE"},
     )
 
@@ -611,13 +611,17 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     sample_index_4 = nw.new_node(
         Nodes.SampleIndex,
-        input_kwargs={"Geometry": resample_curve, 3: curve_tangent, "Index": round},
+        input_kwargs={
+            "Geometry": resample_curve,
+            "Value": curve_tangent,
+            "Index": round,
+        },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     cross_product = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: sample_index_4.outputs[2], 1: sample_index_5.outputs[2]},
+        input_kwargs={0: sample_index_4, 1: sample_index_5},
         attrs={"operation": "CROSS_PRODUCT"},
     )
 
@@ -637,7 +641,7 @@ def nodegroup_warp_around_curve(nw: NodeWrangler):
 
     add_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: sample_index_3.outputs[2], 1: add_1.outputs["Vector"]},
+        input_kwargs={0: sample_index_3, 1: add_1.outputs["Vector"]},
     )
 
     set_position = nw.new_node(

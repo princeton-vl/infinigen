@@ -295,20 +295,21 @@ def configure_blender(
         bpy.context.scene.cycles.motion_blur_position = "START"
         bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
 
-        addons = ["extra_mesh_objects", "real_snow", "antlandscape"]
-        for addon in addons:
-            try:
-                with butil.Suppress():
-                    bpy.ops.extensions.package_mark_clear_all()
-                    bpy.ops.extensions.package_mark_set(pkg_id=addon, repo_index=-1)
-                    bpy.ops.extensions.package_enable_not_installed()
-                logger.info(f"Add-on {addon} enabled.")
-            except ValueError | RuntimeError:
-                with butil.Suppress():
-                    bpy.ops.extensions.userpref_allow_online()
-                logger.info(f"Installing Add-on {addon}.")
-                with butil.Suppress():
-                    bpy.ops.extensions.package_install(
-                        repo_index=0, pkg_id=addon, enable_on_install=True
-                    )
-                logger.info(f"Add-on {addon} Installed.")
+    addons = ["extra_mesh_objects", "real_snow", "antlandscape"]
+    for addon in addons:
+        long = f"bl_ext.blender_org.{addon}"
+        try:
+            with butil.Suppress():
+                bpy.ops.preferences.addon_enable(module=long)
+            assert long in bpy.context.preferences.addons.keys()
+            logger.info(f"Add-on {addon} enabled.")
+        except RuntimeError:
+            with butil.Suppress():
+                bpy.ops.extensions.userpref_allow_online()
+            logger.info(f"Installing Add-on {addon}.")
+            with butil.Suppress():
+                bpy.ops.extensions.package_install(
+                    repo_index=0, pkg_id=addon, enable_on_install=True
+                )
+            assert long in bpy.context.preferences.addons.keys()
+            logger.info(f"Add-on {addon} Installed.")

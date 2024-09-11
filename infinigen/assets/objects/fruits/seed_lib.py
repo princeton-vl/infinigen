@@ -44,7 +44,7 @@ def nodegroup_strawberry_seed(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 8)]
+        Nodes.GroupInput, expose_input=[("NodeSocketInt", "Resolution", 8)]
     )
 
     quadratic_bezier = nw.new_node(

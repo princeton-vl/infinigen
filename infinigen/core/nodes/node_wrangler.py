@@ -19,7 +19,7 @@ import bpy
 import numpy as np
 
 from infinigen.core.nodes import node_info
-from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_info import Nodes, map_socket
 from infinigen.core.util.random import random_vector3
 
 from .compatibility import COMPATIBILITY_MAPPINGS
@@ -174,7 +174,7 @@ class NodeWrangler:
                     input_item, list
                 ), "Multi-input sockets to GroupOutput nodes are impossible"
                 if input_socket_name not in node.inputs:
-                    nodeclass = infer_output_socket(input_item).bl_idname
+                    nodeclass = map_socket(infer_output_socket(input_item).bl_idname)
                     self.node_group.interface.new_socket(
                         name=input_socket_name, in_out="OUTPUT", socket_type=nodeclass
                     )

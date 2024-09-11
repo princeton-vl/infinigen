@@ -30,7 +30,9 @@ def nodegroup_to_part(
         else:
             ng = nodegroup_func()
         geo_outputs = [
-            o for o in ng.outputs if o.bl_socket_idname == "NodeSocketGeometry"
+            s
+            for s in ng.interface.items_tree
+            if s.in_out == "OUTPUT" and s.bl_socket_idname == "NodeSocketGeometry"
         ]
         objs = {
             o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params)

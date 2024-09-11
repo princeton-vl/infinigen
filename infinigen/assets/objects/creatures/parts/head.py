@@ -214,7 +214,7 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: greater_than, 15: symmetric_clone.outputs["Both"]},
+        input_kwargs={0: greater_than, 2: symmetric_clone.outputs["Both"]},
     )
 
     greater_than_1 = nw.new_node(
@@ -355,12 +355,12 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: greater_than_1, 15: realize_instances}
+        Nodes.Switch, input_kwargs={0: greater_than_1, 2: realize_instances}
     )
 
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [switch_1.outputs[6], switch.outputs[6]]},
+        input_kwargs={"Geometry": [switch_1, switch]},
     )
 
     resample_curve = nw.new_node(
@@ -473,7 +473,7 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "snout_length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "snout_y_scale", 0.62),
-            ("NodeSocketVectorXYZ", "Nose Bridge Scale", (1.0, 0.35, 0.9)),
+            ("NodeSocketVector", "Nose Bridge Scale", (1.0, 0.35, 0.9)),
             ("NodeSocketVector", "Jaw Muscle Middle Coord", (0.24, 0.41, 1.3)),
             ("NodeSocketVector", "Jaw StartRad, EndRad, Fullness", (0.06, 0.11, 1.5)),
             (

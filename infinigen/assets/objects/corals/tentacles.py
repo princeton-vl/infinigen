@@ -101,7 +101,7 @@ def geo_tentacles(
     rotation = nw.new_node(
         Nodes.RotateEuler,
         input_kwargs={"Rotation": rotation, "Angle": nw.uniform(0, 2 * np.pi)},
-        attrs={"type": "AXIS_ANGLE", "space": "LOCAL"},
+        attrs={"rotation_type": "AXIS_ANGLE", "space": "LOCAL"},
     )
 
     points = surface.eval_argument(nw, points_fn, points=points, normal=normal)

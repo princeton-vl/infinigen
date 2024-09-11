@@ -142,15 +142,15 @@ def nodegroup_make_skirting_board(nw: NodeWrangler, control_points):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Is Ceiling"],
-            8: (-1.0000, 1.0000, 1.0000),
-            9: (-1.0000, -1.0000, -1.0000),
+            1: (-1.0000, 1.0000, 1.0000),
+            2: (-1.0000, -1.0000, -1.0000),
         },
         attrs={"input_type": "VECTOR"},
     )
 
     transform_geometry_1 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": set_position, "Scale": switch.outputs[3]},
+        input_kwargs={"Geometry": set_position, "Scale": switch},
     )
 
     curve_to_mesh_1 = nw.new_node(

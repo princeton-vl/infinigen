@@ -416,3 +416,11 @@ DATATYPE_FIELDS = {
     "FLOAT_COLOR": "color",
     "BOOLEAN": "value",
 }
+
+
+def map_socket(socket):
+    match socket:
+        case "NodeSocketVectorEuler":
+            return "NodeSocketVector"
+        case _:
+            return socket

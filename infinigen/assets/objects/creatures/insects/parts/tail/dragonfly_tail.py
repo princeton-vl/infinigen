@@ -175,9 +175,9 @@ def nodegroup_dragonfly_tail(
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (1.84, 0.0, 0.14)),
-            ("NodeSocketVectorTranslation", "End", (3.14, 0.0, -0.32)),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (1.84, 0.0, 0.14)),
+            ("NodeSocketVector", "End", (3.14, 0.0, -0.32)),
             ("NodeSocketFloat", "Segment Length", 0.44),
             ("NodeSocketFloat", "Segment Scale", 0.25),
             ("NodeSocketFloat", "Random Seed", 3.2),

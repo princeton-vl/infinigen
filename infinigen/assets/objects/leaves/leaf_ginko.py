@@ -400,7 +400,7 @@ def nodegroup_ginko(
             ("NodeSocketGeometry", "Mesh", None),
             ("NodeSocketFloat", "Vein Length", 0.64),
             ("NodeSocketFloat", "Vein Width", 0.005),
-            ("NodeSocketFloatAngle", "Angle", -1.7617),
+            ("NodeSocketFloat", "Angle", -1.7617),
             ("NodeSocketFloat", "Displacenment", 0.5),
             ("NodeSocketFloat", "Multiplier", 1.980),
             ("NodeSocketFloat", "Scale Vein", 80.0),

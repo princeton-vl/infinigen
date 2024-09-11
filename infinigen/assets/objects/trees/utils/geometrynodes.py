@@ -198,15 +198,13 @@ def coll_distribute(nw, merge_dist=None):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Realize Instance"],
-            14: instance_on_points,
-            15: realize_instances,
+            0: group_input.outputs["Realize Instance"],
+            1: instance_on_points,
+            2: realize_instances,
         },
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": switch.outputs[6]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": switch})
 
 
 @node_utils.to_nodegroup("PhylloDist", singleton=False)
@@ -562,7 +560,7 @@ def set_tree_radius(nw):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions},
+        input_kwargs={0: True, 1: mesh_to_curve, 2: set_handle_positions},
     )
 
     multiply = nw.new_node(
@@ -598,7 +596,7 @@ def set_tree_radius(nw):
 
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": switch.outputs[6], "Radius": minimum},
+        input_kwargs={"Curve": switch, "Radius": minimum},
     )
 
     curve_circle = nw.new_node(

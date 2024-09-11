@@ -19,7 +19,7 @@ FORMAT_CHOICES = ["fbx", "obj", "usdc", "usda", "stl", "ply"]
 BAKE_TYPES = {
     "DIFFUSE": "Base Color",
     "ROUGHNESS": "Roughness",
-}  #  'EMIT':'Emission' #  "GLOSSY": 'Specular IOR Level', 'TRANSMISSION':'Transmission Weight' don't export
+}  # 'EMIT':'Emission Color' #  "GLOSSY": 'Specular IOR Level', 'TRANSMISSION':'Transmission Weight' don't export
 SPECIAL_BAKE = {"METAL": "Metallic", "NORMAL": "Normal"}
 ALL_BAKE = BAKE_TYPES | SPECIAL_BAKE
 

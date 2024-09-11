@@ -55,7 +55,6 @@ def shader_lampshade(nw: NodeWrangler):
             "Roughness": U(0.5, 0.8),
             "IOR": 4.0000,
             "Transmission Weight": U(0.05, 0.2),
-            "Transmission Roughness": 1.0000,
         },
     )
 

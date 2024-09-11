@@ -412,9 +412,9 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["Shutter"],
-            14: windowpanel_1,
-            15: windowshutter,
+            0: group_input_1.outputs["Shutter"],
+            1: windowpanel_1,
+            2: windowshutter,
         },
     )
 
@@ -464,7 +464,7 @@ def nodegroup_window_geometry(nw: NodeWrangler):
 
     transform = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": switch.outputs[6], "Translation": combine_xyz},
+        input_kwargs={"Geometry": switch, "Translation": combine_xyz},
     )
 
     geometry_to_instance = nw.new_node(
@@ -706,14 +706,14 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["Curtain"],
-            14: join_geometry,
-            15: join_geometry_1,
+            0: group_input_1.outputs["Curtain"],
+            1: join_geometry,
+            2: join_geometry_1,
         },
     )
 
     realize_instances = nw.new_node(
-        Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1.outputs[6]}
+        Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1}
     )
 
     bounding_box = nw.new_node(
@@ -1579,15 +1579,15 @@ def nodegroup_window_panel(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["WithGlass"],
-            14: set_material_1,
-            15: join_geometry,
+            0: group_input.outputs["WithGlass"],
+            1: set_material_1,
+            2: join_geometry,
         },
     )
 
     set_shade_smooth = nw.new_node(
         Nodes.SetShadeSmooth,
-        input_kwargs={"Geometry": switch.outputs[6], "Shade Smooth": False},
+        input_kwargs={"Geometry": switch, "Shade Smooth": False},
     )
 
     group_output = nw.new_node(

@@ -342,7 +342,7 @@ def nodegroup_text(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
+            ("NodeSocketVector", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
             ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
@@ -641,7 +641,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Size", (0.1000, 10.0000, 4.0000)),
+            ("NodeSocketVector", "Size", (0.1000, 10.0000, 4.0000)),
             ("NodeSocketVector", "Pos", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketInt", "Resolution", 2),
         ],
@@ -707,7 +707,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Size", (0.1000, 10.0000, 4.0000)),
+            ("NodeSocketVector", "Size", (0.1000, 10.0000, 4.0000)),
             ("NodeSocketVector", "Pos", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketInt", "Resolution", 2),
             ("NodeSocketFloat", "Thickness", 0.0000),
@@ -819,7 +819,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch_2 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch3"], 14: transform_2}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch3"], 2: transform_2}
     )
 
     subtract_3 = nw.new_node(
@@ -886,7 +886,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch_1 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch2"], 14: transform_1}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch2"], 1: transform_1}
     )
 
     subtract_5 = nw.new_node(
@@ -948,7 +948,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch1"], 14: transform}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch1"], 1: transform}
     )
 
     subtract_6 = nw.new_node(
@@ -1022,7 +1022,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch_3 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch4"], 14: transform_3}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch4"], 1: transform_3}
     )
 
     combine_xyz_9 = nw.new_node(
@@ -1081,7 +1081,7 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch_4 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch5"], 14: transform_4}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch5"], 1: transform_4}
     )
 
     combine_xyz_10 = nw.new_node(
@@ -1142,19 +1142,19 @@ def nodegroup_hollow_cube(nw: NodeWrangler):
     )
 
     switch_5 = nw.new_node(
-        Nodes.Switch, input_kwargs={1: group_input.outputs["Switch6"], 14: transform_5}
+        Nodes.Switch, input_kwargs={0: group_input.outputs["Switch6"], 1: transform_5}
     )
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={
             "Geometry": [
-                switch_2.outputs[6],
-                switch_1.outputs[6],
-                switch.outputs[6],
-                switch_3.outputs[6],
-                switch_4.outputs[6],
-                switch_5.outputs[6],
+                switch_2,
+                switch_1,
+                switch,
+                switch_3,
+                switch_4,
+                switch_5,
             ]
         },
     )

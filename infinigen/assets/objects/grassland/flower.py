@@ -538,7 +538,7 @@ def nodegroup_plant_seed(nw):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "Dimensions", (0.0, 0.0, 0.0)),
-            ("NodeSocketIntUnsigned", "U", 4),
+            ("NodeSocketInt", "U", 4),
             ("NodeSocketInt", "V", 8),
         ],
     )

@@ -142,7 +142,7 @@ def nodegroup_curve_to_board(nw: NodeWrangler):
 
     resample_curve = nw.new_node(
         Nodes.ResampleCurve,
-        input_kwargs={"Curve": set_curve_tilt, "Count": 128, "Length": 0.0500},
+        input_kwargs={"Curve": set_curve_tilt, "Count": 128},
     )
 
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
@@ -284,7 +284,6 @@ def nodegroup_leg_straight(nw: NodeWrangler):
         input_kwargs={
             "Curve": set_curve_tilt,
             "Count": group_input.outputs["Resolution"],
-            "Length": 0.0500,
         },
     )
 

@@ -62,6 +62,8 @@ def test_export_curr_scene(format, tmp_path):
     for obj in bpy.data.objects:
         if obj.name == "World":
             continue
+        if obj.type == "EMPTY":
+            continue
         total_polys += len(obj.data.polygons)
 
     assert total_polys == poly_count1 + poly_count2

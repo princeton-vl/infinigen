@@ -72,7 +72,7 @@ def instance_rotation(
             "Axis": perturbed_normal,
             "Angle": z_rotation,
         },
-        attrs={"type": "AXIS_ANGLE"},
+        attrs={"rotation_type": "AXIS_ANGLE"},
     )
     return rotation
 

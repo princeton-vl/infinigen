@@ -98,14 +98,14 @@ def nodegroup_basic_stem(nw: NodeWrangler, stem_color=(0.179, 0.836, 0.318, 1.0)
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "quad_start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "quad_mid", (0.0, -0.05, 0.2)),
-            ("NodeSocketVectorTranslation", "quad_end", (-0.1, 0.0, 0.4)),
-            ("NodeSocketIntUnsigned", "quad_res", 128),
+            ("NodeSocketVector", "quad_start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "quad_mid", (0.0, -0.05, 0.2)),
+            ("NodeSocketVector", "quad_end", (-0.1, 0.0, 0.4)),
+            ("NodeSocketInt", "quad_res", 128),
             ("NodeSocketFloat", "cross_radius", 0.08),
             ("NodeSocketInt", "cross_res", 128),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, 1.0, 2.0)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, 1.0, 2.0)),
         ],
     )
 
@@ -249,10 +249,10 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
             ("NodeSocketFloat", "cross section noise amount", 0.4),
             ("NodeSocketFloat", "z noise amount", 1.0),
             ("NodeSocketFloat", "noise random seed", 0.0),
-            ("NodeSocketVectorTranslation", "quad_start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "quad_mid", (0.0, -0.05, 0.2)),
-            ("NodeSocketVectorTranslation", "quad_end", (-0.1, 0.0, 0.4)),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "quad_start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "quad_mid", (0.0, -0.05, 0.2)),
+            ("NodeSocketVector", "quad_end", (-0.1, 0.0, 0.4)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
             ("NodeSocketFloat", "cross_radius", 0.04),
         ],
     )
@@ -635,15 +635,15 @@ def nodegroup_coconut_stem(
         expose_input=[
             ("NodeSocketGeometry", "Target", None),
             ("NodeSocketFloat", "radius", 0.0),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.08)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.08)),
             ("NodeSocketInt", "Count", 6),
             ("NodeSocketFloat", "base scale", 0.3),
             ("NodeSocketFloat", "top scale", 0.24),
             ("NodeSocketFloat", "attach threshold", 0.1),
             ("NodeSocketFloat", "attach multiplier", 10.0),
             ("NodeSocketFloat", "calyx width", 0.5),
-            ("NodeSocketVectorTranslation", "stem_mid", (0.0, 0.0, 1.0)),
-            ("NodeSocketVectorTranslation", "stem_end", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "stem_mid", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "stem_end", (0.0, 0.0, 1.0)),
             ("NodeSocketFloat", "stem_radius", 0.5),
         ],
     )
@@ -853,10 +853,10 @@ def nodegroup_pineapple_leaf(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 8),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, -0.32, 3.72)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.92, 4.32)),
+            ("NodeSocketInt", "Resolution", 8),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (0.0, -0.32, 3.72)),
+            ("NodeSocketVector", "End", (0.0, 0.92, 4.32)),
         ],
     )
 
@@ -952,7 +952,7 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Leaf", None),
-            ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.7)),
+            ("NodeSocketVector", "translation", (0.0, 0.0, 0.7)),
             ("NodeSocketVector", "rotation base", (-0.4363, 0.0, 0.0)),
             ("NodeSocketInt", "number of leaves", 75),
             ("NodeSocketFloat", "noise amount", 0.1),
@@ -1081,11 +1081,11 @@ def nodegroup_pineapple_stem(nw: NodeWrangler, basic_color):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 16),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, -0.32, 3.72)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.92, 4.32)),
-            ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.7)),
+            ("NodeSocketInt", "Resolution", 16),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (0.0, -0.32, 3.72)),
+            ("NodeSocketVector", "End", (0.0, 0.92, 4.32)),
+            ("NodeSocketVector", "translation", (0.0, 0.0, 0.7)),
             ("NodeSocketVector", "rotation base", (-0.5236, 0.0, 0.0)),
             ("NodeSocketInt", "number of leaves", 75),
             ("NodeSocketFloat", "noise amount", 0.1),

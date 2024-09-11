@@ -467,7 +467,7 @@ def nodegroup_leaf_on_stem(nw: NodeWrangler, versions):
         expose_input=[
             ("NodeSocketGeometry", "Points", None),
             ("NodeSocketGeometry", "Instance", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, 1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, 1.0, 1.0)),
             ("NodeSocketInt", "Samples", 0),
         ],
     )

@@ -48,10 +48,10 @@ def init_color_material(
     if is_emission:
         out_node = nt.nodes.get("Material Output")
         nt.nodes.new("ShaderNodeEmission")
-        em = nt.nodes.get("Emission")
+        em = nt.nodes.get("Emission Color")
         em.inputs.get("Strength").default_value = emit_strength
         em.inputs.get("Color").default_value = color
-        new_link(nt, em, "Emission", out_node, "Surface")
+        new_link(nt, em, "Emission Color", out_node, "Surface")
 
     else:
         bsdf_node = nt.nodes.get("Principled BSDF")
@@ -99,13 +99,13 @@ def create_leaf_material(src_hue, glow=False):
     if glow:
         out_node = nt.nodes.get("Material Output")
         nt.nodes.new("ShaderNodeEmission")
-        em = nt.nodes.get("Emission")
+        em = nt.nodes.get("Emission Color")
         em.inputs.get("Strength").default_value = 1
         em.inputs.get("Color").default_value = (
             *colorsys.hsv_to_rgb(src_hue + np.random.randn() * 0.1, 1, 1),
             1,
         )
-        new_link(nt, em, "Emission", out_node, "Surface")
+        new_link(nt, em, "Emission Color", out_node, "Surface")
 
     else:
         info_node = nt.nodes.new("ShaderNodeObjectInfo")
@@ -252,7 +252,7 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
         nt.nodes.new("ShaderNodeValToRGB")  # ColorRamp
         nt.nodes.new("ShaderNodeMixShader")
 
-        em = nt.nodes.get("Emission")
+        em = nt.nodes.get("Emission Color")
         em.inputs.get("Strength").default_value = 5
         em.inputs.get("Color").default_value = (
             *colorsys.hsv_to_rgb(np.random.rand(), 1, 1),
@@ -271,5 +271,5 @@ def setup_material(m, txt_paths, metal_prob=0.2, transm_prob=0.2, emit_prob=0):
         mix = nt.nodes.get("Mix Shader")
         new_link(nt, ramp, "Color", mix, "Fac")
         new_link(nt, bsdf, "BSDF", mix, "Shader")
-        new_link(nt, em, "Emission", mix, "Shader")
+        new_link(nt, em, "Emission Color", mix, "Shader")
         new_link(nt, mix, "Shader", out_node, "Surface")

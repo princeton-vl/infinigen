@@ -25,7 +25,7 @@ def nodegroup_pedal_stem_head_geometry(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
             ("NodeSocketFloat", "Radius", 0.04),
         ],
     )
@@ -360,7 +360,7 @@ def nodegroup_pedal_stem_branch_geometry(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Curve", None),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
         ],
     )
 
@@ -405,8 +405,8 @@ def nodegroup_pedal_stem_geometry(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.0, 1.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, 0.0, 0.5)),
+            ("NodeSocketVector", "End", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "Middle", (0.0, 0.0, 0.5)),
             ("NodeSocketFloat", "Radius", 0.05),
         ],
     )

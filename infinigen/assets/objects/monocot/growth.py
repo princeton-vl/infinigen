@@ -144,7 +144,7 @@ class MonocotGrowthFactory(AssetFactory):
             )
             z_rotation = nw.new_node(
                 Nodes.AccumulateField,
-                [None, nw.uniform(self.angle * 0.95, self.angle * 1.05)],
+                [nw.uniform(self.angle * 0.95, self.angle * 1.05)],
             )
             rotation = nw.combine(0, y_rotation, z_rotation)
             scale = nw.build_float_curve(parameter, self.scale_curve, "AUTO")
@@ -167,7 +167,7 @@ class MonocotGrowthFactory(AssetFactory):
                 )
             points, z_rotation = nw.new_node(
                 Nodes.CaptureAttribute, [points, z_rotation]
-            ).outputs
+            ).outputs[:2]
             leaves = nw.new_node(Nodes.CollectionInfo, [leaves, True, True])
             is_leaf = reduce(
                 lambda *xs: nw.boolean_math("AND", *xs),
