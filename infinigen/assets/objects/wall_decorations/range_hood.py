@@ -27,24 +27,18 @@ class RangeHoodFactory(AssetFactory):
 
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
-            self.surface, self.scratch, self.edge_wear = self.get_material_params()
+            self.initialize_materials()
 
-    def get_material_params(self):
+    def initialize_materials(self):
         surface_gen_class = weighted_sample(material_assignments.metals)()
         self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
 
-        is_scratch = np.random.uniform() < scratch_prob
-        is_edge_wear = np.random.uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
-
-        return surface, scratch, edge_wear
+        self.scratch = None if uniform() > scratch_prob else scratch()
+        self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
     @staticmethod
     def sample_parameters(dimensions):

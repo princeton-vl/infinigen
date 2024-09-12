@@ -4,7 +4,6 @@
 # Authors: Hongyu Wen
 
 
-import numpy as np
 from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
@@ -44,18 +43,8 @@ class MicrowaveFactory(AssetFactory):
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
-
-        is_scratch = np.random.uniform() < scratch_prob
-        is_edge_wear = np.random.uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-        else:
-            scratch = scratch()
-
-        if not is_edge_wear:
-            edge_wear = None
-        else:
-            edge_wear = edge_wear()
+        scratch = None if U() > scratch_prob else scratch()
+        edge_wear = None if U() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 

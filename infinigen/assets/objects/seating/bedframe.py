@@ -76,10 +76,9 @@ class BedFrameFactory(ChairFactory):
             self.limb_surface = limb_surface_gen_class()()
 
             scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-            self.scratch, self.edge_wear = material_assignments.wear_tear
-
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
             self.clothes_scatter = surface.NoApply
             self.dot_distance = log_uniform(0.16, 0.2)

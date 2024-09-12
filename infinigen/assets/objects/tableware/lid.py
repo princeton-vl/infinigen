@@ -57,9 +57,10 @@ class LidFactory(AssetFactory):
             self.handle_surface_material_gen = handle_surface_gen_class()
 
             scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-            self.scratch, self.edge_wear = material_assignments.wear_tear
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            scratch, edge_wear = material_assignments.wear_tear
+
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
     def create_asset(self, **params) -> bpy.types.Object:
         self.surface = self.surface_material_gen()

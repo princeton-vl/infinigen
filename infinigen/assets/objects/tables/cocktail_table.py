@@ -227,14 +227,8 @@ class TableCocktailFactory(AssetFactory):
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear
-
-        is_scratch = uniform() < scratch_prob
-        is_edge_wear = uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
+        scratch = None if uniform() > scratch_prob else scratch()
+        edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 

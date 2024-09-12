@@ -84,12 +84,11 @@ class BathtubFactory(AssetFactory):
             hole_surface_gen_class = weighted_sample(material_assignments.metal_neutral)
             self.hole_surface_material_gen = hole_surface_gen_class
 
-            is_scratch = uniform() < material_assignments.wear_tear_prob[0]
-            is_edge_wear = uniform() < material_assignments.wear_tear_prob[1]
-            self.scratch = material_assignments.wear_tear[0]() if is_scratch else None
-            self.edge_wear = (
-                material_assignments.wear_tear[1]() if is_edge_wear else None
-            )
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+
             # ////////////////////////////////////////////////////////
 
             self.beveler = BevelSharp(mult=5, segments=5)
