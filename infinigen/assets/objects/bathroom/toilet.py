@@ -64,12 +64,12 @@ class ToiletFactory(AssetFactory):
             self.hardware_on_side = uniform() < 0.5
 
             surface_gen_class = weighted_sample(material_assignments.ceramics)
-            self.surface = surface_gen_class
+            self.surface = surface_gen_class()
 
             hardware_surface_gen_class = weighted_sample(
                 material_assignments.metal_neutral
             )
-            self.hardware_surface = hardware_surface_gen_class
+            self.hardware_surface = hardware_surface_gen_class()
 
             scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
             scratch, edge_wear = material_assignments.wear_tear

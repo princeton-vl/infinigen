@@ -105,9 +105,9 @@ class BathtubFactory(AssetFactory):
         return new_bbox(-self.size, 0, 0, self.width, 0, self.depth)
 
     def create_asset(self, **params) -> bpy.types.Object:
-        self.surface = self.surface_material_gen
-        self.leg_surface = self.leg_surface_material_gen
-        self.hole_surface = self.hole_surface_material_gen
+        self.surface = self.surface_material_gen()
+        self.leg_surface = self.leg_surface_material_gen()
+        self.hole_surface = self.hole_surface_material_gen()
 
         if self.has_base:
             obj = self.make_base()

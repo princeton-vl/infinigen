@@ -102,7 +102,7 @@ class HardwareFactory(AssetFactory):
         return obj
 
     def create_asset(self, **params) -> bpy.types.Object:
-        self.surface = self.surface_material_gen
+        self.surface = self.surface_material_gen()
 
         match self.hardware_type:
             case "hook":

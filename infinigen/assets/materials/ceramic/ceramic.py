@@ -4,6 +4,7 @@
 # Authors: Lingjie Mei
 from numpy.random import uniform
 
+from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -66,8 +67,6 @@ class Ceramic:
 
     @staticmethod
     def apply(obj, selection=None, clear=False, **kwargs):
-        import infinigen.assets.materials.common as common
-
         common.apply(obj, shader_ceramic, selection, clear, **kwargs)
 
     __call__ = generate
