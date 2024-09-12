@@ -84,6 +84,7 @@ shelf_board = (
 
 glasses = [
     (ceramic.Glass, 1.0),
+    (ceramic.ColoredGlass, 0.5),
 ]
 
 ceramics = [

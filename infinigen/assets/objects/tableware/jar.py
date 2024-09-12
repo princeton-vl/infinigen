@@ -8,11 +8,13 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class JarFactory(AssetFactory):
@@ -26,6 +28,14 @@ class JarFactory(AssetFactory):
             self.x_cap = uniform(0.6, 0.9) * np.cos(np.pi / self.n_base)
             self.z_cap = uniform(0.05, 0.08)
             self.z_neck = uniform(0.15, 0.2)
+
+            self.surface = weighted_sample(material_assignments.jar)()
+            self.cap_surface = weighted_sample(material_assignments.appliance_handle)()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
             self.cap_subsurf = uniform() < 0.5
 

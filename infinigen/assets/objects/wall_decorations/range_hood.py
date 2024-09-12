@@ -30,9 +30,9 @@ class RangeHoodFactory(AssetFactory):
             self.initialize_materials()
 
     def initialize_materials(self):
-        surface_gen_class = weighted_sample(material_assignments.metals)()
+        surface_gen_class = weighted_sample(material_assignments.metals)
         self.surface_material_gen = surface_gen_class()
-        self.surface = self.surface_material_gen()
+        self.surface = self.surface_material_gen
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
         scratch, edge_wear = material_assignments.wear_tear

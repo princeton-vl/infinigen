@@ -8,7 +8,7 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.objects.deformed_trees import FallenTreeFactory
+from infinigen.assets.objects.deformed_trees.fallen import FallenTreeFactory
 from infinigen.assets.utils.decorate import read_co
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
