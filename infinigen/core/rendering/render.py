@@ -385,6 +385,14 @@ def configure_compositor(
     )
 
 
+def enable_real_geometry():
+    for material in bpy.data.materials:
+        if hasattr(material, "displacement_method"):
+            material.displacement_method = "DISPLACEMENT"
+        else:
+            material.cycles.displacement_method = "DISPLACEMENT"
+
+
 @gin.configurable
 def render_image(
     camera: bpy.types.Object,
@@ -403,6 +411,7 @@ def render_image(
         bpy.data.objects[exclude].hide_render = True
 
     init.configure_cycles_devices()
+    enable_real_geometry()
 
     tmp_dir = frames_folder.parent.resolve() / "tmp"
     tmp_dir.mkdir(exist_ok=True)

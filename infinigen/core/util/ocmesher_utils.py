@@ -53,7 +53,9 @@ def run_ocmesher(obj, cameras):
     xyz_min -= xyz_size * 0.01
     xyz_max += xyz_size * 0.01
     bounds = (xyz_min[0], xyz_max[0], xyz_min[1], xyz_max[1], xyz_min[2], xyz_max[2])
-    mesher = OcMesher(get_caminfo(cameras)[0], bounds, pixels_per_cube=3)
+    mesher = OcMesher(
+        get_caminfo(cameras)[0], bounds, pixels_per_cube=1.5, edge_fine_factor=1
+    )
     mesh = Mesh(mesh=mesher([room_sdf_func], structure_mesh=mesh)[0][0])
     ocmesh = mesh.export_blender(obj.name + ".ocmesher")
     transfer_attributes.transfer_all(source=obj, target=ocmesh, uvs=True)

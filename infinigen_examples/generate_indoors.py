@@ -363,13 +363,15 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     )
 
     rooms_meshed = butil.get_collection("placeholders:room_meshes")
-    rooms_ocmeshed = []
-    cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
-    for room_meshed in rooms_meshed.objects:
-        room_ocmeshed = ocmesher_utils.run_ocmesher(room_meshed, cameras)
-        rooms_ocmeshed.append(room_ocmeshed)
-    butil.group_in_collection(rooms_ocmeshed, "placeholders:room_ocmeshes")
-    rooms_meshed = butil.get_collection("placeholders:room_ocmeshes")
+
+    if overrides.get("enable_ocmesh_room", False):
+        rooms_ocmeshed = []
+        cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
+        for room_meshed in rooms_meshed.objects:
+            room_ocmeshed = ocmesher_utils.run_ocmesher(room_meshed, cameras)
+            rooms_ocmeshed.append(room_ocmeshed)
+        butil.group_in_collection(rooms_ocmeshed, "placeholders:room_ocmeshes")
+        rooms_meshed = butil.get_collection("placeholders:room_ocmeshes")
 
     rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
