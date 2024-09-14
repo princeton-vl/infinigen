@@ -48,7 +48,7 @@ class SphericalMesher:
         cams = full_info[0]
         assert (
             self.fov[0] < np.pi / 2 and self.fov[1] < np.pi / 2
-        ), "the algorithm does not support larger-than-90-degree fov yet"
+        ), "`mesher_backend=SphericalMesher` does not support larger-than-90-degree fov yet. Please add `fine_terrain.mesher_backend = \"OcMesher\"` to your gin config."
         self.r_min = r_min
         self.complete_depth_test = complete_depth_test
         self.bounds = bounds

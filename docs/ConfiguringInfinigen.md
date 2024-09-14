@@ -172,7 +172,8 @@ We recommend this command as a starting point for generating high quality videos
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
-    --cleanup big_files --warmup_sec 60000 --config trailer_video high_quality_terrain
+    --cleanup big_files --warmup_sec 60000 --config trailer_video high_quality_terrain \
+    -p fine_terrain.mesher_backend="OcMesher"
 ```
 
 #### Creating large-scale stereo datasets
@@ -219,7 +220,8 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \
-    --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30]
+    --overrides camera.camera_pose_proposal.altitude=["uniform", 20, 30] \
+    -p fine_terrain.mesher_backend="OcMesher"
 ```
 
 :bulb: The command shown is overriding `infinigen_examples/configs_nature/base.gin`'s default setting of `camera.camera_pose_proposal.altitude`. You can use a similar syntax to override any number of .gin config entries. Separate multiple entries with spaces. 
@@ -229,7 +231,8 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
 python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_scenes 500 \
     --pipeline_config slurm monocular_video cuda_terrain opengl_gt \
     --cleanup big_files --warmup_sec 30000 --config trailer_video high_quality_terrain \
-    --pipeline_overrides iterate_scene_tasks.frame_range=[1,25]
+    --pipeline_overrides iterate_scene_tasks.frame_range=[1,25] \
+    -p fine_terrain.mesher_backend="OcMesher"
 ```
 
 :bulb: This command uses `--pipeline_overrides` rather than `--overrides` since it is providing a gin override to the `manage_jobs.py` process, not some part of the main `infinigen_examples/generate_nature.py` driver.
