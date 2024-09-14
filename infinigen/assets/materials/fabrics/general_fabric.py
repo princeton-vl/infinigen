@@ -63,7 +63,7 @@ def func_fabric(nw: NodeWrangler, **kwargs):
 
     mix = nw.new_node(
         Nodes.Mix,
-        input_kwargs={1: map_range.outputs["Result"], 2: map_range_1.outputs["Result"]},
+        input_kwargs={6: map_range.outputs["Result"], 7: map_range_1.outputs["Result"]},
         attrs={"data_type": "RGBA"},
     )
 
@@ -130,7 +130,7 @@ def func_fabric(nw: NodeWrangler, **kwargs):
 
     mix_4 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: less_than, 1: mix_2.outputs[2], 2: group_input["Color1"]},
+        input_kwargs={0: less_than, 6: mix_2.outputs[2], 7: group_input["Color1"]},
         attrs={"data_type": "RGBA"},
     )
 
@@ -175,7 +175,7 @@ def func_fabric(nw: NodeWrangler, **kwargs):
 
     mix_1 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={1: musgrave_texture, 2: mix.outputs[2]},
+        input_kwargs={6: musgrave_texture, 7: mix.outputs[2]},
         attrs={"data_type": "RGBA"},
     )
 

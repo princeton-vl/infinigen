@@ -28,7 +28,7 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
 
     mix_6 = nw.new_node(
         Nodes.Mix,
-        input_kwargs={0: 0.1125, 1: voronoi_texture.outputs["Color"]},
+        input_kwargs={0: 0.1125, 6: voronoi_texture.outputs["Color"]},
         attrs={"data_type": "RGBA"},
     )
 

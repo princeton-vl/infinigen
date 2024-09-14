@@ -1,7 +1,6 @@
 # Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
 # of this source tree.
-
 import ast
 import logging
 import os
@@ -15,12 +14,12 @@ import bpy
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 # See https://github.com/opencv/opencv/issues/21326#issuecomment-1008517425
 
+import addon_utils
 import gin
 import numpy as np
 from numpy.random import randint
 
 import infinigen
-from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import LogLevel
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
@@ -298,18 +297,16 @@ def configure_blender(
     addons = ["extra_mesh_objects", "real_snow", "antlandscape"]
     for addon in addons:
         long = f"bl_ext.blender_org.{addon}"
-        try:
-            with butil.Suppress():
-                bpy.ops.preferences.addon_enable(module=long)
-            assert long in bpy.context.preferences.addons.keys()
-            logger.info(f"Add-on {addon} enabled.")
-        except RuntimeError:
-            with butil.Suppress():
-                bpy.ops.extensions.userpref_allow_online()
+        all_addons = set(a.__name__ for a in addon_utils.modules(refresh=True))
+        if long in all_addons:
+            bpy.ops.preferences.addon_enable(module=long)
+        else:
+            bpy.ops.extensions.userpref_allow_online()
             logger.info(f"Installing Add-on {addon}.")
-            with butil.Suppress():
-                bpy.ops.extensions.package_install(
-                    repo_index=0, pkg_id=addon, enable_on_install=True
-                )
-            assert long in bpy.context.preferences.addons.keys()
-            logger.info(f"Add-on {addon} Installed.")
+            bpy.ops.extensions.repo_sync(repo_index=0)
+            bpy.ops.extensions.package_install(
+                repo_index=0, pkg_id=addon, enable_on_install=True
+            )
+            bpy.ops.preferences.addon_enable(module=long)
+        assert long in bpy.context.preferences.addons.keys()
+        logger.info(f"{addon} enabled.")

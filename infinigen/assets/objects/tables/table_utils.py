@@ -586,7 +586,7 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: group_input.outputs["Keep Legs"], 1: realize_instances},
+        input_kwargs={0: group_input.outputs["Keep Legs"], 2: realize_instances},
     )
 
     multiply_1 = nw.new_node(

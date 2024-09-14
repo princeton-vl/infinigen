@@ -642,7 +642,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_1 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={0: 4.0000, 2: reroute_13, 3: 4},
+        input_kwargs={2: reroute_13, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -962,7 +962,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_2 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        input_kwargs={2: reroute_10, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -982,7 +982,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_3 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        input_kwargs={2: reroute_10, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -1446,7 +1446,7 @@ class SofaFactory(AssetFactory):
             ng_inputs={
                 **self.params,
             },
-            apply=True,
+            apply=False,
         )
         tagging.tag_system.relabel_obj(obj)
         surface.add_material(obj, self.sofa_fabric)
