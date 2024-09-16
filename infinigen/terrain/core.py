@@ -202,11 +202,9 @@ class Terrain:
             for e in self.elements:
                 self.elements[e].cleanup()
 
-    @gin.configurable()
     def export(
         self,
-        dynamic=False,
-        spherical=True,  # false for OcMesher
+        mesher_backend="SphericalMesher",
         cameras=None,
         main_terrain_only=False,
         remove_redundant_attrs=True,
@@ -221,13 +219,14 @@ class Terrain:
             ]
             if opaque_elements != []:
                 attributes_dict[TerrainNames.OpaqueTerrain] = set()
-                if dynamic:
-                    if spherical:
-                        mesher = OpaqueSphericalMesher(cameras, self.bounds)
-                    else:
+                if mesher_backend == "SphericalMesher":
+                    mesher = OpaqueSphericalMesher(cameras, self.bounds)
+                elif mesher_backend == "OcMesher":
                         mesher = OcMesher(cameras, self.bounds)
-                else:
+                elif mesher_backend == "UniformMesher":
                     mesher = UniformMesher(self.populated_bounds)
+                else:
+                    raise ValueError("unrecognized mesher_backend")
                 with Timer(f"meshing {TerrainNames.OpaqueTerrain}"):
                     mesh = mesher([element for element in opaque_elements])
                     meshes_dict[TerrainNames.OpaqueTerrain] = mesh
@@ -243,12 +242,12 @@ class Terrain:
         ]
         for element in individual_transparent_elements:
             if not main_terrain_only or element.__class__.name == self.main_terrain:
-                if dynamic:
+                if mesher_backend in ["SphericalMesher", "OcMesher"]:
                     special_args = {}
                     if element.__class__.name == ElementNames.Atmosphere:
                         special_args["pixels_per_cube"] = 100
                         special_args["inv_scale"] = 1
-                    if spherical:
+                    if mesher_backend == "SphericalMesher":
                         mesher = TransparentSphericalMesher(
                             cameras, self.bounds, **special_args
                         )
@@ -259,8 +258,10 @@ class Terrain:
                             simplify_occluded=False,
                             **special_args,
                         )
-                else:
+                elif mesher_backend == "UniformMesher":
                     mesher = UniformMesher(self.populated_bounds, enclosed=True)
+                else:
+                    raise ValueError("unrecognized mesher_backend")
                 with Timer(f"meshing {element.__class__.name}"):
                     mesh = mesher([element])
                     meshes_dict[element.__class__.name] = mesh
@@ -277,15 +278,16 @@ class Terrain:
             ]
             if collective_transparent_elements != []:
                 attributes_dict[TerrainNames.CollectiveTransparentTerrain] = set()
-                if dynamic:
-                    if spherical:
-                        mesher = TransparentSphericalMesher(cameras, self.bounds)
-                    else:
-                        mesher = CollectiveOcMesher(
-                            cameras, self.bounds, simplify_occluded=False
-                        )
-                else:
+                if mesher_backend == "SphericalMesher":
+                    mesher = TransparentSphericalMesher(cameras, self.bounds)
+                elif mesher_backend == "OcMesher":
+                    mesher = CollectiveOcMesher(
+                        cameras, self.bounds, simplify_occluded=False
+                    )
+                elif mesher_backend == "UniformMesher":
                     mesher = UniformMesher(self.populated_bounds)
+                else:
+                    raise ValueError("unrecognized mesher_backend")
                 with Timer(f"meshing {TerrainNames.CollectiveTransparentTerrain}"):
                     mesh = mesher(
                         [element for element in collective_transparent_elements]
@@ -296,7 +298,7 @@ class Terrain:
                         element.attributes
                     )
 
-        if main_terrain_only or dynamic:
+        if main_terrain_only or cameras is not None:
             for mesh_name in meshes_dict:
                 mesh_name_unapplied = mesh_name
                 if mesh_name + "_unapplied" in bpy.data.objects.keys():
@@ -327,7 +329,7 @@ class Terrain:
                             surface.mod_name
                         )
 
-        if dynamic:
+        if cameras is not None:
             if remove_redundant_attrs:
                 for mesh_name in meshes_dict:
                     if len(attributes_dict[mesh_name]) == 1:
@@ -404,7 +406,7 @@ class Terrain:
 
     @gin.configurable
     def coarse_terrain(self):
-        coarse_meshes, attributes_dict = self.export()
+        coarse_meshes, attributes_dict = self.export(mesher_backend="UniformMesher")
         terrain_objs = {}
         for name in coarse_meshes:
             obj = coarse_meshes[name].export_blender(name)
@@ -416,8 +418,8 @@ class Terrain:
         self.apply_surface_templates(attributes_dict)
         self.surfaces_into_sdf()
 
-        # do second time to avoid surface application difference resulting in cloating rocks
-        coarse_meshes, _ = self.export(main_terrain_only=True)
+        # do second time to avoid surface application difference resulting in floating rocks
+        coarse_meshes, _ = self.export(main_terrain_only=True, mesher_backend="UniformMesher")
         main_mesh = coarse_meshes[self.main_terrain]
 
         # WaterCovered annotation
@@ -444,7 +446,8 @@ class Terrain:
                 self.tag_terrain(self.terrain_objs[name])
         return main_obj
 
-    def fine_terrain(self, output_folder, cameras, optimize_terrain_diskusage=True):
+    @gin.configurable
+    def fine_terrain(self, output_folder, cameras, optimize_terrain_diskusage=True, mesher_backend="SphericalMesher"):
         # redo sampling to achieve attribute -> surface correspondance
         self.sample_surface_templates()
         if (self.on_the_fly_asset_folder / Assets.Ocean).exists():
@@ -456,7 +459,7 @@ class Terrain:
                     link_folder=self.on_the_fly_asset_folder / Assets.Ocean,
                 )
         self.surfaces_into_sdf()
-        fine_meshes, _ = self.export(dynamic=True, cameras=cameras)
+        fine_meshes, _ = self.export(mesher_backend=mesher_backend, cameras=cameras)
         for mesh_name in fine_meshes:
             obj = fine_meshes[mesh_name].export_blender(mesh_name + "_fine")
             if mesh_name not in hidden_in_viewport:
