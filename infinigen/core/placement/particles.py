@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 def bake(emitter, system):
     logger.info(f"Baking particles for {emitter.name=}")
 
+    hide_orig = emitter.hide_viewport
+    emitter.hide_viewport = False
+
     with butil.SelectObjects(emitter):
         override = {
             "scene": bpy.context.scene,
@@ -32,6 +35,8 @@ def bake(emitter, system):
             bpy.context.scene.frame_end += 1
             bpy.ops.ptcache.bake(override, bake=True)
             bpy.context.scene.frame_end -= 1
+
+    emitter.hide_viewport = hide_orig
 
 
 def configure_boids(system_config, settings):
@@ -92,10 +97,8 @@ def particle_system(
     if isinstance(subject, bpy.types.Collection):
         subject = as_particle_collection(subject)
 
-    emitter.name = f"particles:emitter({subject.name.split(':')[-1]})"
-
     mod = emitter.modifiers.new(name="PARTICLE", type="PARTICLE_SYSTEM")
-    system = emitter.particle_systems[mod.name]
+    system = mod.particle_system
 
     emitter.show_instancer_for_viewport = False
     emitter.show_instancer_for_render = False
