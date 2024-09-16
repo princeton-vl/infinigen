@@ -122,7 +122,21 @@ def queue_export(
     **kwargs,
 ):
     input_suffix = get_suffix(input_indices)
-    input_folder = f"{folder}/coarse{input_suffix}"
+    input_folder_priority_options = [
+        f"fine{input_suffix}",
+        "fine",
+        f"coarse{input_suffix}",
+        "coarse",
+    ]
+
+    for option in input_folder_priority_options:
+        input_folder = f"{folder}/{option}"
+        if (Path(input_folder) / "scene.blend").exists():
+            break
+    else:
+        logger.warning(
+            f"No scene.blend found in {input_folder} for any of {input_folder_priority_options}"
+        )
 
     cmd = (
         get_cmd(
