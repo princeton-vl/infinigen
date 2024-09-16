@@ -12,7 +12,7 @@ import numpy as np
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures.util.creature import Part, PartFactory
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, ng_outputs
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -649,17 +649,9 @@ class FishFin(PartFactory):
         )
         butil.set_geomod_inputs(mod, params)
 
-        id1 = next(
-            s
-            for s in mod.node_group.interface.items_tree
-            if s.in_out == "OUTPUT" and s.name == "Bump"
-        ).identifier
+        id1 = ng_outputs(mod.node_group)["Bump"].identifier
         mod[f"{id1}_attribute_name"] = "Bump"
-        id2 = next(
-            s
-            for s in mod.node_group.interface.items_tree
-            if s.in_out == "OUTPUT" and s.name == "BumpMask"
-        ).identifier
+        id2 = ng_outputs(mod.node_group)["BumpMask"].identifier
         mod[f"{id2}_attribute_name"] = "BumpMask"
 
         butil.apply_modifiers(fin, mod)

@@ -32,6 +32,14 @@ class NodeMisuseWarning(UserWarning):
     pass
 
 
+def ng_inputs(node_group):
+    return {s.name: s for s in node_group.interface.items_tree if s.in_out == "INPUT"}
+
+
+def ng_outputs(node_group):
+    return {s.name: s for s in node_group.interface.items_tree if s.in_out == "OUTPUT"}
+
+
 # This is for Blender 3.3 because of the nodetree change
 def geometry_node_group_empty_new():
     group = bpy.data.node_groups.new("Geometry Nodes", "GeometryNodeTree")
@@ -225,10 +233,7 @@ class NodeWrangler:
 
         group_input = self.new_node(Nodes.GroupInput)  # will reuse singleton
 
-        if any(
-            s.name == name and s.in_out == "INPUT"
-            for s in self.node_group.interface.items_tree
-        ):
+        if name in ng_inputs(self.node_group):
             assert len([o for o in group_input.outputs if o.name == name]) == 1
             return group_input.outputs[name]
 

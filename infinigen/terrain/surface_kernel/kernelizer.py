@@ -9,6 +9,7 @@ from collections import OrderedDict
 
 import numpy as np
 
+from infinigen.core.nodes.node_wrangler import ng_inputs, ng_outputs
 from infinigen.terrain.utils import (
     NODE_ATTRS_AVAILABLE,
     NODE_FUNCTIONS,
@@ -48,7 +49,7 @@ def my_getattr(x, a):
 class Kernelizer:
     def get_inputs(self, node_tree):
         inputs = OrderedDict()
-        for node_input in node_tree.inputs:
+        for node_input in ng_inputs(node_tree).values():
             if node_input.type != SocketType.Geometry:
                 assert node_input.type != SocketType.Image
                 inputs[node_input.identifier] = SOCKETTYPE_KERNEL[node_input.type]
@@ -59,7 +60,7 @@ class Kernelizer:
         for node in node_tree.nodes:
             if node.bl_idname == Nodes.SetPosition:
                 outputs[Vars.Offset] = KernelDataType.float3
-        for node_output in node_tree.outputs:
+        for node_output in ng_outputs(node_tree).values():
             if node_output.type != SocketType.Geometry:
                 outputs[node_output.identifier] = SOCKETTYPE_KERNEL[node_output.type]
         return outputs
@@ -416,7 +417,7 @@ class Kernelizer:
         code, imp_inputs, outputs = self.execute_node_tree(
             node_tree, collective_style=True
         )
-        for nodeoutput in node_tree.outputs:
+        for nodeoutput in ng_outputs(node_tree).values():
             id = nodeoutput.identifier
             if id != "Output_1":  # not Geometry
                 code = re.sub(rf"\b{id}\b", modifier[f"{id}_attribute_name"], code)

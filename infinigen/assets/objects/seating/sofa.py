@@ -1446,7 +1446,7 @@ class SofaFactory(AssetFactory):
             ng_inputs={
                 **self.params,
             },
-            apply=False,
+            apply=True,
         )
         tagging.tag_system.relabel_obj(obj)
         surface.add_material(obj, self.sofa_fabric)

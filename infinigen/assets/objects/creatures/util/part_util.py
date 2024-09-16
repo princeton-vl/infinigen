@@ -15,6 +15,7 @@ from infinigen.assets.objects.creatures.util.creature import (
 )
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 from infinigen.assets.utils.geometry import nurbs
+from infinigen.core.nodes.node_wrangler import ng_outputs
 from infinigen.core.util import blender as butil
 
 
@@ -29,11 +30,11 @@ def nodegroup_to_part(
             ng = nodegroup_func(**kwargs)
         else:
             ng = nodegroup_func()
-        geo_outputs = [
-            s
-            for s in ng.interface.items_tree
-            if s.in_out == "OUTPUT" and s.bl_socket_idname == "NodeSocketGeometry"
-        ]
+        geo_outputs = {
+            o
+            for o in ng_outputs(ng).values()
+            if o.bl_socket_idname == "NodeSocketGeometry"
+        }
         objs = {
             o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params)
             for o in geo_outputs

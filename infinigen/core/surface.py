@@ -24,6 +24,8 @@ from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
     geometry_node_group_empty_new,
+    ng_inputs,
+    ng_outputs,
 )
 from infinigen.core.nodes.utils import infer_output_socket, isnode
 from infinigen.core.util import blender as butil
@@ -390,39 +392,31 @@ def add_geomod(
         else:
             mod.node_group = ng
 
-        outputs = [
-            s for s in mod.node_group.interface.items_tree if s.in_out == "OUTPUT"
+        non_geometries = [
+            o
+            for o in ng_outputs(mod.node_group).values()
+            if o.socket_type != "NodeSocketGeometry"
         ]
-        identifiers = [
-            outputs[i].identifier
-            for i in range(len(outputs))
-            if outputs[i].socket_type != "NodeSocketGeometry"
-        ]
-        if len(identifiers) != len(attributes):
+        if len(non_geometries) != len(attributes):
             raise Exception(
-                f"has {len(identifiers)} identifiers, but {len(attributes)} attributes. Specifically, "
-                f"{identifiers=} and {attributes=}"
+                f"has {len(non_geometries)} identifiers, but {len(attributes)} attributes. Specifically, "
+                f"{non_geometries=} and {attributes=}"
             )
-        for id, att_name in zip(identifiers, attributes):
+        for o, att_name in zip(non_geometries, attributes):
             # attributes are a 1-indexed list, and Geometry is the first element, so we start from 2
             # while f'Output_{i}_attribute_name' not in
-            mod[id + "_attribute_name"] = att_name
-        os = [
-            outputs[i]
-            for i in range(len(outputs))
-            if outputs[i].socket_type != "NodeSocketGeometry"
-        ]
-        for o, domain in zip(os, domains):
+            mod[o.identifier + "_attribute_name"] = att_name
+        for o, domain in zip(non_geometries, domains):
             o.attribute_domain = domain
 
-        inputs = [s for s in mod.node_group.interface.items_tree if s.in_out == "INPUT"]
+        inputs = ng_inputs(mod.node_group)
         if not any(att_name is None for att_name in input_attributes):
             raise Exception("None should be provided for Geometry inputs.")
-        for i, att_name in zip(inputs, input_attributes):
-            id = i.identifier
+        for i, att_name in zip(inputs.values(), input_attributes):
+            o = i.identifier
             if att_name is not None:
-                mod[f"{id}_use_attribute"] = True
-                mod[f"{id}_attribute_name"] = att_name
+                mod[f"{o}_use_attribute"] = True
+                mod[f"{o}_attribute_name"] = att_name
 
     if apply:
         for obj in objs:
