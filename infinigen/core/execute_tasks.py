@@ -308,7 +308,7 @@ def execute_tasks(
         col.hide_viewport = False
 
     if need_terrain_processing and (
-        Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task
+        Task.Render in task or Task.GroundTruth in task or Task.MeshSave in task or Task.Export in task
     ):
         terrain = Terrain(
             scene_seed,
