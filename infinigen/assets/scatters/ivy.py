@@ -92,58 +92,6 @@ class Ivy:
         self.factory = LeafFactoryIvy(np.random.randint(0, 1e5), random_season())
         self.col = make_asset_collection(self.factory, 5)
 
-    def __call__(self, obj, selection=None):
-        factory = LeafFactoryIvy(np.random.randint(0, 1e5), random_season())
-        col = make_asset_collection(factory, 5)
-
-        scatter_obj = butil.spawn_vert("scatter:" + "ivy")
-        surface.add_geomod(
-            scatter_obj,
-            geo_base_selection,
-            apply=True,
-            input_args=[obj, selection, 0.05],
-        )
-
-        def end_index(nw):
-            return nw.compare(
-                "EQUAL",
-                nw.new_node(Nodes.Index),
-                np.random.randint(len(scatter_obj.data.vertices)),
-            )
-
-        def weight(nw):
-            return nw.scalar_multiply(
-                nw.uniform(0.8, 1),
-                nw.scalar_sub(
-                    2,
-                    nw.math(
-                        "ABSOLUTE",
-                        nw.dot(
-                            nw.vector_math(
-                                "NORMALIZE",
-                                nw.sub(
-                                    *nw.new_node(Nodes.InputEdgeVertices).outputs[2:]
-                                ),
-                            ),
-                            (0, 0, 1),
-                        ),
-                    ),
-                ),
-            )
-
-        surface.add_geomod(
-            scatter_obj,
-            geo_shortest_path,
-            apply=True,
-            input_args=[end_index, weight, uniform(0.1, 0.15), uniform(0.1, 0.15)],
-        )
-        fix_tree(scatter_obj)
-        surface.add_geomod(scatter_obj, geo_radius, apply=True, input_args=[0.005, 12])
-        assign_material(scatter_obj, shaderfunc_to_material(shader_simple_brown))
-        surface.add_geomod(scatter_obj, geo_leaf, apply=True, input_args=[col])
-
-        return scatter_obj
-
     def apply(self, obj, selection=None):
         scatter_obj = butil.spawn_vert("scatter:" + "ivy")
         surface.add_geomod(

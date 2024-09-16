@@ -39,11 +39,11 @@ def apply(obj, scale=1, density=1.0, n=5, selection=None, **kwargs):
     return scatter_obj, seaweeds
 
 
-class SeaweedGenerator:
+class Seaweed:
     def __init__(self):
         pass
 
-    def __call__(self, obj, scale=1, density=1.0, n=5, selection=None, **kwargs):
+    def apply(self, obj, scale=1, density=1.0, n=5, selection=None, **kwargs):
         n_species = np.random.randint(2, 5)
         factories = [SeaweedFactory(np.random.randint(1e5)) for i in range(n_species)]
         seaweeds = make_asset_collection(

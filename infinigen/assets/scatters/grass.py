@@ -46,11 +46,11 @@ def apply(obj, selection=None, **kwargs):
     return scatter_obj, grass_col
 
 
-class GrassGenerator:
+class Grass:
     def __init__(self):
         pass
 
-    def __call__(self, obj, selection=None, **kwargs):
+    def apply(self, obj, selection=None, **kwargs):
         n_fac = 1
         facs = [GrassTuftFactory(np.random.randint(1e7)) for _ in range(n_fac)]
         grass_col = make_asset_collection(facs, n=10)

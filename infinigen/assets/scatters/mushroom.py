@@ -114,11 +114,11 @@ def apply(objs, selection=None, **kwargs):
     return scattered_objects, col
 
 
-class MushroomGenerator:
+class Mushroom:
     def __init__(self):
         pass
 
-    def __call__(self, objs, selection=None, **kwargs):
+    def apply(self, objs, selection=None, **kwargs):
         factories = [MushroomFactory(np.random.randint(1e5)) for _ in range(3)]
         mushroom_keypoints = [
             f.build_mushrooms(np.random.randint(1e5)) for f in factories

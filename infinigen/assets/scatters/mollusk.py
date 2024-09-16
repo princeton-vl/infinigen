@@ -45,11 +45,11 @@ def apply(obj, scale=0.4, density=1.0, n=10, selection=None):
         return scatter_obj, mollusk
 
 
-class MolluskGenerator:
+class Mollusk:
     def __init__(self):
         pass
 
-    def __call__(self, obj, scale=0.4, density=1.0, n=10, selection=None):
+    def apply(self, obj, scale=0.4, density=1.0, n=10, selection=None):
         with CountInstance("mollusk"):
             n_species = np.random.randint(4, 6)
             factories = list(

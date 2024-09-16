@@ -26,20 +26,6 @@ class Mushrooms:
             weights=np.random.uniform(0.5, 1, len(self.factories)),
         )
 
-    def __call__(self, obj, scale=0.3, density=1.0, selection=None):
-        scatter_obj = scatter_instances(
-            base_obj=obj,
-            collection=self.col,
-            density=density,
-            min_spacing=scale,
-            scale=scale,
-            scale_rand=U(0.5, 0.9),
-            selection=selection,
-            taper_scale=True,
-        )
-
-        return scatter_obj
-
     def apply(self, obj, scale=0.3, density=1.0, selection=None):
         scatter_obj = scatter_instances(
             base_obj=obj,

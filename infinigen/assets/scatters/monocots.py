@@ -33,11 +33,11 @@ def apply(obj, n=4, grass=None, selection=None, **kwargs):
     return scatter_obj, monocots
 
 
-class MonocotsGenerator:
+class Monocots:
     def __init__(self):
         pass
 
-    def __call__(self, obj, n=4, grass=None, selection=None, **kwargs):
+    def apply(self, obj, n=4, grass=None, selection=None, **kwargs):
         monocots = make_asset_collection(
             MonocotFactory(np.random.randint(1e5), grass=grass),
             n=n,

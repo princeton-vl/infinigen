@@ -36,11 +36,11 @@ def apply(obj, scale=1, density=2e3, n=3, selection=None):
     return scatter_obj, pine_needle
 
 
-class PineNeedleGenerator:
+class PineNeedle:
     def __init__(self):
         pass
 
-    def __call__(self, obj, scale=1, density=2e3, n=3, selection=None):
+    def apply(self, obj, scale=1, density=2e3, n=3, selection=None):
         n_species = np.random.randint(2, 3)
         factories = [
             PineNeedleFactory(np.random.randint(1e5)) for i in range(n_species)

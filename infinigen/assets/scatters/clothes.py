@@ -67,24 +67,6 @@ class ClothesCover:
         self.bbox = bbox
         self.z_offset = 0.2
 
-    def __call__(self, obj, selection=None, **kwargs):
-        for obj in obj if isinstance(obj, list) else [obj]:
-            x, y, z = read_co(obj).T
-            clothes = deep_clone_obj(
-                np.random.choice(self.col.objects), keep_materials=True
-            )
-            clothes.parent = obj
-            clothes.location = (
-                uniform(self.bbox[0], self.bbox[1]) * (np.max(x) - np.min(x))
-                + np.min(x),
-                uniform(self.bbox[2], self.bbox[3]) * (np.max(y) - np.min(y))
-                + np.min(y),
-                np.max(z) + self.z_offset - np.min(read_co(clothes)[:, -1]),
-            )
-            clothes.rotation_euler[-1] = uniform(0, np.pi * 2)
-            cloth_sim(clothes, obj, mass=0.05, tension_stiffness=2, distance_min=5e-3)
-            subsurf(clothes, 2)
-
     def apply(self, obj, selection=None, **kwargs):
         for obj in obj if isinstance(obj, list) else [obj]:
             x, y, z = read_co(obj).T

@@ -42,11 +42,11 @@ def apply(obj, n=5, selection=None):
     return scatter_obj, urchin
 
 
-class UrchinGenerator:
+class Urchin:
     def __init__(self):
         pass
 
-    def __call__(self, obj, n=5, selection=None):
+    def apply(self, obj, n=5, selection=None):
         n_species = np.random.randint(2, 3)
         factories = list(
             UrchinFactory(np.random.randint(1e5)) for i in range(n_species)

@@ -35,11 +35,11 @@ def apply(obj, n=4, selection=None, **kwargs):
     return scatter_obj, monocots
 
 
-class DecorativePlantsGenerator:
+class DecorativePlants:
     def __init__(self):
         pass
 
-    def __call__(self, obj, n=4, selection=None, **kwargs):
+    def apply(self, obj, n=4, selection=None, **kwargs):
         fac_class = np.random.choice([succulent.SucculentFactory])
 
         monocots = make_asset_collection(

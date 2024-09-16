@@ -48,11 +48,11 @@ def apply(obj, selection=None, n_leaf=0, n_twig=10, **kwargs):
     return scatter_obj, twigs
 
 
-class GroundTwigsGenerator:
+class GroundTwigs:
     def __init__(self):
         pass
 
-    def __call__(self, obj, selection=None, n_leaf=0, n_twig=10, **kwargs):
+    def apply(self, obj, selection=None, n_leaf=0, n_twig=10, **kwargs):
         (_, twig_params, leaf_params), _ = random_species(season="winter")
         twigs = make_twig_collection(
             np.random.randint(1e5),

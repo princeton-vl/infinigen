@@ -195,11 +195,11 @@ def apply(obj, species_seed=None, selection=None, n_trees=1, **kwargs):
     return scatter_obj, col
 
 
-class ChoppedTreesGenerator:
+class ChoppedTrees:
     def __init__(self):
         pass
 
-    def __call__(self, obj, species_seed=None, selection=None, n_trees=1, **kwargs):
+    def apply(self, obj, species_seed=None, selection=None, n_trees=1, **kwargs):
         assert obj is not None
         if species_seed is None:
             species_seed = np.random.randint(1e6)

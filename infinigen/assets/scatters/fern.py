@@ -31,11 +31,11 @@ def apply(obj, selection=None, density=("uniform", 1, 6), **kwargs):
     return scatter_obj, fern_col
 
 
-class FernGenerator:
+class Fern:
     def __init__(self):
         pass
 
-    def __call__(self, obj, selection=None, density=("uniform", 1, 6), **kwargs):
+    def apply(self, obj, selection=None, density=("uniform", 1, 6), **kwargs):
         fern_col = make_asset_collection(
             FernFactory(np.random.randint(1e5)), n=2, verbose=True
         )

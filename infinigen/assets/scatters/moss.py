@@ -28,29 +28,6 @@ class MossCover:
                 ),
             )
 
-    def __call__(self, obj, selection=None):
-        def instance_index(nw: NodeWrangler, n):
-            return nw.math(
-                "MODULO",
-                nw.new_node(
-                    Nodes.FloatToInt, [nw.scalar_multiply(nw.musgrave(10), 2 * n)]
-                ),
-                n,
-            )
-
-        scatter_obj = scatter_instances(
-            base_obj=obj,
-            collection=self.col,
-            density=2e4,
-            min_spacing=0.005,
-            scale=1,
-            scale_rand=U(0.3, 0.7),
-            selection=selection,
-            instance_index=instance_index,
-        )
-
-        return scatter_obj
-
     def apply(self, obj, selection=None):
         def instance_index(nw: NodeWrangler, n):
             return nw.math(

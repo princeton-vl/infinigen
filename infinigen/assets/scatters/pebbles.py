@@ -36,11 +36,11 @@ def apply(obj, n=5, detail=3, selection=None, **kwargs):
     return scatter_obj, rocks
 
 
-class PebblesGenerator:
+class Pebbles:
     def __init__(self):
         pass
 
-    def __call__(self, obj, n=5, detail=3, selection=None, **kwargs):
+    def apply(self, obj, n=5, detail=3, selection=None, **kwargs):
         fac = BlenderRockFactory(np.random.randint(1e5), detail=detail)
         rocks = make_asset_collection(fac, n=n)
 

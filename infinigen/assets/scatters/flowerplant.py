@@ -36,11 +36,11 @@ def apply(obj, selection=None, density=1.0):
     return scatter_obj, flowerplant_col
 
 
-class FlowerplantGenerator:
+class Flowerplant:
     def __init__(self):
         pass
 
-    def __call__(self, obj, selection=None, density=1.0):
+    def apply(self, obj, selection=None, density=1.0):
         flowerplant_col = make_asset_collection(
             FlowerPlantFactory(np.random.randint(1e5)), n=12, verbose=True
         )

@@ -44,11 +44,11 @@ def apply(obj, scale=1, density=1.0, n=6, selection=None):
     return scatter_obj, jellyfish
 
 
-class JellyfishGenerator:
+class Jellyfish:
     def __init__(self):
         pass
 
-    def __call__(self, obj, scale=1, density=1.0, n=6, selection=None):
+    def apply(self, obj, scale=1, density=1.0, n=6, selection=None):
         n_species = np.random.randint(2, 3)
         factories = list(
             JellyfishFactory(np.random.randint(1e5)) for i in range(n_species)
