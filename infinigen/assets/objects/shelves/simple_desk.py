@@ -9,13 +9,9 @@ from numpy.random import normal, uniform
 
 from infinigen.assets.materials.shelf_shaders import (
     shader_shelves_black_metallic,
-    shader_shelves_black_metallic_sampler,
     shader_shelves_black_wood,
-    shader_shelves_black_wood_sampler,
     shader_shelves_white,
     shader_shelves_white_metallic,
-    shader_shelves_white_metallic_sampler,
-    shader_shelves_white_sampler,
 )
 from infinigen.assets.objects.shelves.utils import nodegroup_tagged_cube
 from infinigen.core import surface, tagging
@@ -267,7 +263,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": table_top,
-            "Material": surface.shaderfunc_to_material(kwargs["top_material"]),
+            "Material": kwargs["top_material"],
         },
     )
 
@@ -293,7 +289,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": table_legs,
-            "Material": surface.shaderfunc_to_material(kwargs["leg_material"]),
+            "Material": kwargs["leg_material"],
         },
     )
 
@@ -352,37 +348,17 @@ class SimpleDeskBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        if params["top_material"] == "white":
-            if randomness:
-                params["top_material"] = lambda x: shader_shelves_white(
-                    x, **shader_shelves_white_sampler()
-                )
-            else:
-                params["top_material"] = shader_shelves_white
-        elif params["top_material"] == "black_wood":
-            if randomness:
-                params["top_material"] = lambda x: shader_shelves_black_wood(
-                    x, **shader_shelves_black_wood_sampler()
-                )
-            else:
-                params["top_material"] = shader_shelves_black_wood
+        if params['top_material'] == 'white':
+            params['top_material'] = surface.shaderfunc_to_material(shader_shelves_white)
+        elif params['top_material'] == 'black_wood':
+            params['top_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood)
         else:
             raise NotImplementedError
 
-        if params["leg_material"] == "white":
-            if randomness:
-                params["leg_material"] = lambda x: shader_shelves_white_metallic(
-                    x, **shader_shelves_white_metallic_sampler()
-                )
-            else:
-                params["leg_material"] = shader_shelves_white_metallic
-        elif params["leg_material"] == "black":
-            if randomness:
-                params["leg_material"] = lambda x: shader_shelves_black_metallic(
-                    x, **shader_shelves_black_metallic_sampler()
-                )
-            else:
-                params["leg_material"] = shader_shelves_black_metallic
+        if params['leg_material'] == 'white':
+            params['leg_material'] = surface.shaderfunc_to_material(shader_shelves_white_metallic)
+        elif params['leg_material'] == 'black':
+            params['leg_material'] = surface.shaderfunc_to_material(shader_shelves_black_metallic)
         else:
             raise NotImplementedError
 
