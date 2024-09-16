@@ -658,10 +658,6 @@ def compose_nature(output_folder, scene_seed, **params):
         camera_rigs[0], "cube", offset=Vector(), size=30
     )
 
-    butil.constrain_object(
-        cube_emitter, "COPY_LOCATION", use_offset=True, target=camera_rigs[0]
-    )
-
     def leaf_particles():
         gen = weather.FallingParticles(
             leaves.LeafFactoryV2(randint(1e7)),
@@ -669,7 +665,7 @@ def compose_nature(output_folder, scene_seed, **params):
         )
         return gen(overhead_emitter)
 
-    p.run_stage("leaf_particles", leaf_particles, prereq="trees")
+    p.run_stage("leaf_particles", leaf_particles)
 
     def rain_particles():
         gen = weather.FallingParticles(

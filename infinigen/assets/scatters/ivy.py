@@ -102,10 +102,14 @@ class Ivy:
         )
 
         def end_index(nw):
+            if len(scatter_obj.data.vertices) == 0:
+                i = 0
+            else:
+                i = np.random.randint(len(scatter_obj.data.vertices))
             return nw.compare(
                 "EQUAL",
                 nw.new_node(Nodes.Index),
-                np.random.randint(len(scatter_obj.data.vertices)),
+                i,
             )
 
         def weight(nw):
@@ -135,7 +139,9 @@ class Ivy:
             input_args=[end_index, weight, uniform(0.1, 0.15), uniform(0.1, 0.15)],
         )
         fix_tree(scatter_obj)
+
         surface.add_geomod(scatter_obj, geo_radius, apply=True, input_args=[0.005, 12])
+
         assign_material(scatter_obj, shaderfunc_to_material(shader_simple_brown))
         surface.add_geomod(scatter_obj, geo_leaf, apply=True, input_args=[self.col])
 
