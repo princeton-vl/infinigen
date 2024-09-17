@@ -291,6 +291,8 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     p.run_stage("solve_small", solve_small, use_chance=False, default=state)
 
+    solver.optim.save_stats(output_folder / "optim_records.csv")
+
     p.run_stage(
         "populate_assets", populate.populate_state_placeholders, state, use_chance=False
     )

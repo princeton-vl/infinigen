@@ -41,7 +41,7 @@ class FruitCover:
     def apply(self, obj, selection=None):
         for obj in obj if isinstance(obj, Iterable) else [obj]:
             scale = uniform(0.06, 0.08) / self.shrink_rate
-            scatter_instances(
+            scattered = scatter_instances(
                 base_obj=obj,
                 collection=self.col,
                 density=1e3,
@@ -53,6 +53,7 @@ class FruitCover:
                 apply_geo=True,
                 realize=True,
             )
+            scattered.parent = obj
 
 
 class FruitContainerFactory(AssetFactory):

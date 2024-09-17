@@ -37,7 +37,9 @@ def spawn_emitter(follow_cam, mesh_type, size, offset, name=None):
     emitter.name = f"emitter({name=}, {mesh_type=})"
 
     emitter.hide_viewport = True
-    emitter.hide_render = True
+    emitter.hide_render = True  # will be undone if any particle systems are added
+
+    butil.put_in_collection(emitter, butil.get_collection("particles"))
 
     return emitter
 
@@ -156,9 +158,12 @@ class FallingParticles(Generator):
             emitter, col, self.params, collision
         )
 
-        logger.info(f"{self} baking particles")
-        particles.bake(emitter, system)
+        system.name = repr(self)
+        system.settings.name = repr(self) + ".settings"
+        emitter.hide_render = False
 
-        butil.put_in_collection(emitter, butil.get_collection("particles"))
+        logger.info(f"{self} baking particles")
+
+        particles.bake(emitter, system)
 
         return emitter

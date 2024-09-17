@@ -1,4 +1,4 @@
-export.spherical = False # use OcMesher
+fine_terrain.mesher_backend = "OcMesher"
 AnimPolicyRandomWalkLookaround.speed = ('uniform', 0.5, 1)
 AnimPolicyRandomWalkLookaround.step_speed_mult = 1
 AnimPolicyRandomWalkLookaround.yaw_sampler = ('uniform',-20, 20)
