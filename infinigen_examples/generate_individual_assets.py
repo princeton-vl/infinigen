@@ -210,11 +210,9 @@ def build_scene_surface(args, factory_name, idx):
                 if args.dryrun:
                     return
 
-                if hasattr(template, "make_sphere"):
-                    asset = template.make_sphere()
-                else:
-                    bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
-                    asset = bpy.context.active_object
+                bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
+                asset = bpy.context.active_object
+                
                 if type(template) is type:
                     template = template(idx)
                 template.apply(asset)
@@ -234,6 +232,8 @@ def build_and_save_asset(payload: dict):
 
     if args.seed > 0:
         idx = args.seed
+        
+    surface.registry.initialize_from_gin()
 
     path = args.output_folder / factory_name
     if (path / f"images/image_{idx:03d}.png").exists() and args.skip_existing:
@@ -454,7 +454,6 @@ def main(args):
         ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
         skip_unknown=True,
     )
-    surface.registry.initialize_from_gin()
 
     if args.debug is not None:
         for name in logging.root.manager.loggerDict:
@@ -504,11 +503,12 @@ def main(args):
         ]
 
     if not args.postprocessing_only:
-        for fac in factories:
-            targets = [
-                {"args": args, "fac": fac, "idx": idx} for idx in range(args.n_images)
-            ]
-            mapfunc(build_and_save_asset, targets, args)
+        targets = [
+            {"args": args, "fac": fac, "idx": idx}
+            for idx in range(args.n_images)
+            for fac in factories
+        ]
+        mapfunc(build_and_save_asset, targets, args)
 
     if args.dryrun:
         return
