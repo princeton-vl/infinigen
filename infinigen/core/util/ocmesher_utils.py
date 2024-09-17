@@ -5,6 +5,7 @@
 
 from ctypes import POINTER, c_float, c_int32
 
+import bpy
 import numpy as np
 from numpy import ascontiguousarray as AC
 
@@ -46,6 +47,10 @@ def create_sdf_from_mesh(mesh):
 
 
 def run_ocmesher(obj, cameras):
+    butil.apply_transform(obj, loc=True, rot=True, scale=True)
+    with butil.ViewportMode(obj, "EDIT"):
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.quads_convert_to_tris(quad_method="BEAUTY", ngon_method="BEAUTY")
     mesh = Mesh(obj=obj)
     room_sdf_func = create_sdf_from_mesh(mesh)
     xyz_min, xyz_max = butil.bounds(obj)
