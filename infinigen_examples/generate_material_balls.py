@@ -82,7 +82,7 @@ def build_scene_surface(factory_name, idx):
                     raise Exception(f"{factory_name} not Found.")
             if type(template) is type:
                 template = template(idx)
-            
+
             bpy.ops.mesh.primitive_ico_sphere_add(radius=scale, subdivisions=7)
             asset = bpy.context.active_object
             asset.rotation_euler = (

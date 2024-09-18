@@ -222,7 +222,7 @@ class Terrain:
                 if mesher_backend == "SphericalMesher":
                     mesher = OpaqueSphericalMesher(cameras, self.bounds)
                 elif mesher_backend == "OcMesher":
-                        mesher = OcMesher(cameras, self.bounds)
+                    mesher = OcMesher(cameras, self.bounds)
                 elif mesher_backend == "UniformMesher":
                     mesher = UniformMesher(self.populated_bounds)
                 else:
@@ -419,7 +419,9 @@ class Terrain:
         self.surfaces_into_sdf()
 
         # do second time to avoid surface application difference resulting in floating rocks
-        coarse_meshes, _ = self.export(main_terrain_only=True, mesher_backend="UniformMesher")
+        coarse_meshes, _ = self.export(
+            main_terrain_only=True, mesher_backend="UniformMesher"
+        )
         main_mesh = coarse_meshes[self.main_terrain]
 
         # WaterCovered annotation
@@ -447,7 +449,13 @@ class Terrain:
         return main_obj
 
     @gin.configurable
-    def fine_terrain(self, output_folder, cameras, optimize_terrain_diskusage=True, mesher_backend="SphericalMesher"):
+    def fine_terrain(
+        self,
+        output_folder,
+        cameras,
+        optimize_terrain_diskusage=True,
+        mesher_backend="SphericalMesher",
+    ):
         # redo sampling to achieve attribute -> surface correspondance
         self.sample_surface_templates()
         if (self.on_the_fly_asset_folder / Assets.Ocean).exists():

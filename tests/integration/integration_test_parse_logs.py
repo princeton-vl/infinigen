@@ -1,11 +1,11 @@
+import argparse
 import os
 import re
 from datetime import timedelta
 from pathlib import Path
 
+import jinja2
 import pandas as pd
-
-SCENES = ["dining"]
 
 
 def sizeof_fmt(num, suffix="B"):
@@ -14,16 +14,6 @@ def sizeof_fmt(num, suffix="B"):
             return f"{num:3.1f} {unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}"
-
-
-def make_stats(data_df):
-    stats = pd.DataFrame()
-    stats["mean"] = data_df.mean(axis=1)
-    stats["median"] = data_df.min(axis=1)
-    stats["90%"] = data_df.quantile(0.9, axis=1)
-    stats["95%"] = data_df.quantile(0.95, axis=1)
-    stats["99%"] = data_df.quantile(0.99, axis=1)
-    return stats
 
 
 def td_to_str(td):
@@ -101,25 +91,17 @@ def parse_scene_log(
     render_time = step_times["rendershort"][0]
     gt_time = step_times["blendergt"][0]
 
-    coarse_face = poly_data["[Coarse] Faces"][0]
     coarse_tris = poly_data["[Coarse] Tris"][0]
-    fine_face = poly_data["[Fine] Faces"][0]
     fine_tris = poly_data["[Fine] Tris"][0]
     mem = coarse_stage_df["mem_at_finish"].iloc[-1]
     obj_count = coarse_stage_df["obj_count"].iloc[-1]
-    instance_count = coarse_stage_df["instance_count"].iloc[-1]
 
     ret_dict = {
-        "coarse_face": coarse_face,
         "coarse_tris": coarse_tris,
-        "fine_face": fine_face,
         "fine_tirs": fine_tris,
-        "mem": mem,
         "obj_count": obj_count,
-        "instance_count": instance_count,
-        "coarse_time": coarse_time,
-        "pop_time": pop_time,
-        "fine_time": fine_time,
+        "gen_time": coarse_time + pop_time + fine_time,
+        "gen_mem_gb": mem,
         "render_time": render_time,
         "gt_time": gt_time,
     }
@@ -127,35 +109,180 @@ def parse_scene_log(
     return ret_dict
 
 
-def test_logs(dir):
-    print("")
-    step_times = {
-        "fineterrain": [],
-        "coarse": [],
-        "populate": [],
-        "rendershort": [],
-        "blendergt": [],
+def parse_run_df(run_path: Path):
+    runs = {
+        "_".join((x.name.split("_")[2:])): x for x in run_path.iterdir() if x.is_dir()
     }
+    for k, v in runs.items():
+        print(k, v)
 
-    poly_data = {
-        "[Coarse] Faces": [],
-        "[Coarse] Tris": [],
-        "[Fine] Faces": [],
-        "[Fine] Tris": [],
-    }
-    completed_seeds = os.path.join(dir, "finished_seeds.txt")
-    # num_lines = sum(1 for _ in open(completed_seeds))
-    for scene in os.listdir(dir):
-        if scene not in open(completed_seeds).read():
-            continue
-        scene_path = os.path.join(dir, scene)
-        dict = parse_scene_log(
-            scene_path,
-            step_times,
-            poly_data,
+    records = []
+
+    def scene_folders(type):
+        scenes = []
+
+        for name, path in runs.items():
+            if not name.startswith(type):
+                continue
+            for scene in path.iterdir():
+                if not scene.is_dir():
+                    continue
+                if scene.name == "logs":
+                    continue
+                scenes.append(scene)
+
+        return sorted(scenes)
+
+    N_ASSETS = 3
+    IMG_NAME = "Image_0_0_0048_0.png"
+    NORMAL_NAME = "SurfaceNormal_0_0_0048_0.png"
+
+    for scene in scene_folders("scene_nature"):
+        scenetype = "_".join(scene.parent.name.split("_")[2:])
+        records.append(
+            {
+                "name": scenetype + "/" + scene.name,
+                "category": "scene_nature",
+                "img_path": scene / "frames" / "Image" / "camera_0" / IMG_NAME,
+                "normal_path": scene
+                / "frames"
+                / "SurfaceNormal"
+                / "camera_0"
+                / NORMAL_NAME,
+                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+            }
         )
 
-    print(dict)
+    for scene in scene_folders("scene_indoor"):
+        scenetype = "_".join(scene.parent.name.split("_")[2:])
+        records.append(
+            {
+                "name": scenetype + "/" + scene.name,
+                "category": "scene_indoor",
+                "img_path": scene / "frames" / "Image" / "camera_0" / IMG_NAME,
+                "normal_path": scene
+                / "frames"
+                / "SurfaceNormal"
+                / "camera_0"
+                / NORMAL_NAME,
+                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+            }
+        )
+
+    for scene in scene_folders("asset"):
+        category = "_".join(scene.parent.name.split("_")[2:])
+        record = {
+            "category": category,
+            "name": category + "/" + scene.name,
+            "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+        }
+
+        for i in range(N_ASSETS):
+            img_path = scene / "images" / f"image_{i:03d}.png"
+            record[f"img_path_{i}"] = img_path
+
+        records.append(record)
+
+    return pd.DataFrame.from_records(records)
 
 
-test_logs("/n/fs/scratch/dy2617/system_test/dining/")
+def find_run(base_path: str, run: str) -> Path:
+    base_path = Path(base_path)
+
+    run_path = base_path / run
+    if run_path.exists():
+        return run_path
+
+    options = [x for x in base_path.iterdir() if run in x.name.split("_")]
+    if len(options) == 1:
+        return options[0]
+    elif len(options) > 1:
+        raise ValueError(f"Multiple runs found for {run}, {options}")
+    else:
+        raise FileNotFoundError(f"Could not find match for {run=} in {base_path=}")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base_path", type=Path)
+    parser.add_argument("--compare_runs", type=str, nargs="+")
+    parser.add_argument("--nearest", action="store_true")
+    args = parser.parse_args()
+
+    runs_folder = args.base_path / "runs"
+    views_folder = args.base_path / "views"
+
+    runs = [find_run(runs_folder, run) for run in args.compare_runs]
+
+    dfs = {run: parse_run_df(runs_folder / run) for run in runs}
+
+    version_names = [r.name for r in runs]
+
+    if len(runs) == 2:
+        lhs = dfs[runs[0]]
+        rhs = dfs[runs[1]]
+    elif len(runs) == 1:
+        lhs = rhs = dfs[runs[0]]
+    else:
+        raise ValueError("Only 1 or 2 runs supported")
+
+    if not args.nearest:
+        names_0 = set(lhs["name"])
+        names_1 = set(rhs["name"])
+        diff = names_0.symmetric_difference(names_1)
+        if diff:
+            raise ValueError(
+                f"Names differ between runs:\n {names_0-names_1=},\n {names_1-names_0=}"
+            )
+
+    if args.nearest:
+        raise NotImplementedError()  # need to handle str dtypes
+        main_df = pd.merge_asof(
+            lhs, rhs, on="name", suffixes=("_A", "_B"), direction="nearest"
+        )
+    else:
+        main_df = lhs.merge(rhs, on="name", suffixes=("_A", "_B"), how="outer")
+
+    for col in main_df:
+        if col.startswith("img_path"):
+            main_df[col] = main_df[col].apply(
+                lambda x: "../" + str(x.relative_to(args.base_path))
+                if isinstance(x, Path)
+                else x
+            )
+
+    print(main_df.columns)
+
+    categories = [
+        "scene_nature",
+        "scene_indoor",
+        "asset_nature_meshes",
+        "asset_indoor_meshes",
+        "asset_nature_materials",
+        "asset_indoor_materials",
+    ]
+    path_lookups = {
+        category: main_df[main_df["category_A"] == category].to_dict(orient="records")
+        for category in categories
+    }
+
+    for category, records in path_lookups.items():
+        print(category, len(records))
+
+    jenv = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+    template = jenv.get_template("tests/integration/template.html")
+
+    # Render the template with the data
+    html_content = template.render(
+        title="Version Comparison", version_names=version_names, **path_lookups
+    )
+
+    # Save the rendered HTML to a file
+    name = "_".join(args.compare_runs) + ".html"
+    output_path = views_folder / name
+    print("Writing to ", output_path)
+    output_path.write_text(html_content)
+
+
+if __name__ == "__main__":
+    main()
