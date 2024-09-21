@@ -20,8 +20,9 @@ try:
         FlowDirectorSteepest,
         TransportLengthHillslopeDiffuser,
     )
-except ImportError:
+except ImportError as e:
     landlab = None
+    _landlab_import_error = e
 
 from infinigen.core.util.organization import AssetFile
 from infinigen.core.util.random import random_general as rg
@@ -53,9 +54,10 @@ def upsidedown_mountains_asset(
 
     if landlab is None:
         raise ImportError(
-            "landlab must be installed to use terrain mountain simulation "
-            "Please install optional terrain dependencies via `pip install .[terrain]`"
-        )
+            "landlab import failed for terrain mountain simulation "
+            f" original error: {_landlab_import_error}\n"
+            "You may need to install terrain dependencies via `pip install .[terrain]`"
+        ) from _landlab_import_error
 
     Path(folder).mkdir(parents=True, exist_ok=True)
     N = resolution
