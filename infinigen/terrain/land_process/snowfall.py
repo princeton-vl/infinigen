@@ -17,7 +17,8 @@ try:
         FlowDirectorSteepest,
         TransportLengthHillslopeDiffuser,
     )
-except ImportError:
+except ImportError as e:
+    _landlab_import_error = e
     landlab = None
 
 from infinigen.core.util.organization import AssetFile, Process
@@ -57,9 +58,10 @@ def run_snowfall(
 ):
     if landlab is None:
         raise ImportError(
-            "landlab must be installed to use terrain snowfall "
-            "Please install optional terrain dependencies via `pip install .[terrain]`"
-        )
+            "landlab import failed for terrain snowfall simulation\n"
+            f" original error: {_landlab_import_error}\n"
+            "You may need to install terrain dependencies via `pip install .[terrain]`"
+        ) from _landlab_import_error
 
     heightmap_path = f"{folder}/{Process.Erosion}.{AssetFile.Heightmap}.exr"
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
