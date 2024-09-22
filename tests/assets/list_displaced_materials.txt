@@ -1,5 +1,4 @@
-infinigen.assets.materials.fabric.fabric
-infinigen.assets.materials.fabric.leather
+infinigen.assets.materials.fabrics.leather
 infinigen.assets.materials.metal.grained_and_polished_metal
 infinigen.assets.materials.metal.hammered_metal
 infinigen.assets.materials.ceramic.concrete

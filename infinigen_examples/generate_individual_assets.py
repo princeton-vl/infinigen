@@ -231,8 +231,9 @@ def build_scene_surface(args, factory_name, idx):
                     bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
                     asset = bpy.context.active_object
 
-                with butil.ViewportMode(asset, mode="EDIT"):
-                    bpy.ops.mesh.subdivide(number_cuts=10)
+                if len(asset.data.vertices) < 100:
+                    with butil.ViewportMode(asset, mode="EDIT"):
+                        bpy.ops.mesh.subdivide(number_cuts=10)
                     
                 if type(gen_class) is type:
                     mat_gen = gen_class(idx)
