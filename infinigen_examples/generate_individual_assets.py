@@ -146,15 +146,9 @@ def build_scene_asset(args, factory_name, idx):
                     size=5, x_subdivisions=400, y_subdivisions=400
                 )
                 plane = bpy.context.active_object
-                with butil.ViewportMode(plane, mode="EDIT"):
-                    bpy.ops.mesh.subdivide(number_cuts=10)
                 plane.location[-1] = x_min[-1]
                 plane.is_shadow_catcher = True
                 material = bpy.data.materials.new("plane")
-                if hasattr(material, "displacement_method"):
-                    material.displacement_method = "DISPLACEMENT"
-                else:
-                    material.cycles.displacement_method = "DISPLACEMENT"
                 material.use_nodes = True
                 material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
                     0.015,
@@ -185,7 +179,7 @@ def build_scene_surface(args, factory_name, idx):
             )
             plane = bpy.context.active_object
             with butil.ViewportMode(plane, mode="EDIT"):
-                bpy.ops.mesh.subdivide(number_cuts=10)
+                bpy.ops.mesh.subdivide(number_cuts=5)
             material = bpy.data.materials.new("plane")
             if hasattr(material, "displacement_method"):
                 material.displacement_method = "DISPLACEMENT"
@@ -228,12 +222,14 @@ def build_scene_surface(args, factory_name, idx):
                 if hasattr(gen_class, "make_sphere"):
                     asset = gen_class.make_sphere()
                 else:
-                    bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
+                    bpy.ops.mesh.primitive_ico_sphere_add(
+                        radius=0.8, subdivisions=9 if factory_name == "concrete" else 3
+                    )
                     asset = bpy.context.active_object
 
                 if len(asset.data.vertices) < 100:
                     with butil.ViewportMode(asset, mode="EDIT"):
-                        bpy.ops.mesh.subdivide(number_cuts=10)
+                        bpy.ops.mesh.subdivide(number_cuts=2)
                     
                 if type(gen_class) is type:
                     mat_gen = gen_class(idx)
