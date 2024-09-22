@@ -321,7 +321,10 @@ def add_material(
         nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
-
+    if hasattr(material, "displacement_method"):
+        material.displacement_method = "DISPLACEMENT"
+    else:
+        material.cycles.displacement_method = "DISPLACEMENT"
     for obj in objs:
         obj.active_material = material
     return material

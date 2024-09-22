@@ -20,6 +20,10 @@ def apply(obj, shader_func, selection=None, *args, **kwargs):
         material = surface.shaderfunc_to_material(shader_func, *args, **kwargs)
     else:
         material = shader_func
+    if hasattr(material, "displacement_method"):
+        material.displacement_method = "DISPLACEMENT"
+    else:
+        material.cycles.displacement_method = "DISPLACEMENT"
     for o in obj:
         index = len(o.data.materials)
         o.data.materials.append(material)
