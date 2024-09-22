@@ -243,7 +243,7 @@ def configure_render_cycles(
 @gin.configurable
 def configure_cycles_devices(use_gpu=True):
     if use_gpu is False:
-        logger.info(f"Render will use CPU-only due to {use_gpu=}")
+        logger.info(f"Job will use CPU-only due to {use_gpu=}")
         bpy.context.scene.cycles.device = "CPU"
         return
 
@@ -264,7 +264,7 @@ def configure_cycles_devices(use_gpu=True):
     use_device_type = types[0]
 
     if use_device_type == "CPU":
-        logger.warning(f"Render will use CPU-only, only found {types=}")
+        logger.warning(f"Job will use CPU-only, only found {types=}")
         bpy.context.scene.cycles.device = "CPU"
         return
 

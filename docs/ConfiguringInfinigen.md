@@ -187,7 +187,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_data --nu
 #### Creating a few low-resolution images to your test changes
 
 ```bash
-screen python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes 50 \
+python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes 50 \
     --pipeline_config slurm monocular cuda_terrain \
     --cleanup big_files --warmup_sec 1200 --configs dev
 ```
