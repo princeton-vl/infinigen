@@ -82,18 +82,14 @@ def build_scene_surface(factory_name, idx):
                     raise Exception(f"{factory_name} not Found.")
             if type(template) is type:
                 template = template(idx)
-            if hasattr(template, "make_sphere"):
-                asset = template.make_sphere()
-                asset.scale = [0.3] * 3
-                butil.apply_transform(asset)
-            else:
-                bpy.ops.mesh.primitive_ico_sphere_add(radius=scale, subdivisions=7)
-                asset = bpy.context.active_object
-                asset.rotation_euler = (
-                    uniform(np.pi / 6, np.pi / 3),
-                    uniform(-np.pi / 12, np.pi / 12),
-                    uniform(-np.pi / 12, np.pi / 12),
-                )
+
+            bpy.ops.mesh.primitive_ico_sphere_add(radius=scale, subdivisions=7)
+            asset = bpy.context.active_object
+            asset.rotation_euler = (
+                uniform(np.pi / 6, np.pi / 3),
+                uniform(-np.pi / 12, np.pi / 12),
+                uniform(-np.pi / 12, np.pi / 12),
+            )
 
             with FixedSeed(idx):
                 if "metal" in factory_name or "sofa_fabric" in factory_name:
