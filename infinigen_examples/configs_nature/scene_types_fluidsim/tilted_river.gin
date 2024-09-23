@@ -23,7 +23,7 @@ camera_pose_proposal.pitch = -110
 compose_nature.tilted_river_enabled = True
 
 boulder.create_placeholder.boulder_scale = 3
-LandTiles.land_process = None
+LandTiles.land_processes = None
 
 render.hide_water = True
 compute_base_views.min_candidates_ratio = 1

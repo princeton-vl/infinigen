@@ -1,0 +1,5 @@
+scene.upsidedown_mountains_chance = 0
+ant_landscape_asset.snowfall = 0
+multi_mountains_asset.snowfall = 0
+coast_asset.snowfall = 0
+get_land_process.snowfall_enabled = 0

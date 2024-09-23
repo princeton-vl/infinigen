@@ -8,7 +8,7 @@ populate_scene.cactus_fire_on_the_fly_chance = 0.1
 compose_nature.glowing_rocks_chance = 0.0
 
 compose_nature.cached_fire = False
-LandTiles.land_process = None
+LandTiles.land_processes = None
 #scene.voronoi_rocks_chance = 1
 #animate_cameras.follow_poi_chance=0
 
