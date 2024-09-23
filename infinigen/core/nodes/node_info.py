@@ -177,6 +177,7 @@ class Nodes:
     WorldOutput = "ShaderNodeOutputWorld"
     Composite = "CompositorNodeComposite"
     Viewer = "CompositorNodeViewer"
+    CompositorMixRGB = "CompositorNodeMixRGB"
 
     # Point
     DistributePointsOnFaces = "GeometryNodeDistributePointsOnFaces"

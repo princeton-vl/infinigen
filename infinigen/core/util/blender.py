@@ -22,7 +22,6 @@ from tqdm import tqdm
 
 from infinigen.core.nodes.node_info import DATATYPE_DIMS, DATATYPE_FIELDS
 
-from ..nodes.node_wrangler import ng_inputs
 from . import math as mutil
 from .logging import Suppress
 
@@ -556,7 +555,11 @@ def get_camera_res():
 def set_geomod_inputs(mod, inputs: dict):
     assert mod.type == "NODES"
     for k, v in inputs.items():
-        inputs = ng_inputs(mod.node_group)
+        inputs = {
+            s.name: s
+            for s in mod.node_group.interface.items_tree
+            if s.in_out == "INPUT"
+        }
         if k not in inputs:
             raise KeyError(f"Couldnt find {k=} in {mod.node_group.inputs.keys()=}")
         soc = inputs[k]
