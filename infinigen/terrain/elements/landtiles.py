@@ -34,6 +34,24 @@ def none_to_0(x):
         return 0
     return x
 
+@gin.configurable
+def get_land_process(land_processes, land_process_probs=None, snowfall_enabled=True):
+    if not isinstance(land_processes, list):
+        land_processes = [land_processes]
+        land_process_probs = [1]
+    if not snowfall_enabled:
+        land_processes_ = []
+        land_process_probs_ = []
+        for land_process, prob in zip(land_processes, land_process_probs):
+            if land_process != Process.Snowfall:
+                land_processes_.append(land_process)
+                land_process_probs_.append(prob)
+    else:
+        land_processes_ = land_processes
+        land_process_probs_ = land_process_probs
+    if land_processes_ == []:
+        return None
+    return rg(("choice", land_processes_, land_process_probs_))
 
 @gin.configurable
 class LandTiles(Element):
@@ -53,7 +71,8 @@ class LandTiles(Element):
         attribute_distance_range=1e9,
         island_probability=0,
         tile_heights=[-0.1],
-        land_process=("choice", [Process.Erosion, None], [0.65, 0.35]),
+        land_processes=[Process.Erosion, None],
+        land_process_probs=[0.65, 0.35],
         height_modification_start=None,
         height_modification_end=None,
         attribute_modification_start_height=None,
@@ -83,7 +102,7 @@ class LandTiles(Element):
         )
         self.smooth = smooth
         self.aux_names = []
-        land_process = rg(land_process)
+        land_process = get_land_process(land_processes, land_process_probs)
         sharpen = 0
         mask_random_freq = 0
         if land_process == Process.Snowfall:
@@ -252,7 +271,7 @@ class Volcanos(LandTiles):
             tile_density=tile_density,
             attribute_probability=0.5,
             attribute_distance_range=150,
-            land_process=Process.Eruption,
+            land_processes=Process.Eruption,
             height_modification_start=-0.5,
             height_modification_end=-1.5,
             attribute_modification_start_height=None,
@@ -282,7 +301,7 @@ class FloatingIce(LandTiles):
             tiles=[LandTile.Mesa],
             tile_density=tile_density,
             tile_heights=[-12.15],
-            land_process=Process.IceErosion,
+            land_processes=Process.IceErosion,
             transparency=Transparency.CollectiveTransparent,
             height_modification_start=None,
             height_modification_end=None,

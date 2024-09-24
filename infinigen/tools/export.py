@@ -761,7 +761,6 @@ def export_scene(
     task_uniqname=None,
     **kwargs,
 ):
-    bpy.ops.wm.open_mainfile(filepath=str(input_blend))
     folder = output_folder / f"export_{input_blend.name}"
     folder.mkdir(exist_ok=True, parents=True)
     export_curr_scene(folder, **kwargs)

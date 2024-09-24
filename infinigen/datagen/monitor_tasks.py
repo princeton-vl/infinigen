@@ -150,14 +150,13 @@ def iterate_scene_tasks(
     # even if we wouldnt launch them now (due to crashes etc)
     monitor_all,
     # provided by gin
-    global_tasks, 
-    view_dependent_tasks, 
-    camera_dependent_tasks, 
-
-    frame_range, 
-    cam_id_ranges, 
-    point_trajectory_src_frame=1, 
-    num_resamples=1, 
+    global_tasks,
+    view_dependent_tasks,
+    camera_dependent_tasks,
+    frame_range,
+    cam_id_ranges,
+    point_trajectory_src_frame=1,
+    num_resamples=1,
     render_frame_range=None,
     finalize_tasks=[],
     view_block_size=1,  # how many frames should share each `view_dependent_task`
@@ -262,10 +261,10 @@ def iterate_scene_tasks(
                     min(view_frame_range[1], cam_frame + cam_block_size - 1),
                 ]  # blender frame_end is INCLUSIVE
                 cam_overrides = [
-                    f'execute_tasks.frame_range=[{cam_frame_range[0]},{cam_frame_range[1]}]',
-                    f'execute_tasks.camera_id=[{cam_rig},{subcam}]',
-                    f'execute_tasks.resample_idx={resample_idx}',
-                    f'execute_tasks.point_trajectory_src_frame={point_trajectory_src_frame}',
+                    f"execute_tasks.frame_range=[{cam_frame_range[0]},{cam_frame_range[1]}]",
+                    f"execute_tasks.camera_id=[{cam_rig},{subcam}]",
+                    f"execute_tasks.resample_idx={resample_idx}",
+                    f"execute_tasks.point_trajectory_src_frame={point_trajectory_src_frame}",
                 ]
 
                 camdep_indices = dict(

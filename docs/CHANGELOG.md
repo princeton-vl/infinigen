@@ -105,3 +105,10 @@ v1.8.1
 - Fix silent output from upload stage, remove export from upload
 - Reduce solving time spent on small objects
 
+v1.8.2
+- Remove nonessential opengl_gt packages
+- Fix CrabFactory crash, FruitContainerFactory unparent object, wall parts
+- Fix nature particles not visible in render
+- Add smbpy du and df commands
+- Fix fineterrain not included in export for optimize_diskusage=True
+- Update mesher_backend config name & default commands

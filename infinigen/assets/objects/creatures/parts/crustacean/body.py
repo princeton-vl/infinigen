@@ -60,7 +60,7 @@ class CrabBodyFactory(PartFactory):
         displace_vertices(obj, lambda x, y, z: (0, 0, height_scale(x / x_length)))
         self.add_head(obj, params)
 
-        line = new_line(x_length)
+        line = new_line(1, x_length)
         line.location[0] -= x_length
         butil.apply_transform(line, loc=True)
 

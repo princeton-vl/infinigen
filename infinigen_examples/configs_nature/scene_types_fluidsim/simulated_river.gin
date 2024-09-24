@@ -21,7 +21,7 @@ camera_pose_proposal.roll = 180
 camera_pose_proposal.yaw = -178
 
 boulder.create_placeholder.boulder_scale = 1
-LandTiles.land_process = None
+LandTiles.land_processes = None
 
 render.hide_water = True
 compute_base_views.min_candidates_ratio = 1

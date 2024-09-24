@@ -11,7 +11,7 @@ compose_nature.snow_particles_chance = 0.5
 
 shader_atmosphere.density = 0
 nishita_lighting.sun_elevation = ("spherical_sample", 10, 30)
-LandTiles.land_process = "snowfall"
+LandTiles.land_processes = "snowfall"
 scene.waterbody_chance = 0
 scene.caves_chance = 0
 scene.ground_chance = 0

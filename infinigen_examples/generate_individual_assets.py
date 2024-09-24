@@ -207,11 +207,9 @@ def build_scene_surface(args, factory_name, idx):
                 if args.dryrun:
                     return
 
-                if hasattr(template, "make_sphere"):
-                    asset = template.make_sphere()
-                else:
-                    bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
-                    asset = bpy.context.active_object
+                bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
+                asset = bpy.context.active_object
+
                 if type(template) is type:
                     template = template(idx)
                 template.apply(asset)
@@ -423,7 +421,13 @@ def setup_camera(args):
     return camera, camera.parent
 
 
-def mapfunc(f, its, args):
+@gin.configurable
+def mapfunc(
+    f,
+    its,
+    args,
+    slurm_nodelist=None,
+):
     if args.n_workers == 1:
         return [f(i) for i in its]
     elif not args.slurm:
@@ -431,6 +435,12 @@ def mapfunc(f, its, args):
             return list(p.imap(f, its))
     else:
         executor = submitit.AutoExecutor(folder=args.output_folder / "logs")
+
+        slurm_additional_parameters = {}
+
+        if slurm_nodelist is not None:
+            slurm_additional_parameters["nodelist"] = slurm_nodelist
+
         executor.update_parameters(
             name=args.output_folder.name,
             timeout_min=60,
@@ -438,6 +448,7 @@ def mapfunc(f, its, args):
             mem_gb=8,
             slurm_partition=os.environ["INFINIGEN_SLURMPARTITION"],
             slurm_array_parallelism=args.n_workers,
+            slurm_additional_parameters=slurm_additional_parameters,
         )
         jobs = executor.map_array(f, its)
         for j in jobs:
@@ -449,6 +460,8 @@ def main(args):
 
     init.apply_gin_configs(
         ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        configs=args.configs,
+        overrides=args.overrides,
         skip_unknown=True,
     )
 
@@ -500,11 +513,12 @@ def main(args):
         ]
 
     if not args.postprocessing_only:
-        for fac in factories:
-            targets = [
-                {"args": args, "fac": fac, "idx": idx} for idx in range(args.n_images)
-            ]
-            mapfunc(build_and_save_asset, targets, args)
+        targets = [
+            {"args": args, "fac": fac, "idx": idx}
+            for idx in range(args.n_images)
+            for fac in factories
+        ]
+        mapfunc(build_and_save_asset, targets, args)
 
     if args.dryrun:
         return
@@ -688,6 +702,20 @@ def make_args():
         "--dryrun",
         action="store_true",
         help="Import assets but do not run them. Used for testing.",
+    )
+    parser.add_argument(
+        "--configs",
+        type=str,
+        nargs="+",
+        default=[],
+        help="List of gin config files to apply",
+    )
+    parser.add_argument(
+        "--overrides",
+        type=str,
+        nargs="+",
+        default=[],
+        help="List of gin overrides to apply",
     )
 
     return init.parse_args_blender(parser)

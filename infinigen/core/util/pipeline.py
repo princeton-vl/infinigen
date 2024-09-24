@@ -37,6 +37,7 @@ class RandomStageExecutor:
             if not e["ran"]:
                 logger.info(f"Skipping run_stage({name}...) due to unmet {prereq=}")
                 return
+
         with FixedSeed(int_hash((self.scene_seed, name, 0))):
             if not self.params.get(f"{name}_enabled", True):
                 logger.debug(f"Not running {name} due to manually set not enabled")

@@ -17,7 +17,7 @@ LandTiles.transparency = "CollectiveTransparent"
 VoronoiRocks.transparency = "CollectiveTransparent"
 
 LandTiles.randomness = 1
-LandTiles.land_process = "ice_erosion"
+LandTiles.land_processes = "ice_erosion"
 LandTiles.tiles = ["Mesa"]
 LandTiles.tile_heights = [-2.75]
 LandTiles.tile_density = 0.4

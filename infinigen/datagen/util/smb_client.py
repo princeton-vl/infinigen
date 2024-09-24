@@ -9,6 +9,7 @@
 import argparse
 import logging
 import os
+import re
 import subprocess
 import time
 import types
@@ -153,6 +154,26 @@ def listdir(remote_path: Path, extras=False):
     yield from yield_dirfiles(data, extras, parent=remote_path)
 
 
+def disk_usage(remote_path: Path):
+    data = run_command_stdout(f"recurse ON; du {remote_path}")
+    n_blocks, block_size, blocks_avail, file_bytes = map(int, re.findall(r"\d+", data))
+
+    gb_file = file_bytes / 1024**3
+    msg = f"{gb_file:.2f} GB"
+    return msg
+
+
+def disk_free():
+    data = run_command_stdout("du infinigen")
+    data = data.splitlines()[1].strip()
+    n_blocks, block_size, blocks_avail = re.findall(r"\d+", data)
+
+    gb_used = int(n_blocks) * int(block_size) / 1024**3
+    gb_free = int(blocks_avail) * int(block_size) / 1024**3
+    msg = f"Used: {gb_used:.2f} GB, Free: {gb_free:.2f} GB, Total: {gb_used + gb_free:.2f} GB"
+    return msg
+
+
 def run_command_stdout(command: str):
     smb_str = os.environ[SMB_AUTH_VARNAME]
     time.sleep(_SMB_RATELIMIT_DELAY)
@@ -211,24 +232,6 @@ def mapfunc(f, its, args):
         executor.map_array(f, its)
 
 
-def process_one(p: list[Path]):
-    res = commands[args.command](*p)
-
-    p_summary = " ".join(str(pi) for pi in p)
-
-    def result(r):
-        if args.verbose:
-            print(f"{args.command} {p_summary}: {r}")
-        else:
-            print(r)
-
-    if isinstance(res, types.GeneratorType):
-        for r in res:
-            result(r)
-    else:
-        result(res)
-
-
 def resolve_globs(p: Path, args):
     def resolved(parts):
         if any(x in str(p) for x in args.exclude):
@@ -259,7 +262,34 @@ commands = {
     "upload": upload,
     "mkdir": mkdir,
     "exists": check_exists,
+    "du": disk_usage,
+    "df": disk_free,
 }
+
+
+def process_one(p: list[Path]):
+    p = [Path(pi) for pi in p]
+
+    if args.command not in commands:
+        raise ValueError(
+            f"Unrecognized command {args.command}, options are {commands.keys()}"
+        )
+
+    res = commands[args.command](*p)
+
+    p_summary = " ".join(str(pi) for pi in p)
+
+    def result(r):
+        if args.verbose:
+            print(f"{p_summary} {r}")
+        else:
+            print(r)
+
+    if isinstance(res, types.GeneratorType):
+        for r in res:
+            result(r)
+    else:
+        result(res)
 
 
 def main(args):
@@ -277,7 +307,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("command", type=str, choices=list(commands.keys()))
-    parser.add_argument("paths", type=Path, nargs="+")
+    parser.add_argument("paths", type=Path, nargs="*")
     parser.add_argument("--exclude", type=str, nargs="+", default=[])
     parser.add_argument("--n_workers", type=int, default=1)
     parser.add_argument("--slurm", action="store_true")

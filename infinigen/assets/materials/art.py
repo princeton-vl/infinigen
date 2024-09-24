@@ -86,6 +86,7 @@ class ArtComposite(DarkArt):
 
         return shader_art_composite
 
+
 class ArtRug(ArtComposite):
     @property
     def base_shader(self):
@@ -99,7 +100,6 @@ class ArtFabric(ArtComposite):
 
 
 class ArtGeneral:
-
     # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
     #     if scale is not None:
     #         write_uv(obj, read_uv(obj) * scale)
@@ -108,7 +108,3 @@ class ArtGeneral:
         return Art().generate(selection, bbox, **kwargs)
 
     __call__ = generate
-
-
-def make_sphere():
-    return text.make_sphere()

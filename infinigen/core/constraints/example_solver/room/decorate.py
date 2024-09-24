@@ -256,15 +256,30 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                 i = np.argmax(
                     read_edge_length(w) - 100 * (np.abs(co[u, -1] - co[v, -1]) > 0.1)
                 )
-                center = read_center(w)[:, :2]
-                u_ = co[np.newaxis, u[i], :2]
-                v_ = co[np.newaxis, v[i], :2]
-                alternative = (
-                    np.linalg.norm(center - u_, axis=-1)
-                    + np.linalg.norm(center - v_, axis=-1)
-                    - np.linalg.norm(u_ - v_, axis=-1)
-                    < 0.1
+                u_ = co[u[i]]
+                v_ = co[v[i]]
+                non_vertical = np.linalg.norm((co[u] - co[v])[:, :2], axis=-1) > 1e-2
+                directional = (
+                    np.abs(np.cross((co[u] - co[v])[:, :2], (u_ - v_)[np.newaxis, :2]))
+                    < 1e-4
                 )
+                collinear = (
+                    np.abs(np.cross((co[u] - v_)[:, :2], (u_ - v_)[np.newaxis, :2]))
+                    < 1e-4
+                )
+                collinear_ = (
+                    np.abs(np.cross((co[u] - u_)[:, :2], (u_ - v_)[np.newaxis, :2]))
+                    < 1e-4
+                )
+                aligned = non_vertical & directional & collinear & collinear_
+                with butil.ViewportMode(w, "EDIT"):
+                    bm = bmesh.from_edit_mesh(w.data)
+                    bm.faces.ensure_lookup_table()
+                    alternative = np.zeros(len(bm.faces), dtype=int)
+                    for f in bm.faces:
+                        for e in f.edges:
+                            if aligned[e.index]:
+                                alternative[f.index] = 1
                 write_attr_data(
                     w, "alternative", alternative, type="INT", domain="FACE"
                 )
