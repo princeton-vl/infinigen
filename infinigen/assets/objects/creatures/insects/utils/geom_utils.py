@@ -660,7 +660,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot.outputs[3]}
+        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot}
     )
 
 

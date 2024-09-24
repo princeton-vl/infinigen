@@ -33,7 +33,8 @@ def bake(emitter, system):
         }
         with Suppress():
             bpy.context.scene.frame_end += 1
-            bpy.ops.ptcache.bake(override, bake=True)
+            with bpy.context.temp_override(override):
+                bpy.ops.ptcache.bake(bake=True)
             bpy.context.scene.frame_end -= 1
 
     emitter.hide_viewport = hide_orig

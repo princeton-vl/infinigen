@@ -670,7 +670,6 @@ class BlueprintSolidifier:
             obj, f"{PREFIX}{t.Subpart.SupportSurface.value}", floor, "BOOLEAN", "FACE"
         )
         write_attr_data(obj, f"{PREFIX}{t.Subpart.Wall.value}", wall, "BOOLEAN", "FACE")
-        write_attr_data(obj, "segment_id", np.arange(len(center)), "BOOLEAN", "FACE")
         full = np.ones_like(ceiling)
         if visible:
             write_attr_data(

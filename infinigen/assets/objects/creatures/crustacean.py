@@ -190,7 +190,7 @@ def shader_crustacean(nw: NodeWrangler, params):
     )
     light_color = hsv2rgba(base_hue, uniform(0.0, 0.4), log_uniform(0.2, 1.0))
     specular = uniform(0.6, 0.8)
-    specular_tint = uniform(0, 1)
+    specular_tint = [uniform(0, 1)] * 3
     clearcoat = uniform(0.2, 0.8)
     roughness = uniform(0.1, 0.3)
     metallic = uniform(0.6, 0.8)

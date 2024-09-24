@@ -40,7 +40,10 @@ if __name__ == "__main__":
         ) as f:
             json.dump(current_json, f)
         for npz_path in os.listdir(static_mesh_folder):
-            if npz_path.endswith(".npz"):
+            if (
+                npz_path.endswith(".npz")
+                and not (static_mesh_folder / npz_path).exists()
+            ):
                 os.symlink(
                     static_mesh_folder / npz_path,
                     args.target_frames_dir

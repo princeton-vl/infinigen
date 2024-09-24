@@ -357,7 +357,11 @@ def keep_cam_pose_proposal(
         return None
 
     coverage = len(dists) / n_pix
-    if coverage < terrain_coverage_range[0] or coverage > terrain_coverage_range[1]:
+    if (
+        coverage < terrain_coverage_range[0]
+        or coverage > terrain_coverage_range[1]
+        or coverage == 0
+    ):
         logger.debug(
             f"keep_cam_pose_proposal rejects {coverage=} for {terrain_coverage_range=}"
         )
