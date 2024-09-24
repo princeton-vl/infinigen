@@ -16,7 +16,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import Attributes
 
-from ...core.nodes.node_wrangler import ng_inputs
+from ...core.nodes.node_wrangler import ng_inputs, ng_outputs
 from .camera import getK
 from .ctype_util import ASDOUBLE, ASINT, load_cdll
 from .kernelizer_util import ATTRTYPE_DIMS, ATTRTYPE_FIELDS, NPTYPEDIM_ATTR, Vars
@@ -433,7 +433,7 @@ def move_modifier(target_obj, m):
                 id = inp.identifier
                 modifier[f"{id}_attribute_name"] = inp.name
                 modifier[f"{id}_use_attribute"] = True
-        for i, outp in enumerate(modifier.node_group.outputs):
+        for i, outp in enumerate(ng_outputs(modifier.node_group).values()):
             if i > 0:
                 id = outp.identifier
                 modifier[f"{id}_attribute_name"] = m[f"{id}_attribute_name"]

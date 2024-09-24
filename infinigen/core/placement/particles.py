@@ -47,7 +47,8 @@ def configure_boids(system_config, settings):
         context = bpy.context.copy()
         context["particle_settings"] = system_config
         for _ in boids.states[0].rules.keys():
-            bpy.ops.boid.rule_del(context)
+            with bpy.context.temp_override(context):
+                bpy.ops.boid.rule_del()
         for r in rules:
             bpy.ops.boid.rule_add(context, type=r.pop("type"))
             for k, v in r.items():

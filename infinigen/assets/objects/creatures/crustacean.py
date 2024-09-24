@@ -225,7 +225,7 @@ def shader_crustacean(nw: NodeWrangler, params):
             "Metallic": metallic,
             "Roughness": roughness,
             "Specular IOR Level": specular,
-            "Specular IOR Level Tint": specular_tint,
+            "Specular Tint": specular_tint,
             "Coat Weight": clearcoat,
         },
     )

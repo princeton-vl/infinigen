@@ -561,7 +561,7 @@ def set_geomod_inputs(mod, inputs: dict):
             if s.in_out == "INPUT"
         }
         if k not in inputs:
-            raise KeyError(f"Couldnt find {k=} in {mod.node_group.inputs.keys()=}")
+            raise KeyError(f"Couldnt find {k=} in {inputs=}")
         soc = inputs[k]
 
         if not hasattr(soc, "default_value"):

@@ -89,7 +89,6 @@ def nodegroup_make_skirting_board(nw: NodeWrangler, control_points):
         Nodes.ResampleCurve,
         input_kwargs={
             "Curve": transform_geometry,
-            "Count": 220,
             "Length": group_input.outputs["Resolution"],
         },
         attrs={"mode": "LENGTH"},

@@ -2623,7 +2623,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Do Tangent Rot"],
-            1: if_normal_rot.outputs[3],
+            1: if_normal_rot,
             2: rotate_euler_1,
         },
         label="if_tangent_rot",
