@@ -37,7 +37,7 @@ def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
 class GlassVolume:
     shader = shader_glass_volume
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_glass_volume)
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_glass_volume, **kwargs)
 
     __call__ = generate

@@ -11,6 +11,7 @@ from numpy.random import uniform
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -86,8 +87,9 @@ class JarFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets, clear=uniform() < 0.5)
-        self.cap_surface.apply(assets, selection="cap")
+        # self.surface.apply(assets, clear=uniform() < 0.5)
+        surface.assign_material(assets, self.surface(clear=uniform() < 0.5))
+        surface.assign_material(assets, self.cap_surface(), selection="cap")
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

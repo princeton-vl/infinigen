@@ -170,8 +170,8 @@ def shader_brushed_metal(
 class BrushedMetal:
     shader = shader_brushed_metal
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_brushed_metal)
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_brushed_metal, **kwargs)
 
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_brushed_metal, selection, **kwargs)

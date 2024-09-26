@@ -26,6 +26,7 @@ from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver.room.base import room_level
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 logger = logging.getLogger(__name__)
@@ -185,7 +186,7 @@ def apply_skirtingboard(
     with FixedSeed(seed):
         thickness = uniform(0.02, 0.05)
         height = uniform(0.08, 0.15)
-        color = colors.white_hsv()
+        color = hsv2rgba(colors.white_hsv())
         roughness = uniform(0.5, 1.0)
         n_peaks = randint(1, 4)
         start_y = uniform(0.0, 0.5)

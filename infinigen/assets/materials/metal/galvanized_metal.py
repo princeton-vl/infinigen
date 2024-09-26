@@ -125,8 +125,8 @@ def shader_galvanized_metal(
 class GalvanizedMetal:
     shader = shader_galvanized_metal
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_galvanized_metal)
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_galvanized_metal, **kwargs)
 
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_galvanized_metal, selection, **kwargs)

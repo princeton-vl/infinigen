@@ -85,7 +85,7 @@ class RangeHoodFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        surface.assign_material(assets, self.surface())
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

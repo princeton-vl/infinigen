@@ -45,7 +45,7 @@ def shader_vase_ceramic(nw: NodeWrangler):
 class VaseCeramic:
     shader = shader_vase_ceramic
 
-    def generate(self):
+    def generate(self, **kwargs):
         return surface.shaderfunc_to_material(shader_vase_ceramic)
 
     __call__ = generate

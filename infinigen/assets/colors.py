@@ -378,3 +378,11 @@ def metal_hsv():
         uniform(0.3, 0.6),
         log_uniform(0.02, 0.5),
     )
+
+
+def white_hsv():
+    return (
+        0.0,
+        uniform(0, 0.1),
+        uniform(0.8, 1),
+    )

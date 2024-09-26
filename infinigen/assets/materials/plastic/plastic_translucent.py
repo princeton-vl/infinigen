@@ -57,8 +57,8 @@ def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
 class PlasticTranslucent:
     shader = shader_translucent_plastic
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_translucent_plastic)
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_translucent_plastic, **kwargs)
 
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_translucent_plastic, selection, **kwargs)

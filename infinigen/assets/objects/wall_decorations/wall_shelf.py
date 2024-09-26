@@ -18,6 +18,7 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.assets.utils.object import join_objects, new_bbox, new_bbox_2d
 from infinigen.assets.utils.shapes import polygon2obj
+from infinigen.core import surface
 from infinigen.core import tagging as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -115,7 +116,8 @@ class WallShelfFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.make_plate()
-        self.plate_surface.apply(obj)
+        surface.assign_material(obj, self.plate_surface())
+        # self.plate_surface.apply(obj)
         if self.support_side != "none":
             support = self.make_support()
             supports = [support] + [
@@ -123,7 +125,8 @@ class WallShelfFactory(AssetFactory):
             ]
             for s, l in zip(supports, self.support_locs):
                 s.location[1] = self.length * l
-            self.support_surface.apply(supports)
+            surface.assign_material(supports, self.support_surface())
+            # self.support_surface.apply(supports)
             obj = join_objects([obj] + supports)
         return obj
 
