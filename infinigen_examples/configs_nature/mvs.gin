@@ -1,0 +1,5 @@
+camera.spawn_camera_rigs.n_camera_rigs = 10
+camera.spawn_camera_rigs.camera_rig_config = [
+    {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
+]
+camera.compute_base_views.center_coordinate=(30, 10, 5)

@@ -264,6 +264,8 @@ class CameraProposal:
 def camera_pose_proposal(
     scene_bvh,
     location_sample: typing.Callable | tuple,
+    center_coordinate=None,
+    radius=None,
     altitude=("uniform", 1.5, 2.5),
     roll=0,
     yaw=("uniform", -180, 180),
@@ -279,6 +281,16 @@ def camera_pose_proposal(
 
     if override_loc is not None:
         loc = Vector(random_general(override_loc))
+    elif center_coordinate:
+        # Define the radius of the circle
+        random_angle = np.random.uniform(2 * np.math.pi)
+        xoff = np.random.uniform(-radius/10, radius/10)
+        yoff = np.random.uniform(-radius/10, radius/10)
+        zoff = np.random.uniform(center_coordinate[2]+5, center_coordinate[2]+8)
+        loc = Vector([0, 0, 0])
+        loc[0] = center_coordinate[0] + radius * np.math.cos(random_angle) + xoff
+        loc[1] = center_coordinate[1] + radius * np.math.sin(random_angle) + yoff
+        loc[2] = center_coordinate[2] + zoff
     elif altitude is None:
         loc = location_sample()
     else:
@@ -291,7 +303,20 @@ def camera_pose_proposal(
         desired_alt = random_general(altitude)
         loc[2] = loc[2] + desired_alt - curr_alt
 
-    rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
+    if center_coordinate:
+        direction = loc - Vector(center_coordinate)
+        direction = Vector(direction)
+        rotation_matrix = direction.to_track_quat('Z', 'Y').to_matrix()
+        rotation_euler = rotation_matrix.to_euler('XYZ')
+        roll, pitch, yaw = rotation_euler
+        noise_range = np.deg2rad(5.0)  # 5 degrees of noise in radians
+        # Add random noise to roll, pitch, and yaw
+        roll += np.random.uniform(-noise_range, noise_range)
+        pitch += np.random.uniform(-noise_range, noise_range)
+        yaw += np.random.uniform(-noise_range, noise_range)
+        rot = np.array([roll, pitch, yaw])
+    else:
+        rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
     focal_length = random_general(focal_length)
     return CameraProposal(loc, rot, focal_length)
 
@@ -385,7 +410,7 @@ class AnimPolicyGoToProposals:
         bbox = (camera_rig.location - margin, camera_rig.location + margin)
 
         for _ in range(self.retries):
-            res = camera_pose_proposal(bvh, bbox)
+            res = camera_pose_proposal(bvh, bbox) # !
             if res is None:
                 continue
             dist = np.linalg.norm(np.array(res.loc) - np.array(camera_rig.location))
@@ -408,6 +433,7 @@ def compute_base_views(
     terrain,
     scene_bvh,
     location_sample: typing.Callable,
+    center_coordinate=None,
     placeholders_kd=None,
     camera_selection_answers={},
     vertexwise_min_dist=None,
@@ -418,11 +444,14 @@ def compute_base_views(
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
+    random_radius = np.random.uniform(12, 18)
+    logger.debug("Center Coordinate", center_coordinate)
     with tqdm(total=n_min_candidates, desc="Searching for camera viewpoints") as pbar:
         for it in range(1, max_tries):
-            props = camera_pose_proposal(
-                scene_bvh=scene_bvh, location_sample=location_sample
-            )
+            if center_coordinate:
+                props = camera_pose_proposal(scene_bvh=scene_bvh, location_sample=location_sample, center_coordinate=center_coordinate, radius=random_radius)
+            else:
+                props = camera_pose_proposal(scene_bvh=scene_bvh, location_sample=location_sample, radius=random_radius)
 
             if props is None:
                 logger.debug(
