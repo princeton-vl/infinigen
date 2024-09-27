@@ -29,12 +29,40 @@ def td_to_str(td):
 
 def parse_scene_log(
     scene_path,
-    step_times,
-    poly_data,
-):
+):  
+
+    ret_dict = {
+        "coarse_tris": "NAN",
+        "fine_tirs": "NAN",
+        "obj_count": "NAN",
+        "gen_time": "NAN",
+        "gen_mem_gb": "NAN",
+        "render_time": "NAN",
+        "gt_time":"NAN",
+    }
+
+    step_times = {
+        "fineterrain": [],
+        "coarse": [],
+        "populate": [],
+        "rendershort": [],
+        "shortrender": [],
+        "blendergt": [],
+    }
+    poly_data = {
+        "[Coarse] Faces": [],
+        "[Coarse] Tris": [],
+        "[Fine] Faces": [],
+        "[Fine] Tris": [],
+    }
+
     log_folder = os.path.join(scene_path, "logs")
     coarse_folder = os.path.join(scene_path, "coarse")
-    fine_folder = next(Path(scene_path).glob("fine*"))
+    fine_folder = os.path.join(scene_path, "fine")
+
+    if not (os.path.isdir(log_folder) and os.path.isdir(coarse_folder) and os.path.isdir(fine_folder)):
+        return ret_dict
+
     # seed = Path(scene_path).stem
     # scene_times = []
     if os.path.isdir(log_folder):
@@ -85,11 +113,29 @@ def parse_scene_log(
 
     coarse_stage_df = pd.read_csv(os.path.join(coarse_folder, "pipeline_coarse.csv"))
 
-    coarse_time = step_times["coarse"][0]
-    pop_time = step_times["populate"][0]
-    fine_time = step_times["fineterrain"][0]
-    render_time = step_times["rendershort"][0]
-    gt_time = step_times["blendergt"][0]
+    if len(step_times["coarse"]) >= 1:
+        coarse_time = step_times["coarse"][0]
+    else: 
+        coarse_time = timedelta(seconds=0)    
+    if len(step_times["populate"]) >= 1:
+        pop_time = step_times["populate"][0]
+    else: 
+        pop_time = timedelta(seconds=0)    
+
+    if len(step_times["fineterrain"]) >= 1:
+        fine_time = step_times["fineterrain"][0]
+    else: 
+        fine_time = timedelta(seconds=0)    
+    if len(step_times["rendershort"]) >= 1:
+        render_time = step_times["rendershort"][0]
+    elif len(step_times["shortrender"]) >= 1:
+        render_time = step_times["shortrender"][0]
+    else:
+        render_time = timedelta(seconds=0)    
+    if len(step_times["blendergt"]) >= 1:
+        gt_time = step_times["blendergt"][0]
+    else: 
+        gt_time = timedelta(seconds=0)    
 
     coarse_tris = poly_data["[Coarse] Tris"][0]
     fine_tris = poly_data["[Fine] Tris"][0]
@@ -101,7 +147,7 @@ def parse_scene_log(
         "fine_tirs": fine_tris,
         "obj_count": obj_count,
         "gen_time": coarse_time + pop_time + fine_time,
-        "gen_mem_gb": mem,
+        "gen_mem_gb": sizeof_fmt(mem),
         "render_time": render_time,
         "gt_time": gt_time,
     }
@@ -138,6 +184,7 @@ def parse_run_df(run_path: Path):
     NORMAL_NAME = "SurfaceNormal_0_0_0048_0.png"
 
     for scene in scene_folders("scene_nature"):
+        stats = parse_scene_log(scene)
         scenetype = "_".join(scene.parent.name.split("_")[2:])
         records.append(
             {
@@ -149,11 +196,13 @@ def parse_run_df(run_path: Path):
                 / "SurfaceNormal"
                 / "camera_0"
                 / NORMAL_NAME,
-                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+                "stats": f"gen_time: {stats['gen_time']}, gen_mem: {stats['gen_mem_gb']}, \
+                    render_time: {stats['render_time']}, render_mem: TODO, render_vram: TODO",
             }
         )
 
     for scene in scene_folders("scene_indoor"):
+        stats = parse_scene_log(scene)
         scenetype = "_".join(scene.parent.name.split("_")[2:])
         records.append(
             {
@@ -165,16 +214,19 @@ def parse_run_df(run_path: Path):
                 / "SurfaceNormal"
                 / "camera_0"
                 / NORMAL_NAME,
-                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+                "stats": f"gen_time: {stats['gen_time']}, gen_mem: {stats['gen_mem_gb']}, \
+                    render_time: {stats['render_time']}, render_mem: TODO, render_vram: TODO",
             }
         )
 
     for scene in scene_folders("asset"):
+        stats = parse_scene_log(scene)
         category = "_".join(scene.parent.name.split("_")[2:])
         record = {
             "category": category,
             "name": category + "/" + scene.name,
-            "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+             "stats": f"gen_time: {stats['gen_time']}, gen_mem: {stats['gen_mem_gb']}, \
+                    render_time: {stats['render_time']}, render_mem: TODO, render_vram: TODO",
         }
 
         for i in range(N_ASSETS):
@@ -278,7 +330,7 @@ def main():
     )
 
     # Save the rendered HTML to a file
-    name = "_".join(args.compare_runs) + ".html"
+    name = "_2".join(args.compare_runs) + ".html"
     output_path = views_folder / name
     print("Writing to ", output_path)
     output_path.write_text(html_content)
