@@ -46,7 +46,7 @@ from infinigen.assets.lighting import (
 # from infinigen.core.rendering.render import enable_gpu
 from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material, subclasses
-from infinigen.core import init
+from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import AssetFactory, density
 from infinigen.core.tagging import tag_system
@@ -210,9 +210,11 @@ def build_scene_surface(args, factory_name, idx):
                 bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
                 asset = bpy.context.active_object
 
-                if type(template) is type:
-                    template = template(idx)
-                template.apply(asset)
+                mat_gen = template()
+                surface.assign_material(asset, mat_gen())
+                # if type(template) is type:
+                #     template = template(idx)
+                # template.apply(asset)
         except ModuleNotFoundError:
             raise Exception(f"{factory_name} not Found.")
 
