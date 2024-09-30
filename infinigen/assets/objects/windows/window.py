@@ -99,7 +99,9 @@ class WindowFactory(AssetFactory):
         shader_curtain_frame_material_choice = weighted_sample(
             material_assignments.metals
         )()()
-        shader_curtain_material_choice = shader_curtain_material
+        shader_curtain_material_choice = weighted_sample(
+            material_assignments.curtain
+        )()()
 
         params = {
             "FrameWidth": frame_width,
@@ -117,9 +119,7 @@ class WindowFactory(AssetFactory):
             "ShutterInterval": shutter_inverval,
             "FrameMaterial": shader_frame_material_choice,
             "CurtainFrameMaterial": shader_curtain_frame_material_choice,
-            "CurtainMaterial": surface.shaderfunc_to_material(
-                shader_curtain_material_choice
-            ),
+            "CurtainMaterial": shader_curtain_material_choice,
             "Material": surface.shaderfunc_to_material(shader_window_glass),
         }
         return params
@@ -204,7 +204,9 @@ class WindowFactory(AssetFactory):
         shader_curtain_frame_material_choice = weighted_sample(
             material_assignments.metals
         )()()
-        shader_curtain_material_choice = shader_curtain_material
+        shader_curtain_material_choice = weighted_sample(
+            material_assignments.curtain
+        )()()
 
         params = {
             "Width": width,
@@ -237,9 +239,7 @@ class WindowFactory(AssetFactory):
             "ShutterInterval": shutter_inverval,
             "FrameMaterial": shader_frame_material_choice,
             "CurtainFrameMaterial": shader_curtain_frame_material_choice,
-            "CurtainMaterial": surface.shaderfunc_to_material(
-                shader_curtain_material_choice
-            ),
+            "CurtainMaterial": shader_curtain_material_choice,
             "Material": surface.shaderfunc_to_material(shader_window_glass),
         }
         return params

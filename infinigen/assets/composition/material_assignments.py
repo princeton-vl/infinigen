@@ -173,6 +173,14 @@ tableware = [
     (wood.Wood, 1.0),
 ]
 
+curtain = [
+    (fabric.FineKnitFabric, 1.0),
+    (wood.Wood, 2.0),
+    (plastic.PlasticRough, 2.0),
+    (ceramic.GlassVolume, 0.5),
+    (lamp_shaders.LampShade, 2.0),
+]
+
 officechair_seat = [
     (fabric.Leather, 1.0),
     (wood.Wood, 1.0),

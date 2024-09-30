@@ -6,6 +6,7 @@
 from numpy.random import uniform as U
 
 from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
@@ -72,8 +73,15 @@ def shader_lampshade(nw: NodeWrangler):
 
 
 class LampShade:
+    shader = shader_lampshade
+
+    def generate(self, selection=None, **kwargs):
+        return surface.shaderfunc_to_material(shader_lampshade, **kwargs)
+
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_lampshade, selection, **kwargs)
+
+    __call__ = generate
 
 
 def shader_lamp_bulb_nonemissive(nw: NodeWrangler):
