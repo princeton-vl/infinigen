@@ -10,7 +10,7 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
 
-def shader_rug(nw: NodeWrangler, strength=1.0, **kwargs):
+def shader_rug(nw: NodeWrangler, strength=0.01, **kwargs):
     coord = nw.new_node(
         Nodes.Mapping, [nw.new_node(Nodes.TextureCoord).outputs["Object"]]
     )
@@ -76,6 +76,7 @@ class Rug:
     shader = shader_rug
 
     def generate(self):
-        return surface.shaderfunc_to_material(shader_rug)
+        strength = log_uniform(0.01, 0.02)
+        return surface.shaderfunc_to_material(shader_rug, strength=strength)
 
     __call__ = generate
