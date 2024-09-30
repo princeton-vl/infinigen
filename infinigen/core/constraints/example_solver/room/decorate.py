@@ -152,44 +152,44 @@ room_wall_alternative_fns = {
     t.Semantics.LivingRoom: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.Bedroom: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.Office: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.OpenOffice: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.FactoryOffice: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.BreakRoom: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
 }
 room_wall_alternative_fns = defaultdict(
@@ -207,7 +207,7 @@ pillar_rooms = {
 
 
 def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=3):
-    wall_fns = list(weighted_sample(room_wall_fns[room_type(r.name)]) for r in walls)
+    wall_fns = list(weighted_sample(room_wall_fns[room_type(r.name)])() for r in walls)
     logger.debug(
         f"{room_walls.__name__} adding materials to {len(walls)=}, using {len(wall_fns)=}"
     )
@@ -283,24 +283,33 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                 write_attr_data(
                     w, "alternative", alternative, type="INT", domain="FACE"
                 )
-                import_material(fn).apply(
-                    w, **kwargs, selection="alternative", scale=log_uniform(0.5, 2.0)
+                mat_gen = fn()
+                surface.assign_material(
+                    w,
+                    mat_gen(scale=log_uniform(0.5, 2.0), **kwargs),
+                    selection="alternative",
                 )
+                # import_fn(fn).apply(
+                #     w, **kwargs, selection="alternative", scale=log_uniform(0.5, 2.0)
+                # )
 
 
 def room_ceilings(ceilings):
     logger.debug(f"{room_ceilings.__name__} adding materials to {len(ceilings)=}")
 
     ceiling_fns = list(
-        weighted_sample(room_ceiling_fns[room_type(r.name)]) for r in ceilings
+        weighted_sample(room_ceiling_fns[room_type(r.name)])() for r in ceilings
     )
     for ceiling_fn in set(ceiling_fns):
         rooms_ = [o for o, f in zip(ceilings, ceiling_fns) if f == ceiling_fn]
-        ceiling_fn.apply(rooms_)
+        surface.assign_material(rooms_, ceiling_fn())
+        # ceiling_fn.apply(rooms_)
 
 
 def room_floors(floors, n_floors=3):
-    floor_fns = list(weighted_sample(room_floor_fns[room_type(r.name)]) for r in floors)
+    floor_fns = list(
+        weighted_sample(room_floor_fns[room_type(r.name)])() for r in floors
+    )
     logger.debug(
         f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
     )
@@ -310,7 +319,8 @@ def room_floors(floors, n_floors=3):
         indices = np.random.randint(0, n_floors, len(rooms_))
         for i in range(n_floors):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-            floor_fn.apply(rooms__)
+            surface.assign_material(rooms__, floor_fn())
+            # floor_fn.apply(rooms__)
 
 
 @gin.configurable
