@@ -56,6 +56,10 @@ from infinigen_examples.util.generate_indoors_util import (
     restrict_solving,
 )
 
+from . import (
+    generate_nature,  # noqa: F401 # needed for nature gin configs to be loaded
+)
+
 logger = logging.getLogger(__name__)
 
 

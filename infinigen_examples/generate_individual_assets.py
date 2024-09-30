@@ -212,9 +212,7 @@ def build_scene_surface(args, factory_name, idx):
 
                 mat_gen = template()
                 surface.assign_material(asset, mat_gen())
-                # if type(template) is type:
-                #     template = template(idx)
-                # template.apply(asset)
+
         except ModuleNotFoundError:
             raise Exception(f"{factory_name} not Found.")
 
