@@ -266,6 +266,7 @@ def camera_pose_proposal(
     location_sample: typing.Callable | tuple,
     center_coordinate=None,
     radius=None,
+    bbox=None,
     altitude=("uniform", 1.5, 2.5),
     roll=0,
     yaw=("uniform", -180, 180),
@@ -282,15 +283,31 @@ def camera_pose_proposal(
     if override_loc is not None:
         loc = Vector(random_general(override_loc))
     elif center_coordinate:
-        # Define the radius of the circle
-        random_angle = np.random.uniform(2 * np.math.pi)
-        xoff = np.random.uniform(-radius/10, radius/10)
-        yoff = np.random.uniform(-radius/10, radius/10)
-        zoff = np.random.uniform(center_coordinate[2]+5, center_coordinate[2]+8)
-        loc = Vector([0, 0, 0])
-        loc[0] = center_coordinate[0] + radius * np.math.cos(random_angle) + xoff
-        loc[1] = center_coordinate[1] + radius * np.math.sin(random_angle) + yoff
-        loc[2] = center_coordinate[2] + zoff
+        while True:
+            # Define the radius of the circle
+            random_angle = np.random.uniform(2 * np.math.pi)
+            xoff = np.random.uniform(-radius / 10, radius / 10)
+            yoff = np.random.uniform(-radius / 10, radius / 10)
+            zoff = random_general(altitude)
+            loc = Vector([0, 0, 0])
+            loc[0] = center_coordinate[0] + radius * np.math.cos(random_angle) + xoff
+            loc[1] = center_coordinate[1] + radius * np.math.sin(random_angle) + yoff
+            loc[2] = center_coordinate[2] + zoff
+            if bbox is not None:
+                out_of_bbox = False
+                for i in range(3):
+                    if loc[i] < bbox[0][i] or loc[i] > bbox[1][i]:
+                        out_of_bbox = True
+                        break
+                if out_of_bbox:
+                    continue
+            hit, *_ = scene_bvh.ray_cast(
+                loc,
+                Vector(center_coordinate) - loc,
+                (Vector(center_coordinate) - loc).length,
+            )
+            if hit is None:
+                break
     elif altitude is None:
         loc = location_sample()
     else:
@@ -306,8 +323,8 @@ def camera_pose_proposal(
     if center_coordinate:
         direction = loc - Vector(center_coordinate)
         direction = Vector(direction)
-        rotation_matrix = direction.to_track_quat('Z', 'Y').to_matrix()
-        rotation_euler = rotation_matrix.to_euler('XYZ')
+        rotation_matrix = direction.to_track_quat("Z", "Y").to_matrix()
+        rotation_euler = rotation_matrix.to_euler("XYZ")
         roll, pitch, yaw = rotation_euler
         noise_range = np.deg2rad(5.0)  # 5 degrees of noise in radians
         # Add random noise to roll, pitch, and yaw
@@ -316,7 +333,9 @@ def camera_pose_proposal(
         yaw += np.random.uniform(-noise_range, noise_range)
         rot = np.array([roll, pitch, yaw])
     else:
-        rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
+        rot = np.deg2rad(
+            [random_general(pitch), random_general(roll), random_general(yaw)]
+        )
     focal_length = random_general(focal_length)
     return CameraProposal(loc, rot, focal_length)
 
@@ -410,7 +429,7 @@ class AnimPolicyGoToProposals:
         bbox = (camera_rig.location - margin, camera_rig.location + margin)
 
         for _ in range(self.retries):
-            res = camera_pose_proposal(bvh, bbox) # !
+            res = camera_pose_proposal(bvh, bbox)  # !
             if res is None:
                 continue
             dist = np.linalg.norm(np.array(res.loc) - np.array(camera_rig.location))
@@ -434,6 +453,8 @@ def compute_base_views(
     scene_bvh,
     location_sample: typing.Callable,
     center_coordinate=None,
+    radius=None,
+    bbox=None,
     placeholders_kd=None,
     camera_selection_answers={},
     vertexwise_min_dist=None,
@@ -444,14 +465,21 @@ def compute_base_views(
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
-    random_radius = np.random.uniform(12, 18)
     logger.debug("Center Coordinate", center_coordinate)
     with tqdm(total=n_min_candidates, desc="Searching for camera viewpoints") as pbar:
         for it in range(1, max_tries):
             if center_coordinate:
-                props = camera_pose_proposal(scene_bvh=scene_bvh, location_sample=location_sample, center_coordinate=center_coordinate, radius=random_radius)
+                props = camera_pose_proposal(
+                    scene_bvh=scene_bvh,
+                    location_sample=location_sample,
+                    center_coordinate=center_coordinate,
+                    radius=random_general(radius),
+                    bbox=bbox,
+                )
             else:
-                props = camera_pose_proposal(scene_bvh=scene_bvh, location_sample=location_sample, radius=random_radius)
+                props = camera_pose_proposal(
+                    scene_bvh=scene_bvh, location_sample=location_sample
+                )
 
             if props is None:
                 logger.debug(
@@ -640,6 +668,10 @@ def configure_cameras(
     scene_preprocessed: dict,
     init_bounding_box: tuple[np.array, np.array] = None,
     init_surfaces: list[bpy.types.Object] = None,
+    terrain_mesh=None,
+    nonroom_objs=None,
+    mvs_setting=False,
+    mvs_radius=("uniform", 12, 18),
 ):
     bpy.context.view_layer.update()
     dummy_camera = spawn_camera()
@@ -658,10 +690,43 @@ def configure_cameras(
     else:
         raise ValueError("Either init_bounding_box or init_surfaces must be provided")
 
+    if mvs_setting:
+        if terrain_mesh:
+            vertices = np.array([np.array(v.co) for v in terrain_mesh.data.vertices])
+            sdfs = scene_preprocessed["terrain"].compute_camera_space_sdf(vertices)
+            vertices = vertices[sdfs >= -1e-5]
+            center_coordinate = list(
+                vertices[np.random.choice(list(range(len(vertices))))]
+            )
+        elif nonroom_objs:
+
+            def contain_keywords(name, keywords):
+                for keyword in keywords:
+                    if name == keyword or name.startswith(f"{keyword}."):
+                        return True
+                return False
+
+            inside_objs = [
+                x
+                for x in nonroom_objs
+                if not contain_keywords(x.name, ["window", "door", "entrance"])
+            ]
+            assert inside_objs != []
+            obj = np.random.choice(inside_objs)
+            vertices = [v.co for v in obj.data.vertices]
+            center_coordinate = vertices[np.random.choice(list(range(len(vertices))))]
+            center_coordinate = obj.matrix_world @ center_coordinate
+            center_coordinate = list(np.array(center_coordinate))
+    else:
+        center_coordinate = None
+
     base_views = compute_base_views(
         dummy_camera,
         n_views=len(cam_rigs),
         location_sample=location_sample,
+        center_coordinate=center_coordinate,
+        radius=mvs_radius,
+        bbox=init_bounding_box,
         **scene_preprocessed,
     )
 

@@ -71,3 +71,5 @@ compose_indoors.num_floating = ('discrete_uniform', 15, 25)
 compose_indoors.norm_floating_size = True
 compose_indoors.enable_collision_floating = False
 compose_indoors.enable_collision_solved = False
+
+configure_cameras.mvs_radius = ("uniform", 1, 2)

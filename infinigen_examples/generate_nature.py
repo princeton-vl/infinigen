@@ -286,7 +286,10 @@ def compose_nature(output_folder, scene_seed, **params):
     p.run_stage(
         "pose_cameras",
         lambda: cam_util.configure_cameras(
-            camera_rigs, scene_preprocessed, init_bounding_box=bbox
+            camera_rigs,
+            scene_preprocessed,
+            init_bounding_box=bbox,
+            terrain_mesh=terrain_mesh,
         ),
         use_chance=False,
     )
