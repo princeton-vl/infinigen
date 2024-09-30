@@ -53,6 +53,7 @@ from infinigen.core.tagging import tag_system
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
 from infinigen.core.util.camera import points_inview
+from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.test_utils import load_txt_list
 from infinigen.tools import export
@@ -265,6 +266,9 @@ def build_and_save_asset(payload: dict):
     if args.dryrun:
         return
 
+    with (output_folder / "polycounts.txt").open("w") as f:
+        save_polycounts(f)
+
     configure_cycles_devices()
 
     with FixedSeed(args.lighting + idx):
@@ -434,9 +438,10 @@ def mapfunc(
         executor.update_parameters(
             name=args.output_folder.name,
             timeout_min=60,
-            cpus_per_task=2,
+            cpus_per_task=4,
             mem_gb=8,
-            slurm_partition=os.environ["INFINIGEN_SLURMPARTITION"],
+            gpus_per_node=1 if args.gpu else 0,
+            slurm_partition=os.environ.get("INFINIGEN_SLURMPARTITION"),
             slurm_array_parallelism=args.n_workers,
             slurm_additional_parameters=slurm_additional_parameters,
         )
@@ -477,11 +482,13 @@ def main(args):
 
     factories = list(args.factories)
 
-    for i, f in enumerate(factories):
-        if f.endswith(".txt"):
-            res = [f.split(".")[-1] for f in load_txt_list(f, skip_sharp=False)]
-            f.pop(i)
-            f.insert(i, res)
+    if len(factories) == 1 and factories[0].endswith(".txt"):
+        factories = [
+            f.split(".")[-1] 
+            for f in load_txt_list(factories[0], skip_sharp=False)
+        ]
+    else:
+        assert not any(f.endswith(".txt") for f in factories)
 
     targets = [
         {"args": args, "fac": fac, "idx": idx}
@@ -498,7 +505,7 @@ def main(args):
     for fac in factories:
         if args.render == "image":
             files = list(args.output_folder.glob(f"{fac}_*/Image*.png"))
-            make_grid(args, fac, files, args.n_images)
+            make_grid(args, "grid_" + fac, files, args.n_images)
         elif args.render == "video":
             subprocess.run(
                 f'ffmpeg -y -r 24 -pattern_type glob -i "{fac}_*/Image*.png" video.mp4',

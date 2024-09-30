@@ -16,8 +16,6 @@ OUTPUT_PATH=/n/fs/pvl-renders/integration_test/runs/
 mkdir -p $OUTPUT_PATH
 OUTPUT_PATH=$OUTPUT_PATH/$VERSION_STRING
 
-NODECONF="\"node004,node005,node006,node008,node901,node902,node906,node907,node908,node909,node910,node911,node912,node913,node914\""
-
 # Run Indoor Scene Generation
 if [ "$RUN_INDOOR" -eq 1 ]; then
     for indoor_type in DiningRoom Bathroom Bedroom Kitchen LivingRoom; do
@@ -36,7 +34,7 @@ if [ "$RUN_NATURE" -eq 1 ]; then
         --num_scenes 3 --cleanup big_files --overwrite \
         --configs $nature_type.gin \
         --pipeline_configs slurm monocular \
-        --pipeline_overrides sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF &
+        --pipeline_overrides sample_scene_spec.seed_range=[0,100] &
     done
 fi
 
@@ -44,26 +42,22 @@ fi
 if [ "$RUN_INDOOR_ASSETS" -eq 1 ]; then
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_indoor_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_meshes \
-    --overrides mapfunc.slurm_nodelist=$NODECONF \
-    --slurm --n_workers 100 -n 3 &
+    --slurm --n_workers 100 -n 3 --gpu &
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_indoor_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_materials \
-    --overrides mapfunc.slurm_nodelist=$NODECONF \
-    --slurm --n_workers 100 -n 3 &
+    --slurm --n_workers 100 -n 3 --gpu & 
 fi
 
 # Run Nature Meshes Generation
 if [ "$RUN_NATURE_ASSETS" -eq 1 ]; then
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
-    --overrides mapfunc.slurm_nodelist=$NODECONF \
-    --slurm --n_workers 100 -n 3 &
+    --slurm --n_workers 100 -n 3 --gpu & 
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_nature_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_materials \
-    --overrides mapfunc.slurm_nodelist=$NODECONF \
-    --slurm --n_workers 100 -n 3 &
+    --slurm --n_workers 100 -n 3 --gpu &
 fi
 
 # Wait for all background processes to finish
