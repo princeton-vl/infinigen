@@ -110,6 +110,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 - ["Hello World": Generate your first Infinigen-Nature scene](docs/HelloWorld.md)
 - ["Hello Room": Generate your first Infinigen-Indoors scene](docs/HelloRoom.md)
 - [Configuring Infinigen](docs/ConfiguringInfinigen.md)
+- [Configuring Cameras](docs/ConfiguringCameras.md)
 - [Downloading pre-generated data](docs/PreGeneratedData.md)
 - [Generating individual assets](docs/GeneratingIndividualAssets.md)
 - [Exporting to external fileformats (OBJ, OpenUSD, etc)](docs/ExportingToExternalFileFormats.md)

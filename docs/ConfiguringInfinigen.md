@@ -101,12 +101,12 @@ If you have more than one GPU and are using a `local_*.gin` compute config, each
 
 ### Rendering Video, Stereo and other data formats
 
-Generating a video, stereo or other dataset typically requires more render jobs, so we must instruct `manage_jobs.py` to run those jobs. `datagen/configs/data_schema/` provides many options for you to use in your `--pipeline_configs`, including `monocular_video.gin` and `stereo.gin`. <br> These configs are typically mutually exclusive, and you must include at least one </br>
+Generating a video, stereo or other dataset typically requires more render jobs, so we must instruct `manage_jobs.py` to run those jobs. `datagen/configs/data_schema/` provides many options for you to use in your `--pipeline_configs`, including `monocular_video.gin`, `stereo.gin` and `multiview_stereo.gin`. <br> These configs are typically mutually exclusive, and you must include at least one </br>
 
 
 To create longer videos, modify `iterate_scene_tasks.frame_range` in `monocular_video.gin` (note: we use 24fps video by default). `iterate_scene_tasks.view_block_size` controls how many frames will be grouped into each `fine_terrain` and render / ground-truth task.
 
-If you need more than two cameras, or want to customize their placement, see `infinigen_examples/configs_nature/base.gin`'s `camera.spawn_camera_rigs.camera_rig_config` for advice on existing options, or write your own code to instantiate a custom camera setup.
+If you need more than two cameras, or want to customize their placement, see `infinigen_examples/configs_nature/base.gin`'s `camera.spawn_camera_rigs.camera_rig_config` for advice on existing options, or write your own code to instantiate a custom camera setup. For multiview stereo data, you may include `multiview_stereo.gin` in  `--configs`, which creates 30 cameras by default.
 
 ### Config Overrides to Customize Scene Content
 
