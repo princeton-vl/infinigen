@@ -147,9 +147,13 @@ def shader_lined_fur_base(
 
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_1, 1: multiply_2})
 
+    displacement = nw.new_node(
+        Nodes.Displacement, input_kwargs={"Height": add, "Midlevel": 1.4000, "Scale": 0.0300}
+    )
+
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": principled_bsdf, "Displacement": add},
+        input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
         attrs={"is_active_output": True},
     )
 

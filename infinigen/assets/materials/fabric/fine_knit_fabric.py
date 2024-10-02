@@ -134,9 +134,13 @@ def shader_material(
         Nodes.Math, input_kwargs={0: invert_color, 1: color_ramp_1.outputs["Color"]}
     )
 
+    displacement = nw.new_node(
+        Nodes.Displacement, input_kwargs={"Height": add, "Midlevel": 0.4000, "Scale": 0.0300}
+    )
+
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": mix_shader, "Displacement": add},
+        input_kwargs={"Surface": mix_shader, "Displacement": displacement},
         attrs={"is_active_output": True},
     )
 

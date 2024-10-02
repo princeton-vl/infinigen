@@ -180,9 +180,9 @@ def shader_fabric_base(
     # bump_1 = nw.new_node(Nodes.Bump, input_kwargs={'Height': color_ramp_1.outputs["Color"]})
 
     scale = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: color_ramp_1.outputs["Color"], "Scale": brick_knit},
-        attrs={"operation": "SCALE"},
+        Nodes.Math,
+        input_kwargs={0: color_ramp_1.outputs["Color"], 1: brick_knit},
+        attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
     mapping_2 = nw.new_node(
@@ -234,25 +234,24 @@ def shader_fabric_base(
     )
 
     scale_1 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: multiply, "Scale": subtract},
-        attrs={"operation": "SCALE"},
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: subtract},
+        attrs={"operation": "MULTIPLY"},
     )
-
-    # scale_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: bump, 'Scale': subtract}, attrs={'operation': 'SCALE'})
 
     add_1 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]},
+        Nodes.Math,
+        input_kwargs={0: scale, 1: scale_1},
+        attrs={"operation": "ADD"},
     )
 
-    vector_displacement = nw.new_node(
-        "ShaderNodeVectorDisplacement", input_kwargs={"Vector": add_1.outputs["Vector"]}
+    displacement = nw.new_node(
+        Nodes.Displacement, input_kwargs={"Height": add_1, "Midlevel": 0.4, "Scale": 0.03}
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": mix_shader, "Displacement": vector_displacement},
+        input_kwargs={"Surface": mix_shader, "Displacement": displacement},
         attrs={"is_active_output": True},
     )
 
