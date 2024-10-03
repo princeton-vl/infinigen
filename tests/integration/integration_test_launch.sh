@@ -39,24 +39,25 @@ if [ "$RUN_NATURE" -eq 1 ]; then
 fi
 
 # Run Indoor Meshes Generation
-if [ "$RUN_INDOOR_ASSETS" -eq 1 ]; then
+if [ "$RUN_MESHES" -eq 1 ]; then
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_indoor_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_meshes \
     --slurm --n_workers 100 -n 3 --gpu &
 
     python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_indoor_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_materials \
+    -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
     --slurm --n_workers 100 -n 3 --gpu & 
 fi
 
 # Run Nature Meshes Generation
-if [ "$RUN_NATURE_ASSETS" -eq 1 ]; then
+if [ "$RUN_MATERIALS" -eq 1 ]; then
+
     python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
+    -f tests/assets/list_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_new_materials \
     --slurm --n_workers 100 -n 3 --gpu & 
 
     python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_nature_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_materials \
+    -f tests/assets/list_materials_deprecated_interface.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_deprec_materials \
     --slurm --n_workers 100 -n 3 --gpu &
 fi
 

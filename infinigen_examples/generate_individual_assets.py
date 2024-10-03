@@ -238,8 +238,6 @@ def build_and_save_asset(payload: dict):
     if args.seed > 0:
         idx = args.seed
 
-    surface.registry.initialize_from_gin()
-
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.render.resolution_x, scene.render.resolution_y = map(
