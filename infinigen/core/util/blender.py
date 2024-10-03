@@ -17,6 +17,7 @@ import bmesh
 import mathutils
 import numpy as np
 import trimesh
+from mathutils import Vector
 from tqdm import tqdm
 
 from infinigen.core.nodes.node_info import DATATYPE_DIMS, DATATYPE_FIELDS
@@ -1011,3 +1012,16 @@ def purge_empty_materials(obj):
                 continue
             bpy.context.object.active_material_index = i
             bpy.ops.object.material_slot_remove()
+
+
+def global_polygon_normal(obj, polygon, rev_normal=False):
+    loc, rot, scale = obj.matrix_world.decompose()
+    rot = rot.to_matrix()
+    normal = rot @ polygon.normal
+    if rev_normal:
+        normal = -normal
+    return normal / np.linalg.norm(normal)
+
+
+def global_vertex_coordinates(obj, local_vertex) -> Vector:
+    return obj.matrix_world @ local_vertex.co

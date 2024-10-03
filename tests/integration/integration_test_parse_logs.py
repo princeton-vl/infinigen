@@ -256,7 +256,7 @@ def find_run(base_path: str, run: str) -> Path:
 
 def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=80, limit=1):
     
-    from rapidfuzz import process, fuzz
+    from rapidfuzz import fuzz, process
 
     matches_A = []
     matches_B = []
