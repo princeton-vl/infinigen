@@ -233,6 +233,8 @@ def parse_run_df(run_path: Path):
 
         records.append(record)
 
+    print(f"{run_path=} found {len(records)} records")
+
     return pd.DataFrame.from_records(records)
 
 
@@ -243,7 +245,7 @@ def find_run(base_path: str, run: str) -> Path:
     if run_path.exists():
         return run_path
 
-    options = [x for x in base_path.iterdir() if run in x.name.split("_")]
+    options = [x for x in base_path.iterdir() if run in x.name]
     if len(options) == 1:
         return options[0]
     elif len(options) > 1:
@@ -251,6 +253,32 @@ def find_run(base_path: str, run: str) -> Path:
     else:
         raise FileNotFoundError(f"Could not find match for {run=} in {base_path=}")
 
+
+def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=80, limit=1):
+    
+    from rapidfuzz import process, fuzz
+
+    matches_A = []
+    matches_B = []
+
+    for i, rowA in dfA.iterrows():
+        
+        match = process.extractOne(rowA[keyA], dfB[keyB], scorer=fuzz.ratio, score_cutoff=threshold)
+        
+        if match:
+            matched_rowB = dfB.loc[match[2]].to_dict()
+        else:
+            matched_rowB = {col: pd.NA for col in dfB.columns}
+
+        matches_A.append(rowA.to_dict())
+        matches_B.append(matched_rowB)
+
+    dfA_matched = pd.DataFrame(matches_A).add_suffix('_A')
+    dfB_matched = pd.DataFrame(matches_B).add_suffix('_B')
+
+    merged_df = pd.concat([dfA_matched, dfB_matched], axis=1)
+
+    return merged_df    
 
 def main():
     parser = argparse.ArgumentParser()
@@ -271,25 +299,16 @@ def main():
     if len(runs) == 2:
         lhs = dfs[runs[0]]
         rhs = dfs[runs[1]]
+        print(lhs.columns)
+        print(rhs.columns)
     elif len(runs) == 1:
         lhs = rhs = dfs[runs[0]]
+        print(lhs.columns)
     else:
         raise ValueError("Only 1 or 2 runs supported")
 
-    if not args.nearest:
-        names_0 = set(lhs["name"])
-        names_1 = set(rhs["name"])
-        diff = names_0.symmetric_difference(names_1)
-        if diff:
-            raise ValueError(
-                f"Names differ between runs:\n {names_0-names_1=},\n {names_1-names_0=}"
-            )
-
     if args.nearest:
-        raise NotImplementedError()  # need to handle str dtypes
-        main_df = pd.merge_asof(
-            lhs, rhs, on="name", suffixes=("_A", "_B"), direction="nearest"
-        )
+        main_df = fuzzy_merge(lhs, rhs, keyA="name", keyB="name", threshold=80)
     else:
         main_df = lhs.merge(rhs, on="name", suffixes=("_A", "_B"), how="outer")
 
@@ -328,7 +347,7 @@ def main():
     )
 
     # Save the rendered HTML to a file
-    name = "_2".join(args.compare_runs) + ".html"
+    name = "_".join(args.compare_runs) + ".html"
     output_path = views_folder / name
     print("Writing to ", output_path)
     output_path.write_text(html_content)
