@@ -94,7 +94,7 @@ def save_polycounts(file):
         )
         file.write(f"{col.name}: {polycount:,}\n")
     for stat in bpy.context.scene.statistics(bpy.context.view_layer).split(" | ")[2:]:
-        file.write(stat)
+        file.write(stat + "\n")
 
 
 @gin.configurable

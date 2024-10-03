@@ -1,3 +1,7 @@
+# Copyright (C) 2024, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
 import argparse
 import os
 import re
@@ -28,86 +32,138 @@ def td_to_str(td):
 
 
 def parse_scene_log(
-    scene_path,
-    step_times,
-    poly_data,
+    scene_path: Path,
 ):
-    log_folder = os.path.join(scene_path, "logs")
-    coarse_folder = os.path.join(scene_path, "coarse")
-    fine_folder = next(Path(scene_path).glob("fine*"))
-    # seed = Path(scene_path).stem
-    # scene_times = []
-    if os.path.isdir(log_folder):
-        for filepath in Path(log_folder).glob("*.err"):
-            step = ""
-            for stepName in step_times:
-                if filepath.stem.startswith(stepName):
-                    step = stepName
-                    break
-            else:
-                continue
-            errFile = open(filepath)
-            text = errFile.read()
-            if "[MAIN TOTAL] finished in" not in text:
-                continue
+    ret_dict = {
+        "coarse_tris": "NAN",
+        "fine_tirs": "NAN",
+        "obj_count": "NAN",
+        "gen_time": "NAN",
+        "gen_mem_gb": "NAN",
+        "render_time": "NAN",
+        "gt_time": "NAN",
+    }
+
+    step_times = {
+        "fineterrain": [],
+        "coarse": [],
+        "populate": [],
+        "rendershort": [],
+        "shortrender": [],
+        "blendergt": [],
+    }
+
+    log_folder = scene_path/"logs"
+    coarse_folder = scene_path/"coarse"
+    fine_folder = scene_path/"fine"
+
+    if not (
+        log_folder.exists()
+        and coarse_folder.exists()
+        and fine_folder.exists()
+    ):
+        return ret_dict
+
+    for filepath in log_folder.glob("*.err"):
+        step = ""
+        for stepName in step_times:
+            if filepath.stem.startswith(stepName):
+                step = stepName
+                break
+        else:
+            continue
+        errFile = open(filepath)
+        text = errFile.read()
+        if "[MAIN TOTAL] finished in" not in text:
+            continue
+        search = re.search(
+            r"\[MAIN TOTAL\] finished in ([0-9]+):([0-9]+):([0-9]+)", text
+        )
+        d = None
+        if search is None:
             search = re.search(
-                r"\[MAIN TOTAL\] finished in ([0-9]+):([0-9]+):([0-9]+)", text
+                r"\[MAIN TOTAL\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)",
+                text,
             )
-            d = None
-            if search is None:
-                search = re.search(
-                    r"\[MAIN TOTAL\] finished in ([0-9]) day.*, ([0-9]+):([0-9]+):([0-9]+)",
-                    text,
-                )
-                d, h, m, s = search.group(1, 2, 3, 4)
-            else:
-                h, m, s = search.group(1, 2, 3)
-            if d is None:
-                step_timedelta = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
-            else:
-                step_timedelta = timedelta(
-                    days=int(d), hours=int(h), minutes=int(m), seconds=int(s)
-                )
-            step_times[step].append(step_timedelta)
-
-    coarse_poly = os.path.join(coarse_folder, "polycounts.txt")
-    fine_poly = os.path.join(fine_folder, "polycounts.txt")
-    if os.path.isfile(coarse_poly) and os.path.isfile(fine_poly):
-        coarse_text = open(coarse_poly).read().replace(",", "")
-        fine_text = open(fine_poly).read().replace(",", "")
-        for faces, tris in re.findall("Faces:([0-9]+)Tris:([0-9]+)", coarse_text):
-            poly_data["[Coarse] Faces"].append(int(faces))
-            poly_data["[Coarse] Tris"].append(int(tris))
-
-        for faces, tris in re.findall("Faces:([0-9]+)Tris:([0-9]+)", fine_text):
-            poly_data["[Fine] Faces"].append(int(faces))
-            poly_data["[Fine] Tris"].append(int(tris))
+            d, h, m, s = search.group(1, 2, 3, 4)
+        else:
+            h, m, s = search.group(1, 2, 3)
+        if d is None:
+            step_timedelta = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
+        else:
+            step_timedelta = timedelta(
+                days=int(d), hours=int(h), minutes=int(m), seconds=int(s)
+            )
+        step_times[step].append(step_timedelta)
 
     coarse_stage_df = pd.read_csv(os.path.join(coarse_folder, "pipeline_coarse.csv"))
 
-    coarse_time = step_times["coarse"][0]
-    pop_time = step_times["populate"][0]
-    fine_time = step_times["fineterrain"][0]
-    render_time = step_times["rendershort"][0]
-    gt_time = step_times["blendergt"][0]
+    if len(step_times["coarse"]) >= 1:
+        coarse_time = step_times["coarse"][0]
+    else:
+        coarse_time = timedelta(seconds=0)
+    if len(step_times["populate"]) >= 1:
+        pop_time = step_times["populate"][0]
+    else:
+        pop_time = timedelta(seconds=0)
 
-    coarse_tris = poly_data["[Coarse] Tris"][0]
-    fine_tris = poly_data["[Fine] Tris"][0]
+    if len(step_times["fineterrain"]) >= 1:
+        fine_time = step_times["fineterrain"][0]
+    else:
+        fine_time = timedelta(seconds=0)
+    if len(step_times["rendershort"]) >= 1:
+        render_time = step_times["rendershort"][0]
+    elif len(step_times["shortrender"]) >= 1:
+        render_time = step_times["shortrender"][0]
+    else:
+        render_time = timedelta(seconds=0)
+    if len(step_times["blendergt"]) >= 1:
+        gt_time = step_times["blendergt"][0]
+    else:
+        gt_time = timedelta(seconds=0)
+
     mem = coarse_stage_df["mem_at_finish"].iloc[-1]
     obj_count = coarse_stage_df["obj_count"].iloc[-1]
 
     ret_dict = {
-        "coarse_tris": coarse_tris,
-        "fine_tirs": fine_tris,
         "obj_count": obj_count,
         "gen_time": coarse_time + pop_time + fine_time,
-        "gen_mem_gb": mem,
+        "gen_mem_gb": sizeof_fmt(mem),
         "render_time": render_time,
         "gt_time": gt_time,
     }
 
+    fine_poly = parse_poly_file(fine_folder/"polycounts.txt")
+    ret_dict["gen_triangles"] = fine_poly.get("Triangles", "NAN")
+
     return ret_dict
 
+def parse_poly_file(path):
+    res = {}
+
+    if not path.exists():
+        return res
+
+    for l in path.read_text().splitlines():
+        fields = l.split(":")
+        if len(fields) != 2:
+            continue
+        k, v = fields
+        res[k] = v
+
+    return res
+
+def parse_asset_log(asset_path):
+
+    poly = parse_poly_file(asset_path/"polycounts.txt")
+
+    return {
+        "triangles": poly.get("Tris", "NAN"),
+        "gen_mem": poly.get("Memory", "NAN"),
+    }
+
+def format_stats(d):
+    return ", ".join(f"{k}: {v}" for k, v in d.items())
 
 def parse_run_df(run_path: Path):
     runs = {
@@ -133,39 +189,36 @@ def parse_run_df(run_path: Path):
 
         return sorted(scenes)
 
-    N_ASSETS = 3
     IMG_NAME = "Image_0_0_0048_0.png"
     NORMAL_NAME = "SurfaceNormal_0_0_0048_0.png"
 
     for scene in scene_folders("scene_nature"):
+        stats = parse_scene_log(scene)
         scenetype = "_".join(scene.parent.name.split("_")[2:])
+        img = scene / "frames" / "Image" / "camera_0" / IMG_NAME
+        normal = scene / "frames" / "SurfaceNormal" / "camera_0" / NORMAL_NAME
         records.append(
             {
                 "name": scenetype + "/" + scene.name,
                 "category": "scene_nature",
-                "img_path": scene / "frames" / "Image" / "camera_0" / IMG_NAME,
-                "normal_path": scene
-                / "frames"
-                / "SurfaceNormal"
-                / "camera_0"
-                / NORMAL_NAME,
-                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+                "img_path": img,
+                "normal_path": normal,
+                "stats": format_stats(stats),
             }
         )
 
     for scene in scene_folders("scene_indoor"):
+        stats = parse_scene_log(scene)
         scenetype = "_".join(scene.parent.name.split("_")[2:])
+        img = scene / "frames" / "Image" / "camera_0" / IMG_NAME
+        normal = scene / "frames" / "SurfaceNormal" / "camera_0" / NORMAL_NAME
         records.append(
             {
                 "name": scenetype + "/" + scene.name,
                 "category": "scene_indoor",
-                "img_path": scene / "frames" / "Image" / "camera_0" / IMG_NAME,
-                "normal_path": scene
-                / "frames"
-                / "SurfaceNormal"
-                / "camera_0"
-                / NORMAL_NAME,
-                "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+                "img_path": img,
+                "normal_path": normal,
+                "stats": format_stats(stats),
             }
         )
 
@@ -174,12 +227,9 @@ def parse_run_df(run_path: Path):
         record = {
             "category": category,
             "name": category + "/" + scene.name,
-            "stats": "TODO gen_time, gen_mem, render_time, render_mem, render_vram",
+            "img_path": scene / "Image.png",
+            "stats": format_stats(parse_asset_log(scene)),
         }
-
-        for i in range(N_ASSETS):
-            img_path = scene / "images" / f"image_{i:03d}.png"
-            record[f"img_path_{i}"] = img_path
 
         records.append(record)
 
@@ -204,7 +254,7 @@ def find_run(base_path: str, run: str) -> Path:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base_path", type=Path)
+    parser.add_argument("base_path", type=Path)
     parser.add_argument("--compare_runs", type=str, nargs="+")
     parser.add_argument("--nearest", action="store_true")
     args = parser.parse_args()
@@ -278,7 +328,7 @@ def main():
     )
 
     # Save the rendered HTML to a file
-    name = "_".join(args.compare_runs) + ".html"
+    name = "_2".join(args.compare_runs) + ".html"
     output_path = views_folder / name
     print("Writing to ", output_path)
     output_path.write_text(html_content)
