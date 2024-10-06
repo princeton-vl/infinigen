@@ -11,6 +11,7 @@ import copy
 import itertools
 import logging
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -18,7 +19,6 @@ from dataclasses import dataclass
 from multiprocessing import Process
 from pathlib import Path
 from shutil import which
-from is_wsl import is_wsl
 
 import gin
 import numpy as np
@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
 NVIDIA_SMI_PATH = "/bin/nvidia-smi"
 NVIDIA_SMI_WSL_PATH = "/usr/lib/wsl/lib/nvidia-smi"
+
+def is_wsl(v: str = platform.uname().release) -> int:
+    # WSL v1 and v2
+    if v.endswith("-Microsoft") or v.endswith("microsoft-standard-WSL2"):
+        return True
+
+    return False
 
 
 @dataclass
@@ -163,8 +170,8 @@ class LocalScheduleHandler:
 
             if which(nvidia_smi_path) is None:
                 raise ValueError(
-                    f"LocalScheduleHandler.use_gpu=True yet could not find {nvidia_smi_path}, "
-                    "please use --pipeline_overrides LocalScheduleHandler.use_gpu=False if your machine does not have a supported GPU"
+                    f"LocalScheduleHandler.use_gpu=True yet could not find `nvidia-smi` by this path: {nvidia_smi_path} "
+                    "Please use --pipeline_overrides LocalScheduleHandler.use_gpu=False if your machine does not have a supported GPU"
                 )
 
             result = subprocess.check_output(f"{nvidia_smi_path} -L".split()).decode()
