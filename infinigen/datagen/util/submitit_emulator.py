@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from multiprocessing import Process
 from pathlib import Path
 from shutil import which
+from is_wsl import is_wsl
 
 import gin
 import numpy as np
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 CUDA_VARNAME = "CUDA_VISIBLE_DEVICES"
 NVIDIA_SMI_PATH = "/bin/nvidia-smi"
+NVIDIA_SMI_WSL_PATH = "/usr/lib/wsl/lib/nvidia-smi"
 
 
 @dataclass
@@ -131,10 +133,11 @@ class LocalScheduleHandler:
             cls._inst = cls()
         return cls._inst
 
-    def __init__(self, jobs_per_gpu=1, use_gpu=True):
+    def __init__(self, jobs_per_gpu=1, use_gpu=True, nvidia_smi_path=None):
         self.queue = []
         self.jobs_per_gpu = jobs_per_gpu
         self.use_gpu = use_gpu
+        self.nvidia_smi_path = nvidia_smi_path
 
     def enqueue(self, func, args, kwargs, params, log_folder):
         job = LocalJob(job_id=get_fake_job_id(), process=None)
@@ -156,13 +159,15 @@ class LocalScheduleHandler:
         resources = {}
 
         if self.use_gpu:
-            if which(NVIDIA_SMI_PATH) is None:
+            nvidia_smi_path = self.nvidia_smi_path or (NVIDIA_SMI_WSL_PATH if is_wsl() else NVIDIA_SMI_PATH)
+
+            if which(nvidia_smi_path) is None:
                 raise ValueError(
-                    f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}, "
+                    f"LocalScheduleHandler.use_gpu=True yet could not find {nvidia_smi_path}, "
                     "please use --pipeline_overrides LocalScheduleHandler.use_gpu=False if your machine does not have a supported GPU"
                 )
 
-            result = subprocess.check_output(f"{NVIDIA_SMI_PATH} -L".split()).decode()
+            result = subprocess.check_output(f"{nvidia_smi_path} -L".split()).decode()
             gpus_uuids = set(i for i in range(len(result.splitlines())))
 
             if CUDA_VARNAME in os.environ:
