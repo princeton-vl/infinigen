@@ -48,13 +48,12 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
-
-# from infinigen.core.rendering.render import enable_gpu
 from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
-from infinigen.core.placement import density
+from infinigen.core.placement import AssetFactory, density
+from infinigen.core.rendering import enable_real_geometry
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
@@ -157,6 +156,7 @@ def build_scene_asset(args, factory_name, idx):
                     1,
                 )
                 assign_material(plane, material)
+        enable_real_geometry()
 
     return asset
 
@@ -178,8 +178,7 @@ def build_scene_surface(args, factory_name, idx):
                 size=10, x_subdivisions=400, y_subdivisions=400
             )
             plane = bpy.context.active_object
-            with butil.ViewportMode(plane, mode="EDIT"):
-                bpy.ops.mesh.subdivide(number_cuts=5)
+
             material = bpy.data.materials.new("plane")
             if hasattr(material, "displacement_method"):
                 material.displacement_method = "DISPLACEMENT"
@@ -223,11 +222,12 @@ def build_scene_surface(args, factory_name, idx):
                     asset = gen_class.make_sphere()
                 else:
                     bpy.ops.mesh.primitive_ico_sphere_add(
-                        radius=0.8, subdivisions=9 if factory_name == "concrete" else 3
+                        radius=0.8,
+                        subdivisions=9,
                     )
                     asset = bpy.context.active_object
-
-                if len(asset.data.vertices) < 100:
+                    
+                while len(asset.data.vertices) < 500000:
                     with butil.ViewportMode(asset, mode="EDIT"):
                         bpy.ops.mesh.subdivide(number_cuts=2)
                     
