@@ -11,10 +11,6 @@ import logging
 import typing
 from copy import deepcopy
 from dataclasses import dataclass
-from random import sample
-import sys
-import warnings
-from copy import deepcopy, copy
 from functools import partial
 from itertools import chain
 from pathlib import Path
@@ -42,15 +38,6 @@ from infinigen.terrain.core import Terrain
 from infinigen.tools.suffixes import get_suffix
 
 from . import animation_policy
-
-from infinigen.core.util import blender as butil
-from infinigen.core.util.logging import Timer
-from infinigen.core.util.math import clip_gaussian, lerp
-from infinigen.core.util import camera
-from infinigen.core.util.random import random_general
-from infinigen.core.util.rrt import validate_cam_pose_rrt
-
-from infinigen.tools.suffixes import get_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -790,7 +777,6 @@ def animate_cameras(
     validate_pose_func=None,
     **kwargs,
 ):
-    
     animation_ratio = {}
     animation_answers = {}
     for k in scene_preprocessed["camera_selection_ratio"]:
@@ -816,7 +802,7 @@ def animate_cameras(
                     target_obj=cam_rig, pois=pois, bvh=scene_preprocessed["scene_bvh"]
                 )
             else:
-                with gin.config_scope('cam'):
+                with gin.config_scope("cam"):
                     policy = animation_policy.AnimPolicyRandomWalkLookaround()
         else:
             policy = policy_registry()
@@ -874,16 +860,15 @@ if __name__ == "__main__":
     It is very useful for debugging camera.py.
     """
 
-    cams = [cam for cam in bpy.context.scene.objects 
-            if "cam" in cam.name.lower() 
-            and cam.type != "CAMERA" 
-            ]
-    
+    cams = [
+        cam
+        for cam in bpy.context.scene.objects
+        if "cam" in cam.name.lower() and cam.type != "CAMERA"
+    ]
+
     animate_cameras(cams)
     path = bpy.data.filepath
-    bpy.ops.wm.save_mainfile(
-        filepath=path
-    )
+    bpy.ops.wm.save_mainfile(filepath=path)
 
     cam = bpy.context.scene.camera
 

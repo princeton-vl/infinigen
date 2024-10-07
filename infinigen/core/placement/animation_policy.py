@@ -13,12 +13,11 @@ import bpy
 import gin
 import mathutils
 import numpy as np
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler, Vector
 from mathutils.bvhtree import BVHTree
-from numpy.matlib import repmat
 from numpy.random import normal as N
 from numpy.random import uniform as U
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
@@ -324,11 +323,13 @@ class AnimPolicyFollowObject:
 
 
 def validate_keyframe_range(
-    obj, 
-    start_frame, end_frame, 
-    bvhtree, validate_pose_func=None,
-    stride=1, # runs faster but imperfect precision
-    check_straight_line=True # rules out proposals faster, but has imperfect precision
+    obj,
+    start_frame,
+    end_frame,
+    bvhtree,
+    validate_pose_func=None,
+    stride=1,  # runs faster but imperfect precision
+    check_straight_line=True,  # rules out proposals faster, but has imperfect precision
 ):
     last_pos = deepcopy(obj.location)
 
@@ -369,7 +370,6 @@ def try_animate_trajectory(
     max_step_tries=50,
     verbose=True,
 ):
- 
     frame_prev = bpy.context.scene.frame_start
     frame_curr = bpy.context.scene.frame_start
     pbar = tqdm(total=duration_frames) if verbose else None
@@ -395,8 +395,17 @@ def try_animate_trajectory(
 
             keyframe(obj, loc, rot, step_end_frame, interp=interp)
 
-            if not validate_keyframe_range(obj, frame_prev, step_end_frame, bvh, validate_pose_func, check_straight_line=False):
-                logger.debug(f'validate_keyframe_range failed on moving {obj.location} to {loc}')
+            if not validate_keyframe_range(
+                obj,
+                frame_prev,
+                step_end_frame,
+                bvh,
+                validate_pose_func,
+                check_straight_line=False,
+            ):
+                logger.debug(
+                    f"validate_keyframe_range failed on moving {obj.location} to {loc}"
+                )
                 # clear out the candidate keyframes we just inserted, they were no good
                 for fc in obj.animation_data.action.fcurves:
                     if fc.data_path == "":
@@ -405,7 +414,12 @@ def try_animate_trajectory(
                 continue
 
             if verbose:
-                pbar.update(min(step_frames, bpy.context.scene.frame_start + duration_frames - frame_curr)) # dont overshoot the pbar, it makes the formatting not nice
+                pbar.update(
+                    min(
+                        step_frames,
+                        bpy.context.scene.frame_start + duration_frames - frame_curr,
+                    )
+                )  # dont overshoot the pbar, it makes the formatting not nice
 
             break  # we found a good pose
 

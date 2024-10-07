@@ -1,28 +1,31 @@
-# Copyright (c) Princeton University.
+# Copyright (c) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: 
+# Authors:
 # - Dylan Li: primary author
 
-import bpy
-import mathutils
-
-import gin
-import numpy as np
-from numpy.random import uniform as U
-from numpy.matlib import repmat
-from mathutils import Vector, Euler
 from math import ceil
 
-from infinigen.core.util.random import random_general
+import bpy
+import gin
+import mathutils
+import numpy as np
+from mathutils import Euler, Vector
+from numpy.matlib import repmat
+from numpy.random import uniform as U
+
 from infinigen.core.placement.animation_policy import PolicyError
+from infinigen.core.util.random import random_general
+
 
 @gin.configurable
-class RRT():
-
+class RRT:
     def __init__(
-        self, boundary=None, step_range=(1, 1),
-        closest_dist_to_obstacle=0.2, max_iter=2000, 
+        self,
+        boundary=None,
+        step_range=(1, 1),
+        closest_dist_to_obstacle=0.2,
+        max_iter=2000,
     ):
         self.boundary = self.get_boundary() if boundary is None else boundary
         self.step_range = step_range
@@ -32,15 +35,23 @@ class RRT():
         self.collision_check_dirs = []
 
         # create directions to check proximity to obstacles
-        thetas = [ 2*np.pi*i / 8 for i in range(8) ]
-        phis = [ np.pi*i / 4 for i in range(5) ]
+        thetas = [2 * np.pi * i / 8 for i in range(8)]
+        phis = [np.pi * i / 4 for i in range(5)]
         for theta in thetas:
             for phi in phis:
                 self.collision_check_dirs.append(
-                    closest_dist_to_obstacle * Vector((np.cos(theta)*np.sin(phi), np.sin(theta)*np.sin(phi), np.cos(phi))))
+                    closest_dist_to_obstacle
+                    * Vector(
+                        (
+                            np.cos(theta) * np.sin(phi),
+                            np.sin(theta) * np.sin(phi),
+                            np.cos(phi),
+                        )
+                    )
+                )
 
     def generate_path(self, start=None, goal=None):
-        bound_added = 0       
+        bound_added = 0
         if start is None:
             x0 = tuple(self.rand_valid_node())
         else:
@@ -58,13 +69,13 @@ class RRT():
 
         path = []
         self.vertices = {}
-        self.vertices[x0] = (None, 0.0) # (parent, cost)
+        self.vertices[x0] = (None, 0.0)  # (parent, cost)
         iter = 0
         while iter < self.max_iter:
             xrand = self.sample_free(xt)
             xnearest = self.nearest(xrand)
             xnew = self.steer(xnearest, xrand)
-            
+
             if self.prox_check(xnew):
                 Xnear = self.neighborhood(xnew)
                 # connecting along minimal cost path
@@ -90,9 +101,11 @@ class RRT():
                         c2 = self.cost(xnew) + self.getDist(xnew, xnear)
                         if not collide and c2 < self.cost(xnear):
                             self.wireup(xnear, xnew)
-                    
+
                     # stop if xnew is near the goal node
-                    if self.getDist(xnew, xt) < self.step and not self.line_not_valid(xnew, xt):
+                    if self.getDist(xnew, xt) < self.step and not self.line_not_valid(
+                        xnew, xt
+                    ):
                         break
 
             self.step = U(*self.step_range)
@@ -102,11 +115,11 @@ class RRT():
             self.boundary = self.boundary[:-bound_added]
         xn = self.neighborhood(xt, self.step, max_iter=1000)
         if len(xn) == 0:
-            raise PolicyError(f'RRT could not find path from {x0} to {xt}')
-        c = [ self.cost(tuple(x)) for x in xn ]
+            raise PolicyError(f"RRT could not find path from {x0} to {xt}")
+        c = [self.cost(tuple(x)) for x in xn]
         xncmin = tuple(xn[np.argmin(c)])
         x = xncmin
-        
+
         path = []
         while x != x0:
             path.append(x)
@@ -115,19 +128,19 @@ class RRT():
         path.reverse()
 
         return path
-    
+
     def next_goal(self, start, max_iter=100):
-        r_range = (self.step_range[0]*8, self.step_range[1]*16)
+        r_range = (self.step_range[0] * 8, self.step_range[1] * 16)
         z_range = (self.boundary.min(axis=0)[2], self.boundary.max(axis=0)[2])
-        theta_range = (0, 2*np.pi)
+        theta_range = (0, 2 * np.pi)
         iter = 0
         while iter < max_iter:
             r = np.random.uniform(*r_range)
             z = np.random.uniform(*z_range)
             theta = np.random.uniform(*theta_range)
 
-            translation = Vector((1,0,0))
-            translation.rotate(Euler((0,0,theta)))
+            translation = Vector((1, 0, 0))
+            translation.rotate(Euler((0, 0, theta)))
             translation *= r
             translation[2] = z
             next = Vector(start) + translation
@@ -135,23 +148,29 @@ class RRT():
                 if not self.node_in_object(next):
                     return next
             iter += 1
-        raise PolicyError(f'RRT could not find the next goal node with start node {start}')
+        raise PolicyError(
+            f"RRT could not find the next goal node with start node {start}"
+        )
 
     def prox_check(self, x):
         for dir in self.collision_check_dirs:
             # ray cast from x to check proximity to obstacles
             if self.line_not_valid(x, Vector(x) + dir):
                 return False
-            
+
         return True
-    
-    def node_in_object(self, coord):                
+
+    def node_in_object(self, coord):
         for obj in bpy.context.scene.objects:
-            if obj.type == "MESH" and not obj.hide_render and "atmosphere" not in obj.name:
+            if (
+                obj.type == "MESH"
+                and not obj.hide_render
+                and "atmosphere" not in obj.name
+            ):
                 if self.is_inside_obj(obj, coord):
                     return True
-        return False  
-    
+        return False
+
     def rand_valid_node(self):
         x = self.rand_node()
         i = 0
@@ -160,7 +179,7 @@ class RRT():
             x = self.rand_node()
             i += 1
             if i > 100:
-                return (0.,0.,0.)
+                return (0.0, 0.0, 0.0)
         return x
 
     def rand_node(self):
@@ -185,7 +204,15 @@ class RRT():
         self.vertices[x] = (y, self.cost(y) + self.getDist(x, y))
 
     def getDist(self, pos1, pos2):
-        return np.sqrt(sum([(pos1[0] - pos2[0]) ** 2, (pos1[1] - pos2[1]) ** 2, (pos1[2] - pos2[2]) ** 2]))
+        return np.sqrt(
+            sum(
+                [
+                    (pos1[0] - pos2[0]) ** 2,
+                    (pos1[1] - pos2[1]) ** 2,
+                    (pos1[2] - pos2[2]) ** 2,
+                ]
+            )
+        )
 
     def sample_free(self, xt, bias=0.1):
         if np.random.random() < bias:
@@ -203,11 +230,15 @@ class RRT():
     def neighborhood(self, x, radius=None, max_iter=10):
         V = self.get_vertices()
         num_verts = len(V)
-        
+
         gamma = 5
-        eta = self.step        
+        eta = self.step
         nearpoints = []
-        r = min(gamma * ((np.log(num_verts) / num_verts) ** (1/3)), eta) if radius is None else radius
+        r = (
+            min(gamma * ((np.log(num_verts) / num_verts) ** (1 / 3)), eta)
+            if radius is None
+            else radius
+        )
         i = 0
         while len(nearpoints) == 0:
             if i > max_iter:
@@ -217,7 +248,7 @@ class RRT():
             nearpoints = V[inside]
             i += 1
             r += eta
-            
+
         return np.array(nearpoints)
 
     def steer(self, x, direction):
@@ -230,37 +261,45 @@ class RRT():
         xnew = (x[0] + increment[0], x[1] + increment[1], x[2] + increment[2])
 
         return xnew
-    
+
     def get_boundary(self, objects=None):
         def np_matmul_coords(coordinates, matrix, space=None):
-            M = (space @ matrix @ space.inverted()
-                if space else matrix).transposed()
+            M = (space @ matrix @ space.inverted() if space else matrix).transposed()
             ones = np.ones((coordinates.shape[0], 1))
             coords4d = np.hstack((coordinates, ones))
-            return np.dot(coords4d, M)[:,:-1]
+            return np.dot(coords4d, M)[:, :-1]
 
         # get the global coordinates of all object bounding box corners
         if objects is None:
-            objects = [obj for obj in bpy.data.objects if 
-                    obj.type == 'MESH' and 
-                    "atmosphere" not in obj.name.lower() and
-                    not obj.hide_render]   
+            objects = [
+                obj
+                for obj in bpy.data.objects
+                if obj.type == "MESH"
+                and "atmosphere" not in obj.name.lower()
+                and not obj.hide_render
+            ]
         coords = np.vstack(
-            tuple(np_matmul_coords(np.array(o.bound_box), o.matrix_world.copy())
+            tuple(
+                np_matmul_coords(np.array(o.bound_box), o.matrix_world.copy())
                 for o in objects
-        ))
+            )
+        )
 
         return coords
 
     def is_in_boundary(self, coord, bbox):
-        return not (np.any(coord < bbox.min(axis=0)) or np.any(coord > bbox.max(axis=0)))
+        return not (
+            np.any(coord < bbox.min(axis=0)) or np.any(coord > bbox.max(axis=0))
+        )
 
     def line_not_valid(self, p1, p2, bbox=None, dist=None):
-        '''see if line intersects obstacle'''
+        """see if line intersects obstacle"""
         p1_np, p2_np = np.array(p1), np.array(p2)
 
         if bbox is not None:
-            if (not self.is_in_boundary(p2_np, bbox)) or (not self.is_in_boundary(p1_np, bbox)):
+            if (not self.is_in_boundary(p2_np, bbox)) or (
+                not self.is_in_boundary(p1_np, bbox)
+            ):
                 return True
 
         if dist is None:
@@ -272,7 +311,7 @@ class RRT():
     def is_inside_obj(self, obj, coord):
         max_iters = 1000
         EPS = 0.00000000001
-        
+
         mat = obj.matrix_local.inverted()
         origin = mat @ mathutils.Vector(coord)
         # will return true if obj is a plane above coord
@@ -299,9 +338,10 @@ class RRT():
 
 
 @gin.configurable
-class AnimPolicyRRT():
-
-    def __init__(self, rrt=None, speed=('uniform', 8., 10.), rot=('normal', 0, [20, 20, 20], 3)):
+class AnimPolicyRRT:
+    def __init__(
+        self, rrt=None, speed=("uniform", 8.0, 10.0), rot=("normal", 0, [20, 20, 20], 3)
+    ):
         self.speed = speed
         self.rot = rot
         self.rrt = RRT() if rrt is None else rrt
@@ -314,12 +354,9 @@ class AnimPolicyRRT():
     def retry(self):
         self.ind = max(0, self.ind - 1)
 
-    def __call__(self, obj, frame_curr, bvh, retry_pct=0): 
+    def __call__(self, obj, frame_curr, bvh, retry_pct=0):
         if self.ind == 0:
             self.path = self.rrt.generate_path(start=obj.location)
-
-        if len(self.path) < 2:
-            raise PolicyError(f'RRTStar created path of len {len(self.path)} < 2')
 
         if retry_pct != 0:
             self.ind = max(0, self.ind - 1)
@@ -328,7 +365,15 @@ class AnimPolicyRRT():
             self.path = self.rrt.generate_path(start=obj.location)
             self.ind = 1
 
+        if len(self.path) < 2:
+            raise PolicyError(f"RRTStar created path of len {len(self.path)} < 2")
+
         speed = random_general(self.speed)
+
+        if self.ind >= len(self.path) or self.ind < 0:
+            raise AssertionError(
+                f"index {self.ind} out of bounds for path of len {len(self.path)}"
+            )
 
         pos = Vector(self.path[self.ind])
         time = np.linalg.norm(pos - obj.location) / speed
@@ -336,23 +381,23 @@ class AnimPolicyRRT():
         rot = np.array(obj.rotation_euler) + rot_diff
         self.ind += 1
 
-        return Vector(pos), Vector(rot), time, 'BEZIER'
-    
+        return Vector(pos), Vector(rot), time, "BEZIER"
+
 
 @gin.configurable
 def validate_cam_pose_rrt(
     cam,
-    max_sky_percent=0.7, # max percent of sky in view frame 
-    max_proxim_percent=0.5, # max percent of view frame too close to cam
-    min_obj_dist=None, # distance that is too close to cam
-    min_pixels_check=100, # min number of pixels to check in view frame for sky/proxim
+    max_sky_percent=0.7,  # max percent of sky in view frame
+    max_proxim_percent=0.5,  # max percent of view frame too close to cam
+    min_obj_dist=None,  # distance that is too close to cam
+    min_pixels_check=100,  # min number of pixels to check in view frame for sky/proxim
 ):
     origin = cam.location
-    if not cam.type == 'CAMERA':
+    if not cam.type == "CAMERA":
         cam = cam.children[0]
-    if not cam.type == 'CAMERA':
-        raise ValueError(f'{cam.name=} had {cam.type=}')
-    
+    if not cam.type == "CAMERA":
+        raise ValueError(f"{cam.name=} had {cam.type=}")
+
     bpy.context.view_layer.update()
 
     frame = cam.data.view_frame(scene=bpy.context.scene)
@@ -361,12 +406,16 @@ def validate_cam_pose_rrt(
     topLeft = frame[3]
     z = frame[0][2]
     eps = abs(z) if min_obj_dist is None else min_obj_dist
-    
+
     # number of pixels in viewframe to ray cast through
-    resolutionX = bpy.context.scene.render.resolution_x * (bpy.context.scene.render.resolution_percentage / 100)
-    resolutionY = bpy.context.scene.render.resolution_y * (bpy.context.scene.render.resolution_percentage / 100)
-    num_pix_x = ceil((min_pixels_check * resolutionX / resolutionY)**0.5)
-    num_pix_y = ceil((min_pixels_check * resolutionY / resolutionX)**0.5)
+    resolutionX = bpy.context.scene.render.resolution_x * (
+        bpy.context.scene.render.resolution_percentage / 100
+    )
+    resolutionY = bpy.context.scene.render.resolution_y * (
+        bpy.context.scene.render.resolution_percentage / 100
+    )
+    num_pix_x = ceil((min_pixels_check * resolutionX / resolutionY) ** 0.5)
+    num_pix_y = ceil((min_pixels_check * resolutionY / resolutionX) ** 0.5)
 
     # setup vectors to match pixels
     xRange = np.linspace(topLeft[0], topRight[0], num_pix_x)
@@ -376,7 +425,7 @@ def validate_cam_pose_rrt(
     sky_hits = 0
     prox_hits = 0
     rotation = cam.matrix_world.to_quaternion()
-    num_pixels = (len(xRange) * len(yRange))
+    num_pixels = len(xRange) * len(yRange)
     sky_threshold = max_sky_percent * num_pixels
     prox_threshold = max_proxim_percent * num_pixels
     for x in xRange:
