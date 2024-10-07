@@ -254,21 +254,39 @@ def find_run(base_path: str, run: str) -> Path:
         raise FileNotFoundError(f"Could not find match for {run=} in {base_path=}")
 
 
-def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=80, limit=1):
+def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=1):
     
     from rapidfuzz import fuzz, process
 
     matches_A = []
     matches_B = []
+    
+
+    def preproc(x):
+        x = x.split('/')[-1]
+        x = re.sub(r'(?<!^)(?=[A-Z][a-z])', '_', x)
+        x = x.lower()
+        return x
+
+    b_names_list = dfB[keyB].apply(preproc)
+    print(list(b_names_list))
 
     for i, rowA in dfA.iterrows():
         
-        match = process.extractOne(rowA[keyA], dfB[keyB], scorer=fuzz.ratio, score_cutoff=threshold)
+        match = process.extractOne(
+            preproc(rowA[keyA]), 
+            b_names_list, 
+            scorer=fuzz.ratio, 
+            score_cutoff=threshold
+        )
         
         if match:
             matched_rowB = dfB.loc[match[2]].to_dict()
+            #print(f"Matched {rowA[keyA].split('/')[-1]} with {matched_rowB[keyB].split('/')[-1]} with score {match[1]:.2f}")
         else:
             matched_rowB = {col: pd.NA for col in dfB.columns}
+            matched_rowB[keyB] = "No Matching Scene"
+            print(f"No match found for {rowA[keyA].split('/')[-1]}")
 
         matches_A.append(rowA.to_dict())
         matches_B.append(matched_rowB)
@@ -309,6 +327,8 @@ def main():
 
     if args.nearest:
         main_df = fuzzy_merge(lhs, rhs, keyA="name", keyB="name", threshold=80)
+        main_df["name_A"] = main_df["name"]
+        main_df["name_B"] = main_df["name"]
     else:
         main_df = lhs.merge(rhs, on="name", suffixes=("_A", "_B"), how="outer")
 
