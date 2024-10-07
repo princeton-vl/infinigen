@@ -708,14 +708,18 @@ def home_furniture_constraints():
     deskchair = furniture[seating.OfficeChairFactory].related_to(
         desks, cu.front_to_front
     )
-    monitors = obj[appliances.MonitorFactory]
+    desk_monitors = (
+        obj[appliances.MonitorFactory]
+        .related_to(desks, cu.ontop)
+        .related_to(desks, cu.back_coplanar_back)
+    )
 
     constraints["desk"] = rooms.all(
         lambda r: (
             desks.related_to(r).all(
                 lambda t: (
                     deskchair.related_to(r).related_to(t).count().in_range(0, 1)
-                    * monitors.related_to(t, cu.ontop).count().equals(1)
+                    * desk_monitors.related_to(t, cu.ontop).count().equals(1)
                     * (obj[Semantics.OfficeShelfItem].related_to(t, cu.on).count() >= 0)
                     * (deskchair.related_to(r).related_to(t).count() == 1)
                 )
@@ -730,15 +734,6 @@ def home_furniture_constraints():
                 + d.distance(doors.related_to(r)).maximize(weight=0.1)
                 + cl.accessibility_cost(d, furniture.related_to(r)).minimize(weight=3)
                 + cl.accessibility_cost(d, r).minimize(weight=3)
-                + monitors.related_to(d).mean(
-                    lambda m: (
-                        cl.accessibility_cost(m, r, dist=2).minimize(weight=3)
-                        + cl.accessibility_cost(
-                            m, obj.related_to(r), dist=0.5
-                        ).minimize(weight=3)
-                        + m.distance(r, cu.walltags).hinge(0.1, 1e7).minimize(weight=1)
-                    )
-                )
                 + deskchair.distance(rooms, cu.walltags).maximize(weight=1)
             )
         )
@@ -956,49 +951,16 @@ def home_furniture_constraints():
         cu.bottom, {Subpart.SupportSurface}, margin=0.001
     )
     cl.StableAgainst(cu.back, cu.walltags, margin=0.1)
-    kitchen_sink = obj[Semantics.Sink][table_decorations.SinkFactory].related_to(
-        countertops, sink_flush_on_counter
-    )
-    constraints["kitchen_sink"] = kitchens.all(
-        lambda r: (
-            # those sinks can be on either type of counter
-            kitchen_sink.related_to(wallcounter.related_to(r)).count().in_range(0, 1)
-            * kitchen_sink.related_to(island.related_to(r))
-            .count()
-            .in_range(0, 1)  # island sinks dont need to be against wall
-            * countertops.related_to(r).all(
-                lambda c: (
-                    kitchen_sink.related_to(c).all(
-                        lambda s: s.distance(c, cu.side).in_range(0.05, 0.2)
-                    )
-                )
-            )
-        )
+    kitchen_sink = (
+        obj[Semantics.Sink][table_decorations.SinkFactory]
+        .related_to(countertops, sink_flush_on_counter)
+        .related_to(countertops, cu.front_coplanar_front)
     )
 
-    score_terms["kitchen_sink"] = kitchens.mean(
+    constraints["kitchen_sink"] = kitchens.all(
         lambda r: (
-            countertops.mean(
-                lambda c: kitchen_sink.related_to(c).mean(
-                    lambda s: (
-                        (s.volume(dims=2) / c.volume(dims=2))
-                        .hinge(0.2, 0.4)
-                        .minimize(weight=10)
-                    )
-                )
-            )
-            + island.related_to(r).mean(
-                lambda isl: (  # sinks on islands must be near to edge and oriented outwards
-                    kitchen_sink.related_to(isl).mean(
-                        lambda s: (
-                            cl.angle_alignment_cost(s, isl, cu.side).minimize(weight=10)
-                            + cl.distance(s, isl, cu.side)
-                            .hinge(0.05, 0.07)
-                            .minimize(weight=10)
-                        )
-                    )
-                )
-            )
+            kitchen_sink.related_to(wallcounter.related_to(r)).count().in_range(0, 1)
+            * kitchen_sink.related_to(island.related_to(r)).count().in_range(0, 1)
         )
     )
 
@@ -1006,8 +968,10 @@ def home_furniture_constraints():
     kitchen_appliances_big = kitchen_appliances.related_to(
         kitchens, cu.on_floor
     ).related_to(kitchens, cu.against_wall)
-    microwaves = kitchen_appliances[appliances.MicrowaveFactory].related_to(
-        wallcounter, cu.on
+    microwaves = (
+        kitchen_appliances[appliances.MicrowaveFactory]
+        .related_to(wallcounter, cu.on)
+        .related_to(wallcounter, cu.back_coplanar_back)
     )
 
     constraints["kitchen_appliance"] = kitchens.all(
@@ -1200,7 +1164,11 @@ def home_furniture_constraints():
         )
     )
 
-    tvs = obj[appliances.TVFactory].related_to(tvstands, cu.ontop)
+    tvs = (
+        obj[appliances.TVFactory]
+        .related_to(tvstands, cu.ontop)
+        .related_to(tvstands, cu.back_coplanar_back)
+    )
 
     if params["has_tv"]:
         constraints["tv"] = livingrooms.all(

@@ -463,12 +463,6 @@ def tag_support_surfaces(obj, angle_threshold=0.1):
     angle_threshold (float): The cosine of the maximum angle deviation from +z to be considered a support surface.
     """
 
-    def global_polygon_normal(obj, polygon):
-        loc, rot, scale = obj.matrix_world.decompose()
-        rot = rot.to_matrix()
-        normal = rot @ polygon.normal
-        return normal / np.linalg.norm(normal)
-
     def process_mesh(mesh_obj):
         up_vector = Vector((0, 0, 1))
 
@@ -476,7 +470,7 @@ def tag_support_surfaces(obj, angle_threshold=0.1):
         support_mask = np.zeros(n_poly, dtype=bool)
 
         for poly in mesh_obj.data.polygons:
-            global_normal = global_polygon_normal(mesh_obj, poly)
+            global_normal = butil.global_polygon_normal(mesh_obj, poly)
             if global_normal.dot(up_vector) > 1 - angle_threshold:
                 support_mask[poly.index] = True
 

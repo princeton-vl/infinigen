@@ -213,30 +213,21 @@ def delete_obj(scene, a, delete_blender=True):
             scene.delete_geometry(obj_name + "_mesh")
 
 
-def global_vertex_coordinates(obj, local_vertex) -> Vector:
-    return obj.matrix_world @ local_vertex.co
-
-
-def global_polygon_normal(obj, polygon):
-    loc, rot, scale = obj.matrix_world.decompose()
-    rot = rot.to_matrix()
-    normal = rot @ polygon.normal
-    return normal / np.linalg.norm(normal)
-
-
 def is_planar(obj, tolerance=1e-6):
     if len(obj.data.polygons) != 1:
         return False
 
     polygon = obj.data.polygons[0]
-    global_normal = global_polygon_normal(obj, polygon)
+    global_normal = butil.global_polygon_normal(obj, polygon)
 
     # Take the first vertex as a reference point on the plane
-    ref_vertex = global_vertex_coordinates(obj, obj.data.vertices[polygon.vertices[0]])
+    ref_vertex = butil.global_vertex_coordinates(
+        obj, obj.data.vertices[polygon.vertices[0]]
+    )
 
     # Check if all vertices lie on the plane defined by the reference vertex and the global normal
     for vertex in obj.data.vertices:
-        distance = (global_vertex_coordinates(obj, vertex) - ref_vertex).dot(
+        distance = (butil.global_vertex_coordinates(obj, vertex) - ref_vertex).dot(
             global_normal
         )
         if not math.isclose(distance, 0, abs_tol=tolerance):
@@ -253,8 +244,12 @@ def planes_parallel(plane_obj_a, plane_obj_b, tolerance=1e-6):
     # if not is_planar(plane_obj_a) or not is_planar(plane_obj_b):
     #     raise ValueError("One or both objects are not planar")
 
-    global_normal_a = global_polygon_normal(plane_obj_a, plane_obj_a.data.polygons[0])
-    global_normal_b = global_polygon_normal(plane_obj_b, plane_obj_b.data.polygons[0])
+    global_normal_a = butil.global_polygon_normal(
+        plane_obj_a, plane_obj_a.data.polygons[0]
+    )
+    global_normal_b = butil.global_polygon_normal(
+        plane_obj_b, plane_obj_b.data.polygons[0]
+    )
 
     dot_product = global_normal_a.dot(global_normal_b)
 
