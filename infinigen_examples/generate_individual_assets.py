@@ -236,6 +236,25 @@ def build_and_save_asset(payload: dict):
 
     output_folder.mkdir(exist_ok=True)
 
+    init.apply_gin_configs(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        configs=args.configs,
+        overrides=args.overrides,
+        skip_unknown=True,
+    )
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith("infinigen"):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
+
+    init.configure_blender()
+
+    if args.gpu:
+        init.configure_render_cycles()
+
     logger.info(f"Building scene for {factory_name} {idx}")
 
     if args.seed > 0:
@@ -453,25 +472,6 @@ def mapfunc(
 
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
-
-    init.apply_gin_configs(
-        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
-        configs=args.configs,
-        overrides=args.overrides,
-        skip_unknown=True,
-    )
-
-    if args.debug is not None:
-        for name in logging.root.manager.loggerDict:
-            if not name.startswith("infinigen"):
-                continue
-            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
-                logging.getLogger(name).setLevel(logging.DEBUG)
-
-    init.configure_blender()
-
-    if args.gpu:
-        init.configure_render_cycles()
 
     if args.output_folder is None:
         outputs = Path("outputs")
