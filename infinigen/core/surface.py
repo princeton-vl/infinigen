@@ -26,6 +26,7 @@ from infinigen.core.nodes.node_wrangler import (
 )
 from infinigen.core.nodes.utils import infer_output_socket, isnode
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import enable_real_geometry
 
 
 def remove_materials(obj):
@@ -321,10 +322,7 @@ def add_material(
         nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
-    if hasattr(material, "displacement_method"):
-        material.displacement_method = "DISPLACEMENT"
-    else:
-        material.cycles.displacement_method = "DISPLACEMENT"
+    enable_real_geometry(material)
     for obj in objs:
         obj.active_material = material
     return material

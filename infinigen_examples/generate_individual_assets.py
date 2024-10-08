@@ -52,12 +52,12 @@ from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
-from infinigen.core.placement import AssetFactory, density
-from infinigen.core.rendering import enable_real_geometry
+from infinigen.core.placement import density
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import enable_real_geometry
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
@@ -180,10 +180,7 @@ def build_scene_surface(args, factory_name, idx):
             plane = bpy.context.active_object
 
             material = bpy.data.materials.new("plane")
-            if hasattr(material, "displacement_method"):
-                material.displacement_method = "DISPLACEMENT"
-            else:
-                material.cycles.displacement_method = "DISPLACEMENT"
+            enable_real_geometry(material)
             material.use_nodes = True
             material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
                 0.015,

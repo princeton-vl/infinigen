@@ -33,6 +33,7 @@ from infinigen.core.rendering.post_render import (
     load_uniq_inst,
 )
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import enable_real_geometry
 from infinigen.core.util.logging import Timer
 from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder
 from infinigen.tools.suffixes import get_suffix
@@ -385,14 +386,6 @@ def configure_compositor(
     )
 
 
-def enable_real_geometry():
-    for material in bpy.data.materials:
-        if hasattr(material, "displacement_method"):
-            material.displacement_method = "DISPLACEMENT"
-        else:
-            material.cycles.displacement_method = "DISPLACEMENT"
-
-
 @gin.configurable
 def render_image(
     camera: bpy.types.Object,
@@ -411,7 +404,8 @@ def render_image(
         bpy.data.objects[exclude].hide_render = True
 
     init.configure_cycles_devices()
-    enable_real_geometry()
+    for material in bpy.data.materials:
+        enable_real_geometry(material)
 
     tmp_dir = frames_folder.parent.resolve() / "tmp"
     tmp_dir.mkdir(exist_ok=True)
