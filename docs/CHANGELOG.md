@@ -112,3 +112,11 @@ v1.8.2
 - Add smbpy du and df commands
 - Fix fineterrain not included in export for optimize_diskusage=True
 - Update mesher_backend config name & default commands
+
+v1.8.3
+- Fix landlab import error message, add no_landlab.gin config
+
+v1.9.0
+- Add CoPlanar indoor constraint, fix backwards tvs/monitors/sinks
+- Fix empty scene / null objects selected during export
+- Add full system visual check / integration script
