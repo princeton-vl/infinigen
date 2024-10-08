@@ -982,6 +982,7 @@ if __name__ == "__main__":
         "-t",
         "--task",
         nargs="+",
+        action="append",
         default=["coarse"],
         choices=[
             "coarse",
@@ -997,6 +998,7 @@ if __name__ == "__main__":
         "-g",
         "--configs",
         nargs="+",
+        action="append",
         default=["base"],
         help="Set of config files for gin (separated by spaces) "
         "e.g. --gin_config file1 file2 (exclude .gin from path)",
@@ -1005,6 +1007,7 @@ if __name__ == "__main__":
         "-p",
         "--overrides",
         nargs="+",
+        action="append",
         default=[],
         help="Parameter settings that override config defaults "
         "e.g. --gin_param module_1.a=2 module_2.b=3",
