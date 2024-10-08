@@ -66,7 +66,8 @@ dev = [
     "pytype",
     "ruff",
     "isort",
-    "tabulate", # for integration test results
+    "tabulate",
+    "rapidfuzz", 
     "pre-commit"
 ]
 

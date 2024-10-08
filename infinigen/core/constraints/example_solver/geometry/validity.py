@@ -19,7 +19,10 @@ from infinigen.core.constraints.evaluator.node_impl.trimesh_geometry import (
     any_touching,
     constrain_contact,
 )
-from infinigen.core.constraints.example_solver.geometry.stability import stable_against
+from infinigen.core.constraints.example_solver.geometry.stability import (
+    coplanar,
+    stable_against,
+)
 from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.util import blender as butil
 
@@ -71,6 +74,14 @@ def all_relations_valid(state, name):
         match relation_state.relation:
             case cl.StableAgainst(_child_tags, _parent_tags, _margin):
                 res = stable_against(state, name, relation_state)
+                if not res:
+                    logger.debug(
+                        f"{name} failed relation {i=}/{len(rels)} {relation_state.relation} on {relation_state.target_name}"
+                    )
+                    return False
+
+            case cl.CoPlanar(_child_tags, _parent_tags, _margin):
+                res = coplanar(state, name, relation_state)
                 if not res:
                     logger.debug(
                         f"{name} failed relation {i=}/{len(rels)} {relation_state.relation} on {relation_state.target_name}"

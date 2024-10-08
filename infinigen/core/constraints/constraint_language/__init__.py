@@ -44,6 +44,7 @@ from .geometry import (
 from .relations import (
     AnyRelation,
     ConnectorType,
+    CoPlanar,
     CutFrom,
     GeometryRelation,
     NegatedRelation,

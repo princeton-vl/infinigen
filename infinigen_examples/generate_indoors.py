@@ -481,6 +481,8 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
                         break
                 break
 
+    p.save_results(output_folder / "pipeline_coarse.csv")
+
     return {
         "height_offset": height,
         "whole_bbox": house_bbox,
