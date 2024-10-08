@@ -211,7 +211,11 @@ def build_scene_surface(args, factory_name, idx):
                 asset = bpy.context.active_object
 
                 mat_gen = template()
-                surface.assign_material(asset, mat_gen())
+
+                if hasattr(mat_gen, "apply"):
+                    mat_gen.apply(asset)
+                else:
+                    surface.assign_material(asset, mat_gen())
 
         except ModuleNotFoundError:
             raise Exception(f"{factory_name} not Found.")

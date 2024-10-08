@@ -1,8 +1,8 @@
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
 RUN_NATURE=${RUN_NATURE:-1}
-RUN_INDOOR_ASSETS=${RUN_INDOOR_ASSETS:-1}
-RUN_NATURE_ASSETS=${RUN_INDOOR_MATERIALS:-1}
+RUN_MESHES=${RUN_MESHES:-1}
+RUN_MATERIALS=${RUN_MATERIALS:-1}
 
 # Version Info
 INFINIGEN_VERSION=$(python -c "import infinigen; print(infinigen.__version__)")
