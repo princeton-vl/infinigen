@@ -1,2 +1,3 @@
 include 'infinigen/datagen/configs/data_schema/monocular_video.gin'
-iterate_scene_tasks.cam_id_ranges = [1, 2]
+iterate_scene_tasks.n_camera_rigs = 1
+iterate_scene_tasks.n_subcams = 2
