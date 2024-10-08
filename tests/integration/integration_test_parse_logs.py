@@ -327,10 +327,13 @@ def main():
 
     if args.nearest:
         main_df = fuzzy_merge(lhs, rhs, keyA="name", keyB="name", threshold=80)
-        main_df["name_A"] = main_df["name"]
-        main_df["name_B"] = main_df["name"]
     else:
         main_df = lhs.merge(rhs, on="name", suffixes=("_A", "_B"), how="outer")
+        main_df["name_A"] = main_df["name"]
+        main_df["name_B"] = main_df["name"]
+
+    assert "name_A" in main_df.columns
+    assert "name_B" in main_df.columns
 
     for col in main_df:
         if col.startswith("img_path"):
