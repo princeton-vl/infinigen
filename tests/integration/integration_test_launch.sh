@@ -1,8 +1,8 @@
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
 RUN_NATURE=${RUN_NATURE:-1}
-RUN_INDOOR_ASSETS=${RUN_INDOOR_ASSETS:-1}
-RUN_NATURE_ASSETS=${RUN_INDOOR_MATERIALS:-1}
+RUN_OBJECTS=${RUN_OBJECTS:-1}
+RUN_MATERIALS=${RUN_MATERIALS:-1}
 
 # Version Info
 INFINIGEN_VERSION=$(python -c "import infinigen; print(infinigen.__version__)")
@@ -38,22 +38,25 @@ if [ "$RUN_NATURE" -eq 1 ]; then
     done
 fi
 
-# Run Indoor Meshes Generation
-if [ "$RUN_INDOOR_ASSETS" -eq 1 ]; then
+# Objects
+if [ "$RUN_OBJECTS" -eq 1 ]; then
+
+    python -m infinigen_examples.generate_individual_assets \
+    -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
+    --slurm --n_workers 100 -n 3 --gpu & 
+
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_indoor_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_meshes \
     --slurm --n_workers 100 -n 3 --gpu &
+fi
+
+# Materials
+if [ "$RUN_MATERIALS" -eq 1 ]; then
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_indoor_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_materials \
     --slurm --n_workers 100 -n 3 --gpu & 
-fi
 
-# Run Nature Meshes Generation
-if [ "$RUN_NATURE_ASSETS" -eq 1 ]; then
-    python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
-    --slurm --n_workers 100 -n 3 --gpu & 
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_nature_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_materials \
