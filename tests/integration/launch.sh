@@ -1,3 +1,10 @@
+OUTPUT_PATH=$1
+
+if [ -z "$OUTPUT_PATH" ]; then
+    echo "Please provide an output path"
+    exit 1
+fi
+
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
 RUN_NATURE=${RUN_NATURE:-1}
@@ -10,8 +17,7 @@ COMMIT_HASH=$(git rev-parse HEAD | cut -c 1-6)
 DATE=$(date '+%Y-%m-%d')
 JOBTAG="${DATE}_ifg-int"
 BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/_/-/g')
-VERSION_STRING="${DATE}_${INFINIGEN_VERSION}_${BRANCH}_${COMMIT_HASH}_${USER}"
-OUTPUT_PATH=/n/fs/pvl-renders/integration_test/runs/
+VERSION_STRING="${DATE}_${BRANCH}_${COMMIT_HASH}_${USER}"
 
 mkdir -p $OUTPUT_PATH
 OUTPUT_PATH=$OUTPUT_PATH/$VERSION_STRING
@@ -20,10 +26,10 @@ OUTPUT_PATH=$OUTPUT_PATH/$VERSION_STRING
 if [ "$RUN_INDOOR" -eq 1 ]; then
     for indoor_type in DiningRoom Bathroom Bedroom Kitchen LivingRoom; do
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_indoor_$indoor_type \
-        --num_scenes 3 --cleanup big_files --configs singleroom --overwrite \
+        --num_scenes 3 --cleanup big_files --configs singleroom.gin fast_solve.gin --overwrite \
         --pipeline_configs slurm_1h monocular indoor_background_configs.gin \
         --pipeline_overrides get_cmd.driver_script=infinigen_examples.generate_indoors sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF \
-        --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] compose_indoors.solve_small_enabled=False &
+        --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] &
     done
 fi
 

@@ -53,15 +53,11 @@ def parse_scene_log(
         "blendergt": [],
     }
 
-    log_folder = scene_path/"logs"
-    coarse_folder = scene_path/"coarse"
-    fine_folder = scene_path/"fine"
+    log_folder = scene_path / "logs"
+    coarse_folder = scene_path / "coarse"
+    fine_folder = scene_path / "fine"
 
-    if not (
-        log_folder.exists()
-        and coarse_folder.exists()
-        and fine_folder.exists()
-    ):
+    if not (log_folder.exists() and coarse_folder.exists() and fine_folder.exists()):
         return ret_dict
 
     for filepath in log_folder.glob("*.err"):
@@ -133,10 +129,11 @@ def parse_scene_log(
         "gt_time": gt_time,
     }
 
-    fine_poly = parse_poly_file(fine_folder/"polycounts.txt")
+    fine_poly = parse_poly_file(fine_folder / "polycounts.txt")
     ret_dict["gen_triangles"] = fine_poly.get("Triangles", "NAN")
 
     return ret_dict
+
 
 def parse_poly_file(path):
     res = {}
@@ -153,17 +150,19 @@ def parse_poly_file(path):
 
     return res
 
-def parse_asset_log(asset_path):
 
-    poly = parse_poly_file(asset_path/"polycounts.txt")
+def parse_asset_log(asset_path):
+    poly = parse_poly_file(asset_path / "polycounts.txt")
 
     return {
         "triangles": poly.get("Tris", "NAN"),
         "gen_mem": poly.get("Memory", "NAN"),
     }
 
+
 def format_stats(d):
     return ", ".join(f"{k}: {v}" for k, v in d.items())
+
 
 def parse_run_df(run_path: Path):
     runs = {
@@ -255,16 +254,14 @@ def find_run(base_path: str, run: str) -> Path:
 
 
 def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=1):
-    
     from rapidfuzz import fuzz, process
 
     matches_A = []
     matches_B = []
-    
 
     def preproc(x):
-        x = x.split('/')[-1]
-        x = re.sub(r'(?<!^)(?=[A-Z][a-z])', '_', x)
+        x = x.split("/")[-1]
+        x = re.sub(r"(?<!^)(?=[A-Z][a-z])", "_", x)
         x = x.lower()
         return x
 
@@ -272,17 +269,13 @@ def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=1):
     print(list(b_names_list))
 
     for i, rowA in dfA.iterrows():
-        
         match = process.extractOne(
-            preproc(rowA[keyA]), 
-            b_names_list, 
-            scorer=fuzz.ratio, 
-            score_cutoff=threshold
+            preproc(rowA[keyA]), b_names_list, scorer=fuzz.ratio, score_cutoff=threshold
         )
-        
+
         if match:
             matched_rowB = dfB.loc[match[2]].to_dict()
-            #print(f"Matched {rowA[keyA].split('/')[-1]} with {matched_rowB[keyB].split('/')[-1]} with score {match[1]:.2f}")
+            # print(f"Matched {rowA[keyA].split('/')[-1]} with {matched_rowB[keyB].split('/')[-1]} with score {match[1]:.2f}")
         else:
             matched_rowB = {col: pd.NA for col in dfB.columns}
             matched_rowB[keyB] = "No Matching Scene"
@@ -291,22 +284,26 @@ def fuzzy_merge(dfA, dfB, keyA, keyB, threshold=1):
         matches_A.append(rowA.to_dict())
         matches_B.append(matched_rowB)
 
-    dfA_matched = pd.DataFrame(matches_A).add_suffix('_A')
-    dfB_matched = pd.DataFrame(matches_B).add_suffix('_B')
+    dfA_matched = pd.DataFrame(matches_A).add_suffix("_A")
+    dfB_matched = pd.DataFrame(matches_B).add_suffix("_B")
 
     merged_df = pd.concat([dfA_matched, dfB_matched], axis=1)
 
-    return merged_df    
+    return merged_df
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("base_path", type=Path)
-    parser.add_argument("--compare_runs", type=str, nargs="+")
+    parser.add_argument("compare_runs", type=Path, nargs="+")
     parser.add_argument("--nearest", action="store_true")
     args = parser.parse_args()
 
-    runs_folder = args.base_path / "runs"
-    views_folder = args.base_path / "views"
+    for run in args.compare_runs:
+        if not run.exists():
+            raise FileNotFoundError(f"Could not find {run}")
+
+    runs_folder = args.compare_runs[0].parent
+    views_folder = runs_folder.parent / "views"
 
     runs = [find_run(runs_folder, run) for run in args.compare_runs]
 
@@ -370,7 +367,7 @@ def main():
     )
 
     # Save the rendered HTML to a file
-    name = "_".join(args.compare_runs) + ".html"
+    name = "_".join([p.name for p in args.compare_runs]) + ".html"
     output_path = views_folder / name
     print("Writing to ", output_path)
     output_path.write_text(html_content)
