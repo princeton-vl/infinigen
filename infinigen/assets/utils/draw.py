@@ -74,7 +74,7 @@ def surface_from_func(fn, div_x=16, div_y=16, size_x=2, size_y=2):
     return mesh
 
 
-def bezier_curve(anchors, vector_locations=(), resolution=64, to_mesh=True):
+def bezier_curve(anchors, vector_locations=(), resolution=None, to_mesh=True):
     n = [len(r) for r in anchors if isinstance(r, Sized)][0]
     anchors = np.array(
         [
@@ -98,22 +98,37 @@ def bezier_curve(anchors, vector_locations=(), resolution=64, to_mesh=True):
         else:
             points[i].handle_left_type = "AUTO"
             points[i].handle_right_type = "AUTO"
-    obj.data.splines[0].resolution_u = resolution
-    if to_mesh:
-        return curve2mesh(obj)
-    return obj
+    obj.data.splines[0].resolution_u = resolution if resolution is not None else 12
+    if not to_mesh:
+        return obj
+    return curve2mesh(obj)
 
 
 def curve2mesh(obj):
+    points = obj.data.splines[0].bezier_points
+    cos = np.array([p.co for p in points])
+    length = np.linalg.norm(cos[:-1] - cos[1:], axis=-1)
+    min_length = 5e-3
+    with butil.ViewportMode(obj, "EDIT"):
+        for i in reversed(range(len(points) - 1)):
+            points = list(obj.data.splines[0].bezier_points)
+            number_cuts = min(int(length[i] / min_length) - 1, 64)
+            if number_cuts < 0:
+                continue
+            bpy.ops.curve.select_all(action="DESELECT")
+            points[i].select_control_point = True
+            points[i + 1].select_control_point = True
+            bpy.ops.curve.subdivide(number_cuts=number_cuts)
+    obj.data.splines[0].resolution_u = 1
     with butil.SelectObjects(obj):
         bpy.ops.object.convert(target="MESH")
     obj = bpy.context.active_object
-    butil.modify_mesh(obj, "WELD", merge_threshold=1e-4)
+    butil.modify_mesh(obj, "WELD", merge_threshold=1e-3)
     return obj
 
 
 def align_bezier(
-    anchors, axes=None, scale=None, vector_locations=(), resolution=64, to_mesh=True
+    anchors, axes=None, scale=None, vector_locations=(), resolution=None, to_mesh=True
 ):
     obj = bezier_curve(anchors, vector_locations, resolution, False)
     points = obj.data.splines[0].bezier_points
@@ -145,9 +160,9 @@ def align_bezier(
             * np.linalg.norm(p.handle_right - p.co)
             * scale[2 * i + 1]
         )
-    if to_mesh:
-        return curve2mesh(obj)
-    return obj
+    if not to_mesh:
+        return obj
+    return curve2mesh(obj)
 
 
 def remesh_fill(obj, resolution=0.005):
@@ -168,22 +183,22 @@ def remesh_fill(obj, resolution=0.005):
 def spin(
     anchors,
     vector_locations=(),
-    subdivision=64,
     resolution=None,
+    rotation_resolution=None,
     axis=(0, 0, 1),
     loop=False,
     dupli=False,
 ):
-    obj = bezier_curve(anchors, vector_locations, subdivision)
+    obj = bezier_curve(anchors, vector_locations, resolution)
     co = read_co(obj)
-    max_radius = np.amax(
+    mean_radius = np.mean(
         np.linalg.norm(
             co - (co @ np.array(axis))[:, np.newaxis] * np.array(axis), axis=-1
         )
     )
-    if resolution is None:
-        resolution = min(int(2 * np.pi * max_radius / 0.005), 128)
-    butil.modify_mesh(obj, "WELD", merge_threshold=1e-4)
+    if rotation_resolution is None:
+        rotation_resolution = min(int(2 * np.pi * mean_radius / 5e-3), 128)
+    butil.modify_mesh(obj, "WELD", merge_threshold=1e-3)
     if loop:
         with butil.ViewportMode(obj, "EDIT"), butil.Suppress():
             bpy.ops.mesh.select_all(action="SELECT")
@@ -191,9 +206,11 @@ def spin(
         remesh_fill(obj)
     with butil.ViewportMode(obj, "EDIT"), butil.Suppress():
         bpy.ops.mesh.select_all(action="SELECT")
-        bpy.ops.mesh.spin(steps=resolution, angle=np.pi * 2, axis=axis, dupli=dupli)
+        bpy.ops.mesh.spin(
+            steps=rotation_resolution, angle=np.pi * 2, axis=axis, dupli=dupli
+        )
         bpy.ops.mesh.select_all(action="SELECT")
-        bpy.ops.mesh.remove_doubles(threshold=1e-4)
+        bpy.ops.mesh.remove_doubles(threshold=1e-3)
     return obj
 
 

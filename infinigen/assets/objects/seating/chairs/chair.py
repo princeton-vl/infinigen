@@ -226,7 +226,7 @@ class ChairFactory(AssetFactory):
             * self.thickness
         )
         vector_locations = [1, 7] if self.is_seat_round else [1, 3, 5, 7]
-        obj = bezier_curve((x_anchors, y_anchors, z_anchors), vector_locations, 8)
+        obj = bezier_curve((x_anchors, y_anchors, z_anchors), vector_locations)
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.fill_grid(use_interp_simple=True)
@@ -260,9 +260,7 @@ class ChairFactory(AssetFactory):
                 case _:
                     axes = None
                     scale = None
-            limb = align_bezier(
-                np.stack([leg_start, leg_end], -1), axes, scale, resolution=64
-            )
+            limb = align_bezier(np.stack([leg_start, leg_end], -1), axes, scale)
             limb.location = (
                 np.array(
                     [
@@ -335,7 +333,7 @@ class ChairFactory(AssetFactory):
                     & (center[:, -1] <= z_max * self.back_height),
                 )
                 bpy.ops.mesh.bridge_edge_loops(
-                    number_cuts=32,
+                    number_cuts=64,
                     interpolation="LINEAR",
                     smoothness=smoothness,
                     profile_shape_factor=profile_shape_factor,

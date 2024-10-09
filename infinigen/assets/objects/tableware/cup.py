@@ -79,9 +79,10 @@ class CupFactory(TablewareFactory):
                 self.x_end,
             )
             z_anchors = 0, 0, self.depth * 0.5, self.depth
-        anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
-        obj = spin(anchors, [1], 16)
-        subsurf(obj, 1)
+        anchors = np.array(x_anchors) * self.scale, 0, np.array(z_anchors) * self.scale
+        obj = spin(anchors, [1])
+        obj.scale = [1 / self.scale] * 3
+        butil.apply_transform(obj, True)
         butil.modify_mesh(
             obj,
             "BEVEL",
@@ -95,6 +96,7 @@ class CupFactory(TablewareFactory):
         else:
             wrap = None
         self.solidify_with_inside(obj, self.thickness)
+        subsurf(obj, 2)
         handle_location = (
             x_anchors[-2] * (1 - self.handle_location)
             + x_anchors[-1] * self.handle_location,

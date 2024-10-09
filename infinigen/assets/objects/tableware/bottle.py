@@ -198,7 +198,6 @@ class BottleFactory(AssetFactory):
         z_anchors = np.array(self.z_anchors) * self.z_length
         anchors = x_anchors, 0, z_anchors
         obj = spin(anchors, np.nonzero(self.is_vector)[0])
-        subsurf(obj, 1, True)
         subsurf(obj, 1)
         if self.bottle_width > 0:
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.bottle_width)
