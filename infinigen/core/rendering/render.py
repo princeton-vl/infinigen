@@ -33,7 +33,7 @@ from infinigen.core.rendering.post_render import (
     load_uniq_inst,
 )
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import enable_real_geometry
+from infinigen.core.util.blender import set_geometry_option
 from infinigen.core.util.logging import Timer
 from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder
 from infinigen.tools.suffixes import get_suffix
@@ -405,7 +405,7 @@ def render_image(
 
     init.configure_cycles_devices()
     for material in bpy.data.materials:
-        enable_real_geometry(material)
+        set_geometry_option(material)
 
     tmp_dir = frames_folder.parent.resolve() / "tmp"
     tmp_dir.mkdir(exist_ok=True)

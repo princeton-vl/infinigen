@@ -29,13 +29,12 @@ from .logging import Suppress
 logger = logging.getLogger(__name__)
 
 
-@gin.configurable("real_geometry")
-def enable_real_geometry(material, enabled=False):
-    if enabled:
-        if hasattr(material, "displacement_method"):
-            material.displacement_method = "DISPLACEMENT"
-        else:
-            material.cycles.displacement_method = "DISPLACEMENT"
+@gin.configurable("geometry")
+def set_geometry_option(material, option="BUMP"):
+    if hasattr(material, "displacement_method"):
+        material.displacement_method = option
+    else:
+        material.cycles.displacement_method = option
 
 
 def deep_clone_obj(obj, keep_modifiers=False, keep_materials=False):

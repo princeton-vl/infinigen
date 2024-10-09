@@ -26,7 +26,7 @@ from infinigen.core.nodes.node_wrangler import (
 )
 from infinigen.core.nodes.utils import infer_output_socket, isnode
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import enable_real_geometry
+from infinigen.core.util.blender import set_geometry_option
 
 
 def remove_materials(obj):
@@ -322,7 +322,7 @@ def add_material(
         nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": mix_shader})
     else:
         raise ValueError(f"{type(selection)=} not handled.")
-    enable_real_geometry(material)
+    set_geometry_option(material)
     for obj in objs:
         obj.active_material = material
     return material

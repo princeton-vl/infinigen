@@ -10,7 +10,7 @@ from infinigen.assets.utils.decorate import read_material_index, write_material_
 from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.surface import read_attr_data
-from infinigen.core.util.blender import enable_real_geometry
+from infinigen.core.util.blender import set_geometry_option
 from infinigen.core.util.math import FixedSeed
 
 
@@ -21,7 +21,7 @@ def apply(obj, shader_func, selection=None, *args, **kwargs):
         material = surface.shaderfunc_to_material(shader_func, *args, **kwargs)
     else:
         material = shader_func
-    enable_real_geometry(material)
+    set_geometry_option(material)
 
     for o in obj:
         index = len(o.data.materials)
