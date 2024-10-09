@@ -14,6 +14,7 @@ umask 0002
 # Initialize arrays to hold the arguments
 arg1_strings=()
 arg2_strings=()
+arg3_strings=()
 
 # Parse the command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -36,6 +37,14 @@ while [[ $# -gt 0 ]]; do
         shift
       done
       ;;
+    --pipeline_configs)
+      shift  # Move past the option
+      # Collect arguments until the next option or end of input
+      while [[ $# -gt 0 && $1 != --* ]]; do
+        arg3_strings+=("$1")
+        shift
+      done
+      ;;
     *)
       echo "Unknown option: $key"
       exit 1
@@ -47,6 +56,11 @@ done
 # Combine the arrays into single strings
 parsed_nature_configs="${arg1_strings[*]}"
 parsed_indoors_configs="${arg2_strings[*]}"
+parsed_pipeline_configs="${arg3_strings[*]}"
+
+if [ -z "$parsed_pipeline_configs" ]; then
+    parsed_pipeline_configs="slurm_1h"
+fi
 
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
@@ -70,7 +84,7 @@ if [ "$RUN_INDOOR" -eq 1 ]; then
     for indoor_type in DiningRoom Bathroom Bedroom Kitchen LivingRoom; do
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_indoor_$indoor_type \
         --num_scenes 3 --cleanup big_files --configs singleroom.gin fast_solve.gin $parsed_indoors_configs --overwrite \
-        --pipeline_configs slurm monocular blender_gt indoor_background_configs.gin \
+        --pipeline_configs slurm.gin monocular.gin blender_gt.gin indoor_background_configs.gin $parsed_pipeline_configs \
         --pipeline_overrides get_cmd.driver_script=infinigen_examples.generate_indoors sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF \
         --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] compose_indoors.solve_small_enabled=False &
     done
@@ -82,7 +96,7 @@ if [ "$RUN_NATURE" -eq 1 ]; then
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_nature_$nature_type \
         --num_scenes 3 --cleanup big_files --overwrite \
         --configs $nature_type.gin dev.gin $parsed_nature_configs \
-        --pipeline_configs slurm monocular blender_gt \
+        --pipeline_configs slurm.gin monocular.gin blender_gt.gin $parsed_pipeline_configs \
         --pipeline_overrides sample_scene_spec.seed_range=[0,100] &
     done
 fi
