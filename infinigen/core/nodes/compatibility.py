@@ -145,6 +145,7 @@ def compat_musgrave_texture(nw, orig_type, input_args, attrs, input_kwargs):
         attrs["noise_dimensions"] = attrs.pop("musgrave_dimensions")
     if "musgrave_type" in attrs:
         attrs["noise_type"] = attrs.pop("musgrave_type")
+    attrs["normalize"] = False
     return nw.new_node(
         node_type=Nodes.NoiseTexture,
         input_args=[],
