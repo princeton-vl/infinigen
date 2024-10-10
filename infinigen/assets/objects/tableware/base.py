@@ -27,11 +27,11 @@ class TablewareFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.thickness = 0.01
 
-            surface_gen_class = weighted_sample(material_assignments.plastics)
+            surface_gen_class = weighted_sample(material_assignments.cup)
             surface_material_gen = surface_gen_class()
             self.surface = surface_material_gen()
 
-            inside_surface_gen_class = weighted_sample(material_assignments.metals)
+            inside_surface_gen_class = weighted_sample(material_assignments.cup)
             inside_surface_gen = inside_surface_gen_class()
             self.inside_surface = inside_surface_gen()
 

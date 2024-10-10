@@ -124,7 +124,7 @@ bathroom_touchsurface = [
 ]
 
 abstract_art = [(art.Art, 1.0), (art.DarkArt, 0.5)]
-blanket = fabrics + [(art.ArtFabric, 2.0)]
+blanket = fabrics + [(art.ArtFabric, 3.0)]
 pants = fabrics + [(art.ArtFabric, 5.0)]
 towel = fabrics + [(art.ArtRug, 2.0), (fabric.Rug, 5.0)]
 
@@ -150,6 +150,8 @@ furniture_leg = decorative_metal + [
     (wood.Wood, 1.0),
     (ceramic.GlassVolume, 1.0),
     (plastic.PlasticRough, 1.0),
+    (metal.BrushedBlackMetal, 3.0),
+    (wood.BlackPlywood, 3.0),
 ]
 
 furniture_hard_surface = [

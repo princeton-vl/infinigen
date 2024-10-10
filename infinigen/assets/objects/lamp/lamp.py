@@ -14,12 +14,6 @@ from numpy.random import uniform as U
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
-from infinigen.assets.materials.lamp_shaders import (
-    shader_black,
-    shader_lamp_bulb_nonemissive,
-    shader_lampshade,
-)
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -90,6 +84,9 @@ class LampFactory(AssetFactory):
                 "CurvePoint3": (0.0, 0.0, 1.2),
             },
         }
+        self.lampshade_material = weighted_sample(material_assignments.lampshade)()
+        self.metal_material = weighted_sample(material_assignments.furniture_leg)()
+
         with FixedSeed(factory_seed):
             self.params = self.sample_parameters(dimensions)
             self.material_params, self.scratch, self.edge_wear = (
@@ -98,18 +95,15 @@ class LampFactory(AssetFactory):
 
         self.params.update(self.material_params)
 
-        self.lampshade_material = weighted_sample(material_assignments.lampshade)
-        self.metal_material = weighted_sample(material_assignments.furniture_leg)
-
     def get_material_params(self):
-        black_material = shader_black
-        white_material = shader_lamp_bulb_nonemissive
-        lampshade_material = shader_lampshade
+        # black_material = shader_black
+        # white_material = shader_lamp_bulb_nonemissive
+        # lampshade_material = shader_lampshade
 
         wrapped_params = {
-            "BlackMaterial": surface.shaderfunc_to_material(black_material),
-            "MetalMaterial": surface.shaderfunc_to_material(white_material),
-            "LampshadeMaterial": surface.shaderfunc_to_material(lampshade_material),
+            "BlackMaterial": self.metal_material(),
+            "MetalMaterial": self.metal_material(),
+            "LampshadeMaterial": self.lampshade_material(),
         }
 
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
