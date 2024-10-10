@@ -59,7 +59,7 @@ metal_neutral = [
 fabrics = [
     (fabric.CoarseKnitFabric, 1.0),
     (fabric.FineKnitFabric, 1.0),
-    (fabric.PlaidFabric, 1.0),
+    # (fabric.PlaidFabric, 1.0),
     (fabric.Leather, 0.3),
     (fabric.SofaFabric, 1.0),
 ]
