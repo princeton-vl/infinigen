@@ -1,9 +1,9 @@
-camera.spawn_camera_rigs.n_camera_rigs = 30
-camera.spawn_camera_rigs.camera_rig_config = [
-    {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
-]
+compute_base_views.min_candidates_ratio = 1
+fine_terrain.mesher_backend = "OcMesher"
+
 configure_cameras.mvs_setting = True
 compose_nature.camera_selection_ranges_ratio = {}
 compose_nature.camera_selection_tags_ratio = {}
-compute_base_views.min_candidates_ratio = 1
-fine_terrain.mesher_backend = "OcMesher"
+compose_nature.animate_cameras_enabled=False
+
+compose_nature.inview_distance = 40

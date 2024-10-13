@@ -40,8 +40,6 @@ from . import animation_policy
 
 logger = logging.getLogger(__name__)
 
-CAMERA_RIGS_DIRNAME = "CameraRigs"
-
 
 @gin.configurable
 def get_sensor_coords(cam, H, W, sparse=False):
@@ -119,55 +117,54 @@ def spawn_camera():
     return cam
 
 
-def camera_name(rig_id, cam_id):
-    return f"{CAMERA_RIGS_DIRNAME}/{rig_id}/{cam_id}"
+def cam_name(cam_rig, subcam):
+    return f"camera_{cam_rig}_{subcam}"
+
+
+def get_id(camera: bpy.types.Object):
+    _, rig, subcam = camera.name.split("_")
+    return int(rig), int(subcam)
 
 
 @gin.configurable
 def spawn_camera_rigs(
     camera_rig_config,
     n_camera_rigs,
-):
+) -> list[bpy.types.Object]:
+    rigs_col = butil.get_collection("camera_rigs")
+    cams_col = butil.get_collection("cameras")
+
     def spawn_rig(i):
-        rig_parent = butil.spawn_empty(f"{CAMERA_RIGS_DIRNAME}/{i}")
+        rig_parent = butil.spawn_empty(f"camrig.{i}")
+        butil.put_in_collection(rig_parent, rigs_col)
+
         for j, config in enumerate(camera_rig_config):
             cam = spawn_camera()
-            cam.name = camera_name(i, j)
+            cam.name = cam_name(i, j)
             cam.parent = rig_parent
-
             cam.location = config["loc"]
             cam.rotation_euler = config["rot_euler"]
 
+            butil.put_in_collection(cam, cams_col)
+
         return rig_parent
 
-    camera_rigs = [spawn_rig(i) for i in range(n_camera_rigs)]
-    butil.group_in_collection(camera_rigs, CAMERA_RIGS_DIRNAME)
-
-    return camera_rigs
+    return [spawn_rig(i) for i in range(n_camera_rigs)]
 
 
-def get_cameras_ids() -> list[tuple]:
-    res = []
-    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
-    rigs = [o for o in col.objects if o.name.count("/") == 1]
-    for i, root in enumerate(rigs):
-        for j, subcam in enumerate(root.children):
-            assert subcam.name == camera_name(i, j)
-            res.append((i, j))
+def get_camera_rigs() -> list[bpy.types.Object]:
+    if "camera_rigs" not in bpy.data.collections:
+        raise ValueError("No camera rigs found")
 
-    return res
+    result = list(bpy.data.collections["camera_rigs"].objects)
 
+    for i, rig in enumerate(result):
+        for j, child in enumerate(rig.children):
+            expected = cam_name(i, j)
+            if child.name != expected:
+                raise ValueError(f"child {i=} {j}  was {child.name=}, {expected=}")
 
-def get_camera(rig_id, subcam_id, checkonly=False):
-    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
-    name = camera_name(rig_id, subcam_id)
-    if name in col.objects.keys():
-        return col.objects[name]
-    if checkonly:
-        return None
-    raise ValueError(
-        f"Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}"
-    )
+    return result
 
 
 @node_utils.to_nodegroup(
@@ -181,8 +178,7 @@ def nodegroup_active_cam_info(nw: NodeWrangler):
     )
 
 
-def set_active_camera(rig_id, subcam_id):
-    camera = get_camera(rig_id, subcam_id)
+def set_active_camera(camera: bpy.types.Object):
     bpy.context.scene.camera = camera
 
     ng = (
@@ -191,34 +187,6 @@ def set_active_camera(rig_id, subcam_id):
     ng.nodes["Object Info"].inputs["Object"].default_value = camera
 
     return bpy.context.scene.camera
-
-
-def positive_gaussian(mean, std):
-    while True:
-        val = np.random.normal(mean, std)
-        if val > 0:
-            return val
-
-
-def set_camera(
-    camera,
-    location,
-    rotation,
-    focus_dist,
-    frame,
-):
-    camera.location = location
-    camera.rotation_euler = rotation
-    if focus_dist is not None:
-        camera.data.dof.focus_distance = (
-            focus_dist  # this should come before view_layer.update()
-        )
-    bpy.context.view_layer.update()
-
-    camera.keyframe_insert(data_path="location", frame=frame)
-    camera.keyframe_insert(data_path="rotation_euler", frame=frame)
-    if focus_dist is not None:
-        camera.data.dof.keyframe_insert(data_path="focus_distance", frame=frame)
 
 
 def terrain_camera_query(
@@ -465,7 +433,7 @@ def compute_base_views(
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
-    logger.debug("Center Coordinate", center_coordinate)
+
     with tqdm(total=n_min_candidates, desc="Searching for camera viewpoints") as pbar:
         for it in range(1, max_tries):
             if center_coordinate:
@@ -798,32 +766,37 @@ def animate_cameras(
 
 
 @gin.configurable
-def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
+def save_camera_parameters(
+    camera_obj: bpy.types.Object, output_folder, frame, use_dof=False
+):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
+
     if frame is not None:
         bpy.context.scene.frame_set(frame)
-    for camera_pair_id, camera_id in camera_ids:
-        camera_obj = get_camera(camera_pair_id, camera_id)
-        if use_dof is not None:
-            camera_obj.data.dof.use_dof = use_dof
-        # Saving camera parameters
-        K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        suffix = get_suffix(
-            dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id)
-        )
-        output_file = output_folder / f"camview{suffix}.npz"
 
-        height_width = np.array(
-            (
-                bpy.context.scene.render.resolution_y,
-                bpy.context.scene.render.resolution_x,
-            )
+    camrig_id, subcam_id = get_id(camera_obj)
+
+    if use_dof is not None:
+        camera_obj.data.dof.use_dof = use_dof
+
+    # Saving camera parameters
+    K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
+    suffix = get_suffix(
+        dict(cam_rig=camrig_id, resample=0, frame=frame, subcam=subcam_id)
+    )
+    output_file = output_folder / f"camview{suffix}.npz"
+
+    height_width = np.array(
+        (
+            bpy.context.scene.render.resolution_y,
+            bpy.context.scene.render.resolution_x,
         )
-        T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag(
-            (1.0, -1.0, -1.0, 1.0)
-        )  # Y down Z forward (aka opencv)
-        np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
+    )
+    T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag(
+        (1.0, -1.0, -1.0, 1.0)
+    )  # Y down Z forward (aka opencv)
+    np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 
 if __name__ == "__main__":

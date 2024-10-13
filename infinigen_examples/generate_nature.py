@@ -293,20 +293,25 @@ def compose_nature(output_folder, scene_seed, **params):
         ),
         use_chance=False,
     )
-    cam = cam_util.get_camera(0, 0)
+    primary_cams = [rig.children[0] for rig in camera_rigs]
 
-    p.run_stage("lighting", lighting.sky_lighting.add_lighting, cam, use_chance=False)
+    p.run_stage(
+        "lighting",
+        lighting.sky_lighting.add_lighting,
+        primary_cams[0],
+        use_chance=False,
+    )
 
     # determine a small area of the terrain for the creatures to run around on
     # must happen before camera is animated, as camera may want to follow them around
     terrain_center, *_ = split_in_view.split_inview(
         terrain_mesh,
-        cam=cam,
-        start=0,
-        end=0,
-        outofview=False,
-        vis_margin=5,
+        primary_cams,
         dist_max=params["center_distance"],
+        vis_margin=5,
+        frame_start=0,
+        frame_end=0,
+        outofview=False,
         hide_render=True,
         suffix="center",
     )
@@ -367,10 +372,9 @@ def compose_nature(output_folder, scene_seed, **params):
     with logging_util.Timer("Compute coarse terrain frustrums"):
         terrain_inview, *_ = split_in_view.split_inview(
             terrain_mesh,
+            primary_cams,
             verbose=True,
             outofview=False,
-            print_areas=True,
-            cam=cam,
             vis_margin=2,
             dist_max=params["inview_distance"],
             hide_render=True,
@@ -378,10 +382,9 @@ def compose_nature(output_folder, scene_seed, **params):
         )
         terrain_near, *_ = split_in_view.split_inview(
             terrain_mesh,
+            primary_cams,
             verbose=True,
             outofview=False,
-            print_areas=True,
-            cam=cam,
             vis_margin=2,
             dist_max=params["near_distance"],
             hide_render=True,
@@ -734,9 +737,12 @@ def compose_nature(output_folder, scene_seed, **params):
 
 
 @gin.configurable
-def populate_scene(output_folder, scene_seed, **params):
+def populate_scene(
+    output_folder: Path, scene_seed: int, camera_rigs: list[bpy.types.Object], **params
+):
     p = RandomStageExecutor(scene_seed, output_folder, params)
-    camera = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
+
+    primary_cams = [rig.children[0] for rig in camera_rigs]
 
     season = p.run_stage(
         "choose_season", trees.random_season, use_chance=False, default=[]
@@ -750,7 +756,7 @@ def populate_scene(output_folder, scene_seed, **params):
         use_chance=False,
         default=[],
         fn=lambda: placement.populate_all(
-            trees.TreeFactory, camera, season=season, vis_cull=4
+            trees.TreeFactory, primary_cams, season=season, vis_cull=4
         ),
     )  # ,
     # meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
@@ -758,40 +764,44 @@ def populate_scene(output_folder, scene_seed, **params):
         "populate_boulders",
         use_chance=False,
         default=[],
-        fn=lambda: placement.populate_all(rocks.BoulderFactory, camera, vis_cull=3),
+        fn=lambda: placement.populate_all(
+            rocks.BoulderFactory, primary_cams, vis_cull=3
+        ),
     )  # ,
     # meshing_camera=camera, adapt_mesh_method='subdivide', cam_meshing_max_dist=8))
     populated["bushes"] = p.run_stage(
         "populate_bushes",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            trees.BushFactory, camera, vis_cull=1, adapt_mesh_method="subdivide"
+            trees.BushFactory, primary_cams, vis_cull=1, adapt_mesh_method="subdivide"
         ),
     )
     p.run_stage(
         "populate_kelp",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            monocot.KelpMonocotFactory, camera, vis_cull=5
+            monocot.KelpMonocotFactory, primary_cams, vis_cull=5
         ),
     )
     populated["cactus"] = p.run_stage(
         "populate_cactus",
         use_chance=False,
-        fn=lambda: placement.populate_all(cactus.CactusFactory, camera, vis_cull=6),
+        fn=lambda: placement.populate_all(
+            cactus.CactusFactory, primary_cams, vis_cull=6
+        ),
     )
     p.run_stage(
         "populate_clouds",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            cloud.CloudFactory, camera, dist_cull=None, vis_cull=None
+            cloud.CloudFactory, primary_cams, dist_cull=None, vis_cull=None
         ),
     )
     p.run_stage(
         "populate_glowing_rocks",
         use_chance=False,
         fn=lambda: placement.populate_all(
-            rocks.GlowingRocksFactory, camera, dist_cull=None, vis_cull=None
+            rocks.GlowingRocksFactory, primary_cams, dist_cull=None, vis_cull=None
         ),
     )
 
@@ -801,7 +811,7 @@ def populate_scene(output_folder, scene_seed, **params):
         default=[],
         fn=lambda: placement.populate_all(
             fluid.CachedTreeFactory,
-            camera,
+            primary_cams,
             season=season,
             vis_cull=4,
             dist_cull=70,
@@ -814,7 +824,7 @@ def populate_scene(output_folder, scene_seed, **params):
         default=[],
         fn=lambda: placement.populate_all(
             fluid.CachedBoulderFactory,
-            camera,
+            primary_cams,
             vis_cull=3,
             dist_cull=70,
             cache_system=fire_cache_system,
@@ -825,7 +835,7 @@ def populate_scene(output_folder, scene_seed, **params):
         use_chance=False,
         fn=lambda: placement.populate_all(
             fluid.CachedBushFactory,
-            camera,
+            primary_cams,
             vis_cull=1,
             adapt_mesh_method="subdivide",
             cache_system=fire_cache_system,
@@ -836,7 +846,7 @@ def populate_scene(output_folder, scene_seed, **params):
         use_chance=False,
         fn=lambda: placement.populate_all(
             fluid.CachedCactusFactory,
-            camera,
+            primary_cams,
             vis_cull=6,
             cache_system=fire_cache_system,
         ),
@@ -909,7 +919,7 @@ def populate_scene(output_folder, scene_seed, **params):
         p.run_stage(
             f"populate_{k}",
             use_chance=False,
-            fn=lambda: placement.populate_all(fac, camera=None),
+            fn=lambda: placement.populate_all(fac, cameras=None),
         )
 
     fire_warmup = params.get("fire_warmup", 50)

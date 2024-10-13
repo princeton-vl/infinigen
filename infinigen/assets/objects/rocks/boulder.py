@@ -35,7 +35,7 @@ class BoulderFactory(AssetFactory):
     def __init__(
         self,
         factory_seed,
-        meshing_camera=None,
+        meshing_cameras=None,
         adapt_mesh_method="remesh",
         cam_meshing_max_dist=1e7,
         coarse=False,
@@ -43,7 +43,7 @@ class BoulderFactory(AssetFactory):
     ):
         super(BoulderFactory, self).__init__(factory_seed, coarse)
 
-        self.camera = meshing_camera
+        self.cameras = meshing_cameras
         self.cam_meshing_max_dist = cam_meshing_max_dist
         self.adapt_mesh_method = adapt_mesh_method
 
@@ -166,10 +166,10 @@ class BoulderFactory(AssetFactory):
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
     def create_asset(self, i, placeholder, face_size=0.01, distance=0, **params):
-        if self.camera is not None and distance < self.cam_meshing_max_dist:
+        if self.cameras is not None and distance < self.cam_meshing_max_dist:
             assert self.adapt_mesh_method != "remesh"
             skin_obj, outofview, vert_dists, _ = split_inview(
-                placeholder, cam=self.camera, vis_margin=0.15
+                placeholder, cameras=self.cameras, vis_margin=0.15
             )
             butil.parent_to(outofview, skin_obj, no_inverse=True, no_transform=True)
             face_size = detail.target_face_size(vert_dists.min())

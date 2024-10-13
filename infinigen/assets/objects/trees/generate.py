@@ -58,7 +58,7 @@ class GenericTreeFactory(AssetFactory):
         child_col,
         trunk_surface,
         realize=False,
-        meshing_camera=None,
+        meshing_cameras=None,
         cam_meshing_max_dist=1e7,
         coarse_mesh_placeholder=False,
         adapt_mesh_method="remesh",
@@ -73,7 +73,7 @@ class GenericTreeFactory(AssetFactory):
         self.trunk_surface = trunk_surface
         self.realize = realize
 
-        self.camera = meshing_camera
+        self.cameras = meshing_cameras
         self.cam_meshing_max_dist = cam_meshing_max_dist
         self.adapt_mesh_method = adapt_mesh_method
         self.decimate_placeholder_levels = decimate_placeholder_levels
@@ -168,12 +168,12 @@ class GenericTreeFactory(AssetFactory):
                 ),
             )
 
-        if self.camera is not None and distance < self.cam_meshing_max_dist:
+        if self.cameras is not None and distance < self.cam_meshing_max_dist:
             assert self.adapt_mesh_method != "remesh"
 
             skin_obj_cleanup = skin_obj
             skin_obj, outofview, vert_dists, _ = split_inview(
-                skin_obj, cam=self.camera, vis_margin=0.15
+                skin_obj, cameras=self.cameras, vis_margin=0.15
             )
             butil.parent_to(outofview, skin_obj, no_inverse=True, no_transform=True)
 

@@ -377,7 +377,7 @@ def configure_compositor(
 
 @gin.configurable
 def render_image(
-    camera_id,
+    camera: bpy.types.Object,
     frames_folder,
     passes_to_save,
     flat_shading=False,
@@ -388,8 +388,6 @@ def render_image(
 ):
     tic = time.time()
 
-    camera_rig_id, subcam_id = camera_id
-
     for exclude in excludes:
         bpy.data.objects[exclude].hide_render = True
 
@@ -399,6 +397,8 @@ def render_image(
     tmp_dir.mkdir(exist_ok=True)
     bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
 
+    camrig_id, subcam_id = cam_util.get_id(camera)
+
     if flat_shading:
         with Timer("Set object indices"):
             object_data = set_pass_indices()
@@ -406,7 +406,7 @@ def render_image(
             first_frame = bpy.context.scene.frame_start
             suffix = get_suffix(
                 dict(
-                    cam_rig=camera_rig_id,
+                    cam_rig=camrig_id,
                     resample=0,
                     frame=first_frame,
                     subcam=subcam_id,
@@ -425,7 +425,7 @@ def render_image(
                 first_frame = bpy.context.scene.frame_start
                 suffix = get_suffix(
                     dict(
-                        cam_rig=camera_rig_id,
+                        cam_rig=camrig_id,
                         resample=0,
                         frame=first_frame,
                         subcam=subcam_id,
@@ -437,17 +437,16 @@ def render_image(
         bpy.context.scene.use_nodes = True
     file_slot_nodes = configure_compositor(frames_folder, passes_to_save, flat_shading)
 
-    indices = dict(cam_rig=camera_rig_id, resample=0, subcam=subcam_id)
+    indices = dict(cam_rig=camrig_id, resample=0, subcam=subcam_id)
 
     ## Update output names
     fileslot_suffix = get_suffix({"frame": "####", **indices})
     for file_slot in file_slot_nodes:
         file_slot.path = f"{file_slot.path}{fileslot_suffix}"
 
-    camera = cam_util.get_camera(camera_rig_id, subcam_id)
     if use_dof == "IF_TARGET_SET":
         use_dof = camera.data.dof.focus_object is not None
-    if use_dof is not None:
+    elif use_dof is not None:
         camera.data.dof.use_dof = use_dof
         camera.data.dof.aperture_fstop = dof_aperture_fstop
 
@@ -470,7 +469,7 @@ def render_image(
                 postprocess_blendergt_outputs(frames_folder, suffix)
             else:
                 cam_util.save_camera_parameters(
-                    camera_ids=cam_util.get_cameras_ids(),
+                    camera,
                     output_folder=frames_folder,
                     frame=frame,
                 )
