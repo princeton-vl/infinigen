@@ -540,7 +540,7 @@ class BlueprintSolidifier:
         wt = self.constants.wall_thickness
         cutter.scale = (
             self.constants.door_width / 2,
-            self.constants.door_width / 2 + wt,
+            self.constants.door_width + wt / 2,
             self.constants.door_size / 2 - _snap / 2,
         )
         cutter.location[-1] += _snap / 2
