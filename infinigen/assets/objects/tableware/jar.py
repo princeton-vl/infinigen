@@ -69,7 +69,7 @@ class JarFactory(AssetFactory):
             bpy.ops.mesh.extrude_edges_move(
                 TRANSFORM_OT_translate={"value": (0, 0, self.z_cap * self.z_length)}
             )
-        subsurf(obj, 1)
+        subsurf(obj, 2)
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
 
         cap = new_cylinder(vertices=64)

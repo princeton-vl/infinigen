@@ -121,7 +121,7 @@ def obj2polygon(obj):
             for p in obj.data.polygons
         ]
     )
-    return shapely.make_valid(shapely.simplify(p, 1e-6))
+    return shapely.ops.orient(shapely.make_valid(shapely.simplify(p, 1e-6)))
 
 
 def buffer(p, distance):

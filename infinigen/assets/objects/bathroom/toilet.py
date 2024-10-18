@@ -140,7 +140,7 @@ class ToiletFactory(AssetFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.bridge_edge_loops(
-                number_cuts=np.random.randint(12, 16),
+                number_cuts=64,
                 profile_shape_factor=uniform(0.1, 0.2),
                 interpolation="SURFACE",
             )
@@ -243,7 +243,7 @@ class ToiletFactory(AssetFactory):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.bridge_edge_loops(
-                number_cuts=np.random.randint(12, 16),
+                number_cuts=64,
                 profile_shape_factor=uniform(0.0, 0.15),
             )
         return stand

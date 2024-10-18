@@ -5,6 +5,8 @@ blender.tar.xz
 Blender.app
 build/
 
+.nfs*
+
 *.c
 
 .coverage

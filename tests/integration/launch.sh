@@ -1,7 +1,14 @@
+OUTPUT_PATH=$1
+
+if [ -z "$OUTPUT_PATH" ]; then
+    echo "Please provide an output path"
+    exit 1
+fi
+
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
 RUN_NATURE=${RUN_NATURE:-1}
-RUN_MESHES=${RUN_MESHES:-1}
+RUN_OBJECTS=${RUN_OBJECTS:-1}
 RUN_MATERIALS=${RUN_MATERIALS:-1}
 
 # Version Info
@@ -10,8 +17,7 @@ COMMIT_HASH=$(git rev-parse HEAD | cut -c 1-6)
 DATE=$(date '+%Y-%m-%d')
 JOBTAG="${DATE}_ifg-int"
 BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/_/-/g')
-VERSION_STRING="${DATE}_${INFINIGEN_VERSION}_${BRANCH}_${COMMIT_HASH}_${USER}"
-OUTPUT_PATH=/n/fs/pvl-renders/integration_test/runs/
+VERSION_STRING="${DATE}_${BRANCH}_${COMMIT_HASH}_${USER}"
 
 mkdir -p $OUTPUT_PATH
 OUTPUT_PATH=$OUTPUT_PATH/$VERSION_STRING
@@ -20,7 +26,7 @@ OUTPUT_PATH=$OUTPUT_PATH/$VERSION_STRING
 if [ "$RUN_INDOOR" -eq 1 ]; then
     for indoor_type in DiningRoom Bathroom Bedroom Kitchen LivingRoom; do
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_indoor_$indoor_type \
-        --num_scenes 3 --cleanup big_files --configs singleroom --overwrite \
+        --num_scenes 3 --cleanup big_files --configs singleroom.gin fast_solve.gin --overwrite \
         --pipeline_configs slurm_1h monocular indoor_background_configs.gin \
         --pipeline_overrides get_cmd.driver_script=infinigen_examples.generate_indoors sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF \
         --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] compose_indoors.solve_small_enabled=False &
@@ -38,23 +44,25 @@ if [ "$RUN_NATURE" -eq 1 ]; then
     done
 fi
 
-# Run Indoor Meshes Generation
-if [ "$RUN_MESHES" -eq 1 ]; then
-    python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_indoor_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_meshes \
-    --slurm --n_workers 100 -n 3 --gpu &
+# Objects
+if [ "$RUN_OBJECTS" -eq 1 ]; then
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_nature_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_meshes \
     --slurm --n_workers 100 -n 3 --gpu & 
+
+    python -m infinigen_examples.generate_individual_assets \
+    -f tests/assets/list_indoor_meshes.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_meshes \
+    --slurm --n_workers 100 -n 3 --gpu &
 fi
 
-# Run Nature Meshes Generation
+# Materials
 if [ "$RUN_MATERIALS" -eq 1 ]; then
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_new_materials \
     --slurm --n_workers 100 -n 3 --gpu & 
+
 
     python -m infinigen_examples.generate_individual_assets \
     -f tests/assets/list_materials_deprecated_interface.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_deprec_materials \

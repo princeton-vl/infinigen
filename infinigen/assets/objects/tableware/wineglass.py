@@ -8,7 +8,6 @@ from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.tableware.base import TablewareFactory
-from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.draw import spin
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -43,10 +42,8 @@ class WineglassFactory(TablewareFactory):
         )
         z_anchors = 0, z_bottom / 2, z_bottom, self.z_cup, self.z_mid, self.z_length
         anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
-        obj = spin(anchors, [0, 1, 2, 3], 4, 16)
-        subsurf(obj, 2)
+        obj = spin(anchors, [0, 1, 2, 3])
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
-        subsurf(obj, 1)
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
 
