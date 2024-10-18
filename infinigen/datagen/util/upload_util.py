@@ -121,6 +121,18 @@ def rclone_upload_file(src_file, dst_folder):
     print(f"Uploaded {src_file}")
 
 
+def copy_upload_file(src_file, dst_folder, root_dir):
+    assert os.path.exists(src_file), src_file
+    if dst_folder.as_posix().startswith("infinigen/renders"):
+        dst_folder = dst_folder.as_posix().split("/")[-1]
+
+    if not os.path.exists(f"{root_dir}/{dst_folder}"):
+        os.makedirs(f"{root_dir}/{dst_folder}")
+
+    shutil.copy2(src_file, f"{root_dir}/{dst_folder}")
+    print(f"Copy {src_file}")
+
+
 def get_commit_hash():
     git = shutil.which("git")
     if git is None:
@@ -180,6 +192,8 @@ def get_upload_func(method="smbclient"):
         return rclone_upload_file
     elif method == "smbclient":
         return smb_client.upload
+    elif method.startswith("copyfile"):
+        return lambda x, y: copy_upload_file(x, y, root_dir=method.split(":")[-1])
     else:
         raise ValueError(f"Unrecognized {method=}")
 
