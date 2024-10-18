@@ -50,6 +50,18 @@ def update_exterior(state: State, i: str):
         r.value = MultiLineString(v)
 
 
+def mls_ccw(mls: MultiLineString, state: State, i: str):
+    exterior = state[i].polygon.exterior
+    coords = np.array(exterior.coords[:-1])
+    mls_ = []
+    for ls in mls.geoms:
+        u, v = ls.coords[:2]
+        x = np.argmin(np.linalg.norm(coords - np.array(u)[np.newaxis], axis=-1))
+        y = np.argmin(np.linalg.norm(coords - np.array(v)[np.newaxis], axis=-1))
+        mls_.append(ls if x < y else shapely.reverse(ls))
+    return MultiLineString(mls_)
+
+
 def update_staircase(state: State, i: str):
     pholder = room_name(Semantics.Staircase, room_level(i))
     r = next(r for r in state[pholder].relations if r.target_name == i)

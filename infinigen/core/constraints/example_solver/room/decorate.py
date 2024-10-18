@@ -45,7 +45,7 @@ from infinigen.core.constraints.example_solver.room.base import room_level, room
 from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.math import int_hash
+from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
@@ -93,7 +93,7 @@ def split_rooms(rooms_meshed: list[bpy.types.Object]):
 
 
 def import_material(factory_name):
-    with gin.unlock_config():
+    with gin.unlock_config(), FixedSeed(0):
         try:
             return importlib.import_module(f"infinigen.assets.materials.{factory_name}")
         except ImportError:

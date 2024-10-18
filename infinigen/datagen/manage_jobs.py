@@ -679,7 +679,7 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshol
         print(message)
         if wandb is not None:
             wandb.alert(
-                title=f"{args.output_folder} full",
+                title=f"{args.output_folder.name} sleeping for full disk",
                 text=message,
                 wait_duration=3 * 60 * 60,
             )

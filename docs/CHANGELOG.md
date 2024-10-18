@@ -121,3 +121,12 @@ v1.9.0
 - Add CoPlanar indoor constraint, fix backwards tvs/monitors/sinks
 - Fix empty scene / null objects selected during export
 - Add full system visual check / integration script
+
+v1.9.1
+- Reduce excessive polycount in bottles and tableware objects
+- Fix alignment of windows
+- Fix wall materials not being deterministic w.r.t random seed
+- Fix gin configs not correctly passed to slurm jobs in generate_individual_assets
+- Fix integration test image titles 
+- Fix integration test asset image alignment
+- Make multistory houses disabled by default

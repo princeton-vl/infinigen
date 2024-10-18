@@ -35,7 +35,7 @@ def get_gpu_nodes():
     for line in sinfo_output.splitlines():
         node, group, gres, totalmem = line.split()
         if group != "all":
-            if group in {"pvl", "cs*"}:
+            if group in {"pvl", "cs*", "pnlp"}:
                 num_cpus = int(cpu_regex(gres).group(1))
                 shared_node_mem[node] = int((int(totalmem) / 1024) / num_cpus)
             if gres_regex(gres):
