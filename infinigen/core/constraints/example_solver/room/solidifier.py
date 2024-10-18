@@ -42,6 +42,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
 
 from .base import RoomGraph, room_type, valid_rooms
+from .utils import mls_ccw
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,8 @@ class BlueprintSolidifier:
         }
         exterior = next(k for k in state.objs if room_type(k) == Semantics.Exterior)
         exterior_edges = {
-            r.target_name: canonicalize_mls(r.value) for r in state[exterior].relations
+            r.target_name: mls_ccw(canonicalize_mls(r.value), state, r.target_name)
+            for r in state[exterior].relations
         }
         exterior_buffer = shapely.simplify(
             state[exterior].polygon.buffer(-wt / 2 - _eps, join_style="mitre"), 1e-3
@@ -538,7 +540,7 @@ class BlueprintSolidifier:
         wt = self.constants.wall_thickness
         cutter.scale = (
             self.constants.door_width / 2,
-            self.constants.door_width / 2 + wt,
+            self.constants.door_width + wt / 2,
             self.constants.door_size / 2 - _snap / 2,
         )
         cutter.location[-1] += _snap / 2

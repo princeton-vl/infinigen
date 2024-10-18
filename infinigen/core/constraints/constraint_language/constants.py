@@ -150,7 +150,7 @@ class RoomConstants:
                     break
             if not is_valid_polygon(p):
                 raise NotImplementedError("Invalid polygon")
-            return p
+            return orient(p)
         except AttributeError:
             raise NotImplementedError("Invalid multi polygon")
 

@@ -290,8 +290,9 @@ def build_and_save_asset(payload: dict):
         )
 
     if args.cam_center > 0 and asset:
-        co = read_base_co(asset) + asset.location
-        center.location = (np.amin(co, 0) + np.amax(co, 0)) / 2
+        co = read_base_co(asset)
+        location = (np.amin(co, 0) + np.amax(co, 0)) / 2
+        center.location = (np.array(asset.matrix_world) @ np.array([*location, 1]))[:-1]
         center.location[-1] += args.cam_zoff
 
     if args.cam_dist <= 0 and asset:

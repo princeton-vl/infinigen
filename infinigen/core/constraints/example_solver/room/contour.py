@@ -142,12 +142,14 @@ class ContourFactory:
                         quad_segs = (
                             1 if corner_func == "sharp" else np.random.randint(4, 7)
                         )
-                        exterior_ = (
+                        exterior_ = self.constants.canonicalize(
                             exterior.difference(cutter)
                             .union(shapely.Point(q).buffer(length, quad_segs=quad_segs))
                             .buffer(0)
                         )
-                        new = state[k].polygon.intersection(exterior_).buffer(0)
+                        new = self.constants.canonicalize(
+                            state[k].polygon.intersection(exterior_).buffer(0)
+                        )
                         if all(
                             new.buffer(-m + 1e-2).geom_type == "Polygon"
                             for m in np.linspace(0, 0.75, 4)

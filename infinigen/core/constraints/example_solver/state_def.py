@@ -74,7 +74,7 @@ class ObjectState:
         obj = self.obj
         tags = self.tags
         relations = self.relations
-        return f"{self.__class__.__name__}(obj.name={obj.name if obj is not None else obj.name}, polygon={self.polygon}, {tags=}, {relations=})"
+        return f"{self.__class__.__name__}(obj.name={obj.name if obj is not None else None}, polygon={self.polygon}, {tags=}, {relations=})"
 
 
 @dataclass
