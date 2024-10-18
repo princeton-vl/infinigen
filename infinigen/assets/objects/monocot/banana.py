@@ -12,6 +12,7 @@ from infinigen.assets.utils.decorate import displace_vertices, read_co
 from infinigen.assets.utils.draw import bezier_curve, leaf
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import join_objects, origin2lowest
+from infinigen.assets.utils.shapes import point_normal_up
 from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
@@ -134,6 +135,7 @@ class TaroMonocotFactory(BananaMonocotFactory):
             self.max_y_angle = uniform(-np.pi * 0.05, 0)
 
     def displace_veins(self, obj):
+        point_normal_up(obj)
         vg = obj.vertex_groups.new(name="distance")
         x, y, z = read_co(obj).T
         branch = np.cos(

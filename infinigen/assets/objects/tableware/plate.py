@@ -26,21 +26,19 @@ class PlateFactory(TablewareFactory):
             self.z_mid = uniform(0.3, 0.8) * self.z_length
             self.has_guard = False
             self.pre_level = 1
-            self.thickness = uniform(0.01, 0.03)
             self.has_inside = uniform(0, 1) < 0.2
             self.scale = log_uniform(0.2, 0.4)
+            self.thickness = uniform(0.01, 0.03) * self.scale
             self.scratch = self.edge_wear = None
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = 0, self.x_mid, self.x_mid, self.x_end
         z_anchors = 0, 0, self.z_mid, self.z_length
-        anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
-        obj = spin(anchors, [1, 2], 4, 16)
+        anchors = np.array(x_anchors) * self.scale, 0, np.array(z_anchors) * self.scale
+        obj = spin(anchors, [1, 2])
         butil.modify_mesh(
             obj, "SUBSURF", render_levels=self.pre_level, levels=self.pre_level
         )
         self.solidify_with_inside(obj, self.thickness)
-        subsurf(obj, 2)
-        obj.scale = [self.scale] * 3
-        butil.apply_transform(obj)
+        subsurf(obj, 1)
         return obj

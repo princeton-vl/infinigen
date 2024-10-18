@@ -27,9 +27,9 @@ class BowlFactory(TablewareFactory):
             self.x_bottom = uniform(0.2, 0.3) * self.x_end
             self.x_mid = uniform(0.8, 0.95) * self.x_end
             self.has_guard = False
-            self.thickness = uniform(0.01, 0.03)
             self.has_inside = uniform(0, 1) < 0.5
             self.scale = log_uniform(0.15, 0.4)
+            self.thickness = uniform(0.01, 0.03) * self.scale
         self.edge_wear = None
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
@@ -46,15 +46,12 @@ class BowlFactory(TablewareFactory):
             self.x_end,
         )
         z_anchors = 0, 0, 0, self.z_bottom, self.z_length / 2, self.z_length
-        anchors = x_anchors, np.zeros_like(x_anchors), z_anchors
-        obj = spin(anchors, [2, 3], 16, 64)
-        subsurf(obj, 1)
+        anchors = np.array(x_anchors) * self.scale, 0, np.array(z_anchors) * self.scale
+        obj = spin(anchors, [2, 3])
         self.solidify_with_inside(obj, self.thickness)
         butil.modify_mesh(
             obj, "BEVEL", width=self.thickness / 2, segments=np.random.randint(2, 5)
         )
-        obj.scale = [self.scale] * 3
-        butil.apply_transform(obj)
         subsurf(obj, 1)
         set_shade_smooth(obj)
         return obj

@@ -163,7 +163,7 @@ class VeratrumEarMonocotFactory(MonocotGrowthFactory):
             [0, 2, 4],
             dupli=True,
             loop=True,
-            resolution=np.random.randint(3, 5),
+            rotation_resolution=np.random.randint(3, 5),
             axis=(1, 0, 0),
         )
         butil.modify_mesh(obj, "WELD", merge_threshold=face_size / 2)

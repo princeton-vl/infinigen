@@ -313,7 +313,7 @@ class MushroomCapFactory(AssetFactory):
                 gill_config["vector_locations"],
                 dupli=True,
                 loop=True,
-                resolution=np.random.randint(8, 20),
+                rotation_resolution=np.random.randint(8, 20),
             )
             subsurface2face_size(gill, face_size)
             assign_material(gill, self.material)

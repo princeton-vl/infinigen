@@ -108,6 +108,7 @@ class KnifeFactory(TablewareFactory):
             selection = self.make_double_sided(selection)
         self.add_guard(obj, selection)
         subsurf(obj, 1)
+        subsurf(obj, 1, True)
         obj.scale = [self.scale] * 3
         butil.apply_transform(obj)
         return obj
