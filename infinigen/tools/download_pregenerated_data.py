@@ -290,6 +290,7 @@ if __name__ == "__main__":
         "--seeds",
         type=str,
         nargs="+",
+        action="append",
         default=None,
         help="What scenes should we download? Omit to download all available in this release",
     )
@@ -297,6 +298,7 @@ if __name__ == "__main__":
         "--cameras",
         type=str,
         nargs="+",
+        action="append",
         default=None,
         help="What cameras should we download data for? Omit to download all available in this release",
     )
@@ -304,6 +306,7 @@ if __name__ == "__main__":
         "--data_types",
         type=str,
         nargs="+",
+        action="append",
         default=None,
         help="What data types (e.g Image, Depth, etc) should we download data for? Omit to download all available in this release",
     )
