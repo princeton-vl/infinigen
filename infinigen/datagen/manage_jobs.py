@@ -771,7 +771,6 @@ if __name__ == "__main__":
         "--specific_seed",
         default=None,
         nargs="+",
-        action="append",
         help="The default, None, will choose a random seed per scene. Otherwise, all "
         "scenes will have the specified seed. Interpreted as an integer if possible.",
     )
@@ -799,7 +798,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--configs",
         nargs="*",
-        action="append",
         default=[],
         help="List of gin config names to pass through to all underlying "
         "scene generation jobs.",
@@ -808,7 +806,6 @@ if __name__ == "__main__":
         "-p",
         "--overrides",
         nargs="+",
-        action="append",
         type=str,
         default=[],
         help="List of gin overrides to pass through to all underlying "
@@ -825,14 +822,12 @@ if __name__ == "__main__":
         "--pipeline_configs",
         type=str,
         nargs="+",
-        action="append",
         help="List of gin config names from tools/pipeline_configs "
         "to configure this execution",
     )
     parser.add_argument(
         "--pipeline_overrides",
         nargs="+",
-        action="append",
         type=str,
         default=[],
         help="List of gin overrides to configure this execution",

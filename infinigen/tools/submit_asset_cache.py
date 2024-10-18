@@ -26,7 +26,6 @@ parser.add_argument(
     "-a",
     "--assets",
     nargs="+",
-    action="append",
     default=[
         "CachedBushFactory",
         "CachedTreeFactory",
