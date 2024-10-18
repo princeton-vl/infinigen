@@ -68,8 +68,8 @@ def parse_scene_log(
                 break
         else:
             continue
-        errFile = open(filepath)
-        text = errFile.read()
+
+        text = filepath.read_text()
         if "[MAIN TOTAL] finished in" not in text:
             continue
         search = re.search(
@@ -335,7 +335,7 @@ def main():
     for col in main_df:
         if col.startswith("img_path"):
             main_df[col] = main_df[col].apply(
-                lambda x: "../" + str(x.relative_to(args.base_path))
+                lambda x: "../" + str(x.relative_to(runs_folder.parent))
                 if isinstance(x, Path)
                 else x
             )
