@@ -221,6 +221,8 @@ def iterate_scene_tasks(
 
     running_views = 0
     for cam_rig, view_frame in itertools.product(cam_rigs, view_frames):
+        logger.debug(f"Checking {seed=} {cam_rig=} {view_frame=}")
+
         view_frame_range = [
             view_frame,
             min(frame_range[1], view_frame + view_block_size - 1),
@@ -238,8 +240,11 @@ def iterate_scene_tasks(
             configs=global_configs,
             output_indices=view_idxs,
         )
+
+        state = JobState.Succeeded
         for state, *rest in view_tasks_iter:
             yield state, *rest
+
         if state not in CONCLUDED_JOBSTATES:
             if viewdep_paralell:
                 running_views += 1
@@ -285,7 +290,7 @@ def iterate_scene_tasks(
                     input_indices=view_idxs if len(view_dependent_tasks) else None,
                     output_indices={**camdep_indices, **extra_indices},
                 )
-
+                state = JobState.Succeeded
                 for state, *rest in camera_dep_iter:
                     yield state, *rest
                 if state not in CONCLUDED_JOBSTATES:
