@@ -12,11 +12,11 @@ import numpy as np
 import trimesh
 from numpy import ascontiguousarray as AC
 
+from infinigen.core.nodes.node_wrangler import ng_inputs, ng_outputs
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import Attributes
 
-from ...core.nodes.node_wrangler import ng_inputs, ng_outputs
 from .camera import getK
 from .ctype_util import ASDOUBLE, ASINT, load_cdll
 from .kernelizer_util import ATTRTYPE_DIMS, ATTRTYPE_FIELDS, NPTYPEDIM_ATTR, Vars
