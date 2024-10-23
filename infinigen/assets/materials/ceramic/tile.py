@@ -565,10 +565,16 @@ class Tile:
                         shader_rectangle_tile,
                         shader_staggered_tile,
                         shader_crossed_tile,
+                        shader_composite_tile,
                     ]
                 )
         return surface.shaderfunc_to_material(
-            shader_func, name=f"{name}_{method.__name__}_tile"
+            method,
+            base_shader=shader_func,
+            alternating=alternating,
+            scale=scale,
+            vertical=vertical,
+            name=f"{name}_{method.__name__}_tile",
         )
 
     __call__ = generate
