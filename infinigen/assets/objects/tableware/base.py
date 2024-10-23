@@ -94,9 +94,9 @@ class TablewareFactory(AssetFactory):
         assign_material(assets, [])
         surface.assign_material(assets, self.surface)
         if self.has_inside:
-            surface.assign_material(assets, self.inside_surface)
+            surface.assign_material(assets, self.inside_surface, selection="inside")
         if self.has_guard:
-            surface.assign_material(assets, self.guard_surface)
+            surface.assign_material(assets, self.guard_surface, selection="guard")
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:
