@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+from contextlib import nullcontext
 from dataclasses import dataclass
 from multiprocessing import Process
 from pathlib import Path
@@ -69,13 +70,17 @@ def job_wrapper(
     func,
     inner_args,
     inner_kwargs,
-    stdout_file: Path,
-    stderr_file: Path,
+    stdout_file: Path = None,
+    stderr_file: Path = None,
     cuda_devices=None,
 ):
-    with stdout_file.open("w") as stdout, stderr_file.open("w") as stderr:
-        sys.stdout = stdout
-        sys.stderr = stderr
+    stdout_ctx = stdout_file.open("w") if stdout_file is not None else nullcontext()
+    stderr_ctx = stderr_file.open("w") if stderr_file is not None else nullcontext()
+    with stdout_ctx as stdout, stderr_ctx as stderr:
+        if stdout_file is not None:
+            sys.stdout = stdout
+        if stderr_file is not None:
+            sys.stderr = stderr
         if cuda_devices is not None:
             os.environ[CUDA_VARNAME] = ",".join([str(i) for i in cuda_devices])
         else:
@@ -84,10 +89,16 @@ def job_wrapper(
 
 
 def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None):
-    stderr_file = log_folder / f"{job_id}_0_log.err"
-    stdout_file = log_folder / f"{job_id}_0_log.out"
-    with stdout_file.open("w") as f:
-        f.write(f"{func} {args}\n")
+    if log_folder is None:
+        # pass input through to stdout if log_folder is None
+        stderr_file = None
+        stdout_file = None
+        print(f"{func} {args}")
+    else:
+        stderr_file = log_folder / f"{job_id}_0_log.err"
+        stdout_file = log_folder / f"{job_id}_0_log.out"
+        with stdout_file.open("w") as f:
+            f.write(f"{func} {args}\n")
 
     kwargs = dict(
         func=func,
@@ -104,9 +115,12 @@ def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None
 
 
 class ImmediateLocalExecutor:
-    def __init__(self, folder: str):
-        self.log_folder = Path(folder).resolve()
-        self.log_folder.mkdir(exist_ok=True)
+    def __init__(self, folder: str | None):
+        if folder is None:
+            self.log_folder = None
+        else:
+            self.log_folder = Path(folder).resolve()
+            self.log_folder.mkdir(exist_ok=True)
         self.parameters = {}
 
     def update_parameters(self, **parameters):
@@ -236,8 +250,11 @@ class LocalScheduleHandler:
 
 class ScheduledLocalExecutor:
     def __init__(self, folder: str):
-        self.log_folder = Path(folder)
-        self.log_folder.mkdir(exist_ok=True)
+        if folder is None:
+            self.log_folder = None
+        else:
+            self.log_folder = Path(folder)
+            self.log_folder.mkdir(exist_ok=True)
         self.parameters = {}
 
     def update_parameters(self, **parameters):
