@@ -335,8 +335,24 @@ def compose_nature(output_folder, scene_seed, **params):
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
 
     def animate_cameras():
-        cam_util.animate_cameras(camera_rigs, bbox, scene_preprocessed, pois=pois)
-
+    
+        objs = [
+            obj
+            for obj in bpy.context.scene.objects
+            if obj.type == "MESH"
+            and not obj.hide_render
+            and "atmosphere" not in obj.name
+        ]
+        cam_traj.animate_trajectories(
+            cam_rigs=camera_rigs,
+            scene_preprocessed=scene_preprocessed,
+            init_bounding_box=bbox,
+            obj_groups=[objs],
+            pois=pois,
+        )
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        
         save_imu_tum_data = params.get("save_imu_tum_data")
         if save_imu_tum_data:
             frames_folder = output_folder.parent / "frames"

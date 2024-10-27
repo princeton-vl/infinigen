@@ -15,8 +15,9 @@ import numpy as np
 from numpy.random import uniform as U
 from tqdm import tqdm
 
-from infinigen.core.placement.camera import terrain_camera_query
+from infinigen.core.placement.camera import configure_cameras, terrain_camera_query
 from infinigen.core.util import blender as butil
+from infinigen.core.util.rrt import AnimPolicyRRT
 
 from . import animation_policy
 from . import camera as cam_util
@@ -24,68 +25,64 @@ from . import camera as cam_util
 logger = logging.getLogger(__name__)
 
 
-# replaces configure cameras
 @gin.configurable
 def compute_trajectories(
-    cam,
-    n_trajectories,
-    terrain,
-    bbox,
-    scene_bvh,
-    placeholders_kd=None,
+    n_cams,
+    scene_preprocessed: dict,
+    init_bounding_box: tuple[np.array, np.array] = None,
+    init_surfaces: list[bpy.types.Object] = None,
+    obj_groups=None,
     camera_selection_answers={},
-    vertexwise_min_dist=None,
     camera_selection_ratio=None,
     min_candidates_ratio=5,
-    min_base_views_ratio=20,
+    min_base_views_ratio=10,
     pois=None,
     follow_poi_chance=0.0,
     policy_registry=None,
     validate_pose_func=None,
 ):
+    cam = cam_util.spawn_camera()
     trajectory_proposals = []
-    n_min_candidates = int(min_candidates_ratio * n_trajectories)
 
-    bpy.context.scene.frame_end = 200
+    # num trajectories to fully compute and score
+    n_min_candidates = int(min_candidates_ratio * n_cams)
+
     start = bpy.context.scene.frame_start
     end = bpy.context.scene.frame_end
     if end <= start:
+        logger.warning(
+            f"Cannot compute trajectories for frame {start=} and frame {end=}"
+        )
         return []
+
     if validate_pose_func is None:
         anim_valid_pose_func = partial(
             cam_util.keep_cam_pose_proposal,
-            placeholders_kd=placeholders_kd,
-            scene_bvh=scene_bvh,
-            terrain=terrain,
+            placeholders_kd=scene_preprocessed["placeholders_kd"],
+            scene_bvh=scene_preprocessed["scene_bvh"],
+            terrain=scene_preprocessed["terrain"],
             camera_selection_answers=camera_selection_answers,
-            vertexwise_min_dist=vertexwise_min_dist,
+            vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
             camera_selection_ratio=camera_selection_ratio,
         )
     else:
         anim_valid_pose_func = validate_pose_func
 
-    def location_sample():
-        return np.random.uniform(*bbox)
-
-    # generate 2 * n_trajectories base_views from which we should generate potential trajectories
-    # pregenerating base views helps avoid bad trajectory suggestions
-    base_view_selections = cam_util.compute_base_views(
-        cam,
+    base_views = configure_cameras(
+        cam_rigs=[],
+        scene_preprocessed=scene_preprocessed,
+        init_bounding_box=init_bounding_box,
+        init_surfaces=init_surfaces,
         n_views=n_min_candidates * min_base_views_ratio,
-        terrain=terrain,
-        scene_bvh=scene_bvh,
-        location_sample=location_sample,
-        placeholders_kd=placeholders_kd,
-        vertexwise_min_dist=vertexwise_min_dist,
-        min_candidates_ratio=1,
-        camera_selection_ratio=camera_selection_ratio,
     )
     with tqdm(
         total=n_min_candidates, desc="Searching for potential trajectories"
     ) as pbar:
-        for view in base_view_selections:
+        i = 0
+        for view in base_views:
+            i += 1
             # set initial base view, and then propose a trajectory afterwards
-            score, proposal, focus_dist = view
+            _, proposal, focus_dist = view
             cam.location = proposal.loc
             cam.rotation_euler = proposal.rot
 
@@ -95,28 +92,33 @@ def compute_trajectories(
             if policy_registry is None:
                 if U() < follow_poi_chance and pois is not None and len(pois):
                     policy = animation_policy.AnimPolicyFollowObject(
-                        target_obj=cam, pois=pois, bvh=scene_bvh
+                        target_obj=cam, pois=pois, bvh=scene_preprocessed["scene_bvh"]
                     )
                 else:
                     with gin.config_scope("cam"):
                         policy = animation_policy.AnimPolicyRandomWalkLookaround()
             else:
-                policy = policy_registry()
+                match policy_registry:
+                    case "rrt":
+                        with gin.config_scope("rrt"):
+                            policy = AnimPolicyRRT(obj_groups=obj_groups)
 
-            logger.info(f"Animating {cam=} using {policy=}")
+            logger.info(f"Computing trajectory using {policy=}")
 
             # keyframe the base trajectory
             try:
                 animation_policy.animate_trajectory(
                     obj=cam,
-                    bvh=scene_bvh,
+                    bvh=scene_preprocessed["scene_bvh"],
                     policy_func=policy,
                     validate_pose_func=anim_valid_pose_func,
                     fatal=True,
                     verbose=False,
                 )
-            except ValueError as err:
-                logger.info(err)
+            except ValueError as error:
+                logger.info(
+                    f"Compute trajectory for base view {i}/{len(base_views)} failed with {error=}"
+                )
                 continue
 
             # save the trajectory with deepcopies of rotation_euler and locations on keyframes
@@ -136,7 +138,10 @@ def compute_trajectories(
             for frame in range(start, end + 1, 2):
                 bpy.context.scene.frame_set(frame)
                 dists, _, _ = terrain_camera_query(
-                    cam, scene_bvh, camera_selection_answers, vertexwise_min_dist
+                    cam,
+                    scene_preprocessed["scene_bvh"],
+                    camera_selection_answers,
+                    scene_preprocessed["vertexwise_min_dist"],
                 )
                 current_traj_scores.append(np.std(dists))
 
@@ -162,38 +167,45 @@ def compute_trajectories(
             if len(trajectory_proposals) >= n_min_candidates:
                 break
 
-    if len(trajectory_proposals) < n_trajectories:
-        raise ValueError(f"Could not find {n_trajectories} trajectory proposals")
-    return sorted(trajectory_proposals, reverse=True)[:n_trajectories]
+    butil.delete(cam)
+    if len(trajectory_proposals) < n_cams:
+        raise ValueError(f"Could not find {n_cams} trajectory proposals")
+    return sorted(trajectory_proposals, reverse=True)[:n_cams]
 
 
 @gin.configurable
 def animate_trajectories(
     cam_rigs,
-    bounding_box,
-    scene_preprocessed,
+    scene_preprocessed: dict,
+    init_bounding_box: tuple[np.array, np.array] = None,
+    init_surfaces: list[bpy.types.Object] = None,
+    obj_groups=None,
     follow_poi_chance=0.0,
     pois=None,
     policy_registry=None,
     validate_pose_func=None,
+    fatal=True,
 ):
     bpy.context.view_layer.update()
-    dummy_camera = cam_util.spawn_camera()
-
     # generate potential trajectories
-    trajectories = compute_trajectories(
-        dummy_camera,
-        n_trajectories=len(cam_rigs),
-        terrain=scene_preprocessed["terrain"],
-        scene_bvh=scene_preprocessed["scene_bvh"],
-        bbox=bounding_box,
-        placeholders_kd=scene_preprocessed["placeholders_kd"],
-        vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
-        follow_poi_chance=follow_poi_chance,
-        pois=pois,
-        policy_registry=policy_registry,
-        validate_pose_func=validate_pose_func,
-    )
+    try:
+        trajectories = compute_trajectories(
+            n_cams=len(cam_rigs),
+            scene_preprocessed=scene_preprocessed,
+            init_bounding_box=init_bounding_box,
+            obj_groups=obj_groups,
+            init_surfaces=init_surfaces,
+            follow_poi_chance=follow_poi_chance,
+            pois=pois,
+            policy_registry=policy_registry,
+            validate_pose_func=validate_pose_func,
+        )
+    except ValueError as err:
+        if fatal:
+            raise ValueError(err)
+        else:
+            logger.warning(err)
+            return
 
     # keyframe in trajectory for each camera rig
     for cam_rig, trajectory in zip(cam_rigs, trajectories):
@@ -211,7 +223,6 @@ def animate_trajectories(
                 if not cam.type == "CAMERA":
                     continue
                 cam.data.dof.focus_distance = trajectory[4]
-    butil.delete(dummy_camera)
 
 
 # deletes keyframes on camera from prior animation phase

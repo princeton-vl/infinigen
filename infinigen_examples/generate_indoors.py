@@ -37,6 +37,7 @@ from infinigen.core.constraints.example_solver import (
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
 from infinigen.core.constraints.example_solver.solve import Solver
 from infinigen.core.placement import camera as cam_util
+from infinigen.core.placement import camera_trajectories as cam_traj
 from infinigen.core.util import blender as butil
 from infinigen.core.util import ocmesher_utils, pipeline
 from infinigen.core.util.camera import points_inview
@@ -230,10 +231,11 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     camera_rigs = placement.camera.spawn_camera_rigs()
 
-    def pose_cameras():
+    def animate_cameras():
         nonroom_objs = [
             o.obj for o in state.objs.values() if t.Semantics.Room not in o.tags
         ]
+        room_objs = [o.obj for o in state.objs.values() if t.Semantics.Room in o.tags]
         scene_objs = solved_rooms + nonroom_objs
 
         scene_preprocessed = placement.camera.camera_selection_preprocessing(
@@ -247,34 +249,24 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             ]
         )
 
-        placement.camera.configure_cameras(
-            camera_rigs,
+        cam_traj.animate_trajectories(
+            cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
             nonroom_objs=nonroom_objs,
             terrain_coverage_range=None,  # do not filter cameras by terrain visibility, even if nature scenetype configs request this
+            obj_groups=[room_objs, nonroom_objs],
         )
+
         butil.delete(solved_floor_surface)
-        return scene_preprocessed
-
-    scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
-
-    def animate_cameras():
-        cam_util.animate_cameras(
-            camera_rigs,
-            solved_bbox,
-            scene_preprocessed,
-            pois=[],
-            terrain_coverage_range=None,  # same as above - do not filter by terrain visiblity when indoors
-        )
-
+        
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
         save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
-    p.run_stage(
-        "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
-    )
+        return scene_preprocessed
+
+    p.run_stage("animate_cameras", animate_cameras, use_chance=False, prereq=None)
 
     p.run_stage(
         "populate_intermediate_pholders",

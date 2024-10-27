@@ -4,33 +4,125 @@
 # Authors:
 # - Dylan Li: primary author
 
+import logging
+from functools import partial
 from math import ceil
 
 import bpy
 import gin
-import mathutils
 import numpy as np
-from mathutils import Euler, Vector
+from mathutils import Euler, Vector, bvhtree
 from numpy.matlib import repmat
 from numpy.random import uniform as U
 
 from infinigen.core.placement.animation_policy import PolicyError
 from infinigen.core.util.random import random_general
 
+logger = logging.getLogger(__name__)
+
+
+@gin.configurable
+def validate_node_nature(node, obj_groups):
+    MAX_ITERS = 100
+    EPS = 0.00000000001
+    direction = Vector((0, 0, 1))
+
+    # check if node is in an object (or under a plane)
+    for obj in obj_groups[0]:
+        mat = obj.matrix_local.inverted()
+        origin = mat @ Vector(node)
+        num_hits = 0
+        deps = bpy.context.evaluated_depsgraph_get()
+        bvh = bvhtree.BVHTree.FromObject(obj, deps)
+        loc, _, face, _ = bvh.ray_cast(origin, direction)
+
+        while loc is not None and num_hits < MAX_ITERS:
+            num_hits += 1
+            new_face = face
+            curr_eps = EPS
+            while new_face == face:
+                fudge_loc = loc + direction * curr_eps
+                new_loc, _, new_face, _ = bvh.ray_cast(fudge_loc, direction)
+                if new_face == face:
+                    curr_eps *= 10
+                else:
+                    loc = new_loc
+            face = new_face
+
+        if (num_hits % 2) != 0:
+            return False
+
+    return True
+
+
+@gin.configurable
+def validate_node_indoors(node, obj_groups):
+    # check if inside building using room objs
+    for obj in obj_groups[0]:
+        deps = bpy.context.evaluated_depsgraph_get()
+        bvh = bvhtree.BVHTree.FromObject(obj, deps)
+        cast_up = bvh.ray_cast(node, Vector((0, 0, 1)))
+        cast_down = bvh.ray_cast(node, Vector((0, 0, -1)))
+        if cast_up[0] is not None and cast_down[0] is not None:
+            break
+    else:
+        return False
+
+    MAX_ITERS = 100
+    EPS = 0.00000000001
+    direction = Vector((0, 0, 1))
+
+    # check if node is in a nonroom object
+    for obj in obj_groups[1]:
+        num_hits = 0
+        deps = bpy.context.evaluated_depsgraph_get()
+        bvh = bvhtree.BVHTree.FromObject(obj, deps)
+        loc, _, face, _ = bvh.ray_cast(node, direction)
+        if loc is not None:
+            f = bvh.ray_cast(node, Vector((0, 0, -1)))
+            if f[0] is None:
+                return False
+
+        while loc is not None and num_hits < MAX_ITERS:
+            num_hits += 1
+            new_face = face
+            curr_eps = EPS
+            while new_face == face:
+                fudge_loc = loc + direction * curr_eps
+                new_loc, _, new_face, _ = bvh.ray_cast(fudge_loc, direction)
+                if new_face == face:
+                    curr_eps *= 10
+                else:
+                    loc = new_loc
+            face = new_face
+
+        if (num_hits % 2) != 0:
+            return False
+
+    return True
+
 
 @gin.configurable
 class RRT:
     def __init__(
         self,
-        boundary=None,
+        obj_groups,
+        validate_node,
+        bbox=None,
         step_range=(1, 1),
-        closest_dist_to_obstacle=0.2,
+        stride_range=(16, 32),
+        min_node_dist_to_obstacle=0.2,
         max_iter=2000,
     ):
-        self.boundary = self.get_boundary() if boundary is None else boundary
+        self.validate_node = partial(
+            validate_node,
+            obj_groups=obj_groups,
+        )
+        self.bbox = self.get_bbox() if bbox is None else bbox
         self.step_range = step_range
         self.max_iter = max_iter
         self.step = U(*step_range)
+        self.stride_range = stride_range
         self.vertices = {}
         self.collision_check_dirs = []
 
@@ -40,7 +132,7 @@ class RRT:
         for theta in thetas:
             for phi in phis:
                 self.collision_check_dirs.append(
-                    closest_dist_to_obstacle
+                    min_node_dist_to_obstacle
                     * Vector(
                         (
                             np.cos(theta) * np.sin(phi),
@@ -56,15 +148,15 @@ class RRT:
             x0 = tuple(self.rand_valid_node())
         else:
             x0 = tuple(start)
-            if self.node_in_object(x0):
-                raise PolicyError(f"RRT started with node {x0} in object")
-            self.boundary = np.vstack((self.boundary, start))
+            if not self.is_valid(x0):
+                raise PolicyError(f"RRT started with invalid node {x0}")
+            self.bbox = np.vstack((self.bbox, start))
             bound_added += 1
         if goal is None:
             xt = tuple(self.rand_valid_node())
         else:
             xt = tuple(goal)
-            self.boundary = np.vstack((self.boundary, goal))
+            self.bbox = np.vstack((self.bbox, goal))
             bound_added += 1
 
         path = []
@@ -84,7 +176,7 @@ class RRT:
                 for xnear in Xnear:
                     xnear = tuple(xnear)
                     c1 = self.cost(xnear) + self.getDist(xnew, xnear)
-                    collide = self.line_not_valid(xnew, xnear, self.boundary)
+                    collide = self.line_not_valid(xnew, xnear, self.bbox)
                     collisions.append(collide)
                     if not collide:
                         if xmin is None:
@@ -112,7 +204,7 @@ class RRT:
             iter += 1
 
         if bound_added > 0:
-            self.boundary = self.boundary[:-bound_added]
+            self.bbox = self.bbox[:-bound_added]
         xn = self.neighborhood(xt, self.step, max_iter=1000)
         if len(xn) == 0:
             raise PolicyError(f"RRT could not find path from {x0} to {xt}")
@@ -124,14 +216,17 @@ class RRT:
         while x != x0:
             path.append(x)
             x = self.parent(x)
-        path.append(x0)
+        # path.append(x0)
         path.reverse()
 
         return path
 
     def next_goal(self, start, max_iter=100):
-        r_range = (self.step_range[0] * 8, self.step_range[1] * 16)
-        z_range = (self.boundary.min(axis=0)[2], self.boundary.max(axis=0)[2])
+        r_range = (
+            self.step_range[0] * self.stride_range[0],
+            self.step_range[1] * self.stride_range[1],
+        )
+        z_range = (self.bbox.min(axis=0)[2], self.bbox.max(axis=0)[2])
         theta_range = (0, 2 * np.pi)
         iter = 0
         while iter < max_iter:
@@ -144,9 +239,8 @@ class RRT:
             translation *= r
             translation[2] = z
             next = Vector(start) + translation
-            if self.is_in_boundary(next, self.boundary):
-                if not self.node_in_object(next):
-                    return next
+            if self.is_valid(next):
+                return next
             iter += 1
         raise PolicyError(
             f"RRT could not find the next goal node with start node {start}"
@@ -171,11 +265,20 @@ class RRT:
                     return True
         return False
 
+    def is_valid(self, node):
+        if not self.is_in_bbox(node, self.bbox):
+            return False
+
+        if not self.validate_node(node=node):
+            return False
+
+        return True
+
     def rand_valid_node(self):
         x = self.rand_node()
         i = 0
 
-        while self.node_in_object(x):
+        while not self.is_valid(x):
             x = self.rand_node()
             i += 1
             if i > 100:
@@ -183,7 +286,7 @@ class RRT:
         return x
 
     def rand_node(self):
-        return np.random.uniform(self.boundary.min(axis=0), self.boundary.max(axis=0))
+        return np.random.uniform(self.bbox.min(axis=0), self.bbox.max(axis=0))
 
     def parent(self, x):
         if x in self.vertices:
@@ -262,7 +365,7 @@ class RRT:
 
         return xnew
 
-    def get_boundary(self, objects=None):
+    def get_bbox(self, objects=None):
         def np_matmul_coords(coordinates, matrix, space=None):
             M = (space @ matrix @ space.inverted() if space else matrix).transposed()
             ones = np.ones((coordinates.shape[0], 1))
@@ -287,7 +390,7 @@ class RRT:
 
         return coords
 
-    def is_in_boundary(self, coord, bbox):
+    def is_in_bbox(self, coord, bbox):
         return not (
             np.any(coord < bbox.min(axis=0)) or np.any(coord > bbox.max(axis=0))
         )
@@ -297,9 +400,7 @@ class RRT:
         p1_np, p2_np = np.array(p1), np.array(p2)
 
         if bbox is not None:
-            if (not self.is_in_boundary(p2_np, bbox)) or (
-                not self.is_in_boundary(p1_np, bbox)
-            ):
+            if (not self.is_in_bbox(p2_np, bbox)) or (not self.is_in_bbox(p1_np, bbox)):
                 return True
 
         if dist is None:
@@ -308,70 +409,56 @@ class RRT:
         f = bpy.context.scene.ray_cast(deps, p1_np, p2_np - p1_np, distance=dist)
         return f[0]
 
-    def is_inside_obj(self, obj, coord):
-        max_iters = 1000
-        EPS = 0.00000000001
-
-        mat = obj.matrix_local.inverted()
-        origin = mat @ mathutils.Vector(coord)
-        # will return true if obj is a plane above coord
-        direction = mathutils.Vector((0, 0, 1))
-        num_hits = 0
-
-        deps = bpy.context.evaluated_depsgraph_get()
-        bvh = mathutils.bvhtree.BVHTree.FromObject(obj, deps)
-        loc, _, face, _ = bvh.ray_cast(origin, direction)
-
-        while loc is not None and num_hits < max_iters:
-            num_hits += 1
-            new_face = face
-            curr_eps = EPS
-            while new_face == face:
-                fudge_loc = loc + direction * curr_eps
-                new_loc, _, new_face, _ = bvh.ray_cast(fudge_loc, direction)
-                if new_face == face:
-                    curr_eps *= 10
-                else:
-                    loc = new_loc
-            face = new_face
-        return (num_hits % 2) != 0
-
 
 @gin.configurable
 class AnimPolicyRRT:
     def __init__(
-        self, rrt=None, speed=("uniform", 8.0, 10.0), rot=("normal", 0, [20, 20, 20], 3)
+        self,
+        rrt=None,
+        obj_groups=None,
+        speed=("uniform", 1.0, 1.0),
+        rot=("normal", 0, [20, 20, 20], 3),
+        start=None,
+        goal=None,
     ):
         self.speed = speed
         self.rot = rot
-        self.rrt = RRT() if rrt is None else rrt
+        self.start = start
+        self.goal = goal
+        self.rrt = RRT(obj_groups=obj_groups) if rrt is None else rrt
         self.ind = 0
 
     def reset(self):
-        self.path = self.rrt.generate_path() if self.rrt is not None else []
+        self.path = (
+            self.rrt.generate_path(start=self.start, goal=self.goal)
+            if self.rrt is not None
+            else []
+        )
         self.ind = 0
 
     def retry(self):
         self.ind = max(0, self.ind - 1)
 
     def __call__(self, obj, frame_curr, bvh, retry_pct=0):
-        if self.ind == 0:
-            self.path = self.rrt.generate_path(start=obj.location)
+        start = obj.location if self.start is None else self.start
 
         if retry_pct != 0:
             self.ind = max(0, self.ind - 1)
 
-        if self.ind >= len(self.path):
-            self.path = self.rrt.generate_path(start=obj.location)
-            self.ind = 1
+        if self.ind == 0:
+            self.path = self.rrt.generate_path(start=start, goal=self.goal)
 
-        if len(self.path) < 2:
-            raise PolicyError(f"RRTStar created path of len {len(self.path)} < 2")
+        if self.ind >= len(self.path):
+            self.path = self.rrt.generate_path(start=start, goal=self.goal)
+            self.ind = 0
+
+        if len(self.path) < 1:
+            raise PolicyError(f"RRTStar created path of len {len(self.path)} < 1")
 
         speed = random_general(self.speed)
 
         if self.ind >= len(self.path) or self.ind < 0:
-            raise AssertionError(
+            raise PolicyError(
                 f"index {self.ind} out of bounds for path of len {len(self.path)}"
             )
 
@@ -442,8 +529,10 @@ def validate_cam_pose_rrt(
                 sky_hits += 1
 
             if sky_hits > sky_threshold:
+                logger.warning(f"Sky hits {sky_hits / num_pixels}")
                 return False
             if prox_hits > prox_threshold:
+                logger.warning(f"Prox hits {prox_hits / num_pixels}")
                 return False
 
     return True

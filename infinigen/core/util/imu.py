@@ -361,10 +361,9 @@ def save_imu_tum_files(
                 "#Format: timestamp angular velocity(x y z) linear acceleration(x y z)\n"
             )
             imu_file.write(imu_text)
-            print(f"saved {imu_file_name}")
-            logger.info(f"Saved IMU data for {anim_objects[i].name}")
+            logger.info(f"Saved IMU data for {anim_objects[i].name} at {imu_file_name}")
 
         with open(tum_file_name, "w") as tum_file:
             tum_file.write("#Format: timestamp position(x y z) rotation(x y z w)\n")
             tum_file.write(tum_text)
-            logger.info(f"Saved TUM data for {anim_objects[i].name}")
+            logger.info(f"Saved TUM data for {anim_objects[i].name} at {tum_file_name}")

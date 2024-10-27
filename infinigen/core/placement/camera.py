@@ -660,6 +660,7 @@ def configure_cameras(
     nonroom_objs=None,
     mvs_setting=False,
     mvs_radius=("uniform", 12, 18),
+    n_views: int = None,
     **kwargs,
 ):
     bpy.context.view_layer.update()
@@ -707,11 +708,12 @@ def configure_cameras(
             center_coordinate = list(np.array(center_coordinate))
     else:
         center_coordinate = None
-
+        
+    n = len(cam_rigs) if n_views is None else n_views
     for cam_rig in cam_rigs:
         views = compute_base_views(
             cam_rig,
-            n_views=1,
+            n_views=n,
             location_sample=location_sample,
             center_coordinate=center_coordinate,
             radius=mvs_radius,
@@ -732,6 +734,8 @@ def configure_cameras(
                 if not cam.type == "CAMERA":
                     continue
                 cam.data.dof.focus_distance = focus_dist
+
+    return views
 
 def anim_valid_camrig_pose_func(
     cam_rig: bpy.types.Object,
