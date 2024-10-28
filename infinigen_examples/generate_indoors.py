@@ -252,6 +252,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
+            nonroom_objs=nonroom_objs,
         )
         butil.delete(solved_floor_surface)
         return scene_preprocessed
@@ -309,7 +310,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
         placer = FloatingObjectPlacement(
             generators=facs,
-            camera=cam_util.get_camera(0, 0),
+            camera=camera_rigs[0].children[0],
             background_objs=list(pholder_cutters.objects) + list(pholder_rooms.objects),
             collision_objs=list(pholder_objs.objects),
         )
@@ -388,8 +389,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     # state.print()
     state.to_json(output_folder / "solve_state.json")
 
-    cam = cam_util.get_camera(0, 0)
-
     def turn_off_lights():
         for o in bpy.data.objects:
             if o.type == "LIGHT" and not o.data.cycles.is_portal:
@@ -430,7 +429,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         create_outdoor_backdrop,
         terrain,
         house_bbox=house_bbox,
-        cam=cam,
+        cameras=[rig.children[0] for rig in camera_rigs],
         p=p,
         params=overrides,
         use_chance=False,

@@ -1,0 +1,9 @@
+compute_base_views.min_candidates_ratio = 1
+fine_terrain.mesher_backend = "OcMesher"
+
+configure_cameras.mvs_setting = True
+compose_nature.camera_selection_ranges_ratio = {}
+compose_nature.camera_selection_tags_ratio = {}
+compose_nature.animate_cameras_enabled=False
+
+compose_nature.inview_distance = 40

@@ -50,7 +50,8 @@ full/render_image.passes_to_save = [
     ['volume_direct', 'VolumeDir'],
     ['emit', 'Emit'],
     ['environment', 'Env'],
-    ['ambient_occlusion', 'AO']
+    ['ambient_occlusion', 'AO'],
+    ['material_index', 'IndexMA'],
 ]
 flat/render_image.passes_to_save = [
     ['z', 'Depth'],
@@ -78,7 +79,7 @@ camera.camera_pose_proposal.altitude = ("weighted_choice",
 
 camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 30, 20, 160)
 
-# WARNING: Large camera rig translations or rotations require special handling. 
+# WARNING: Large camera rig translations or rotations require special handling.
 #    if your cameras are not all approximately forward facing within a few centimeters, you must either:
 #    -  configure the pipeline to generate assets / terrain for each camera separately, rather than sharing it between the whole rig
 #    -  or, treat your camera rig as multiple camera rigs each with one camera, and implement code to positon them correctly

@@ -40,8 +40,6 @@ from . import animation_policy
 
 logger = logging.getLogger(__name__)
 
-CAMERA_RIGS_DIRNAME = "CameraRigs"
-
 
 @gin.configurable
 def get_sensor_coords(cam, H, W, sparse=False):
@@ -119,55 +117,54 @@ def spawn_camera():
     return cam
 
 
-def camera_name(rig_id, cam_id):
-    return f"{CAMERA_RIGS_DIRNAME}/{rig_id}/{cam_id}"
+def cam_name(cam_rig, subcam):
+    return f"camera_{cam_rig}_{subcam}"
+
+
+def get_id(camera: bpy.types.Object):
+    _, rig, subcam = camera.name.split("_")
+    return int(rig), int(subcam)
 
 
 @gin.configurable
 def spawn_camera_rigs(
     camera_rig_config,
     n_camera_rigs,
-):
+) -> list[bpy.types.Object]:
+    rigs_col = butil.get_collection("camera_rigs")
+    cams_col = butil.get_collection("cameras")
+
     def spawn_rig(i):
-        rig_parent = butil.spawn_empty(f"{CAMERA_RIGS_DIRNAME}/{i}")
+        rig_parent = butil.spawn_empty(f"camrig.{i}")
+        butil.put_in_collection(rig_parent, rigs_col)
+
         for j, config in enumerate(camera_rig_config):
             cam = spawn_camera()
-            cam.name = camera_name(i, j)
+            cam.name = cam_name(i, j)
             cam.parent = rig_parent
-
             cam.location = config["loc"]
             cam.rotation_euler = config["rot_euler"]
 
+            butil.put_in_collection(cam, cams_col)
+
         return rig_parent
 
-    camera_rigs = [spawn_rig(i) for i in range(n_camera_rigs)]
-    butil.group_in_collection(camera_rigs, CAMERA_RIGS_DIRNAME)
-
-    return camera_rigs
+    return [spawn_rig(i) for i in range(n_camera_rigs)]
 
 
-def get_cameras_ids() -> list[tuple]:
-    res = []
-    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
-    rigs = [o for o in col.objects if o.name.count("/") == 1]
-    for i, root in enumerate(rigs):
-        for j, subcam in enumerate(root.children):
-            assert subcam.name == camera_name(i, j)
-            res.append((i, j))
+def get_camera_rigs() -> list[bpy.types.Object]:
+    if "camera_rigs" not in bpy.data.collections:
+        raise ValueError("No camera rigs found")
 
-    return res
+    result = list(bpy.data.collections["camera_rigs"].objects)
 
+    for i, rig in enumerate(result):
+        for j, child in enumerate(rig.children):
+            expected = cam_name(i, j)
+            if child.name != expected:
+                raise ValueError(f"child {i=} {j}  was {child.name=}, {expected=}")
 
-def get_camera(rig_id, subcam_id, checkonly=False):
-    col = bpy.data.collections[CAMERA_RIGS_DIRNAME]
-    name = camera_name(rig_id, subcam_id)
-    if name in col.objects.keys():
-        return col.objects[name]
-    if checkonly:
-        return None
-    raise ValueError(
-        f"Could not get_camera({rig_id=}, {subcam_id=}). {list(col.objects.keys())=}"
-    )
+    return result
 
 
 @node_utils.to_nodegroup(
@@ -181,8 +178,7 @@ def nodegroup_active_cam_info(nw: NodeWrangler):
     )
 
 
-def set_active_camera(rig_id, subcam_id):
-    camera = get_camera(rig_id, subcam_id)
+def set_active_camera(camera: bpy.types.Object):
     bpy.context.scene.camera = camera
 
     ng = (
@@ -191,34 +187,6 @@ def set_active_camera(rig_id, subcam_id):
     ng.nodes["Object Info"].inputs["Object"].default_value = camera
 
     return bpy.context.scene.camera
-
-
-def positive_gaussian(mean, std):
-    while True:
-        val = np.random.normal(mean, std)
-        if val > 0:
-            return val
-
-
-def set_camera(
-    camera,
-    location,
-    rotation,
-    focus_dist,
-    frame,
-):
-    camera.location = location
-    camera.rotation_euler = rotation
-    if focus_dist is not None:
-        camera.data.dof.focus_distance = (
-            focus_dist  # this should come before view_layer.update()
-        )
-    bpy.context.view_layer.update()
-
-    camera.keyframe_insert(data_path="location", frame=frame)
-    camera.keyframe_insert(data_path="rotation_euler", frame=frame)
-    if focus_dist is not None:
-        camera.data.dof.keyframe_insert(data_path="focus_distance", frame=frame)
 
 
 def terrain_camera_query(
@@ -264,6 +232,9 @@ class CameraProposal:
 def camera_pose_proposal(
     scene_bvh,
     location_sample: typing.Callable | tuple,
+    center_coordinate=None,
+    radius=None,
+    bbox=None,
     altitude=("uniform", 1.5, 2.5),
     roll=0,
     yaw=("uniform", -180, 180),
@@ -279,6 +250,32 @@ def camera_pose_proposal(
 
     if override_loc is not None:
         loc = Vector(random_general(override_loc))
+    elif center_coordinate:
+        while True:
+            # Define the radius of the circle
+            random_angle = np.random.uniform(2 * np.math.pi)
+            xoff = np.random.uniform(-radius / 10, radius / 10)
+            yoff = np.random.uniform(-radius / 10, radius / 10)
+            zoff = random_general(altitude)
+            loc = Vector([0, 0, 0])
+            loc[0] = center_coordinate[0] + radius * np.math.cos(random_angle) + xoff
+            loc[1] = center_coordinate[1] + radius * np.math.sin(random_angle) + yoff
+            loc[2] = center_coordinate[2] + zoff
+            if bbox is not None:
+                out_of_bbox = False
+                for i in range(3):
+                    if loc[i] < bbox[0][i] or loc[i] > bbox[1][i]:
+                        out_of_bbox = True
+                        break
+                if out_of_bbox:
+                    continue
+            hit, *_ = scene_bvh.ray_cast(
+                loc,
+                Vector(center_coordinate) - loc,
+                (Vector(center_coordinate) - loc).length,
+            )
+            if hit is None:
+                break
     elif altitude is None:
         loc = location_sample()
     else:
@@ -291,7 +288,22 @@ def camera_pose_proposal(
         desired_alt = random_general(altitude)
         loc[2] = loc[2] + desired_alt - curr_alt
 
-    rot = np.deg2rad([random_general(pitch), random_general(roll), random_general(yaw)])
+    if center_coordinate:
+        direction = loc - Vector(center_coordinate)
+        direction = Vector(direction)
+        rotation_matrix = direction.to_track_quat("Z", "Y").to_matrix()
+        rotation_euler = rotation_matrix.to_euler("XYZ")
+        roll, pitch, yaw = rotation_euler
+        noise_range = np.deg2rad(5.0)  # 5 degrees of noise in radians
+        # Add random noise to roll, pitch, and yaw
+        roll += np.random.uniform(-noise_range, noise_range)
+        pitch += np.random.uniform(-noise_range, noise_range)
+        yaw += np.random.uniform(-noise_range, noise_range)
+        rot = np.array([roll, pitch, yaw])
+    else:
+        rot = np.deg2rad(
+            [random_general(pitch), random_general(roll), random_general(yaw)]
+        )
     focal_length = random_general(focal_length)
     return CameraProposal(loc, rot, focal_length)
 
@@ -385,7 +397,7 @@ class AnimPolicyGoToProposals:
         bbox = (camera_rig.location - margin, camera_rig.location + margin)
 
         for _ in range(self.retries):
-            res = camera_pose_proposal(bvh, bbox)
+            res = camera_pose_proposal(bvh, bbox)  # !
             if res is None:
                 continue
             dist = np.linalg.norm(np.array(res.loc) - np.array(camera_rig.location))
@@ -408,6 +420,9 @@ def compute_base_views(
     terrain,
     scene_bvh,
     location_sample: typing.Callable,
+    center_coordinate=None,
+    radius=None,
+    bbox=None,
     placeholders_kd=None,
     camera_selection_answers={},
     vertexwise_min_dist=None,
@@ -418,11 +433,21 @@ def compute_base_views(
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
+
     with tqdm(total=n_min_candidates, desc="Searching for camera viewpoints") as pbar:
         for it in range(1, max_tries):
-            props = camera_pose_proposal(
-                scene_bvh=scene_bvh, location_sample=location_sample
-            )
+            if center_coordinate:
+                props = camera_pose_proposal(
+                    scene_bvh=scene_bvh,
+                    location_sample=location_sample,
+                    center_coordinate=center_coordinate,
+                    radius=random_general(radius),
+                    bbox=bbox,
+                )
+            else:
+                props = camera_pose_proposal(
+                    scene_bvh=scene_bvh, location_sample=location_sample
+                )
 
             if props is None:
                 logger.debug(
@@ -611,6 +636,10 @@ def configure_cameras(
     scene_preprocessed: dict,
     init_bounding_box: tuple[np.array, np.array] = None,
     init_surfaces: list[bpy.types.Object] = None,
+    terrain_mesh=None,
+    nonroom_objs=None,
+    mvs_setting=False,
+    mvs_radius=("uniform", 12, 18),
 ):
     bpy.context.view_layer.update()
     dummy_camera = spawn_camera()
@@ -629,10 +658,43 @@ def configure_cameras(
     else:
         raise ValueError("Either init_bounding_box or init_surfaces must be provided")
 
+    if mvs_setting:
+        if terrain_mesh:
+            vertices = np.array([np.array(v.co) for v in terrain_mesh.data.vertices])
+            sdfs = scene_preprocessed["terrain"].compute_camera_space_sdf(vertices)
+            vertices = vertices[sdfs >= -1e-5]
+            center_coordinate = list(
+                vertices[np.random.choice(list(range(len(vertices))))]
+            )
+        elif nonroom_objs:
+
+            def contain_keywords(name, keywords):
+                for keyword in keywords:
+                    if name == keyword or name.startswith(f"{keyword}."):
+                        return True
+                return False
+
+            inside_objs = [
+                x
+                for x in nonroom_objs
+                if not contain_keywords(x.name, ["window", "door", "entrance"])
+            ]
+            assert inside_objs != []
+            obj = np.random.choice(inside_objs)
+            vertices = [v.co for v in obj.data.vertices]
+            center_coordinate = vertices[np.random.choice(list(range(len(vertices))))]
+            center_coordinate = obj.matrix_world @ center_coordinate
+            center_coordinate = list(np.array(center_coordinate))
+    else:
+        center_coordinate = None
+
     base_views = compute_base_views(
         dummy_camera,
         n_views=len(cam_rigs),
         location_sample=location_sample,
+        center_coordinate=center_coordinate,
+        radius=mvs_radius,
+        bbox=init_bounding_box,
         **scene_preprocessed,
     )
 
@@ -704,32 +766,37 @@ def animate_cameras(
 
 
 @gin.configurable
-def save_camera_parameters(camera_ids, output_folder, frame, use_dof=False):
+def save_camera_parameters(
+    camera_obj: bpy.types.Object, output_folder, frame, use_dof=False
+):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
+
     if frame is not None:
         bpy.context.scene.frame_set(frame)
-    for camera_pair_id, camera_id in camera_ids:
-        camera_obj = get_camera(camera_pair_id, camera_id)
-        if use_dof is not None:
-            camera_obj.data.dof.use_dof = use_dof
-        # Saving camera parameters
-        K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
-        suffix = get_suffix(
-            dict(cam_rig=camera_pair_id, resample=0, frame=frame, subcam=camera_id)
-        )
-        output_file = output_folder / f"camview{suffix}.npz"
 
-        height_width = np.array(
-            (
-                bpy.context.scene.render.resolution_y,
-                bpy.context.scene.render.resolution_x,
-            )
+    camrig_id, subcam_id = get_id(camera_obj)
+
+    if use_dof is not None:
+        camera_obj.data.dof.use_dof = use_dof
+
+    # Saving camera parameters
+    K = camera.get_calibration_matrix_K_from_blender(camera_obj.data)
+    suffix = get_suffix(
+        dict(cam_rig=camrig_id, resample=0, frame=frame, subcam=subcam_id)
+    )
+    output_file = output_folder / f"camview{suffix}.npz"
+
+    height_width = np.array(
+        (
+            bpy.context.scene.render.resolution_y,
+            bpy.context.scene.render.resolution_x,
         )
-        T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag(
-            (1.0, -1.0, -1.0, 1.0)
-        )  # Y down Z forward (aka opencv)
-        np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
+    )
+    T = np.asarray(camera_obj.matrix_world, dtype=np.float64) @ np.diag(
+        (1.0, -1.0, -1.0, 1.0)
+    )  # Y down Z forward (aka opencv)
+    np.savez(output_file, K=np.asarray(K, dtype=np.float64), T=T, HW=height_width)
 
 
 if __name__ == "__main__":

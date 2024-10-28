@@ -1,7 +1,8 @@
 iterate_scene_tasks.frame_range = [1, 48]
 iterate_scene_tasks.view_block_size = 192
 iterate_scene_tasks.cam_block_size = 8
-iterate_scene_tasks.cam_id_ranges = [1, 1]
+iterate_scene_tasks.n_camera_rigs = 1
+iterate_scene_tasks.n_subcams = 1
 
 iterate_scene_tasks.global_tasks = [
     {'name': 'coarse', 'func': @queue_coarse}, 
