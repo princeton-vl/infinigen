@@ -34,6 +34,7 @@ def none_to_0(x):
         return 0
     return x
 
+
 @gin.configurable
 def get_land_process(land_processes, land_process_probs=None, snowfall_enabled=True):
     if not isinstance(land_processes, list):
@@ -52,6 +53,7 @@ def get_land_process(land_processes, land_process_probs=None, snowfall_enabled=T
     if land_processes_ == []:
         return None
     return rg(("choice", land_processes_, land_process_probs_))
+
 
 @gin.configurable
 class LandTiles(Element):

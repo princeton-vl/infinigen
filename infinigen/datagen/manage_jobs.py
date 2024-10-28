@@ -171,9 +171,12 @@ def slurm_submit_cmd(
 
 
 @gin.configurable
-def local_submit_cmd(cmd, folder, name, use_scheduler=False, **kwargs):
+def local_submit_cmd(
+    cmd, folder, name, use_scheduler=False, passthrough=False, **kwargs
+):
     ExecutorClass = ScheduledLocalExecutor if use_scheduler else ImmediateLocalExecutor
-    executor = ExecutorClass(folder=(folder / "logs"))
+    log_folder = (folder / "logs") if not passthrough else None
+    executor = ExecutorClass(folder=log_folder)
     executor.update_parameters(name=name, **kwargs)
     if callable(cmd[0]):
         func, *arg = cmd
