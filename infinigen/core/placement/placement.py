@@ -18,9 +18,8 @@ from infinigen.core.nodes.node_wrangler import (
     NodeWrangler,
     geometry_node_group_empty_new,
 )
-from infinigen.core.placement import detail
+from infinigen.core.placement import detail, split_in_view
 from infinigen.core.util import blender as butil
-from infinigen.core.util import camera as camera_util
 
 from .factory import AssetFactory
 
@@ -151,7 +150,7 @@ def parse_asset_name(name):
 
 def populate_collection(
     factory: AssetFactory,
-    placeholder_col,
+    placeholder_col: bpy.types.Collection,
     asset_col_target=None,
     cameras=None,
     dist_cull=None,
@@ -178,33 +177,18 @@ def populate_collection(
             continue
 
         if cameras is not None:
-            populate = False
-            dist_list = []
-            vis_dist_list = []
-            for i, camera in enumerate(cameras):
-                points = get_placeholder_points(p)
-                dists, vis_dists = camera_util.min_dists_from_cam_trajectory(
-                    points, camera
+            mask, min_dists, min_vis_dists = split_in_view.compute_inview_distances(
+                get_placeholder_points(p), cameras, verbose=verbose
+            )
+
+            dist = min_dists.min()
+            vis_dist = min_vis_dists.min()
+
+            if not mask.any():
+                logger.debug(
+                    f"{p.name=} culled, not in view of any camera. {dist=} {vis_dist=}"
                 )
-                dist, vis_dist = dists.min(), vis_dists.min()
-                if dist_cull is not None and dist > dist_cull:
-                    logger.debug(
-                        f"{p.name=} temporarily culled in camera {i} due to {dist=:.2f} > {dist_cull=}"
-                    )
-                    continue
-                if vis_cull is not None and vis_dist > vis_cull:
-                    logger.debug(
-                        f"{p.name=} temporarily culled in camera {i} due to {vis_dist=:.2f} > {vis_cull=}"
-                    )
-                    continue
-                populate = True
-                dist_list.append(dist)
-                vis_dist_list.append(vis_dist)
-            if not populate:
-                p.hide_render = True
                 continue
-            p["dist"] = min(dist_list)
-            p["vis_dist"] = min(vis_dist_list)
 
         else:
             dist = detail.scatter_res_distance()
@@ -251,7 +235,12 @@ def populate_collection(
 
 @gin.configurable
 def populate_all(
-    factory_class, camera, dist_cull=200, vis_cull=0, cache_system=None, **kwargs
+    factory_class: type,
+    cameras: list[bpy.types.Object],
+    dist_cull=200,
+    vis_cull=0,
+    cache_system=None,
+    **kwargs,
 ):
     """
     Find all collections that may have been produced by factory_class, and update them
@@ -283,7 +272,7 @@ def populate_all(
             factory_class(int(fac_seed), **kwargs),
             col,
             asset_target_col,
-            camera,
+            camera=cameras,
             dist_cull=dist_cull,
             vis_cull=vis_cull,
             cache_system=cache_system,

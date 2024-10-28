@@ -129,3 +129,10 @@ v1.9.1
 - Fix integration test image titles 
 - Fix integration test asset image alignment
 - Make multistory houses disabled by default
+
+v1.10.0
+- Add Configuring Cameras documentation
+- Add config for multiview cameras surrounding a point of interest
+- Add MaterialSegmentation output pass
+- Add passthrough mode to direct manage_jobs stdout directly to terminal
+- Add "copyfile:destination" upload mode

@@ -3,15 +3,14 @@
 
 # Authors: Lahav Lipson, Lingjie Mei
 
+import logging
 
 import bpy
 import bpy_extras
 import numpy as np
 from mathutils import Matrix, Vector
-from tqdm import trange
 
-from infinigen.core.util import blender as butil
-from infinigen.core.util.math import dehomogenize, homogenize
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------
 # 3x4 P matrix from Blender camera
@@ -131,48 +130,6 @@ def project_by_object_utils(cam, point):
         int(scene.render.resolution_y * render_scale),
     )
     return Vector((co_2d.x * render_size[0], render_size[1] - co_2d.y * render_size[1]))
-
-
-def compute_vis_dists(points, cam):
-    projmat, K, RT = map(np.array, get_3x4_P_matrix_from_blender(cam))
-    proj = points @ projmat.T
-    uv, d = dehomogenize(proj), proj[:, -1]
-
-    clamped_uv = np.clip(uv, [0, 0], butil.get_camera_res())
-    clamped_d = np.maximum(d, 0)
-
-    RT_4x4_inv = np.array(Matrix(RT).to_4x4().inverted())
-    clipped_pos = (
-        homogenize((homogenize(clamped_uv) * clamped_d[:, None]) @ np.linalg.inv(K).T)
-        @ RT_4x4_inv.T
-    )
-
-    vis_dist = np.linalg.norm(points[:, :-1] - clipped_pos[:, :-1], axis=-1)
-
-    return d, vis_dist
-
-
-def min_dists_from_cam_trajectory(points, cam, start=None, end=None, verbose=False):
-    assert len(points.shape) == 2 and points.shape[-1] == 3
-    assert cam.type == "CAMERA"
-
-    if start is None:
-        start = bpy.context.scene.frame_start
-    if end is None:
-        end = bpy.context.scene.frame_end
-
-    points = homogenize(points)
-    min_dists = np.full(len(points), 1e7)
-    min_vis_dists = np.full(len(points), 1e7)
-
-    rangeiter = trange if verbose else range
-    for i in rangeiter(start, end + 1):
-        bpy.context.scene.frame_set(i)
-        dists, vis_dists = compute_vis_dists(points, cam)
-        min_dists = np.minimum(dists, min_dists)
-        min_vis_dists = np.minimum(vis_dists, min_vis_dists)
-
-    return min_dists, min_vis_dists
 
 
 def points_inview(bbox, camera):

@@ -112,7 +112,7 @@ def compose_scene(
         kole_clouds.add_kole_clouds()
 
     camera_rigs = cam_util.spawn_camera_rigs()
-    cam = cam_util.get_camera(0, 0)
+    cam = camera_rigs[0].children[0]
 
     # find a flat spot on the terrain to do the demo\
     terrain = Terrain(
@@ -171,7 +171,7 @@ def compose_scene(
 
     # apply a procedural backdrop on all visible parts of the terrain
     terrain_inview, *_ = split_inview(
-        terrain_mesh, cam=cam, dist_max=params["inview_distance"], vis_margin=2
+        terrain_mesh, cameras=[cam], dist_max=params["inview_distance"], vis_margin=2
     )
     if background is None:
         pass

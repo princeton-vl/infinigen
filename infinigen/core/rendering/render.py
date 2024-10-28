@@ -90,6 +90,17 @@ def set_pass_indices():
     return tree_output
 
 
+def set_material_pass_indices():
+    output_material_properties = {}
+    mat_index = 1
+    for mat in bpy.data.materials:
+        if mat.pass_index == 0:
+            mat.pass_index = mat_index
+            mat_index += 1
+        output_material_properties[mat.name] = {"pass_index": mat.pass_index}
+    return output_material_properties
+
+
 # Can be pasted directly into the blender console
 def make_clay():
     clay_material = bpy.data.materials.new(name="clay")
@@ -145,13 +156,24 @@ def configure_compositor_output(
     passes_to_save,
     saving_ground_truth,
 ):
-    file_output_node = nw.new_node(
+    file_output_node_png = nw.new_node(
         Nodes.OutputFile,
         attrs={
             "base_path": str(frames_folder),
-            "format.file_format": "OPEN_EXR" if saving_ground_truth else "PNG",
+            "format.file_format": "PNG",
             "format.color_mode": "RGB",
         },
+    )
+    file_output_node_exr = nw.new_node(
+        Nodes.OutputFile,
+        attrs={
+            "base_path": str(frames_folder),
+            "format.file_format": "OPEN_EXR",
+            "format.color_mode": "RGB",
+        },
+    )
+    default_file_output_node = (
+        file_output_node_exr if saving_ground_truth else file_output_node_png
     )
     file_slot_list = []
     viewlayer = bpy.context.scene.view_layers["ViewLayer"]
@@ -161,6 +183,13 @@ def configure_compositor_output(
             setattr(viewlayer, f"use_pass_{viewlayer_pass}", True)
         else:
             setattr(viewlayer.cycles, f"use_pass_{viewlayer_pass}", True)
+        # must save the material pass index as EXR
+        file_output_node = (
+            default_file_output_node
+            if viewlayer_pass != "material_index"
+            else file_output_node_exr
+        )
+
         slot_input = file_output_node.file_slots.new(socket_name)
         render_socket = render_layers.outputs[socket_name]
         if viewlayer_pass == "vector":
@@ -173,24 +202,15 @@ def configure_compositor_output(
             nw.links.new(render_socket, slot_input)
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
-    slot_input = file_output_node.file_slots["Image"]
+    slot_input = default_file_output_node.file_slots["Image"]
     image = image_denoised if image_denoised is not None else image_noisy
-    nw.links.new(image, file_output_node.inputs["Image"])
+    nw.links.new(image, default_file_output_node.inputs["Image"])
     if saving_ground_truth:
         slot_input.path = "UniqueInstances"
     else:
-        image_exr_output_node = nw.new_node(
-            Nodes.OutputFile,
-            attrs={
-                "base_path": str(frames_folder),
-                "format.file_format": "OPEN_EXR",
-                "format.color_mode": "RGB",
-            },
-        )
-        rgb_exr_slot_input = file_output_node.file_slots["Image"]
-        nw.links.new(image, image_exr_output_node.inputs["Image"])
-        file_slot_list.append(image_exr_output_node.file_slots[rgb_exr_slot_input.path])
-    file_slot_list.append(file_output_node.file_slots[slot_input.path])
+        nw.links.new(image, file_output_node_exr.inputs["Image"])
+        file_slot_list.append(file_output_node_exr.file_slots[slot_input.path])
+    file_slot_list.append(default_file_output_node.file_slots[slot_input.path])
 
     return file_slot_list
 
@@ -308,6 +328,22 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
     uniq_inst_path.unlink()
 
 
+def postprocess_materialgt_output(frames_folder, output_stem):
+    # Save material segmentation visualization if present
+    ma_seg_dst_path = frames_folder / f"IndexMA{output_stem}.exr"
+    if ma_seg_dst_path.is_file():
+        ma_seg_mask_array = load_seg_mask(ma_seg_dst_path)
+        np.save(
+            ma_seg_dst_path.with_name(f"MaterialSegmentation{output_stem}.npy"),
+            ma_seg_mask_array,
+        )
+        imwrite(
+            ma_seg_dst_path.with_name(f"MaterialSegmentation{output_stem}.png"),
+            colorize_int_array(ma_seg_mask_array),
+        )
+        ma_seg_dst_path.unlink()
+
+
 def configure_compositor(
     frames_folder: Path,
     passes_to_save: list,
@@ -341,7 +377,7 @@ def configure_compositor(
 
 @gin.configurable
 def render_image(
-    camera_id,
+    camera: bpy.types.Object,
     frames_folder,
     passes_to_save,
     flat_shading=False,
@@ -352,8 +388,6 @@ def render_image(
 ):
     tic = time.time()
 
-    camera_rig_id, subcam_id = camera_id
-
     for exclude in excludes:
         bpy.data.objects[exclude].hide_render = True
 
@@ -363,6 +397,8 @@ def render_image(
     tmp_dir.mkdir(exist_ok=True)
     bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
 
+    camrig_id, subcam_id = cam_util.get_id(camera)
+
     if flat_shading:
         with Timer("Set object indices"):
             object_data = set_pass_indices()
@@ -370,7 +406,7 @@ def render_image(
             first_frame = bpy.context.scene.frame_start
             suffix = get_suffix(
                 dict(
-                    cam_rig=camera_rig_id,
+                    cam_rig=camrig_id,
                     resample=0,
                     frame=first_frame,
                     subcam=subcam_id,
@@ -380,22 +416,37 @@ def render_image(
 
         with Timer("Flat Shading"):
             global_flat_shading()
+    else:
+        segment_materials = "material_index" in (x[0] for x in passes_to_save)
+        if segment_materials:
+            with Timer("Set material indices"):
+                material_data = set_material_pass_indices()
+                json_object = json.dumps(material_data, indent=4)
+                first_frame = bpy.context.scene.frame_start
+                suffix = get_suffix(
+                    dict(
+                        cam_rig=camrig_id,
+                        resample=0,
+                        frame=first_frame,
+                        subcam=subcam_id,
+                    )
+                )
+                (frames_folder / f"Materials{suffix}.json").write_text(json_object)
 
     if not bpy.context.scene.use_nodes:
         bpy.context.scene.use_nodes = True
     file_slot_nodes = configure_compositor(frames_folder, passes_to_save, flat_shading)
 
-    indices = dict(cam_rig=camera_rig_id, resample=0, subcam=subcam_id)
+    indices = dict(cam_rig=camrig_id, resample=0, subcam=subcam_id)
 
     ## Update output names
     fileslot_suffix = get_suffix({"frame": "####", **indices})
     for file_slot in file_slot_nodes:
         file_slot.path = f"{file_slot.path}{fileslot_suffix}"
 
-    camera = cam_util.get_camera(camera_rig_id, subcam_id)
     if use_dof == "IF_TARGET_SET":
         use_dof = camera.data.dof.focus_object is not None
-    if use_dof is not None:
+    elif use_dof is not None:
         camera.data.dof.use_dof = use_dof
         camera.data.dof.aperture_fstop = dof_aperture_fstop
 
@@ -418,10 +469,13 @@ def render_image(
                 postprocess_blendergt_outputs(frames_folder, suffix)
             else:
                 cam_util.save_camera_parameters(
-                    camera_ids=cam_util.get_cameras_ids(),
+                    camera,
                     output_folder=frames_folder,
                     frame=frame,
                 )
+                bpy.context.scene.frame_set(frame)
+                suffix = get_suffix(dict(frame=frame, **indices))
+                postprocess_materialgt_output(frames_folder, suffix)
 
     for file in tmp_dir.glob("*.png"):
         file.unlink()

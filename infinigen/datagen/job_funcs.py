@@ -217,6 +217,7 @@ def queue_populate(
     configs,
     taskname=None,
     input_prefix="fine",
+    exclude_gpus=[],
     overrides=[],
     input_indices=None,
     output_indices=None,
@@ -250,7 +251,14 @@ def queue_populate(
     with (folder / "run_pipeline.sh").open("a") as f:
         f.write(f"{' '.join(' '.join(cmd).split())}\n\n")
 
-    res = submit_cmd(cmd, folder=folder, name=name, gpus=0, **kwargs)
+    res = submit_cmd(
+        cmd,
+        folder=folder,
+        name=name,
+        gpus=0,
+        slurm_exclude=nodes_with_gpus(*exclude_gpus),
+        **kwargs,
+    )
     return res, output_folder
 
 

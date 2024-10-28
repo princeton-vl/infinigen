@@ -154,7 +154,8 @@ def iterate_scene_tasks(
     view_dependent_tasks,
     camera_dependent_tasks,
     frame_range,
-    cam_id_ranges,
+    n_camera_rigs,
+    n_subcams,
     point_trajectory_src_frame=1,
     num_resamples=1,
     render_frame_range=None,
@@ -181,11 +182,8 @@ def iterate_scene_tasks(
     if cam_block_size is None:
         cam_block_size = view_block_size
 
-    if cam_id_ranges[0] <= 0 or cam_id_ranges[1] <= 0:
-        raise ValueError(
-            f"{cam_id_ranges=} is invalid, both num. rigs and "
-            "num subcams must be >= 1 or no work is done"
-        )
+    assert n_camera_rigs >= 1
+    assert n_subcams >= 1
     assert view_block_size >= 1
     assert cam_block_size >= 1
     if cam_block_size > view_block_size:
@@ -218,11 +216,13 @@ def iterate_scene_tasks(
     view_range = render_frame_range if render_frame_range is not None else frame_range
     view_frames = range(view_range[0], view_range[1] + 1, view_block_size)
     resamples = range(num_resamples)
-    cam_rigs = range(cam_id_ranges[0])
-    subcams = range(cam_id_ranges[1])
+    cam_rigs = range(n_camera_rigs)
+    subcams = range(n_subcams)
 
     running_views = 0
     for cam_rig, view_frame in itertools.product(cam_rigs, view_frames):
+        logger.debug(f"Checking {seed=} {cam_rig=} {view_frame=}")
+
         view_frame_range = [
             view_frame,
             min(frame_range[1], view_frame + view_block_size - 1),
@@ -240,8 +240,11 @@ def iterate_scene_tasks(
             configs=global_configs,
             output_indices=view_idxs,
         )
+
+        state = JobState.Succeeded
         for state, *rest in view_tasks_iter:
             yield state, *rest
+
         if state not in CONCLUDED_JOBSTATES:
             if viewdep_paralell:
                 running_views += 1
@@ -287,7 +290,7 @@ def iterate_scene_tasks(
                     input_indices=view_idxs if len(view_dependent_tasks) else None,
                     output_indices={**camdep_indices, **extra_indices},
                 )
-
+                state = JobState.Succeeded
                 for state, *rest in camera_dep_iter:
                     yield state, *rest
                 if state not in CONCLUDED_JOBSTATES:
