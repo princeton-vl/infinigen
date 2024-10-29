@@ -4,6 +4,8 @@ from .chairs import (
     BarChairFactory,
     ChairFactory,
     OfficeChairFactory,
+    ChairSeatFactory,
+    ChairLegFactory,
 )
 from .mattress import MattressFactory
 from .pillow import PillowFactory
