@@ -552,6 +552,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
 
     args = init.parse_args_blender(parser)
+
     logging.getLogger("infinigen").setLevel(logging.INFO)
     logging.getLogger("infinigen.core.nodes.node_wrangler").setLevel(logging.CRITICAL)
 

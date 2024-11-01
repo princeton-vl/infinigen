@@ -136,3 +136,7 @@ v1.10.0
 - Add MaterialSegmentation output pass
 - Add passthrough mode to direct manage_jobs stdout directly to terminal
 - Add "copyfile:destination" upload mode
+
+v1.10.1
+- Fix missing validity checks for camera-rig cameras which are not the 0th index
+- Fix missing seat in dining chair
