@@ -87,6 +87,8 @@ On Linux / Mac / WSL:
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
+conda create --name infinigen python=3.11
+conda activate infinigen 
 ```
 
 Then, install using one of the options below:

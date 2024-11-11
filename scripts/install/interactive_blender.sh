@@ -66,4 +66,4 @@ fi
 # Install Blender dependencies
 "${BLENDER_PYTHON}" -m ensurepip
 
-CFLAGS="-I/usr/include/python3.11 ${CFLAGS}" "${BLENDER_PYTHON}" -m pip install -e .
+CFLAGS="-I/usr/include/python3.11 -I$CONDA_PREFIX/include/python3.11 $CFLAGS" ${BLENDER_PYTHON} -m pip install -e .
