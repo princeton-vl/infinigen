@@ -167,7 +167,7 @@ def build_scene_surface(args, factory_name, idx):
             if not hasattr(scatter, "apply"):
                 raise ValueError(f"{scatter} has no apply()")
 
-            if args.dryun:
+            if args.dryrun:
                 return
 
             bpy.ops.mesh.primitive_grid_add(

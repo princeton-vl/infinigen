@@ -311,7 +311,7 @@ def nodegroup_node_group_002(nw: NodeWrangler):
             ("NodeSocketColor", "Color", (0.8, 0.8, 0.8, 1.0)),
             ("NodeSocketFloat", "attribute", 0.0),
             ("NodeSocketFloat", "voronoi scale", 50.0),
-            ("NodeSocketFloatFactor", "voronoi randomness", 1.0),
+            ("NodeSocketFloat", "voronoi randomness", 1.0),
             ("NodeSocketFloat", "seed", 0.0),
             ("NodeSocketFloat", "noise scale", 10.0),
             ("NodeSocketFloat", "noise amount", 1.4),
@@ -691,7 +691,7 @@ def nodegroup_tree_cracks(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: capture_attribute.outputs[2], 1: uniform(0.1, 0.25)},
+        input_kwargs={0: capture_attribute.outputs[1], 1: uniform(0.1, 0.25)},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -1253,7 +1253,7 @@ def shader_trunk(nw: NodeWrangler):
         input_kwargs={
             "Base Color": mix,
             "Roughness": voronoi_texture.outputs["Distance"],
-            "Specular": 0,
+            "Specular IOR Level": 0,
         },
     )
 

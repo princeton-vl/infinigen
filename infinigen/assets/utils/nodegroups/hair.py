@@ -404,7 +404,7 @@ def nodegroup_duplicate_to_clumps(nw: NodeWrangler):
     scale_1 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
-            0: capture_attribute.outputs["Attribute"],
+            0: capture_attribute.outputs[1],
             "Scale": map_range.outputs["Result"],
         },
         attrs={"operation": "SCALE"},
@@ -459,7 +459,7 @@ def nodegroup_hair_length_rescale(nw: NodeWrangler):
         Nodes.VectorMath,
         input_kwargs={
             0: hairposition.outputs["Relative Position"],
-            1: capture_attribute.outputs[2],
+            1: capture_attribute.outputs[1],
             2: hairposition.outputs["Root Position"],
         },
         attrs={"operation": "MULTIPLY_ADD"},

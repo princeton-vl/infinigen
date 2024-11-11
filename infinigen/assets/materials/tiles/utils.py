@@ -59,7 +59,7 @@ def nodegroup_u_v_recenter(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "UV", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketVector", "HalfSize", (0.0000, 0.0000, 0.0000)),
-            ("NodeSocketFloatAngle", "Rot Angle", 0.0000),
+            ("NodeSocketFloat", "Rot Angle", 0.0000),
         ],
     )
 

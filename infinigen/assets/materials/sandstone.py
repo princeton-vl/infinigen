@@ -391,7 +391,7 @@ def shader(nw: NodeWrangler, color=("palette", "sandstone")):
         input_kwargs={
             "Base Color": colorramp_1.outputs["Color"],
             "Roughness": 0.9,
-            "Specular": 0.1,
+            "Specular IOR Level": 0.1,
         },
     )
 

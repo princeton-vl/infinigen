@@ -93,7 +93,11 @@ def shader_dragonfly_head_shader(nw: NodeWrangler, base_color, v):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix, "Specular": 0.7545, "Roughness": 0.0636},
+        input_kwargs={
+            "Base Color": mix,
+            "Specular IOR Level": 0.7545,
+            "Roughness": 0.0636,
+        },
     )
 
     material_output = nw.new_node(
@@ -133,7 +137,7 @@ def nodegroup_dragon_fly_head(
     )
 
     float_curve_1 = nw.new_node(
-        Nodes.FloatCurve, input_kwargs={"Value": capture_attribute.outputs[2]}
+        Nodes.FloatCurve, input_kwargs={"Value": capture_attribute.outputs[1]}
     )
     node_utils.assign_curve(
         float_curve_1.mapping.curves[0],

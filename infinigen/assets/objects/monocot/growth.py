@@ -144,7 +144,7 @@ class MonocotGrowthFactory(AssetFactory):
             )
             z_rotation = nw.new_node(
                 Nodes.AccumulateField,
-                [None, nw.uniform(self.angle * 0.95, self.angle * 1.05)],
+                [nw.uniform(self.angle * 0.95, self.angle * 1.05)],
             )
             rotation = nw.combine(0, y_rotation, z_rotation)
             scale = nw.build_float_curve(parameter, self.scale_curve, "AUTO")
@@ -165,9 +165,9 @@ class MonocotGrowthFactory(AssetFactory):
                     },
                     attrs={"pivot_axis": "Z"},
                 )
-            points, _, z_rotation = nw.new_node(
-                Nodes.CaptureAttribute, [points, None, z_rotation]
-            ).outputs[:3]
+            points, z_rotation = nw.new_node(
+                Nodes.CaptureAttribute, [points, z_rotation]
+            ).outputs[:2]
             leaves = nw.new_node(Nodes.CollectionInfo, [leaves, True, True])
             is_leaf = reduce(
                 lambda *xs: nw.boolean_math("AND", *xs),
@@ -298,9 +298,9 @@ class MonocotGrowthFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
-                "Subsurface": 0.01,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.01, 0.01, 0.01),
             },
         )

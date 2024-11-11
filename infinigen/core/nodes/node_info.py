@@ -177,6 +177,7 @@ class Nodes:
     WorldOutput = "ShaderNodeOutputWorld"
     Composite = "CompositorNodeComposite"
     Viewer = "CompositorNodeViewer"
+    CompositorMixRGB = "CompositorNodeMixRGB"
 
     # Point
     DistributePointsOnFaces = "GeometryNodeDistributePointsOnFaces"
@@ -416,3 +417,11 @@ DATATYPE_FIELDS = {
     "FLOAT_COLOR": "color",
     "BOOLEAN": "value",
 }
+
+
+def map_socket(socket):
+    match socket:
+        case "NodeSocketVectorEuler":
+            return "NodeSocketVector"
+        case _:
+            return socket

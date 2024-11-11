@@ -35,7 +35,7 @@ def nodegroup_table_legs(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "thickness", 0.5000),
             ("NodeSocketFloat", "height", 0.5000),
-            ("NodeSocketFloatDistance", "radius", 0.0200),
+            ("NodeSocketFloat", "radius", 0.0200),
             ("NodeSocketFloat", "width", 0.5000),
             ("NodeSocketFloat", "depth", 0.5000),
             ("NodeSocketFloat", "dist", 0.5000),

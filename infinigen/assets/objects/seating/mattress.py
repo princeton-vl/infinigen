@@ -49,8 +49,8 @@ def make_coiled(obj, dot_distance, dot_depth, dot_size):
         bpy.ops.mesh.select_more()
         bpy.ops.mesh.select_more()
     write_attr_data(obj, "tip", np.zeros(len(obj.data.polygons)), domain="FACE")
-    surface.set_active(obj, "tip")
     with butil.ViewportMode(obj, "EDIT"):
+        surface.set_active(obj, "tip")
         bpy.ops.mesh.attribute_set(value_float=1)
 
     def geo_scale(nw: NodeWrangler):

@@ -154,7 +154,7 @@ def shader_dragonfly_tail_shader(nw: NodeWrangler, base_color, v, ring_length):
         input_kwargs={
             "Base Color": mix_1,
             "Metallic": 0.5,
-            "Specular": 0.5114,
+            "Specular IOR Level": 0.5114,
             "Roughness": 0.2568,
         },
     )
@@ -175,10 +175,10 @@ def nodegroup_dragonfly_tail(
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (1.84, 0.0, 0.14)),
-            ("NodeSocketVectorTranslation", "End", (3.14, 0.0, -0.32)),
-            ("NodeSocketFloatDistance", "Segment Length", 0.44),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (1.84, 0.0, 0.14)),
+            ("NodeSocketVector", "End", (3.14, 0.0, -0.32)),
+            ("NodeSocketFloat", "Segment Length", 0.44),
             ("NodeSocketFloat", "Segment Scale", 0.25),
             ("NodeSocketFloat", "Random Seed", 3.2),
             ("NodeSocketFloat", "Radius", 0.9),
@@ -224,7 +224,7 @@ def nodegroup_dragonfly_tail(
 
     map_range = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute.outputs[2], 3: 1.0, 4: 0.8},
+        input_kwargs={"Value": capture_attribute.outputs[1], 3: 1.0, 4: 0.8},
     )
 
     multiply = nw.new_node(
@@ -641,7 +641,7 @@ def nodegroup_add_vertical_stripes(nw: NodeWrangler):
 #         input_kwargs={'Fac': maximum, 'Color1': group_1, 'Color2': mix_1})
 
 #     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-#         input_kwargs={'Base Color': mix, 'Metallic': 0.9, 'Specular': 0.5114, 'Roughness': 0.2568})
+#         input_kwargs={'Base Color': mix, 'Metallic': 0.9, 'Specular IOR Level': 0.5114, 'Roughness': 0.2568})
 
 #     material_output = nw.new_node(Nodes.MaterialOutput,
 #         input_kwargs={'Surface': principled_bsdf})

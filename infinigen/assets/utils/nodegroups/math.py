@@ -82,13 +82,13 @@ def nodegroup_clamp_or_wrap(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: group_input.outputs["Use Wrap"], 4: clamp, 5: wrap},
+        input_kwargs={0: group_input.outputs["Use Wrap"], 1: clamp, 2: wrap},
         attrs={"input_type": "INT"},
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Output": switch.outputs[1]},
+        input_kwargs={"Output": switch},
         attrs={"is_active_output": True},
     )
 
@@ -173,8 +173,8 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_1,
-            8: group_input.outputs["Arg == 0"],
-            9: group_input.outputs["Arg == 1"],
+            1: group_input.outputs["Arg == 0"],
+            2: group_input.outputs["Arg == 1"],
         },
         attrs={"input_type": "VECTOR"},
     )
@@ -189,21 +189,19 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_2,
-            8: group_input.outputs["Arg == 2"],
-            9: group_input.outputs["Arg == 3"],
+            1: group_input.outputs["Arg == 2"],
+            2: group_input.outputs["Arg == 3"],
         },
         attrs={"input_type": "VECTOR"},
     )
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: greater_equal, 8: switch_1.outputs[3], 9: switch_2.outputs[3]},
+        input_kwargs={0: greater_equal, 1: switch_1, 2: switch_2},
         attrs={"input_type": "VECTOR"},
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Output": switch.outputs[3]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Output": switch})
 
 
 @node_utils.to_nodegroup("nodegroup_deg2_rad", singleton=True, type="GeometryNodeTree")
@@ -254,13 +252,11 @@ def nodegroup_aspect_to_dim(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: greater_than, 8: combine_xyz_1, 9: combine_xyz_2},
+        input_kwargs={0: greater_than, 1: combine_xyz_1, 2: combine_xyz_2},
         attrs={"input_type": "VECTOR"},
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"XY Scale": switch.outputs[3]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"XY Scale": switch})
 
 
 @node_utils.to_nodegroup(

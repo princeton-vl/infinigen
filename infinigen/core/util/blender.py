@@ -555,10 +555,14 @@ def get_camera_res():
 def set_geomod_inputs(mod, inputs: dict):
     assert mod.type == "NODES"
     for k, v in inputs.items():
-        if k not in mod.node_group.inputs:
-            raise KeyError(f"Couldnt find {k=} in {mod.node_group.inputs.keys()=}")
-
-        soc = mod.node_group.inputs[k]
+        inputs = {
+            s.name: s
+            for s in mod.node_group.interface.items_tree
+            if s.in_out == "INPUT"
+        }
+        if k not in inputs:
+            raise KeyError(f"Couldnt find {k=} in {inputs=}")
+        soc = inputs[k]
 
         if not hasattr(soc, "default_value"):
             if v is not None:
@@ -571,6 +575,8 @@ def set_geomod_inputs(mod, inputs: dict):
 
         if isinstance(soc.default_value, (float, int)):
             v = type(soc.default_value)(v)
+        if isinstance(v, np.ndarray):
+            v = v.tolist()
 
         try:
             mod[soc.identifier] = v
@@ -639,10 +645,10 @@ def import_mesh(path, **kwargs):
     ext = ext.lower().strip()
 
     funcs = {
-        "obj": bpy.ops.import_scene.obj,
+        "obj": bpy.ops.wm.obj_import,
         "fbx": bpy.ops.import_scene.fbx,
         "stl": bpy.ops.import_mesh.stl,
-        "ply": bpy.ops.import_mesh.ply,
+        "ply": bpy.ops.wm.ply_import,
         "usdc": bpy.ops.wm.usd_import,
     }
 
@@ -655,12 +661,15 @@ def import_mesh(path, **kwargs):
     with Suppress():
         funcs[ext](filepath=str(path), **kwargs)
 
-    if len(bpy.context.selected_objects) > 1:
+    if len(bpy.context.selected_objects) > 1 if ext != "usdc" else 2:
         print(
             f"Warning: {ext.upper()} Import produced {len(bpy.context.selected_objects)} objects, "
             f"but only the first is returned by import_obj"
         )
-    return bpy.context.selected_objects[0]
+    if ext != "usdc":
+        return bpy.context.selected_objects[0]
+    else:
+        return next(o for o in bpy.context.selected_objects if o.type != "EMPTY")
 
 
 def boolean(objs, mode="UNION", verbose=False):

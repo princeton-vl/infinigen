@@ -78,6 +78,10 @@ class ArtComposite(DarkArt):
 
         return shader_art_composite
 
+    @classmethod
+    def make_sphere(cls):
+        return text.make_sphere()
+
 
 class ArtRug(ArtComposite):
     @property

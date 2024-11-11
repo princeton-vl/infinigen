@@ -12,8 +12,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
-bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
-
 
 class BlenderRockFactory(AssetFactory):
     def __init__(self, factory_seed, detail=1):

@@ -468,9 +468,7 @@ def nodegroup_pinnae_level1_instance_position(nw: NodeWrangler, pinnae_contour):
             (1.0, pinnae_contour[7]),
         ],
     )
-    accumulate_field_1 = nw.new_node(
-        Nodes.AccumulateField, input_kwargs={1: float_curve_2}
-    )
+    accumulate_field_1 = nw.new_node(Nodes.AccumulateField, [float_curve_2])
     # pinnae scale w.r.t fern age
     map_range_5 = nw.new_node(
         Nodes.MapRange,
@@ -479,7 +477,7 @@ def nodegroup_pinnae_level1_instance_position(nw: NodeWrangler, pinnae_contour):
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={
-            0: accumulate_field_1.outputs[4],
+            0: accumulate_field_1.outputs["Trailing"],
             1: map_range_5.outputs["Result"],
         },
         attrs={"operation": "MULTIPLY"},
@@ -642,9 +640,7 @@ def nodegroup_pinnae_level2_set_point(nw: NodeWrangler, pinna_contour):
             (1.0, pinna_contour[5]),
         ],
     )
-    accumulate_field_2 = nw.new_node(
-        Nodes.AccumulateField, input_kwargs={1: float_curve}
-    )
+    accumulate_field_2 = nw.new_node(Nodes.AccumulateField, [float_curve])
 
     # pinna scale w.r.t fern age
     map_range_6 = nw.new_node(
@@ -654,7 +650,7 @@ def nodegroup_pinnae_level2_set_point(nw: NodeWrangler, pinna_contour):
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={
-            0: accumulate_field_2.outputs[4],
+            0: accumulate_field_2.outputs["Trailing"],
             1: map_range_6.outputs["Result"],
         },
         attrs={"operation": "MULTIPLY"},

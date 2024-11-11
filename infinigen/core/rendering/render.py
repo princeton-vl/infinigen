@@ -192,14 +192,23 @@ def configure_compositor_output(
 
         slot_input = file_output_node.file_slots.new(socket_name)
         render_socket = render_layers.outputs[socket_name]
-        if viewlayer_pass == "vector":
-            separate_color = nw.new_node(Nodes.CompSeparateColor, [render_socket])
-            comnbine_color = nw.new_node(
-                Nodes.CompCombineColor, [0, (separate_color, 3), (separate_color, 2), 0]
-            )
-            nw.links.new(comnbine_color.outputs[0], slot_input)
-        else:
-            nw.links.new(render_socket, slot_input)
+        match viewlayer_pass:
+            case "vector":
+                separate_color = nw.new_node(Nodes.CompSeparateColor, [render_socket])
+                comnbine_color = nw.new_node(
+                    Nodes.CompCombineColor,
+                    [0, (separate_color, 3), (separate_color, 2), 0],
+                )
+                nw.links.new(comnbine_color.outputs[0], slot_input)
+            case "normal":
+                color = nw.new_node(
+                    Nodes.CompositorMixRGB,
+                    [None, render_socket, (0, 0, 0, 0)],
+                    attrs={"blend_type": "ADD"},
+                ).outputs[0]
+                nw.links.new(color, slot_input)
+            case _:
+                nw.links.new(render_socket, slot_input)
         file_slot_list.append(file_output_node.file_slots[slot_input.name])
 
     slot_input = default_file_output_node.file_slots["Image"]

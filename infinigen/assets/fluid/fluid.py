@@ -24,9 +24,8 @@ from infinigen.assets.materials import (
 from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
-    infer_input_socket,
-    infer_output_socket,
 )
+from infinigen.core.nodes.utils import infer_input_socket, infer_output_socket
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.logging import Timer

@@ -20,7 +20,7 @@ def shader_spider_plant(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": main_color,
-            "Subsurface IOR": 1.01,
+            "IOR": 1.01,
             "Roughness": 2.0,
         },
     )

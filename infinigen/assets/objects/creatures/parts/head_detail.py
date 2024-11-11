@@ -36,8 +36,8 @@ def nodegroup_cat_ear(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Depth", 0.0),
-            ("NodeSocketFloatDistance", "Thickness", 0.0),
-            ("NodeSocketFloatDistance", "Curl Deg", 0.0),
+            ("NodeSocketFloat", "Thickness", 0.0),
+            ("NodeSocketFloat", "Curl Deg", 0.0),
         ],
     )
 
@@ -169,10 +169,10 @@ def nodegroup_cat_nose(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Nose Radius", 0.06),
-            ("NodeSocketFloatDistance", "Nostril Size", 0.025),
-            ("NodeSocketFloatFactor", "Crease", 0.008),
-            ("NodeSocketVectorXYZ", "Scale", (1.2, 1.0, 1.0)),
+            ("NodeSocketFloat", "Nose Radius", 0.06),
+            ("NodeSocketFloat", "Nostril Size", 0.025),
+            ("NodeSocketFloat", "Crease", 0.008),
+            ("NodeSocketVector", "Scale", (1.2, 1.0, 1.0)),
         ],
     )
 

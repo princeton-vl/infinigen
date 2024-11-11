@@ -152,6 +152,14 @@ SOCKETTYPE_KERNEL = {
     # BOOL todo when necessary
 }
 
+SOCKETTYPES = {
+    "NodeSocketFloat": SocketType.Value,
+    "NodeSocketVector": SocketType.Vector,
+    "NodeSocketInt": SocketType.Int,
+    "NodeSocketColor": SocketType.RGBA,
+    "NodeSocketImage": SocketType.Image,
+    "NodeSocketGeometry": SocketType.Geometry,
+}
 
 NODE_FUNCTIONS = {
     Nodes.WaveTexture: "node_shader_tex_wave",

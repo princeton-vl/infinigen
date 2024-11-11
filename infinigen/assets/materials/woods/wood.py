@@ -182,7 +182,7 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
         input_kwargs={
             "Base Color": color,
             "Roughness": roughness,
-            "Clearcoat": np.clip(uniform(0, 1.4), 0, 1),
+            "Coat Weight": np.clip(uniform(0, 1.4), 0, 1),
         },
     )
     nw.new_node(

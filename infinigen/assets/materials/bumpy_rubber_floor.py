@@ -24,7 +24,7 @@ def nodegroup_node_group(nw: NodeWrangler):
             ("NodeSocketColor", "Base Color", (0.8000, 0.8000, 0.8000, 1.0000)),
             ("NodeSocketFloat", "Scale", 1.0000),
             ("NodeSocketFloat", "Seed", 0.0000),
-            ("NodeSocketFloatFactor", "Roughness", 0.4000),
+            ("NodeSocketFloat", "Roughness", 0.4000),
         ],
     )
 
@@ -71,7 +71,7 @@ def nodegroup_node_group(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": hue_saturation_value,
-            "Specular": 0.9,
+            "Specular IOR Level": 0.9,
             "Roughness": group_input.outputs["Roughness"],
         },
     )

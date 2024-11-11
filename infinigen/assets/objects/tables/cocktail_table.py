@@ -186,9 +186,9 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: kwargs["is_placeholder"],
-            14: join_geometry,
-            15: transform_geometry_1,
+            0: kwargs["is_placeholder"],
+            1: join_geometry,
+            2: transform_geometry_1,
         },
     )
 

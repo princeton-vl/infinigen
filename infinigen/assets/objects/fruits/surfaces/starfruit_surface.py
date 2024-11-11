@@ -42,7 +42,7 @@ def shader_starfruit_shader(nw: NodeWrangler, base_color, ridge_color):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
-            "Specular": 0.775,
+            "Specular IOR Level": 0.775,
             "Roughness": 0.2,
         },
     )

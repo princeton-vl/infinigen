@@ -278,7 +278,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
     #         ('NodeSocketInt', 'seed', 0),
     #         ('NodeSocketFloat', 'main branch noise amount', 0.3000),
     #         ('NodeSocketFloat', 'main branch noise scale', 1.1000),
-    #         ('NodeSocketFloatDistance', 'overall radius', 0.0200),
+    #         ('NodeSocketFloat', 'overall radius', 0.0200),
     #         ('NodeSocketFloat', 'twig density', 10.0000),
     #         ('NodeSocketFloat', 'twig rotation', 45.0000),
     #         ('NodeSocketFloat', 'twig scale', 5.0000),
@@ -356,7 +356,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
         nodegroup_generate_anchor().name,
         input_kwargs={
             "Curve": capture_attribute,
-            "curve parameter": capture_attribute.outputs[2],
+            "curve parameter": capture_attribute.outputs[1],
             "trim_top": 0.9000,
             "seed": add,
             "density": kwargs["fruit density"],
@@ -468,7 +468,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
 
     map_range_2 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute.outputs[2], 3: 1.0000, 4: 0.1000},
+        input_kwargs={"Value": capture_attribute.outputs[1], 3: 1.0000, 4: 0.1000},
     )
 
     multiply_3 = nw.new_node(
@@ -510,7 +510,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
 
     map_range_3 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute_1.outputs[2], 2: 0.2000},
+        input_kwargs={"Value": capture_attribute_1.outputs[1], 2: 0.2000},
     )
 
     scale_2 = nw.new_node(
@@ -553,7 +553,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
         nodegroup_generate_anchor().name,
         input_kwargs={
             "Curve": capture_attribute_2.outputs["Geometry"],
-            "curve parameter": capture_attribute_1.outputs[2],
+            "curve parameter": capture_attribute_1.outputs[1],
             "trim_top": 1.0000,
             "seed": add_2,
             "density": kwargs["leaf density"],
@@ -576,7 +576,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
             "Points": generateanchor_1,
             "Instance": collection_info,
             "Pick Instance": True,
-            "Tangent": capture_attribute_2.outputs["Attribute"],
+            "Tangent": capture_attribute_2.outputs[1],
             "Rot x deg": kwargs["leaf rot"],
             "Scale": kwargs["leaf scale"],
             "Seed": kwargs["seed"],
@@ -585,7 +585,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
 
     map_range_1 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute.outputs[2], 3: 1.0000, 4: 0.4000},
+        input_kwargs={"Value": capture_attribute.outputs[1], 3: 1.0000, 4: 0.4000},
     )
 
     multiply_4 = nw.new_node(
@@ -626,7 +626,7 @@ def generate_branch(nw: NodeWrangler, **kwargs):
 
     map_range_4 = nw.new_node(
         Nodes.MapRange,
-        input_kwargs={"Value": capture_attribute_1.outputs[2], 3: 0.8000, 4: 0.1000},
+        input_kwargs={"Value": capture_attribute_1.outputs[1], 3: 0.8000, 4: 0.1000},
     )
 
     multiply_7 = nw.new_node(

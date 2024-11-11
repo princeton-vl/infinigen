@@ -139,7 +139,7 @@ def nodegroup_plate(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[("NodeSocketVectorXYZ", "Scale", (1.0000, 1.0000, 1.0000))],
+        expose_input=[("NodeSocketVector", "Scale", (1.0000, 1.0000, 1.0000))],
     )
 
     transform_1 = nw.new_node(
@@ -161,9 +161,9 @@ def nodegroup_text(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Translation", (1.5000, 0.0000, 0.0000)),
+            ("NodeSocketVector", "Translation", (1.5000, 0.0000, 0.0000)),
             ("NodeSocketString", "String", "BrandName"),
-            ("NodeSocketFloatDistance", "Size", 0.0500),
+            ("NodeSocketFloat", "Size", 0.0500),
             ("NodeSocketFloat", "Offset Scale", 0.0020),
         ],
     )
@@ -324,7 +324,7 @@ def nodegroup_cube(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Size", (0.1000, 10.0000, 4.0000)),
+            ("NodeSocketVector", "Size", (0.1000, 10.0000, 4.0000)),
             ("NodeSocketVector", "Pos", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketInt", "Resolution", 10),
         ],

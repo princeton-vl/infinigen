@@ -373,7 +373,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
 
     multiply = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: thickness, 2: 0.2500},
+        input_kwargs={0: thickness, 1: 0.2500},
         attrs={"operation": "MULTIPLY"},
     )
 

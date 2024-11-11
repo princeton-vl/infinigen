@@ -795,7 +795,7 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, leaf_contour_control_points=N
         Nodes.GroupOutput,
         input_kwargs={
             "Mesh": set_position_1,
-            "Attribute": capture_attribute.outputs[2],
+            "Attribute": capture_attribute.outputs[1],
             "X Modulated": nodegroup_midrib.outputs["X Modulated"],
             "Vein Coord": nodegroup_vein_coord_001,
             "Vein Value": nodegroup_apply_vein_midrib,

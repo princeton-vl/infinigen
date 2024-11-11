@@ -301,11 +301,11 @@ def nodegroup_water_tap(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "base_width", U(0.2, 0.3)),
+            ("NodeSocketFloat", "base_width", U(0.2, 0.3)),
             ("NodeSocketFloat", "tap_head", U(0.7, 1.1)),
             ("NodeSocketFloat", "roation_z", U(5.5, 7.0)),
             ("NodeSocketFloat", "tap_height", U(0.5, 1)),
-            ("NodeSocketFloatDistance", "base_radius", U(0.0, 0.1)),
+            ("NodeSocketFloat", "base_radius", U(0.0, 0.1)),
             ("NodeSocketBool", "Switch", True if U() > 0.5 else False),
             ("NodeSocketFloat", "Y", U(-0.5, -0.06)),
             ("NodeSocketBool", "hand_type", True if U() > 0.2 else False),
@@ -420,16 +420,16 @@ def nodegroup_water_tap(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Switch"],
-            14: transform_geometry_1,
-            15: curve_to_mesh_2,
+            0: group_input.outputs["Switch"],
+            1: transform_geometry_1,
+            2: curve_to_mesh_2,
         },
     )
 
     curve_to_mesh_1 = nw.new_node(
         Nodes.CurveToMesh,
         input_kwargs={
-            "Curve": switch.outputs[6],
+            "Curve": switch,
             "Profile Curve": curve_circle_1.outputs["Curve"],
         },
     )
@@ -446,7 +446,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: group_input.outputs["Switch"], 2: greater_than, 3: 1.0000},
+        input_kwargs={0: group_input.outputs["Switch"], 1: greater_than, 2: 1.0000},
         attrs={"input_type": "FLOAT"},
     )
 
@@ -467,8 +467,8 @@ def nodegroup_water_tap(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Switch"],
-            8: combine_xyz,
-            9: (1.0000, 1.0000, 1.0000),
+            1: combine_xyz,
+            2: (1.0000, 1.0000, 1.0000),
         },
         attrs={"input_type": "VECTOR"},
     )
@@ -478,7 +478,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
         input_kwargs={
             "Geometry": separate_geometry.outputs["Selection"],
             "Translation": (0.0000, 0.0000, 0.6000),
-            "Scale": switch_2.outputs[3],
+            "Scale": switch_2,
         },
     )
 
@@ -553,7 +553,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
 
     switch_5 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["one_side"], 14: transform_geometry_7},
+        input_kwargs={0: group_input.outputs["one_side"], 1: transform_geometry_7},
     )
 
     transform_geometry_8 = nw.new_node(
@@ -567,7 +567,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
 
     join_geometry_3 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [switch_5.outputs[6], transform_geometry_8]},
+        input_kwargs={"Geometry": [switch_5, transform_geometry_8]},
     )
 
     cylinder_1 = nw.new_node(
@@ -591,7 +591,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
 
     switch_4 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["one_side"], 14: transform_geometry_9},
+        input_kwargs={0: group_input.outputs["one_side"], 1: transform_geometry_9},
     )
 
     transform_geometry_10 = nw.new_node(
@@ -616,24 +616,24 @@ def nodegroup_water_tap(nw: NodeWrangler):
     switch_8 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["length_one_side"],
-            14: transform_geometry_10,
-            15: transform_geometry_17,
+            0: group_input.outputs["length_one_side"],
+            1: transform_geometry_10,
+            2: transform_geometry_17,
         },
     )
 
     switch_7 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["one_side"],
-            14: transform_geometry_10,
-            15: switch_8.outputs[6],
+            0: group_input.outputs["one_side"],
+            1: transform_geometry_10,
+            2: switch_8,
         },
     )
 
     join_geometry_4 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [switch_4.outputs[6], switch_7.outputs[6]]},
+        input_kwargs={"Geometry": [switch_4, switch_7]},
     )
 
     join_geometry_5 = nw.new_node(
@@ -658,9 +658,9 @@ def nodegroup_water_tap(nw: NodeWrangler):
     switch_3 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["hand_type"],
-            14: join_geometry_2,
-            15: transform_geometry_11,
+            0: group_input.outputs["hand_type"],
+            1: join_geometry_2,
+            2: transform_geometry_11,
         },
     )
 
@@ -679,7 +679,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
         input_kwargs={
             "Geometry": [
                 transform_geometry_5,
-                switch_3.outputs[6],
+                switch_3,
                 extrude_mesh.outputs["Mesh"],
             ]
         },
@@ -860,9 +860,9 @@ def nodegroup_water_tap(nw: NodeWrangler):
     switch_6 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["different_type"],
-            14: join_geometry_1,
-            15: transform_geometry_16,
+            0: group_input.outputs["different_type"],
+            1: join_geometry_1,
+            2: transform_geometry_16,
         },
     )
 
@@ -889,9 +889,7 @@ def nodegroup_water_tap(nw: NodeWrangler):
 
     join_geometry_6 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [switch_6.outputs[6], extrude_mesh_1.outputs["Mesh"]]
-        },
+        input_kwargs={"Geometry": [switch_6, extrude_mesh_1.outputs["Mesh"]]},
     )
 
     set_material = nw.new_node(
@@ -918,12 +916,12 @@ def nodegroup_sink_geometry(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Depth", 2.0000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Depth", 2.0000),
             ("NodeSocketFloat", "Curvature", 0.9500),
             ("NodeSocketFloat", "Upper Height", 1.0000),
             ("NodeSocketFloat", "Lower Height", -0.0500),
-            ("NodeSocketFloatDistance", "HoleRadius", 0.1000),
+            ("NodeSocketFloat", "HoleRadius", 0.1000),
             ("NodeSocketFloat", "Margin", 0.5000),
             ("NodeSocketFloat", "WaterTapMargin", 0.5000),
             ("NodeSocketMaterial", "Tap", None),

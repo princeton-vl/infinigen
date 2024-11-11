@@ -12,7 +12,7 @@ import numpy as np
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures.util.creature import Part, PartFactory
 from infinigen.core.nodes import node_utils
-from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, ng_outputs
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -146,7 +146,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorXYZ", "FinScale", (1.0000, 1.0000, 0.5000)),
+            ("NodeSocketVector", "FinScale", (1.0000, 1.0000, 0.5000)),
             ("NodeSocketFloat", "RoundWeight", 1.0000),
             ("NodeSocketFloat", "Freq", 69.1150),
             ("NodeSocketFloat", "OffsetWeightZ", 1.0000),
@@ -186,7 +186,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
 
     separate_xyz_2 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     add_2 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_2.outputs["X"]})
@@ -568,7 +568,7 @@ def nodegroup_fish_fin(nw: NodeWrangler):
     multiply_24 = nw.new_node(
         Nodes.Math,
         input_kwargs={
-            0: capture_attribute_1.outputs[2],
+            0: capture_attribute_1.outputs[1],
             1: capture_z_rigidity.outputs[2],
         },
         attrs={"operation": "MULTIPLY"},
@@ -601,8 +601,8 @@ def nodegroup_fish_fin(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": store_cloth_pin,
-            "Bump": capture_attribute_1.outputs[2],
-            "BumpMask": capture_attribute_2.outputs[2],
+            "Bump": capture_attribute_1.outputs[1],
+            "BumpMask": capture_attribute_2.outputs[1],
         },
     )
 
@@ -649,9 +649,9 @@ class FishFin(PartFactory):
         )
         butil.set_geomod_inputs(mod, params)
 
-        id1 = mod.node_group.outputs["Bump"].identifier
+        id1 = ng_outputs(mod.node_group)["Bump"].identifier
         mod[f"{id1}_attribute_name"] = "Bump"
-        id2 = mod.node_group.outputs["BumpMask"].identifier
+        id2 = ng_outputs(mod.node_group)["BumpMask"].identifier
         mod[f"{id2}_attribute_name"] = "BumpMask"
 
         butil.apply_modifiers(fin, mod)

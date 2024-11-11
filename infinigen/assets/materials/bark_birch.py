@@ -366,7 +366,7 @@ def geo_bark_birch(nw, selection=None):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": group,
-            "initial_position": capture_attribute.outputs["Attribute"],
+            "initial_position": capture_attribute.outputs[1],
         },
     )
 
