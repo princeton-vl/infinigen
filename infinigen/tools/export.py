@@ -956,9 +956,10 @@ def export_curr_scene(
             ):
                 continue
 
-            export_subfolder = export_folder / obj.name
-            export_subfolder.mkdir(exist_ok=True)
-            export_file = export_subfolder / f"{obj.name}.{format}"
+            obj_name = obj.name.replace('/', '_')
+            export_subfolder = export_folder / obj_name
+            export_subfolder.mkdir(exist_ok=True, parents=True)
+            export_file = export_subfolder / f"{obj_name}.{format}"
 
             logging.info(f"Exporting file to {export_file=}")
             obj.hide_viewport = False
