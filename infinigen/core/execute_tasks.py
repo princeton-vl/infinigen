@@ -16,7 +16,6 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import 
 
 import bpy
 import gin
-from frozendict import frozendict
 
 import infinigen.assets.scatters
 from infinigen.core import init, surface
@@ -102,7 +101,7 @@ def save_meshes(
     for col in bpy.data.collections:
         col.hide_viewport = col.hide_render
 
-    previous_frame_mesh_id_mapping = frozendict()
+    previous_frame_mesh_id_mapping = dict()
     current_frame_mesh_id_mapping = defaultdict(dict)
 
     # save static meshes
@@ -118,7 +117,7 @@ def save_meshes(
         previous_frame_mesh_id_mapping,
         current_frame_mesh_id_mapping,
     )
-    previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+    previous_frame_mesh_id_mapping = dict(current_frame_mesh_id_mapping)
     current_frame_mesh_id_mapping.clear()
 
     for obj in bpy.data.objects:
@@ -144,7 +143,7 @@ def save_meshes(
             output_folder=frame_info_folder / "cameras",
             frame=frame_idx,
         )
-        previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+        previous_frame_mesh_id_mapping = dict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
 
