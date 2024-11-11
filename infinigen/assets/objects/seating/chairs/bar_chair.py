@@ -194,7 +194,7 @@ class BarChairFactory(AssetFactory):
         obj = bpy.context.active_object
 
         surface.add_geomod(
-            obj, geometry_assemble_chair, apply=False, input_kwargs=self.params
+            obj, geometry_assemble_chair, apply=True, input_kwargs=self.params
         )
         tagging.tag_system.relabel_obj(obj)
 

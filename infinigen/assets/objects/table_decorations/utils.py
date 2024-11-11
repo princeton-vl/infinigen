@@ -388,7 +388,7 @@ def nodegroup_lofting_poly(nw: NodeWrangler):
 
     evaluate_on_domain = nw.new_node(
         Nodes.EvaluateonDomain,
-        input_kwargs={1: index},
+        input_kwargs={0: index},
         attrs={"domain": "CURVE", "data_type": "INT"},
     )
 
