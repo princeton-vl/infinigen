@@ -30,7 +30,7 @@ def nodegroup_capped_cylinder(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "Thickness", 0.5000),
             ("NodeSocketFloat", "Radius", 0.2000),
-            ("NodeSocketFloatDistance", "Cap Flatness", 4.0000),
+            ("NodeSocketFloat", "Cap Flatness", 4.0000),
             ("NodeSocketFloat", "Fillet Radius Vertical", 0.4000),
             ("NodeSocketFloat", "Cap Relative Scale", 1.0000),
             ("NodeSocketFloat", "Cap Relative Z Offset", 0.0000),

@@ -32,7 +32,7 @@ def nodegroup_hammered_metal(nw: NodeWrangler):
         input_kwargs={
             "Base Color": group_input.outputs["Base Color"],
             "Metallic": 1.0000,
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": 0.1000,
         },
     )

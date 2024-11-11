@@ -218,7 +218,9 @@ def lava_shader(nw):
     )
 
     noise_emission = nw.new_node(
-        Nodes.NoiseTexture, input_kwargs={"W": uniform(0, 10), "Scale": 0.5}
+        Nodes.NoiseTexture,
+        input_kwargs={"W": uniform(0, 10), "Scale": 0.5},
+        attrs={"noise_dimensions": "4D"},
     )
 
     strength_emission = nw.new_node(
@@ -281,10 +283,6 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         dir_y = nw.new_value(math.sqrt(5 - (dir_x**2)), "dir_y")
         dir_x = nw.new_value(dir_x, "dir_x")
         # print(f"{wave_sca=} {dir_x=} {dir_y=}")
-
-        group_input = nw.new_node(
-            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
-        )
 
         noise_texture_1 = nw.new_node(
             Nodes.NoiseTexture,

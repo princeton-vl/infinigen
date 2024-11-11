@@ -62,7 +62,7 @@ class MossFactory(AssetFactory):
             Nodes.PrincipledBSDF,
             input_kwargs={
                 "Base Color": mix_rgb,
-                "Subsurface": subsurface_ratio,
+                "Subsurface Weight": subsurface_ratio,
                 "Subsurface Radius": (0.01, 0.01, 0.01),
                 "Subsurface Color": background,
                 "Roughness": roughness,

@@ -347,7 +347,7 @@ def execute_tasks(
 
 
 def main(input_folder, output_folder, scene_seed, task, task_uniqname, **kwargs):
-    version_req = ["3.6.0"]
+    version_req = ["3.6.0", "4.2.0"]
     assert bpy.app.version_string in version_req, (
         f"You are using blender={bpy.app.version_string} which is "
         f"not supported. Please use {version_req}"

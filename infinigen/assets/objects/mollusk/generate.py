@@ -137,7 +137,7 @@ class MolluskFactory(AssetFactory):
             Nodes.PrincipledBSDF,
             input_kwargs={
                 "Base Color": nw.new_node(Nodes.MixRGB, [ratio, cr_0, cr_1]),
-                "Specular": specular,
+                "Specular IOR Level": specular,
                 "Roughness": roughness,
             },
         )

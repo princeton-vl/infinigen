@@ -204,7 +204,7 @@ def geo_bark(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "Attribute": capture_attribute.outputs["Attribute"],
+            "Attribute": capture_attribute.outputs[1],
         },
         attrs={"is_active_output": True},
     )

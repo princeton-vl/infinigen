@@ -200,7 +200,7 @@ def nodegroup_star_cross_section(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "curve parameters": capture_attribute.outputs[2],
+            "curve parameters": capture_attribute.outputs[1],
         },
     )
 
@@ -216,9 +216,9 @@ def nodegroup_cylax_cross_section(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketInt", "fork number", 10),
             ("NodeSocketFloat", "bottom radius", 0.0),
-            ("NodeSocketFloatDistance", "noise random seed", 0.0),
+            ("NodeSocketFloat", "noise random seed", 0.0),
             ("NodeSocketFloat", "noise amount", 0.4),
-            ("NodeSocketFloatDistance", "radius", 1.0),
+            ("NodeSocketFloat", "radius", 1.0),
         ],
     )
 
@@ -415,6 +415,6 @@ def nodegroup_coconut_cross_section(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position,
-            "curve parameters": capture_attribute.outputs[2],
+            "curve parameters": capture_attribute.outputs[1],
         },
     )

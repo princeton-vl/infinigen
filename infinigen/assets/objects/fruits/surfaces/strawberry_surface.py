@@ -67,7 +67,7 @@ def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix, "Specular": 1.0, "Roughness": 0.15},
+        input_kwargs={"Base Color": mix, "Specular IOR Level": 1.0, "Roughness": 0.15},
     )
 
     mix_shader = nw.new_node(
@@ -97,7 +97,7 @@ def nodegroup_strawberry_surface(
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketFloat", "spline parameter", 0.0),
-            ("NodeSocketFloatDistance", "Distance Min", 0.12),
+            ("NodeSocketFloat", "Distance Min", 0.12),
             ("NodeSocketFloat", "Strength", 0.74),
             ("NodeSocketFloat", "noise random seed", 0.0),
         ],

@@ -34,7 +34,7 @@ def nodegroup_tiger_toe(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "length_rad1_rad2", (0.18, 0.045, 0.024)),
-            ("NodeSocketFloatDistance", "Toebean Radius", 0.03),
+            ("NodeSocketFloat", "Toebean Radius", 0.03),
             ("NodeSocketFloat", "Claw Curl Deg", 30.0),
             ("NodeSocketVector", "Claw Pct Length Rad1 Rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Toe Curl Scalar", 1.0),
@@ -221,7 +221,7 @@ def nodegroup_foot(nw: NodeWrangler):
             ("NodeSocketVector", "Toe Rotate", (0.0000, -1.57, 0.0000)),
             ("NodeSocketVector", "Toe Length Rad1 Rad2", (0.3000, 0.0450, 0.0250)),
             ("NodeSocketFloat", "Toe Splay", 0.0000),
-            ("NodeSocketFloatDistance", "Toebean Radius", 0.0300),
+            ("NodeSocketFloat", "Toebean Radius", 0.0300),
             ("NodeSocketFloat", "Claw Curl Deg", 30.0000),
             ("NodeSocketVector", "Claw Pct Length Rad1 Rad2", (0.3000, 0.5000, 0.0000)),
             ("NodeSocketVector", "Thumb Pct", (1.0000, 1.0000, 1.0000)),

@@ -23,7 +23,7 @@ def shader_tongue(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (0.8, 0.0605, 0.0437, 1.0),
-            "Subsurface": 0.0312,
+            "Subsurface Weight": 0.0312,
             "Subsurface Color": (0.8, 0.0, 0.2679, 1.0),
             "Roughness": colorramp.outputs["Color"],
         },

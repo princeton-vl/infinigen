@@ -44,11 +44,11 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
-            ("NodeSocketFloatFactor", "Width Shaping", 0.6764),
+            ("NodeSocketFloat", "Width Shaping", 0.6764),
             ("NodeSocketFloat", "Canine Length", 0.050000000000000003),
             ("NodeSocketFloat", "Incisor Size", 0.01),
             ("NodeSocketFloat", "Tooth Crookedness", 0.0),
-            ("NodeSocketFloatFactor", "Tongue Shaping", 1.0),
+            ("NodeSocketFloat", "Tongue Shaping", 1.0),
             ("NodeSocketFloat", "Tongue X Scale", 0.90000000000000002),
         ],
     )
@@ -214,7 +214,7 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: greater_than, 15: symmetric_clone.outputs["Both"]},
+        input_kwargs={0: greater_than, 2: symmetric_clone.outputs["Both"]},
     )
 
     greater_than_1 = nw.new_node(
@@ -355,12 +355,12 @@ def nodegroup_carnivore_jaw(nw: NodeWrangler):
     )
 
     switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: greater_than_1, 15: realize_instances}
+        Nodes.Switch, input_kwargs={0: greater_than_1, 2: realize_instances}
     )
 
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [switch_1.outputs[6], switch.outputs[6]]},
+        input_kwargs={"Geometry": [switch_1, switch]},
     )
 
     resample_curve = nw.new_node(
@@ -473,7 +473,7 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
             ("NodeSocketVector", "length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "snout_length_rad1_rad2", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "snout_y_scale", 0.62),
-            ("NodeSocketVectorXYZ", "Nose Bridge Scale", (1.0, 0.35, 0.9)),
+            ("NodeSocketVector", "Nose Bridge Scale", (1.0, 0.35, 0.9)),
             ("NodeSocketVector", "Jaw Muscle Middle Coord", (0.24, 0.41, 1.3)),
             ("NodeSocketVector", "Jaw StartRad, EndRad, Fullness", (0.06, 0.11, 1.5)),
             (
@@ -500,7 +500,7 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
                 (0.3, 60.6, 66.0),
             ),
             ("NodeSocketFloat", "aspect", 1.0),
-            ("NodeSocketFloatDistance", "EyeRad", 0.03),
+            ("NodeSocketFloat", "EyeRad", 0.03),
             ("NodeSocketVector", "EyeOffset", (-0.2, 0.5, 0.2)),
         ],
     )
@@ -979,7 +979,7 @@ def nodegroup_flying_bird_head(nw: NodeWrangler):
             ),
             ("NodeSocketVector", "angles_deg", (0.0, -24.0, -20.0)),
             ("NodeSocketVector", "eye_coord", (0.5, 0.0, 1.0)),
-            ("NodeSocketFloatDistance", "Radius", 0.040000000000000001),
+            ("NodeSocketFloat", "Radius", 0.040000000000000001),
         ],
     )
 
@@ -1039,7 +1039,7 @@ def nodegroup_bird_head(nw: NodeWrangler):
             ),
             ("NodeSocketVector", "angles_deg", (0.0, -24.0, -20.0)),
             ("NodeSocketVector", "eye_coord", (0.5, 0.0, 1.0)),
-            ("NodeSocketFloatDistance", "Radius", 0.040000000000000001),
+            ("NodeSocketFloat", "Radius", 0.040000000000000001),
         ],
     )
 

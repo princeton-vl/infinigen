@@ -77,7 +77,7 @@ def shader_black_white_snake(nw: NodeWrangler, rand=True):
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
             "Metallic": 0.6,
-            "Specular": 0.2,
+            "Specular IOR Level": 0.2,
             "Roughness": 0.4,
         },
         attrs={"subsurface_method": "BURLEY"},
@@ -124,7 +124,7 @@ def shader_brown(nw: NodeWrangler, rand=False):
         input_kwargs={
             "Base Color": colorramp_2.outputs["Color"],
             "Metallic": 0.4,
-            "Specular": 0.3,
+            "Specular IOR Level": 0.3,
             "Roughness": 1,
         },
         attrs={"subsurface_method": "BURLEY"},
@@ -289,7 +289,7 @@ def shader_golden(nw: NodeWrangler, rand=False):
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
             "Metallic": 0.4,
-            "Specular": 0.2,
+            "Specular IOR Level": 0.2,
             "Roughness": 0.4,
         },
         attrs={"subsurface_method": "BURLEY"},

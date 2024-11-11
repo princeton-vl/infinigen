@@ -23,7 +23,7 @@ def nodegroup_crack(nw: NodeWrangler):
             ("NodeSocketFloat", "Seed", 0.0000),
             ("NodeSocketFloat", "Amount", 1.0000),
             ("NodeSocketFloat", "Scale", 0.0000),
-            ("NodeSocketFloatFactor", "Snake Crack", 0.3000),
+            ("NodeSocketFloat", "Snake Crack", 0.3000),
         ],
     )
 
@@ -189,7 +189,7 @@ def nodegroup_concrete(nw: NodeWrangler):
             ("NodeSocketFloat", "Roughness", 0.0000),
             ("NodeSocketFloat", "Crack Amount", 0.0000),
             ("NodeSocketFloat", "Crack Scale", 0.0000),
-            ("NodeSocketFloatFactor", "Snake Crack", 0.3000),
+            ("NodeSocketFloat", "Snake Crack", 0.3000),
         ],
     )
 

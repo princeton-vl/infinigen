@@ -50,13 +50,11 @@ def shader_lampshade(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix.outputs[2],
-            "Subsurface": U(0.03, 0.08),
+            "Subsurface Weight": U(0.03, 0.08),
             "Subsurface Radius": (0.1000, 0.1000, 0.1000),
-            "Subsurface IOR": 1.6029,
             "Roughness": U(0.5, 0.8),
             "IOR": 4.0000,
-            "Transmission": U(0.05, 0.2),
-            "Transmission Roughness": 1.0000,
+            "Transmission Weight": U(0.05, 0.2),
         },
     )
 

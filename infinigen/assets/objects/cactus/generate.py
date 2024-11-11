@@ -105,7 +105,7 @@ class CactusFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
+                "Specular IOR Level": specular,
             },
         )
         return bsdf

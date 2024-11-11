@@ -19,10 +19,11 @@ import bpy
 import numpy as np
 
 from infinigen.core.nodes import node_info
-from infinigen.core.nodes.node_info import Nodes
+from infinigen.core.nodes.node_info import Nodes, map_socket
 from infinigen.core.util.random import random_vector3
 
 from .compatibility import COMPATIBILITY_MAPPINGS
+from .utils import infer_input_socket, infer_output_socket
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +32,23 @@ class NodeMisuseWarning(UserWarning):
     pass
 
 
+def ng_inputs(node_group):
+    return {s.name: s for s in node_group.interface.items_tree if s.in_out == "INPUT"}
+
+
+def ng_outputs(node_group):
+    return {s.name: s for s in node_group.interface.items_tree if s.in_out == "OUTPUT"}
+
+
 # This is for Blender 3.3 because of the nodetree change
 def geometry_node_group_empty_new():
     group = bpy.data.node_groups.new("Geometry Nodes", "GeometryNodeTree")
-    group.inputs.new("NodeSocketGeometry", "Geometry")
-    group.outputs.new("NodeSocketGeometry", "Geometry")
+    group.interface.new_socket(
+        name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry"
+    )
+    group.interface.new_socket(
+        name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry"
+    )
     input_node = group.nodes.new("NodeGroupInput")
     output_node = group.nodes.new("NodeGroupOutput")
     output_node.is_active_output = True
@@ -65,74 +78,6 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
         )
     log = file if hasattr(file, "write") else sys.stderr
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
-
-
-def isnode(x):
-    return isinstance(
-        x, (bpy.types.ShaderNode, bpy.types.NodeInternal, bpy.types.GeometryNode)
-    )
-
-
-def infer_output_socket(item):
-    """
-    Figure out if `item` somehow represents a node with an output we can use.
-    If so, return that output socket
-    """
-
-    if isinstance(item, bpy.types.NodeSocket):
-        res = item
-    elif isnode(item):
-        # take the first active socket
-        try:
-            res = next(o for o in item.outputs if o.enabled)
-        except StopIteration:
-            raise ValueError(
-                f"Attempted to get output socket for {item} but none are enabled!"
-            )
-    elif isinstance(item, tuple) and isnode(item[0]):
-        node, socket_name = item
-        if isinstance(socket_name, int):
-            return node.outputs[socket_name]
-        try:
-            res = next(o for o in node.outputs if o.enabled and o.name == socket_name)
-        except StopIteration:
-            raise ValueError(
-                f"Couldnt find an enabled socket on {node} corresponding to requested tuple {item}"
-            )
-    else:
-        return None
-
-    if not res.enabled:
-        raise ValueError(
-            f"Attempted to use output socket {res} of node {res.node} which is not enabled. "
-            "Please check your attrs are correct, or be more specific about the socket to use"
-        )
-
-    return res
-
-
-def infer_input_socket(node, input_socket_name):
-    if isinstance(input_socket_name, str):
-        try:
-            input_socket = next(
-                i for i in node.inputs if i.name == input_socket_name and i.enabled
-            )
-        except StopIteration:
-            input_socket = node.inputs[input_socket_name]
-    else:
-        input_socket = node.inputs[input_socket_name]
-
-    if not input_socket.enabled:
-        logger.warning(
-            f'Attempted to use ({input_socket.name=},{input_socket.type=}) of {node.name=}, but it was '
-            f'disabled. Either change attrs={{...}}, '
-            f'change the socket index, or specify the socket by name (assuming two enabled sockets don\'t '
-            f'share a name).'
-            f'The input sockets are '
-            f'{[(i.name, i.type, ("ENABLED" if i.enabled else "DISABLED")) for i in node.inputs]}.',
-        )
-
-    return input_socket
 
 
 class NodeWrangler:
@@ -237,8 +182,10 @@ class NodeWrangler:
                     input_item, list
                 ), "Multi-input sockets to GroupOutput nodes are impossible"
                 if input_socket_name not in node.inputs:
-                    nodeclass = infer_output_socket(input_item).bl_idname
-                    self.node_group.outputs.new(nodeclass, input_socket_name)
+                    nodeclass = map_socket(infer_output_socket(input_item).bl_idname)
+                    self.node_group.interface.new_socket(
+                        name=input_socket_name, in_out="OUTPUT", socket_type=nodeclass
+                    )
                     assert (
                         input_socket_name in node.inputs
                         and node.inputs[input_socket_name].enabled
@@ -286,13 +233,15 @@ class NodeWrangler:
 
         group_input = self.new_node(Nodes.GroupInput)  # will reuse singleton
 
-        if name in self.node_group.inputs:
+        if name in ng_inputs(self.node_group):
             assert len([o for o in group_input.outputs if o.name == name]) == 1
             return group_input.outputs[name]
 
         # Infer from args what type of node input to make (NodeSocketFloat / NodeSocketVector / etc)
         nodeclass = self._infer_nodeclass_from_args(dtype, val)
-        inp = self.node_group.inputs.new(nodeclass, name)
+        inp = self.node_group.interface.new_socket(
+            name, in_out="INPUT", socket_type=nodeclass
+        )
 
         def prepare_cast(to_type, val):
             # cast val only when necessary, and only when type(val) wont crash

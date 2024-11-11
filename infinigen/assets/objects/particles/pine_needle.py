@@ -47,7 +47,7 @@ def nodegroup_pine_needle(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "Scale", 0.0400),
             ("NodeSocketFloat", "Bend", 0.0300),
-            ("NodeSocketFloatDistance", "Radius", 0.0010),
+            ("NodeSocketFloat", "Radius", 0.0010),
         ],
     )
 

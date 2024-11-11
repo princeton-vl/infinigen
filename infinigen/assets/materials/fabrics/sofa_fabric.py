@@ -46,7 +46,7 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
         input_kwargs={
             "Base Color": brick_texture.outputs["Color"],
             "Roughness": 0.8624,
-            "Sheen": 1.0000,
+            "Sheen Weight": 1.0000,
         },
     )
 

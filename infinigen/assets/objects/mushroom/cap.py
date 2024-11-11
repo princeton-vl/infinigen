@@ -420,10 +420,10 @@ class MushroomCapFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
                 "Subsurface Color": subsurface_color,
-                "Subsurface": 0.01,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.05, 0.05, 0.05),
             },
         )
@@ -468,10 +468,10 @@ class MushroomCapFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
                 "Subsurface Color": subsurface_color,
-                "Subsurface": 0.01,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.05, 0.05, 0.05),
             },
         )
@@ -531,10 +531,10 @@ class MushroomCapFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
                 "Subsurface Color": subsurface_color,
-                "Subsurface": 0.01,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.05, 0.05, 0.05),
             },
         )
@@ -588,10 +588,10 @@ class MushroomCapFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
                 "Subsurface Color": subsurface_color,
-                "Subsurface": 0.01,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.05, 0.05, 0.05),
             },
         )

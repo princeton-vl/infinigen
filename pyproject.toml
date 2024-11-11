@@ -17,12 +17,11 @@ keywords = [
 classifiers = [
     "Framework :: Blender",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10"
 ]
 
-requires-python = "==3.10.*"
+requires-python = "==3.11.*"
 dependencies = [
-    "bpy==3.6.0",
+    "bpy==4.2.0",
     "frozendict", # TODO remove
     "geomdl", # used only for creatures
     "gin_config>=0.5.0",
@@ -40,6 +39,7 @@ dependencies = [
     "submitit",
     "tqdm",
     "trimesh",
+    "OpenEXR",
 
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl", 

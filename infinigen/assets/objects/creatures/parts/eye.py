@@ -36,7 +36,7 @@ def nodegroup_eyelid(nw: NodeWrangler):
             ("NodeSocketVector", "EyelidEndCoord", (0.0, 1.5, 0.29999999999999999)),
             ("NodeSocketFloat", "StartRadPct", 0.5),
             ("NodeSocketFloat", "EndRadPct", 0.5),
-            ("NodeSocketFloatAngle", "Tilt", -0.34910000000000002),
+            ("NodeSocketFloat", "Tilt", -0.34910000000000002),
         ],
     )
 
@@ -150,7 +150,7 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.050000000000000003),
+            ("NodeSocketFloat", "Radius", 0.050000000000000003),
             ("NodeSocketFloat", "Eyelid Thickness Ratio", 0.34999999999999998),
             ("NodeSocketFloat", "Eyelid Fullness", 2.0),
             ("NodeSocketBool", "Eyelids", True),
@@ -186,7 +186,7 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Eyelids"], 15: join_geometry},
+        input_kwargs={0: group_input.outputs["Eyelids"], 2: join_geometry},
     )
 
     uv_sphere = nw.new_node(
@@ -280,7 +280,7 @@ def nodegroup_mammal_eye(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": None,
-            "BodyExtra_Lid": switch.outputs[6],
+            "BodyExtra_Lid": switch,
             "Eyeballl": normvec,
             "ParentCutter": transform_2,
         },

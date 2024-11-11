@@ -32,7 +32,7 @@ def nodegroup_vein(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "Vector", (0.0, 0.0, 0.0)),
-            ("NodeSocketFloatAngle", "Angle", 0.0),
+            ("NodeSocketFloat", "Angle", 0.0),
             ("NodeSocketFloat", "Length", 0.0),
             ("NodeSocketFloat", "Start", 0.0),
             ("NodeSocketFloat", "X Modulated", 0.0),
@@ -338,8 +338,8 @@ def nodegroup_midrib(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "Vector", (0.0, 0.0, 0.0)),
-            ("NodeSocketFloatAngle", "Angle", 0.8238),
-            ("NodeSocketFloatAngle", "vein Angle", 0.7854),
+            ("NodeSocketFloat", "Angle", 0.8238),
+            ("NodeSocketFloat", "vein Angle", 0.7854),
             ("NodeSocketFloat", "vein Length", 0.2),
             ("NodeSocketFloat", "vein Start", -0.2),
             ("NodeSocketFloat", "Anneal", 0.4),
@@ -1190,7 +1190,7 @@ def geo_leaf_maple(nw: NodeWrangler, **kwargs):
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[2]},
+        input_kwargs={"Geometry": apply_wave, "Vein": capture_attribute.outputs[1]},
     )
 
 

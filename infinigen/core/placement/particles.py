@@ -33,7 +33,8 @@ def bake(emitter, system):
         }
         with Suppress():
             bpy.context.scene.frame_end += 1
-            bpy.ops.ptcache.bake(override, bake=True)
+            with bpy.context.temp_override(**override):
+                bpy.ops.ptcache.bake(bake=True)
             bpy.context.scene.frame_end -= 1
 
     emitter.hide_viewport = hide_orig
@@ -47,9 +48,11 @@ def configure_boids(system_config, settings):
         context = bpy.context.copy()
         context["particle_settings"] = system_config
         for _ in boids.states[0].rules.keys():
-            bpy.ops.boid.rule_del(context)
+            with bpy.context.temp_override(**context):
+                bpy.ops.boid.rule_del()
         for r in rules:
-            bpy.ops.boid.rule_add(context, type=r.pop("type"))
+            with bpy.context.temp_override(**context):
+                bpy.ops.boid.rule_add(type=r.pop("type"))
             for k, v in r.items():
                 setattr(boids.states[0].rules[-1], k, v)
         assert len(boids.states[0].rules) == len(rules)

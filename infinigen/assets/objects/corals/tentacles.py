@@ -101,7 +101,7 @@ def geo_tentacles(
     rotation = nw.new_node(
         Nodes.RotateEuler,
         input_kwargs={"Rotation": rotation, "Angle": nw.uniform(0, 2 * np.pi)},
-        attrs={"type": "AXIS_ANGLE", "space": "LOCAL"},
+        attrs={"rotation_type": "AXIS_ANGLE", "space": "LOCAL"},
     )
 
     points = surface.eval_argument(nw, points_fn, points=points, normal=normal)
@@ -136,8 +136,8 @@ def shader_tentacles(nw: NodeWrangler, base_hue=0.3):
         input_kwargs={
             "Base Color": color,
             "Roughness": roughness,
-            "Specular": specular,
-            "Subsurface": 0.01,
+            "Specular IOR Level": specular,
+            "Subsurface Weight": 0.01,
         },
     )
     fresnel_color = hsv2rgba(uniform(0, 1), 0.6, 0.6)

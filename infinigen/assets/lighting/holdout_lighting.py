@@ -40,6 +40,8 @@ def holdout_lighting(
 
 def add_lighting():
     nw = NodeWrangler(bpy.context.scene.world.node_tree)
+    if not os.path.exists(HOLDOUT_RESOURCES):
+        return
     surface = holdout_lighting(nw)
     nw.new_node(Nodes.WorldOutput, input_kwargs={"Surface": surface})
     bpy.context.scene.world.cycles_visibility.camera = False

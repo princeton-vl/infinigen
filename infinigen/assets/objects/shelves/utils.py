@@ -45,9 +45,7 @@ def nodegroup_tagged_cube(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput,
-        expose_input=[
-            ("NodeSocketVectorTranslation", "Size", (1.0000, 1.0000, 1.0000))
-        ],
+        expose_input=[("NodeSocketVector", "Size", (1.0000, 1.0000, 1.0000))],
     )
 
     cube = nw.new_node(

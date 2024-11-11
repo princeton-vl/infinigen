@@ -192,7 +192,7 @@ def nodegroup_n_gon_cylinder(nw: NodeWrangler):
         Nodes.SampleCurve,
         input_kwargs={
             "Curves": group_input.outputs["Radius Curve"],
-            "Factor": capture_attribute.outputs[2],
+            "Factor": capture_attribute.outputs[1],
         },
         attrs={"use_all_curves": True},
     )
@@ -424,20 +424,18 @@ def nodegroup_create_anchors(nw: NodeWrangler):
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: equal_1,
-            14: curve_to_points.outputs["Points"],
-            15: curve_to_points_1.outputs["Points"],
+            0: equal_1,
+            1: curve_to_points.outputs["Points"],
+            2: curve_to_points_1.outputs["Points"],
         },
     )
 
     points = nw.new_node("GeometryNodePoints")
 
-    switch = nw.new_node(
-        Nodes.Switch, input_kwargs={1: equal, 14: switch_1.outputs[6], 15: points}
-    )
+    switch = nw.new_node(Nodes.Switch, input_kwargs={0: equal, 1: switch_1, 2: points})
 
     set_point_radius = nw.new_node(
-        Nodes.SetPointRadius, input_kwargs={"Points": switch.outputs[6]}
+        Nodes.SetPointRadius, input_kwargs={"Points": switch}
     )
 
     combine_xyz_2 = nw.new_node(
@@ -557,8 +555,8 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Align Leg X rot"],
-            8: align_euler_to_vector,
-            9: align_euler_to_vector_3,
+            1: align_euler_to_vector,
+            2: align_euler_to_vector_3,
         },
         attrs={"input_type": "VECTOR"},
     )
@@ -577,7 +575,7 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
         input_kwargs={
             "Points": transform,
             "Instance": group_input.outputs["Leg Instance"],
-            "Rotation": switch.outputs[3],
+            "Rotation": switch,
             "Scale": combine_xyz_2,
         },
     )
@@ -588,7 +586,7 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Keep Legs"], 15: realize_instances},
+        input_kwargs={0: group_input.outputs["Keep Legs"], 2: realize_instances},
     )
 
     multiply_1 = nw.new_node(
@@ -677,13 +675,11 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
 
     switch_2 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: equal, 6: boolean, 7: less_than},
+        input_kwargs={0: equal, 1: boolean, 2: less_than},
         attrs={"input_type": "BOOLEAN"},
     )
 
-    op_and_2 = nw.new_node(
-        Nodes.BooleanMath, input_kwargs={0: op_or, 1: switch_2.outputs[2]}
-    )
+    op_and_2 = nw.new_node(Nodes.BooleanMath, input_kwargs={0: op_or, 1: switch_2})
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
@@ -700,13 +696,13 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
 
     field_at_index = nw.new_node(
         Nodes.FieldAtIndex,
-        input_kwargs={"Index": modulo_1, 3: position_1},
+        input_kwargs={"Index": modulo_1, 1: position_1},
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     subtract_3 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: position_1, 1: field_at_index.outputs[2]},
+        input_kwargs={0: position_1, 1: field_at_index},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -750,7 +746,7 @@ def nodegroup_create_legs_and_strechers(nw: NodeWrangler):
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [switch_1.outputs[6], realize_instances_1]},
+        input_kwargs={"Geometry": [switch_1, realize_instances_1]},
     )
 
     group_output = nw.new_node(
@@ -769,7 +765,7 @@ def nodegroup_create_cap(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketInt", "Resolution", 64),
         ],
     )
@@ -853,7 +849,7 @@ def nodegroup_arc_top(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Diameter", 1.0000),
+            ("NodeSocketFloat", "Diameter", 1.0000),
             ("NodeSocketFloat", "Sweep Angle", 180.0000),
         ],
     )

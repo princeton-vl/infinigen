@@ -22,7 +22,7 @@ def shader_basic_bsdf(nw):
             "Base Color": color,
             "Roughness": np.clip(normal(0.6, 0.3), 0.05, 0.95),
             "Metallic": uniform(0, 1) if uniform() < 0.3 else 0,
-            "Subsurface": 0 if uniform() < 0.8 else uniform(0, 0.2),
+            "Subsurface Weight": 0 if uniform() < 0.8 else uniform(0, 0.2),
         },
         attrs={"subsurface_method": "BURLEY"},
     )

@@ -30,9 +30,9 @@ class GlobularBaseCactusFactory(BaseCactusFactory):
         selection = nw.compare(
             "EQUAL", nw.math("MODULO", nw.new_node(Nodes.Index), 2), 0
         )
-        circle, _, selection = nw.new_node(
-            Nodes.CaptureAttribute, [circle, None, selection]
-        ).outputs[:3]
+        circle, selection = nw.new_node(
+            Nodes.CaptureAttribute, [circle, selection]
+        ).outputs[:2]
         circle = nw.new_node(
             Nodes.SetPosition,
             [

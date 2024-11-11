@@ -134,7 +134,7 @@ def shader_scale(nw, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": colormap,
-            "Subsurface": 0.2,
+            "Subsurface Weight": 0.2,
             "Subsurface Radius": (0.36, 0.46, 0.6),
             "Subsurface Color": (1.0, 0.9405, 0.7747, 1.0),
             "Metallic": 0.8,
@@ -577,8 +577,8 @@ def geo_scale(nw, rand=True, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute_4.outputs["Geometry"],
-            "attr2": capture_attribute_1.outputs["Attribute"],
-            "attr5": capture_attribute_4.outputs["Attribute"],
+            "attr2": capture_attribute_1.outputs[1],
+            "attr5": capture_attribute_4.outputs[1],
         },
         attrs={"is_active_output": True},
     )

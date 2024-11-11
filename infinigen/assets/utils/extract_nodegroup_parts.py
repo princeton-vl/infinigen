@@ -10,12 +10,14 @@ from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
     geometry_node_group_empty_new,
+    ng_inputs,
+    ng_outputs,
 )
 from infinigen.core.util import blender as butil
 
 
 def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
-    assert k in nodegroup.outputs
+    assert k in ng_outputs(nodegroup)
     assert target_obj.type == "MESH"
 
     vert = butil.spawn_vert("extract_nodegroup_geo.temp")
@@ -29,7 +31,7 @@ def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
     obj_inp = nw.new_node(Nodes.ObjectInfo, [target_obj])
 
     group_input_kwargs = {**ng_params}
-    if "Geometry" in nodegroup.inputs:
+    if "Geometry" in ng_inputs(nodegroup):
         group_input_kwargs["Geometry"] = obj_inp.outputs["Geometry"]
     group = nw.new_node(nodegroup.name, input_kwargs=group_input_kwargs)
 

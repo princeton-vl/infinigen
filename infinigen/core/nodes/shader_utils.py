@@ -38,8 +38,12 @@ def convert_shader_displacement(mat: bpy.types.Material):
     geo_node_group = bpy.data.node_groups.new("GeometryNodes", "GeometryNodeTree")
     group_input = geo_node_group.nodes.new("NodeGroupInput")
     group_output = geo_node_group.nodes.new("NodeGroupOutput")
-    geo_node_group.outputs.new("NodeSocketGeometry", "Geometry")
-    geo_node_group.inputs.new("NodeSocketGeometry", "Geometry")
+    geo_node_group.interface.new_socket(
+        name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry"
+    )
+    geo_node_group.interface.new_socket(
+        name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry"
+    )
     set_pos = geo_node_group.nodes.new("GeometryNodeSetPosition")
     normal = geo_node_group.nodes.new("GeometryNodeInputNormal")
     scale = geo_node_group.nodes.new("ShaderNodeVectorMath")

@@ -73,7 +73,7 @@ def wind_rotation(nw, speed=1.0, direction=None, scale=1.0, strength=30):
             "Axis": vector_rotate_1,
             "Angle": deg2rad,
         },
-        attrs={"type": "AXIS_ANGLE"},
+        attrs={"rotation_type": "AXIS_ANGLE"},
     )
     return rotation
 

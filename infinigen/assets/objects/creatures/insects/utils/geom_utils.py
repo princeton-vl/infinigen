@@ -20,7 +20,7 @@ def nodegroup_symmetric_clone(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, -1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, -1.0, 1.0)),
         ],
     )
 
@@ -114,8 +114,8 @@ def nodegroup_attach_part(nw: NodeWrangler):
             ("NodeSocketGeometry", "Skin Mesh", None),
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
             ("NodeSocketVector", "Part Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -260,9 +260,9 @@ def nodegroup_instance_on_points(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "rotation base", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorEuler", "rotation delta", (-1.5708, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "translation", (0.0, -0.5, 0.0)),
+            ("NodeSocketVector", "rotation base", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "rotation delta", (-1.5708, 0.0, 0.0)),
+            ("NodeSocketVector", "translation", (0.0, -0.5, 0.0)),
             ("NodeSocketFloat", "scale", 0.0),
             ("NodeSocketGeometry", "Points", None),
             ("NodeSocketGeometry", "Instance", None),
@@ -402,7 +402,7 @@ def shader_dragonfly_body_shader(nw: NodeWrangler):
         input_kwargs={
             "Base Color": group_1,
             "Metallic": 0.2182,
-            "Specular": 0.8318,
+            "Specular IOR Level": 0.8318,
             "Roughness": 0.1545,
         },
     )
@@ -599,7 +599,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Rotation", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Hit Normal", (0.0, 0.0, 1.0)),
             ("NodeSocketVector", "Curve Tangent", (0.0, 0.0, 1.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -624,8 +624,8 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Do Normal Rot"],
-            8: group_input.outputs["Rotation"],
-            9: rotate_euler,
+            1: group_input.outputs["Rotation"],
+            2: rotate_euler,
         },
         label="if_normal_rot",
         attrs={"input_type": "VECTOR"},
@@ -652,15 +652,15 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Do Tangent Rot"],
-            8: if_normal_rot.outputs[3],
-            9: rotate_euler_1,
+            1: if_normal_rot,
+            2: rotate_euler_1,
         },
         label="if_tangent_rot",
         attrs={"input_type": "VECTOR"},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot.outputs[3]}
+        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot}
     )
 
 
@@ -675,8 +675,8 @@ def nodegroup_part_surface(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Skin Mesh", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
         ],
     )
@@ -749,10 +749,10 @@ def nodegroup_shape_quadratic(
             ("NodeSocketFloat", "random seed pos", 0.0),
             ("NodeSocketFloat", "noise scale pos", 0.0),
             ("NodeSocketFloat", "noise amount pos", 0.0),
-            ("NodeSocketIntUnsigned", "Resolution", 256),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.15, -1.5)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.0, 1.5)),
+            ("NodeSocketInt", "Resolution", 256),
+            ("NodeSocketVector", "Start", (0.0, 0.15, -1.5)),
+            ("NodeSocketVector", "Middle", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "End", (0.0, 0.0, 1.5)),
         ],
     )
 
@@ -906,8 +906,8 @@ def nodegroup_shape_quadratic(
         Nodes.GroupOutput,
         input_kwargs={
             "Mesh": curve_to_mesh,
-            "spline parameter": capture_attribute.outputs[2],
-            "spline tangent": capture_attribute_1.outputs["Attribute"],
+            "spline parameter": capture_attribute.outputs[1],
+            "spline tangent": capture_attribute_1.outputs[1],
             "radius to center": geometry_proximity.outputs["Distance"],
         },
     )
@@ -993,8 +993,8 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_1,
-            8: group_input.outputs["Arg == 0"],
-            9: group_input.outputs["Arg == 1"],
+            1: group_input.outputs["Arg == 0"],
+            2: group_input.outputs["Arg == 1"],
         },
         attrs={"input_type": "VECTOR"},
     )
@@ -1009,21 +1009,19 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_2,
-            8: group_input.outputs["Arg == 2"],
-            9: group_input.outputs["Arg == 3"],
+            1: group_input.outputs["Arg == 2"],
+            2: group_input.outputs["Arg == 3"],
         },
         attrs={"input_type": "VECTOR"},
     )
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: greater_equal, 8: switch_1.outputs[3], 9: switch_2.outputs[3]},
+        input_kwargs={0: greater_equal, 1: switch_1, 2: switch_2},
         attrs={"input_type": "VECTOR"},
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Output": switch.outputs[3]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Output": switch})
 
 
 @node_utils.to_nodegroup(
@@ -1111,13 +1109,11 @@ def nodegroup_aspect_to_dim(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: greater_than, 8: combine_xyz_1, 9: combine_xyz_2},
+        input_kwargs={0: greater_than, 1: combine_xyz_1, 2: combine_xyz_2},
         attrs={"input_type": "VECTOR"},
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"XY Scale": switch.outputs[3]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"XY Scale": switch})
 
 
 @node_utils.to_nodegroup(
@@ -1186,7 +1182,7 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 32),
+            ("NodeSocketInt", "Resolution", 32),
             ("NodeSocketVector", "Origin", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "angles_deg", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Seg Lengths", (0.3, 0.3, 0.3)),
@@ -1302,15 +1298,15 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Do Bezier"],
-            14: subdivide_curve_1,
-            15: subdivide_curve,
+            0: group_input.outputs["Do Bezier"],
+            1: subdivide_curve_1,
+            2: subdivide_curve,
         },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Curve": switch.outputs[6], "Endpoint": polartocart_2},
+        input_kwargs={"Curve": switch, "Endpoint": polartocart_2},
     )
 
 
@@ -1325,7 +1321,7 @@ def nodegroup_profile_part(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Profile Curve", None),
-            ("NodeSocketFloatDistance", "Radius Func", 1.0),
+            ("NodeSocketFloat", "Radius Func", 1.0),
         ],
     )
 

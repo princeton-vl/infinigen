@@ -142,7 +142,7 @@ def shader_marble(nw: NodeWrangler, **kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix_1.outputs[2],
-            "Specular": 0.6000,
+            "Specular IOR Level": 0.6000,
             "Roughness": 0.1000,
             "Normal": bump,
         },

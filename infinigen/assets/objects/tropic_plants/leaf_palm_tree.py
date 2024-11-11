@@ -448,9 +448,9 @@ def nodegroup_palm_leaf_instance(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Attribute": nodegroup_leaf_gen.outputs["Attribute"],
-            "Coordinate": capture_attribute.outputs["Attribute"],
-            "subvein": capture_attribute_1.outputs[2],
-            "vein": capture_attribute_2.outputs[2],
+            "Coordinate": capture_attribute.outputs[1],
+            "subvein": capture_attribute_1.outputs[1],
+            "vein": capture_attribute_2.outputs[1],
             "Geometry": nodegroup_leaf_rotate_x,
         },
     )
@@ -467,7 +467,7 @@ def nodegroup_leaf_on_stem(nw: NodeWrangler, versions):
         expose_input=[
             ("NodeSocketGeometry", "Points", None),
             ("NodeSocketGeometry", "Instance", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, 1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, 1.0, 1.0)),
             ("NodeSocketInt", "Samples", 0),
         ],
     )

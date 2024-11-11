@@ -79,7 +79,7 @@ def shader_basic_stem_shader(nw: NodeWrangler, stem_color):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": hue_saturation_value,
-            "Specular": 0.1205,
+            "Specular IOR Level": 0.1205,
             "Roughness": 0.5068,
         },
     )
@@ -98,14 +98,14 @@ def nodegroup_basic_stem(nw: NodeWrangler, stem_color=(0.179, 0.836, 0.318, 1.0)
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "quad_start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "quad_mid", (0.0, -0.05, 0.2)),
-            ("NodeSocketVectorTranslation", "quad_end", (-0.1, 0.0, 0.4)),
-            ("NodeSocketIntUnsigned", "quad_res", 128),
-            ("NodeSocketFloatDistance", "cross_radius", 0.08),
+            ("NodeSocketVector", "quad_start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "quad_mid", (0.0, -0.05, 0.2)),
+            ("NodeSocketVector", "quad_end", (-0.1, 0.0, 0.4)),
+            ("NodeSocketInt", "quad_res", 128),
+            ("NodeSocketFloat", "cross_radius", 0.08),
             ("NodeSocketInt", "cross_res", 128),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, 1.0, 2.0)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, 1.0, 2.0)),
         ],
     )
 
@@ -217,7 +217,7 @@ def shader_calyx_shader(nw: NodeWrangler, stem_color):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": hue_saturation_value,
-            "Specular": 0.5136,
+            "Specular IOR Level": 0.5136,
             "Roughness": 0.7614,
         },
     )
@@ -244,16 +244,16 @@ def nodegroup_calyx_stem(nw: NodeWrangler, stem_color=(0.1678, 0.4541, 0.0397, 1
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketInt", "fork number", 10),
-            ("NodeSocketFloatDistance", "outer radius", 1.0),
+            ("NodeSocketFloat", "outer radius", 1.0),
             ("NodeSocketFloat", "inner radius", 0.2),
             ("NodeSocketFloat", "cross section noise amount", 0.4),
             ("NodeSocketFloat", "z noise amount", 1.0),
-            ("NodeSocketFloatDistance", "noise random seed", 0.0),
-            ("NodeSocketVectorTranslation", "quad_start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "quad_mid", (0.0, -0.05, 0.2)),
-            ("NodeSocketVectorTranslation", "quad_end", (-0.1, 0.0, 0.4)),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.0)),
-            ("NodeSocketFloatDistance", "cross_radius", 0.04),
+            ("NodeSocketFloat", "noise random seed", 0.0),
+            ("NodeSocketVector", "quad_start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "quad_mid", (0.0, -0.05, 0.2)),
+            ("NodeSocketVector", "quad_end", (-0.1, 0.0, 0.4)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.0)),
+            ("NodeSocketFloat", "cross_radius", 0.04),
         ],
     )
 
@@ -378,7 +378,7 @@ def nodegroup_jigsaw(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "Value", 0.5),
             ("NodeSocketFloat", "noise scale", 30.0),
-            ("NodeSocketFloatFactor", "noise randomness", 0.7),
+            ("NodeSocketFloat", "noise randomness", 0.7),
             ("NodeSocketFloat", "From Max", 0.15),
             ("NodeSocketFloat", "To Min", 0.9),
         ],
@@ -517,7 +517,7 @@ def nodegroup_coconut_calyx(nw: NodeWrangler, basic_color, edge_color):
         expose_input=[
             ("NodeSocketFloat", "width", 0.5),
             ("NodeSocketInt", "resolution", 128),
-            ("NodeSocketFloatDistance", "radius", 1.0),
+            ("NodeSocketFloat", "radius", 1.0),
             ("NodeSocketInt", "subdivision", 5),
             ("NodeSocketFloat", "bump displacement", 0.16),
             ("NodeSocketFloat", "bump scale", 3.22),
@@ -635,15 +635,15 @@ def nodegroup_coconut_stem(
         expose_input=[
             ("NodeSocketGeometry", "Target", None),
             ("NodeSocketFloat", "radius", 0.0),
-            ("NodeSocketVectorTranslation", "Translation", (0.0, 0.0, 1.08)),
+            ("NodeSocketVector", "Translation", (0.0, 0.0, 1.08)),
             ("NodeSocketInt", "Count", 6),
             ("NodeSocketFloat", "base scale", 0.3),
             ("NodeSocketFloat", "top scale", 0.24),
             ("NodeSocketFloat", "attach threshold", 0.1),
             ("NodeSocketFloat", "attach multiplier", 10.0),
             ("NodeSocketFloat", "calyx width", 0.5),
-            ("NodeSocketVectorTranslation", "stem_mid", (0.0, 0.0, 1.0)),
-            ("NodeSocketVectorTranslation", "stem_end", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "stem_mid", (0.0, 0.0, 1.0)),
+            ("NodeSocketVector", "stem_end", (0.0, 0.0, 1.0)),
             ("NodeSocketFloat", "stem_radius", 0.5),
         ],
     )
@@ -700,7 +700,7 @@ def nodegroup_coconut_stem(
     map_range_2 = nw.new_node(
         Nodes.MapRange,
         input_kwargs={
-            "Value": capture_attribute.outputs[2],
+            "Value": capture_attribute.outputs[1],
             3: group_input.outputs["base scale"],
             4: group_input.outputs["top scale"],
         },
@@ -722,7 +722,7 @@ def nodegroup_coconut_stem(
     )
 
     map_range_1 = nw.new_node(
-        Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[2], 4: 0.01}
+        Nodes.MapRange, input_kwargs={"Value": capture_attribute.outputs[1], 4: 0.01}
     )
 
     combine_xyz = nw.new_node(
@@ -759,7 +759,7 @@ def nodegroup_coconut_stem(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": join_geometry,
-            "distance to edge": capture_attribute_1.outputs[2],
+            "distance to edge": capture_attribute_1.outputs[1],
         },
     )
 
@@ -834,7 +834,7 @@ def shader_leaf(nw: NodeWrangler, basic_color):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": hue_saturation_value,
-            "Specular": 0.5955,
+            "Specular IOR Level": 0.5955,
             "Roughness": 1.0,
         },
     )
@@ -853,10 +853,10 @@ def nodegroup_pineapple_leaf(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 8),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, -0.32, 3.72)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.92, 4.32)),
+            ("NodeSocketInt", "Resolution", 8),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (0.0, -0.32, 3.72)),
+            ("NodeSocketVector", "End", (0.0, 0.92, 4.32)),
         ],
     )
 
@@ -952,8 +952,8 @@ def nodegroup_pineapple_crown(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Leaf", None),
-            ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.7)),
-            ("NodeSocketVectorEuler", "rotation base", (-0.4363, 0.0, 0.0)),
+            ("NodeSocketVector", "translation", (0.0, 0.0, 0.7)),
+            ("NodeSocketVector", "rotation base", (-0.4363, 0.0, 0.0)),
             ("NodeSocketInt", "number of leaves", 75),
             ("NodeSocketFloat", "noise amount", 0.1),
             ("NodeSocketFloat", "noise scale", 50.0),
@@ -1081,12 +1081,12 @@ def nodegroup_pineapple_stem(nw: NodeWrangler, basic_color):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 16),
-            ("NodeSocketVectorTranslation", "Start", (0.0, 0.0, 0.0)),
-            ("NodeSocketVectorTranslation", "Middle", (0.0, -0.32, 3.72)),
-            ("NodeSocketVectorTranslation", "End", (0.0, 0.92, 4.32)),
-            ("NodeSocketVectorTranslation", "translation", (0.0, 0.0, 0.7)),
-            ("NodeSocketVectorEuler", "rotation base", (-0.5236, 0.0, 0.0)),
+            ("NodeSocketInt", "Resolution", 16),
+            ("NodeSocketVector", "Start", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Middle", (0.0, -0.32, 3.72)),
+            ("NodeSocketVector", "End", (0.0, 0.92, 4.32)),
+            ("NodeSocketVector", "translation", (0.0, 0.0, 0.7)),
+            ("NodeSocketVector", "rotation base", (-0.5236, 0.0, 0.0)),
             ("NodeSocketInt", "number of leaves", 75),
             ("NodeSocketFloat", "noise amount", 0.1),
             ("NodeSocketFloat", "noise scale", 20.0),

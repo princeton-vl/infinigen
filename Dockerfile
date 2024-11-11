@@ -23,6 +23,6 @@ WORKDIR /opt/infinigen
 COPY . .
 RUN conda init bash && \
     . ~/.bashrc && \
-    conda create --name infinigen python=3.10 -y && \
+    conda create --name infinigen python=3.11 -y && \
     conda activate infinigen && \
     pip install -e ".[dev]"

@@ -12,6 +12,7 @@ import numpy as np
 import trimesh
 from numpy import ascontiguousarray as AC
 
+from infinigen.core.nodes.node_wrangler import ng_inputs, ng_outputs
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import Attributes
@@ -427,12 +428,12 @@ def move_modifier(target_obj, m):
     with Timer(f"copying {m.name}"):
         modifier = target_obj.modifiers.new(m.name, "NODES")
         modifier.node_group = m.node_group
-        for i, inp in enumerate(modifier.node_group.inputs):
+        for i, inp in enumerate(ng_inputs(modifier.node_group).values()):
             if i > 0:
                 id = inp.identifier
                 modifier[f"{id}_attribute_name"] = inp.name
                 modifier[f"{id}_use_attribute"] = True
-        for i, outp in enumerate(modifier.node_group.outputs):
+        for i, outp in enumerate(ng_outputs(modifier.node_group).values()):
             if i > 0:
                 id = outp.identifier
                 modifier[f"{id}_attribute_name"] = m[f"{id}_attribute_name"]

@@ -148,7 +148,11 @@ def shader_fabric_base(
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": reroute, "Specular": 0.6309, "Roughness": 0.9945},
+        input_kwargs={
+            "Base Color": reroute,
+            "Specular IOR Level": 0.6309,
+            "Roughness": 0.9945,
+        },
     )
 
     combine_color = nw.new_node(
@@ -160,7 +164,7 @@ def shader_fabric_base(
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": combine_color,
-            "Specular": 0.6309,
+            "Specular IOR Level": 0.6309,
             "Roughness": 0.9945,
         },
     )

@@ -950,7 +950,7 @@ def nodegroup_nodegroup_leaf_gen(nw: NodeWrangler, **kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Mesh": set_position_1,
-            "Attribute": capture_attribute.outputs[2],
+            "Attribute": capture_attribute.outputs[1],
             "X Modulated": nodegroup_midrib.outputs["X Modulated"],
             "Vein Coord": nodegroup_vein_coord_001,
             "Vein Value": nodegroup_apply_vein_midrib,
@@ -1158,9 +1158,9 @@ def geo_leaf_broadleaf(nw: NodeWrangler, **kwargs):
         input_kwargs={
             "Geometry": move_to_origin,
             "Offset": nodegroup_leaf_gen.outputs["Attribute"],
-            "Coordinate": capture_attribute.outputs["Attribute"],
-            "subvein offset": capture_attribute_1.outputs[2],
-            "vein value": capture_attribute_2.outputs[2],
+            "Coordinate": capture_attribute.outputs[1],
+            "subvein offset": capture_attribute_1.outputs[1],
+            "vein value": capture_attribute_2.outputs[1],
         },
     )
 

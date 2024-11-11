@@ -69,9 +69,9 @@ class VeratrumMonocotFactory(MonocotGrowthFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Clearcoat": clearcoat,
-                "Subsurface": 0.01,
+                "Specular IOR Level": specular,
+                "Coat Weight": clearcoat,
+                "Subsurface Weight": 0.01,
                 "Subsurface Radius": (0.01, 0.01, 0.01),
             },
         )

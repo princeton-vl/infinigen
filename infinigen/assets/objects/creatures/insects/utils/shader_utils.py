@@ -21,7 +21,7 @@ def shader_black_w_noise_shader(nw: NodeWrangler):
         input_kwargs={
             "Base Color": group,
             "Metallic": 0.9,
-            "Specular": 0.5114,
+            "Specular IOR Level": 0.5114,
             "Roughness": 0.2568,
         },
     )

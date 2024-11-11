@@ -10,6 +10,7 @@ import bpy
 import pytest
 
 from infinigen.core import tagging
+from infinigen.core.init import configure_blender
 from infinigen.core.util import blender as butil
 from infinigen.core.util.test_utils import import_item, load_txt_list, setup_gin
 
@@ -80,6 +81,7 @@ def check_factory_runs(fac_class, seed1=0, seed2=0, distance_m=50):
 )
 def test_nature_factory_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_nature", configs=["base_nature.gin"])
+    configure_blender()
     fac_class = import_item(pathspec)
     check_factory_runs(fac_class, **kwargs)
 

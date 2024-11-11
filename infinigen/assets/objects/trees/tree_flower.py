@@ -83,7 +83,7 @@ def nodegroup_follow_curve(nw):
 
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     attribute_statistic = nw.new_node(
@@ -227,7 +227,7 @@ def nodegroup_flower_petal(nw):
 
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     multiply = nw.new_node(
@@ -263,7 +263,7 @@ def nodegroup_flower_petal(nw):
 
     separate_xyz_1 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     add_1 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_1.outputs["X"]})
@@ -540,7 +540,7 @@ def nodegroup_plant_seed(nw):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketVector", "Dimensions", (0.0, 0.0, 0.0)),
-            ("NodeSocketIntUnsigned", "U", 4),
+            ("NodeSocketInt", "U", 4),
             ("NodeSocketInt", "V", 8),
         ],
     )
@@ -656,7 +656,7 @@ def shader_petal(nw, petal_color_name):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": petal_color,
-            "Specular": specular,
+            "Specular IOR Level": specular,
             "Roughness": roughness,
         },
     )
