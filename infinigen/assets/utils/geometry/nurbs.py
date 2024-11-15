@@ -10,11 +10,18 @@ import math
 import bmesh
 import bpy
 import numpy as np
-from geomdl import NURBS
 
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
+
+try:
+    from geomdl import NURBS
+except ImportError:
+    logger.warning(
+        "Failed to import `geomdl` package, generation will crash if `geomdl` is used"
+    )
+    NURBS = None
 
 try:
     import bnurbs
@@ -208,7 +215,12 @@ def blender_mesh_from_pydata(points, edges, faces, uvs=None, name="pydata_mesh")
     return obj
 
 
-def blender_nurbs_to_geomdl(s: bpy.types.Spline) -> NURBS.Surface:
+def blender_nurbs_to_geomdl(s: bpy.types.Spline):
+    if NURBS is None:
+        raise ImportError(
+            f"geomdl was not found at runtime, please either install `geomdl` or avoid calling {blender_nurbs_to_geomdl}"
+        )
+
     surf = NURBS.Surface(normalize_kv=False)
 
     surf.degree_u, surf.degree_v = (s.order_u - 1, s.order_v - 1)
@@ -241,7 +253,7 @@ def blender_nurbs_to_geomdl(s: bpy.types.Spline) -> NURBS.Surface:
     return surf
 
 
-def geomdl_to_mesh(surf: NURBS.Surface, eval_delta, name="geomdl_mesh"):
+def geomdl_to_mesh(surf, eval_delta, name="geomdl_mesh"):
     surf.delta = eval_delta
     points = np.array(surf.evalpts)
 
@@ -277,6 +289,11 @@ def map_uv_to_valid_domain(s: bpy.types.Spline, uv: np.array):
 def geomdl_nurbs(
     ctrlpts, eval_delta, ws=None, kv_u=None, kv_v=None, name="loft_nurbs", cyclic_v=True
 ):
+    if NURBS is None:
+        raise ImportError(
+            f"geomdl was not found at runtime, please either install `geomdl` or avoid calling {geomdl_nurbs}"
+        )
+
     n, m, _ = ctrlpts.shape
     degree_u, degree_v = (3, 3)
 

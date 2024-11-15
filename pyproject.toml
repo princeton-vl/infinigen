@@ -22,8 +22,6 @@ classifiers = [
 requires-python = "==3.11.*"
 dependencies = [
     "bpy==4.2.0",
-    "frozendict", # TODO remove
-    "geomdl", # used only for creatures
     "gin_config>=0.5.0",
     "imageio",
     "matplotlib",
@@ -40,6 +38,8 @@ dependencies = [
     "tqdm",
     "trimesh",
     "OpenEXR",
+
+    "geomdl", # can be removed so long as you do not generate any creatures
 
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl", 

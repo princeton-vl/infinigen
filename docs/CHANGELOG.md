@@ -143,3 +143,6 @@ v1.10.1
 
 v1.11.0
 - Update to Blender == 4.2.0
+
+v1.11.1
+- Remove `frozendict` dependency, make `geomdl` optional if not using creatures
