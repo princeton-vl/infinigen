@@ -23,8 +23,15 @@ from pathlib import Path
 import bpy
 import gin
 import numpy as np
-import submitit
 from PIL import Image
+
+try:
+    import submitit
+except ImportError:
+    logging.warning(
+        f"Failed to import submitit, {Path(__file__).name} will crash if slurm job is requested"
+    )
+    submitit = None
 
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
@@ -448,6 +455,9 @@ def mapfunc(
         with Pool(args.n_workers) as p:
             return list(p.imap(f, its))
     else:
+        if submitit is None:
+            raise ValueError("submitit not imported, cannot use --slurm")
+
         executor = submitit.AutoExecutor(folder=args.output_folder / "logs")
 
         slurm_additional_parameters = {}

@@ -28,9 +28,16 @@ from shutil import which
 import gin
 import numpy as np
 import pandas as pd
-import submitit
-import submitit.core.utils
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+try:
+    import submitit
+    import submitit.core.utils
+except ImportError:
+    logging.warning(
+        f"Failed to import submitit, {Path(__file__).name} will crash if slurm job is requested"
+    )
+    submitit = None
 
 # ruff: noqa: E402
 ORIG_SYS_PATH = list(sys.path)  # Make a new instance of sys.path
@@ -114,6 +121,9 @@ def slurm_submit_cmd(
     slurm_niceness=None,
     **_,
 ):
+    if submitit is None:
+        raise ValueError("submitit is required for slurm_submit_cmd")
+
     executor = submitit.AutoExecutor(folder=(folder / "logs"))
     executor.update_parameters(
         mem_gb=mem_gb,
@@ -157,11 +167,13 @@ def slurm_submit_cmd(
 
     executor.update_parameters(slurm_additional_parameters=slurm_additional_params)
 
+    if callable(cmd[0]):
+        raise ValueError(
+            "Callable with submit_cmd is deprecated, please submit a commandline string"
+        )
+
     while True:
         try:
-            if callable(cmd[0]):
-                func, *arg = cmd
-                return executor.submit(func, *arg)
             render_fn = submitit.helpers.CommandFunction(cmd)
             return executor.submit(render_fn)
         except submitit.core.utils.FailedJobError as e:
@@ -172,18 +184,19 @@ def slurm_submit_cmd(
 
 @gin.configurable
 def local_submit_cmd(
-    cmd, folder, name, use_scheduler=False, passthrough=False, **kwargs
+    cmd, folder: Path, name: str, use_scheduler=False, passthrough=False, **kwargs
 ):
     ExecutorClass = ScheduledLocalExecutor if use_scheduler else ImmediateLocalExecutor
     log_folder = (folder / "logs") if not passthrough else None
     executor = ExecutorClass(folder=log_folder)
     executor.update_parameters(name=name, **kwargs)
+
     if callable(cmd[0]):
-        func, *arg = cmd
-        return executor.submit(func, *arg)
-    else:
-        func = submitit.helpers.CommandFunction(cmd)
-        return executor.submit(func)
+        raise ValueError(
+            "Callable with submit_cmd is deprecated, please submit a commandline string"
+        )
+
+    return executor.submit(cmd)
 
 
 def init_db_from_existing(output_folder: Path):

@@ -34,10 +34,11 @@ dependencies = [
     "scikit-learn",
     "scipy",
     "shapely",
-    "submitit",
     "tqdm",
     "trimesh",
     "OpenEXR",
+
+    "submitit", # can be removed so long as you dont use slurm.gin or --slurm args
 
     "geomdl", # can be removed so long as you do not generate any creatures
 

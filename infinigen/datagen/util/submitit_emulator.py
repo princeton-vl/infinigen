@@ -13,7 +13,6 @@ import logging
 import os
 import re
 import subprocess
-import sys
 from contextlib import nullcontext
 from dataclasses import dataclass
 from multiprocessing import Process
@@ -67,9 +66,7 @@ def get_fake_job_id():
 
 
 def job_wrapper(
-    func,
-    inner_args,
-    inner_kwargs,
+    command: list[str],
     stdout_file: Path = None,
     stderr_file: Path = None,
     cuda_devices=None,
@@ -77,33 +74,36 @@ def job_wrapper(
     stdout_ctx = stdout_file.open("w") if stdout_file is not None else nullcontext()
     stderr_ctx = stderr_file.open("w") if stderr_file is not None else nullcontext()
     with stdout_ctx as stdout, stderr_ctx as stderr:
-        if stdout_file is not None:
-            sys.stdout = stdout
-        if stderr_file is not None:
-            sys.stderr = stderr
         if cuda_devices is not None:
-            os.environ[CUDA_VARNAME] = ",".join([str(i) for i in cuda_devices])
+            env = os.environ.copy()
+            env[CUDA_VARNAME] = ",".join([str(i) for i in cuda_devices])
         else:
-            os.environ[CUDA_VARNAME] = ""
-        return func(*inner_args, **inner_kwargs)
+            env = None
+
+        subprocess.run(
+            command,
+            stdout=stdout if stdout_file is not None else subprocess.PIPE,
+            stderr=stderr if stderr_file is not None else subprocess.PIPE,
+            shell=False,
+            check=False,  # dont throw CalledProcessError
+            env=env,
+        )
 
 
-def launch_local(func, args, kwargs, job_id, log_folder, name, cuda_devices=None):
+def launch_local(command: str, job_id, log_folder: Path, name: str, cuda_devices=None):
     if log_folder is None:
         # pass input through to stdout if log_folder is None
         stderr_file = None
         stdout_file = None
-        print(f"{func} {args}")
+        print(command)
     else:
         stderr_file = log_folder / f"{job_id}_0_log.err"
         stdout_file = log_folder / f"{job_id}_0_log.out"
         with stdout_file.open("w") as f:
-            f.write(f"{func} {args}\n")
+            f.write(f"{command}\n")
 
     kwargs = dict(
-        func=func,
-        inner_args=args,
-        inner_kwargs=kwargs,
+        command=command,
         stdout_file=stdout_file,
         stderr_file=stderr_file,
         cuda_devices=cuda_devices,
@@ -126,12 +126,10 @@ class ImmediateLocalExecutor:
     def update_parameters(self, **parameters):
         self.parameters.update(parameters)
 
-    def submit(self, func, *args, **kwargs):
+    def submit(self, command: str):
         job_id = get_fake_job_id()
         name = self.parameters.get("name", None)
-        proc = launch_local(
-            func, args, kwargs, job_id, log_folder=self.log_folder, name=name
-        )
+        proc = launch_local(command, job_id, log_folder=self.log_folder, name=name)
         return LocalJob(job_id=job_id, process=proc)
 
 
@@ -150,12 +148,10 @@ class LocalScheduleHandler:
         self.jobs_per_gpu = jobs_per_gpu
         self.use_gpu = use_gpu
 
-    def enqueue(self, func, args, kwargs, params, log_folder):
+    def enqueue(self, command: str, params, log_folder):
         job = LocalJob(job_id=get_fake_job_id(), process=None)
         job_rec = dict(
-            func=func,
-            args=args,
-            kwargs=kwargs,
+            command=command,
             params=params,
             job=job,
             log_folder=log_folder,
@@ -166,7 +162,7 @@ class LocalScheduleHandler:
         return job
 
     @gin.configurable
-    def total_resources(self):
+    def total_resources(self) -> set:
         resources = {}
 
         if self.use_gpu:
@@ -192,7 +188,7 @@ class LocalScheduleHandler:
 
         return resources
 
-    def resources_available(self, total):
+    def resources_available(self, total) -> set:
         resources = copy.copy(total)
 
         for job_rec in self.queue:
@@ -221,9 +217,7 @@ class LocalScheduleHandler:
             gpu_idxs = [g[0] for g in gpu_assignment]
 
         job_rec["job"].process = launch_local(
-            func=job_rec["func"],
-            args=job_rec["args"],
-            kwargs=job_rec["kwargs"],
+            command=job_rec["command"],
             job_id=job_rec["job"].job_id,
             log_folder=job_rec["log_folder"],
             name=job_rec["params"].get("name", None),
@@ -231,7 +225,9 @@ class LocalScheduleHandler:
         )
         job_rec["gpu_assignment"] = gpu_assignment
 
-    def attempt_dispatch_job(self, job_rec, available, total, select_gpus="first"):
+    def attempt_dispatch_job(
+        self, job_rec, available: set, total: set, select_gpus="first"
+    ):
         n_gpus = job_rec["params"].get("gpus", 0) or 0
 
         if n_gpus == 0 or not self.use_gpu:
@@ -260,9 +256,9 @@ class ScheduledLocalExecutor:
     def update_parameters(self, **parameters):
         self.parameters.update(parameters)
 
-    def submit(self, func, *args, **kwargs):
+    def submit(self, command):
         return LocalScheduleHandler.instance().enqueue(
-            func, args, kwargs, params=self.parameters, log_folder=self.log_folder
+            command, params=self.parameters, log_folder=self.log_folder
         )
 
 
