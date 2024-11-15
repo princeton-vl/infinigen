@@ -26,9 +26,9 @@ except ImportError:
 try:
     import bnurbs
 except ImportError:
-    logger.warning(
-        "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
-    )
+    # logger.warning(
+    #    "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
+    # )
     bnurbs = None
 
 
@@ -154,6 +154,12 @@ def blender_nurbs(
     spline.use_cyclic_v = cyclic_v
     spline.resolution_u, spline.resolution_v = resolution
 
+    if (kv_u is not None or kv_v is not None) and bnurbs is None:
+        logger.warning(
+            "Failed to import compiled `bnurbs` package. `bnurbs` extension is no longer compiled by default, "
+            f"please either install it via BUILD_BNURBS=True during install, or avoid calling {blender_nurbs.__name__}"
+        )
+
     if kv_u is not None:
         bnurbs.set_knotsu(spline, kv_u)
     if kv_v is not None:
@@ -218,7 +224,7 @@ def blender_mesh_from_pydata(points, edges, faces, uvs=None, name="pydata_mesh")
 def blender_nurbs_to_geomdl(s: bpy.types.Spline):
     if NURBS is None:
         raise ImportError(
-            f"geomdl was not found at runtime, please either install `geomdl` or avoid calling {blender_nurbs_to_geomdl}"
+            f"geomdl was not found at runtime, please either install `geomdl` or avoid calling {blender_nurbs_to_geomdl.__name__}"
         )
 
     surf = NURBS.Surface(normalize_kv=False)
@@ -229,7 +235,8 @@ def blender_nurbs_to_geomdl(s: bpy.types.Spline):
 
     if bnurbs is None:
         logger.warning(
-            "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
+            "Failed to import compiled `bnurbs` package. `bnurbs` extension is no longer compiled by default, "
+            f"please either install it via BUILD_BNURBS=True during install, or avoid calling {blender_nurbs_to_geomdl.__name__}"
         )
     surf.knotvector_u = bnurbs.get_knotsu(s)
     surf.knotvector_v = bnurbs.get_knotsv(s)
