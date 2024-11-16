@@ -138,11 +138,12 @@ def save_meshes(
             previous_frame_mesh_id_mapping,
             current_frame_mesh_id_mapping,
         )
-        cam_util.save_camera_parameters(
-            camera_ids=cameras,
-            output_folder=frame_info_folder / "cameras",
-            frame=frame_idx,
-        )
+        for cam in cameras:
+            cam_util.save_camera_parameters(
+                camera_obj=cam,
+                output_folder=frame_info_folder / "cameras",
+                frame=frame_idx,
+            )
         previous_frame_mesh_id_mapping = dict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
@@ -340,6 +341,7 @@ def execute_tasks(
         save_meshes(
             scene_seed,
             output_folder=output_folder,
+            cameras=[c for rig in camera_rigs for c in rig.children],
             frame_range=frame_range,
             point_trajectory_src_frame=point_trajectory_src_frame,
         )
