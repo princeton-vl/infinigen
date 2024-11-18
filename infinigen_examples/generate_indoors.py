@@ -253,6 +253,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
             nonroom_objs=nonroom_objs,
+            terrain_coverage_range=None,  # do not filter cameras by terrain visibility, even if nature scenetype configs request this
         )
         butil.delete(solved_floor_surface)
         return scene_preprocessed
@@ -260,7 +261,13 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
 
     def animate_cameras():
-        cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
+        cam_util.animate_cameras(
+            camera_rigs,
+            solved_bbox,
+            scene_preprocessed,
+            pois=[],
+            terrain_coverage_range=None,  # same as above - do not filter by terrain visiblity when indoors
+        )
 
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]

@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 
 import gin
-import submitit
 
 from infinigen.datagen.util.submitit_emulator import LocalJob
 
@@ -73,7 +72,7 @@ def get_scene_state(scene: dict, taskname: str, scene_folder: Path):
         return JobState.Succeeded
     elif isinstance(job_obj, LocalJob):
         res = job_obj.status()
-    elif isinstance(job_obj, submitit.Job):
+    elif hasattr(job_obj, "job_id"):
         res = seff(job_obj)
     else:
         raise TypeError(f"Unrecognized {job_obj=}")
@@ -95,7 +94,7 @@ def cancel_job(job_obj):
         return JobState.Succeeded
     elif isinstance(job_obj, LocalJob):
         job_obj.kill()
-    elif isinstance(job_obj, submitit.Job):
+    elif hasattr(job_obj, "job_id"):
         # TODO: does submitit have a cancel?
         subprocess.check_call(["/usr/bin/scancel", str(job_obj.job_id)])
     else:

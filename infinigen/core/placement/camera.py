@@ -357,7 +357,7 @@ def keep_cam_pose_proposal(
         return None
 
     coverage = len(dists) / n_pix
-    if (
+    if terrain_coverage_range is not None and (
         coverage < terrain_coverage_range[0]
         or coverage > terrain_coverage_range[1]
         or coverage == 0
@@ -435,12 +435,10 @@ def compute_base_views(
     radius=None,
     bbox=None,
     placeholders_kd=None,
-    camera_selection_answers={},
-    vertexwise_min_dist=None,
-    camera_selection_ratio=None,
     min_candidates_ratio=20,
     max_tries=30000,
     visualize=False,
+    **kwargs,
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
@@ -475,9 +473,7 @@ def compute_base_views(
                     terrain,
                     scene_bvh,
                     placeholders_kd,
-                    camera_selection_answers=camera_selection_answers,
-                    vertexwise_min_dist=vertexwise_min_dist,
-                    camera_selection_ratio=camera_selection_ratio,
+                    **kwargs,
                 )
                 all_scores.append(score)
 
@@ -660,6 +656,7 @@ def configure_cameras(
     nonroom_objs=None,
     mvs_setting=False,
     mvs_radius=("uniform", 12, 18),
+    **kwargs,
 ):
     bpy.context.view_layer.update()
 
@@ -716,6 +713,7 @@ def configure_cameras(
             radius=mvs_radius,
             bbox=init_bounding_box,
             **scene_preprocessed,
+            **kwargs,
         )
 
         score, props, focus_dist = views[0]
@@ -740,6 +738,7 @@ def animate_cameras(
     pois=None,
     follow_poi_chance=0.0,
     policy_registry=None,
+    **kwargs,
 ):
     animation_ratio = {}
     animation_answers = {}
@@ -760,6 +759,7 @@ def animate_cameras(
                 vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
                 camera_selection_answers=animation_answers,
                 camera_selection_ratio=animation_ratio,
+                **kwargs,
             )
 
             if score is None:
@@ -793,7 +793,7 @@ def animate_cameras(
 
 @gin.configurable
 def save_camera_parameters(
-    camera_obj: bpy.types.Object, output_folder, frame, use_dof=False
+    camera_obj: bpy.types.Object, output_folder: Path, frame: int, use_dof=False
 ):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)

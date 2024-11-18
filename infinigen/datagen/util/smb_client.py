@@ -17,7 +17,14 @@ from itertools import product
 from multiprocessing import Pool
 from pathlib import Path
 
-import submitit
+try:
+    import submitit
+except ImportError:
+    logging.warning(
+        f"Failed to import submitit, {Path(__file__).name} will crash if slurm job is requested"
+    )
+    submitit = None
+
 from tqdm import tqdm
 
 logger = logging.getLogger(__file__)
@@ -216,10 +223,10 @@ def list_files_recursive(base_path: Path):
 def mapfunc(f, its, args):
     if args.n_workers == 1:
         return [f(i) for i in its]
-    elif not args.slurm:
-        with Pool(args.n_workers) as p:
-            return list(tqdm(p.imap(f, its), total=len(its)))
-    else:
+    elif args.slurm:
+        if submitit is None:
+            raise ValueError("submitit not imported, cannot use --slurm")
+
         executor = submitit.AutoExecutor(folder=args.local_path / "logs")
         executor.update_parameters(
             name=args.local_path.name,
@@ -230,6 +237,9 @@ def mapfunc(f, its, args):
             slurm_array_parallelism=args.n_workers,
         )
         executor.map_array(f, its)
+    else:
+        with Pool(args.n_workers) as p:
+            return list(tqdm(p.imap(f, its), total=len(its)))
 
 
 def resolve_globs(p: Path, args):

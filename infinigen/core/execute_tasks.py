@@ -16,7 +16,6 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import 
 
 import bpy
 import gin
-from frozendict import frozendict
 
 import infinigen.assets.scatters
 from infinigen.core import init, surface
@@ -102,7 +101,7 @@ def save_meshes(
     for col in bpy.data.collections:
         col.hide_viewport = col.hide_render
 
-    previous_frame_mesh_id_mapping = frozendict()
+    previous_frame_mesh_id_mapping = dict()
     current_frame_mesh_id_mapping = defaultdict(dict)
 
     # save static meshes
@@ -118,7 +117,7 @@ def save_meshes(
         previous_frame_mesh_id_mapping,
         current_frame_mesh_id_mapping,
     )
-    previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+    previous_frame_mesh_id_mapping = dict(current_frame_mesh_id_mapping)
     current_frame_mesh_id_mapping.clear()
 
     for obj in bpy.data.objects:
@@ -139,12 +138,13 @@ def save_meshes(
             previous_frame_mesh_id_mapping,
             current_frame_mesh_id_mapping,
         )
-        cam_util.save_camera_parameters(
-            camera_ids=cameras,
-            output_folder=frame_info_folder / "cameras",
-            frame=frame_idx,
-        )
-        previous_frame_mesh_id_mapping = frozendict(current_frame_mesh_id_mapping)
+        for cam in cameras:
+            cam_util.save_camera_parameters(
+                camera_obj=cam,
+                output_folder=frame_info_folder / "cameras",
+                frame=frame_idx,
+            )
+        previous_frame_mesh_id_mapping = dict(current_frame_mesh_id_mapping)
         current_frame_mesh_id_mapping.clear()
 
 
@@ -341,13 +341,14 @@ def execute_tasks(
         save_meshes(
             scene_seed,
             output_folder=output_folder,
+            cameras=[c for rig in camera_rigs for c in rig.children],
             frame_range=frame_range,
             point_trajectory_src_frame=point_trajectory_src_frame,
         )
 
 
 def main(input_folder, output_folder, scene_seed, task, task_uniqname, **kwargs):
-    version_req = ["3.6.0", "4.2.0"]
+    version_req = ["4.2.0"]
     assert bpy.app.version_string in version_req, (
         f"You are using blender={bpy.app.version_string} which is "
         f"not supported. Please use {version_req}"
