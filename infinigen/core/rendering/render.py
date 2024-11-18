@@ -18,7 +18,7 @@ import gin
 import numpy as np
 from imageio import imwrite
 
-from infinigen.core import init, surface
+from infinigen.core import init
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.post_render import (
@@ -240,6 +240,21 @@ def shader_random(nw: NodeWrangler):
     )
 
 
+def replace_shader(obj):
+    for i in range(len(obj.material_slots)):
+        mat = obj.material_slots[i].material
+        nodes = obj.material_slots[i].material.node_tree.nodes
+        object_info = nodes.new(type="ShaderNodeObjectInfo")
+        white_noise_texture = nodes.new(type="ShaderNodeTexWhiteNoise")
+        material_output = nodes["Material Output"]
+        mat.node_tree.links.new(
+            object_info.outputs["Random"], white_noise_texture.inputs["Vector"]
+        )
+        mat.node_tree.links.new(
+            white_noise_texture.outputs["Color"], material_output.inputs["Surface"]
+        )
+
+
 def global_flat_shading():
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if "fire_system_type" in obj and obj["fire_system_type"] == "volume":
@@ -266,14 +281,13 @@ def global_flat_shading():
             print(obj.name, "NONE")
             continue
         with butil.SelectObjects(obj):
-            for i in range(len(obj.material_slots)):
-                bpy.ops.object.material_slot_remove()
+            replace_shader(obj)
 
-    for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
-        surface.add_material(obj, shader_random)
-    for mat in bpy.data.materials:
-        nw = NodeWrangler(mat.node_tree)
-        shader_random(nw)
+    # for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
+    #     surface.add_material(obj, shader_random)
+    # for mat in bpy.data.materials:
+    #     nw = NodeWrangler(mat.node_tree)
+    #     shader_random(nw)
 
     nw = NodeWrangler(bpy.data.worlds["World"].node_tree)
     for link in nw.links:

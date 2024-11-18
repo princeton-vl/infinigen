@@ -45,7 +45,8 @@ from infinigen.core.util.test_utils import (
     import_item,
     load_txt_list,
 )
-from infinigen.terrain.core import Terrain
+from infinigen.terrain import Terrain
+from infinigen.tools.convert_displacement import convert_shader_displacement
 from infinigen_examples.constraints import home as home_constraints
 from infinigen_examples.constraints import util as cu
 from infinigen_examples.util.generate_indoors_util import (
@@ -370,8 +371,11 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         for room_meshed in rooms_meshed.objects:
             room_ocmeshed = ocmesher_utils.run_ocmesher(room_meshed, cameras)
             rooms_ocmeshed.append(room_ocmeshed)
+
         butil.group_in_collection(rooms_ocmeshed, "placeholders:room_ocmeshes")
         rooms_meshed = butil.get_collection("placeholders:room_ocmeshes")
+        for mesh in rooms_meshed.objects:
+            convert_shader_displacement(mesh)
 
     rooms_split = room_dec.split_rooms(list(rooms_meshed.objects))
 
