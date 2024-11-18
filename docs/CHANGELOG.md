@@ -145,9 +145,10 @@ v1.11.0
 - Update to Blender == 4.2.0
 
 v1.11.1
+- Fix failed camera search when canyon/cliff/cave loaded as nature background
+- Fix scrambled GT maps in blender_gt due to incorrect OpenEXR pixel unpack ordering
+- Fix save_mesh kwarg mismatch from v1.10.0
 - Remove `frozendict` dependency, make `geomdl` optional if not using creatures
 - Make `submitit` optional if not using SLURM
 - Make blender addons optional if not using relevant assets (rocks/terrain/snowlayer)
 - Make `bnurbs` CPython module optional and not installed by default
-- Fix save_mesh kwarg mismatch from v1.10.0
-- Fix failed camera search when canyon/cliff/cave loaded as nature background

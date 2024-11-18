@@ -42,12 +42,12 @@ def load_single_channel(p):
             np_type = np.uint8
     data = np.frombuffer(file.channel(channel, channel_type.type), np_type)
     dw = file.header()["dataWindow"]
-    sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
+    sz = (dw.max.y - dw.min.y + 1, dw.max.x - dw.min.x + 1)
     return data.reshape(sz)
 
 
-load_depth = load_single_channel
-
+def load_depth(p):
+    return load_single_channel(p)
 
 def load_normals(p):
     return load_exr(p)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
