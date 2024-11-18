@@ -11,10 +11,13 @@ import cv2
 import gin
 import numpy as np
 
+from infinigen.core.init import require_blender_addon
 from infinigen.core.util.organization import AssetFile, LandTile
 from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall
 from infinigen.terrain.utils import random_nat, smooth
+
+require_blender_addon("antlandscape", fail="warn")
 
 
 def create(
@@ -22,6 +25,8 @@ def create(
     subdivision_x,
     subdivision_y,
 ):
+    require_blender_addon("antlandscape")
+
     def presets(**kwargs):
         bpy.ops.mesh.landscape_add(
             ant_terrain_name="Landscape",
