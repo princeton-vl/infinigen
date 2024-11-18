@@ -21,6 +21,7 @@ from infinigen.assets.materials import (
     water,
     waterfall_material,
 )
+from infinigen.core.init import require_blender_addon
 from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
@@ -33,6 +34,8 @@ from infinigen.core.util.logging import Timer
 logger = logging.getLogger(__name__)
 
 FLUID_INITIALIZED = False
+
+require_blender_addon("antlandscape", fail="warn")
 
 
 def check_initalize_fluids():
@@ -620,6 +623,8 @@ def generate_waterfall(
     check_initalize_fluids()
 
     seed = np.random.randint(10000)
+
+    require_blender_addon("antlandscape")
 
     bpy.ops.mesh.landscape_add(
         ant_terrain_name="Landscape",
