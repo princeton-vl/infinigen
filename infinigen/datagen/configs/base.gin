@@ -11,4 +11,8 @@ sample_scene_spec.config_distribution = [
     ("coast", 4),
     ("arctic", 1),
     ("snowy_mountain", 1),
+
+    # keep these here even if 0, otherwise sample_config_distribution will clash with them if they are provided manually by the user
+    ("under_water", 0),
+    ("kelp_forest", 0),
 ]
