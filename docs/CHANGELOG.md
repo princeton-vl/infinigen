@@ -153,3 +153,6 @@ v1.11.1
 - Make `submitit` optional if not using SLURM
 - Make blender addons optional if not using relevant assets (rocks/terrain/snowlayer)
 - Make `bnurbs` CPython module optional and not installed by default
+
+v1.11.2
+- Fix opengl_gt input file symlink missing
