@@ -43,8 +43,8 @@ dependencies = [
     "geomdl", # can be removed so long as you do not generate any creatures
 
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
-    "python-fcl", 
-    "rtree", 
+    "python-fcl",
+    "rtree",
 ]
 
 [project.optional-dependencies]
@@ -60,7 +60,6 @@ vis = [
 ]
 dev = [
     "pytest",
-    "pytest-ordering",
     "pytest-cov",
     "pytest-xdist",
     "pytest-timeout",
@@ -68,7 +67,7 @@ dev = [
     "ruff",
     "isort",
     "tabulate",
-    "rapidfuzz", 
+    "rapidfuzz",
     "pre-commit"
 ]
 
@@ -117,7 +116,7 @@ filterwarnings = [
     "ignore:The value of the smallest subnormal for <class 'numpy.float:UserWarning",
 
     # ignore warnings from landlab, not our problem
-    "ignore:pkg_resources is deprecated as an API:DeprecationWarning", 
+    "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
     "ignore:Importing from numpy.matlib is deprecated since 1.19.0:PendingDeprecationWarning",
     "ignore:Please import `label` from the `scipy.ndimage` namespace; the `scipy.ndimage.measurements` namespace is deprecated and will be removed in SciPy 2.0.0:DeprecationWarning"
 
@@ -134,7 +133,7 @@ exclude = [
 
     "*.ipynb",
 
-    # exclude known submodules 
+    # exclude known submodules
     "infinigen/datagen/customgt/dependencies/",
     "infinigen/OcMesher",
     "infinigen/infinigen_gpl",
@@ -147,8 +146,8 @@ exclude = [
 [tool.ruff.lint]
 
 select = [
-    "E", 
-    "I", 
+    "E",
+    "I",
     "F",
     "S102", # no exec(),
     "TID252", # relative imports only allowed for siblings
@@ -156,12 +155,12 @@ select = [
 ]
 ignore = [
     "E501", # over-length lines, formatter should handle it
-    "E741", # ambigous variable name 
+    "E741", # ambigous variable name
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [
-    "F401", 
+    "F401",
     "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
 ]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
