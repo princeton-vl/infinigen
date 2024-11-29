@@ -510,7 +510,7 @@ def spawn_capsule(rad, height, us=32, vs=16):
     bpy.context.collection.objects.link(obj)
 
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=us, v_segments=vs, diameter=2 * rad)
+    bmesh.ops.create_uvsphere(bm, u_segments=us, v_segments=vs, radius=rad)
 
     for v in bm.verts:
         if v.co.z > 0:
