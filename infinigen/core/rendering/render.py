@@ -225,18 +225,49 @@ def configure_compositor_output(
 
 
 def shader_random(nw: NodeWrangler):
-    # Code generated using version 2.4.3 of the node_transpiler
+    # Code generated using version 2.6.5 of the node_transpiler
+    object_info_1 = nw.new_node(Nodes.ObjectInfo_Shader)
 
-    object_info = nw.new_node(Nodes.ObjectInfo_Shader)
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 10
 
-    white_noise_texture = nw.new_node(
-        Nodes.WhiteNoiseTexture, input_kwargs={"Vector": object_info.outputs["Random"]}
-    )
+    divide = nw.new_node(Nodes.Math, input_kwargs={0: 1.0000, 1: value}, attrs={'operation': 'DIVIDE'})
 
-    nw.new_node(
-        Nodes.MaterialOutput,
-        input_kwargs={"Surface": white_noise_texture.outputs["Color"]},
-    )
+    divide_1 = nw.new_node(Nodes.Math, input_kwargs={0: object_info_1.outputs["Random"], 1: divide},
+                           attrs={'operation': 'DIVIDE'})
+
+    floor = nw.new_node(Nodes.Math, input_kwargs={0: divide_1}, attrs={'operation': 'FLOOR'})
+
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: floor, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    divide_2 = nw.new_node(Nodes.Math, input_kwargs={0: object_info_1.outputs["Random"], 1: divide},
+                           attrs={'operation': 'DIVIDE'})
+
+    fract = nw.new_node(Nodes.Math, input_kwargs={0: divide_2}, attrs={'operation': 'FRACT'})
+
+    divide_3 = nw.new_node(Nodes.Math, input_kwargs={0: fract, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    floor_1 = nw.new_node(Nodes.Math, input_kwargs={0: divide_3}, attrs={'operation': 'FLOOR'})
+
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: floor_1, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    divide_4 = nw.new_node(Nodes.Math, input_kwargs={0: divide_2, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    fract_1 = nw.new_node(Nodes.Math, input_kwargs={0: divide_4}, attrs={'operation': 'FRACT'})
+
+    divide_5 = nw.new_node(Nodes.Math, input_kwargs={0: fract_1, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    floor_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide_5}, attrs={'operation': 'FLOOR'})
+
+    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: floor_2, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    combine_color = nw.new_node(Nodes.CombineColor,
+                                input_kwargs={'Red': multiply, 'Green': multiply_1, 'Blue': multiply_2})
+
+    emission = nw.new_node(
+        "ShaderNodeEmission", input_kwargs={"Color": combine_color, "Strength": 0.5})
+    _ = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': emission})
+
 
 
 def global_flat_shading():
