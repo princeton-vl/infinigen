@@ -12,11 +12,13 @@ import logging
 import os
 import time
 from pathlib import Path
+import shutil
 
 import bpy
 import gin
 import numpy as np
 from imageio import imwrite
+import cv2
 
 from infinigen.core import init, surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -278,7 +280,7 @@ def global_flat_shading():
         nw.links.remove(link)
 
 
-def postprocess_blendergt_outputs(frames_folder, output_stem):
+def postprocess_blendergt_outputs(frames_folder, output_stem, frame, tmp_dir):
     # Save flow visualization
     flow_dst_path = frames_folder / f"Vector{output_stem}.exr"
     flow_array = load_flow(flow_dst_path)
@@ -325,15 +327,11 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
 
     # Save unique instances visualization
     uniq_inst_path = frames_folder / f"UniqueInstances{output_stem}.exr"
-    uniq_inst_array = load_uniq_inst(uniq_inst_path)
-    np.save(
-        flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"),
-        uniq_inst_array,
-    )
-    imwrite(
-        uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"),
-        colorize_int_array(uniq_inst_array),
-    )
+    #uniq_inst_array = load_uniq_inst(uniq_inst_path)
+    uniq_inst_tmp_path = f"{tmp_dir}/{frame:04d}.png"
+    uniq_inst_array = cv2.imread(uniq_inst_tmp_path)
+    np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
+    shutil.copy(uniq_inst_tmp_path, str(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.png")))
     uniq_inst_path.unlink()
 
 
@@ -475,7 +473,7 @@ def render_image(
             if flat_shading:
                 bpy.context.scene.frame_set(frame)
                 suffix = get_suffix(dict(frame=frame, **indices))
-                postprocess_blendergt_outputs(frames_folder, suffix)
+                postprocess_blendergt_outputs(frames_folder, suffix, frame, tmp_dir)
             else:
                 cam_util.save_camera_parameters(
                     camera,
