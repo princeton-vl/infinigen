@@ -224,11 +224,14 @@ class Nodes:
 
     # Shaders
     MixShader = "ShaderNodeMixShader"
+    AddShader = "ShaderNodeAddShader"
     DiffuseBSDF = "ShaderNodeBsdfDiffuse"
     PrincipledBSDF = "ShaderNodeBsdfPrincipled"
     TranslucentBSDF = "ShaderNodeBsdfTranslucent"
     TransparentBSDF = "ShaderNodeBsdfTransparent"
     PrincipledVolume = "ShaderNodeVolumePrincipled"
+    VolumeAbsorption = "ShaderNodeVolumeAbsorption"
+    VolumeScatter = "ShaderNodeVolumeScatter"
     PrincipledHairBSDF = "ShaderNodeBsdfHairPrincipled"
     Emission = "ShaderNodeEmission"
     Fresnel = "ShaderNodeFresnel"
