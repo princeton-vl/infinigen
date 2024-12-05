@@ -276,7 +276,7 @@ def global_flat_shading():
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if "fire_system_type" in obj and obj["fire_system_type"] == "volume":
             continue
-        if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
+        if obj.name.lower() in {"atmosphere", "atmosphere_fine", "liquid", "liquid_fine"}:
             bpy.data.objects.remove(obj)
         elif obj.active_material is not None:
             nw = obj.active_material.node_tree
@@ -285,6 +285,7 @@ def global_flat_shading():
                     vol_socket = node.inputs["Volume"]
                     if len(vol_socket.links) > 0:
                         nw.links.remove(vol_socket.links[0])
+    bpy.context.view_layer.update()
 
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if obj.type != "MESH":
