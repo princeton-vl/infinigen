@@ -243,7 +243,7 @@ def global_flat_shading():
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if "fire_system_type" in obj and obj["fire_system_type"] == "volume":
             continue
-        if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
+        if obj.name.lower() in {"atmosphere", "atmosphere_fine", "liquid", "liquid_fine"}:
             bpy.data.objects.remove(obj)
         elif obj.active_material is not None:
             nw = obj.active_material.node_tree
