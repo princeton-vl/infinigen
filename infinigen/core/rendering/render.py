@@ -252,6 +252,7 @@ def global_flat_shading():
                     vol_socket = node.inputs["Volume"]
                     if len(vol_socket.links) > 0:
                         nw.links.remove(vol_socket.links[0])
+    bpy.context.view_layer.update()
 
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if obj.type != "MESH":
