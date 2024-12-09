@@ -15,7 +15,6 @@ keywords = [
     "procedural"
 ]
 classifiers = [
-    "Framework :: Blender",
     "Programming Language :: Python :: 3",
 ]
 
