@@ -155,3 +155,7 @@ v1.11.1
 
 v1.11.2
 - Fix opengl_gt input file symlink missing
+
+v1.11.3
+- Increase max camera / object animation random walk trials
+- Fix scenetype gin recognition causing crashes for underwater.gin / kelpforest.gin

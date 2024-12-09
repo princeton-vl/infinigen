@@ -71,9 +71,7 @@ class BoidSwarmFactory(AssetFactory):
             step_range=step_size_range,
             yaw_dist=("normal", 0, 70),
         )
-        animation_policy.animate_trajectory(
-            p, self.bvh, policy, retry_rotation=True, max_full_retries=20
-        )
+        animation_policy.animate_trajectory(p, self.bvh, policy, retry_rotation=True)
 
         return p
 

@@ -578,7 +578,7 @@ def animate_trajectory(
     policy_func,
     validate_pose_func=None,
     max_step_tries=25,
-    max_full_retries=10,
+    max_full_retries=40,
     retry_rotation=False,
     verbose=True,
     fatal=False,
