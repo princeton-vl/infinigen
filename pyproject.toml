@@ -51,6 +51,9 @@ dependencies = [
 terrain = [
     "landlab==2.6.0",
     "pyrender",
+    # landlab depends on `setuptools` but doesn't explicitly list it as a
+    # dependency; We include it to avoid problems with newer Python versions.
+    "setuptools"
 ]
 vis = [
     "einops",
