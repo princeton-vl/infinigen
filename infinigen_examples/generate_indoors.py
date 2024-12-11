@@ -30,12 +30,12 @@ from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.example_solver import (
-    Solver,
     greedy,
     populate,
     state_def,
 )
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
+from infinigen.core.constraints.example_solver.solve import Solver
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline

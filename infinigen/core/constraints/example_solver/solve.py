@@ -131,15 +131,15 @@ class Solver:
         weights = np.array([s if isinstance(s, (float, int)) else s(t) for s in scheds])
         return np.random.choice(funcs, p=weights / weights.sum())
 
-    def solve_rooms(self, scene_seed, consgraph: cl.Problem, filter: r.Domain):
+    def solve_rooms(self, scene_seed, consgraph: "cl.Problem", filter: "r.Domain"):
         self.state, _, _ = self.room_solver_fn(scene_seed, consgraph).solve()
         return self.state
 
     @gin.configurable
     def solve_objects(
         self,
-        consgraph: cl.Problem,
-        filter_domain: r.Domain,
+        consgraph: "cl.Problem",
+        filter_domain: "r.Domain",
         var_assignments: dict[str, str],
         n_steps: int,
         desc: str,
@@ -216,6 +216,6 @@ class Solver:
 
         return self.state
 
-    def get_bpy_objects(self, domain: r.Domain) -> list[bpy.types.Object]:
+    def get_bpy_objects(self, domain: "r.Domain") -> list[bpy.types.Object]:
         objkeys = domain_contains.objkeys_in_dom(domain, self.state)
         return [self.state.objs[k].obj for k in objkeys]
