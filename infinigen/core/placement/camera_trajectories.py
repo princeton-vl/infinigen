@@ -58,6 +58,7 @@ def compute_trajectories(
             init_bounding_box=init_bounding_box,
             init_surfaces=init_surfaces,
         )
+        butil.delete(cam)
         return []
 
     if validate_pose_func is None:
@@ -74,7 +75,7 @@ def compute_trajectories(
         anim_valid_pose_func = validate_pose_func
 
     base_views = configure_cameras(
-        cam_rigs=[],
+        cam_rigs=cam_rigs,
         scene_preprocessed=scene_preprocessed,
         init_bounding_box=init_bounding_box,
         init_surfaces=init_surfaces,
@@ -195,7 +196,6 @@ def animate_trajectories(
     # generate potential trajectories
     try:
         trajectories = compute_trajectories(
-            n_cams=len(cam_rigs),
             cam_rigs=cam_rigs,
             scene_preprocessed=scene_preprocessed,
             init_bounding_box=init_bounding_box,

@@ -36,7 +36,6 @@ from infinigen.core.constraints.example_solver import (
 )
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
 from infinigen.core.constraints.example_solver.solve import Solver
-from infinigen.core.placement import camera as cam_util
 from infinigen.core.placement import camera_trajectories as cam_traj
 from infinigen.core.util import blender as butil
 from infinigen.core.util import ocmesher_utils, pipeline
@@ -253,13 +252,11 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
-            nonroom_objs=nonroom_objs,
-            terrain_coverage_range=None,  # do not filter cameras by terrain visibility, even if nature scenetype configs request this
             obj_groups=[room_objs, nonroom_objs],
         )
 
         butil.delete(solved_floor_surface)
-        
+
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
         save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
