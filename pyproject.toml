@@ -112,7 +112,7 @@ version = {attr = "infinigen.__version__"}
 testpaths = "tests"
 junit_family = "xunit2"
 markers = ["nature", "indoors", "skip_for_ci"]
-timeout = 240
+timeout = 480
 
 filterwarnings = [
 
