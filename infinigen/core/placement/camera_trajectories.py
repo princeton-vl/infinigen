@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @gin.configurable
 def compute_trajectories(
-    n_cams,
+    cam_rigs,
     scene_preprocessed: dict,
     init_bounding_box: tuple[np.array, np.array] = None,
     init_surfaces: list[bpy.types.Object] = None,
@@ -41,6 +41,7 @@ def compute_trajectories(
     policy_registry=None,
     validate_pose_func=None,
 ):
+    n_cams = len(cam_rigs)
     cam = cam_util.spawn_camera()
     trajectory_proposals = []
 
@@ -49,9 +50,13 @@ def compute_trajectories(
 
     start = bpy.context.scene.frame_start
     end = bpy.context.scene.frame_end
+
     if end <= start:
-        logger.warning(
-            f"Cannot compute trajectories for frame {start=} and frame {end=}"
+        configure_cameras(
+            cam_rigs=cam_rigs,
+            scene_preprocessed=scene_preprocessed,
+            init_bounding_box=init_bounding_box,
+            init_surfaces=init_surfaces,
         )
         return []
 
@@ -191,6 +196,7 @@ def animate_trajectories(
     try:
         trajectories = compute_trajectories(
             n_cams=len(cam_rigs),
+            cam_rigs=cam_rigs,
             scene_preprocessed=scene_preprocessed,
             init_bounding_box=init_bounding_box,
             obj_groups=obj_groups,
