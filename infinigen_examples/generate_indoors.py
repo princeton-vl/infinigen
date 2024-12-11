@@ -230,13 +230,13 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     camera_rigs = placement.camera.spawn_camera_rigs()
 
-    def animate_cameras():
-        nonroom_objs = [
-            o.obj for o in state.objs.values() if t.Semantics.Room not in o.tags
-        ]
-        room_objs = [o.obj for o in state.objs.values() if t.Semantics.Room in o.tags]
-        scene_objs = solved_rooms + nonroom_objs
+    nonroom_objs = [
+        o.obj for o in state.objs.values() if t.Semantics.Room not in o.tags
+    ]
+    room_objs = [o.obj for o in state.objs.values() if t.Semantics.Room in o.tags]
+    scene_objs = solved_rooms + nonroom_objs
 
+    def pose_cameras():
         scene_preprocessed = placement.camera.camera_selection_preprocessing(
             terrain=None, scene_objs=scene_objs
         )
@@ -248,22 +248,33 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             ]
         )
 
-        cam_traj.animate_trajectories(
+        poses = cam_traj.compute_poses(
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
-            obj_groups=[room_objs, nonroom_objs],
         )
 
         butil.delete(solved_floor_surface)
+
+        return poses, scene_preprocessed
+
+    poses, scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
+
+    def animate_cameras():
+        cam_traj.animate_trajectories(
+            cam_rigs=camera_rigs,
+            base_views=poses,
+            scene_preprocessed=scene_preprocessed,
+            obj_groups=[room_objs, nonroom_objs],
+        )
 
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
         save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
-        return scene_preprocessed
-
-    p.run_stage("animate_cameras", animate_cameras, use_chance=False, prereq=None)
+    p.run_stage(
+        "animate_cameras", animate_cameras, use_chance=False, prereq="pose_cameras"
+    )
 
     p.run_stage(
         "populate_intermediate_pholders",

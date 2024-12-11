@@ -26,16 +26,57 @@ logger = logging.getLogger(__name__)
 
 
 @gin.configurable
-def compute_trajectories(
+def compute_poses(
     cam_rigs,
     scene_preprocessed: dict,
     init_bounding_box: tuple[np.array, np.array] = None,
     init_surfaces: list[bpy.types.Object] = None,
+    terrain_mesh = None,
+    min_candidates_ratio=5,
+    min_base_views_ratio=10,
+):
+    n_cams = len(cam_rigs)
+    cam = cam_util.spawn_camera()
+
+    # num trajectories to fully compute and score
+    n_min_candidates = int(min_candidates_ratio * n_cams)
+
+    start = bpy.context.scene.frame_start
+    end = bpy.context.scene.frame_end
+
+    if end <= start:
+        configure_cameras(
+            cam_rigs=cam_rigs,
+            scene_preprocessed=scene_preprocessed,
+            init_bounding_box=init_bounding_box,
+            init_surfaces=init_surfaces,
+            terrain_mesh=terrain_mesh,
+        )
+        butil.delete(cam)
+        return []
+
+    base_views = configure_cameras(
+        cam_rigs=cam_rigs,
+        scene_preprocessed=scene_preprocessed,
+        init_bounding_box=init_bounding_box,
+        init_surfaces=init_surfaces,
+        terrain_mesh=terrain_mesh,
+        n_views=n_min_candidates * min_base_views_ratio,
+    )
+
+    butil.delete(cam)
+    return base_views
+
+
+@gin.configurable
+def compute_trajectories(
+    cam_rigs,
+    base_views,
+    scene_preprocessed: dict,
     obj_groups=None,
     camera_selection_answers={},
     camera_selection_ratio=None,
     min_candidates_ratio=5,
-    min_base_views_ratio=10,
     pois=None,
     follow_poi_chance=0.0,
     policy_registry=None,
@@ -52,12 +93,6 @@ def compute_trajectories(
     end = bpy.context.scene.frame_end
 
     if end <= start:
-        configure_cameras(
-            cam_rigs=cam_rigs,
-            scene_preprocessed=scene_preprocessed,
-            init_bounding_box=init_bounding_box,
-            init_surfaces=init_surfaces,
-        )
         butil.delete(cam)
         return []
 
@@ -74,13 +109,6 @@ def compute_trajectories(
     else:
         anim_valid_pose_func = validate_pose_func
 
-    base_views = configure_cameras(
-        cam_rigs=cam_rigs,
-        scene_preprocessed=scene_preprocessed,
-        init_bounding_box=init_bounding_box,
-        init_surfaces=init_surfaces,
-        n_views=n_min_candidates * min_base_views_ratio,
-    )
     with tqdm(
         total=n_min_candidates, desc="Searching for potential trajectories"
     ) as pbar:
@@ -182,9 +210,8 @@ def compute_trajectories(
 @gin.configurable
 def animate_trajectories(
     cam_rigs,
+    base_views,
     scene_preprocessed: dict,
-    init_bounding_box: tuple[np.array, np.array] = None,
-    init_surfaces: list[bpy.types.Object] = None,
     obj_groups=None,
     follow_poi_chance=0.0,
     pois=None,
@@ -197,10 +224,9 @@ def animate_trajectories(
     try:
         trajectories = compute_trajectories(
             cam_rigs=cam_rigs,
+            base_views=base_views,
             scene_preprocessed=scene_preprocessed,
-            init_bounding_box=init_bounding_box,
             obj_groups=obj_groups,
-            init_surfaces=init_surfaces,
             follow_poi_chance=follow_poi_chance,
             pois=pois,
             policy_registry=policy_registry,

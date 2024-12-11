@@ -273,38 +273,16 @@ def compose_nature(output_folder, scene_seed, **params):
 
     primary_cams = [rig.children[0] for rig in camera_rigs]
     
-    def animate_cameras():
-    
-        objs = [
-            obj
-            for obj in bpy.context.scene.objects
-            if obj.type == "MESH"
-            and not obj.hide_render
-            and "atmosphere" not in obj.name
-        ]
-        cam_traj.animate_trajectories(
+    def pose_cameras():
+        poses = cam_traj.compute_poses(
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_bounding_box=bbox,
-            obj_groups=[objs],
-            pois=pois,
+            terrain_mesh=terrain_mesh
         )
-        frames_folder = output_folder.parent / "frames"
-        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
-        
-        save_imu_tum_data = params.get("save_imu_tum_data")
-        if save_imu_tum_data:
-            frames_folder = output_folder.parent / "frames"
-            animated_cams = [
-                cam for cam in camera_rigs if cam.animation_data is not None
-            ]
-            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+        return poses
 
-    p.run_stage(
-        "animate_cameras",
-        animate_cameras,
-        use_chance=False,
-    )
+    poses = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
 
 
     p.run_stage(
@@ -367,6 +345,38 @@ def compose_nature(output_folder, scene_seed, **params):
         return list(col.objects)
 
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
+
+    def animate_cameras():
+        objs = [
+            obj
+            for obj in bpy.context.scene.objects
+            if obj.type == "MESH"
+            and not obj.hide_render
+            and "atmosphere" not in obj.name
+        ]
+        cam_traj.animate_trajectories(
+            cam_rigs=camera_rigs,
+            base_views=poses,
+            scene_preprocessed=scene_preprocessed,
+            obj_groups=[objs],
+            pois=pois
+        )
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        
+        save_imu_tum_data = params.get("save_imu_tum_data")
+        if save_imu_tum_data:
+            frames_folder = output_folder.parent / "frames"
+            animated_cams = [
+                cam for cam in camera_rigs if cam.animation_data is not None
+            ]
+            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+
+    p.run_stage(
+        "animate_cameras",
+        animate_cameras,
+        use_chance=False,
+    )
 
     with logging_util.Timer("Compute coarse terrain frustrums"):
         terrain_inview, *_ = split_in_view.split_inview(
