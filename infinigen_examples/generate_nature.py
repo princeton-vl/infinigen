@@ -347,6 +347,12 @@ def compose_nature(output_folder, scene_seed, **params):
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
 
     def animate_cameras():
+        hidden_cols = [ c for c in bpy.data.collections if c.hide_viewport ]
+        hidden_objs = [ o for o in bpy.context.scene.objects if o.hide_viewport ]
+        for o in hidden_objs: 
+            o.hide_viewport = False
+        for c in hidden_cols:
+            c.hide_viewport = False
         objs = [
             obj
             for obj in bpy.context.scene.objects
@@ -361,6 +367,10 @@ def compose_nature(output_folder, scene_seed, **params):
             obj_groups=[objs],
             pois=pois
         )
+        for o in hidden_objs: 
+            o.hide_viewport = True
+        for c in hidden_cols:
+            c.hide_viewport = True
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
         
