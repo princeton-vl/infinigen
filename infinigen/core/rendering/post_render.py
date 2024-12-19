@@ -49,6 +49,7 @@ def load_single_channel(p):
 def load_depth(p):
     return load_single_channel(p)
 
+
 def load_normals(p):
     return load_exr(p)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
 

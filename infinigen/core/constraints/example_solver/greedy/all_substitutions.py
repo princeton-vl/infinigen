@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_toplevel_var(
-    dom: r.Domain,
-    state: state_def.State,
-    limits: dict[t.Variable, int] = None,
+    dom: "r.Domain",
+    state: "state_def.State",
+    limits: dict["t.Variable", int] = None,
 ) -> typing.Iterator[str]:
     """
     Find and yield all valid substitutions of a toplevel VariableTag in a given dom
@@ -58,11 +58,11 @@ def _resolve_toplevel_var(
 
 
 def substitutions(
-    dom: r.Domain,
-    state: state_def.State,
-    limits: dict[t.Variable, int] | None = None,
+    dom: "r.Domain",
+    state: "state_def.State",
+    limits: dict["t.Variable", int] | None = None,
     nonempty: bool = False,
-) -> typing.Iterator[r.Domain]:
+) -> typing.Iterator["r.Domain"]:
     """Find all t.Variable in d's tags or relations, and return one Domain for each possible assignment
 
     limits cuts off enumeration of each varname with some integer count

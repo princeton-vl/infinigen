@@ -661,7 +661,7 @@ def manage_datagen_jobs(
     all_scenes: list[dict],
     elapsed: float,
     num_concurrent: int,
-    disk_sleep_threshold=0.95,
+    disk_sleep_threshold=0.99,
 ):
     if LocalScheduleHandler._inst is not None:
         sys.path = ORIG_SYS_PATH  # hacky workaround because bpy module breaks with multiprocessing
