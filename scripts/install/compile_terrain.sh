@@ -71,22 +71,25 @@ fi
 OS=$(uname -s)
 ARCH=$(uname -m)
 
-if [ "${OS}" = "Linux" ]; then
-    alias gx1="g++ -O3 -c -fpic -fopenmp "
-    alias gx2="g++ -O3 -shared -fopenmp "
-elif [ "${OS}" = "Darwin" ]; then
-    if [ "${ARCH}" = "arm64" ]; then
-        compiler="/opt/homebrew/opt/llvm/bin/clang++"
-    else
-        compiler="/usr/local/opt/llvm/bin/clang++"
-    fi
-    alias gx1="${compiler} -O3 -c -fpic -fopenmp "
-    alias gx2="${compiler} -O3 -shared -fopenmp "
-    alias gx="${compiler} -O3 -fpic -shared -fopenmp "
+if [ -n "$CXX" ]; then
+    compiler="$CXX"
 else
-    echo "Unsupported OS"
-    exit -1
+    if [ "${OS}" = "Linux" ]; then
+        compiler="g++"
+    elif [ "${OS}" = "Darwin" ]; then
+        if [ "${ARCH}" = "arm64" ]; then
+            compiler="/opt/homebrew/opt/llvm/bin/clang++"
+        else
+            compiler="/usr/local/opt/llvm/bin/clang++"
+        fi
+    else
+        echo "Unsupported OS"
+        exit -1
+    fi
 fi
+
+alias gx1="${compiler} \$CXXFLAGS -O3 -c -fpic -fopenmp "
+alias gx2="${compiler} \$LDFLAGS -O3 -shared -fopenmp "
 
 mkdir -p lib/cpu/utils
 gx1 -o lib/cpu/utils/FastNoiseLite.o source/cpu/utils/FastNoiseLite.cpp
@@ -121,16 +124,11 @@ gx2 -o lib/cpu/meshing/utils.so lib/cpu/meshing/utils.o
 echo "compiled lib/cpu/meshing/utils.so"
 
 if [ "${OS}" = "Darwin" ]; then
-    if [ "${ARCH}" = "arm64" ]; then
-        alias gx1="CPATH=/opt/homebrew/include:${CPATH} g++ -O3 -c -fpic -std=c++17"
-        alias gx2="CPATH=/opt/homebrew/include:${CPATH} g++ -O3 -shared -std=c++17"
-    else
-        alias gx1="CPATH=/usr/local/include:${CPATH} g++ -O3 -c -fpic -std=c++17"
-        alias gx2="CPATH=/usr/local/include:${CPATH} g++ -O3 -shared -std=c++17"
-    fi
+    alias gx1="CPATH=/opt/homebrew/include:${CPATH} ${compiler} -O3 -c -fpic -std=c++17"
+    alias gx2="CPATH=/opt/homebrew/include:${CPATH} ${compiler} -O3 -shared -std=c++17"
 fi
 mkdir -p lib/cpu/soil_machine
-gx1 -o lib/cpu/soil_machine/SoilMachine.o source/cpu/soil_machine/SoilMachine.cpp
+gx1 -I../datagen/customgt/dependencies/glm -o lib/cpu/soil_machine/SoilMachine.o source/cpu/soil_machine/SoilMachine.cpp
 gx2 -o lib/cpu/soil_machine/SoilMachine.so lib/cpu/soil_machine/SoilMachine.o
 echo "compiled lib/cpu/soil_machine/SoilMachine.so"
 

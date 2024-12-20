@@ -159,3 +159,14 @@ v1.11.2
 v1.11.3
 - Increase max camera / object animation random walk trials
 - Fix scenetype gin recognition causing crashes for underwater.gin / kelpforest.gin
+
+v1.11.4
+- Fix circular / segfaulting imports when modules imported individually
+- Fix ordering-dependence in unit tests 
+- Fix scenetype.gin crashes for underwater/kelpforest
+- Increase integration test timelimit
+- Add `analyze_crash_reasons` crash summary script
+- Improve success rate of camera / creature animations via increased retry attempts
+
+v1.12.0
+- Publish to PyPi
