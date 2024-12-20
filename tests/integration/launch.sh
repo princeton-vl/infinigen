@@ -30,7 +30,7 @@ if [ "$RUN_INDOOR" -eq 1 ]; then
     for indoor_type in DiningRoom Bathroom Bedroom Kitchen LivingRoom; do
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_indoor_$indoor_type \
         --num_scenes 3 --cleanup big_files --configs singleroom.gin fast_solve.gin --overwrite \
-        --pipeline_configs slurm monocular indoor_background_configs.gin \
+        --pipeline_configs slurm monocular blender_gt indoor_background_configs.gin \
         --pipeline_overrides get_cmd.driver_script=infinigen_examples.generate_indoors sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF \
         --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] &
     done
@@ -42,7 +42,7 @@ if [ "$RUN_NATURE" -eq 1 ]; then
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_nature_$nature_type \
         --num_scenes 3 --cleanup big_files --overwrite \
         --configs $nature_type.gin dev.gin \
-        --pipeline_configs slurm monocular \
+        --pipeline_configs slurm monocular blender_gt \
         --pipeline_overrides sample_scene_spec.seed_range=[0,100] &
     done
 fi
