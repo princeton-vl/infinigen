@@ -69,7 +69,11 @@ def parse_scene_log(
         else:
             continue
 
-        text = filepath.read_text()
+        try:
+            text = filepath.read_text()
+        except FileNotFoundError:
+            continue
+
         if "[MAIN TOTAL] finished in" not in text:
             continue
         search = re.search(
