@@ -1,0 +1,119 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_sdist_purepy:
+    name: Build source/pure python wheels
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Build source/pure python wheels
+      run: |
+        python -m pip install build
+        python -m build --outdir=wheelhouse
+      env:
+        INFINIGEN_MINIMAL_INSTALL: "True"
+
+    - name: Upload to github
+      uses: actions/upload-artifact@v4
+      with:
+        path: wheelhouse/*
+        if-no-files-found: error
+
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }} for ${{ matrix.cibw_archs }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # we skip Windows since that results in pure Python wheels
+          # anyway; (compile_terrain.sh is not supported on Windows)
+          - os: ubuntu-latest
+            cibw_archs: "x86_64"
+          - os: ubuntu-latest
+            cibw_archs: "aarch64"
+          - os: macos-13
+            cibw_archs: "x86_64"
+          - os: macos-latest
+            cibw_archs: "arm64"
+
+    steps:
+    - name: Install macOS dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install libomp
+        echo "MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d '.' -f 1-2)" >> $GITHUB_ENV
+
+    - name: Set CXXFLAGS and LDFLAGS for macOS
+      if: matrix.os == 'macos-13'
+      run: |
+        echo "CXX=$(brew --prefix llvm@15)/bin/clang++" >> $GITHUB_ENV
+        echo "CXXFLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+        echo "LDFLAGS=-Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp" >> $GITHUB_ENV
+
+    - name: Set CXXFLAGS and LDFLAGS for macOS
+      if: matrix.os == 'macos-latest'
+      run: |
+        echo "CXX=$(brew --prefix llvm@15)/bin/clang++" >> $GITHUB_ENV
+        echo "CXXFLAGS=-I/opt/homebrew/opt/libomp/include" >> $GITHUB_ENV
+        echo "LDFLAGS=-Wl,-rpath,/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/libomp/lib -lomp" >> $GITHUB_ENV
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.21
+      with:
+        output-dir: wheelhouse
+      env:
+        CIBW_BUILD: "cp311-*"
+        # `bpy` is not easily pip-installable on manylinux (no sdists either),
+        # so we skip tests
+        CIBW_TEST_COMMAND: ""
+        CIBW_BUILD_VERBOSITY: 1
+        CIBW_ENVIRONMENT:
+          CXXFLAGS="${{ env.CXXFLAGS }}"
+          LDFLAGS="${{ env.LDFLAGS }}"
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-${{ runner.os }}-${{ matrix.cibw_archs }}
+        path: ./wheelhouse/*.whl
+        if-no-files-found: error
+
+  publish_to_pypi:
+    name: Publish wheels to PyPi
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    needs: [build_sdist_purepy, build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload wheels to pypi
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m pip install --upgrade twine
+          twine upload dist/*

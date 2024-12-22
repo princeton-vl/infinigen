@@ -131,10 +131,10 @@ class SimulatedAnnealingSolver:
 
     def validate_lazy_eval(
         self,
-        state: State,
-        consgraph: cl.Problem,
-        prop_result: evaluate.EvalResult,
-        filter_domain: r.Domain,
+        state: "State",
+        consgraph: "cl.Problem",
+        prop_result: "evaluate.EvalResult",
+        filter_domain: "r.Domain",
     ):
         test_memo = {}
         impl_util.DISABLE_BVH_CACHE = True
@@ -162,10 +162,10 @@ class SimulatedAnnealingSolver:
     @gin.configurable
     def _move(
         self,
-        consgraph: cl.Node,
-        state: State,
-        move: Move,
-        filter_domain: r.Domain,
+        consgraph: "cl.Node",
+        state: "State",
+        move: "Move",
+        filter_domain: "r.Domain",
         do_lazy_eval=True,
         validate_lazy_eval=False,
     ):
@@ -188,11 +188,11 @@ class SimulatedAnnealingSolver:
     def retry_attempt_proposals(
         self,
         propose_func: typing.Callable,
-        consgraph: cl.Node,
-        state: State,
+        consgraph: "cl.Node",
+        state: "State",
         temp: float,
-        filter_domain: r.Domain,
-    ) -> typing.Tuple[Move, evaluate.EvalResult, int]:
+        filter_domain: "r.Domain",
+    ) -> typing.Tuple["Move", "evaluate.EvalResult", int]:
         move_gen = propose_func(consgraph, state, filter_domain, temp)
 
         move = None
@@ -224,7 +224,9 @@ class SimulatedAnnealingSolver:
         temp = np.clip(temp, self.final_temp, self.initial_temp)
         return temp
 
-    def metrop_hastings_with_viol(self, prop_result: evaluate.EvalResult, temp: float):
+    def metrop_hastings_with_viol(
+        self, prop_result: "evaluate.EvalResult", temp: float
+    ):
         prop_viol = prop_result.viol_count()
         curr_viol = self.curr_result.viol_count()
 

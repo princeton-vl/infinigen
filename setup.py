@@ -44,7 +44,8 @@ def ensure_submodules():
         )
 
 
-ensure_submodules()
+if not MINIMAL_INSTALL:
+    ensure_submodules()
 
 # inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests

@@ -21,6 +21,6 @@ def check_scatter_runs(pathspec):
 
 @pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_scatters.txt"))
 def test_scatter_runs(pathspec, **kwargs):
-    configure_blender()
     setup_gin("infinigen_examples/configs_nature", ["base_nature.gin"])
+    configure_blender()
     check_scatter_runs(pathspec)

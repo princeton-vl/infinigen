@@ -297,12 +297,18 @@ def require_blender_addon(addon: str, fail: str = "fatal", allow_online=False):
 
     builtin_local_addons = set(a.__name__ for a in addon_utils.modules(refresh=True))
 
-    if addon not in builtin_local_addons and not allow_online:
+    if (
+        (addon not in builtin_local_addons)
+        and (long not in builtin_local_addons)
+        and (not allow_online)
+    ):
         report_fail(f"{addon=} not found and online install is disabled")
 
     try:
         if long in builtin_local_addons:
-            logger.info(f"Addon {addon} already in blender local addons, attempt to enable it.")
+            logger.info(
+                f"Addon {addon} already in blender local addons, attempt to enable it."
+            )
             bpy.ops.preferences.addon_enable(module=long)
         else:
             bpy.ops.extensions.userpref_allow_online()
