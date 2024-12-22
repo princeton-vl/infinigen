@@ -389,11 +389,12 @@ def render_image(
     camera: bpy.types.Object,
     frames_folder,
     passes_to_save,
-    flat_shading=False,
     render_resolution_override=None,
     excludes=[],
     use_dof=False,
     dof_aperture_fstop=2.8,
+    flat_shading=False,
+    override_num_samples=None,
 ):
     tic = time.time()
 
@@ -407,6 +408,9 @@ def render_image(
     bpy.context.scene.render.filepath = f"{tmp_dir}{os.sep}"
 
     camrig_id, subcam_id = cam_util.get_id(camera)
+
+    if override_num_samples is not None:  # usually used for GT
+        bpy.context.scene.cycles.samples = override_num_samples
 
     if flat_shading:
         with Timer("Set object indices"):

@@ -34,8 +34,7 @@ render_image.dof_aperture_fstop = 3
 compositor_postprocessing.distort = False
 compositor_postprocessing.color_correct = False
 
-flat/configure_render_cycles.min_samples = 1
-flat/configure_render_cycles.num_samples = 16
+flat/render_image.override_num_samples = 16
 flat/render_image.flat_shading = True
 full/render_image.passes_to_save = [
     ['diffuse_direct', 'DiffDir'],
