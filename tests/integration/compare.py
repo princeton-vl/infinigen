@@ -300,6 +300,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("compare_runs", type=Path, nargs="+")
     parser.add_argument("--nearest", action="store_true")
+    parser.add_argument("--output_path", type=Path, default=None)
     args = parser.parse_args()
 
     for run in args.compare_runs:
@@ -372,7 +373,10 @@ def main():
 
     # Save the rendered HTML to a file
     name = "_".join([p.name for p in args.compare_runs]) + ".html"
-    output_path = views_folder / name
+
+    output_path = args.output_path
+    if output_path is None:
+        output_path = views_folder / name
     print("Writing to ", output_path)
     output_path.write_text(html_content)
 
