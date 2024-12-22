@@ -346,15 +346,13 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["SymmY"],
-            14: group_input.outputs["Curve"],
-            15: symmetric_clone.outputs["Both"],
+            0: group_input.outputs["SymmY"],
+            1: group_input.outputs["Curve"],
+            2: symmetric_clone.outputs["Both"],
         },
     )
 
-    curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": switch.outputs[6]}
-    )
+    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": switch})
 
     geometry_proximity = nw.new_node(
         Nodes.Proximity,

@@ -232,7 +232,7 @@ def geo_instance_scatter(
     rotation_val = nw.new_node(
         Nodes.RotateEuler,
         [rotation_val],
-        {"type": "AXIS_ANGLE", "space": "LOCAL"},
+        {"rotation_type": "AXIS_ANGLE", "space": "LOCAL"},
         input_kwargs={"Axis": Vector((0.0, 0.0, 1.0)), "Angle": nw.uniform(0, 1e4)},
     )
     if rotation_offset is not None:

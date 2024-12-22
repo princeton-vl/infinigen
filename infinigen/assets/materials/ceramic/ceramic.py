@@ -31,11 +31,11 @@ def shader_ceramic(
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Roughness": roughness,
-            "Clearcoat": 1,
-            "Clearcoat Roughness": clearcoat_roughness,
-            "Specular": 1,
+            "Coat Weight": 1,
+            "Coat Roughness": clearcoat_roughness,
+            "Specular IOR Level": 1,
             "Base Color": color,
-            "Subsurface": uniform(0.02, 0.05),
+            "Subsurface Weight": uniform(0.02, 0.05),
             "Subsurface Radius": (0.02, 0.02, 0.02),
         },
     )

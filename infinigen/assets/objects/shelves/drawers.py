@@ -389,7 +389,7 @@ def nodegroup_door_knob(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.0040),
+            ("NodeSocketFloat", "Radius", 0.0040),
             ("NodeSocketFloat", "length", 0.5000),
             ("NodeSocketFloat", "z", 0.5000),
         ],

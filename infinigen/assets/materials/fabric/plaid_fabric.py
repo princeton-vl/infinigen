@@ -152,7 +152,7 @@ def func_fabric(nw: NodeWrangler, **kwargs):
         input_kwargs={
             "Base Color": mix_3.outputs[2],
             "Roughness": map_range_2.outputs["Result"],
-            "Sheen": 1.0000,
+            "Sheen Weight": 1.0000,
             "Sheen Tint": 1.0000,
         },
     )

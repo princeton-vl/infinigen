@@ -214,7 +214,7 @@ def shader_edge_tear_free_node_group(
         input_kwargs={
             "Base Color": reroute,
             "Metallic": 0.3745,
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": 0.1436,
         },
     )
@@ -297,7 +297,7 @@ def shader_edge_tear_free_node_group(
         input_kwargs={
             "Base Color": reroute,
             "Metallic": 0.3855,
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": 0.0000,
         },
     )

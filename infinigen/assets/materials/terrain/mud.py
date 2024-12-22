@@ -100,7 +100,7 @@ def shader_mud(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": colorramp_3.outputs["Color"],
-            "Specular": colorramp_6.outputs["Color"],
+            "Specular IOR Level": colorramp_6.outputs["Color"],
             "Roughness": mix_3,
         },
     )

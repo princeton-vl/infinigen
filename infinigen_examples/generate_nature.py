@@ -1009,16 +1009,18 @@ if __name__ == "__main__":
         "e.g. --gin_param module_1.a=2 module_2.b=3",
     )
     parser.add_argument("--task_uniqname", type=str, default=None)
-    parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_const",
-        dest="loglevel",
-        const=logging.DEBUG,
-        default=logging.INFO,
-    )
+    parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
 
     args = init.parse_args_blender(parser)
-    logging.getLogger("infinigen").setLevel(args.loglevel)
+
+    logging.getLogger("infinigen").setLevel(logging.INFO)
+    logging.getLogger("infinigen.core.nodes.node_wrangler").setLevel(logging.CRITICAL)
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith("infinigen"):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
 
     main(args)

@@ -6,16 +6,17 @@
 
 import bpy
 
+from infinigen.core.init import require_blender_addon
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+require_blender_addon("real_snow", fail="warn")
+
 
 class Snowlayer:
-    def __init__(self):
-        bpy.ops.preferences.addon_enable(module="real_snow")
-        pass
-
     def apply(self, obj, **kwargs):
+        require_blender_addon("real_snow")
+
         bpy.context.scene.snow.height = 0.1
         with butil.SelectObjects(obj):
             bpy.ops.snow.create()
@@ -24,7 +25,7 @@ class Snowlayer:
         tag_object(snow, "boulder")
 
 
-def apply(obj):
+def apply(obj, selection=None, **kwargs):
     snowlayer = Snowlayer()
     snowlayer.apply(obj)
     return snowlayer

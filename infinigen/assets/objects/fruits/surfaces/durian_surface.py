@@ -76,7 +76,7 @@ def shader_durian_shader(nw: NodeWrangler, peak_color, base_color):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": hue_saturation_value,
-            "Specular": 0.1205,
+            "Specular IOR Level": 0.1205,
             "Roughness": 0.5068,
         },
     )
@@ -103,7 +103,7 @@ def nodegroup_durian_surface(
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketFloat", "displacement", 1.0),
             ("NodeSocketFloat", "spline parameter", 0.0),
-            ("NodeSocketFloatDistance", "distance Min", 0.1),
+            ("NodeSocketFloat", "distance Min", 0.1),
             ("NodeSocketFloat", "noise amount", 0.3),
             ("NodeSocketFloat", "noise scale", 5.0),
         ],
@@ -202,6 +202,6 @@ def nodegroup_durian_surface(
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_material,
-            "distance to center": capture_attribute.outputs[2],
+            "distance to center": capture_attribute.outputs[1],
         },
     )

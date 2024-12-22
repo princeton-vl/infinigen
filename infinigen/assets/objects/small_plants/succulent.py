@@ -403,12 +403,12 @@ def nodegroup_petal_on_base(nw: NodeWrangler, R=1.0):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.1),
+            ("NodeSocketFloat", "Radius", 0.1),
             ("NodeSocketFloat", "x_R", -1.3),
             ("NodeSocketFloat", "z_R", -1.57),
             ("NodeSocketInt", "Resolution", 10),
             ("NodeSocketGeometry", "Instance", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, 1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, 1.0, 1.0)),
             ("NodeSocketFloat", "base_z", 0.5),
         ],
     )

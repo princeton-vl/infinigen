@@ -169,9 +169,9 @@ def nodegroup_scale(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.040000000000000001),
+            ("NodeSocketFloat", "Radius", 0.040000000000000001),
             ("NodeSocketFloat", "thickness", 0.10000000000000001),
-            ("NodeSocketVectorEuler", "Rotation", (0.0, -0.17449999999999999, 0.0)),
+            ("NodeSocketVector", "Rotation", (0.0, -0.17449999999999999, 0.0)),
         ],
     )
 

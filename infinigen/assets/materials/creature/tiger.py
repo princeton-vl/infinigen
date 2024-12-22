@@ -207,7 +207,7 @@ def shader_tiger_attr(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_5, "Specular": 0.0},
+        input_kwargs={"Base Color": mix_5, "Specular IOR Level": 0.0},
         attrs={"subsurface_method": "BURLEY"},
     )
 

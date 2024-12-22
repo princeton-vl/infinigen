@@ -145,7 +145,7 @@ def nodegroup_setup(nw: NodeWrangler):
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
-            "Spline": capture_attribute_1.outputs[2],
+            "Spline": capture_attribute_1.outputs[1],
             "Geometry": capture_attribute_1.outputs["Geometry"],
         },
     )
@@ -207,7 +207,7 @@ def nodegroup_edge_extrusion(nw: NodeWrangler):
         Nodes.ExtrudeMesh,
         input_kwargs={
             "Mesh": curve_to_mesh,
-            "Offset": capture_attribute.outputs["Attribute"],
+            "Offset": capture_attribute.outputs[1],
             "Offset Scale": float_curve,
         },
         attrs={"mode": "EDGES"},

@@ -208,7 +208,7 @@ def shader_soil(nw, random_seed=0):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix,
-            "Specular": 0.2,
+            "Specular IOR Level": 0.2,
             "Roughness": colorramp_2.outputs["Color"],
         },
     )

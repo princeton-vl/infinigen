@@ -30,12 +30,12 @@ from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl
 from infinigen.core.constraints import reasoning as r
 from infinigen.core.constraints.example_solver import (
-    Solver,
     greedy,
     populate,
     state_def,
 )
 from infinigen.core.constraints.example_solver.room import decorate as room_dec
+from infinigen.core.constraints.example_solver.solve import Solver
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
@@ -252,6 +252,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
             nonroom_objs=nonroom_objs,
+            terrain_coverage_range=None,  # do not filter cameras by terrain visibility, even if nature scenetype configs request this
         )
         butil.delete(solved_floor_surface)
         return scene_preprocessed
@@ -259,7 +260,13 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
 
     def animate_cameras():
-        cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
+        cam_util.animate_cameras(
+            camera_rigs,
+            solved_bbox,
+            scene_preprocessed,
+            pois=[],
+            terrain_coverage_range=None,  # same as above - do not filter by terrain visiblity when indoors
+        )
 
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
@@ -552,6 +559,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
 
     args = init.parse_args_blender(parser)
+
     logging.getLogger("infinigen").setLevel(logging.INFO)
     logging.getLogger("infinigen.core.nodes.node_wrangler").setLevel(logging.CRITICAL)
 

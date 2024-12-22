@@ -72,7 +72,7 @@ def nodegroup_chameleon_toe(nw: NodeWrangler):
         input_kwargs={
             "Geometry": curve_to_mesh,
             "Name": "Ridge",
-            "Value": capture_attribute.outputs[2],
+            "Value": capture_attribute.outputs[1],
         },
         attrs={"data_type": "FLOAT", "domain": "POINT"},
     )
@@ -167,13 +167,13 @@ def nodegroup_clamp_or_wrap(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: group_input.outputs["Use Wrap"], 4: clamp, 5: wrap},
+        input_kwargs={0: group_input.outputs["Use Wrap"], 1: clamp, 2: wrap},
         attrs={"input_type": "INT"},
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Output": switch.outputs[1]},
+        input_kwargs={"Output": switch},
         attrs={"is_active_output": True},
     )
 
@@ -294,8 +294,8 @@ def nodegroup_chameleon_claw_shape(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0000, 1.0472, 0.0000)),
-            ("NodeSocketVectorXYZ", "Scale", (0.2000, 0.2000, 0.4000)),
+            ("NodeSocketVector", "Rotation", (0.0000, 1.0472, 0.0000)),
+            ("NodeSocketVector", "Scale", (0.2000, 0.2000, 0.4000)),
         ],
     )
 
@@ -383,10 +383,10 @@ def nodegroup_chameleon_foot_shape(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "ouRotation", (0.0000, 1.0472, 0.0000)),
-            ("NodeSocketVectorEuler", "inRotation", (0.0000, 2.0944, 3.1416)),
-            ("NodeSocketVectorXYZ", "ouScale", (1.0000, 1.0000, 1.0000)),
-            ("NodeSocketVectorXYZ", "inScale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "ouRotation", (0.0000, 1.0472, 0.0000)),
+            ("NodeSocketVector", "inRotation", (0.0000, 2.0944, 3.1416)),
+            ("NodeSocketVector", "ouScale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "inScale", (1.0000, 1.0000, 1.0000)),
         ],
     )
 
@@ -665,8 +665,8 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_1,
-            8: group_input.outputs["Arg == 0"],
-            9: group_input.outputs["Arg == 1"],
+            1: group_input.outputs["Arg == 0"],
+            2: group_input.outputs["Arg == 1"],
         },
         attrs={"input_type": "VECTOR"},
     )
@@ -681,21 +681,21 @@ def nodegroup_switch4(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: greater_equal_2,
-            8: group_input.outputs["Arg == 2"],
-            9: group_input.outputs["Arg == 3"],
+            1: group_input.outputs["Arg == 2"],
+            2: group_input.outputs["Arg == 3"],
         },
         attrs={"input_type": "VECTOR"},
     )
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: greater_equal, 8: switch_1.outputs[3], 9: switch_2.outputs[3]},
+        input_kwargs={0: greater_equal, 1: switch_1, 2: switch_2},
         attrs={"input_type": "VECTOR"},
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Output": switch.outputs[3]},
+        input_kwargs={"Output": switch},
         attrs={"is_active_output": True},
     )
 
@@ -710,7 +710,7 @@ def nodegroup_symmetric_clone(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0000, -1.0000, 1.0000)),
+            ("NodeSocketVector", "Scale", (1.0000, -1.0000, 1.0000)),
         ],
     )
 
@@ -874,10 +874,10 @@ def nodegroup_chameleon_leg_raw_shape(nw: NodeWrangler):
             ("NodeSocketFloat", "calf_body_rotation", 0.5000),
             ("NodeSocketFloat", "thigh_calf_rotation", 20.0000),
             ("NodeSocketFloat", "toe_toe_rotation", 20.0000),
-            ("NodeSocketVectorXYZ", "thigh_scale", (1.0000, 0.6500, 1.0000)),
-            ("NodeSocketVectorXYZ", "calf_scale", (1.0000, 0.6500, 1.0000)),
-            ("NodeSocketVectorXYZ", "ouScale", (1.0000, 1.0000, 1.0000)),
-            ("NodeSocketVectorXYZ", "inScale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "thigh_scale", (1.0000, 0.6500, 1.0000)),
+            ("NodeSocketVector", "calf_scale", (1.0000, 0.6500, 1.0000)),
+            ("NodeSocketVector", "ouScale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "inScale", (1.0000, 1.0000, 1.0000)),
         ],
     )
 
@@ -1662,7 +1662,7 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 32),
+            ("NodeSocketInt", "Resolution", 32),
             ("NodeSocketVector", "Origin", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketVector", "angles_deg", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketVector", "Seg Lengths", (0.3000, 0.3000, 0.3000)),
@@ -1774,15 +1774,15 @@ def nodegroup_polar_bezier(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Do Bezier"],
-            14: subdivide_curve_1,
-            15: subdivide_curve,
+            0: group_input.outputs["Do Bezier"],
+            1: subdivide_curve_1,
+            2: subdivide_curve,
         },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Curve": switch.outputs[6], "Endpoint": polartocart_2},
+        input_kwargs={"Curve": switch, "Endpoint": polartocart_2},
         attrs={"is_active_output": True},
     )
 
@@ -1901,15 +1901,13 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["SymmY"],
-            14: group_input_1.outputs["Curve"],
-            15: symmetric_clone.outputs["Both"],
+            0: group_input_1.outputs["SymmY"],
+            1: group_input_1.outputs["Curve"],
+            2: symmetric_clone.outputs["Both"],
         },
     )
 
-    curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh, input_kwargs={"Curve": switch.outputs[6]}
-    )
+    curve_to_mesh = nw.new_node(Nodes.CurveToMesh, input_kwargs={"Curve": switch})
 
     geometry_proximity = nw.new_node(
         Nodes.Proximity,
@@ -2028,16 +2026,16 @@ def nodegroup_curve_sculpt(nw: NodeWrangler):
     switch_3 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["Attr"],
-            14: set_position,
-            15: store_named_attribute,
+            0: group_input_1.outputs["Attr"],
+            1: set_position,
+            2: store_named_attribute,
         },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
-            "Geometry": switch_3.outputs[6],
+            "Geometry": switch_3,
             "Result": switch_2.outputs["Output"],
         },
         attrs={"is_active_output": True},
@@ -2358,7 +2356,7 @@ def shader_chameleon(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": combine_color,
-            "Specular": 0.3000,
+            "Specular IOR Level": 0.3000,
             "Roughness": 0.6000,
         },
     )
@@ -2383,17 +2381,17 @@ def nodegroup_chameleon_leg_shape(nw: NodeWrangler):
             ("NodeSocketFloat", "body_position", 0.1000),
             ("NodeSocketFloat", "body_thickness", 0.0500),
             ("NodeSocketFloat", "body_height", -0.1000),
-            ("NodeSocketVectorEuler", "Rotation", (0.0000, -0.6981, 0.0000)),
+            ("NodeSocketVector", "Rotation", (0.0000, -0.6981, 0.0000)),
             ("NodeSocketFloat", "thigh_length", 0.6000),
             ("NodeSocketFloat", "calf_length", 0.5000),
             ("NodeSocketFloat", "thigh_body_rotation", 25.0000),
             ("NodeSocketFloat", "calf_body_rotation", 15.0000),
             ("NodeSocketFloat", "thigh_calf_rotation", 20.0000),
             ("NodeSocketFloat", "toe_toe_rotation", 20.0000),
-            ("NodeSocketVectorXYZ", "thigh_scale", (1.0000, 0.6500, 1.0000)),
-            ("NodeSocketVectorXYZ", "calf_scale", (1.0000, 0.6500, 1.0000)),
-            ("NodeSocketVectorXYZ", "ouScale", (1.0000, 1.0000, 1.0000)),
-            ("NodeSocketVectorXYZ", "inScale", (0.6000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "thigh_scale", (1.0000, 0.6500, 1.0000)),
+            ("NodeSocketVector", "calf_scale", (1.0000, 0.6500, 1.0000)),
+            ("NodeSocketVector", "ouScale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "inScale", (0.6000, 1.0000, 1.0000)),
         ],
     )
 
@@ -2527,7 +2525,7 @@ def nodegroup_chameleon_body_shape(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorXYZ", "Scale", (0.9000, 0.7000, 0.8000)),
+            ("NodeSocketVector", "Scale", (0.9000, 0.7000, 0.8000)),
             ("NodeSocketFloat", "length", 1.4000),
         ],
     )
@@ -2645,7 +2643,7 @@ def nodegroup_chameleon_head_shape(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "Crown", 0.2000),
             ("NodeSocketFloat", "EyeBrow", 0.0200),
-            ("NodeSocketVectorXYZ", "Scale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "Scale", (1.0000, 1.0000, 1.0000)),
         ],
     )
 
@@ -3272,7 +3270,7 @@ def nodegroup_round_bump(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatDistance", "Distance", 0.0200),
+            ("NodeSocketFloat", "Distance", 0.0200),
             ("NodeSocketFloat", "Offset Scale", 0.0100),
             ("NodeSocketInt", "Level", 1),
         ],
@@ -3479,7 +3477,7 @@ def shader_chameleon_eye(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": combine_color,
-            "Specular": 0.3000,
+            "Specular IOR Level": 0.3000,
             "Roughness": 0.6000,
         },
     )
@@ -3503,9 +3501,9 @@ def nodegroup_chameleon(nw: NodeWrangler):
             ("NodeSocketFloat", "body_length", 1.4000),
             ("NodeSocketFloat", "head_crown", 0.2000),
             ("NodeSocketFloat", "head_eyebrow", 0.0200),
-            ("NodeSocketVectorXYZ", "head_scale", (1.0000, 1.0000, 1.0000)),
-            ("NodeSocketVectorEuler", "left_eye_rotation", (0.0000, 0.0000, -1.5)),
-            ("NodeSocketVectorEuler", "right_eye_rotation", (0.0000, 0.0000, 1.5)),
+            ("NodeSocketVector", "head_scale", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "left_eye_rotation", (0.0000, 0.0000, -1.5)),
+            ("NodeSocketVector", "right_eye_rotation", (0.0000, 0.0000, 1.5)),
             ("NodeSocketFloat", "pupil_radius", 0.2200),
             ("NodeSocketFloat", "front_leg_position", 0.0800),
             ("NodeSocketFloat", "back_leg_position", 0.8500),

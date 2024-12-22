@@ -19,7 +19,7 @@ def nodegroup_principled_hair(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
-        Nodes.GroupInput, expose_input=[("NodeSocketIntUnsigned", "Resolution", 4)]
+        Nodes.GroupInput, expose_input=[("NodeSocketInt", "Resolution", 4)]
     )
 
     crosssection = nw.new_node(

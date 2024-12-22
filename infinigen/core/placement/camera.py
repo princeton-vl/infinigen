@@ -11,7 +11,6 @@ import logging
 import typing
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import partial
 from itertools import chain
 from pathlib import Path
 
@@ -34,6 +33,7 @@ from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import SelectionCriterions
 from infinigen.core.util.random import random_general
+from infinigen.terrain.core import Terrain
 from infinigen.tools.suffixes import get_suffix
 
 from . import animation_policy
@@ -190,7 +190,11 @@ def set_active_camera(camera: bpy.types.Object):
 
 
 def terrain_camera_query(
-    cam, scene_bvh, terrain_tags_queries, vertexwise_min_dist, min_dist=0
+    cam: bpy.types.Object,
+    scene_bvh: BVHTree,
+    terrain_tags_queries,
+    vertexwise_min_dist,
+    min_dist=0,
 ):
     dists = []
     sensor_coords, pix_it = get_sensor_coords(cam, sparse=True)
@@ -222,10 +226,13 @@ class CameraProposal:
     rot: np.array
     focal_length: float
 
-    def apply(self, cam):
-        cam.location = self.loc
-        cam.rotation_euler = self.rot
-        cam.data.lens = self.focal_length
+    def apply(self, cam_rig):
+        cam_rig.location = self.loc
+        cam_rig.rotation_euler = self.rot
+
+        if self.focal_length is not None:
+            for cam in cam_rig.children:
+                cam.data.lens = self.focal_length
 
 
 @gin.configurable
@@ -310,9 +317,9 @@ def camera_pose_proposal(
 
 @gin.configurable
 def keep_cam_pose_proposal(
-    cam,
-    terrain,
-    scene_bvh,
+    cam: bpy.types.Object,
+    terrain: Terrain,
+    scene_bvh: BVHTree,
     placeholders_kd,
     camera_selection_answers,
     vertexwise_min_dist,
@@ -323,11 +330,9 @@ def keep_cam_pose_proposal(
 ):
     if terrain is not None:  # TODO refactor
         terrain_sdf = terrain.compute_camera_space_sdf(
-            np.array(cam.location).reshape((1, 3))
+            np.array(cam.matrix_world.translation).reshape((1, 3))
         )
 
-    if not cam.type == "CAMERA":
-        cam = cam.children[0]
     if not cam.type == "CAMERA":
         raise ValueError(f"{cam.name=} had {cam.type=}")
 
@@ -352,14 +357,20 @@ def keep_cam_pose_proposal(
         return None
 
     coverage = len(dists) / n_pix
-    if coverage < terrain_coverage_range[0] or coverage > terrain_coverage_range[1]:
+    if terrain_coverage_range is not None and (
+        coverage < terrain_coverage_range[0]
+        or coverage > terrain_coverage_range[1]
+        or coverage == 0
+    ):
         logger.debug(
             f"keep_cam_pose_proposal rejects {coverage=} for {terrain_coverage_range=}"
         )
         return None
 
     if terrain is not None and terrain_sdf <= 0:
-        logger.debug(f"keep_cam_pose_proposal rejects {terrain_sdf=}")
+        logger.debug(
+            f"keep_cam_pose_proposal rejects {terrain_sdf=} for {cam.matrix_world.translation=}"
+        )
         return None
 
     if rparams := camera_selection_ratio:
@@ -415,21 +426,19 @@ class AnimPolicyGoToProposals:
 
 @gin.configurable
 def compute_base_views(
-    cam,
-    n_views,
+    camera_rig: bpy.types.Object,
+    n_views: int,
     terrain,
-    scene_bvh,
+    scene_bvh: BVHTree,
     location_sample: typing.Callable,
     center_coordinate=None,
     radius=None,
     bbox=None,
     placeholders_kd=None,
-    camera_selection_answers={},
-    vertexwise_min_dist=None,
-    camera_selection_ratio=None,
     min_candidates_ratio=20,
     max_tries=30000,
     visualize=False,
+    **kwargs,
 ):
     potential_views = []
     n_min_candidates = int(min_candidates_ratio * n_views)
@@ -455,23 +464,29 @@ def compute_base_views(
                 )
                 continue
 
-            props.apply(cam)
+            props.apply(camera_rig)
 
-            criterion = keep_cam_pose_proposal(
-                cam,
-                terrain,
-                scene_bvh,
-                placeholders_kd,
-                camera_selection_answers=camera_selection_answers,
-                vertexwise_min_dist=vertexwise_min_dist,
-                camera_selection_ratio=camera_selection_ratio,
-            )
+            all_scores = []
+            for cam in camera_rig.children:
+                score = keep_cam_pose_proposal(
+                    cam,
+                    terrain,
+                    scene_bvh,
+                    placeholders_kd,
+                    **kwargs,
+                )
+                all_scores.append(score)
+
+            if any(score is None for score in all_scores):
+                criterion = None
+            else:
+                criterion = np.mean(all_scores)
 
             if visualize:
                 criterion_str = f"{criterion:.2f}" if criterion is not None else "None"
                 marker = butil.spawn_empty(f"attempt_{it}_{criterion_str}")
-                marker.location = cam.location
-                marker.rotation_euler = cam.rotation_euler
+                marker.location = camera_rig.location
+                marker.rotation_euler = camera_rig.rotation_euler
 
             if criterion is None:
                 logger.debug(f"{it=} {criterion=}")
@@ -515,6 +530,7 @@ def build_bvh_and_attrs(objs, tags_queries):
             obj.select_set(True)
         bpy.ops.object.join()
         obj = bpy.context.view_layer.objects.active
+
     bvh = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
     from infinigen.terrain.utils import Mesh
 
@@ -640,9 +656,9 @@ def configure_cameras(
     nonroom_objs=None,
     mvs_setting=False,
     mvs_radius=("uniform", 12, 18),
+    **kwargs,
 ):
     bpy.context.view_layer.update()
-    dummy_camera = spawn_camera()
 
     if init_bounding_box is not None:
 
@@ -688,18 +704,19 @@ def configure_cameras(
     else:
         center_coordinate = None
 
-    base_views = compute_base_views(
-        dummy_camera,
-        n_views=len(cam_rigs),
-        location_sample=location_sample,
-        center_coordinate=center_coordinate,
-        radius=mvs_radius,
-        bbox=init_bounding_box,
-        **scene_preprocessed,
-    )
+    for cam_rig in cam_rigs:
+        views = compute_base_views(
+            cam_rig,
+            n_views=1,
+            location_sample=location_sample,
+            center_coordinate=center_coordinate,
+            radius=mvs_radius,
+            bbox=init_bounding_box,
+            **scene_preprocessed,
+            **kwargs,
+        )
 
-    for view, cam_rig in zip(base_views, cam_rigs):
-        score, props, focus_dist = view
+        score, props, focus_dist = views[0]
         cam_rig.location = props.loc
         cam_rig.rotation_euler = props.rot
 
@@ -712,8 +729,6 @@ def configure_cameras(
                     continue
                 cam.data.dof.focus_distance = focus_dist
 
-    butil.delete(dummy_camera)
-
 
 @gin.configurable
 def animate_cameras(
@@ -723,6 +738,7 @@ def animate_cameras(
     pois=None,
     follow_poi_chance=0.0,
     policy_registry=None,
+    **kwargs,
 ):
     animation_ratio = {}
     animation_answers = {}
@@ -731,15 +747,25 @@ def animate_cameras(
             animation_ratio[k] = scene_preprocessed["camera_selection_ratio"][k]
             animation_answers[k] = scene_preprocessed["camera_selection_answers"][k]
 
-    anim_valid_pose_func = partial(
-        keep_cam_pose_proposal,
-        placeholders_kd=scene_preprocessed["placeholders_kd"],
-        scene_bvh=scene_preprocessed["scene_bvh"],
-        terrain=scene_preprocessed["terrain"],
-        vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
-        camera_selection_answers=animation_answers,
-        camera_selection_ratio=animation_ratio,
-    )
+    def anim_valid_camrig_pose_func(cam_rig: bpy.types.Object):
+        assert len(cam_rig.children) > 0
+
+        for cam in cam_rig.children:
+            score = keep_cam_pose_proposal(
+                cam,
+                placeholders_kd=scene_preprocessed["placeholders_kd"],
+                scene_bvh=scene_preprocessed["scene_bvh"],
+                terrain=scene_preprocessed["terrain"],
+                vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
+                camera_selection_answers=animation_answers,
+                camera_selection_ratio=animation_ratio,
+                **kwargs,
+            )
+
+            if score is None:
+                return False
+
+        return True
 
     for cam_rig in cam_rigs:
         if policy_registry is None:
@@ -758,7 +784,7 @@ def animate_cameras(
             cam_rig,
             scene_preprocessed["scene_bvh"],
             policy_func=policy,
-            validate_pose_func=anim_valid_pose_func,
+            validate_pose_func=anim_valid_camrig_pose_func,
             verbose=True,
             fatal=True,
             bounding_box=bounding_box,
@@ -767,7 +793,7 @@ def animate_cameras(
 
 @gin.configurable
 def save_camera_parameters(
-    camera_obj: bpy.types.Object, output_folder, frame, use_dof=False
+    camera_obj: bpy.types.Object, output_folder: Path, frame: int, use_dof=False
 ):
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)

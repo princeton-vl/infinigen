@@ -535,7 +535,7 @@ def nodegroup_scales(nw: NodeWrangler):
 
     separate_xyz_7 = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute_1.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute_1.outputs[1]},
     )
 
     attribute_statistic = nw.new_node(
@@ -593,7 +593,7 @@ def nodegroup_scales(nw: NodeWrangler):
         input_kwargs={
             "Geometry": capture_attribute_4.outputs["Geometry"],
             "attr2": combine_xyz_3,
-            "attr5": capture_attribute_4.outputs["Attribute"],
+            "attr5": capture_attribute_4.outputs[1],
         },
     )
 
@@ -900,7 +900,7 @@ def shader_fish_body_regular(nw: NodeWrangler, rand=True, **input_kwargs):
             "Subsurface Radius": (0.36, 0.46, 0.6),
             "Subsurface Color": (1.0, 0.9405, 0.7747, 1.0),
             "Metallic": 0.8,
-            "Specular": 0.9,
+            "Specular IOR Level": 0.9,
             "Roughness": 0.3,
             "IOR": 1.69,
         },
@@ -1097,7 +1097,7 @@ def shader_fish_body_gold(nw: NodeWrangler, rand=True, **input_kwargs):
             "Subsurface Radius": (0.36, 0.46, 0.6),
             "Subsurface Color": (1.0, 0.9405, 0.7747, 1.0),
             "Metallic": 0.5,
-            "Specular": 0.5273,
+            "Specular IOR Level": 0.5273,
             "Roughness": 0.1,
             "IOR": 1.69,
         },

@@ -146,7 +146,7 @@ def shader_dragonfly_body_shader(nw: NodeWrangler, base_color, v):
         input_kwargs={
             "Base Color": mix,
             "Metallic": 0.2182,
-            "Specular": 0.8318,
+            "Specular IOR Level": 0.8318,
             "Roughness": 0.1545,
         },
     )
@@ -318,7 +318,7 @@ def nodegroup_dragonfly_body(
     )
 
     reroute = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": capture_attribute.outputs[2]}
+        Nodes.Reroute, input_kwargs={"Input": capture_attribute.outputs[1]}
     )
 
     less_than = nw.new_node(

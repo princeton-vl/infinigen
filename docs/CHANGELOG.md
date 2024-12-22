@@ -136,3 +136,37 @@ v1.10.0
 - Add MaterialSegmentation output pass
 - Add passthrough mode to direct manage_jobs stdout directly to terminal
 - Add "copyfile:destination" upload mode
+
+v1.10.1
+- Fix missing validity checks for camera-rig cameras which are not the 0th index
+- Fix missing seat in dining chair
+
+v1.11.0
+- Update to Blender == 4.2.0
+
+v1.11.1
+- Fix failed camera search when canyon/cliff/cave loaded as nature background
+- Fix scrambled GT maps in blender_gt due to incorrect OpenEXR pixel unpack ordering
+- Fix save_mesh kwarg mismatch from v1.10.0
+- Remove `frozendict` dependency, make `geomdl` optional if not using creatures
+- Make `submitit` optional if not using SLURM
+- Make blender addons optional if not using relevant assets (rocks/terrain/snowlayer)
+- Make `bnurbs` CPython module optional and not installed by default
+
+v1.11.2
+- Fix opengl_gt input file symlink missing
+
+v1.11.3
+- Increase max camera / object animation random walk trials
+- Fix scenetype gin recognition causing crashes for underwater.gin / kelpforest.gin
+
+v1.11.4
+- Fix circular / segfaulting imports when modules imported individually
+- Fix ordering-dependence in unit tests 
+- Fix scenetype.gin crashes for underwater/kelpforest
+- Increase integration test timelimit
+- Add `analyze_crash_reasons` crash summary script
+- Improve success rate of camera / creature animations via increased retry attempts
+
+v1.12.0
+- Publish to PyPi

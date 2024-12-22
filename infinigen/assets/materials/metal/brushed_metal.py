@@ -130,7 +130,7 @@ def nodegroup_brushed_metal(nw: NodeWrangler):
         input_kwargs={
             "Base Color": hue_saturation_value,
             "Metallic": 1.0000,
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": map_range_1.outputs["Result"],
         },
     )

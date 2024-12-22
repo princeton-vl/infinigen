@@ -198,15 +198,13 @@ def coll_distribute(nw, merge_dist=None):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Realize Instance"],
-            14: instance_on_points,
-            15: realize_instances,
+            0: group_input.outputs["Realize Instance"],
+            1: instance_on_points,
+            2: realize_instances,
         },
     )
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": switch.outputs[6]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": switch})
 
 
 @node_utils.to_nodegroup("PhylloDist", singleton=False)
@@ -444,7 +442,7 @@ def follow_curve(nw):
 
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
-        input_kwargs={"Vector": capture_attribute.outputs["Attribute"]},
+        input_kwargs={"Vector": capture_attribute.outputs[1]},
     )
 
     math = nw.new_node(
@@ -521,7 +519,7 @@ def set_tree_radius(nw):
             ("NodeSocketFloat", "Min radius", 0.02),
             ("NodeSocketFloat", "Max radius", 5.0),
             ("NodeSocketInt", "Profile res", 20),
-            ("NodeSocketFloatDistance", "Merge dist", 0.001),
+            ("NodeSocketFloat", "Merge dist", 0.001),
         ],
     )
 
@@ -562,7 +560,7 @@ def set_tree_radius(nw):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: True, 14: mesh_to_curve, 15: set_handle_positions},
+        input_kwargs={0: True, 1: mesh_to_curve, 2: set_handle_positions},
     )
 
     multiply = nw.new_node(
@@ -598,7 +596,7 @@ def set_tree_radius(nw):
 
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": switch.outputs[6], "Radius": minimum},
+        input_kwargs={"Curve": switch, "Radius": minimum},
     )
 
     curve_circle = nw.new_node(
@@ -897,7 +895,7 @@ def bark_geo_2(nw):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "offset_barkgeo2": capture_attribute.outputs["Attribute"],
+            "offset_barkgeo2": capture_attribute.outputs[1],
         },
     )
 
@@ -981,7 +979,7 @@ def bark_geo_1(nw):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "offset_barkgeo1": capture_attribute.outputs["Attribute"],
+            "offset_barkgeo1": capture_attribute.outputs[1],
         },
     )
 

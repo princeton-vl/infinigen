@@ -36,7 +36,7 @@ def nodegroup_pineapple_surface(
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketFloat", "spline parameter", 0.0),
-            ("NodeSocketFloatDistance", "point distance", 0.22),
+            ("NodeSocketFloat", "point distance", 0.22),
             ("NodeSocketFloat", "cell scale", 0.2),
             ("NodeSocketFloat", "random seed", 0.0),
         ],
@@ -327,6 +327,6 @@ def nodegroup_pineapple_cell_body(nw: NodeWrangler):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": set_position_1,
-            "spline parameter": capture_attribute.outputs[2],
+            "spline parameter": capture_attribute.outputs[1],
         },
     )

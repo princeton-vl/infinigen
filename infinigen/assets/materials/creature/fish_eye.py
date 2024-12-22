@@ -403,7 +403,11 @@ def shader_eyeball_fish(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_8, "Specular": 0.0000, "Roughness": 0.0000},
+        input_kwargs={
+            "Base Color": mix_8,
+            "Specular IOR Level": 0.0000,
+            "Roughness": 0.0000,
+        },
     )
 
     glossy_bsdf = nw.new_node("ShaderNodeBsdfGlossy")

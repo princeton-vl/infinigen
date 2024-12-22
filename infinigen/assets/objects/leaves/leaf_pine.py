@@ -23,7 +23,7 @@ def shader_needle(nw):
     # Code generated using version 2.3.1 of the node_transpiler
 
     velvet_bsdf = nw.new_node(
-        "ShaderNodeBsdfVelvet", input_kwargs={"Color": (0.016, 0.2241, 0.0252, 1.0)}
+        "ShaderNodeBsdfSheen", input_kwargs={"Color": (0.016, 0.2241, 0.0252, 1.0)}
     )
 
     glossy_bsdf = nw.new_node(
@@ -114,7 +114,7 @@ def nodegroup_instance_needle(nw):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Curve", None),
-            ("NodeSocketFloatFactor", "Needle Density", 0.9),
+            ("NodeSocketFloat", "Needle Density", 0.9),
             ("NodeSocketInt", "Seed", 0),
             ("NodeSocketGeometry", "Instance", None),
             ("NodeSocketFloat", "X Angle Mean", 0.5),
@@ -241,7 +241,7 @@ def nodegroup_needle5(nw):
             ("NodeSocketGeometry", "Instance", None),
             ("NodeSocketFloat", "X Angle Mean", 0.5),
             ("NodeSocketFloat", "X Angle Range", 0.0),
-            ("NodeSocketFloatFactor", "Needle Density", 0.9),
+            ("NodeSocketFloat", "Needle Density", 0.9),
             ("NodeSocketInt", "Seed", 0),
         ],
     )
@@ -344,7 +344,7 @@ def shader_twig(nw):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (0.08, 0.0329, 0.0414, 1.0),
-            "Specular": 0.0527,
+            "Specular IOR Level": 0.0527,
             "Roughness": 0.4491,
         },
     )
@@ -363,10 +363,10 @@ def nodegroup_pine_twig(nw):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketIntUnsigned", "Resolution", 20),
+            ("NodeSocketInt", "Resolution", 20),
             ("NodeSocketFloat", "Middle Y", 0.0),
             ("NodeSocketFloat", "Middle Z", 0.0),
-            ("NodeSocketFloatFactor", "Needle Density", 0.9),
+            ("NodeSocketFloat", "Needle Density", 0.9),
             ("NodeSocketGeometry", "Instance", None),
             ("NodeSocketFloat", "X Angle Mean", 0.5),
             ("NodeSocketFloat", "X Angle Range", 0.0),

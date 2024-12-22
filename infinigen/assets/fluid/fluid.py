@@ -20,12 +20,12 @@ from infinigen.assets.materials.fluid import (
     smoke,
     water,
 )
+from infinigen.core.init import require_blender_addon
 from infinigen.core.nodes.node_wrangler import (
     Nodes,
     NodeWrangler,
-    infer_input_socket,
-    infer_output_socket,
 )
+from infinigen.core.nodes.utils import infer_input_socket, infer_output_socket
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.logging import Timer
@@ -33,6 +33,8 @@ from infinigen.core.util.logging import Timer
 logger = logging.getLogger(__name__)
 
 FLUID_INITIALIZED = False
+
+require_blender_addon("antlandscape", fail="warn")
 
 
 def check_initalize_fluids():
@@ -620,6 +622,8 @@ def generate_waterfall(
     check_initalize_fluids()
 
     seed = np.random.randint(10000)
+
+    require_blender_addon("antlandscape")
 
     bpy.ops.mesh.landscape_add(
         ant_terrain_name="Landscape",

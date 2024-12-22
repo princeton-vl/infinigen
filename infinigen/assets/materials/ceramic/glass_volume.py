@@ -20,7 +20,8 @@ def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
             color = hsv2rgba(uniform(0, 1), uniform(0.5, 0.9), uniform(0.6, 0.9))
 
     principled_bsdf = nw.new_node(
-        Nodes.PrincipledBSDF, input_kwargs={"Roughness": 0.0000, "Transmission": 1.0000}
+        Nodes.PrincipledBSDF,
+        input_kwargs={"Roughness": 0.0000, "Transmission Weight": 1.0000},
     )
 
     volume_absorption = nw.new_node(

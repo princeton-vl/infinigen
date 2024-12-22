@@ -172,8 +172,8 @@ class CoralFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Specular": specular,
-                "Subsurface": subsurface_ratio,
+                "Specular IOR Level": specular,
+                "Subsurface Weight": subsurface_ratio,
                 "Subsurface Radius": subsurface_radius,
                 "Subsurface Color": subsurface_color,
             },

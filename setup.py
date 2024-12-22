@@ -22,6 +22,7 @@ str_true = "True"
 MINIMAL_INSTALL = os.environ.get("INFINIGEN_MINIMAL_INSTALL") == str_true
 BUILD_TERRAIN = os.environ.get("INFINIGEN_INSTALL_TERRAIN", str_true) == str_true
 BUILD_OPENGL = os.environ.get("INFINIGEN_INSTALL_CUSTOMGT", "False") == str_true
+BUILD_BNURBS = os.environ.get("INFINIGEN_INSTALL_BNURBS", "False") == str_true
 
 dont_build_steps = ["clean", "egg_info", "dist_info", "sdist", "--help"]
 is_build_step = not any(x in sys.argv[1] for x in dont_build_steps)
@@ -43,7 +44,8 @@ def ensure_submodules():
         )
 
 
-ensure_submodules()
+if not MINIMAL_INSTALL:
+    ensure_submodules()
 
 # inspired by https://github.com/pytorch/pytorch/blob/161ea463e690dcb91a30faacbf7d100b98524b6b/setup.py#L290
 # theirs seems to not exclude dist_info but this causes duplicate compiling in my tests
@@ -56,13 +58,14 @@ if is_build_step and not MINIMAL_INSTALL:
 cython_extensions = []
 
 if not MINIMAL_INSTALL:
-    cython_extensions.append(
-        Extension(
-            name="bnurbs",
-            sources=["infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
-            include_dirs=[numpy.get_include()],
+    if BUILD_BNURBS:
+        cython_extensions.append(
+            Extension(
+                name="bnurbs",
+                sources=["infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
+                include_dirs=[numpy.get_include()],
+            )
         )
-    )
     if BUILD_TERRAIN:
         cython_extensions.append(
             Extension(

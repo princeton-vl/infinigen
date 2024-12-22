@@ -17,6 +17,7 @@ import mathutils
 import numpy as np
 
 from infinigen.core.nodes.node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
+from infinigen.core.nodes.node_wrangler import ng_inputs
 
 logger = logging.getLogger(__name__)
 
@@ -657,7 +658,7 @@ def create_node(node_tree, node, memo):
     # Special case: input node
     if node.bl_idname == Nodes.GroupInput:
         all_inps = []
-        for inp in node_tree.inputs:
+        for inp in ng_inputs(node_tree).values():
             repr_val, targets = (
                 represent_default_value(inp.default_value, simple=False)
                 if hasattr(inp, "default_value")

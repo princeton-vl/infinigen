@@ -66,7 +66,7 @@ def shader_spots_sparse_attr(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix,
-            "Specular": 0.0,
+            "Specular IOR Level": 0.0,
             "Roughness": colorramp.outputs["Color"],
         },
     )
@@ -175,7 +175,7 @@ def geometry_spots_sparse(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "Attribute": capture_attribute.outputs["Attribute"],
+            "Attribute": capture_attribute.outputs[1],
         },
     )
 

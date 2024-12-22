@@ -24,7 +24,7 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Metallic": 1.0,
-            "Specular": uniform(0.5, 1.0),
+            "Specular IOR Level": uniform(0.5, 1.0),
             "Base Color": colors.hsv2rgba(color_hsv),
             "Roughness": roughness,
         },

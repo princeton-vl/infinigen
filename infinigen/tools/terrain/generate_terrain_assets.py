@@ -92,8 +92,6 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cpu")
     args = init.parse_args_blender(parser)
 
-    bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
-    bpy.ops.preferences.addon_enable(module="ant_landscape")
     butil.clear_scene(targets=[bpy.data.objects])
     asset_generation(
         Path(args.folder),

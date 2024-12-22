@@ -20,12 +20,11 @@ def whitewater(nw: NodeWrangler):
             "Subsurface Color": random_color_neighbour(
                 (0.7147, 0.6062, 0.8000, 1.0000), 0.05, 0.05, 0.05
             ),
-            "Specular": 0.0886 + 0.01 * normal(),
+            "Specular IOR Level": 0.0886 + 0.01 * normal(),
             "Roughness": 0.1500,
-            "Sheen Tint": 0.0000,
-            "Clearcoat Roughness": 0.0000,
+            "Coat Roughness": 0.0000,
             "IOR": 1.1000,
-            "Transmission": 0.5000,
+            "Transmission Weight": 0.5000,
         },
         attrs={"distribution": "MULTI_GGX"},
     )

@@ -423,7 +423,6 @@ class FlyingBirdFactory(AssetFactory):
             self.bvh,
             self.policy,
             retry_rotation=True,
-            max_full_retries=30,
             fatal=True,
         )
         curve.name = f"animhelper:{self}.create_placeholder({i}).path"

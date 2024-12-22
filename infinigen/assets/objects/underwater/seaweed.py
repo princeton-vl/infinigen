@@ -163,11 +163,11 @@ class SeaweedFactory(AssetFactory):
             Nodes.PrincipledBSDF,
             input_kwargs={
                 "Base Color": cr,
-                "Subsurface": subsurface_ratio,
+                "Subsurface Weight": subsurface_ratio,
                 "Subsurface Radius": (0.01, 0.01, 0.01),
                 "Subsurface Color": map_perturb(base_hue, 0.6, 0.2),
                 "Roughness": roughness,
-                "Specular": specular,
+                "Specular IOR Level": specular,
             },
         )
 

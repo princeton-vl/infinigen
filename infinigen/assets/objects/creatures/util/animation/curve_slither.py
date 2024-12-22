@@ -187,7 +187,7 @@ def nodegroup_wiggles(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatDistance", "Wavelength", 2.3300),
+            ("NodeSocketFloat", "Wavelength", 2.3300),
             ("NodeSocketFloat", "Magnitude", 1.6800),
             ("NodeSocketFloat", "MagRandom", 1.0000),
             ("NodeSocketFloat", "Loopyness", 0.5800),
@@ -231,7 +231,7 @@ def nodegroup_wiggles(nw: NodeWrangler):
         nodegroup_add_loopbacks().name,
         input_kwargs={
             "Geometry": addwiggles,
-            "Vector": capture_attribute.outputs["Attribute"],
+            "Vector": capture_attribute.outputs[1],
             "Amount": group_input.outputs["Loopyness"],
             "Randomness": group_input.outputs["LoopRandom"],
         },

@@ -17,12 +17,12 @@ def liquid_particle_material(nw: NodeWrangler):
         input_kwargs={
             "Base Color": (1.0000, 1.0000, 1.0000, 1.0000),
             "Subsurface Color": (0.7147, 0.6062, 0.8000, 1.0000),
-            "Specular": 0.0886,
+            "Specular IOR Level": 0.0886,
             "Roughness": 0.2705 + (0.1 * normal()),
             "Sheen Tint": 0.0000,
-            "Clearcoat Roughness": 0.0000,
+            "Coat Roughness": 0.0000,
             "IOR": 1.2000,
-            "Transmission": 0.2818 + (0.1 * normal()),
+            "Transmission Weight": 0.2818 + (0.1 * normal()),
         },
         attrs={"distribution": "MULTI_GGX"},
     )

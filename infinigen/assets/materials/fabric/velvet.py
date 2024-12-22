@@ -85,12 +85,11 @@ def shader_velvet(nw: NodeWrangler, **kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix_2.outputs[2],
-            "Specular": 0.0000,
+            "Specular IOR Level": 0.0000,
             "Roughness": uniform(0.4, 0.9),
             "Anisotropic": 0.7614,
             "Anisotropic Rotation": 1.0000,
-            "Sheen": 16.2273,
-            "Sheen Tint": 1.0000,
+            "Sheen Weight": 16.2273,
         },
     )
 

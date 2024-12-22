@@ -79,7 +79,7 @@ def nodegroup_symmetric_clone(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketVectorXYZ", "Scale", (1.0, -1.0, 1.0)),
+            ("NodeSocketVector", "Scale", (1.0, -1.0, 1.0)),
         ],
     )
 
@@ -116,7 +116,7 @@ def nodegroup_solidify(nw: NodeWrangler):
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Mesh", None),
-            ("NodeSocketFloatDistance", "Distance", 0.0),
+            ("NodeSocketFloat", "Distance", 0.0),
         ],
     )
 

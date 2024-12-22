@@ -201,8 +201,8 @@ def nodegroup_diamond(nw: NodeWrangler):
             ("NodeSocketVector", "Coordinate", (0.0000, 0.0000, 0.0000)),
             ("NodeSocketFloat", "Subtiles Number", 1.0000),
             ("NodeSocketFloat", "Aspect Ratio", 5.0000),
-            ("NodeSocketFloatFactor", "border", 0.1000),
-            ("NodeSocketFloatFactor", "Flatness", 0.9000),
+            ("NodeSocketFloat", "border", 0.1000),
+            ("NodeSocketFloat", "Flatness", 0.9000),
         ],
     )
 

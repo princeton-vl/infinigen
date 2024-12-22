@@ -80,7 +80,7 @@ def shader_twocolorz(nw, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
-            "Specular": 0.0,
+            "Specular IOR Level": 0.0,
             "Roughness": colorramp_1.outputs["Color"],
         },
     )

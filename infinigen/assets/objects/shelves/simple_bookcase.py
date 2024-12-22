@@ -147,8 +147,8 @@ def nodegroup_screw_head(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Depth", 0.0050),
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Depth", 0.0050),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "bottom_gap", 0.5000),
             ("NodeSocketFloat", "division_thickness", 0.5000),
             ("NodeSocketFloat", "width", 0.5000),

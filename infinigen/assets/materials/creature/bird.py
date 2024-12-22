@@ -395,8 +395,8 @@ def shader_bird_body(nw: NodeWrangler, rand=True, kind="duck", **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": group,
-            "Subsurface IOR": 0.0,
-            "Specular": 0.0,
+            "IOR": 0.0,
+            "Specular IOR Level": 0.0,
             "Roughness": 1.0,
         },
     )
@@ -487,7 +487,11 @@ def shader_bird_feather(
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": (mix, "Result"), "Specular": 0.0, "Roughness": 1.0},
+        input_kwargs={
+            "Base Color": (mix, "Result"),
+            "Specular IOR Level": 0.0,
+            "Roughness": 1.0,
+        },
         attrs={"subsurface_method": "BURLEY"},
     )
 
@@ -605,7 +609,7 @@ def shader_bird_claw(nw: NodeWrangler, rand=True, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (0.0091, 0.0091, 0.0091, 1.0),
-            "Specular": 0.0,
+            "Specular IOR Level": 0.0,
             "Roughness": 0.4409,
         },
     )

@@ -26,7 +26,7 @@ from infinigen.core.constraints.example_solver import (
 logger = logging.getLogger(__name__)
 
 
-def iter_domains(node: cl.Node) -> typing.Iterator[r.Domain]:
+def iter_domains(node: "cl.Node") -> typing.Iterator["r.Domain"]:
     match node:
         case cl.ObjectSetExpression():
             yield node, r.constraint_domain(node)
@@ -93,6 +93,7 @@ def check_problem_greedy_coverage(prob: cl.Problem, stages: dict[str, r.Domain])
         check_coverage_errors(b, coverage, stages)
 
 
+#
 def check_unfinalized_constraints(prob: cl.Problem):
     # TODO
     return []

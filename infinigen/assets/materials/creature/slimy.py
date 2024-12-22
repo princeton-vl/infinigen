@@ -73,9 +73,9 @@ def shader_slimy(nw, rand=False, **input_kwargs):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": (0.6605, 0.0279, 0.0359, 1.0),
-            "Subsurface": 0.2,
+            "Subsurface Weight": 0.2,
             "Subsurface Color": (0.4621, 0.0213, 0.0265, 1.0),
-            "Specular": 0.8591,
+            "Specular IOR Level": 0.8591,
             "Roughness": mix_1,
         },
     )
@@ -167,7 +167,7 @@ def geo_slimy(nw, rand=False, **input_kwargs):
         Nodes.GroupOutput,
         input_kwargs={
             "Geometry": capture_attribute.outputs["Geometry"],
-            "Attribute": capture_attribute.outputs["Attribute"],
+            "Attribute": capture_attribute.outputs[1],
         },
     )
 

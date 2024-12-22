@@ -24,7 +24,7 @@ def waterfall_shader(nw: NodeWrangler):
             "Base Color": rgb,
             "Roughness": 0.0,
             "IOR": 1.33,
-            "Transmission": 1.0,
+            "Transmission Weight": 1.0,
         },
     )
 
@@ -64,10 +64,10 @@ def waterfall_shader(nw: NodeWrangler):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Metallic": 0.2636,
-            "Specular": 1.0,
+            "Specular IOR Level": 1.0,
             "Roughness": 0.0,
             "IOR": 1.333,
-            "Transmission": 0.8205,
+            "Transmission Weight": 0.8205,
             "Alpha": colorramp.outputs["Color"],
         },
     )

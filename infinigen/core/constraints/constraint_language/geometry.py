@@ -20,7 +20,7 @@ class center_stable_surface_dist(ScalarExpression):
 class accessibility_cost(ScalarExpression):
     objs: ObjectSetExpression
     others: ObjectSetExpression
-    normal: np.array = field(default=np.array([1, 0, 0]))
+    normal: np.array = field(default_factory=lambda: np.array([1, 0, 0]))
     dist: float = 1.0
 
     def __post_init__(self):

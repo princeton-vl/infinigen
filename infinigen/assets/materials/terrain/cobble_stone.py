@@ -102,10 +102,6 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
         # depth of stone
         dep_sto = nw.new_value(U(0.02, 0.04), "dep_sto")
 
-        group_input = nw.new_node(
-            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
-        )
-
         noise_texture = nw.new_node(
             Nodes.NoiseTexture,
             input_kwargs={
@@ -195,6 +191,10 @@ def geo_cobblestone(nw: NodeWrangler, selection=None, random_seed=0, geometry=Tr
 
         if not geometry:
             return colorramp
+
+        group_input = nw.new_node(
+            Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
+        )
 
         multiply_1 = nw.new_node(
             Nodes.VectorMath,

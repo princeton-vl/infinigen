@@ -26,8 +26,8 @@ def nodegroup_part_surface(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Skin Mesh", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
         ],
     )
@@ -141,7 +141,7 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorEuler", "Rotation", (0.0, 0.0, 0.0)),
+            ("NodeSocketVector", "Rotation", (0.0, 0.0, 0.0)),
             ("NodeSocketVector", "Hit Normal", (0.0, 0.0, 1.0)),
             ("NodeSocketVector", "Curve Tangent", (0.0, 0.0, 1.0)),
             ("NodeSocketBool", "Do Normal Rot", False),
@@ -166,8 +166,8 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Do Normal Rot"],
-            8: group_input.outputs["Rotation"],
-            9: rotate_euler,
+            1: group_input.outputs["Rotation"],
+            2: rotate_euler,
         },
         label="if_normal_rot",
         attrs={"input_type": "VECTOR"},
@@ -194,15 +194,15 @@ def nodegroup_raycast_rotation(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             0: group_input.outputs["Do Tangent Rot"],
-            8: if_normal_rot.outputs[3],
-            9: rotate_euler_1,
+            1: if_normal_rot.outputs[0],
+            2: rotate_euler_1,
         },
         label="if_tangent_rot",
         attrs={"input_type": "VECTOR"},
     )
 
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot.outputs[3]}
+        Nodes.GroupOutput, input_kwargs={"Output": if_tangent_rot}
     )
 
 
@@ -286,7 +286,7 @@ def nodegroup_surface_muscle(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Debug Points"], 15: join_geometry},
+        input_kwargs={0: group_input.outputs["Debug Points"], 2: join_geometry},
     )
 
     u_resolution = nw.new_node(Nodes.Integer, label="U Resolution")
@@ -373,14 +373,12 @@ def nodegroup_surface_muscle(nw: NodeWrangler):
     )
 
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [switch.outputs[6], profilepart]}
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [switch, profilepart]}
     )
 
-    switch_1 = nw.new_node(Nodes.Switch, input_kwargs={1: True, 15: join_geometry_1})
+    switch_1 = nw.new_node(Nodes.Switch, input_kwargs={0: True, 2: join_geometry_1})
 
-    group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": switch_1.outputs[6]}
-    )
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": switch_1})
 
 
 @node_utils.to_nodegroup(
@@ -395,8 +393,8 @@ def nodegroup_attach_part(nw: NodeWrangler):
             ("NodeSocketGeometry", "Skin Mesh", None),
             ("NodeSocketGeometry", "Skeleton Curve", None),
             ("NodeSocketGeometry", "Geometry", None),
-            ("NodeSocketFloatFactor", "Length Fac", 0.0),
-            ("NodeSocketVectorEuler", "Ray Rot", (0.0, 0.0, 0.0)),
+            ("NodeSocketFloat", "Length Fac", 0.0),
+            ("NodeSocketVector", "Ray Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketFloat", "Rad", 0.0),
             ("NodeSocketVector", "Part Rot", (0.0, 0.0, 0.0)),
             ("NodeSocketBool", "Do Normal Rot", False),

@@ -8,6 +8,8 @@ import argparse
 import logging
 import os
 
+import OpenEXR
+
 # ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import cv2.
 
@@ -30,8 +32,22 @@ def load_exr(path):
 load_flow = load_exr
 
 
+def load_single_channel(p):
+    file = OpenEXR.InputFile(str(p))
+    channel, channel_type = next(iter(file.header()["channels"].items()))
+    match str(channel_type.type):
+        case "FLOAT":
+            np_type = np.float32
+        case _:
+            np_type = np.uint8
+    data = np.frombuffer(file.channel(channel, channel_type.type), np_type)
+    dw = file.header()["dataWindow"]
+    sz = (dw.max.y - dw.min.y + 1, dw.max.x - dw.min.x + 1)
+    return data.reshape(sz)
+
+
 def load_depth(p):
-    return load_exr(p)[..., 0]
+    return load_single_channel(p)
 
 
 def load_normals(p):
@@ -39,7 +55,7 @@ def load_normals(p):
 
 
 def load_seg_mask(p):
-    return load_exr(p)[..., 2].astype(np.int64)
+    return load_single_channel(p).astype(np.int64)
 
 
 def load_uniq_inst(p):

@@ -70,7 +70,7 @@ def shader_dragonfly_eye_shader(nw: NodeWrangler, base_color, v):
         Nodes.PrincipledBSDF,
         input_kwargs={
             "Base Color": mix,
-            "Specular": map_range_1.outputs["Result"],
+            "Specular IOR Level": map_range_1.outputs["Result"],
             "Roughness": 0.0,
         },
     )

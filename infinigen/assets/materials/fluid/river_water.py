@@ -25,7 +25,11 @@ def shader_river_water(nw: NodeWrangler):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Roughness": 0.0000, "IOR": 1.3300, "Transmission": 1.0000},
+        input_kwargs={
+            "Roughness": 0.0000,
+            "IOR": 1.3300,
+            "Transmission Weight": 1.0000,
+        },
     )
 
     mix_shader = nw.new_node(

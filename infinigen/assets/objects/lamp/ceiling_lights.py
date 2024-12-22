@@ -142,7 +142,7 @@ def nodegroup_ceiling_light_geometry(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Radius", 0.2000),
+            ("NodeSocketFloat", "Radius", 0.2000),
             ("NodeSocketFloat", "Thickness", 0.0050),
             ("NodeSocketFloat", "InnerRadius", 0.1800),
             ("NodeSocketFloat", "Height", 0.1000),

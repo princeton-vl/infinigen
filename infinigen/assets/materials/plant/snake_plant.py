@@ -140,7 +140,7 @@ def shader_snake_plant(nw: NodeWrangler):
         input_kwargs={
             "Base Color": mix,
             "Roughness": U(8.0, 15.0),
-            "Clearcoat Roughness": 0.0,
+            "Coat Roughness": 0.0,
         },
     )
 

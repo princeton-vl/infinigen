@@ -8,11 +8,12 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
+from infinigen.core.init import require_blender_addon
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
-bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
+require_blender_addon("extra_mesh_objects", fail="warn")
 
 
 class BlenderRockFactory(AssetFactory):
@@ -23,6 +24,8 @@ class BlenderRockFactory(AssetFactory):
     __repr__ = AssetFactory.__repr__
 
     def create_asset(self, **params):
+        require_blender_addon("extra_mesh_objects")
+
         seed = np.random.randint(0, 99999)
 
         zscale = U(0.2, 0.8)

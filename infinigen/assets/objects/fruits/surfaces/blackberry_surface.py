@@ -24,7 +24,11 @@ def shader_berry_shader(nw: NodeWrangler, berry_color):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": berry_color, "Specular": 0.5705, "Roughness": 0.2},
+        input_kwargs={
+            "Base Color": berry_color,
+            "Specular IOR Level": 0.5705,
+            "Roughness": 0.2,
+        },
     )
 
     material_output = nw.new_node(

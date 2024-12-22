@@ -97,9 +97,9 @@ def nodegroup_corner_cube(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketVectorTranslation", "Location", (0.0000, 0.0000, 0.0000)),
-            ("NodeSocketVectorTranslation", "CenteringLoc", (0.5000, 0.5000, 0.0000)),
-            ("NodeSocketVectorTranslation", "Dimensions", (1.0000, 1.0000, 1.0000)),
+            ("NodeSocketVector", "Location", (0.0000, 0.0000, 0.0000)),
+            ("NodeSocketVector", "CenteringLoc", (0.5000, 0.5000, 0.0000)),
+            ("NodeSocketVector", "Dimensions", (1.0000, 1.0000, 1.0000)),
             ("NodeSocketFloat", "SupportingEdgeFac", 0.0000),
             ("NodeSocketInt", "Vertices X", 4),
             ("NodeSocketInt", "Vertices Y", 4),
@@ -186,10 +186,10 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
             ("NodeSocketFloat", "Backrest Width", 0.1100),
             ("NodeSocketFloat", "Seat Margin", 0.9700),
             ("NodeSocketFloat", "Backrest Angle", -0.2000),
-            ("NodeSocketFloatFactor", "arm_width", 0.7000),
+            ("NodeSocketFloat", "arm_width", 0.7000),
             ("NodeSocketInt", "Arm Type", 0),
-            ("NodeSocketFloatFactor", "Arm_height", 0.7318),
-            ("NodeSocketFloatAngle", "arms_angle", 0.8727),
+            ("NodeSocketFloat", "Arm_height", 0.7318),
+            ("NodeSocketFloat", "arms_angle", 0.8727),
             ("NodeSocketBool", "Footrest", False),
             ("NodeSocketInt", "Count", 4),
             ("NodeSocketFloat", "Scaling footrest", 1.5000),
@@ -642,19 +642,17 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_1 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={0: 4.0000, 2: reroute_13, 3: 4},
+        input_kwargs={2: reroute_13, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
     switch_8 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: equal_1, 8: divide_2.outputs["Vector"], 9: combine_xyz_4},
+        input_kwargs={0: equal_1, 1: divide_2.outputs["Vector"], 2: combine_xyz_4},
         attrs={"input_type": "VECTOR"},
     )
 
-    separate_xyz_16 = nw.new_node(
-        Nodes.SeparateXYZ, input_kwargs={"Vector": switch_8.outputs[3]}
-    )
+    separate_xyz_16 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": switch_8})
 
     multiply_6 = nw.new_node(
         Nodes.Math,
@@ -678,7 +676,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     subtract_3 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: switch_8.outputs[3], 1: combine_xyz_18},
+        input_kwargs={0: switch_8, 1: combine_xyz_18},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -756,14 +754,14 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     switch_6 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["leg_type"],
-            14: transform_geometry_9,
-            15: transform_geometry_12,
+            0: group_input.outputs["leg_type"],
+            1: transform_geometry_9,
+            2: transform_geometry_12,
         },
     )
 
     transform_geometry_8 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": switch_6.outputs[6]}
+        Nodes.Transform, input_kwargs={"Geometry": switch_6}
     )
 
     instance_on_points_1 = nw.new_node(
@@ -833,7 +831,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     switch_2 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Footrest"], 15: transform_geometry_5},
+        input_kwargs={0: group_input.outputs["Footrest"], 1: transform_geometry_5},
     )
 
     combine_xyz_19 = nw.new_node(
@@ -884,17 +882,17 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     switch_4 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Footrest"], 15: join_geometry_11},
+        input_kwargs={0: group_input.outputs["Footrest"], 2: join_geometry_11},
     )
 
     switch_5 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: equal, 14: switch_2.outputs[6], 15: switch_4.outputs[6]},
+        input_kwargs={0: equal, 1: switch_2, 2: switch_4},
     )
 
     join_geometry_4 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [join_geometry_3, base_board, switch_5.outputs[6]]},
+        input_kwargs={"Geometry": [join_geometry_3, base_board, switch_5]},
     )
 
     grid = nw.new_node(Nodes.MeshGrid, input_kwargs={"Vertices X": 2, "Vertices Y": 2})
@@ -964,7 +962,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_2 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        input_kwargs={2: reroute_10, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -984,7 +982,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     equal_3 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={1: 4.0000, 2: reroute_10, 3: 4},
+        input_kwargs={2: reroute_10, 3: 4},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -994,13 +992,13 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     switch_7 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={0: equal_3, 4: reroute_11, 5: 1},
+        input_kwargs={0: equal_3, 1: reroute_11, 2: 1},
         attrs={"input_type": "INT"},
     )
 
     combine_xyz_15 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": 1.0000, "Y": switch_7.outputs[1], "Z": 1.1000},
+        input_kwargs={"X": 1.0000, "Y": switch_7, "Z": 1.1000},
     )
 
     multiply_16 = nw.new_node(
@@ -1071,7 +1069,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
             "Geometry": seat_cushion,
             "Selection": equal_4,
             "Name": "TAG_support",
-            6: True,
+            "Value": True,
         },
         attrs={"data_type": "BOOLEAN", "domain": "FACE"},
     )
@@ -1085,7 +1083,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
             "Geometry": store_named_attribute_1,
             "Selection": value,
             "Name": "TAG_cushion",
-            6: True,
+            "Value": True,
         },
         attrs={"data_type": "BOOLEAN", "domain": "FACE"},
     )
@@ -1160,15 +1158,15 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
     switch_9 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: equal_2,
-            14: nodegroup_array_fill_line_002,
-            15: nodegroup_array_fill_line_002_1,
+            0: equal_2,
+            1: nodegroup_array_fill_line_002,
+            2: nodegroup_array_fill_line_002_1,
         },
     )
 
     switch_3 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: group_input.outputs["Footrest"], 15: switch_9.outputs[6]},
+        input_kwargs={0: group_input.outputs["Footrest"], 2: switch_9},
     )
 
     nodegroup_array_fill_line_002_2 = nw.new_node(
@@ -1184,9 +1182,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     join_geometry_9 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [switch_3.outputs[6], nodegroup_array_fill_line_002_2]
-        },
+        input_kwargs={"Geometry": [switch_3, nodegroup_array_fill_line_002_2]},
     )
 
     subdivide_mesh = nw.new_node(
@@ -1357,14 +1353,14 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     switch_1 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={1: True, 14: join_geometry_7, 15: subdivision_surface_2},
+        input_kwargs={0: True, 1: join_geometry_7, 2: subdivision_surface_2},
     )
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["Subdivide"],
-            14: join_geometry_7,
-            15: subdivision_surface_2,
+            0: group_input.outputs["Subdivide"],
+            1: join_geometry_7,
+            2: subdivision_surface_2,
         },
     )
 
@@ -1386,7 +1382,7 @@ def nodegroup_sofa_geometry(nw: NodeWrangler):
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": switch_1.outputs[6], "BoundingBox": reroute_8},
+        input_kwargs={"Geometry": switch_1, "BoundingBox": reroute_8},
         attrs={"is_active_output": True},
     )
 

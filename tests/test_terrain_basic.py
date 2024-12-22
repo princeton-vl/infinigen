@@ -4,10 +4,10 @@
 # Authors: Zeyu Ma
 
 
-import bpy
 import gin
 import pytest
 
+from infinigen.core.init import configure_blender
 from infinigen.core.util.organization import Task
 from infinigen.core.util.test_utils import setup_gin
 from infinigen.terrain.core import Terrain
@@ -33,8 +33,7 @@ def test_terrain_runs():
         ],
     )
 
-    bpy.ops.preferences.addon_enable(module="add_mesh_extra_objects")
-    bpy.ops.preferences.addon_enable(module="ant_landscape")
+    configure_blender()
 
     terrain = Terrain(0, task=Task.Coarse, on_the_fly_asset_folder="/tmp/terrain_tests")
     terrain.coarse_terrain()

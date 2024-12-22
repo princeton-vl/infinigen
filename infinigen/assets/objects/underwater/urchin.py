@@ -144,9 +144,9 @@ class UrchinFactory(AssetFactory):
             input_kwargs={
                 "Base Color": color,
                 "Roughness": roughness,
-                "Subsurface": subsurface,
+                "Subsurface Weight": subsurface,
                 "Subsurface Color": color,
-                "Transmission": transmission,
+                "Transmission Weight": transmission,
             },
         )
         return principled_bsdf

@@ -212,10 +212,7 @@ class ChairFactory(AssetFactory):
             np.array(
                 [
                     0,
-                    -self.seat_back,
-                    -self.seat_mid_x,
-                    -1,
-                    0,
+                    0.1,
                     1,
                     self.seat_mid_x,
                     self.seat_back,
@@ -226,17 +223,13 @@ class ChairFactory(AssetFactory):
             / 2
         )
         y_anchors = (
-            np.array(
-                [0, 0, -self.seat_mid, -1, -self.seat_front, -1, -self.seat_mid, 0, 0]
-            )
+            np.array([-self.seat_front, -self.seat_front, -1, -self.seat_mid, 0, 0])
             * self.size
         )
-        z_anchors = (
-            np.array([0, 0, self.seat_mid_z, 0, 0, 0, self.seat_mid_z, 0, 0])
-            * self.thickness
-        )
-        vector_locations = [1, 7] if self.is_seat_round else [1, 3, 5, 7]
+        z_anchors = np.array([0, 0, 0, self.seat_mid_z, 0, 0]) * self.thickness
+        vector_locations = [4] if self.is_seat_round else [2, 4]
         obj = bezier_curve((x_anchors, y_anchors, z_anchors), vector_locations)
+        butil.modify_mesh(obj, "MIRROR")
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.fill_grid(use_interp_simple=True)

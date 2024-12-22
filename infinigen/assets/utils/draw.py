@@ -110,6 +110,11 @@ def curve2mesh(obj):
     length = np.linalg.norm(cos[:-1] - cos[1:], axis=-1)
     min_length = 5e-3
     with butil.ViewportMode(obj, "EDIT"):
+        for i in range(len(points)):
+            if points[i].handle_left_type == "FREE":
+                points[i].handle_left_type = "ALIGNED"
+            if points[i].handle_right_type == "FREE":
+                points[i].handle_right_type = "ALIGNED"
         for i in reversed(range(len(points) - 1)):
             points = list(obj.data.splines[0].bezier_points)
             number_cuts = min(int(length[i] / min_length) - 1, 64)

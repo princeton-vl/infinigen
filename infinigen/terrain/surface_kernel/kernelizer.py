@@ -9,10 +9,10 @@ from collections import OrderedDict
 
 import numpy as np
 
+from infinigen.core.nodes.node_wrangler import ng_inputs, ng_outputs
 from infinigen.terrain.utils import (
     NODE_ATTRS_AVAILABLE,
     NODE_FUNCTIONS,
-    SOCKETTYPE_KERNEL,
     KernelDataType,
     Nodes,
     SocketType,
@@ -28,6 +28,7 @@ from infinigen.terrain.utils import (
     value_string,
     var_list,
 )
+from infinigen.terrain.utils.kernelizer_util import SOCKETTYPE_KERNEL, SOCKETTYPES
 
 functional_nodes = [
     Nodes.SetPosition,
@@ -48,10 +49,11 @@ def my_getattr(x, a):
 class Kernelizer:
     def get_inputs(self, node_tree):
         inputs = OrderedDict()
-        for node_input in node_tree.inputs:
-            if node_input.type != SocketType.Geometry:
-                assert node_input.type != SocketType.Image
-                inputs[node_input.identifier] = SOCKETTYPE_KERNEL[node_input.type]
+        for node_input in ng_inputs(node_tree).values():
+            socket_type = SOCKETTYPES[node_input.socket_type]
+            if socket_type != SocketType.Geometry:
+                assert socket_type != SocketType.Image
+                inputs[node_input.identifier] = SOCKETTYPE_KERNEL[socket_type]
         return inputs
 
     def get_output(self, node_tree):
@@ -59,9 +61,10 @@ class Kernelizer:
         for node in node_tree.nodes:
             if node.bl_idname == Nodes.SetPosition:
                 outputs[Vars.Offset] = KernelDataType.float3
-        for node_output in node_tree.outputs:
-            if node_output.type != SocketType.Geometry:
-                outputs[node_output.identifier] = SOCKETTYPE_KERNEL[node_output.type]
+        for node_output in ng_outputs(node_tree).values():
+            socket_type = SOCKETTYPES[node_output.socket_type]
+            if socket_type != SocketType.Geometry:
+                outputs[node_output.identifier] = SOCKETTYPE_KERNEL[socket_type]
         return outputs
 
     def regularize(self, node_tree):
@@ -416,9 +419,8 @@ class Kernelizer:
         code, imp_inputs, outputs = self.execute_node_tree(
             node_tree, collective_style=True
         )
-        for nodeoutput in node_tree.outputs:
-            id = nodeoutput.identifier
-            if id != "Output_1":  # not Geometry
+        for nodeoutput in ng_outputs(node_tree).values():
+            if nodeoutput.socket_type != "NodeSocketGeometry":
                 code = re.sub(rf"\b{id}\b", modifier[f"{id}_attribute_name"], code)
                 outputs[modifier[f"{id}_attribute_name"]] = outputs.pop(id)
         return code, imp_inputs, outputs

@@ -134,7 +134,11 @@ def shader_cracked_ground(nw: NodeWrangler, random_seed=0):
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_2, "Specular": 0.2000, "Roughness": 0.9000},
+        input_kwargs={
+            "Base Color": mix_2,
+            "Specular IOR Level": 0.2000,
+            "Roughness": 0.9000,
+        },
     )
 
     material_output = nw.new_node(

@@ -293,14 +293,14 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     group_input_1 = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Height", 2.0000),
-            ("NodeSocketFloatDistance", "FrameWidth", 0.1000),
-            ("NodeSocketFloatDistance", "FrameThickness", 0.1000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Height", 2.0000),
+            ("NodeSocketFloat", "FrameWidth", 0.1000),
+            ("NodeSocketFloat", "FrameThickness", 0.1000),
             ("NodeSocketInt", "PanelHAmount", 0),
             ("NodeSocketInt", "PanelVAmount", 0),
-            ("NodeSocketFloatDistance", "SubFrameWidth", 0.0500),
-            ("NodeSocketFloatDistance", "SubFrameThickness", 0.0500),
+            ("NodeSocketFloat", "SubFrameWidth", 0.0500),
+            ("NodeSocketFloat", "SubFrameThickness", 0.0500),
             ("NodeSocketInt", "SubPanelHAmount", 3),
             ("NodeSocketInt", "SubPanelVAmount", 2),
             ("NodeSocketFloat", "GlassThickness", 0.0100),
@@ -312,13 +312,13 @@ def nodegroup_window_geometry(nw: NodeWrangler):
             ("NodeSocketFloat", "CurtainFrameDepth", 0.5000),
             ("NodeSocketFloat", "CurtainDepth", 0.0300),
             ("NodeSocketFloat", "CurtainIntervalNumber", 20.0000),
-            ("NodeSocketFloatDistance", "CurtainFrameRadius", 0.0100),
+            ("NodeSocketFloat", "CurtainFrameRadius", 0.0100),
             ("NodeSocketFloat", "CurtainMidL", -0.5000),
             ("NodeSocketFloat", "CurtainMidR", 0.5000),
             ("NodeSocketBool", "Shutter", True),
-            ("NodeSocketFloatDistance", "ShutterPanelRadius", 0.0050),
-            ("NodeSocketFloatDistance", "ShutterWidth", 0.0500),
-            ("NodeSocketFloatDistance", "ShutterThickness", 0.0050),
+            ("NodeSocketFloat", "ShutterPanelRadius", 0.0050),
+            ("NodeSocketFloat", "ShutterWidth", 0.0500),
+            ("NodeSocketFloat", "ShutterThickness", 0.0050),
             ("NodeSocketFloat", "ShutterRotation", 0.0000),
             ("NodeSocketFloat", "ShutterInterval", 0.0500),
             ("NodeSocketMaterial", "FrameMaterial", None),
@@ -436,9 +436,9 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["Shutter"],
-            14: windowpanel_1,
-            15: windowshutter,
+            0: group_input_1.outputs["Shutter"],
+            1: windowpanel_1,
+            2: windowshutter,
         },
     )
 
@@ -488,7 +488,7 @@ def nodegroup_window_geometry(nw: NodeWrangler):
 
     transform = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": switch.outputs[6], "Translation": combine_xyz},
+        input_kwargs={"Geometry": switch, "Translation": combine_xyz},
     )
 
     geometry_to_instance = nw.new_node(
@@ -730,14 +730,14 @@ def nodegroup_window_geometry(nw: NodeWrangler):
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input_1.outputs["Curtain"],
-            14: join_geometry,
-            15: join_geometry_1,
+            0: group_input_1.outputs["Curtain"],
+            1: join_geometry,
+            2: join_geometry_1,
         },
     )
 
     realize_instances = nw.new_node(
-        Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1.outputs[6]}
+        Nodes.RealizeInstances, input_kwargs={"Geometry": switch_1}
     )
 
     bounding_box = nw.new_node(
@@ -855,9 +855,9 @@ def nodegroup_curtain(nw: NodeWrangler):
         expose_input=[
             ("NodeSocketFloat", "Width", 0.5000),
             ("NodeSocketFloat", "Depth", 0.1000),
-            ("NodeSocketFloatDistance", "Height", 0.1000),
+            ("NodeSocketFloat", "Height", 0.1000),
             ("NodeSocketFloat", "IntervalNumber", 0.5000),
-            ("NodeSocketFloatDistance", "Radius", 1.0000),
+            ("NodeSocketFloat", "Radius", 1.0000),
             ("NodeSocketFloat", "L1", 0.5000),
             ("NodeSocketFloat", "R1", 0.0000),
             ("NodeSocketFloat", "L2", 0.0000),
@@ -1111,8 +1111,8 @@ def nodegroup_curtain(nw: NodeWrangler):
     combine_xyz_12 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={
-            "X": capture_attribute_1.outputs[2],
-            "Y": capture_attribute.outputs[2],
+            "X": capture_attribute_1.outputs[1],
+            "Y": capture_attribute.outputs[1],
         },
     )
 
@@ -1188,14 +1188,14 @@ def nodegroup_window_shutter(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Height", 2.0000),
-            ("NodeSocketFloatDistance", "FrameWidth", 0.1000),
-            ("NodeSocketFloatDistance", "FrameThickness", 0.1000),
-            ("NodeSocketFloatDistance", "PanelWidth", 0.1000),
-            ("NodeSocketFloatDistance", "PanelThickness", 0.1000),
-            ("NodeSocketFloatDistance", "ShutterWidth", 0.1000),
-            ("NodeSocketFloatDistance", "ShutterThickness", 0.1000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Height", 2.0000),
+            ("NodeSocketFloat", "FrameWidth", 0.1000),
+            ("NodeSocketFloat", "FrameThickness", 0.1000),
+            ("NodeSocketFloat", "PanelWidth", 0.1000),
+            ("NodeSocketFloat", "PanelThickness", 0.1000),
+            ("NodeSocketFloat", "ShutterWidth", 0.1000),
+            ("NodeSocketFloat", "ShutterThickness", 0.1000),
             ("NodeSocketFloat", "ShutterInterval", 0.5000),
             ("NodeSocketFloat", "ShutterRotation", 0.0000),
             ("NodeSocketMaterial", "FrameMaterial", None),
@@ -1437,12 +1437,12 @@ def nodegroup_window_panel(nw: NodeWrangler):
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
-            ("NodeSocketFloatDistance", "Width", 2.0000),
-            ("NodeSocketFloatDistance", "Height", 2.0000),
-            ("NodeSocketFloatDistance", "FrameWidth", 0.1000),
-            ("NodeSocketFloatDistance", "FrameThickness", 0.1000),
-            ("NodeSocketFloatDistance", "PanelWidth", 0.1000),
-            ("NodeSocketFloatDistance", "PanelThickness", 0.1000),
+            ("NodeSocketFloat", "Width", 2.0000),
+            ("NodeSocketFloat", "Height", 2.0000),
+            ("NodeSocketFloat", "FrameWidth", 0.1000),
+            ("NodeSocketFloat", "FrameThickness", 0.1000),
+            ("NodeSocketFloat", "PanelWidth", 0.1000),
+            ("NodeSocketFloat", "PanelThickness", 0.1000),
             ("NodeSocketInt", "PanelHAmount", 0),
             ("NodeSocketInt", "PanelVAmount", 0),
             ("NodeSocketBool", "WithGlass", False),
@@ -1603,15 +1603,15 @@ def nodegroup_window_panel(nw: NodeWrangler):
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            1: group_input.outputs["WithGlass"],
-            14: set_material_1,
-            15: join_geometry,
+            0: group_input.outputs["WithGlass"],
+            1: set_material_1,
+            2: join_geometry,
         },
     )
 
     set_shade_smooth = nw.new_node(
         Nodes.SetShadeSmooth,
-        input_kwargs={"Geometry": switch.outputs[6], "Shade Smooth": False},
+        input_kwargs={"Geometry": switch, "Shade Smooth": False},
     )
 
     group_output = nw.new_node(
