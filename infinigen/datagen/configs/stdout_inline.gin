@@ -1,0 +1,3 @@
+LocalScheduleHandler.use_gpu = False 
+local_submit_cmd.stdout_passthrough = True 
+print_stats_block.mute = True
