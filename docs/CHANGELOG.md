@@ -178,3 +178,4 @@ v1.12.1
 - Fix outdated bbox input for camera_pose_proposal
 - Bugfix stdout passthrough mode crashing due to no logfile created
 - Add normalmaps to integration test viewer, misc test fixes
+- Avoid rare duplicate names in indoor solver
