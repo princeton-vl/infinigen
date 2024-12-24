@@ -184,11 +184,18 @@ def slurm_submit_cmd(
 
 @gin.configurable
 def local_submit_cmd(
-    cmd, folder: Path, name: str, use_scheduler=False, passthrough=False, **kwargs
+    cmd,
+    folder: Path,
+    name: str,
+    use_scheduler=False,
+    stdout_passthrough: bool = False,
+    **kwargs,
 ):
     ExecutorClass = ScheduledLocalExecutor if use_scheduler else ImmediateLocalExecutor
-    log_folder = (folder / "logs") if not passthrough else None
-    executor = ExecutorClass(folder=log_folder)
+    log_folder = folder / "logs"
+    log_folder.mkdir(exist_ok=True)
+
+    executor = ExecutorClass(folder=log_folder, stdout_passthrough=stdout_passthrough)
     executor.update_parameters(name=name, **kwargs)
 
     if callable(cmd[0]):
@@ -338,9 +345,15 @@ def update_symlink(scene_folder, scenes):
         to = scene_folder / "logs" / f"{new_name}.out"
         std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
 
+        if not std_out.exists():
+            raise FileNotFoundError(
+                f"{std_out=} does not exist during attempt to symlink from {to=}"
+            )
+
         if os.path.islink(to):
             os.unlink(to)
             os.unlink(scene_folder / "logs" / f"{new_name}.err")
+
         os.symlink(std_out.resolve(), to)
         os.symlink(
             std_out.with_suffix(".err").resolve(),
@@ -705,6 +718,27 @@ def manage_datagen_jobs(
 
 
 @gin.configurable
+def print_stats_block(
+    output_folder: Path,
+    start_time: datetime,
+    log_stats: dict,
+    mute: bool = False,
+):
+    if mute:
+        return
+
+    now = datetime.now()
+
+    print(
+        f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}'
+    )
+    print("=" * 60)
+    for k, v in sorted(log_stats.items()):
+        print(f"{k.ljust(30)} : {v}")
+    print("-" * 60)
+
+
+@gin.configurable
 def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=None):
     command_path = args.output_folder / "datagen_command.sh"
     with command_path.open("w") as f:
@@ -752,25 +786,14 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
 
     start_time = datetime.now()
     while any(j["all_done"] == SceneState.NotDone for j in all_scenes):
-        now = datetime.now()
-
-        if args.print_stats:
-            print(
-                f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}'
-            )
-
         log_stats = manage_datagen_jobs(
-            all_scenes, elapsed=(now - start_time).total_seconds()
+            all_scenes, elapsed=(datetime.now() - start_time).total_seconds()
         )
 
         if wandb is not None:
             wandb.log(log_stats)
 
-        if args.print_stats:
-            print("=" * 60)
-            for k, v in sorted(log_stats.items()):
-                print(f"{k.ljust(30)} : {v}")
-            print("-" * 60)
+        print_stats_block(args.output_folder, start_time, log_stats)
 
         time.sleep(2)
 
@@ -878,7 +901,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
     )
-    parser.add_argument("--print_stats", type=int, default=1)
     args = parser.parse_args()
 
     using_upload = any("upload" in x for x in args.pipeline_configs)
