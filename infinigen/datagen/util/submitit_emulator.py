@@ -13,7 +13,6 @@ import logging
 import os
 import re
 import subprocess
-from contextlib import nullcontext
 from dataclasses import dataclass
 from multiprocessing import Process
 from pathlib import Path
@@ -60,6 +59,31 @@ class LocalJob:
         self.process.kill()
 
 
+class FileTee:
+    """
+    Wrap a file-like object in order to write all its output to a stream aswell (usually sys.stdout or sys.stderr)
+    """
+
+    def __init__(self, inner, stream):
+        self.inner = inner
+        self.stream = stream
+
+    def write(self, data):
+        self.inner.write(data)
+        self.stream.write(data)
+
+    def flush(self):
+        self.inner.flush()
+        self.stream.flush()
+
+    def close(self):
+        self.inner.close()
+        self.stream.close()
+
+    def fileno(self):
+        return self.inner.fileno()
+
+
 def get_fake_job_id():
     # Lahav assures me these will never conflict
     return np.random.randint(int(1e10), int(1e11))
@@ -67,13 +91,17 @@ def get_fake_job_id():
 
 def job_wrapper(
     command: list[str],
-    stdout_file: Path = None,
-    stderr_file: Path = None,
+    stdout_file: Path,
+    stderr_file: Path,
     cuda_devices=None,
+    stdout_passthrough: bool = False,
 ):
-    stdout_ctx = stdout_file.open("w") if stdout_file is not None else nullcontext()
-    stderr_ctx = stderr_file.open("w") if stderr_file is not None else nullcontext()
-    with stdout_ctx as stdout, stderr_ctx as stderr:
+    with stdout_file.open("w") as stdout, stderr_file.open("w") as stderr:
+        if stdout_passthrough:
+            # TODO: send output to BOTH the file and the console
+            stdout = None
+            stderr = None
+
         if cuda_devices is not None:
             env = os.environ.copy()
             env[CUDA_VARNAME] = ",".join([str(i) for i in cuda_devices])
@@ -82,31 +110,35 @@ def job_wrapper(
 
         subprocess.run(
             command,
-            stdout=stdout if stdout_file is not None else subprocess.PIPE,
-            stderr=stderr if stderr_file is not None else subprocess.PIPE,
+            stdout=stdout,
+            stderr=stderr,
             shell=False,
             check=False,  # dont throw CalledProcessError
             env=env,
         )
 
 
-def launch_local(command: str, job_id, log_folder: Path, name: str, cuda_devices=None):
-    if log_folder is None:
-        # pass input through to stdout if log_folder is None
-        stderr_file = None
-        stdout_file = None
-        print(command)
-    else:
-        stderr_file = log_folder / f"{job_id}_0_log.err"
-        stdout_file = log_folder / f"{job_id}_0_log.out"
-        with stdout_file.open("w") as f:
-            f.write(f"{command}\n")
+def launch_local(
+    command: str,
+    job_id: str,
+    log_folder: Path,
+    name: str,
+    cuda_devices=None,
+    stdout_passthrough: bool = False,
+):
+    stderr_file = log_folder / f"{job_id}_0_log.err"
+    stdout_file = log_folder / f"{job_id}_0_log.out"
+
+    with stdout_file.open("w") as f:
+        f.write(f"{command}\n")
+    stderr_file.touch()
 
     kwargs = dict(
         command=command,
         stdout_file=stdout_file,
         stderr_file=stderr_file,
         cuda_devices=cuda_devices,
+        stdout_passthrough=stdout_passthrough,
     )
     proc = Process(target=job_wrapper, kwargs=kwargs, name=name)
     proc.start()
@@ -115,12 +147,15 @@ def launch_local(command: str, job_id, log_folder: Path, name: str, cuda_devices
 
 
 class ImmediateLocalExecutor:
-    def __init__(self, folder: str | None):
+    def __init__(self, folder: str | None, stdout_passthrough: bool = False):
         if folder is None:
             self.log_folder = None
         else:
             self.log_folder = Path(folder).resolve()
             self.log_folder.mkdir(exist_ok=True)
+
+        self.stdout_passthrough = stdout_passthrough
+
         self.parameters = {}
 
     def update_parameters(self, **parameters):
@@ -129,7 +164,13 @@ class ImmediateLocalExecutor:
     def submit(self, command: str):
         job_id = get_fake_job_id()
         name = self.parameters.get("name", None)
-        proc = launch_local(command, job_id, log_folder=self.log_folder, name=name)
+        proc = launch_local(
+            command,
+            job_id,
+            log_folder=self.log_folder,
+            name=name,
+            stdout_passthrough=self.stdout_passthrough,
+        )
         return LocalJob(job_id=job_id, process=proc)
 
 
@@ -148,7 +189,9 @@ class LocalScheduleHandler:
         self.jobs_per_gpu = jobs_per_gpu
         self.use_gpu = use_gpu
 
-    def enqueue(self, command: str, params, log_folder):
+    def enqueue(
+        self, command: str, params: dict, log_folder: Path, stdout_passthrough: bool
+    ):
         job = LocalJob(job_id=get_fake_job_id(), process=None)
         job_rec = dict(
             command=command,
@@ -156,7 +199,15 @@ class LocalScheduleHandler:
             job=job,
             log_folder=log_folder,
             gpu_assignment=None,
+            stdout_passthrough=stdout_passthrough,
         )
+
+        # matches behavior of submitit (?) - user code expects to be able to set up its
+        #   symlinks for these logfiles right at job queue time
+        stderr_file = log_folder / f"{job.job_id}_0_log.err"
+        stdout_file = log_folder / f"{job.job_id}_0_log.out"
+        stderr_file.touch()
+        stdout_file.touch()
 
         self.queue.append(job_rec)
         return job
@@ -222,6 +273,7 @@ class LocalScheduleHandler:
             log_folder=job_rec["log_folder"],
             name=job_rec["params"].get("name", None),
             cuda_devices=gpu_idxs,
+            stdout_passthrough=job_rec["stdout_passthrough"],
         )
         job_rec["gpu_assignment"] = gpu_assignment
 
@@ -245,12 +297,12 @@ class LocalScheduleHandler:
 
 
 class ScheduledLocalExecutor:
-    def __init__(self, folder: str):
-        if folder is None:
-            self.log_folder = None
-        else:
-            self.log_folder = Path(folder)
-            self.log_folder.mkdir(exist_ok=True)
+    def __init__(self, folder: str, stdout_passthrough: bool = False):
+        self.log_folder = Path(folder)
+        self.log_folder.mkdir(exist_ok=True)
+
+        self.stdout_passthrough = stdout_passthrough
+
         self.parameters = {}
 
     def update_parameters(self, **parameters):
@@ -258,7 +310,10 @@ class ScheduledLocalExecutor:
 
     def submit(self, command):
         return LocalScheduleHandler.instance().enqueue(
-            command, params=self.parameters, log_folder=self.log_folder
+            command,
+            params=self.parameters,
+            log_folder=self.log_folder,
+            stdout_passthrough=self.stdout_passthrough,
         )
 
 

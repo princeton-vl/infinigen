@@ -124,10 +124,15 @@ def propose_addition_bound_gen(
     for i, assignments in enumerate(all_assignments):
         logger.debug("Found assignments %d %s %s", i, len(assignments), assignments)
 
+        def sample_name():
+            return f"{np.random.randint(1e6):04d}_{gen_class.__name__}"
+
+        target_name = next(
+            sample_name() for _ in range(100) if sample_name() not in curr.objs
+        )
+
         yield moves.Addition(
-            names=[
-                f"{np.random.randint(1e6):04d}_{gen_class.__name__}"
-            ],  # decided later
+            names=[target_name],  # decided later
             gen_class=gen_class,
             relation_assignments=assignments,
             temp_force_tags=prop_dom.tags,

@@ -408,7 +408,10 @@ class AnimPolicyGoToProposals:
         bbox = (camera_rig.location - margin, camera_rig.location + margin)
 
         for _ in range(self.retries):
-            res = camera_pose_proposal(bvh, bbox)  # !
+            res = camera_pose_proposal(
+                scene_bvh=bvh,
+                location_sample=lambda: np.random.uniform(*bbox),
+            )
             if res is None:
                 continue
             dist = np.linalg.norm(np.array(res.loc) - np.array(camera_rig.location))
