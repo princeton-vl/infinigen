@@ -55,7 +55,7 @@ def collapse_hierarchy(root_obj):
     bpy.context.view_layer.objects.active = mesh_objects[0]
     bpy.ops.object.join()
 
-    final_obj = bpy.context.active_object
+    final_obj = bpy.context.active_object.copy()
 
     butil.delete(list(butil.iter_object_tree(root_obj)))
 
