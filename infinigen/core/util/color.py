@@ -58,7 +58,7 @@ HSV_RANGES = {
     "water": (U(0.2, 0.6), N(0.5, 0.1), U(0.7, 1)),
     "darker_water": (U(0.2, 0.6), N(0.5, 0.1), U(0.2, 0.3)),
     "under_water": (U(0.5, 0.7), U(0.7, 0.95), U(0.7, 1)),
-    "seawater_scatter": (
+    "water_scatter": (
         N(0.474, 0.05),
         N(0.8, 0.1),
         N(0.9, 0.1)
