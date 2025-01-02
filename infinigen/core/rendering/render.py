@@ -12,11 +12,13 @@ import logging
 import os
 import time
 from pathlib import Path
+import shutil
 
 import bpy
 import gin
 import numpy as np
 from imageio import imwrite
+import cv2
 
 from infinigen.core import init, surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -225,25 +227,56 @@ def configure_compositor_output(
 
 
 def shader_random(nw: NodeWrangler):
-    # Code generated using version 2.4.3 of the node_transpiler
+    # Code generated using version 2.6.5 of the node_transpiler
+    object_info_1 = nw.new_node(Nodes.ObjectInfo_Shader)
 
-    object_info = nw.new_node(Nodes.ObjectInfo_Shader)
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 10
 
-    white_noise_texture = nw.new_node(
-        Nodes.WhiteNoiseTexture, input_kwargs={"Vector": object_info.outputs["Random"]}
-    )
+    divide = nw.new_node(Nodes.Math, input_kwargs={0: 1.0000, 1: value}, attrs={'operation': 'DIVIDE'})
 
-    nw.new_node(
-        Nodes.MaterialOutput,
-        input_kwargs={"Surface": white_noise_texture.outputs["Color"]},
-    )
+    divide_1 = nw.new_node(Nodes.Math, input_kwargs={0: object_info_1.outputs["Random"], 1: divide},
+                           attrs={'operation': 'DIVIDE'})
+
+    floor = nw.new_node(Nodes.Math, input_kwargs={0: divide_1}, attrs={'operation': 'FLOOR'})
+
+    multiply = nw.new_node(Nodes.Math, input_kwargs={0: floor, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    divide_2 = nw.new_node(Nodes.Math, input_kwargs={0: object_info_1.outputs["Random"], 1: divide},
+                           attrs={'operation': 'DIVIDE'})
+
+    fract = nw.new_node(Nodes.Math, input_kwargs={0: divide_2}, attrs={'operation': 'FRACT'})
+
+    divide_3 = nw.new_node(Nodes.Math, input_kwargs={0: fract, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    floor_1 = nw.new_node(Nodes.Math, input_kwargs={0: divide_3}, attrs={'operation': 'FLOOR'})
+
+    multiply_1 = nw.new_node(Nodes.Math, input_kwargs={0: floor_1, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    divide_4 = nw.new_node(Nodes.Math, input_kwargs={0: divide_2, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    fract_1 = nw.new_node(Nodes.Math, input_kwargs={0: divide_4}, attrs={'operation': 'FRACT'})
+
+    divide_5 = nw.new_node(Nodes.Math, input_kwargs={0: fract_1, 1: divide}, attrs={'operation': 'DIVIDE'})
+
+    floor_2 = nw.new_node(Nodes.Math, input_kwargs={0: divide_5}, attrs={'operation': 'FLOOR'})
+
+    multiply_2 = nw.new_node(Nodes.Math, input_kwargs={0: floor_2, 1: divide}, attrs={'operation': 'MULTIPLY'})
+
+    combine_color = nw.new_node(Nodes.CombineColor,
+                                input_kwargs={'Red': multiply, 'Green': multiply_1, 'Blue': multiply_2})
+
+    emission = nw.new_node(
+        "ShaderNodeEmission", input_kwargs={"Color": combine_color, "Strength": 0.5})
+    _ = nw.new_node(Nodes.MaterialOutput, input_kwargs={'Surface': emission})
+
 
 
 def global_flat_shading():
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if "fire_system_type" in obj and obj["fire_system_type"] == "volume":
             continue
-        if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
+        if obj.name.lower() in {"atmosphere", "atmosphere_fine", "liquid", "liquid_fine"}:
             bpy.data.objects.remove(obj)
         elif obj.active_material is not None:
             nw = obj.active_material.node_tree
@@ -279,7 +312,7 @@ def global_flat_shading():
         nw.links.remove(link)
 
 
-def postprocess_blendergt_outputs(frames_folder, output_stem):
+def postprocess_blendergt_outputs(frames_folder, output_stem, frame, tmp_dir):
     # Save flow visualization
     flow_dst_path = frames_folder / f"Vector{output_stem}.exr"
     flow_array = load_flow(flow_dst_path)
@@ -326,15 +359,11 @@ def postprocess_blendergt_outputs(frames_folder, output_stem):
 
     # Save unique instances visualization
     uniq_inst_path = frames_folder / f"UniqueInstances{output_stem}.exr"
-    uniq_inst_array = load_uniq_inst(uniq_inst_path)
-    np.save(
-        flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"),
-        uniq_inst_array,
-    )
-    imwrite(
-        uniq_inst_path.with_name(f"InstanceSegmentation{output_stem}.png"),
-        colorize_int_array(uniq_inst_array),
-    )
+    #uniq_inst_array = load_uniq_inst(uniq_inst_path)
+    uniq_inst_tmp_path = f"{tmp_dir}/{frame:04d}.png"
+    uniq_inst_array = cv2.imread(uniq_inst_tmp_path)
+    np.save(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.npy"), uniq_inst_array)
+    shutil.copy(uniq_inst_tmp_path, str(flow_dst_path.with_name(f"InstanceSegmentation{output_stem}.png")))
     uniq_inst_path.unlink()
 
 
@@ -480,7 +509,7 @@ def render_image(
             if flat_shading:
                 bpy.context.scene.frame_set(frame)
                 suffix = get_suffix(dict(frame=frame, **indices))
-                postprocess_blendergt_outputs(frames_folder, suffix)
+                postprocess_blendergt_outputs(frames_folder, suffix, frame, tmp_dir)
             else:
                 cam_util.save_camera_parameters(
                     camera,
