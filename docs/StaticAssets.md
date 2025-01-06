@@ -79,7 +79,7 @@ If you want to add more categories, just add more lines with `{CategoryName}` as
 
 ## Define Semantics
 
-Infinigen allows the user to specify high-level semantics for the objects in the scene. These semantics are then used to define high-level constraints. For example, we want to say that our static shelf factory is a type of storage unit, which will be placed against the wall, and there will be a bunch of objects on top of it. In general, if you want your static object factory to be treated like an existing asset factory, you can just imitate the semantics of the existing asset factory. Let's demonstrate this idea by defining semantics for our static shelf. We go to `infinigen_examples/indoor_asset_semantics.py` and search for `LargeShelfFactory`. We see that it is used as `Semantics.Storage` and `Semantics.AssetPlaceholderForChildren`. We want our static shelf to be used as a storage unit as well, so we add a line for our new static factory:
+Infinigen allows the user to specify high-level semantics for the objects in the scene. These semantics are then used to define high-level constraints. For example, we want to say that our static shelf factory is a type of storage unit, which will be placed against the wall, and there will be a bunch of objects on top of it. In general, if you want your static object factory to be treated like an existing asset factory, you can just imitate the semantics of the existing asset factory. Let's demonstrate this idea by defining semantics for our static shelf. We go to `infinigen_examples/constraints/semantics.py` and search for `LargeShelfFactory`. We see that it is used as `Semantics.Storage` and `Semantics.AssetPlaceholderForChildren`. We want our static shelf to be used as a storage unit as well, so we add a line for our new static factory:
 ![alt text](images/static_assets/image3.jpg)
 
 Similarly, we add `StaticShelfFactory` to `Semantics.AssetPlaceholderForChildren`. This will replace the placeholder bounding box for the shelf before placing the small objects. 
@@ -166,7 +166,7 @@ StaticMyCategoryFactory = static_category_factory("infinigen/assets/static_asset
 
 5. Add a line in `infinigen/assets/static_assets/__init__.py` to import the factory from other files.
 
-6. Define the semantics for the objects in `infinigen_examples/indoor_asset_semantics.py`. E.g.
+6. Define the semantics for the objects in `infinigen_examples/constraints/semantics.py`. E.g.
 
 ```python
 used_as[Semantics.Furniture] = {...

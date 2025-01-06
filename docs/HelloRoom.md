@@ -116,7 +116,7 @@ Each of these commandline args demonstrates a different way in which you can res
 - `restrict_solving.consgraph_filters=[\"counter\",\"sink\"]` says to throw out any `constraints` or `score_terms` keys from `home_furniture_constraints()` that do not contain `counter` or `sink` as substrings, producing a simpler constraint graph. 
 - `compose_indoors.solve_steps_large=30 compose_indoors.solve_steps_small=30` says to spend fewer optimization steps on large/small objects. You can also do the same for medium. These values override the defaults provided in `fast_solve.gin` and `infinigen_examples/configs_indoor/base.gin`
 
-These settings are intended for debugging or for generating tailored datasets. If you want more granular control over what assets are used for what purposes, please customize `infinigen_examples/indoor_asset_semantics.py` which defines this mapping. 
+These settings are intended for debugging or for generating tailored datasets. If you want more granular control over what assets are used for what purposes, please customize `infinigen_examples/constraints/semantics.py` which defines this mapping. 
 
 If you are using the commands from [Creating large datasets](#creating-large-datasets) you will instead add these configs as `--overrides` to the end of your command, rather than `-p`
 
