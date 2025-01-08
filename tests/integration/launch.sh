@@ -41,7 +41,7 @@ if [ "$RUN_NATURE" -eq 1 ]; then
     for nature_type in arctic canyon cave coast coral_reef desert forest kelp_forest mountain plain river snowy_mountain under_water; do
         python -m infinigen.datagen.manage_jobs --output_folder $OUTPUT_PATH/${JOBTAG}_scene_nature_$nature_type \
         --num_scenes 3 --cleanup big_files --overwrite \
-        --configs $nature_type.gin dev.gin \
+        --configs $nature_type.gin \
         --pipeline_configs slurm monocular blender_gt \
         --pipeline_overrides sample_scene_spec.seed_range=[0,100] &
     done
