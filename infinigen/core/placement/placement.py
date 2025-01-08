@@ -191,7 +191,7 @@ def filter_populate_targets(
 def populate_collection(
     factory: AssetFactory,
     placeholder_col: bpy.types.Collection,
-    cameras,
+    cameras: list[bpy.types.Object] = None,
     asset_col_target=None,
     dist_cull=None,
     vis_cull=None,
