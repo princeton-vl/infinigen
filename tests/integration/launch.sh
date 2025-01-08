@@ -58,10 +58,6 @@ parsed_nature_configs="${arg1_strings[*]}"
 parsed_indoors_configs="${arg2_strings[*]}"
 parsed_pipeline_configs="${arg3_strings[*]}"
 
-if [ -z "$parsed_pipeline_configs" ]; then
-    parsed_pipeline_configs="slurm_1h"
-fi
-
 # Environment Variables for Opting In/Out
 RUN_INDOOR=${RUN_INDOOR:-1}
 RUN_NATURE=${RUN_NATURE:-1}
