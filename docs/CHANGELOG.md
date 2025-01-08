@@ -188,3 +188,7 @@ v1.12.2
 - Usability improvements for integration test scripts
 - Fix static asset import #391
 - Fix indoor_asset_semantics.py typo #398
+
+v1.12.3
+- Fix populate_collection missing argument 'cameras'
+- Fix split_in_view crash for dist_max=None
