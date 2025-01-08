@@ -38,8 +38,15 @@ def get_configs(log_path, stage):
         return match.groups()[0]
 
 
-def main(args):
-    crash_reasons = (args.input_folder / "crash_summaries.txt").read_text().split("\n")
+def parse_run_folder(run_folder: Path, args: argparse.Namespace):
+
+    crash_reasons = (run_folder / "crash_summaries.txt")
+
+    if not crash_reasons.exists():
+        print(f"Could not find crash reasons for {run_folder}")
+        return
+
+    crash_reasons = crash_reasons.read_text().split("\n")
 
     regex = re.compile(
         ".*\s.*\s(.*\/([a-zA-Z0-9]*)\/logs\/(.*))\sreason=[\"'](.*)[\"']\snode='(.*)'"
@@ -70,6 +77,9 @@ def main(args):
 
     df = pd.DataFrame.from_records(records)
 
+    return df
+
+def visualize_results(df: pd.DataFrame, args: argparse.Namespace):
     df["reason_canonical"] = df["reason"].apply(canonicalize_reason)
 
     print("COMMON CRASH REASONS")
@@ -108,10 +118,17 @@ def main(args):
             print(f"  {row}")
         print("")
 
+def main(args):
+
+    run_dfs = [parse_run_folder(run_folder, args) for run_folder in args.input_folder]
+    run_dfs = [x for x in run_dfs if x is not None]
+    
+    df = pd.concat(run_dfs)
+    visualize_results(df, args)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_folder", type=Path, required=True)
+    parser.add_argument("--input_folder", type=Path, required=True, nargs="+")
     args = parser.parse_args()
 
     main(args)

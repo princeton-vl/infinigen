@@ -194,6 +194,8 @@ def get_upload_func(method="smbclient"):
         return smb_client.upload
     elif method.startswith("copyfile"):
         return lambda x, y: copy_upload_file(x, y, root_dir=method.split(":")[-1])
+    elif method == "mock":
+        return lambda x, y: print(f"Mock upload {x} to {y}")
     else:
         raise ValueError(f"Unrecognized {method=}")
 
