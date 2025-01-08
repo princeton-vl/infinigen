@@ -28,13 +28,11 @@ def collapse_hierarchy(root_obj):
     mesh_objects = []
 
     def process_object(obj, parent=None):
-        new_obj = obj
-        if obj.type != "MESH":
-            new_obj = create_empty_mesh_object(obj.name, parent)
-            new_obj.matrix_world = obj.matrix_world
-        else:
-            if parent:
-                new_obj.parent = parent
+        new_obj = create_empty_mesh_object(obj.name, parent)
+        new_obj.matrix_world = obj.matrix_world
+
+        if obj.type == "MESH":
+            new_obj.data = obj.data.copy()
 
         mesh_objects.append(new_obj)
 
@@ -54,9 +52,9 @@ def collapse_hierarchy(root_obj):
 
     bpy.context.view_layer.objects.active = mesh_objects[0]
     bpy.ops.object.join()
-
     final_obj = bpy.context.active_object
 
+    # Delete the original hierarchy
     butil.delete(list(butil.iter_object_tree(root_obj)))
 
     return final_obj

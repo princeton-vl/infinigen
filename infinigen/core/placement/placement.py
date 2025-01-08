@@ -128,7 +128,7 @@ def scatter_placeholders(locations, factory: AssetFactory):
     return col
 
 
-def get_placeholder_points(obj):
+def get_placeholder_points(obj: bpy.types.Object) -> np.ndarray:
     if obj.type == "MESH":
         verts = np.zeros((len(obj.data.vertices), 3))
         obj.data.vertices.foreach_get("co", verts.reshape(-1))
@@ -148,51 +148,82 @@ def parse_asset_name(name):
     return list(match.groups())
 
 
+def filter_populate_targets(
+    placeholders: list[bpy.types.Object],
+    cameras: list[bpy.types.Object],
+    dist_cull: float,
+    vis_cull: float,
+    verbose: bool,
+) -> list[tuple[bpy.types.Object, float, float]]:
+    if verbose:
+        placeholders = tqdm(placeholders)
+
+    results = []
+
+    for i, p in enumerate(placeholders):
+        classname, *_ = parse_asset_name(p.name)
+
+        if classname is None:
+            raise ValueError(f"Could not parse {p.name=}, got {classname=}")
+
+        mask, min_dists, min_vis_dists = split_in_view.compute_inview_distances(
+            get_placeholder_points(p),
+            cameras,
+            dist_max=dist_cull,
+            vis_margin=vis_cull,
+            verbose=False,
+        )
+
+        dist = min_dists.min()
+        vis_dist = min_vis_dists.min()
+
+        if not mask.any():
+            logger.debug(
+                f"{p.name=} culled, not in view of any camera. {dist=} {vis_dist=}"
+            )
+            continue
+
+        results.append((p, dist, vis_dist))
+
+    return results
+
+
 def populate_collection(
     factory: AssetFactory,
     placeholder_col: bpy.types.Collection,
+    cameras,
     asset_col_target=None,
-    cameras=None,
     dist_cull=None,
     vis_cull=None,
     verbose=True,
     cache_system=None,
     **asset_kwargs,
 ):
-    logger.info(f"Populating placeholders for {factory}")
-
     if asset_col_target is None:
         asset_col_target = butil.get_collection(f"unique_assets:{repr(factory)}")
 
-    all_objs = []
-    updated_pholders = []
     placeholders = [o for o in placeholder_col.objects if o.parent is None]
 
+    if cameras is not None:
+        logger.info(f"Checking visibility for {placeholder_col.name=}")
+        targets = filter_populate_targets(
+            placeholders, cameras, dist_cull, vis_cull, verbose
+        )
+    else:
+        targets = [(p, detail.scatter_res_distance(), 0) for p in placeholders]
+
+    print(
+        f"Populating {len(targets)} placeholders for {factory=} out of {len(placeholders)} total"
+    )
+
+    all_objs = []
+    updated_pholders = []
+
     if verbose:
-        placeholders = tqdm(placeholders)
+        targets = tqdm(targets)
 
-    for i, p in enumerate(placeholders):
-        classname, fac_seed, _, inst_seed = parse_asset_name(p.name)
-        if classname is None:
-            continue
-
-        if cameras is not None:
-            mask, min_dists, min_vis_dists = split_in_view.compute_inview_distances(
-                get_placeholder_points(p), cameras, verbose=verbose
-            )
-
-            dist = min_dists.min()
-            vis_dist = min_vis_dists.min()
-
-            if not mask.any():
-                logger.debug(
-                    f"{p.name=} culled, not in view of any camera. {dist=} {vis_dist=}"
-                )
-                continue
-
-        else:
-            dist = detail.scatter_res_distance()
-            vis_dist = 0
+    for i, (p, dist, vis_dist) in enumerate(targets):
+        classname, inst_seed, *_ = parse_asset_name(p.name)
 
         if cache_system:
             if (
@@ -209,10 +240,12 @@ def populate_collection(
                 cache_system.link_fire(full_sim_folder, sim_folder, obj, factory)
             else:
                 break
-        else:
-            obj = factory.spawn_asset(
-                i, placeholder=p, distance=dist, vis_distance=vis_dist, **asset_kwargs
-            )
+
+            continue
+
+        obj = factory.spawn_asset(
+            i, placeholder=p, distance=dist, vis_distance=vis_dist, **asset_kwargs
+        )
 
         if p is not obj:
             p.hide_render = True
@@ -268,11 +301,13 @@ def populate_all(
             )
             continue
 
+        fac_inst = factory_class(int(fac_seed), **kwargs)
+
         new_assets, pholders = populate_collection(
-            factory_class(int(fac_seed), **kwargs),
-            col,
-            asset_target_col,
-            camera=cameras,
+            fac_inst,
+            placeholder_col=col,
+            cameras=cameras,
+            asset_target_col=asset_target_col,
             dist_cull=dist_cull,
             vis_cull=vis_cull,
             cache_system=cache_system,

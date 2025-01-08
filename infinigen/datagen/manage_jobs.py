@@ -346,9 +346,7 @@ def update_symlink(scene_folder, scenes):
         std_out = scene_folder / "logs" / f"{scene.job_id}_0_log.out"
 
         if not std_out.exists():
-            raise FileNotFoundError(
-                f"{std_out=} does not exist during attempt to symlink from {to=}"
-            )
+            std_out.touch()
 
         if os.path.islink(to):
             os.unlink(to)

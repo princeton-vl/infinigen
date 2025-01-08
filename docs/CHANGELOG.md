@@ -180,3 +180,11 @@ v1.12.1
 - Bugfix stdout passthrough mode crashing due to no logfile created
 - Add normalmaps to integration test viewer, misc test fixes
 - Avoid rare duplicate names in indoor solver
+
+v1.12.2
+- Fix excessive time/memory/crashes in nature scenes due to inactive viewpoint filter
+- Fix blendergt not set to 1hr timelimit by slurm_1h.gin
+- Add get_cmd.child_debug flag
+- Usability improvements for integration test scripts
+- Fix static asset import #391
+- Fix indoor_asset_semantics.py typo #398

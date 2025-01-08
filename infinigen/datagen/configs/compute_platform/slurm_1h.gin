@@ -10,6 +10,7 @@ queue_coarse.hours = 1
 queue_fine_terrain.hours = 1
 queue_populate.hours = 1
 queue_render.hours = 1
+ground_truth/queue_render.hours = 1
 queue_mesh_save.hours = 1
 queue_opengl.hours = 1
 
