@@ -19,7 +19,7 @@ INFINIGEN_VERSION=$(python -c "import infinigen; print(infinigen.__version__)")
 COMMIT_HASH=$(git rev-parse HEAD | cut -c 1-6) 
 DATE=$(date '+%Y-%m-%d')
 JOBTAG="${DATE}_ifg-int"
-BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/_/-/g; s/\//_/g')
+BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/_/-/g; s|/|-|g; s/\//_/g')
 VERSION_STRING="${DATE}_${BRANCH}_${COMMIT_HASH}_${USER}"
 
 mkdir -p $OUTPUT_PATH

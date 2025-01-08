@@ -753,6 +753,8 @@ def animate_cameras(
     def anim_valid_camrig_pose_func(cam_rig: bpy.types.Object):
         assert len(cam_rig.children) > 0
 
+        scores = []
+
         for cam in cam_rig.children:
             score = keep_cam_pose_proposal(
                 cam,
@@ -765,10 +767,15 @@ def animate_cameras(
                 **kwargs,
             )
 
-            if score is None:
-                return False
+            frame = bpy.context.scene.frame_current
+            logger.debug(f"Checking {cam.name=} {frame=} got {score=}")
 
-        return True
+            if score is None:
+                return None
+
+            scores.append(score)
+
+        return np.min(scores)
 
     for cam_rig in cam_rigs:
         if policy_registry is None:

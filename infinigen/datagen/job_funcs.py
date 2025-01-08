@@ -48,6 +48,7 @@ def get_cmd(
     driver_script="infinigen_examples.generate_nature",  # replace with a regular path to a .py, or another installed module
     input_folder=None,
     process_niceness=None,
+    child_debug=None,
 ):
     if isinstance(task, list):
         task = " ".join(task)
@@ -72,9 +73,18 @@ def get_cmd(
         cmd += "--input_folder " + str(input_folder) + " "
     if output_folder is not None:
         cmd += "--output_folder " + str(output_folder) + " "
+
     cmd += f"--seed {seed} --task {task} --task_uniqname {taskname} "
+
+    if child_debug is not None:
+        if child_debug == "all":
+            cmd += "--debug "
+        else:
+            cmd += f"--debug {child_debug} "
+
     if len(configs) != 0:
         cmd += f'-g {" ".join(configs)} '
+
     cmd += "-p"
 
     return cmd.split()
