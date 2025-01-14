@@ -399,8 +399,8 @@ class TreeFactory(GenericTreeFactory):
         # return
         # return 'leaf_maple'
         leaf_type = np.random.choice(
-            ["leaf", "leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
-            p=[0, 0.0, 0.70, 0.15, 0.15],
+            ["leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
+            p=[0.0, 0.70, 0.15, 0.15],
         )
         flower_type = np.random.choice(["flower", "berry", None], p=[1.0, 0.0, 0.0])
         if season == "spring":
@@ -526,7 +526,7 @@ class BushFactory(GenericTreeFactory):
 
         with FixedSeed(seed):
             leaf_type = np.random.choice(
-                ["leaf", "leaf_v2", "flower", "berry"], p=[0.1, 0.4, 0.5, 0]
+                ["leaf_v2", "flower", "berry"], p=[0.5, 0.5, 0]
             )
 
             colname = f"assets:{self}.twigs"

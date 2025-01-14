@@ -338,7 +338,6 @@ ground = [
 liquid = [
     (fluid.Water, 7),
     (fluid.Lava, 3),
-    (fluid.Whitewater, 1),
 ]
 
 beach = [

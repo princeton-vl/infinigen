@@ -285,7 +285,7 @@ class FishFactory(AssetFactory):
             )
 
             body_material_fac = weighted_sample(material_assignments.fish)
-            self.body_material = body_material_fac()()
+            self.body_material = body_material_fac()
             self.fin_material = materials.creature.FishFin()
             self.eye_material = materials.creature.FishEye()
 
