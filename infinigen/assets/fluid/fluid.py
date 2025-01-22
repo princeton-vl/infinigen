@@ -199,7 +199,6 @@ def make_liquid_effector(obj):
 
 @gin.configurable
 def add_field(location, noise=None, strength=None):
-    check_initalize_fluids()
     logger.info("adding field")
     bpy.ops.object.select_all(action="DESELECT")
     field = bpy.data.objects.new("turbulence", None)
@@ -240,7 +239,6 @@ def create_gas_domain(
     flame_vorticity=None,
     vorticity=None,
 ):
-    check_initalize_fluids()
     bpy.ops.mesh.primitive_cube_add(size=size, location=location)
     obj = bpy.context.object
     set_gas_domain_settings(
@@ -275,7 +273,6 @@ def set_gas_domain_settings(
     flame_vorticity=None,
     vorticity=None,
 ):
-    check_initalize_fluids()
     if "Fluid" not in obj.modifiers:
         mod = obj.modifiers.new("Fluid", type="FLUID")
     else:
@@ -345,8 +342,6 @@ def set_gas_domain_settings(
 
 @gin.configurable
 def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount=None):
-    check_initalize_fluids()
-
     bpy.ops.mesh.primitive_ico_sphere_add(radius=size, location=location)
     obj = bpy.context.object
     mod = obj.modifiers.new("Fluid", type="FLUID")
@@ -375,8 +370,6 @@ def create_gas_flow(location, fluid_type="fire_and_smoke", size=0.1, fuel_amount
 
 @gin.configurable
 def set_gas_flow_settings(obj, fluid_type="fire_and_smoke", fuel_amount=None):
-    check_initalize_fluids()
-
     if "Fluid" not in obj.modifiers:
         mod = obj.modifiers.new("Fluid", type="FLUID")
     else:
@@ -544,8 +537,6 @@ def set_obj_on_fire(
     dissolve_speed=25,
     dom_scale=1,
 ):
-    check_initalize_fluids()
-
     dissolve_speed += np.random.randint(-3, 4)
     if add_turbulence:
         add_field(
@@ -768,8 +759,6 @@ def find_root(node):
 def set_fire_to_assets(
     assets, start_frame, simulation_duration, output_folder=None, max_fire_assets=1
 ):
-    check_initalize_fluids()
-
     if len(assets) == 0:
         return
 
@@ -814,8 +803,6 @@ def duplicate_fluid_obj(obj):
 
 @gin.configurable
 def estimate_smoke_domain(obj, start_frame, simulation_duration):
-    check_initalize_fluids()
-
     bpy.ops.object.select_all(action="DESELECT")
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
