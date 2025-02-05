@@ -217,13 +217,10 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
         shape = np.random.choice(["square", "rectangle", "hexagon"])
         kwargs = dict(vertical=True, alternating=False, shape=shape)
         rooms_ = [o for o, w in zip(walls, wall_fns) if w == wall_fn]
-        for room in rooms_:
-            surface.assign_material(room, wall_fn())
-
-        # indices = np.random.randint(0, n_walls, len(rooms_))
-        # for i in range(n_walls):
-        #     rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-        #     wall_fn.apply(rooms__, **kwargs)
+        indices = np.random.randint(0, n_walls, len(rooms_))
+        for i in range(n_walls):
+            rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+            surface.assign_material(rooms__, wall_fn(**kwargs))
 
     for w in walls:
         logger.debug(
