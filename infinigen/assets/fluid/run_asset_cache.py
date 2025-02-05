@@ -4,21 +4,19 @@
 # Authors: Karhan Kayan
 
 import argparse
-import importlib
-import os
-import sys
 import time
 
 import gin
 import numpy as np
 
-sys.path.append(os.getcwd())
-
+from infinigen.assets.fluid import cached_factory_wrappers
 from infinigen.assets.fluid.asset_cache import FireCachingSystem
-from infinigen.core import init, surface
+from infinigen.core import init
+from infinigen.core.util.test_utils import setup_gin
 
 if __name__ == "__main__":
     time.sleep(np.random.uniform(0, 3))
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--asset_folder", type=str)
     parser.add_argument("-a", "--asset")
@@ -30,21 +28,15 @@ if __name__ == "__main__":
     parser.add_argument("--dom_scale", type=float, default=1)
 
     args = init.parse_args_blender(parser)
-    init.apply_gin_configs(
-        configs=[], overrides=[], config_folders=["infinigen_examples/configs_nature"]
-    )
-    surface.registry.initialize_from_gin()
+    setup_gin("infinigen_examples/configs_nature", configs=["base_nature.gin"])
 
-    factory_name = args.asset
-    factory = None
-    for subdir in os.listdir("assets"):
-        with gin.unlock_config():
-            module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
-        if hasattr(module, factory_name):
-            factory = getattr(module, factory_name)
-            break
-    if factory is None:
-        raise ModuleNotFoundError(f"{factory_name} not Found.")
+    # Use gin.unlock_config() when getting the factory class
+    with gin.unlock_config():
+        factory = getattr(cached_factory_wrappers, args.asset, None)
+        if factory is None:
+            raise ModuleNotFoundError(
+                f"{args.asset} not found in cached_factory_wrappers."
+            )
 
-    cache_system = FireCachingSystem(asset_folder=args.asset_folder, create=True)
-    cache_system.create_cached_assets(factory, args)
+        cache_system = FireCachingSystem(asset_folder=args.asset_folder, create=True)
+        cache_system.create_cached_assets(factory, args)

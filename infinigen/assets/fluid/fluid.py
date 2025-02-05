@@ -41,6 +41,7 @@ require_blender_addon("antlandscape", fail="warn")
 def check_initalize_fluids():
     if FLUID_INITIALIZED:
         return
+    bpy.ops.preferences.addon_enable(module="flip_fluids_addon")
     bpy.ops.flip_fluid_operators.complete_installation()
 
 
