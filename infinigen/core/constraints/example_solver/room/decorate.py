@@ -246,7 +246,11 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                     type="INT",
                     domain="FACE",
                 )
-                plaster.Plaster().apply(w, **kwargs, selection="alternative")
+                plaster_mat_gen = plaster.Plaster()
+                surface.assign_material(
+                    w, plaster_mat_gen(**kwargs), selection="alternative"
+                )
+                # plaster.Plaster().apply(w, **kwargs, selection="alternative")
             case _:
                 co = read_co(w)
                 u, v = read_edges(w).T

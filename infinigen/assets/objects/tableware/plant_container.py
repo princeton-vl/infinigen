@@ -41,6 +41,8 @@ class PlantPotFactory(PotFactory):
             alpha = uniform(0.5, 0.8)
             self.r_mid = (self.r_expand - 1) * alpha + 1
 
+        self.surface = weighted_sample(material_assignments.decorative_hard)()()
+
 
 class PlantContainerFactory(AssetFactory):
     plant_factories = [

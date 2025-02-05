@@ -259,7 +259,7 @@ side = rail + metals
 handrail = woods + metals + fabrics
 post = handrail
 
-wall = [(ceramic.Plaster, 2.0)]
+wall = [(ceramic.Plaster, 25.0), *wood_tiles, (ceramic.Tile, 5.0)]
 kitchen_wall = [
     (ceramic.Plaster, 5.0),
     (ceramic.Tile, 2.0),
@@ -307,7 +307,7 @@ balcony_floor = bathroom_floor
 office_floor = wood_tiles + [(fabric.Rug, 1.0)]
 warehouse_floor = [(ceramic.Concrete, 1.0)]
 
-ceiling = wall
+ceiling = wall_plaster
 warehouse_ceiling = [(ceramic.Concrete, 1.0)]
 garage_ceiling = warehouse_ceiling
 
