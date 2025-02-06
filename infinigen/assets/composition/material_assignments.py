@@ -259,7 +259,7 @@ side = rail + metals
 handrail = woods + metals + fabrics
 post = handrail
 
-wall = [(ceramic.Plaster, 25.0), *wood_tiles, (ceramic.Tile, 5.0)]
+wall = [(ceramic.Plaster, 10.0)]
 kitchen_wall = [
     (ceramic.Plaster, 5.0),
     (ceramic.Tile, 2.0),

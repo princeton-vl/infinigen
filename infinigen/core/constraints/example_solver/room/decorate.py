@@ -38,6 +38,7 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.assets.utils.object import obj2trimesh
 from infinigen.assets.utils.shapes import dissolve_limited
+from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -220,6 +221,9 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
         indices = np.random.randint(0, n_walls, len(rooms_))
         for i in range(n_walls):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+            if wall_fn.__class__.__name__ == "Plaster":
+                for r in rooms__:
+                    unwrap_normal(r, selection=None)
             surface.assign_material(rooms__, wall_fn(**kwargs))
 
     for w in walls:
@@ -247,10 +251,10 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                     domain="FACE",
                 )
                 plaster_mat_gen = plaster.Plaster()
+                unwrap_normal(w, selection="alternative")
                 surface.assign_material(
                     w, plaster_mat_gen(**kwargs), selection="alternative"
                 )
-                # plaster.Plaster().apply(w, **kwargs, selection="alternative")
             case _:
                 co = read_co(w)
                 u, v = read_edges(w).T
@@ -285,14 +289,15 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                     w, "alternative", alternative, type="INT", domain="FACE"
                 )
                 mat_gen = fn()
+
+                if mat_gen.__class__.__name__ == "Plaster":
+                    unwrap_normal(w, selection="alternative")
+
                 surface.assign_material(
                     w,
                     mat_gen(scale=log_uniform(0.5, 2.0), **kwargs),
                     selection="alternative",
                 )
-                # import_fn(fn).apply(
-                #     w, **kwargs, selection="alternative", scale=log_uniform(0.5, 2.0)
-                # )
 
 
 def room_ceilings(ceilings):
@@ -303,6 +308,10 @@ def room_ceilings(ceilings):
     )
     for ceiling_fn in set(ceiling_fns):
         rooms_ = [o for o, f in zip(ceilings, ceiling_fns) if f == ceiling_fn]
+        if ceiling_fn.__class__.__name__ == "Plaster":
+            for r in rooms_:
+                unwrap_normal(r, selection=None)
+
         surface.assign_material(rooms_, ceiling_fn())
         # ceiling_fn.apply(rooms_)
 
@@ -320,6 +329,9 @@ def room_floors(floors, n_floors=3):
         indices = np.random.randint(0, n_floors, len(rooms_))
         for i in range(n_floors):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
+            if floor_fn.__class__.__name__ == "Plaster":
+                for r in rooms__:
+                    unwrap_normal(r, selection=None)
             surface.assign_material(rooms__, floor_fn())
             # floor_fn.apply(rooms__)
 
