@@ -9,12 +9,10 @@ from numpy.random import uniform
 
 from infinigen.assets.materials.shelf_shaders import (
     shader_glass,
-    shader_shelves_black_wood,
-    shader_shelves_black_wood_sampler,
+    shader_shelves_black_wood_z,
     shader_shelves_white,
-    shader_shelves_white_sampler,
     shader_shelves_wood,
-    shader_shelves_wood_sampler,
+    shader_shelves_wood_z,
 )
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
@@ -247,7 +245,7 @@ def nodegroup_mid_board(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": transform_4,
-            "Material": surface.shaderfunc_to_material(kwargs["material"][0]),
+            "Material": kwargs["material"][0],
         },
     )
 
@@ -283,7 +281,7 @@ def nodegroup_mid_board(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": transform_7,
-            "Material": surface.shaderfunc_to_material(kwargs["material"][1]),
+            "Material": kwargs["material"][1],
         },
     )
 
@@ -369,7 +367,7 @@ def nodegroup_mid_board_001(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": transform_4,
-            "Material": surface.shaderfunc_to_material(kwargs["material"][0]),
+            "Material": kwargs["material"][0],
         },
     )
 
@@ -1118,7 +1116,7 @@ def geometry_door_nodes(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": join_geometry_1,
-            "Material": surface.shaderfunc_to_material(kwargs["frame_material"]),
+            "Material": kwargs["frame_material"],
         },
     )
 
@@ -1219,75 +1217,25 @@ class CabinetDoorBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        white_wood_params = shader_shelves_white_sampler()
-        black_wood_params = shader_shelves_black_wood_sampler()
-        normal_wood_params = shader_shelves_wood_sampler()
-        if params["frame_material"] == "white":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_white(
-                    x, **white_wood_params
-                )
-            else:
-                params["frame_material"] = shader_shelves_white
-        elif params["frame_material"] == "black_wood":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_black_wood(
-                    x, **black_wood_params, z_axis_texture=True
-                )
-            else:
-                params["frame_material"] = lambda x: shader_shelves_black_wood(
-                    x, z_axis_texture=True
-                )
-        elif params["frame_material"] == "wood":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_wood(
-                    x, **normal_wood_params, z_axis_texture=True
-                )
-            else:
-                params["frame_material"] = lambda x: shader_shelves_wood(
-                    x, z_axis_texture=True
-                )
+        if params['frame_material'] == 'white':
+            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_white)
+        elif params['frame_material'] == 'black_wood':
+            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
+        elif params['frame_material'] == 'wood':
+            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_wood)
 
         materials = []
-        if not isinstance(params["panel_material"], list):
-            params["panel_material"] = [params["board_material"]]
-        for mat in params["panel_material"]:
-            if mat == "white":
-                if randomness:
-
-                    def mat(x):
-                        return shader_shelves_white(x, **white_wood_params)
-                else:
-                    mat = shader_shelves_white
-            elif mat == "black_wood":
-                if randomness:
-
-                    def mat(x):
-                        return shader_shelves_black_wood(
-                            x, **black_wood_params, z_axis_texture=True
-                        )
-                else:
-
-                    def mat(x):
-                        return shader_shelves_black_wood(x, z_axis_texture=True)
-            elif mat == "wood":
-                if randomness:
-
-                    def mat(x):
-                        return shader_shelves_wood(
-                            x, **normal_wood_params, z_axis_texture=True
-                        )
-                else:
-
-                    def mat(x):
-                        return shader_shelves_wood(x, z_axis_texture=True)
-            elif mat == "glass":
-                if randomness:
-
-                    def mat(x):
-                        return shader_glass(x)
-                else:
-                    mat = shader_glass
+        if not isinstance(params['panel_material'], list):
+            params['panel_material'] = [params['panel_material']]
+        for mat in params['panel_material']:
+            if mat == 'white':
+                mat = surface.shaderfunc_to_material(shader_shelves_white)
+            elif mat == 'black_wood':
+                mat = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
+            elif mat == 'wood':
+                mat = surface.shaderfunc_to_material(shader_shelves_wood_z)
+            elif mat == 'glass':
+                mat = surface.shaderfunc_to_material(shader_glass)
             materials.append(mat)
         params["panel_material"] = materials
         return params
