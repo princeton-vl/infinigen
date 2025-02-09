@@ -511,3 +511,11 @@ def get_shelf_material(name, **kwargs):
     # elif r < .3:
     #     shader_func = rg(fabric_shader_list)
     return surface.shaderfunc_to_material(shader_func, **kwargs)
+
+
+def shader_shelves_black_wood_z(nw: NodeWrangler, **kwargs):
+    shader_shelves_black_wood(nw, z_axis_texture=True)
+
+
+def shader_shelves_wood_z(nw: NodeWrangler, **kwargs):
+    shader_shelves_wood(nw, z_axis_texture=True)

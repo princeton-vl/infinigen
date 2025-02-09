@@ -19,6 +19,7 @@ from infinigen.assets.utils.decorate import (
     write_co,
 )
 from infinigen.assets.utils.object import join_objects, new_grid
+from infinigen.assets.utils.shapes import dissolve_limited
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -153,6 +154,7 @@ class BedFrameFactory(ChairFactory):
             y[y < -self.size / 2] -= self.leg_thickness / 2 + 1e-3
             y[y > -self.size / 2] += self.leg_thickness / 2 + 1e-3
             write_co(obj, np.stack([x, y, z], -1))
+        dissolve_limited(obj)
         match self.leg_decor_type:
             case "coiled":
                 self.divide(obj, self.dot_distance)

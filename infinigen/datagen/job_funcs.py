@@ -49,6 +49,7 @@ def get_cmd(
     input_folder=None,
     process_niceness=None,
     child_debug=None,
+    interactive_blender=False,
 ):
     if isinstance(task, list):
         task = " ".join(task)
@@ -56,12 +57,20 @@ def get_cmd(
     cmd = ""
     if process_niceness is not None:
         cmd += f"nice -n {process_niceness} "
+
     cmd += f"{sys.executable} "
 
-    if driver_script.endswith(".py"):
-        cmd += driver_script + " "
+    if interactive_blender:
+        cmd += "-m infinigen.launch_blender "
+        if driver_script.endswith(".py"):
+            cmd += f"-s {driver_script} "
+        else:
+            cmd += f"-m {driver_script} "
     else:
-        cmd += "-m " + driver_script + " "
+        if driver_script.endswith(".py"):
+            cmd += driver_script + " "
+        else:
+            cmd += "-m " + driver_script + " "
 
     # No longer supported using pip bpy
     # if blender_thread_limit is not None:

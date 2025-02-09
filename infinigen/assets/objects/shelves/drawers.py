@@ -10,11 +10,8 @@ from numpy.random import uniform
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
-    shader_shelves_black_wood_sampler,
     shader_shelves_white,
-    shader_shelves_white_sampler,
     shader_shelves_wood,
-    shader_shelves_wood_sampler,
 )
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -596,7 +593,7 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": join_geometry,
-            "Material": surface.shaderfunc_to_material(kwargs["frame_material"]),
+            "Material": kwargs["frame_material"],
         },
     )
 
@@ -661,34 +658,18 @@ class CabinetDrawerBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        white_wood_params = shader_shelves_white_sampler()
-        black_wood_params = shader_shelves_black_wood_sampler()
-        normal_wood_params = shader_shelves_wood_sampler()
-        if params["frame_material"] == "white":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_white(
-                    x, **white_wood_params
-                )
-            else:
-                params["frame_material"] = shader_shelves_white
-        elif params["frame_material"] == "black_wood":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_black_wood(
-                    x, **black_wood_params, z_axis_texture=True
-                )
-            else:
-                params["frame_material"] = lambda x: shader_shelves_black_wood(
-                    x, z_axis_texture=True
-                )
-        elif params["frame_material"] == "wood":
-            if randomness:
-                params["frame_material"] = lambda x: shader_shelves_wood(
-                    x, **normal_wood_params, z_axis_texture=True
-                )
-            else:
-                params["frame_material"] = lambda x: shader_shelves_wood(
-                    x, z_axis_texture=True
-                )
+        if params["drawer_material"] == "white":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["drawer_material"] == "black_wood":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood
+            )
+        elif params["drawer_material"] == "wood":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_wood
+            )
 
         if params["knob_material"] == "metal":
             params["knob_material"] = weighted_sample(

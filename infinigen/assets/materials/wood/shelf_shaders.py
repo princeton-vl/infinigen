@@ -1,9 +1,8 @@
-# Copyright (C) 2023, Princeton University.
+# Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Beining Han
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=jDEijCwz6to by Lachlan Sarv
-
 
 import numpy as np
 from numpy.random import normal, uniform
@@ -21,6 +20,17 @@ from infinigen.core.util.color import hsv2rgba
 
 def shader_shelves_white(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
+    params = dict()
+    v = uniform(0.7, 1.0)
+    base_color = [
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+    ]
+    params["rgb"] = base_color
+    params["roughness"] = uniform(0.7, 1.0)
+
+    kwargs = params
     rgb = kwargs.get("rgb", [0.9, 0.9, 0.9])
     base_color = (*rgb, 1.0)
     principled_bsdf = nw.new_node(
@@ -37,21 +47,14 @@ def shader_shelves_white(nw: NodeWrangler, **kwargs):
     )
 
 
-def shader_shelves_white_sampler():
-    params = dict()
-    v = uniform(0.7, 1.0)
-    base_color = [
-        v * (1.0 + normal(0, 0.005)),
-        v * (1.0 + normal(0, 0.005)),
-        v * (1.0 + normal(0, 0.005)),
-    ]
-    params["rgb"] = base_color
-    params["roughness"] = uniform(0.7, 1.0)
-    return params
-
-
 def shader_shelves_black_metallic(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
+    params = dict()
+    base_color = [uniform(0, 0.01), uniform(0, 0.01), uniform(0, 0.01)]
+    params["rgb"] = base_color
+    params["metallic"] = uniform(0.45, 0.75)
+
+    kwargs = params
 
     color = (*kwargs.get("rgb", [0.0, 0.0, 0.0]), 1.0)
     principled_bsdf = nw.new_node(
@@ -65,17 +68,19 @@ def shader_shelves_black_metallic(nw: NodeWrangler, **kwargs):
     )
 
 
-def shader_shelves_black_metallic_sampler():
-    params = dict()
-    base_color = [uniform(0, 0.01), uniform(0, 0.01), uniform(0, 0.01)]
-    params["rgb"] = base_color
-    params["metallic"] = uniform(0.45, 0.75)
-    return params
-
-
 def shader_shelves_white_metallic(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
+    params = dict()
+    v = uniform(0.7, 1.0)
+    base_color = [
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+        v * (1.0 + normal(0, 0.005)),
+    ]
+    params["rgb"] = base_color
+    params["metallic"] = uniform(0.45, 0.75)
 
+    kwargs = params
     rgb = kwargs.get("rgb", [0.9, 0.9, 0.9])
     base_color = (*rgb, 1.0)
     principled_bsdf = nw.new_node(
@@ -93,21 +98,16 @@ def shader_shelves_white_metallic(nw: NodeWrangler, **kwargs):
     )
 
 
-def shader_shelves_white_metallic_sampler():
-    params = dict()
-    v = uniform(0.7, 1.0)
-    base_color = [
-        v * (1.0 + normal(0, 0.005)),
-        v * (1.0 + normal(0, 0.005)),
-        v * (1.0 + normal(0, 0.005)),
-    ]
-    params["rgb"] = base_color
-    params["metallic"] = uniform(0.45, 0.75)
-    return params
-
-
 def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler
+    params = dict()
+    params["wave_scale"] = uniform(1.0, 3.0)
+    params["dark_scale"] = uniform(0.0, 0.01)
+    params["gray_scale"] = uniform(0.01, 0.03)
+    params["rgb"] = [uniform(0.015, 0.035), uniform(0.0, 0.01), uniform(0.0, 0.01)]
+    params["roughness"] = uniform(0.75, 1.0)
+
+    kwargs.update(params)
 
     texture_coordinate_1 = nw.new_node(Nodes.TextureCoord)
     wave_scale = kwargs.get("wave_scale", 2.0)
@@ -252,18 +252,20 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
     )
 
 
-def shader_shelves_black_wood_sampler():
-    params = dict()
-    params["wave_scale"] = uniform(1.0, 3.0)
-    params["dark_scale"] = uniform(0.0, 0.01)
-    params["gray_scale"] = uniform(0.01, 0.03)
-    params["rgb"] = [uniform(0.015, 0.035), uniform(0.0, 0.01), uniform(0.0, 0.01)]
-    params["roughness"] = uniform(0.75, 1.0)
-    return params
+def shader_shelves_black_wood_z(nw: NodeWrangler, **kwargs):
+    shader_shelves_black_wood(nw, z_axis_texture=True)
 
 
 def shader_shelves_wood(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler
+    params = dict()
+    params["bright_hsv"] = [uniform(0.03, 0.09), uniform(0.5, 0.7), uniform(0.7, 1.0)]
+    params["mid_hsv"] = [uniform(0.02, 0.06), uniform(0.6, 1.0), uniform(0.3, 0.6)]
+    params["dark_hsv"] = [uniform(0.03, 0.05), uniform(0.6, 1.0), uniform(0.1, 0.3)]
+    params["wave_scale"] = uniform(1.0, 3.0)
+    params["roughness"] = uniform(0.75, 1.0)
+
+    kwargs.update(params)
 
     texture_coordinate_1 = nw.new_node(Nodes.TextureCoord)
     wave_scale = kwargs.get("wave_scale", 2.0)
@@ -399,14 +401,8 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
     )
 
 
-def shader_shelves_wood_sampler():
-    params = dict()
-    params["bright_hsv"] = [uniform(0.03, 0.09), uniform(0.5, 0.7), uniform(0.7, 1.0)]
-    params["mid_hsv"] = [uniform(0.02, 0.06), uniform(0.6, 1.0), uniform(0.3, 0.6)]
-    params["dark_hsv"] = [uniform(0.03, 0.05), uniform(0.6, 1.0), uniform(0.1, 0.3)]
-    params["wave_scale"] = uniform(1.0, 3.0)
-    params["roughness"] = uniform(0.75, 1.0)
-    return params
+def shader_shelves_wood_z(nw: NodeWrangler, **kwargs):
+    shader_shelves_wood(nw, z_axis_texture=True)
 
 
 def get_shelf_material(name, **kwargs):
