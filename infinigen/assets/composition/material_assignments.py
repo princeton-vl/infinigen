@@ -240,7 +240,15 @@ cup = decorative_hard + [
     (plastic.PlasticTranslucent, 5.0),
     (ceramic.Glass, 3.0),
 ]
-jar = cup
+jar = [
+    (ceramic.Glass, 8.0),
+    (plastic.Plastic, 2.0),
+    (plastic.PlasticTranslucent, 2.0),
+    (ceramic.VaseCeramic, 2.0),
+    (ceramic.ColoredGlass, 2.0),
+    (ceramic.Marble, 1.0),
+    (ceramic.GlassVolume, 2.0),
+]
 lid = cup
 frame = decorative_metal + woods
 

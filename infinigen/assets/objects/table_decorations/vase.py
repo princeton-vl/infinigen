@@ -40,7 +40,9 @@ class VaseFactory(AssetFactory):
 
     def get_material_params(self):
         params = {
-            "Material": weighted_sample(material_assignments.marble)(),
+            "Material": weighted_sample(
+                material_assignments.marble + material_assignments.tableware
+            )(),
         }
         wrapped_params = {k: v() for k, v in params.items()}
 
