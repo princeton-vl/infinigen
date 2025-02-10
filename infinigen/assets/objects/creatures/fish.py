@@ -17,6 +17,7 @@ from numpy.random import uniform as U
 
 from infinigen.assets import materials
 from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.creature.fish_body import FishGeomod
 from infinigen.assets.materials.utils.surface_utils import sample_range
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import cloth_sim, creature, genome, joining
@@ -290,7 +291,10 @@ class FishFactory(AssetFactory):
             self.eye_material = materials.creature.FishEye()
 
     def apply_materials(self, obj):
-        surface.assign_material(obj, self.body_material)
+        if obj.name.find("Nurb") >= 0:
+            FishGeomod().apply(obj, kwargs={"rand": True})
+
+        surface.assign_material(obj, self.body_material())
 
         mat = joining.get_parts(obj)[0].active_material
         gold = mat is not None and "gold" in mat.name.lower()
