@@ -322,6 +322,7 @@ class AnimPolicyFollowObject:
         return Vector(pos), None, time, "BEZIER"
 
 
+@gin.configurable
 def validate_keyframe_range(
     obj,
     start_frame,
@@ -330,6 +331,7 @@ def validate_keyframe_range(
     validate_pose_func=None,
     stride=1,  # runs faster but imperfect precision
     check_straight_line=True,  # rules out proposals faster, but has imperfect precision
+    check_keyframe_straight_line=True,
 ):
     last_pos = deepcopy(obj.location)
 
@@ -346,9 +348,10 @@ def validate_keyframe_range(
     for frame_idx in range(start_frame, end_frame + 1, stride):
         bpy.context.scene.frame_set(frame_idx)
 
-        if not freespace_ray_check(last_pos, obj.location):
-            logger.debug(f"{frame_idx=} freespace_ray_check failed")
-            return False
+        if check_keyframe_straight_line:
+            if not freespace_ray_check(last_pos, obj.location):
+                logger.debug(f"{frame_idx=} freespace_ray_check failed")
+                return False
 
         if validate_pose_func is not None and not validate_pose_func(obj):
             # technically we should validate against all cameras, but this would be expensive

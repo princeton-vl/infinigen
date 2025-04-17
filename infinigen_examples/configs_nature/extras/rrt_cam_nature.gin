@@ -1,18 +1,21 @@
 animate_trajectories.policy_registry = "rrt"
 animate_trajectories.validate_pose_func = @rrt/validate_cam_pose_rrt
 compute_trajectories.min_candidates_ratio = 2
+compute_poses.min_base_views_ratio = 4
+validate_keyframe_range.check_keyframe_straight_line = False
 
 RRT.step_range = (4, 8)
+RRT.stride_range = (100, 200)
 RRT.validate_node = @rrt/validate_node_nature
 
 rrt/AnimPolicyRRT.speed = ('uniform', 6, 10)
 rrt/AnimPolicyRRT.rot = ('normal', 0, [15, 15, 15], 3)
 
 cam/validate_cam_pose_rrt.max_sky_percent = 0.7
-cam/validate_cam_pose_rrt.max_proxim_percent = 0.7
-rrt/validate_cam_pose_rrt.min_obj_dist = 0.2
+cam/validate_cam_pose_rrt.max_proxim_percent = 0.9
+rrt/validate_cam_pose_rrt.min_obj_dist = 1.0
 
-animate_trajectory.max_step_tries = 5
+animate_trajectory.max_step_tries = 30
 animate_trajectory.max_full_retries = 3
 
 spawn_camera_rigs.n_camera_rigs = 1

@@ -127,20 +127,21 @@ class RRT:
         self.collision_check_dirs = []
 
         # create directions to check proximity to obstacles
-        thetas = [2 * np.pi * i / 8 for i in range(8)]
-        phis = [np.pi * i / 4 for i in range(5)]
-        for theta in thetas:
-            for phi in phis:
-                self.collision_check_dirs.append(
-                    min_node_dist_to_obstacle
-                    * Vector(
-                        (
-                            np.cos(theta) * np.sin(phi),
-                            np.sin(theta) * np.sin(phi),
-                            np.cos(phi),
+        if min_node_dist_to_obstacle > 0:
+            thetas = [2 * np.pi * i / 8 for i in range(8)]
+            phis = [np.pi * i / 4 for i in range(5)]
+            for theta in thetas:
+                for phi in phis:
+                    self.collision_check_dirs.append(
+                        min_node_dist_to_obstacle
+                        * Vector(
+                            (
+                                np.cos(theta) * np.sin(phi),
+                                np.sin(theta) * np.sin(phi),
+                                np.cos(phi),
+                            )
                         )
                     )
-                )
 
     def generate_path(self, start=None, goal=None):
         bound_added = 0
@@ -464,7 +465,7 @@ class AnimPolicyRRT:
 
         pos = Vector(self.path[self.ind])
         time = np.linalg.norm(pos - obj.location) / speed
-        rot_diff = np.deg2rad(random_general(self.rot)) if self.ind > 0 else np.zeros(3)
+        rot_diff = np.deg2rad(random_general(self.rot))
         rot = np.array(obj.rotation_euler) + rot_diff
         self.ind += 1
 
@@ -529,10 +530,10 @@ def validate_cam_pose_rrt(
                 sky_hits += 1
 
             if sky_hits > sky_threshold:
-                logger.warning(f"Sky hits {sky_hits / num_pixels}")
+                logger.debug(f"Sky hits {sky_hits / num_pixels}")
                 return False
             if prox_hits > prox_threshold:
-                logger.warning(f"Prox hits {prox_hits / num_pixels}")
+                logger.debug(f"Prox hits {prox_hits / num_pixels}")
                 return False
 
     return True
