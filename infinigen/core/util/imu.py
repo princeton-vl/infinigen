@@ -289,11 +289,12 @@ def get_imu_tum_data(object, start, end):
 
     imu_text = []
     tum_text = []
-    object.rotation_mode = "QUATERNION"
 
     # format data
     for i in range(length):
         bpy.context.scene.frame_set(i + start)
+        rot_euler = object.rotation_euler
+        rot_quat = rot_euler.to_quaternion()
         imu_text.append(
             " ".join(
                 [
@@ -314,10 +315,10 @@ def get_imu_tum_data(object, start, end):
                     str(object.location[0]),
                     str(object.location[1]),
                     str(object.location[2]),
-                    str(object.rotation_quaternion[1]),
-                    str(object.rotation_quaternion[2]),
-                    str(object.rotation_quaternion[3]),
-                    str(object.rotation_quaternion[0]),
+                    str(rot_quat.x),
+                    str(rot_quat.y),
+                    str(rot_quat.z),
+                    str(rot_quat.w),
                 ]
             )
         )
@@ -329,12 +330,13 @@ def get_imu_tum_data(object, start, end):
 def save_imu_tum_files(
     output_folder,
     objects: list[bpy.types.Object],
-    start=bpy.context.scene.frame_start,
-    end=bpy.context.scene.frame_end,
 ):
     """
     Write imu and tum data to output files for each object.
     """
+
+    start = bpy.context.scene.frame_start
+    end = bpy.context.scene.frame_end
 
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
@@ -347,7 +349,7 @@ def save_imu_tum_files(
     for i in range(len(objects)):
         try:
             imu_text, tum_text = get_imu_tum_data(anim_objects[i], start, end)
-            name = anim_objects[i].name.replace("/", "_")
+            name = anim_objects[i].name.replace("/", "_").replace(".", "_")
         except Exception as e:
             logger.warning(
                 f"Error when saving imu/tum data for {anim_objects[i].name}: {e}"
@@ -367,3 +369,37 @@ def save_imu_tum_files(
             tum_file.write("#Format: timestamp position(x y z) rotation(x y z w)\n")
             tum_file.write(tum_text)
             logger.info(f"Saved TUM data for {anim_objects[i].name} at {tum_file_name}")
+
+
+def get_camera_intrinsics(camera):
+    if not camera.type == "CAMERA":
+        camera = camera.children[0]
+    if not camera.type == "CAMERA":
+        raise ValueError(f"{camera.name=} had {camera.type=}")
+
+    render = bpy.context.scene.render
+    cam_data = camera.data
+
+    # Sensor size and resolution
+    resolution_x_in_px = render.resolution_x
+    resolution_y_in_px = render.resolution_y
+    scale = render.resolution_percentage / 100
+    resolution_x = resolution_x_in_px * scale
+    resolution_y = resolution_y_in_px * scale
+
+    # Focal length in pixels
+    focal_length_mm = cam_data.lens
+    sensor_fit = cam_data.sensor_fit
+
+    if sensor_fit == "VERTICAL":
+        f_in_px = resolution_y * focal_length_mm / cam_data.sensor_height
+    else:
+        f_in_px = resolution_x * focal_length_mm / cam_data.sensor_width
+
+    # Principal point (usually center of image)
+    c_x = resolution_x / 2.0
+    c_y = resolution_y / 2.0
+
+    ret = f"{f_in_px} {f_in_px} {c_x} {c_y}"
+
+    return ret
