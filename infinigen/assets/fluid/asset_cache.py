@@ -3,7 +3,6 @@
 
 # Authors: Karhan Kayan
 
-import importlib
 import json
 import logging
 import os
@@ -15,6 +14,7 @@ import gin
 import numpy as np
 from mathutils import Vector
 
+from infinigen.assets.fluid import cached_factory_wrappers
 from infinigen.assets.fluid.fluid import find_available_cache, set_obj_on_fire
 from infinigen.core.util import blender as butil
 
@@ -64,13 +64,10 @@ class FireCachingSystem:
 
     def create_cached_assets(self, factory_class, args):
         factory_name = factory_class.__name__
-        factory = None
-        for subdir in os.listdir("assets"):
-            with gin.unlock_config():
-                module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
-            if hasattr(module, factory_name):
-                factory = getattr(module, factory_name)
-                break
+
+        with gin.unlock_config():
+            factory = getattr(cached_factory_wrappers, args.asset, None)
+
         if factory is None:
             raise ModuleNotFoundError(f"{factory_name} not Found.")
 
