@@ -14,24 +14,24 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.bird
-import infinigen.assets.materials.scale
-import infinigen.assets.materials.snake_scale
-import infinigen.assets.materials.snake_shaders
-import infinigen.assets.materials.spot_sparse_attr
-from infinigen.assets.materials import bone, eyeball, nose, tongue
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.creature import (
+    bone,
+    eyeball,
+    nose,
+    tongue,
+)
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import animation as creature_animation
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util.animation import curve_slither
 from infinigen.assets.objects.creatures.util.animation.run_cycle import follow_path
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
-from infinigen.core.util.random import random_general
+from infinigen.core.util.random import random_general, weighted_sample
 
 
 def dinosaur():
@@ -99,9 +99,6 @@ def dinosaur():
         parts=body,
         postprocess_params=dict(
             animation=dict(),
-            surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
-            ],
         ),
     )
 
@@ -162,9 +159,6 @@ def lizard_genome():
         parts=head,
         postprocess_params=dict(
             anim=lizard_run_params(),
-            surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
-            ],
         ),
     )
 
@@ -256,9 +250,6 @@ def snake_genome():
         parts=body,
         postprocess_params=dict(
             anim=snake_swim_params(),
-            surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
-            ],
         ),
     )
 
@@ -273,9 +264,6 @@ def chameleon_genome():
         parts=body,
         postprocess_params=dict(
             anim=snake_swim_params(),
-            surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
-            ],
         ),
     )
 
@@ -332,9 +320,6 @@ def frog_genome():
         postprocess_func=reptile_postprocessing,
         postprocess_params=dict(
             animation=dict(mode="swim", speed_m_s=0.5),
-            surface_registry=[
-                (infinigen.assets.materials.snake_scale, 1),
-            ],
         ),
     )
 
@@ -443,7 +428,7 @@ def reptile_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.reptile)
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
 
@@ -457,7 +442,7 @@ def chameleon_postprocessing(body_parts, extras, params):
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = surface.registry.sample_registry(params["surface_registry"])
+    main_template = weighted_sample(material_assignments.reptile)
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
 

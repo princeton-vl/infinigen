@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import snake_plant
+from infinigen.assets.materials.plant import snake_plant
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -18,9 +18,9 @@ from infinigen.core.util import blender as butil
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_thickness", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_thickness", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_thickness(nw: NodeWrangler):
+def nodegroup_petal_thickness(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -45,9 +45,9 @@ def nodegroup_pedal_thickness(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_z_pedal_rotation", singleton=False, type="GeometryNodeTree"
+    "nodegroup_z_petal_rotation", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_z_pedal_rotation(nw: NodeWrangler):
+def nodegroup_z_petal_rotation(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -88,9 +88,9 @@ def nodegroup_z_pedal_rotation(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_x_pedal_rotation", singleton=False, type="GeometryNodeTree"
+    "nodegroup_x_petal_rotation", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_x_pedal_rotation(nw: NodeWrangler):
+def nodegroup_x_petal_rotation(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     position_1 = nw.new_node(Nodes.InputPosition)
@@ -128,11 +128,11 @@ def nodegroup_setup(nw: NodeWrangler):
         },
     )
 
-    x_pedal_rotation = nw.new_node(nodegroup_x_pedal_rotation().name)
+    x_petal_rotation = nw.new_node(nodegroup_x_petal_rotation().name)
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": quadratic_bezier, "Offset": x_pedal_rotation},
+        input_kwargs={"Geometry": quadratic_bezier, "Offset": x_petal_rotation},
     )
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
@@ -232,8 +232,8 @@ def nodegroup_face_extrusion(nw: NodeWrangler):
         ],
     )
 
-    z_pedal_rotation = nw.new_node(
-        nodegroup_z_pedal_rotation().name,
+    z_petal_rotation = nw.new_node(
+        nodegroup_z_petal_rotation().name,
         input_kwargs={"Value": group_input.outputs["Value"]},
     )
 
@@ -241,12 +241,12 @@ def nodegroup_face_extrusion(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": group_input.outputs["Geometry"],
-            "Offset": z_pedal_rotation,
+            "Offset": z_petal_rotation,
         },
     )
 
-    pedal_thickness = nw.new_node(
-        nodegroup_pedal_thickness().name,
+    petal_thickness = nw.new_node(
+        nodegroup_petal_thickness().name,
         input_kwargs={"Value": group_input.outputs["Value"]},
     )
 
@@ -254,7 +254,7 @@ def nodegroup_face_extrusion(nw: NodeWrangler):
         Nodes.ExtrudeMesh,
         input_kwargs={
             "Mesh": set_position_2,
-            "Offset Scale": pedal_thickness,
+            "Offset Scale": petal_thickness,
             "Individual": False,
         },
     )
@@ -265,9 +265,9 @@ def nodegroup_face_extrusion(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_single_pedal", singleton=False, type="GeometryNodeTree"
+    "nodegroup_single_petal", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_single_pedal_nodes(nw: NodeWrangler):
+def nodegroup_single_petal_nodes(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     setup = nw.new_node(nodegroup_setup().name)
@@ -298,8 +298,8 @@ def nodegroup_single_pedal_nodes(nw: NodeWrangler):
     )
 
 
-def check_vicinity(param, pedal_params):
-    for p in pedal_params:
+def check_vicinity(param, petal_params):
+    for p in petal_params:
         r1 = max(param[0] * np.sin(param[1]), 0.2)
         r2 = max(p[0] * np.sin(p[1]), 0.2)
         dist = np.linalg.norm([param[2] - p[2], param[3] - p[3]])
@@ -309,32 +309,32 @@ def check_vicinity(param, pedal_params):
 
 
 def geometry_snake_plant_nodes(nw: NodeWrangler, **kwargs):
-    num_pedals = kwargs["num_pedals"]
-    pedals = []
-    pedal_params = []
+    num_petals = kwargs["num_petals"]
+    petals = []
+    petal_params = []
     c = 0
-    while c < 50 and len(pedal_params) < num_pedals:
+    while c < 50 and len(petal_params) < num_petals:
         c += 1
         scale = uniform(0.7, 1.0)
         x_rotation = normal(0, 0.15)
         x, y = uniform(-0.7, 0.7), uniform(-0.7, 0.7)
         param = (scale, x_rotation, x, y)
-        if check_vicinity(param, pedal_params):
+        if check_vicinity(param, petal_params):
             continue
         else:
-            pedal_params.append(param)
+            petal_params.append(param)
 
-    for param in pedal_params:
+    for param in petal_params:
         scale = param[0]
         z_rotation = uniform(0, 6.28)
         x_rotation = param[1]
         z2_rotation = uniform(0, 6.28)
         x, y = param[2], param[3]
-        pedal = nw.new_node(nodegroup_single_pedal_nodes().name)
+        petal = nw.new_node(nodegroup_single_petal_nodes().name)
         s_transform = nw.new_node(
             Nodes.Transform,
             input_kwargs={
-                "Geometry": pedal,
+                "Geometry": petal,
                 "Scale": (scale, scale, scale),
                 "Rotation": (0.0, 0.0, z_rotation),
             },
@@ -351,13 +351,13 @@ def geometry_snake_plant_nodes(nw: NodeWrangler, **kwargs):
                 "Translation": (x, y, 0),
             },
         )
-        pedals.append(z_transform)
-    pedals = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": pedals})
+        petals.append(z_transform)
+    petals = nw.new_node(Nodes.JoinGeometry, input_kwargs={"Geometry": petals})
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
-            "Geometry": pedals,
+            "Geometry": petals,
             "Material": surface.shaderfunc_to_material(snake_plant.shader_snake_plant),
         },
     )
@@ -381,8 +381,8 @@ class SnakePlantFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        pedal_num = randint(4, 8)
-        params["num_pedals"] = pedal_num
+        petal_num = randint(4, 8)
+        params["num_petals"] = petal_num
 
         surface.add_geomod(
             obj, geometry_snake_plant_nodes, apply=True, input_kwargs=params

@@ -11,7 +11,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.text import Text
 from infinigen.assets.utils.decorate import (
     mirror,
@@ -41,7 +41,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class TVFactory(AssetFactory):
@@ -66,40 +66,13 @@ class TVFactory(AssetFactory):
             self.leg_width = uniform(0.5, 0.8)
             self.leg_bevel_width = uniform(0.01, 0.02)
 
-            materials = self.get_material_params()
-            self.surface = materials["surface"]
-            self.scratch = materials["scratch"]
-            self.edge_wear = materials["edge_wear"]
-            self.screen_surface = materials["screen_surface"]
-            self.support_surface = materials["support"]
-
-    def get_material_params(self):
-        material_assignments = AssetList["TVFactory"]()
-        surface = material_assignments["surface"].assign_material()
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = np.random.uniform() < scratch_prob
-        is_edge_wear = np.random.uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
-
-        args = (self.factory_seed, False)
-        kwargs = {"emission": 0.01 if uniform() < 0.1 else uniform(2, 3)}
-        screen_surface = material_assignments["screen_surface"].assign_material()
-        if screen_surface == Text:
-            screen_surface = screen_surface(*args, **kwargs)
-        support = material_assignments["support"].assign_material()
-        return {
-            "surface": surface,
-            "scratch": scratch,
-            "edge_wear": edge_wear,
-            "screen_surface": screen_surface,
-            "support": support,
-        }
+            self.surface = weighted_sample(material_assignments.metal_neutral)()
+            self.support_surface = weighted_sample(material_assignments.metal_neutral)()
+            self.screen_surface = weighted_sample(material_assignments.graphicdesign)()
+            if isinstance(self.screen_surface, Text):
+                self.screen_surface.emission = (
+                    0.01 if uniform() < 0.1 else uniform(2, 3)
+                )
 
     @property
     def height(self):
@@ -143,6 +116,11 @@ class TVFactory(AssetFactory):
             write_attribute(leg_obj, 1, "leg", "FACE", "INT")
         parts.extend(legs)
         obj = join_objects(parts)
+
+        surface.assign_material(obj, self.surface())
+        surface.assign_material(obj, self.support_surface(), selection="leg")
+        surface.assign_material(obj, self.screen_surface(), selection="screen")
+
         obj.rotation_euler[2] = np.pi / 2
         butil.apply_transform(obj)
         return obj
@@ -164,7 +142,6 @@ class TVFactory(AssetFactory):
         unwrap_faces(obj, screen)
         bbox = compute_uv_direction(obj, "x", "z", screen[fc2f])
         write_attr_data(obj, "screen", screen, domain="FACE", type="INT")
-        self.screen_surface.apply(obj, "screen", bbox)
 
     def make_base(self):
         obj = new_cube()
@@ -277,12 +254,6 @@ class TVFactory(AssetFactory):
         butil.apply_transform(base, True)
         butil.modify_mesh(base, "BEVEL", width=self.leg_bevel_width, segments=8)
         return [leg, base]
-
-    def finalize_assets(self, assets):
-        self.surface.apply(assets, selection="!screen", rough=True, metal_color="bw")
-        self.support_surface.apply(
-            assets, selection="leg", rough=True, metal_color="bw"
-        )
 
 
 class MonitorFactory(TVFactory):

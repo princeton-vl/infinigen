@@ -36,16 +36,10 @@ def snowfall_params(
         ((np.cos(np.pi / 6), 0, np.sin(np.pi / 6)), (0.80, 0.801)),
         ((0, 0, 1), (0.90, 0.901)),
     ],
-    detailed_normal_params=[((0, 0, 1), (0.80, 0.801))],
-    on_rock_normal_params=[((0, 0, 1), (0.50, 0.501))],
 ):
     global snowfall_params_
     if snowfall_params_ == {}:
-        snowfall_params_ = {
-            "normal_params": rg(normal_params),
-            "detailed_normal_params": rg(detailed_normal_params),
-            "on_rock_normal_params": rg(on_rock_normal_params),
-        }
+        snowfall_params_ = {"normal_params": rg(normal_params)}
     return snowfall_params_
 
 

@@ -8,10 +8,9 @@ import gin
 import pytest
 
 from infinigen.core.init import configure_blender
-from infinigen.core.surface import registry
 from infinigen.core.util.organization import Task
 from infinigen.core.util.test_utils import setup_gin
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 
 
 @pytest.mark.skip
@@ -36,9 +35,7 @@ def test_terrain_runs():
 
     configure_blender()
 
-    terrain = Terrain(
-        0, registry, task=Task.Coarse, on_the_fly_asset_folder="/tmp/terrain_tests"
-    )
+    terrain = Terrain(0, task=Task.Coarse, on_the_fly_asset_folder="/tmp/terrain_tests")
     terrain.coarse_terrain()
 
     gin.clear_config()

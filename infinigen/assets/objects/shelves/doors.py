@@ -7,8 +7,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.shelf_shaders import (
-    shader_glass,
+from infinigen.assets.materials.ceramic.glass import shader_glass
+from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood_z,
     shader_shelves_white,
     shader_shelves_wood,
@@ -1217,24 +1217,30 @@ class CabinetDoorBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        if params['frame_material'] == 'white':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-        elif params['frame_material'] == 'black_wood':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
-        elif params['frame_material'] == 'wood':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_wood)
+        if params["frame_material"] == "white":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["frame_material"] == "black_wood":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood_z
+            )
+        elif params["frame_material"] == "wood":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_wood
+            )
 
         materials = []
-        if not isinstance(params['panel_material'], list):
-            params['panel_material'] = [params['panel_material']]
-        for mat in params['panel_material']:
-            if mat == 'white':
+        if not isinstance(params["panel_material"], list):
+            params["panel_material"] = [params["panel_material"]]
+        for mat in params["panel_material"]:
+            if mat == "white":
                 mat = surface.shaderfunc_to_material(shader_shelves_white)
-            elif mat == 'black_wood':
+            elif mat == "black_wood":
                 mat = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
-            elif mat == 'wood':
+            elif mat == "wood":
                 mat = surface.shaderfunc_to_material(shader_shelves_wood_z)
-            elif mat == 'glass':
+            elif mat == "glass":
                 mat = surface.shaderfunc_to_material(shader_glass)
             materials.append(mat)
         params["panel_material"] = materials

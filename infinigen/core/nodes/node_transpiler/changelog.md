@@ -15,3 +15,4 @@
 2.6.3 - Ignore reroutes
 2.6.4 - Fix world/compositor transpiling
 2.6.5 - Revert "Ignore reroutes"
+2.7.0 - Remove "color_category" since it was also removed as an infinigen op

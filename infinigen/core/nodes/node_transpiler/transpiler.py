@@ -21,7 +21,7 @@ from infinigen.core.nodes.node_wrangler import ng_inputs
 
 logger = logging.getLogger(__name__)
 
-VERSION = "2.6.5"
+VERSION = "2.7.0"
 indent_string = " " * 4
 LINE_LEN = 100
 
@@ -114,7 +114,6 @@ def prefix(dependencies_used) -> str:
         "from numpy.random import uniform, normal, randint\n"
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
         "from infinigen.core.nodes import node_utils\n"
-        "from infinigen.core.util.color import color_category\n"
         "from infinigen.core import surface\n"
     )
 
@@ -297,7 +296,6 @@ def represent_label_value_expression(expression):
     Valid operations:
     - U, uniform
     - N, normal
-    - color, color_category
 
     Valid arguments: str, float, list of float
 
@@ -368,13 +366,6 @@ def represent_label_value_expression(expression):
         }[op]
         args = ", ".join(repr(a) for a in args)
         return f"{funcname}({args})"
-
-    elif op in ["color", "color_category"]:
-        if not len(args) == 1:
-            raise ValueError(
-                f"In {expression=}, expected 1 argument, got {len(args)} instead"
-            )
-        return f"color_category({repr(args[0])})"
     else:
         raise ValueError(
             f"Failed to represent_label_value_expression({expression=}), unrecognized {op=}"

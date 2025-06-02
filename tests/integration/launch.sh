@@ -32,7 +32,7 @@ if [ "$RUN_INDOOR" -eq 1 ]; then
         --num_scenes 3 --cleanup big_files --configs singleroom.gin fast_solve.gin --overwrite \
         --pipeline_configs slurm monocular blender_gt indoor_background_configs.gin \
         --pipeline_overrides get_cmd.driver_script=infinigen_examples.generate_indoors sample_scene_spec.seed_range=[0,100] slurm_submit_cmd.slurm_nodelist=$NODECONF \
-        --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] &
+        --overrides compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"$indoor_type\"\] compose_indoors.solve_small_enabled=False &
     done
 fi
 
@@ -63,12 +63,12 @@ fi
 if [ "$RUN_MATERIALS" -eq 1 ]; then
 
     python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_indoor_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_indoor_materials \
+    -f tests/assets/list_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_new_materials \
     --slurm --n_workers 100 -n 3 --gpu & 
 
 
     python -m infinigen_examples.generate_individual_assets \
-    -f tests/assets/list_nature_materials.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_nature_materials \
+    -f tests/assets/list_materials_deprecated_interface.txt --output_folder $OUTPUT_PATH/${JOBTAG}_asset_deprec_materials \
     --slurm --n_workers 100 -n 3 --gpu &
 fi
 

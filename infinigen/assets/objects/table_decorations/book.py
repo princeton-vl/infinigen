@@ -10,12 +10,14 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import text
+from infinigen.assets.materials.ceramic import plaster
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.mesh import longest_ray
 from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cube
 from infinigen.assets.utils.uv import wrap_front_back_side
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
@@ -33,20 +35,26 @@ class BookFactory(AssetFactory):
         self.offset = 0 if uniform() < 0.5 else log_uniform(0.002, 0.008)
         self.thickness = uniform(0.002, 0.003)
 
-        materials = AssetList["BookFactory"]()
-        self.surface = materials["surface"].assign_material()
-        self.cover_surface = materials["cover_surface"].assign_material()
+        surface_gen_class = plaster.Plaster
+        self.surface_material_gen = surface_gen_class()
+
+        cover_surface_gen_class = text.Text
+        self.cover_surface_material_gen = cover_surface_gen_class()
+        self.cover_surface = self.cover_surface_material_gen()
+
         if self.cover_surface == text.Text:
             self.cover_surface = self.cover_surface(self.factory_seed)
 
-        scratch_prob, edge_wear_prob = materials["wear_tear_prob"]
-        self.scratch, self.edge_wear = materials["wear_tear"]
-        self.scratch = None if uniform() > scratch_prob else self.scratch
-        self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
+        self.scratch = None if uniform() > scratch_prob else scratch()
+        self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
         self.texture_shared = uniform() < 0.2
 
     def create_asset(self, **params) -> bpy.types.Object:
+        self.surface = self.surface_material_gen()
+
         width = int(log_uniform(0.08, 0.15) * self.rel_scale / self.unit) * self.unit
         height = int(width * self.skewness / self.unit) * self.unit
         depth = uniform(0.01, 0.02) * self.rel_scale
@@ -88,7 +96,8 @@ class BookFactory(AssetFactory):
         paper.location = width / 2, height / 2, depth / 2
         paper.scale = width / 2 - 1e-4, height / 2, depth / 2 - 1e-4
         butil.apply_transform(paper, True)
-        self.surface.apply(paper)
+
+        surface.assign_material(paper, self.surface)
         return paper
 
     def make_hardcover(self, width, height, depth):

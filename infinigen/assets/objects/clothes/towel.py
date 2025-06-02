@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import uniform
 from scipy.optimize import fsolve
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.elements.rug import ArtRug
 from infinigen.assets.utils.decorate import (
     geo_extension,
@@ -25,7 +25,7 @@ from infinigen.assets.utils.uv import wrap_sides
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class TowelFactory(AssetFactory):
@@ -41,8 +41,11 @@ class TowelFactory(AssetFactory):
         self.fold_count = 15
         self.roll_count = 256
         self.roll_total = self.compute_roll_total()
-        materials = AssetList["TowelFactory"]()
-        self.surface = materials["surface"].assign_material()
+
+        surface_gen_class = weighted_sample(material_assignments.towel)
+        self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
+
         if self.surface == ArtRug:
             self.surface = self.surface(self.factory_seed)
 

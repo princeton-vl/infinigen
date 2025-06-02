@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.cactus import CactusFactory
 from infinigen.assets.objects.monocot import MonocotFactory
 from infinigen.assets.objects.mushroom import MushroomFactory
@@ -28,7 +28,7 @@ from infinigen.assets.utils.object import join_objects, new_bbox, origin2lowest
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class PlantPotFactory(PotFactory):
@@ -40,9 +40,8 @@ class PlantPotFactory(PotFactory):
             self.r_expand = uniform(1.1, 1.3)
             alpha = uniform(0.5, 0.8)
             self.r_mid = (self.r_expand - 1) * alpha + 1
-            material_assignments = AssetList["PlantContainerFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.scale = log_uniform(0.08, 0.12)
+
+        self.surface = weighted_sample(material_assignments.decorative_hard)()()
 
 
 class PlantContainerFactory(AssetFactory):
@@ -59,13 +58,15 @@ class PlantContainerFactory(AssetFactory):
         super(PlantContainerFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.base_factory = PlantPotFactory(self.factory_seed, coarse)
-            self.dirt_ratio = uniform(0.7, 0.8)
-            material_assignments = AssetList["PlantContainerFactory"]()
-            self.dirt_surface = material_assignments["dirt_surface"].assign_material()
+
             fn = np.random.choice(self.plant_factories)
+
+            self.dirt_ratio = uniform(0.7, 0.8)
             self.plant_factory = fn(self.factory_seed)
             self.side_size = self.base_factory.scale * self.base_factory.r_expand
             self.top_size = uniform(0.4, 0.6)
+
+            self.dirt_surface = weighted_sample(material_assignments.potting_soil)()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(

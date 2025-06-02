@@ -10,7 +10,7 @@ import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import simple_greenery
+from infinigen.assets.materials.plant import simple_greenery
 from infinigen.assets.objects.small_plants import leaf_general as Leaf
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -1364,6 +1364,7 @@ def geo_fern(nw: NodeWrangler, **kwargs):
 class FernFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
+        self.leaf_material = simple_greenery.SimpleGreenery()
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -1407,7 +1408,7 @@ class FernFactory(AssetFactory):
             bpy.ops.object.material_slot_remove()
             bpy.ops.object.shade_flat()
 
-        simple_greenery.apply(obj)
+        self.leaf_material.apply(obj)
 
         return obj
 

@@ -13,7 +13,8 @@ from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.materials.plastics import plastic_rough
+from infinigen.assets import colors
+from infinigen.assets.materials.plastic import plastic_rough
 from infinigen.assets.utils.decorate import (
     read_co,
 )
@@ -25,7 +26,7 @@ from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver.room.base import room_level
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
-from infinigen.core.util.color import color_category
+from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
 logger = logging.getLogger(__name__)
@@ -184,7 +185,7 @@ def apply_skirtingboard(
     with FixedSeed(seed):
         thickness = uniform(0.02, 0.05)
         height = uniform(0.08, 0.15)
-        color = color_category("white")
+        color = hsv2rgba(colors.white_hsv())
         roughness = uniform(0.5, 1.0)
         n_peaks = randint(1, 4)
         start_y = uniform(0.0, 0.5)

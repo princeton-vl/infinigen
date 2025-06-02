@@ -30,15 +30,15 @@ from numpy.random import rand, uniform
 from PIL import Image
 
 from infinigen import repo_root
-from infinigen.assets.materials import common
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane
 from infinigen.assets.utils.uv import compute_uv_direction
+from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed, clip_gaussian
+from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
@@ -68,30 +68,28 @@ class Text:
     font_weights = ["normal", "bold", "heavy"]
     font_styles = ["normal", "italic", "oblique"]
 
-    def __init__(self, factory_seed, has_barcode=True, emission=0):
-        self.factory_seed = factory_seed
-        with FixedSeed(self.factory_seed):
-            self.size = 4
-            self.dpi = 100
-            self.colormap = (
-                self.build_sequential_colormap()
-                if uniform() < 0.5
-                else self.build_diverging_colormap()
-            )
-            self.white_chance = 0.03
-            self.black_chance = 0.05
+    def __init__(self, has_barcode=True, emission=0):
+        self.size = 4
+        self.dpi = 100
+        self.colormap = (
+            self.build_sequential_colormap()
+            if uniform() < 0.5
+            else self.build_diverging_colormap()
+        )
+        self.white_chance = 0.03
+        self.black_chance = 0.05
 
-            self.n_patches = np.random.randint(5, 8)
-            self.force_horizontal = uniform() < 0.75
+        self.n_patches = np.random.randint(5, 8)
+        self.force_horizontal = uniform() < 0.75
 
-            self.n_texts = np.random.randint(2, 4)
+        self.n_texts = np.random.randint(2, 4)
 
-            self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
-            self.barcode_scale = uniform(0.3, 0.6)
-            self.barcode_length = np.random.randint(25, 40)
-            self.barcode_aspect = log_uniform(1.5, 3)
+        self.n_barcodes = 1 if has_barcode and uniform() < 0.5 else 0
+        self.barcode_scale = uniform(0.3, 0.6)
+        self.barcode_length = np.random.randint(25, 40)
+        self.barcode_aspect = log_uniform(1.5, 3)
 
-            self.emission = emission
+        self.emission = emission
 
     @staticmethod
     def build_diverging_colormap():
@@ -442,16 +440,21 @@ class Text:
 
         return shader_text
 
-    def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
-        common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
+    # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), **kwargs):
+    #     common.apply(obj, self.make_shader_func(bbox), selection, **kwargs)
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), **kwargs):
+        return surface.shaderfunc_to_material(self.make_shader_func(bbox))
+
+    __call__ = generate
 
 
-def apply(
-    obj, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs
-):
-    Text(np.random.randint(1e5), has_barcode, emission).apply(
-        obj, selection, bbox, **kwargs
-    )
+class TextGeneral:
+    def generate(
+        self, selection=None, bbox=(0, 1, 0, 1), has_barcode=True, emission=0, **kwargs
+    ):
+        return Text(has_barcode, emission).generate(selection, bbox, **kwargs)
+
+    __call__ = generate
 
 
 def make_sphere():
@@ -460,3 +463,10 @@ def make_sphere():
     butil.apply_transform(obj)
     compute_uv_direction(obj, "x", "z")
     return obj
+
+
+class TextNoBarcode:
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), emission=0, **kwargs):
+        return Text(False, emission).generate(selection, bbox, **kwargs)
+
+    __call__ = generate

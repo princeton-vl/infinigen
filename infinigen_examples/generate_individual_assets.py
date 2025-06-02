@@ -72,30 +72,27 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
 OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
 
 def build_scene_asset(args, factory_name, idx):
-    fac = None
+    factory = None
     for subdir in sorted(list(OBJECTS_PATH.iterdir())):
         clsname = subdir.name.split(".")[0].strip()
         with gin.unlock_config():
             module = importlib.import_module(f"infinigen.assets.objects.{clsname}")
+
         if hasattr(module, factory_name):
-            fac = getattr(module, factory_name)
+            factory = getattr(module, factory_name)
             logger.info(f"Found {factory_name} in {subdir}")
             break
         logger.debug(f"{factory_name} not found in {subdir}")
-    if fac is None:
+    if factory is None:
         raise ModuleNotFoundError(f"{factory_name} not Found.")
 
-    if args.dryrun:
-        return
-
     with FixedSeed(idx):
-        fac = fac(idx)
+        fac = factory(idx)
         try:
             if args.spawn_placeholder:
                 ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
@@ -220,9 +217,13 @@ def build_scene_surface(args, factory_name, idx):
                 bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
                 asset = bpy.context.active_object
 
-                if type(template) is type:
-                    template = template(idx)
-                template.apply(asset)
+                mat_gen = template()
+
+                if hasattr(mat_gen, "apply"):
+                    mat_gen.apply(asset)
+                else:
+                    surface.assign_material(asset, mat_gen())
+
         except ModuleNotFoundError:
             raise Exception(f"{factory_name} not Found.")
 
@@ -266,8 +267,6 @@ def build_and_save_asset(payload: dict):
 
     if args.seed > 0:
         idx = args.seed
-
-    surface.registry.initialize_from_gin()
 
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"

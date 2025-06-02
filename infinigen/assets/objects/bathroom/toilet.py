@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import (
     read_center,
     read_co,
@@ -26,7 +26,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, normalize
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class ToiletFactory(AssetFactory):
@@ -62,18 +62,19 @@ class ToiletFactory(AssetFactory):
             self.hardware_radius = uniform(0.015, 0.02)
             self.hardware_length = uniform(0.04, 0.05)
             self.hardware_on_side = uniform() < 0.5
-            material_assignments = AssetList["ToiletFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.hardware_surface = material_assignments[
-                "hardware_surface"
-            ].assign_material()
 
-            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
-            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
-            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
-            self.edge_wear = (
-                material_assignments["wear_tear"][1] if is_edge_wear else None
+            surface_gen_class = weighted_sample(material_assignments.ceramics)
+            self.surface = surface_gen_class()
+
+            hardware_surface_gen_class = weighted_sample(
+                material_assignments.metal_neutral
             )
+            self.hardware_surface = hardware_surface_gen_class()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
     @property
     def mid_offset(self):

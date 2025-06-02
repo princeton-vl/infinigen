@@ -13,7 +13,7 @@ from numpy.random import normal as N
 from numpy.random import randint
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.chitin
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -23,10 +23,10 @@ from infinigen.assets.objects.creatures.util.animation import (
 from infinigen.assets.objects.creatures.util.boid_swarm import BoidSwarmFactory
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed, clip_gaussian, lerp
+from infinigen.core.util.random import weighted_sample
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +65,6 @@ def insect_hair_params():
             "IOR": 1.55,
         },
     }
-
-
-def beetle_postprocessing(body_parts, extras, params):
-    main_template = surface.registry.sample_registry(params["surface_registry"])
-    main_template.apply(body_parts)
 
 
 def beetle_genome():
@@ -122,7 +117,6 @@ def beetle_genome():
     return genome.CreatureGenome(
         parts=body,
         postprocess_params=dict(
-            surface_registry=[(infinigen.assets.materials.chitin, 1)],
             hair=insect_hair_params(),
         ),
     )
@@ -137,6 +131,12 @@ class BeetleFactory(AssetFactory):
         self.bvh = bvh
         self.animation_mode = animation_mode
 
+        with FixedSeed(factory_seed):
+            self.body_material = weighted_sample(material_assignments.beetle)()
+
+    def apply_materials(self, obj):
+        self.body_material.apply(joining.get_parts(obj))
+
     def create_asset(self, i, hair=False, **kwargs):
         genome = beetle_genome()
         root, parts = creature.genome_to_creature(
@@ -149,7 +149,7 @@ class BeetleFactory(AssetFactory):
             parts,
             genome,
             rigging=(self.animation_mode is not None),
-            postprocess_func=beetle_postprocessing,
+            postprocess_func=self.apply_materials,
             **kwargs,
         )
         if self.animation_mode == "walk_cycle":

@@ -6,13 +6,15 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import read_center, subsurf, write_co
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder, new_line
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class LidFactory(AssetFactory):
@@ -35,29 +37,43 @@ class LidFactory(AssetFactory):
             self.handle_subsurf_level = np.random.randint(0, 3)
 
             if self.is_glass:
-                material_assignments = AssetList["GlassLidFactory"]()
-            else:
-                material_assignments = AssetList["LidFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.rim_surface = material_assignments["rim_surface"].assign_material()
-            self.handle_surface = material_assignments[
-                "handle_surface"
-            ].assign_material()
+                surface_gen_class = weighted_sample(
+                    material_assignments.appliance_front_maybeglass
+                )
 
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            else:
+                surface_gen_class = weighted_sample(
+                    material_assignments.decorative_hard
+                )
+
+            self.surface_material_gen = surface_gen_class()
+
+            rim_surface_gen_class = weighted_sample(material_assignments.metals)
+            self.rim_surface_material_gen = rim_surface_gen_class()
+
+            handle_surface_gen_class = weighted_sample(
+                material_assignments.decorative_hard
+            )
+            self.handle_surface_material_gen = handle_surface_gen_class()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
     def create_asset(self, **params) -> bpy.types.Object:
+        self.surface = self.surface_material_gen()
+        self.rim_surface = self.rim_surface_material_gen()
+        self.handle_surface = self.handle_surface_material_gen()
+
         x_anchors = 0, 0.01, self.x_length / 2, self.x_length
         z_anchors = self.z_height, self.z_height, self.z_height * uniform(0.7, 0.8), 0
         obj = spin((x_anchors, 0, z_anchors))
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness, offset=0)
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
-        self.surface.apply(
-            obj, clear=True if self.is_glass else None, metal_color="bw+natural"
-        )
+
+        surface.assign_material(obj, self.surface)
         parts = [obj]
         if self.is_glass:
             parts.append(self.add_rim())
@@ -79,7 +95,7 @@ class LidFactory(AssetFactory):
         obj = bpy.context.active_object
         obj.scale[-1] = self.rim_height / self.thickness
         butil.apply_transform(obj)
-        self.rim_surface.apply(obj)
+        surface.assign_material(obj, self.rim_surface)
         return obj
 
     def add_handle(self, obj):
@@ -114,7 +130,7 @@ class LidFactory(AssetFactory):
         butil.modify_mesh(obj, "BEVEL", width=self.thickness / 2, segments=4)
         obj.location = 0, -self.thickness, z_offset
         butil.apply_transform(obj, True)
-        self.handle_surface.apply(obj)
+        surface.assign_material(obj, self.handle_surface)
         return obj
 
     def add_knob(self):
@@ -133,7 +149,7 @@ class LidFactory(AssetFactory):
         butil.apply_transform(top, True)
         butil.modify_mesh(top, "BEVEL", width=self.thickness / 2, segments=4)
         obj = join_objects([obj, top])
-        self.handle_surface.apply(obj)
+        surface.assign_material(obj, self.handle_surface)
         return obj
 
     def finalize_assets(self, assets):

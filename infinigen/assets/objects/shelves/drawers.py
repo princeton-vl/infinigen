@@ -7,8 +7,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal
-from infinigen.assets.materials.shelf_shaders import (
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
     shader_shelves_white,
     shader_shelves_wood,
@@ -17,6 +17,7 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup(
@@ -657,15 +658,23 @@ class CabinetDrawerBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        if params['drawer_material'] == 'white':
-            params['drawer_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-        elif params['drawer_material'] == 'black_wood':
-            params['drawer_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood)
-        elif params['drawer_material'] == 'wood':
-            params['drawer_material'] = surface.shaderfunc_to_material(shader_shelves_wood)
+        if params["drawer_material"] == "white":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["drawer_material"] == "black_wood":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood
+            )
+        elif params["drawer_material"] == "wood":
+            params["drawer_material"] = surface.shaderfunc_to_material(
+                shader_shelves_wood
+            )
 
-        if params['knob_material'] == 'metal':
-            params['knob_material'] = surface.shaderfunc_to_material(metal.get_shader())
+        if params["knob_material"] == "metal":
+            params["knob_material"] = weighted_sample(
+                material_assignments.decorative_metal
+            )
         else:
             params["knob_material"] = params["frame_material"]
 

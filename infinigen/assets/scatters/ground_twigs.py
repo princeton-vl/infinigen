@@ -7,10 +7,11 @@
 import numpy as np
 from numpy.random import uniform as U
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.trees.generate import make_twig_collection, random_species
 from infinigen.assets.utils.misc import toggle_hide, toggle_show
-from infinigen.core import surface
 from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.util.random import weighted_sample
 
 from .chopped_trees import approx_settle_transform
 
@@ -24,7 +25,7 @@ def apply(obj, selection=None, n_leaf=0, n_twig=10, **kwargs):
         n_leaf=n_leaf,
         n_twig=n_twig,
         leaf_types=None,
-        trunk_surface=surface.registry("bark"),
+        trunk_surface=weighted_sample(material_assignments.bark),
     )
 
     toggle_show(twigs)

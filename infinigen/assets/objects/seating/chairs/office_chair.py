@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import choice, uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.seating.chairs.seats.curvy_seats import (
     generate_curvy_seats,
 )
@@ -17,6 +17,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
@@ -78,25 +79,16 @@ class OfficeChairFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self, leg_style):
-        material_assignments = AssetList["OfficeChairFactory"](leg_style)
         params = {
-            "TopMaterial": material_assignments["top"].assign_material(),
-            "LegMaterial": material_assignments["leg"].assign_material(),
+            "TopMaterial": weighted_sample(material_assignments.large_seat_fabric)(),
+            "LegMaterial": weighted_sample(material_assignments.furniture_leg)(),
         }
-        wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = uniform() < scratch_prob
-        is_edge_wear = uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
+        scratch = None if uniform() > scratch_prob else scratch()
+        edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 

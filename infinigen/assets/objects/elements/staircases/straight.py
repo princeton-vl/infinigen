@@ -13,8 +13,7 @@ import shapely
 from numpy.random import uniform
 from shapely import LineString, Polygon
 
-from infinigen.assets.materials import fabrics, glass, metal, plaster, wood
-from infinigen.assets.materials.stone_and_concrete import concrete
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import (
     mirror,
     read_co,
@@ -46,7 +45,7 @@ from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, normalize
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
 
@@ -79,9 +78,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.has_step = self.support_type in ["solid", "hole"]
             self.hole_size = log_uniform(0.6, 1.0)
             probs = np.array([3, 2, 2, 2])
-            self.step_surface = np.random.choice(
-                [wood, plaster, concrete, fabrics.fabric_random], p=probs / probs.sum()
-            )
+            self.step_surface = weighted_sample(material_assignments.step)()
 
             self.has_rail = self.support_type in ["single-rail", "double-rail"]
             self.rail_offset = self.step_width * uniform(0.15, 0.3)
@@ -89,9 +86,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.rail_width = log_uniform(0.08, 0.2)
             self.rail_height = log_uniform(0.08, 0.12)
             probs = np.array([3, 2, 2, 1])
-            self.rail_surface = np.random.choice(
-                [metal, plaster, concrete, fabrics.fabric_random], p=probs / probs.sum()
-            )
+            self.rail_surface = weighted_sample(material_assignments.rail)()
 
             self.has_tread = not self.has_step or uniform() < 0.75
             self.tread_height = (
@@ -104,18 +99,14 @@ class StraightStaircaseFactory(AssetFactory):
                 else self.step_width
             )
             probs = np.array([3, 3, 1])
-            self.tread_surface = np.random.choice(
-                [wood, metal, glass], p=probs / probs.sum()
-            )
+            self.tread_surface = weighted_sample(material_assignments.tread)()
 
             self.has_sides = self.support_type in ["side", "solid", "hole"]
             self.side_type = np.random.choice(["zig-zag", "straight"])
             self.side_height = self.step_height * log_uniform(0.2, 0.8)
             self.side_thickness = uniform(0.03, 0.08)
             probs = np.array([3, 3, 1, 2])
-            self.side_surface = np.random.choice(
-                [wood, metal, plaster, fabrics.fabric_random], p=probs / probs.sum()
-            )
+            self.side_surface = weighted_sample(material_assignments.side)()
 
             self.has_column = self.support_type == "chord"
 
@@ -130,9 +121,7 @@ class StraightStaircaseFactory(AssetFactory):
                 1 - self.handrail_offset / self.step_width,
             ]
             probs = np.array([3, 2, 3])
-            self.handrail_surface = np.random.choice(
-                [wood, metal, fabrics.fabric_random], p=probs / probs.sum()
-            )
+            self.handrail_surface = weighted_sample(material_assignments.handrail)()
 
             self.post_height = log_uniform(0.8, 1.2)
             self.post_k = int(np.ceil(self.step_width / self.step_length))
@@ -140,9 +129,8 @@ class StraightStaircaseFactory(AssetFactory):
             self.post_minor_width = self.post_width * log_uniform(0.3, 0.5)
             self.is_post_circular = uniform() < 0.5
             probs = np.array([3, 3, 2])
-            self.post_surface = np.random.choice(
-                [wood, metal, fabrics.fabric_random], p=probs / probs.sum()
-            )
+            self.post_surface = weighted_sample(material_assignments.post)()
+
             self.has_vertical_post = self.handrail_type == "vertical-post"
 
             self.has_bars = self.handrail_type == "horizontal-post"
@@ -154,7 +142,7 @@ class StraightStaircaseFactory(AssetFactory):
             self.has_glasses = self.handrail_type == "glass"
             self.glass_height = self.post_height - uniform(0, 0.05)
             self.glass_margin = self.step_height / 2 + uniform(0, 0.05)
-            self.glass_surface = glass
+            self.glass_surface = weighted_sample(material_assignments.glasses)()
 
             self.has_spiral = False
             self.mirror = uniform() < 0.5
@@ -620,20 +608,19 @@ class StraightStaircaseFactory(AssetFactory):
             bpy.ops.mesh.normals_make_consistent(inside=False)
 
     def finalize_assets(self, assets):
+        surface.assign_material(assets, self.handrail_surface())
         if self.has_step:
-            self.step_surface.apply(assets, selection="steps", metal_color="bw+natural")
+            surface.assign_material(assets, self.step_surface(), selection="steps")
         if self.has_tread:
-            self.tread_surface.apply(
-                assets, selection="treads", metal_color="bw+natural"
-            )
+            surface.assign_material(assets, self.tread_surface(), selection="treads")
         if self.has_rail:
-            self.rail_surface.apply(assets, selection="rails")
+            surface.assign_material(assets, self.rail_surface(), selection="rails")
         if self.has_sides:
-            self.side_surface.apply(assets, selection="sides")
-        self.handrail_surface.apply(assets, selection="handrails")
-        self.post_surface.apply(assets, selection="posts")
+            surface.assign_material(assets, self.side_surface(), selection="sides")
+        surface.assign_material(assets, self.handrail_surface(), selection="handrails")
+        surface.assign_material(assets, self.post_surface(), selection="posts")
         if self.has_glasses:
-            self.glass_surface.apply(assets, selection="glasses")
+            surface.assign_material(assets, self.glass_surface(), selection="glasses")
 
     def make_guardrail(self, mesh):
         def geo_extrude(nw: NodeWrangler):

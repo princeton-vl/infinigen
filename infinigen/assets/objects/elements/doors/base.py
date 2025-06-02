@@ -9,8 +9,8 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import glass, metal, wood
-from infinigen.assets.materials.common import unique_surface
+from infinigen.assets import colors
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import mirror, read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin
@@ -29,7 +29,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class BaseDoorFactory(AssetFactory):
@@ -47,15 +47,14 @@ class BaseDoorFactory(AssetFactory):
             self.out_bevel = uniform() < 0.7
             self.shrink_width = log_uniform(0.005, 0.06)
 
-            surface_fn = np.random.choice([metal, wood], p=[0.2, 0.8])
-            self.surface = unique_surface(surface_fn, self.factory_seed)
+            self.surface = weighted_sample(material_assignments.frame)()
             self.has_glass = False
-            self.glass_surface = glass
+            self.glass_surface = weighted_sample(material_assignments.glasses)()
             self.has_louver = False
-            self.louver_surface = np.random.choice([metal, wood], p=[0.2, 0.8])
+            self.louver_surface = weighted_sample(material_assignments.frame)()
 
             self.handle_type = np.random.choice(["knob", "lever", "pull"])
-            self.handle_surface = np.random.choice([metal, wood], p=[0.2, 0.8])
+            self.handle_surface = weighted_sample(material_assignments.frame)()
             self.handle_offset = self.panel_margin * 0.5
             self.handle_height = self.height * uniform(0.45, 0.5)
 
@@ -98,11 +97,11 @@ class BaseDoorFactory(AssetFactory):
             self.pull_radius = uniform(0.01, 0.02)
             self.pull_type = np.random.choice(["u", "tee", "zed"])
             self.is_pull_circular = uniform() < 0.5 or self.pull_type == "zed"
-            self.panel_surface = unique_surface(surface_fn, np.random.randint(1e5))
+            self.panel_surface = weighted_sample(material_assignments.frame)()
             self.auto_bevel = BevelSharp()
             self.side_bevel = log_uniform(0.005, 0.015)
 
-            self.metal_color = metal.sample_metal_color()
+            self.metal_color_hsv = colors.metal_hsv()
 
     def create_asset(self, **params) -> bpy.types.Object:
         for _ in range(100):
@@ -141,12 +140,12 @@ class BaseDoorFactory(AssetFactory):
         return []
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets, metal_color=self.metal_color, vertical=True)
+        self.surface.apply(assets, metal_color=self.metal_color_hsv, vertical=True)
         if self.has_glass:
             self.glass_surface.apply(assets, selection="glass", clear=True)
         if self.has_louver:
             self.louver_surface.apply(
-                assets, selection="louver", metal_color=self.metal_color
+                assets, selection="louver", metal_color=self.metal_color_hsv
             )
         self.handle_surface.apply(assets, selection="handle", metal_color="natural")
 
@@ -277,5 +276,5 @@ class BaseDoorFactory(AssetFactory):
 
         factory = DoorCasingFactory(self.factory_seed, self.coarse, self.constants)
         factory.surface = self.surface
-        factory.metal_color = self.metal_color
+        factory.metal_color = self.metal_color_hsv
         return factory

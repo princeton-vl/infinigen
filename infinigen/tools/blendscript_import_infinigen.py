@@ -36,7 +36,6 @@ from infinigen_examples import generate_nature
 init.apply_gin_configs(
     Path(pwd) / "infinigen_examples/configs_nature", ["base.gin"], skip_unknown=True
 )
-surface.registry.initialize_from_gin()
 
 logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] | %(message)s",

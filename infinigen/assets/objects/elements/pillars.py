@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import marble_regular, marble_voronoi
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import (
     read_co,
     read_edge_center,
@@ -22,12 +22,13 @@ from infinigen.assets.utils.object import (
     new_base_circle,
     new_cylinder,
 )
+from infinigen.core import surface
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class PillarFactory(AssetFactory):
@@ -71,7 +72,7 @@ class PillarFactory(AssetFactory):
                 self.n,
             )
             self.inset_profile = uniform(0, 1, self.m) < 0.3
-            self.surface = np.random.choice([marble_regular, marble_voronoi])
+            self.surface = weighted_sample(material_assignments.marble)()
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = new_cylinder(vertices=4 * self.n)
@@ -153,4 +154,4 @@ class PillarFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        surface.assign_material(assets, self.surface())

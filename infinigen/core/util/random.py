@@ -13,7 +13,6 @@ from matplotlib import colors
 from numpy.random import uniform
 
 import infinigen
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import clip_gaussian
 
 
@@ -100,7 +99,7 @@ def random_general(var):
     elif func == "palette":
         return sample_json_palette(*args)
     elif func == "color_category":
-        return color_category(*args)
+        raise ValueError("color_category is deprecated")
     else:
         return var
 
@@ -219,7 +218,41 @@ def random_color(brightness_lim=1):
     )
 
 
-def sample_registry(reg):
+def weighted_sample(reg):
     classes, weights = zip(*reg)
     weights = np.array(weights)
     return np.random.choice(classes, p=weights / weights.sum())
+
+
+def mixture_of_gaussian(
+    means: np.ndarray,
+    stds: np.array,
+    weights: list[float],
+    clamp_min=None,
+    clamp_max=None,
+):
+    p = np.array(weights) / np.sum(weights)
+    idx = np.random.choice(len(p), p=p)
+
+    mu = means[idx]
+    std = stds[idx]
+
+    res = np.random.normal(mu, std)
+
+    if clamp_min is not None:
+        res = np.maximum(res, clamp_min)
+    if clamp_max is not None:
+        res = np.minimum(res, clamp_max)
+
+    return res
+
+
+def wrap_gaussian(mean, std, low=0, high=1):
+    x = np.random.normal(mean, std)
+
+    if x < low:
+        x = high - (low - x) % (high - low)
+    elif x > high:
+        x = low + (x - high) % (high - low)
+
+    return x

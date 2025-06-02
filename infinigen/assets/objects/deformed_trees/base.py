@@ -9,6 +9,7 @@ import colorsys
 
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.trees.generate import GenericTreeFactory, random_species
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
@@ -17,7 +18,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import NoApply
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class BaseDeformedTreeFactory(AssetFactory):
@@ -29,7 +30,7 @@ class BaseDeformedTreeFactory(AssetFactory):
             self.base_factory = GenericTreeFactory(
                 factory_seed, tree_params, None, NoApply, coarse
             )
-            self.trunk_surface = surface.registry("bark")
+            self.trunk_surface = weighted_sample(material_assignments.bark)
             self.base_hue = uniform(0.02, 0.08)
             self.material = surface.shaderfunc_to_material(
                 self.shader_rings, self.base_hue

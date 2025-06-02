@@ -167,5 +167,8 @@ ignore = [
 ]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
 [tool.pytype]
 inputs = ['infinigen', 'infinigen_examples']

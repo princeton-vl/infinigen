@@ -6,12 +6,12 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import glass
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.tableware.base import TablewareFactory
 from infinigen.assets.utils.draw import spin
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class WineglassFactory(TablewareFactory):
@@ -27,7 +27,7 @@ class WineglassFactory(TablewareFactory):
             self.x_mid = self.x_top * log_uniform(0.9, 1.2)
             self.has_guard = False
             self.thickness = uniform(0.01, 0.03)
-            self.surface = glass
+            self.surface = weighted_sample(material_assignments.glasses)()()
             self.scale = log_uniform(0.1, 0.3)
 
     def create_asset(self, **params) -> bpy.types.Object:
