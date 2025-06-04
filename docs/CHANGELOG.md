@@ -191,3 +191,8 @@ v1.12.2
 v1.12.3
 - Fix populate_collection missing argument 'cameras'
 - Fix split_in_view crash for dist_max=None
+
+
+v1.13.0
+- Refactor materials into classes
+- Separate test lists for new-style and deprecated apply()-style materials
