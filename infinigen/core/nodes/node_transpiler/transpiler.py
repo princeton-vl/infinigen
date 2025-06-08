@@ -452,15 +452,83 @@ def create_attrs_dict(node_tree, node):
     }
 
 
-def create_inputs_dict(node_tree, node, memo):
+def process_single_input(node_tree, node, input_socket, input_name, memo):
     """
-    Produce some `code` that instantiates all node INPUTS to `node`,
-    as well as a python dict `inputs_dict` containing all the variable
-    names that should be used to refer to each of the inputs we instantiated
+    Process a single input socket and return either:
+    - None if the input should be skipped
+    - (input_expression, code, new_targets) tuple if the input should be included
     """
+    if not input_socket.enabled:
+        return None
 
+    links = get_connected_link(node_tree, input_socket)
+    if links is None:
+        if not hasattr(input_socket, "default_value"):
+            return None
+        if not has_default_value_changed(node_tree, node, input_socket):
+            return None
+        input_expression, targets = represent_default_value(
+            input_socket.default_value, simple=False
+        )
+        return (input_expression, "", targets)
+
+    # Process all valid links to this input
+    all_expressions = []
+    all_code = []
+    all_targets = {}
+
+    for link in links:
+        if not link.from_socket.enabled or not link.to_socket.enabled:
+            logger.warning(
+                f"Transpiler encountered {'from' if not link.from_socket.enabled else 'to'} disabled socket "
+                f"{link.from_socket if not link.from_socket.enabled else link.to_socket}, ignoring it"
+            )
+            continue
+
+        input_varname, input_code, targets = create_node(
+            node_tree, link.from_node, memo
+        )
+        all_code.append(input_code)
+        all_targets.update(targets)
+
+        if len(link.from_node.outputs) == 1:
+            input_expression = input_varname
+        else:
+            socket_name = link.from_socket.name
+            input_expression = f'{input_varname}.outputs["{socket_name}"]'
+
+            # Catch shared socket output names
+            if (
+                link.from_node.outputs[socket_name].identifier
+                != link.from_socket.identifier
+            ):
+                from_idx = [
+                    i
+                    for i, o in enumerate(link.from_node.outputs)
+                    if o.identifier == link.from_socket.identifier
+                ][0]
+                input_expression = f"{input_varname}.outputs[{from_idx}]"
+
+        all_expressions.append(input_expression)
+
+    if not all_expressions:
+        return None
+
+    return (
+        all_expressions[0] if len(all_expressions) == 1 else all_expressions,
+        "".join(all_code),
+        all_targets,
+    )
+
+
+def combine_input_results(node, processed_inputs):
+    """
+    Combine the results of processing multiple inputs into the final inputs_dict and code.
+    processed_inputs is a list of (idx, name, result) tuples where result is either None or (expr, code, targets)
+    """
     inputs_dict = {}
-    code = ""
+    all_code = []
+    all_targets = {}
 
     def update_inputs(i, k, v):
         is_input_name_unique = [socket.name for socket in node.inputs].count(k) == 1
@@ -472,63 +540,29 @@ def create_inputs_dict(node_tree, node, memo):
                 inputs_dict[k] = [inputs_dict[k]]
             inputs_dict[k].append(v)
 
-    new_transpile_targets = {}
+    for i, input_name, result in processed_inputs:
+        if result is None:
+            continue
+        input_expression, code, targets = result
+        update_inputs(i, input_name, input_expression)
+        if code:
+            all_code.append(code)
+        all_targets.update(targets)
+
+    return inputs_dict, "".join(all_code), all_targets
+
+
+def create_inputs_dict(node_tree, node, memo):
+    """
+    Process all inputs of a node and return a dict mapping input names to their values,
+    along with any generated code and new transpile targets.
+    """
+    processed = []
     for i, (input_name, input_socket) in enumerate(node.inputs.items()):
-        if not input_socket.enabled:
-            continue
+        result = process_single_input(node_tree, node, input_socket, input_name, memo)
+        processed.append((i, input_name, result))
 
-        links = get_connected_link(node_tree, input_socket)
-
-        if links is None:
-            if hasattr(input_socket, "default_value"):
-                if not has_default_value_changed(node_tree, node, input_socket):
-                    continue
-                input_expression, targets = represent_default_value(
-                    input_socket.default_value, simple=False
-                )
-                new_transpile_targets.update(targets)
-                update_inputs(i, input_name, input_expression)
-            continue
-
-        for link in links:
-            if not link.from_socket.enabled:
-                logger.warning(
-                    f"Transpiler encountered link from disabled socket {link.from_socket}, ignoring it"
-                )
-                continue
-            if not link.to_socket.enabled:
-                logger.warning(
-                    f"Transpiler encountered link to disabled socket {link.to_socket}, ignoring it"
-                )
-                continue
-
-            input_varname, input_code, targets = create_node(
-                node_tree, link.from_node, memo
-            )
-            code += input_code
-            new_transpile_targets.update(targets)
-
-            if len(link.from_node.outputs) == 1:
-                input_expression = input_varname
-            else:
-                socket_name = link.from_socket.name
-                input_expression = f'{input_varname}.outputs["{socket_name}"]'
-
-                # Catch shared socket output names
-                if (
-                    link.from_node.outputs[socket_name].identifier
-                    != link.from_socket.identifier
-                ):
-                    from_idx = [
-                        i
-                        for i, o in enumerate(link.from_node.outputs)
-                        if o.identifier == link.from_socket.identifier
-                    ][0]
-                    input_expression = f"{input_varname}.outputs[{from_idx}]"
-
-            update_inputs(i, input_name, input_expression)
-
-    return inputs_dict, code, new_transpile_targets
+    return combine_input_results(node, processed)
 
 
 def repr_iter_val(v):
