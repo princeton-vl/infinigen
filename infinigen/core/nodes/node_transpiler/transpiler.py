@@ -474,6 +474,9 @@ def create_inputs_dict(node_tree, node, memo):
 
     new_transpile_targets = {}
     for i, (input_name, input_socket) in enumerate(node.inputs.items()):
+        if not input_socket.enabled:
+            continue
+
         links = get_connected_link(node_tree, input_socket)
 
         if links is None:
