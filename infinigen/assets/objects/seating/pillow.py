@@ -53,13 +53,13 @@ class PillowFactory(AssetFactory):
         self.extrude_thickness = (
             self.thickness * log_uniform(1, 8) if uniform() < 0.5 else 0
         )
-        
+
         self.has_seam = uniform() < 0.3 and not self.shape == "torus"
         self.seam_radius = uniform(0.01, 0.02)
 
         surface_gen_class = weighted_sample(material_assignments.fabrics)
         self.surface = surface_gen_class()()
-        
+
         if self.surface == art.ArtFabric:
             self.surface = self.surface(self.factory_seed)
 

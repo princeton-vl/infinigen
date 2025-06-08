@@ -39,8 +39,7 @@ def get_configs(log_path, stage):
 
 
 def parse_run_folder(run_folder: Path, args: argparse.Namespace):
-
-    crash_reasons = (run_folder / "crash_summaries.txt")
+    crash_reasons = run_folder / "crash_summaries.txt"
 
     if not crash_reasons.exists():
         print(f"Could not find crash reasons for {run_folder}")
@@ -78,6 +77,7 @@ def parse_run_folder(run_folder: Path, args: argparse.Namespace):
     df = pd.DataFrame.from_records(records)
 
     return df
+
 
 def visualize_results(df: pd.DataFrame, args: argparse.Namespace):
     df["reason_canonical"] = df["reason"].apply(canonicalize_reason)
@@ -118,13 +118,14 @@ def visualize_results(df: pd.DataFrame, args: argparse.Namespace):
             print(f"  {row}")
         print("")
 
-def main(args):
 
+def main(args):
     run_dfs = [parse_run_folder(run_folder, args) for run_folder in args.input_folder]
     run_dfs = [x for x in run_dfs if x is not None]
-    
+
     df = pd.concat(run_dfs)
     visualize_results(df, args)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
