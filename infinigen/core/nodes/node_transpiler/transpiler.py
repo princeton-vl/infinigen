@@ -21,7 +21,7 @@ from infinigen.core.nodes.node_wrangler import ng_inputs
 
 logger = logging.getLogger(__name__)
 
-VERSION = "2.7.0"
+VERSION = "2.7.1"
 indent_string = " " * 4
 LINE_LEN = 100
 
@@ -150,6 +150,16 @@ def postfix(funcnames, targets):
     return header + indent(body)
 
 
+def repr_iter_val(v):
+    match v:
+        case list():
+            return represent_list(v)
+        case str():
+            return v  # String are assumed to be code variables to get passed through
+        case _:
+            return represent_default_value(v, simple=True)
+
+
 def represent_default_value(val, simple=True):
     """
     Attempt to create a python expression to represent val, which was the .default_value of some .input node
@@ -160,39 +170,42 @@ def represent_default_value(val, simple=True):
     code = ""
     new_transpiler_targets = {}
 
-    if isinstance(
-        val,
-        (str, int, bool, bpy.types.Object, bpy.types.Collection, set, bpy.types.Image),
-    ):
-        code = repr(val)
-    elif isinstance(val, (float)):
-        code = f"{val:.4f}"
-    elif isinstance(
-        val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)
-    ):
-        code = represent_tuple(tuple(val))
-    elif isinstance(val, bpy.types.Collection):
-        logger.warning(
-            f"Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing"
-        )
-        code = f"bpy.data.collections[{repr(val.name)}]"
-    elif isinstance(val, bpy.types.Material):
-        if val.use_nodes:
-            funcname = get_func_name(val)
-            new_transpiler_targets[funcname] = val
-            code = f"surface.shaderfunc_to_material({funcname})"
-        else:
-            logger.warning(f"Encountered material {val} but it has use_nodes=False")
+    match val:
+        case str() | int() | bool() | set():
             code = repr(val)
-    elif val is None:
-        logger.warning(
-            "Transpiler introduced a None into result script, this may not have been intended by the user"
-        )
-        code = "None"
-    else:
-        raise ValueError(
-            f"represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer"
-        )
+        case float():
+            code = f"{val:.4f}"
+        case (
+            tuple()
+            | bpy.types.bpy_prop_array()
+            | mathutils.Vector()
+            | mathutils.Euler()
+        ):
+            code = represent_tuple(tuple(val))
+        case bpy.types.Object() | bpy.types.Image():
+            code = repr(val)
+        case bpy.types.Collection():
+            logger.warning(
+                f"Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing"
+            )
+            code = f"bpy.data.collections[{repr(val.name)}]"
+        case bpy.types.Material():
+            if val.use_nodes:
+                funcname = get_func_name(val)
+                new_transpiler_targets[funcname] = val
+                code = f"surface.shaderfunc_to_material({funcname})"
+            else:
+                logger.warning(f"Encountered material {val} but it has use_nodes=False")
+                code = repr(val)
+        case None:
+            logger.warning(
+                "Transpiler introduced a None into result script, this may not have been intended by the user"
+            )
+            code = "None"
+        case _:
+            raise ValueError(
+                f"represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer"
+            )
 
     assert isinstance(code, str)
 
@@ -563,15 +576,6 @@ def create_inputs_dict(node_tree, node, memo):
         processed.append((i, input_name, result))
 
     return combine_input_results(node, processed)
-
-
-def repr_iter_val(v):
-    if isinstance(v, list):
-        return represent_list(v)
-    elif isinstance(v, str):
-        return v  # String are assumed to be code variables to get passed through
-    else:
-        return represent_default_value(v, simple=True)
 
 
 def represent_list(inputs, spacing=" "):
