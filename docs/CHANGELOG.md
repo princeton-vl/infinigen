@@ -196,3 +196,6 @@ v1.12.3
 v1.13.0
 - Refactor materials into classes
 - Separate test lists for new-style and deprecated apply()-style materials
+
+v1.13.1
+- Refactor transpiler, fix transpiling disabled input sockets
