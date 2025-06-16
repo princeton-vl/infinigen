@@ -1,14 +1,15 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+
+import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.plastic import Plastic, PlasticTranslucent
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
 from infinigen.core import surface
@@ -87,8 +88,13 @@ class JarFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        # self.surface.apply(assets, clear=uniform() < 0.5)
-        surface.assign_material(assets, self.surface(clear=uniform() < 0.5))
+        kwargs = (
+            dict(clear=uniform() < 0.5)
+            if isinstance(self.surface, Plastic)
+            or isinstance(self.surface, PlasticTranslucent)
+            else {}
+        )
+        surface.assign_material(assets, self.surface(**kwargs))
         surface.assign_material(assets, self.cap_surface(), selection="cap")
         if self.scratch:
             self.scratch.apply(assets)
