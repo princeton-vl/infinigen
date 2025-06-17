@@ -26,10 +26,7 @@ def get_texture_params():
         "_pattern_density": choice([uniform(0.1, 1.0), uniform(1.0, 10.0)]),
         "_color": uniform(0.0, 1.0, 3),
         "_brick_knit": choice(
-            [
-                uniform(0.0, 0.05), 
-                uniform(0.05, 0.95), 
-                uniform(0.95, 1.0)]
+            [uniform(0.0, 0.05), uniform(0.05, 0.95), uniform(0.95, 1.0)]
         ),
         "_knit_resolution": uniform(0.5, 0.6),
         "_brick_resolution": uniform(20.0, 30.0),
@@ -187,7 +184,6 @@ def shader_fabric_base(
         attrs={"operation": "SUBTRACT", "use_clamp": True},
     )
 
-
     scale = nw.new_node(
         Nodes.Math,
         input_kwargs={0: inverted_brick, 1: brick_knit},
@@ -255,7 +251,8 @@ def shader_fabric_base(
     )
 
     displacement = nw.new_node(
-        Nodes.Displacement, input_kwargs={"Height": add_1, "Midlevel": 0.4, "Scale": 0.01}
+        Nodes.Displacement,
+        input_kwargs={"Height": add_1, "Midlevel": 0.4, "Scale": 0.01},
     )
 
     material_output = nw.new_node(

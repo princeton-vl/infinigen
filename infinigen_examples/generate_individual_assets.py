@@ -224,11 +224,11 @@ def build_scene_surface(args, factory_name, idx):
                         subdivisions=9,
                     )
                     asset = bpy.context.active_object
-                    
+
                 while len(asset.data.vertices) < 500000:
                     with butil.ViewportMode(asset, mode="EDIT"):
                         bpy.ops.mesh.subdivide(number_cuts=2)
-                    
+
                 if type(gen_class) is type:
                     mat_gen = gen_class(idx)
 

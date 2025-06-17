@@ -56,7 +56,7 @@ def shader_material(
 
     relative_density_y = nw.new_node(Nodes.Value, label="relative_density_y")
     relative_density_y.outputs[0].default_value = _relative_density_y
-    
+
     displacement_scale = nw.new_node(Nodes.Value, label="displacement_scale")
     displacement_scale.outputs[0].default_value = _displacement_scale
 
@@ -140,7 +140,8 @@ def shader_material(
     )
 
     displacement = nw.new_node(
-        Nodes.Displacement, input_kwargs={"Height": add, "Midlevel": 0.4000, "Scale": displacement_scale}
+        Nodes.Displacement,
+        input_kwargs={"Height": add, "Midlevel": 0.4000, "Scale": displacement_scale},
     )
 
     material_output = nw.new_node(
