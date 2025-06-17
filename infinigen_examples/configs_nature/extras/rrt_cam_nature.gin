@@ -1,4 +1,4 @@
-animate_trajectories.policy_registry = "rrt"
+animate_trajectories.animation_mode = "rrt"
 animate_trajectories.validate_pose_func = @rrt/validate_cam_pose_rrt
 compute_trajectories.min_candidates_ratio = 2
 compute_poses.min_base_views_ratio = 4

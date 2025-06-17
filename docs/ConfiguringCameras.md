@@ -34,11 +34,11 @@ Indoor video, dynamic & interesting camera motion:
 
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/video_dynamic_indoor --num_scenes 30 \
--configs singleroom rrt_cam_indoors.gin \
--pipeline_configs local_256GB.gin indoor_background_configs.gin monocular_video \
--overrides compute_base_views.min_candidates_ratio=2 compose_indoors.terrain_enabled=False compose_indoors.restrict_single_supported_roomtype=True \
--pipeline_overrides get_cmd.driver_script='infinigen_examples.generate_indoors' iterate_scene_tasks.frame_range=[1,300] \
--warmup_sec 2000 --cleanup big_files --overwrite
+--configs singleroom.gin rrt_cam_indoors.gin \
+--pipeline_configs local_256GB.gin indoor_background_configs.gin monocular_video \
+--overrides compute_base_views.min_candidates_ratio=2 compose_indoors.terrain_enabled=False compose_indoors.restrict_single_supported_roomtype=True \
+--pipeline_overrides get_cmd.driver_script='infinigen_examples.generate_indoors' iterate_scene_tasks.frame_range=[1,200] \
+--warmup_sec 2000 --cleanup big_files --overwrite
 ```
 
 In order to create dynamic and varied camera motion, use the `rrt_cam_indoors.gin` and `rrt_cam_nature.gin` configuration files for indoor scenes and nature scenes respectively. This will animate cameras using the animation policy found in [rrt.py](../infinigen/core/util/rrt.py/.py). There are three customizable components used to create such a motion:

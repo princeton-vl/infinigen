@@ -2,7 +2,8 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors:
-# - Dylan Li: primary author
+# - Alexander Raistrick: original placement/camera.py: camera pose proposal, camera random walk animations
+# - Dylan Li: refactored to camera_trajectories.py to support RRT option
 # - Sumanth Maddirala: base view selection
 
 import logging
@@ -12,7 +13,6 @@ from functools import partial
 import bpy
 import gin
 import numpy as np
-from numpy.random import uniform as U
 from tqdm import tqdm
 
 from infinigen.core.placement.camera import configure_cameras, terrain_camera_query
@@ -31,7 +31,7 @@ def compute_poses(
     scene_preprocessed: dict,
     init_bounding_box: tuple[np.array, np.array] = None,
     init_surfaces: list[bpy.types.Object] = None,
-    terrain_mesh = None,
+    terrain_mesh=None,
     min_candidates_ratio=5,
     min_base_views_ratio=10,
 ):
@@ -78,8 +78,7 @@ def compute_trajectories(
     camera_selection_ratio=None,
     min_candidates_ratio=5,
     pois=None,
-    follow_poi_chance=0.0,
-    policy_registry=None,
+    animation_mode: str = "random_walk",
     validate_pose_func=None,
 ):
     n_cams = len(cam_rigs)
@@ -123,19 +122,22 @@ def compute_trajectories(
             if not anim_valid_pose_func(cam):
                 continue
 
-            if policy_registry is None:
-                if U() < follow_poi_chance and pois is not None and len(pois):
+            match animation_mode:
+                case "random_walk":
+                    with gin.config_scope("cam"):
+                        policy = animation_policy.AnimPolicyRandomWalkLookaround()
+                case "random_walk_forward":
+                    with gin.config_scope("cam"):
+                        policy = animation_policy.AnimPolicyRandomForwardWalk()
+                case "follow_poi":
                     policy = animation_policy.AnimPolicyFollowObject(
                         target_obj=cam, pois=pois, bvh=scene_preprocessed["scene_bvh"]
                     )
-                else:
-                    with gin.config_scope("cam"):
-                        policy = animation_policy.AnimPolicyRandomWalkLookaround()
-            else:
-                match policy_registry:
-                    case "rrt":
-                        with gin.config_scope("rrt"):
-                            policy = AnimPolicyRRT(obj_groups=obj_groups)
+                case "rrt":
+                    with gin.config_scope("rrt"):
+                        policy = AnimPolicyRRT(obj_groups=obj_groups)
+                case _:
+                    raise ValueError(f"Invalid animation mode: {animation_mode}")
 
             logger.info(f"Computing trajectory using {policy=}")
 
@@ -215,12 +217,12 @@ def animate_trajectories(
     obj_groups=None,
     follow_poi_chance=0.0,
     pois=None,
-    policy_registry=None,
+    animation_mode="random_walk",
     validate_pose_func=None,
     fatal=True,
 ):
     bpy.context.view_layer.update()
-    # generate potential trajectories
+
     try:
         trajectories = compute_trajectories(
             cam_rigs=cam_rigs,
@@ -229,7 +231,7 @@ def animate_trajectories(
             obj_groups=obj_groups,
             follow_poi_chance=follow_poi_chance,
             pois=pois,
-            policy_registry=policy_registry,
+            animation_mode=animation_mode,
             validate_pose_func=validate_pose_func,
         )
     except ValueError as err:
