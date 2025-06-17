@@ -471,7 +471,7 @@ def shader_concrete(
         input_kwargs={
             "Height": group.outputs["Displacement"],
             "Midlevel": 0.0000,
-            "Scale": 0.0500,
+            "Scale": -0.00500,
         },
     )
 

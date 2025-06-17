@@ -15,6 +15,7 @@ import numpy as np
 from mathutils.bvhtree import BVHTree
 from numpy import ascontiguousarray as AC
 
+import infinigen
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import (
     fluid as fluid_materials,
@@ -61,7 +62,11 @@ from infinigen.terrain.utils import (
     write_attributes,
 )
 
-assert ocmesher_version == "1.0"
+ocmesher_version_expected = "2.0"
+if ocmesher_version != ocmesher_version_expected:
+    raise ValueError(
+        f"User has installed {ocmesher_version=} which is not for {infinigen.__version__=}, we expected {ocmesher_version_expected=}, you may need to re-run installation / recompile the codebase"
+    )
 
 logger = logging.getLogger(__name__)
 

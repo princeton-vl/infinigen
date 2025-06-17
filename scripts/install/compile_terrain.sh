@@ -122,6 +122,10 @@ echo "compiled lib/cpu/meshing/uniform_mesher.so"
 gx1 -o lib/cpu/meshing/utils.o source/cpu/meshing/utils.cpp
 gx2 -o lib/cpu/meshing/utils.so lib/cpu/meshing/utils.o
 echo "compiled lib/cpu/meshing/utils.so"
+mkdir -p lib/cpu/sdf_from_mesh
+gx1 -o lib/cpu/sdf_from_mesh/sdf_from_mesh.o source/cpu/sdf_from_mesh/sdf_from_mesh.cpp
+gx2 -o lib/cpu/sdf_from_mesh/sdf_from_mesh.so lib/cpu/sdf_from_mesh/sdf_from_mesh.o
+echo "compiled lib/cpu/sdf_from_mesh/sdf_from_mesh.so"
 
 if [ "${OS}" = "Darwin" ]; then
     alias gx1="CPATH=/opt/homebrew/include:${CPATH} ${compiler} -O3 -c -fpic -std=c++17"

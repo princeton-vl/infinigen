@@ -7,9 +7,10 @@ from numpy.random import uniform
 from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
+from infinigen.core.util.random import log_uniform
 
 
-def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
+def shader_sofa_fabric(nw: NodeWrangler, scale=1, strength=0.01, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler
 
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "UVMap"})
@@ -50,7 +51,8 @@ def shader_sofa_fabric(nw: NodeWrangler, scale=1, **kwargs):
     )
 
     displacement = nw.new_node(
-        Nodes.Displacement, input_kwargs={"Height": brick_texture.outputs["Fac"]}
+        Nodes.Displacement,
+        input_kwargs={"Height": brick_texture.outputs["Fac"], "Scale": strength},
     )
 
     material_output = nw.new_node(
@@ -64,6 +66,8 @@ class SofaFabric:
     shader = shader_sofa_fabric
 
     def generate(self):
-        return surface.shaderfunc_to_material(shader_sofa_fabric)
+        strength = log_uniform(0.005, 0.01)
+        # unwrap_faces(obj, selection) # TODO need to integrate UVs
+        return surface.shaderfunc_to_material(shader_sofa_fabric, strength=strength)
 
     __call__ = generate

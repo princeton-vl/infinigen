@@ -199,3 +199,6 @@ v1.13.0
 
 v1.13.1
 - Refactor transpiler, fix transpiling disabled input sockets
+
+v1.14.0
+- Add option to densely subdivide room meshes using OcMesher
