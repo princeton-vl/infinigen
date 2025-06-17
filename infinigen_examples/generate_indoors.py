@@ -38,8 +38,8 @@ from infinigen.core.constraints.example_solver.room import decorate as room_dec
 from infinigen.core.constraints.example_solver.solve import Solver
 from infinigen.core.placement import camera_trajectories as cam_traj
 from infinigen.core.util import blender as butil
+from infinigen.core.util import camera as cam_util
 from infinigen.core.util import ocmesher_utils, pipeline
-from infinigen.core.util.camera import points_inview
 from infinigen.core.util.imu import save_imu_tum_files
 from infinigen.core.util.test_utils import (
     import_item,
@@ -258,7 +258,9 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
         return poses, scene_preprocessed
 
-    poses, scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
+    poses, scene_preprocessed = p.run_stage(
+        "pose_cameras", pose_cameras, use_chance=False
+    )
 
     def animate_cameras():
         cam_traj.animate_trajectories(
@@ -489,7 +491,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
                 cam_dist * np.cos(rot_x),
             )
             bpy.context.view_layer.update()
-            inview = points_inview(bbox, camera)
+            inview = cam_util.points_inview(bbox, camera)
             if inview.all():
                 for area in bpy.context.screen.areas:
                     if area.type == "VIEW_3D":

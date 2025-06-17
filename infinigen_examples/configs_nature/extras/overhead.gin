@@ -1,4 +1,3 @@
-animate_cameras.follow_poi_chance=0.0
 camera.camera_pose_proposal.altitude = ("clip_gaussian", 30, 20, 17, 70)
 camera.camera_pose_proposal.pitch = ("clip_gaussian", 0, 30, 0, 15)
 
