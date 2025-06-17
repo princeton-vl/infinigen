@@ -4,7 +4,6 @@
 # Authors:
 # - Hongyu Wen: primary author
 # - Alexander Raistrick: update window glass
-import random
 
 import bpy
 import numpy as np
@@ -12,10 +11,7 @@ from numpy.random import randint as RI
 from numpy.random import uniform
 from numpy.random import uniform as U
 
-from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import (
-    glass_shader_list,
-)
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -24,6 +20,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, clip_gaussian
+from infinigen.core.util.random import weighted_sample
 
 
 def shader_window_glass(nw: NodeWrangler):
@@ -73,21 +70,63 @@ class WindowFactory(AssetFactory):
         super(WindowFactory, self).__init__(factory_seed, coarse=coarse)
 
         with FixedSeed(factory_seed):
-            # Leave the parameters sampling to the create_asset function
-            # self.params = self.sample_parameters(dimensions, open, curtain, shutter)
-
-            self.params = {}
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
+            self.params = self.sample_parameters()
             self.beveler = BevelSharp()
             self.open = open
             self.curtain = curtain
             self.shutter = shutter
-        self.params.update(self.material_params)
 
     @staticmethod
-    def sample_parameters(dimensions, open, curtain, shutter):
+    def sample_parameters():
+        frame_width = U(0.05, 0.1)
+        sub_frame_width = U(0.01, frame_width)
+        sub_frame_h_amount = RI(1, 2)
+        sub_frame_v_amount = RI(1, 2)
+        glass_thickness = U(0.01, 0.03)
+
+        shutter_panel_radius = U(0.001, 0.003)
+        shutter_width = U(0.03, 0.05)
+        shutter_thickness = U(0.003, 0.007)
+        shutter_rotation = U(0, 1)
+        shutter_inverval = shutter_width + U(0.001, 0.003)
+
+        curtain_frame_depth = U(0.05, 0.1)
+        curtain_depth = U(0.03, curtain_frame_depth)
+        curtain_frame_radius = U(0.01, 0.02)
+
+        shader_frame_material_choice = weighted_sample(material_assignments.woods)()()
+
+        shader_curtain_frame_material_choice = weighted_sample(
+            material_assignments.metals
+        )()()
+        shader_curtain_material_choice = weighted_sample(
+            material_assignments.curtain
+        )()()
+
+        params = {
+            "FrameWidth": frame_width,
+            "SubFrameWidth": sub_frame_width,
+            "SubPanelHAmount": sub_frame_h_amount,
+            "SubPanelVAmount": sub_frame_v_amount,
+            "GlassThickness": glass_thickness,
+            "CurtainFrameDepth": curtain_frame_depth,
+            "CurtainDepth": curtain_depth,
+            "CurtainFrameRadius": curtain_frame_radius,
+            "ShutterPanelRadius": shutter_panel_radius,
+            "ShutterWidth": shutter_width,
+            "ShutterThickness": shutter_thickness,
+            "ShutterRotation": shutter_rotation,
+            "ShutterInterval": shutter_inverval,
+            "FrameMaterial": shader_frame_material_choice,
+            "CurtainFrameMaterial": shader_curtain_frame_material_choice,
+            "CurtainMaterial": shader_curtain_material_choice,
+            "Material": surface.shaderfunc_to_material(shader_window_glass),
+        }
+        return params
+
+    def sample_asset_params(
+        self, dimensions=None, open=None, curtain=None, shutter=None
+    ):
         if dimensions is None:
             width = U(1, 4)
             height = U(1, 4)
@@ -160,6 +199,15 @@ class WindowFactory(AssetFactory):
         curtain_mid_l = -U(0, width / 2)
         curtain_mid_r = U(0, width / 2)
 
+        shader_frame_material_choice = weighted_sample(material_assignments.woods)()()
+
+        shader_curtain_frame_material_choice = weighted_sample(
+            material_assignments.metals
+        )()()
+        shader_curtain_material_choice = weighted_sample(
+            material_assignments.curtain
+        )()()
+
         params = {
             "Width": width,
             "Height": height,
@@ -189,39 +237,15 @@ class WindowFactory(AssetFactory):
             "ShutterThickness": shutter_thickness,
             "ShutterRotation": shutter_rotation,
             "ShutterInterval": shutter_inverval,
+            "FrameMaterial": shader_frame_material_choice,
+            "CurtainFrameMaterial": shader_curtain_frame_material_choice,
+            "CurtainMaterial": shader_curtain_material_choice,
+            "Material": surface.shaderfunc_to_material(shader_window_glass),
         }
         return params
 
-    def get_material_params(self):
-        material_assignments = AssetList["WindowFactory"]()
-        params = {
-            "FrameMaterial": material_assignments["frame"].assign_material(),
-            "CurtainFrameMaterial": material_assignments[
-                "curtain_frame"
-            ].assign_material(),
-            "CurtainMaterial": material_assignments["curtain"].assign_material(),
-            "Material": random.choice(glass_shader_list),
-        }
-
-        wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
-        }
-
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = np.random.uniform() < scratch_prob
-        is_edge_wear = np.random.uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
-
-        return wrapped_params, scratch, edge_wear
-
     def create_asset(self, dimensions=None, open=None, realized=True, **params):
-        obj_params = self.sample_parameters(
+        obj_params = self.sample_asset_params(
             dimensions, open, self.curtain, self.shutter
         )
         self.params.update(obj_params)

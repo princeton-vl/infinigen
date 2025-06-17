@@ -11,6 +11,7 @@ import gin
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.cloud import CloudFactory
 from infinigen.assets.objects.fruits import (
     apple,
@@ -39,6 +40,7 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 from . import tree_flower
 
@@ -141,7 +143,7 @@ class GenericTreeFactory(AssetFactory):
 
         if not self.coarse_mesh_placeholder:
             skin_obj = self._create_coarse_mesh(skeleton_obj)
-            self.trunk_surface.apply(skin_obj)
+            self.trunk_surface.apply(self, skin_obj)
             butil.parent_to(skeleton_obj, skin_obj, no_inverse=True)
         else:
             skin_obj = butil.deep_clone_obj(placeholder)
@@ -246,10 +248,6 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
 
     if leaf_type is None:
         return None, None
-    elif leaf_type == "leaf":
-        return leaf.LeafFactory(seed, leaf_params, **kwargs), surface.registry(
-            "greenery"
-        )
     elif leaf_type == "leaf_pine":
         return leaf_pine.LeafFactoryPine(seed, season, **kwargs), None
     elif leaf_type == "leaf_ginko":
@@ -401,8 +399,8 @@ class TreeFactory(GenericTreeFactory):
         # return
         # return 'leaf_maple'
         leaf_type = np.random.choice(
-            ["leaf", "leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
-            p=[0, 0.0, 0.70, 0.15, 0.15],
+            ["leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
+            p=[0.0, 0.70, 0.15, 0.15],
         )
         flower_type = np.random.choice(["flower", "berry", None], p=[1.0, 0.0, 0.0])
         if season == "spring":
@@ -444,7 +442,7 @@ class TreeFactory(GenericTreeFactory):
             if not isinstance(leaf_type, list):
                 leaf_type = [leaf_type]
 
-            trunk_surface = surface.registry("bark")
+            trunk_surface = weighted_sample(material_assignments.bark)
 
             if uniform() < fruit_chance:
                 fruit_type = self.get_fruit_type()
@@ -512,7 +510,7 @@ class BushFactory(GenericTreeFactory):
     def __init__(self, seed, coarse=False, **kwargs):
         with FixedSeed(seed):
             shrub_shape = np.random.randint(2)
-            trunk_surface = surface.registry("bark")
+            trunk_surface = weighted_sample(material_assignments.bark)
             tree_params, twig_params, leaf_params = treeconfigs.shrub(
                 shrub_shape=shrub_shape
             )
@@ -528,7 +526,7 @@ class BushFactory(GenericTreeFactory):
 
         with FixedSeed(seed):
             leaf_type = np.random.choice(
-                ["leaf", "leaf_v2", "flower", "berry"], p=[0.1, 0.4, 0.5, 0]
+                ["leaf_v2", "flower", "berry"], p=[0.5, 0.5, 0]
             )
 
             colname = f"assets:{self}.twigs"

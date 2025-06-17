@@ -24,23 +24,6 @@ logging.basicConfig(
 # unused imports required for gin to find modules currently, # TODO remove
 # ruff: noqa: F401
 from infinigen.assets import fluid, lighting, weather
-from infinigen.assets.materials import (
-    atmosphere_light_haze,
-    chunkyrock,
-    cobble_stone,
-    cracked_ground,
-    dirt,
-    ice,
-    lava,
-    mountain,
-    mud,
-    sand,
-    sandstone,
-    snow,
-    soil,
-    stone,
-    water,
-)
 from infinigen.assets.objects import (
     cactus,
     cloud,
@@ -84,10 +67,10 @@ from infinigen.core.util import logging as logging_util
 from infinigen.core.util import pipeline
 from infinigen.core.util.imu import save_imu_tum_files
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.organization import Tags, Task
+from infinigen.core.util.organization import Tags
 from infinigen.core.util.pipeline import RandomStageExecutor
-from infinigen.core.util.random import random_general, sample_registry
-from infinigen.terrain import Terrain
+from infinigen.core.util.random import random_general, weighted_sample
+from infinigen.terrain.core import Terrain
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +82,6 @@ def compose_nature(output_folder, scene_seed, **params):
     def add_coarse_terrain():
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task="coarse",
             on_the_fly_asset_folder=output_folder / "assets",
         )
@@ -321,7 +303,7 @@ def compose_nature(output_folder, scene_seed, **params):
     pois = []  # objects / points of interest, for the camera to look at
 
     def add_ground_creatures(target):
-        fac_class = sample_registry(params["ground_creature_registry"])
+        fac_class = weighted_sample(params["ground_creature_registry"])
         fac = fac_class(int_hash((scene_seed, 0)), bvh=scene_bvh, animation_mode="idle")
         n = params.get("max_ground_creatures", randint(1, 4))
         selection = (
@@ -346,7 +328,7 @@ def compose_nature(output_folder, scene_seed, **params):
     )
 
     def flying_creatures():
-        fac_class = sample_registry(params["flying_creature_registry"])
+        fac_class = weighted_sample(params["flying_creature_registry"])
         fac = fac_class(randint(1e7), bvh=scene_bvh, animation_mode="idle")
         n = params.get("max_flying_creatures", randint(2, 7))
         col = placement.scatter_placeholders_mesh(
@@ -359,9 +341,13 @@ def compose_nature(output_folder, scene_seed, **params):
     def animate_cameras():
         cam_util.animate_cameras(camera_rigs, bbox, scene_preprocessed, pois=pois)
 
-        frames_folder = output_folder.parent / "frames"
-        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
-        save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
+        save_imu_tum_data = params.get("save_imu_tum_data")
+        if save_imu_tum_data:
+            frames_folder = output_folder.parent / "frames"
+            animated_cams = [
+                cam for cam in camera_rigs if cam.animation_data is not None
+            ]
+            save_imu_tum_files(frames_folder / "imu_tum", animated_cams)
 
     p.run_stage(
         "animate_cameras",

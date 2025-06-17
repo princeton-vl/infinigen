@@ -6,9 +6,10 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import wood
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import read_normal
 from infinigen.assets.utils.object import join_objects, new_bbox, new_cube
+from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -26,7 +27,7 @@ class PalletFactory(AssetFactory):
         self.tile_width = uniform(0.06, 0.1)
         self.tile_slackness = uniform(1.5, 2)
         self.height = uniform(0.2, 0.25)
-        self.surface = wood
+        self.surface = wood.Wood()()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         bbox = new_bbox(0, self.width, 0, self.depth, 0, self.height)
@@ -135,4 +136,8 @@ class PalletFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        # self.surface.apply(assets)
+        if isinstance(assets, bpy.types.Object):
+            assets = [assets]
+        for element in assets:
+            surface.assign_material(element, self.surface)

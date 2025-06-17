@@ -8,8 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
-from infinigen.assets.materials import fabrics
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.scatters import clothes
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring
 from infinigen.assets.utils.object import new_bbox, new_cube
@@ -19,7 +18,7 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
 
@@ -82,10 +81,12 @@ class MattressFactory(AssetFactory):
             self.dot_size = uniform(0.005, 0.02)
             self.dot_depth = uniform(0.04, 0.08)
             self.wrap_distance = 0.05
-            self.surface = fabrics.fabric_random
+            # self.surface = fabric.fabric_random
             self.type = rg(self.types)
-            materials = AssetList["MattressFactory"]()
-            self.surface = materials["surface"].assign_material()
+
+            surface_gen_class = weighted_sample(material_assignments.fabrics)
+            self.surface_material_gen = surface_gen_class()
+            self.surface = self.surface_material_gen()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -136,4 +137,5 @@ class MattressFactory(AssetFactory):
         )
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets)
+        # self.surface.apply(assets)
+        surface.assign_material(assets, self.surface)

@@ -99,5 +99,3 @@ infinigen.assets.objects.windows.WindowFactory
 
 infinigen.assets.objects.organizer.basket.BasketBaseFactory
 infinigen.assets.objects.organizer.plate_rack.PlateOnRackBaseFactory
-
-

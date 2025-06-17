@@ -14,7 +14,7 @@ from mathutils import Vector
 from numpy.random import uniform
 
 from infinigen.assets import weather
-from infinigen.assets.materials import invisible_to_camera
+from infinigen.assets.materials.dev import invisible_to_camera
 from infinigen.assets.scatters import grass, pebbles
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -24,7 +24,7 @@ from infinigen.core.placement import density, split_in_view
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
-from infinigen.terrain import Terrain, hidden_in_viewport
+from infinigen.terrain.core import Terrain, hidden_in_viewport
 from infinigen.terrain.utils import Mesh
 from infinigen_examples.constraints import util as cu
 

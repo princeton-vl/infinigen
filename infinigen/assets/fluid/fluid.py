@@ -14,12 +14,11 @@ from mathutils import Vector
 from numpy.random import uniform
 
 from infinigen.assets.fluid import duplication_geomod
-from infinigen.assets.materials import (
-    blackbody_shader,
+from infinigen.assets.materials.fluid import (
+    blackbody,
     lava,
-    smoke_material,
+    smoke,
     water,
-    waterfall_material,
 )
 from infinigen.core.init import require_blender_addon
 from infinigen.core.nodes.node_wrangler import (
@@ -132,7 +131,7 @@ def create_liquid_domain(
 
     if fluid_type == "water":
         if waterfall:
-            waterfall_material.apply(obj)
+            waterfall.apply(obj)
             settings.use_spray_particles = True
             settings.use_foam_particles = True
             settings.use_bubble_particles = True
@@ -323,9 +322,9 @@ def set_gas_domain_settings(
         else:
             settings.flame_vorticity = uniform(0.45, 0.55)
         settings.burning_rate = uniform(0.50, 0.80)
-        blackbody_shader.apply(obj)
+        blackbody.apply(obj)
     elif fluid_type == "smoke":
-        smoke_material.apply(obj)
+        smoke.apply(obj)
         settings.alpha = 1.0
     elif fluid_type == "fire":
         if flame_vorticity:
@@ -333,7 +332,7 @@ def set_gas_domain_settings(
         else:
             settings.flame_vorticity = uniform(0.45, 0.55)
         settings.burning_rate = uniform(0.50, 0.80)
-        blackbody_shader.apply(obj)
+        blackbody.apply(obj)
     else:
         raise ValueError
 

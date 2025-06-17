@@ -10,7 +10,7 @@ import shapely
 from numpy.random import uniform
 from shapely import Point, affinity
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import text
 from infinigen.assets.utils.decorate import write_co
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
@@ -20,7 +20,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class CanFactory(AssetFactory):
@@ -32,16 +32,15 @@ class CanFactory(AssetFactory):
             self.shape = np.random.choice(["circle", "rectangle"])
             self.skewness = uniform(1, 2.5) if uniform() < 0.5 else 1
 
-            material_assignments = AssetList["CanFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.wrap_surface = material_assignments["wrap_surface"].assign_material()
+            self.surface = weighted_sample(material_assignments.metals)()()
+            self.wrap_surface = weighted_sample(material_assignments.graphicdesign)()()
             if self.wrap_surface == text.Text:
                 self.wrap_surface = text.Text(self.factory_seed, False)
 
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
             self.texture_shared = uniform() < 0.2
 
@@ -55,7 +54,7 @@ class CanFactory(AssetFactory):
             bpy.ops.mesh.edge_face_add()
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.z_length)
         surface.add_geomod(obj, self.geo_cap, apply=True)
-        self.surface.apply(obj)
+        surface.assign_material(obj, self.surface)
         wrap = self.make_wrap(coords)
         obj = join_objects([obj, wrap])
         return obj

@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
-from infinigen.assets.materials.shelf_shaders import (
+from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_metallic,
     shader_shelves_black_wood,
     shader_shelves_white,
@@ -348,17 +348,25 @@ class SimpleDeskBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        if params['top_material'] == 'white':
-            params['top_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-        elif params['top_material'] == 'black_wood':
-            params['top_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood)
+        if params["top_material"] == "white":
+            params["top_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["top_material"] == "black_wood":
+            params["top_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood
+            )
         else:
             raise NotImplementedError
 
-        if params['leg_material'] == 'white':
-            params['leg_material'] = surface.shaderfunc_to_material(shader_shelves_white_metallic)
-        elif params['leg_material'] == 'black':
-            params['leg_material'] = surface.shaderfunc_to_material(shader_shelves_black_metallic)
+        if params["leg_material"] == "white":
+            params["leg_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white_metallic
+            )
+        elif params["leg_material"] == "black":
+            params["leg_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_metallic
+            )
         else:
             raise NotImplementedError
 

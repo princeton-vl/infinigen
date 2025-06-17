@@ -21,7 +21,7 @@ from infinigen.core.nodes.node_wrangler import ng_inputs
 
 logger = logging.getLogger(__name__)
 
-VERSION = "2.6.5"
+VERSION = "2.7.1"
 indent_string = " " * 4
 LINE_LEN = 100
 
@@ -114,7 +114,6 @@ def prefix(dependencies_used) -> str:
         "from numpy.random import uniform, normal, randint\n"
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
         "from infinigen.core.nodes import node_utils\n"
-        "from infinigen.core.util.color import color_category\n"
         "from infinigen.core import surface\n"
     )
 
@@ -151,6 +150,16 @@ def postfix(funcnames, targets):
     return header + indent(body)
 
 
+def repr_iter_val(v):
+    match v:
+        case list():
+            return represent_list(v)
+        case str():
+            return v  # String are assumed to be code variables to get passed through
+        case _:
+            return represent_default_value(v, simple=True)
+
+
 def represent_default_value(val, simple=True):
     """
     Attempt to create a python expression to represent val, which was the .default_value of some .input node
@@ -161,39 +170,42 @@ def represent_default_value(val, simple=True):
     code = ""
     new_transpiler_targets = {}
 
-    if isinstance(
-        val,
-        (str, int, bool, bpy.types.Object, bpy.types.Collection, set, bpy.types.Image),
-    ):
-        code = repr(val)
-    elif isinstance(val, (float)):
-        code = f"{val:.4f}"
-    elif isinstance(
-        val, (tuple, bpy.types.bpy_prop_array, mathutils.Vector, mathutils.Euler)
-    ):
-        code = represent_tuple(tuple(val))
-    elif isinstance(val, bpy.types.Collection):
-        logger.warning(
-            f"Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing"
-        )
-        code = f"bpy.data.collections[{repr(val.name)}]"
-    elif isinstance(val, bpy.types.Material):
-        if val.use_nodes:
-            funcname = get_func_name(val)
-            new_transpiler_targets[funcname] = val
-            code = f"surface.shaderfunc_to_material({funcname})"
-        else:
-            logger.warning(f"Encountered material {val} but it has use_nodes=False")
+    match val:
+        case str() | int() | bool() | set():
             code = repr(val)
-    elif val is None:
-        logger.warning(
-            "Transpiler introduced a None into result script, this may not have been intended by the user"
-        )
-        code = "None"
-    else:
-        raise ValueError(
-            f"represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer"
-        )
+        case float():
+            code = f"{val:.4f}"
+        case (
+            tuple()
+            | bpy.types.bpy_prop_array()
+            | mathutils.Vector()
+            | mathutils.Euler()
+        ):
+            code = represent_tuple(tuple(val))
+        case bpy.types.Object() | bpy.types.Image():
+            code = repr(val)
+        case bpy.types.Collection():
+            logger.warning(
+                f"Encountered collection {repr(val.name)} as a default_value - please edit the code to remove this dependency on a collection already existing"
+            )
+            code = f"bpy.data.collections[{repr(val.name)}]"
+        case bpy.types.Material():
+            if val.use_nodes:
+                funcname = get_func_name(val)
+                new_transpiler_targets[funcname] = val
+                code = f"surface.shaderfunc_to_material({funcname})"
+            else:
+                logger.warning(f"Encountered material {val} but it has use_nodes=False")
+                code = repr(val)
+        case None:
+            logger.warning(
+                "Transpiler introduced a None into result script, this may not have been intended by the user"
+            )
+            code = "None"
+        case _:
+            raise ValueError(
+                f"represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer"
+            )
 
     assert isinstance(code, str)
 
@@ -297,7 +309,6 @@ def represent_label_value_expression(expression):
     Valid operations:
     - U, uniform
     - N, normal
-    - color, color_category
 
     Valid arguments: str, float, list of float
 
@@ -368,13 +379,6 @@ def represent_label_value_expression(expression):
         }[op]
         args = ", ".join(repr(a) for a in args)
         return f"{funcname}({args})"
-
-    elif op in ["color", "color_category"]:
-        if not len(args) == 1:
-            raise ValueError(
-                f"In {expression=}, expected 1 argument, got {len(args)} instead"
-            )
-        return f"color_category({repr(args[0])})"
     else:
         raise ValueError(
             f"Failed to represent_label_value_expression({expression=}), unrecognized {op=}"
@@ -461,15 +465,83 @@ def create_attrs_dict(node_tree, node):
     }
 
 
-def create_inputs_dict(node_tree, node, memo):
+def process_single_input(node_tree, node, input_socket, input_name, memo):
     """
-    Produce some `code` that instantiates all node INPUTS to `node`,
-    as well as a python dict `inputs_dict` containing all the variable
-    names that should be used to refer to each of the inputs we instantiated
+    Process a single input socket and return either:
+    - None if the input should be skipped
+    - (input_expression, code, new_targets) tuple if the input should be included
     """
+    if not input_socket.enabled:
+        return None
 
+    links = get_connected_link(node_tree, input_socket)
+    if links is None:
+        if not hasattr(input_socket, "default_value"):
+            return None
+        if not has_default_value_changed(node_tree, node, input_socket):
+            return None
+        input_expression, targets = represent_default_value(
+            input_socket.default_value, simple=False
+        )
+        return (input_expression, "", targets)
+
+    # Process all valid links to this input
+    all_expressions = []
+    all_code = []
+    all_targets = {}
+
+    for link in links:
+        if not link.from_socket.enabled or not link.to_socket.enabled:
+            logger.warning(
+                f"Transpiler encountered {'from' if not link.from_socket.enabled else 'to'} disabled socket "
+                f"{link.from_socket if not link.from_socket.enabled else link.to_socket}, ignoring it"
+            )
+            continue
+
+        input_varname, input_code, targets = create_node(
+            node_tree, link.from_node, memo
+        )
+        all_code.append(input_code)
+        all_targets.update(targets)
+
+        if len(link.from_node.outputs) == 1:
+            input_expression = input_varname
+        else:
+            socket_name = link.from_socket.name
+            input_expression = f'{input_varname}.outputs["{socket_name}"]'
+
+            # Catch shared socket output names
+            if (
+                link.from_node.outputs[socket_name].identifier
+                != link.from_socket.identifier
+            ):
+                from_idx = [
+                    i
+                    for i, o in enumerate(link.from_node.outputs)
+                    if o.identifier == link.from_socket.identifier
+                ][0]
+                input_expression = f"{input_varname}.outputs[{from_idx}]"
+
+        all_expressions.append(input_expression)
+
+    if not all_expressions:
+        return None
+
+    return (
+        all_expressions[0] if len(all_expressions) == 1 else all_expressions,
+        "".join(all_code),
+        all_targets,
+    )
+
+
+def combine_input_results(node, processed_inputs):
+    """
+    Combine the results of processing multiple inputs into the final inputs_dict and code.
+    processed_inputs is a list of (idx, name, result) tuples where result is either None or (expr, code, targets)
+    """
     inputs_dict = {}
-    code = ""
+    all_code = []
+    all_targets = {}
 
     def update_inputs(i, k, v):
         is_input_name_unique = [socket.name for socket in node.inputs].count(k) == 1
@@ -481,69 +553,29 @@ def create_inputs_dict(node_tree, node, memo):
                 inputs_dict[k] = [inputs_dict[k]]
             inputs_dict[k].append(v)
 
-    new_transpile_targets = {}
-    for i, (input_name, input_socket) in enumerate(node.inputs.items()):
-        links = get_connected_link(node_tree, input_socket)
-
-        if links is None:
-            if hasattr(input_socket, "default_value"):
-                if not has_default_value_changed(node_tree, node, input_socket):
-                    continue
-                input_expression, targets = represent_default_value(
-                    input_socket.default_value, simple=False
-                )
-                new_transpile_targets.update(targets)
-                update_inputs(i, input_name, input_expression)
+    for i, input_name, result in processed_inputs:
+        if result is None:
             continue
+        input_expression, code, targets = result
+        update_inputs(i, input_name, input_expression)
+        if code:
+            all_code.append(code)
+        all_targets.update(targets)
 
-        for link in links:
-            if not link.from_socket.enabled:
-                logger.warning(
-                    f"Transpiler encountered link from disabled socket {link.from_socket}, ignoring it"
-                )
-                continue
-            if not link.to_socket.enabled:
-                logger.warning(
-                    f"Transpiler encountered link to disabled socket {link.to_socket}, ignoring it"
-                )
-                continue
-
-            input_varname, input_code, targets = create_node(
-                node_tree, link.from_node, memo
-            )
-            code += input_code
-            new_transpile_targets.update(targets)
-
-            if len(link.from_node.outputs) == 1:
-                input_expression = input_varname
-            else:
-                socket_name = link.from_socket.name
-                input_expression = f'{input_varname}.outputs["{socket_name}"]'
-
-                # Catch shared socket output names
-                if (
-                    link.from_node.outputs[socket_name].identifier
-                    != link.from_socket.identifier
-                ):
-                    from_idx = [
-                        i
-                        for i, o in enumerate(link.from_node.outputs)
-                        if o.identifier == link.from_socket.identifier
-                    ][0]
-                    input_expression = f"{input_varname}.outputs[{from_idx}]"
-
-            update_inputs(i, input_name, input_expression)
-
-    return inputs_dict, code, new_transpile_targets
+    return inputs_dict, "".join(all_code), all_targets
 
 
-def repr_iter_val(v):
-    if isinstance(v, list):
-        return represent_list(v)
-    elif isinstance(v, str):
-        return v  # String are assumed to be code variables to get passed through
-    else:
-        return represent_default_value(v, simple=True)
+def create_inputs_dict(node_tree, node, memo):
+    """
+    Process all inputs of a node and return a dict mapping input names to their values,
+    along with any generated code and new transpile targets.
+    """
+    processed = []
+    for i, (input_name, input_socket) in enumerate(node.inputs.items()):
+        result = process_single_input(node_tree, node, input_socket, input_name, memo)
+        processed.append((i, input_name, result))
+
+    return combine_input_results(node, processed)
 
 
 def represent_list(inputs, spacing=" "):

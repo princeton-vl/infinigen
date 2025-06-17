@@ -10,7 +10,7 @@ import bpy
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from infinigen.assets.materials import common
+from infinigen.assets.materials.utils import common
 from infinigen.assets.utils.decorate import (
     read_co,
     read_edges,
@@ -23,6 +23,7 @@ from infinigen.assets.utils.decorate import (
     select_faces,
     write_uv,
 )
+from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
 logger = logging.getLogger(__name__)
@@ -147,7 +148,7 @@ def max_bbox(bboxes):
     )
 
 
-def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwargs):
+def wrap_sides(obj, material, axes, xs, ys, groupings=None, selection=None, **kwargs):
     fc2f = face_corner2faces(obj)
     axes = np.array([str2vec(axis) for axis in axes])
     faces = np.argmax(read_normal(obj) @ axes.T, -1)
@@ -166,14 +167,12 @@ def wrap_sides(obj, surface, axes, xs, ys, groupings=None, selection=None, **kwa
     for indices in groupings:
         selected = sum(selections[i] for i in indices)
         try:
-            surface.apply(
-                obj, selected, bbox=max_bbox([bboxes[i] for i in indices]), **kwargs
-            )
+            surface.assign_material(obj, material=material)
         except TypeError:
             logger.debug(
                 f"apply() for {surface=} with kwarg bbox failed, trying again without"
             )
-            surface.apply(obj, selected, **kwargs)
+            surface.assign_material(obj, material=material)
 
 
 def wrap_front_back(obj, surface, shared=True, **kwargs):

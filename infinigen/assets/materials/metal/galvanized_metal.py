@@ -6,7 +6,9 @@
 
 from numpy.random import uniform
 
-from infinigen.assets.materials import common
+from infinigen.assets import colors
+from infinigen.assets.materials.utils import common
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -96,19 +98,21 @@ def nodegroup_galvanized_metal(nw: NodeWrangler):
 
 
 def shader_galvanized_metal(
-    nw: NodeWrangler, scale=1.0, base_color=None, seed=None, **kwargs
+    nw: NodeWrangler, scale=1.0, base_color_hsv=None, seed=None, **kwargs
 ):
     # Code generated using version 2.6.4 of the node_transpiler
     if seed is None:
         seed = uniform(-1000.0, 1000.0)
-    if base_color is None:
-        from infinigen.assets.materials.metal import sample_metal_color
-
-        base_color = sample_metal_color(**kwargs)
+    if base_color_hsv is None:
+        base_color_hsv = colors.metal_hsv()
 
     group = nw.new_node(
         nodegroup_galvanized_metal().name,
-        input_kwargs={"Base Color": base_color, "Scale": scale, "Seed": seed},
+        input_kwargs={
+            "Base Color": colors.hsv2rgba(base_color_hsv),
+            "Scale": scale,
+            "Seed": seed,
+        },
     )
 
     material_output = nw.new_node(
@@ -118,5 +122,13 @@ def shader_galvanized_metal(
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    common.apply(obj, shader_galvanized_metal, selection=selection, **kwargs)
+class GalvanizedMetal:
+    shader = shader_galvanized_metal
+
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_galvanized_metal, **kwargs)
+
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_galvanized_metal, selection, **kwargs)
+
+    __call__ = generate

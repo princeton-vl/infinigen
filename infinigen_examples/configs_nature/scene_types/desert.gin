@@ -16,8 +16,8 @@ compose_nature.snow_particles_chance = 0
 compose_nature.leaf_particles_chance = 0.05
 compose_nature.dust_particles_chance = 0.0
 
-assets.materials.atmosphere_light_haze.shader_atmosphere.density = ("uniform", 0, 0.0015)
-assets.materials.atmosphere_light_haze.shader_atmosphere.anisotropy = 0
+atmosphere_light_haze.shader_atmosphere.density = ("uniform", 0, 0.0015)
+atmosphere_light_haze.shader_atmosphere.anisotropy = 0
 
 animate_cameras.follow_poi_chance=0.5
 
@@ -26,12 +26,11 @@ compose_nature.ground_creature_registry = [
     (@SnakeFactory, 1)
 ]
 
-surface.registry.ground_collection = [
-    ('sand', 1),
+Terrain.ground_collection = [
+    ("infinigen.assets.materials.terrain.sand.Sand", 1)
 ]
-
-surface.registry.mountain_collection = [
-    ("sandstone", 1),
+Terrain.mountain_collection = [
+    ("infinigen.assets.materials.terrain.sandstone.Sandstone", 1)
 ]
 
 # scene composition config

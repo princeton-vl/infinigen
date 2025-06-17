@@ -20,11 +20,11 @@ import numpy as np
 
 from infinigen import repo_root
 from infinigen.assets import lighting
-from infinigen.assets.materials import invisible_to_camera
+from infinigen.assets.materials.dev import InvisibleToCamera
 from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
 from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
-from infinigen.core import execute_tasks, init, placement, surface, tagging
+from infinigen.core import execute_tasks, init, placement, tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import checks
 from infinigen.core.constraints import constraint_language as cl
@@ -45,19 +45,19 @@ from infinigen.core.util.test_utils import (
     import_item,
     load_txt_list,
 )
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 from infinigen_examples.constraints import home as home_constraints
-
-from . import (
-    generate_nature,  # noqa F401 # needed for nature gin configs to load  # noqa F401 # needed for nature gin configs to load
-)
-from .constraints import util as cu
-from .util.generate_indoors_util import (
+from infinigen_examples.constraints import util as cu
+from infinigen_examples.util.generate_indoors_util import (
     apply_greedy_restriction,
     create_outdoor_backdrop,
     hide_other_rooms,
     place_cam_overhead,
     restrict_solving,
+)
+
+from . import (
+    generate_nature,  # noqa: F401 # needed for nature gin configs to be loaded
 )
 
 logger = logging.getLogger(__name__)
@@ -140,7 +140,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     def add_coarse_terrain():
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task="coarse",
             on_the_fly_asset_folder=output_folder / "assets",
         )
@@ -405,6 +404,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     p.run_stage("lights_off", turn_off_lights)
 
     def invisible_room_ceilings():
+        invisible_to_camera = InvisibleToCamera()
         rooms_split["exterior"].hide_viewport = True
         rooms_split["exterior"].hide_render = True
         invisible_to_camera.apply(list(rooms_split["ceiling"].objects))

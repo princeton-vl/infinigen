@@ -7,13 +7,10 @@
 # - Lahav Lipson: Surface mixing
 # - Lingjie Mei: attributes and geo nodes
 
-import importlib
 import string
-from collections import defaultdict
 from inspect import signature
 
 import bpy
-import gin
 import numpy as np
 from mathutils import Vector
 from tqdm import trange
@@ -330,6 +327,72 @@ def add_material(
     return material
 
 
+def assign_material(
+    objs: bpy.types.Object | list[bpy.types.Object],
+    material: bpy.types.Material,
+    selection: str | np.ndarray | None = None,
+):
+    if not isinstance(objs, list):
+        objs = [objs]
+
+    for obj in objs:
+        if selection is None:
+            obj.active_material = material
+            return
+
+        if len(obj.material_slots) == 0:
+            raise ValueError(
+                f"{assign_material.__name__} recieved {selection=} but existing materials to combine with"
+            )
+
+        if isinstance(selection, str):
+            if selection.startswith("!"):
+                selection_arr = ~read_attr_data(
+                    obj, selection[1:], domain="FACE", result_dtype=bool
+                )
+            else:
+                selection_arr = read_attr_data(
+                    obj, selection, domain="FACE", result_dtype=bool
+                )
+        elif isinstance(selection, np.ndarray):
+            selection_arr = selection
+        else:
+            raise ValueError(
+                f"Expected str or np.ndarray for selection, got {selection=}"
+            )
+
+        if selection_arr.dtype != bool:
+            raise ValueError(
+                f"Got unexpected {selection_arr.dtype=} for {selection=}, expected `bool`"
+            )
+
+        if "face_mask" not in obj.data.attributes:
+            active_mat = obj.active_material
+            active_mat_idx = next(
+                (s.slot_index for s in obj.material_slots if s.material == active_mat),
+                None,
+            )
+            if active_mat is None:
+                raise ValueError(
+                    f"Could not find active material {active_mat=}. Should be impossible since {len(obj.material_slots)=} is non empty"
+                )
+
+            material_index = np.full(len(obj.data.polygons), active_mat_idx, dtype=int)
+        else:
+            material_index = read_attr_data(obj, "material_index", domain="FACE")
+
+        with butil.SelectObjects(obj):
+            bpy.ops.object.material_slot_add()
+        slot = obj.material_slots[-1]
+        assert slot.material is None
+
+        slot.material = material
+        material_index[selection_arr] = slot.slot_index
+        write_attr_data(
+            obj, "material_index", material_index, type="INT", domain="FACE"
+        )
+
+
 def add_geomod(
     objs,
     geo_func,
@@ -430,61 +493,3 @@ class NoApply:
     @staticmethod
     def apply(objs, *args, **kwargs):
         return objs, []
-
-
-class Registry:
-    def __init__(self):
-        self._registry = None
-
-    @staticmethod
-    def get_surface(name):
-        if name == "":
-            return NoApply
-
-        prefixes = [
-            "infinigen.infinigen_gpl.surfaces",
-            "infinigen.assets.materials",
-            "infinigen.assets.scatters",
-        ]
-        for prefix in prefixes:
-            try:
-                return importlib.import_module("." + name, prefix)
-            except ModuleNotFoundError:
-                continue
-
-        raise ValueError(f"Could not find {name=} in any of {prefixes}")
-
-    @staticmethod
-    def sample_registry(registry):
-        mods, probs = zip(*registry)
-        return np.random.choice(mods, p=np.array(probs) / sum(probs))
-
-    @gin.configurable("registry")
-    def initialize_from_gin(self, smooth_categories=0, **gin_category_info):
-        if smooth_categories != 0:
-            raise NotImplementedError
-
-        with gin.unlock_config():
-            self._registry = defaultdict(list)
-            for k, v in gin_category_info.items():
-                self._registry[k] = [
-                    (self.get_surface(name), weight) for name, weight in v
-                ]
-
-    def __call__(self, category_key):
-        if self._registry is None:
-            raise ValueError(
-                "Surface registry has not been initialized! Have you loaded gin and called .initialize()?"
-                "Note, this step cannot happen at module initialization time, as gin is not yet loaded"
-            )
-
-        if category_key not in self._registry:
-            raise KeyError(
-                f"registry recieved request with {category_key=}, but no gin_config for this key was "
-                f"provided. {self._registry.keys()=}"
-            )
-
-        return self.sample_registry(self._registry[category_key])
-
-
-registry = Registry()

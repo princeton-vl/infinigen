@@ -24,7 +24,9 @@ from shapely.ops import nearest_points
 from tqdm import tqdm, trange
 from trimesh.transformations import translation_matrix
 
-from infinigen.assets.materials import plaster
+import infinigen.core.surface as surface
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.ceramic import plaster
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
 from infinigen.assets.objects.elements.doors import random_door_factory
 from infinigen.assets.objects.windows import WindowFactory
@@ -36,6 +38,7 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.assets.utils.object import obj2trimesh
 from infinigen.assets.utils.shapes import dissolve_limited
+from infinigen.assets.utils.uv import unwrap_normal
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints import constraint_language as cl
@@ -46,7 +49,7 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, int_hash
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
 logger = logging.getLogger(__name__)
@@ -110,61 +113,38 @@ def import_material(factory_name):
 
 
 room_ceiling_fns = defaultdict(
-    lambda: "plaster",
-    {t.Semantics.Warehouse: "concrete", t.Semantics.Garage: "concrete"},
+    lambda: material_assignments.ceiling,
+    {
+        t.Semantics.Warehouse: material_assignments.warehouse_ceiling,
+        t.Semantics.Garage: material_assignments.garage_ceiling,
+    },
 )
 
 room_floor_fns = defaultdict(
-    lambda: ("weighted_choice", (3, "wood_tile"), (2, "non_wood_tile"), (1, "rug")),
+    lambda: material_assignments.floor,
     {
-        t.Semantics.Garage: "concrete",
-        t.Semantics.Utility: (
-            "weighted_choice",
-            (1, "concrete"),
-            (1, "concrete"),
-            (1, "tile"),
-        ),
-        t.Semantics.Bathroom: "non_wood_tile",
-        t.Semantics.Restroom: "non_wood_tile",
-        t.Semantics.Balcony: "non_wood_tile",
-        t.Semantics.Office: ("weighted_choice", (1, "wood_tile"), (1, "rug")),
-        t.Semantics.FactoryOffice: ("weighted_choice", (1, "wood_tile"), (1, "rug")),
-        t.Semantics.OpenOffice: ("weighted_choice", (1, "wood_tile"), (1, "rug")),
-        t.Semantics.Warehouse: "concrete",
+        t.Semantics.Garage: material_assignments.garage_floor,
+        t.Semantics.Utility: material_assignments.utility_floor,
+        t.Semantics.Bathroom: material_assignments.bathroom_floor,
+        t.Semantics.Restroom: material_assignments.bathroom_floor,
+        t.Semantics.Balcony: material_assignments.balcony_floor,
+        t.Semantics.Office: material_assignments.office_floor,
+        t.Semantics.FactoryOffice: material_assignments.office_floor,
+        t.Semantics.OpenOffice: material_assignments.office_floor,
+        t.Semantics.Warehouse: material_assignments.warehouse_floor,
     },
 )
 
 room_wall_fns = defaultdict(
-    lambda: (
-        "weighted_choice",
-        (15, "plaster"),
-        (1, "wood_tile"),
-        (3, "non_wood_tile"),
-    ),
+    lambda: material_assignments.wall,
     {
-        t.Semantics.Kitchen: ("weighted_choice", (2, "non_wood_tile"), (5, "plaster")),
-        t.Semantics.Garage: (
-            "weighted_choice",
-            (5, "concrete"),
-            (1, "brick"),
-            (3, "plaster"),
-        ),
-        t.Semantics.Utility: (
-            "weighted_choice",
-            (1, "concrete"),
-            (1, "brick"),
-            (1, "brick"),
-            (5, "plaster"),
-        ),
-        t.Semantics.Balcony: ("weighted_choice", (1, "brick"), (5, "plaster")),
-        t.Semantics.Bathroom: "non_wood_tile",
-        t.Semantics.Restroom: "non_wood_tile",
-        t.Semantics.Warehouse: (
-            "weighted_choice",
-            (5, "concrete"),
-            (1, "brick"),
-            (3, "plaster"),
-        ),
+        t.Semantics.Kitchen: material_assignments.kitchen_wall,
+        t.Semantics.Garage: material_assignments.garage_wall,
+        t.Semantics.Utility: material_assignments.utility_wall,
+        t.Semantics.Balcony: material_assignments.balcony_wall,
+        t.Semantics.Bathroom: material_assignments.bathroom_wall,
+        t.Semantics.Restroom: material_assignments.bathroom_wall,
+        t.Semantics.Warehouse: material_assignments.warehouse_wall,
     },
 )
 
@@ -173,16 +153,44 @@ room_wall_alternative_fns = {
     t.Semantics.LivingRoom: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
     t.Semantics.Bedroom: (
         "weighted_choice",
         (2, "none"),
-        (2, "art"),
-        (2, "plaster"),
         (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
+    ),
+    t.Semantics.Office: (
+        "weighted_choice",
+        (2, "none"),
+        (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
+    ),
+    t.Semantics.OpenOffice: (
+        "weighted_choice",
+        (2, "none"),
+        (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
+    ),
+    t.Semantics.FactoryOffice: (
+        "weighted_choice",
+        (2, "none"),
+        (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
+    ),
+    t.Semantics.BreakRoom: (
+        "weighted_choice",
+        (2, "none"),
+        (1, "half"),
+        *([(v, k) for k, v in material_assignments.wall_plaster]),
+        *([(v, k) for k, v in material_assignments.abstract_art]),
     ),
 }
 room_wall_alternative_fns = defaultdict(
@@ -200,9 +208,7 @@ pillar_rooms = {
 
 
 def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=3):
-    wall_fns = list(
-        import_material(rg(room_wall_fns[room_type(r.name)])) for r in walls
-    )
+    wall_fns = list(weighted_sample(room_wall_fns[room_type(r.name)])() for r in walls)
     logger.debug(
         f"{room_walls.__name__} adding materials to {len(walls)=}, using {len(wall_fns)=}"
     )
@@ -215,7 +221,10 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
         indices = np.random.randint(0, n_walls, len(rooms_))
         for i in range(n_walls):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-            wall_fn.apply(rooms__, **kwargs)
+            if wall_fn.__class__.__name__ == "Plaster":
+                for r in rooms__:
+                    unwrap_normal(r, selection=None)
+            surface.assign_material(rooms__, wall_fn(**kwargs))
 
     for w in walls:
         logger.debug(
@@ -241,7 +250,11 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                     type="INT",
                     domain="FACE",
                 )
-                plaster.apply(w, **kwargs, selection="alternative")
+                plaster_mat_gen = plaster.Plaster()
+                unwrap_normal(w, selection="alternative")
+                surface.assign_material(
+                    w, plaster_mat_gen(**kwargs), selection="alternative"
+                )
             case _:
                 co = read_co(w)
                 u, v = read_edges(w).T
@@ -275,8 +288,15 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
                 write_attr_data(
                     w, "alternative", alternative, type="INT", domain="FACE"
                 )
-                import_material(fn).apply(
-                    w, **kwargs, selection="alternative", scale=log_uniform(0.5, 2.0)
+                mat_gen = fn()
+
+                if mat_gen.__class__.__name__ == "Plaster":
+                    unwrap_normal(w, selection="alternative")
+
+                surface.assign_material(
+                    w,
+                    mat_gen(scale=log_uniform(0.5, 2.0), **kwargs),
+                    selection="alternative",
                 )
 
 
@@ -284,16 +304,21 @@ def room_ceilings(ceilings):
     logger.debug(f"{room_ceilings.__name__} adding materials to {len(ceilings)=}")
 
     ceiling_fns = list(
-        import_material(rg(room_ceiling_fns[room_type(r.name)])) for r in ceilings
+        weighted_sample(room_ceiling_fns[room_type(r.name)])() for r in ceilings
     )
     for ceiling_fn in set(ceiling_fns):
         rooms_ = [o for o, f in zip(ceilings, ceiling_fns) if f == ceiling_fn]
-        ceiling_fn.apply(rooms_)
+        if ceiling_fn.__class__.__name__ == "Plaster":
+            for r in rooms_:
+                unwrap_normal(r, selection=None)
+
+        surface.assign_material(rooms_, ceiling_fn())
+        # ceiling_fn.apply(rooms_)
 
 
 def room_floors(floors, n_floors=3):
     floor_fns = list(
-        import_material(rg(room_floor_fns[room_type(r.name)])) for r in floors
+        weighted_sample(room_floor_fns[room_type(r.name)])() for r in floors
     )
     logger.debug(
         f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
@@ -304,7 +329,11 @@ def room_floors(floors, n_floors=3):
         indices = np.random.randint(0, n_floors, len(rooms_))
         for i in range(n_floors):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
-            floor_fn.apply(rooms__)
+            if floor_fn.__class__.__name__ == "Plaster":
+                for r in rooms__:
+                    unwrap_normal(r, selection=None)
+            surface.assign_material(rooms__, floor_fn())
+            # floor_fn.apply(rooms__)
 
 
 @gin.configurable

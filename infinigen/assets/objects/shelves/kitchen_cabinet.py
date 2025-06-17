@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.shelf_shaders import (
+from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
     shader_shelves_black_wood_z,
     shader_shelves_white,
@@ -91,9 +91,14 @@ def geometry_nodes(nw: NodeWrangler, **kwargs):
         )
         cabinets.append(transform)
 
-    join_geometry_1 = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': cabinets})
-    group_output = nw.new_node(Nodes.GroupOutput,
-                               input_kwargs={'Geometry': join_geometry_1}, attrs={'is_active_output': True})
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": cabinets}
+    )
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": join_geometry_1},
+        attrs={"is_active_output": True},
+    )
 
 
 class KitchenCabinetBaseFactory(AssetFactory):
@@ -115,29 +120,43 @@ class KitchenCabinetBaseFactory(AssetFactory):
     def get_material_params(self):
         with FixedSeed(self.factory_seed):
             params = {}
-            params['frame_material'] = np.random.choice(['white', 'black_wood', 'wood'], p=[0.4, 0.3, 0.3])
-            params['board_material'] = params['frame_material']
+            params["frame_material"] = np.random.choice(
+                ["white", "black_wood", "wood"], p=[0.4, 0.3, 0.3]
+            )
+            params["board_material"] = params["frame_material"]
             return self.get_material_func(params, randomness=True)
 
     def get_material_func(self, params, randomness=True):
         with FixedSeed(self.factory_seed):
-            if params['frame_material'] == 'white':
-                params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-            elif params['frame_material'] == 'black_wood':
-                params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
-            elif params['frame_material'] == 'wood':
-                params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_wood_z)
+            if params["frame_material"] == "white":
+                params["frame_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_white
+                )
+            elif params["frame_material"] == "black_wood":
+                params["frame_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_black_wood_z
+                )
+            elif params["frame_material"] == "wood":
+                params["frame_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_wood_z
+                )
 
-            if params['board_material'] == 'white':
-                params['board_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-            elif params['board_material'] == 'black_wood':
-                params['board_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood)
-            elif params['board_material'] == 'wood':
-                params['board_material'] = surface.shaderfunc_to_material(shader_shelves_wood)
+            if params["board_material"] == "white":
+                params["board_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_white
+                )
+            elif params["board_material"] == "black_wood":
+                params["board_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_black_wood
+                )
+            elif params["board_material"] == "wood":
+                params["board_material"] = surface.shaderfunc_to_material(
+                    shader_shelves_wood
+                )
 
-            params['panel_material'] = params['frame_material']
-            params['knob_material'] = params['board_material']
-            params['drawer_material'] = params['board_material']
+            params["panel_material"] = params["frame_material"]
+            params["knob_material"] = params["board_material"]
+            params["drawer_material"] = params["board_material"]
             return params
 
     def get_frame_params(self, width, i=0):
@@ -353,12 +372,14 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
             dimensions = self.dimensions
         params["Dimensions"] = dimensions
 
-        params['shelf_depth'] = params['Dimensions'][0] - 0.01
-        num_h = int((params['Dimensions'][2] - 0.06) / 0.3)
-        params['shelf_cell_height'] = [(params['Dimensions'][2] - 0.06) / num_h for _ in range(num_h)]
-        params['side_board_thickness'] = 0.02
-        params['division_board_thickness'] = 0.02
-        params['bottom_board_height'] = 0.06
+        params["shelf_depth"] = params["Dimensions"][0] - 0.01
+        num_h = int((params["Dimensions"][2] - 0.06) / 0.3)
+        params["shelf_cell_height"] = [
+            (params["Dimensions"][2] - 0.06) / num_h for _ in range(num_h)
+        ]
+        params["side_board_thickness"] = 0.02
+        params["division_board_thickness"] = 0.02
+        params["bottom_board_height"] = 0.06
 
         self.frame_params = params
 
@@ -368,11 +389,11 @@ class KitchenCabinetFactory(KitchenCabinetBaseFactory):
         self.cabinet_widths = intervals.tolist()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
-        x,y,z = self.dimensions
+        x, y, z = self.dimensions
 
-        num_w_cells = max((y / 0.45),1)
+        num_w_cells = max((y / 0.45), 1)
         width = (num_w_cells - 1) * 0.02 * 2 + (num_w_cells - 1) * 0.001 + y
         height = (int((z - 0.06) / 0.3) + 1) * 0.02 + 0.06 + z
         x += 0.01
 
-        return new_bbox(-x / 2., x / 2., -width / 2., width / 2., 0, height)
+        return new_bbox(-x / 2.0, x / 2.0, -width / 2.0, width / 2.0, 0, height)

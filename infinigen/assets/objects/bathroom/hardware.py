@@ -6,13 +6,13 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import join_objects, new_base_cylinder, new_cube
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class HardwareFactory(AssetFactory):
@@ -31,14 +31,13 @@ class HardwareFactory(AssetFactory):
             self.extension_length = self.attachment_radius * uniform(2, 3)
             self.ring_radius = log_uniform(2, 6) * self.attachment_radius
 
-            material_assignments = AssetList["HardwareFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            is_scratch = uniform() < material_assignments["wear_tear_prob"][0]
-            is_edge_wear = uniform() < material_assignments["wear_tear_prob"][1]
-            self.scratch = material_assignments["wear_tear"][0] if is_scratch else None
-            self.edge_wear = (
-                material_assignments["wear_tear"][1] if is_edge_wear else None
-            )
+            surface_gen_class = weighted_sample(material_assignments.metal_neutral)
+            self.surface_material_gen = surface_gen_class
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
     def make_attachment(self):
         base = new_base_cylinder() if self.is_circular else new_cube()
@@ -103,6 +102,8 @@ class HardwareFactory(AssetFactory):
         return obj
 
     def create_asset(self, **params) -> bpy.types.Object:
+        self.surface = self.surface_material_gen()
+
         match self.hardware_type:
             case "hook":
                 extra = self.make_hook()

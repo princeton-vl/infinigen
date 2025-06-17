@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials.shelf_shaders import (
+from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
     shader_shelves_black_wood_z,
     shader_shelves_white,
@@ -814,19 +814,31 @@ class LargeShelfBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        if params['frame_material'] == 'white':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-        elif params['frame_material'] == 'black_wood':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood_z)
-        elif params['frame_material'] == 'wood':
-            params['frame_material'] = surface.shaderfunc_to_material(shader_shelves_wood_z)
+        if params["frame_material"] == "white":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["frame_material"] == "black_wood":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood_z
+            )
+        elif params["frame_material"] == "wood":
+            params["frame_material"] = surface.shaderfunc_to_material(
+                shader_shelves_wood_z
+            )
 
-        if params['board_material'] == 'white':
-            params['board_material'] = surface.shaderfunc_to_material(shader_shelves_white)
-        elif params['board_material'] == 'black_wood':
-            params['board_material'] = surface.shaderfunc_to_material(shader_shelves_black_wood)
-        elif params['board_material'] == 'wood':
-            params['board_material'] = surface.shaderfunc_to_material(shader_shelves_wood)
+        if params["board_material"] == "white":
+            params["board_material"] = surface.shaderfunc_to_material(
+                shader_shelves_white
+            )
+        elif params["board_material"] == "black_wood":
+            params["board_material"] = surface.shaderfunc_to_material(
+                shader_shelves_black_wood
+            )
+        elif params["board_material"] == "wood":
+            params["board_material"] = surface.shaderfunc_to_material(
+                shader_shelves_wood
+            )
 
         return params
 

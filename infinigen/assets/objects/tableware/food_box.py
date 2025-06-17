@@ -21,7 +21,7 @@ class FoodBoxFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             dimensions = np.sort(log_uniform(0.05, 0.3, 3)).tolist()
             self.dimensions = np.array([dimensions[1], dimensions[0], dimensions[2]])
-            self.surface = text.Text(self.factory_seed)
+            self.surface = text.Text(self.factory_seed)()
             self.texture_shared = uniform() < 0.4
 
     def create_placeholder(self, **params):

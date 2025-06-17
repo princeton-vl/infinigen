@@ -13,10 +13,7 @@ compose_nature.snow_particles_chance=0.0
 compose_nature.leaves_chance=0.0
 compose_nature.rain_particles_chance=0.0
 
-surface.registry.liquid_collection = [
-    ('water', 0.7),
-    ('lava', 0.3)
-]
+Terrain.liquid_collection = "liquid"
 
 compose_nature.bug_swarm_chance=0.0
 

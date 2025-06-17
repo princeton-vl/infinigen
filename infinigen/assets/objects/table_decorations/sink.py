@@ -12,15 +12,16 @@ import bpy
 import numpy as np
 from numpy.random import uniform as U
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils import bbox_from_mesh
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
-from infinigen.core import surface, tagging
+from infinigen.core import tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class SinkFactory(AssetFactory):
@@ -36,30 +37,22 @@ class SinkFactory(AssetFactory):
             self.material_params, self.scratch, self.edge_wear = (
                 self.get_material_params()
             )
+            # TODO sink_color = colors.metal_natural_hsv()
         self.params.update(self.material_params)
 
         self.tap_factory = TapFactory(factory_seed)
 
     def get_material_params(self):
-        material_assignments = AssetList["SinkFactory"]()
         params = {
-            "Sink": material_assignments["sink"].assign_material(),
-            "Tap": material_assignments["tap"].assign_material(),
+            "Sink": weighted_sample(material_assignments.metals)(),
+            "Tap": weighted_sample(material_assignments.metals)(),
         }
-        wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = U() < scratch_prob
-        is_edge_wear = U() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch()
+        edge_wear = None if U() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 
@@ -129,10 +122,11 @@ class SinkFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
 
 class TapFactory(AssetFactory):
@@ -160,21 +154,16 @@ class TapFactory(AssetFactory):
         return params
 
     def get_material_params(self):
-        material_assignments = AssetList["TapFactory"]()
-        tap_material = material_assignments["tap"].assign_material()
+        tap_gen_class = weighted_sample(material_assignments.metals)
 
-        wrapped_params = {"Tap": surface.shaderfunc_to_material(tap_material)}
+        tap_material_gen = tap_gen_class()
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
+        wrapped_params = {"Tap": tap_material_gen()}
 
-        is_scratch = U() < scratch_prob
-        is_edge_wear = U() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch()
+        edge_wear = None if U() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 
@@ -193,10 +182,11 @@ class TapFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        pass
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)
 
 
 @node_utils.to_nodegroup("nodegroup_handle", singleton=False, type="GeometryNodeTree")

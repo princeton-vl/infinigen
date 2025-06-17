@@ -18,7 +18,7 @@ import bpy
 import gin
 
 import infinigen.assets.scatters
-from infinigen.core import init, surface
+from infinigen.core import init
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.render import render_image
 from infinigen.core.rendering.resample import resample_scene
@@ -28,7 +28,7 @@ from infinigen.core.util import exporting
 from infinigen.core.util.logging import Timer, create_text_file, save_polycounts
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
-from infinigen.terrain import Terrain
+from infinigen.terrain.core import Terrain
 from infinigen.tools.export import export_scene, triangulate_meshes
 
 logger = logging.getLogger(__name__)
@@ -236,7 +236,6 @@ def execute_tasks(
     bpy.context.scene.render.resolution_y = generate_resolution[1]
     bpy.context.view_layer.update()
 
-    surface.registry.initialize_from_gin()
     init.configure_blender()
 
     if Task.Coarse in task:
@@ -265,7 +264,6 @@ def execute_tasks(
             info = pickle.load(f)
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task=task,
             on_the_fly_asset_folder=output_folder / "assets",
             height_offset=info["height_offset"],
@@ -319,7 +317,6 @@ def execute_tasks(
     ):
         terrain = Terrain(
             scene_seed,
-            surface.registry,
             task=task,
             on_the_fly_asset_folder=output_folder / "assets",
         )

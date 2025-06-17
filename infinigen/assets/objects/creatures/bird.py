@@ -12,12 +12,8 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-import infinigen.assets.materials.basic_bsdf
-import infinigen.assets.materials.bird
-import infinigen.assets.materials.reptile_brown_circle_attr
-import infinigen.assets.materials.reptile_two_color_attr
-import infinigen.assets.materials.spot_sparse_attr
-from infinigen.assets.materials import beak, bone, eyeball, tongue
+import infinigen.assets.materials.creature as creature_materials
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
 from infinigen.assets.objects.creatures.util import hair as creature_hair
@@ -27,13 +23,13 @@ from infinigen.assets.objects.creatures.util.animation.driver_wiggle import (
 )
 from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
-from infinigen.core import surface
 from infinigen.core.placement import animation_policy
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import random_general as rg
+from infinigen.core.util.random import weighted_sample
 
 
 def bird_hair_params(flying=True):
@@ -68,19 +64,6 @@ def bird_hair_params(flying=True):
             "IOR": 1.55,
         },
     }
-
-
-def bird_postprocessing(body_parts, extras, params):
-    def get_extras(k):
-        return [o for o in extras if k in o.name]
-
-    main_template = surface.registry.sample_registry(params["surface_registry"])
-    main_template.apply(body_parts + get_extras("BodyExtra") + get_extras("Feather"))
-
-    tongue.apply(get_extras("Tongue"))
-    bone.apply(get_extras("Teeth") + get_extras("Claws"))
-    eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    beak.apply(get_extras("Beak"))
 
 
 def duck_genome(mode):
@@ -191,12 +174,6 @@ def duck_genome(mode):
         postprocess_params=dict(
             animation=dict(),
             hair=bird_hair_params(flying=False),
-            surface_registry=[
-                (infinigen.assets.materials.spot_sparse_attr, 4),
-                (infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
-                (infinigen.assets.materials.reptile_two_color_attr, 0.5),
-                (infinigen.assets.materials.bird, 5),
-            ],
         ),
     )
 
@@ -316,14 +293,26 @@ def flying_bird_genome(mode):
         postprocess_params=dict(
             animation=dict(),
             hair=bird_hair_params(flying=True),
-            surface_registry=[
-                # (infinigen.assets.materials.spot_sparse_attr, 4),
-                # (infinigen.assets.materials.reptile_brown_circle_attr, 0.5),
-                # (infinigen.assets.materials.reptile_two_color_attr, 0.5),
-                (infinigen.assets.materials.bird, 5)
-            ],
         ),
     )
+
+
+def apply_bird_materials(bird, obj):
+    bird.body_material.apply(
+        joining.get_parts(obj)
+        + joining.get_parts(obj, False, "BodyExtra")
+        + joining.get_parts(obj, False, "Feather")
+    )
+
+    # TODO move these into the individual part generators
+    bird.tongue_material.apply(joining.get_parts(obj, False, "Tongue"))
+    bird.bone_material.apply(
+        joining.get_parts(obj, False, "Teeth") + joining.get_parts(obj, False, "Claws")
+    )
+    bird.eyeball_material.apply(
+        joining.get_parts(obj, False, "Eyeball"), shader_kwargs={"coord": "X"}
+    )
+    bird.beak_material.apply(joining.get_parts(obj, False, "Beak"))
 
 
 @gin.configurable
@@ -334,6 +323,14 @@ class BirdFactory(AssetFactory):
         super().__init__(factory_seed, coarse)
         self.bvh = bvh
         self.animation_mode = animation_mode
+
+        with FixedSeed(factory_seed):
+            body_material_fac = weighted_sample(material_assignments.bird)
+            self.body_material = body_material_fac()
+            self.tongue_material = creature_materials.tongue.Tongue()
+            self.bone_material = creature_materials.bone.Bone()
+            self.eyeball_material = creature_materials.eyeball.Eyeball()
+            self.beak_material = creature_materials.beak.Beak()
 
     def create_asset(self, i, placeholder, hair=True, **kwargs):
         dynamic = self.animation_mode is not None
@@ -349,7 +346,7 @@ class BirdFactory(AssetFactory):
             parts,
             genome,
             rigging=dynamic,
-            postprocess_func=bird_postprocessing,
+            postprocess_func=lambda root: apply_bird_materials(self, root),
             **kwargs,
         )
 
@@ -403,6 +400,12 @@ class FlyingBirdFactory(AssetFactory):
                 step_range=(5, 40),
                 yaw_dist=("normal", 0, 15),
             )
+            body_material_fac = weighted_sample(material_assignments.bird)
+            self.body_material = body_material_fac()
+            self.tongue_material = creature_materials.tongue.Tongue()
+            self.bone_material = creature_materials.bone.Bone()
+            self.eyeball_material = creature_materials.eyeball.Eyeball()
+            self.beak_material = creature_materials.beak.Beak()
 
     def create_placeholder(self, i, loc, rot):
         p = butil.spawn_cube(size=3)
@@ -448,7 +451,7 @@ class FlyingBirdFactory(AssetFactory):
             parts,
             genome,
             rigging=self.animation_mode is not None,
-            postprocess_func=bird_postprocessing,
+            postprocess_func=lambda root: apply_bird_materials(self, root),
             **kwargs,
         )
 

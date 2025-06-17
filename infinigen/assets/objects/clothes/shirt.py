@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.art import ArtFabric
 from infinigen.assets.utils.decorate import (
     read_center,
@@ -20,7 +20,7 @@ from infinigen.assets.utils.object import new_circle
 from infinigen.assets.utils.uv import wrap_front_back
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 
 class ShirtFactory(AssetFactory):
@@ -38,8 +38,11 @@ class ShirtFactory(AssetFactory):
         self.sleeve_width = uniform(0.14, 0.18)
         self.sleeve_angle = uniform(np.pi / 6, np.pi / 4)
         self.thickness = log_uniform(0.02, 0.03)
-        materials = AssetList["ShirtFactory"]()
-        self.surface = materials["surface"].assign_material()
+
+        surface_gen_class = weighted_sample(material_assignments.pants)
+        self.surface_material_gen = surface_gen_class()
+        self.surface = self.surface_material_gen()
+
         if self.surface == ArtFabric:
             self.surface = self.surface(self.factory_seed)
 

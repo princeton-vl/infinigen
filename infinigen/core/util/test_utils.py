@@ -9,7 +9,7 @@ from pathlib import Path
 
 import gin
 
-from infinigen.core import init, surface
+from infinigen.core import init
 
 
 def setup_gin(configs_folders, configs, overrides=None):
@@ -21,7 +21,6 @@ def setup_gin(configs_folders, configs, overrides=None):
         skip_unknown=True,
         finalize_config=False,
     )
-    surface.registry.initialize_from_gin()
     gin.unlock_config()
 
 

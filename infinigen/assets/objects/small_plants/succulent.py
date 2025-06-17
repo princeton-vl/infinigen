@@ -8,7 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import succulent
+from infinigen.assets.materials.plant import succulent
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -18,9 +18,9 @@ from infinigen.core.util import blender as butil
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_cross_contour_top", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_cross_contour_top", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
+def nodegroup_petal_cross_contour_top(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     normal_2 = nw.new_node(Nodes.InputNormal)
@@ -56,9 +56,9 @@ def nodegroup_pedal_cross_contour_top(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_cross_contour_bottom", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_cross_contour_bottom", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_cross_contour_bottom(nw: NodeWrangler):
+def nodegroup_petal_cross_contour_bottom(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     normal = nw.new_node(Nodes.InputNormal)
@@ -92,9 +92,9 @@ def nodegroup_pedal_cross_contour_bottom(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_cross_contour", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_cross_contour", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_cross_contour(nw: NodeWrangler):
+def nodegroup_petal_cross_contour(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     curve_circle = nw.new_node(
@@ -110,8 +110,8 @@ def nodegroup_pedal_cross_contour(nw: NodeWrangler):
         ],
     )
 
-    pedal_cross_contour_bottom = nw.new_node(
-        nodegroup_pedal_cross_contour_bottom().name,
+    petal_cross_contour_bottom = nw.new_node(
+        nodegroup_petal_cross_contour_bottom().name,
         input_kwargs={
             "Y": group_input.outputs["Y_bottom"],
             "X": group_input.outputs["X"],
@@ -122,13 +122,13 @@ def nodegroup_pedal_cross_contour(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": curve_circle.outputs["Curve"],
-            "Selection": pedal_cross_contour_bottom.outputs["Value"],
-            "Offset": pedal_cross_contour_bottom.outputs["Vector"],
+            "Selection": petal_cross_contour_bottom.outputs["Value"],
+            "Offset": petal_cross_contour_bottom.outputs["Vector"],
         },
     )
 
-    pedal_cross_contour_top = nw.new_node(
-        nodegroup_pedal_cross_contour_top().name,
+    petal_cross_contour_top = nw.new_node(
+        nodegroup_petal_cross_contour_top().name,
         input_kwargs={"Y": group_input.outputs["Y_top"], "X": group_input.outputs["X"]},
     )
 
@@ -136,8 +136,8 @@ def nodegroup_pedal_cross_contour(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={
             "Geometry": set_position_1,
-            "Selection": pedal_cross_contour_top.outputs["Value"],
-            "Offset": pedal_cross_contour_top.outputs["Vector"],
+            "Selection": petal_cross_contour_top.outputs["Value"],
+            "Offset": petal_cross_contour_top.outputs["Vector"],
         },
     )
 
@@ -164,9 +164,9 @@ def nodegroup_pedal_cross_contour(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_z_contour", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_z_contour", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_z_contour(nw: NodeWrangler, curve_param=[]):
+def nodegroup_petal_z_contour(nw: NodeWrangler, curve_param=[]):
     # Code generated using version 2.4.3 of the node_transpiler
 
     spline_parameter = nw.new_node(Nodes.SplineParameter)
@@ -201,9 +201,9 @@ def nodegroup_pedal_z_contour(nw: NodeWrangler, curve_param=[]):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_curvature", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_curvature", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_curvature(nw: NodeWrangler):
+def nodegroup_petal_stem_curvature(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     position_3 = nw.new_node(Nodes.InputPosition)
@@ -252,9 +252,9 @@ def nodegroup_pedal_stem_curvature(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_rotation_on_base_circle", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_rotation_on_base_circle", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_rotation_on_base_circle(nw: NodeWrangler):
+def nodegroup_petal_rotation_on_base_circle(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     random_value_1 = nw.new_node(Nodes.RandomValue, input_kwargs={2: -0.1, 3: 0.1})
@@ -328,9 +328,9 @@ def nodegroup_base_perturbation(nw: NodeWrangler, R=1.0):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_geometry", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_geometry", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_geometry(nw: NodeWrangler, curve_param=[]):
+def nodegroup_petal_geometry(nw: NodeWrangler, curve_param=[]):
     # Code generated using version 2.4.3 of the node_transpiler
 
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": (0.0, 0.0, 0.2)})
@@ -348,33 +348,33 @@ def nodegroup_pedal_geometry(nw: NodeWrangler, curve_param=[]):
             ("NodeSocketFloat", "Y_bottom", 0.0),
             ("NodeSocketFloat", "X", 0.0),
             ("NodeSocketFloat", "Y_top", 0.0),
-            ("NodeSocketFloat", "pedal_stem", 0.2),
-            ("NodeSocketFloat", "pedal_z", 0.5),
+            ("NodeSocketFloat", "petal_stem", 0.2),
+            ("NodeSocketFloat", "petal_z", 0.5),
         ],
     )
 
-    pedal_stem_curvature = nw.new_node(
-        nodegroup_pedal_stem_curvature().name,
-        input_kwargs={"Value": group_input.outputs["pedal_stem"]},
+    petal_stem_curvature = nw.new_node(
+        nodegroup_petal_stem_curvature().name,
+        input_kwargs={"Value": group_input.outputs["petal_stem"]},
     )
 
     set_position_4 = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": resample_curve, "Offset": pedal_stem_curvature},
+        input_kwargs={"Geometry": resample_curve, "Offset": petal_stem_curvature},
     )
 
-    pedal_z_contour = nw.new_node(
-        nodegroup_pedal_z_contour(curve_param=curve_param).name,
-        input_kwargs={"Value": group_input.outputs["pedal_z"]},
+    petal_z_contour = nw.new_node(
+        nodegroup_petal_z_contour(curve_param=curve_param).name,
+        input_kwargs={"Value": group_input.outputs["petal_z"]},
     )
 
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
-        input_kwargs={"Curve": set_position_4, "Radius": pedal_z_contour},
+        input_kwargs={"Curve": set_position_4, "Radius": petal_z_contour},
     )
 
-    pedal_cross_contour = nw.new_node(
-        nodegroup_pedal_cross_contour().name,
+    petal_cross_contour = nw.new_node(
+        nodegroup_petal_cross_contour().name,
         input_kwargs={
             "Y_bottom": group_input.outputs["Y_bottom"],
             "X": group_input.outputs["X"],
@@ -386,7 +386,7 @@ def nodegroup_pedal_geometry(nw: NodeWrangler, curve_param=[]):
         Nodes.CurveToMesh,
         input_kwargs={
             "Curve": set_curve_radius,
-            "Profile Curve": pedal_cross_contour,
+            "Profile Curve": petal_cross_contour,
             "Fill Caps": True,
         },
     )
@@ -395,9 +395,9 @@ def nodegroup_pedal_geometry(nw: NodeWrangler, curve_param=[]):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_on_base", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_on_base", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_on_base(nw: NodeWrangler, R=1.0):
+def nodegroup_petal_on_base(nw: NodeWrangler, R=1.0):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -458,8 +458,8 @@ def nodegroup_pedal_on_base(nw: NodeWrangler, R=1.0):
         Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points_1}
     )
 
-    pedal_rotation_on_base_circle = nw.new_node(
-        nodegroup_pedal_rotation_on_base_circle().name,
+    petal_rotation_on_base_circle = nw.new_node(
+        nodegroup_petal_rotation_on_base_circle().name,
         input_kwargs={0: group_input.outputs["x_R"], 1: group_input.outputs["z_R"]},
     )
 
@@ -467,7 +467,7 @@ def nodegroup_pedal_on_base(nw: NodeWrangler, R=1.0):
         Nodes.RotateInstances,
         input_kwargs={
             "Instances": realize_instances_1,
-            "Rotation": pedal_rotation_on_base_circle,
+            "Rotation": petal_rotation_on_base_circle,
         },
     )
 
@@ -486,77 +486,77 @@ def nodegroup_pedal_on_base(nw: NodeWrangler, R=1.0):
 
 def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
-    pedal_bases = []
+    petal_bases = []
 
-    pedal_cross_coutour_y_bottom = nw.new_node(
-        Nodes.Value, label="pedal_cross_coutour_y_bottom"
+    petal_cross_coutour_y_bottom = nw.new_node(
+        Nodes.Value, label="petal_cross_coutour_y_bottom"
     )
-    pedal_cross_coutour_y_bottom.outputs[0].default_value = kwargs["cross_y_bottom"]
+    petal_cross_coutour_y_bottom.outputs[0].default_value = kwargs["cross_y_bottom"]
 
-    pedal_cross_coutour_x = nw.new_node(Nodes.Value, label="pedal_cross_coutour_x")
-    pedal_cross_coutour_x.outputs[0].default_value = kwargs["cross_x"]
+    petal_cross_coutour_x = nw.new_node(Nodes.Value, label="petal_cross_coutour_x")
+    petal_cross_coutour_x.outputs[0].default_value = kwargs["cross_x"]
 
-    pedal_cross_coutour_y_top = nw.new_node(
-        Nodes.Value, label="pedal_cross_coutour_y_top"
+    petal_cross_coutour_y_top = nw.new_node(
+        Nodes.Value, label="petal_cross_coutour_y_top"
     )
-    pedal_cross_coutour_y_top.outputs[0].default_value = kwargs["cross_y_top"]
-    pedal_stem_curvature_scale = nw.new_node(
-        Nodes.Value, label="pedal_stem_curvature_scale"
+    petal_cross_coutour_y_top.outputs[0].default_value = kwargs["cross_y_top"]
+    petal_stem_curvature_scale = nw.new_node(
+        Nodes.Value, label="petal_stem_curvature_scale"
     )
-    pedal_stem_curvature_scale.outputs[0].default_value = np.abs(normal(0, 1.0))
+    petal_stem_curvature_scale.outputs[0].default_value = np.abs(normal(0, 1.0))
 
-    pedal_z_coutour_scale = nw.new_node(Nodes.Value, label="pedal_z_coutour_scale")
-    pedal_z_coutour_scale.outputs[0].default_value = uniform(0.4, 0.9)
+    petal_z_coutour_scale = nw.new_node(Nodes.Value, label="petal_z_coutour_scale")
+    petal_z_coutour_scale.outputs[0].default_value = uniform(0.4, 0.9)
     material = kwargs["material"]
 
     for i in range(kwargs["num_bases"]):
-        pedal_geometry = nw.new_node(
-            nodegroup_pedal_geometry(curve_param=kwargs["pedal_curve_param"]).name,
+        petal_geometry = nw.new_node(
+            nodegroup_petal_geometry(curve_param=kwargs["petal_curve_param"]).name,
             input_kwargs={
-                "Y_bottom": pedal_cross_coutour_y_bottom,
-                "X": pedal_cross_coutour_x,
-                "Y_top": pedal_cross_coutour_y_top,
-                "pedal_stem": pedal_stem_curvature_scale,
-                "pedal_z": pedal_z_coutour_scale,
+                "Y_bottom": petal_cross_coutour_y_bottom,
+                "X": petal_cross_coutour_x,
+                "Y_top": petal_cross_coutour_y_top,
+                "petal_stem": petal_stem_curvature_scale,
+                "petal_z": petal_z_coutour_scale,
             },
         )
 
         base_circle_radius = nw.new_node(Nodes.Value, label="base_circle_radius")
         base_circle_radius.outputs[0].default_value = kwargs["base_radius"][i]
 
-        pedal_x_rotation = nw.new_node(Nodes.Value, label="pedal_x_rotation")
-        pedal_x_rotation.outputs[0].default_value = kwargs["pedal_x_R"][i]
+        petal_x_rotation = nw.new_node(Nodes.Value, label="petal_x_rotation")
+        petal_x_rotation.outputs[0].default_value = kwargs["petal_x_R"][i]
 
         base_z_rotation = nw.new_node(Nodes.Value, label="base_z_rotation")
         base_z_rotation.outputs[0].default_value = -1.57 + normal(0, 0.3)
 
-        base_pedal_num = nw.new_node(
-            Nodes.Integer, label="base_pedal_num", attrs={"integer": 10}
+        base_petal_num = nw.new_node(
+            Nodes.Integer, label="base_petal_num", attrs={"integer": 10}
         )
-        base_pedal_num.integer = kwargs["base_pedal_num"][i]
+        base_petal_num.integer = kwargs["base_petal_num"][i]
 
-        pedal_scale = nw.new_node(Nodes.Value, label="pedal_scale")
-        pedal_scale.outputs[0].default_value = kwargs["base_pedal_scale"][i]
+        petal_scale = nw.new_node(Nodes.Value, label="petal_scale")
+        petal_scale.outputs[0].default_value = kwargs["base_petal_scale"][i]
 
         base_z = nw.new_node(Nodes.Value, label="base_z")
         base_z.outputs[0].default_value = kwargs["base_z"][i]
 
-        pedal_on_base = nw.new_node(
-            nodegroup_pedal_on_base(R=kwargs["base_radius"][i]).name,
+        petal_on_base = nw.new_node(
+            nodegroup_petal_on_base(R=kwargs["base_radius"][i]).name,
             input_kwargs={
                 "Radius": base_circle_radius,
-                "x_R": pedal_x_rotation,
+                "x_R": petal_x_rotation,
                 "z_R": base_z_rotation,
-                "Resolution": base_pedal_num,
-                "Instance": pedal_geometry,
-                "Scale": pedal_scale,
+                "Resolution": base_petal_num,
+                "Instance": petal_geometry,
+                "Scale": petal_scale,
                 "base_z": base_z,
             },
         )
-        pedal_bases.append(pedal_on_base)
+        petal_bases.append(petal_on_base)
 
     join_geometry = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": pedal_bases}
+        Nodes.JoinGeometry, input_kwargs={"Geometry": petal_bases}
     )
 
     set_shade_smooth_1 = nw.new_node(
@@ -579,10 +579,10 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
 class SucculentFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(SucculentFactory, self).__init__(factory_seed, coarse=coarse)
-        self.mode = np.random.choice(["thin_pedal", "thick_pedal"], p=[0.65, 0.35])
+        self.mode = np.random.choice(["thin_petal", "thick_petal"], p=[0.65, 0.35])
 
     def get_params(self, mode):
-        if mode == "thin_pedal":
+        if mode == "thin_petal":
             params = {}
             params["cross_y_bottom"] = uniform(0.08, 0.25)
             params["cross_y_top"] = uniform(-0.04, 0.02)
@@ -590,7 +590,7 @@ class SucculentFactory(AssetFactory):
             # get geometry params on each base
             num_bases = randint(5, 8)
             params["num_bases"] = num_bases
-            base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = (
+            base_radius, petal_x_R, base_petal_num, base_petal_scale, base_z = (
                 [],
                 [],
                 [],
@@ -599,31 +599,31 @@ class SucculentFactory(AssetFactory):
             )
             init_base_radius, diff_base_radius = uniform(0.09, 0.11), 0.1
             init_x_R, diff_x_R = uniform(-1.2, -1.35), uniform(-0.7, -1.1)
-            init_pedal_num = randint(num_bases, 15)
-            diff_pedal_scale = uniform(0.5, 0.9)
+            init_petal_num = randint(num_bases, 15)
+            diff_petal_scale = uniform(0.5, 0.9)
             for i in range(num_bases):
                 base_radius.append(
                     init_base_radius - (i * diff_base_radius) / num_bases
                 )
-                pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_pedal_num.append(init_pedal_num - i + randint(0, 2))
-                base_pedal_scale.append(1.0 - (i * diff_pedal_scale) / num_bases)
+                petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
+                base_petal_num.append(init_petal_num - i + randint(0, 2))
+                base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
                 base_z.append(0.0 + i * uniform(0.005, 0.008))
             params["base_radius"] = base_radius
-            params["pedal_x_R"] = pedal_x_R
-            params["base_pedal_num"] = base_pedal_num
-            params["base_pedal_scale"] = base_pedal_scale
+            params["petal_x_R"] = petal_x_R
+            params["base_petal_num"] = base_petal_num
+            params["base_petal_scale"] = base_petal_scale
             params["base_z"] = base_z
 
             contour_bit = randint(0, 3)
             material_bit = randint(0, 3)
 
             if contour_bit == 0:
-                params["pedal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
+                params["petal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
             elif contour_bit == 1:
-                params["pedal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
+                params["petal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
             elif contour_bit == 2:
-                params["pedal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
+                params["petal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
             else:
                 raise NotImplementedError
 
@@ -638,7 +638,7 @@ class SucculentFactory(AssetFactory):
 
             return params
 
-        elif mode == "thick_pedal":
+        elif mode == "thick_petal":
             params = {}
             params["cross_y_bottom"] = uniform(0.22, 0.30)
             params["cross_y_top"] = uniform(0.08, 0.15)
@@ -646,7 +646,7 @@ class SucculentFactory(AssetFactory):
             # get geometry params on each base
             num_bases = randint(3, 6)
             params["num_bases"] = num_bases
-            base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = (
+            base_radius, petal_x_R, base_petal_num, base_petal_scale, base_z = (
                 [],
                 [],
                 [],
@@ -655,29 +655,29 @@ class SucculentFactory(AssetFactory):
             )
             init_base_radius, diff_base_radius = uniform(0.12, 0.14), 0.11
             init_x_R, diff_x_R = uniform(-1.3, -1.4), uniform(-0.1, -1.2)
-            init_pedal_num = randint(num_bases, 12)
-            diff_pedal_scale = uniform(0.6, 0.9)
+            init_petal_num = randint(num_bases, 12)
+            diff_petal_scale = uniform(0.6, 0.9)
             for i in range(num_bases):
                 base_radius.append(
                     init_base_radius - (i * diff_base_radius) / num_bases
                 )
-                pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_pedal_num.append(init_pedal_num - i + randint(0, 2))
-                base_pedal_scale.append(1.0 - (i * diff_pedal_scale) / num_bases)
+                petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
+                base_petal_num.append(init_petal_num - i + randint(0, 2))
+                base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
                 base_z.append(0.0 + i * uniform(0.005, 0.006))
             params["base_radius"] = base_radius
-            params["pedal_x_R"] = pedal_x_R
-            params["base_pedal_num"] = base_pedal_num
-            params["base_pedal_scale"] = base_pedal_scale
+            params["petal_x_R"] = petal_x_R
+            params["base_petal_num"] = base_petal_num
+            params["base_petal_scale"] = base_petal_scale
             params["base_z"] = base_z
 
             contour_bit = randint(0, 2)
             material_bit = randint(0, 2)
 
             if contour_bit == 0:
-                params["pedal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
+                params["petal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
             elif contour_bit == 1:
-                params["pedal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
+                params["petal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
             else:
                 raise NotImplementedError
 

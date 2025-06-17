@@ -8,8 +8,9 @@ import shapely
 import shapely.affinity
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal, plastic
-from infinigen.assets.materials.woods import wood
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials import plastic
+from infinigen.assets.materials.wood import wood
 from infinigen.assets.utils.decorate import (
     read_edge_center,
     read_edge_direction,
@@ -17,6 +18,7 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.assets.utils.object import join_objects, new_bbox, new_bbox_2d
 from infinigen.assets.utils.shapes import polygon2obj
+from infinigen.core import surface
 from infinigen.core import tagging as t
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import write_attr_data
@@ -53,8 +55,17 @@ class WallShelfFactory(AssetFactory):
     support_joins = "mitre", "round", "bevel"
     plate_bevels = "weighted_choice", (1, "none"), (1, "front"), (1, "side")
 
-    plate_surfaces = "weighted_choice", (2, wood), (1, metal)
-    support_surfaces = "weighted_choice", (2, metal), (1, wood), (2, plastic)
+    plate_surfaces = (
+        "weighted_choice",
+        (10, wood.Wood),
+        *[(v, k) for k, v in material_assignments.metals],
+    )
+    support_surfaces = (
+        "weighted_choice",
+        *[(v, k) for k, v in material_assignments.metals],
+        (5, wood.Wood),
+        (5, plastic.PlasticRough),
+    )
 
     def __init__(self, factory_seed, coarse=False):
         super(WallShelfFactory, self).__init__(factory_seed, coarse)
@@ -79,8 +90,8 @@ class WallShelfFactory(AssetFactory):
         self.support_length = self.width * uniform(0.7, 1.1)
         self.plate_bevel = rg(self.plate_bevels)
         self.support_join = np.random.choice(self.support_joins)
-        self.plate_surface = rg(self.plate_surfaces)
-        self.support_surface = rg(self.support_surfaces)
+        self.plate_surface = rg(self.plate_surfaces)()
+        self.support_surface = rg(self.support_surfaces)()
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         box = new_bbox(
@@ -105,7 +116,8 @@ class WallShelfFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.make_plate()
-        self.plate_surface.apply(obj)
+        surface.assign_material(obj, self.plate_surface())
+        # self.plate_surface.apply(obj)
         if self.support_side != "none":
             support = self.make_support()
             supports = [support] + [
@@ -113,7 +125,8 @@ class WallShelfFactory(AssetFactory):
             ]
             for s, l in zip(supports, self.support_locs):
                 s.location[1] = self.length * l
-            self.support_surface.apply(supports)
+            surface.assign_material(supports, self.support_surface())
+            # self.support_surface.apply(supports)
             obj = join_objects([obj] + supports)
         return obj
 

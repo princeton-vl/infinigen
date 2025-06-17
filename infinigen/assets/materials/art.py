@@ -5,23 +5,32 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials.fabrics.fabric_random import fabric_shader_list
-from infinigen.assets.utils.decorate import read_uv, write_uv
 from infinigen.core.nodes import Nodes, NodeWrangler
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
-from . import rug, text
+from . import text
+from .fabric import rug
+from .fabric.coarse_knit_fabric import shader_coarse_knit_fabric
+from .fabric.fine_knit_fabric import shader_fine_knit_fabric
+from .fabric.leather import shader_leather
+from .fabric.sofa_fabric import shader_sofa_fabric
+
+fabric_shader_list = (
+    "weighted_choice",
+    (1, shader_coarse_knit_fabric),
+    (1, shader_fine_knit_fabric),
+    (2, shader_leather),
+    (1, shader_sofa_fabric),
+)
 
 
 class Art(text.Text):
-    def __init__(self, factory_seed):
-        super().__init__(factory_seed)
-        with FixedSeed(self.factory_seed):
-            self.n_barcodes = 0
-            self.n_texts = 0
-            self.n_patches = np.random.randint(10, 15)
+    def __init__(self):
+        super().__init__()
+        self.n_barcodes = 0
+        self.n_texts = 0
+        self.n_patches = np.random.randint(10, 15)
 
     @staticmethod
     def scale_uniform(min_, max_):
@@ -29,11 +38,10 @@ class Art(text.Text):
 
 
 class DarkArt(Art):
-    def __init__(self, factory_seed):
-        super().__init__(factory_seed)
-        with FixedSeed(self.factory_seed):
-            self.darken_scale = uniform(5, 10)
-            self.darken_ratio = uniform(0.5, 1)
+    def __init__(self):
+        super().__init__()
+        self.darken_scale = uniform(5, 10)
+        self.darken_ratio = uniform(0.5, 1)
 
     def make_shader_func(self, bbox):
         art_shader_func = super(DarkArt, self).make_shader_func(bbox)
@@ -95,7 +103,12 @@ class ArtFabric(ArtComposite):
         return rg(fabric_shader_list)
 
 
-def apply(obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
-    if scale is not None:
-        write_uv(obj, read_uv(obj) * scale)
-    Art(np.random.randint(1e5)).apply(obj, selection, bbox, **kwargs)
+class ArtGeneral:
+    # def apply(self, obj, selection=None, bbox=(0, 1, 0, 1), scale=None, **kwargs):
+    #     if scale is not None:
+    #         write_uv(obj, read_uv(obj) * scale)
+    #     Art().apply(obj, selection, bbox, **kwargs)
+    def generate(self, selection=None, bbox=(0, 1, 0, 1), **kwargs):
+        return Art().generate(selection, bbox, **kwargs)
+
+    __call__ = generate

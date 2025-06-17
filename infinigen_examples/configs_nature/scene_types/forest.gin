@@ -7,17 +7,13 @@ scene.warped_rocks_chance = 0
 compose_nature.inview_distance = 40
 placement.populate_all.dist_cull = 40
 
-surface.registry.ground_collection = [
-    ('mud', 2),
-    ('dirt', 1),
-    ('soil', 1),
+Terrain.ground_collection = "forest_soil"
+Terrain.mountain_collection = [
+    ("infinigen.assets.materials.terrain.dirt.Dirt", 1),
+    ("infinigen.assets.materials.terrain.soil.Soil", 1),
+    ("infinigen.assets.materials.terrain.cracked_ground.CrackedGround", 0.5),
 ]
 
-surface.registry.mountain_collection = [
-    ('dirt', 1),
-    ('soil', 1),
-    ('cracked_ground', 0.5)
-]
 
 compose_nature.ground_creatures_chance = 0.1
 compose_nature.ground_creature_registry = [

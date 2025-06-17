@@ -1,19 +1,22 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+
+import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials.plastic import Plastic, PlasticTranslucent
 from infinigen.assets.utils.decorate import subsurf, write_attribute
 from infinigen.assets.utils.object import join_objects, new_circle, new_cylinder
+from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class JarFactory(AssetFactory):
@@ -28,13 +31,13 @@ class JarFactory(AssetFactory):
             self.z_cap = uniform(0.05, 0.08)
             self.z_neck = uniform(0.15, 0.2)
 
-            material_assignments = AssetList["JarFactory"]()
-            self.surface = material_assignments["surface"].assign_material()
-            self.cap_surface = material_assignments["cap_surface"].assign_material()
-            scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-            self.scratch, self.edge_wear = material_assignments["wear_tear"]
-            self.scratch = None if uniform() > scratch_prob else self.scratch
-            self.edge_wear = None if uniform() > edge_wear_prob else self.edge_wear
+            self.surface = weighted_sample(material_assignments.jar)()
+            self.cap_surface = weighted_sample(material_assignments.appliance_handle)()
+
+            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+            scratch, edge_wear = material_assignments.wear_tear
+            self.scratch = None if uniform() > scratch_prob else scratch()
+            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
             self.cap_subsurf = uniform() < 0.5
 
@@ -85,8 +88,14 @@ class JarFactory(AssetFactory):
         return obj
 
     def finalize_assets(self, assets):
-        self.surface.apply(assets, clear=uniform() < 0.5)
-        self.cap_surface.apply(assets, selection="cap")
+        kwargs = (
+            dict(clear=uniform() < 0.5)
+            if isinstance(self.surface, Plastic)
+            or isinstance(self.surface, PlasticTranslucent)
+            else {}
+        )
+        surface.assign_material(assets, self.surface(**kwargs))
+        surface.assign_material(assets, self.cap_surface(), selection="cap")
         if self.scratch:
             self.scratch.apply(assets)
         if self.edge_wear:

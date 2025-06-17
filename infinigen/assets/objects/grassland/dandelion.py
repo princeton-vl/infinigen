@@ -8,7 +8,11 @@ import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.materials import simple_brownish, simple_greenery, simple_whitish
+from infinigen.assets.materials.plant import (
+    simple_brownish,
+    simple_greenery,
+    simple_whitish,
+)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -17,9 +21,9 @@ from infinigen.core.tagging import tag_nodegroup, tag_object
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_head_geometry", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_head_geometry", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_head_geometry(nw: NodeWrangler):
+def nodegroup_petal_stem_head_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -59,9 +63,9 @@ def nodegroup_pedal_stem_head_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_end_geometry", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_end_geometry", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_end_geometry(nw: NodeWrangler):
+def nodegroup_petal_stem_end_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -148,15 +152,15 @@ def nodegroup_pedal_stem_end_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_branch_shape", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_branch_shape", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_branch_shape(nw: NodeWrangler):
+def nodegroup_petal_stem_branch_shape(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
-    pedal_stem_branches_num = nw.new_node(
-        Nodes.Integer, label="pedal_stem_branches_num"
+    petal_stem_branches_num = nw.new_node(
+        Nodes.Integer, label="petal_stem_branches_num"
     )
-    pedal_stem_branches_num.integer = 40
+    petal_stem_branches_num.integer = 40
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Radius", 0.0100)]
@@ -165,18 +169,18 @@ def nodegroup_pedal_stem_branch_shape(nw: NodeWrangler):
     curve_circle_1 = nw.new_node(
         Nodes.CurveCircle,
         input_kwargs={
-            "Resolution": pedal_stem_branches_num,
+            "Resolution": petal_stem_branches_num,
             "Radius": group_input.outputs["Radius"],
         },
     )
 
-    pedal_stem_branch_length = nw.new_node(
-        Nodes.Value, label="pedal_stem_branch_length"
+    petal_stem_branch_length = nw.new_node(
+        Nodes.Value, label="petal_stem_branch_length"
     )
-    pedal_stem_branch_length.outputs[0].default_value = 0.5000
+    petal_stem_branch_length.outputs[0].default_value = 0.5000
 
     combine_xyz_1 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": pedal_stem_branch_length}
+        Nodes.CombineXYZ, input_kwargs={"X": petal_stem_branch_length}
     )
 
     curve_line_1 = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz_1})
@@ -272,9 +276,9 @@ def nodegroup_pedal_stem_branch_shape(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_branch_contour", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_branch_contour", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_branch_contour(nw: NodeWrangler):
+def nodegroup_petal_stem_branch_contour(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -286,14 +290,14 @@ def nodegroup_pedal_stem_branch_contour(nw: NodeWrangler):
         input_kwargs={"Geometry": group_input.outputs["Geometry"]},
     )
 
-    pedal_stem_branch_rsample = nw.new_node(
-        Nodes.Value, label="pedal_stem_branch_rsample"
+    petal_stem_branch_rsample = nw.new_node(
+        Nodes.Value, label="petal_stem_branch_rsample"
     )
-    pedal_stem_branch_rsample.outputs[0].default_value = 10.0
+    petal_stem_branch_rsample.outputs[0].default_value = 10.0
 
     resample_curve = nw.new_node(
         Nodes.ResampleCurve,
-        input_kwargs={"Curve": realize_instances, "Count": pedal_stem_branch_rsample},
+        input_kwargs={"Curve": realize_instances, "Count": petal_stem_branch_rsample},
     )
 
     index = nw.new_node(Nodes.Index)
@@ -310,7 +314,7 @@ def nodegroup_pedal_stem_branch_contour(nw: NodeWrangler):
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
     )
 
-    # generate pedal branch contour
+    # generate petal branch contour
     dist = uniform(-0.05, -0.25)
     node_utils.assign_curve(
         float_curve.mapping.curves[0],
@@ -351,9 +355,9 @@ def nodegroup_pedal_stem_branch_contour(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_branch_geometry", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_branch_geometry", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_branch_geometry(nw: NodeWrangler):
+def nodegroup_petal_stem_branch_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -397,9 +401,9 @@ def nodegroup_pedal_stem_branch_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem_geometry", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem_geometry", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem_geometry(nw: NodeWrangler):
+def nodegroup_petal_stem_geometry(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
     group_input = nw.new_node(
@@ -458,9 +462,9 @@ def nodegroup_pedal_stem_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_selection", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_selection", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_selection(nw: NodeWrangler, params):
+def nodegroup_petal_selection(nw: NodeWrangler, params):
     # Code generated using version 2.4.3 of the node_transpiler
 
     random_value = nw.new_node(Nodes.RandomValue, input_kwargs={5: 1})
@@ -593,49 +597,49 @@ def nodegroup_stem_geometry(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_pedal_stem", singleton=False, type="GeometryNodeTree"
+    "nodegroup_petal_stem", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_pedal_stem(nw: NodeWrangler):
+def nodegroup_petal_stem(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    pedal_stem_top_point = nw.new_node(Nodes.Vector, label="pedal_stem_top_point")
-    pedal_stem_top_point.vector = (0.0, 0.0, 1.0)
+    petal_stem_top_point = nw.new_node(Nodes.Vector, label="petal_stem_top_point")
+    petal_stem_top_point.vector = (0.0, 0.0, 1.0)
 
-    pedal_stem_mid_point = nw.new_node(Nodes.Vector, label="pedal_stem_mid_point")
-    pedal_stem_mid_point.vector = (normal(0, 0.05), normal(0, 0.05), 0.5)
+    petal_stem_mid_point = nw.new_node(Nodes.Vector, label="petal_stem_mid_point")
+    petal_stem_mid_point.vector = (normal(0, 0.05), normal(0, 0.05), 0.5)
 
-    pedal_stem_radius = nw.new_node(Nodes.Value, label="pedal_stem_radius")
-    pedal_stem_radius.outputs[0].default_value = uniform(0.02, 0.045)
+    petal_stem_radius = nw.new_node(Nodes.Value, label="petal_stem_radius")
+    petal_stem_radius.outputs[0].default_value = uniform(0.02, 0.045)
 
-    pedal_stem_geometry = nw.new_node(
-        nodegroup_pedal_stem_geometry().name,
+    petal_stem_geometry = nw.new_node(
+        nodegroup_petal_stem_geometry().name,
         input_kwargs={
-            "End": pedal_stem_top_point,
-            "Middle": pedal_stem_mid_point,
-            "Radius": pedal_stem_radius,
+            "End": petal_stem_top_point,
+            "Middle": petal_stem_mid_point,
+            "Radius": petal_stem_radius,
         },
     )
 
-    pedal_stem_top_radius = nw.new_node(Nodes.Value, label="pedal_stem_top_radius")
-    pedal_stem_top_radius.outputs[0].default_value = uniform(0.005, 0.008)
+    petal_stem_top_radius = nw.new_node(Nodes.Value, label="petal_stem_top_radius")
+    petal_stem_top_radius.outputs[0].default_value = uniform(0.005, 0.008)
 
-    pedal_stem_branch_shape = nw.new_node(
-        nodegroup_pedal_stem_branch_shape().name,
-        input_kwargs={"Radius": pedal_stem_top_radius},
+    petal_stem_branch_shape = nw.new_node(
+        nodegroup_petal_stem_branch_shape().name,
+        input_kwargs={"Radius": petal_stem_top_radius},
     )
 
-    pedal_stem_branch_geometry = nw.new_node(
-        nodegroup_pedal_stem_branch_geometry().name,
+    petal_stem_branch_geometry = nw.new_node(
+        nodegroup_petal_stem_branch_geometry().name,
         input_kwargs={
-            "Curve": pedal_stem_branch_shape,
-            "Translation": pedal_stem_top_point,
+            "Curve": petal_stem_branch_shape,
+            "Translation": petal_stem_top_point,
         },
     )
 
     set_material_3 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
-            "Geometry": pedal_stem_branch_geometry,
+            "Geometry": petal_stem_branch_geometry,
             "Material": surface.shaderfunc_to_material(
                 simple_whitish.shader_simple_white
             ),
@@ -644,19 +648,19 @@ def nodegroup_pedal_stem(nw: NodeWrangler):
 
     resample_curve = nw.new_node(
         Nodes.ResampleCurve,
-        input_kwargs={"Curve": pedal_stem_geometry.outputs["Curve"]},
+        input_kwargs={"Curve": petal_stem_geometry.outputs["Curve"]},
     )
 
-    pedal_stem_end_geometry = nw.new_node(
-        nodegroup_pedal_stem_end_geometry().name,
+    petal_stem_end_geometry = nw.new_node(
+        nodegroup_petal_stem_end_geometry().name,
         input_kwargs={"Points": resample_curve},
     )
 
-    pedal_stem_head_geometry = nw.new_node(
-        nodegroup_pedal_stem_head_geometry().name,
+    petal_stem_head_geometry = nw.new_node(
+        nodegroup_petal_stem_head_geometry().name,
         input_kwargs={
-            "Translation": pedal_stem_top_point,
-            "Radius": pedal_stem_top_radius,
+            "Translation": petal_stem_top_point,
+            "Radius": petal_stem_top_radius,
         },
     )
 
@@ -664,10 +668,10 @@ def nodegroup_pedal_stem(nw: NodeWrangler):
         Nodes.JoinGeometry,
         input_kwargs={
             "Geometry": [
-                pedal_stem_geometry.outputs["Geometry"],
+                petal_stem_geometry.outputs["Geometry"],
                 set_material_3,
-                pedal_stem_end_geometry,
-                pedal_stem_head_geometry,
+                petal_stem_end_geometry,
+                petal_stem_head_geometry,
             ]
         },
     )
@@ -717,8 +721,8 @@ def nodegroup_flower_geometry(nw: NodeWrangler, params):
         "col_less_than": int(params["col_less_than"] * num_core_segments.integer),
         "col_great_than": int(params["col_less_than"] * num_core_segments.integer),
     }
-    pedal_selection = nw.new_node(
-        nodegroup_pedal_selection(params=selection_params).name,
+    petal_selection = nw.new_node(
+        nodegroup_petal_selection(params=selection_params).name,
         input_kwargs={"num_segments": num_core_segments},
     )
 
@@ -744,7 +748,7 @@ def nodegroup_flower_geometry(nw: NodeWrangler, params):
         Nodes.InstanceOnPoints,
         input_kwargs={
             "Points": transform,
-            "Selection": pedal_selection,
+            "Selection": petal_selection,
             "Instance": group_input.outputs["Instance"],
             "Rotation": align_euler_to_vector_1,
             "Scale": multiply,
@@ -837,10 +841,10 @@ def geometry_dandelion_nodes(nw: NodeWrangler, **kwargs):
         Nodes.ResampleCurve, input_kwargs={"Curve": quadratic_bezier_1}
     )
 
-    pedal_stem = nw.new_node(nodegroup_pedal_stem().name)
+    petal_stem = nw.new_node(nodegroup_petal_stem().name)
 
     geometry_to_instance = nw.new_node(
-        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": pedal_stem}
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": petal_stem}
     )
 
     flower_geometry = nw.new_node(
@@ -885,10 +889,10 @@ def geometry_dandelion_nodes(nw: NodeWrangler, **kwargs):
 def geometry_dandelion_seed_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
 
-    pedal_stem = nw.new_node(nodegroup_pedal_stem().name)
+    petal_stem = nw.new_node(nodegroup_petal_stem().name)
 
     geometry_to_instance = nw.new_node(
-        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": pedal_stem}
+        "GeometryNodeGeometryToInstance", input_kwargs={"Geometry": petal_stem}
     )
 
     group_output = nw.new_node(

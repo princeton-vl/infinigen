@@ -8,7 +8,7 @@
 import bpy
 from numpy.random import choice, uniform
 
-from infinigen.assets.material_assignments import AssetList
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.tables.legs.single_stand import (
     nodegroup_generate_single_stand,
 )
@@ -28,6 +28,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.surface import NoApply
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup(
@@ -218,25 +219,16 @@ class TableCocktailFactory(AssetFactory):
         self.params.update(self.material_params)
 
     def get_material_params(self):
-        material_assignments = AssetList["TableCocktailFactory"]()
         params = {
-            "TopMaterial": material_assignments["top"].assign_material(),
-            "LegMaterial": material_assignments["leg"].assign_material(),
+            "TopMaterial": weighted_sample(material_assignments.table_top)(),
+            "LegMaterial": weighted_sample(material_assignments.tableware)(),
         }
-        wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
-        }
+        wrapped_params = {k: v() for k, v in params.items()}
 
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = uniform() < scratch_prob
-        is_edge_wear = uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch, edge_wear = material_assignments.wear_tear
+        scratch = None if uniform() > scratch_prob else scratch()
+        edge_wear = None if uniform() > edge_wear_prob else edge_wear()
 
         return wrapped_params, scratch, edge_wear
 
@@ -338,7 +330,7 @@ class TableCocktailFactory(AssetFactory):
 
     def finalize_assets(self, assets):
         self.clothes_scatter.apply(assets)
-        if self.scratch:
-            self.scratch.apply(assets)
-        if self.edge_wear:
-            self.edge_wear.apply(assets)
+        # if self.scratch:
+        #     self.scratch.apply(assets)
+        # if self.edge_wear:
+        #     self.edge_wear.apply(assets)

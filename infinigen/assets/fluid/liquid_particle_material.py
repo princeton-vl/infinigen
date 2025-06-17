@@ -34,3 +34,10 @@ def liquid_particle_material(nw: NodeWrangler):
 
 def apply(obj, selection=None, **kwargs):
     surface.add_material(obj, liquid_particle_material, selection=selection)
+
+
+class Liquid:
+    shader = liquid_particle_material
+
+    def apply(self, obj, selection=None, **kwargs):
+        surface.add_material(obj, liquid_particle_material, selection=selection)

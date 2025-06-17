@@ -6,7 +6,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.elements.warehouses.pallet import PalletFactory
 from infinigen.assets.utils.decorate import (
     read_co,
@@ -32,6 +32,7 @@ from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.random import weighted_sample
 
 
 class RackFactory(AssetFactory):
@@ -49,7 +50,9 @@ class RackFactory(AssetFactory):
             self.frame_height = self.thickness * uniform(3, 4)
             self.frame_count = np.random.randint(20, 30)
 
-            self.stand_surface = self.support_surface = self.frame_surface = metal
+            self.stand_surface = self.support_surface = self.frame_surface = (
+                weighted_sample(material_assignments.metals)()
+            )
             self.pallet_factory = PalletFactory(self.factory_seed)
             self.margin_range = 0.3, 0.5
 
@@ -197,6 +200,9 @@ class RackFactory(AssetFactory):
         return frames
 
     def finalize_assets(self, assets):
-        self.stand_surface.apply(assets, "stand", metal_color="bw")
-        self.support_surface.apply(assets, "support", metal_color="bw")
-        self.frame_surface.apply(assets, "frame", metal_color="bw")
+        # self.stand_surface.apply(assets, "stand", metal_color="bw")
+        # self.support_surface.apply(assets, "support", metal_color="bw")
+        # self.frame_surface.apply(assets, "frame", metal_color="bw")
+        surface.assign_material(assets, self.stand_surface())
+        surface.assign_material(assets, self.support_surface())
+        surface.assign_material(assets, self.frame_surface())

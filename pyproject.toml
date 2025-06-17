@@ -20,21 +20,25 @@ classifiers = [
 
 requires-python = "==3.11.*"
 dependencies = [
+
+    # NOTE: many less-than dependencies could likely be loosened
+    #   we attempted to restrict to only versions that are known to be working
+
     "bpy==4.2.0",
     "gin_config>=0.5.0",
-    "imageio",
+    "imageio<2.32.0",      # e.g. 2.31.1
     "matplotlib",
     "networkx",
     "numpy<2",
-    "opencv-python",
+    "opencv-python<4.9.0", # e.g. 4.8.0.74
     "pandas",
     "psutil",
-    "scikit-image",
-    "scikit-learn",
+    "scikit-image<0.20.0", # e.g 0.19.3
+    "scikit-learn<1.4.0",  # e.g 1.3.0
     "scipy",
-    "shapely",
+    "shapely<=2.0.5",
     "tqdm",
-    "trimesh",
+    "trimesh<3.23.0",
     "OpenEXR",
 
     "submitit", # can be removed so long as you dont use slurm.gin or --slurm args
@@ -49,7 +53,7 @@ dependencies = [
 [project.optional-dependencies]
 terrain = [
     "landlab==2.6.0",
-    "pyrender",
+    "pyrender<0.2.0",
     # landlab depends on `setuptools` but doesn't explicitly list it as a
     # dependency; We include it to avoid problems with newer Python versions.
     "setuptools"
@@ -166,6 +170,9 @@ ignore = [
     "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
 ]
 "infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
 
 [tool.pytype]
 inputs = ['infinigen', 'infinigen_examples']

@@ -10,13 +10,13 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import color_category
 from infinigen.core.util.math import FixedSeed
 
 
@@ -1583,13 +1583,13 @@ class LeafFactoryV2(AssetFactory):
             t = uniform(0.0, 1.0)
 
             if t < 0.8:
-                self.blade_color = color_category("greenery")
+                self.blade_color_hsv = colors.plant_green()
             elif t < 0.9:
-                self.blade_color = color_category("yellowish")
+                self.blade_color_hsv = colors.plant_yellow()
             else:
-                self.blade_color = color_category("red")
+                self.blade_color_hsv = colors.plant_red()
 
-            self.blight_color = color_category("yellowish")
+            self.blight_color_hsv = colors.plant_yellow()
             self.vein_color_mix_factor = uniform(0.2, 0.6)
 
     @staticmethod
@@ -1656,12 +1656,12 @@ class LeafFactoryV2(AssetFactory):
         ]
 
         material_kwargs = phenome.copy()
-        material_kwargs["blade_color"] = self.blade_color
+        material_kwargs["blade_color"] = list(colors.hsv2rgba(self.blade_color_hsv))
         material_kwargs["blade_color"][0] += np.random.normal(0.0, 0.03)
         material_kwargs["blade_color"][1] += np.random.normal(0.0, 0.03)
         material_kwargs["blade_color"][2] += np.random.normal(0.0, 0.03)
 
-        material_kwargs["blight_color"] = self.blight_color
+        material_kwargs["blight_color"] = colors.hsv2rgba(self.blight_color_hsv)
 
         material_kwargs["vein_color_mix_factor"] = self.vein_color_mix_factor
         material_kwargs["blight_weight"] = np.random.binomial(1, 0.1)
