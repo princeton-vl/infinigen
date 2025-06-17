@@ -202,3 +202,4 @@ v1.13.1
 
 v1.14.0
 - Add option to densely subdivide room meshes using OcMesher
+- Add RRT-Star camera pathfinding for video viewpoint animation

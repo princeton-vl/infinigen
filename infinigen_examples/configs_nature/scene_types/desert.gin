@@ -19,8 +19,6 @@ compose_nature.dust_particles_chance = 0.0
 atmosphere_light_haze.shader_atmosphere.density = ("uniform", 0, 0.0015)
 atmosphere_light_haze.shader_atmosphere.anisotropy = 0
 
-animate_cameras.follow_poi_chance=0.5
-
 compose_nature.ground_creatures_chance = 1.0
 compose_nature.ground_creature_registry = [
     (@SnakeFactory, 1)

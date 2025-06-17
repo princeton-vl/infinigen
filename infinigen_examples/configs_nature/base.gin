@@ -70,7 +70,6 @@ SphericalMesher.r_min = %min_terrain_distance
 
 build_terrain_bvh_and_attrs.avoid_border = False # disabled due to crashes 5/15
 
-animate_cameras.follow_poi_chance=0.0
 camera.camera_pose_proposal.altitude = ("weighted_choice",
     (0.975, ("clip_gaussian", 2, 0.3, 0.5, 3)), # person height usually
     (0.025, ("clip_gaussian", 15, 7, 5, 30)) # drone height sometimes

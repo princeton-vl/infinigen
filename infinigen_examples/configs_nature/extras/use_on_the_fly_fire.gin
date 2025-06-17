@@ -10,7 +10,6 @@ compose_nature.glowing_rocks_chance = 0.0
 compose_nature.cached_fire = False
 LandTiles.land_processes = None
 #scene.voronoi_rocks_chance = 1
-#animate_cameras.follow_poi_chance=0
 
 configure_render_cycles.exposure = 0.4
 
