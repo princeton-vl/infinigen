@@ -114,14 +114,17 @@
     },
     "metadata": {
         "joint1": {
+            "joint label": "door_handle",
             "parent body label": "joint1parent",
             "child body label": "joint1child"
         },
         "joint4": {
+            "joint label": "door_handle",
             "parent body label": "joint4parent",
             "child body label": "joint4child"
         },
         "joint0": {
+            "joint label": "door_hinge",
             "parent body label": "joint0parent",
             "child body label": "joint0child"
         }
