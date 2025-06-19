@@ -1,8 +1,15 @@
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+
+from .joint_utils import nodegroup_sliding_joint
+
 
 @node_utils.to_nodegroup(
     "nodegroup_beveled_cylinder", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_beveled_cylinder(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -71,6 +78,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_handle_end", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_handle_end(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -96,6 +106,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         Nodes.ResampleCurve, input_kwargs={"Curve": quadrilateral_1, "Count": 8}
     )
 
+    index = nw.new_node(Nodes.Index)
 
     greater_equal = nw.new_node(
         Nodes.Compare,
@@ -187,6 +198,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_push_bar_handle", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_push_bar_handle(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -288,9 +302,11 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_6 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["total_length"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: multiply})
 
     multiply_7 = nw.new_node(
         Nodes.Math, input_kwargs={0: add, 1: 0.9500}, attrs={"operation": "MULTIPLY"}
@@ -307,8 +323,10 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_max_1 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["bar_aspect_ratio"], 1: multiply_2},
         attrs={"operation": "MULTIPLY"},
     )
+
     multiply_max_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: multiply_max_1, 1: 0.5},
@@ -357,6 +375,10 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
     )
 
+    # transform_geometry_2 = nw.new_node(Nodes.Transform,
+    #     input_kwargs={'Geometry': transform_geometry_1.outputs["Geometry"], 'Translation': combine_xyz_2, 'Scale': (1.0000, -1.0000, 1.0000)})
+
+    # flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={'Mesh': transform_geometry_2})
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
@@ -365,16 +387,57 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
     )
 
 
+# def nodegroup_push_bar_handle_warper(
+#     nw,
+#     bar_length,
+#     thickness,
+#     bar_aspect_ratio,
+#     bar_height_ratio,
+#     bar_length_ratio,
+#     end_length_ratio,
+#     end_height_ratio,
+#     overall_x,
+#     overall_y,
+#     overall_z,
+#     mat=None
+# ):
+#     # Code generated using version 2.6.5 of the node_transpiler
 
+#     # bar_length = nw.new_node(Nodes.Value, label='bar_length')
+#     # bar_length.outputs[0].default_value = 1.0000
 
+#     # thickness = nw.new_node(Nodes.Value, label='thickness')
+#     # thickness.outputs[0].default_value = 0.1000
 
+#     # bar_aspect_ratio = nw.new_node(Nodes.Value, label='bar_aspect_ratio')
+#     # bar_aspect_ratio.outputs[0].default_value = 0.5000
 
+#     # bar_height_ratio = nw.new_node(Nodes.Value, label='bar_height_ratio')
+#     # bar_height_ratio.outputs[0].default_value = 0.8000
 
+#     # bar_length_ratio = nw.new_node(Nodes.Value, label='bar_length_ratio')
+#     # bar_length_ratio.outputs[0].default_value = 0.8000
 
+#     # end_length_ratio = nw.new_node(Nodes.Value, label='end_length_ratio')
+#     # end_length_ratio.outputs[0].default_value = 0.0800
+
+#     # end_height_ratio = nw.new_node(Nodes.Value, label='end_height_ratio')
+#     # end_height_ratio.outputs[0].default_value = 2.0000
+
+#     pushbarhandle = nw.new_node(nodegroup_push_bar_handle().name,
 #         input_kwargs={'total_length': bar_length,
 #             'thickness': thickness,
+#             'bar_aspect_ratio': bar_aspect_ratio,
 #             'bar_height_ratio': bar_height_ratio,
 #             'bar_length_ratio': bar_length_ratio,
 #             'end_length_ratio': end_length_ratio,
+#             'end_height_ratio': end_height_ratio})
+
+#     # todo: set material
+
+#     transform_geometry = nw.new_node(Nodes.Transform,
+#         input_kwargs={'Geometry': pushbarhandle.outputs["Geometry"], 'Translation': (overall_x, overall_y, overall_z), 'Scale': (1.0000, -1.0000, 1.0000)})
+
+#     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={'Mesh': transform_geometry})
 
 #     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': flip_faces}, attrs={'is_active_output': True})
