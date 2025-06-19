@@ -1,14 +1,21 @@
+import bpy
 
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+
 
 @node_utils.to_nodegroup(
     "nodegroup_add_geometry_metadata", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_add_geometry_metadata(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
+            ("NodeSocketInt", "Value", 1),
         ],
     )
 
@@ -17,6 +24,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         input_kwargs={
             "Geometry": group_input.outputs["Geometry"],
             "Name": group_input.outputs["Label"],
+            "Value": group_input.outputs["Value"],
         },
         attrs={"data_type": "INT"},
     )
@@ -31,6 +39,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_symmetry_along_y", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_symmetry_along_y(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
     )
@@ -44,9 +55,18 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         Nodes.FlipFaces, input_kwargs={"Mesh": transform_geometry_2}
     )
 
+    handle_1 = nw.new_node(
+        nodegroup_add_geometry_metadata().name,
         input_kwargs={"Geometry": group_input, "Label": "handle", "Value": 1},
+    )
+
+    handle_2 = nw.new_node(
+        nodegroup_add_geometry_metadata().name,
         input_kwargs={"Geometry": flip_faces, "Label": "handle", "Value": 2},
+    )
+
     join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [handle_1, handle_2]}
     )
 
     group_output = nw.new_node(
@@ -56,6 +76,10 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
     )
 
 
+def nodegroup_arc_on_door_warper(
+    nw,
+    door_width,
+    door_depth,
 ):
     arc_on_door = nw.new_node(
         nodegroup_arc_on_door().name,
@@ -65,9 +89,14 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
     group_output = nw.new_node(
         Nodes.GroupOutput, input_kwargs={"Geometry": arc_on_door.outputs["Geometry"]}
     )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_arc_on_door", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_arc_on_door(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -78,6 +107,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["door_depth"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -131,6 +161,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"is_active_output": True},
     )
 
+
+def nodegroup_door_frame_warper(
     nw, full_frame, top_dome, door_width, door_height, door_depth, frame_width
 ):
     door_frame = nw.new_node(
@@ -153,6 +185,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_door_frame", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_door_frame(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -300,6 +335,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_4 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["frame_width"], 1: 1.4142},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -328,11 +364,13 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_5 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["frame_width"], 1: 1.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_6 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["frame_width"], 1: -1.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -353,6 +391,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_8 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["full_frame"], 1: multiply_7},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -364,9 +403,11 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_10 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["frame_width"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
 
+    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_9, 1: multiply_10})
 
     multiply_11 = nw.new_node(
         Nodes.Math,
@@ -376,11 +417,13 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_12 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["top_dome"], 1: multiply_11},
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_13 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["full_frame"], 1: multiply_12},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -393,7 +436,12 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
         attrs={"is_active_output": True},
     )
+
+
 @node_utils.to_nodegroup("Hinge Joint", singleton=False, type="GeometryNodeTree")
+def nodegroup_hinge_joint(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -420,6 +468,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"data_type": "INT"},
     )
 
+    integer = nw.new_node(Nodes.Integer)
+    integer.integer = 0
 
     switch_2 = nw.new_node(
         Nodes.Switch,
@@ -485,6 +535,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"data_type": "INT"},
     )
 
+    integer_1 = nw.new_node(Nodes.Integer)
+    integer_1.integer = 1
 
     add = nw.new_node(
         Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
@@ -554,6 +606,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     greater_than = nw.new_node(
         Nodes.Compare,
+        input_kwargs={1: 1.0000, 2: attribute_statistic_7.outputs["Sum"]},
         attrs={"data_type": "INT"},
     )
 
@@ -601,16 +654,20 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     equal_2 = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
+    position_4 = nw.new_node(Nodes.InputPosition)
 
+    position_1 = nw.new_node(Nodes.InputPosition)
 
     bounding_box = nw.new_node(
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_2 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -647,6 +704,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"data_type": "BOOLEAN"},
     )
 
+    position_3 = nw.new_node(Nodes.InputPosition)
 
     named_attribute_12 = nw.new_node(
         Nodes.NamedAttribute,
@@ -681,6 +739,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
     )
 
+    position_2 = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_5 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -735,6 +794,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"operation": "EQUAL"},
     )
 
+    op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_4, 1: equal_5})
 
     clamp = nw.new_node(
         Nodes.Clamp,
@@ -1026,6 +1086,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         input_kwargs={"Geometry": separate_geometry_5.outputs["Selection"]},
     )
 
+    position_7 = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_9 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -1075,6 +1136,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
     )
 
+    position_8 = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_11 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -1104,6 +1166,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     normalize = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: attribute_statistic_12.outputs["Mean"]},
         attrs={"operation": "NORMALIZE"},
     )
 
@@ -1208,6 +1271,10 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"is_active_output": True},
     )
 
+
+def geometry_node_join(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     object_info_2 = nw.new_node(
         Nodes.ObjectInfo, input_kwargs={"Object": bpy.data.objects["Cube.001"]}
     )
@@ -1256,6 +1323,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
 @node_utils.to_nodegroup("Sliding Joint", singleton=False, type="GeometryNodeTree")
+def nodegroup_sliding_joint(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -1282,6 +1352,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"data_type": "INT"},
     )
 
+    integer = nw.new_node(Nodes.Integer)
+    integer.integer = 0
 
     switch_2 = nw.new_node(
         Nodes.Switch,
@@ -1359,6 +1431,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"data_type": "INT"},
     )
 
+    integer_1 = nw.new_node(Nodes.Integer)
+    integer_1.integer = 1
 
     add = nw.new_node(
         Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
@@ -1418,6 +1492,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     bounding_box_3 = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": reroute})
 
+    position_7 = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_9 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -1463,6 +1538,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     normalize = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: attribute_statistic_5.outputs["Mean"]},
         attrs={"operation": "NORMALIZE"},
     )
 
@@ -1529,6 +1605,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
     attribute_statistic_2 = nw.new_node(
         Nodes.AttributeStatistic,
@@ -1577,6 +1654,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     greater_than = nw.new_node(
         Nodes.Compare,
+        input_kwargs={1: 1.0000, 2: attribute_statistic_7.outputs["Sum"]},
         attrs={"data_type": "INT"},
     )
 
@@ -1624,10 +1702,13 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     equal_2 = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
+    position_4 = nw.new_node(Nodes.InputPosition)
 
+    position_1 = nw.new_node(Nodes.InputPosition)
 
     add_2 = nw.new_node(
         Nodes.VectorMath,
@@ -1667,6 +1748,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"operation": "EQUAL"},
     )
 
+    op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_3, 1: equal_4})
 
     clamp = nw.new_node(
         Nodes.Clamp,
@@ -1693,6 +1775,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"operation": "SCALE"},
     )
 
+    position_5 = nw.new_node(Nodes.InputPosition)
 
     add_3 = nw.new_node(
         Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: position_5}
