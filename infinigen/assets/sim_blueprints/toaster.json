@@ -104,14 +104,17 @@
     },
     "metadata": {
         "joint0": {
+            "joint label": "button",
             "parent body label": "joint0parent",
             "child body label": "joint0child"
         },
         "joint1": {
+            "joint label": "knob",
             "parent body label": "joint1parent",
             "child body label": "joint1child"
         },
         "joint3": {
+            "joint label": "slider",
             "parent body label": "joint3parent",
             "child body label": "joint3child"
         }
