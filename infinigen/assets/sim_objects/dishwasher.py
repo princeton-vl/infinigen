@@ -19,10 +19,13 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
 
+
 @node_utils.to_nodegroup(
     "nodegroup_dish_rack", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_dish_rack(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     quadrilateral = nw.new_node("GeometryNodeCurvePrimitiveQuadrilateral")
 
     store_named_attribute = nw.new_node(
@@ -44,6 +47,7 @@ def nodegroup_dish_rack(nw: NodeWrangler):
         input_kwargs={"Geometry": curve_line, "Name": "joint12"},
         attrs={"data_type": "INT"},
     )
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -3065,6 +3069,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
             "Value": group_input.outputs["Max"],
         },
     )
+
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={
@@ -3076,6 +3081,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
             ]
         },
     )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
@@ -3085,6 +3091,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
         },
         attrs={"is_active_output": True},
     )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_duplicate_joints_on_parent_002", singleton=False, type="GeometryNodeTree"
@@ -3871,6 +3878,7 @@ def geometry_nodes(nw: NodeWrangler):
         Nodes.SetPosition,
         input_kwargs={"Geometry": nodegroup_dish_rack_no_gc, "Offset": reroute_56},
     )
+
     set_material_5 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": set_position_2, "Material": reroute_70},
@@ -4048,13 +4056,19 @@ def sample_silver():
     rgb = hsv2rgba(h, s, v)
     return rgb
 
+
 class DishwasherFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
         self.sim_blueprint = blueprint_path_completion("dishwasher.json")
+
+    def sample_parameters(self):
         with FixedSeed(self.factory_seed):
+            # add code here to randomly sample from parameters
             depth = U(1.0, 1.5)
             width = U(1.2, 1.6)
             height = U(1.7, 2.1)
+            door_thickness = U(0.05, 0.07) * depth
             rack_radius = U(0.015, 0.02)
             rack_h_amount = np.random.choice([1, 2, 3])
             buttons_amount = RI(0, 6)
@@ -4062,9 +4076,14 @@ class DishwasherFactory(AssetFactory):
             ElementAmountRack = RI(3, 6)  # Number of elements on the rack
             RackHeight = U(0.18, 0.3)  # Height of the rack elements
             racks_depth = U(0.3, 0.5)  # Depth of the racks
+            handle_variations_x = U(1, 1.9)
+            handle_variations_y = U(1, 1.15)
             handle_type = RI(0, 2)  # 0 for round, 1 for square
+            Radius = U(0.03, 0.04)
             handle_position = U(0.1, 0.2)  # Position of the handle
+            button_position = RI(0, 1)
             curved_handle = RI(0, 1)
+            # material_assignments = AssetList["DishwasherFactory"]()
             body_mat = np.random.choice(
                 [metal.get_shader(), plastic.get_shader(translucent=0.2)], p=[0.5, 0.5]
             )
@@ -4089,10 +4108,25 @@ class DishwasherFactory(AssetFactory):
                     get_all_metal_shaders(sample_light_exterior())
                 )
 
+            params = {
+                "Depth": depth,
+                "Width": width,
+                "Height": height,
+                "DoorThickness": door_thickness,
+                "RackRadius": rack_radius,
+                "RackAmount": rack_h_amount,
                 "button_type": button_type,
+                "buttons_amount": buttons_amount,
                 "ElementAmountRack": ElementAmountRack,
                 "RackHeight": RackHeight,
+                "racks_depth": racks_depth,
+                "handle_variations_x": handle_variations_x,
+                "handle_variations_y": handle_variations_y,
+                "handle_type": handle_type,
                 "Radius": Radius,
+                "handle_position": handle_position,
+                "button_position": button_position,
+                "curved_handle": curved_handle,
                 "Surface": surface.shaderfunc_to_material(
                     body_mat, metal_color="bw+natural"
                 ),
@@ -4108,7 +4142,17 @@ class DishwasherFactory(AssetFactory):
                 "Buttons": surface.shaderfunc_to_material(
                     knob_mat_2, metal_color="bw+natural"
                 ),
+            }
+            return params
+
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
             apply=export,
+            node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
+        )
+
         return obj
