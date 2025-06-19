@@ -1,3 +1,4 @@
+"""
 # INSTRUCTIONS FOR USE IN BLENDER
 # Create a blender file at repo_root/worldgen/dev_scene.blend
 # Click the 'Scripting' Tab, then + to make a new empty script
@@ -12,6 +13,7 @@ import numpy as np
 pwd = Path(bpy.data.filepath).parent
 if not str(pwd) in sys.path:
     sys.path.append(str(pwd))
+
 import gin
 gin.clear_config()
 gin.enter_interactive_mode()
@@ -38,6 +40,7 @@ blender.clear_scene(keep=['Camera', 'UV', 'Plane', 'Reference', 'Example', 'Dev'
 
 get_factory = lambda _: generate.CreatureFactory(np.random.randint(1e5))
 dev_script.main(get_factory=get_factory, species=3, n=1, spacing=2,
+    join=False,
     remesh=False,
     rigging=False,
     pose=False,
@@ -49,13 +52,17 @@ dev_script.main(get_factory=get_factory, species=3, n=1, spacing=2,
 )
 
 
+"""
 
 import bpy
 import mathutils
+import numpy as np
 from tqdm import tqdm
 
 
+def main(get_factory, species=9, n=16, spacing=4, one_row=False, **kwargs):
     import timeit
+
     start = timeit.default_timer()
 
     if one_row:
@@ -66,14 +73,26 @@ from tqdm import tqdm
         inst_row = int(np.sqrt(n))
     spec_spacing = (inst_row + 1) * spacing
 
+    # spec_row = inst_row = 1
 
     cam = bpy.context.scene.camera
+    pbar = tqdm(total=species * n)
     for spec in range(species):
         all_objs = []
         factory = get_factory(spec)
+        base_pos = spec_spacing * mathutils.Vector(
+            (spec % spec_row, spec // spec_row, 0)
+        )
         for i in range(n):
+            loc = base_pos + spacing * mathutils.Vector(
+                (i % inst_row, i // inst_row, 0)
+            )
             distance = (cam.location - loc).length if cam else 0.1
+            obj = factory(
+                i=i, loc=loc, rot=mathutils.Euler(), distance=distance, **kwargs
+            )
             all_objs.append(obj)
             pbar.update(1)
         factory.finalize_assets(all_objs)
     time = timeit.default_timer() - start
+    print(f"{time:.2f}s for {n} objects, {time/(n):.2f} per object")
