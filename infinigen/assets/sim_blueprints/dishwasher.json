@@ -1,0 +1,142 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "joint0"
+            }
+        },
+        "joint0": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+            }
+        },
+        "switch0": {
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+                "0": "duplicate0",
+                "1": "joint1",
+                "0": "joint1"
+            }
+        },
+        "joint1": {
+            "kinematic_type": 0,
+            "children": {
+            }
+        },
+            "kinematic_type": 0,
+            "children": {
+            }
+        },
+            "kinematic_type": 0,
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+                "0": "joint7"
+            }
+        },
+        "joint7": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+            }
+        },
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+                "0": "joint8",
+            }
+        },
+        "joint8": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+            }
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+                "0": "joint8",
+                "1": "joint8"
+            }
+        },
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+            }
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint9": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "joint10",
+            }
+        },
+        "joint10": {
+            "kinematic_type": 0,
+            "children": {
+            }
+        },
+            "joint_type": -1,
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+            "joint_type": -1,
+        },
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "joint1": {
+            "joint label": "joint1",
+            "parent body label": "joint1parent",
+            "child body label": "joint1child"
+        }
+    },
+    "name": "dishwasher"
+}
