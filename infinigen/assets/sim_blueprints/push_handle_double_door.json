@@ -103,5 +103,10 @@
             "child body label": "joint0child"
         }
     },
+    "labels": [
+        "handle",
+        "door",
+        "door_frame"
+    ],
     "name": "double_door"
 }
