@@ -1,3 +1,4 @@
+import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.materials import metal, plastic, wood
@@ -5,9 +6,18 @@ from infinigen.assets.objects.elements.doors.joint_utils import (
     nodegroup_hinge_joint,
     nodegroup_sliding_joint,
 )
+from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
+from infinigen.core.util.paths import blueprint_path_completion
+
+
+def nodegroup_carriage_flat(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     curve_line_1 = nw.new_node(
         Nodes.CurveLine,
         input_kwargs={
@@ -72,6 +82,10 @@ from infinigen.core.util.math import FixedSeed
         attrs={"is_active_output": True},
     )
 
+
+def nodegroup_carriage_sphere(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     uv_sphere = nw.new_node(
         Nodes.MeshUVSphere, input_kwargs={"Segments": 64, "Rings": 32}
     )
@@ -90,6 +104,10 @@ from infinigen.core.util.math import FixedSeed
         input_kwargs={"Geometry": transform_geometry_3},
         attrs={"is_active_output": True},
     )
+
+
+def nodegroup_carriage_eroded_sphere(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
 
     uv_sphere = nw.new_node(
         Nodes.MeshUVSphere, input_kwargs={"Segments": 64, "Rings": 32}
@@ -144,6 +162,10 @@ from infinigen.core.util.math import FixedSeed
         attrs={"is_active_output": True},
     )
 
+
+def nodegroup_carriage_cylider(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={"Vertices": 16, "Side Segments": 12, "Fill Segments": 2},
@@ -169,6 +191,10 @@ from infinigen.core.util.math import FixedSeed
         attrs={"is_active_output": True},
     )
 
+
+def nodegroup_carriage_half_cylinder(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={"Side Segments": 12, "Fill Segments": 2},
@@ -183,6 +209,7 @@ from infinigen.core.util.math import FixedSeed
         },
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
@@ -244,6 +271,9 @@ from infinigen.core.util.math import FixedSeed
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -272,6 +302,9 @@ from infinigen.core.util.math import FixedSeed
 @node_utils.to_nodegroup(
     "nodegroup_duplicate_joints_on_parent", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_duplicate_joints_on_parent(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -297,7 +330,9 @@ from infinigen.core.util.math import FixedSeed
 
     reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
 
+    index_1 = nw.new_node(Nodes.Index)
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: index_1, 1: 1.0000})
 
     store_named_attribute_1 = nw.new_node(
         Nodes.StoreNamedAttribute,
@@ -331,6 +366,9 @@ from infinigen.core.util.math import FixedSeed
 
 
 @node_utils.to_nodegroup("nodegroup_toaster", singleton=False, type="GeometryNodeTree")
+def nodegroup_toaster(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     string = nw.new_node("FunctionNodeInputString", attrs={"string": "duplicate0"})
 
     string_1 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint0"})
@@ -345,6 +383,7 @@ from infinigen.core.util.math import FixedSeed
 
     group_input = nw.new_node(
         Nodes.GroupInput,
+        expose_input=[
             ("NodeSocketGeometry", "carriage_object", None),
             ("NodeSocketInt", "num_slots", 2),
             ("NodeSocketVector", "carriage_dimensions", (1.0000, 1.0000, 1.0000)),
@@ -380,6 +419,7 @@ from infinigen.core.util.math import FixedSeed
         Nodes.Math, input_kwargs={0: reroute_3}, attrs={"operation": "MULTIPLY"}
     )
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 0.2500})
 
     map_range_4 = nw.new_node(
         Nodes.MapRange,
@@ -412,6 +452,7 @@ from infinigen.core.util.math import FixedSeed
         Nodes.ResampleCurve, input_kwargs={"Curve": curve_line, "Count": 128}
     )
 
+    position_1 = nw.new_node(Nodes.InputPosition)
 
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_1})
 
@@ -475,6 +516,7 @@ from infinigen.core.util.math import FixedSeed
         Nodes.Transform, input_kwargs={"Geometry": resample_curve_1}
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
@@ -527,6 +569,7 @@ from infinigen.core.util.math import FixedSeed
 
     multiply_3 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["num_slots"], 1: 0.4500},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -586,6 +629,7 @@ from infinigen.core.util.math import FixedSeed
 
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": add_1})
 
+    position_2 = nw.new_node(Nodes.InputPosition)
 
     separate_xyz_2 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_2})
 
@@ -610,6 +654,7 @@ from infinigen.core.util.math import FixedSeed
 
     less_than = nw.new_node(
         Nodes.Compare,
+        input_kwargs={0: map_range_7.outputs["Result"], 1: 0.8000},
         attrs={"operation": "LESS_THAN"},
     )
 
@@ -639,6 +684,7 @@ from infinigen.core.util.math import FixedSeed
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["double slots"]}
     )
 
+    index = nw.new_node(Nodes.Index)
 
     multiply_add = nw.new_node(
         Nodes.Math,
@@ -665,6 +711,7 @@ from infinigen.core.util.math import FixedSeed
         attrs={"data_type": "INT"},
     )
 
+    index_2 = nw.new_node(Nodes.Index)
 
     map_range_1 = nw.new_node(
         Nodes.MapRange, input_kwargs={"Value": index_2, 3: -0.2500, 4: 0.2500}
@@ -708,6 +755,7 @@ from infinigen.core.util.math import FixedSeed
 
     multiply_5 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["slot depth"], 1: 2.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -763,8 +811,10 @@ from infinigen.core.util.math import FixedSeed
     )
 
     carriage_slit_width = nw.new_node(Nodes.Value, label="carriage slit width")
+    carriage_slit_width.outputs[0].default_value = 0.0650
 
     carriage_slit_depth = nw.new_node(Nodes.Value, label="carriage slit depth")
+    carriage_slit_depth.outputs[0].default_value = 0.2000
 
     multiply_6 = nw.new_node(
         Nodes.Math,
@@ -773,6 +823,7 @@ from infinigen.core.util.math import FixedSeed
     )
 
     carriage_slit_height = nw.new_node(Nodes.Value, label="carriage slit height")
+    carriage_slit_height.outputs[0].default_value = 1.2000
 
     combine_xyz_5 = nw.new_node(
         Nodes.CombineXYZ,
@@ -1061,6 +1112,7 @@ from infinigen.core.util.math import FixedSeed
         Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_2, "Count": 128}
     )
 
+    spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     float_curve_1 = nw.new_node(
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
@@ -1083,6 +1135,7 @@ from infinigen.core.util.math import FixedSeed
         "GeometryNodeCurvePrimitiveQuadrilateral", input_kwargs={"Width": reroute_6}
     )
 
+    add_2 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_6, 1: 2.0000})
 
     multiply_7 = nw.new_node(
         Nodes.Math, input_kwargs={0: add_2, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
@@ -1173,6 +1226,7 @@ from infinigen.core.util.math import FixedSeed
         },
     )
 
+    index_1 = nw.new_node(Nodes.Index)
 
     subtract_3 = nw.new_node(
         Nodes.Math,
@@ -1182,6 +1236,7 @@ from infinigen.core.util.math import FixedSeed
 
     multiply_8 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input.outputs["base side shape param"], 1: -0.3500},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -1196,6 +1251,7 @@ from infinigen.core.util.math import FixedSeed
 
     multiply_9 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: subtract_3, 1: map_range_5.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -1207,6 +1263,7 @@ from infinigen.core.util.math import FixedSeed
 
     multiply_11 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: index_1, 1: group_input.outputs["button vertical interval"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -1258,6 +1315,9 @@ from infinigen.core.util.math import FixedSeed
 
 
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
+def geometry_nodes(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -1282,6 +1342,12 @@ from infinigen.core.util.math import FixedSeed
             ("NodeSocketMaterial", "carriage mat", None),
         ],
     )
+
+    # toaster = nw.new_node(nodegroup_toaster().name,
+    #     input_kwargs={
+    #         'num_slots': group_input.outputs['num_slots']
+    #      })
+
     toaster = nw.new_node(
         nodegroup_toaster().name,
         input_kwargs={
@@ -1301,13 +1367,37 @@ from infinigen.core.util.math import FixedSeed
             "base side shape param": 0.2800,
         },
     )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": toaster},
         attrs={"is_active_output": True},
     )
+
+
 class ToasterFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False, use_transparent_mat=False):
+        super().__init__(factory_seed=factory_seed, coarse=coarse)
+        # super().__init__(factory_seed=None, coarse=False)
         self.sim_blueprint = blueprint_path_completion("toaster.json")
+        self.use_transparent_mat = use_transparent_mat
+
+    def sample_parameters(self):
+        # add code here to randomly sample from parameters
+        with FixedSeed(self.factory_seed):
+            toaster_length = uniform(1.2, 1.6)
+
+            if self.use_transparent_mat:
+                translucent = 0.2
+            else:
+                translucent = 0.0
+
+            # body_mat_1 = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.4, 0.6])
+            # body_mat_2 = np.random.choice([body_mat_1, metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.3, 0.2, 0.5])
+            # button_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
+            # knob_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
+            # carriage_mat = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
+
             body_mat_1 = np.random.choice(
                 [metal.get_shader(), plastic.get_shader(translucent=translucent)],
                 p=[0.9, 0.1],
@@ -1344,9 +1434,13 @@ class ToasterFactory(AssetFactory):
                 ],
                 p=[0.9, 0.05, 0.05],
             )
+
+            button_side = np.random.choice([-1.0, 1.0])
             knob_side = np.random.choice(
                 [0.0, -button_side]
             )  # should be different side or center
+
+            # create carriage obj
             carriage_style = np.random.choice(
                 [
                     nodegroup_carriage_cylider,
@@ -1356,7 +1450,13 @@ class ToasterFactory(AssetFactory):
                     nodegroup_carriage_flat,
                 ]
             )
+
+            self.carriage_obj = butil.spawn_vert()
+            surface.add_geomod(
                 self.carriage_obj, carriage_style, apply=True, input_kwargs={}
+            )
+
+            return {
                 "num_slots": np.random.choice([1, 2, 3], p=[0.3, 0.6, 0.1]),
                 "carriage_dimensions": (
                     uniform(0.8, 1.2),
@@ -1395,6 +1495,18 @@ class ToasterFactory(AssetFactory):
                 "carriage mat": surface.shaderfunc_to_material(
                     carriage_mat, metal_color="light"
                 ),
+            }
+
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+        ng_input = self.sample_parameters()
+        obj = self.carriage_obj
+
+        butil.modify_mesh(
+            obj,
+            "NODES",
             apply=export,
+            node_group=nodegroup_toaster(),
             ng_inputs=ng_input,
+        )
+
+        return obj
