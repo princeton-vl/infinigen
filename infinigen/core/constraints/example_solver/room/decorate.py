@@ -224,6 +224,8 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
             if wall_fn.__class__.__name__ == "Plaster":
                 for r in rooms__:
                     unwrap_normal(r, selection=None)
+            if wall_fn.__class__.__name__ == "Brick":
+                kwargs = {}
             surface.assign_material(rooms__, wall_fn(**kwargs))
 
     for w in walls:
@@ -317,15 +319,18 @@ def room_ceilings(ceilings):
 
 
 def room_floors(floors, n_floors=3):
-    floor_fns = list(
-        weighted_sample(room_floor_fns[room_type(r.name)])() for r in floors
-    )
+
+    floor_material_gens = []
+    for r in floors:
+        gen_class = weighted_sample(room_floor_fns[room_type(r.name)])
+        floor_material_gens.append(gen_class())
+
     logger.debug(
-        f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_fns)=}"
+        f"{room_floors.__name__} adding materials to {len(floors)=}, using {len(floor_material_gens)=}"
     )
 
-    for floor_fn in set(floor_fns):
-        rooms_ = [o for o, f in zip(floors, floor_fns) if f == floor_fn]
+    for floor_fn in set(floor_material_gens):
+        rooms_ = [o for o, f in zip(floors, floor_material_gens) if f == floor_fn]
         indices = np.random.randint(0, n_floors, len(rooms_))
         for i in range(n_floors):
             rooms__ = [r for r, j in zip(rooms_, indices) if j == i]
