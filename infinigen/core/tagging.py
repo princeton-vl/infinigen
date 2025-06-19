@@ -197,7 +197,7 @@ def print_segments_summary(obj: bpy.types.Object):
     print(f"Tag Segments Summary for {obj.name=}")
     for vi, mean in results:
         name = _name_for_tagval(vi)
-        print(f"  {mean*100:.1f}% {vi=} {name}")
+        print(f"  {mean * 100:.1f}% {vi=} {name}")
 
 
 def tag_object(obj, name=None, mask=None):
@@ -492,3 +492,54 @@ def tag_support_surfaces(obj, angle_threshold=0.1):
             process_object(child)
 
     process_object(obj)
+
+
+def extract_vertex_mask(
+    obj: bpy.types.Object, vertex_mask: np.array, nonempty=False
+) -> bpy.types.Object:
+    if not vertex_mask.any():
+        if nonempty:
+            raise ValueError(f"extract_vertex_mask({obj.name=}) got empty mask")
+        return butil.spawn_vert()
+
+    orig_hide_viewport = obj.hide_viewport
+    obj.hide_viewport = False
+
+    # Switch to Edit mode, duplicate the selection, and separate it
+    with butil.SelectObjects(obj, active=0):
+        with butil.ViewportMode(obj, "EDIT"):
+            bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type="VERT")
+            bpy.ops.mesh.select_all(action="DESELECT")
+
+        # select vertices based on the mask
+        for vert in obj.data.vertices:
+            vert.select = vertex_mask[vert.index]
+        if nonempty and len([v for v in obj.data.vertices if v.select]) == 0:
+            raise ValueError(
+                f"extract_vertex_mask({obj.name=}, {nonempty=}) failed to select vertices"
+            )
+
+        with butil.ViewportMode(obj, "EDIT"):
+            bpy.ops.mesh.duplicate_move()
+            bpy.ops.mesh.separate(type="SELECTED")
+
+        res = next((o for o in bpy.context.selected_objects if o != obj), None)
+
+    obj.hide_viewport = orig_hide_viewport
+
+    if nonempty:
+        if res is None:
+            raise ValueError(
+                f"extract_vertex_mask({obj.name=} got {res=} for {vertex_mask.mean()=})"
+            )
+        if len(res.data.vertices) == 0:
+            raise ValueError(
+                f"extract_vertex_mask({obj.name=}) got {res=} with {len(res.data.vertices)=}"
+            )
+    elif res is None:
+        logger.warning(
+            f"extract_vertex_mask({obj.name=}) failed to extract any vertices"
+        )
+        return butil.spawn_vert()
+
+    return res
