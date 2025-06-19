@@ -176,7 +176,7 @@ def geo_instance_scatter(
         Nodes.ObjectInfo, [base_obj], attrs={"transform_space": transform_space}
     ).outputs["Geometry"]
 
-    overall_density = nw.expose_input("Overall Density", val=density)
+    overall_density = nw.expose_input("Overall Density", val=density, dtype="VALUE")
     selection_val = surface.eval_argument(nw, selection)
     if isinstance(selection_val, tuple):
         selection_val, density_scalar = selection_val
