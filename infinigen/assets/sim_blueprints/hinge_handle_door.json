@@ -1,0 +1,48 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "joint0"
+            }
+        },
+        "joint0": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "visasset0",
+                "1": "joint1"
+            }
+        },
+        "visasset0": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint1": {
+            "kinematic_type": 0,
+            "children": {
+                "0": "visasset1",
+            }
+        },
+        "visasset1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "joint0": {
+            "joint label": "door_hinge",
+        },
+            "joint label": "door_handle",
+        }
+    },
+    "name": "door"
+}
