@@ -91,18 +91,22 @@
     },
     "metadata": {
         "joint1": {
+            "joint label": "door_hinge",
             "parent body label": "joint1parent",
             "child body label": "joint1child"
         },
         "joint3": {
+            "joint label": "door_handle",
             "parent body label": "joint3parent",
             "child body label": "joint3child"
         },
         "joint0": {
+            "joint label": "door_hinge",
             "parent body label": "joint0parent",
             "child body label": "joint0child"
         },
         "joint6": {
+            "joint label": "door_handle",
             "parent body label": "joint6parent",
             "child body label": "joint6child"
         }
@@ -112,4 +116,5 @@
         "door",
         "door_frame"
     ],
+    "name": "double_door"
 }
