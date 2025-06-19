@@ -1,5 +1,7 @@
 import functools
+
 import numpy as np
+
 from infinigen.assets.materials import fabrics, lamp_shaders, metal, plastic
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -8,9 +10,12 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
+
+
 @node_utils.to_nodegroup("nodegroup_bulb_003", singleton=False, type="GeometryNodeTree")
 def nodegroup_bulb_003(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     curve_line = nw.new_node(
         Nodes.CurveLine,
         input_kwargs={
@@ -83,7 +88,9 @@ def nodegroup_bulb_003(nw: NodeWrangler):
     resample_curve = nw.new_node(
         Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_1, "Count": 100}
     )
+
     spline_parameter = nw.new_node(Nodes.SplineParameter)
+
     float_curve = nw.new_node(
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
     )
@@ -149,12 +156,17 @@ def nodegroup_bulb_003(nw: NodeWrangler):
         input_kwargs={"Geometry": set_material, "Name": "joint13"},
         attrs={"data_type": "INT"},
     )
+
     curve_line_2 = nw.new_node(Nodes.CurveLine)
+
     resample_curve_1 = nw.new_node(
         Nodes.ResampleCurve, input_kwargs={"Curve": curve_line_2, "Count": 100}
     )
+
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": resample_curve_1})
+
     spline_parameter_1 = nw.new_node(Nodes.SplineParameter)
+
     float_curve_1 = nw.new_node(
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter_1.outputs["Factor"]}
     )
@@ -224,6 +236,7 @@ def nodegroup_bulb_003(nw: NodeWrangler):
 )
 def nodegroup_reversiable_bulb_003(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -305,6 +318,7 @@ def nodegroup_reversiable_bulb_003(nw: NodeWrangler):
 )
 def nodegroup_bulb_rack_003(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     curve_line = nw.new_node(
         Nodes.CurveLine,
         input_kwargs={
@@ -582,6 +596,7 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
 )
 def nodegroup_string_nodes_v2(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     string = nw.new_node("FunctionNodeInputString", attrs={"string": "joint17"})
 
     group_input = nw.new_node(
@@ -607,28 +622,36 @@ def nodegroup_string_nodes_v2(nw: NodeWrangler):
         input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Name": "joint17"},
         attrs={"data_type": "INT"},
     )
+
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.0150
+
     multiply_add = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["Depth"], 2: value},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add})
+
     multiply = nw.new_node(
         Nodes.Math, input_kwargs={0: value, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
     )
+
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["Length"], 1: multiply},
         attrs={"operation": "DIVIDE"},
     )
+
     float_to_integer = nw.new_node(Nodes.FloatToInt, input_kwargs={"Float": divide})
+
     multiply_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: float_to_integer, 1: multiply},
         attrs={"operation": "MULTIPLY"},
     )
+
     multiply_add_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["Depth"], 2: multiply_1},
@@ -737,20 +760,25 @@ def nodegroup_string_nodes_v2(nw: NodeWrangler):
         input_kwargs={0: group_input.outputs["RadialLength"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
+
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4})
+
     transform_geometry_1 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_2},
     )
+
     store_named_attribute_3 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={"Geometry": transform_geometry_1, "Name": "joint16", "Value": 1},
         attrs={"data_type": "INT"},
     )
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [store_named_attribute_2, store_named_attribute_3]},
     )
+
     multiply_5 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["RadialLength"], 1: 1.0000},
@@ -788,6 +816,7 @@ def nodegroup_string_nodes_v2(nw: NodeWrangler):
 )
 def nodegroup_node_group(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     cube_1 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": (2.0000, 1.0000, 1.0000)}
     )
@@ -831,6 +860,7 @@ def nodegroup_node_group(nw: NodeWrangler):
 )
 def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -856,8 +886,10 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
     )
+
     integer = nw.new_node(Nodes.Integer)
     integer.integer = 0
+
     switch_2 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -921,8 +953,10 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
     )
+
     integer_1 = nw.new_node(Nodes.Integer)
     integer_1.integer = 1
+
     add = nw.new_node(
         Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
     )
@@ -1042,13 +1076,18 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
+
     position_4 = nw.new_node(Nodes.InputPosition)
+
     position_1 = nw.new_node(Nodes.InputPosition)
+
     bounding_box = nw.new_node(
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
     )
+
     position = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_2 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -1083,7 +1122,9 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Geometry": set_position, "Name": "is_jointed", "Value": True},
         attrs={"data_type": "BOOLEAN"},
     )
+
     position_3 = nw.new_node(Nodes.InputPosition)
+
     named_attribute_12 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "part_id"},
@@ -1116,7 +1157,9 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
     )
+
     position_2 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_5 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -1169,7 +1212,9 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={0: group_input.outputs["Max"], "Epsilon": 0.0000},
         attrs={"operation": "EQUAL"},
     )
+
     op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_4, 1: equal_5})
+
     clamp = nw.new_node(
         Nodes.Clamp,
         input_kwargs={
@@ -1459,7 +1504,9 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_5.outputs["Selection"]},
     )
+
     position_7 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_9 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -1507,7 +1554,9 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
     )
+
     position_8 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_11 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -1647,6 +1696,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 )
 def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -1672,8 +1722,10 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
     )
+
     integer = nw.new_node(Nodes.Integer)
     integer.integer = 0
+
     switch_2 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -1749,8 +1801,10 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
     )
+
     integer_1 = nw.new_node(Nodes.Integer)
     integer_1.integer = 1
+
     add = nw.new_node(
         Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
     )
@@ -1808,7 +1862,9 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
     )
 
     bounding_box_3 = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": reroute})
+
     position_7 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_9 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -1919,7 +1975,9 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
     )
+
     position = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_2 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -2018,8 +2076,11 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
+
     position_4 = nw.new_node(Nodes.InputPosition)
+
     position_1 = nw.new_node(Nodes.InputPosition)
+
     add_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: position_1, 1: attribute_statistic_2.outputs["Mean"]},
@@ -2057,7 +2118,9 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={0: group_input.outputs["Max"], "Epsilon": 0.0000},
         attrs={"operation": "EQUAL"},
     )
+
     op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_3, 1: equal_4})
+
     clamp = nw.new_node(
         Nodes.Clamp,
         input_kwargs={
@@ -2082,7 +2145,9 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={0: transform_direction, "Scale": switch_5},
         attrs={"operation": "SCALE"},
     )
+
     position_5 = nw.new_node(Nodes.InputPosition)
+
     add_3 = nw.new_node(
         Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: position_5}
     )
@@ -2249,6 +2314,7 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
 )
 def nodegroup_lamp_head_final(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -2355,7 +2421,9 @@ def nodegroup_lamp_head_final(nw: NodeWrangler):
             "True": store_named_attribute,
         },
     )
+
     spline_parameter = nw.new_node(Nodes.SplineParameter)
+
     map_range = nw.new_node(
         Nodes.MapRange,
         input_kwargs={
@@ -2706,6 +2774,7 @@ def nodegroup_lamp_head_final(nw: NodeWrangler):
 )
 def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -2734,6 +2803,7 @@ def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
 def geometry_nodes(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -2946,33 +3016,43 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={2: group_input.outputs["ButtonType"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
+
     reroute_54 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonType"]}
     )
+
     greater_equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: reroute_54, 3: 2},
         attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
     )
+
     string_3 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint18"})
+
     reroute_29 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonR1"]}
     )
+
     reroute_31 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonH1"]}
     )
+
     cylinder_4 = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={"Radius": reroute_29, "Depth": reroute_31},
     )
+
     add_jointed_geometry_metadata_3 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": cylinder_4.outputs["Mesh"], "Label": "button"},
     )
+
     multiply_1 = nw.new_node(
         Nodes.Math, input_kwargs={1: reroute_31}, attrs={"operation": "MULTIPLY"}
     )
+
     combine_xyz_19 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
+
     transform_geometry_5 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -2980,13 +3060,17 @@ def geometry_nodes(nw: NodeWrangler):
             "Translation": combine_xyz_19,
         },
     )
+
     combine_xyz_36 = nw.new_node(Nodes.CombineXYZ)
+
     multiply_add = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["RackHeight"], 1: -2.0000, 2: 0.0000},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
     combine_xyz_35 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_add})
+
     switch_25 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -2996,7 +3080,9 @@ def geometry_nodes(nw: NodeWrangler):
         },
         attrs={"input_type": "VECTOR"},
     )
+
     combine_xyz_16 = nw.new_node(Nodes.CombineXYZ)
+
     combine_xyz_15 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"Y": 1.5700, "Z": 3.1400}
     )
@@ -3049,7 +3135,9 @@ def geometry_nodes(nw: NodeWrangler):
             "Translation": combine_xyz_20,
         },
     )
+
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ)
+
     reroute_21 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_1})
 
     reroute_42 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
@@ -3214,16 +3302,20 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={0: reroute_43, 1: 1.6000},
         attrs={"operation": "MULTIPLY"},
     )
+
     combine_xyz_25 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={"X": multiply_4, "Y": multiply_5, "Z": multiply_4},
     )
+
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_25})
+
     multiply_add_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_40, 2: 0.0000},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
     combine_xyz_26 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_1})
 
     transform_geometry_28 = nw.new_node(
@@ -3251,6 +3343,7 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={0: reroute_40, 2: multiply_6},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
     combine_xyz_23 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_2})
 
     transform_geometry_24 = nw.new_node(
@@ -3259,11 +3352,14 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     reroute_51 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_42})
+
     transform_geometry_25 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": transform_geometry_24, "Rotation": reroute_51},
     )
+
     combine_xyz_24 = nw.new_node(Nodes.CombineXYZ)
+
     transform_geometry_27 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -3363,7 +3459,9 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={"Geometry": transform_geometry_35, "Name": "joint21"},
         attrs={"data_type": "INT"},
     )
+
     nodegroup = nw.new_node(nodegroup_node_group().name)
+
     add_jointed_geometry_metadata_8 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": nodegroup, "Label": "button"},
@@ -3625,7 +3723,9 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={2: reroute_54, 3: 2},
         attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
     )
+
     string_8 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint26"})
+
     add = nw.new_node(
         Nodes.Math,
         input_kwargs={
@@ -3633,6 +3733,7 @@ def geometry_nodes(nw: NodeWrangler):
             1: group_input.outputs["Radius"],
         },
     )
+
     multiply_add_3 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: -2.0000, 1: add, 2: group_input.outputs["BaseRadius"]},
@@ -4070,6 +4171,9 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_8 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["FirstBarExtension"]}
     )
+
+    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_9, 1: reroute_8})
+
     cylinder_6 = nw.new_node(
         "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_6, "Depth": add_1}
     )
@@ -4154,6 +4258,7 @@ def geometry_nodes(nw: NodeWrangler):
 
     greater_equal_2 = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: reroute_54, 3: 2},
         attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
     )
 
@@ -4235,10 +4340,13 @@ def geometry_nodes(nw: NodeWrangler):
 
     multiply_11 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: bounding_box.outputs["Min"], 1: combine_xyz_3},
         attrs={"operation": "MULTIPLY"},
     )
+
     multiply_12 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: bounding_box.outputs["Max"], 1: combine_xyz_3},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -4486,22 +4594,30 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_11 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarExtension"]}
     )
+
+    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_10, 1: reroute_11})
+
     cylinder_9 = nw.new_node(
         "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_7, "Depth": add_3}
     )
+
     set_material_8 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": cylinder_9.outputs["Mesh"], "Material": reroute_28},
     )
+
     add_jointed_geometry_metadata_15 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": set_material_8, "Label": "bar"},
     )
+
     multiply_14 = nw.new_node(
         Nodes.Math, input_kwargs={0: reroute_10}, attrs={"operation": "MULTIPLY"}
     )
+
     multiply_add_6 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: reroute_11, 1: -0.5000, 2: multiply_14},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
@@ -4595,12 +4711,16 @@ def geometry_nodes(nw: NodeWrangler):
 
     multiply_16 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: bounding_box_1.outputs["Min"], 1: combine_xyz_4},
         attrs={"operation": "MULTIPLY"},
     )
+
     multiply_17 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: bounding_box_1.outputs["Max"], 1: combine_xyz_4},
         attrs={"operation": "MULTIPLY"},
     )
+
     add_4 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
@@ -4608,12 +4728,16 @@ def geometry_nodes(nw: NodeWrangler):
             1: multiply_17.outputs["Vector"],
         },
     )
+
     multiply_18 = nw.new_node(
         Nodes.Math, input_kwargs={0: reroute_7}, attrs={"operation": "MULTIPLY"}
     )
+
     combine_xyz_11 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_18})
+
     subtract = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: add_4.outputs["Vector"], 1: combine_xyz_11},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -4890,6 +5014,20 @@ def geometry_nodes(nw: NodeWrangler):
         input_kwargs={"Geometry": switch},
         attrs={"is_active_output": True},
     )
+
+
+def sample_lamp_parameters(lamp_type=None, materials={}):
+    """
+    Sample parameters for a procedural lamp.
+
+    Args:
+        lamp_type: Optional string to specify lamp type: 'standing', 'desk',
+                  'single_bar', 'single_bar_modern', 'double_bar', or None for random.
+
+    Returns:
+        Dictionary of lamp parameters.
+    """
+    if lamp_type is None:
         lamp_type = np.random.choice(
             [
                 "standing",
@@ -4902,6 +5040,14 @@ def geometry_nodes(nw: NodeWrangler):
             ],
             p=[0.2, 0.15, 0.15, 0.1, 0.1, 0.1, 0.2],
         )
+        # desk does not look good now
+        # lamp_type = np.random.choice([
+        #     'standing', 'single_bar', 'single_bar_modern',
+        #     'double_bar', 'double_bar_modern', 'short_second_bar'
+        # ])
+
+    # Initialize parameter dictionary with defaults
+    params = {
         "SingleHinge": False,
         "DoubleHinge": False,
         "FirstBarLength": 0.0,
@@ -4929,6 +5075,7 @@ def geometry_nodes(nw: NodeWrangler):
         "ButtonType": 0,
         "BaseSides": np.random.choice([40, 4, 6], p=[0.7, 0.2, 0.1]),
         "ShadeSides": np.random.choice([40, 4, 6], p=[0.7, 0.2, 0.1]),
+    }
     params["BaseButtonOffset"] = np.random.uniform(0.05, params["BaseRadius"] - 0.05)
     params["BaseMaterial"] = materials["base"]
     params["StandMaterial"] = materials["stand"]
@@ -4938,80 +5085,125 @@ def geometry_nodes(nw: NodeWrangler):
     params["LampRackMaterial"] = materials["lamp_rack"]
     params["MetalMaterial"] = materials["metal"]
 
+    def sample_button(button_type):
         params["BaseButtonOffset"] = np.random.uniform(0, 1)
+        match button_type:
+            case 0:
                 params["ButtonR1"] = np.random.uniform(0.02, 0.03)
                 params["ButtonH1"] = np.random.uniform(0.05, 0.08)
                 params["ButtonH2"] = np.random.uniform(0.2, 0.3)
+            case 1:
                 params["ButtonR1"] = np.random.uniform(0.03, 0.06)
                 params["ButtonR2"] = params["ButtonR1"] * np.random.uniform(0.6, 0.8)
                 params["ButtonH1"] = params["ButtonR1"] * np.random.uniform(0.5, 1.0)
+            case 2:
                 params["ButtonR1"] = np.random.uniform(0.02, 0.04)
                 params["ButtonR2"] = params["ButtonR1"] * np.random.uniform(0.6, 0.8)
                 params["ButtonH1"] = params["ButtonR1"] * np.random.uniform(0.5, 1.0)
                 params["ButtonH2"] = np.random.uniform(0.04, 0.1)
+            case 3:
                 params["ButtonR1"] = np.random.uniform(0.025, 0.04)
                 params["ButtonR2"] = params["ButtonR1"] * np.random.uniform(0.6, 0.9)
                 params["ButtonH1"] = 2
+
+    # Set parameters based on lamp type
     if lamp_type == "standing" or lamp_type == "desk":
         if lamp_type == "standing":
             params["Height"] = np.random.uniform(1.4, 1.85)
+        else:
+            # desk lamp
             params["Height"] = np.random.uniform(0.4, 0.9)
+
+        if np.random.rand() < 0.7:
+            # Traditional shade
             params["TopRadius"] = np.random.uniform(0.1, 0.2)
             params["BottomRadius"] = params["TopRadius"] * np.random.uniform(1.5, 2.5)
+        else:
+            # Cylindrical shade (similar top and bottom radius)
+            radius = np.random.uniform(0.1, 0.25)
             params["TopRadius"] = radius
             params["BottomRadius"] = radius
         params["RackHeight"] = -params["TopRadius"] - np.random.uniform(0.03, 0.3)
         params["ShadeHeight"] = params["RackHeight"] - np.random.uniform(0.0, 0.3)
+
         if lamp_type == "standing":
             params["ButtonOnLampShade"] = True
+        else:
             params["ButtonOnLampShade"] = (
                 False  # np.random.choice([True, False], p=[0.7, 0.3])
             )
         if params["ButtonOnLampShade"]:
             params["ButtonType"] = 0
             sample_button(params["ButtonType"])
+        else:
             params["IncludeButtonBase"] = not params["ButtonOnLampShade"]
             params["ButtonType"] = np.random.choice([1, 2, 3])
             sample_button(params["ButtonType"])
         params["IncludeLightBulb"] = True
+
     elif lamp_type == "single_bar":
         params["SingleHinge"] = True
+        if np.random.rand() < 0.7:
+            # has extension
             params["FirstBarLength"] = np.random.uniform(0.5, 1.0)
             params["FirstBarExtension"] = params["FirstBarLength"] * np.random.uniform(
                 0.2, 0.8
             )
+        else:
+            # no extension
             params["FirstBarLength"] = np.random.uniform(0.6, 1.0)
             params["FirstBarExtension"] = 0.0
+
         params["Height"] = np.random.uniform(0.6, 1.4)
+        # Adjust base radius for stability based on height
         params["BaseRadius"] = np.random.uniform(0.1, 0.25)
         if params["Height"] > 1.0:
             params["BaseRadius"] = max(params["BaseRadius"], 0.15)
+
+        # Add shade type variation
+        if np.random.rand() < 0.8:
+            # Traditional shade
             params["TopRadius"] = np.random.uniform(0.08, 0.15)
             params["BottomRadius"] = params["TopRadius"] * np.random.uniform(1.8, 3.0)
             params["RackHeight"] = params["TopRadius"] + np.random.uniform(0.05, 0.25)
+        else:
+            # Cylindrical shade
+            radius = np.random.uniform(0.1, 0.18)
             params["TopRadius"] = radius
             params["BottomRadius"] = radius
             params["RackHeight"] = radius + np.random.uniform(0.05, 0.2)
+
         params["ShadeHeight"] = params["RackHeight"] + np.random.uniform(0.0, 0.3)
         params["HeadSideways"] = True
         params["ReverseBulb"] = True
         params["IncludeLightBulb"] = True
+
         params["ButtonOnLampShade"] = False
         params["IncludeButtonBase"] = True
         params["ButtonType"] = np.random.choice([1, 2, 3])
         sample_button(params["ButtonType"])
+
     elif lamp_type == "single_bar_modern":
         params["SingleHinge"] = True
+
+        if np.random.rand() < 0.7:
+            # has extension
             params["FirstBarLength"] = np.random.uniform(0.5, 1.0)
             params["FirstBarExtension"] = params["FirstBarLength"] * np.random.uniform(
                 0.2, 0.8
             )
+        else:
+            # no extension
             params["FirstBarLength"] = np.random.uniform(0.6, 1.0)
             params["FirstBarExtension"] = 0.0
+
         params["Height"] = np.random.uniform(0.4, 1.2)
+        # Adjust base for stability
         params["BaseRadius"] = np.random.uniform(0.12, 0.28)
         if params["FirstBarExtension"] > 0.8:
             params["BaseRadius"] = max(params["BaseRadius"], 0.18)
+
+        radius = np.random.uniform(0.08, 0.18)
         params["TopRadius"] = radius
         params["BottomRadius"] = radius
 
@@ -5037,10 +5229,14 @@ def geometry_nodes(nw: NodeWrangler):
         params["SecondBarSliding"] = np.random.choice([True, False], p=[0.7, 0.3])
         params["Height"] = np.random.uniform(0.6, 1.4)
         params["HeadSideways"] = True
+
+        # Adjust base for stability
         params["BaseRadius"] = np.random.uniform(0.12, 0.28)
         if params["FirstBarExtension"] > 0.5 or params["SecondBarExtension"] > 0.5:
             params["BaseRadius"] = max(params["BaseRadius"], 0.18)
+
         if lamp_type == "double_bar_modern":
+            radius = np.random.uniform(0.14, 0.18)
             params["TopRadius"] = radius
             params["BottomRadius"] = radius
             params["RackHeight"] = np.random.uniform(0.02, 0.08)
@@ -5053,10 +5249,16 @@ def geometry_nodes(nw: NodeWrangler):
             params["ShadeMaterial"] = materials["stand"]
             params["ButtonType"] = np.random.choice([1, 2, 3])
             sample_button(params["ButtonType"])
+        else:
+            # Traditional shade
+            if np.random.rand() < 0.8:
                 params["TopRadius"] = np.random.uniform(0.08, 0.15)
                 params["BottomRadius"] = params["TopRadius"] * np.random.uniform(
                     1.8, 3.0
                 )
+            else:
+                # Cylindrical shade
+                radius = np.random.uniform(0.1, 0.18)
                 params["TopRadius"] = radius
                 params["BottomRadius"] = radius
 
@@ -5078,9 +5280,18 @@ def geometry_nodes(nw: NodeWrangler):
         params["SecondBarExtension"] = np.random.uniform(0.5, 0.9)
         params["SecondBarSliding"] = True
         params["Height"] = np.random.uniform(0.7, 1.2)
+
+        # Adjust base for stability with extended arm
         params["BaseRadius"] = np.random.uniform(0.15, 0.3)
+
+        # Add shade type variation
+        if np.random.rand() < 0.8:
+            # Traditional shade
             params["TopRadius"] = np.random.uniform(0.15, 0.25)
             params["BottomRadius"] = params["TopRadius"] * np.random.uniform(1.8, 2.5)
+        else:
+            # More cylindrical shade
+            radius = np.random.uniform(0.18, 0.25)
             params["TopRadius"] = radius
             params["BottomRadius"] = radius
 
@@ -5098,16 +5309,141 @@ def geometry_nodes(nw: NodeWrangler):
         params["RackThickness"] = 0.0
         params["IncludeLightBulb"] = True
 
+    # params['BaseMaterial'] = np.random.choice(material_options[:3])
+    # params['StandMaterial'] = np.random.choice(material_options[:3])
+    # params['ShadeMaterial'] = np.random.choice(material_options[3:])
+    # params['ShadeInteriorMaterial'] = 'shader_lampshade.004'
+    # params['ButtonMaterial'] = np.random.choice(material_options[:3])
+    # params['LampRackMaterial'] = np.random.choice(material_options[:3])
+    # params['MetalMaterial'] = 'shader_metal.002'
+
+    return params
 
 
+def sample_white_interior():
+    """Generate a white or near-white color for the lamp shade interior"""
+    # Very high value (brightness), low saturation
+    h = np.random.uniform(0, 1)  # Hue can be any value since saturation is low
+    s = np.random.uniform(0, 0.1)  # Very low saturation to keep it close to white
+    v = np.random.uniform(0.9, 1.0)  # High value for brightness
+
+    # Convert to RGB
+    rgb = hsv2rgba(h, s, v)
+    return rgb
 
 
+def sample_light_exterior():
+    """Generate a light color for the lamp shade exterior"""
+    # Light pastel colors - high value, moderate-low saturation
+    h = np.random.uniform(0, 1)  # Any hue is possible
+    s = np.random.uniform(0.1, 0.3)  # Low-moderate saturation for pastel effect
+    v = np.random.uniform(0.8, 0.95)  # High value but not too bright
+
+    # Convert to RGB
+    rgb = hsv2rgba(h, s, v)
+    return rgb
 
 
+def sample_gold():
+    """Generate a gold color variation"""
+    # Gold colors are generally in yellow-orange hue range
+    # 36/360 to 56/360 converted to 0-1 scale
+    h = np.random.uniform(0.1, 0.155)  # Gold hue range
+    s = np.random.uniform(0.65, 0.9)  # Moderate to high saturation
+    v = np.random.uniform(0.75, 1.0)  # Bright
+
+    # Convert to RGB
+    rgb = hsv2rgba(h, s, v)
+    return rgb
+
+
+def sample_silver():
+    """Generate a silver color variation"""
+    # Silver colors are desaturated with high brightness
+    h = np.random.uniform(0, 1)  # Hue doesn't matter much due to low saturation
+    s = np.random.uniform(0, 0.1)  # Very low saturation
+    v = np.random.uniform(0.75, 0.9)  # High but not maximum brightness
+
+    # Convert to RGB
+    rgb = hsv2rgba(h, s, v)
+    return rgb
+
+
+# def generate_lamp_colors(num_samples=5):
+#     """Generate multiple sets of lamp colors"""
+#     results = []
+#
+#     for _ in range(num_samples):
+#         colors = {
+#             'interior': sample_white_interior(),
+#             'exterior': sample_light_exterior(),
+#             'gold': sample_gold(),
+#             'silver': sample_silver()
+#         }
+#         results.append(colors)
+#
+#     return results
+#
+# # Example usage
+# lamp_color_options = generate_lamp_colors(10)
+# print("Generated 10 sets of lamp color options:")
+# for i, colors in enumerate(lamp_color_options):
+#     print(f"Option {i+1}:")
+#     print(f"  Interior (white): RGB{colors['interior']}")
+#     print(f"  Exterior (light): RGB{colors['exterior']}")
+#     print(f"  Gold accent: RGB{colors['gold']}")
+#     print(f"  Silver accent: RGB{colors['silver']}")
+#     print()
+
+
+def get_all_metal_shaders(color):
+    metal_shaders_list = [
+        metal.brushed_metal.shader_brushed_metal,
+        metal.galvanized_metal.shader_galvanized_metal,
+        metal.grained_and_polished_metal.shader_grained_metal,
+        metal.hammered_metal.shader_hammered_metal,
+    ]
+    new_shaders = [
+        functools.partial(shader, base_color=color) for shader in metal_shaders_list
+    ]
+    for idx, ns in enumerate(new_shaders):
+        # fix taken from: https://github.com/elastic/apm-agent-python/issues/293
+        ns.__name__ = metal_shaders_list[idx].__name__
+
+    return new_shaders
+
+
+def get_all_fabric_shaders():
+    return [
+        fabrics.shader_coarse_knit_fabric,
+        fabrics.shader_fine_knit_fabric,
+        fabrics.shader_fabric,
+        fabrics.shader_sofa_fabric,
+    ]
+
+
+def shader_fine_knit_fabric_colored(color):
+    def shader(nw: NodeWrangler):
+        fabric_params = fabrics.fine_knit_fabric.get_texture_params()
         fabric_params["_color"] = color[:3]  # np.ones(3) * np.random.uniform(0.8, 1.0)
+        fabric_params["_map"] = "Object"
+        return fabrics.fine_knit_fabric.shader_material(nw, **fabric_params)
 
+    return shader
+
+
+class LampFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
         self.sim_blueprint = blueprint_path_completion("lamp.json")
         self.type = None
+
+    def sample_parameters(self):
+        # fabric = np.random.choice(get_all_fabric_shaders())
+
+        def sample_mat():
+            gold = np.random.choice(get_all_metal_shaders(sample_gold()))
+            silver = np.random.choice(get_all_metal_shaders(sample_silver()))
             return np.random.choice(
                 [
                     gold,
@@ -5118,8 +5454,26 @@ def geometry_nodes(nw: NodeWrangler):
                 ],
                 p=[0.2, 0.2, 0.35, 0.15, 0.1],
             )
+
+        r = np.random.rand()
         if r < 1 / 3:
+            # base, stand, button are same
+            base = stand = button = sample_mat()
         elif r < 2 / 3:
+            # base = stand, button is different
+            base = stand = sample_mat()
+            button = sample_mat()
+        else:
+            # base, stand, button are different
+            base = sample_mat()
+            stand = sample_mat()
+            button = sample_mat()
+
+        fabric = get_all_fabric_shaders()[1]
+        metal_ = np.random.choice(get_all_metal_shaders(sample_gold()))
+        lampshade = shader_fine_knit_fabric_colored(sample_white_interior())
+
+        shaders = {
             "base": base,
             "stand": stand,
             "shade_light": lampshade,
@@ -5129,6 +5483,19 @@ def geometry_nodes(nw: NodeWrangler):
             ),
             "metal": metal.get_shader(),
             "shade_interior": lamp_shaders.shader_lampshade,
+        }
+
+        materials = {k: surface.shaderfunc_to_material(v) for k, v in shaders.items()}
+        return sample_lamp_parameters(materials=materials, lamp_type=self.type)
+
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
             apply=export,
+            node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
+        )
+
+        return obj
