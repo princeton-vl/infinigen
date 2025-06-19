@@ -8,6 +8,7 @@ import bpy
 
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.util import blender as butil
 
 
 def shader_invisible(nw: NodeWrangler):
@@ -43,6 +44,7 @@ class InvisibleToCamera:
             obj = [obj]
 
         for o in obj:
-            for i in range(len(o.material_slots)):
-                bpy.ops.object.material_slot_remove({"object": o})
+            with butil.SelectObjects(o):
+                for i in range(len(o.material_slots)):
+                    bpy.ops.object.material_slot_remove()
         surface.add_material(obj, shader_invisible, selection=selection)
