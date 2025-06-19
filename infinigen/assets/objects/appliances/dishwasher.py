@@ -4,6 +4,7 @@
 # Authors: Hongyu Wen
 
 
+import gin
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import randint as RI
@@ -25,6 +26,7 @@ from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
 
 
+@gin.configurable
 class DishwasherFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
         super(DishwasherFactory, self).__init__(factory_seed, coarse=coarse)

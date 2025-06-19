@@ -84,8 +84,8 @@ if __name__ == "__main__":
 
     args.output.mkdir(exist_ok=True)
     imwrite(args.output / "A.png", image1)
-    print(f'Wrote {args.output / "A.png"}')
+    print(f"Wrote {args.output / 'A.png'}")
     imwrite(args.output / "C.png", image2)
-    print(f'Wrote {args.output / "C.png"}')
+    print(f"Wrote {args.output / 'C.png'}")
     imwrite(args.output / "B.png", warped_image)
-    print(f'Wrote {args.output / "B.png"}')
+    print(f"Wrote {args.output / 'B.png'}")

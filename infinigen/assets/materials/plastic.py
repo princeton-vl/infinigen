@@ -14,7 +14,7 @@ from infinigen.assets.materials.plastics.plastic_translucent import (
 )
 
 
-def apply(obj, selection=None, clear=None, **kwargs):
+def get_shader(clear=None, **kwargs):
     is_rough = kwargs.get("rough", uniform(0, 1))
     is_translucent = kwargs.get("translucent", uniform(0, 1))
     if clear is None:
@@ -24,4 +24,11 @@ def apply(obj, selection=None, clear=None, **kwargs):
         if is_rough > is_translucent
         else shader_translucent_plastic
     )
+
+    return shader_func
+
+
+def apply(obj, selection=None, clear=None, **kwargs):
+    shader_func = get_shader(clear=clear, **kwargs)
+
     common.apply(obj, shader_func, selection, clear=clear, **kwargs)

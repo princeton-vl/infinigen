@@ -80,7 +80,7 @@ def get_imagetypes_available(scene_folder):
     for dtype_folder in (scene_folder / "frames").iterdir():
         frames = dtype_folder / "camera_0"
         uniq = set(p.suffix for p in frames.iterdir())
-        dtypes += [f'{dtype_folder.name}_{u.strip(".")}' for u in uniq]
+        dtypes += [f"{dtype_folder.name}_{u.strip('.')}" for u in uniq]
     return dtypes
 
 

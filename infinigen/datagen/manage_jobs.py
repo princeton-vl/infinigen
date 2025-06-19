@@ -669,7 +669,7 @@ def manage_datagen_jobs(
 
     # Dont launch new scenes if disk is getting full
     if control_state["disk_usage"] > disk_sleep_threshold:
-        message = f"{args.output_folder} is full ({100*control_state['disk_usage']}%). Sleeping."
+        message = f"{args.output_folder} is full ({100 * control_state['disk_usage']}%). Sleeping."
         print(message)
         if wandb is not None:
             wandb.alert(
@@ -743,7 +743,7 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
 
         if args.print_stats:
             print(
-                f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}'
+                f"{args.output_folder} {start_time.strftime('%m/%d %I:%M%p')} -> {now.strftime('%m/%d %I:%M%p')}"
             )
 
         log_stats = manage_datagen_jobs(

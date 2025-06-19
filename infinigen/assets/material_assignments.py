@@ -69,14 +69,14 @@ class MaterialOptions:
         return np.random.choice(self.materials, p=self.probabilities)
 
 
-def get_all_metal_shaders():
+def get_all_metal_shaders(metal_color=None):
     metal_shaders_list = [
         metal.brushed_metal.shader_brushed_metal,
         metal.galvanized_metal.shader_galvanized_metal,
         metal.grained_and_polished_metal.shader_grained_metal,
         metal.hammered_metal.shader_hammered_metal,
     ]
-    color = metal.sample_metal_color()
+    color = metal.sample_metal_color(metal_color)
     new_shaders = [
         functools.partial(shader, base_color=color) for shader in metal_shaders_list
     ]
@@ -116,6 +116,19 @@ def beverage_fridge_materials():
         "back": TextureAssignments(
             [beverage_fridge_shaders.shader_black_medal_001], [1.0]
         ),
+        "wear_tear": [procedural_scratch, procedural_edge_wear],
+        "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
+    }
+
+
+def singlefridge_materials():
+    metal_shaders = get_all_metal_shaders("bw+natural+light")
+    body_shaders = metal_shaders + [wood.shader_wood]
+    inner_shaders = [plastic_furniture()]
+    return {
+        "body": TextureAssignments(body_shaders, [1.0] * len(body_shaders)),
+        "inner": TextureAssignments(inner_shaders, [1.0]),
+        "glass": TextureAssignments([glass.shader_glass], [1.0]),
         "wear_tear": [procedural_scratch, procedural_edge_wear],
         "wear_tear_prob": [DEFAULT_SCRATCH_PROB, DEFAULT_EDGE_WEAR_PROB],
     }
@@ -623,6 +636,7 @@ AssetList = {
     "OvenFactory": oven_materials,  # looks like dishwasher currently
     "TVFactory": tv_materials,
     "MonitorFactory": None,  # inherits from TVFactory
+    "SinglefridgeFactory": singlefridge_materials,
     # bathroom
     "BathtubFactory": bathtub_materials,
     "BathroomSinkFactory": bathroom_sink_materials,  # inheriting from bathtub factory, so not used

@@ -191,8 +191,7 @@ def shader_wood(nw: NodeWrangler, color=None, w=None, vertical=False, **kwargs):
     )
 
 
-def apply(obj, selection=None, **kwargs):
-    # TODO HACK - avoiding circular imports for now
+def get_shader():
     from infinigen.assets.materials.shelf_shaders import (
         shader_shelves_black_wood,
         shader_shelves_white,
@@ -208,6 +207,14 @@ def apply(obj, selection=None, **kwargs):
         shader = shader_shelves_black_wood
     else:
         shader = shader_wood
+
+    return shader
+
+
+def apply(obj, selection=None, **kwargs):
+    # TODO HACK - avoiding circular imports for now
+    shader = get_shader()
+
     common.apply(obj, shader, selection, **kwargs)
 
 

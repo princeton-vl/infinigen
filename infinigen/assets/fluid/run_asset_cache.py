@@ -39,7 +39,7 @@ if __name__ == "__main__":
     factory = None
     for subdir in os.listdir("assets"):
         with gin.unlock_config():
-            module = importlib.import_module(f'assets.{subdir.split(".")[0]}')
+            module = importlib.import_module(f"assets.{subdir.split('.')[0]}")
         if hasattr(module, factory_name):
             factory = getattr(module, factory_name)
             break

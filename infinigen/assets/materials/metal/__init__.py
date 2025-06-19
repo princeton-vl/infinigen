@@ -78,6 +78,11 @@ def sample_metal_color(metal_color=None, **kwargs):
                 s + uniform(-0.1, 0.1),
                 v * log_uniform(0.5, 0.2),
             )
+        case "light":
+            h, s, v = rgb2hsv(hex_to_rgb(rg(natural_colors))[:-1])
+            return hsv2rgba(
+                h + uniform(-0.1, 0.1), s + uniform(-0.1, 0.1), uniform(0.8, 1.0)
+            )
         case "bw":
             return hsv2rgba(uniform(0, 1), uniform(0.0, 0.2), log_uniform(0.01, 0.2))
         case "bw+natural":
@@ -86,6 +91,14 @@ def sample_metal_color(metal_color=None, **kwargs):
                 if uniform() < 0.5
                 else sample_metal_color("natural")
             )
+        case "bw+natural+light":
+            random_value = uniform()
+            if random_value < 0.3:
+                return sample_metal_color("bw")  # Black and white
+            elif random_value < 0.8:
+                return sample_metal_color("light")  # Light Color
+            else:
+                return sample_metal_color("natural")  # Natural Color
         case _:
             if uniform() < 0.2:
                 return sample_metal_color("natural")

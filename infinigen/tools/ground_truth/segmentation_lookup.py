@@ -167,6 +167,6 @@ if __name__ == "__main__":
 
     args.output.mkdir(exist_ok=True)
     imwrite(args.output / "A.png", image)
-    print(f'Wrote {args.output / "A.png"}')
+    print(f"Wrote {args.output / 'A.png'}")
     imwrite(args.output / "B.png", canvas)
-    print(f'Wrote {args.output / "B.png"}')
+    print(f"Wrote {args.output / 'B.png'}")

@@ -37,7 +37,7 @@ class Job:
         if self.req_memory is not None:
             return f"{self.job_id}     {self.name.ljust(60)}     {self.gpu.ljust(10)} {self.cpu.ljust(5)}  {f'{self.max_memory_gb:.3f}G'.ljust(9)}  {self.start_time.strftime('%m/%d/%Y, %H:%M:%S')}  {str(self.time_elapsed).ljust(20)}  {self.current_status.ljust(10)}  {self.node}"
         else:
-            return f"{self.job_id}     {self.name.ljust(60+73)}     {self.current_status.ljust(10)}"
+            return f"{self.job_id}     {self.name.ljust(60 + 73)}     {self.current_status.ljust(10)}"
 
 
 sacct_line_regex = re.compile(
