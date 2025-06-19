@@ -41,6 +41,7 @@
     },
     "metadata": {
         "joint0": {
+            "joint label": "door_hinge",
             "parent body label": "joint0parent",
             "child body label": "joint0child"
         }
