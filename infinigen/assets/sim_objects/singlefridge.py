@@ -3,8 +3,14 @@ import functools
 import numpy as np
 
 from infinigen.assets.materials import metal
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
+from infinigen.core.util.paths import blueprint_path_completion
+
+
 @node_utils.to_nodegroup(
     "nodegroup_sliding_joint", singleton=False, type="GeometryNodeTree"
 )
@@ -2982,6 +2988,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             "Attribute": named_attribute_13.outputs["Attribute"],
         },
     )
+
     equal_6 = nw.new_node(
         Nodes.Compare,
         input_kwargs={
@@ -3000,6 +3007,9 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_5.outputs["Selection"]},
     )
+
+    position_7 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_9 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -3008,6 +3018,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
+
     transform_geometry_1 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -3015,6 +3026,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             "Translation": attribute_statistic_9.outputs["Mean"],
         },
     )
+
     switch_6 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -3022,14 +3034,17 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             "True": transform_geometry_1,
         },
     )
+
     store_named_attribute_14 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={"Geometry": switch_6, "Name": "part_id", "Value": 999999999},
         attrs={"data_type": "INT"},
     )
+
     cone = nw.new_node(
         "GeometryNodeMeshCone", input_kwargs={"Radius Bottom": 0.0500, "Depth": 0.2000}
     )
+
     transform_geometry_3 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -3037,11 +3052,14 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             "Translation": (0.0000, 0.0000, -0.0500),
         },
     )
+
     bounding_box_4 = nw.new_node(
         Nodes.BoundingBox,
         input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
     )
+
     position_8 = nw.new_node(Nodes.InputPosition)
+
     attribute_statistic_11 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -3050,6 +3068,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
+
     add_3 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={
@@ -3057,6 +3076,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             1: attribute_statistic_11.outputs["Mean"],
         },
     )
+
     attribute_statistic_12 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
@@ -3065,15 +3085,18 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
+
     normalize = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: attribute_statistic_12.outputs["Mean"]},
         attrs={"operation": "NORMALIZE"},
     )
+
     align_rotation_to_vector_1 = nw.new_node(
         "FunctionNodeAlignRotationToVector",
         input_kwargs={"Vector": normalize.outputs["Vector"]},
     )
+
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -3082,6 +3105,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
             "Rotation": align_rotation_to_vector_1,
         },
     )
+
     switch_7 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -3171,6 +3195,9 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup("nodegroup_shelf", singleton=False, type="GeometryNodeTree")
+def nodegroup_shelf(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -3232,6 +3259,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["LayerNum"]}
     )
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: reroute_1, 1: 2.0000})
 
     divide = nw.new_node(
         Nodes.Math,
@@ -3343,6 +3371,9 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 @node_utils.to_nodegroup(
     "nodegroup_move_to_origin", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_move_to_origin(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
     )
@@ -3358,6 +3389,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: add.outputs["Vector"], 1: (-0.5000, -0.5000, -0.5000)},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3379,6 +3411,9 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 @node_utils.to_nodegroup(
     "nodegroup_singlefridge", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_singlefridge(nw: NodeWrangler):
+    # Code generated using version 2.6.5 of the node_transpiler
+
     group_input_2 = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -3440,6 +3475,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input_2.outputs["WallThickness"], 1: 2.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3457,6 +3493,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     subtract = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: group_input_2.outputs["Size"], 1: combine_xyz_11},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -3481,6 +3518,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_1 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input_2.outputs["ShelfMargin"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3680,6 +3718,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_3 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: combine_xyz_8, 1: (-0.5000, -0.5000, -0.5000)},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3759,6 +3798,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     subtract_4 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: multiply_5, 1: group_input_2.outputs["DoorHandleMargin"]},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -3773,6 +3813,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_6 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: subtract_4, 1: map_range_1.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3822,6 +3863,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     subtract_5 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: separate_xyz_10.outputs["Y"], 1: separate_xyz_11.outputs["Y"]},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -3887,6 +3929,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_12 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: multiply_11, 1: map_range.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -3904,6 +3947,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     subtract_6 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: centerofgeometry, 1: centerofgeometry_1},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -3966,9 +4010,11 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_13 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input_2.outputs["WallThickness"], 1: 2.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
+    add_7 = nw.new_node(Nodes.Math, input_kwargs={0: add_6, 1: multiply_13})
 
     subtract_7 = nw.new_node(
         Nodes.Math,
@@ -3978,6 +4024,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     subtract_8 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: separate_xyz_5.outputs["Y"], 1: multiply_13},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -4024,14 +4071,17 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
 
     multiply_15 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input_2.outputs["WallThickness"], 1: 2.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
+    add_8 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_14, 1: multiply_15})
 
     multiply_16 = nw.new_node(
         Nodes.Math, input_kwargs={0: subtract_7}, attrs={"operation": "MULTIPLY"}
     )
 
+    add_9 = nw.new_node(Nodes.Math, input_kwargs={0: add_8, 1: multiply_16})
 
     subtract_9 = nw.new_node(
         Nodes.Math,
@@ -4109,6 +4159,7 @@ def nodegroup_hinge_joint(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
+
 def get_all_metal_shaders(color):
     metal_shaders_list = [
         metal.brushed_metal.shader_brushed_metal,
@@ -4161,8 +4212,25 @@ def sample_light_exterior():
     # Convert to RGB
     rgb = hsv2rgba(h, s, v)
     return rgb
+
+
+class SinglefridgeFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
         self.sim_blueprint = blueprint_path_completion("singlefridge.json")
+
+    def sample_parameters(self):
+        # add code here to randomly sample from parameters
         return {}
+
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            apply=True,
             node_group=nodegroup_singlefridge(),
             ng_inputs=self.sample_parameters(),
+        )
+
+        return obj
