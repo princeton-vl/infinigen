@@ -200,3 +200,6 @@ v1.13.0
 
 v1.13.1
 - Refactor transpiler, fix transpiling disabled input sockets
+
+v1.13.2
+- Bugfix invalid Brick kwargs and `1-2 args execution context is supported` during indoor room generation
