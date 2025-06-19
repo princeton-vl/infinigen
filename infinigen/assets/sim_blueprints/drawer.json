@@ -1,0 +1,49 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "joint0"
+            }
+        },
+        "joint0": {
+            "kinematic_type": 0,
+            "joint_type": 2,
+            "children": {
+                "1": "joint1",
+                "0": "visasset0"
+            }
+        },
+        "joint1": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset0",
+                "1": "joint2"
+            }
+        },
+        "visasset0": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint2": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset0",
+                "1": "visasset0"
+            }
+        }
+    },
+    "metadata": {
+        "joint0": {
+            "joint label": "joint0",
+            "parent body label": "joint0parent",
+            "child body label": "joint0child"
+        }
+    },
+    "labels": [],
+    "name": "drawer"
+}
