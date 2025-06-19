@@ -22,8 +22,10 @@
         },
         "joint1": {
             "kinematic_type": 0,
+            "joint_type": 0,
             "children": {
                 "0": "visasset1",
+                "1": "joint2"
             }
         },
         "visasset1": {
@@ -31,7 +33,33 @@
             "joint_type": -1,
             "children": {}
         },
+        "joint2": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "visasset2",
+                "1": "joint3"
+            }
+        },
         "visasset2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint3": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset3",
+                "1": "visasset4"
+            }
+        },
+        "visasset3": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset4": {
             "kinematic_type": 1,
             "joint_type": -1,
             "children": {}
@@ -40,9 +68,19 @@
     "metadata": {
         "joint0": {
             "joint label": "door_hinge",
+            "parent body label": "joint0parent",
+            "child body label": "joint0child"
         },
+        "joint2": {
             "joint label": "door_handle",
+            "parent body label": "joint2parent",
+            "child body label": "joint2child"
         }
     },
+    "labels": [
+        "handle",
+        "door",
+        "door_frame"
+    ],
     "name": "door"
 }
