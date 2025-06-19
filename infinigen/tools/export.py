@@ -8,10 +8,15 @@ import logging
 import math
 import shutil
 import subprocess
+from collections import defaultdict
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import bpy
+import coacd
 import gin
+import numpy as np
+import trimesh
 
 from infinigen.core.util import blender as butil
 
@@ -19,8 +24,9 @@ FORMAT_CHOICES = ["fbx", "obj", "usdc", "usda", "stl", "ply"]
 BAKE_TYPES = {
     "DIFFUSE": "Base Color",
     "ROUGHNESS": "Roughness",
+    "NORMAL": "Normal",
 }  # 'EMIT':'Emission Color' #  "GLOSSY": 'Specular IOR Level', 'TRANSMISSION':'Transmission Weight' don't export
-SPECIAL_BAKE = {"METAL": "Metallic", "NORMAL": "Normal"}
+SPECIAL_BAKE = {"METAL": "Metallic", "TRANSMISSION": "Transmission Weight"}
 ALL_BAKE = BAKE_TYPES | SPECIAL_BAKE
 
 
@@ -418,10 +424,14 @@ def process_glass_materials(obj, export_usd):
             create_glass_shader(mat.node_tree, export_usd)
 
 
-def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
-    img = bpy.data.images.new(f"{obj.name}_{bake_type}", img_size, img_size)
-    clean_name = (obj.name).replace(" ", "_").replace(".", "_")
-    file_path = dest / f"{clean_name}_{bake_type}.png"
+def bake_pass(obj, dest: Path, img_size, bake_type, export_usd, export_name=None):
+    if export_name is None:
+        img = bpy.data.images.new(f"{obj.name}_{bake_type}", img_size, img_size)
+        clean_name = (obj.name).replace(" ", "_").replace(".", "_")
+        file_path = dest / f"{clean_name}_{bake_type}.png"
+    else:
+        img = bpy.data.images.new(f"{export_name}_{bake_type}", img_size, img_size)
+        file_path = dest / f"{export_name}_{bake_type}.png"
     dest = dest / "textures"
 
     bake_obj = False
@@ -448,26 +458,29 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
         nodes.active = img_node
         img_node.select = True
 
+        if len(output.inputs["Displacement"].links) != 0:
+            bake_obj = True
+
         if len(output.inputs[0].links) == 0:
             logging.info(f"{mat.name} has no surface output, not using baked textures")
             bake_exclude_mats[mat] = img_node
             continue
 
-        surface_node = output.inputs[0].links[0].from_node
-        if (
-            bake_type in ALL_BAKE
-            and surface_node.bl_idname == "ShaderNodeBsdfPrincipled"
-            and len(surface_node.inputs[ALL_BAKE[bake_type]].links) == 0
-        ):  # trivial bsdf graph
-            logging.info(
-                f"{mat.name} has no procedural input for {bake_type}, not using baked textures"
-            )
-            bake_exclude_mats[mat] = img_node
-            continue
+        # surface_node = output.inputs[0].links[0].from_node
+        # if (
+        #     bake_type in ALL_BAKE
+        #     and surface_node.bl_idname == "ShaderNodeBsdfPrincipled"
+        #     and len(surface_node.inputs[ALL_BAKE[bake_type]].links) == 0
+        # ):  # trivial bsdf graph
+        #     logging.info(
+        #         f"{mat.name} has no procedural input for {bake_type}, not using baked textures"
+        #     )
+        #     bake_exclude_mats[mat] = img_node
+        #     continue
 
         bake_obj = True
 
-    if bake_type == "METAL":
+    if bake_type in SPECIAL_BAKE:
         internal_bake_type = "EMIT"
     else:
         internal_bake_type = bake_type
@@ -478,8 +491,7 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
             type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
         )
         img.filepath_raw = str(file_path)
-        if not export_usd:
-            img.save()
+        img.save()
         logging.info(f"Saving to {file_path}")
     else:
         logging.info(f"No necessary materials to bake on {obj.name}, skipping bake")
@@ -488,58 +500,97 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
         mat.node_tree.nodes.remove(img_node)
 
 
-def bake_metal(
-    obj, dest, img_size, export_usd
-):  # metal baking is not really set up for node graphs w/ 2 mixed BSDFs.
-    metal_map_mats = []
+def bake_special_emit(obj, dest, img_size, export_usd, bake_type, export_name=None):
+    # If at least one material has both a BSDF and non-zero bake type value, then bake
+    should_bake = False
+
+    # (Root node, From Socket, To Socket)
+    links_removed = []
+    links_added = []
+
     for slot in obj.material_slots:
         mat = slot.material
-        if mat is None or not mat.use_nodes:
+        if mat is None:
+            logging.warn("No material on mesh, skipping...")
             continue
+        if not mat.use_nodes:
+            logging.warn("Material has no nodes, skipping...")
+            continue
+
         nodes = mat.node_tree.nodes
-        if nodes.get("Principled BSDF") and nodes.get("Material Output"):
+        principled_bsdf_node = None
+        root_node = None
+        logging.info(f"{mat.name} has {len(nodes)} nodes: {nodes}")
+        for node in nodes:
+            if node.type != "GROUP":
+                continue
+
+            for subnode in node.node_tree.nodes:
+                logging.info(f" [{subnode.type}] {subnode.name} {subnode.bl_idname}")
+                if subnode.type == "BSDF_PRINCIPLED":
+                    logging.debug(f" BSDF_PRINCIPLED: {subnode.inputs}")
+                    principled_bsdf_node = subnode
+                    root_node = node
+
+        if nodes.get("Principled BSDF"):
             principled_bsdf_node = nodes["Principled BSDF"]
-            outputNode = nodes["Material Output"]
-        else:
+            root_node = mat
+        elif not principled_bsdf_node:
+            logging.warn("No Principled BSDF, skipping...")
+            continue
+        elif ALL_BAKE[bake_type] not in principled_bsdf_node.inputs:
+            logging.warn(f"No {bake_type} input, skipping...")
             continue
 
-        links = mat.node_tree.links
+        # Here, we've found the proper BSDF and bake type input. Set up the scene graph
+        # for baking.
+        outputSoc = principled_bsdf_node.outputs[0].links[0].to_socket
 
-        if len(principled_bsdf_node.inputs["Metallic"].links) != 0:
-            link = principled_bsdf_node.inputs["Metallic"].links[0]
-            from_socket = link.from_socket
-            links.remove(link)
-            links.new(outputNode.inputs[0], from_socket)
-            metal_map_mats.append(mat)
+        # Remove the BSDF link to Output first
+        l = principled_bsdf_node.outputs[0].links[0]
+        from_socket, to_socket = l.from_socket, l.to_socket
+        logging.debug(f"Removing link: {from_socket.name} => {to_socket.name}")
+        root_node.node_tree.links.remove(l)
+        links_removed.append((root_node, from_socket, to_socket))
 
-    if len(metal_map_mats) != 0:
-        bake_pass(obj, dest, img_size, "METAL", export_usd)
+        # Get bake_type value
+        bake_input = principled_bsdf_node.inputs[ALL_BAKE[bake_type]]
+        bake_val = bake_input.default_value
+        logging.info(f"{bake_type} value: {bake_val}")
 
-    for mat in metal_map_mats:
-        nodes = mat.node_tree.nodes
-        outputNode = nodes["Material Output"]
-        principled_bsdf_node = nodes["Principled BSDF"]
-        links.remove(outputNode.inputs[0].links[0])
-        links.new(outputNode.inputs[0], principled_bsdf_node.outputs[0])
+        if bake_val > 0:
+            should_bake = True
 
+        # Make a color input matching the metallic value
+        col = root_node.node_tree.nodes.new("ShaderNodeRGB")
+        col.outputs[0].default_value = (bake_val, bake_val, bake_val, 1.0)
 
-def bake_normals(obj, dest, img_size, export_usd):
-    bake_obj = False
-    for slot in obj.material_slots:
-        mat = slot.material
-        if mat is None or not mat.use_nodes:
-            continue
-        nodes = mat.node_tree.nodes
-        if nodes.get("Material Output"):
-            outputNode = nodes["Material Output"]
-        else:
-            continue
+        # Link the color to output
+        new_link = root_node.node_tree.links.new(col.outputs[0], outputSoc)
+        links_added.append((root_node, col.outputs[0], outputSoc))
+        logging.debug(
+            f"Linking {col.outputs[0].name} to {outputSoc.name}({outputSoc.bl_idname}): {new_link}"
+        )
 
-        if len(outputNode.inputs["Displacement"].links) != 0:
-            bake_obj = True
+    # After setting up all materials, bake if applicable
+    if should_bake:
+        bake_pass(obj, dest, img_size, bake_type, export_usd, export_name)
 
-    if bake_obj:
-        bake_pass(obj, dest, img_size, "NORMAL", export_usd)
+    # After baking, undo the temporary changes to the scene graph
+    for n, from_soc, to_soc in links_added:
+        logging.debug(
+            f"Removing added link:\t{n.name}: {from_soc.name} => {to_soc.name}"
+        )
+        for l in n.node_tree.links:
+            if l.from_socket == from_soc and l.to_socket == to_soc:
+                n.node_tree.links.remove(l)
+                logging.debug(
+                    f"Removed link:\t{n.name}: {from_soc.name} => {to_soc.name}"
+                )
+
+    for n, from_soc, to_soc in links_removed:
+        logging.debug(f"Adding back link:\t{n.name}: {from_soc.name} => {to_soc.name}")
+        n.node_tree.links.new(from_soc, to_soc)
 
 
 def remove_params(mat, node_tree):
@@ -602,6 +653,22 @@ def skipBake(obj):
     return False
 
 
+def triangulate_mesh(obj: bpy.types.Object):
+    logging.debug("Triangulating Mesh")
+    if obj.type == "MESH":
+        view_state = obj.hide_viewport
+        obj.hide_viewport = False
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        logging.debug(f"Triangulating {obj}")
+        bpy.ops.mesh.quads_convert_to_tris()
+        bpy.ops.object.mode_set(mode="OBJECT")
+        obj.select_set(False)
+        obj.hide_viewport = view_state
+
+
 def triangulate_meshes():
     logging.debug("Triangulating Meshes")
     for obj in bpy.context.scene.objects:
@@ -647,7 +714,36 @@ def set_center_of_mass():
             obj.hide_viewport = view_state
 
 
-def bake_object(obj, dest, img_size, export_usd):
+def duplicate_node_groups(node_tree, group_map=None):
+    if group_map is None:
+        group_map = {}
+
+    for node in node_tree.nodes:
+        if node.type == "GROUP":
+            group = node.node_tree
+            if group not in group_map:
+                group_copy = group.copy()
+                group_copy.name = f"{group.name}_copy"
+                group_map[group] = group_copy
+
+                duplicate_node_groups(group_copy, group_map)
+            else:
+                group_copy = group_map[group]
+
+            node.node_tree = group_copy
+
+    return group_map
+
+
+def deep_copy_material(original_material, new_name_suffix="_deepcopy"):
+    new_mat = original_material.copy()
+    new_mat.name = original_material.name + new_name_suffix
+    if new_mat.use_nodes and new_mat.node_tree:
+        duplicate_node_groups(new_mat.node_tree)
+    return new_mat
+
+
+def bake_object(obj, dest, img_size, export_usd, export_name=None):
     if not uv_unwrap(obj):
         return
 
@@ -657,16 +753,19 @@ def bake_object(obj, dest, img_size, export_usd):
         for slot in obj.material_slots:
             mat = slot.material
             if mat is not None:
-                slot.material = (
-                    mat.copy()
+                slot.material = deep_copy_material(
+                    mat
                 )  # we duplicate in the case of distinct meshes sharing materials
 
         process_glass_materials(obj, export_usd)
-        bake_metal(obj, dest, img_size, export_usd)
-        bake_normals(obj, dest, img_size, export_usd)
+
+        for bake_type in SPECIAL_BAKE:
+            bake_special_emit(obj, dest, img_size, export_usd, bake_type, export_name)
+
+        # bake_normals(obj, dest, img_size, export_usd)
         paramDict = process_interfering_params(obj)
         for bake_type in BAKE_TYPES:
-            bake_pass(obj, dest, img_size, bake_type, export_usd)
+            bake_pass(obj, dest, img_size, bake_type, export_usd, export_name)
 
         apply_baked_tex(obj, paramDict)
 
@@ -782,7 +881,7 @@ def export_single_obj(
     export_usd = format in ["usda", "usdc"]
 
     export_folder = output_folder
-    export_folder.mkdir(exist_ok=True)
+    export_folder.mkdir(parents=True, exist_ok=True)
     export_file = export_folder / output_folder.with_suffix(f".{format}").name
 
     logging.info(f"Exporting to directory {export_folder=}")
@@ -849,6 +948,175 @@ def export_single_obj(
     obj.location = old_loc
 
     return export_file
+
+
+def export_sim_ready(
+    obj: bpy.types.Object,
+    output_folder: Path,
+    image_res: int = 1024,
+    translation: Tuple = (0, 0, 0),
+    name: Optional[str] = None,
+    visual_only: bool = False,
+    collision_only: bool = False,
+    separate_asset_dirs: bool = True,
+) -> Dict[str, List[Path]]:
+    """
+    Exports both the visual and collision assets for a geometry.
+    """
+    asset_exports = defaultdict(list)
+    export_name = name if name is not None else obj.name
+
+    if separate_asset_dirs:
+        visual_export_folder = output_folder / "visual"
+        collision_export_folder = output_folder / "collision"
+    else:
+        visual_export_folder = output_folder
+        collision_export_folder = output_folder
+
+    texture_export_folder = output_folder / "textures"
+
+    visual_export_folder.mkdir(parents=True, exist_ok=True)
+    collision_export_folder.mkdir(parents=True, exist_ok=True)
+
+    logging.info(f"Exporting to directory {output_folder=}")
+
+    collection_views, obj_views = update_visibility()
+
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.device = "GPU"
+    bpy.context.scene.cycles.samples = 1  # choose render sample
+    # Set the tile size
+    bpy.context.scene.cycles.tile_x = image_res
+    bpy.context.scene.cycles.tile_y = image_res
+
+    if obj.type != "MESH" or obj not in list(bpy.context.view_layer.objects):
+        raise ValueError("Object not mesh")
+
+    # export the textures
+    if not skipBake(obj):
+        texture_export_folder.mkdir(parents=True, exist_ok=True)
+        obj.hide_render = False
+        obj.hide_viewport = False
+        bake_object(obj, texture_export_folder, image_res, False, export_name)
+        obj.hide_render = True
+        obj.hide_viewport = True
+
+    for collection, status in collection_views.items():
+        collection.hide_render = status
+
+    for obj_tmp, status in obj_views.items():
+        obj_tmp.hide_render = status
+
+    # translating object
+    old_loc = obj.location.copy()
+    obj.location = (
+        old_loc[0] + translation[0],
+        old_loc[1] + translation[1],
+        old_loc[2] + translation[2],
+    )
+
+    if (
+        obj.type != "MESH"
+        or obj.hide_render
+        or len(obj.data.vertices) == 0
+        or obj not in list(bpy.context.view_layer.objects)
+    ):
+        raise ValueError("Object is not mesh or hidden from render")
+
+    # export the mesh assets
+    visual_export_file = visual_export_folder / f"{export_name}.obj"
+
+    logging.info(f"Exporting file to {visual_export_file=}")
+    obj.hide_viewport = False
+    obj.select_set(True)
+
+    # export visual asset
+    with butil.SelectObjects(obj, active=1):
+        bpy.ops.wm.obj_export(
+            filepath=str(visual_export_file),
+            up_axis="Z",
+            forward_axis="Y",
+            export_selected_objects=True,
+            export_triangulated_mesh=True,  # required for coacd to run properly
+        )
+    if not collision_only:
+        asset_exports["visual"].append(visual_export_file)
+
+    if visual_only:
+        obj.select_set(False)
+        obj.location = old_loc
+        return asset_exports
+
+    clone = butil.deep_clone_obj(obj)
+    parts = butil.split_object(clone)
+
+    part_export_obj_file = visual_export_folder / f"{export_name}_part.obj"
+    part_export_mtl_file = visual_export_folder / f"{export_name}_part.mtl"
+
+    collision_count = 0
+    for part in parts:
+        with butil.SelectObjects(part, active=1):
+            bpy.ops.wm.obj_export(
+                filepath=str(part_export_obj_file),
+                up_axis="Z",
+                forward_axis="Y",
+                export_selected_objects=True,
+                export_triangulated_mesh=True,  # required for coacd to run properly
+            )
+
+        # export the collision meshes
+        mesh_tri = trimesh.load(
+            str(part_export_obj_file), merge_norm=True, merge_tex=True, force="mesh"
+        )
+        trimesh.repair.fix_inversion(mesh_tri)
+        preprocess_mode = "off"
+        if not mesh_tri.is_volume:
+            print(
+                mesh_tri.is_watertight,
+                mesh_tri.is_winding_consistent,
+                np.isfinite(mesh_tri.center_mass).all(),
+                mesh_tri.volume > 0.0,
+            )
+            preprocess_mode = "on"
+
+            if len(mesh_tri.vertices) < 4:
+                logging.warning(
+                    f"Mesh is not a volume. Only has {len(mesh_tri.vertices)} vertices."
+                )
+                # raise ValueError(f"Mesh is not a volume. Only has {len(mesh_tri.vertices)} vertices.")
+        mesh = coacd.Mesh(mesh_tri.vertices, mesh_tri.faces)
+
+        subparts = coacd.run_coacd(
+            mesh=mesh,
+            threshold=0.05,
+            max_convex_hull=-1,
+            preprocess_mode=preprocess_mode,
+            mcts_max_depth=3,
+        )
+        export_name = export_name.replace("vis", "col")
+        for vs, fs in subparts:
+            collision_export_file = (
+                collision_export_folder / f"{export_name}_col{collision_count}.obj"
+            )
+            subpart_mesh = trimesh.Trimesh(vs, fs)
+
+            # if subpart_mesh.is_empty:
+            #     raise ValueError(
+            #         "Warning: Collision mesh is completely outside the bounds of the original mesh."
+            #     )
+            subpart_mesh.export(str(collision_export_file))
+            asset_exports["collision"].append(collision_export_file)
+            collision_count += 1
+
+    # delete temporary part files
+    part_export_obj_file.unlink(missing_ok=True)
+    part_export_mtl_file.unlink(missing_ok=True)
+
+    obj.select_set(False)
+    obj.location = old_loc
+    butil.delete(clone)
+
+    return asset_exports
 
 
 @gin.configurable

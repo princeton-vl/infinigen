@@ -135,6 +135,7 @@ class AssetFactory:
             bpy.data.materials,
         ]
 
+        export_path = None
         with (
             FixedSeed(int_hash((self.factory_seed, i))),
             butil.GarbageCollect(gc_targets, verbose=False),
@@ -142,6 +143,10 @@ class AssetFactory:
             params = self.asset_parameters(distance, vis_distance)
             params.update(kwargs)
             obj = self.create_asset(i=i, placeholder=placeholder, **params)
+            # TODO: clean this up
+            if "export" in params and params["export"]:
+                obj, export_path, semantic_mapping = obj
+                assert export_path
 
         obj.name = f"{repr(self)}.spawn_asset({i})"
 
@@ -157,6 +162,8 @@ class AssetFactory:
             obj.rotation_euler = placeholder.rotation_euler
             butil.delete(placeholder)
 
+        if export_path is not None:
+            return obj, export_path, semantic_mapping
         return obj
 
     __call__ = spawn_asset  # for convinience

@@ -385,7 +385,7 @@ PYTYPE_TO_DATATYPE = {
     float: "FLOAT",
     np.float32: "FLOAT",
     np.float64: "FLOAT",
-    np.array: "FLOAT_VECTOR",
+    np.float64: "FLOAT_VECTOR",
     bool: "BOOLEAN",
 }
 DATATYPE_TO_PYTYPE = {v: k for k, v in PYTYPE_TO_DATATYPE.items()}

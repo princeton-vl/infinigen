@@ -118,6 +118,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 - [Extended ground-truth](docs/GroundTruthAnnotations.md)
 - [Implementing new materials & assets](docs/ImplementingAssets.md)
 - [Generating fluid simulations](docs/GeneratingFluidSimulations.md)
+- [Exporting to physics simulation](docs/ExportingToSimulators.md)
 
 Please see our [project roadmap](https://infinigen.org/roadmap) and follow us at [https://twitter.com/PrincetonVL](https://twitter.com/PrincetonVL) for updates. 
 
