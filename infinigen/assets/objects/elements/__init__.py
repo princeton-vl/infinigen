@@ -1,5 +1,6 @@
 from .doors import (
     DoorCasingFactory,
+    DoorFactory,
     GlassPanelDoorFactory,
     LiteDoorFactory,
     LouverDoorFactory,
