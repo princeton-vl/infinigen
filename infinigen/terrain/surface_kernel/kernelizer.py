@@ -311,8 +311,8 @@ class Kernelizer:
                     func = NODE_FUNCTIONS[head_node.bl_idname]
                 code += f"""{func}(
                     {concat_string(params)}
-                    {','.join(inputs)},
-                    {','.join(outputs)}
+                    {",".join(inputs)},
+                    {",".join(outputs)}
                 );
                 """
             for link in links:

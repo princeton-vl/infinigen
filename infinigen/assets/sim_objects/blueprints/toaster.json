@@ -1,0 +1,129 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "duplicate0"
+            }
+        },
+        "duplicate0": {
+            "kinematic_type": 3,
+            "joint_type": -1,
+            "children": {
+                "1": "joint0",
+                "0": "joint0"
+            }
+        },
+        "joint0": {
+            "kinematic_type": 0,
+            "joint_type": 2,
+            "children": {
+                "1": "visasset1",
+                "0": "duplicate1"
+            }
+        },
+        "visasset1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "duplicate1": {
+            "kinematic_type": 3,
+            "joint_type": -1,
+            "children": {
+                "0": "joint1",
+                "1": "joint1"
+            }
+        },
+        "joint1": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "1": "joint2",
+                "0": "duplicate2"
+            }
+        },
+        "joint2": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset2",
+                "1": "visasset3"
+            }
+        },
+        "visasset2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset3": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "duplicate2": {
+            "kinematic_type": 3,
+            "joint_type": -1,
+            "children": {
+                "0": "joint3",
+                "1": "joint3"
+            }
+        },
+        "joint3": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "visasset11",
+                "1": "joint4"
+            }
+        },
+        "visasset11": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint4": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset12",
+                "1": "visasset8"
+            }
+        },
+        "visasset12": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset8": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "joint0": {
+            "joint label": "button",
+            "parent body label": "joint0parent",
+            "child body label": "joint0child"
+        },
+        "joint1": {
+            "joint label": "knob",
+            "parent body label": "joint1parent",
+            "child body label": "joint1child"
+        },
+        "joint3": {
+            "joint label": "slider",
+            "parent body label": "joint3parent",
+            "child body label": "joint3child"
+        }
+    },
+    "labels": [
+        "toaster_body",
+        "slider",
+        "button",
+        "knob"
+    ],
+    "name": "toaster"
+}

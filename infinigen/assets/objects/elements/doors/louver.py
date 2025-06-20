@@ -1,17 +1,16 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
-
 # Authors: Lingjie Mei
+import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen.assets.objects.elements.doors.panel import PanelDoorFactory
 from infinigen.assets.utils.decorate import write_attribute, write_co
 from infinigen.assets.utils.object import new_cube, new_plane
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
-
-from .panel import PanelDoorFactory
 
 
 class LouverDoorFactory(PanelDoorFactory):
@@ -74,6 +73,24 @@ class LouverDoorFactory(PanelDoorFactory):
             constant_offset_displace=(0, 0, self.louver_size),
             count=int(np.ceil((y_max - y_min) / self.louver_size) + 0.5),
         )
+        louver.location[-1] -= self.depth * np.tan(self.louver_angle) / 2
+        butil.apply_transform(louver, True)
+        butil.select_none()
+        with butil.ViewportMode(louver, "EDIT"):
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.bisect(
+                plane_co=(0, 0, y_min),
+                plane_no=(0, 0, 1),
+                use_fill=True,
+                clear_inner=True,
+            )
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.bisect(
+                plane_co=(0, 0, y_max),
+                plane_no=(0, 0, 1),
+                use_fill=True,
+                clear_outer=True,
+            )
         write_attribute(louver, 1, "louver", "FACE")
         return [cutter, louver]
 

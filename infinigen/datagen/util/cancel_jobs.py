@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("-wo", "--without_substring", default=None)
     parser.add_argument("--not_running", action="store_true")
     args = parser.parse_args()
-    job_cmd = f'/usr/bin/squeue --user={os.environ["USER"]} -o %.24i%.40j%.14R -h'
+    job_cmd = f"/usr/bin/squeue --user={os.environ['USER']} -o %.24i%.40j%.14R -h"
     squeue_output = subprocess.check_output(job_cmd.split()).decode()
     matches = re.findall("([0-9]+) *([^ ]+) *([^ ]+) *\n", squeue_output)
     for job_id, job_name, job_status in tqdm(matches):

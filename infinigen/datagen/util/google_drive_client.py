@@ -24,7 +24,7 @@ def download(remote_path, local_folder):
     print(f"Downloading to {dest_path}")
     with Path("/dev/null").open("w") as devnull:
         subprocess.run(
-            f'{shutil.which("rclone")} copy infinigen_renders:{remote_path} {local_folder}/',
+            f"{shutil.which('rclone')} copy infinigen_renders:{remote_path} {local_folder}/",
             shell=True,
             check=True,
             stderr=devnull,

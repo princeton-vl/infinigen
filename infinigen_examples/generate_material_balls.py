@@ -73,7 +73,7 @@ def build_scene_surface(factory_name, idx):
                     if not subdir.endswith(".py"):
                         with gin.unlock_config():
                             module = importlib.import_module(
-                                f'infinigen.assets.materials.{subdir.split(".")[0]}'
+                                f"infinigen.assets.materials.{subdir.split('.')[0]}"
                             )
                         if hasattr(module, factory_name):
                             template = getattr(module, factory_name)

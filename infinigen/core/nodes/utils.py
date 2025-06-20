@@ -69,12 +69,12 @@ def infer_input_socket(node, input_socket_name):
 
     if not input_socket.enabled:
         logger.warning(
-            f'Attempted to use ({input_socket.name=},{input_socket.type=}) of {node.name=}, but it was '
-            f'disabled. Either change attrs={{...}}, '
-            f'change the socket index, or specify the socket by name (assuming two enabled sockets don\'t '
-            f'share a name).'
-            f'The input sockets are '
-            f'{[(i.name, i.type, ("ENABLED" if i.enabled else "DISABLED")) for i in node.inputs]}.',
+            f"Attempted to use ({input_socket.name=},{input_socket.type=}) of {node.name=}, but it was "
+            f"disabled. Either change attrs={{...}}, "
+            f"change the socket index, or specify the socket by name (assuming two enabled sockets don't "
+            f"share a name)."
+            f"The input sockets are "
+            f"{[(i.name, i.type, ('ENABLED' if i.enabled else 'DISABLED')) for i in node.inputs]}.",
         )
 
     return input_socket

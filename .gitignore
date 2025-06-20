@@ -24,6 +24,7 @@ __pycache__
 *.blend
 *.blend1
 *.obj
+*.mtl
 *.DS_Store
 **._.DS_Store
 **.swp
@@ -42,9 +43,6 @@ Blender-FLIP-Fluids
 *.mp4
 
 *.npz
-*.obj
-*.blend
-*.blend1
 *.out
 profiles_*.npz
 outputs
@@ -73,3 +71,25 @@ blends
 
 process_mesh
 worldgen
+
+*.xml
+*.usd
+*.usda
+*.usdc
+
+tests/sim/sim_exports
+tests/sim/test_blueprints
+tests/sim/test_objects
+sim_exports/
+
+MUJOCO_LOG.txt
+
+articulated_asset_preview.html
+*.png
+*.gif
+
+sim_testing/
+
+*.log
+
+*tmp*

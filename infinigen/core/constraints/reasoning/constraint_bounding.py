@@ -111,9 +111,9 @@ def evaluate_known_vars(node: cl.Node, known_vars) -> cl.constant:
     if is_constant(node):
         return None
     match node:
-        case cl.ScalarOperatorExpression(
-            f, (lhs, rhs)
-        ) if f in int_inverse_op.keys() or f in int_inverse_op:
+        case cl.ScalarOperatorExpression(f, (lhs, rhs)) if (
+            f in int_inverse_op.keys() or f in int_inverse_op
+        ):
             if is_constant(lhs):
                 rhs_eval = evaluate_known_vars(rhs, known_vars)
                 if is_constant(rhs_eval):
