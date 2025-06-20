@@ -385,10 +385,15 @@ PYTYPE_TO_DATATYPE = {
     float: "FLOAT",
     np.float32: "FLOAT",
     np.float64: "FLOAT",
-    np.float64: "FLOAT_VECTOR",
+    np.array: "FLOAT_VECTOR",
     bool: "BOOLEAN",
 }
-DATATYPE_TO_PYTYPE = {v: k for k, v in PYTYPE_TO_DATATYPE.items()}
+DATATYPE_TO_PYTYPE= {
+    "INT": int,
+    "FLOAT": np.float32,
+    "FLOAT_VECTOR": np.float64,
+    "BOOLEAN": bool
+}
 
 # Each thing containing nodes has a different output node id
 OUTPUT_NODE_IDS = {

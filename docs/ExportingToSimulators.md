@@ -38,10 +38,15 @@ To export articulated assets to the MJCF/URDF/USD file formats, we provide the f
 ./scripts/spawn_sim_ready_asset.sh {asset name} {number of instances} {mjcf/urdf/usd}
 ```
 
-For instance, the command to generate 10 instances of doors in the MJCF file format is
+For instance, to generate 10 instances of all available assets in the MJCF file format, run the following scripts.
 
 ```bash
 ./scripts/spawn_sim_ready_asset.sh door 10 mjcf
+./scripts/spawn_sim_ready_asset.sh dishwasher 10 mjcf
+./scripts/spawn_sim_ready_asset.sh lamp 10 mjcf
+./scripts/spawn_sim_ready_asset.sh multifridge 10 mjcf
+./scripts/spawn_sim_ready_asset.sh multidoublefridge 10 mjcf
+./scripts/spawn_sim_ready_asset.sh toaster 10 mjcf
 ```
 
-To view all included articulated assets, please see `OBJECT_CLASS_MAP` in `infinigen/assets/sim_objects/mapping.py`. Each key in the map corresponds to an articulated asset. Note that `singlefridge` and `doublefridge` are used by `multifridge` and `multidoublefridge` and are not meant to be used on their own.
+To view the most updated list of included articulated assets, please see `OBJECT_CLASS_MAP` in `infinigen/assets/sim_objects/mapping.py`. Each key in the map corresponds to an articulated asset. Note that `singlefridge` and `doublefridge` are used by `multifridge` and `multidoublefridge` and are not meant to be used on their own.
