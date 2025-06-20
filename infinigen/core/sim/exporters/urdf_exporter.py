@@ -66,6 +66,7 @@ class URDFBuilder(SimBuilder):
         kinematic_root: KinematicNode,
         metadata: Dict,
         visual_only: bool = False,
+        image_res: int = 512
     ):
         super().build(blend_obj, metadata)
 
@@ -73,7 +74,7 @@ class URDFBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        self._populate_links(root, visual_only=visual_only)
+        self._populate_links(root, visual_only=visual_only, image_res=image_res)
 
     def _populate_links(
         self,
@@ -82,6 +83,7 @@ class URDFBuilder(SimBuilder):
         joint_nodes: List[KinematicNode] = [],
         pos_offset: np.array = np.zeros(3),
         visual_only: bool = False,
+        image_res: int = 512
     ):
         """Populates the urdf with links and joints."""
         # create a link for the body
@@ -95,7 +97,7 @@ class URDFBuilder(SimBuilder):
         for asset in root.assets:
             # export the mesh and set the filename
             visasset_path, colasset_paths, mesh = self._get_mesh(
-                asset.attribs, visual_only=visual_only
+                asset.attribs, visual_only=visual_only, image_res=image_res
             )
 
             # add all the assets for the given link
@@ -227,7 +229,7 @@ class URDFBuilder(SimBuilder):
         self.urdf.append(joint)
         return joint
 
-    def _get_mesh(self, attribs: List[PathItem], visual_only: bool):
+    def _get_mesh(self, attribs: List[PathItem], visual_only: bool, image_res: int):
         mesh = self._get_geometry(attribs)
         labels = self._get_labels(mesh)
         if len(labels) == 0:
@@ -242,7 +244,7 @@ class URDFBuilder(SimBuilder):
         export_paths = export_sim_ready(
             mesh,
             output_folder=self.assets_dir,
-            image_res=512,
+            image_res=image_res,
             translation=-geometry_center,
             separate_asset_dirs=False,
             name=unique_name,
@@ -291,6 +293,7 @@ def export(
     sim_blueprint: Path,
     seed: int,
     export_dir: Path = Path("./sim_exports/urdf"),
+    image_res: int = 512,
     visual_only: bool = True,
     **kwargs,
 ):
@@ -311,6 +314,7 @@ def export(
         kinematic_root=kinematic_root,
         metadata=metadata,
         visual_only=visual_only,
+        image_res=image_res
     )
 
     metadata.update(builder.get_bounding_box_info())

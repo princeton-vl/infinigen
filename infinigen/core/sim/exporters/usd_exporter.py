@@ -58,6 +58,7 @@ class USDBuilder(SimBuilder):
         kinematic_root: KinematicNode,
         metadata: Dict,
         visual_only: bool = False,
+        image_res: int = 512
     ):
         super().build(blend_obj, metadata)
 
@@ -65,10 +66,10 @@ class USDBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        body_info = self._add_assets(root, visual_only)
+        body_info = self._add_assets(root, visual_only, image_res)
         self._add_joints(root, body_info)
 
-    def _add_assets(self, root: RigidBody, visual_only: bool):
+    def _add_assets(self, root: RigidBody, visual_only: bool, image_res: int):
         """Populates the USD with its xforms and assets."""
         body_usd_info = dict()
 
@@ -86,7 +87,7 @@ class USDBuilder(SimBuilder):
             link_path = f"/Asset/{link_name}"
             for asset in body.assets:
                 vismesh, colmeshes, asset = self._add_mesh(
-                    asset.attribs, link_path, visual_only
+                    asset.attribs, link_path, visual_only, image_res
                 )
                 vismesh_refs.append(vismesh)
                 colmesh_refs.append(colmeshes)
@@ -232,7 +233,7 @@ class USDBuilder(SimBuilder):
         UsdPhysics.RigidBodyAPI.Apply(xform.GetPrim())
         return xform
 
-    def _add_mesh(self, attribs: List[PathItem], usd_path: str, visual_only: bool):
+    def _add_mesh(self, attribs: List[PathItem], usd_path: str, visual_only: bool, image_res: int):
         """Adds an asset along with its materials to the USD and returns the asset."""
         mesh_vert, mesh_face, mesh_facenum, labels, asset = self._get_geometry_info(
             attribs
@@ -255,7 +256,7 @@ class USDBuilder(SimBuilder):
         vismesh.GetFaceVertexIndicesAttr().Set(Vt.IntArray(mesh_face))
         vismesh.GetPrim().GetAttribute("subdivisionScheme").Set("bilinear")
 
-        self._bake_materials(asset, unique_name)
+        self._bake_materials(asset, unique_name, image_res)
 
         # adding the texture uv coordinates
         uv_layer = asset.data.uv_layers.active
@@ -382,9 +383,8 @@ class USDBuilder(SimBuilder):
 
         return vismesh, colmeshes, asset
 
-    def _bake_materials(self, asset: bpy.types.Object, name: str):
+    def _bake_materials(self, asset: bpy.types.Object, name: str, image_res: int):
         # set the materials
-        image_res = 1024
         bpy.context.scene.render.engine = "CYCLES"
         bpy.context.scene.cycles.device = "GPU"
         bpy.context.scene.cycles.samples = 1  # choose render sample
@@ -475,6 +475,7 @@ def export(
     sim_blueprint: Path,
     seed: int,
     export_dir: Path = Path("./sim_exports/usd"),
+    image_res: int = 512,
     visual_only: bool = True,
     file_extension: str = "usda",
     **kwargs,
@@ -496,6 +497,7 @@ def export(
         kinematic_root=kinematic_root,
         metadata=metadata,
         visual_only=visual_only,
+        image_res=image_res
     )
 
     # export the USD file

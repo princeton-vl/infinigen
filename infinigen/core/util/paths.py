@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import infinigen.assets.sim_blueprints as blueprints
+import infinigen.assets.sim_objects.blueprints as blueprints
 
 
 def blueprint_path_completion(blueprint_path, root=None):

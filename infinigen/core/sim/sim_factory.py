@@ -13,6 +13,7 @@ def spawn_simready(
     name: str,
     exporter: str = "mjcf",
     export_dir: Path = Path("./sim_exports"),
+    image_res: int = 512,
     seed: int = 0,
     **kwargs,
 ) -> Tuple[Path, Dict]:
@@ -38,6 +39,7 @@ def spawn_simready(
         sim_blueprint=asset.sim_blueprint,
         seed=asset.factory_seed,
         export_dir=export_dir,
+        image_res=image_res,
         **kwargs,
     )
 
