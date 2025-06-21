@@ -1,3 +1,11 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Stamatis Alexandropoulos: primary author
+# - Abhishek Joshi: updates for sim integration
+
 import functools
 
 import numpy as np
@@ -17,7 +25,6 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
-
 from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
 
@@ -4086,29 +4093,26 @@ class DishwasherFactory(AssetFactory):
             button_position = RI(0, 1)
             curved_handle = RI(0, 1)
 
-            body_mat = np.random.choice(
-                [metal.get_shader(), plastic.get_shader(translucent=0.2)], p=[0.5, 0.5]
-            )
-            button_mat = np.random.choice(
-                [metal.get_shader(), plastic.get_shader(translucent=0.2)], p=[0.6, 0.4]
-            )
-            knob_mat = np.random.choice(
-                [
-                    metal.get_shader(),
-                    plastic.get_shader(translucent=0.2),
-                    wood.get_shader(),
-                ],
-                p=[0.1, 0.3, 0.6],
-            )
-            knob_mat_2 = np.random.choice(
-                [plastic.get_shader(translucent=0.2), wood.get_shader()], p=[0.8, 0.2]
+            dishwasher_materials = (
+                (metal.MetalBasic, 2.0),
+                (metal.BrushedMetal, 2.0),
+                (metal.GalvanizedMetal, 2.0),
+                (metal.BrushedBlackMetal, 2.0),
+                (plastic.Plastic, 1.0),
+                (plastic.PlasticRough, 1.0),
             )
 
-            r = np.random.rand()
-            if r < 0.7:
-                body_mat = np.random.choice(
-                    get_all_metal_shaders(sample_light_exterior())
-                )
+            body_shader = weighted_sample(dishwasher_materials)()
+            front_shader = weighted_sample(dishwasher_materials)()
+            button_shader = weighted_sample(dishwasher_materials)()
+            knob_shader = weighted_sample(dishwasher_materials)()
+            knob_shader_2 = weighted_sample(dishwasher_materials)()
+
+            body_mat = body_shader.generate()
+            front_mat = front_shader.generate()
+            button_mat = button_shader.generate()
+            knob_mat = knob_shader.generate()
+            knob_mat_2 = knob_shader_2.generate()
 
             params = {
                 "Depth": depth,
@@ -4129,21 +4133,11 @@ class DishwasherFactory(AssetFactory):
                 "handle_position": handle_position,
                 "button_position": button_position,
                 "curved_handle": curved_handle,
-                "Surface": surface.shaderfunc_to_material(
-                    body_mat, metal_color="bw+natural"
-                ),
-                "Front": surface.shaderfunc_to_material(
-                    weighted_sample(material_assignments.kitchen_appliance_hard)()
-                ),
-                "Button": surface.shaderfunc_to_material(
-                    knob_mat, metal_color="bw+natural"
-                ),
-                "WhiteMetal": surface.shaderfunc_to_material(
-                    button_mat, metal_color="bw+natural"
-                ),
-                "Buttons": surface.shaderfunc_to_material(
-                    knob_mat_2, metal_color="bw+natural"
-                ),
+                "Surface": body_mat,
+                "Front": front_mat,
+                "Button": knob_mat,
+                "WhiteMetal": button_mat,
+                "Buttons": knob_mat_2,
             }
             return params
 

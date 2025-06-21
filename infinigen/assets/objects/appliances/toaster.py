@@ -1,3 +1,11 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Yiming Zuo: primary author
+# - Abhishek Joshi: updates for sim integration
+
 import numpy as np
 from numpy.random import uniform
 
@@ -13,6 +21,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
+from infinigen.assets.composition import material_assignments
+from infinigen.core.util.random import weighted_sample
 
 
 def nodegroup_carriage_flat(nw: NodeWrangler):
@@ -1387,53 +1397,31 @@ class ToasterFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             toaster_length = uniform(1.2, 1.6)
 
-            if self.use_transparent_mat:
-                translucent = 0.2
-            else:
-                translucent = 0.0
+            toaster_materials = (
+                (metal.MetalBasic, 2.0),
+                (metal.BrushedMetal, 2.0),
+                (metal.GalvanizedMetal, 2.0),
+                (metal.BrushedBlackMetal, 2.0),
+                (plastic.Plastic, 1.0),
+                (plastic.PlasticRough, 1.0),
+            )
 
-            # body_mat_1 = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.4, 0.6])
-            # body_mat_2 = np.random.choice([body_mat_1, metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.3, 0.2, 0.5])
-            # button_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
-            # knob_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
-            # carriage_mat = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
+            self.body_shader_1 = weighted_sample(toaster_materials)()
+            self.body_shader_2 = weighted_sample(toaster_materials)()
+            self.button_shader = weighted_sample(toaster_materials)()
+            self.knob_shader = weighted_sample(toaster_materials)()
+            self.carriage_shader = weighted_sample(toaster_materials)()
 
-            body_mat_1 = np.random.choice(
-                [metal.get_shader(), plastic.get_shader(translucent=translucent)],
-                p=[0.9, 0.1],
-            )
-            body_mat_2 = np.random.choice(
-                [
-                    body_mat_1,
-                    metal.get_shader(),
-                    plastic.get_shader(translucent=translucent),
-                ],
-                p=[0.5, 0.4, 0.1],
-            )
-            button_mat = np.random.choice(
-                [
-                    metal.get_shader(),
-                    plastic.get_shader(translucent=translucent),
-                    wood.get_shader(),
-                ],
-                p=[0.9, 0.05, 0.05],
-            )
-            knob_mat = np.random.choice(
-                [
-                    metal.get_shader(),
-                    plastic.get_shader(translucent=translucent),
-                    wood.get_shader(),
-                ],
-                p=[0.9, 0.05, 0.05],
-            )
-            carriage_mat = np.random.choice(
-                [
-                    metal.get_shader(),
-                    plastic.get_shader(translucent=translucent),
-                    wood.get_shader(),
-                ],
-                p=[0.9, 0.05, 0.05],
-            )
+            body_mat_1 = self.body_shader_1.generate()
+            body_mat_2 = body_mat_1
+            if uniform() < 0.5:
+                body_mat_2 = self.body_shader_2.generate()
+            button_mat = self.button_shader.generate()
+            knob_mat = button_mat
+            carriage_mat = button_mat
+            if uniform() < 0.5:
+                knob_mat = self.knob_shader.generate()
+                carriage_mat = self.carriage_shader.generate()
 
             button_side = np.random.choice([-1.0, 1.0])
             knob_side = np.random.choice(
@@ -1480,21 +1468,11 @@ class ToasterFactory(AssetFactory):
                 "button vertical offset": uniform(-0.65, -0.20),
                 "base alternative style": np.random.choice([True, False]),
                 "base side shape param": uniform(0.1, 0.5),
-                "body mat 1": surface.shaderfunc_to_material(
-                    body_mat_1, metal_color="light"
-                ),
-                "body mat 2": surface.shaderfunc_to_material(
-                    body_mat_2, metal_color="light"
-                ),
-                "button mat": surface.shaderfunc_to_material(
-                    button_mat, metal_color="light"
-                ),
-                "knob mat": surface.shaderfunc_to_material(
-                    knob_mat, metal_color="light"
-                ),
-                "carriage mat": surface.shaderfunc_to_material(
-                    carriage_mat, metal_color="light"
-                ),
+                "body mat 1": body_mat_1,
+                "body mat 2": body_mat_2,
+                "button mat": button_mat,
+                "knob mat": knob_mat,
+                "carriage mat": carriage_mat
             }
 
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):

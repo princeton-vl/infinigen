@@ -4,6 +4,8 @@
 
 # Authors:
 # - Lingjie Mei: primary author
+# - Yiming Zuo: updates for sim integration
+# - Abhishek Joshi: updates for sim integration
 
 
 import bpy
@@ -68,13 +70,6 @@ def geometry_node_join(
         single_door_flip_lr = True
     else:
         single_door_flip_lr = False
-    # door_frame = nw.new_node(nodegroup_door_frame().name,
-    #     input_kwargs={'full_frame': True, 'top_dome': True, 'door_width': door_width, 'door_height': door_height, 'door_depth': door_depth, 'frame_width': 0.0500})
-
-    # door_frame_colored = nw.new_node(
-    #     Nodes.SetMaterial,
-    #     input_kwargs={"Geometry": door_frame, "Material": surface.shaderfunc_to_material(frame_mat)},
-    # )
 
     door_frame = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": door_frame})
 
@@ -101,6 +96,7 @@ def geometry_node_join(
     # duplicate the handle on both side of the door
     handle_type = handle_info_dict["handle_type"]
     if handle_type == "bar":
+        handle_material = handle_info_dict["shader"].generate()
         handle_object_info = nw.new_node(
             nodegroup_push_bar_handle().name,
             input_kwargs={
@@ -121,9 +117,7 @@ def geometry_node_join(
             Nodes.SetMaterial,
             input_kwargs={
                 "Geometry": handle_object_info,
-                "Material": surface.shaderfunc_to_material(
-                    handle_info_dict["shader"], base_color=handle_info_dict["color"]
-                ),
+                "Material": handle_material
             },
         )
 
@@ -143,15 +137,6 @@ def geometry_node_join(
         handle_object_info = nw.new_node(
             Nodes.ObjectInfo, input_kwargs={"Object": handle_obj}
         )
-
-        # handle_object_info = nw.new_node(
-        #     nodegroup_add_geometry_metadata().name,
-        #     input_kwargs={
-        #         "Geometry": handle_object_info.outputs["Geometry"],
-        #         "Label": "handle",
-        #     },
-        # )
-
         handle_object_info = nw.new_node(
             nodegroup_symmetry_along_y().name,
             input_kwargs={"Geometry": handle_object_info.outputs["Geometry"]},
@@ -679,11 +664,11 @@ class BaseDoorFactory(AssetFactory):
             self.out_bevel = uniform() < 0.7
             self.shrink_width = log_uniform(0.005, 0.06)
 
-            self.surface = weighted_sample(material_assignments.frame)()
+            self.surface = weighted_sample(material_assignments.hard_materials)()
             self.has_glass = uniform(0, 1.0) < 0.5
             self.glass_surface = weighted_sample(material_assignments.glasses)()
-            self.louver_surface = weighted_sample(material_assignments.frame)()
-            self.handle_surface = weighted_sample(material_assignments.frame)()
+            self.louver_surface = weighted_sample(material_assignments.hard_materials)()
+            self.handle_surface = weighted_sample(material_assignments.metal_neutral)()
             self.has_louver = True
 
             self.handle_type = np.random.choice(
@@ -703,7 +688,6 @@ class BaseDoorFactory(AssetFactory):
             self.door_orientation = np.random.choice(
                 ["left", "right"]
             )  # handle on left/right for push
-            # self.door_orientation = 'left'
 
             if self.door_frame_style in ["full_frame_double_door"]:
                 if self.handle_type == "pull":
@@ -737,9 +721,6 @@ class BaseDoorFactory(AssetFactory):
                         "hinge_handle_door.json"
                     )
 
-            self.handle_surface = np.random.choice(
-                [metal, wood, plastic], p=[0.4, 0.2, 0.4]
-            )
             self.handle_offset = self.panel_margin * 0.5
             self.handle_height = self.height * uniform(0.45, 0.5)
 
@@ -765,7 +746,7 @@ class BaseDoorFactory(AssetFactory):
                     "bar_end_length_ratio": uniform(0.1, 0.15),
                     "bar_end_height_ratio": uniform(1.8, 3.0),
                     "bar_overall_z_offset": -uniform(0.0, 0.1) * self.height,
-                    "shader": metal.get_shader(),
+                    "shader": weighted_sample(material_assignments.metals)(),
                     "color": colors.hsv2rgba(colors.metal_natural_hsv()),
                 }
 
@@ -847,7 +828,7 @@ class BaseDoorFactory(AssetFactory):
                 self.auto_bevel(handle)
 
             handle = join_objects(handles)
-            self.handle_surface.apply(handle, metal_color="natural")
+            self.handle_surface.apply(handle)
 
             handle.location = -self.width, -self.depth / 2, -self.height / 2
             butil.apply_transform(handle, True)
@@ -925,7 +906,7 @@ class BaseDoorFactory(AssetFactory):
                 "frame_width": self.door_frame_width,
             },
         )
-        self.surface.apply(door_frame, metal_color=self.metal_color, vertical=True)
+        
         self.auto_bevel(door_frame)
         door_frame = add_bevel(
             door_frame, get_bevel_edges(door), offset=self.side_bevel
@@ -953,15 +934,6 @@ class BaseDoorFactory(AssetFactory):
             )
             self.auto_bevel(door_arc)
 
-            if self.door_arc_surface == "door":
-                self.surface.apply(
-                    door_arc, metal_color=self.metal_color, vertical=True
-                )
-            elif self.door_arc_surface == "glass":
-                self.glass_surface.apply(door_arc, clear=True)
-            else:
-                raise NotImplementedError
-
             door_arc.location = -self.width / 2, 0.0, self.height / 2
             butil.apply_transform(door_arc, True)
             door_arc = add_bevel(
@@ -984,12 +956,23 @@ class BaseDoorFactory(AssetFactory):
             # door_arc.location = -self.width / 2, 0.0, 0.0
             # butil.apply_transform(door_arc, True)
 
-        self.surface.apply(door, metal_color=self.metal_color, vertical=True)
+        if self.door_frame_style == "full_frame_dome":
+            if self.door_arc_surface == "door":
+                self.surface.apply([door_frame, door, door_arc])
+            elif self.door_arc_surface == "glass":
+                self.surface.apply([door_frame, door])
+                self.glass_surface.apply(door_arc, clear=True)
+            else:
+                breakpoint()
+                raise NotImplementedError
+        else:
+            self.surface.apply([door_frame, door])
+
         if self.has_glass:
             self.glass_surface.apply(door, selection="glass", clear=True)
         if self.has_louver:
             self.louver_surface.apply(
-                door, selection="louver", metal_color=self.metal_color
+                door, selection="louver"
             )
 
         door.location = -self.width, -self.depth / 2, -self.height / 2
@@ -1063,15 +1046,6 @@ class BaseDoorFactory(AssetFactory):
         return self.make_handles(obj)
 
     def make_handles(self, obj):
-        # write_attribute(obj, 1, "handle", "FACE")
-        # obj.location = self.handle_offset, 0, self.handle_height
-        # butil.apply_transform(obj, loc=True)
-        # other = deep_clone_obj(obj)
-        # obj.location[1] += self.depth
-        # butil.apply_transform(obj, loc=True)
-        # mirror(other, 1)
-        # return [obj, other]
-
         # making handle two-sided is moved to nodegroup_join
         write_attribute(obj, 1, "handle", "FACE")
         obj.location = self.handle_offset, self.depth, self.handle_height

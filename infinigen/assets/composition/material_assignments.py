@@ -70,6 +70,31 @@ plastics = [
     (plastic.PlasticTranslucent, 1.0),
 ]
 
+hard_materials = [
+    (metal.MetalBasic, 1.0),
+    (metal.BrushedMetal, 1.0),
+    (metal.GalvanizedMetal, 1.0),
+    (metal.GrainedMetal, 1.0),
+    (metal.HammeredMetal, 1.0),
+    (metal.BrushedBlackMetal, 1.0),
+    (wood.Wood, 2.0),
+    (wood.WhitePlywood, 2.0),
+    (wood.BlackPlywood, 2.0),
+    (wood.BlondePlywood, 2.0),
+    (plastic.Plastic, 1.0),
+    (plastic.PlasticRough, 1.0),
+    (plastic.PlasticTranslucent, 1.0),
+]
+
+metal_plastic = (
+    metal_neutral
+    + [
+        (plastic.Plastic, 1.0),
+        (plastic.PlasticRough, 1.0),
+        (plastic.PlasticTranslucent, 1.0),
+    ]
+)
+
 shelf_board = (
     metals
     + plastics
@@ -129,7 +154,7 @@ pants = fabrics + [(art.ArtFabric, 5.0)]
 towel = fabrics + [(art.ArtRug, 2.0), (fabric.Rug, 5.0)]
 
 lampshade = fabrics + [
-    (lamp_shaders.LampShade, 7.0),
+    (lamp_shaders.LampShade, 5.0),
 ]
 
 table_top = [

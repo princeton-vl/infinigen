@@ -31,7 +31,7 @@ def shader_black(nw: NodeWrangler):
 class BlackPlastic:
     shader = shader_black
 
-    def generate(self):
+    def generate(self, **kwargs):
         return surface.shaderfunc_to_material(shader_black)
 
     def apply(self, obj, selection=None, **kwargs):

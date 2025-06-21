@@ -1,8 +1,16 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Jack Nugent: primary author
+# - Abhishek Joshi: updates for sim integration
+
 import functools
 
 import numpy as np
 
-from infinigen.assets.materials import fabrics, lamp_shaders, metal, plastic
+from infinigen.assets.materials import fabrics, lamp_shaders, metal, plastic, ceramic
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
@@ -10,7 +18,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
-
+from infinigen.assets.composition import material_assignments
+from infinigen.core.util.random import weighted_sample
 
 @node_utils.to_nodegroup("nodegroup_bulb_003", singleton=False, type="GeometryNodeTree")
 def nodegroup_bulb_003(nw: NodeWrangler):
@@ -5040,11 +5049,6 @@ def sample_lamp_parameters(lamp_type=None, materials={}):
             ],
             p=[0.2, 0.15, 0.15, 0.1, 0.1, 0.1, 0.2],
         )
-        # desk does not look good now
-        # lamp_type = np.random.choice([
-        #     'standing', 'single_bar', 'single_bar_modern',
-        #     'double_bar', 'double_bar_modern', 'short_second_bar'
-        # ])
 
     # Initialize parameter dictionary with defaults
     params = {
@@ -5083,7 +5087,7 @@ def sample_lamp_parameters(lamp_type=None, materials={}):
     params["ShadeInteriorMaterial"] = materials["shade_interior"]
     params["ButtonMaterial"] = materials["button"]
     params["LampRackMaterial"] = materials["lamp_rack"]
-    params["MetalMaterial"] = materials["metal"]
+    params["MetalMaterial"] = materials["metal_mat"]
 
     def sample_button(button_type):
         params["BaseButtonOffset"] = np.random.uniform(0, 1)
@@ -5120,7 +5124,7 @@ def sample_lamp_parameters(lamp_type=None, materials={}):
             params["BottomRadius"] = params["TopRadius"] * np.random.uniform(1.5, 2.5)
         else:
             # Cylindrical shade (similar top and bottom radius)
-            radius = np.random.uniform(0.1, 0.25)
+            radius = np.random.uniform(0.15, 0.3)
             params["TopRadius"] = radius
             params["BottomRadius"] = radius
         params["RackHeight"] = -params["TopRadius"] - np.random.uniform(0.03, 0.3)
@@ -5309,16 +5313,7 @@ def sample_lamp_parameters(lamp_type=None, materials={}):
         params["RackThickness"] = 0.0
         params["IncludeLightBulb"] = True
 
-    # params['BaseMaterial'] = np.random.choice(material_options[:3])
-    # params['StandMaterial'] = np.random.choice(material_options[:3])
-    # params['ShadeMaterial'] = np.random.choice(material_options[3:])
-    # params['ShadeInteriorMaterial'] = 'shader_lampshade.004'
-    # params['ButtonMaterial'] = np.random.choice(material_options[:3])
-    # params['LampRackMaterial'] = np.random.choice(material_options[:3])
-    # params['MetalMaterial'] = 'shader_metal.002'
-
     return params
-
 
 def sample_white_interior():
     """Generate a white or near-white color for the lamp shade interior"""
@@ -5327,22 +5322,7 @@ def sample_white_interior():
     s = np.random.uniform(0, 0.1)  # Very low saturation to keep it close to white
     v = np.random.uniform(0.9, 1.0)  # High value for brightness
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
-
-
-def sample_light_exterior():
-    """Generate a light color for the lamp shade exterior"""
-    # Light pastel colors - high value, moderate-low saturation
-    h = np.random.uniform(0, 1)  # Any hue is possible
-    s = np.random.uniform(0.1, 0.3)  # Low-moderate saturation for pastel effect
-    v = np.random.uniform(0.8, 0.95)  # High value but not too bright
-
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
-
+    return (h, s, v)
 
 def sample_gold():
     """Generate a gold color variation"""
@@ -5352,10 +5332,7 @@ def sample_gold():
     s = np.random.uniform(0.65, 0.9)  # Moderate to high saturation
     v = np.random.uniform(0.75, 1.0)  # Bright
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
-
+    return (h, s, v)
 
 def sample_silver():
     """Generate a silver color variation"""
@@ -5364,37 +5341,7 @@ def sample_silver():
     s = np.random.uniform(0, 0.1)  # Very low saturation
     v = np.random.uniform(0.75, 0.9)  # High but not maximum brightness
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
-
-
-# def generate_lamp_colors(num_samples=5):
-#     """Generate multiple sets of lamp colors"""
-#     results = []
-#
-#     for _ in range(num_samples):
-#         colors = {
-#             'interior': sample_white_interior(),
-#             'exterior': sample_light_exterior(),
-#             'gold': sample_gold(),
-#             'silver': sample_silver()
-#         }
-#         results.append(colors)
-#
-#     return results
-#
-# # Example usage
-# lamp_color_options = generate_lamp_colors(10)
-# print("Generated 10 sets of lamp color options:")
-# for i, colors in enumerate(lamp_color_options):
-#     print(f"Option {i+1}:")
-#     print(f"  Interior (white): RGB{colors['interior']}")
-#     print(f"  Exterior (light): RGB{colors['exterior']}")
-#     print(f"  Gold accent: RGB{colors['gold']}")
-#     print(f"  Silver accent: RGB{colors['silver']}")
-#     print()
-
+    return (h, s, v)
 
 def get_all_metal_shaders(color):
     metal_shaders_list = [
@@ -5411,16 +5358,6 @@ def get_all_metal_shaders(color):
         ns.__name__ = metal_shaders_list[idx].__name__
 
     return new_shaders
-
-
-def get_all_fabric_shaders():
-    return [
-        fabrics.shader_coarse_knit_fabric,
-        fabrics.shader_fine_knit_fabric,
-        fabrics.shader_fabric,
-        fabrics.shader_sofa_fabric,
-    ]
-
 
 def shader_fine_knit_fabric_colored(color):
     def shader(nw: NodeWrangler):
@@ -5439,21 +5376,23 @@ class LampFactory(AssetFactory):
         self.type = None
 
     def sample_parameters(self):
-        # fabric = np.random.choice(get_all_fabric_shaders())
 
         def sample_mat():
-            gold = np.random.choice(get_all_metal_shaders(sample_gold()))
-            silver = np.random.choice(get_all_metal_shaders(sample_silver()))
-            return np.random.choice(
-                [
-                    gold,
-                    silver,
-                    metal.get_shader(),
-                    plastic.get_shader(),
-                    lamp_shaders.shader_black,
-                ],
-                p=[0.2, 0.2, 0.35, 0.15, 0.1],
-            )
+            gold = sample_gold()
+            silver = sample_silver()
+        
+            shader = weighted_sample([
+                (metal.MetalBasic, 0.7),
+                (plastic.Plastic, 0.2),
+                (plastic.BlackPlastic, 0.1),
+            ])()
+            r = np.random.rand()
+            if r < 0.3:
+                return shader(color_hsv=gold)
+            elif r < 0.6:
+                return shader(color_hsv=silver)
+            else:
+                return shader()
 
         r = np.random.rand()
         if r < 1 / 3:
@@ -5469,23 +5408,27 @@ class LampFactory(AssetFactory):
             stand = sample_mat()
             button = sample_mat()
 
-        fabric = get_all_fabric_shaders()[1]
-        metal_ = np.random.choice(get_all_metal_shaders(sample_gold()))
-        lampshade = shader_fine_knit_fabric_colored(sample_white_interior())
+        glasses = [
+            (ceramic.Glass, 1.0),
+            (ceramic.ColoredGlass, 0.5),
+        ]
 
-        shaders = {
+        
+        shade_light = weighted_sample(material_assignments.lampshade)()()
+        interior = metal.MetalBasic()(color_hsv=sample_white_interior()) # TODO fix materials for lightbulb
+        lamp_rack = sample_mat()
+        metal_mat = weighted_sample(material_assignments.metal_neutral)()()
+
+        materials = {
             "base": base,
             "stand": stand,
-            "shade_light": lampshade,
             "button": button,
-            "lamp_rack": np.random.choice(
-                [metal.get_shader(), lamp_shaders.shader_black]
-            ),
-            "metal": metal.get_shader(),
-            "shade_interior": lamp_shaders.shader_lampshade,
+            "lamp_rack": lamp_rack,
+            "metal_mat": metal_mat,
+            "shade_light": shade_light,
+            "shade_interior": interior,
         }
 
-        materials = {k: surface.shaderfunc_to_material(v) for k, v in shaders.items()}
         return sample_lamp_parameters(materials=materials, lamp_type=self.type)
 
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):

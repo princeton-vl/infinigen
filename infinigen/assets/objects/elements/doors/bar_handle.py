@@ -1,3 +1,10 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Yiming Zuo: primary author
+
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
