@@ -1,3 +1,10 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Abhishek Joshi: primary author
+
 from pathlib import Path
 
 import infinigen.assets.sim_objects.blueprints as blueprints
@@ -5,16 +12,8 @@ import infinigen.assets.sim_objects.blueprints as blueprints
 
 def blueprint_path_completion(blueprint_path, root=None):
     """
-    Takes in a local xml path and returns a full path.
-        if @xml_path is absolute, do nothing
-        if @xml_path is not absolute, load xml that is shipped by the package
-
-    Args:
-        xml_path (str): local xml path
-        root (str): root folder for xml path. If not specified defaults to
-            infinigen.assets.sim_blueprints
-    Returns:
-        str: Full (absolute) xml path
+    Returns the absolute path to an assets blueprint.
+    logic borrowed and adapted from https://github.com/ARISE-Initiative/robosuite
     """
     if blueprint_path.startswith("/"):
         full_path = blueprint_path

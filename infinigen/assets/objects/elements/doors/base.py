@@ -4,6 +4,8 @@
 
 # Authors:
 # - Lingjie Mei: primary author
+# - Yiming Zuo: updates for sim integration
+# - Abhishek Joshi: updates for sim integration
 
 
 import bpy

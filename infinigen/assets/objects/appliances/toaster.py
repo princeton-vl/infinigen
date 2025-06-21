@@ -1,3 +1,11 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Yiming Zuo: primary author
+# - Abhishek Joshi: updates for sim integration
+
 import numpy as np
 from numpy.random import uniform
 
@@ -1388,54 +1396,6 @@ class ToasterFactory(AssetFactory):
         # add code here to randomly sample from parameters
         with FixedSeed(self.factory_seed):
             toaster_length = uniform(1.2, 1.6)
-
-            if self.use_transparent_mat:
-                translucent = 0.2
-            else:
-                translucent = 0.0
-
-            # body_mat_1 = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.4, 0.6])
-            # body_mat_2 = np.random.choice([body_mat_1, metal.get_shader(), plastic.get_shader(translucent=translucent)], p=[0.3, 0.2, 0.5])
-            # button_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
-            # knob_mat =  np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
-            # carriage_mat = np.random.choice([metal.get_shader(), plastic.get_shader(translucent=translucent), wood.get_shader()], p=[0.6, 0.3, 0.1])
-
-            # body_mat_1 = np.random.choice(
-            #     [metal.get_shader(), plastic.get_shader(translucent=translucent)],
-            #     p=[0.9, 0.1],
-            # )
-            # body_mat_2 = np.random.choice(
-            #     [
-            #         body_mat_1,
-            #         metal.get_shader(),
-            #         plastic.get_shader(translucent=translucent),
-            #     ],
-            #     p=[0.5, 0.4, 0.1],
-            # )
-            # button_mat = np.random.choice(
-            #     [
-            #         metal.get_shader(),
-            #         plastic.get_shader(translucent=translucent),
-            #         wood.get_shader(),
-            #     ],
-            #     p=[0.9, 0.05, 0.05],
-            # )
-            # knob_mat = np.random.choice(
-            #     [
-            #         metal.get_shader(),
-            #         plastic.get_shader(translucent=translucent),
-            #         wood.get_shader(),
-            #     ],
-            #     p=[0.9, 0.05, 0.05],
-            # )
-            # carriage_mat = np.random.choice(
-            #     [
-            #         metal.get_shader(),
-            #         plastic.get_shader(translucent=translucent),
-            #         wood.get_shader(),
-            #     ],
-            #     p=[0.9, 0.05, 0.05],
-            # )
 
             toaster_materials = (
                 (metal.MetalBasic, 2.0),

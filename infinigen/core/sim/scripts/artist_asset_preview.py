@@ -1,3 +1,10 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Abhishek Joshi: primary author
+
 from typing import Any, Dict, Optional
 
 import bpy
@@ -6,9 +13,6 @@ import numpy as np
 
 frame = 1
 obj = bpy.context.active_object
-
-debug_frame = 79
-
 
 def select_none():
     if hasattr(bpy.context, "active_object") and bpy.context.active_object is not None:

@@ -1,3 +1,10 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Abhishek Joshi: primary author
+
 """
 Factory method for spawn sim ready assets. Current sim ready file formats include mjcf, usd, and urdf.
 """
