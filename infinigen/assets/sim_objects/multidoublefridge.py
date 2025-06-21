@@ -7,7 +7,6 @@ import string
 import numpy as np
 from numpy.random import normal, randint, uniform
 
-from infinigen.assets.material_assignments import AssetList
 from infinigen.assets.materials import metal, plastic
 from infinigen.assets.sim_objects.doublefridge import (
     nodegroup_doublefridge,
@@ -18,7 +17,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
-
+from infinigen.core.util.random import weighted_sample
+from infinigen.assets.composition import material_assignments
 
 def get_all_metal_shaders(color):
     metal_shaders_list = [
@@ -45,9 +45,7 @@ def sample_gold():
     s = np.random.uniform(0.65, 0.9)  # Moderate to high saturation
     v = np.random.uniform(0.75, 1.0)  # Bright
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
+    return (h, s, v)
 
 
 def sample_silver():
@@ -57,9 +55,7 @@ def sample_silver():
     s = np.random.uniform(0, 0.1)  # Very low saturation
     v = np.random.uniform(0.75, 0.9)  # High but not maximum brightness
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
+    return (h, s, v)
 
 
 def sample_light_exterior():
@@ -69,44 +65,42 @@ def sample_light_exterior():
     s = np.random.uniform(0.1, 0.3)  # Low-moderate saturation for pastel effect
     v = np.random.uniform(0.8, 0.95)  # High value but not too bright
 
-    # Convert to RGB
-    rgb = hsv2rgba(h, s, v)
-    return rgb
+    return (h, s, v)
+
 
 
 class MultiDoublefridgeFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
         self.sim_blueprint = blueprint_path_completion("multidoublefridge.json")
-        self.material_params, self.scratch, self.edge_wear = self.get_material_params()
+        self.material_params = self.get_material_params()
 
     def get_material_params(self):
-        material_assignments = AssetList["SinglefridgeFactory"]()
-        body_material = material_assignments["body"].assign_material()
-        inner_material = material_assignments["inner"].assign_material()
-        glass_material = material_assignments["glass"].assign_material()
+        body_material = weighted_sample(material_assignments.kitchen_appliance_hard)()()
+        inner_material = weighted_sample(material_assignments.kitchen_appliance_hard)()()
+        glass_material = weighted_sample(material_assignments.appliance_front_maybeglass)()()
 
         r = np.random.rand()
-        if r < 0.2:
-            body_material = plastic.get_shader()
-        elif r < 0.6:
-            body_material = np.random.choice(
-                get_all_metal_shaders(sample_light_exterior())
-            )
+        if r < 0.5:
+            body_material = metal.MetalBasic()(color_hsv=sample_light_exterior())
 
-        r = np.random.rand()
-        if r < 1 / 3:
-            handle_material = body_material
-        elif r < 2 / 3:
-            handle_material = np.random.choice(get_all_metal_shaders(sample_silver()))
-        else:
-            handle_material = np.random.choice(get_all_metal_shaders(sample_gold()))
+        def sample_handle_mat():
+            gold = sample_gold()
+            silver = sample_silver()
+        
+            shader = weighted_sample([
+                (metal.MetalBasic, 0.7),
+                (plastic.Plastic, 0.3),
+            ])()
+            r = np.random.rand()
+            if r < 1 / 3:
+                return shader(color_hsv=gold, color_rgba=hsv2rgba(gold))
+            elif r < 2 / 3:
+                return shader(color_hsv=silver, color_rgba=hsv2rgba(silver))
+            else:
+                return shader()
 
-        r = np.random.rand()
-        if r < 0.2:
-            inner_material = np.random.choice(
-                get_all_metal_shaders(sample_light_exterior())
-            )
+        handle_material = sample_handle_mat()
 
         transparent_door = uniform(0.0, 1.0) < 0.5
         transparent_shelf = uniform(0.0, 1.0) < 0.5
@@ -123,22 +117,7 @@ class MultiDoublefridgeFactory(AssetFactory):
             "DrawerHandleMaterial": inner_material,
         }
 
-        wrapped_params = {
-            k: surface.shaderfunc_to_material(v) for k, v in params.items()
-        }
-
-        scratch_prob, edge_wear_prob = material_assignments["wear_tear_prob"]
-        scratch, edge_wear = material_assignments["wear_tear"]
-
-        is_scratch = uniform() < scratch_prob
-        is_edge_wear = uniform() < edge_wear_prob
-        if not is_scratch:
-            scratch = None
-
-        if not is_edge_wear:
-            edge_wear = None
-
-        return wrapped_params, scratch, edge_wear
+        return params
 
     def sample_heights(self, level_num):
         if level_num == 1:

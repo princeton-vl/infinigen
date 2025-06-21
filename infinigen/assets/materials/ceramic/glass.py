@@ -49,8 +49,8 @@ def shader_glass(nw: NodeWrangler, color=None, is_window=False, **kwargs):
 class Glass:
     shader = shader_glass
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_glass)
+    def generate(self, color=(1, 1, 1, 1), **kwargs):
+        return surface.shaderfunc_to_material(shader_glass, color=color)
 
     def apply(self, obj, selection=None, clear=False, **kwargs):
         color = get_glass_color(clear)

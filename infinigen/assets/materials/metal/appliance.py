@@ -8,7 +8,7 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
-def shader_brushed_black_metal(nw: NodeWrangler):
+def shader_brushed_black_metal(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler
 
     anisotropic_bsdf = nw.new_node(
@@ -28,6 +28,9 @@ class BrushedBlackMetal:
 
     def generate(self):
         return surface.shaderfunc_to_material(shader_brushed_black_metal)
+    
+    def apply(self, obj, selection=None, **kwargs):
+        common.apply(obj, shader_brushed_black_metal, selection, **kwargs)
 
     __call__ = generate
 
