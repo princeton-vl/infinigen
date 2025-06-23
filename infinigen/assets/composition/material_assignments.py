@@ -330,7 +330,7 @@ garage_floor = [
 ]
 utility_floor = [
     (ceramic.Concrete, 1.0),
-    (ceramic.plaster, 1.0),
+    (ceramic.Plaster, 1.0),
     (ceramic.tile, 1.0),
 ]
 bathroom_floor = [
