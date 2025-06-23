@@ -906,6 +906,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
     )
+    parser.add_argument("--print_stats", type=int, default=1)
     args = parser.parse_args()
 
     using_upload = any("upload" in x for x in args.pipeline_configs)
