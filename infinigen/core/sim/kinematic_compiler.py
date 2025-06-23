@@ -107,10 +107,8 @@ def get_geometry_graph(
         node_tree = queue.pop(0)
 
         if node_tree not in seen_groups:
-            print(f"Adding node tree {node_tree}")
             seen_groups.add(node_tree)
         else:
-            print(f"Already seen node tree {node_tree}")
             continue
 
         # add all the groups in this node tree
