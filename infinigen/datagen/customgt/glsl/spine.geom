@@ -43,25 +43,24 @@ void main() {
     float z_min = 0.00001;
     vec3 v_pos = (v1.z > v2.z) ? v1 : v2;
 
-    // edge case where both vertices in the edge have z < z_min
-    if (v_pos.z < z_min) {
-        v_pos.z = 2 * z_min;
-    }
-
     if (v1.z < z_min) {
-        float t = (z_min - v1.z) / (v_pos.z - v1.z);
+        float t = (z_min - v1.z) / max(v_pos.z - v1.z, 1e-8);
+        t = clamp(t, 0.0, 1.0);
         v1 = mix(v1, v_pos, t);
     }
     if (v2.z < z_min) {
-        float t = (z_min - v2.z) / (v_pos.z - v2.z);
+        float t = (z_min - v2.z) / max(v_pos.z - v2.z, 1e-8);
+        t = clamp(t, 0.0, 1.0);
         v2 = mix(v2, v_pos, t);
     }
     if (v3.z < z_min) {
-        float t = (z_min - v3.z) / (v_pos.z - v3.z);
+        float t = (z_min - v3.z) / max(v_pos.z - v3.z, 1e-8);
+        t = clamp(t, 0.0, 1.0);
         v3 = mix(v3, v_pos, t);
     }
     if (v4.z < z_min) {
-        float t = (z_min - v4.z) / (v_pos.z - v4.z);
+        float t = (z_min - v4.z) / max(v_pos.z - v4.z, 1e-8);
+        t = clamp(t, 0.0, 1.0);
         v4 = mix(v4, v_pos, t);
     }
 
