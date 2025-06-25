@@ -4,6 +4,9 @@
 
 # Authors:
 # - Hongyu Wen: primary author
+# Acknowledgment: This file draws inspiration 
+# from https://www.youtube.com/watch?v=o50FE2W1m8Y
+# by Open Class
 
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
