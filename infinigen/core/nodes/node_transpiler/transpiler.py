@@ -994,14 +994,6 @@ class {class_name}(AssetFactory):
             ng_inputs=self.sample_parameters()
         )
 
-        if export:
-            export_func = factory.sim_exporter_factory(exporter=exporter, **kwargs)
-            asset_path, semantic_mapping = export_func(blend_obj=obj, 
-                                                       sim_blueprint=self.sim_blueprint, 
-                                                       seed=self.factory_seed,
-                                                       **kwargs)
-            return obj, asset_path, semantic_mapping
-
         return obj
     """
 
