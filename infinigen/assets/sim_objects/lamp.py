@@ -5,7 +5,7 @@
 # Authors:
 # - Jack Nugent: primary author
 # - Abhishek Joshi: updates for sim integration
-# Acknowledgment: This file draws inspiration 
+# Acknowledgment: This file draws inspiration
 # from https://www.youtube.com/watch?v=o50FE2W1m8Y
 # by Open Class
 
@@ -13,16 +13,15 @@ import functools
 
 import numpy as np
 
-from infinigen.assets.materials import fabrics, lamp_shaders, metal, plastic, ceramic
-from infinigen.core import surface
+from infinigen.assets.composition import material_assignments
+from infinigen.assets.materials import ceramic, fabrics, metal, plastic
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
-from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
+
 
 @node_utils.to_nodegroup("nodegroup_bulb_003", singleton=False, type="GeometryNodeTree")
 def nodegroup_bulb_003(nw: NodeWrangler):
@@ -5318,6 +5317,7 @@ def sample_lamp_parameters(lamp_type=None, materials={}):
 
     return params
 
+
 def sample_white_interior():
     """Generate a white or near-white color for the lamp shade interior"""
     # Very high value (brightness), low saturation
@@ -5326,6 +5326,7 @@ def sample_white_interior():
     v = np.random.uniform(0.9, 1.0)  # High value for brightness
 
     return (h, s, v)
+
 
 def sample_gold():
     """Generate a gold color variation"""
@@ -5337,6 +5338,7 @@ def sample_gold():
 
     return (h, s, v)
 
+
 def sample_silver():
     """Generate a silver color variation"""
     # Silver colors are desaturated with high brightness
@@ -5345,6 +5347,7 @@ def sample_silver():
     v = np.random.uniform(0.75, 0.9)  # High but not maximum brightness
 
     return (h, s, v)
+
 
 def get_all_metal_shaders(color):
     metal_shaders_list = [
@@ -5361,6 +5364,7 @@ def get_all_metal_shaders(color):
         ns.__name__ = metal_shaders_list[idx].__name__
 
     return new_shaders
+
 
 def shader_fine_knit_fabric_colored(color):
     def shader(nw: NodeWrangler):
@@ -5379,16 +5383,17 @@ class LampFactory(AssetFactory):
         self.type = None
 
     def sample_parameters(self):
-
         def sample_mat():
             gold = sample_gold()
             silver = sample_silver()
-        
-            shader = weighted_sample([
-                (metal.MetalBasic, 0.7),
-                (plastic.Plastic, 0.2),
-                (plastic.BlackPlastic, 0.1),
-            ])()
+
+            shader = weighted_sample(
+                [
+                    (metal.MetalBasic, 0.7),
+                    (plastic.Plastic, 0.2),
+                    (plastic.BlackPlastic, 0.1),
+                ]
+            )()
             r = np.random.rand()
             if r < 0.3:
                 return shader(color_hsv=gold)
@@ -5416,9 +5421,10 @@ class LampFactory(AssetFactory):
             (ceramic.ColoredGlass, 0.5),
         ]
 
-        
         shade_light = weighted_sample(material_assignments.lampshade)()()
-        interior = metal.MetalBasic()(color_hsv=sample_white_interior()) # TODO fix materials for lightbulb
+        interior = metal.MetalBasic()(
+            color_hsv=sample_white_interior()
+        )  # TODO fix materials for lightbulb
         lamp_rack = sample_mat()
         metal_mat = weighted_sample(material_assignments.metal_neutral)()()
 

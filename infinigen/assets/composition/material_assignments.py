@@ -86,14 +86,11 @@ hard_materials = [
     (plastic.PlasticTranslucent, 1.0),
 ]
 
-metal_plastic = (
-    metal_neutral
-    + [
-        (plastic.Plastic, 1.0),
-        (plastic.PlasticRough, 1.0),
-        (plastic.PlasticTranslucent, 1.0),
-    ]
-)
+metal_plastic = metal_neutral + [
+    (plastic.Plastic, 1.0),
+    (plastic.PlasticRough, 1.0),
+    (plastic.PlasticTranslucent, 1.0),
+]
 
 shelf_board = (
     metals

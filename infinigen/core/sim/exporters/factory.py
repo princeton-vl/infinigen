@@ -5,6 +5,7 @@
 # Authors:
 # - Abhishek Joshi: primary author
 
+
 def sim_exporter_factory(exporter="mjcf", **kwargs):
     """
     Creates an instance of a sim exporter

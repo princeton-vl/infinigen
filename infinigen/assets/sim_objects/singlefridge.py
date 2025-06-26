@@ -4,7 +4,7 @@
 
 # Authors:
 # - Hongyu Wen: primary author
-# Acknowledgment: This file draws inspiration 
+# Acknowledgment: This file draws inspiration
 # from https://www.youtube.com/watch?v=o50FE2W1m8Y
 # by Open Class
 

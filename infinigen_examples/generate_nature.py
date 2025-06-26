@@ -272,18 +272,17 @@ def compose_nature(output_folder, scene_seed, **params):
     )
 
     primary_cams = [rig.children[0] for rig in camera_rigs]
-    
+
     def pose_cameras():
         poses = cam_traj.compute_poses(
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_bounding_box=bbox,
-            terrain_mesh=terrain_mesh
+            terrain_mesh=terrain_mesh,
         )
         return poses
 
     poses = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
-
 
     p.run_stage(
         "lighting",
@@ -347,9 +346,9 @@ def compose_nature(output_folder, scene_seed, **params):
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
 
     def animate_cameras():
-        hidden_cols = [ c for c in bpy.data.collections if c.hide_viewport ]
-        hidden_objs = [ o for o in bpy.context.scene.objects if o.hide_viewport ]
-        for o in hidden_objs: 
+        hidden_cols = [c for c in bpy.data.collections if c.hide_viewport]
+        hidden_objs = [o for o in bpy.context.scene.objects if o.hide_viewport]
+        for o in hidden_objs:
             o.hide_viewport = False
         for c in hidden_cols:
             c.hide_viewport = False
@@ -365,15 +364,15 @@ def compose_nature(output_folder, scene_seed, **params):
             base_views=poses,
             scene_preprocessed=scene_preprocessed,
             obj_groups=[objs],
-            pois=pois
+            pois=pois,
         )
-        for o in hidden_objs: 
+        for o in hidden_objs:
             o.hide_viewport = True
         for c in hidden_cols:
             c.hide_viewport = True
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
-        
+
         save_imu_tum_data = params.get("save_imu_tum_data")
         if save_imu_tum_data:
             frames_folder = output_folder.parent / "frames"

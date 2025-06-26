@@ -8,8 +8,8 @@ from pathlib import Path
 
 import bpy
 
-from infinigen.assets.sim_objects import blueprints
 from infinigen.assets import sim_objects as objects
+from infinigen.assets.sim_objects import blueprints
 from infinigen.core.nodes.node_transpiler import transpiler
 from infinigen.core.sim import kinematic_compiler
 

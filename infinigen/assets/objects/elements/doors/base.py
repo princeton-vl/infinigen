@@ -33,9 +33,8 @@ from infinigen.core.sim import kinematic_compiler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.paths import blueprint_path_completion
-from infinigen.core.util.random import log_uniform
+from infinigen.core.util.random import log_uniform, weighted_sample
 
 from .bar_handle import nodegroup_push_bar_handle
 from .joint_utils import (
@@ -115,10 +114,7 @@ def geometry_node_join(
 
         handle_object_info = nw.new_node(
             Nodes.SetMaterial,
-            input_kwargs={
-                "Geometry": handle_object_info,
-                "Material": handle_material
-            },
+            input_kwargs={"Geometry": handle_object_info, "Material": handle_material},
         )
 
         handle_object_info = nw.new_node(
@@ -647,14 +643,12 @@ def geometry_node_join(
 
 
 class BaseDoorFactory(AssetFactory):
-    def __init__(
-        self, factory_seed, coarse=False, constants=None
-    ):
+    def __init__(self, factory_seed, coarse=False, constants=None):
         super(BaseDoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             if constants is None:
                 constants = RoomConstants()
-                
+
             self.width = constants.door_width
             self.height = constants.door_size
             self.constants = constants
@@ -906,7 +900,7 @@ class BaseDoorFactory(AssetFactory):
                 "frame_width": self.door_frame_width,
             },
         )
-        
+
         self.auto_bevel(door_frame)
         door_frame = add_bevel(
             door_frame, get_bevel_edges(door), offset=self.side_bevel
@@ -971,9 +965,7 @@ class BaseDoorFactory(AssetFactory):
         if self.has_glass:
             self.glass_surface.apply(door, selection="glass", clear=True)
         if self.has_louver:
-            self.louver_surface.apply(
-                door, selection="louver"
-            )
+            self.louver_surface.apply(door, selection="louver")
 
         door.location = -self.width, -self.depth / 2, -self.height / 2
         butil.apply_transform(door, True)

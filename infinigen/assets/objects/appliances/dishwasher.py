@@ -5,7 +5,6 @@
 
 
 import gin
-import numpy as np
 from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U

@@ -738,6 +738,7 @@ def configure_cameras(
 
     return views
 
+
 def anim_valid_camrig_pose_func(
     cam_rig: bpy.types.Object,
     scene_preprocessed: dict,
@@ -771,6 +772,7 @@ def anim_valid_camrig_pose_func(
 
     return np.min(scores)
 
+
 @gin.configurable
 def animate_cameras(
     cam_rigs,
@@ -788,7 +790,7 @@ def animate_cameras(
         if scene_preprocessed["camera_selection_ratio"][k][2]:
             animation_ratio[k] = scene_preprocessed["camera_selection_ratio"][k]
             animation_answers[k] = scene_preprocessed["camera_selection_answers"][k]
-    
+
     if validate_pose_func is None:
         anim_valid_pose_func = partial(
             anim_valid_camrig_pose_func,
