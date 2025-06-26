@@ -14,6 +14,7 @@ import numpy as np
 frame = 1
 obj = bpy.context.active_object
 
+
 def select_none():
     if hasattr(bpy.context, "active_object") and bpy.context.active_object is not None:
         bpy.context.active_object.select_set(False)

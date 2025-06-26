@@ -73,7 +73,7 @@ class URDFBuilder(SimBuilder):
         kinematic_root: KinematicNode,
         metadata: Dict,
         visual_only: bool = False,
-        image_res: int = 512
+        image_res: int = 512,
     ):
         super().build(blend_obj, metadata)
 
@@ -90,7 +90,7 @@ class URDFBuilder(SimBuilder):
         joint_nodes: List[KinematicNode] = [],
         pos_offset: np.array = np.zeros(3),
         visual_only: bool = False,
-        image_res: int = 512
+        image_res: int = 512,
     ):
         """Populates the urdf with links and joints."""
         # create a link for the body
@@ -321,7 +321,7 @@ def export(
         kinematic_root=kinematic_root,
         metadata=metadata,
         visual_only=visual_only,
-        image_res=image_res
+        image_res=image_res,
     )
 
     metadata.update(builder.get_bounding_box_info())

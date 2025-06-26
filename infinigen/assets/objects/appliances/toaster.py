@@ -9,7 +9,7 @@
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.materials import metal, plastic, wood
+from infinigen.assets.materials import metal, plastic
 from infinigen.assets.objects.elements.doors.joint_utils import (
     nodegroup_hinge_joint,
     nodegroup_sliding_joint,
@@ -21,7 +21,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
-from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
 
 
@@ -1472,7 +1471,7 @@ class ToasterFactory(AssetFactory):
                 "body mat 2": body_mat_2,
                 "button mat": button_mat,
                 "knob mat": knob_mat,
-                "carriage mat": carriage_mat
+                "carriage mat": carriage_mat,
             }
 
     def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):

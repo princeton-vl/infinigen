@@ -80,7 +80,7 @@ class MJCFBuilder(SimBuilder):
         kinematic_root: KinematicNode,
         metadata: Dict,
         visual_only: bool = False,
-        image_res: int = 512
+        image_res: int = 512,
     ):
         super().build(blend_obj, metadata)
 
@@ -88,7 +88,9 @@ class MJCFBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        asset_body = self._populate_mjcf(root, visual_only=visual_only, image_res=image_res)
+        asset_body = self._populate_mjcf(
+            root, visual_only=visual_only, image_res=image_res
+        )
         self._populate_joints(asset_body)
         self.main_body.append(asset_body)
 
@@ -100,7 +102,7 @@ class MJCFBuilder(SimBuilder):
         joint_nodes: List[KinematicNode] = [],
         pos_offset: np.array = np.zeros(3),
         visual_only: bool = False,
-        image_res: int = 512
+        image_res: int = 512,
     ):
         """Populates the mjcf with assets and joints."""
         link_name = f"link_{self.link_count}"
@@ -112,7 +114,9 @@ class MJCFBuilder(SimBuilder):
         colgeom_refs = []
         assets = []
         for asset in root.assets:
-            visgeom, colgeoms, asset = self._add_mesh(asset.attribs, link, visual_only, image_res)
+            visgeom, colgeoms, asset = self._add_mesh(
+                asset.attribs, link, visual_only, image_res
+            )
             visgeom_refs.append(visgeom)
             colgeom_refs.append(colgeoms)
             assets.append(asset)
@@ -157,7 +161,13 @@ class MJCFBuilder(SimBuilder):
 
         return link
 
-    def _add_mesh(self, attribs: List[PathItem], body: ET.Element, visual_only: bool, image_res: int):
+    def _add_mesh(
+        self,
+        attribs: List[PathItem],
+        body: ET.Element,
+        visual_only: bool,
+        image_res: int,
+    ):
         asset = self._get_geometry(attribs)
         labels = self._get_labels(asset)
         if len(labels) == 0:
@@ -351,7 +361,7 @@ def export(
         kinematic_root=kinematic_root,
         metadata=metadata,
         visual_only=visual_only,
-        image_res=image_res
+        image_res=image_res,
     )
 
     metadata.update(builder.get_bounding_box_info())

@@ -319,7 +319,6 @@ def room_ceilings(ceilings):
 
 
 def room_floors(floors, n_floors=3):
-
     floor_material_gens = []
     for r in floors:
         gen_class = weighted_sample(room_floor_fns[room_type(r.name)])

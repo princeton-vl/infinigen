@@ -5,7 +5,7 @@
 # Authors:
 # - Stamatis Alexandropoulos: primary author
 # - Abhishek Joshi: updates for sim integration
-# Acknowledgment: This file draws inspiration 
+# Acknowledgment: This file draws inspiration
 # from https://www.youtube.com/watch?v=o50FE2W1m8Y
 # by Open Class
 
@@ -18,9 +18,7 @@ from numpy.random import uniform as U
 from infinigen.assets.materials import (
     metal,
     plastic,
-    wood,
 )
-from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -28,7 +26,6 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
-from infinigen.assets.composition import material_assignments
 from infinigen.core.util.random import weighted_sample
 
 

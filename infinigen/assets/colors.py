@@ -388,7 +388,8 @@ def metal_bw_natural_light_hsv():
         return metal_light_hsv()  # Light Color
     else:
         return metal_natural_hsv()  # Natural Color
-    
+
+
 def metal_hsv():
     if uniform() < 0.2:
         return metal_natural_hsv()

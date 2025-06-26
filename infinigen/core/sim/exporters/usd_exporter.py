@@ -65,7 +65,7 @@ class USDBuilder(SimBuilder):
         kinematic_root: KinematicNode,
         metadata: Dict,
         visual_only: bool = False,
-        image_res: int = 512
+        image_res: int = 512,
     ):
         super().build(blend_obj, metadata)
 
@@ -240,7 +240,9 @@ class USDBuilder(SimBuilder):
         UsdPhysics.RigidBodyAPI.Apply(xform.GetPrim())
         return xform
 
-    def _add_mesh(self, attribs: List[PathItem], usd_path: str, visual_only: bool, image_res: int):
+    def _add_mesh(
+        self, attribs: List[PathItem], usd_path: str, visual_only: bool, image_res: int
+    ):
         """Adds an asset along with its materials to the USD and returns the asset."""
         mesh_vert, mesh_face, mesh_facenum, labels, asset = self._get_geometry_info(
             attribs
@@ -504,7 +506,7 @@ def export(
         kinematic_root=kinematic_root,
         metadata=metadata,
         visual_only=visual_only,
-        image_res=image_res
+        image_res=image_res,
     )
 
     # export the USD file

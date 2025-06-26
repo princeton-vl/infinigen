@@ -5,7 +5,7 @@
 # Authors:
 # - Hongyu Wen: primary author
 # - Abhishek Joshi: updates for sim integration
-# Acknowledgment: This file draws inspiration 
+# Acknowledgment: This file draws inspiration
 # from https://www.youtube.com/watch?v=o50FE2W1m8Y
 # by Open Class
 
@@ -18,18 +18,18 @@ import string
 import numpy as np
 from numpy.random import normal, randint, uniform
 
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import metal, plastic
 from infinigen.assets.sim_objects.doublefridge import (
     nodegroup_doublefridge,
     nodegroup_multi_drawer_top,
 )
-from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
-from infinigen.assets.composition import material_assignments
+
 
 def get_all_metal_shaders(color):
     metal_shaders_list = [
@@ -79,7 +79,6 @@ def sample_light_exterior():
     return (h, s, v)
 
 
-
 class MultiDoublefridgeFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
@@ -88,8 +87,12 @@ class MultiDoublefridgeFactory(AssetFactory):
 
     def get_material_params(self):
         body_material = weighted_sample(material_assignments.kitchen_appliance_hard)()()
-        inner_material = weighted_sample(material_assignments.kitchen_appliance_hard)()()
-        glass_material = weighted_sample(material_assignments.appliance_front_maybeglass)()()
+        inner_material = weighted_sample(
+            material_assignments.kitchen_appliance_hard
+        )()()
+        glass_material = weighted_sample(
+            material_assignments.appliance_front_maybeglass
+        )()()
 
         r = np.random.rand()
         if r < 0.5:
@@ -98,11 +101,13 @@ class MultiDoublefridgeFactory(AssetFactory):
         def sample_handle_mat():
             gold = sample_gold()
             silver = sample_silver()
-        
-            shader = weighted_sample([
-                (metal.MetalBasic, 0.7),
-                (plastic.Plastic, 0.3),
-            ])()
+
+            shader = weighted_sample(
+                [
+                    (metal.MetalBasic, 0.7),
+                    (plastic.Plastic, 0.3),
+                ]
+            )()
             r = np.random.rand()
             if r < 1 / 3:
                 return shader(color_hsv=gold, color_rgba=hsv2rgba(gold))

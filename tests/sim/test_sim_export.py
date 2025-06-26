@@ -23,5 +23,5 @@ def test_sim_export(tmp_path, asset, format):
         export_dir=tmp_path,
         exporter=format,
         visual_only=True,
-        image_res=16
+        image_res=16,
     )
