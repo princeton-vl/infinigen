@@ -210,3 +210,6 @@ v1.14.0
 
 v1.15.0
 - Initial code release for Infinigen-Sim! See ExportingToSimulators.md for guide on generating articulated doors, toasters, lamps, fridges, & dishwashers. Added articulation exporters to USD, MJCF, URDF.
+
+v1.15.1
+- Fix occlusion boundaries when polygons project to negative z in camera space
