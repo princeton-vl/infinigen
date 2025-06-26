@@ -155,7 +155,7 @@ def user_select_string_list(values, descriptions_dict=None, extra_msg=None):
             isinstance(x, int) and x not in range(len(values))
         ):
             raise ValueError(
-                f'User provided input "{x}" was not recognized, expected integer 0 to {len(values)-1} or a shorthand string'
+                f'User provided input "{x}" was not recognized, expected integer 0 to {len(values) - 1} or a shorthand string'
             )
 
         if isinstance(x, int):

@@ -136,11 +136,11 @@ if __name__ == "__main__":
     print(fine_status_freq)
 
     avg_fine_elapsed = timedelta(seconds=np.mean(all_times["fine"]["elapsed"]))
-    print(f'{avg_fine_elapsed} {round(np.mean(all_times["fine"]["percentage"])):02d}%')
+    print(f"{avg_fine_elapsed} {round(np.mean(all_times['fine']['percentage'])):02d}%")
 
     avg_coarse_elapsed = timedelta(seconds=np.mean(all_times["coarse"]["elapsed"]))
     print(
-        f'{avg_fine_elapsed} {round(np.mean(all_times["coarse"]["percentage"])):02d}%'
+        f"{avg_fine_elapsed} {round(np.mean(all_times['coarse']['percentage'])):02d}%"
     )
     vg_full_elapsed = timedelta(seconds=np.mean(all_times["full"]))
     print(vg_full_elapsed)

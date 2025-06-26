@@ -693,7 +693,7 @@ def manage_datagen_jobs(
 
     # Dont launch new scenes if disk is getting full
     if control_state["disk_usage"] > disk_sleep_threshold:
-        message = f"{args.output_folder} is full ({100*control_state['disk_usage']}%). Sleeping."
+        message = f"{args.output_folder} is full ({100 * control_state['disk_usage']}%). Sleeping."
         print(message)
         if wandb is not None:
             wandb.alert(
@@ -784,6 +784,13 @@ def main(args, shuffle=True, wandb_project="render", upload_commandfile_method=N
 
     start_time = datetime.now()
     while any(j["all_done"] == SceneState.NotDone for j in all_scenes):
+        now = datetime.now()
+
+        if args.print_stats:
+            print(
+                f"{args.output_folder} {start_time.strftime('%m/%d %I:%M%p')} -> {now.strftime('%m/%d %I:%M%p')}"
+            )
+
         log_stats = manage_datagen_jobs(
             all_scenes, elapsed=(datetime.now() - start_time).total_seconds()
         )
@@ -899,6 +906,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
     )
+    parser.add_argument("--print_stats", type=int, default=1)
     args = parser.parse_args()
 
     using_upload = any("upload" in x for x in args.pipeline_configs)

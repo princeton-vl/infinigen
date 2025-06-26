@@ -82,8 +82,8 @@ if __name__ == "__main__":
     normals_color = cv2.resize(normals_color, target_shape)
 
     imwrite(args.output / "A.png", image)
-    print(f'Wrote {args.output / "A.png"}')
+    print(f"Wrote {args.output / 'A.png'}")
     imwrite(args.output / "B.png", normals_color)
-    print(f'Wrote {args.output / "B.png"}')
+    print(f"Wrote {args.output / 'B.png'}")
     shutil.copyfile(normal_path, args.output / "C.png")
-    print(f'Wrote {args.output / "C.png"}')
+    print(f"Wrote {args.output / 'C.png'}")

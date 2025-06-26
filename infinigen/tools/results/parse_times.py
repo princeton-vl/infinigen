@@ -71,7 +71,7 @@ if __name__ == "__main__":
     job_times = {}
     for line in out.splitlines():
         job_name, job_sec, status, *_ = line.strip().split()
-        regex = re.compile(f"{args.output_folder.stem}_({'[A-Z]'*8}_.+)").fullmatch(
+        regex = re.compile(f"{args.output_folder.stem}_({'[A-Z]' * 8}_.+)").fullmatch(
             job_name
         )
         if regex is not None:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         to_print.append(
             (
                 average_percent,
-                f"{key.ljust(40)} {average_time//3600:02d}h:{((average_time%3600)//60):02d}m ({average_percent}%) [#{len(data_list)}]",
+                f"{key.ljust(40)} {average_time // 3600:02d}h:{((average_time % 3600) // 60):02d}m ({average_percent}%) [#{len(data_list)}]",
             )
         )
 

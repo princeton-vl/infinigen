@@ -104,7 +104,7 @@ def import_material(factory_name):
                 if not subdir.endswith(".py"):
                     with gin.unlock_config():
                         module = importlib.import_module(
-                            f'infinigen.assets.materials.{subdir.split(".")[0]}'
+                            f"infinigen.assets.materials.{subdir.split('.')[0]}"
                         )
                     if hasattr(module, factory_name):
                         return getattr(module, factory_name)

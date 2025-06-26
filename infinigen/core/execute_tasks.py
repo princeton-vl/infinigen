@@ -166,7 +166,7 @@ def validate_version(scene_version):
 def group_collections(config):
     for config in config:  # Group collections before fine runs
         butil.group_in_collection(
-            [o for o in bpy.data.objects if o.name.startswith(f'{config["name"]}:')],
+            [o for o in bpy.data.objects if o.name.startswith(f"{config['name']}:")],
             config["name"],
         )
         butil.group_toplevel_collections(

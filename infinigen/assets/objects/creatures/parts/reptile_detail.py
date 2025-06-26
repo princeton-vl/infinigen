@@ -1027,7 +1027,7 @@ class ReptileBody(PartFactory):
         }
         part.iks = {
             t: IKParams(
-                name=f"body_{i+1}",
+                name=f"body_{i + 1}",
                 mode="pin" if i == 0 else "iksolve",
                 rotation_weight=0,
                 target_size=0.3,

@@ -370,6 +370,25 @@ def metal_bw_natural_hsv():
     return metal_bw_hsv() if uniform() < 0.5 else metal_natural_hsv()
 
 
+def metal_light_hsv():
+    nat = metal_natural_hsv()
+    h, s, v = nat
+    return (
+        h + uniform(-0.1, 0.1),
+        s + uniform(-0.1, 0.1),
+        uniform(0.8, 1),
+    )
+
+
+def metal_bw_natural_light_hsv():
+    random_value = uniform()
+    if random_value < 0.3:
+        return metal_bw_hsv()  # Black and white
+    elif random_value < 0.8:
+        return metal_light_hsv()  # Light Color
+    else:
+        return metal_natural_hsv()  # Natural Color
+    
 def metal_hsv():
     if uniform() < 0.2:
         return metal_natural_hsv()

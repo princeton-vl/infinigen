@@ -5,17 +5,19 @@
 # - Alexander Raistrick: primary author
 # - Alejandro Newell, Lingjie Mei: bugfixes
 
-
 import importlib
 import keyword
 import logging
 import re
+import runpy
 from collections import OrderedDict
+from pathlib import Path
 
 import bpy
 import mathutils
 import numpy as np
 
+from infinigen.assets.sim_objects import mapping
 from infinigen.core.nodes.node_info import OUTPUT_NODE_IDS, SINGLETON_NODES, Nodes
 from infinigen.core.nodes.node_wrangler import ng_inputs
 
@@ -115,6 +117,10 @@ def prefix(dependencies_used) -> str:
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
         "from infinigen.core.nodes import node_utils\n"
         "from infinigen.core import surface\n"
+        "from infinigen.core.placement.factory import AssetFactory\n"
+        "from infinigen.core.util import blender as butil\n"
+        "from infinigen.core.util.paths import blueprint_path_completion\n"
+        "from infinigen.core.sim.exporters import factory\n"
     )
 
     deps_table = [
@@ -133,13 +139,13 @@ def prefix(dependencies_used) -> str:
 
 
 def postfix(funcnames, targets):
-    header = "def apply(obj, selection=None, **kwargs):\n"
+    header = "def apply(obj, selection=None, apply=False, **kwargs):\n"
     body = ""
 
     for funcname, target in zip(funcnames, targets):
         idname = get_node_tree(target).bl_idname
         if idname == "GeometryNodeTree":
-            body += f"surface.add_geomod(obj, {funcname}, selection=selection, attributes=[])\n"
+            body += f"surface.add_geomod(obj, {funcname}, apply=apply, selection=selection, attributes=[], **kwargs)\n"
         elif idname == "ShaderNodeTree":
             body += f"surface.add_material(obj, {funcname}, selection=selection)\n"
         else:
@@ -842,7 +848,11 @@ def transpile(orig_targets, module_dependencies=[]):
 
         # create function definition
         new_code = ""
-        if hasattr(target, "bl_idname") and target.bl_idname.endswith("NodeGroup"):
+        if (
+            hasattr(target, "bl_idname")
+            and target.bl_idname.endswith("NodeGroup")
+            or funcname == "geometry_nodes"
+        ):
             new_code += f"@node_utils.to_nodegroup({repr(funcname)}, singleton=False, type={repr(get_node_tree(target).bl_idname)})\n"
         new_code += f"def {funcname}(nw: NodeWrangler):\n"
 
@@ -868,6 +878,136 @@ def transpile(orig_targets, module_dependencies=[]):
                 targets[k] = (v, False)  # mark as needing to be transpiled
 
     return code, orig_names, available_dependencies
+
+
+def clean_and_capitalize(input_string):
+    """
+    Upper cases the first letter of the string and uppercases
+    the character after '.', '-', or '_' while removing these
+    special characters from the string.
+    """
+    # Uppercase the character after ., -, or _
+    cleaned_string = re.sub(
+        r"[._-](\w)", lambda match: match.group(1).upper(), input_string
+    )
+    # Remove all special characters except alphanumerics
+    cleaned_string = re.sub(r"[^A-Za-z0-9\s]", "", cleaned_string)
+    # Capitalize the first character
+    if cleaned_string:
+        result = cleaned_string[0].upper() + cleaned_string[1:]
+    else:
+        result = cleaned_string  # Handle empty string case
+    return result
+
+
+def add_asset_to_file(file_path, asset_name, class_name, import_path):
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    mapping = runpy.run_path(file_path)
+    obj_class_map = mapping.get("OBJECT_CLASS_MAP", {})
+    if asset_name in obj_class_map:
+        logging.warning(
+            f"The asset name '{asset_name}' already exists in OBJECT_CLASS_MAP."
+        )
+        return
+
+    new_import = f"from {import_path}.{asset_name} import {class_name}\n"
+    new_dict_entry = f'    "{asset_name}": {class_name},\n'
+
+    updated_lines = []
+    import_added = False
+    dict_entry_added = False
+    inside_object_map = False
+
+    for line in lines:
+        # Handle import insertion
+        if "# add newly transpiled assets here" in line and not import_added:
+            updated_lines.append(new_import)
+            import_added = True
+
+        updated_lines.append(line)
+
+        # Handle dictionary insertion
+        if "OBJECT_CLASS_MAP" in line:
+            inside_object_map = True
+
+        if (
+            inside_object_map
+            and "# add newly transpiled assets here" in line
+            and not dict_entry_added
+        ):
+            updated_lines.insert(
+                len(updated_lines) - 1, new_dict_entry
+            )  # Insert before the comment
+            dict_entry_added = True
+            inside_object_map = False  # Reset after adding
+
+    # Write the updated content back
+    with open(file_path, "w") as file:
+        file.writelines(updated_lines)
+
+
+def transpile_object_to_sim_class(
+    obj,
+    module_dependencies=[],
+    sim_blueprint=None,
+    output_name=None,
+    add_to_catalog=True,
+):
+    targets = []
+    targets += [mod for mod in obj.modifiers if mod.type == "NODES"]
+    logging.info(
+        f"Found {len(targets)} initial transpile targets for object {repr(obj)}"
+    )
+
+    func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
+
+    code = prefix(dependencies_used) + "\n\n"
+    code += func_code + "\n\n"
+    # code += postfix(funcnames, targets)
+    # code += "\n\n"
+    output_name = obj.name if output_name is None else output_name
+    class_name = clean_and_capitalize(output_name) + "Factory"
+    code += f"""
+class {class_name}(AssetFactory):
+
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
+        self.sim_blueprint = {f"blueprint_path_completion('{sim_blueprint}')"}
+
+    def sample_parameters(self):
+        # add code here to randomly sample from parameters
+        return {'{}'}
+
+    def create_asset(self, 
+                     export=True,
+                     exporter="mjcf",
+                     asset_params=None,
+                     **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            apply=True,
+            node_group={funcnames[0]}(),
+            ng_inputs=self.sample_parameters()
+        )
+
+        return obj
+    """
+
+    if add_to_catalog:
+        mapping_path = Path(mapping.__file__)
+        add_asset_to_file(
+            file_path=mapping_path,
+            asset_name=output_name,
+            class_name=class_name,
+            import_path="infinigen.assets.sim_objects",
+        )
+
+    logging.info("")  # newline once done for ease of reading the logs
+    return code
 
 
 def transpile_object(obj, module_dependencies=[]):

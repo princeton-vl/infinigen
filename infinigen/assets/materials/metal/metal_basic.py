@@ -35,9 +35,9 @@ def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
 class MetalBasic:
     shader = shader_metal
 
-    def generate(self, selection=None, **kwargs):
-        color = colors.metal_hsv()
-        return surface.shaderfunc_to_material(shader_metal, color)
+    def generate(self, selection=None, color_hsv=None, **kwargs):
+        color_hsv = color_hsv or colors.metal_hsv()
+        return surface.shaderfunc_to_material(shader_metal, color_hsv)
 
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_metal, selection, **kwargs)
