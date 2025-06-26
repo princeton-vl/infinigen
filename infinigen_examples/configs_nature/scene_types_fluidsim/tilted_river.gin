@@ -1,7 +1,7 @@
 include 'infinigen_examples/configs_nature/scene_types/river.gin'
 
 UniformMesher.enclosed=1
-animate_cameras.policy_registry = @cam/AnimPolicyRandomForwardWalk
+animate_cameras.animation_mode = "random_forward_walk"
 cam/AnimPolicyRandomForwardWalk.forward_vec = (0,0,-1)
 cam/AnimPolicyRandomForwardWalk.speed = 1
 cam/AnimPolicyRandomForwardWalk.step_range = (5, 10)

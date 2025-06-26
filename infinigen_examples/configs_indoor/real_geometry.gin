@@ -1,0 +1,2 @@
+geometry.option = "DISPLACEMENT"
+compose_indoors.enable_ocmesh_room = True

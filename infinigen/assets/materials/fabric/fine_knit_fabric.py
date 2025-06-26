@@ -26,6 +26,7 @@ def get_texture_params():
         "_roughness": uniform(0, 1.0),
         "_thread_density_x": uniform(100, 300),
         "_relative_density_y": uniform(0.75, 1.33),
+        "_displacement_scale": uniform(0.001, 0.005),
     }
 
 
@@ -35,6 +36,7 @@ def shader_material(
     _roughness=0.4,
     _thread_density_x=200,
     _relative_density_y=1.0,
+    _displacement_scale=0.005,
     _map="UV",
 ):
     red = nw.new_node(Nodes.Value, label="red")
@@ -54,6 +56,9 @@ def shader_material(
 
     relative_density_y = nw.new_node(Nodes.Value, label="relative_density_y")
     relative_density_y.outputs[0].default_value = _relative_density_y
+
+    displacement_scale = nw.new_node(Nodes.Value, label="displacement_scale")
+    displacement_scale.outputs[0].default_value = _displacement_scale
 
     combine_color = nw.new_node(
         Nodes.CombineColor, input_kwargs={"Red": red, "Green": green, "Blue": blue}
@@ -134,9 +139,14 @@ def shader_material(
         Nodes.Math, input_kwargs={0: invert_color, 1: color_ramp_1.outputs["Color"]}
     )
 
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": add, "Midlevel": 0.4000, "Scale": displacement_scale},
+    )
+
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": mix_shader, "Displacement": add},
+        input_kwargs={"Surface": mix_shader, "Displacement": displacement},
         attrs={"is_active_output": True},
     )
 

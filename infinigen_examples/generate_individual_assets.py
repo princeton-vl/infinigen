@@ -48,8 +48,6 @@ from infinigen.assets.lighting import (
     sky_lighting,
     three_point_lighting,
 )
-
-# from infinigen.core.rendering.render import enable_gpu
 from infinigen.assets.utils.decorate import read_base_co, read_co
 from infinigen.assets.utils.misc import assign_material
 from infinigen.core import init, surface
@@ -59,6 +57,7 @@ from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
+from infinigen.core.util.blender import set_geometry_option
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
@@ -157,6 +156,8 @@ def build_scene_asset(args, factory_name, idx):
                     1,
                 )
                 assign_material(plane, material)
+        for material in bpy.data.materials:
+            set_geometry_option(material)
 
     return asset
 
@@ -180,6 +181,7 @@ def build_scene_surface(args, factory_name, idx):
             plane = bpy.context.active_object
 
             material = bpy.data.materials.new("plane")
+            set_geometry_option(material)
             material.use_nodes = True
             material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
                 0.015,
@@ -196,7 +198,7 @@ def build_scene_surface(args, factory_name, idx):
         try:
             with gin.unlock_config():
                 try:
-                    template = importlib.import_module(
+                    gen_class = importlib.import_module(
                         f"infinigen.assets.materials.{factory_name}"
                     )
                 except ImportError:
@@ -206,7 +208,7 @@ def build_scene_surface(args, factory_name, idx):
                                 f'infinigen.assets.materials.{subdir.split(".")[0]}'
                             )
                         if hasattr(module, factory_name):
-                            template = getattr(module, factory_name)
+                            gen_class = getattr(module, factory_name)
                             break
                     else:
                         raise Exception(f"{factory_name} not Found.")
@@ -214,16 +216,26 @@ def build_scene_surface(args, factory_name, idx):
                 if args.dryrun:
                     return
 
-                bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
-                asset = bpy.context.active_object
+                if hasattr(gen_class, "make_sphere"):
+                    asset = gen_class.make_sphere()
+                else:
+                    bpy.ops.mesh.primitive_ico_sphere_add(
+                        radius=0.8,
+                        subdivisions=9,
+                    )
+                    asset = bpy.context.active_object
 
-                mat_gen = template()
+                while len(asset.data.vertices) < 500000:
+                    with butil.ViewportMode(asset, mode="EDIT"):
+                        bpy.ops.mesh.subdivide(number_cuts=2)
+
+                if type(gen_class) is type:
+                    mat_gen = gen_class(idx)
 
                 if hasattr(mat_gen, "apply"):
                     mat_gen.apply(asset)
                 else:
                     surface.assign_material(asset, mat_gen())
-
         except ModuleNotFoundError:
             raise Exception(f"{factory_name} not Found.")
 

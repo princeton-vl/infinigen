@@ -21,6 +21,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+
 # unused imports required for gin to find modules currently, # TODO remove
 # ruff: noqa: F401
 from infinigen.assets import fluid, lighting, weather
@@ -61,6 +62,7 @@ from infinigen.assets.scatters import (
 from infinigen.assets.scatters.utils.selection import scatter_lower, scatter_upward
 from infinigen.core import execute_tasks, init, surface
 from infinigen.core.placement import camera as cam_util
+from infinigen.core.placement import camera_trajectories as cam_traj
 from infinigen.core.placement import density, placement, split_in_view
 from infinigen.core.util import blender as butil
 from infinigen.core.util import logging as logging_util
@@ -73,6 +75,9 @@ from infinigen.core.util.random import random_general, weighted_sample
 from infinigen.terrain.core import Terrain
 
 logger = logging.getLogger(__name__)
+
+
+from infinigen.core.util import rrt
 
 
 @gin.configurable
@@ -265,17 +270,20 @@ def compose_nature(output_folder, scene_seed, **params):
         if terrain is not None
         else butil.bounds(terrain_mesh)
     )
-    p.run_stage(
-        "pose_cameras",
-        lambda: cam_util.configure_cameras(
-            camera_rigs,
-            scene_preprocessed,
-            init_bounding_box=bbox,
-            terrain_mesh=terrain_mesh,
-        ),
-        use_chance=False,
-    )
+
     primary_cams = [rig.children[0] for rig in camera_rigs]
+    
+    def pose_cameras():
+        poses = cam_traj.compute_poses(
+            cam_rigs=camera_rigs,
+            scene_preprocessed=scene_preprocessed,
+            init_bounding_box=bbox,
+            terrain_mesh=terrain_mesh
+        )
+        return poses
+
+    poses = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
+
 
     p.run_stage(
         "lighting",
@@ -339,8 +347,33 @@ def compose_nature(output_folder, scene_seed, **params):
     pois += p.run_stage("flying_creatures", flying_creatures, default=[])
 
     def animate_cameras():
-        cam_util.animate_cameras(camera_rigs, bbox, scene_preprocessed, pois=pois)
-
+        hidden_cols = [ c for c in bpy.data.collections if c.hide_viewport ]
+        hidden_objs = [ o for o in bpy.context.scene.objects if o.hide_viewport ]
+        for o in hidden_objs: 
+            o.hide_viewport = False
+        for c in hidden_cols:
+            c.hide_viewport = False
+        objs = [
+            obj
+            for obj in bpy.context.scene.objects
+            if obj.type == "MESH"
+            and not obj.hide_render
+            and "atmosphere" not in obj.name
+        ]
+        cam_traj.animate_trajectories(
+            cam_rigs=camera_rigs,
+            base_views=poses,
+            scene_preprocessed=scene_preprocessed,
+            obj_groups=[objs],
+            pois=pois
+        )
+        for o in hidden_objs: 
+            o.hide_viewport = True
+        for c in hidden_cols:
+            c.hide_viewport = True
+        frames_folder = output_folder.parent / "frames"
+        animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
+        
         save_imu_tum_data = params.get("save_imu_tum_data")
         if save_imu_tum_data:
             frames_folder = output_folder.parent / "frames"

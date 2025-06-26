@@ -13,6 +13,7 @@ from pathlib import Path
 # ruff: noqa: I001
 # must import bpy before bmesh
 import bpy
+import gin
 import bmesh
 import mathutils
 import numpy as np
@@ -26,6 +27,14 @@ from . import math as mutil
 from .logging import Suppress
 
 logger = logging.getLogger(__name__)
+
+
+@gin.configurable("geometry")
+def set_geometry_option(material, option="BUMP"):
+    if hasattr(material, "displacement_method"):
+        material.displacement_method = option
+    else:
+        material.cycles.displacement_method = option
 
 
 def deep_clone_obj(obj, keep_modifiers=False, keep_materials=False):

@@ -22,16 +22,16 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 def get_texture_params():
     return {
-        "_pattern_mixer": choice([uniform(0.0, 0.75), uniform(0.75, 1.0)]),
+        "_pattern_mixer": choice([uniform(0.0, 0.1), uniform(0.1, 0.9)]),
         "_pattern_density": choice([uniform(0.1, 1.0), uniform(1.0, 10.0)]),
         "_color": uniform(0.0, 1.0, 3),
         "_brick_knit": choice(
             [uniform(0.0, 0.05), uniform(0.05, 0.95), uniform(0.95, 1.0)]
         ),
-        "_knit_resolution": uniform(0.5, 3.0),
-        "_brick_resolution": uniform(10.0, 30.0),
-        "_crease_resolution": uniform(10.0, 80.0),
-        "_smoothness": choice([uniform(0.0, 0.2), uniform(0.2, 1.0)]),
+        "_knit_resolution": uniform(0.5, 0.6),
+        "_brick_resolution": uniform(20.0, 30.0),
+        "_crease_resolution": uniform(50.0, 80.0),
+        "_smoothness": choice([uniform(0.0, 0.2), uniform(0.2, 0.5)]),
         "_color_shader_frac": uniform(0.1, 0.9),
     }
 
@@ -178,11 +178,16 @@ def shader_fabric_base(
     )
 
     # bump_1 = nw.new_node(Nodes.Bump, input_kwargs={'Height': color_ramp_1.outputs["Color"]})
+    inverted_brick = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: 1.0000, 1: color_ramp_1.outputs["Color"]},
+        attrs={"operation": "SUBTRACT", "use_clamp": True},
+    )
 
     scale = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: color_ramp_1.outputs["Color"], "Scale": brick_knit},
-        attrs={"operation": "SCALE"},
+        Nodes.Math,
+        input_kwargs={0: inverted_brick, 1: brick_knit},
+        attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
 
     mapping_2 = nw.new_node(
@@ -234,25 +239,25 @@ def shader_fabric_base(
     )
 
     scale_1 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: multiply, "Scale": subtract},
-        attrs={"operation": "SCALE"},
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: subtract},
+        attrs={"operation": "MULTIPLY"},
     )
-
-    # scale_1 = nw.new_node(Nodes.VectorMath, input_kwargs={0: bump, 'Scale': subtract}, attrs={'operation': 'SCALE'})
 
     add_1 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: scale.outputs["Vector"], 1: scale_1.outputs["Vector"]},
+        Nodes.Math,
+        input_kwargs={0: scale, 1: scale_1},
+        attrs={"operation": "ADD"},
     )
 
-    vector_displacement = nw.new_node(
-        "ShaderNodeVectorDisplacement", input_kwargs={"Vector": add_1.outputs["Vector"]}
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": add_1, "Midlevel": 0.4, "Scale": 0.01},
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": mix_shader, "Displacement": vector_displacement},
+        input_kwargs={"Surface": mix_shader, "Displacement": displacement},
         attrs={"is_active_output": True},
     )
 

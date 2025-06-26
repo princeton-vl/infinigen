@@ -11,6 +11,7 @@ import logging
 import typing
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import partial
 from itertools import chain
 from pathlib import Path
 
@@ -659,6 +660,7 @@ def configure_cameras(
     nonroom_objs=None,
     mvs_setting=False,
     mvs_radius=("uniform", 12, 18),
+    n_views: int = None,
     **kwargs,
 ):
     bpy.context.view_layer.update()
@@ -707,10 +709,12 @@ def configure_cameras(
     else:
         center_coordinate = None
 
+    n = len(cam_rigs) if n_views is None else n_views
+    views = None
     for cam_rig in cam_rigs:
         views = compute_base_views(
             cam_rig,
-            n_views=1,
+            n_views=n,
             location_sample=location_sample,
             center_coordinate=center_coordinate,
             radius=mvs_radius,
@@ -732,6 +736,40 @@ def configure_cameras(
                     continue
                 cam.data.dof.focus_distance = focus_dist
 
+    return views
+
+def anim_valid_camrig_pose_func(
+    cam_rig: bpy.types.Object,
+    scene_preprocessed: dict,
+    animation_answers: dict,
+    animation_ratio: dict,
+    **kwargs,
+):
+    assert len(cam_rig.children) > 0
+
+    scores = []
+
+    for cam in cam_rig.children:
+        score = keep_cam_pose_proposal(
+            cam,
+            placeholders_kd=scene_preprocessed["placeholders_kd"],
+            scene_bvh=scene_preprocessed["scene_bvh"],
+            terrain=scene_preprocessed["terrain"],
+            vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
+            camera_selection_answers=animation_answers,
+            camera_selection_ratio=animation_ratio,
+            **kwargs,
+        )
+
+        frame = bpy.context.scene.frame_current
+        logger.debug(f"Checking {cam.name=} {frame=} got {score=}")
+
+        if score is None:
+            return None
+
+        scores.append(score)
+
+    return np.min(scores)
 
 @gin.configurable
 def animate_cameras(
@@ -741,6 +779,7 @@ def animate_cameras(
     pois=None,
     follow_poi_chance=0.0,
     policy_registry=None,
+    validate_pose_func=None,
     **kwargs,
 ):
     animation_ratio = {}
@@ -749,33 +788,17 @@ def animate_cameras(
         if scene_preprocessed["camera_selection_ratio"][k][2]:
             animation_ratio[k] = scene_preprocessed["camera_selection_ratio"][k]
             animation_answers[k] = scene_preprocessed["camera_selection_answers"][k]
-
-    def anim_valid_camrig_pose_func(cam_rig: bpy.types.Object):
-        assert len(cam_rig.children) > 0
-
-        scores = []
-
-        for cam in cam_rig.children:
-            score = keep_cam_pose_proposal(
-                cam,
-                placeholders_kd=scene_preprocessed["placeholders_kd"],
-                scene_bvh=scene_preprocessed["scene_bvh"],
-                terrain=scene_preprocessed["terrain"],
-                vertexwise_min_dist=scene_preprocessed["vertexwise_min_dist"],
-                camera_selection_answers=animation_answers,
-                camera_selection_ratio=animation_ratio,
-                **kwargs,
-            )
-
-            frame = bpy.context.scene.frame_current
-            logger.debug(f"Checking {cam.name=} {frame=} got {score=}")
-
-            if score is None:
-                return None
-
-            scores.append(score)
-
-        return np.min(scores)
+    
+    if validate_pose_func is None:
+        anim_valid_pose_func = partial(
+            anim_valid_camrig_pose_func,
+            scene_preprocessed=scene_preprocessed,
+            camera_selection_answers=animation_answers,
+            camera_selection_ratio=animation_ratio,
+            **kwargs,
+        )
+    else:
+        anim_valid_pose_func = anim_valid_camrig_pose_func
 
     for cam_rig in cam_rigs:
         if policy_registry is None:
@@ -784,7 +807,8 @@ def animate_cameras(
                     target_obj=cam_rig, pois=pois, bvh=scene_preprocessed["scene_bvh"]
                 )
             else:
-                policy = animation_policy.AnimPolicyRandomWalkLookaround()
+                with gin.config_scope("cam"):
+                    policy = animation_policy.AnimPolicyRandomWalkLookaround()
         else:
             policy = policy_registry()
 
@@ -794,7 +818,7 @@ def animate_cameras(
             cam_rig,
             scene_preprocessed["scene_bvh"],
             policy_func=policy,
-            validate_pose_func=anim_valid_camrig_pose_func,
+            validate_pose_func=anim_valid_pose_func,
             verbose=True,
             fatal=True,
             bounding_box=bounding_box,
@@ -840,6 +864,17 @@ if __name__ == "__main__":
     This interactive section generates a depth map by raycasting through each pixel. 
     It is very useful for debugging camera.py.
     """
+
+    cams = [
+        cam
+        for cam in bpy.context.scene.objects
+        if "cam" in cam.name.lower() and cam.type != "CAMERA"
+    ]
+
+    animate_cameras(cams)
+    path = bpy.data.filepath
+    bpy.ops.wm.save_mainfile(filepath=path)
+
     cam = bpy.context.scene.camera
 
     scene = bpy.context.scene

@@ -128,6 +128,8 @@ def convert_shader_displacement(obj, apply_geo_modifier=True):
     for mat in displaced_materials:
         mat = slot.material
         mat.node_tree.links.remove(nodes["Material Output"].inputs["Surface"].links[0])
+        mat.node_tree.links.remove(nodes["Material Output"].inputs["Surface"].links[2])
         mat.node_tree.links.new(
             displaced_materials[mat], nodes["Material Output"].inputs["Surface"]
         )
+        mat.node_tree.links.remove(nodes["Material Output"].inputs["Surface"].links[2])
