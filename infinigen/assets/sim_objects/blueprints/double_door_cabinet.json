@@ -1,0 +1,146 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "joint0"
+            }
+        },
+        "joint0": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "joint1",
+                "1": "visasset10"
+            }
+        },
+        "joint1": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "joint2",
+                "1": "visasset9"
+            }
+        },
+        "joint2": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "joint3",
+                "1": "visasset8"
+            }
+        },
+        "joint3": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "joint4",
+                "1": "joint5",
+                "2": "joint6",
+                "3": "joint7"
+            }
+        },
+        "joint4": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset0",
+                "1": "visasset1"
+            }
+        },
+        "visasset0": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint5": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset2",
+                "1": "visasset3"
+            }
+        },
+        "visasset2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset3": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint6": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset4",
+                "1": "visasset5"
+            }
+        },
+        "visasset4": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset5": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "joint7": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset6",
+                "1": "visasset7"
+            }
+        },
+        "visasset6": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset7": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset8": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset9": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset10": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "joint1": {
+            "joint label": "joint1",
+            "parent body label": "joint1parent",
+            "child body label": "joint1child"
+        },
+        "joint0": {
+            "joint label": "joint0",
+            "parent body label": "joint0parent",
+            "child body label": "joint0child"
+        }
+    },
+    "labels": [],
+    "name": "double_door_cabinet"
+}

@@ -980,9 +980,7 @@ class {class_name}(AssetFactory):
         # add code here to randomly sample from parameters
         return {'{}'}
 
-    def create_asset(self, 
-                     export=True,
-                     exporter="mjcf",
+    def create_asset(self,
                      asset_params=None,
                      **kwargs):
         obj = butil.spawn_vert()

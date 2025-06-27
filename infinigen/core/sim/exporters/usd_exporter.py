@@ -448,8 +448,14 @@ class USDBuilder(SimBuilder):
             self.stage, str(mtl_path) + type_to_path[texture_type]
         )
         texture_sampler.CreateIdAttr("UsdUVTexture")
+        
+        # relative path
+        parts = file.parts
+        index = parts.index("assets")
+        file = Path(*parts[index:])
+        
         texture_sampler.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(
-            str(file.resolve())
+            str(Path(*parts[index:]))
         )
         texture_sampler.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(
             st_reader.ConnectableAPI(), "result"
