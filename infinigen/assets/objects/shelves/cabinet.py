@@ -1407,7 +1407,7 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
 class CabinetDoorBaseFactory(AssetFactory):
     def __init__(self, factory_seed, params={}, coarse=False):
         super(CabinetDoorBaseFactory, self).__init__(factory_seed, coarse=coarse)
-        self.params = {}
+        self.params = params
 
     def get_asset_params(self, i=0):
         params = self.params.copy()
@@ -1438,12 +1438,12 @@ class CabinetDoorBaseFactory(AssetFactory):
 
         if params.get("frame_material", None) is None:
             params["frame_material"] = np.random.choice(
-                ["white", "black_wood", "wood"], p=[0.5, 0.2, 0.3]
+                ["white", "black_wood", "wood", "glass", "metal"]
             )
         if params.get("board_material", None) is None:
             if params["has_mid_ramp"]:
                 lower_mat = np.random.choice(
-                    [params["frame_material"], "glass"], p=[0.7, 0.3]
+                    [params["frame_material"], "glass"], p=[0.6, 0.4]
                 )
                 upper_mat = np.random.choice([lower_mat, "glass"], p=[0.6, 0.4])
                 params["board_material"] = [lower_mat, upper_mat]
@@ -1454,16 +1454,20 @@ class CabinetDoorBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
+        print("GETTING MATERIAL FUNCTION", params)
+        print("FRAME MATERIAL", params["frame_material"])
         params["frame_material"] = get_shelf_material(params["frame_material"])
+        print("FRAME MATERIAL", params["frame_material"])
         materials = []
         if not isinstance(params["board_material"], list):
             params["board_material"] = [params["board_material"]]
         for mat in params["board_material"]:
             materials.append(get_shelf_material(mat))
         params["board_material"] = materials
+
         return params
 
-    def create_asset(self, i=0, **params):
+    def create_asset(self, sample_params=True, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=1,
             enter_editmode=False,
@@ -1473,7 +1477,11 @@ class CabinetDoorBaseFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        obj_params = self.get_asset_params(i)
+        if sample_params:
+            obj_params = self.get_asset_params(i)
+        else:
+            obj_params = self.params
+
         surface.add_geomod(
             obj, geometry_door_nodes, apply=True, attributes=[], input_kwargs=obj_params
         )
@@ -1664,11 +1672,11 @@ class CabinetBaseFactory(AssetFactory):
         door_params = self.get_door_params(i=i)
         self.door_fac.params = door_params
         self.door_fac.params["door_left_hinge"] = False
-        right_door, door_obj_params = self.door_fac.create_asset(i=i, ret_params=True)
+        right_door, door_obj_params = self.door_fac.create_asset(sample_params=True, i=i, ret_params=True)
         right_door.name = "cabinet_right_door"
         self.door_fac.params = door_obj_params
         self.door_fac.params["door_left_hinge"] = True
-        left_door, _ = self.door_fac.create_asset(i=i, ret_params=True)
+        left_door, _ = self.door_fac.create_asset(sample_params=False, i=i, ret_params=True)
         left_door.name = "cabinet_left_door"
         self.door_params = door_obj_params
 
@@ -1689,16 +1697,6 @@ class CabinetBaseFactory(AssetFactory):
         # create cabinet
         cabinet_params = self.get_cabinet_params(i=i)
 
-        if len(cabinet_params["door_hinge_pos"]) > 1:
-            self.sim_blueprint = blueprint_path_completion(
-                "double_door_cabinet.json"
-            )
-        else:
-            self.sim_blueprint = blueprint_path_completion(
-                "single_door_cabinet.json"
-            )
-
-
         surface.add_geomod(
             obj,
             geometry_cabinet_nodes,
@@ -1712,10 +1710,6 @@ class CabinetBaseFactory(AssetFactory):
             },
         )
         butil.delete([shelf, left_door, right_door])
-
-        kinematic_compiler.compile(obj)
-        butil.apply_modifiers(obj, geometry_cabinet_nodes.__name__)
-
 
         return obj
 

@@ -14,7 +14,8 @@ from typing import Dict, Tuple
 
 from infinigen.assets.sim_objects.mapping import OBJECT_CLASS_MAP
 from infinigen.core.sim.exporters.factory import sim_exporter_factory
-
+from infinigen.core.sim import kinematic_compiler
+from infinigen.core.util import blender as butil
 
 def spawn_simready(
     name: str,
@@ -38,12 +39,17 @@ def spawn_simready(
     asset = asset_class(seed)
     obj = asset.spawn_asset(i=0, **kwargs)
 
+    sim_blueprint = kinematic_compiler.compile(obj)
+    butil.apply_modifiers(obj)
+
+    sim_blueprint["name"] = name
+
     export_dir = export_dir / exporter
 
     export_func = sim_exporter_factory(exporter=exporter)
     export_path, semantic_mapping = export_func(
         blend_obj=obj,
-        sim_blueprint=asset.sim_blueprint,
+        sim_blueprint=sim_blueprint,
         seed=asset.factory_seed,
         export_dir=export_dir,
         image_res=image_res,

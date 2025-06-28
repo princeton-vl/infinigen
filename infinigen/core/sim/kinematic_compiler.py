@@ -151,7 +151,7 @@ def add_kinematic_node_as_child(node, child, idx):
 
 def compile(obj: bpy.types.Object) -> Dict:
     """
-    Compiles the Blender geometry nodes graph into MJCF format
+    Compiles the Blender geometry nodes graph for the given object
     """
 
     KinematicNode.reset_counts()

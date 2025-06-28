@@ -24,35 +24,33 @@ from infinigen.core.sim.kinematic_node import (
 from infinigen.core.util import blender as butil
 
 
-def parse_sim_blueprint(sim_blueprint: Path) -> Tuple[str, KinematicNode]:
+def parse_sim_blueprint(sim_blueprint: Dict) -> Tuple[str, KinematicNode]:
     """
     Parses the given sim blueprint to be used to generate the required file.
     """
-    with open(sim_blueprint, "r") as f:
-        blueprint = json.load(f)
 
     # gets the name of the model
-    name = blueprint["name"]
+    name = sim_blueprint["name"]
 
     # build the kinematic DAG and returns the root
     nodes = {}
-    for idn, node_info in blueprint["graph"].items():
+    for idn, node_info in sim_blueprint["graph"].items():
         nodes[idn] = kinematic_node_factory(
             kinematic_type=KinematicType(node_info["kinematic_type"]),
             joint_type=JointType(node_info["joint_type"]),
             idn=idn if idn != "root" else "",
         )
-    for idn, node_info in blueprint["graph"].items():
+    for idn, node_info in sim_blueprint["graph"].items():
         for attr_value, child in node_info["children"].items():
             nodes[idn].add_child(int(attr_value), nodes[child])
     kinematic_root = nodes["root"]
 
-    metadata = blueprint["metadata"]
+    metadata = sim_blueprint["metadata"]
     for _, v in metadata.items():
         del v["parent body label"]
         del v["child body label"]
 
-    metadata["part_labels"] = blueprint["labels"]
+    metadata["part_labels"] = sim_blueprint["labels"]
 
     return name, kinematic_root, metadata
 

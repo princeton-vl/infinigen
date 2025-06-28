@@ -287,6 +287,7 @@ def geometry_node_join(
             door = nw.new_node(
                 nodegroup_hinge_joint().name,
                 input_kwargs={
+                    "Joint Label": "door_handle",
                     "Parent": door_body,
                     "Child": handle_transformed,
                     "Position": door_handle_pos,
@@ -584,6 +585,7 @@ def geometry_node_join(
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
+            "Joint Label": "door_hinge",
             "Parent": door_frame.outputs["Geometry"],
             "Child": final_door,
             "Position": add_2,
@@ -627,6 +629,7 @@ def geometry_node_join(
         hinge_joint = nw.new_node(
             nodegroup_hinge_joint().name,
             input_kwargs={
+                "Joint Label": "door_hinge",
                 "Parent": hinge_joint,
                 "Child": door_other,
                 "Position": add_other,
@@ -682,38 +685,6 @@ class BaseDoorFactory(AssetFactory):
             self.door_orientation = np.random.choice(
                 ["left", "right"]
             )  # handle on left/right for push
-
-            if self.door_frame_style in ["full_frame_double_door"]:
-                if self.handle_type == "pull":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "pull_double_door.json"
-                    )
-                elif self.handle_type == "none":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "no_handle_double_door.json"
-                    )
-                elif self.handle_type == "bar":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "push_bar_double_door.json"
-                    )
-                else:
-                    self.sim_blueprint = blueprint_path_completion(
-                        "hinge_handle_double_door.json"
-                    )
-
-            else:
-                if self.handle_type == "pull":
-                    self.sim_blueprint = blueprint_path_completion("pull_door.json")
-                elif self.handle_type == "none":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "no_handle_door.json"
-                    )
-                elif self.handle_type == "bar":
-                    self.sim_blueprint = blueprint_path_completion("push_bar_door.json")
-                else:
-                    self.sim_blueprint = blueprint_path_completion(
-                        "hinge_handle_door.json"
-                    )
 
             self.handle_offset = self.panel_margin * 0.5
             self.handle_height = self.height * uniform(0.45, 0.5)
@@ -1016,11 +987,11 @@ class BaseDoorFactory(AssetFactory):
         )
 
         # compile the object and add necessary attributes
-        kinematic_compiler.compile(door_joined)
+        # kinematic_compiler.compile(door_joined)
 
         # apply the geonode
         # if export:
-        butil.apply_modifiers(door_joined, geometry_node_join.__name__)
+        # butil.apply_modifiers(door_joined, geometry_node_join.__name__)
 
         return door_joined
 
