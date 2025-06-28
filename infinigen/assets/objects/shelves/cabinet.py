@@ -1454,10 +1454,7 @@ class CabinetDoorBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        print("GETTING MATERIAL FUNCTION", params)
-        print("FRAME MATERIAL", params["frame_material"])
         params["frame_material"] = get_shelf_material(params["frame_material"])
-        print("FRAME MATERIAL", params["frame_material"])
         materials = []
         if not isinstance(params["board_material"], list):
             params["board_material"] = [params["board_material"]]
