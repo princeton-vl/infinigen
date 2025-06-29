@@ -35,14 +35,14 @@ def is_hinge(node: bpy.types.Node) -> bool:
     """
     Returns true if the current node is a hinge joint node
     """
-    return is_node_group(node) and "Hinge Joint" in node.node_tree.name
+    return is_node_group(node) and "hinge_joint" in node.node_tree.name
 
 
 def is_sliding(node: bpy.types.Node) -> bool:
     """
     Returns true if the current node is a sliding joint node
     """
-    return is_node_group(node) and "Sliding Joint" in node.node_tree.name
+    return is_node_group(node) and "sliding_joint" in node.node_tree.name
 
 
 def is_joint(node: bpy.types.Node) -> bool:
@@ -57,7 +57,7 @@ def is_add_metadata(node: bpy.types.Node) -> bool:
     Returns true fi the node is an add metadata node.
     """
     return (
-        is_node_group(node) and "Add Jointed Geometry Metadata" in node.node_tree.name
+        is_node_group(node) and "add_jointed_geometry_metadata" in node.node_tree.name
     )
 
 
@@ -65,7 +65,7 @@ def is_duplicate(node: bpy.types.Node) -> bool:
     """
     Returns true if the node is a duplicate joint node.
     """
-    return is_node_group(node) and "Duplicate Joints on Parent" in node.node_tree.name
+    return is_node_group(node) and "duplicate_joints_on_parent" in node.node_tree.name
 
 
 def is_switch(node: bpy.types.Node) -> bool:
@@ -172,7 +172,7 @@ def get_functional_geonodes(link, visited):
         if link in visited:
             return
 
-        if not is_node_group(node) or "Joint" in node.node_tree.name:
+        if not is_node_group(node) or "joint" in node.node_tree.name:
             to_nodes.append((node, link))
             return
 
@@ -186,7 +186,7 @@ def get_functional_geonodes(link, visited):
     from_node, to_node = from_socket.node, to_socket.node
     # first find the functional node this is coming from
     while is_node_group(from_node):
-        if "Joint" in from_node.node_tree.name:
+        if "joint" in from_node.node_tree.name:
             break
         inner_output_group = get_node_by_idname(from_node.node_tree, "NodeGroupOutput")
         socket_name = from_socket.name

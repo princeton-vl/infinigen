@@ -23,7 +23,7 @@ def nodegroup_handle(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare,
         input_kwargs={2: group_input.outputs["Handle Type"]},
-        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
     
     cylinder = nw.new_node('GeometryNodeMeshCylinder', input_kwargs={'Vertices': 16, 'Radius': 0.0100, 'Depth': 0.0500})
     
@@ -364,7 +364,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare,
         input_kwargs={2: named_attribute_1.outputs["Attribute"], 3: attribute_statistic.outputs["Min"]},
-        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
     
     separate_geometry_2 = nw.new_node(Nodes.SeparateGeometry, input_kwargs={'Geometry': store_named_attribute_1, 'Selection': equal})
     
@@ -398,7 +398,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal_1 = nw.new_node(Nodes.Compare,
         input_kwargs={2: named_attribute_2.outputs["Attribute"], 3: attribute_statistic_1.outputs["Min"]},
-        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
     
     separate_geometry_3 = nw.new_node(Nodes.SeparateGeometry, input_kwargs={'Geometry': store_named_attribute, 'Selection': equal_1})
     
@@ -499,7 +499,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal_2 = nw.new_node(Nodes.Compare,
         input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
-        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
     
     position_4 = nw.new_node(Nodes.InputPosition)
     
@@ -660,7 +660,7 @@ def geometry_nodes(nw: NodeWrangler):
     subtract = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: reroute_1}, attrs={'operation': 'SUBTRACT'})
     
     sliding_joint = nw.new_node(nodegroup_sliding_joint().name,
-        input_kwargs={'Parent': drawer_base, 'Child': drawers, 'Max': subtract})
+        input_kwargs={'Parent': drawer_base, 'Child': drawers, 'Axis': (1.0000, 0.0000, 0.0000), 'Value': -1.1000, 'Max': subtract})
     
     reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Bottom Offset"]})
     
@@ -757,7 +757,6 @@ class DrawerFactory(AssetFactory):
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
-
         body_material = weighted_sample(material_assignments.shelf_board)()()
 
         if uniform() < 0.5:
@@ -782,7 +781,6 @@ class DrawerFactory(AssetFactory):
             "Drawer Material": drawer_material,
             "Base Material": handle_material
         }
-        
 
     def create_asset(self,
                      asset_params=None,

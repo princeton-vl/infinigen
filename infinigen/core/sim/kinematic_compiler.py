@@ -44,7 +44,7 @@ def get_labels(node_tree: bpy.types.NodeTree):
     while q:
         nt = q.pop(0)
         for node in nt.nodes:
-            if utils.is_node_group(node) and "Joint" not in node.node_tree.name:
+            if utils.is_node_group(node) and "joint" not in node.node_tree.name:
                 q.append(node.node_tree)
             if utils.is_add_metadata(node):
                 labels.append(get_string_input(node, "Label"))
@@ -113,7 +113,7 @@ def get_geometry_graph(
 
         # add all the groups in this node tree
         for node in node_tree.nodes:
-            if utils.is_node_group(node) and "Joint" not in node.node_tree.name:
+            if utils.is_node_group(node) and "joint" not in node.node_tree.name:
                 queue.append(node.node_tree)
 
         for link in node_tree.links:
@@ -178,7 +178,6 @@ def compile(obj: bpy.types.Object) -> Dict:
         # check if there's already a kinematic equivalent for current node
         if node in blend_to_kinematic_node:
             return blend_to_kinematic_node[node]
-
         if utils.is_join(node):
             kinematic_type = KinematicType.JOINT
             joint_type = JointType.WELD
