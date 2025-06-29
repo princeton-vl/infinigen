@@ -14,6 +14,7 @@ from infinigen.assets.sim_objects.multidoublefridge import MultiDoublefridgeFact
 from infinigen.assets.sim_objects.multifridge import MultifridgeFactory
 from infinigen.assets.sim_objects.singlefridge import SinglefridgeFactory
 from infinigen.assets.objects.shelves.cabinet import CabinetFactory
+from infinigen.assets.sim_objects.drawer import DrawerFactory
 # add newly transpiled assets here
 
 OBJECT_CLASS_MAP = {
@@ -26,5 +27,6 @@ OBJECT_CLASS_MAP = {
     "multidoublefridge": MultiDoublefridgeFactory,
     "lamp": LampFactory,
     "cabinet": CabinetFactory,
+    "drawer": DrawerFactory,
     # add newly transpiled assets here
 }

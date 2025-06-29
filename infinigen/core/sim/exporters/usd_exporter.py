@@ -487,7 +487,7 @@ class USDBuilder(SimBuilder):
 
 def export(
     blend_obj: bpy.types.Object,
-    sim_blueprint: Path,
+    sim_blueprint: Dict,
     seed: int,
     export_dir: Path = Path("./sim_exports/usd"),
     image_res: int = 512,

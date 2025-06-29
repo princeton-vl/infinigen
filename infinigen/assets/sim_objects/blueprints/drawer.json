@@ -4,15 +4,23 @@
             "kinematic_type": -1,
             "joint_type": -1,
             "children": {
-                "0": "joint0"
+                "0": "duplicate0"
+            }
+        },
+        "duplicate0": {
+            "kinematic_type": 3,
+            "joint_type": -1,
+            "children": {
+                "0": "joint0",
+                "1": "joint0"
             }
         },
         "joint0": {
             "kinematic_type": 0,
             "joint_type": 2,
             "children": {
-                "1": "joint1",
-                "0": "visasset0"
+                "0": "joint1",
+                "1": "joint2"
             }
         },
         "joint1": {
@@ -20,10 +28,21 @@
             "joint_type": 0,
             "children": {
                 "0": "visasset0",
-                "1": "joint2"
+                "1": "visasset2",
+                "2": "visasset4"
             }
         },
         "visasset0": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset4": {
             "kinematic_type": 1,
             "joint_type": -1,
             "children": {}
@@ -32,9 +51,46 @@
             "kinematic_type": 0,
             "joint_type": 0,
             "children": {
-                "0": "visasset0",
-                "1": "visasset0"
+                "0": "switch0",
+                "1": "visasset9"
             }
+        },
+        "switch0": {
+            "kinematic_type": 2,
+            "joint_type": -1,
+            "children": {
+                "0": "joint3",
+                "1": "visasset7"
+            }
+        },
+        "joint3": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "visasset5",
+                "1": "visasset5",
+                "2": "visasset6"
+            }
+        },
+        "visasset5": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset6": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset7": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "visasset9": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
         }
     },
     "metadata": {

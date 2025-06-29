@@ -4141,12 +4141,12 @@ class DishwasherFactory(AssetFactory):
             }
             return params
 
-    def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+    def create_asset(self, **kwargs):
         obj = butil.spawn_vert()
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=export,
+            apply=False,
             node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
         )

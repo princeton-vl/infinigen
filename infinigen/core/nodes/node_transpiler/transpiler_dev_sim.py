@@ -33,17 +33,6 @@ def transpile_simready(args):
     )
     output_name.replace(".", "_")
 
-    # injecting named attributes for articulated objects
-    kinematic_info = kinematic_compiler.compile(obj)
-    kinematic_info["name"] = output_name
-
-    # write the kinematic information for the object
-    blueprint_path = Path(blueprints.__path__[0]) / f"{output_name}.json"
-    blueprint_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(blueprint_path, "w") as f:
-        json.dump(kinematic_info, f, indent=4)
-    print(f"Generated sim ready information to {blueprint_path}")
-
     dependencies = [
         # if your transpile target is using nodegroups taken from some python file,
         # add those filepaths here so the transpiler imports from them rather than creating a duplicate definition.
@@ -52,7 +41,6 @@ def transpile_simready(args):
     res = transpiler.transpile_object_to_sim_class(
         obj=obj,
         module_dependencies=dependencies,
-        sim_blueprint=blueprint_path.name,
         output_name=output_name,
     )
 

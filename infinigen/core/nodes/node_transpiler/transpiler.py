@@ -121,6 +121,8 @@ def prefix(dependencies_used) -> str:
         "from infinigen.core.util import blender as butil\n"
         "from infinigen.core.util.paths import blueprint_path_completion\n"
         "from infinigen.core.sim.exporters import factory\n"
+        "from infinigen.core.util.random import weighted_sample\n"
+        "from infinigen.assets.composition import material_assignments\n"
     )
 
     deps_table = [
@@ -951,7 +953,6 @@ def add_asset_to_file(file_path, asset_name, class_name, import_path):
 def transpile_object_to_sim_class(
     obj,
     module_dependencies=[],
-    sim_blueprint=None,
     output_name=None,
     add_to_catalog=True,
 ):
@@ -974,7 +975,6 @@ class {class_name}(AssetFactory):
 
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
-        self.sim_blueprint = {f"blueprint_path_completion('{sim_blueprint}')"}
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
@@ -987,7 +987,7 @@ class {class_name}(AssetFactory):
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=True,
+            apply=False,
             node_group={funcnames[0]}(),
             ng_inputs=self.sample_parameters()
         )
