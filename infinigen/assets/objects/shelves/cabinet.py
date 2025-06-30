@@ -18,7 +18,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.assets.objects.elements.doors.joint_utils import (
-    nodegroup_add_geometry_metadata,
+    nodegroup_add_jointed_geometry_metadata,
     nodegroup_arc_on_door_warper,
     nodegroup_door_frame_warper,
     nodegroup_hinge_joint,

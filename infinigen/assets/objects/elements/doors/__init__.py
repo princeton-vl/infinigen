@@ -4,6 +4,7 @@
 # Authors: Lingjie Mei
 import bpy
 import numpy as np
+from numpy.random import uniform, normal, randint
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -32,9 +33,18 @@ class DoorFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             self.base_factory = random_door_factory()(factory_seed, coarse, constants)
 
-    @property
-    def sim_blueprint(self):
-        return self.base_factory.sim_blueprint
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+			"door_hinge": {
+				"stiffness": 0,
+				"damping": uniform(0, 10)
+			},
+            "door_handle": {
+				"stiffness": uniform(2, 7),
+				"damping": uniform(0, 3)
+			},
+		}
 
     def create_asset(self, **params) -> bpy.types.Object:
         return self.base_factory.create_asset(**params)

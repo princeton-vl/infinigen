@@ -324,6 +324,20 @@ def nodegroup_drawer_base(nw: NodeWrangler):
     
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Mesh': set_material}, attrs={'is_active_output': True})
 
+@node_utils.to_nodegroup('nodegroup_add_jointed_geometry_metadata', singleton=False, type='GeometryNodeTree')
+def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(Nodes.GroupInput,
+        expose_input=[('NodeSocketGeometry', 'Geometry', None),
+            ('NodeSocketString', 'Label', '')])
+    
+    store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
+        input_kwargs={'Geometry': group_input.outputs["Geometry"], 'Name': group_input.outputs["Label"], 'Value': 1},
+        attrs={'data_type': 'INT'})
+    
+    group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={'Geometry': store_named_attribute}, attrs={'is_active_output': True})
+
 @node_utils.to_nodegroup('nodegroup_sliding_joint', singleton=False, type='GeometryNodeTree')
 def nodegroup_sliding_joint(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
@@ -648,8 +662,14 @@ def geometry_nodes(nw: NodeWrangler):
     drawer_base = nw.new_node(nodegroup_drawer_base().name,
         input_kwargs={'Size': group_input.outputs["Size"], 'Thickness': group_input.outputs["Thickness"], 'Bottom Offset': group_input.outputs["Bottom Offset"], 'Num Rows': group_input.outputs["Num Rows"], 'Num Columns': group_input.outputs["Num Columns"], 'Base Material': group_input.outputs["Base Material"]})
     
+    add_jointed_geometry_metadata = nw.new_node(nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={'Geometry': drawer_base, 'Label': 'drawer_base'})
+    
     drawers = nw.new_node(nodegroup_drawers().name,
         input_kwargs={'Size': group_input.outputs["Size"], 'Thickness': group_input.outputs["Thickness"], 'Base Offset': group_input.outputs["Bottom Offset"], 'Num Rows': group_input.outputs["Num Rows"], 'Num Columns': group_input.outputs["Num Columns"], 'Drawer X Thickness': group_input.outputs["Drawer X Cut Scale"], 'Drawer Y Thickness': group_input.outputs["Drawer Y Cut Scale"], 'Handle Type': group_input.outputs["Handle Type"], 'Handle Material': group_input.outputs["Handle Material"], 'Drawer Material': group_input.outputs["Drawer Material"]})
+    
+    add_jointed_geometry_metadata_1 = nw.new_node(nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={'Geometry': drawers, 'Label': 'drawer_door'})
     
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': group_input.outputs["Size"]})
     
@@ -660,7 +680,7 @@ def geometry_nodes(nw: NodeWrangler):
     subtract = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz.outputs["X"], 1: reroute_1}, attrs={'operation': 'SUBTRACT'})
     
     sliding_joint = nw.new_node(nodegroup_sliding_joint().name,
-        input_kwargs={'Parent': drawer_base, 'Child': drawers, 'Axis': (1.0000, 0.0000, 0.0000), 'Value': -1.1000, 'Max': subtract})
+        input_kwargs={'Joint Label': 'drawer_slider', 'Parent': add_jointed_geometry_metadata, 'Child': add_jointed_geometry_metadata_1, 'Axis': (1.0000, 0.0000, 0.0000), 'Max': subtract})
     
     reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Bottom Offset"]})
     
@@ -754,6 +774,15 @@ class DrawerFactory(AssetFactory):
 
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
+
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+			"drawer_slider": {
+				"stiffness": 0,
+				"damping": uniform(0, 10)
+			},
+		}
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters

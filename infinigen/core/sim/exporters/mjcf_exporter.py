@@ -5,12 +5,13 @@
 # Authors:
 # - Abhishek Joshi: primary author
 
+import re
 import json
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Callable, Dict, List
 from xml.dom.minidom import parseString
 
 import bpy
@@ -23,7 +24,10 @@ from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
 from infinigen.tools.export import export_sim_ready, skipBake
-
+from infinigen.core.sim.material_physics import (
+    MATERIAL_PHYSICS_PROPERTIES,
+    DEFAULT_MATERIAL_PHYSICS_PROPERTIES
+)
 
 def create_element(tag: str, **kwargs) -> ET.Element:
     return ET.Element(tag, attrib=kwargs)
@@ -78,6 +82,7 @@ class MJCFBuilder(SimBuilder):
         self,
         blend_obj: bpy.types.Object,
         kinematic_root: KinematicNode,
+        sample_joint_params_fn: Callable,
         metadata: Dict,
         visual_only: bool = False,
         image_res: int = 512,
@@ -91,7 +96,7 @@ class MJCFBuilder(SimBuilder):
         asset_body = self._populate_mjcf(
             root, visual_only=visual_only, image_res=image_res
         )
-        self._populate_joints(asset_body)
+        self._populate_joints(asset_body, sample_joint_params_fn)
         self.main_body.append(asset_body)
 
         self._sort_asset_elements(self.asset)
@@ -169,6 +174,10 @@ class MJCFBuilder(SimBuilder):
         image_res: int,
     ):
         asset = self._get_geometry(attribs)
+
+        # for face in asset.data.polygons:
+        #     print(asset.data.materials[face.material_index])
+
         labels = self._get_labels(asset)
         if len(labels) == 0:
             asset_name = "geom"
@@ -211,8 +220,32 @@ class MJCFBuilder(SimBuilder):
             visgeom.set("material", f"{unique_name}_mat")
         body.append(visgeom)
 
+        # getting material physical properties
+        material = asset.data.materials[asset.data.polygons[0].material_index]
+        material_name = material.name
+        if material_name.startswith("shader_"):
+            material_name = material_name[7:]
+        if material_name.endswith("_deepcopy"):
+            material_name = material_name[:-9]
+
         colgeoms = []
         if not visual_only:
+            # get the material physics properties
+            mat_physics = None
+            if material_name in MATERIAL_PHYSICS_PROPERTIES:
+                mat_physics = MATERIAL_PHYSICS_PROPERTIES[material_name]
+            else:
+                for key, prop in DEFAULT_MATERIAL_PHYSICS_PROPERTIES:
+                    if key in material_name:
+                        mat_physics = prop
+            if mat_physics is None:
+                # setting default material physics
+                mat_physics = {
+                    "friction": 1.0,
+                    "density": 1000
+                }
+
+
             # add the collision asset to the list of assets in the scene
             for colasset_path in export_paths["collision"]:
                 colasset_name = colasset_path.stem
@@ -232,6 +265,8 @@ class MJCFBuilder(SimBuilder):
                     group="0",
                     contype="1",
                     conaffinity="1",
+                    friction=f"{mat_physics['friction']} 0.005 0.0001",
+                    density=f"{mat_physics['density']}"
                 )
                 body.append(colgeom)
                 colgeoms.append(colgeom)
@@ -261,13 +296,17 @@ class MJCFBuilder(SimBuilder):
             self.asset.append(texture_element)
             self.asset.append(material_element)
 
-    def _populate_joints(self, body: ET.Element):
+    def _populate_joints(self, body: ET.Element, sample_joint_params_fn: Callable):
         """
         Populates all the joints with the true value given the object.
         """
+        # sample the physics distribution for the joints
+        joint_params = sample_joint_params_fn()
+
         for joint in body.findall(".//joint"):
             # set the position and axis of the joints
-            prefix = self.joint_map[joint.get("name")]
+            joint_name = joint.get("name")
+            prefix = self.joint_map[joint_name]
 
             pos_vals = surface.read_attr_data(self.blend_obj, prefix + "_pos")
             pos_mask = np.any(pos_vals != 0.0, axis=1)
@@ -309,6 +348,11 @@ class MJCFBuilder(SimBuilder):
                 ref = range_max
             joint.set("ref", f"{ref}")
 
+            # sample joint physics parameters
+            nonunique_joint_name = re.sub(r'_\d+$', '', joint_name)
+            joint.set("stiffness", str(joint_params[nonunique_joint_name]["stiffness"]))
+            joint.set("damping", str(joint_params[nonunique_joint_name]["damping"]))
+
     def _sort_asset_elements(self, asset: ET.Element):
         mesh_elements = []
         material_elements = []
@@ -339,6 +383,7 @@ def export(
     blend_obj: bpy.types.Object,
     sim_blueprint: Dict,
     seed: int,
+    sample_joint_params_fn: Callable,
     export_dir: Path = Path("./sim_exports/mjcf"),
     image_res: int = 512,
     visual_only: bool = True,
@@ -359,6 +404,7 @@ def export(
     builder.build(
         blend_obj=blend_obj,
         kinematic_root=kinematic_root,
+        sample_joint_params_fn=sample_joint_params_fn,
         metadata=metadata,
         visual_only=visual_only,
         image_res=image_res,

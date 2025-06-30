@@ -51,6 +51,7 @@ def spawn_simready(
         blend_obj=obj,
         sim_blueprint=sim_blueprint,
         seed=asset.factory_seed,
+        sample_joint_params_fn=asset_class.sample_joint_parameters,
         export_dir=export_dir,
         image_res=image_res,
         **kwargs,

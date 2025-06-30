@@ -29,7 +29,6 @@ from infinigen.core import surface
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.sim import kinematic_compiler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.math import FixedSeed
@@ -38,7 +37,7 @@ from infinigen.core.util.random import log_uniform, weighted_sample
 
 from .bar_handle import nodegroup_push_bar_handle
 from .joint_utils import (
-    nodegroup_add_geometry_metadata,
+    nodegroup_add_jointed_geometry_metadata,
     nodegroup_arc_on_door_warper,
     nodegroup_door_frame_warper,
     nodegroup_hinge_joint,
@@ -73,7 +72,7 @@ def geometry_node_join(
     door_frame = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": door_frame})
 
     door_frame = nw.new_node(
-        nodegroup_add_geometry_metadata().name,
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": door_frame.outputs["Geometry"],
             "Label": "door_frame",
@@ -118,7 +117,7 @@ def geometry_node_join(
         )
 
         handle_object_info = nw.new_node(
-            nodegroup_add_geometry_metadata().name,
+            nodegroup_add_jointed_geometry_metadata().name,
             input_kwargs={
                 "Geometry": handle_object_info.outputs["Geometry"],
                 "Label": "handle",
@@ -268,7 +267,7 @@ def geometry_node_join(
                 )
 
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={"Geometry": door_body, "Label": "door", "Value": 2},
                 )
 
@@ -276,7 +275,7 @@ def geometry_node_join(
                 door_body = door_info
 
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_body.outputs["Geometry"],
                         "Label": "door",
@@ -316,7 +315,7 @@ def geometry_node_join(
                     )
 
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc,
                             "Label": "door",
@@ -328,7 +327,7 @@ def geometry_node_join(
                     door_arc = door_arc_info
 
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc.outputs["Geometry"],
                             "Label": "door",
@@ -356,7 +355,7 @@ def geometry_node_join(
 
             if flip_lr:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -365,7 +364,7 @@ def geometry_node_join(
                 )
             else:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -386,7 +385,7 @@ def geometry_node_join(
             if door_arc_info is not None:
                 if flip_lr:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -395,7 +394,7 @@ def geometry_node_join(
                     )
                 else:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -437,7 +436,7 @@ def geometry_node_join(
 
             if flip_lr:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -446,7 +445,7 @@ def geometry_node_join(
                 )
             else:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -460,7 +459,7 @@ def geometry_node_join(
             if door_arc_info is not None:
                 if flip_lr:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -469,7 +468,7 @@ def geometry_node_join(
                     )
                 else:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -985,13 +984,6 @@ class BaseDoorFactory(AssetFactory):
                 "door_orientation": self.door_orientation,
             },
         )
-
-        # compile the object and add necessary attributes
-        # kinematic_compiler.compile(door_joined)
-
-        # apply the geonode
-        # if export:
-        # butil.apply_modifiers(door_joined, geometry_node_join.__name__)
 
         return door_joined
 

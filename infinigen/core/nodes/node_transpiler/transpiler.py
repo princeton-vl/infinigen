@@ -949,6 +949,20 @@ def add_asset_to_file(file_path, asset_name, class_name, import_path):
     with open(file_path, "w") as file:
         file.writelines(updated_lines)
 
+def extract_joint_labels(code_str):
+    pattern = r"'Joint Label'\s*:\s*'([^']*)'"
+    return re.findall(pattern, code_str)
+
+def build_joint_sampler(code_str):
+    labels = extract_joint_labels(code_str)
+    result = "{\n"
+    for label in labels:
+        result += f'\t\t\t"{label}": {{\n'
+        result += f'\t\t\t\t"stiffness": 0,\n'
+        result += f'\t\t\t\t"damping": 0\n'
+        result += f'\t\t\t}},\n'
+    result += "\t\t}"
+    return result
 
 def transpile_object_to_sim_class(
     obj,
@@ -964,6 +978,8 @@ def transpile_object_to_sim_class(
 
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
 
+    joint_sampler_str = build_joint_sampler(func_code)
+
     code = prefix(dependencies_used) + "\n\n"
     code += func_code + "\n\n"
     # code += postfix(funcnames, targets)
@@ -975,6 +991,10 @@ class {class_name}(AssetFactory):
 
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
+
+    @classmethod
+    def sample_joint_parameters(self):
+        return {joint_sampler_str}
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
