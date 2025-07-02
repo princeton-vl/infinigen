@@ -23,7 +23,21 @@ def nodegroup_handle(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare,
         input_kwargs={2: group_input.outputs["Handle Type"]},
-        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+    
+    equal_1 = nw.new_node(Nodes.Compare,
+        input_kwargs={2: group_input.outputs["Handle Type"], 3: 1},
+        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
+    
+    arc = nw.new_node('GeometryNodeCurveArc', input_kwargs={'Radius': 0.0500, 'Sweep Angle': 3.1416})
+    
+    curve_circle = nw.new_node(Nodes.CurveCircle, input_kwargs={'Radius': 0.0100})
+    
+    curve_to_mesh = nw.new_node(Nodes.CurveToMesh,
+        input_kwargs={'Curve': arc.outputs["Curve"], 'Profile Curve': curve_circle.outputs["Curve"]})
+    
+    transform_geometry_5 = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': curve_to_mesh, 'Rotation': (0.0000, 0.0000, -1.5708), 'Scale': (2.0000, 1.0000, 1.5000)})
     
     cylinder = nw.new_node('GeometryNodeMeshCylinder', input_kwargs={'Vertices': 16, 'Radius': 0.0100, 'Depth': 0.0500})
     
@@ -44,13 +58,15 @@ def nodegroup_handle(nw: NodeWrangler):
     
     transform_geometry_3 = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': join_geometry, 'Translation': (0.0250, -0.0500, 0.0000)})
     
+    switch_1 = nw.new_node(Nodes.Switch,
+        input_kwargs={'Switch': equal_1, 'False': transform_geometry_5, 'True': transform_geometry_3})
+    
     uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={'Segments': 12, 'Rings': 8, 'Radius': 0.0200})
     
     transform_geometry_4 = nw.new_node(Nodes.Transform,
         input_kwargs={'Geometry': uv_sphere.outputs["Mesh"], 'Translation': (0.0200, 0.0000, 0.0000)})
     
-    switch = nw.new_node(Nodes.Switch,
-        input_kwargs={'Switch': equal, 'False': transform_geometry_3, 'True': transform_geometry_4})
+    switch = nw.new_node(Nodes.Switch, input_kwargs={'Switch': equal, 'False': switch_1, 'True': transform_geometry_4})
     
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["Handle Material"]})
     
@@ -378,7 +394,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal = nw.new_node(Nodes.Compare,
         input_kwargs={2: named_attribute_1.outputs["Attribute"], 3: attribute_statistic.outputs["Min"]},
-        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
     
     separate_geometry_2 = nw.new_node(Nodes.SeparateGeometry, input_kwargs={'Geometry': store_named_attribute_1, 'Selection': equal})
     
@@ -412,7 +428,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal_1 = nw.new_node(Nodes.Compare,
         input_kwargs={2: named_attribute_2.outputs["Attribute"], 3: attribute_statistic_1.outputs["Min"]},
-        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
     
     separate_geometry_3 = nw.new_node(Nodes.SeparateGeometry, input_kwargs={'Geometry': store_named_attribute, 'Selection': equal_1})
     
@@ -513,7 +529,7 @@ def nodegroup_sliding_joint(nw: NodeWrangler):
     
     equal_2 = nw.new_node(Nodes.Compare,
         input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
-        attrs={'data_type': 'INT', 'operation': 'EQUAL'})
+        attrs={'operation': 'EQUAL', 'data_type': 'INT'})
     
     position_4 = nw.new_node(Nodes.InputPosition)
     
@@ -634,7 +650,7 @@ def nodegroup_duplicate_joints_on_parent(nw: NodeWrangler):
     
     store_named_attribute = nw.new_node(Nodes.StoreNamedAttribute,
         input_kwargs={'Geometry': instance_on_points, 'Name': group_input.outputs["Duplicate ID (do not set)"], 'Value': add},
-        attrs={'data_type': 'INT', 'domain': 'INSTANCE'})
+        attrs={'domain': 'INSTANCE', 'data_type': 'INT'})
     
     realize_instances = nw.new_node(Nodes.RealizeInstances, input_kwargs={'Geometry': store_named_attribute})
     
@@ -805,11 +821,12 @@ class DrawerFactory(AssetFactory):
             "Num Columns": randint(1, 4),
             "Drawer X Cut Scale": uniform(0.6, 0.97),
             "Drawer Y Cut Scale": uniform(0.6, 0.97),
-            "Handle Type": randint(0, 2),
+            "Handle Type": 0,
             "Handle Material": body_material,
             "Drawer Material": drawer_material,
             "Base Material": handle_material
         }
+
 
     def create_asset(self,
                      asset_params=None,
