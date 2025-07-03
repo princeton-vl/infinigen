@@ -58,3 +58,5 @@ class Pebbles:
             selection=selection,
             taper_density=True,
         )
+
+        return scatter_obj, rocks
