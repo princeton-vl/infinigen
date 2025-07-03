@@ -120,6 +120,7 @@ class NodeWrangler:
         label=None,
         expose_input=None,
         compat_mode=True,
+        strict: bool = True,
     ):
         if input_args is None:
             input_args = []
@@ -128,6 +129,11 @@ class NodeWrangler:
 
         if attrs is None:
             attrs = {}
+
+        if strict and node_type == Nodes.Bump:
+            raise ValueError(
+                "Bump node is banned in default infinigen. Please use 'Displacement' output socket, or set strict=False"
+            )
 
         compat_map = COMPATIBILITY_MAPPINGS.get(node_type)
         if compat_mode and compat_map is not None:

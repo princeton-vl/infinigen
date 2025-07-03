@@ -195,8 +195,9 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(
-        Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]}
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": mix_3.outputs[2], "Midlevel": 0.0, "Scale": 0.01},
     )
 
     principled_bsdf = nw.new_node(
@@ -204,13 +205,15 @@ def shader_shelves_black_wood(nw: NodeWrangler, **kwargs):
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
             "Roughness": kwargs.get("roughness", 0.9),
-            "Normal": bump,
         },
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": principled_bsdf},
+        input_kwargs={
+            "Surface": principled_bsdf,
+            "Displacement": displacement,
+        },
         attrs={"is_active_output": True},
     )
 
@@ -357,8 +360,9 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(
-        Nodes.Bump, input_kwargs={"Strength": 0.5000, "Height": mix_3.outputs[2]}
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": mix_3.outputs[2], "Midlevel": 0.0, "Scale": 0.01},
     )
 
     principled_bsdf = nw.new_node(
@@ -366,13 +370,15 @@ def shader_shelves_wood(nw: NodeWrangler, **kwargs):
         input_kwargs={
             "Base Color": colorramp.outputs["Color"],
             "Roughness": kwargs.get("roughness", 0.9),
-            "Normal": bump,
         },
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": principled_bsdf},
+        input_kwargs={
+            "Surface": principled_bsdf,
+            "Displacement": displacement,
+        },
         attrs={"is_active_output": True},
     )
 

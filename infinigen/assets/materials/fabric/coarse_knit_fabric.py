@@ -177,7 +177,6 @@ def shader_fabric_base(
         },
     )
 
-    # bump_1 = nw.new_node(Nodes.Bump, input_kwargs={'Height': color_ramp_1.outputs["Color"]})
     inverted_brick = nw.new_node(
         Nodes.Math,
         input_kwargs={0: 1.0000, 1: color_ramp_1.outputs["Color"]},
@@ -229,8 +228,6 @@ def shader_fabric_base(
         input_kwargs={0: voronoi_texture_1.outputs["Distance"], 1: add},
         attrs={"use_clamp": True, "operation": "MULTIPLY"},
     )
-
-    # bump = nw.new_node(Nodes.Bump, input_kwargs={'Height': multiply})
 
     subtract = nw.new_node(
         Nodes.Math,

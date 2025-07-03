@@ -114,6 +114,7 @@ def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selectio
             input_kwargs={
                 "Height": nw.scalar_multiply(mortar, -uniform(0.01, 0.02)),
                 "Midlevel": 0.0,
+                "Scale": 1.0,
             },
         ),
     )

@@ -167,14 +167,15 @@ def scratch_shader(
 
     # return material_output
 
-    bump = nw.new_node(
-        Nodes.Bump,
+    displacement = nw.new_node(
+        Nodes.Displacement,
         input_kwargs={
-            "Strength": n_scratch_depth,
             "Height": map_range.outputs["Result"],
+            "Midlevel": 0.0,
+            "Scale": n_scratch_depth,
         },
     )
-    return {"Normal": bump}
+    return {"Displacement": displacement}
 
 
 def find_normal_input(bsdf):
@@ -222,12 +223,17 @@ class Scratches:
             nw_bsdf, bsdf = result[-1]
             # final_bsdf = scratch_shader(nw_bsdf, bsdf, **shader_kwargs)
 
-            if "Normal" in bsdf.inputs.keys():
-                if len(nw_bsdf.find_from(bsdf.inputs["Normal"])) == 0:
-                    bump = scratch_shader(nw_bsdf, None, **shader_kwargs)["Normal"]
+            displacement = scratch_shader(nw_bsdf, None, **shader_kwargs)[
+                "Displacement"
+            ]
 
-                    # connecting nodes: https://blender.stackexchange.com/questions/101820/how-to-add-remove-links-to-existing-or-new-nodes-using-python
-                    nw_bsdf.links.new(bump.outputs[0], bsdf.inputs["Normal"])
+            # Find the material output node and connect displacement
+            material_output = nw_bsdf.find("MaterialOutput")
+            if material_output:
+                material_output = material_output[0]
+                nw_bsdf.links.new(
+                    displacement.outputs[0], material_output.inputs["Displacement"]
+                )
 
             nw_bsdf.label = MARKER_LABEL
 

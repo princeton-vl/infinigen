@@ -57,18 +57,23 @@ def shader_brick(nw: NodeWrangler, height=None, **kwargs):
     )
 
     offset = nw.scalar_add(
-        nw.scalar_multiply(nw.scalar_sub(color, 0.5), uniform(0.01, 0.04)),
+        nw.scalar_multiply(color, uniform(0.01, 0.04)),
         nw.scalar_multiply(
             nw.new_node(Nodes.MusgraveTexture, [uv_map], input_kwargs={"Scale": 50}),
             uniform(0.0, 0.01),
         ),
     )
-    bump = nw.new_node(Nodes.Bump, input_kwargs={"Height": offset})
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Roughness": roughness, "Base Color": color, "Normal": bump},
+        input_kwargs={"Roughness": roughness, "Base Color": color},
     )
-    nw.new_node(Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf})
+    displacement = nw.new_node(
+        Nodes.Displacement, input_kwargs={"Height": offset, "Scale": 0.05}
+    )
+    nw.new_node(
+        Nodes.MaterialOutput,
+        input_kwargs={"Surface": principled_bsdf, "Displacement": displacement},
+    )
 
 
 class Brick:
