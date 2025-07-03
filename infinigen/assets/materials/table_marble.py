@@ -130,8 +130,9 @@ def shader_marble(nw: NodeWrangler, **kwargs):
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(
-        "ShaderNodeBump", input_kwargs={"Strength": 0.0200, "Height": multiply}
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": multiply, "Midlevel": 0.0, "Scale": 0.02},
     )
 
     principled_bsdf = nw.new_node(
@@ -140,13 +141,15 @@ def shader_marble(nw: NodeWrangler, **kwargs):
             "Base Color": mix_1.outputs[2],
             "Specular IOR Level": 0.6000,
             "Roughness": 0.1000,
-            "Normal": bump,
         },
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": principled_bsdf},
+        input_kwargs={
+            "Surface": principled_bsdf,
+            "Displacement": displacement,
+        },
         attrs={"is_active_output": True},
     )
 
@@ -287,17 +290,21 @@ def shader_wood(nw: NodeWrangler, **kwargs):
         attrs={"data_type": "RGBA"},
     )
 
-    bump = nw.new_node(
-        "ShaderNodeBump", input_kwargs={"Strength": 0.2000, "Height": mix_2.outputs[2]}
+    displacement = nw.new_node(
+        Nodes.Displacement,
+        input_kwargs={"Height": mix_2.outputs[2], "Midlevel": 0.0, "Scale": 0.05},
     )
 
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
-        input_kwargs={"Base Color": mix_3.outputs[2], "Normal": bump},
+        input_kwargs={"Base Color": mix_3.outputs[2]},
     )
 
     material_output = nw.new_node(
         Nodes.MaterialOutput,
-        input_kwargs={"Surface": principled_bsdf},
+        input_kwargs={
+            "Surface": principled_bsdf,
+            "Displacement": displacement,
+        },
         attrs={"is_active_output": True},
     )

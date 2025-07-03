@@ -330,13 +330,17 @@ def get_imu_tum_data(object, start, end):
 def save_imu_tum_files(
     output_folder,
     objects: list[bpy.types.Object],
+    start=None,
+    end=None,
 ):
     """
     Write imu and tum data to output files for each object.
     """
 
-    start = bpy.context.scene.frame_start
-    end = bpy.context.scene.frame_end
+    if start is None:
+        start = bpy.context.scene.frame_start
+    if end is None:
+        end = bpy.context.scene.frame_end
 
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
