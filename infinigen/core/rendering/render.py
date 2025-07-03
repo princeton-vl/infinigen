@@ -243,7 +243,9 @@ def shader_random(nw: NodeWrangler):
 def replace_shader(obj):
     for i in range(len(obj.material_slots)):
         mat = obj.material_slots[i].material
-        nodes = obj.material_slots[i].material.node_tree.nodes
+        if mat is None or mat.node_tree is None:
+            continue
+        nodes = mat.node_tree.nodes
         object_info = nodes.new(type="ShaderNodeObjectInfo")
         white_noise_texture = nodes.new(type="ShaderNodeTexWhiteNoise")
         material_output = nodes["Material Output"]
