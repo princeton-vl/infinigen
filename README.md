@@ -66,6 +66,8 @@ If you use Infinigen in your work, please cite our academic papers:
 Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
+</p>
+
 ```
 @inproceedings{infinigen2023infinite,
   title={Infinite Photorealistic Worlds Using Procedural Generation},
@@ -101,6 +103,33 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
     month     = {June},
     year      = {2024},
     pages     = {21783-21794}
+}
+```
+
+<h3 align="center"><a href="https://arxiv.org/abs/2505.10755">Infinigen-Sim: Procedural Generation of Articulated Simulation Assets</a></h3>
+<p align="center">
+<a href="https://abhihjoshi.github.io/">Abhishek Joshi</a>, 
+<a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
+<a href="https://pvl.cs.princeton.edu/people.html">Jack Nugent</a>, 
+<a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
+<a href="">Jonathan Liu</a>, 
+<a href="https://hermera.github.io/">Hongyu Wen</a>, <br>
+<a href="https://stamatisalex.github.io/">Stamatis Alexandropoulos</a>, 
+<a href="">Tao Sun</a>, 
+<a href="http://araistrick.com/">Alexander Raistrick</a>,  
+<a href="">Gaowen Liu</a>,  
+<a href="https://www.mcgill.ca/civil/yi-shao">Yi Shao</a>,  
+<a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+
+```
+@misc{joshi2025infinigensimproceduralgenerationarticulated,
+      title={Infinigen-Sim: Procedural Generation of Articulated Simulation Assets}, 
+      author={Abhishek Joshi and Beining Han and Jack Nugent and Yiming Zuo and Jonathan Liu and Hongyu Wen and Stamatis Alexandropoulos and Tao Sun and Alexander Raistrick and Gaowen Liu and Yi Shao and Jia Deng},
+      year={2025},
+      eprint={2505.10755},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2505.10755}, 
 }
 ```
 
