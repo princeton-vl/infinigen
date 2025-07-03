@@ -14,7 +14,7 @@ import functools
 import numpy as np
 
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.materials import ceramic, fabrics, metal, plastic
+from infinigen.assets.materials import ceramic, fabric, metal, plastic
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
@@ -5368,10 +5368,10 @@ def get_all_metal_shaders(color):
 
 def shader_fine_knit_fabric_colored(color):
     def shader(nw: NodeWrangler):
-        fabric_params = fabrics.fine_knit_fabric.get_texture_params()
+        fabric_params = fabric.fine_knit_fabric.get_texture_params()
         fabric_params["_color"] = color[:3]  # np.ones(3) * np.random.uniform(0.8, 1.0)
         fabric_params["_map"] = "Object"
-        return fabrics.fine_knit_fabric.shader_material(nw, **fabric_params)
+        return fabric.fine_knit_fabric.shader_material(nw, **fabric_params)
 
     return shader
 
