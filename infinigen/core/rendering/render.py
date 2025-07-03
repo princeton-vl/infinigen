@@ -401,6 +401,33 @@ def configure_compositor(
 
 
 @gin.configurable
+def set_displacement_mode(displacement_mode="DISPLACEMENT"):
+    """Set displacement mode for all materials.
+
+    Args:
+        displacement_mode: Either 'DISPLACEMENT', 'BUMP', 'BOTH', or 'NONE'
+    """
+    if displacement_mode == "NONE":
+        # Remove all displacement connections
+        for material in bpy.data.materials:
+            if material.node_tree is None:
+                continue
+            nw = NodeWrangler(material.node_tree)
+            # Find MaterialOutput nodes
+            material_outputs = nw.find("MaterialOutput")
+            for output_node in material_outputs:
+                if "Displacement" in output_node.inputs:
+                    displacement_input = output_node.inputs["Displacement"]
+                    # Remove any links to the displacement input
+                    for link in displacement_input.links:
+                        nw.links.remove(link)
+    else:
+        # Set standard displacement mode
+        for material in bpy.data.materials:
+            set_geometry_option(material, displacement_mode)
+
+
+@gin.configurable
 def render_image(
     camera: bpy.types.Object,
     frames_folder,
@@ -418,8 +445,7 @@ def render_image(
         bpy.data.objects[exclude].hide_render = True
 
     init.configure_cycles_devices()
-    for material in bpy.data.materials:
-        set_geometry_option(material)
+    set_displacement_mode()
 
     tmp_dir = frames_folder.parent.resolve() / "tmp"
     tmp_dir.mkdir(exist_ok=True)
