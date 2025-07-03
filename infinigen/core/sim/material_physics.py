@@ -2,7 +2,7 @@
 
 MATERIAL_PHYSICS_PROPERTIES = {
     "granite": {
-        "friction": 1.0,
+        "friction": 0.8,
         "density": 2650
     },
     "brick": {
@@ -10,7 +10,7 @@ MATERIAL_PHYSICS_PROPERTIES = {
         "density": 1800
     },
     "aluminum": {
-        "friction": 1.0,
+        "friction": 0.5,
         "density": 2700
     },
     "ceramic": {
