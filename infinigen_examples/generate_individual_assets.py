@@ -53,11 +53,11 @@ from infinigen.assets.utils.misc import assign_material
 from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import density
+from infinigen.core.rendering.render import set_displacement_mode
 from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
-from infinigen.core.rendering.render import set_displacement_mode
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
