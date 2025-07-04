@@ -4,6 +4,8 @@
 # Authors: Alexander Raistrick
 
 
+import bpy
+
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -29,14 +31,26 @@ def geo_face_colors(nw: NodeWrangler):
         Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Geometry", None)]
     )
 
-    random_value = nw.new_node(Nodes.RandomValue, attrs={"data_type": "FLOAT_VECTOR"})
+    random_value = nw.new_node(Nodes.RandomValue, attrs={"data_type": "FLOAT"})
+
+    combine = nw.new_node(
+        Nodes.CombineColor,
+        input_kwargs={
+            0: random_value.outputs["Value"],
+            1: 1.0,
+            2: 0.4,
+        },
+        attrs={"mode": "HSV"},
+    )
+
+    geo = nw.new_node(Nodes.Triangulate, input_kwargs={"Mesh": group_input})
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": group_input.outputs["Geometry"],
+            "Geometry": geo,
             "Name": "col",
-            "Value": random_value.outputs["Value"],
+            "Value": combine,
         },
         attrs={"data_type": "FLOAT_VECTOR", "domain": "FACE"},
     )
@@ -48,5 +62,17 @@ def geo_face_colors(nw: NodeWrangler):
 
 class FaceSizeVisualizer:
     def apply(self, obj, selection=None, **kwargs):
+        if not isinstance(obj, list):
+            obj = [obj]
+
+        obj = [o for o in obj if o.type == "MESH" and not o.hide_viewport]
+
+        for o in obj:
+            bpy.context.view_layer.objects.active = o
+            for _ in range(len(o.material_slots)):
+                bpy.ops.object.material_slot_remove()
+            for m in o.modifiers:
+                o.modifiers.remove(m)
+
         surface.add_geomod(obj, geo_face_colors, selection=selection, attributes=[])
         surface.add_material(obj, shader_material, selection=selection)

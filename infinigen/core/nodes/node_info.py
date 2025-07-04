@@ -40,7 +40,7 @@ class Nodes:
     SeparateColor = "ShaderNodeSeparateColor"
     CompSeparateColor = "CompositorNodeSeparateColor"
     CombineRGB = "ShaderNodeCombineRGB"
-    CombineColor = "ShaderNodeCombineColor"
+    CombineColor = "FunctionNodeCombineColor"
     CompCombineColor = "CompositorNodeCombineColor"
 
     # bl3.5 additions
@@ -103,6 +103,7 @@ class Nodes:
     ConvexHull = "GeometryNodeConvexHull"
     Raycast = "GeometryNodeRaycast"
     DuplicateElements = "GeometryNodeDuplicateElements"
+    Triangulate = "GeometryNodeTriangulate"
 
     # Input
     GroupInput = "NodeGroupInput"

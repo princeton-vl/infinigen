@@ -92,6 +92,37 @@ See [ConfiguringInfinigen.md](./ConfiguringInfinigen.md) for documentation on `m
 
 More documentation coming soon.
 
+### Dense room-mesh subdivision with OcMesher
+
+Infinigen-Indoors uses large polygons for walls/floors/ceilings by default, which have innaccurate ground truth for the surface normal / minute depth changes created by materials.
+
+To fix this, use `real_geometry_with_bump.gin` if you want fine mesh + displacements, or just `real_geometry.gin` if you want the subdivided mesh but no displacement.
+
+:warning: The current implementation of displacement for indoor materials is valid for `blender_gt` extracted with cycles. For OpenGL & any non-blender mesh exports, it will be densely subdivided but *will not have material displacements applied to the polygons*. This is because we use blender's efficient, but non-realized, "shader displacement". We have code to convert this to an exportable mesh (infinigen/tools/convert_displacement.py) but it is not yet integrated
+
+:warning: Most indoor object assets (e.g cabinets, doors) do not yet have a reliable strategy to create dense meshes. This means they are not safe to use with any displacement method besides `set_displacement_mode.displacement_mode = "NONE"` if you want material geometry to be reflected in ground truth. 
+
+```bash
+
+# install terrain
+git submodule update
+pip install -e .[terrain]
+
+python -m infinigen_examples.generate_indoors -- --output_folder outputs/indoors/coarse --seed 0 --task coarse -g forest singleroom real_geometry_with_bump -p compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"DiningRoom\"\] compose_indoors.solve_small_enabled=False 
+```
+
+<p align="center">
+  <img src="images/hello_room/ocmesh_base.png" width="350" />
+  <img src="images/hello_room/ocmesh_facesize.png" width="350" />
+</p>
+
+Second image shows polygons via the following codeblock:
+```python
+from infinigen.assets.materials.dev import face_size_visualizer as f
+f.FaceSizeVisualizer().apply(list(bpy.data.objects))
+```
+
+
 ### Restricting the solver to certain rooms / objects
 
 Configuring `compose_indoors()` and ``restrict_solving()` via gin allows you to only solve sub-parts of the default constraint problem:

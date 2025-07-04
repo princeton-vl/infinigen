@@ -213,3 +213,9 @@ v1.15.0
 
 v1.15.1
 - Fix occlusion boundaries when polygons project to negative z in camera space
+
+v1.15.2
+- Fix house ocmesher camera crash
+- Add house ocmesher example command, warnings and example images
+- Update face_size_visualizer
+- Standardize use of set_displacement_mode

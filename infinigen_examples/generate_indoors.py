@@ -369,7 +369,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
     if overrides.get("enable_ocmesh_room", False):
         rooms_ocmeshed = []
-        cameras = [cam_util.get_camera(i, j) for i, j in cam_util.get_cameras_ids()]
+        cameras = [cam for camera_rig in camera_rigs for cam in camera_rig.children]
         for room_meshed in rooms_meshed.objects:
             room_ocmeshed = ocmesher_utils.run_ocmesher(room_meshed, cameras)
             rooms_ocmeshed.append(room_ocmeshed)
