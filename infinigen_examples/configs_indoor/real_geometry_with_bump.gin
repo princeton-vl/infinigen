@@ -1,2 +1,2 @@
-geometry.option = "BOTH"
+set_displacement_mode.displacement_mode = "BOTH"
 compose_indoors.enable_ocmesh_room = True
