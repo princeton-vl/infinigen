@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "infinigen"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "BSD-3-Clause"
 dynamic = ["version"]
 
 description = "Infinite Photorealistic Worlds using Procedural Generation"
@@ -86,6 +86,7 @@ wandb = [
 # include-package-data is terribly named. package-data is still included if false,
 # just not the package-data setuptools would otherwise autogenerate from MANIFEST.in or version control
 include-package-data = false
+license-files = []
 
 [tool.setuptools.packages.find]
 include = ["infinigen*"]
