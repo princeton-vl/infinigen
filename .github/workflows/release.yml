@@ -100,7 +100,8 @@ jobs:
 
   publish_to_pypi:
     name: Publish wheels to PyPi
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    # if branch main repo "infinigen"
+    if: github.repository == 'princeton-vl/infinigen' && github.event_name == 'push'
     needs: [build_sdist_purepy, build_wheels]
     runs-on: ubuntu-latest
     steps:
