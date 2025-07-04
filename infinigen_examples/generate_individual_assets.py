@@ -57,7 +57,7 @@ from infinigen.core.tagging import tag_system
 
 # noinspection PyUnresolvedReferences
 from infinigen.core.util import blender as butil
-from infinigen.core.util.blender import set_geometry_option
+from infinigen.core.rendering.render import set_displacement_mode
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
@@ -156,8 +156,6 @@ def build_scene_asset(args, factory_name, idx):
                     1,
                 )
                 assign_material(plane, material)
-        for material in bpy.data.materials:
-            set_geometry_option(material)
 
     return asset
 
@@ -181,7 +179,6 @@ def build_scene_surface(args, factory_name, idx):
             plane = bpy.context.active_object
 
             material = bpy.data.materials.new("plane")
-            set_geometry_option(material)
             material.use_nodes = True
             material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
                 0.015,
@@ -307,6 +304,7 @@ def build_and_save_asset(payload: dict):
         save_polycounts(f)
 
     configure_cycles_devices()
+    set_displacement_mode()
 
     with FixedSeed(args.lighting + idx):
         if args.hdri:
