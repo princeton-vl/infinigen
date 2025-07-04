@@ -34,7 +34,7 @@ def geo_face_colors(nw: NodeWrangler):
     random_value = nw.new_node(Nodes.RandomValue, attrs={"data_type": "FLOAT"})
 
     combine = nw.new_node(
-        Nodes.CombineColor,
+        Nodes.FunctionCombineColor,
         input_kwargs={
             0: random_value.outputs["Value"],
             1: 1.0,

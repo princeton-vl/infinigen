@@ -40,7 +40,8 @@ class Nodes:
     SeparateColor = "ShaderNodeSeparateColor"
     CompSeparateColor = "CompositorNodeSeparateColor"
     CombineRGB = "ShaderNodeCombineRGB"
-    CombineColor = "FunctionNodeCombineColor"
+    CombineColor = "ShaderNodeCombineColor"
+    FunctionCombineColor = "FunctionNodeCombineColor"
     CompCombineColor = "CompositorNodeCombineColor"
 
     # bl3.5 additions
