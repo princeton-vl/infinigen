@@ -15,8 +15,12 @@ def check_scatter_runs(pathspec):
     butil.clear_scene()
     base_cube = butil.spawn_cube()
 
-    scatter = import_item(pathspec)
-    scatter.apply(base_cube)
+    # scatter = import_item(pathspec)
+    # scatter.apply(base_cube)
+
+    ScatterClass = import_item(pathspec)
+    scatter_inst = ScatterClass()
+    scatter_inst.apply(base_cube)
 
 
 @pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_scatters.txt"))

@@ -9,7 +9,6 @@
 # - Karhan Kayan - add fire option
 
 import argparse
-import importlib
 import logging
 import math
 import os
@@ -61,7 +60,7 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.camera import points_inview
 from infinigen.core.util.logging import save_polycounts
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.test_utils import load_txt_list
+from infinigen.core.util.test_utils import import_item, load_txt_list
 from infinigen.tools import export
 
 logging.basicConfig(
@@ -75,168 +74,180 @@ OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
 
-def build_scene_asset(args, factory_name, idx):
-    factory = None
-    for subdir in sorted(list(OBJECTS_PATH.iterdir())):
-        clsname = subdir.name.split(".")[0].strip()
-        with gin.unlock_config():
-            module = importlib.import_module(f"infinigen.assets.objects.{clsname}")
-
-        if hasattr(module, factory_name):
-            factory = getattr(module, factory_name)
-            logger.info(f"Found {factory_name} in {subdir}")
-            break
-        logger.debug(f"{factory_name} not found in {subdir}")
-    if factory is None:
-        raise ModuleNotFoundError(f"{factory_name} not Found.")
-
-    with FixedSeed(idx):
-        fac = factory(idx)
-        try:
-            if args.spawn_placeholder:
-                ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
-                asset = fac.spawn_asset(idx, placeholder=ph)
-            else:
-                asset = fac.spawn_asset(idx)
-        except Exception as e:
-            traceback.print_exc()
-            print(f"{fac}.spawn_asset({idx=}) FAILED!! {e}")
-            raise e
-        fac.finalize_assets(asset)
-        if args.fire:
-            from infinigen.assets.fluid.fluid import set_obj_on_fire
-
-            set_obj_on_fire(
-                asset,
-                0,
-                resolution=args.fire_res,
-                simulation_duration=args.fire_duration,
-                noise_scale=2,
-                add_turbulence=True,
-                adaptive_domain=False,
-            )
-            bpy.context.scene.frame_set(args.fire_duration)
-            bpy.context.scene.frame_end = args.fire_duration
-            bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[
-                1
-            ].default_value = 0.04
-            bpy.context.scene.view_settings.exposure = -1
-        bpy.context.view_layer.objects.active = asset
-        parent = asset
-        if asset.type == "EMPTY":
-            meshes = [o for o in asset.children_recursive if o.type == "MESH"]
-            sizes = []
-            for m in meshes:
-                co = read_co(m)
-                sizes.append((np.amax(co, 0) - np.amin(co, 0)).sum())
-            i = np.argmax(np.array(sizes))
-            asset = meshes[i]
-        if not args.no_mod:
-            if parent.animation_data is not None:
-                drivers = parent.animation_data.drivers.values()
-                for d in drivers:
-                    parent.driver_remove(d.data_path)
-            co = read_co(asset)
-            x_min, x_max = np.amin(co, 0), np.amax(co, 0)
-            parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
-            butil.apply_transform(parent, loc=True)
-            if not args.no_ground:
-                bpy.ops.mesh.primitive_grid_add(
-                    size=5, x_subdivisions=400, y_subdivisions=400
-                )
-                plane = bpy.context.active_object
-                plane.location[-1] = x_min[-1]
-                plane.is_shadow_catcher = True
-                material = bpy.data.materials.new("plane")
-                material.use_nodes = True
-                material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
-                    0.015,
-                    0.009,
-                    0.003,
-                    1,
-                )
-                assign_material(plane, material)
-
-    return asset
-
-
-def build_scene_surface(args, factory_name, idx):
+def unified_asset_import(name):
     try:
-        with gin.unlock_config():
-            scatter = importlib.import_module(
-                f"infinigen.assets.scatters.{factory_name}"
-            )
+        return import_item(name), name.split(".")[-1]
+    except Exception:
+        pass
 
-            if not hasattr(scatter, "apply"):
-                raise ValueError(f"{scatter} has no apply()")
+    """Unified import function using test lists."""
+    test_lists = {
+        "scatter": "tests/assets/list_scatters.txt",
+        "material": "tests/assets/list_materials.txt",
+        "material_deprec": "tests/assets/list_materials_deprecated_interface.txt",
+        "object": "tests/assets/list_nature_meshes.txt",
+    }
 
-            if args.dryrun:
-                return
+    # Create single list with (asset_path, asset_type) tuples
+    all_assets = [
+        (asset, asset_type)
+        for asset_type, path in test_lists.items()
+        for asset in load_txt_list(infinigen.repo_root() / path)
+    ]
 
-            bpy.ops.mesh.primitive_grid_add(
-                size=10, x_subdivisions=400, y_subdivisions=400
-            )
-            plane = bpy.context.active_object
+    # Check exact match first
+    exact = next((asset for asset, atype in all_assets if asset == name), None)
+    if exact:
+        return import_item(exact), next(
+            atype for asset, atype in all_assets if asset == exact
+        )
 
-            material = bpy.data.materials.new("plane")
-            material.use_nodes = True
-            material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
-                0.015,
-                0.009,
-                0.003,
-                1,
-            )
-            assign_material(plane, material)
-            if type(scatter) is type:
-                scatter = scatter(idx)
-            scatter.apply(plane, selection=density.placement_mask(0.15, 0.45))
-            asset = plane
-    except ModuleNotFoundError:
-        try:
-            with gin.unlock_config():
-                try:
-                    gen_class = importlib.import_module(
-                        f"infinigen.assets.materials.{factory_name}"
-                    )
-                except ImportError:
-                    for subdir in os.listdir("infinigen/assets/materials"):
-                        with gin.unlock_config():
-                            module = importlib.import_module(
-                                f"infinigen.assets.materials.{subdir.split('.')[0]}"
-                            )
-                        if hasattr(module, factory_name):
-                            gen_class = getattr(module, factory_name)
-                            break
-                    else:
-                        raise Exception(f"{factory_name} not Found.")
+    # Check partial match (class name)
+    matches = [
+        (asset, atype) for asset, atype in all_assets if asset.split(".")[-1] == name
+    ]
 
-                if args.dryrun:
-                    return
+    if len(matches) == 1:
+        return import_item(matches[0][0]), matches[0][1]
+    elif len(matches) > 1:
+        print(f"Ambiguous '{name}': {[f'{a} ({t})' for a, t in matches]}")
+        raise ValueError(f"Ambiguous asset name: {name}")
 
-                if hasattr(gen_class, "make_sphere"):
-                    asset = gen_class.make_sphere()
-                else:
-                    bpy.ops.mesh.primitive_ico_sphere_add(
-                        radius=0.8,
-                        subdivisions=9,
-                    )
-                    asset = bpy.context.active_object
+    # Show options and fail
+    all_class_names = sorted(set(a.split(".")[-1] for a, _ in all_assets))
+    raise ModuleNotFoundError(
+        f"Options are {all_class_names}, {len(all_class_names)} could not find asset: {name}"
+    )
 
-                while len(asset.data.vertices) < 500000:
-                    with butil.ViewportMode(asset, mode="EDIT"):
-                        bpy.ops.mesh.subdivide(number_cuts=2)
 
-                if type(gen_class) is type:
-                    mat_gen = gen_class(idx)
+def _strip_modifiers(args, asset, parent):
+    """Helper function to strip modifiers and center asset."""
+    if args.no_mod:
+        return
 
-                if hasattr(mat_gen, "apply"):
-                    mat_gen.apply(asset)
-                else:
-                    surface.assign_material(asset, mat_gen())
-        except ModuleNotFoundError:
-            raise Exception(f"{factory_name} not Found.")
+    if parent.animation_data is not None:
+        drivers = parent.animation_data.drivers.values()
+        for d in drivers:
+            parent.driver_remove(d.data_path)
+    co = read_co(asset)
+    x_min, x_max = np.amin(co, 0), np.amax(co, 0)
+    parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
+    butil.apply_transform(parent, loc=True)
+    if not args.no_ground:
+        bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
+        plane = bpy.context.active_object
+        plane.location[-1] = x_min[-1]
+        plane.is_shadow_catcher = True
+        material = bpy.data.materials.new("plane")
+        material.use_nodes = True
+        material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
+            0.015,
+            0.009,
+            0.003,
+            1,
+        )
+        assign_material(plane, material)
+
+
+def build_scene_asset(args, cls, idx):
+    factory = cls
+    logger.info(f"Using factory {factory}")
+
+    fac = factory(idx)
+    try:
+        if args.spawn_placeholder:
+            ph = fac.spawn_placeholder(idx, (0, 0, 0), (0, 0, 0))
+            asset = fac.spawn_asset(idx, placeholder=ph)
+        else:
+            asset = fac.spawn_asset(idx)
+    except Exception as e:
+        traceback.print_exc()
+        print(f"{fac}.spawn_asset({idx=}) FAILED!! {e}")
+        raise e
+    fac.finalize_assets(asset)
+    if args.fire:
+        from infinigen.assets.fluid.fluid import set_obj_on_fire
+
+        set_obj_on_fire(
+            asset,
+            0,
+            resolution=args.fire_res,
+            simulation_duration=args.fire_duration,
+            noise_scale=2,
+            add_turbulence=True,
+            adaptive_domain=False,
+        )
+        bpy.context.scene.frame_set(args.fire_duration)
+        bpy.context.scene.frame_end = args.fire_duration
+        bpy.data.worlds["World"].node_tree.nodes["Background.001"].inputs[
+            1
+        ].default_value = 0.04
+        bpy.context.scene.view_settings.exposure = -1
+    bpy.context.view_layer.objects.active = asset
+    parent = asset
+    if asset.type == "EMPTY":
+        meshes = [o for o in asset.children_recursive if o.type == "MESH"]
+        sizes = []
+        for m in meshes:
+            co = read_co(m)
+            sizes.append((np.amax(co, 0) - np.amin(co, 0)).sum())
+        i = np.argmax(np.array(sizes))
+        asset = meshes[i]
+    _strip_modifiers(args, asset, parent)
 
     return asset
+
+
+def build_scene_scatter(args, cls, idx):
+    if args.dryrun:
+        return
+
+    bpy.ops.mesh.primitive_grid_add(size=10, x_subdivisions=400, y_subdivisions=400)
+    plane = bpy.context.active_object
+
+    material = bpy.data.materials.new("plane")
+    material.use_nodes = True
+    material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
+        0.015,
+        0.009,
+        0.003,
+        1,
+    )
+    assign_material(plane, material)
+
+    scatter_instance = cls()
+    scatter_instance.apply(plane, selection=density.placement_mask(0.15, 0.45))
+
+    return plane
+
+
+def build_scene_material(args, cls, idx):
+    if args.dryrun:
+        return
+
+    if hasattr(cls, "make_sphere"):
+        asset = cls.make_sphere()
+    else:
+        bpy.ops.mesh.primitive_ico_sphere_add(radius=0.8, subdivisions=9)
+        asset = bpy.context.active_object
+
+    while len(asset.data.vertices) < 500000:
+        with butil.ViewportMode(asset, mode="EDIT"):
+            bpy.ops.mesh.subdivide(number_cuts=2)
+
+    mat_gen = cls() if type(cls) is type else cls
+
+    if hasattr(mat_gen, "apply"):
+        mat_gen.apply(asset)
+    else:
+        surface.assign_material(asset, mat_gen())
+
+    return asset
+
+
+def build_scene_surface(args, cls, idx):
+    """Legacy function - use build_scene_asset instead."""
+    return build_scene_asset(args, cls, idx)
 
 
 def build_and_save_asset(payload: dict):
@@ -292,10 +303,23 @@ def build_and_save_asset(payload: dict):
 
     camera, center = setup_camera(args)
 
-    if "Factory" in factory_name:
-        asset = build_scene_asset(args, factory_name, idx)
-    else:
-        asset = build_scene_surface(args, factory_name, idx)
+    # Use unified import to determine asset type
+    with gin.unlock_config():
+        cls, asset_type = unified_asset_import(factory_name)
+
+    with FixedSeed(idx):
+        match asset_type:
+            case "object":
+                asset = build_scene_asset(args, cls, idx)
+            case "scatter":
+                asset = build_scene_scatter(args, cls, idx)
+            case "material" | "material_deprec":
+                asset = build_scene_material(args, cls, idx)
+            case _:
+                raise ValueError(f"Unsupported asset type: {asset_type}")
+
+    # Apply displacement mode to all materials
+    set_displacement_mode()
 
     if args.dryrun:
         return

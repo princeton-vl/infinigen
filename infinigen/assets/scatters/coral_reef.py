@@ -65,3 +65,23 @@ def apply_horizontal(obj, scale=1, density=5.0, n=4, selection=None):
     )
 
     return scatter_obj, corals
+
+
+class CoralReef:
+    def __init__(self):
+        pass
+
+    def apply(
+        self,
+        obj,
+        scale=1,
+        density=5.0,
+        n=12,
+        selection=None,
+        horizontal=False,
+        **kwargs,
+    ):
+        if horizontal:
+            return apply_horizontal(obj, scale, density, n, selection)
+        else:
+            return apply_all(obj, scale, density, n, selection)

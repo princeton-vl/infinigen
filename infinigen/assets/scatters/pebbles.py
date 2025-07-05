@@ -34,3 +34,29 @@ def apply(obj, n=5, detail=3, selection=None, **kwargs):
     )
 
     return scatter_obj, rocks
+
+
+class Pebbles:
+    def __init__(self):
+        pass
+
+    def apply(self, obj, n=5, detail=3, selection=None, **kwargs):
+        fac = BlenderRockFactory(np.random.randint(1e5), detail=detail)
+        rocks = make_asset_collection(fac, n=n)
+
+        mat = weighted_sample(material_assignments.rock)()
+        mat.apply(list(rocks.objects))
+
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=rocks,
+            vol_density=U(0.05, 0.4),
+            ground_offset=0.03,
+            scale=U(0.05, 1),
+            scale_rand=U(0.75, 0.95),
+            scale_rand_axi=U(0.4, 0.6),
+            selection=selection,
+            taper_density=True,
+        )
+
+        return scatter_obj, rocks
