@@ -21,6 +21,9 @@ from infinigen.core.constraints.example_solver import (
     propose_continous,
     propose_discrete,
 )
+from infinigen.core.constraints.example_solver.room.predefined import (
+    PredefinedFloorPlanSolver,
+)
 from infinigen.core.constraints.example_solver.state_def import State
 from infinigen.core.util import blender as butil
 
@@ -53,10 +56,7 @@ class LinearDecaySchedule:
 
 @gin.configurable
 class Solver:
-    def __init__(
-        self,
-        output_folder: Path,
-    ):
+    def __init__(self, output_folder: Path, predefined=False):
         """Initialize the solver
 
         Parameters
@@ -78,7 +78,10 @@ class Solver:
         self.optim = SimulatedAnnealingSolver(
             output_folder=output_folder,
         )
-        self.room_solver_fn = FloorPlanSolver
+        if predefined:
+            self.room_solver_fn = PredefinedFloorPlanSolver
+        else:
+            self.room_solver_fn = FloorPlanSolver
         self.state: State = None
         self.dimensions = None
 
