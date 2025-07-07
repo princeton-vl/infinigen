@@ -929,13 +929,17 @@ if __name__ == "__main__":
     assert args.specific_seed is None or args.num_scenes == 1
 
     if args.output_folder is None:
-        date_str = datetime.now().strftime("%y-%m-%d_%H-%M")
+        date_str = datetime.now().strftime("%y-%m-%d_%H-%M-%S")
         hostname = os.uname().nodename
 
         output_base = Path("outputs")
         assert output_base.exists(), output_base
 
         args.output_folder = Path(f"outputs/{date_str}_{hostname}")
+    elif os.environ.get("SLURM_ARRAY_TASK_ID") is not None:
+        args.output_folder = Path(
+            (str(args.output_folder) + "_" + str(os.environ["SLURM_ARRAY_TASK_ID"]))
+        )
 
     overwrite_ok = args.use_existing or args.overwrite
     if args.output_folder.exists() and not overwrite_ok:
