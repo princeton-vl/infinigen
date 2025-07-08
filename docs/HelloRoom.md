@@ -165,3 +165,10 @@ By default, between 15 and 25 objects are generated and have their size normaliz
 ```
 pytest tests/ --disable-warnings
 ```
+
+## Generate Rooms with Existing Floor Plan
+There are times when users would like to generate only the furniture placements given a predefined floor plan. Then the user may run the following command:
+```bash
+--seed 0 --task coarse  --output_folder outputs/indoors_real/coarse -g singleroom.gin fast_solve.gin  -p compose_indoors.terrain_enabled=False Solver.predefined_floor_plan='infinigen_examples/configs_indoor/floor_plans/predefined.json'
+```
+Inside `predefined.json` or other similarly specified files, one can specify the rooms, windows and doors from their custom dataset. The naming of the room should follow current schema of `{room_type}_{room_level}/{room_id}`. Rooms are specified as a shapely Polygon, while doors and windows are specified as a shapely LineString. 

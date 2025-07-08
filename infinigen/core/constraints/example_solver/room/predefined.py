@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import copy
 
 import shapely
 
@@ -54,31 +55,18 @@ class PredefinedBlueprintSolidifier(BlueprintSolidifier):
         return window_cutters, entrance_cutters
 
 
-predefined_examples = [
-    {
-        "rooms": {
-            "dining-room_0/0": shapely.box(0, 0, 10, 10),
-            "kitchen_0/0": shapely.box(-5, 3, 0, 7),
-        },
-        "doors": {
-            "door": shapely.LineString([(0, 4), (0, 6)]),
-            "door.001": shapely.LineString([(2, 0), (5, 0)]),
-        },
-        "windows": {
-            "window": shapely.LineString([(10, 3), (10, 7)]),
-            "window.001": shapely.LineString([(-4, 3), (-1, 3)]),
-        },
-    },
-]
-
-
 class PredefinedFloorPlanSolver:
-    def __init__(self, factory_seed, consgraph):
+    def __init__(self, factory_seed, consgraph, config):
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
             self.constants = consgraph.constants
             self.n_stories = self.constants.n_stories
-            self.config = predefined_examples[factory_seed]
+            for k, vs in config.items():
+                for n in copy(vs):
+                    vs[n] = eval(vs[n]["operation"])(
+                        *vs[n].get("args", []), **vs[n].get("kwargs", {})
+                    )
+                self.config = config
             max_height = max(room_level(n) for n in self.config["rooms"]) + 1
             self.solidifiers = [
                 PredefinedBlueprintSolidifier(consgraph, self.config, i)
