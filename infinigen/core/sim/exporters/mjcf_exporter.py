@@ -5,8 +5,8 @@
 # Authors:
 # - Abhishek Joshi: primary author
 
-import re
 import json
+import re
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -23,11 +23,12 @@ from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, Si
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
-from infinigen.tools.export import export_sim_ready, skipBake
 from infinigen.core.sim.material_physics import (
+    DEFAULT_MATERIAL_PHYSICS_PROPERTIES,
     MATERIAL_PHYSICS_PROPERTIES,
-    DEFAULT_MATERIAL_PHYSICS_PROPERTIES
 )
+from infinigen.tools.export import export_sim_ready, skipBake
+
 
 def create_element(tag: str, **kwargs) -> ET.Element:
     return ET.Element(tag, attrib=kwargs)
@@ -206,6 +207,26 @@ class MJCFBuilder(SimBuilder):
             has_material=not skipBake(asset),
         )
 
+        # getting material physical properties
+        material = asset.data.materials[asset.data.polygons[0].material_index]
+        material_name = material.name
+        if material_name.startswith("shader_"):
+            material_name = material_name[7:]
+        if material_name.endswith("_deepcopy"):
+            material_name = material_name[:-9]
+
+        # get the material physics properties
+        mat_physics = None
+        if material_name in MATERIAL_PHYSICS_PROPERTIES:
+            mat_physics = MATERIAL_PHYSICS_PROPERTIES[material_name]
+        else:
+            for key, prop in DEFAULT_MATERIAL_PHYSICS_PROPERTIES.items():
+                if key in material_name:
+                    mat_physics = prop
+        if mat_physics is None:
+            # setting default material physics
+            mat_physics = {"friction": 1.0, "density": 1000}
+
         # create and link a geom for the asset
         visgeom = create_element(
             "geom",
@@ -215,37 +236,15 @@ class MJCFBuilder(SimBuilder):
             group="1",
             contype="0",
             conaffinity="0",
+            friction=f"{mat_physics['friction']} 0.005 0.0001",
+            density=f"{mat_physics['density']}",
         )
         if not skipBake(asset):
             visgeom.set("material", f"{unique_name}_mat")
         body.append(visgeom)
 
-        # getting material physical properties
-        material = asset.data.materials[asset.data.polygons[0].material_index]
-        material_name = material.name
-        if material_name.startswith("shader_"):
-            material_name = material_name[7:]
-        if material_name.endswith("_deepcopy"):
-            material_name = material_name[:-9]
-
         colgeoms = []
         if not visual_only:
-            # get the material physics properties
-            mat_physics = None
-            if material_name in MATERIAL_PHYSICS_PROPERTIES:
-                mat_physics = MATERIAL_PHYSICS_PROPERTIES[material_name]
-            else:
-                for key, prop in DEFAULT_MATERIAL_PHYSICS_PROPERTIES:
-                    if key in material_name:
-                        mat_physics = prop
-            if mat_physics is None:
-                # setting default material physics
-                mat_physics = {
-                    "friction": 1.0,
-                    "density": 1000
-                }
-
-
             # add the collision asset to the list of assets in the scene
             for colasset_path in export_paths["collision"]:
                 colasset_name = colasset_path.stem
@@ -266,7 +265,7 @@ class MJCFBuilder(SimBuilder):
                     contype="1",
                     conaffinity="1",
                     friction=f"{mat_physics['friction']} 0.005 0.0001",
-                    density=f"{mat_physics['density']}"
+                    density=f"{mat_physics['density']}",
                 )
                 body.append(colgeom)
                 colgeoms.append(colgeom)
@@ -349,9 +348,24 @@ class MJCFBuilder(SimBuilder):
             joint.set("ref", f"{ref}")
 
             # sample joint physics parameters
-            nonunique_joint_name = re.sub(r'_\d+$', '', joint_name)
-            joint.set("stiffness", str(joint_params[nonunique_joint_name]["stiffness"]))
-            joint.set("damping", str(joint_params[nonunique_joint_name]["damping"]))
+            nonunique_joint_name = re.sub(r"_\d+$", "", joint_name)
+            if nonunique_joint_name in joint_params:
+                if "stiffness" in joint_params[nonunique_joint_name]:
+                    joint.set(
+                        "stiffness",
+                        str(joint_params[nonunique_joint_name]["stiffness"]),
+                    )
+
+                if "damping" in joint_params[nonunique_joint_name]:
+                    joint.set(
+                        "damping", str(joint_params[nonunique_joint_name]["damping"])
+                    )
+
+                if "frictionloss" in joint_params[nonunique_joint_name]:
+                    joint.set(
+                        "frictionloss",
+                        str(joint_params[nonunique_joint_name]["frictionloss"]),
+                    )
 
     def _sort_asset_elements(self, asset: ET.Element):
         mesh_elements = []

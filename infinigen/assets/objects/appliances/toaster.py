@@ -20,7 +20,6 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
 
@@ -631,8 +630,8 @@ def nodegroup_toaster(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             "Switch": group_input.outputs["base alternative style"],
-            "False": store_named_attribute_6,
-            "True": store_named_attribute_7,
+            "False": curve_to_mesh,
+            "True": transform_geometry_12,
         },
     )
 
@@ -752,8 +751,8 @@ def nodegroup_toaster(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={
             "Switch": reroute_4,
-            "False": store_named_attribute_5,
-            "True": store_named_attribute_4,
+            "False": points,
+            "True": realize_instances,
         },
     )
 
@@ -925,7 +924,7 @@ def nodegroup_toaster(nw: NodeWrangler):
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_9, store_named_attribute_10]},
+        input_kwargs={"Geometry": [transform_geometry_6, transform_geometry_7]},
     )
 
     reroute_2 = nw.new_node(
@@ -974,9 +973,9 @@ def nodegroup_toaster(nw: NodeWrangler):
     hinge_joint_005 = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_5,
-            "Parent": store_named_attribute_8,
-            "Child": store_named_attribute_11,
+            "Joint Label": "slider_joint",
+            "Parent": add_jointed_geometry_metadata,
+            "Child": add_jointed_geometry_metadata_1,
             "Position": (0.0000, -2.0000, 0.0000),
             "Axis": (-1.0000, 0.0000, 0.0000),
             "Min": -0.300,
@@ -989,7 +988,6 @@ def nodegroup_toaster(nw: NodeWrangler):
     duplicate_joints_on_parent = nw.new_node(
         nodegroup_duplicate_joints_on_parent().name,
         input_kwargs={
-            "Duplicate ID (do not set)": string_4,
             "Parent": hinge_joint_005.outputs["Parent"],
             "Child": hinge_joint_005.outputs["Child"],
             "Points": reroute,
@@ -1036,7 +1034,7 @@ def nodegroup_toaster(nw: NodeWrangler):
 
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_1, store_named_attribute_2]},
+        input_kwargs={"Geometry": [cylinder_1.outputs["Mesh"], transform_geometry_9]},
     )
 
     combine_xyz_8 = nw.new_node(
@@ -1084,9 +1082,9 @@ def nodegroup_toaster(nw: NodeWrangler):
     hinge_joint_005_1 = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_3,
-            "Parent": store_named_attribute_12,
-            "Child": store_named_attribute_3,
+            "Joint Label": "knob_joint",
+            "Parent": duplicate_joints_on_parent,
+            "Child": add_jointed_geometry_metadata_2,
             "Axis": (0.0000, 1.0000, 0.0000),
             "Min": -2.5000,
             "Max": 2.5000,
@@ -1096,7 +1094,6 @@ def nodegroup_toaster(nw: NodeWrangler):
     duplicate_joints_on_parent_1 = nw.new_node(
         nodegroup_duplicate_joints_on_parent().name,
         input_kwargs={
-            "Duplicate ID (do not set)": string_2,
             "Parent": hinge_joint_005_1.outputs["Parent"],
             "Child": hinge_joint_005_1.outputs["Child"],
             "Points": reroute,
@@ -1227,9 +1224,9 @@ def nodegroup_toaster(nw: NodeWrangler):
     sliding_joint_003 = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
-            "Parent": store_named_attribute_13,
-            "Child": store_named_attribute,
+            "Joint Label": "button_joint",
+            "Parent": duplicate_joints_on_parent_1,
+            "Child": add_jointed_geometry_metadata_3,
             "Axis": (0.0000, -1.0000, 0.0000),
             "Max": 0.1000,
         },
@@ -1309,7 +1306,6 @@ def nodegroup_toaster(nw: NodeWrangler):
     duplicate_joints_on_parent_2 = nw.new_node(
         nodegroup_duplicate_joints_on_parent().name,
         input_kwargs={
-            "Duplicate ID (do not set)": string,
             "Parent": sliding_joint_003.outputs["Parent"],
             "Child": sliding_joint_003.outputs["Child"],
             "Points": realize_instances_1,
@@ -1352,11 +1348,6 @@ def geometry_nodes(nw: NodeWrangler):
         ],
     )
 
-    # toaster = nw.new_node(nodegroup_toaster().name,
-    #     input_kwargs={
-    #         'num_slots': group_input.outputs['num_slots']
-    #      })
-
     toaster = nw.new_node(
         nodegroup_toaster().name,
         input_kwargs={
@@ -1387,9 +1378,25 @@ def geometry_nodes(nw: NodeWrangler):
 class ToasterFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False, use_transparent_mat=False):
         super().__init__(factory_seed=factory_seed, coarse=coarse)
-        # super().__init__(factory_seed=None, coarse=False)
-        self.sim_blueprint = blueprint_path_completion("toaster.json")
         self.use_transparent_mat = use_transparent_mat
+
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+            "slider_joint": {
+                "stiffness": uniform(8000, 12000),
+                "damping": uniform(800, 1200),
+            },
+            "knob_joint": {
+                "stiffness": 0,
+                "damping": uniform(0, 10),
+                "frictionloss": 10.0,
+            },
+            "button_joint": {
+                "stiffness": uniform(100, 150),
+                "damping": uniform(100, 150),
+            },
+        }
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
@@ -1481,7 +1488,7 @@ class ToasterFactory(AssetFactory):
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=export,
+            apply=False,
             node_group=nodegroup_toaster(),
             ng_inputs=ng_input,
         )

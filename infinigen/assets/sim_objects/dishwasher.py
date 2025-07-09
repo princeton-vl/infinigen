@@ -25,7 +25,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
 
@@ -906,7 +905,7 @@ def nodegroup_buttons(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_2,
+            "Joint Label": "button_joint",
             "Parent": store_named_attribute_1,
             "Child": store_named_attribute_4,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -1081,7 +1080,7 @@ def nodegroup_buttons(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string,
+            "Joint Label": "knob_joint",
             "Parent": store_named_attribute_5,
             "Child": store_named_attribute,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -3782,7 +3781,7 @@ def geometry_nodes(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_2,
+            "Joint Label": "door_joint",
             "Parent": store_named_attribute_8,
             "Child": store_named_attribute_5,
             "Position": reroute_88,
@@ -3922,7 +3921,7 @@ def geometry_nodes(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "rack_joint",
             "Parent": store_named_attribute_9,
             "Child": store_named_attribute_10,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -4069,7 +4068,25 @@ def sample_silver():
 class DishwasherFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
-        self.sim_blueprint = blueprint_path_completion("dishwasher.json")
+
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+            "door_joint": {
+                "stiffness": np.random.uniform(1000, 10000),
+                "damping": np.random.uniform(500, 2000),
+                "frictionloss": np.random.uniform(1000, 1500),
+            },
+            "rack_joint": {
+                "stiffness": 0,
+                "damping": np.random.uniform(60, 80),
+            },
+            "button_joint": {
+                "stiffness": np.random.uniform(1, 5),
+                "damping": np.random.uniform(0, 10),
+            },
+            "knob_joint": {"stiffness": 0, "damping": np.random.uniform(0, 10)},
+        }
 
     def sample_parameters(self):
         with FixedSeed(self.factory_seed):

@@ -1157,7 +1157,7 @@ def nodegroup_multi_drawer(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "internal_drawer",
             "Parent": store_named_attribute_3,
             "Child": store_named_attribute_2,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -1444,7 +1444,7 @@ def nodegroup_multi_drawer_top(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "freezer_drawer",
             "Parent": store_named_attribute_3,
             "Child": store_named_attribute_2,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -3971,7 +3971,7 @@ def nodegroup_singlefridge(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string,
+            "Joint Label": "door_hinge",
             "Parent": store_named_attribute_5,
             "Child": store_named_attribute_4,
             "Position": add_4.outputs["Vector"],
@@ -4238,7 +4238,7 @@ class SinglefridgeFactory(AssetFactory):
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=True,
+            apply=False,
             node_group=nodegroup_singlefridge(),
             ng_inputs=self.sample_parameters(),
         )

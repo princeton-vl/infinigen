@@ -8,22 +8,14 @@ import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
+from infinigen.assets.objects.elements.doors.joint_utils import nodegroup_hinge_joint
 from infinigen.assets.objects.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.sim import kinematic_compiler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
-from infinigen.assets.objects.elements.doors.joint_utils import (
-    nodegroup_add_jointed_geometry_metadata,
-    nodegroup_arc_on_door_warper,
-    nodegroup_door_frame_warper,
-    nodegroup_hinge_joint,
-    nodegroup_symmetry_along_y,
-)
 
 
 @node_utils.to_nodegroup(
@@ -1024,7 +1016,7 @@ def geometry_door_nodes(nw: NodeWrangler, **kwargs):
             "door_height": door_height,
             "horizontal_edge": ramped_edge_1,
         },
-    ) 
+    )
 
     add = nw.new_node(
         Nodes.Math, input_kwargs={0: panel_edge_frame.outputs["Value"], 1: 0.0001}
@@ -1249,13 +1241,11 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
 
     cabinet_base = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [shelf_info.outputs["Geometry"]] + [set_material]
-        },
+        input_kwargs={"Geometry": [shelf_info.outputs["Geometry"]] + [set_material]},
     )
 
     r_translation = kwargs["door_hinge_pos"][0]
-    
+
     bounding_box = nw.new_node(
         Nodes.BoundingBox,
         input_kwargs={"Geometry": shelf_info.outputs["Geometry"]},
@@ -1331,13 +1321,17 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     )
 
     combine_xyz_r = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": separate_xyz_r.outputs["X"],
-                                        "Y": separate_xyz_r.outputs["Y"],}
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": separate_xyz_r.outputs["X"],
+            "Y": separate_xyz_r.outputs["Y"],
+        },
     )
 
     doors = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
+            "Joint Label": "cabinet_hinge",
             "Parent": cabinet_base,
             "Child": transform_r,
             "Position": combine_xyz_r,
@@ -1350,7 +1344,6 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
 
     if len(kwargs["door_hinge_pos"]) > 1:
         l_translation = kwargs["door_hinge_pos"][1]
-        
 
         value_2 = nw.new_node(Nodes.Vector)
         value_2.vector = l_translation
@@ -1371,8 +1364,8 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
         )
 
         combine_xyz_l = nw.new_node(
-            Nodes.CombineXYZ, input_kwargs={"X": separate_xyz_r.outputs["X"],
-                                            "Y": multiply_2}
+            Nodes.CombineXYZ,
+            input_kwargs={"X": separate_xyz_r.outputs["X"], "Y": multiply_2},
         )
 
         transform_l = nw.new_node(
@@ -1387,6 +1380,7 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
         doors = nw.new_node(
             nodegroup_hinge_joint().name,
             input_kwargs={
+                "Joint Label": "cabinet_hinge",
                 "Parent": doors,
                 "Child": transform_l,
                 "Position": combine_xyz_l,
@@ -1530,6 +1524,12 @@ class CabinetBaseFactory(AssetFactory):
         self.shelf_fac = LargeShelfBaseFactory(factory_seed)
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
 
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+            "cabinet_hinge": {"stiffness": 0, "damping": uniform(0, 10)},
+        }
+
     def sample_params(self):
         # Update fac params
         pass
@@ -1669,11 +1669,15 @@ class CabinetBaseFactory(AssetFactory):
         door_params = self.get_door_params(i=i)
         self.door_fac.params = door_params
         self.door_fac.params["door_left_hinge"] = False
-        right_door, door_obj_params = self.door_fac.create_asset(sample_params=True, i=i, ret_params=True)
+        right_door, door_obj_params = self.door_fac.create_asset(
+            sample_params=True, i=i, ret_params=True
+        )
         right_door.name = "cabinet_right_door"
         self.door_fac.params = door_obj_params
         self.door_fac.params["door_left_hinge"] = True
-        left_door, _ = self.door_fac.create_asset(sample_params=False, i=i, ret_params=True)
+        left_door, _ = self.door_fac.create_asset(
+            sample_params=False, i=i, ret_params=True
+        )
         left_door.name = "cabinet_left_door"
         self.door_params = door_obj_params
 

@@ -380,7 +380,7 @@ class MultiDoublefridgeFactory(AssetFactory):
             butil.modify_mesh(
                 obj,
                 "NODES",
-                apply=export,
+                apply=False,
                 node_group=node_group(),
                 ng_inputs=self.params[i],
             )
@@ -406,3 +406,11 @@ class MultiDoublefridgeFactory(AssetFactory):
         #     return obj, asset_path, semantic_mapping
 
         return obj
+
+    @classmethod
+    def sample_joint_parameters(self):
+        return {
+            "door_hinge": {"stiffness": 0, "damping": uniform(50, 200)},
+            "internal_drawer": {"stiffness": 0, "damping": uniform(50, 200)},
+            "freezer_drawer": {"stiffness": 0, "damping": uniform(50, 200)},
+        }
