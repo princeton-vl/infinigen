@@ -68,6 +68,7 @@ wandb = None  # will be imported and initialized ONLY if installed and enabled
 
 # used only if enabled in gin configs
 PARTITION_ENVVAR = "INFINIGEN_SLURMPARTITION"
+ACCOUNT_ENVVAR = "INFINIGEN_SLURMACCOUNT"
 EXCLUDE_FILE_ENVVAR = "INFINIGEN_SLURM_EXCLUDENODES_LIST"
 NUM_CONCURRENT_ENVVAR = "INFINIGEN_NUMCONCURRENT_TARGET"
 
@@ -142,12 +143,10 @@ def slurm_submit_cmd(
         executor.update_parameters(gpus_per_node=gpus)
 
     if slurm_account is not None:
-        if slurm_account == f"ENVVAR_{PARTITION_ENVVAR}":
-            slurm_account = os.environ.get(PARTITION_ENVVAR)
+        if slurm_account == f"ENVVAR_{ACCOUNT_ENVVAR}":
+            slurm_account = os.environ.get(ACCOUNT_ENVVAR)
             if slurm_account is None:
-                logger.warning(
-                    f"{PARTITION_ENVVAR=} was not set, using no slurm account"
-                )
+                logger.warning(f"{ACCOUNT_ENVVAR=} was not set, using no slurm account")
 
         if isinstance(slurm_account, list):
             slurm_account = np.random.choice(slurm_account)
@@ -160,7 +159,15 @@ def slurm_submit_cmd(
         slurm_additional_params["nice"] = slurm_niceness
 
     if slurm_partition is not None:
-        slurm_additional_params["partition"] = slurm_partition
+        if slurm_partition == f"ENVVAR_{PARTITION_ENVVAR}":
+            slurm_partition = os.environ.get(PARTITION_ENVVAR)
+            if slurm_partition is None:
+                logger.warning(
+                    f"{PARTITION_ENVVAR=} was not set, using no slurm partition"
+                )
+
+        if slurm_partition is not None:
+            executor.update_parameters(slurm_partition=slurm_partition)
 
     if slurm_nodelist is not None:
         slurm_additional_params["nodelist"] = slurm_nodelist
