@@ -22,6 +22,10 @@ from infinigen.core.sim.kinematic_node import (
     kinematic_node_factory,
 )
 from infinigen.core.util import blender as butil
+from infinigen.core.sim.material_physics import (
+    MATERIAL_PHYSICS_PROPERTIES,
+    DEFAULT_MATERIAL_PHYSICS_PROPERTIES
+)
 
 
 def parse_sim_blueprint(sim_blueprint: Dict) -> Tuple[str, KinematicNode]:
@@ -175,3 +179,30 @@ def export_individual_mesh(obj: bpy.types.Object, output_dir: Path) -> None:
             forward_axis="Y",
             export_selected_objects=True,
         )
+
+def get_material_properties(obj: bpy.types.Object):
+
+    # getting material physical properties
+    material = obj.data.materials[obj.data.polygons[0].material_index]
+    material_name = material.name
+    if material_name.startswith("shader_"):
+        material_name = material_name[7:]
+    if material_name.endswith("_deepcopy"):
+        material_name = material_name[:-9]
+
+    # get the material physics properties
+    mat_physics = None
+    if material_name in MATERIAL_PHYSICS_PROPERTIES:
+        mat_physics = MATERIAL_PHYSICS_PROPERTIES[material_name]
+    else:
+        for key, prop in DEFAULT_MATERIAL_PHYSICS_PROPERTIES.items():
+            if key in material_name:
+                mat_physics = prop
+    if mat_physics is None:
+        # setting default material physics
+        mat_physics = {
+            "friction": 1.0,
+            "density": 1000
+        }
+
+    return mat_physics
