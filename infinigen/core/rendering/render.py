@@ -12,6 +12,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Literal
 
 import bpy
 import gin
@@ -402,31 +403,37 @@ def configure_compositor(
     )
 
 
-@gin.configurable
-def set_displacement_mode(displacement_mode="DISPLACEMENT"):
-    """Set displacement mode for all materials.
+def _unlink_material_displacement_output(material: bpy.types.Material):
+    if material.node_tree is None:
+        return
+    nw = NodeWrangler(material.node_tree)
+    material_outputs = nw.find(Nodes.MaterialOutput)
+    for output_node in material_outputs:
+        if "Displacement" not in output_node.inputs:
+            continue
+        displacement_input = output_node.inputs["Displacement"]
+        for link in displacement_input.links:
+            logger.debug(f"Removing {link} to {output_node.name} in {material.name}")
+            nw.links.remove(link)
 
-    Args:
-        displacement_mode: Either 'DISPLACEMENT', 'BUMP', 'BOTH', or 'NONE'
-    """
-    if displacement_mode == "NONE":
-        # Remove all displacement connections
-        for material in bpy.data.materials:
-            if material.node_tree is None:
-                continue
-            nw = NodeWrangler(material.node_tree)
-            # Find MaterialOutput nodes
-            material_outputs = nw.find("MaterialOutput")
-            for output_node in material_outputs:
-                if "Displacement" in output_node.inputs:
-                    displacement_input = output_node.inputs["Displacement"]
-                    # Remove any links to the displacement input
-                    for link in displacement_input.links:
-                        nw.links.remove(link)
-    else:
-        # Set standard displacement mode
-        for material in bpy.data.materials:
-            set_geometry_option(material, displacement_mode)
+
+@gin.configurable
+def set_displacement_mode(
+    displacement_mode: Literal["DISPLACEMENT", "BUMP", "BOTH", "NONE"] = "DISPLACEMENT",
+):
+    match displacement_mode:
+        case "NONE":
+            for material in bpy.data.materials:
+                _unlink_material_displacement_output(material)
+        case "DISPLACEMENT" | "BUMP" | "BOTH":
+            for material in bpy.data.materials:
+                set_geometry_option(material, displacement_mode)
+        case _:
+            raise ValueError(f"Invalid displacement mode: {displacement_mode}")
+            for material in bpy.data.materials:
+                set_geometry_option(material, displacement_mode)
+        case _:
+            raise ValueError(f"Invalid displacement mode: {displacement_mode}")
 
 
 @gin.configurable
