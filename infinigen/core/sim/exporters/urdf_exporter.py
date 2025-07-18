@@ -16,6 +16,7 @@ from xml.dom.minidom import parseString
 import bmesh
 import bpy
 import numpy as np
+import trimesh
 
 import infinigen.core.sim.exporters.utils as exputils
 from infinigen.core import surface
@@ -142,7 +143,38 @@ class URDFBuilder(SimBuilder):
 
             inertial = create_element("inertial")
             mass = create_element("mass", value=str(mat_physics["density"] * vol))
+
+            t = trimesh.Trimesh(
+                vertices=[list(vertex.co) for vertex in mesh.data.vertices],
+                faces=[
+                    list(triangle.vertices) for triangle in mesh.data.loop_triangles
+                ],
+            )
+            t.mass_properties["density"] = mass / t.volume
+            I_tensor = t.moment_inertia
             inertial.append(mass)
+            ixx, ixy, ixz = I_tensor[0]
+            _,   iyy, iyz = I_tensor[1]
+            _,   _,   izz = I_tensor[2]
+
+            inertia = create_element(
+                "inertia",
+                ixx=str(ixx),
+                ixy=str(ixy),
+                ixz=str(ixz),
+                iyy=str(iyy),
+                iyz=str(iyz),
+                izz=str(izz),
+            )
+            inertial.append(inertia)
+
+            com = t.center_mass
+            origin = create_element(
+                "origin",
+                xyz=exputils.array_to_string(com)
+            )
+            inertial.append(origin)
+
             link.append(inertial)
 
             collision_refs = []
