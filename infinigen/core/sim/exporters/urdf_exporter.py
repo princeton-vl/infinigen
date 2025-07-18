@@ -140,9 +140,9 @@ class URDFBuilder(SimBuilder):
             vol = bm.calc_volume(signed=False)
             bm.free()
 
-            inertial = create_element(
-                "inertial", mass=str(mat_physics["density"] * vol)
-            )
+            inertial = create_element("inertial")
+            mass = create_element("mass", value=str(mat_physics["density"] * vol))
+            inertial.append(mass)
             link.append(inertial)
 
             collision_refs = []
