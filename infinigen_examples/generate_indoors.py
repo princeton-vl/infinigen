@@ -260,7 +260,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         return poses, scene_preprocessed
 
     poses, scene_preprocessed = p.run_stage(
-        "pose_cameras", pose_cameras, use_chance=False
+        "pose_cameras", pose_cameras, use_chance=False, default=(None, None)
     )
 
     def animate_cameras():
