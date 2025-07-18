@@ -8,7 +8,10 @@ import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
-from infinigen.assets.objects.elements.doors.joint_utils import nodegroup_hinge_joint
+from infinigen.assets.objects.elements.doors.joint_utils import (
+    nodegroup_hinge_joint,
+    nodegroup_add_jointed_geometry_metadata
+)
 from infinigen.assets.objects.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -1180,9 +1183,27 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     right_door_info = nw.new_node(
         Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][0]}
     )
+    right_door_info = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": right_door_info.outputs["Geometry"],
+            "Label": "door",
+            "Value": 1,
+        },
+    )
+
     left_door_info = nw.new_node(
         Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][1]}
     )
+    left_door_info = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": left_door_info.outputs["Geometry"],
+            "Label": "door",
+            "Value": 1,
+        },
+    )
+
     shelf_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["shelf"]})
 
     attaches = []
@@ -1243,6 +1264,15 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [shelf_info.outputs["Geometry"]] + [set_material]},
     )
+    cabinet_base = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": cabinet_base.outputs["Geometry"],
+            "Label": "cabinet_base",
+            "Value": 1,
+        },
+    )
+
 
     r_translation = kwargs["door_hinge_pos"][0]
 
