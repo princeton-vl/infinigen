@@ -33,7 +33,6 @@ from infinigen.core.rendering.post_render import (
     load_seg_mask,
     load_uniq_inst,
 )
-from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import set_geometry_option
 from infinigen.core.util.logging import Timer
 from infinigen.tools.datarelease_toolkit import reorganize_old_framesfolder
@@ -241,56 +240,93 @@ def shader_random(nw: NodeWrangler):
     )
 
 
-def replace_shader(obj):
-    for i in range(len(obj.material_slots)):
-        mat = obj.material_slots[i].material
-        if mat is None or mat.node_tree is None:
+def _replace_shader_with_randcolor(material: bpy.types.Material):
+    nt = material.node_tree
+    if nt is None:
+        return
+    logger.debug(f"Replacing shader with randcolor for {material.name}")
+    nodes = nt.nodes
+    object_info = nodes.new(type="ShaderNodeObjectInfo")
+    white_noise_texture = nodes.new(type="ShaderNodeTexWhiteNoise")
+    material_output = nodes["Material Output"]
+    nt.links.new(object_info.outputs["Random"], white_noise_texture.inputs["Vector"])
+    nt.links.new(
+        white_noise_texture.outputs["Color"], material_output.inputs["Surface"]
+    )
+
+
+def _remove_volume_shading(material: bpy.types.Material):
+    nt = material.node_tree
+    if nt is None:
+        return
+    nw = NodeWrangler(nt)
+    for output in nw.find(Nodes.MaterialOutput):
+        if "Volume" not in output.inputs:
             continue
-        nodes = mat.node_tree.nodes
-        object_info = nodes.new(type="ShaderNodeObjectInfo")
-        white_noise_texture = nodes.new(type="ShaderNodeTexWhiteNoise")
-        material_output = nodes["Material Output"]
-        mat.node_tree.links.new(
-            object_info.outputs["Random"], white_noise_texture.inputs["Vector"]
-        )
-        mat.node_tree.links.new(
-            white_noise_texture.outputs["Color"], material_output.inputs["Surface"]
-        )
+        vol_socket = output.inputs["Volume"]
+        if len(vol_socket.links) > 0:
+            nw.links.remove(vol_socket.links[0])
+
+
+def _replace_materials_with_flat_shading(obj: bpy.types.Object):
+    for i in range(len(obj.material_slots)):
+        if obj.material_slots[i] is None or obj.material_slots[i].material is None:
+            logger.debug(
+                f"Skipping {obj.name} with empty material slot {i}/{len(obj.material_slots)}"
+            )
+            continue
+        try:
+            _replace_shader_with_randcolor(obj.material_slots[i].material)
+        except Exception as e:
+            mat = obj.material_slots[i].material
+            raise RuntimeError(
+                f"Error in blendergt flat_shading {_replace_shader_with_randcolor.__name__} for "
+                f"{obj.name} with material slot {i} {mat.name}: {e}"
+            )
 
 
 def global_flat_shading():
+    # Remove all volumes in the scene as they cause noisy depth
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if "fire_system_type" in obj and obj["fire_system_type"] == "volume":
             continue
         if obj.name.lower() in {"atmosphere", "atmosphere_fine"}:
             bpy.data.objects.remove(obj)
-        elif obj.active_material is not None:
-            nw = obj.active_material.node_tree
-            for node in nw.nodes:
-                if node.bl_idname == Nodes.MaterialOutput:
-                    vol_socket = node.inputs["Volume"]
-                    if len(vol_socket.links) > 0:
-                        nw.links.remove(vol_socket.links[0])
+            continue
+        if obj.active_material is None:
+            continue
+        try:
+            _remove_volume_shading(obj.active_material)
+        except Exception as e:
+            mat = obj.active_material
+            raise RuntimeError(
+                f"Error in blendergt flat_shading {_remove_volume_shading.__name__} for "
+                f"{obj.name} with material {mat.name}: {e}"
+            )
+
     bpy.context.view_layer.update()
 
+    # Get rid of all nondiffuse materials. e.g. glass becomes solid, or else we get noisy depth (as of bl3.6 at least)
     for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
         if obj.type != "MESH":
+            logger.debug(
+                f"{global_flat_shading.__name__} skipping {obj.name} with non-MESH type {obj.type}"
+            )
             continue
         obj.hide_viewport = False
         if "fire_system_type" in obj and obj["fire_system_type"] == "gt_mesh":
             obj.hide_viewport = False
             obj.hide_render = False
-        if not hasattr(obj, "material_slots"):
-            print(obj.name, "NONE")
+        if (
+            not hasattr(obj, "material_slots")
+            or obj.material_slots is None
+            or len(obj.material_slots) == 0
+        ):
+            logger.debug(
+                f"{global_flat_shading.__name__} skipping {obj.name} with no material slots"
+            )
             continue
-        with butil.SelectObjects(obj):
-            replace_shader(obj)
-
-    # for obj in bpy.context.scene.view_layers["ViewLayer"].objects:
-    #     surface.add_material(obj, shader_random)
-    # for mat in bpy.data.materials:
-    #     nw = NodeWrangler(mat.node_tree)
-    #     shader_random(nw)
+        _replace_materials_with_flat_shading(obj)
 
     nw = NodeWrangler(bpy.data.worlds["World"].node_tree)
     for link in nw.links:
@@ -413,7 +449,9 @@ def _unlink_material_displacement_output(material: bpy.types.Material):
             continue
         displacement_input = output_node.inputs["Displacement"]
         for link in displacement_input.links:
-            logger.debug(f"Removing {link} to {output_node.name} in {material.name}")
+            logger.debug(
+                f"{_unlink_material_displacement_output.__name__} removing {link} to {output_node.name} in {material.name}"
+            )
             nw.links.remove(link)
 
 
@@ -426,10 +464,6 @@ def set_displacement_mode(
             for material in bpy.data.materials:
                 _unlink_material_displacement_output(material)
         case "DISPLACEMENT" | "BUMP" | "BOTH":
-            for material in bpy.data.materials:
-                set_geometry_option(material, displacement_mode)
-        case _:
-            raise ValueError(f"Invalid displacement mode: {displacement_mode}")
             for material in bpy.data.materials:
                 set_geometry_option(material, displacement_mode)
         case _:
