@@ -2,7 +2,7 @@ FloorPlanSolver.n_divide_trials = 25
 FloorPlanSolver.iters_mult = 25
 GraphMaker.fast=True
 
-home_room_constraints.fast = True
+home_room_constraints.has_fewer_rooms = True
 
 solve_objects.addition_weight_scalar = 3.0
 
