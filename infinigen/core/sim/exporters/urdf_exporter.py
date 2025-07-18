@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from xml.dom.minidom import parseString
 
-import bpy
 import bmesh
+import bpy
 import numpy as np
 
 import infinigen.core.sim.exporters.utils as exputils
@@ -84,7 +84,12 @@ class URDFBuilder(SimBuilder):
         self._simplify_skeleton(root)
 
         joint_params = sample_joint_params_fn()
-        self._populate_links(root, visual_only=visual_only, image_res=image_res, joint_params=joint_params)
+        self._populate_links(
+            root,
+            visual_only=visual_only,
+            image_res=image_res,
+            joint_params=joint_params,
+        )
 
     def _populate_links(
         self,
@@ -135,12 +140,13 @@ class URDFBuilder(SimBuilder):
             vol = bm.calc_volume(signed=False)
             bm.free()
 
-            inertial = create_element("inertial", mass=str(mat_physics["density"] * vol))
+            inertial = create_element(
+                "inertial", mass=str(mat_physics["density"] * vol)
+            )
             link.append(inertial)
 
             collision_refs = []
             if not visual_only:
-
                 for colasset_path in colasset_paths:
                     collision = create_element("collision")
                     collision_origin = create_element("origin", xyz="0.0 0.0 0.0")
@@ -178,7 +184,9 @@ class URDFBuilder(SimBuilder):
                 joint_node.idn
             )
             abs_joint_pos = aabb_center + rel_pos
-            
+
+            joint_properties = exputils.get_joint_properties(joint_name, joint_params)
+
             self._create_joint(
                 name=unique_joint_name,
                 joint_type=joint_node.joint_type,
@@ -188,8 +196,8 @@ class URDFBuilder(SimBuilder):
                 min_range=range_min,
                 max_range=range_max,
                 axis=axis,
-                damping=joint_params[joint_name]["damping"] if "damping" in joint_params[joint_name] else 0,
-                friction=joint_params[joint_name]["friction"] if "friction" in joint_params[joint_name] else 0
+                damping=joint_properties["damping"],
+                friction=joint_properties["friction"],
             )
             pos_offset = abs_joint_pos
 
@@ -241,7 +249,9 @@ class URDFBuilder(SimBuilder):
         joint.append(create_element("origin", xyz=exputils.array_to_string(origin)))
         joint.append(create_element("parent", link=parent_link))
         joint.append(create_element("child", link=child_link))
-        joint.append(create_element("dynamics", damping=str(damping), friction=str(friction)))
+        joint.append(
+            create_element("dynamics", damping=str(damping), friction=str(friction))
+        )
 
         if joint_type != JointType.WELD:
             joint.append(create_element("axis", xyz=exputils.array_to_string(axis)))

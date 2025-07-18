@@ -1385,7 +1385,7 @@ class ToasterFactory(AssetFactory):
         return {
             "slider_joint": {
                 "stiffness": uniform(8000, 12000),
-                "damping": uniform(800, 1200),
+                "damping": uniform(1500, 2500),
             },
             "knob_joint": {
                 "stiffness": 0,

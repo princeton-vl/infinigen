@@ -5,7 +5,6 @@
 # Authors:
 # - Abhishek Joshi: primary author
 
-import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -21,11 +20,11 @@ from infinigen.core.sim.kinematic_node import (
     KinematicType,
     kinematic_node_factory,
 )
-from infinigen.core.util import blender as butil
 from infinigen.core.sim.material_physics import (
+    DEFAULT_MATERIAL_PHYSICS_PROPERTIES,
     MATERIAL_PHYSICS_PROPERTIES,
-    DEFAULT_MATERIAL_PHYSICS_PROPERTIES
 )
+from infinigen.core.util import blender as butil
 
 
 def parse_sim_blueprint(sim_blueprint: Dict) -> Tuple[str, KinematicNode]:
@@ -180,8 +179,8 @@ def export_individual_mesh(obj: bpy.types.Object, output_dir: Path) -> None:
             export_selected_objects=True,
         )
 
-def get_material_properties(obj: bpy.types.Object):
 
+def get_material_properties(obj: bpy.types.Object) -> Dict:
     # getting material physical properties
     material = obj.data.materials[obj.data.polygons[0].material_index]
     material_name = material.name
@@ -200,9 +199,16 @@ def get_material_properties(obj: bpy.types.Object):
                 mat_physics = prop
     if mat_physics is None:
         # setting default material physics
-        mat_physics = {
-            "friction": 1.0,
-            "density": 1000
-        }
+        mat_physics = {"friction": 1.0, "density": 1000}
 
     return mat_physics
+
+
+def get_joint_properties(joint_name: str, joint_params: Dict) -> Dict:
+    res = {
+        "stiffness": joint_params[joint_name].get("stiffness", 0.0),
+        "damping": joint_params[joint_name].get("damping", 0.0),
+        "friction": joint_params[joint_name].get("friction", 0.0),
+    }
+
+    return res

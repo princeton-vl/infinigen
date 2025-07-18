@@ -4073,9 +4073,9 @@ class DishwasherFactory(AssetFactory):
     def sample_joint_parameters(self):
         return {
             "door_joint": {
-                "stiffness": np.random.uniform(1000, 10000),
+                "stiffness": np.random.uniform(500, 10000),
                 "damping": np.random.uniform(500, 2000),
-                "frictionloss": np.random.uniform(1000, 1500),
+                "friction": np.random.uniform(1000, 1500),
             },
             "rack_joint": {
                 "stiffness": 0,

@@ -70,8 +70,10 @@ class MJCFBuilder(SimBuilder):
         self.worldbody = create_element("worldbody")
         self.main_body = create_element("body", name="object")
         self.worldbody.append(self.main_body)
+        self.contact = create_element("contact")
         mujoco.append(self.asset)
         mujoco.append(self.worldbody)
+        mujoco.append(self.contact)
 
         return mujoco
 
@@ -90,7 +92,7 @@ class MJCFBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        asset_body = self._populate_mjcf(
+        asset_body, _ = self._populate_mjcf(
             root, visual_only=visual_only, image_res=image_res
         )
         self._populate_joints(asset_body, sample_joint_params_fn)
@@ -152,16 +154,20 @@ class MJCFBuilder(SimBuilder):
 
         # add all children bodies
         for child, joints in root.children.items():
-            link.append(
-                self._populate_mjcf(
-                    child,
-                    joint_nodes=joints,
-                    pos_offset=aabb_center,
-                    visual_only=visual_only,
-                )
+            child_link, child_name = self._populate_mjcf(
+                child,
+                joint_nodes=joints,
+                pos_offset=aabb_center,
+                visual_only=visual_only,
+            )
+            link.append(child_link)
+
+            # exclude contacts between parent and child bodies
+            self.contact.append(
+                create_element("exclude", body1=link_name, body2=child_name)
             )
 
-        return link
+        return link, link_name
 
     def _add_mesh(
         self,
@@ -171,9 +177,6 @@ class MJCFBuilder(SimBuilder):
         image_res: int,
     ):
         asset = self._get_geometry(attribs)
-
-        # for face in asset.data.polygons:
-        #     print(asset.data.materials[face.material_index])
 
         labels = self._get_labels(asset)
         if len(labels) == 0:
@@ -204,12 +207,7 @@ class MJCFBuilder(SimBuilder):
         )
 
         # getting material physical properties
-        material = asset.data.materials[asset.data.polygons[0].material_index]
-        material_name = material.name
-        if material_name.startswith("shader_"):
-            material_name = material_name[7:]
-        if material_name.endswith("_deepcopy"):
-            material_name = material_name[:-9]
+        mat_physics = exputils.get_material_properties(asset)
 
         # create and link a geom for the asset
         visgeom = create_element(
@@ -229,8 +227,6 @@ class MJCFBuilder(SimBuilder):
 
         colgeoms = []
         if not visual_only:
-            mat_physics = exputils.get_material_properties(asset)
-
             # add the collision asset to the list of assets in the scene
             for colasset_path in export_paths["collision"]:
                 colasset_name = colasset_path.stem
@@ -250,8 +246,8 @@ class MJCFBuilder(SimBuilder):
                     group="0",
                     contype="1",
                     conaffinity="1",
-                    friction=f"{mat_physics["friction"]} 0.005 0.0001",
-                    density=f"{mat_physics["density"]}"
+                    friction=f"{mat_physics['friction']} 0.005 0.0001",
+                    density=f"{mat_physics['density']}",
                 )
                 body.append(colgeom)
                 colgeoms.append(colgeom)
@@ -333,25 +329,16 @@ class MJCFBuilder(SimBuilder):
                 ref = range_max
             joint.set("ref", f"{ref}")
 
-            # sample joint physics parameters
+            # set joint physics parameters
             nonunique_joint_name = re.sub(r"_\d+$", "", joint_name)
+            joint_properties = exputils.get_joint_properties(
+                nonunique_joint_name, joint_params
+            )
+
             if nonunique_joint_name in joint_params:
-                if "stiffness" in joint_params[nonunique_joint_name]:
-                    joint.set(
-                        "stiffness",
-                        str(joint_params[nonunique_joint_name]["stiffness"]),
-                    )
-
-                if "damping" in joint_params[nonunique_joint_name]:
-                    joint.set(
-                        "damping", str(joint_params[nonunique_joint_name]["damping"])
-                    )
-
-                if "frictionloss" in joint_params[nonunique_joint_name]:
-                    joint.set(
-                        "frictionloss",
-                        str(joint_params[nonunique_joint_name]["frictionloss"]),
-                    )
+                joint.set("stiffness", str(joint_properties["stiffness"]))
+                joint.set("damping", str(joint_properties["damping"]))
+                joint.set("frictionloss", str(joint_properties["friction"]))
 
     def _sort_asset_elements(self, asset: ET.Element):
         mesh_elements = []

@@ -115,7 +115,9 @@ class USDBuilder(SimBuilder):
 
         return body_usd_info
 
-    def _add_joints(self, root: RigidBody, body_info: Dict, sample_joint_params_fn: Callable):
+    def _add_joints(
+        self, root: RigidBody, body_info: Dict, sample_joint_params_fn: Callable
+    ):
         """Populates the USD with its joints."""
 
         # sample the physics distribution for the joints
@@ -155,9 +157,14 @@ class USDBuilder(SimBuilder):
                     )
                     joint = UsdPhysics.PrismaticJoint(joint_prim)
 
-                drive_api = UsdPhysics.DriveAPI.Get(joint_prim, "angular") or UsdPhysics.DriveAPI.Apply(joint_prim, "angular")
-                drive_api.CreateStiffnessAttr().Set(joint_params[joint_name]["stiffness"])
-                drive_api.CreateDampingAttr().Set(joint_params[joint_name]["damping"])
+                joint_properties = exputils.get_joint_properties(
+                    joint_name, joint_params
+                )
+                drive_api = UsdPhysics.DriveAPI.Get(
+                    joint_prim, "angular"
+                ) or UsdPhysics.DriveAPI.Apply(joint_prim, "angular")
+                drive_api.CreateStiffnessAttr().Set(joint_properties["stiffness"])
+                drive_api.CreateDampingAttr().Set(joint_properties["damping"])
 
                 parent_path = body_info[body]["path"]
                 child_path = body_info[child_body]["path"]
@@ -336,7 +343,6 @@ class USDBuilder(SimBuilder):
 
         colmeshes = []
         if not visual_only:
-
             # run convex decomposition to generate collision meshes
             col_count = 0
 
@@ -465,12 +471,12 @@ class USDBuilder(SimBuilder):
             self.stage, str(mtl_path) + type_to_path[texture_type]
         )
         texture_sampler.CreateIdAttr("UsdUVTexture")
-        
+
         # relative path
         parts = file.parts
         index = parts.index("assets")
         file = Path(*parts[index:])
-        
+
         texture_sampler.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(
             str(Path(*parts[index:]))
         )
