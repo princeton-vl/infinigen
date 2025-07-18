@@ -706,6 +706,10 @@ def configure_cameras(
             center_coordinate = vertices[np.random.choice(list(range(len(vertices))))]
             center_coordinate = obj.matrix_world @ center_coordinate
             center_coordinate = list(np.array(center_coordinate))
+        else:
+            raise ValueError(
+                f"Got {mvs_setting=} yet {terrain_mesh=} {nonroom_objs=}, we expected at least one in order to choose a center coordinate"
+            )
     else:
         center_coordinate = None
 

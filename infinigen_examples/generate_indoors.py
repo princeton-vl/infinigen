@@ -253,6 +253,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
+            nonroom_objs=nonroom_objs,
         )
 
         butil.delete(solved_floor_surface)
