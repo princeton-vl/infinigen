@@ -219,3 +219,6 @@ v1.15.2
 - Add house ocmesher example command, warnings and example images
 - Update face_size_visualizer
 - Standardize use of set_displacement_mode
+
+v1.16.0
+- Refactored scatters into classes

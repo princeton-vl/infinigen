@@ -34,3 +34,33 @@ def apply(obj, scale=1, density=2e3, n=3, selection=None):
     )
 
     return scatter_obj, pine_needle
+
+
+class PineNeedle:
+    def __init__(self):
+        pass
+
+    def apply(self, obj, scale=1, density=2e3, n=3, selection=None):
+        n_species = np.random.randint(2, 3)
+        factories = [
+            PineNeedleFactory(np.random.randint(1e5)) for i in range(n_species)
+        ]
+        pine_needle = make_asset_collection(
+            factories, weights=U(0.5, 1, len(factories)), n=n, verbose=True
+        )
+
+        d = np.deg2rad(U(5, 15))
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=pine_needle,
+            vol_density=U(0.01, 0.03),
+            rotation_offset=lambda nw: nw.uniform((-d,) * 3, (d,) * 3),
+            ground_offset=lambda nw: nw.uniform(0, 0.015),
+            scale=U(2, 3),
+            scale_rand=U(0.4, 0.8),
+            scale_rand_axi=U(0.3, 0.7),
+            selection=selection,
+            taper_density=True,
+        )
+
+        return scatter_obj, pine_needle
