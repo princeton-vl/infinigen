@@ -253,6 +253,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             cam_rigs=camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
+            nonroom_objs=nonroom_objs,
         )
 
         butil.delete(solved_floor_surface)
@@ -260,7 +261,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         return poses, scene_preprocessed
 
     poses, scene_preprocessed = p.run_stage(
-        "pose_cameras", pose_cameras, use_chance=False
+        "pose_cameras", pose_cameras, use_chance=False, default=(None, None)
     )
 
     def animate_cameras():

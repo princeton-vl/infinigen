@@ -220,3 +220,13 @@ v1.15.2
 - Add house ocmesher example command, warnings and example images
 - Update face_size_visualizer
 - Standardize use of set_displacement_mode
+
+v1.15.4
+- fix empty material slot crash in blendergt
+- fix empty material slot crash in export glass materials #442
+- fix displacement not properly disabled when requested 443
+- fix mvs cameras undefined variable #437
+- fix crash in overhead run_stage #439
+- disable optimize_disk_usage unless requested
+- attempted to fix pypi
+- fix missing studio.gin #417 by @jerrylingjiemei

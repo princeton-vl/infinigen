@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "infinigen"
 readme = "README.md"
-license = "BSD-3-Clause"
+license = {text = "BSD-3-Clause"}
 dynamic = ["version"]
 
 description = "Infinite Photorealistic Worlds using Procedural Generation"

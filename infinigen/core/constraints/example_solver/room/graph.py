@@ -35,14 +35,13 @@ from infinigen.core.util.random import log_uniform
 
 @gin.configurable
 class GraphMaker:
-    def __init__(self, factory_seed, consgraph, level, fast=False):
+    def __init__(self, factory_seed, consgraph, level):
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
             self.level = level
             self.constants = consgraph.constants
             self.typical_areas = self.get_typical_areas(consgraph)
             consgraph = consgraph.filter("node")
-            self.fast = fast
             self.consgraph = Problem(
                 {"node": consgraph.constraints["node"]},
                 {"node_gen": self.inject(consgraph.constraints["node_gen"])},
@@ -61,8 +60,6 @@ class GraphMaker:
                 size = high - low
                 if size > 0:
                     p = (mean - low) / size
-                    if self.fast:
-                        p /= 2
                     return cl.rand(
                         self.inject(count, True),
                         "cat",

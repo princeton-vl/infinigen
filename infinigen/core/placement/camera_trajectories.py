@@ -29,11 +29,9 @@ logger = logging.getLogger(__name__)
 def compute_poses(
     cam_rigs,
     scene_preprocessed: dict,
-    init_bounding_box: tuple[np.array, np.array] = None,
-    init_surfaces: list[bpy.types.Object] = None,
-    terrain_mesh=None,
     min_candidates_ratio=5,
     min_base_views_ratio=10,
+    **kwargs,
 ):
     n_cams = len(cam_rigs)
     cam = cam_util.spawn_camera()
@@ -46,11 +44,7 @@ def compute_poses(
 
     if end <= start:
         configure_cameras(
-            cam_rigs=cam_rigs,
-            scene_preprocessed=scene_preprocessed,
-            init_bounding_box=init_bounding_box,
-            init_surfaces=init_surfaces,
-            terrain_mesh=terrain_mesh,
+            cam_rigs=cam_rigs, scene_preprocessed=scene_preprocessed, **kwargs
         )
         butil.delete(cam)
         return []
@@ -58,10 +52,8 @@ def compute_poses(
     base_views = configure_cameras(
         cam_rigs=cam_rigs,
         scene_preprocessed=scene_preprocessed,
-        init_bounding_box=init_bounding_box,
-        init_surfaces=init_surfaces,
-        terrain_mesh=terrain_mesh,
         n_views=n_min_candidates * min_base_views_ratio,
+        **kwargs,
     )
 
     butil.delete(cam)

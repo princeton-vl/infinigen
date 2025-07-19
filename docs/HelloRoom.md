@@ -38,11 +38,12 @@ python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_fo
 python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g no_objects.gin overhead.gin -p compose_indoors.terrain_enabled=False
 
 # Single random room with objects, overhead view (~11min. runtime CPU only):
-python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin singleroom.gin -p compose_indoors.terrain_enabled=False compose_indoors.overhead_cam_enabled=True restrict_solving.solve_max_rooms=1 compose_indoors.invisible_room_ceilings_enabled=True compose_indoors.restrict_single_supported_roomtype=True
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin singleroom.gin -p compose_indoors.terrain_enabled=False restrict_solving.solve_max_rooms=1 compose_indoors.invisible_room_ceilings_enabled=True compose_indoors.restrict_single_supported_roomtype=True
 
-# Whole apartment with objects, overhead view:
-python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin studio.gin -p compose_indoors.terrain_enabled=False
+# Whole home with objects, overhead view: # TODO - bring back studio.gin 3-house appartment, for speed
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g fast_solve.gin overhead.gin -p compose_indoors.terrain_enabled=False
 ```
+Note: whole home solving with objects will take a long time. You can use parallel instances (manage_jobs) below to get more throughput. Reduced roomcount apartment variant coming soon.
 
 Once complete, you can inspect / fly around `outputs/indoors/coarse/scene.blend` in the blender UI:
 

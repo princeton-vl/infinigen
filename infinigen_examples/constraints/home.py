@@ -54,7 +54,7 @@ def sample_home_constraint_params():
 
 
 @gin.configurable
-def home_room_constraints(fast=False):
+def home_room_constraints(has_fewer_rooms=False):
     constraints = OrderedDict()
     score_terms = OrderedDict()
 
@@ -220,7 +220,7 @@ def home_room_constraints(fast=False):
         )
     )
 
-    if fast:
+    if has_fewer_rooms:
         constraints["node_gen"] = (
             rooms[Semantics.Root].all(
                 lambda r: rooms[Semantics.LivingRoom]
@@ -324,7 +324,7 @@ def home_room_constraints(fast=False):
             + public_bathroom_via_living_room(r)
         )
     )
-    if fast:
+    if has_fewer_rooms:
         node_constraint = (
             (rooms[Semantics.Entrance].count() >= 1)
             * (rooms[Semantics.StaircaseRoom].count() == 0)
