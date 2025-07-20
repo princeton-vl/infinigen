@@ -23,6 +23,8 @@ from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, Si
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.tools.export import export_sim_ready, skipBake
 
 
@@ -207,7 +209,7 @@ class MJCFBuilder(SimBuilder):
         )
 
         # getting material physical properties
-        mat_physics = exputils.get_material_properties(asset)
+        mat_physics = mtlphysics.get_material_properties(asset)
 
         # create and link a geom for the asset
         visgeom = create_element(
@@ -331,7 +333,7 @@ class MJCFBuilder(SimBuilder):
 
             # set joint physics parameters
             nonunique_joint_name = re.sub(r"_\d+$", "", joint_name)
-            joint_properties = exputils.get_joint_properties(
+            joint_properties = jointdyna.get_joint_properties(
                 nonunique_joint_name, joint_params
             )
 

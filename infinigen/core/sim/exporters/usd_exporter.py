@@ -27,6 +27,8 @@ from infinigen.core.sim.exporters.base import (
     SimBuilder,
 )
 from infinigen.core.sim.kinematic_node import JointType, KinematicNode
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.core.util import blender as butil
 from infinigen.tools.export import bake_object, skipBake, triangulate_mesh
 
@@ -157,7 +159,7 @@ class USDBuilder(SimBuilder):
                     )
                     joint = UsdPhysics.PrismaticJoint(joint_prim)
 
-                joint_properties = exputils.get_joint_properties(
+                joint_properties = jointdyna.get_joint_properties(
                     joint_name, joint_params
                 )
                 drive_api = UsdPhysics.DriveAPI.Get(
@@ -270,7 +272,7 @@ class USDBuilder(SimBuilder):
         vismesh_path = vis_path + f"/{unique_name}"
         self.asset_freq[asset_name] += 1
 
-        mat_physics = exputils.get_material_properties(asset)
+        mat_physics = mtlphysics.get_material_properties(asset)
 
         vismesh = UsdGeom.Mesh.Define(self.stage, vismesh_path)
 

@@ -9,6 +9,7 @@ import argparse
 import pprint
 from pathlib import Path
 
+from infinigen.core import init
 from infinigen.core.sim import sim_factory as sf
 
 if __name__ == "__main__":
@@ -37,8 +38,13 @@ if __name__ == "__main__":
         action="store_true",
         help="directory to export asset to",
     )
-
+    parser.add_argument("-g", "--gin_config", type=str, default=None, help="gin config")
     args = parser.parse_args()
+    if args.gin_config is not None:
+        init.apply_gin_configs(
+            config_folders=args.gin_config.parent, configs=args.gin_config
+        )
+
     export_path, semantic_mapping = sf.spawn_simready(
         name=args.name,
         seed=args.seed,

@@ -24,6 +24,8 @@ from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, Si
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.tools.export import export_sim_ready
 
 
@@ -130,7 +132,7 @@ class URDFBuilder(SimBuilder):
 
             link.append(visual)
 
-            mat_physics = exputils.get_material_properties(mesh)
+            mat_physics = mtlphysics.get_material_properties(mesh)
 
             # Estimate the mass of the object given the density
             mesh_temp = mesh.to_mesh()
@@ -154,8 +156,8 @@ class URDFBuilder(SimBuilder):
             I_tensor = t.moment_inertia
             inertial.append(mass)
             ixx, ixy, ixz = I_tensor[0]
-            _,   iyy, iyz = I_tensor[1]
-            _,   _,   izz = I_tensor[2]
+            _, iyy, iyz = I_tensor[1]
+            _, _, izz = I_tensor[2]
 
             inertia = create_element(
                 "inertia",
@@ -169,10 +171,7 @@ class URDFBuilder(SimBuilder):
             inertial.append(inertia)
 
             com = t.center_mass
-            origin = create_element(
-                "origin",
-                xyz=exputils.array_to_string(com)
-            )
+            origin = create_element("origin", xyz=exputils.array_to_string(com))
             inertial.append(origin)
 
             link.append(inertial)
@@ -217,7 +216,7 @@ class URDFBuilder(SimBuilder):
             )
             abs_joint_pos = aabb_center + rel_pos
 
-            joint_properties = exputils.get_joint_properties(joint_name, joint_params)
+            joint_properties = jointdyna.get_joint_properties(joint_name, joint_params)
 
             self._create_joint(
                 name=unique_joint_name,
