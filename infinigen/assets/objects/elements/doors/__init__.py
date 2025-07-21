@@ -3,6 +3,7 @@
 
 # Authors: Lingjie Mei
 import bpy
+import gin
 import numpy as np
 from numpy.random import uniform, normal, randint
 
@@ -15,7 +16,6 @@ from .lite import LiteDoorFactory
 from .louver import LouverDoorFactory
 from .panel import GlassPanelDoorFactory, PanelDoorFactory
 
-
 def random_door_factory():
     door_factories = [
         PanelDoorFactory,
@@ -26,7 +26,6 @@ def random_door_factory():
     door_probs = np.array([4, 2, 3, 3])
     return np.random.choice(door_factories, p=door_probs / door_probs.sum())
 
-
 class DoorFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):
         super(DoorFactory, self).__init__(factory_seed, coarse)
@@ -34,15 +33,26 @@ class DoorFactory(AssetFactory):
             self.base_factory = random_door_factory()(factory_seed, coarse, constants)
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='DoorFactory')
+    def sample_joint_parameters(
+        cls,
+        door_hinge_stiffness_min: float = 0.0,
+        door_hinge_stiffness_max: float = 0.0,
+        door_hinge_damping_min: float = 0.0,
+        door_hinge_damping_max: float = 10.0,
+        door_handle_stiffness_min: float = 2.0,
+        door_handle_stiffness_max: float = 7.0,
+        door_handle_damping_min: float = 1.0,
+        door_handle_damping_max: float = 3.0
+    ):
         return {
 			"door_hinge": {
-				"stiffness": 0,
-				"damping": uniform(0, 10)
+				"stiffness": uniform(door_hinge_stiffness_min, door_hinge_stiffness_max),
+				"damping": uniform(door_hinge_damping_min, door_hinge_damping_max)
 			},
             "door_handle": {
-				"stiffness": uniform(2, 7),
-				"damping": uniform(0, 3)
+				"stiffness": uniform(door_handle_stiffness_min, door_handle_stiffness_max),
+				"damping": uniform(door_handle_damping_min, door_handle_damping_max)
 			},
 		}
 

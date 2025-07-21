@@ -6,6 +6,7 @@
 import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
+import gin
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
 from infinigen.assets.objects.elements.doors.joint_utils import (
@@ -1555,9 +1556,25 @@ class CabinetBaseFactory(AssetFactory):
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='CabinetBaseFactory')
+    def sample_joint_parameters(
+        cls,
+        cabinet_hinge_stiffness_min: float = 0.0,
+        cabinet_hinge_stiffness_max: float = 0.0,
+        cabinet_hinge_damping_min: float = 0.0,
+        cabinet_hinge_damping_max: float = 10.0,
+    ):
         return {
-            "cabinet_hinge": {"stiffness": 0, "damping": uniform(0, 10)},
+            "cabinet_hinge": {
+                "stiffness": uniform(
+                    cabinet_hinge_stiffness_min,
+                    cabinet_hinge_stiffness_max
+                ),
+                "damping": uniform(
+                    cabinet_hinge_damping_min,
+                    cabinet_hinge_damping_max
+                ),
+            },
         }
 
     def sample_params(self):

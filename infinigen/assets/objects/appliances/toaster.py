@@ -8,6 +8,7 @@
 
 import numpy as np
 from numpy.random import uniform
+import gin
 
 from infinigen.assets.materials import metal, plastic
 from infinigen.assets.objects.elements.doors.joint_utils import (
@@ -1381,20 +1382,34 @@ class ToasterFactory(AssetFactory):
         self.use_transparent_mat = use_transparent_mat
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='ToasterFactory')
+    def sample_joint_parameters(
+        cls,
+        slider_joint_stiffness_min: float = 8000.0,
+        slider_joint_stiffness_max: float = 12000.0,
+        slider_joint_damping_min: float = 1500.0,
+        slider_joint_damping_max: float = 2500.0,
+        knob_joint_stiffness_min: float = 0.0,
+        knob_joint_stiffness_max: float = 0.0,
+        knob_joint_damping_min: float = 0.0,
+        knob_joint_damping_max: float = 10.0,
+        button_joint_stiffness_min: float = 100.0,
+        button_joint_stiffness_max: float = 150.0,
+        button_joint_damping_min: float = 100.0,
+        button_joint_damping_max: float = 150.0
+    ):
         return {
             "slider_joint": {
-                "stiffness": uniform(8000, 12000),
-                "damping": uniform(1500, 2500),
+                "stiffness": uniform(slider_joint_stiffness_min, slider_joint_stiffness_max),
+                "damping": uniform(slider_joint_damping_min, slider_joint_damping_max),
             },
             "knob_joint": {
-                "stiffness": 0,
-                "damping": uniform(0, 10),
-                "frictionloss": 10.0,
+                "stiffness": uniform(knob_joint_stiffness_min, knob_joint_stiffness_max),
+                "damping": uniform(knob_joint_damping_min, knob_joint_damping_max),
             },
             "button_joint": {
-                "stiffness": uniform(100, 150),
-                "damping": uniform(100, 150),
+                "stiffness": uniform(button_joint_stiffness_min, button_joint_stiffness_max),
+                "damping": uniform(button_joint_damping_min, button_joint_damping_max),
             },
         }
 

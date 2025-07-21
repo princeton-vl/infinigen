@@ -112,6 +112,7 @@ def indent(s):
 def prefix(dependencies_used) -> str:
     fixed_prefix = (
         "import bpy\n"
+        "import gin\n"
         "import mathutils\n"
         "from numpy.random import uniform, normal, randint\n"
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
@@ -954,15 +955,31 @@ def extract_joint_labels(code_str):
     return re.findall(pattern, code_str)
 
 def build_joint_sampler(code_str):
-    labels = extract_joint_labels(code_str)
+    labels = set(extract_joint_labels(code_str))
     result = "{\n"
     for label in labels:
+        replaced_label = label.replace(" ", "_")
         result += f'\t\t\t"{label}": {{\n'
-        result += f'\t\t\t\t"stiffness": 0,\n'
-        result += f'\t\t\t\t"damping": 0\n'
+        result += f'\t\t\t\t"stiffness": uniform({replaced_label}_stiffness_min, {replaced_label}_stiffness_max),\n'
+        result += f'\t\t\t\t"damping": uniform({replaced_label}_damping_min, {replaced_label}_damping_max)\n'
         result += f'\t\t\t}},\n'
     result += "\t\t}"
     return result
+
+def build_joint_params(code_str):
+    labels = set(extract_joint_labels(code_str))
+    lines = []
+    for label in labels:
+        label = label.replace(" ", "_")
+        for attr in ('stiffness', 'damping'):
+            for bound in ('min', 'max'):
+                lines.append(f"{label}_{attr}_{bound}: float = 0.0,")
+    if not lines:
+        return ""
+    # first line unindented, subsequent lines indented
+    formatted = [lines[0]] + ["        " + line for line in lines[1:]]
+    return "\n".join(formatted)
+
 
 def transpile_object_to_sim_class(
     obj,
@@ -978,6 +995,7 @@ def transpile_object_to_sim_class(
 
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
 
+    joint_param_str = build_joint_params(func_code)
     joint_sampler_str = build_joint_sampler(func_code)
 
     code = prefix(dependencies_used) + "\n\n"
@@ -993,7 +1011,11 @@ class {class_name}(AssetFactory):
         super().__init__(factory_seed=factory_seed, coarse=False)
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='{class_name}')
+    def sample_joint_parameters(
+        cls,
+        {joint_param_str}
+    ):
         return {joint_sampler_str}
 
     def sample_parameters(self):

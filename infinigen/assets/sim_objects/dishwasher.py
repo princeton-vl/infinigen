@@ -14,6 +14,7 @@ import functools
 import numpy as np
 from numpy.random import randint as RI
 from numpy.random import uniform as U
+import gin
 
 from infinigen.assets.materials import (
     metal,
@@ -4070,22 +4071,73 @@ class DishwasherFactory(AssetFactory):
         super().__init__(factory_seed=factory_seed, coarse=False)
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='DishwasherFactory')
+    def sample_joint_parameters(
+        cls,
+        door_joint_stiffness_min: float   = 500.0,
+        door_joint_stiffness_max: float   = 10000.0,
+        door_joint_damping_min: float     = 500.0,
+        door_joint_damping_max: float     = 2000.0,
+        door_joint_friction_min: float    = 1000.0,
+        door_joint_friction_max: float    = 1500.0,
+        rack_joint_stiffness_min: float   = 0.0,
+        rack_joint_stiffness_max: float   = 0.0,
+        rack_joint_damping_min: float     = 60.0,
+        rack_joint_damping_max: float     = 80.0,
+        button_joint_stiffness_min: float = 1.0,
+        button_joint_stiffness_max: float = 5.0,
+        button_joint_damping_min: float   = 0.0,
+        button_joint_damping_max: float   = 10.0,
+        knob_joint_stiffness_min: float   = 0.0,
+        knob_joint_stiffness_max: float   = 0.0,
+        knob_joint_damping_min: float     = 0.0,
+        knob_joint_damping_max: float     = 10.0,
+    ):
         return {
             "door_joint": {
-                "stiffness": np.random.uniform(500, 10000),
-                "damping": np.random.uniform(500, 2000),
-                "friction": np.random.uniform(1000, 1500),
+                "stiffness": np.random.uniform(
+                    door_joint_stiffness_min,
+                    door_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    door_joint_damping_min,
+                    door_joint_damping_max
+                ),
+                "friction": np.random.uniform(
+                    door_joint_friction_min,
+                    door_joint_friction_max
+                ),
             },
             "rack_joint": {
-                "stiffness": 0,
-                "damping": np.random.uniform(60, 80),
+                "stiffness": np.random.uniform(
+                    rack_joint_stiffness_min,
+                    rack_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    rack_joint_damping_min,
+                    rack_joint_damping_max
+                ),
             },
             "button_joint": {
-                "stiffness": np.random.uniform(1, 5),
-                "damping": np.random.uniform(0, 10),
+                "stiffness": np.random.uniform(
+                    button_joint_stiffness_min,
+                    button_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    button_joint_damping_min,
+                    button_joint_damping_max
+                ),
             },
-            "knob_joint": {"stiffness": 0, "damping": np.random.uniform(0, 10)},
+            "knob_joint": {
+                "stiffness": np.random.uniform(
+                    knob_joint_stiffness_min,
+                    knob_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    knob_joint_damping_min,
+                    knob_joint_damping_max
+                ),
+            },
         }
 
     def sample_parameters(self):

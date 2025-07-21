@@ -1,6 +1,7 @@
 import bpy
-import mathutils
+import gin
 from numpy.random import uniform, normal, randint
+
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.nodes import node_utils
 from infinigen.core import surface
@@ -792,13 +793,27 @@ class DrawerFactory(AssetFactory):
         super().__init__(factory_seed=factory_seed, coarse=False)
 
     @classmethod
-    def sample_joint_parameters(self):
+    @gin.configurable(module='DrawerFactory')
+    def sample_joint_parameters(
+        cls,
+        drawer_slider_stiffness_min: float = 0.0,
+        drawer_slider_stiffness_max: float = 0.0,
+        drawer_slider_damping_min: float = 200.0,
+        drawer_slider_damping_max: float = 300.0,
+    ):
         return {
-			"drawer_slider": {
-				"stiffness": 0,
-				"damping": uniform(0, 10)
-			},
-		}
+            "drawer_slider": {
+                "stiffness": uniform(
+                    drawer_slider_stiffness_min,
+                    drawer_slider_stiffness_max
+                ),
+                "damping": uniform(
+                    drawer_slider_damping_min,
+                    drawer_slider_damping_max
+                ),
+            },
+        }
+
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters

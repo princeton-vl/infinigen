@@ -169,6 +169,9 @@ class SimBuilder:
         # gets the actual value passed into the switch and returns the
         # coressponding geometry
         switch_value = self._get_switch_values(node.idn, path)
+        if switch_value not in node.children:
+            return RigidBody(), None
+        
         return self._construct_rigid_body_skeleton(
             node.children[switch_value],
             path + [PathItem(node=node, value=switch_value)],

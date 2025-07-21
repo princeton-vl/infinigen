@@ -15,6 +15,8 @@ from typing import Callable, Dict, List
 from xml.dom.minidom import parseString
 
 import bpy
+import bmesh
+import mujoco
 import numpy as np
 
 import infinigen.core.sim.exporters.utils as exputils
@@ -199,6 +201,14 @@ class MJCFBuilder(SimBuilder):
             visual_only=visual_only,
         )
 
+        mesh_temp = asset.to_mesh()
+        bm = bmesh.new()
+        bm.from_mesh(mesh_temp)
+        bmesh.ops.triangulate(bm, faces=bm.faces)
+        bm.transform(asset.matrix_world)
+        vol = bm.calc_volume(signed=False)
+        bm.free()
+
         # add the visual asset to the list of assets in the scene
         visasset_path = export_paths["visual"][0]
         self._add_asset(
@@ -206,6 +216,7 @@ class MJCFBuilder(SimBuilder):
             asset_path=visasset_path,
             asset_type="visual",
             has_material=not skipBake(asset),
+            intertia="legacy" if not np.isclose(vol, mujoco.mjMINVAL) else "shell"
         )
 
         # getting material physical properties
@@ -257,11 +268,19 @@ class MJCFBuilder(SimBuilder):
         return visgeom, colgeoms, asset
 
     def _add_asset(
-        self, asset_name: str, asset_path: Path, asset_type: str, has_material: bool
+        self, 
+        asset_name: str, 
+        asset_path: Path, 
+        asset_type: str, 
+        has_material: bool,
+        intertia: str = "convex"
     ):
         """Adds a mesh along with its materials and texture to the mjcf."""
         mesh_element = create_element(
-            "mesh", name=asset_name, file=str(f"{asset_type}/{asset_path.name}")
+            "mesh", 
+            name=asset_name, 
+            file=str(f"{asset_type}/{asset_path.name}"),
+            inertia=intertia
         )
         self.asset.append(mesh_element)
 
