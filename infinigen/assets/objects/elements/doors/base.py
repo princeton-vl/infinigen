@@ -32,7 +32,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 from .bar_handle import nodegroup_push_bar_handle

@@ -120,7 +120,6 @@ def prefix(dependencies_used) -> str:
         "from infinigen.core import surface\n"
         "from infinigen.core.placement.factory import AssetFactory\n"
         "from infinigen.core.util import blender as butil\n"
-        "from infinigen.core.util.paths import blueprint_path_completion\n"
         "from infinigen.core.sim.exporters import factory\n"
         "from infinigen.core.util.random import weighted_sample\n"
         "from infinigen.assets.composition import material_assignments\n"
@@ -950,9 +949,11 @@ def add_asset_to_file(file_path, asset_name, class_name, import_path):
     with open(file_path, "w") as file:
         file.writelines(updated_lines)
 
+
 def extract_joint_labels(code_str):
     pattern = r"'Joint Label'\s*:\s*'([^']*)'"
     return re.findall(pattern, code_str)
+
 
 def build_joint_sampler(code_str):
     labels = set(extract_joint_labels(code_str))
@@ -962,17 +963,18 @@ def build_joint_sampler(code_str):
         result += f'\t\t\t"{label}": {{\n'
         result += f'\t\t\t\t"stiffness": uniform({replaced_label}_stiffness_min, {replaced_label}_stiffness_max),\n'
         result += f'\t\t\t\t"damping": uniform({replaced_label}_damping_min, {replaced_label}_damping_max)\n'
-        result += f'\t\t\t}},\n'
+        result += f"\t\t\t}},\n"  # noqa
     result += "\t\t}"
     return result
+
 
 def build_joint_params(code_str):
     labels = set(extract_joint_labels(code_str))
     lines = []
     for label in labels:
         label = label.replace(" ", "_")
-        for attr in ('stiffness', 'damping'):
-            for bound in ('min', 'max'):
+        for attr in ("stiffness", "damping"):
+            for bound in ("min", "max"):
                 lines.append(f"{label}_{attr}_{bound}: float = 0.0,")
     if not lines:
         return ""
