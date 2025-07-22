@@ -15,9 +15,9 @@ import random
 import shutil
 import string
 
+import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
-import gin
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import metal, plastic
@@ -395,66 +395,46 @@ class MultiDoublefridgeFactory(AssetFactory):
 
         obj = butil.join_objects(objs)
 
-        # if export:
-        #     export_func = factory.sim_exporter_factory(exporter=exporter, **kwargs)
-        #     asset_path, semantic_mapping = export_func(
-        #         blend_obj=obj,
-        #         sim_blueprint=tmp_buleprint_path,
-        #         seed=self.factory_seed,
-        #         **kwargs,
-        #     )
-        #     os.remove(tmp_buleprint_path)
-        #     return obj, asset_path, semantic_mapping
-
         return obj
 
     @classmethod
-    @gin.configurable(module='MultiDoublefridgeFactory')
+    @gin.configurable(module="MultiDoublefridgeFactory")
     def sample_joint_parameters(
         cls,
-        door_hinge_stiffness_min: float       = 0.0,
-        door_hinge_stiffness_max: float       = 0.0,
-        door_hinge_damping_min: float         = 50.0,
-        door_hinge_damping_max: float         = 200.0,
-        internal_drawer_stiffness_min: float  = 0.0,
-        internal_drawer_stiffness_max: float  = 0.0,
-        internal_drawer_damping_min: float    = 50.0,
-        internal_drawer_damping_max: float    = 200.0,
-        freezer_drawer_stiffness_min: float   = 0.0,
-        freezer_drawer_stiffness_max: float   = 0.0,
-        freezer_drawer_damping_min: float     = 50.0,
-        freezer_drawer_damping_max: float     = 200.0,
+        door_hinge_stiffness_min: float = 0.0,
+        door_hinge_stiffness_max: float = 0.0,
+        door_hinge_damping_min: float = 50.0,
+        door_hinge_damping_max: float = 200.0,
+        internal_drawer_stiffness_min: float = 0.0,
+        internal_drawer_stiffness_max: float = 0.0,
+        internal_drawer_damping_min: float = 50.0,
+        internal_drawer_damping_max: float = 200.0,
+        freezer_drawer_stiffness_min: float = 0.0,
+        freezer_drawer_stiffness_max: float = 0.0,
+        freezer_drawer_damping_min: float = 50.0,
+        freezer_drawer_damping_max: float = 200.0,
     ):
         return {
             "door_hinge": {
                 "stiffness": uniform(
-                    door_hinge_stiffness_min,
-                    door_hinge_stiffness_max
+                    door_hinge_stiffness_min, door_hinge_stiffness_max
                 ),
-                "damping": uniform(
-                    door_hinge_damping_min,
-                    door_hinge_damping_max
-                ),
+                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
             },
             "internal_drawer": {
                 "stiffness": uniform(
-                    internal_drawer_stiffness_min,
-                    internal_drawer_stiffness_max
+                    internal_drawer_stiffness_min, internal_drawer_stiffness_max
                 ),
                 "damping": uniform(
-                    internal_drawer_damping_min,
-                    internal_drawer_damping_max
+                    internal_drawer_damping_min, internal_drawer_damping_max
                 ),
             },
             "freezer_drawer": {
                 "stiffness": uniform(
-                    freezer_drawer_stiffness_min,
-                    freezer_drawer_stiffness_max
+                    freezer_drawer_stiffness_min, freezer_drawer_stiffness_max
                 ),
                 "damping": uniform(
-                    freezer_drawer_damping_min,
-                    freezer_drawer_damping_max
+                    freezer_drawer_damping_min, freezer_drawer_damping_max
                 ),
             },
         }
-
