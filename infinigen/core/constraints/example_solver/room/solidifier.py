@@ -618,7 +618,7 @@ class BlueprintSolidifier:
             cutters.append(cutter)
         return cutters
 
-    def make_open_cutter(self, es, exterior):
+    def make_open_cutter(self, es, exterior=None):
         es = simplify_polygon(es)
         es = shapely.remove_repeated_points(
             linemerge(es) if not isinstance(es, LineString) else es, 0.01
@@ -642,7 +642,8 @@ class BlueprintSolidifier:
         )
 
         p = line.buffer(wt, cap_style="flat", join_style="mitre")
-        p = p.intersection(exterior)
+        if exterior is not None:
+            p = p.intersection(exterior)
         cutters = []
         for p in [p] if p.geom_type == "Polygon" else p.geoms:
             cutter = polygon2obj(p, True)

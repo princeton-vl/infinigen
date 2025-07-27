@@ -5,7 +5,6 @@
 # Authors: Alexander Raistrick
 
 import copy
-import json
 import logging
 from pathlib import Path
 
@@ -57,7 +56,7 @@ class LinearDecaySchedule:
 
 @gin.configurable
 class Solver:
-    def __init__(self, output_folder: Path, predefined_floor_plan=None):
+    def __init__(self, output_folder: Path, floor_plan=""):
         """Initialize the solver
 
         Parameters
@@ -79,13 +78,11 @@ class Solver:
         self.optim = SimulatedAnnealingSolver(
             output_folder=output_folder,
         )
-        if predefined_floor_plan is not None:
-            with open(predefined_floor_plan, "r") as f:
-                self.predefined_floor_plan = json.load(f)
+        self.floor_plan = floor_plan
+        if floor_plan != "":
             self.room_solver_fn = PredefinedFloorPlanSolver
         else:
             self.room_solver_fn = FloorPlanSolver
-            self.predefined_floor_plan = None
         self.state: State = None
         self.dimensions = None
 
@@ -140,7 +137,7 @@ class Solver:
 
     def solve_rooms(self, scene_seed, consgraph: "cl.Problem", filter: "r.Domain"):
         self.state, _, _ = self.room_solver_fn(
-            scene_seed, consgraph, self.predefined_floor_plan
+            scene_seed, consgraph, self.floor_plan
         ).solve()
         return self.state
 
