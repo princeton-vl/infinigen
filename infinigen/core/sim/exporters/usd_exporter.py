@@ -56,7 +56,7 @@ class USDBuilder(SimBuilder):
         UsdGeom.SetStageMetersPerUnit(stage, 1.0)
         UsdPhysics.SetStageKilogramsPerUnit(stage, 1.0)
         default_prim = UsdGeom.Xform.Define(stage, Sdf.Path("/Asset")).GetPrim()
-        UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/Joints"))
+        UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/joints"))
         UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/Looks"))
         stage.SetDefaultPrim(default_prim)
         return stage
@@ -85,7 +85,7 @@ class USDBuilder(SimBuilder):
 
         for body in root:
             # create an xform for the body
-            link_name = f"link_{self.link_count}"
+            link_name = f"link_{self.link_count}" if self.link_count > 0 else "world"
             link_path = f"/Asset/{link_name}"
             xform = self._add_xform(usd_path=link_path)
             self.link_count += 1
@@ -126,18 +126,16 @@ class USDBuilder(SimBuilder):
         joint_params = sample_joint_params_fn()
 
         # add a fixed joint to the root link
-        joint_prim = self.stage.DefinePrim(
-            "/Asset/Joints/root_joint", "PhysicsFixedJoint"
-        )
+        joint_prim = self.stage.DefinePrim("/Asset/root_joint", "PhysicsFixedJoint")
         joint = UsdPhysics.FixedJoint(joint_prim)
-        joint.CreateBody0Rel().SetTargets(["/Asset"])
         joint.CreateBody1Rel().SetTargets([body_info[root]["path"]])
         joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*body_info[root]["center"]))
         joint.CreateLocalPos1Attr().Set(Gf.Vec3f(0, 0, 0))
         # add the top link as the articulation root
-        root_prim = self.stage.GetPrimAtPath(Sdf.Path(body_info[root]["path"]))
-        UsdPhysics.ArticulationRootAPI.Apply(root_prim)
+        UsdPhysics.ArticulationRootAPI.Apply(joint_prim)
 
+        all_link_paths = set()
+        filtered_pairs = defaultdict(set)
         for body in root:
             for child_body, kinematic_nodes in body.children.items():
                 if len(kinematic_nodes) > 1:
@@ -150,12 +148,12 @@ class USDBuilder(SimBuilder):
                 self.joint_freq[joint_name] += 1
                 if node.joint_type == JointType.HINGE:
                     joint_prim = self.stage.DefinePrim(
-                        f"/Asset/Joints/{unique_joint_name}", "PhysicsRevoluteJoint"
+                        f"/Asset/joints/{unique_joint_name}", "PhysicsRevoluteJoint"
                     )
                     joint = UsdPhysics.RevoluteJoint(joint_prim)
                 if node.joint_type == JointType.SLIDING:
                     joint_prim = self.stage.DefinePrim(
-                        f"/Asset/Joints/{unique_joint_name}", "PhysicsPrismaticJoint"
+                        f"/Asset/joints/{unique_joint_name}", "PhysicsPrismaticJoint"
                     )
                     joint = UsdPhysics.PrismaticJoint(joint_prim)
 
@@ -170,6 +168,10 @@ class USDBuilder(SimBuilder):
 
                 parent_path = body_info[body]["path"]
                 child_path = body_info[child_body]["path"]
+                all_link_paths.add(parent_path)
+                all_link_paths.add(child_path)
+                filtered_pairs[parent_path].add(child_path)
+                filtered_pairs[child_path].add(parent_path)
 
                 joint.CreateBody0Rel().SetTargets([parent_path])
                 joint.CreateBody1Rel().SetTargets([child_path])
@@ -248,6 +250,14 @@ class USDBuilder(SimBuilder):
                 multiplier = 180 / np.pi if node.joint_type == JointType.HINGE else 1
                 joint.CreateLowerLimitAttr().Set(range_min * multiplier)
                 joint.CreateUpperLimitAttr().Set(range_max * multiplier)
+
+        for link_path in all_link_paths:
+            link_prim = self.stage.GetPrimAtPath(link_path)
+            UsdPhysics.FilteredPairsAPI.Apply(link_prim)
+            rel = link_prim.CreateRelationship("physics:filteredPairs")
+            children_paths = filtered_pairs[link_path]
+            target_paths = list(all_link_paths - children_paths - set([link_path]))
+            rel.SetTargets(target_paths)
 
     def _add_xform(self, usd_path: str):
         """Creates an xform."""
