@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Callable, Dict, List
 from xml.dom.minidom import parseString
 
-import bpy
 import bmesh
+import bpy
 import mujoco
 import numpy as np
 
@@ -216,7 +216,7 @@ class MJCFBuilder(SimBuilder):
             asset_path=visasset_path,
             asset_type="visual",
             has_material=not skipBake(asset),
-            intertia="legacy" if not np.isclose(vol, mujoco.mjMINVAL) else "shell"
+            intertia="legacy" if not np.isclose(vol, mujoco.mjMINVAL) else "shell",
         )
 
         # getting material physical properties
@@ -268,19 +268,19 @@ class MJCFBuilder(SimBuilder):
         return visgeom, colgeoms, asset
 
     def _add_asset(
-        self, 
-        asset_name: str, 
-        asset_path: Path, 
-        asset_type: str, 
+        self,
+        asset_name: str,
+        asset_path: Path,
+        asset_type: str,
         has_material: bool,
-        intertia: str = "convex"
+        intertia: str = "convex",
     ):
         """Adds a mesh along with its materials and texture to the mjcf."""
         mesh_element = create_element(
-            "mesh", 
-            name=asset_name, 
+            "mesh",
+            name=asset_name,
             file=str(f"{asset_type}/{asset_path.name}"),
-            inertia=intertia
+            inertia=intertia,
         )
         self.asset.append(mesh_element)
 

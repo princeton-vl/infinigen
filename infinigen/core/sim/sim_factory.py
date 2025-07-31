@@ -13,9 +13,10 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 from infinigen.assets.sim_objects.mapping import OBJECT_CLASS_MAP
-from infinigen.core.sim.exporters.factory import sim_exporter_factory
 from infinigen.core.sim import kinematic_compiler
+from infinigen.core.sim.exporters.factory import sim_exporter_factory
 from infinigen.core.util import blender as butil
+
 
 def spawn_simready(
     name: str,

@@ -4,14 +4,14 @@
 # Authors: Beining Han
 
 import bpy
+import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
-import gin
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
 from infinigen.assets.objects.elements.doors.joint_utils import (
+    nodegroup_add_jointed_geometry_metadata,
     nodegroup_hinge_joint,
-    nodegroup_add_jointed_geometry_metadata
 )
 from infinigen.assets.objects.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.core import surface
@@ -1274,7 +1274,6 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-
     r_translation = kwargs["door_hinge_pos"][0]
 
     bounding_box = nw.new_node(
@@ -1556,7 +1555,7 @@ class CabinetBaseFactory(AssetFactory):
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
 
     @classmethod
-    @gin.configurable(module='CabinetBaseFactory')
+    @gin.configurable(module="CabinetBaseFactory")
     def sample_joint_parameters(
         cls,
         cabinet_hinge_stiffness_min: float = 0.0,
@@ -1567,12 +1566,10 @@ class CabinetBaseFactory(AssetFactory):
         return {
             "cabinet_hinge": {
                 "stiffness": uniform(
-                    cabinet_hinge_stiffness_min,
-                    cabinet_hinge_stiffness_max
+                    cabinet_hinge_stiffness_min, cabinet_hinge_stiffness_max
                 ),
                 "damping": uniform(
-                    cabinet_hinge_damping_min,
-                    cabinet_hinge_damping_max
+                    cabinet_hinge_damping_min, cabinet_hinge_damping_max
                 ),
             },
         }

@@ -1022,7 +1022,7 @@ class {class_name}(AssetFactory):
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
-        return {'{}'}
+        return {"{}"}
 
     def create_asset(self,
                      asset_params=None,

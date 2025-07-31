@@ -89,12 +89,10 @@ MATERIAL_DEFAULTS = {
         "max_friction": 1.2,
         "min_density": 1000,
         "max_density": 1400,
-    }
+    },
     # add new materials here
 }
 
-
-import gin
 
 def make_material_sampler(material_name, defaults):
     # define the sampler
@@ -112,8 +110,7 @@ def make_material_sampler(material_name, defaults):
 
 
 MATERIAL_SAMPLERS = {
-    name: make_material_sampler(name, defs)
-    for name, defs in MATERIAL_DEFAULTS.items()
+    name: make_material_sampler(name, defs) for name, defs in MATERIAL_DEFAULTS.items()
 }
 
 
@@ -134,7 +131,7 @@ def get_material_properties(obj: bpy.types.Object) -> Dict:
 
     shader_idx = material_name.find("shader_")
     if shader_idx != -1:
-        material_name = material_name[shader_idx+7:]
+        material_name = material_name[shader_idx + 7 :]
 
     deepcopy_idx = material_name.find("_deepcopy")
     if deepcopy_idx != -1:

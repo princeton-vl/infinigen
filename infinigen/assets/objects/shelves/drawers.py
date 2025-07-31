@@ -1,24 +1,19 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# Authors: Beining Han
+# Authors:
+# - Beining Han: primary author
+# - Abhishek Joshi: Edits for sim
 
 import bpy
 import numpy as np
 from numpy.random import uniform
 
-from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.wood.plywood import get_shelf_material
-from infinigen.assets.materials.wood.plywood import (
-    shader_shelves_black_wood,
-    shader_shelves_white,
-    shader_shelves_wood,
-)
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup(
@@ -659,27 +654,6 @@ class CabinetDrawerBaseFactory(AssetFactory):
         return params
 
     def get_material_func(self, params, randomness=True):
-        # if params.get("drawer_material", None) == "white":
-        #     params["drawer_material"] = surface.shaderfunc_to_material(
-        #         shader_shelves_white
-        #     )
-        # elif params.get("drawer_material", None) == "black_wood":
-        #     params["drawer_material"] = surface.shaderfunc_to_material(
-        #         shader_shelves_black_wood
-        #     )
-        # elif params.get("drawer_material", None) == "wood":
-        #     params["drawer_material"] = surface.shaderfunc_to_material(
-        #         shader_shelves_wood
-        #     )
-
-        # if params.get("knob_material", None) == "metal":
-        #     params["knob_material"] = weighted_sample(
-        #         material_assignments.decorative_metal
-        #     )
-        # else:
-        #     print(params["drawer_material"])
-        #     params["knob_material"] = params["drawer_material"]
-
         params["drawer_material"] = get_shelf_material(params["drawer_material"])
         params["knob_material"] = get_shelf_material(params["knob_material"])
 

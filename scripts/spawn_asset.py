@@ -11,9 +11,7 @@ from pathlib import Path
 
 import gin
 
-from infinigen.core import init
 from infinigen.core.sim import sim_factory as sf
-from infinigen.core.sim.physics import material_physics
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -41,7 +39,9 @@ if __name__ == "__main__":
         action="store_true",
         help="directory to export asset to",
     )
-    parser.add_argument("-g", "--gin_config", type=Path, default=None, help="gin config")
+    parser.add_argument(
+        "-g", "--gin_config", type=Path, default=None, help="gin config"
+    )
     args = parser.parse_args()
 
     if args.gin_config is not None:

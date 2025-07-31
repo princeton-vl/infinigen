@@ -164,10 +164,6 @@ def compile(obj: bpy.types.Object) -> Dict:
     # create a graph representation using only geometry links
     geo_graph = get_geometry_graph(mods)
 
-    # from pprint import pprint
-    # pprint(geo_graph)
-    # exit(0)
-
     blend_to_kinematic_node = {}
 
     # dictionaries used for semantic information
@@ -182,6 +178,7 @@ def compile(obj: bpy.types.Object) -> Dict:
         # check if there's already a kinematic equivalent for current node
         if node in blend_to_kinematic_node:
             return blend_to_kinematic_node[node]
+
         if utils.is_join(node):
             kinematic_type = KinematicType.JOINT
             joint_type = JointType.WELD
