@@ -429,7 +429,7 @@ def process_glass_materials(obj, export_usd):
 def bake_pass(obj, dest: Path, img_size, bake_type, export_usd, export_name=None):
     if export_name is None:
         img = bpy.data.images.new(f"{obj.name}_{bake_type}", img_size, img_size)
-        clean_name = (obj.name).replace(" ", "_").replace(".", "_")
+        clean_name = (obj.name).replace(" ", "_").replace(".", "_").replace("/", "_")
         file_path = dest / f"{clean_name}_{bake_type}.png"
     else:
         img = bpy.data.images.new(f"{export_name}_{bake_type}", img_size, img_size)
@@ -1226,7 +1226,7 @@ def export_curr_scene(
             ):
                 continue
 
-            obj_name = obj.name.replace('/', '_')
+            obj_name = obj.name.replace("/", "_")
             export_subfolder = export_folder / obj_name
             export_subfolder.mkdir(exist_ok=True, parents=True)
             export_file = export_subfolder / f"{obj_name}.{format}"

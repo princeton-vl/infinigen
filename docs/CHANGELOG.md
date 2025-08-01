@@ -230,3 +230,6 @@ v1.15.4
 - disable optimize_disk_usage unless requested
 - attempted to fix pypi
 - fix missing studio.gin #417 by @jerrylingjiemei
+
+v1.15.5
+- Fix mismatched USD textures due to unhandled slashes in object names
