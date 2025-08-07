@@ -90,3 +90,4 @@ class SlimeMold:
 
 def apply(obj, selection=None):
     SlimeMold().apply(obj, selection)
+    # SlimeMold()(obj, selection)

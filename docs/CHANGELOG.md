@@ -233,3 +233,7 @@ v1.15.4
 
 v1.15.5
 - Fix mismatched USD textures due to unhandled slashes in object names
+
+v1.16.0
+- Refactored scatters into classes
+- Change blender_gt surface normals convention from world coordinates to camera coordinates.

@@ -21,12 +21,15 @@ import numpy as np
 from imageio import imwrite
 from matplotlib import pyplot as plt
 
+from infinigen.core.util.camera import get_3x4_RT_matrix_from_blender
+
 logger = logging.getLogger(__name__)
 
 
 def load_exr(path):
     assert Path(path).exists() and Path(path).suffix == ".exr", path
-    return cv2.imread(str(path), cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+    img = cv2.imread(str(path), cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
 load_flow = load_exr
@@ -50,8 +53,27 @@ def load_depth(p):
     return load_single_channel(p)
 
 
-def load_normals(p):
-    return load_exr(p)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
+def load_normals(path, camera=None) -> np.ndarray:
+    data = load_exr(path)
+    if camera is not None:
+        RT = get_3x4_RT_matrix_from_blender(camera)
+        RT_np = np.array(RT)
+        R_world2cv = RT_np[:3, :3]
+
+        original_shape = data.shape
+        normals_flat = data.reshape(-1, 3)
+
+        # Transform normals from world space to camera space
+        # Since normals are direction vectors, only rotation is applied (no translation)
+        normals_cam = (R_world2cv @ normals_flat.T).T
+
+        norms = np.linalg.norm(normals_cam, axis=1, keepdims=True)
+        valid_mask = norms > 1e-6
+        normals_cam[valid_mask.flatten()] /= norms[valid_mask.flatten()]
+
+        data = normals_cam.reshape(original_shape)
+
+    return data
 
 
 def load_seg_mask(p):

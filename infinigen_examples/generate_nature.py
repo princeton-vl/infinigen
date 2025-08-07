@@ -472,7 +472,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=nonliving_domain,
         )
-        _, rock_col = pebbles.apply(target, selection=selection)
+        # _, rock_col = pebbles.apply(target, selection=selection)
+        _, rock_col = pebbles.Pebbles().apply(target, selection=selection)
         return rock_col
 
     p.run_stage("rocks", add_rocks, terrain_inview)
@@ -485,7 +486,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=land_domain,
         )
-        ground_leaves.apply(target, selection=selection, season=season)
+        # ground_leaves.apply(target, selection=selection, season=season)
+        ground_leaves.GroundLeaves().apply(target, selection=selection, season=season)
 
     p.run_stage("ground_leaves", add_ground_leaves, terrain_near, prereq="trees")
 
@@ -498,7 +500,10 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=nonliving_domain,
         )
-        ground_twigs.apply(target, selection=selection, use_leaves=use_leaves)
+        # ground_twigs.apply(target, selection=selection, use_leaves=use_leaves)
+        ground_twigs.GroundTwigs().apply(
+            target, selection=selection, use_leaves=use_leaves
+        )
 
     p.run_stage("ground_twigs", add_ground_twigs, terrain_near)
 
@@ -510,7 +515,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=nonliving_domain,
         )
-        chopped_trees.apply(target, selection=selection)
+        # chopped_trees.apply(target, selection=selection)
+        chopped_trees.ChoppedTrees().apply(target, selection=selection)
 
     p.run_stage("chopped_trees", add_chopped_trees, terrain_inview)
 
@@ -523,7 +529,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             select_thresh=uniform(select_max / 2, select_max),
         )
-        grass.apply(target, selection=selection)
+        # grass.apply(target, selection=selection)
+        grass.Grass().apply(target, selection=selection)
 
     p.run_stage("grass", add_grass, terrain_inview)
 
@@ -531,7 +538,8 @@ def compose_nature(output_folder, scene_seed, **params):
         selection = density.placement_mask(
             normal_dir=(0, 0, 1), scale=0.2, tag=land_domain
         )
-        monocots.apply(terrain_inview, grass=True, selection=selection)
+        # monocots.apply(terrain_inview, grass=True, selection=selection)
+        monocots.Monocots().apply(terrain_inview, grass=True, selection=selection)
         selection = density.placement_mask(
             normal_dir=(0, 0, 1),
             scale=0.2,
@@ -550,7 +558,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=land_domain,
         )
-        fern.apply(target, selection=selection)
+        # fern.apply(target, selection=selection)
+        fern.Fern().apply(target, selection=selection)
 
     p.run_stage("ferns", add_ferns, terrain_inview)
 
@@ -562,7 +571,8 @@ def compose_nature(output_folder, scene_seed, **params):
             return_scalar=True,
             tag=land_domain,
         )
-        flowerplant.apply(target, selection=selection)
+        # flowerplant.apply(target, selection=selection)
+        flowerplant.Flowerplant().apply(target, selection=selection)
 
     p.run_stage("flowers", add_flowers, terrain_inview)
 
@@ -570,7 +580,13 @@ def compose_nature(output_folder, scene_seed, **params):
         vertical_faces = density.placement_mask(
             scale=0.15, select_thresh=uniform(0.44, 0.48)
         )
-        coral_reef.apply(
+        # coral_reef.apply(
+        #     target,
+        #     selection=vertical_faces,
+        #     tag=underwater_domain,
+        #     density=params.get("coral_density", 2.5),
+        # )
+        coral_reef.CoralReef().apply(
             target,
             selection=vertical_faces,
             tag=underwater_domain,
@@ -579,7 +595,15 @@ def compose_nature(output_folder, scene_seed, **params):
         horizontal_faces = density.placement_mask(
             scale=0.15, normal_thresh=-0.4, normal_thresh_high=0.4
         )
-        coral_reef.apply(
+        # coral_reef.apply(
+        #     target,
+        #     selection=horizontal_faces,
+        #     n=5,
+        #     horizontal=True,
+        #     tag=underwater_domain,
+        #     density=params.get("horizontal_coral_density", 2.5),
+        # )
+        coral_reef.CoralReef().apply(
             target,
             selection=horizontal_faces,
             n=5,
@@ -603,7 +627,13 @@ def compose_nature(output_folder, scene_seed, **params):
 
     p.run_stage(
         "seaweed",
-        lambda: seaweed.apply(
+        # lambda: seaweed.apply(
+        #     terrain_inview,
+        #     selection=density.placement_mask(
+        #         scale=0.05, select_thresh=0.5, normal_thresh=0.4, tag=underwater_domain
+        #     ),
+        # ),
+        lambda: seaweed.Seaweed().apply(
             terrain_inview,
             selection=density.placement_mask(
                 scale=0.05, select_thresh=0.5, normal_thresh=0.4, tag=underwater_domain
@@ -612,7 +642,13 @@ def compose_nature(output_folder, scene_seed, **params):
     )
     p.run_stage(
         "urchin",
-        lambda: urchin.apply(
+        # lambda: urchin.apply(
+        #     terrain_inview,
+        #     selection=density.placement_mask(
+        #         scale=0.05, select_thresh=0.5, tag=underwater_domain
+        #     ),
+        # ),
+        lambda: urchin.Urchin().apply(
             terrain_inview,
             selection=density.placement_mask(
                 scale=0.05, select_thresh=0.5, tag=underwater_domain
@@ -621,7 +657,13 @@ def compose_nature(output_folder, scene_seed, **params):
     )
     p.run_stage(
         "jellyfish",
-        lambda: jellyfish.apply(
+        # lambda: jellyfish.apply(
+        #     terrain_inview,
+        #     selection=density.placement_mask(
+        #         scale=0.05, select_thresh=0.5, tag=underwater_domain
+        #     ),
+        # ),
+        lambda: jellyfish.Jellyfish().apply(
             terrain_inview,
             selection=density.placement_mask(
                 scale=0.05, select_thresh=0.5, tag=underwater_domain
@@ -631,7 +673,13 @@ def compose_nature(output_folder, scene_seed, **params):
 
     p.run_stage(
         "seashells",
-        lambda: seashells.apply(
+        # lambda: seashells.apply(
+        #     terrain_near,
+        #     selection=density.placement_mask(
+        #         scale=0.05, select_thresh=0.5, tag="landscape,", return_scalar=True
+        #     ),
+        # ),
+        lambda: seashells.Seashells().apply(
             terrain_near,
             selection=density.placement_mask(
                 scale=0.05, select_thresh=0.5, tag="landscape,", return_scalar=True
@@ -640,7 +688,13 @@ def compose_nature(output_folder, scene_seed, **params):
     )
     p.run_stage(
         "pinecone",
-        lambda: pinecone.apply(
+        # lambda: pinecone.apply(
+        #     terrain_near,
+        #     selection=density.placement_mask(
+        #         scale=0.1, select_thresh=0.63, tag=land_domain
+        #     ),
+        # ),
+        lambda: pinecone.Pinecone().apply(
             terrain_near,
             selection=density.placement_mask(
                 scale=0.1, select_thresh=0.63, tag=land_domain
@@ -649,7 +703,16 @@ def compose_nature(output_folder, scene_seed, **params):
     )
     p.run_stage(
         "pine_needle",
-        lambda: pine_needle.apply(
+        # lambda: pine_needle.apply(
+        #     terrain_near,
+        #     selection=density.placement_mask(
+        #         scale=uniform(0.05, 0.2),
+        #         select_thresh=uniform(0.4, 0.55),
+        #         tag=land_domain,
+        #         return_scalar=True,
+        #     ),
+        # ),
+        lambda: pine_needle.PineNeedle().apply(
             terrain_near,
             selection=density.placement_mask(
                 scale=uniform(0.05, 0.2),
@@ -661,7 +724,16 @@ def compose_nature(output_folder, scene_seed, **params):
     )
     p.run_stage(
         "decorative_plants",
-        lambda: decorative_plants.apply(
+        # lambda: decorative_plants.apply(
+        #     terrain_near,
+        #     selection=density.placement_mask(
+        #         scale=uniform(0.05, 0.2),
+        #         select_thresh=uniform(0.5, 0.65),
+        #         tag=land_domain,
+        #         return_scalar=True,
+        #     ),
+        # ),
+        lambda: decorative_plants.DecorativePlants().apply(
             terrain_near,
             selection=density.placement_mask(
                 scale=uniform(0.05, 0.2),
