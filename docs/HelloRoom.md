@@ -59,10 +59,10 @@ Next, run the commands below to render an RGB image and ground truth:
 
 ```bash
 # Render RGB images
-python -m infinigen_examples.generate_nature --seed 0 --task render --input_folder outputs/indoors/coarse --output_folder outputs/indoors/frames
+python -m infinigen_examples.generate_indoors --seed 0 --task render --input_folder outputs/indoors/coarse --output_folder outputs/indoors/frames
 
 # Use blender to extract ground-truth (optional)
-python -m infinigen_examples.generate_nature --seed 0 --task render --input_folder outputs/indoors/coarse --output_folder outputs/indoors/frames -p render.render_image_func=@flat/render_image 
+python -m infinigen_examples.generate_indoors --seed 0 --task render --input_folder outputs/indoors/coarse --output_folder outputs/indoors/frames -p render.render_image_func=@flat/render_image 
 ```
 
 Once complete, you can open `outputs/indoors/frames` and navigate to view the results.
