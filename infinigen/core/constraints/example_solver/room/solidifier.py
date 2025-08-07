@@ -220,8 +220,11 @@ class BlueprintSolidifier:
         exterior_shape = state[exterior].polygon
 
         rooms = {k: self.make_room(state, k) for k, _ in valid_rooms(state)}
+        valid_neighbours = (
+            self.graph.valid_neighbours if self.graph is not None else None
+        )
         open_cutters, door_cutters, interior_cutters = self.make_interior_cutters(
-            self.graph.valid_neighbours, shared_edges, segments, exterior_buffer
+            valid_neighbours, shared_edges, segments, exterior_buffer
         )
         window_cutters, entrance_cutters = self.make_exterior_cutters(
             exterior_edges, exterior_shape
@@ -388,21 +391,26 @@ class BlueprintSolidifier:
         exterior_centers = []
 
         exterior = next(k for k in state.objs if room_type(k) == Semantics.Exterior)
-        exterior_edge = next(
+        exterior_edges = list(
             r.value for r in state.objs[exterior].relations if r.target_name == name
         )
-        for ls in exterior_edge.geoms:
-            for u, v in zip(ls.coords[:-1], ls.coords[1:]):
-                exterior_centers.append(((u[0] + v[0]) / 2, (u[1] + v[1]) / 2))
-        if len(exterior_centers) > 0:
-            exterior = (
-                np.abs(
-                    center[:, np.newaxis, :2] - np.array(exterior_centers)[np.newaxis]
-                ).sum(-1)
-                < self.constants.wall_thickness * 4
-            ).any(-1)
-        else:
+        if len(exterior_edges) == 0:
             exterior = np.zeros(len(obj.data.polygons), dtype=bool)
+        else:
+            exterior_edge = exterior_edges[0]
+            for ls in exterior_edge.geoms:
+                for u, v in zip(ls.coords[:-1], ls.coords[1:]):
+                    exterior_centers.append(((u[0] + v[0]) / 2, (u[1] + v[1]) / 2))
+            if len(exterior_centers) > 0:
+                exterior = (
+                    np.abs(
+                        center[:, np.newaxis, :2]
+                        - np.array(exterior_centers)[np.newaxis]
+                    ).sum(-1)
+                    < self.constants.wall_thickness * 4
+                ).any(-1)
+            else:
+                exterior = np.zeros(len(obj.data.polygons), dtype=bool)
         write_attr_data(
             obj, f"{PREFIX}{t.Subpart.Interior.value}", ~exterior, "BOOLEAN", "FACE"
         )
@@ -550,7 +558,7 @@ class BlueprintSolidifier:
             z_rot = -np.pi / 2 if direction[0] > 0 else np.pi / 2
         else:
             x = uniform(min(x, x_) + m, max(x, x_) - m)
-            z_rot = 0 if direction[-1] > 0 else np.pi
+            z_rot = 0 if direction[1] > 0 else np.pi
         cutter.location = x, y, self.constants.door_size / 2 + wt / 2
         cutter.rotation_euler[-1] = z_rot
         cutter.name = t.Semantics.Door.value
@@ -610,7 +618,7 @@ class BlueprintSolidifier:
             cutters.append(cutter)
         return cutters
 
-    def make_open_cutter(self, es, exterior):
+    def make_open_cutter(self, es, exterior=None):
         es = simplify_polygon(es)
         es = shapely.remove_repeated_points(
             linemerge(es) if not isinstance(es, LineString) else es, 0.01
@@ -634,7 +642,8 @@ class BlueprintSolidifier:
         )
 
         p = line.buffer(wt, cap_style="flat", join_style="mitre")
-        p = p.intersection(exterior)
+        if exterior is not None:
+            p = p.intersection(exterior)
         cutters = []
         for p in [p] if p.geom_type == "Polygon" else p.geoms:
             cutter = polygon2obj(p, True)
