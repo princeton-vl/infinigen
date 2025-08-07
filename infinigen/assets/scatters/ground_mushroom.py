@@ -41,6 +41,7 @@ class Mushrooms:
         return scatter_obj
 
 
-def apply(obj):
+def apply(obj, selection=None):
     mushrooms = Mushrooms()
     return mushrooms.apply(obj)
+    # return mushrooms(obj)

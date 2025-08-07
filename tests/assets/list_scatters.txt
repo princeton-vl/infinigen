@@ -1,25 +1,52 @@
 # infinigen.assets.scatters.coral_reef # too slow for unit tests
 # infinigen.assets.scatters.chopped_trees # too slow for unit tests
 # infinigen.assets.scatters.ground_mushroom # too slow for unit tests
-infinigen.assets.scatters.clothes
-infinigen.assets.scatters.decorative_plants
-infinigen.assets.scatters.fern
-infinigen.assets.scatters.flowerplant
-infinigen.assets.scatters.grass
-infinigen.assets.scatters.ground_leaves
-infinigen.assets.scatters.ground_twigs
-infinigen.assets.scatters.ivy
-infinigen.assets.scatters.jellyfish
-infinigen.assets.scatters.lichen
-infinigen.assets.scatters.mollusk
-infinigen.assets.scatters.monocots
-infinigen.assets.scatters.moss
-infinigen.assets.scatters.mushroom
-infinigen.assets.scatters.pebbles
-infinigen.assets.scatters.pine_needle
-infinigen.assets.scatters.pinecone
-infinigen.assets.scatters.seashells
-infinigen.assets.scatters.seaweed
-infinigen.assets.scatters.slime_mold
-infinigen.assets.scatters.snow_layer
-infinigen.assets.scatters.urchin
+
+# infinigen.assets.scatters.clothes
+# infinigen.assets.scatters.decorative_plants
+# infinigen.assets.scatters.fern
+# infinigen.assets.scatters.flowerplant
+# infinigen.assets.scatters.grass
+# infinigen.assets.scatters.ground_leaves
+# infinigen.assets.scatters.ground_twigs
+# infinigen.assets.scatters.ivy
+# infinigen.assets.scatters.jellyfish
+# infinigen.assets.scatters.lichen
+# infinigen.assets.scatters.mollusk
+# infinigen.assets.scatters.monocots
+# infinigen.assets.scatters.moss
+# infinigen.assets.scatters.mushroom
+# infinigen.assets.scatters.pebbles
+# infinigen.assets.scatters.pine_needle
+# infinigen.assets.scatters.pinecone
+# infinigen.assets.scatters.seashells
+# infinigen.assets.scatters.seaweed
+# infinigen.assets.scatters.slime_mold
+# infinigen.assets.scatters.snow_layer
+# infinigen.assets.scatters.urchin
+
+# infinigen.assets.scatters.coral_reef.CoralReef # too slow for unit tests?
+# infinigen.assets.scatters.chopped_trees.ChoppedTrees # too slow for unit tests?
+# infinigen.assets.scatters.ground_mushroom.Mushrooms # too slow for unit tests?
+infinigen.assets.scatters.clothes.ClothesCover
+infinigen.assets.scatters.decorative_plants.DecorativePlants
+infinigen.assets.scatters.fern.Fern
+infinigen.assets.scatters.flowerplant.Flowerplant
+infinigen.assets.scatters.grass.Grass
+infinigen.assets.scatters.ground_leaves.GroundLeaves
+infinigen.assets.scatters.ground_twigs.GroundTwigs
+infinigen.assets.scatters.ivy.Ivy
+infinigen.assets.scatters.jellyfish.Jellyfish
+infinigen.assets.scatters.lichen.Lichen
+infinigen.assets.scatters.mollusk.Mollusk
+infinigen.assets.scatters.monocots.Monocots
+infinigen.assets.scatters.moss.MossCover
+infinigen.assets.scatters.mushroom.Mushroom
+infinigen.assets.scatters.pebbles.Pebbles
+infinigen.assets.scatters.pine_needle.PineNeedle
+infinigen.assets.scatters.pinecone.Pinecone
+infinigen.assets.scatters.seashells.Seashells
+infinigen.assets.scatters.seaweed.Seaweed
+infinigen.assets.scatters.slime_mold.SlimeMold
+infinigen.assets.scatters.snow_layer.Snowlayer
+infinigen.assets.scatters.urchin.Urchin

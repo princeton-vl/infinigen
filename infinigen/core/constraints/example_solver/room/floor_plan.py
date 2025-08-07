@@ -27,7 +27,15 @@ from .solver import FloorPlanMoves
 
 @gin.configurable
 class FloorPlanSolver:
-    def __init__(self, factory_seed, consgraph, n_divide_trials=100, iters_mult=200):
+    def __init__(
+        self,
+        factory_seed,
+        consgraph,
+        floor_plan="",
+        n_divide_trials=100,
+        iters_mult=200,
+        **kwargs,
+    ):
         self.factory_seed = factory_seed
         with FixedSeed(factory_seed):
             self.constants = consgraph.constants

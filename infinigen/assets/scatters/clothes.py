@@ -88,3 +88,4 @@ class ClothesCover:
 
 def apply(obj, selection=None, **kwargs):
     ClothesCover().apply(obj, selection, **kwargs)
+    # ClothesCover()(obj, selection, **kwargs)

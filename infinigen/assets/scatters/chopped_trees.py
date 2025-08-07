@@ -193,3 +193,29 @@ def apply(obj, species_seed=None, selection=None, n_trees=1, **kwargs):
     )
 
     return scatter_obj, col
+
+
+class ChoppedTrees:
+    def __init__(self):
+        pass
+
+    def apply(self, obj, species_seed=None, selection=None, n_trees=1, **kwargs):
+        assert obj is not None
+        if species_seed is None:
+            species_seed = np.random.randint(1e6)
+
+        col = chopped_tree_collection(species_seed, n=n_trees)
+        col.hide_viewport = True
+
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=col,
+            scale=1,
+            scale_rand=0.5,
+            scale_rand_axi=0.15,
+            ground_offset=0.1,
+            density=0.7,
+            selection=selection,
+        )
+
+        return scatter_obj, col

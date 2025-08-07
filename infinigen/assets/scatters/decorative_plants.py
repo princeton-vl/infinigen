@@ -33,3 +33,29 @@ def apply(obj, n=4, selection=None, **kwargs):
         selection=selection,
     )
     return scatter_obj, monocots
+
+
+class DecorativePlants:
+    def __init__(self):
+        pass
+
+    def apply(self, obj, n=4, selection=None, **kwargs):
+        fac_class = np.random.choice([succulent.SucculentFactory])
+
+        monocots = make_asset_collection(
+            fac_class(np.random.randint(1e5)), n=n, verbose=True, **kwargs
+        )
+
+        scatter_obj = scatter_instances(
+            base_obj=obj,
+            collection=monocots,
+            vol_density=U(0.05, 2),
+            min_spacing=0.1,
+            normal_fac=0.5,
+            scale=U(0.3, 1),
+            scale_rand=U(0.5, 0.95),
+            rotation_offset=wind(strength=10),
+            taper_density=True,
+            selection=selection,
+        )
+        return scatter_obj, monocots
