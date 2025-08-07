@@ -230,6 +230,12 @@ def configure_render_cycles(
     bpy.context.scene.cycles.volume_max_steps = 32
     bpy.context.scene.cycles.volume_bounces = 4
 
+    # Enable persistent data when rendering multiple frames
+    frame_start = bpy.context.scene.frame_start
+    frame_end = bpy.context.scene.frame_end
+    if frame_end > frame_start:
+        bpy.context.scene.render.use_persistent_data = True
+
 
 @gin.configurable
 def configure_cycles_devices(use_gpu=True):
