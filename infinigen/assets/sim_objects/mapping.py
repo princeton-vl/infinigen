@@ -6,9 +6,9 @@
 # - Abhishek Joshi: primary author
 
 from infinigen.assets.objects.appliances.toaster import ToasterFactory
-from infinigen.assets.objects.elements.doors import DoorFactory
 from infinigen.assets.objects.shelves.cabinet import CabinetFactory
 from infinigen.assets.sim_objects.dishwasher import DishwasherFactory
+from infinigen.assets.sim_objects.door import SimDoorFactory
 from infinigen.assets.sim_objects.doublefridge import DoublefridgeFactory
 from infinigen.assets.sim_objects.drawer import DrawerFactory
 from infinigen.assets.sim_objects.lamp import LampFactory
@@ -19,7 +19,7 @@ from infinigen.assets.sim_objects.singlefridge import SinglefridgeFactory
 # add newly transpiled assets here
 
 OBJECT_CLASS_MAP = {
-    "door": DoorFactory,
+    "door": SimDoorFactory,
     "toaster": ToasterFactory,
     "dishwasher": DishwasherFactory,
     "multifridge": MultifridgeFactory,

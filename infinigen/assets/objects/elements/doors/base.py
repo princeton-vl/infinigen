@@ -762,9 +762,9 @@ class BaseDoorFactory(AssetFactory):
 
             self.metal_color_hsv = colors.metal_hsv()
 
-    def create_asset(self, **params) -> bpy.types.Object:
+    def create_asset(self, apply=True, **params) -> bpy.types.Object:
         for _ in range(100):
-            obj = self._create_asset(**params)
+            obj = self._create_asset(apply=apply, **params)
             if max(obj.dimensions) < 5:
                 return obj
             else:
@@ -772,7 +772,7 @@ class BaseDoorFactory(AssetFactory):
         else:
             raise ValueError("Bad door booleaning")
 
-    def _create_asset(self, **params):
+    def _create_asset(self, apply=True, **params):
         # create handle
 
         if self.handle_type == "bar" or self.handle_type == "none":
@@ -983,6 +983,9 @@ class BaseDoorFactory(AssetFactory):
                 "door_orientation": self.door_orientation,
             },
         )
+
+        if apply:
+            butil.apply_modifiers(door_joined, geometry_node_join.__name__)
 
         return door_joined
 

@@ -34,34 +34,6 @@ class DoorFactory(AssetFactory):
         with FixedSeed(self.factory_seed):
             self.base_factory = random_door_factory()(factory_seed, coarse, constants)
 
-    @classmethod
-    @gin.configurable(module="DoorFactory")
-    def sample_joint_parameters(
-        cls,
-        door_hinge_stiffness_min: float = 0.0,
-        door_hinge_stiffness_max: float = 0.0,
-        door_hinge_damping_min: float = 0.0,
-        door_hinge_damping_max: float = 10.0,
-        door_handle_stiffness_min: float = 2.0,
-        door_handle_stiffness_max: float = 7.0,
-        door_handle_damping_min: float = 1.0,
-        door_handle_damping_max: float = 3.0,
-    ):
-        return {
-            "door_hinge": {
-                "stiffness": uniform(
-                    door_hinge_stiffness_min, door_hinge_stiffness_max
-                ),
-                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
-            },
-            "door_handle": {
-                "stiffness": uniform(
-                    door_handle_stiffness_min, door_handle_stiffness_max
-                ),
-                "damping": uniform(door_handle_damping_min, door_handle_damping_max),
-            },
-        }
-
     def create_asset(self, **params) -> bpy.types.Object:
         return self.base_factory.create_asset(**params)
 
