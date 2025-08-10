@@ -735,7 +735,7 @@ def print_stats_block(
     now = datetime.now()
 
     print(
-        f'{args.output_folder} {start_time.strftime("%m/%d %I:%M%p")} -> {now.strftime("%m/%d %I:%M%p")}'
+        f"{args.output_folder} {start_time.strftime('%m/%d %I:%M%p')} -> {now.strftime('%m/%d %I:%M%p')}"
     )
     print("=" * 60)
     for k, v in sorted(log_stats.items()):

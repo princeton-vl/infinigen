@@ -1,17 +1,8 @@
-# Copyright (C) 2025, Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
-# of this source tree.
-
-# Authors:
-# - Jack Nugent: primary author
-# - Abhishek Joshi: updates for sim integration
-# Acknowledgment: This file draws inspiration
-# from https://www.youtube.com/watch?v=o50FE2W1m8Y
-# by Open Class
-
 import functools
 
+import gin
 import numpy as np
+from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import ceramic, fabric, metal, plastic
@@ -19,13 +10,12 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
 
 @node_utils.to_nodegroup("nodegroup_bulb_003", singleton=False, type="GeometryNodeTree")
 def nodegroup_bulb_003(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+    # Code generated using version 2.7.1 of the node_transpiler
 
     curve_line = nw.new_node(
         Nodes.CurveLine,
@@ -46,12 +36,6 @@ def nodegroup_bulb_003(nw: NodeWrangler):
             "Profile Curve": curve_circle.outputs["Curve"],
             "Fill Caps": True,
         },
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": curve_to_mesh, "Name": "joint14"},
-        attrs={"data_type": "INT"},
     )
 
     spiral = nw.new_node(
@@ -80,12 +64,6 @@ def nodegroup_bulb_003(nw: NodeWrangler):
             "Profile Curve": curve_circle_1.outputs["Curve"],
             "Fill Caps": True,
         },
-    )
-
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": curve_to_mesh_1, "Name": "joint14", "Value": 1},
-        attrs={"data_type": "INT"},
     )
 
     curve_line_1 = nw.new_node(
@@ -129,21 +107,9 @@ def nodegroup_bulb_003(nw: NodeWrangler):
         },
     )
 
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": curve_to_mesh_2, "Name": "joint14", "Value": 2},
-        attrs={"data_type": "INT"},
-    )
-
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                store_named_attribute,
-                store_named_attribute_1,
-                store_named_attribute_2,
-            ]
-        },
+        input_kwargs={"Geometry": [curve_to_mesh, curve_to_mesh_1, curve_to_mesh_2]},
     )
 
     group_input = nw.new_node(
@@ -160,12 +126,6 @@ def nodegroup_bulb_003(nw: NodeWrangler):
             "Geometry": join_geometry,
             "Material": group_input.outputs["MetalMaterial"],
         },
-    )
-
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material, "Name": "joint13"},
-        attrs={"data_type": "INT"},
     )
 
     curve_line_2 = nw.new_node(Nodes.CurveLine)
@@ -216,15 +176,8 @@ def nodegroup_bulb_003(nw: NodeWrangler):
         },
     )
 
-    store_named_attribute_4 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_1, "Name": "joint13", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_3, store_named_attribute_4]},
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
     )
 
     transform_geometry_1 = nw.new_node(
@@ -243,10 +196,10 @@ def nodegroup_bulb_003(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_reversiable_bulb_003", singleton=False, type="GeometryNodeTree"
+    "nodegroup_reversable_bulb", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_reversiable_bulb_003(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+def nodegroup_reversable_bulb(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -325,10 +278,10 @@ def nodegroup_reversiable_bulb_003(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_bulb_rack_003", singleton=False, type="GeometryNodeTree"
+    "nodegroup_bulb_rack", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_bulb_rack_003(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+def nodegroup_bulb_rack(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
 
     curve_line = nw.new_node(
         Nodes.CurveLine,
@@ -360,7 +313,7 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
     less_than = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: amount.outputs["Sides"], 3: 10},
-        attrs={"data_type": "INT", "operation": "LESS_THAN"},
+        attrs={"operation": "LESS_THAN", "data_type": "INT"},
     )
 
     switch = nw.new_node(
@@ -379,12 +332,12 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         attrs={"domain": "INSTANCE"},
     )
 
-    reroute_4 = nw.new_node(
+    reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": duplicate_elements.outputs["Geometry"]}
     )
 
     realize_instances = nw.new_node(
-        Nodes.RealizeInstances, input_kwargs={"Geometry": reroute_4}
+        Nodes.RealizeInstances, input_kwargs={"Geometry": reroute}
     )
 
     endpoint_selection = nw.new_node(
@@ -450,11 +403,11 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         Nodes.CurveCircle, input_kwargs={"Resolution": 100, "Radius": multiply_add}
     )
 
-    reroute_2 = nw.new_node(
+    reroute_1 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": amount.outputs["InnerHeight"]}
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_2})
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_1})
 
     transform_geometry_1 = nw.new_node(
         Nodes.Transform,
@@ -464,11 +417,11 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         },
     )
 
-    reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply})
+    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply})
 
     sample_curve_1 = nw.new_node(
         Nodes.SampleCurve,
-        input_kwargs={"Curves": transform_geometry_1, "Factor": reroute_6},
+        input_kwargs={"Curves": transform_geometry_1, "Factor": reroute_2},
         attrs={"use_all_curves": True},
     )
 
@@ -481,47 +434,23 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         },
     )
 
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_position_1, "Name": "joint12"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": transform_geometry_1})
 
-    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": transform_geometry_1})
-
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_5, "Name": "joint12", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": transform_geometry})
-
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_3, "Name": "joint12", "Value": 2},
-        attrs={"data_type": "INT"},
-    )
+    reroute_4 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": transform_geometry})
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                store_named_attribute_1,
-                store_named_attribute_2,
-                store_named_attribute_3,
-            ]
-        },
+        input_kwargs={"Geometry": [set_position_1, reroute_3, reroute_4]},
     )
 
-    reroute = nw.new_node(
+    reroute_5 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": amount.outputs["Thickness"]}
     )
 
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
+    reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_5})
 
     curve_circle_2 = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": 100, "Radius": reroute_1}
+        Nodes.CurveCircle, input_kwargs={"Resolution": 100, "Radius": reroute_6}
     )
 
     curve_to_mesh = nw.new_node(
@@ -533,17 +462,11 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         },
     )
 
-    store_named_attribute_4 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": curve_to_mesh, "Name": "joint11"},
-        attrs={"data_type": "INT"},
-    )
-
     join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": store_named_attribute_4}
+        Nodes.JoinGeometry, input_kwargs={"Geometry": curve_to_mesh}
     )
 
-    reroute_8 = nw.new_node(
+    reroute_7 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": amount.outputs["Sides"]}
     )
 
@@ -553,45 +476,39 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    reroute_7 = nw.new_node(
+    reroute_8 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": amount.outputs["Thickness"]}
     )
 
     multiply_add_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_7, 1: -1.0000, 2: 0.0000},
+        input_kwargs={0: reroute_8, 1: -1.0000, 2: 0.0000},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={
-            "Vertices": reroute_8,
+            "Vertices": reroute_7,
             "Radius": multiply_add_1,
             "Depth": multiply_add_2,
         },
     )
 
-    reroute_10 = nw.new_node(
+    reroute_9 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": cylinder.outputs["Mesh"]}
     )
 
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": reroute_10, "Translation": combine_xyz},
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_2, "Name": "switch6", "Value": 1},
-        attrs={"data_type": "INT"},
+        input_kwargs={"Geometry": reroute_9, "Translation": combine_xyz},
     )
 
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": amount.outputs["ShadeTop"],
-            "True": store_named_attribute,
+            "True": transform_geometry_2,
         },
     )
 
@@ -603,274 +520,10 @@ def nodegroup_bulb_rack_003(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_string_nodes_v2", singleton=False, type="GeometryNodeTree"
+    "nodegroup_hinge_joint", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_string_nodes_v2(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
-    string = nw.new_node("FunctionNodeInputString", attrs={"string": "joint17"})
-
-    group_input = nw.new_node(
-        Nodes.GroupInput,
-        expose_input=[
-            ("NodeSocketFloat", "Radius", 0.0000),
-            ("NodeSocketFloat", "RadialLength", 0.0000),
-            ("NodeSocketFloat", "Length", 0.0000),
-            ("NodeSocketFloat", "Depth", 0.0000),
-        ],
-    )
-
-    cylinder = nw.new_node(
-        "GeometryNodeMeshCylinder",
-        input_kwargs={
-            "Radius": group_input.outputs["Radius"],
-            "Depth": group_input.outputs["Depth"],
-        },
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Name": "joint17"},
-        attrs={"data_type": "INT"},
-    )
-
-    value = nw.new_node(Nodes.Value)
-    value.outputs[0].default_value = 0.0150
-
-    multiply_add = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["Depth"], 2: value},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add})
-
-    multiply = nw.new_node(
-        Nodes.Math, input_kwargs={0: value, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
-    )
-
-    divide = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["Length"], 1: multiply},
-        attrs={"operation": "DIVIDE"},
-    )
-
-    float_to_integer = nw.new_node(Nodes.FloatToInt, input_kwargs={"Float": divide})
-
-    multiply_1 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: float_to_integer, 1: multiply},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    multiply_add_1 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["Depth"], 2: multiply_1},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_1})
-
-    curve_line = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": combine_xyz_5, "End": combine_xyz_4}
-    )
-
-    curve_to_points = nw.new_node(
-        Nodes.CurveToPoints,
-        input_kwargs={"Curve": curve_line, "Count": float_to_integer},
-    )
-
-    uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={"Radius": value})
-
-    instance_on_points = nw.new_node(
-        Nodes.InstanceOnPoints,
-        input_kwargs={
-            "Points": curve_to_points.outputs["Points"],
-            "Instance": uv_sphere.outputs["Mesh"],
-        },
-    )
-
-    realize_instances = nw.new_node(
-        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
-    )
-
-    multiply_2 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: multiply, 1: -1.0000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    multiply_add_2 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["Length"], 1: -1.0000, 2: multiply_2},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_2})
-
-    transform_geometry_4 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": realize_instances, "Translation": combine_xyz_6},
-    )
-
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_4, "Name": "joint17", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Depth"]}
-    )
-
-    subtract = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: reroute, 1: multiply},
-        attrs={"operation": "SUBTRACT"},
-    )
-
-    sliding_joint_new = nw.new_node(
-        nodegroup_sliding_joint_n_e_w().name,
-        input_kwargs={
-            "Joint ID (do not set)": string,
-            "Parent": store_named_attribute,
-            "Child": store_named_attribute_1,
-            "Axis": (0.0000, 0.0000, -1.0000),
-            "Max": subtract,
-        },
-    )
-
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": sliding_joint_new.outputs["Geometry"],
-            "Name": "joint16",
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    multiply_3 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["Radius"], 1: 2.0000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    combine_xyz_1 = nw.new_node(
-        Nodes.CombineXYZ,
-        input_kwargs={
-            "X": multiply_3,
-            "Y": group_input.outputs["RadialLength"],
-            "Z": group_input.outputs["Depth"],
-        },
-    )
-
-    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_1})
-
-    multiply_4 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["RadialLength"], 1: -0.5000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4})
-
-    transform_geometry_1 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_2},
-    )
-
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_1, "Name": "joint16", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_2, store_named_attribute_3]},
-    )
-
-    multiply_5 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["RadialLength"], 1: 1.0000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_5})
-
-    transform_geometry_2 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": join_geometry, "Translation": combine_xyz_3},
-    )
-
-    join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [sliding_joint_new.outputs["Parent"], transform_geometry_1]
-        },
-    )
-
-    transform_geometry_3 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": join_geometry_1, "Translation": combine_xyz_3},
-    )
-
-    group_output = nw.new_node(
-        Nodes.GroupOutput,
-        input_kwargs={"Geometry": transform_geometry_2, "Parent": transform_geometry_3},
-        attrs={"is_active_output": True},
-    )
-
-
-@node_utils.to_nodegroup(
-    "nodegroup_node_group", singleton=False, type="GeometryNodeTree"
-)
-def nodegroup_node_group(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
-    cube_1 = nw.new_node(
-        Nodes.MeshCube, input_kwargs={"Size": (2.0000, 1.0000, 1.0000)}
-    )
-
-    transform_geometry = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cube_1.outputs["Mesh"],
-            "Translation": (0.0000, 0.5000, 0.5000),
-        },
-    )
-
-    cylinder = nw.new_node(
-        "GeometryNodeMeshCylinder",
-        input_kwargs={"Vertices": 6, "Radius": 6.0000, "Depth": 2.5200},
-    )
-
-    transform_geometry_2 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cylinder.outputs["Mesh"],
-            "Translation": (0.0000, -5.4400, 0.0000),
-            "Rotation": (0.0000, 0.0000, 0.5250),
-        },
-    )
-
-    difference = nw.new_node(
-        Nodes.MeshBoolean,
-        input_kwargs={"Mesh 1": transform_geometry, "Mesh 2": transform_geometry_2},
-    )
-
-    group_output = nw.new_node(
-        Nodes.GroupOutput,
-        input_kwargs={"Geometry": difference.outputs["Mesh"]},
-        attrs={"is_active_output": True},
-    )
-
-
-@node_utils.to_nodegroup(
-    "nodegroup_hinge_joint_n_e_w", singleton=False, type="GeometryNodeTree"
-)
-def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+def nodegroup_hinge_joint(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -892,7 +545,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         ],
     )
 
-    named_attribute_4 = nw.new_node(
+    named_attribute = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
@@ -901,22 +554,22 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     integer = nw.new_node(Nodes.Integer)
     integer.integer = 0
 
-    switch_2 = nw.new_node(
+    switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": named_attribute_4.outputs["Exists"],
+            "Switch": named_attribute.outputs["Exists"],
             "False": integer,
-            "True": named_attribute_4.outputs["Attribute"],
+            "True": named_attribute.outputs["Attribute"],
         },
         attrs={"input_type": "INT"},
     )
 
-    store_named_attribute_1 = nw.new_node(
+    store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
             "Geometry": group_input.outputs["Parent"],
             "Name": "part_id",
-            "Value": switch_2,
+            "Value": switch,
         },
         attrs={"data_type": "INT"},
     )
@@ -930,7 +583,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     attribute_statistic = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
-            "Geometry": store_named_attribute_1,
+            "Geometry": store_named_attribute,
             "Attribute": named_attribute_1.outputs["Attribute"],
         },
     )
@@ -941,25 +594,25 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
             2: named_attribute_1.outputs["Attribute"],
             3: attribute_statistic.outputs["Min"],
         },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    separate_geometry_2 = nw.new_node(
+    separate_geometry = nw.new_node(
         Nodes.SeparateGeometry,
-        input_kwargs={"Geometry": store_named_attribute_1, "Selection": equal},
+        input_kwargs={"Geometry": store_named_attribute, "Selection": equal},
     )
 
-    join_geometry_2 = nw.new_node(
+    join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={
             "Geometry": [
-                separate_geometry_2.outputs["Selection"],
-                separate_geometry_2.outputs["Inverted"],
+                separate_geometry.outputs["Selection"],
+                separate_geometry.outputs["Inverted"],
             ]
         },
     )
 
-    named_attribute_3 = nw.new_node(
+    named_attribute_2 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
@@ -969,30 +622,30 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     integer_1.integer = 1
 
     add = nw.new_node(
-        Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
+        Nodes.Math, input_kwargs={0: named_attribute_2.outputs["Attribute"], 1: 1.0000}
     )
 
-    switch_3 = nw.new_node(
+    switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": named_attribute_3.outputs["Exists"],
+            "Switch": named_attribute_2.outputs["Exists"],
             "False": integer_1,
             "True": add,
         },
         attrs={"input_type": "INT"},
     )
 
-    store_named_attribute = nw.new_node(
+    store_named_attribute_1 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
             "Geometry": group_input.outputs["Child"],
             "Name": "part_id",
-            "Value": switch_3,
+            "Value": switch_1,
         },
         attrs={"data_type": "INT"},
     )
 
-    named_attribute_2 = nw.new_node(
+    named_attribute_3 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
@@ -1001,59 +654,59 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     attribute_statistic_1 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
-            "Geometry": store_named_attribute,
-            "Attribute": named_attribute_2.outputs["Attribute"],
+            "Geometry": store_named_attribute_1,
+            "Attribute": named_attribute_3.outputs["Attribute"],
         },
     )
 
     equal_1 = nw.new_node(
         Nodes.Compare,
         input_kwargs={
-            2: named_attribute_2.outputs["Attribute"],
+            2: named_attribute_3.outputs["Attribute"],
             3: attribute_statistic_1.outputs["Min"],
         },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    separate_geometry_3 = nw.new_node(
+    separate_geometry_1 = nw.new_node(
         Nodes.SeparateGeometry,
-        input_kwargs={"Geometry": store_named_attribute, "Selection": equal_1},
+        input_kwargs={"Geometry": store_named_attribute_1, "Selection": equal_1},
     )
 
-    named_attribute_11 = nw.new_node(
+    named_attribute_4 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "is_jointed"},
         attrs={"data_type": "BOOLEAN"},
     )
 
-    attribute_statistic_7 = nw.new_node(
+    attribute_statistic_2 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
-            "Geometry": separate_geometry_3.outputs["Selection"],
-            "Attribute": named_attribute_11.outputs["Attribute"],
+            "Geometry": separate_geometry_1.outputs["Selection"],
+            "Attribute": named_attribute_4.outputs["Attribute"],
         },
     )
 
     greater_than = nw.new_node(
         Nodes.Compare,
-        input_kwargs={1: 1.0000, 2: attribute_statistic_7.outputs["Sum"]},
+        input_kwargs={2: attribute_statistic_2.outputs["Sum"]},
         attrs={"data_type": "INT"},
     )
 
     combine_matrix = nw.new_node("FunctionNodeCombineMatrix")
 
-    named_attribute_10 = nw.new_node(
+    named_attribute_5 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "body_transform"},
         attrs={"data_type": "FLOAT4X4"},
     )
 
-    switch_1 = nw.new_node(
+    switch_2 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": greater_than,
             "False": combine_matrix,
-            "True": named_attribute_10.outputs["Attribute"],
+            "True": named_attribute_5.outputs["Attribute"],
         },
         attrs={"input_type": "MATRIX"},
     )
@@ -1061,63 +714,63 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
     store_named_attribute_2 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": store_named_attribute,
+            "Geometry": store_named_attribute_1,
             "Name": "body_transform",
-            "Value": switch_1,
+            "Value": switch_2,
         },
         attrs={"data_type": "FLOAT4X4"},
     )
 
-    named_attribute_7 = nw.new_node(
+    named_attribute_6 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "is_jointed"},
         attrs={"data_type": "BOOLEAN"},
     )
 
-    attribute_statistic_4 = nw.new_node(
+    attribute_statistic_3 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
-            "Geometry": separate_geometry_3.outputs["Selection"],
-            "Attribute": named_attribute_7.outputs["Attribute"],
+            "Geometry": separate_geometry_1.outputs["Selection"],
+            "Attribute": named_attribute_6.outputs["Attribute"],
         },
     )
 
     equal_2 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        input_kwargs={2: attribute_statistic_3.outputs["Sum"]},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    position_4 = nw.new_node(Nodes.InputPosition)
+    position = nw.new_node(Nodes.InputPosition)
 
     position_1 = nw.new_node(Nodes.InputPosition)
 
     bounding_box = nw.new_node(
         Nodes.BoundingBox,
-        input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
+        input_kwargs={"Geometry": separate_geometry.outputs["Selection"]},
     )
 
-    position = nw.new_node(Nodes.InputPosition)
+    position_2 = nw.new_node(Nodes.InputPosition)
 
-    attribute_statistic_2 = nw.new_node(
+    attribute_statistic_4 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
             "Geometry": bounding_box.outputs["Bounding Box"],
-            "Attribute": position,
+            "Attribute": position_2,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     add_1 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: position_1, 1: attribute_statistic_2.outputs["Mean"]},
+        input_kwargs={0: position_1, 1: attribute_statistic_4.outputs["Mean"]},
     )
 
-    switch = nw.new_node(
+    switch_3 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": equal_2,
-            "False": position_4,
+            "False": position,
             "True": add_1.outputs["Vector"],
         },
         attrs={"input_type": "VECTOR"},
@@ -1125,7 +778,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     set_position = nw.new_node(
         Nodes.SetPosition,
-        input_kwargs={"Geometry": store_named_attribute_2, "Position": switch},
+        input_kwargs={"Geometry": store_named_attribute_2, "Position": switch_3},
     )
 
     store_named_attribute_3 = nw.new_node(
@@ -1136,51 +789,51 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     position_3 = nw.new_node(Nodes.InputPosition)
 
-    named_attribute_12 = nw.new_node(
+    named_attribute_7 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "part_id"},
         attrs={"data_type": "INT"},
     )
 
-    attribute_statistic_6 = nw.new_node(
+    attribute_statistic_5 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
             "Geometry": set_position,
-            "Attribute": named_attribute_12.outputs["Attribute"],
+            "Attribute": named_attribute_7.outputs["Attribute"],
         },
     )
 
     equal_3 = nw.new_node(
         Nodes.Compare,
         input_kwargs={
-            2: named_attribute_12.outputs["Attribute"],
-            3: attribute_statistic_6.outputs["Min"],
+            2: named_attribute_7.outputs["Attribute"],
+            3: attribute_statistic_5.outputs["Min"],
         },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    separate_geometry_4 = nw.new_node(
+    separate_geometry_2 = nw.new_node(
         Nodes.SeparateGeometry,
         input_kwargs={"Geometry": set_position, "Selection": equal_3},
     )
 
     bounding_box_1 = nw.new_node(
         Nodes.BoundingBox,
-        input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
+        input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
     )
 
-    position_2 = nw.new_node(Nodes.InputPosition)
+    position_4 = nw.new_node(Nodes.InputPosition)
 
-    attribute_statistic_5 = nw.new_node(
+    attribute_statistic_6 = nw.new_node(
         Nodes.AttributeStatistic,
         input_kwargs={
             "Geometry": bounding_box_1.outputs["Bounding Box"],
-            "Attribute": position_2,
+            "Attribute": position_4,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    named_attribute_5 = nw.new_node(
+    named_attribute_8 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "body_transform"},
         attrs={"data_type": "FLOAT4X4"},
@@ -1188,7 +841,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     transpose_matrix = nw.new_node(
         "FunctionNodeTransposeMatrix",
-        input_kwargs={"Matrix": named_attribute_5.outputs["Attribute"]},
+        input_kwargs={"Matrix": named_attribute_8.outputs["Attribute"]},
     )
 
     transform_point = nw.new_node(
@@ -1201,7 +854,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     add_2 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: attribute_statistic_5.outputs["Mean"], 1: transform_point},
+        input_kwargs={0: attribute_statistic_6.outputs["Mean"], 1: transform_point},
     )
 
     transform_direction = nw.new_node(
@@ -1235,7 +888,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         },
     )
 
-    switch_5 = nw.new_node(
+    switch_4 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": op_and,
@@ -1245,7 +898,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         attrs={"input_type": "FLOAT"},
     )
 
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_5})
+    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_4})
 
     vector_rotate = nw.new_node(
         Nodes.VectorRotate,
@@ -1262,7 +915,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Geometry": store_named_attribute_3, "Position": vector_rotate},
     )
 
-    named_attribute_6 = nw.new_node(
+    named_attribute_9 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "body_transform"},
         attrs={"data_type": "FLOAT4X4"},
@@ -1270,7 +923,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     separate_matrix = nw.new_node(
         "FunctionNodeSeparateMatrix",
-        input_kwargs={"Matrix": named_attribute_6.outputs["Attribute"]},
+        input_kwargs={"Matrix": named_attribute_9.outputs["Attribute"]},
     )
 
     combine_xyz = nw.new_node(
@@ -1293,7 +946,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_1}
     )
 
-    named_attribute_8 = nw.new_node(
+    named_attribute_10 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "body_transform"},
         attrs={"data_type": "FLOAT4X4"},
@@ -1301,7 +954,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     separate_matrix_1 = nw.new_node(
         "FunctionNodeSeparateMatrix",
-        input_kwargs={"Matrix": named_attribute_8.outputs["Attribute"]},
+        input_kwargs={"Matrix": named_attribute_10.outputs["Attribute"]},
     )
 
     combine_xyz_1 = nw.new_node(
@@ -1322,7 +975,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         Nodes.SeparateXYZ, input_kwargs={"Vector": vector_rotate_2}
     )
 
-    named_attribute_9 = nw.new_node(
+    named_attribute_11 = nw.new_node(
         Nodes.NamedAttribute,
         input_kwargs={"Name": "body_transform"},
         attrs={"data_type": "FLOAT4X4"},
@@ -1330,7 +983,7 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
 
     separate_matrix_2 = nw.new_node(
         "FunctionNodeSeparateMatrix",
-        input_kwargs={"Matrix": named_attribute_9.outputs["Attribute"]},
+        input_kwargs={"Matrix": named_attribute_11.outputs["Attribute"]},
     )
 
     combine_xyz_2 = nw.new_node(
@@ -1376,801 +1029,6 @@ def nodegroup_hinge_joint_n_e_w(nw: NodeWrangler):
         attrs={"data_type": "FLOAT4X4"},
     )
 
-    string_1 = nw.new_node("FunctionNodeInputString", attrs={"string": "pos"})
-
-    reroute_4 = nw.new_node(
-        Nodes.Reroute,
-        input_kwargs={"Input": group_input.outputs["Joint ID (do not set)"]},
-    )
-
-    join_strings_1 = nw.new_node(
-        "GeometryNodeStringJoin",
-        input_kwargs={"Delimiter": "_", "Strings": [string_1, reroute_4]},
-    )
-
-    reroute_3 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Position"]}
-    )
-
-    store_named_attribute_5 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_4,
-            "Name": join_strings_1,
-            "Value": reroute_3,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    string_2 = nw.new_node("FunctionNodeInputString", attrs={"string": "axis"})
-
-    join_strings_2 = nw.new_node(
-        "GeometryNodeStringJoin",
-        input_kwargs={"Delimiter": "_", "Strings": [string_2, reroute_4]},
-    )
-
-    store_named_attribute_6 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_5,
-            "Name": join_strings_2,
-            "Value": group_input.outputs["Axis"],
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    string_3 = nw.new_node("FunctionNodeInputString", attrs={"string": "min"})
-
-    join_strings_3 = nw.new_node(
-        "GeometryNodeStringJoin",
-        input_kwargs={"Delimiter": "_", "Strings": [string_3, reroute_4]},
-    )
-
-    store_named_attribute_8 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_6,
-            "Name": join_strings_3,
-            "Value": group_input.outputs["Min"],
-        },
-    )
-
-    string_4 = nw.new_node("FunctionNodeInputString", attrs={"string": "max"})
-
-    join_strings_4 = nw.new_node(
-        "GeometryNodeStringJoin",
-        input_kwargs={"Delimiter": "_", "Strings": [string_4, reroute_4]},
-    )
-
-    store_named_attribute_7 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_8,
-            "Name": join_strings_4,
-            "Value": group_input.outputs["Max"],
-        },
-    )
-
-    uv_sphere = nw.new_node(
-        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
-    )
-
-    transform_geometry = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": uv_sphere.outputs["Mesh"],
-            "Translation": attribute_statistic_2.outputs["Mean"],
-        },
-    )
-
-    switch_4 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Center of Parent"],
-            "True": transform_geometry,
-        },
-    )
-
-    store_named_attribute_13 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_4, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    uv_sphere_1 = nw.new_node(
-        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
-    )
-
-    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_position_1})
-
-    named_attribute_13 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "part_id"},
-        attrs={"data_type": "INT"},
-    )
-
-    attribute_statistic_10 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": reroute_2,
-            "Attribute": named_attribute_13.outputs["Attribute"],
-        },
-    )
-
-    equal_6 = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={
-            2: named_attribute_13.outputs["Attribute"],
-            3: attribute_statistic_10.outputs["Min"],
-        },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    )
-
-    separate_geometry_5 = nw.new_node(
-        Nodes.SeparateGeometry,
-        input_kwargs={"Geometry": reroute_2, "Selection": equal_6},
-    )
-
-    bounding_box_3 = nw.new_node(
-        Nodes.BoundingBox,
-        input_kwargs={"Geometry": separate_geometry_5.outputs["Selection"]},
-    )
-
-    position_7 = nw.new_node(Nodes.InputPosition)
-
-    attribute_statistic_9 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": bounding_box_3.outputs["Bounding Box"],
-            "Attribute": position_7,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    transform_geometry_1 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": uv_sphere_1.outputs["Mesh"],
-            "Translation": attribute_statistic_9.outputs["Mean"],
-        },
-    )
-
-    switch_6 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Center of Child"],
-            "True": transform_geometry_1,
-        },
-    )
-
-    store_named_attribute_14 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_6, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    cone = nw.new_node(
-        "GeometryNodeMeshCone", input_kwargs={"Radius Bottom": 0.0500, "Depth": 0.2000}
-    )
-
-    transform_geometry_3 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cone.outputs["Mesh"],
-            "Translation": (0.0000, 0.0000, -0.0500),
-        },
-    )
-
-    bounding_box_4 = nw.new_node(
-        Nodes.BoundingBox,
-        input_kwargs={"Geometry": separate_geometry_4.outputs["Selection"]},
-    )
-
-    position_8 = nw.new_node(Nodes.InputPosition)
-
-    attribute_statistic_11 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": bounding_box_4.outputs["Bounding Box"],
-            "Attribute": position_8,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    add_3 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={
-            0: group_input.outputs["Position"],
-            1: attribute_statistic_11.outputs["Mean"],
-        },
-    )
-
-    attribute_statistic_12 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": separate_geometry_5.outputs["Selection"],
-            "Attribute": transform_direction,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    normalize = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: attribute_statistic_12.outputs["Mean"]},
-        attrs={"operation": "NORMALIZE"},
-    )
-
-    align_rotation_to_vector_1 = nw.new_node(
-        "FunctionNodeAlignRotationToVector",
-        input_kwargs={"Vector": normalize.outputs["Vector"]},
-    )
-
-    transform_geometry_2 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": transform_geometry_3,
-            "Translation": add_3.outputs["Vector"],
-            "Rotation": align_rotation_to_vector_1,
-        },
-    )
-
-    switch_7 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Joint"],
-            "True": transform_geometry_2,
-        },
-    )
-
-    store_named_attribute_15 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_7, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                join_geometry_2,
-                store_named_attribute_7,
-                store_named_attribute_13,
-                store_named_attribute_14,
-                store_named_attribute_15,
-            ]
-        },
-    )
-
-    store_named_attribute_9 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_4,
-            "Name": join_strings_1,
-            "Value": reroute_3,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    store_named_attribute_10 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_9,
-            "Name": join_strings_2,
-            "Value": group_input.outputs["Axis"],
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    store_named_attribute_12 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_10,
-            "Name": join_strings_3,
-            "Value": group_input.outputs["Min"],
-        },
-    )
-
-    store_named_attribute_11 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute_12,
-            "Name": join_strings_4,
-            "Value": group_input.outputs["Max"],
-        },
-    )
-
-    join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                store_named_attribute_11,
-                store_named_attribute_13,
-                store_named_attribute_14,
-                store_named_attribute_15,
-            ]
-        },
-    )
-
-    group_output = nw.new_node(
-        Nodes.GroupOutput,
-        input_kwargs={
-            "Geometry": join_geometry,
-            "Parent": join_geometry_2,
-            "Child": join_geometry_1,
-        },
-        attrs={"is_active_output": True},
-    )
-
-
-@node_utils.to_nodegroup(
-    "nodegroup_sliding_joint_n_e_w", singleton=False, type="GeometryNodeTree"
-)
-def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
-    group_input = nw.new_node(
-        Nodes.GroupInput,
-        expose_input=[
-            ("NodeSocketString", "Joint ID (do not set)", ""),
-            ("NodeSocketString", "Joint Label", ""),
-            ("NodeSocketString", "Parent Label", ""),
-            ("NodeSocketGeometry", "Parent", None),
-            ("NodeSocketString", "Child Label", ""),
-            ("NodeSocketGeometry", "Child", None),
-            ("NodeSocketVector", "Position", (0.0000, 0.0000, 0.0000)),
-            ("NodeSocketVector", "Axis", (0.0000, 0.0000, 1.0000)),
-            ("NodeSocketFloat", "Value", 0.0000),
-            ("NodeSocketFloat", "Min", 0.0000),
-            ("NodeSocketFloat", "Max", 0.0000),
-            ("NodeSocketBool", "Show Center of Parent", False),
-            ("NodeSocketBool", "Show Center of Child", False),
-            ("NodeSocketBool", "Show Joint", False),
-        ],
-    )
-
-    named_attribute_4 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "part_id"},
-        attrs={"data_type": "INT"},
-    )
-
-    integer = nw.new_node(Nodes.Integer)
-    integer.integer = 0
-
-    switch_2 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": named_attribute_4.outputs["Exists"],
-            "False": integer,
-            "True": named_attribute_4.outputs["Attribute"],
-        },
-        attrs={"input_type": "INT"},
-    )
-
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": group_input.outputs["Parent"],
-            "Name": "part_id",
-            "Value": switch_2,
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    named_attribute_1 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "part_id"},
-        attrs={"data_type": "INT"},
-    )
-
-    attribute_statistic = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": store_named_attribute_1,
-            "Attribute": named_attribute_1.outputs["Attribute"],
-        },
-    )
-
-    equal = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={
-            2: named_attribute_1.outputs["Attribute"],
-            3: attribute_statistic.outputs["Min"],
-        },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    )
-
-    separate_geometry_2 = nw.new_node(
-        Nodes.SeparateGeometry,
-        input_kwargs={"Geometry": store_named_attribute_1, "Selection": equal},
-    )
-
-    join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                separate_geometry_2.outputs["Selection"],
-                separate_geometry_2.outputs["Inverted"],
-            ]
-        },
-    )
-
-    cone = nw.new_node(
-        "GeometryNodeMeshCone", input_kwargs={"Radius Bottom": 0.0500, "Depth": 0.2000}
-    )
-
-    transform_geometry_3 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cone.outputs["Mesh"],
-            "Translation": (0.0000, 0.0000, -0.0500),
-        },
-    )
-
-    named_attribute_3 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "part_id"},
-        attrs={"data_type": "INT"},
-    )
-
-    integer_1 = nw.new_node(Nodes.Integer)
-    integer_1.integer = 1
-
-    add = nw.new_node(
-        Nodes.Math, input_kwargs={0: named_attribute_3.outputs["Attribute"], 1: 1.0000}
-    )
-
-    switch_3 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": named_attribute_3.outputs["Exists"],
-            "False": integer_1,
-            "True": add,
-        },
-        attrs={"input_type": "INT"},
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": group_input.outputs["Child"],
-            "Name": "part_id",
-            "Value": switch_3,
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    named_attribute_2 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "part_id"},
-        attrs={"data_type": "INT"},
-    )
-
-    attribute_statistic_1 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": store_named_attribute,
-            "Attribute": named_attribute_2.outputs["Attribute"],
-        },
-    )
-
-    equal_1 = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={
-            2: named_attribute_2.outputs["Attribute"],
-            3: attribute_statistic_1.outputs["Min"],
-        },
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    )
-
-    separate_geometry_3 = nw.new_node(
-        Nodes.SeparateGeometry,
-        input_kwargs={"Geometry": store_named_attribute, "Selection": equal_1},
-    )
-
-    reroute = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": separate_geometry_3.outputs["Selection"]}
-    )
-
-    bounding_box_3 = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": reroute})
-
-    position_7 = nw.new_node(Nodes.InputPosition)
-
-    attribute_statistic_9 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": bounding_box_3.outputs["Bounding Box"],
-            "Attribute": position_7,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    add_1 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={
-            0: group_input.outputs["Position"],
-            1: attribute_statistic_9.outputs["Mean"],
-        },
-    )
-
-    named_attribute_5 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "body_transform"},
-        attrs={"data_type": "FLOAT4X4"},
-    )
-
-    transpose_matrix = nw.new_node(
-        "FunctionNodeTransposeMatrix",
-        input_kwargs={"Matrix": named_attribute_5.outputs["Attribute"]},
-    )
-
-    transform_direction = nw.new_node(
-        "FunctionNodeTransformDirection",
-        input_kwargs={
-            "Direction": group_input.outputs["Axis"],
-            "Transform": transpose_matrix,
-        },
-    )
-
-    attribute_statistic_5 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={"Geometry": reroute, "Attribute": transform_direction},
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    normalize = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: attribute_statistic_5.outputs["Mean"]},
-        attrs={"operation": "NORMALIZE"},
-    )
-
-    align_rotation_to_vector_1 = nw.new_node(
-        "FunctionNodeAlignRotationToVector",
-        input_kwargs={"Vector": normalize.outputs["Vector"]},
-    )
-
-    transform_geometry_2 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": transform_geometry_3,
-            "Translation": add_1.outputs["Vector"],
-            "Rotation": align_rotation_to_vector_1,
-        },
-    )
-
-    switch_7 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Joint"],
-            "True": transform_geometry_2,
-        },
-    )
-
-    store_named_attribute_15 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_7, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    uv_sphere_1 = nw.new_node(
-        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
-    )
-
-    transform_geometry_1 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": uv_sphere_1.outputs["Mesh"],
-            "Translation": attribute_statistic_9.outputs["Mean"],
-        },
-    )
-
-    switch_6 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Center of Child"],
-            "True": transform_geometry_1,
-        },
-    )
-
-    store_named_attribute_14 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_6, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    uv_sphere = nw.new_node(
-        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
-    )
-
-    bounding_box = nw.new_node(
-        Nodes.BoundingBox,
-        input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
-    )
-
-    position = nw.new_node(Nodes.InputPosition)
-
-    attribute_statistic_2 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": bounding_box.outputs["Bounding Box"],
-            "Attribute": position,
-        },
-        attrs={"data_type": "FLOAT_VECTOR"},
-    )
-
-    transform_geometry = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": uv_sphere.outputs["Mesh"],
-            "Translation": attribute_statistic_2.outputs["Mean"],
-        },
-    )
-
-    switch_4 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["Show Center of Parent"],
-            "True": transform_geometry,
-        },
-    )
-
-    store_named_attribute_13 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_4, "Name": "part_id", "Value": 999999999},
-        attrs={"data_type": "INT"},
-    )
-
-    named_attribute_11 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "is_jointed"},
-        attrs={"data_type": "BOOLEAN"},
-    )
-
-    attribute_statistic_7 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": separate_geometry_3.outputs["Selection"],
-            "Attribute": named_attribute_11.outputs["Attribute"],
-        },
-    )
-
-    greater_than = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={1: 1.0000, 2: attribute_statistic_7.outputs["Sum"]},
-        attrs={"data_type": "INT"},
-    )
-
-    combine_matrix = nw.new_node("FunctionNodeCombineMatrix")
-
-    named_attribute_10 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "body_transform"},
-        attrs={"data_type": "FLOAT4X4"},
-    )
-
-    switch_1 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": greater_than,
-            "False": combine_matrix,
-            "True": named_attribute_10.outputs["Attribute"],
-        },
-        attrs={"input_type": "MATRIX"},
-    )
-
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": store_named_attribute,
-            "Name": "body_transform",
-            "Value": switch_1,
-        },
-        attrs={"data_type": "FLOAT4X4"},
-    )
-
-    named_attribute_7 = nw.new_node(
-        Nodes.NamedAttribute,
-        input_kwargs={"Name": "is_jointed"},
-        attrs={"data_type": "BOOLEAN"},
-    )
-
-    attribute_statistic_4 = nw.new_node(
-        Nodes.AttributeStatistic,
-        input_kwargs={
-            "Geometry": separate_geometry_3.outputs["Selection"],
-            "Attribute": named_attribute_7.outputs["Attribute"],
-        },
-    )
-
-    equal_2 = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={2: attribute_statistic_4.outputs["Sum"]},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    )
-
-    position_4 = nw.new_node(Nodes.InputPosition)
-
-    position_1 = nw.new_node(Nodes.InputPosition)
-
-    add_2 = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: position_1, 1: attribute_statistic_2.outputs["Mean"]},
-    )
-
-    switch = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": equal_2,
-            "False": position_4,
-            "True": add_2.outputs["Vector"],
-        },
-        attrs={"input_type": "VECTOR"},
-    )
-
-    set_position = nw.new_node(
-        Nodes.SetPosition,
-        input_kwargs={"Geometry": store_named_attribute_2, "Position": switch},
-    )
-
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_position, "Name": "is_jointed", "Value": True},
-        attrs={"data_type": "BOOLEAN"},
-    )
-
-    equal_3 = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={0: group_input.outputs["Min"], "Epsilon": 0.0000},
-        attrs={"operation": "EQUAL"},
-    )
-
-    equal_4 = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={0: group_input.outputs["Max"], "Epsilon": 0.0000},
-        attrs={"operation": "EQUAL"},
-    )
-
-    op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_3, 1: equal_4})
-
-    clamp = nw.new_node(
-        Nodes.Clamp,
-        input_kwargs={
-            "Value": group_input.outputs["Value"],
-            "Min": group_input.outputs["Min"],
-            "Max": group_input.outputs["Max"],
-        },
-    )
-
-    switch_5 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": op_and,
-            "False": clamp,
-            "True": group_input.outputs["Value"],
-        },
-        attrs={"input_type": "FLOAT"},
-    )
-
-    scale = nw.new_node(
-        Nodes.VectorMath,
-        input_kwargs={0: transform_direction, "Scale": switch_5},
-        attrs={"operation": "SCALE"},
-    )
-
-    position_5 = nw.new_node(Nodes.InputPosition)
-
-    add_3 = nw.new_node(
-        Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: position_5}
-    )
-
-    set_position_2 = nw.new_node(
-        Nodes.SetPosition,
-        input_kwargs={
-            "Geometry": store_named_attribute_3,
-            "Position": add_3.outputs["Vector"],
-        },
-    )
-
     string = nw.new_node("FunctionNodeInputString", attrs={"string": "pos"})
 
     reroute_2 = nw.new_node(
@@ -2183,16 +1041,16 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Delimiter": "_", "Strings": [string, reroute_2]},
     )
 
-    reroute_1 = nw.new_node(
+    reroute_3 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Position"]}
     )
 
     store_named_attribute_5 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": set_position_2,
+            "Geometry": store_named_attribute_4,
             "Name": join_strings,
-            "Value": reroute_1,
+            "Value": reroute_3,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
@@ -2221,7 +1079,7 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Delimiter": "_", "Strings": [string_2, reroute_2]},
     )
 
-    store_named_attribute_8 = nw.new_node(
+    store_named_attribute_7 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
             "Geometry": store_named_attribute_6,
@@ -2237,61 +1095,805 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         input_kwargs={"Delimiter": "_", "Strings": [string_3, reroute_2]},
     )
 
-    store_named_attribute_7 = nw.new_node(
+    store_named_attribute_8 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": store_named_attribute_8,
+            "Geometry": store_named_attribute_7,
             "Name": join_strings_3,
             "Value": group_input.outputs["Max"],
         },
     )
 
-    join_geometry = nw.new_node(
-        Nodes.JoinGeometry,
+    uv_sphere = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
+    )
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
         input_kwargs={
-            "Geometry": [
-                join_geometry_2,
-                store_named_attribute_15,
-                store_named_attribute_14,
-                store_named_attribute_13,
-                store_named_attribute_7,
-            ]
+            "Geometry": uv_sphere.outputs["Mesh"],
+            "Translation": attribute_statistic_4.outputs["Mean"],
+        },
+    )
+
+    switch_5 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Center of Parent"],
+            "True": transform_geometry,
         },
     )
 
     store_named_attribute_9 = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_5, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    uv_sphere_1 = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
+    )
+
+    reroute_4 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_position_1})
+
+    named_attribute_12 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "part_id"},
+        attrs={"data_type": "INT"},
+    )
+
+    attribute_statistic_7 = nw.new_node(
+        Nodes.AttributeStatistic,
         input_kwargs={
-            "Geometry": set_position_2,
-            "Name": join_strings,
-            "Value": reroute_1,
+            "Geometry": reroute_4,
+            "Attribute": named_attribute_12.outputs["Attribute"],
+        },
+    )
+
+    equal_6 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={
+            2: named_attribute_12.outputs["Attribute"],
+            3: attribute_statistic_7.outputs["Min"],
+        },
+        attrs={"operation": "EQUAL", "data_type": "INT"},
+    )
+
+    separate_geometry_3 = nw.new_node(
+        Nodes.SeparateGeometry,
+        input_kwargs={"Geometry": reroute_4, "Selection": equal_6},
+    )
+
+    bounding_box_2 = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": separate_geometry_3.outputs["Selection"]},
+    )
+
+    position_5 = nw.new_node(Nodes.InputPosition)
+
+    attribute_statistic_8 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": bounding_box_2.outputs["Bounding Box"],
+            "Attribute": position_5,
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": uv_sphere_1.outputs["Mesh"],
+            "Translation": attribute_statistic_8.outputs["Mean"],
+        },
+    )
+
+    switch_6 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Center of Child"],
+            "True": transform_geometry_1,
+        },
+    )
+
     store_named_attribute_10 = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_6, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    cone = nw.new_node(
+        "GeometryNodeMeshCone", input_kwargs={"Radius Bottom": 0.0500, "Depth": 0.2000}
+    )
+
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
         input_kwargs={
-            "Geometry": store_named_attribute_9,
+            "Geometry": cone.outputs["Mesh"],
+            "Translation": (0.0000, 0.0000, -0.0500),
+        },
+    )
+
+    bounding_box_3 = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": separate_geometry_2.outputs["Selection"]},
+    )
+
+    position_6 = nw.new_node(Nodes.InputPosition)
+
+    attribute_statistic_9 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": bounding_box_3.outputs["Bounding Box"],
+            "Attribute": position_6,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    add_3 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={
+            0: group_input.outputs["Position"],
+            1: attribute_statistic_9.outputs["Mean"],
+        },
+    )
+
+    attribute_statistic_10 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": separate_geometry_3.outputs["Selection"],
+            "Attribute": transform_direction,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    normalize = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: attribute_statistic_10.outputs["Mean"]},
+        attrs={"operation": "NORMALIZE"},
+    )
+
+    align_rotation_to_vector = nw.new_node(
+        "FunctionNodeAlignRotationToVector",
+        input_kwargs={"Vector": normalize.outputs["Vector"]},
+    )
+
+    transform_geometry_3 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": transform_geometry_2,
+            "Translation": add_3.outputs["Vector"],
+            "Rotation": align_rotation_to_vector,
+        },
+    )
+
+    switch_7 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Joint"],
+            "True": transform_geometry_3,
+        },
+    )
+
+    store_named_attribute_11 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_7, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [
+                join_geometry,
+                store_named_attribute_8,
+                store_named_attribute_9,
+                store_named_attribute_10,
+                store_named_attribute_11,
+            ]
+        },
+    )
+
+    store_named_attribute_12 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_4,
+            "Name": join_strings,
+            "Value": reroute_3,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    store_named_attribute_13 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_12,
             "Name": join_strings_1,
             "Value": group_input.outputs["Axis"],
         },
         attrs={"data_type": "FLOAT_VECTOR"},
     )
 
-    store_named_attribute_12 = nw.new_node(
+    store_named_attribute_14 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": store_named_attribute_10,
+            "Geometry": store_named_attribute_13,
             "Name": join_strings_2,
             "Value": group_input.outputs["Min"],
         },
     )
 
-    store_named_attribute_11 = nw.new_node(
+    store_named_attribute_15 = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
-            "Geometry": store_named_attribute_12,
+            "Geometry": store_named_attribute_14,
+            "Name": join_strings_3,
+            "Value": group_input.outputs["Max"],
+        },
+    )
+
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [
+                store_named_attribute_15,
+                store_named_attribute_9,
+                store_named_attribute_10,
+                store_named_attribute_11,
+            ]
+        },
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={
+            "Geometry": join_geometry_1,
+            "Parent": join_geometry,
+            "Child": join_geometry_2,
+        },
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
+    "nodegroup_sliding_joint", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_sliding_joint(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketString", "Joint ID (do not set)", ""),
+            ("NodeSocketString", "Joint Label", ""),
+            ("NodeSocketString", "Parent Label", ""),
+            ("NodeSocketGeometry", "Parent", None),
+            ("NodeSocketString", "Child Label", ""),
+            ("NodeSocketGeometry", "Child", None),
+            ("NodeSocketVector", "Position", (0.0000, 0.0000, 0.0000)),
+            ("NodeSocketVector", "Axis", (0.0000, 0.0000, 1.0000)),
+            ("NodeSocketFloat", "Value", 0.0000),
+            ("NodeSocketFloat", "Min", 0.0000),
+            ("NodeSocketFloat", "Max", 0.0000),
+            ("NodeSocketBool", "Show Center of Parent", False),
+            ("NodeSocketBool", "Show Center of Child", False),
+            ("NodeSocketBool", "Show Joint", False),
+        ],
+    )
+
+    named_attribute = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "part_id"},
+        attrs={"data_type": "INT"},
+    )
+
+    integer = nw.new_node(Nodes.Integer)
+    integer.integer = 0
+
+    switch = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": named_attribute.outputs["Exists"],
+            "False": integer,
+            "True": named_attribute.outputs["Attribute"],
+        },
+        attrs={"input_type": "INT"},
+    )
+
+    store_named_attribute = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": group_input.outputs["Parent"],
+            "Name": "part_id",
+            "Value": switch,
+        },
+        attrs={"data_type": "INT"},
+    )
+
+    named_attribute_1 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "part_id"},
+        attrs={"data_type": "INT"},
+    )
+
+    attribute_statistic = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": store_named_attribute,
+            "Attribute": named_attribute_1.outputs["Attribute"],
+        },
+    )
+
+    equal = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={
+            2: named_attribute_1.outputs["Attribute"],
+            3: attribute_statistic.outputs["Min"],
+        },
+        attrs={"operation": "EQUAL", "data_type": "INT"},
+    )
+
+    separate_geometry = nw.new_node(
+        Nodes.SeparateGeometry,
+        input_kwargs={"Geometry": store_named_attribute, "Selection": equal},
+    )
+
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [
+                separate_geometry.outputs["Selection"],
+                separate_geometry.outputs["Inverted"],
+            ]
+        },
+    )
+
+    cone = nw.new_node(
+        "GeometryNodeMeshCone", input_kwargs={"Radius Bottom": 0.0500, "Depth": 0.2000}
+    )
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cone.outputs["Mesh"],
+            "Translation": (0.0000, 0.0000, -0.0500),
+        },
+    )
+
+    named_attribute_2 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "part_id"},
+        attrs={"data_type": "INT"},
+    )
+
+    integer_1 = nw.new_node(Nodes.Integer)
+    integer_1.integer = 1
+
+    add = nw.new_node(
+        Nodes.Math, input_kwargs={0: named_attribute_2.outputs["Attribute"], 1: 1.0000}
+    )
+
+    switch_1 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": named_attribute_2.outputs["Exists"],
+            "False": integer_1,
+            "True": add,
+        },
+        attrs={"input_type": "INT"},
+    )
+
+    store_named_attribute_1 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": group_input.outputs["Child"],
+            "Name": "part_id",
+            "Value": switch_1,
+        },
+        attrs={"data_type": "INT"},
+    )
+
+    named_attribute_3 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "part_id"},
+        attrs={"data_type": "INT"},
+    )
+
+    attribute_statistic_1 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": store_named_attribute_1,
+            "Attribute": named_attribute_3.outputs["Attribute"],
+        },
+    )
+
+    equal_1 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={
+            2: named_attribute_3.outputs["Attribute"],
+            3: attribute_statistic_1.outputs["Min"],
+        },
+        attrs={"operation": "EQUAL", "data_type": "INT"},
+    )
+
+    separate_geometry_1 = nw.new_node(
+        Nodes.SeparateGeometry,
+        input_kwargs={"Geometry": store_named_attribute_1, "Selection": equal_1},
+    )
+
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": separate_geometry_1.outputs["Selection"]}
+    )
+
+    bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": reroute})
+
+    position = nw.new_node(Nodes.InputPosition)
+
+    attribute_statistic_2 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": bounding_box.outputs["Bounding Box"],
+            "Attribute": position,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    add_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={
+            0: group_input.outputs["Position"],
+            1: attribute_statistic_2.outputs["Mean"],
+        },
+    )
+
+    named_attribute_4 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "body_transform"},
+        attrs={"data_type": "FLOAT4X4"},
+    )
+
+    transpose_matrix = nw.new_node(
+        "FunctionNodeTransposeMatrix",
+        input_kwargs={"Matrix": named_attribute_4.outputs["Attribute"]},
+    )
+
+    transform_direction = nw.new_node(
+        "FunctionNodeTransformDirection",
+        input_kwargs={
+            "Direction": group_input.outputs["Axis"],
+            "Transform": transpose_matrix,
+        },
+    )
+
+    attribute_statistic_3 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={"Geometry": reroute, "Attribute": transform_direction},
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    normalize = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: attribute_statistic_3.outputs["Mean"]},
+        attrs={"operation": "NORMALIZE"},
+    )
+
+    align_rotation_to_vector = nw.new_node(
+        "FunctionNodeAlignRotationToVector",
+        input_kwargs={"Vector": normalize.outputs["Vector"]},
+    )
+
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": transform_geometry,
+            "Translation": add_1.outputs["Vector"],
+            "Rotation": align_rotation_to_vector,
+        },
+    )
+
+    switch_2 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Joint"],
+            "True": transform_geometry_1,
+        },
+    )
+
+    store_named_attribute_2 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_2, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    uv_sphere = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
+    )
+
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": uv_sphere.outputs["Mesh"],
+            "Translation": attribute_statistic_2.outputs["Mean"],
+        },
+    )
+
+    switch_3 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Center of Child"],
+            "True": transform_geometry_2,
+        },
+    )
+
+    store_named_attribute_3 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_3, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    uv_sphere_1 = nw.new_node(
+        Nodes.MeshUVSphere, input_kwargs={"Segments": 10, "Rings": 10, "Radius": 0.0500}
+    )
+
+    bounding_box_1 = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": separate_geometry.outputs["Selection"]},
+    )
+
+    position_1 = nw.new_node(Nodes.InputPosition)
+
+    attribute_statistic_4 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": bounding_box_1.outputs["Bounding Box"],
+            "Attribute": position_1,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    transform_geometry_3 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": uv_sphere_1.outputs["Mesh"],
+            "Translation": attribute_statistic_4.outputs["Mean"],
+        },
+    )
+
+    switch_4 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": group_input.outputs["Show Center of Parent"],
+            "True": transform_geometry_3,
+        },
+    )
+
+    store_named_attribute_4 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": switch_4, "Name": "part_id", "Value": 999999999},
+        attrs={"data_type": "INT"},
+    )
+
+    named_attribute_5 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "is_jointed"},
+        attrs={"data_type": "BOOLEAN"},
+    )
+
+    attribute_statistic_5 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": separate_geometry_1.outputs["Selection"],
+            "Attribute": named_attribute_5.outputs["Attribute"],
+        },
+    )
+
+    greater_than = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={2: attribute_statistic_5.outputs["Sum"]},
+        attrs={"data_type": "INT"},
+    )
+
+    combine_matrix = nw.new_node("FunctionNodeCombineMatrix")
+
+    named_attribute_6 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "body_transform"},
+        attrs={"data_type": "FLOAT4X4"},
+    )
+
+    switch_5 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": greater_than,
+            "False": combine_matrix,
+            "True": named_attribute_6.outputs["Attribute"],
+        },
+        attrs={"input_type": "MATRIX"},
+    )
+
+    store_named_attribute_5 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_1,
+            "Name": "body_transform",
+            "Value": switch_5,
+        },
+        attrs={"data_type": "FLOAT4X4"},
+    )
+
+    named_attribute_7 = nw.new_node(
+        Nodes.NamedAttribute,
+        input_kwargs={"Name": "is_jointed"},
+        attrs={"data_type": "BOOLEAN"},
+    )
+
+    attribute_statistic_6 = nw.new_node(
+        Nodes.AttributeStatistic,
+        input_kwargs={
+            "Geometry": separate_geometry_1.outputs["Selection"],
+            "Attribute": named_attribute_7.outputs["Attribute"],
+        },
+    )
+
+    equal_2 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={2: attribute_statistic_6.outputs["Sum"]},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
+    )
+
+    position_2 = nw.new_node(Nodes.InputPosition)
+
+    position_3 = nw.new_node(Nodes.InputPosition)
+
+    add_2 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: position_3, 1: attribute_statistic_4.outputs["Mean"]},
+    )
+
+    switch_6 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": equal_2,
+            "False": position_2,
+            "True": add_2.outputs["Vector"],
+        },
+        attrs={"input_type": "VECTOR"},
+    )
+
+    set_position = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={"Geometry": store_named_attribute_5, "Position": switch_6},
+    )
+
+    store_named_attribute_6 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={"Geometry": set_position, "Name": "is_jointed", "Value": True},
+        attrs={"data_type": "BOOLEAN"},
+    )
+
+    equal_3 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={0: group_input.outputs["Min"], "Epsilon": 0.0000},
+        attrs={"operation": "EQUAL"},
+    )
+
+    equal_4 = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={0: group_input.outputs["Max"], "Epsilon": 0.0000},
+        attrs={"operation": "EQUAL"},
+    )
+
+    op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_3, 1: equal_4})
+
+    clamp = nw.new_node(
+        Nodes.Clamp,
+        input_kwargs={
+            "Value": group_input.outputs["Value"],
+            "Min": group_input.outputs["Min"],
+            "Max": group_input.outputs["Max"],
+        },
+    )
+
+    switch_7 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": op_and,
+            "False": clamp,
+            "True": group_input.outputs["Value"],
+        },
+        attrs={"input_type": "FLOAT"},
+    )
+
+    scale = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: transform_direction, "Scale": switch_7},
+        attrs={"operation": "SCALE"},
+    )
+
+    position_4 = nw.new_node(Nodes.InputPosition)
+
+    add_3 = nw.new_node(
+        Nodes.VectorMath, input_kwargs={0: scale.outputs["Vector"], 1: position_4}
+    )
+
+    set_position_1 = nw.new_node(
+        Nodes.SetPosition,
+        input_kwargs={
+            "Geometry": store_named_attribute_6,
+            "Position": add_3.outputs["Vector"],
+        },
+    )
+
+    string = nw.new_node("FunctionNodeInputString", attrs={"string": "pos"})
+
+    reroute_1 = nw.new_node(
+        Nodes.Reroute,
+        input_kwargs={"Input": group_input.outputs["Joint ID (do not set)"]},
+    )
+
+    join_strings = nw.new_node(
+        "GeometryNodeStringJoin",
+        input_kwargs={"Delimiter": "_", "Strings": [string, reroute_1]},
+    )
+
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Position"]}
+    )
+
+    store_named_attribute_7 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": set_position_1,
+            "Name": join_strings,
+            "Value": reroute_2,
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    string_1 = nw.new_node("FunctionNodeInputString", attrs={"string": "axis"})
+
+    join_strings_1 = nw.new_node(
+        "GeometryNodeStringJoin",
+        input_kwargs={"Delimiter": "_", "Strings": [string_1, reroute_1]},
+    )
+
+    store_named_attribute_8 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_7,
+            "Name": join_strings_1,
+            "Value": group_input.outputs["Axis"],
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
+    )
+
+    string_2 = nw.new_node("FunctionNodeInputString", attrs={"string": "min"})
+
+    join_strings_2 = nw.new_node(
+        "GeometryNodeStringJoin",
+        input_kwargs={"Delimiter": "_", "Strings": [string_2, reroute_1]},
+    )
+
+    store_named_attribute_9 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_8,
+            "Name": join_strings_2,
+            "Value": group_input.outputs["Min"],
+        },
+    )
+
+    string_3 = nw.new_node("FunctionNodeInputString", attrs={"string": "max"})
+
+    join_strings_3 = nw.new_node(
+        "GeometryNodeStringJoin",
+        input_kwargs={"Delimiter": "_", "Strings": [string_3, reroute_1]},
+    )
+
+    store_named_attribute_10 = nw.new_node(
+        Nodes.StoreNamedAttribute,
+        input_kwargs={
+            "Geometry": store_named_attribute_9,
             "Name": join_strings_3,
             "Value": group_input.outputs["Max"],
         },
@@ -2301,490 +1903,83 @@ def nodegroup_sliding_joint_n_e_w(nw: NodeWrangler):
         Nodes.JoinGeometry,
         input_kwargs={
             "Geometry": [
-                store_named_attribute_15,
-                store_named_attribute_14,
-                store_named_attribute_13,
-                store_named_attribute_11,
+                join_geometry,
+                store_named_attribute_2,
+                store_named_attribute_3,
+                store_named_attribute_4,
+                store_named_attribute_10,
             ]
         },
     )
-
-    group_output = nw.new_node(
-        Nodes.GroupOutput,
-        input_kwargs={
-            "Geometry": join_geometry,
-            "Parent": join_geometry_2,
-            "Child": join_geometry_1,
-        },
-        attrs={"is_active_output": True},
-    )
-
-
-@node_utils.to_nodegroup(
-    "nodegroup_lamp_head_final", singleton=False, type="GeometryNodeTree"
-)
-def nodegroup_lamp_head_final(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
-    group_input = nw.new_node(
-        Nodes.GroupInput,
-        expose_input=[
-            ("NodeSocketFloat", "ShadeHeight", 0.0000),
-            ("NodeSocketFloat", "TopRadius", 0.3000),
-            ("NodeSocketFloat", "BotRadius", 0.5000),
-            ("NodeSocketBool", "ReverseBulb", True),
-            ("NodeSocketFloat", "RackThickness", 0.0050),
-            ("NodeSocketFloat", "RackHeight", 0.5000),
-            ("NodeSocketMaterial", "BlackMaterial", None),
-            ("NodeSocketMaterial", "LampshadeMaterial", None),
-            ("NodeSocketMaterial", "MetalMaterial", None),
-            ("NodeSocketMaterial", "LampShadeInteriorMaterial", None),
-            ("NodeSocketBool", "ShadeTop", False),
-            ("NodeSocketBool", "ShadeCurved", False),
-            ("NodeSocketBool", "IncludeLightbulb", False),
-            ("NodeSocketBool", "HeadSidways", False),
-            ("NodeSocketGeometry", "string", None),
-            ("NodeSocketInt", "Sides", 100),
-        ],
-    )
-
-    reroute_7 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShadeCurved"]}
-    )
-
-    reroute_8 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_7})
-
-    reroute_11 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackHeight"]}
-    )
-
-    multiply_add = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["ReverseBulb"], 1: 2.0000, 2: -1.0000},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    reroute_20 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_add})
-
-    multiply = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: reroute_11, 1: reroute_20},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
-
-    subtract = nw.new_node(
-        Nodes.Math,
-        input_kwargs={
-            0: group_input.outputs["ShadeHeight"],
-            1: group_input.outputs["RackHeight"],
-        },
-        attrs={"operation": "SUBTRACT"},
-    )
-
-    reroute_19 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": subtract})
-
-    multiply_1 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: multiply_add, 1: -1.0000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    multiply_2 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: reroute_19, 1: multiply_1},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
-
-    curve_line = nw.new_node(
-        Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1}
-    )
-
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": curve_line, "Name": "switch5"},
-        attrs={"data_type": "INT"},
-    )
-
-    b_zier_segment = nw.new_node(
-        Nodes.CurveBezierSegment,
-        input_kwargs={
-            "Start": combine_xyz,
-            "Start Handle": (0.0000, 0.0000, 0.0000),
-            "End": combine_xyz_1,
-        },
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": b_zier_segment, "Name": "switch5", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_8,
-            "False": store_named_attribute_1,
-            "True": store_named_attribute,
-        },
-    )
-
-    spline_parameter = nw.new_node(Nodes.SplineParameter)
-
-    map_range = nw.new_node(
-        Nodes.MapRange,
-        input_kwargs={
-            "Value": spline_parameter.outputs["Factor"],
-            3: group_input.outputs["TopRadius"],
-            4: group_input.outputs["BotRadius"],
-        },
-    )
-
-    reroute_21 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": map_range.outputs["Result"]}
-    )
-
-    set_curve_radius = nw.new_node(
-        Nodes.SetCurveRadius, input_kwargs={"Curve": switch, "Radius": reroute_21}
-    )
-
-    reroute_17 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Sides"]}
-    )
-
-    reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
-
-    reroute_26 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_18})
-
-    curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": reroute_26}
-    )
-
-    curve_to_mesh = nw.new_node(
-        Nodes.CurveToMesh,
-        input_kwargs={
-            "Curve": set_curve_radius,
-            "Profile Curve": curve_circle.outputs["Curve"],
-        },
-    )
-
-    set_shade_smooth = nw.new_node(
-        Nodes.SetShadeSmooth,
-        input_kwargs={"Geometry": curve_to_mesh, "Shade Smooth": False},
-    )
-
-    flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": set_shade_smooth})
-
-    reroute_14 = nw.new_node(
-        Nodes.Reroute,
-        input_kwargs={"Input": group_input.outputs["LampShadeInteriorMaterial"]},
-    )
-
-    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_14})
-
-    reroute_22 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_15})
-
-    set_material_5 = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": flip_faces, "Material": reroute_22}
-    )
-
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_5, "Name": "joint9"},
-        attrs={"data_type": "INT"},
-    )
-
-    extrude_mesh = nw.new_node(
-        Nodes.ExtrudeMesh,
-        input_kwargs={
-            "Mesh": set_shade_smooth,
-            "Offset Scale": 0.0050,
-            "Individual": False,
-        },
-    )
-
-    reroute_12 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["LampshadeMaterial"]}
-    )
-
-    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
-
-    reroute_27 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_13})
-
-    reroute_28 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_27})
-
-    set_material_3 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={"Geometry": extrude_mesh.outputs["Mesh"], "Material": reroute_28},
-    )
-
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_3, "Name": "joint9", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_2, store_named_attribute_3]},
-    )
-
-    transform_geometry = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": join_geometry,
-            "Translation": (0.0000, 0.0000, 0.0010),
-        },
-    )
-
-    store_named_attribute_4 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry, "Name": "joint8"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_6 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackThickness"]}
-    )
-
-    multiply_3 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["TopRadius"], 1: 0.8000},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    maximum = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: multiply_3, 1: 0.0600},
-        attrs={"operation": "MAXIMUM"},
-    )
-
-    multiply_4 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: maximum, 1: 0.1500},
-        attrs={"operation": "MULTIPLY"},
-    )
-
-    reroute_4 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["TopRadius"]}
-    )
-
-    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
-
-    reroute_16 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BlackMaterial"]}
-    )
-
-    reroute = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["MetalMaterial"]}
-    )
-
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
-
-    reversiable_bulb_003 = nw.new_node(
-        nodegroup_reversiable_bulb_003().name,
-        input_kwargs={
-            "Scale": maximum,
-            "BlackMaterial": reroute_16,
-            "LampshadeMaterial": reroute_15,
-            "MetalMaterial": reroute_1,
-        },
-    )
-
-    reroute_2 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShadeTop"]}
-    )
-
-    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
-
-    bulb_rack_003 = nw.new_node(
-        nodegroup_bulb_rack_003().name,
-        input_kwargs={
-            "Thickness": reroute_6,
-            "InnerRadius": multiply_4,
-            "OuterRadius": reroute_5,
-            "InnerHeight": reversiable_bulb_003.outputs["RackSupport"],
-            "OuterHeight": multiply,
-            "ShadeTop": reroute_3,
-            "Sides": reroute_18,
-        },
-    )
-
-    set_material_2 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={
-            "Geometry": bulb_rack_003.outputs["LampShadeTop"],
-            "Material": reroute_13,
-        },
-    )
-
-    reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_2})
-
-    store_named_attribute_5 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_29, "Name": "joint8", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_9 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["IncludeLightbulb"]}
-    )
-
-    reroute_10 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_9})
-
-    greater_than = nw.new_node(
-        Nodes.Compare, input_kwargs={0: group_input.outputs["RackThickness"]}
-    )
-
-    reroute_25 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": reversiable_bulb_003.outputs["Geometry"]}
-    )
-
-    store_named_attribute_9 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_25, "Name": "switch8"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_23 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_16})
-
-    reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
-
-    set_material = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={
-            "Geometry": bulb_rack_003.outputs["Geometry"],
-            "Material": reroute_24,
-        },
-    )
-
-    store_named_attribute_6 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material, "Name": "joint10"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_7 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_25, "Name": "joint10", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_6, store_named_attribute_7]},
-    )
-
-    store_named_attribute_8 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_2, "Name": "switch8", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_3 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": greater_than,
-            "False": store_named_attribute_9,
-            "True": store_named_attribute_8,
-        },
-    )
-
-    store_named_attribute_10 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_3, "Name": "switch7", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_1 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={"Switch": reroute_10, "True": store_named_attribute_10},
-    )
-
-    reroute_30 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_1})
 
     store_named_attribute_11 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_30, "Name": "joint8", "Value": 2},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry,
         input_kwargs={
-            "Geometry": [
-                store_named_attribute_4,
-                store_named_attribute_5,
-                store_named_attribute_11,
-            ]
+            "Geometry": set_position_1,
+            "Name": join_strings,
+            "Value": reroute_2,
         },
+        attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     store_named_attribute_12 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_1, "Name": "joint7"},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_4 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": store_named_attribute_12}
+        input_kwargs={
+            "Geometry": store_named_attribute_11,
+            "Name": join_strings_1,
+            "Value": group_input.outputs["Axis"],
+        },
+        attrs={"data_type": "FLOAT_VECTOR"},
     )
 
     store_named_attribute_13 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_4, "Name": "switch4"},
-        attrs={"data_type": "INT"},
-    )
-
-    transform_geometry_1 = nw.new_node(
-        Nodes.Transform,
         input_kwargs={
-            "Geometry": join_geometry_1,
-            "Rotation": (0.0000, 1.5708, 0.0000),
+            "Geometry": store_named_attribute_12,
+            "Name": join_strings_2,
+            "Value": group_input.outputs["Min"],
         },
     )
 
     store_named_attribute_14 = nw.new_node(
         Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_1, "Name": "joint15"},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_3 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": store_named_attribute_14}
-    )
-
-    store_named_attribute_15 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_3, "Name": "switch4", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_2 = nw.new_node(
-        Nodes.Switch,
         input_kwargs={
-            "Switch": group_input.outputs["HeadSidways"],
-            "False": store_named_attribute_13,
-            "True": store_named_attribute_15,
+            "Geometry": store_named_attribute_13,
+            "Name": join_strings_3,
+            "Value": group_input.outputs["Max"],
+        },
+    )
+
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={
+            "Geometry": [
+                store_named_attribute_2,
+                store_named_attribute_3,
+                store_named_attribute_4,
+                store_named_attribute_14,
+            ]
         },
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": switch_2},
+        input_kwargs={
+            "Geometry": join_geometry_1,
+            "Parent": join_geometry,
+            "Child": join_geometry_2,
+        },
         attrs={"is_active_output": True},
     )
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_add_jointed_geometry_metadata", singleton=False, type="GeometryNodeTree"
+    "nodegroup_add_jointed_geometry_metadata",
+    singleton=False,
+    type="GeometryNodeTree",
 )
 def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+    # Code generated using version 2.7.1 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -2811,9 +2006,648 @@ def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
     )
 
 
+@node_utils.to_nodegroup(
+    "nodegroup_string_nodes_v2", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_string_nodes_v2(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    string = nw.new_node("FunctionNodeInputString", attrs={"string": "joint17"})
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketFloat", "Radius", 0.0000),
+            ("NodeSocketFloat", "RadialLength", 0.0000),
+            ("NodeSocketFloat", "Length", 0.0000),
+            ("NodeSocketFloat", "Depth", 0.0000),
+        ],
+    )
+
+    cylinder = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={
+            "Radius": group_input.outputs["Radius"],
+            "Depth": group_input.outputs["Depth"],
+        },
+    )
+
+    reroute_8 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": cylinder.outputs["Mesh"]}
+    )
+
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 0.0150
+
+    reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": value})
+
+    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
+
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Depth"], 2: reroute_7},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add})
+
+    reroute_16 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz})
+
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Depth"]}
+    )
+
+    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
+
+    reroute_10 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
+
+    multiply = nw.new_node(
+        Nodes.Math, input_kwargs={0: value, 1: 2.0000}, attrs={"operation": "MULTIPLY"}
+    )
+
+    divide = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Length"], 1: multiply},
+        attrs={"operation": "DIVIDE"},
+    )
+
+    float_to_integer = nw.new_node(Nodes.FloatToInt, input_kwargs={"Float": divide})
+
+    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply})
+
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: float_to_integer, 1: reroute_9},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_10, 2: multiply_1},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_1})
+
+    curve_line = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": reroute_16, "End": combine_xyz_1}
+    )
+
+    reroute_14 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": float_to_integer})
+
+    curve_to_points = nw.new_node(
+        Nodes.CurveToPoints, input_kwargs={"Curve": curve_line, "Count": reroute_14}
+    )
+
+    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_7})
+
+    uv_sphere = nw.new_node(Nodes.MeshUVSphere, input_kwargs={"Radius": reroute_13})
+
+    instance_on_points = nw.new_node(
+        Nodes.InstanceOnPoints,
+        input_kwargs={
+            "Points": curve_to_points.outputs["Points"],
+            "Instance": uv_sphere.outputs["Mesh"],
+        },
+    )
+
+    realize_instances = nw.new_node(
+        Nodes.RealizeInstances, input_kwargs={"Geometry": instance_on_points}
+    )
+
+    reroute_4 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Length"]}
+    )
+
+    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_add_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_5, 1: -1.0000, 2: multiply_2},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_2})
+
+    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_2})
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": realize_instances, "Translation": reroute_15},
+    )
+
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Depth"], 1: multiply},
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    reroute_12 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": subtract})
+
+    sliding_joint_001 = nw.new_node(
+        nodegroup_sliding_joint().name,
+        input_kwargs={
+            "Joint ID (do not set)": string,
+            "Joint Label": "pullstring",
+            "Parent": reroute_8,
+            "Child": transform_geometry,
+            "Axis": (0.0000, 0.0000, -1.0000),
+            "Max": reroute_12,
+        },
+    )
+
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["Radius"], 1: 2.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RadialLength"]}
+    )
+
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
+    combine_xyz_3 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": multiply_3, "Y": reroute_3, "Z": reroute_1}
+    )
+
+    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_3})
+
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_3, 1: -0.5000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_4})
+
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_4},
+    )
+
+    reroute_17 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_1}
+    )
+
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [sliding_joint_001.outputs["Geometry"], reroute_17]},
+    )
+
+    reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_3})
+
+    multiply_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_11, 1: 1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_5})
+
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": join_geometry, "Translation": combine_xyz_5},
+    )
+
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [sliding_joint_001.outputs["Parent"], reroute_17]},
+    )
+
+    transform_geometry_3 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": join_geometry_1, "Translation": combine_xyz_5},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": transform_geometry_2, "Parent": transform_geometry_3},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup("nodegroup_u_switch", singleton=False, type="GeometryNodeTree")
+def nodegroup_u_switch(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": (2.0000, 1.0000, 1.0000)})
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cube.outputs["Mesh"],
+            "Translation": (0.0000, 0.5000, 0.5000),
+        },
+    )
+
+    cylinder = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Vertices": 6, "Radius": 6.0000, "Depth": 2.5200},
+    )
+
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cylinder.outputs["Mesh"],
+            "Translation": (0.0000, -5.4400, 0.0000),
+            "Rotation": (0.0000, 0.0000, 0.5250),
+        },
+    )
+
+    difference = nw.new_node(
+        Nodes.MeshBoolean,
+        input_kwargs={"Mesh 1": transform_geometry, "Mesh 2": transform_geometry_1},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": difference.outputs["Mesh"]},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
+    "nodegroup_lamp_head_final", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_lamp_head_final(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketFloat", "ShadeHeight", 0.0000),
+            ("NodeSocketFloat", "TopRadius", 0.3000),
+            ("NodeSocketFloat", "BotRadius", 0.5000),
+            ("NodeSocketBool", "ReverseBulb", True),
+            ("NodeSocketFloat", "RackThickness", 0.0050),
+            ("NodeSocketFloat", "RackHeight", 0.5000),
+            ("NodeSocketMaterial", "BlackMaterial", None),
+            ("NodeSocketMaterial", "LampshadeMaterial", None),
+            ("NodeSocketMaterial", "MetalMaterial", None),
+            ("NodeSocketMaterial", "LampShadeInteriorMaterial", None),
+            ("NodeSocketBool", "ShadeTop", False),
+            ("NodeSocketBool", "ShadeCurved", False),
+            ("NodeSocketBool", "IncludeLightbulb", False),
+            ("NodeSocketBool", "HeadSidways", False),
+            ("NodeSocketGeometry", "string", None),
+            ("NodeSocketInt", "Sides", 100),
+        ],
+    )
+
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["HeadSidways"]}
+    )
+
+    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
+
+    reroute_10 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShadeCurved"]}
+    )
+
+    reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
+
+    reroute_6 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackHeight"]}
+    )
+
+    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
+
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["ReverseBulb"], 1: 2.0000, 2: -1.0000},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    reroute_25 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_add})
+
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_7, 1: reroute_25},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
+
+    subtract = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["ShadeHeight"],
+            1: group_input.outputs["RackHeight"],
+        },
+        attrs={"operation": "SUBTRACT"},
+    )
+
+    reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": subtract})
+
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_add, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_24, 1: multiply_1},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_2})
+
+    curve_line = nw.new_node(
+        Nodes.CurveLine, input_kwargs={"Start": combine_xyz, "End": combine_xyz_1}
+    )
+
+    b_zier_segment = nw.new_node(
+        Nodes.CurveBezierSegment,
+        input_kwargs={
+            "Start": combine_xyz,
+            "Start Handle": (0.0000, 0.0000, 0.0000),
+            "End": combine_xyz_1,
+        },
+    )
+
+    switch = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_11,
+            "False": curve_line,
+            "True": b_zier_segment,
+        },
+    )
+
+    spline_parameter = nw.new_node(Nodes.SplineParameter)
+
+    map_range = nw.new_node(
+        Nodes.MapRange,
+        input_kwargs={
+            "Value": spline_parameter.outputs["Factor"],
+            3: group_input.outputs["TopRadius"],
+            4: group_input.outputs["BotRadius"],
+        },
+    )
+
+    reroute_26 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": map_range.outputs["Result"]}
+    )
+
+    set_curve_radius = nw.new_node(
+        Nodes.SetCurveRadius, input_kwargs={"Curve": switch, "Radius": reroute_26}
+    )
+
+    reroute_16 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Sides"]}
+    )
+
+    reroute_17 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_16})
+
+    reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
+
+    curve_circle = nw.new_node(
+        Nodes.CurveCircle, input_kwargs={"Resolution": reroute_31}
+    )
+
+    curve_to_mesh = nw.new_node(
+        Nodes.CurveToMesh,
+        input_kwargs={
+            "Curve": set_curve_radius,
+            "Profile Curve": curve_circle.outputs["Curve"],
+        },
+    )
+
+    set_shade_smooth = nw.new_node(
+        Nodes.SetShadeSmooth,
+        input_kwargs={"Geometry": curve_to_mesh, "Shade Smooth": False},
+    )
+
+    flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": set_shade_smooth})
+
+    reroute_20 = nw.new_node(
+        Nodes.Reroute,
+        input_kwargs={"Input": group_input.outputs["LampShadeInteriorMaterial"]},
+    )
+
+    reroute_21 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_20})
+
+    reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
+
+    set_material = nw.new_node(
+        Nodes.SetMaterial, input_kwargs={"Geometry": flip_faces, "Material": reroute_29}
+    )
+
+    extrude_mesh = nw.new_node(
+        Nodes.ExtrudeMesh,
+        input_kwargs={
+            "Mesh": set_shade_smooth,
+            "Offset Scale": 0.0050,
+            "Individual": False,
+        },
+    )
+
+    reroute_22 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["LampshadeMaterial"]}
+    )
+
+    reroute_23 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_22})
+
+    reroute_34 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
+
+    set_material_1 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": extrude_mesh.outputs["Mesh"], "Material": reroute_34},
+    )
+
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
+    )
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": join_geometry,
+            "Translation": (0.0000, 0.0000, 0.0010),
+        },
+    )
+
+    reroute_14 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackThickness"]}
+    )
+
+    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_14})
+
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["TopRadius"], 1: 0.8000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    maximum = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_3, 1: 0.0600},
+        attrs={"operation": "MAXIMUM"},
+    )
+
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: maximum, 1: 0.1500},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["TopRadius"]}
+    )
+
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
+    reroute_18 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BlackMaterial"]}
+    )
+
+    reroute_19 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_18})
+
+    reroute_8 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["MetalMaterial"]}
+    )
+
+    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
+    reversable_bulb = nw.new_node(
+        nodegroup_reversable_bulb().name,
+        input_kwargs={
+            "Scale": maximum,
+            "BlackMaterial": reroute_19,
+            "LampshadeMaterial": reroute_21,
+            "MetalMaterial": reroute_9,
+        },
+    )
+
+    reroute_4 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShadeTop"]}
+    )
+
+    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
+    bulb_rack = nw.new_node(
+        nodegroup_bulb_rack().name,
+        input_kwargs={
+            "Thickness": reroute_15,
+            "InnerRadius": multiply_4,
+            "OuterRadius": reroute_3,
+            "InnerHeight": reversable_bulb.outputs["RackSupport"],
+            "OuterHeight": multiply,
+            "ShadeTop": reroute_5,
+            "Sides": reroute_17,
+        },
+    )
+
+    set_material_2 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": bulb_rack.outputs["LampShadeTop"],
+            "Material": reroute_23,
+        },
+    )
+
+    reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_2})
+
+    reroute_12 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["IncludeLightbulb"]}
+    )
+
+    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
+
+    reroute_30 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_15})
+
+    greater_than = nw.new_node(Nodes.Compare, input_kwargs={0: reroute_30})
+
+    reroute_32 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": reversable_bulb.outputs["Geometry"]}
+    )
+
+    reroute_33 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_32})
+
+    reroute_36 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
+
+    reroute_27 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
+
+    reroute_28 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_27})
+
+    set_material_3 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": bulb_rack.outputs["Geometry"],
+            "Material": reroute_28,
+        },
+    )
+
+    join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_3, reroute_33]}
+    )
+
+    switch_1 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": greater_than,
+            "False": reroute_36,
+            "True": join_geometry_1,
+        },
+    )
+
+    switch_2 = nw.new_node(
+        Nodes.Switch, input_kwargs={"Switch": reroute_13, "True": switch_1}
+    )
+
+    reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_2})
+
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry, reroute_35, reroute_37]},
+    )
+
+    reroute_38 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_2})
+
+    join_geometry_3 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": reroute_38}
+    )
+
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": join_geometry_2,
+            "Rotation": (0.0000, 1.5708, 0.0000),
+        },
+    )
+
+    join_geometry_4 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": transform_geometry_1}
+    )
+
+    switch_3 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_1,
+            "False": join_geometry_3,
+            "True": join_geometry_4,
+        },
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Geometry": switch_3},
+        attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
 def geometry_nodes(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
+    # Code generated using version 2.7.1 of the node_transpiler
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -2860,15 +2694,33 @@ def geometry_nodes(nw: NodeWrangler):
         ],
     )
 
-    reroute_4 = nw.new_node(
+    reroute_12 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["DoubleHinge"]}
+    )
+
+    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
+
+    reroute_10 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SingleHinge"]}
+    )
+
+    reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
+
+    reroute_36 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BaseRotate"]}
     )
 
-    reroute_64 = nw.new_node(
+    reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_36})
+
+    reroute_38 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["IncludeButtonBase"]}
     )
 
-    cylinder_1 = nw.new_node(
+    reroute_39 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_38})
+
+    reroute_131 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_39})
+
+    cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={
             "Vertices": group_input.outputs["BaseSides"],
@@ -2879,33 +2731,35 @@ def geometry_nodes(nw: NodeWrangler):
 
     add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": cylinder_1.outputs["Mesh"], "Label": "lamp_base"},
+        input_kwargs={"Geometry": cylinder.outputs["Mesh"], "Label": "lamp_base"},
     )
 
-    reroute_17 = nw.new_node(
+    reroute_40 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BaseMaterial"]}
     )
 
-    set_material_3 = nw.new_node(
+    reroute_41 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_40})
+
+    set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": add_jointed_geometry_metadata,
-            "Material": reroute_17,
+            "Material": reroute_41,
         },
     )
 
-    store_named_attribute_56 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_3, "Name": "joint31"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_81 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material})
 
-    cylinder = nw.new_node(
+    cylinder_1 = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={
             "Radius": group_input.outputs["Radius"],
             "Depth": group_input.outputs["Height"],
         },
+    )
+
+    reroute_45 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": cylinder_1.outputs["Mesh"]}
     )
 
     multiply = nw.new_node(
@@ -2914,77 +2768,60 @@ def geometry_nodes(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_8 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
+    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply})
 
-    transform_geometry_1 = nw.new_node(
+    transform_geometry = nw.new_node(
         Nodes.Transform,
-        input_kwargs={
-            "Geometry": cylinder.outputs["Mesh"],
-            "Translation": combine_xyz_8,
-        },
+        input_kwargs={"Geometry": reroute_45, "Translation": combine_xyz},
     )
 
-    add_jointed_geometry_metadata_1 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": transform_geometry_1, "Label": "bar"},
+        input_kwargs={"Geometry": transform_geometry, "Label": "bar"},
     )
 
-    reroute_16 = nw.new_node(
+    reroute_73 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
+    )
+
+    reroute_42 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["StandMaterial"]}
     )
 
-    set_material_4 = nw.new_node(
+    reroute_43 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_42})
+
+    reroute_69 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_43})
+
+    reroute_87 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_69})
+
+    reroute_100 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_87})
+
+    set_material_1 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_1,
-            "Material": reroute_16,
-        },
+        input_kwargs={"Geometry": reroute_73, "Material": reroute_100},
     )
 
-    store_named_attribute_57 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_4, "Name": "joint31", "Value": 1},
-        attrs={"data_type": "INT"},
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [reroute_81, set_material_1]}
     )
 
-    join_geometry_1 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_56, store_named_attribute_57]},
-    )
-
-    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_1})
-
-    store_named_attribute_83 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_2, "Name": "joint38"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_20 = nw.new_node(
+    reroute_28 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonOnLampShade"]}
     )
 
-    reroute_23 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ShadeHeight"]}
-    )
+    reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_28})
 
-    reroute_24 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackHeight"]}
-    )
-
-    reroute_25 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["HeadSideways"]}
-    )
+    reroute_114 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_29})
 
     lamp_head_final = nw.new_node(
         nodegroup_lamp_head_final().name,
         input_kwargs={
-            "ShadeHeight": reroute_23,
+            "ShadeHeight": group_input.outputs["ShadeHeight"],
             "TopRadius": group_input.outputs["TopRadius"],
             "BotRadius": group_input.outputs["BottomRadius"],
             "ReverseBulb": group_input.outputs["ReverseBulb"],
             "RackThickness": group_input.outputs["RackThickness"],
-            "RackHeight": reroute_24,
+            "RackHeight": group_input.outputs["RackHeight"],
             "BlackMaterial": group_input.outputs["LampRackMaterial"],
             "LampshadeMaterial": group_input.outputs["ShadeMaterial"],
             "MetalMaterial": group_input.outputs["MetalMaterial"],
@@ -2992,7 +2829,7 @@ def geometry_nodes(nw: NodeWrangler):
             "ShadeTop": group_input.outputs["ShadeTop"],
             "ShadeCurved": group_input.outputs["ShadeCurved"],
             "IncludeLightbulb": group_input.outputs["IncludeLightBulb"],
-            "HeadSidways": reroute_25,
+            "HeadSidways": group_input.outputs["HeadSideways"],
             "Sides": group_input.outputs["ShadeSides"],
         },
     )
@@ -3001,630 +2838,640 @@ def geometry_nodes(nw: NodeWrangler):
         Nodes.RealizeInstances, input_kwargs={"Geometry": lamp_head_final}
     )
 
-    add_jointed_geometry_metadata_2 = nw.new_node(
+    reroute_56 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": realize_instances})
+
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": realize_instances, "Label": "head"},
+        input_kwargs={"Geometry": reroute_56, "Label": "head"},
     )
 
-    reroute_19 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata_2}
+    reroute_105 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
     )
 
-    store_named_attribute_19 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_19, "Name": "switch3"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_106 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_105})
 
-    store_named_attribute_2 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_19, "Name": "joint6"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_116 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_106})
 
-    equal = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={2: group_input.outputs["ButtonType"]},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    )
-
-    reroute_54 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonType"]}
-    )
-
-    greater_equal = nw.new_node(
-        Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 2},
-        attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
-    )
-
-    string_3 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint18"})
-
-    reroute_29 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonR1"]}
-    )
-
-    reroute_31 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonH1"]}
-    )
-
-    cylinder_4 = nw.new_node(
-        "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_29, "Depth": reroute_31},
-    )
-
-    add_jointed_geometry_metadata_3 = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": cylinder_4.outputs["Mesh"], "Label": "button"},
-    )
-
-    multiply_1 = nw.new_node(
-        Nodes.Math, input_kwargs={1: reroute_31}, attrs={"operation": "MULTIPLY"}
-    )
-
-    combine_xyz_19 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
-
-    transform_geometry_5 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_3,
-            "Translation": combine_xyz_19,
-        },
-    )
-
-    combine_xyz_36 = nw.new_node(Nodes.CombineXYZ)
-
-    multiply_add = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["RackHeight"], 1: -2.0000, 2: 0.0000},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_35 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_add})
-
-    switch_25 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["HeadSideways"],
-            "False": combine_xyz_36,
-            "True": combine_xyz_35,
-        },
-        attrs={"input_type": "VECTOR"},
-    )
-
-    combine_xyz_16 = nw.new_node(Nodes.CombineXYZ)
-
-    combine_xyz_15 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"Y": 1.5700, "Z": 3.1400}
-    )
-
-    switch_8 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_25,
-            "False": combine_xyz_16,
-            "True": combine_xyz_15,
-        },
-        attrs={"input_type": "VECTOR"},
-    )
-
-    transform_geometry_20 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": transform_geometry_5,
-            "Translation": switch_25,
-            "Rotation": switch_8,
-        },
-    )
-
-    store_named_attribute_5 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_20, "Name": "joint18"},
-        attrs={"data_type": "INT"},
+    reroute_112 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
     )
 
     reroute_30 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonR2"]}
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonType"]}
+    )
+
+    reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
+
+    reroute_78 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_31})
+
+    reroute_79 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_78})
+
+    reroute_92 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_79})
+
+    equal = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={2: reroute_92},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
+    )
+
+    reroute_115 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": equal})
+
+    reroute_109 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_92})
+
+    reroute_110 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_109})
+
+    reroute_119 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_110})
+
+    reroute_120 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_119})
+
+    reroute_122 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_120})
+
+    reroute_123 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_122})
+
+    reroute_126 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_123})
+
+    greater_equal = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={2: reroute_126, 3: 2},
+        attrs={"operation": "GREATER_EQUAL", "data_type": "INT"},
+    )
+
+    string = nw.new_node("FunctionNodeInputString", attrs={"string": "joint18"})
+
+    cylinder_2 = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={
+            "Radius": group_input.outputs["ButtonR1"],
+            "Depth": group_input.outputs["ButtonH1"],
+        },
+    )
+
+    add_jointed_geometry_metadata = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={"Geometry": cylinder_2.outputs["Mesh"], "Label": "button"},
+    )
+
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={1: group_input.outputs["ButtonH1"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_1})
+
+    transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": add_jointed_geometry_metadata,
+            "Translation": combine_xyz_1,
+        },
+    )
+
+    reroute_61 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_1}
+    )
+
+    reroute_2 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["HeadSideways"]}
+    )
+
+    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
+    reroute_58 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_3})
+
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ)
+
+    reroute_21 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["RackHeight"]}
+    )
+
+    multiply_add = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_21, 1: -2.0000, 2: 0.0000},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_add})
+
+    switch = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_58,
+            "False": combine_xyz_2,
+            "True": combine_xyz_3,
+        },
+        attrs={"input_type": "VECTOR"},
+    )
+
+    combine_xyz_4 = nw.new_node(Nodes.CombineXYZ)
+
+    combine_xyz_5 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": 1.5700, "Z": 3.1400}
+    )
+
+    switch_1 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_58,
+            "False": combine_xyz_4,
+            "True": combine_xyz_5,
+        },
+        attrs={"input_type": "VECTOR"},
+    )
+
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": reroute_61,
+            "Translation": switch,
+            "Rotation": switch_1,
+        },
+    )
+
+    reroute_95 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_2}
     )
 
     cylinder_3 = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_30, "Depth": reroute_31},
+        input_kwargs={
+            "Radius": group_input.outputs["ButtonR2"],
+            "Depth": group_input.outputs["ButtonH1"],
+        },
     )
 
-    add_jointed_geometry_metadata_4 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": cylinder_3.outputs["Mesh"], "Label": "button"},
     )
 
-    combine_xyz_20 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_31})
+    reroute_4 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonH1"]}
+    )
+
+    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
+    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_5})
+
+    transform_geometry_3 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": add_jointed_geometry_metadata,
+            "Translation": combine_xyz_6,
+        },
+    )
+
+    reroute_70 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_3}
+    )
+
+    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ)
 
     transform_geometry_4 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_4,
-            "Translation": combine_xyz_20,
-        },
+        input_kwargs={"Geometry": reroute_70, "Rotation": combine_xyz_7},
     )
 
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ)
-
-    reroute_21 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_1})
-
-    reroute_42 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
-
-    transform_geometry_6 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": transform_geometry_4, "Rotation": reroute_42},
-    )
+    reroute_59 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_5})
 
     multiply_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_31, 1: 0.0000},
+        input_kwargs={0: reroute_59, 1: 0.0000},
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_21 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2})
+    combine_xyz_8 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": multiply_2})
 
-    transform_geometry_21 = nw.new_node(
+    reroute_85 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_1})
+
+    reroute_86 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_85})
+
+    transform_geometry_5 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_6,
-            "Translation": combine_xyz_21,
-            "Rotation": switch_8,
+            "Geometry": transform_geometry_4,
+            "Translation": combine_xyz_8,
+            "Rotation": reroute_86,
         },
     )
 
-    store_named_attribute_4 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_21, "Name": "joint18", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_74 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_58})
 
-    combine_xyz_18 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": -1.0000})
+    reroute_75 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_74})
 
-    combine_xyz_17 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
+    reroute_97 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_75})
 
-    switch_10 = nw.new_node(
+    combine_xyz_9 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": -1.0000})
+
+    combine_xyz_10 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
+
+    switch_2 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_25,
-            "False": combine_xyz_18,
-            "True": combine_xyz_17,
+            "Switch": reroute_97,
+            "False": combine_xyz_9,
+            "True": combine_xyz_10,
         },
         attrs={"input_type": "VECTOR"},
     )
 
-    sliding_joint_new = nw.new_node(
-        nodegroup_sliding_joint_n_e_w().name,
+    reroute_76 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_59})
+
+    reroute_77 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_76})
+
+    reroute_102 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_77})
+
+    sliding_joint = nw.new_node(
+        nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_3,
-            "Parent": store_named_attribute_5,
-            "Child": store_named_attribute_4,
-            "Axis": switch_10,
-            "Max": reroute_31,
+            "Joint ID (do not set)": string,
+            "Joint Label": "button",
+            "Parent Label": "button base",
+            "Parent": reroute_95,
+            "Child Label": "button",
+            "Child": transform_geometry_5,
+            "Axis": switch_2,
+            "Max": reroute_102,
         },
     )
 
-    store_named_attribute_6 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": sliding_joint_new.outputs["Geometry"],
-            "Name": "switch10",
-        },
-        attrs={"data_type": "INT"},
+    reroute_118 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": sliding_joint.outputs["Geometry"]}
     )
 
     equal_1 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 3},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        input_kwargs={2: reroute_120, 3: 3},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    string_4 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint19"})
+    string_1 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint19"})
 
-    reroute_33 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_29})
-
-    reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
-
-    reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_31})
-
-    reroute_39 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_35})
-
-    cylinder_12 = nw.new_node(
+    cylinder_4 = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_37, "Depth": reroute_39},
+        input_kwargs={
+            "Radius": group_input.outputs["ButtonR1"],
+            "Depth": group_input.outputs["ButtonH1"],
+        },
     )
 
-    add_jointed_geometry_metadata_5 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": cylinder_12.outputs["Mesh"], "Label": "button"},
+        input_kwargs={"Geometry": cylinder_4.outputs["Mesh"], "Label": "button"},
     )
 
     multiply_3 = nw.new_node(
-        Nodes.Math, input_kwargs={1: reroute_39}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={1: group_input.outputs["ButtonH1"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_22 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_3})
+    combine_xyz_11 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_3})
 
-    transform_geometry_22 = nw.new_node(
+    transform_geometry_6 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_5,
-            "Translation": combine_xyz_22,
+            "Geometry": add_jointed_geometry_metadata,
+            "Translation": combine_xyz_11,
         },
     )
 
-    reroute_45 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_8})
+    reroute_63 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_6}
+    )
 
-    transform_geometry_26 = nw.new_node(
+    transform_geometry_7 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_22,
-            "Translation": switch_25,
-            "Rotation": reroute_45,
+            "Geometry": reroute_63,
+            "Translation": switch,
+            "Rotation": switch_1,
         },
     )
 
-    store_named_attribute_7 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_26, "Name": "joint19"},
-        attrs={"data_type": "INT"},
+    reroute_90 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_7}
     )
 
-    reroute_34 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
-
-    reroute_38 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_34})
-
-    reroute_32 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonH2"]}
-    )
-
-    reroute_36 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_32})
-
-    reroute_40 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_36})
-
-    cylinder_11 = nw.new_node(
+    cylinder_5 = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_38, "Depth": reroute_40},
+        input_kwargs={
+            "Radius": group_input.outputs["ButtonR2"],
+            "Depth": group_input.outputs["ButtonH2"],
+        },
     )
 
-    add_jointed_geometry_metadata_6 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": cylinder_11.outputs["Mesh"], "Label": "button"},
+        input_kwargs={"Geometry": cylinder_5.outputs["Mesh"], "Label": "button"},
     )
 
-    store_named_attribute_8 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": add_jointed_geometry_metadata_6, "Name": "joint20"},
-        attrs={"data_type": "INT"},
+    reroute_62 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
     )
-
-    reroute_43 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_38})
 
     multiply_4 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_43, 1: 0.4000},
+        input_kwargs={0: group_input.outputs["ButtonR2"], 1: 0.4000},
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_5 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_43, 1: 1.6000},
+        input_kwargs={0: group_input.outputs["ButtonR2"], 1: 1.6000},
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_25 = nw.new_node(
+    combine_xyz_12 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={"X": multiply_4, "Y": multiply_5, "Z": multiply_4},
     )
 
-    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_25})
+    cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_12})
+
+    reroute_6 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonH2"]}
+    )
+
+    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
 
     multiply_add_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_40, 2: 0.0000},
+        input_kwargs={0: reroute_7, 2: 0.0000},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    combine_xyz_26 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_1})
+    combine_xyz_13 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_1})
 
-    transform_geometry_28 = nw.new_node(
+    transform_geometry_8 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_26},
+        input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_13},
     )
 
-    store_named_attribute_9 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_28, "Name": "joint20", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_13 = nw.new_node(
+    join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_8, store_named_attribute_9]},
+        input_kwargs={"Geometry": [reroute_62, transform_geometry_8]},
     )
 
     multiply_6 = nw.new_node(
-        Nodes.Math, input_kwargs={0: reroute_39}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["ButtonH1"]},
+        attrs={"operation": "MULTIPLY"},
     )
 
     multiply_add_2 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_40, 2: multiply_6},
+        input_kwargs={0: reroute_7, 2: multiply_6},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    combine_xyz_23 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_2})
+    combine_xyz_14 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_2})
 
-    transform_geometry_24 = nw.new_node(
+    reroute_71 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_14})
+
+    transform_geometry_9 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": join_geometry_13, "Translation": combine_xyz_23},
+        input_kwargs={"Geometry": join_geometry_1, "Translation": reroute_71},
     )
 
-    reroute_51 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_42})
+    reroute_44 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_7})
 
-    transform_geometry_25 = nw.new_node(
+    transform_geometry_10 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": transform_geometry_24, "Rotation": reroute_51},
+        input_kwargs={"Geometry": transform_geometry_9, "Rotation": reroute_44},
     )
 
-    combine_xyz_24 = nw.new_node(Nodes.CombineXYZ)
+    combine_xyz_15 = nw.new_node(Nodes.CombineXYZ)
 
-    transform_geometry_27 = nw.new_node(
+    reroute_96 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_86})
+
+    transform_geometry_11 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_25,
-            "Translation": combine_xyz_24,
-            "Rotation": reroute_45,
+            "Geometry": transform_geometry_10,
+            "Translation": combine_xyz_15,
+            "Rotation": reroute_96,
         },
     )
 
-    store_named_attribute_10 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_27, "Name": "joint19", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_108 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_97})
 
-    reroute_46 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["HeadSideways"]}
-    )
+    combine_xyz_16 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": 1.0000})
 
-    combine_xyz_27 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": 1.0000})
+    combine_xyz_17 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
 
-    combine_xyz_28 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
-
-    switch_13 = nw.new_node(
+    switch_3 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_46,
-            "False": combine_xyz_27,
-            "True": combine_xyz_28,
+            "Switch": reroute_108,
+            "False": combine_xyz_16,
+            "True": combine_xyz_17,
         },
         attrs={"input_type": "VECTOR"},
     )
 
-    hinge_joint_new = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_4,
-            "Parent": store_named_attribute_7,
-            "Child": store_named_attribute_10,
-            "Axis": switch_13,
+            "Joint ID (do not set)": string_1,
+            "Joint Label": "twist button",
+            "Parent Label": "button base",
+            "Parent": reroute_90,
+            "Child Label": "button",
+            "Child": transform_geometry_11,
+            "Axis": switch_3,
+            "Value": -0.5000,
         },
     )
 
-    store_named_attribute_11 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new.outputs["Geometry"],
-            "Name": "switch11",
-        },
-        attrs={"data_type": "INT"},
+    string_2 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint21"})
+
+    combine_xyz_18 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={"X": group_input.outputs["ButtonH1"], "Y": 0.7000, "Z": 1.0000},
     )
 
-    string_5 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint21"})
+    cube_1 = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_18})
 
-    reroute_49 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_35})
-
-    combine_xyz_31 = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"X": reroute_49, "Y": 0.7000, "Z": 1.0000}
-    )
-
-    cube_1 = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz_31})
-
-    add_jointed_geometry_metadata_7 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": cube_1.outputs["Mesh"], "Label": "button"},
     )
 
-    reroute_47 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
-
-    combine_xyz_29 = nw.new_node(
+    combine_xyz_19 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": reroute_47, "Y": reroute_47, "Z": reroute_47},
+        input_kwargs={
+            "X": group_input.outputs["ButtonR1"],
+            "Y": group_input.outputs["ButtonR1"],
+            "Z": group_input.outputs["ButtonR1"],
+        },
     )
 
-    transform_geometry_31 = nw.new_node(
+    reroute_54 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_19})
+
+    transform_geometry_12 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_7,
+            "Geometry": add_jointed_geometry_metadata,
             "Rotation": (1.5708, 0.0000, 1.5708),
-            "Scale": combine_xyz_29,
+            "Scale": reroute_54,
         },
     )
 
-    reroute_52 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_45})
-
-    transform_geometry_35 = nw.new_node(
+    transform_geometry_13 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_31,
-            "Translation": switch_25,
-            "Rotation": reroute_52,
+            "Geometry": transform_geometry_12,
+            "Translation": switch,
+            "Rotation": switch_1,
         },
     )
 
-    store_named_attribute_12 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_35, "Name": "joint21"},
-        attrs={"data_type": "INT"},
-    )
+    u_switch = nw.new_node(nodegroup_u_switch().name)
 
-    nodegroup = nw.new_node(nodegroup_node_group().name)
-
-    add_jointed_geometry_metadata_8 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": nodegroup, "Label": "button"},
+        input_kwargs={"Geometry": u_switch, "Label": "button"},
     )
 
-    transform_geometry_29 = nw.new_node(
+    transform_geometry_14 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_8,
+            "Geometry": add_jointed_geometry_metadata,
             "Translation": (0.0000, -0.5000, -0.5000),
         },
     )
 
     multiply_7 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_47, 1: -0.5000},
+        input_kwargs={0: group_input.outputs["ButtonR1"], 1: -0.5000},
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_32 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_7})
+    combine_xyz_20 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_7})
 
-    reroute_48 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_34})
-
-    combine_xyz_30 = nw.new_node(
+    combine_xyz_21 = nw.new_node(
         Nodes.CombineXYZ,
-        input_kwargs={"X": reroute_48, "Y": reroute_48, "Z": reroute_48},
-    )
-
-    transform_geometry_30 = nw.new_node(
-        Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_29,
-            "Translation": combine_xyz_32,
-            "Rotation": (1.5708, 0.0000, 1.5708),
-            "Scale": combine_xyz_30,
+            "X": group_input.outputs["ButtonR2"],
+            "Y": group_input.outputs["ButtonR2"],
+            "Z": group_input.outputs["ButtonR2"],
         },
     )
 
-    transform_geometry_34 = nw.new_node(
+    reroute_55 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_21})
+
+    transform_geometry_15 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_30,
+            "Geometry": transform_geometry_14,
+            "Translation": combine_xyz_20,
+            "Rotation": (1.5708, 0.0000, 1.5708),
+            "Scale": reroute_55,
+        },
+    )
+
+    transform_geometry_16 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": transform_geometry_15,
             "Rotation": (0.0000, 3.1416, 0.0000),
         },
     )
 
-    transform_geometry_36 = nw.new_node(
+    transform_geometry_17 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": transform_geometry_34, "Rotation": reroute_52},
+        input_kwargs={"Geometry": transform_geometry_16, "Rotation": switch_1},
     )
 
-    store_named_attribute_13 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_36, "Name": "joint21", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    combine_xyz_22 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
 
-    reroute_53 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["HeadSideways"]}
-    )
+    combine_xyz_23 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": 1.0000})
 
-    combine_xyz_33 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": 1.0000})
-
-    combine_xyz_34 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": 1.0000})
-
-    switch_16 = nw.new_node(
+    switch_4 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_53,
-            "False": combine_xyz_33,
-            "True": combine_xyz_34,
+            "Switch": reroute_75,
+            "False": combine_xyz_22,
+            "True": combine_xyz_23,
         },
         attrs={"input_type": "VECTOR"},
     )
 
-    hinge_joint_new_1 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_001 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_5,
-            "Parent": store_named_attribute_12,
-            "Child": store_named_attribute_13,
-            "Axis": switch_16,
+            "Joint ID (do not set)": string_2,
+            "Joint Label": "switch button",
+            "Parent Label": "button base",
+            "Parent": transform_geometry_13,
+            "Child Label": "switch",
+            "Child": transform_geometry_17,
+            "Axis": switch_4,
+            "Value": -0.9000,
             "Min": -0.2500,
             "Max": 0.2500,
         },
     )
 
-    store_named_attribute_14 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_1.outputs["Geometry"],
-            "Name": "switch11",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
+    reroute_107 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_001.outputs["Geometry"]}
     )
 
-    switch_15 = nw.new_node(
+    switch_5 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": equal_1,
-            "False": store_named_attribute_11,
-            "True": store_named_attribute_14,
+            "False": hinge_joint.outputs["Geometry"],
+            "True": reroute_107,
         },
     )
 
-    store_named_attribute_15 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_15, "Name": "switch10", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_11 = nw.new_node(
+    switch_6 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={
-            "Switch": greater_equal,
-            "False": store_named_attribute_6,
-            "True": store_named_attribute_15,
-        },
+        input_kwargs={"Switch": greater_equal, "False": reroute_118, "True": switch_5},
     )
 
-    reroute_26 = nw.new_node(
+    reroute_32 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["ButtonMaterial"]}
     )
 
-    set_material = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": switch_11, "Material": reroute_26}
+    reroute_33 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_32})
+
+    reroute_67 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
+
+    set_material_2 = nw.new_node(
+        Nodes.SetMaterial, input_kwargs={"Geometry": switch_6, "Material": reroute_67}
     )
 
-    combine_xyz_14 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_24})
+    combine_xyz_24 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["RackHeight"]}
+    )
 
-    combine_xyz_13 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": reroute_24})
+    combine_xyz_25 = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"X": group_input.outputs["RackHeight"]}
+    )
 
     switch_7 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_25,
-            "False": combine_xyz_14,
-            "True": combine_xyz_13,
+            "Switch": reroute_3,
+            "False": combine_xyz_24,
+            "True": combine_xyz_25,
         },
         attrs={"input_type": "VECTOR"},
     )
 
-    transform_geometry_19 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": set_material, "Translation": switch_7},
-    )
+    reroute_65 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_7})
 
-    store_named_attribute_16 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_19, "Name": "switch9"},
-        attrs={"data_type": "INT"},
+    reroute_66 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_65})
+
+    reroute_101 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_66})
+
+    transform_geometry_18 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": set_material_2, "Translation": reroute_101},
     )
 
     string_nodes_v2 = nw.new_node(
@@ -3637,7 +3484,7 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    add_jointed_geometry_metadata_9 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": string_nodes_v2.outputs["Geometry"],
@@ -3645,97 +3492,73 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    set_material_11 = nw.new_node(
+    set_material_3 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_9,
-            "Material": group_input.outputs["ButtonMaterial"],
+            "Geometry": add_jointed_geometry_metadata,
+            "Material": reroute_33,
         },
     )
 
-    reroute_22 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_11})
+    reroute_80 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_3})
 
-    store_named_attribute_3 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_22, "Name": "switch9", "Value": 1},
-        attrs={"data_type": "INT"},
+    switch_8 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_115,
+            "False": transform_geometry_18,
+            "True": reroute_80,
+        },
+    )
+
+    join_geometry_2 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [reroute_112, switch_8]}
     )
 
     switch_9 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": equal,
-            "False": store_named_attribute_16,
-            "True": store_named_attribute_3,
+            "Switch": reroute_114,
+            "False": reroute_116,
+            "True": join_geometry_2,
         },
     )
 
-    store_named_attribute_17 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_9, "Name": "joint6", "Value": 1},
-        attrs={"data_type": "INT"},
+    reroute_14 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]}
     )
 
-    join_geometry_12 = nw.new_node(
+    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_14})
+
+    combine_xyz_26 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_15})
+
+    transform_geometry_19 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": switch_9, "Translation": combine_xyz_26},
+    )
+
+    join_geometry_3 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_2, store_named_attribute_17]},
+        input_kwargs={"Geometry": [join_geometry, transform_geometry_19]},
     )
 
-    store_named_attribute_18 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_12, "Name": "switch3", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_149 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_3})
 
-    switch_6 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_20,
-            "False": store_named_attribute_19,
-            "True": store_named_attribute_18,
-        },
-    )
-
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_6})
-
-    combine_xyz = nw.new_node(
-        Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Height"]}
-    )
-
-    transform_geometry = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": reroute, "Translation": combine_xyz}
-    )
-
-    store_named_attribute_84 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry, "Name": "joint38", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_2 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_83, store_named_attribute_84]},
-    )
-
-    store_named_attribute_85 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_2, "Name": "switch20"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_86 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_2, "Name": "joint39"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_150 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_149})
 
     greater_equal_1 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 2},
-        attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
+        input_kwargs={2: reroute_123, 3: 2},
+        attrs={"operation": "GREATER_EQUAL", "data_type": "INT"},
     )
 
-    string_8 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint26"})
+    string_3 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint26"})
+
+    reroute_19 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BaseButtonOffset"]}
+    )
+
+    reroute_20 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
 
     add = nw.new_node(
         Nodes.Math,
@@ -3745,374 +3568,359 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
+    reroute_16 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BaseRadius"]}
+    )
+
+    reroute_17 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_16})
+
     multiply_add_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: -2.0000, 1: add, 2: group_input.outputs["BaseRadius"]},
+        input_kwargs={0: -2.0000, 1: add, 2: reroute_17},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
+    reroute_46 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": add})
 
     multiply_add_4 = nw.new_node(
         Nodes.Math,
-        input_kwargs={
-            0: group_input.outputs["BaseButtonOffset"],
-            1: multiply_add_3,
-            2: add,
-        },
+        input_kwargs={0: reroute_20, 1: multiply_add_3, 2: reroute_46},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
-    multiply_8 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: group_input.outputs["BaseHeight"]},
-        attrs={"operation": "MULTIPLY"},
+    reroute_18 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["BaseHeight"]}
     )
 
-    combine_xyz_2 = nw.new_node(
+    multiply_8 = nw.new_node(
+        Nodes.Math, input_kwargs={0: reroute_18}, attrs={"operation": "MULTIPLY"}
+    )
+
+    combine_xyz_27 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": multiply_add_4, "Z": multiply_8}
     )
 
-    reroute_44 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_2})
-
-    reroute_41 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
-
-    transform_geometry_3 = nw.new_node(
+    transform_geometry_20 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": transform_geometry_5,
-            "Translation": reroute_44,
-            "Rotation": reroute_41,
+            "Geometry": reroute_61,
+            "Translation": combine_xyz_27,
+            "Rotation": combine_xyz_7,
         },
     )
 
-    store_named_attribute_40 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_3, "Name": "joint26"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_41 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_6, "Name": "joint26", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    sliding_joint_new_1 = nw.new_node(
-        nodegroup_sliding_joint_n_e_w().name,
+    sliding_joint_002 = nw.new_node(
+        nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_8,
-            "Parent": store_named_attribute_40,
-            "Child": store_named_attribute_41,
+            "Joint ID (do not set)": string_3,
+            "Joint Label": "button",
+            "Parent Label": "button base",
+            "Parent": transform_geometry_20,
+            "Child Label": "button",
+            "Child": transform_geometry_4,
             "Axis": (0.0000, 0.0000, -1.0000),
-            "Max": reroute_31,
+            "Value": -3.8000,
+            "Max": reroute_77,
         },
     )
 
-    store_named_attribute_42 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": sliding_joint_new_1.outputs["Geometry"],
-            "Name": "switch13",
-        },
-        attrs={"data_type": "INT"},
+    reroute_113 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": sliding_joint_002.outputs["Geometry"]}
     )
 
     equal_2 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 3},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        input_kwargs={2: reroute_110, 3: 3},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    string_9 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint27"})
+    string_4 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint27"})
+
+    transform_geometry_21 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": reroute_63,
+            "Translation": combine_xyz_27,
+            "Rotation": combine_xyz_7,
+        },
+    )
+
+    reroute_91 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_21}
+    )
+
+    hinge_joint_002 = nw.new_node(
+        nodegroup_hinge_joint().name,
+        input_kwargs={
+            "Joint ID (do not set)": string_4,
+            "Joint Label": "twist button",
+            "Parent Label": "button base",
+            "Parent": reroute_91,
+            "Child Label": "twist",
+            "Child": transform_geometry_10,
+        },
+    )
+
+    string_5 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint28"})
+
+    transform_geometry_22 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": transform_geometry_12,
+            "Translation": combine_xyz_27,
+            "Rotation": combine_xyz_7,
+        },
+    )
 
     transform_geometry_23 = nw.new_node(
         Nodes.Transform,
+        input_kwargs={"Geometry": transform_geometry_16, "Rotation": combine_xyz_7},
+    )
+
+    hinge_joint_003 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Geometry": transform_geometry_22,
-            "Translation": reroute_44,
-            "Rotation": reroute_41,
-        },
-    )
-
-    store_named_attribute_43 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_23, "Name": "joint27"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_44 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_25, "Name": "joint27", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    hinge_joint_new_2 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
-        input_kwargs={
-            "Joint ID (do not set)": string_9,
-            "Parent": store_named_attribute_43,
-            "Child": store_named_attribute_44,
-        },
-    )
-
-    store_named_attribute_45 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_2.outputs["Geometry"],
-            "Name": "switch14",
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    string_10 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint28"})
-
-    transform_geometry_33 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": transform_geometry_31,
-            "Translation": reroute_44,
-            "Rotation": reroute_41,
-        },
-    )
-
-    store_named_attribute_46 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_33, "Name": "joint28"},
-        attrs={"data_type": "INT"},
-    )
-
-    transform_geometry_32 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": transform_geometry_34, "Rotation": reroute_51},
-    )
-
-    store_named_attribute_47 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_32, "Name": "joint28", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    hinge_joint_new_3 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
-        input_kwargs={
-            "Joint ID (do not set)": string_10,
-            "Parent": store_named_attribute_46,
-            "Child": store_named_attribute_47,
+            "Joint ID (do not set)": string_5,
+            "Joint Label": "switch button",
+            "Parent Label": "switch base",
+            "Parent": transform_geometry_22,
+            "Child Label": "switch",
+            "Child": transform_geometry_23,
             "Axis": (1.0000, 0.0000, 0.0000),
+            "Value": -7.8000,
             "Min": -0.2500,
             "Max": 0.2500,
         },
     )
 
-    store_named_attribute_48 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_3.outputs["Geometry"],
-            "Name": "switch14",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
+    reroute_103 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_003.outputs["Geometry"]}
     )
 
-    switch_14 = nw.new_node(
+    switch_10 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": equal_2,
-            "False": store_named_attribute_45,
-            "True": store_named_attribute_48,
+            "False": hinge_joint_002.outputs["Geometry"],
+            "True": reroute_103,
         },
     )
 
-    store_named_attribute_49 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_14, "Name": "switch13", "Value": 1},
-        attrs={"data_type": "INT"},
+    switch_11 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": greater_equal_1,
+            "False": reroute_113,
+            "True": switch_10,
+        },
+    )
+
+    reroute_127 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_11})
+
+    reroute_124 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_67})
+
+    set_material_4 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": reroute_127, "Material": reroute_124},
+    )
+
+    reroute_136 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_4})
+
+    reroute_137 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_136})
+
+    join_geometry_4 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_3, reroute_137]}
     )
 
     switch_12 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": greater_equal_1,
-            "False": store_named_attribute_42,
-            "True": store_named_attribute_49,
+            "Switch": reroute_131,
+            "False": reroute_150,
+            "True": join_geometry_4,
         },
     )
 
-    set_material_1 = nw.new_node(
-        Nodes.SetMaterial, input_kwargs={"Geometry": switch_12, "Material": reroute_26}
+    string_6 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint36"})
+
+    reroute_47 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": cylinder.outputs["Mesh"]}
     )
 
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_1})
+    reroute_48 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_47})
 
-    store_named_attribute_87 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_1, "Name": "joint39", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_16 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_86, store_named_attribute_87]},
-    )
-
-    store_named_attribute_88 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_16, "Name": "switch20", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_21 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_64,
-            "False": store_named_attribute_85,
-            "True": store_named_attribute_88,
-        },
-    )
-
-    store_named_attribute_89 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_21, "Name": "switch19"},
-        attrs={"data_type": "INT"},
-    )
-
-    string_12 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint36"})
-
-    add_jointed_geometry_metadata_10 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": cylinder_1.outputs["Mesh"], "Label": "lamp_base"},
+        input_kwargs={"Geometry": reroute_48, "Label": "lamp_base"},
     )
 
-    set_material_2 = nw.new_node(
+    reroute_68 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_41})
+
+    set_material_5 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_10,
-            "Material": reroute_17,
+            "Geometry": add_jointed_geometry_metadata,
+            "Material": reroute_68,
         },
     )
 
-    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_2})
+    reroute_130 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_5})
 
-    store_named_attribute_39 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_15, "Name": "switch12"},
-        attrs={"data_type": "INT"},
+    join_geometry_5 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_4, set_material_5]}
     )
 
-    store_named_attribute_50 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_1, "Name": "joint25"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_51 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_15, "Name": "joint25", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_8 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_50, store_named_attribute_51]},
-    )
-
-    store_named_attribute_52 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_8, "Name": "switch12", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_20 = nw.new_node(
+    switch_13 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_64,
-            "False": store_named_attribute_39,
-            "True": store_named_attribute_52,
+            "Switch": reroute_39,
+            "False": reroute_130,
+            "True": join_geometry_5,
         },
     )
 
-    store_named_attribute_81 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_20, "Name": "joint36"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_132 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_1})
 
-    store_named_attribute_78 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry, "Name": "joint37"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_133 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_132})
 
-    reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_4})
-
-    store_named_attribute_79 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_18, "Name": "joint37", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_9 = nw.new_node(
+    join_geometry_6 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_78, store_named_attribute_79]},
+        input_kwargs={"Geometry": [transform_geometry_19, reroute_133]},
     )
 
-    store_named_attribute_80 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_9, "Name": "joint36", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    hinge_joint_new_4 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_004 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_12,
-            "Parent": store_named_attribute_81,
-            "Child": store_named_attribute_80,
+            "Joint ID (do not set)": string_6,
+            "Joint Label": "lamp z rotation",
+            "Parent Label": "lamp base",
+            "Parent": switch_13,
+            "Child Label": "lamp top",
+            "Child": join_geometry_6,
         },
     )
 
-    store_named_attribute_82 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_4.outputs["Geometry"],
-            "Name": "switch19",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
+    reroute_155 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_004.outputs["Geometry"]}
     )
 
-    switch_3 = nw.new_node(
+    switch_14 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_4,
-            "False": store_named_attribute_89,
-            "True": store_named_attribute_82,
-        },
+        input_kwargs={"Switch": reroute_37, "False": switch_12, "True": reroute_155},
     )
 
-    store_named_attribute_90 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_3, "Name": "switch16"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_164 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_14})
 
-    string_2 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint4"})
+    reroute_145 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_37})
 
-    reroute_6 = nw.new_node(
+    reroute_142 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_131})
+
+    string_7 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint4"})
+
+    reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Radius"]}
     )
 
+    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
+
     multiply_9 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_6, 1: 2.4000},
+        input_kwargs={0: group_input.outputs["Radius"], 1: 2.4000},
         attrs={"operation": "MULTIPLY"},
     )
 
-    cylinder_7 = nw.new_node(
+    cylinder_6 = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_6, "Depth": multiply_9},
+        input_kwargs={"Radius": reroute_1, "Depth": multiply_9},
     )
 
-    transform_geometry_7 = nw.new_node(
+    transform_geometry_24 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": cylinder_6.outputs["Mesh"],
+            "Rotation": (1.5708, 0.0000, 0.0000),
+        },
+    )
+
+    add_jointed_geometry_metadata = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={"Geometry": transform_geometry_24, "Label": "bar"},
+    )
+
+    set_material_6 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": add_jointed_geometry_metadata,
+            "Material": reroute_69,
+        },
+    )
+
+    reroute_98 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_6})
+
+    reroute_99 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_98})
+
+    add_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["FirstBarLength"],
+            1: group_input.outputs["FirstBarExtension"],
+        },
+    )
+
+    cylinder_8 = nw.new_node(
+        "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_1, "Depth": add_1}
+    )
+
+    reroute_64 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": cylinder_8.outputs["Mesh"]}
+    )
+
+    reroute_24 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["FirstBarExtension"]}
+    )
+
+    reroute_25 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_24})
+
+    multiply_10 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["FirstBarLength"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_add_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_25, 1: -0.5000, 2: multiply_10},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
+
+    combine_xyz_28 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_5})
+
+    transform_geometry_26 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": reroute_64, "Translation": combine_xyz_28},
+    )
+
+    add_jointed_geometry_metadata = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={"Geometry": transform_geometry_26, "Label": "bar"},
+    )
+
+    set_material_8 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={
+            "Geometry": add_jointed_geometry_metadata,
+            "Material": reroute_87,
+        },
+    )
+
+    reroute_111 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_8})
+
+    cylinder_7 = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Radius": reroute_1, "Depth": multiply_9},
+    )
+
+    transform_geometry_25 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
             "Geometry": cylinder_7.outputs["Mesh"],
@@ -4120,244 +3928,153 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    add_jointed_geometry_metadata_11 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": transform_geometry_7, "Label": "bar"},
-    )
-
-    reroute_27 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["StandMaterial"]}
-    )
-
-    set_material_6 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_11,
-            "Material": reroute_27,
-        },
-    )
-
-    store_named_attribute_22 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_6, "Name": "joint4"},
-        attrs={"data_type": "INT"},
-    )
-
-    cylinder_5 = nw.new_node(
-        "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_6, "Depth": multiply_9},
-    )
-
-    transform_geometry_2 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cylinder_5.outputs["Mesh"],
-            "Rotation": (1.5708, 0.0000, 0.0000),
-        },
-    )
-
-    add_jointed_geometry_metadata_12 = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": transform_geometry_2, "Label": "bar"},
-    )
-
-    set_material_5 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_12,
-            "Material": reroute_27,
-        },
-    )
-
-    store_named_attribute = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_5, "Name": "joint5"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_9 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["FirstBarLength"]}
-    )
-
-    reroute_8 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["FirstBarExtension"]}
-    )
-
-    add_1 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_9, 1: reroute_8})
-
-    cylinder_6 = nw.new_node(
-        "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_6, "Depth": add_1}
-    )
-
-    multiply_10 = nw.new_node(
-        Nodes.Math, input_kwargs={0: reroute_9}, attrs={"operation": "MULTIPLY"}
-    )
-
-    multiply_add_5 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: reroute_8, 1: -0.5000, 2: multiply_10},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_5})
-
-    transform_geometry_8 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": cylinder_6.outputs["Mesh"],
-            "Translation": combine_xyz_7,
-        },
-    )
-
-    add_jointed_geometry_metadata_13 = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": transform_geometry_8, "Label": "bar"},
+        input_kwargs={"Geometry": transform_geometry_25, "Label": "bar"},
     )
 
     set_material_7 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_13,
-            "Material": reroute_27,
+            "Geometry": add_jointed_geometry_metadata,
+            "Material": reroute_69,
         },
     )
 
-    store_named_attribute_1 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": set_material_7, "Name": "joint5", "Value": 1},
-        attrs={"data_type": "INT"},
+    reroute_93 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_7})
+
+    reroute_94 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_93})
+
+    reroute_121 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_94})
+
+    reroute_22 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["FirstBarLength"]}
     )
 
-    combine_xyz_9 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_9})
+    reroute_23 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_22})
 
-    transform_geometry_9 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": reroute, "Translation": combine_xyz_9},
+    combine_xyz_29 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_23})
+
+    reroute_117 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_29})
+
+    transform_geometry_27 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": switch_9, "Translation": reroute_117}
     )
 
-    store_named_attribute_20 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_9, "Name": "joint5", "Value": 2},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry = nw.new_node(
+    join_geometry_7 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                store_named_attribute,
-                store_named_attribute_1,
-                store_named_attribute_20,
-            ]
-        },
+        input_kwargs={"Geometry": [reroute_111, reroute_121, transform_geometry_27]},
     )
 
-    combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_9})
+    reroute_50 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_9})
 
-    transform_geometry_10 = nw.new_node(
+    reroute_51 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_50})
+
+    combine_xyz_30 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": reroute_51})
+
+    transform_geometry_28 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": join_geometry, "Translation": combine_xyz_5},
+        input_kwargs={"Geometry": join_geometry_7, "Translation": combine_xyz_30},
     )
-
-    store_named_attribute_21 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_10, "Name": "joint4", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_65 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
 
     greater_equal_2 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 2},
-        attrs={"data_type": "INT", "operation": "GREATER_EQUAL"},
+        input_kwargs={2: reroute_79, 3: 2},
+        attrs={"operation": "GREATER_EQUAL", "data_type": "INT"},
     )
+
+    reroute_88 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_2}
+    )
+
+    reroute_89 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_88})
 
     equal_3 = nw.new_node(
         Nodes.Compare,
-        input_kwargs={2: reroute_54, 3: 3},
-        attrs={"data_type": "INT", "operation": "EQUAL"},
+        input_kwargs={2: reroute_31, 3: 3},
+        attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
-    switch_18 = nw.new_node(
+    switch_15 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
             "Switch": equal_3,
-            "False": transform_geometry_26,
-            "True": transform_geometry_35,
+            "False": transform_geometry_7,
+            "True": transform_geometry_13,
         },
+    )
+
+    switch_16 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": greater_equal_2,
+            "False": reroute_89,
+            "True": switch_15,
+        },
+    )
+
+    transform_geometry_29 = nw.new_node(
+        Nodes.Transform, input_kwargs={"Geometry": switch_16, "Translation": reroute_66}
+    )
+
+    reroute_49 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": string_nodes_v2.outputs["Parent"]}
     )
 
     switch_17 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": greater_equal_2,
-            "False": transform_geometry_20,
-            "True": switch_18,
+            "Switch": equal,
+            "False": transform_geometry_29,
+            "True": reroute_49,
         },
     )
 
-    transform_geometry_38 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": switch_17, "Translation": switch_7}
-    )
-
-    reroute_61 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": transform_geometry_38}
-    )
-
-    reroute_62 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": string_nodes_v2.outputs["Parent"]}
-    )
-
-    switch_19 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={"Switch": equal, "False": reroute_61, "True": reroute_62},
-    )
-
-    join_geometry_15 = nw.new_node(
-        Nodes.JoinGeometry, input_kwargs={"Geometry": [reroute_65, switch_19]}
-    )
-
-    switch_24 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["ButtonOnLampShade"],
-            "False": reroute_65,
-            "True": join_geometry_15,
-        },
-    )
-
-    reroute_58 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_24})
-
-    transform_geometry_37 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={"Geometry": reroute_58, "Translation": combine_xyz_9},
-    )
-
-    join_geometry_14 = nw.new_node(
+    join_geometry_8 = nw.new_node(
         Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [switch_17, add_jointed_geometry_metadata]},
+    )
+
+    switch_18 = nw.new_node(
+        Nodes.Switch,
         input_kwargs={
-            "Geometry": [transform_geometry_37, set_material_7, set_material_5]
+            "Switch": reroute_29,
+            "False": reroute_106,
+            "True": join_geometry_8,
         },
     )
+
+    transform_geometry_30 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": switch_18, "Translation": combine_xyz_29},
+    )
+
+    reroute_104 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_8})
+
+    join_geometry_9 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry_30, reroute_94, reroute_104]},
+    )
+
+    reroute_125 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_9})
 
     bounding_box = nw.new_node(
-        Nodes.BoundingBox, input_kwargs={"Geometry": join_geometry_14}
+        Nodes.BoundingBox, input_kwargs={"Geometry": reroute_125}
     )
 
-    combine_xyz_3 = nw.new_node(
+    combine_xyz_31 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": -0.5000, "Y": -0.5000, "Z": -0.5000}
     )
 
     multiply_11 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: bounding_box.outputs["Min"], 1: combine_xyz_3},
+        input_kwargs={0: bounding_box.outputs["Min"], 1: combine_xyz_31},
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_12 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: bounding_box.outputs["Max"], 1: combine_xyz_3},
+        input_kwargs={0: bounding_box.outputs["Max"], 1: combine_xyz_31},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -4369,366 +4086,290 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
-    hinge_joint_new_5 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_005 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_2,
-            "Parent": store_named_attribute_22,
-            "Child": store_named_attribute_21,
+            "Joint ID (do not set)": string_7,
+            "Joint Label": "lamp second joint rotation",
+            "Parent Label": "rotation axle",
+            "Parent": reroute_99,
+            "Child Label": "lamp top",
+            "Child": transform_geometry_28,
             "Position": add_2.outputs["Vector"],
             "Axis": (0.0000, 1.0000, 0.0000),
+            "Value": 5.7000,
         },
     )
 
-    transform_geometry_11 = nw.new_node(
+    reroute_128 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_26})
+
+    reroute_129 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_128})
+
+    transform_geometry_31 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": hinge_joint_new_5.outputs["Geometry"],
-            "Translation": combine_xyz,
+            "Geometry": hinge_joint_005.outputs["Geometry"],
+            "Translation": reroute_129,
         },
     )
 
-    store_named_attribute_70 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_11, "Name": "joint35"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_134 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry})
 
-    store_named_attribute_71 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_2, "Name": "joint35", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_135 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_134})
 
-    join_geometry_3 = nw.new_node(
+    join_geometry_10 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_70, store_named_attribute_71]},
+        input_kwargs={"Geometry": [transform_geometry_31, reroute_135]},
     )
 
-    store_named_attribute_75 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_3, "Name": "switch18"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_161 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_10})
 
-    store_named_attribute_72 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_3, "Name": "joint34"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_153 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_137})
 
-    store_named_attribute_73 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_1, "Name": "joint34", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_18 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_72, store_named_attribute_73]},
-    )
-
-    store_named_attribute_74 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_18, "Name": "switch18", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_23 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_64,
-            "False": store_named_attribute_75,
-            "True": store_named_attribute_74,
-        },
-    )
-
-    store_named_attribute_76 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_23, "Name": "switch17"},
-        attrs={"data_type": "INT"},
-    )
-
-    string_11 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint32"})
-
-    store_named_attribute_68 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_20, "Name": "joint32"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_65 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_11, "Name": "joint33"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_66 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_18, "Name": "joint33", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_154 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_153})
 
     join_geometry_11 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_10, reroute_154]}
+    )
+
+    switch_19 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
+            "Switch": reroute_142,
+            "False": reroute_161,
+            "True": join_geometry_11,
+        },
+    )
+
+    string_8 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint32"})
+
+    reroute_152 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_13})
+
+    reroute_139 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_133})
+
+    reroute_140 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_139})
+
+    join_geometry_12 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_65, store_named_attribute_66]},
+        input_kwargs={"Geometry": [transform_geometry_31, reroute_140]},
     )
 
-    store_named_attribute_67 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_11, "Name": "joint32", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    hinge_joint_new_6 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_006 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_11,
-            "Parent": store_named_attribute_68,
-            "Child": store_named_attribute_67,
+            "Joint ID (do not set)": string_8,
+            "Joint Label": "lamp z rotation",
+            "Parent Label": "lamp base",
+            "Parent": reroute_152,
+            "Child Label": "lamp top",
+            "Child": join_geometry_12,
+            "Value": 3.4000,
         },
     )
 
-    store_named_attribute_69 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_6.outputs["Geometry"],
-            "Name": "switch17",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
+    reroute_166 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_006.outputs["Geometry"]}
     )
 
-    switch_5 = nw.new_node(
+    switch_20 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_4,
-            "False": store_named_attribute_76,
-            "True": store_named_attribute_69,
-        },
+        input_kwargs={"Switch": reroute_145, "False": switch_19, "True": reroute_166},
     )
 
-    reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_5})
-
-    store_named_attribute_77 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_3, "Name": "switch16", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    switch_1 = nw.new_node(
+    switch_21 = nw.new_node(
         Nodes.Switch,
-        input_kwargs={
-            "Switch": group_input.outputs["SingleHinge"],
-            "False": store_named_attribute_90,
-            "True": store_named_attribute_77,
-        },
+        input_kwargs={"Switch": reroute_11, "False": reroute_164, "True": switch_20},
     )
 
-    store_named_attribute_91 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_1, "Name": "switch0"},
-        attrs={"data_type": "INT"},
-    )
+    reroute_167 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_21})
 
-    reroute_13 = nw.new_node(
+    reroute_162 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_145})
+
+    reroute_160 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_142})
+
+    reroute_26 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarSliding"]}
     )
 
-    reroute_14 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_13})
+    reroute_27 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_26})
 
-    string_1 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint2"})
-
-    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
+    string_9 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint2"})
 
     multiply_13 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_7, 1: 2.4000},
+        input_kwargs={0: group_input.outputs["Radius"], 1: 2.4000},
         attrs={"operation": "MULTIPLY"},
     )
 
-    cylinder_10 = nw.new_node(
-        "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_7, "Depth": multiply_13},
-    )
-
-    reroute_28 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_27})
-
-    set_material_10 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={"Geometry": cylinder_10.outputs["Mesh"], "Material": reroute_28},
-    )
-
-    add_jointed_geometry_metadata_14 = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": set_material_10, "Label": "bar"},
-    )
-
-    transform_geometry_13 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_14,
-            "Rotation": (1.5708, 0.0000, 0.0000),
-        },
-    )
-
-    reroute_12 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": transform_geometry_13}
-    )
-
-    store_named_attribute_27 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_12, "Name": "joint2"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_10 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarLength"]}
-    )
-
-    combine_xyz_10 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_10})
-
-    transform_geometry_15 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": hinge_joint_new_5.outputs["Geometry"],
-            "Translation": combine_xyz_10,
-        },
-    )
-
-    store_named_attribute_23 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_15, "Name": "joint3"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_11 = nw.new_node(
-        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarExtension"]}
-    )
-
-    add_3 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_10, 1: reroute_11})
-
     cylinder_9 = nw.new_node(
-        "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_7, "Depth": add_3}
-    )
-
-    set_material_8 = nw.new_node(
-        Nodes.SetMaterial,
-        input_kwargs={"Geometry": cylinder_9.outputs["Mesh"], "Material": reroute_28},
-    )
-
-    add_jointed_geometry_metadata_15 = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={"Geometry": set_material_8, "Label": "bar"},
-    )
-
-    multiply_14 = nw.new_node(
-        Nodes.Math, input_kwargs={0: reroute_10}, attrs={"operation": "MULTIPLY"}
-    )
-
-    multiply_add_6 = nw.new_node(
-        Nodes.Math,
-        input_kwargs={0: reroute_11, 1: -0.5000, 2: multiply_14},
-        attrs={"operation": "MULTIPLY_ADD"},
-    )
-
-    combine_xyz_12 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_6})
-
-    transform_geometry_14 = nw.new_node(
-        Nodes.Transform,
-        input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_15,
-            "Translation": combine_xyz_12,
-        },
-    )
-
-    store_named_attribute_24 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_14, "Name": "joint3", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    cylinder_8 = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Radius": reroute_7, "Depth": multiply_13},
+        input_kwargs={"Radius": reroute_1, "Depth": multiply_13},
     )
 
     set_material_9 = nw.new_node(
         Nodes.SetMaterial,
-        input_kwargs={"Geometry": cylinder_8.outputs["Mesh"], "Material": reroute_28},
+        input_kwargs={"Geometry": cylinder_9.outputs["Mesh"], "Material": reroute_43},
     )
 
-    add_jointed_geometry_metadata_16 = nw.new_node(
+    add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": set_material_9, "Label": "bar"},
     )
 
-    transform_geometry_12 = nw.new_node(
+    reroute_82 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
+    )
+
+    transform_geometry_32 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": reroute_82, "Rotation": (1.5708, 0.0000, 0.0000)},
+    )
+
+    cylinder_11 = nw.new_node(
+        "GeometryNodeMeshCylinder",
+        input_kwargs={"Radius": reroute_1, "Depth": multiply_13},
+    )
+
+    set_material_11 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": cylinder_11.outputs["Mesh"], "Material": reroute_43},
+    )
+
+    add_jointed_geometry_metadata = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={"Geometry": set_material_11, "Label": "bar"},
+    )
+
+    reroute_83 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
+    )
+
+    transform_geometry_35 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": reroute_83, "Rotation": (1.5708, 0.0000, 0.0000)},
+    )
+
+    reroute_146 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_35}
+    )
+
+    reroute_34 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarLength"]}
+    )
+
+    reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_34})
+
+    combine_xyz_32 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_35})
+
+    transform_geometry_33 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": add_jointed_geometry_metadata_16,
-            "Rotation": (1.5708, 0.0000, 0.0000),
+            "Geometry": hinge_joint_005.outputs["Geometry"],
+            "Translation": combine_xyz_32,
         },
     )
 
-    store_named_attribute_25 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_12, "Name": "joint3", "Value": 2},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_4 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={
-            "Geometry": [
-                store_named_attribute_23,
-                store_named_attribute_24,
-                store_named_attribute_25,
-            ]
-        },
-    )
-
-    multiply_15 = nw.new_node(
+    add_3 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: multiply_13, 1: -1.0000},
+        input_kwargs={
+            0: group_input.outputs["SecondBarLength"],
+            1: group_input.outputs["SecondBarExtension"],
+        },
+    )
+
+    cylinder_10 = nw.new_node(
+        "GeometryNodeMeshCylinder", input_kwargs={"Radius": reroute_1, "Depth": add_3}
+    )
+
+    set_material_10 = nw.new_node(
+        Nodes.SetMaterial,
+        input_kwargs={"Geometry": cylinder_10.outputs["Mesh"], "Material": reroute_43},
+    )
+
+    add_jointed_geometry_metadata = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={"Geometry": set_material_10, "Label": "bar"},
+    )
+
+    reroute_84 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata}
+    )
+
+    reroute_8 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["SecondBarExtension"]}
+    )
+
+    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
+    multiply_14 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: group_input.outputs["SecondBarLength"]},
         attrs={"operation": "MULTIPLY"},
     )
 
-    combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_15})
+    multiply_add_6 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_9, 1: -0.5000, 2: multiply_14},
+        attrs={"operation": "MULTIPLY_ADD"},
+    )
 
-    transform_geometry_16 = nw.new_node(
+    combine_xyz_33 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_add_6})
+
+    reroute_72 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_33})
+
+    transform_geometry_34 = nw.new_node(
         Nodes.Transform,
-        input_kwargs={"Geometry": join_geometry_4, "Translation": combine_xyz_6},
+        input_kwargs={"Geometry": reroute_84, "Translation": reroute_72},
     )
 
-    store_named_attribute_26 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_16, "Name": "joint2", "Value": 1},
-        attrs={"data_type": "INT"},
+    reroute_144 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_34}
     )
 
-    join_geometry_6 = nw.new_node(
+    join_geometry_13 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [transform_geometry_14, transform_geometry_12]},
+        input_kwargs={"Geometry": [reroute_146, transform_geometry_33, reroute_144]},
+    )
+
+    reroute_52 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_13})
+
+    reroute_53 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_52})
+
+    multiply_15 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_53, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_34 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_15})
+
+    transform_geometry_36 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": join_geometry_13, "Translation": combine_xyz_34},
+    )
+
+    join_geometry_14 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry_34, transform_geometry_35]},
     )
 
     bounding_box_1 = nw.new_node(
-        Nodes.BoundingBox, input_kwargs={"Geometry": join_geometry_6}
+        Nodes.BoundingBox, input_kwargs={"Geometry": join_geometry_14}
     )
 
-    combine_xyz_4 = nw.new_node(
+    combine_xyz_35 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": -0.5000, "Y": -0.5000, "Z": -0.5000}
     )
 
     multiply_16 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: bounding_box_1.outputs["Min"], 1: combine_xyz_4},
+        input_kwargs={0: bounding_box_1.outputs["Min"], 1: combine_xyz_35},
         attrs={"operation": "MULTIPLY"},
     )
 
     multiply_17 = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: bounding_box_1.outputs["Max"], 1: combine_xyz_4},
+        input_kwargs={0: bounding_box_1.outputs["Max"], 1: combine_xyz_35},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -4740,289 +4381,196 @@ def geometry_nodes(nw: NodeWrangler):
         },
     )
 
+    reroute_57 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
+
     multiply_18 = nw.new_node(
-        Nodes.Math, input_kwargs={0: reroute_7}, attrs={"operation": "MULTIPLY"}
+        Nodes.Math, input_kwargs={0: reroute_57}, attrs={"operation": "MULTIPLY"}
     )
 
-    combine_xyz_11 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_18})
+    combine_xyz_36 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_18})
 
     subtract = nw.new_node(
         Nodes.VectorMath,
-        input_kwargs={0: add_4.outputs["Vector"], 1: combine_xyz_11},
+        input_kwargs={0: add_4.outputs["Vector"], 1: combine_xyz_36},
         attrs={"operation": "SUBTRACT"},
     )
 
-    hinge_joint_new_7 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_007 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
-            "Parent": store_named_attribute_27,
-            "Child": store_named_attribute_26,
+            "Joint ID (do not set)": string_9,
+            "Joint Label": "lamp first joint rotation",
+            "Parent Label": "rotation axle",
+            "Parent": transform_geometry_32,
+            "Child Label": "lamp top",
+            "Child": transform_geometry_36,
             "Position": subtract.outputs["Vector"],
             "Axis": (0.0000, 1.0000, 0.0000),
+            "Value": -0.3000,
         },
     )
 
-    store_named_attribute_28 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_7.outputs["Geometry"],
-            "Name": "switch2",
-        },
-        attrs={"data_type": "INT"},
+    reroute_165 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_007.outputs["Geometry"]}
     )
 
-    string_6 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint22"})
+    string_10 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint22"})
 
-    store_named_attribute_34 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_13, "Name": "joint22"},
-        attrs={"data_type": "INT"},
+    reroute_156 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_32}
     )
 
-    string_7 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint23"})
+    reroute_157 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_156})
 
-    store_named_attribute_32 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_12, "Name": "joint23"},
-        attrs={"data_type": "INT"},
+    string_11 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint23"})
+
+    reroute_143 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_35}
     )
 
-    store_named_attribute_29 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_15, "Name": "joint24"},
-        attrs={"data_type": "INT"},
+    reroute_147 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": transform_geometry_34}
     )
 
-    store_named_attribute_30 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_14, "Name": "joint24", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_7 = nw.new_node(
+    join_geometry_15 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_29, store_named_attribute_30]},
+        input_kwargs={"Geometry": [reroute_147, transform_geometry_33]},
     )
 
-    store_named_attribute_31 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_7, "Name": "joint23", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
+    reroute_138 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_35})
 
     multiply_add_7 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_10, 1: -1.0000, 2: 0.0500},
+        input_kwargs={0: reroute_138, 1: -1.0000, 2: 0.0500},
         attrs={"operation": "MULTIPLY_ADD"},
     )
 
+    reroute_60 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_9})
+
     subtract_1 = nw.new_node(
         Nodes.Math,
-        input_kwargs={0: reroute_11, 1: 0.0500},
+        input_kwargs={0: reroute_60, 1: 0.0500},
         attrs={"operation": "SUBTRACT"},
     )
 
-    sliding_joint_new_2 = nw.new_node(
-        nodegroup_sliding_joint_n_e_w().name,
+    sliding_joint_003 = nw.new_node(
+        nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_7,
-            "Parent": store_named_attribute_32,
-            "Child": store_named_attribute_31,
+            "Joint ID (do not set)": string_11,
+            "Joint Label": "sliding bar",
+            "Parent Label": "hinge",
+            "Parent": reroute_143,
+            "Child Label": "lamp top",
+            "Child": join_geometry_15,
             "Min": multiply_add_7,
             "Max": subtract_1,
         },
     )
 
-    transform_geometry_18 = nw.new_node(
+    reroute_148 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_34})
+
+    transform_geometry_37 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
-            "Geometry": sliding_joint_new_2.outputs["Geometry"],
-            "Translation": combine_xyz_6,
+            "Geometry": sliding_joint_003.outputs["Geometry"],
+            "Translation": reroute_148,
         },
     )
 
-    store_named_attribute_33 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_18, "Name": "joint22", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    hinge_joint_new_8 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
+    hinge_joint_008 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_6,
-            "Parent": store_named_attribute_34,
-            "Child": store_named_attribute_33,
+            "Joint ID (do not set)": string_10,
+            "Joint Label": "lamp first joint rotation",
+            "Parent Label": "rotation axle",
+            "Parent": reroute_157,
+            "Child Label": "lamp top",
+            "Child": transform_geometry_37,
             "Axis": (0.0000, 1.0000, 0.0000),
+            "Value": 4.9000,
         },
-    )
-
-    store_named_attribute_35 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_8.outputs["Geometry"],
-            "Name": "switch2",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    switch_2 = nw.new_node(
-        Nodes.Switch,
-        input_kwargs={
-            "Switch": reroute_14,
-            "False": store_named_attribute_28,
-            "True": store_named_attribute_35,
-        },
-    )
-
-    transform_geometry_17 = nw.new_node(
-        Nodes.Transform, input_kwargs={"Geometry": switch_2, "Translation": combine_xyz}
-    )
-
-    store_named_attribute_55 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_17, "Name": "joint30"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_58 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_2, "Name": "joint30", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_5 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_55, store_named_attribute_58]},
-    )
-
-    store_named_attribute_62 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_5, "Name": "switch15"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_59 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_5, "Name": "joint29"},
-        attrs={"data_type": "INT"},
-    )
-
-    reroute_63 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
-
-    store_named_attribute_60 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_63, "Name": "joint29", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_17 = nw.new_node(
-        Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_59, store_named_attribute_60]},
-    )
-
-    store_named_attribute_61 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_17, "Name": "switch15", "Value": 1},
-        attrs={"data_type": "INT"},
     )
 
     switch_22 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_64,
-            "False": store_named_attribute_62,
-            "True": store_named_attribute_61,
+            "Switch": reroute_27,
+            "False": reroute_165,
+            "True": hinge_joint_008.outputs["Geometry"],
         },
     )
 
-    store_named_attribute_63 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_22, "Name": "switch1"},
-        attrs={"data_type": "INT"},
+    reroute_141 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_129})
+
+    transform_geometry_38 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": switch_22, "Translation": reroute_141},
     )
 
-    string = nw.new_node("FunctionNodeInputString", attrs={"string": "joint0"})
+    reroute_158 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_135})
 
-    store_named_attribute_53 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": switch_20, "Name": "joint0"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_36 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": transform_geometry_17, "Name": "joint1"},
-        attrs={"data_type": "INT"},
-    )
-
-    store_named_attribute_37 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_18, "Name": "joint1", "Value": 1},
-        attrs={"data_type": "INT"},
-    )
-
-    join_geometry_10 = nw.new_node(
+    join_geometry_16 = nw.new_node(
         Nodes.JoinGeometry,
-        input_kwargs={"Geometry": [store_named_attribute_36, store_named_attribute_37]},
+        input_kwargs={"Geometry": [transform_geometry_38, reroute_158]},
     )
 
-    store_named_attribute_38 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": join_geometry_10, "Name": "joint0", "Value": 1},
-        attrs={"data_type": "INT"},
+    reroute_168 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": join_geometry_16})
+
+    reroute_163 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_154})
+
+    join_geometry_17 = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [join_geometry_16, reroute_163]}
     )
 
-    hinge_joint_new_9 = nw.new_node(
-        nodegroup_hinge_joint_n_e_w().name,
-        input_kwargs={
-            "Joint ID (do not set)": string,
-            "Parent": store_named_attribute_53,
-            "Child": store_named_attribute_38,
-        },
-    )
-
-    store_named_attribute_54 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={
-            "Geometry": hinge_joint_new_9.outputs["Geometry"],
-            "Name": "switch1",
-            "Value": 1,
-        },
-        attrs={"data_type": "INT"},
-    )
-
-    switch_4 = nw.new_node(
+    switch_23 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
-            "Switch": reroute_4,
-            "False": store_named_attribute_63,
-            "True": store_named_attribute_54,
+            "Switch": reroute_160,
+            "False": reroute_168,
+            "True": join_geometry_17,
         },
     )
 
-    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_4})
+    string_12 = nw.new_node("FunctionNodeInputString", attrs={"string": "joint0"})
 
-    store_named_attribute_64 = nw.new_node(
-        Nodes.StoreNamedAttribute,
-        input_kwargs={"Geometry": reroute_5, "Name": "switch0", "Value": 1},
-        attrs={"data_type": "INT"},
+    reroute_151 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_13})
+
+    reroute_159 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_140})
+
+    join_geometry_18 = nw.new_node(
+        Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [transform_geometry_38, reroute_159]},
     )
 
-    switch = nw.new_node(
-        Nodes.Switch,
+    hinge_joint_009 = nw.new_node(
+        nodegroup_hinge_joint().name,
         input_kwargs={
-            "Switch": group_input.outputs["DoubleHinge"],
-            "False": store_named_attribute_91,
-            "True": store_named_attribute_64,
+            "Joint ID (do not set)": string_12,
+            "Joint Label": "lamp z rotation",
+            "Parent Label": "lamp base",
+            "Parent": reroute_151,
+            "Child Label": "lamp top",
+            "Child": join_geometry_18,
         },
+    )
+
+    reroute_169 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": hinge_joint_009.outputs["Geometry"]}
+    )
+
+    switch_24 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={"Switch": reroute_162, "False": switch_23, "True": reroute_169},
+    )
+
+    switch_25 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={"Switch": reroute_13, "False": reroute_167, "True": switch_24},
     )
 
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": switch},
+        input_kwargs={"Geometry": switch_25},
         attrs={"is_active_output": True},
     )
 
@@ -5379,8 +4927,106 @@ def shader_fine_knit_fabric_colored(color):
 class LampFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
-        self.sim_blueprint = blueprint_path_completion("lamp.json")
         self.type = None
+
+    @classmethod
+    @gin.configurable(module="LampFactory")
+    def sample_joint_parameters(
+        cls,
+        lamp_first_joint_rotation_stiffness_min: float = 15000,
+        lamp_first_joint_rotation_stiffness_max: float = 25000,
+        lamp_first_joint_rotation_damping_min: float = 50000,
+        lamp_first_joint_rotation_damping_max: float = 60000,
+        lamp_z_rotation_stiffness_min: float = 0.0,
+        lamp_z_rotation_stiffness_max: float = 0.0,
+        lamp_z_rotation_damping_min: float = 10.0,
+        lamp_z_rotation_damping_max: float = 20.0,
+        twist_button_stiffness_min: float = 0.0,
+        twist_button_stiffness_max: float = 0.0,
+        twist_button_damping_min: float = 2.0,
+        twist_button_damping_max: float = 5.0,
+        pullstring_stiffness_min: float = 2.0,
+        pullstring_stiffness_max: float = 5.0,
+        pullstring_damping_min: float = 2.0,
+        pullstring_damping_max: float = 5.0,
+        switch_button_stiffness_min: float = 0.0,
+        switch_button_stiffness_max: float = 0.0,
+        switch_button_damping_min: float = 0.0,
+        switch_button_damping_max: float = 0.0,
+        lamp_second_joint_rotation_stiffness_min: float = 15000,
+        lamp_second_joint_rotation_stiffness_max: float = 25000,
+        lamp_second_joint_rotation_damping_min: float = 40000,
+        lamp_second_joint_rotation_damping_max: float = 60000,
+        sliding_bar_stiffness_min: float = 0.0,
+        sliding_bar_stiffness_max: float = 0.0,
+        sliding_bar_damping_min: float = 50000,
+        sliding_bar_damping_max: float = 60000,
+        button_stiffness_min: float = 20.0,
+        button_stiffness_max: float = 30.0,
+        button_damping_min: float = 5.0,
+        button_damping_max: float = 10.0,
+    ):
+        return {
+            "lamp first joint rotation": {
+                "stiffness": uniform(
+                    lamp_first_joint_rotation_stiffness_min,
+                    lamp_first_joint_rotation_stiffness_max,
+                ),
+                "damping": uniform(
+                    lamp_first_joint_rotation_damping_min,
+                    lamp_first_joint_rotation_damping_max,
+                ),
+            },
+            "lamp z rotation": {
+                "stiffness": uniform(
+                    lamp_z_rotation_stiffness_min, lamp_z_rotation_stiffness_max
+                ),
+                "damping": uniform(
+                    lamp_z_rotation_damping_min, lamp_z_rotation_damping_max
+                ),
+            },
+            "twist button": {
+                "stiffness": uniform(
+                    twist_button_stiffness_min, twist_button_stiffness_max
+                ),
+                "damping": uniform(twist_button_damping_min, twist_button_damping_max),
+            },
+            "pullstring": {
+                "stiffness": uniform(
+                    pullstring_stiffness_min, pullstring_stiffness_max
+                ),
+                "damping": uniform(pullstring_damping_min, pullstring_damping_max),
+            },
+            "switch button": {
+                "stiffness": uniform(
+                    switch_button_stiffness_min, switch_button_stiffness_max
+                ),
+                "damping": uniform(
+                    switch_button_damping_min, switch_button_damping_max
+                ),
+            },
+            "lamp second joint rotation": {
+                "stiffness": uniform(
+                    lamp_second_joint_rotation_stiffness_min,
+                    lamp_second_joint_rotation_stiffness_max,
+                ),
+                "damping": uniform(
+                    lamp_second_joint_rotation_damping_min,
+                    lamp_second_joint_rotation_damping_max,
+                ),
+            },
+            "sliding bar": {
+                "stiffness": uniform(
+                    sliding_bar_stiffness_min, sliding_bar_stiffness_max
+                ),
+                "damping": uniform(sliding_bar_damping_min, sliding_bar_damping_max),
+                "friction": uniform(10000, 20000),
+            },
+            "button": {
+                "stiffness": uniform(button_stiffness_min, button_stiffness_max),
+                "damping": uniform(button_damping_min, button_damping_max),
+            },
+        }
 
     def sample_parameters(self):
         def sample_mat():
@@ -5440,12 +5086,12 @@ class LampFactory(AssetFactory):
 
         return sample_lamp_parameters(materials=materials, lamp_type=self.type)
 
-    def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+    def create_asset(self, **kwargs):
         obj = butil.spawn_vert()
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=export,
+            apply=False,
             node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
         )

@@ -10,11 +10,13 @@ import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 from xml.dom.minidom import parseString
 
+import bmesh
 import bpy
 import numpy as np
+import trimesh
 
 import infinigen.core.sim.exporters.utils as exputils
 from infinigen.core import surface
@@ -22,6 +24,8 @@ from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, Si
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.tools.export import export_sim_ready
 
 
@@ -71,6 +75,7 @@ class URDFBuilder(SimBuilder):
         self,
         blend_obj: bpy.types.Object,
         kinematic_root: KinematicNode,
+        sample_joint_params_fn: Callable,
         metadata: Dict,
         visual_only: bool = False,
         image_res: int = 512,
@@ -81,11 +86,18 @@ class URDFBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        self._populate_links(root, visual_only=visual_only, image_res=image_res)
+        joint_params = sample_joint_params_fn()
+        self._populate_links(
+            root,
+            visual_only=visual_only,
+            image_res=image_res,
+            joint_params=joint_params,
+        )
 
     def _populate_links(
         self,
         root: RigidBody,
+        joint_params: Dict,
         parent_link: str = "world",
         joint_nodes: List[KinematicNode] = [],
         pos_offset: np.array = np.zeros(3),
@@ -120,19 +132,64 @@ class URDFBuilder(SimBuilder):
 
             link.append(visual)
 
-            collision_refs = []
-            for colasset_path in colasset_paths:
-                collision = create_element("collision")
-                collision_origin = create_element("origin", xyz="0.0 0.0 0.0")
-                geometry = create_element("geometry")
-                mesh_element = create_element("mesh")
+            mat_physics = mtlphysics.get_material_properties(mesh)
 
-                mesh_element.set("filename", f"assets/{colasset_path.name}")
-                geometry.append(mesh_element)
-                collision.append(geometry)
-                collision.append(collision_origin)
-                link.append(collision)
-                collision_refs.append(collision_origin)
+            # Estimate the mass of the object given the density
+            mesh_temp = mesh.to_mesh()
+            bm = bmesh.new()
+            bm.from_mesh(mesh_temp)
+            bmesh.ops.triangulate(bm, faces=bm.faces)
+            bm.transform(mesh.matrix_world)
+            vol = bm.calc_volume(signed=False)
+            bm.free()
+
+            inertial = create_element("inertial")
+            mass = create_element("mass", value=str(mat_physics["density"] * vol))
+
+            t = trimesh.Trimesh(
+                vertices=[list(vertex.co) for vertex in mesh.data.vertices],
+                faces=[
+                    list(triangle.vertices) for triangle in mesh.data.loop_triangles
+                ],
+            )
+            t.mass_properties["density"] = mass / t.volume
+            I_tensor = t.moment_inertia
+            inertial.append(mass)
+            ixx, ixy, ixz = I_tensor[0]
+            _, iyy, iyz = I_tensor[1]
+            _, _, izz = I_tensor[2]
+
+            inertia = create_element(
+                "inertia",
+                ixx=str(ixx),
+                ixy=str(ixy),
+                ixz=str(ixz),
+                iyy=str(iyy),
+                iyz=str(iyz),
+                izz=str(izz),
+            )
+            inertial.append(inertia)
+
+            com = t.center_mass
+            origin = create_element("origin", xyz=exputils.array_to_string(com))
+            inertial.append(origin)
+
+            link.append(inertial)
+
+            collision_refs = []
+            if not visual_only:
+                for colasset_path in colasset_paths:
+                    collision = create_element("collision")
+                    collision_origin = create_element("origin", xyz="0.0 0.0 0.0")
+                    geometry = create_element("geometry")
+                    mesh_element = create_element("mesh")
+
+                    mesh_element.set("filename", f"assets/{colasset_path.name}")
+                    geometry.append(mesh_element)
+                    collision.append(geometry)
+                    collision.append(collision_origin)
+                    link.append(collision)
+                    collision_refs.append(collision_origin)
 
             vis_origin_refs.append(visual_origin)
             col_origin_refs.append(collision_refs)
@@ -158,6 +215,9 @@ class URDFBuilder(SimBuilder):
                 joint_node.idn
             )
             abs_joint_pos = aabb_center + rel_pos
+
+            joint_properties = jointdyna.get_joint_properties(joint_name, joint_params)
+
             self._create_joint(
                 name=unique_joint_name,
                 joint_type=joint_node.joint_type,
@@ -167,6 +227,8 @@ class URDFBuilder(SimBuilder):
                 min_range=range_min,
                 max_range=range_max,
                 axis=axis,
+                damping=joint_properties["damping"],
+                friction=joint_properties["friction"],
             )
             pos_offset = abs_joint_pos
 
@@ -183,6 +245,7 @@ class URDFBuilder(SimBuilder):
         for child, joints in root.children.items():
             self._populate_links(
                 child,
+                joint_params,
                 parent_link=link_name,
                 joint_nodes=joints,
                 pos_offset=pos_offset,
@@ -198,6 +261,8 @@ class URDFBuilder(SimBuilder):
         origin: np.ndarray,
         parent_link: str,
         child_link: str,
+        damping: float = 0.0,
+        friction: float = 0.0,
         min_range: Optional[float] = -np.pi,
         max_range: Optional[float] = np.pi,
         axis: Optional[np.ndarray] = None,
@@ -215,6 +280,9 @@ class URDFBuilder(SimBuilder):
         joint.append(create_element("origin", xyz=exputils.array_to_string(origin)))
         joint.append(create_element("parent", link=parent_link))
         joint.append(create_element("child", link=child_link))
+        joint.append(
+            create_element("dynamics", damping=str(damping), friction=str(friction))
+        )
 
         if joint_type != JointType.WELD:
             joint.append(create_element("axis", xyz=exputils.array_to_string(axis)))
@@ -297,8 +365,9 @@ class URDFBuilder(SimBuilder):
 
 def export(
     blend_obj: bpy.types.Object,
-    sim_blueprint: Path,
+    sim_blueprint: Dict,
     seed: int,
+    sample_joint_params_fn: Callable,
     export_dir: Path = Path("./sim_exports/urdf"),
     image_res: int = 512,
     visual_only: bool = True,
@@ -319,6 +388,7 @@ def export(
     builder.build(
         blend_obj=blend_obj,
         kinematic_root=kinematic_root,
+        sample_joint_params_fn=sample_joint_params_fn,
         metadata=metadata,
         visual_only=visual_only,
         image_res=image_res,

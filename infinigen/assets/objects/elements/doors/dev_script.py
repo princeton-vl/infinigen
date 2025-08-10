@@ -102,4 +102,4 @@ def main(get_factory, species=9, n=16, spacing=4, one_row=False, **kwargs):
             pbar.update(1)
         factory.finalize_assets(all_objs)
     time = timeit.default_timer() - start
-    print(f"{time:.2f}s for {n} objects, {time/(n):.2f} per object")
+    print(f"{time:.2f}s for {n} objects, {time / (n):.2f} per object")

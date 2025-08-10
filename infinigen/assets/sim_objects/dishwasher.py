@@ -11,6 +11,7 @@
 
 import functools
 
+import gin
 import numpy as np
 from numpy.random import randint as RI
 from numpy.random import uniform as U
@@ -25,7 +26,6 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
 
@@ -906,7 +906,7 @@ def nodegroup_buttons(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_2,
+            "Joint Label": "button_joint",
             "Parent": store_named_attribute_1,
             "Child": store_named_attribute_4,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -1081,7 +1081,7 @@ def nodegroup_buttons(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string,
+            "Joint Label": "knob_joint",
             "Parent": store_named_attribute_5,
             "Child": store_named_attribute,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -3782,7 +3782,7 @@ def geometry_nodes(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_2,
+            "Joint Label": "door_joint",
             "Parent": store_named_attribute_8,
             "Child": store_named_attribute_5,
             "Position": reroute_88,
@@ -3922,7 +3922,7 @@ def geometry_nodes(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "rack_joint",
             "Parent": store_named_attribute_9,
             "Child": store_named_attribute_10,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -4069,7 +4069,67 @@ def sample_silver():
 class DishwasherFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
-        self.sim_blueprint = blueprint_path_completion("dishwasher.json")
+
+    @classmethod
+    @gin.configurable(module="DishwasherFactory")
+    def sample_joint_parameters(
+        cls,
+        door_joint_stiffness_min: float = 500.0,
+        door_joint_stiffness_max: float = 10000.0,
+        door_joint_damping_min: float = 500.0,
+        door_joint_damping_max: float = 2000.0,
+        door_joint_friction_min: float = 1000.0,
+        door_joint_friction_max: float = 1500.0,
+        rack_joint_stiffness_min: float = 0.0,
+        rack_joint_stiffness_max: float = 0.0,
+        rack_joint_damping_min: float = 60.0,
+        rack_joint_damping_max: float = 80.0,
+        button_joint_stiffness_min: float = 1.0,
+        button_joint_stiffness_max: float = 5.0,
+        button_joint_damping_min: float = 0.0,
+        button_joint_damping_max: float = 10.0,
+        knob_joint_stiffness_min: float = 0.0,
+        knob_joint_stiffness_max: float = 0.0,
+        knob_joint_damping_min: float = 0.0,
+        knob_joint_damping_max: float = 10.0,
+    ):
+        return {
+            "door_joint": {
+                "stiffness": np.random.uniform(
+                    door_joint_stiffness_min, door_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    door_joint_damping_min, door_joint_damping_max
+                ),
+                "friction": np.random.uniform(
+                    door_joint_friction_min, door_joint_friction_max
+                ),
+            },
+            "rack_joint": {
+                "stiffness": np.random.uniform(
+                    rack_joint_stiffness_min, rack_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    rack_joint_damping_min, rack_joint_damping_max
+                ),
+            },
+            "button_joint": {
+                "stiffness": np.random.uniform(
+                    button_joint_stiffness_min, button_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    button_joint_damping_min, button_joint_damping_max
+                ),
+            },
+            "knob_joint": {
+                "stiffness": np.random.uniform(
+                    knob_joint_stiffness_min, knob_joint_stiffness_max
+                ),
+                "damping": np.random.uniform(
+                    knob_joint_damping_min, knob_joint_damping_max
+                ),
+            },
+        }
 
     def sample_parameters(self):
         with FixedSeed(self.factory_seed):
@@ -4141,12 +4201,12 @@ class DishwasherFactory(AssetFactory):
             }
             return params
 
-    def create_asset(self, export=True, exporter="mjcf", asset_params=None, **kwargs):
+    def create_asset(self, **kwargs):
         obj = butil.spawn_vert()
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=export,
+            apply=False,
             node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
         )

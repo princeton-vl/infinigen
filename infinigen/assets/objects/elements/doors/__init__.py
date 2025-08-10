@@ -3,7 +3,9 @@
 
 # Authors: Lingjie Mei
 import bpy
+import gin
 import numpy as np
+from numpy.random import normal, randint, uniform
 
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
@@ -31,10 +33,6 @@ class DoorFactory(AssetFactory):
         super(DoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
             self.base_factory = random_door_factory()(factory_seed, coarse, constants)
-
-    @property
-    def sim_blueprint(self):
-        return self.base_factory.sim_blueprint
 
     def create_asset(self, **params) -> bpy.types.Object:
         return self.base_factory.create_asset(**params)

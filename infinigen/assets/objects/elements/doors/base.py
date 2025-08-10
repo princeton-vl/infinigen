@@ -29,16 +29,14 @@ from infinigen.core import surface
 from infinigen.core.constraints.constraint_language.constants import RoomConstants
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.sim import kinematic_compiler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, get_bevel_edges
 from infinigen.core.util.math import FixedSeed
-from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 from .bar_handle import nodegroup_push_bar_handle
 from .joint_utils import (
-    nodegroup_add_geometry_metadata,
+    nodegroup_add_jointed_geometry_metadata,
     nodegroup_arc_on_door_warper,
     nodegroup_door_frame_warper,
     nodegroup_hinge_joint,
@@ -73,7 +71,7 @@ def geometry_node_join(
     door_frame = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": door_frame})
 
     door_frame = nw.new_node(
-        nodegroup_add_geometry_metadata().name,
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": door_frame.outputs["Geometry"],
             "Label": "door_frame",
@@ -118,7 +116,7 @@ def geometry_node_join(
         )
 
         handle_object_info = nw.new_node(
-            nodegroup_add_geometry_metadata().name,
+            nodegroup_add_jointed_geometry_metadata().name,
             input_kwargs={
                 "Geometry": handle_object_info.outputs["Geometry"],
                 "Label": "handle",
@@ -268,7 +266,7 @@ def geometry_node_join(
                 )
 
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={"Geometry": door_body, "Label": "door", "Value": 2},
                 )
 
@@ -276,7 +274,7 @@ def geometry_node_join(
                 door_body = door_info
 
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_body.outputs["Geometry"],
                         "Label": "door",
@@ -287,6 +285,7 @@ def geometry_node_join(
             door = nw.new_node(
                 nodegroup_hinge_joint().name,
                 input_kwargs={
+                    "Joint Label": "door_handle",
                     "Parent": door_body,
                     "Child": handle_transformed,
                     "Position": door_handle_pos,
@@ -315,7 +314,7 @@ def geometry_node_join(
                     )
 
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc,
                             "Label": "door",
@@ -327,7 +326,7 @@ def geometry_node_join(
                     door_arc = door_arc_info
 
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc.outputs["Geometry"],
                             "Label": "door",
@@ -355,7 +354,7 @@ def geometry_node_join(
 
             if flip_lr:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -364,7 +363,7 @@ def geometry_node_join(
                 )
             else:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -385,7 +384,7 @@ def geometry_node_join(
             if door_arc_info is not None:
                 if flip_lr:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -394,7 +393,7 @@ def geometry_node_join(
                     )
                 else:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -436,7 +435,7 @@ def geometry_node_join(
 
             if flip_lr:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -445,7 +444,7 @@ def geometry_node_join(
                 )
             else:
                 door_body = nw.new_node(
-                    nodegroup_add_geometry_metadata().name,
+                    nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
                         "Label": "door",
@@ -459,7 +458,7 @@ def geometry_node_join(
             if door_arc_info is not None:
                 if flip_lr:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -468,7 +467,7 @@ def geometry_node_join(
                     )
                 else:
                     door_arc = nw.new_node(
-                        nodegroup_add_geometry_metadata().name,
+                        nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
                             "Label": "door",
@@ -584,6 +583,7 @@ def geometry_node_join(
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
+            "Joint Label": "door_hinge",
             "Parent": door_frame.outputs["Geometry"],
             "Child": final_door,
             "Position": add_2,
@@ -627,6 +627,7 @@ def geometry_node_join(
         hinge_joint = nw.new_node(
             nodegroup_hinge_joint().name,
             input_kwargs={
+                "Joint Label": "door_hinge",
                 "Parent": hinge_joint,
                 "Child": door_other,
                 "Position": add_other,
@@ -682,38 +683,6 @@ class BaseDoorFactory(AssetFactory):
             self.door_orientation = np.random.choice(
                 ["left", "right"]
             )  # handle on left/right for push
-
-            if self.door_frame_style in ["full_frame_double_door"]:
-                if self.handle_type == "pull":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "pull_double_door.json"
-                    )
-                elif self.handle_type == "none":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "no_handle_double_door.json"
-                    )
-                elif self.handle_type == "bar":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "push_bar_double_door.json"
-                    )
-                else:
-                    self.sim_blueprint = blueprint_path_completion(
-                        "hinge_handle_double_door.json"
-                    )
-
-            else:
-                if self.handle_type == "pull":
-                    self.sim_blueprint = blueprint_path_completion("pull_door.json")
-                elif self.handle_type == "none":
-                    self.sim_blueprint = blueprint_path_completion(
-                        "no_handle_door.json"
-                    )
-                elif self.handle_type == "bar":
-                    self.sim_blueprint = blueprint_path_completion("push_bar_door.json")
-                else:
-                    self.sim_blueprint = blueprint_path_completion(
-                        "hinge_handle_door.json"
-                    )
 
             self.handle_offset = self.panel_margin * 0.5
             self.handle_height = self.height * uniform(0.45, 0.5)
@@ -793,9 +762,9 @@ class BaseDoorFactory(AssetFactory):
 
             self.metal_color_hsv = colors.metal_hsv()
 
-    def create_asset(self, **params) -> bpy.types.Object:
+    def create_asset(self, apply=True, **params) -> bpy.types.Object:
         for _ in range(100):
-            obj = self._create_asset(**params)
+            obj = self._create_asset(apply=apply, **params)
             if max(obj.dimensions) < 5:
                 return obj
             else:
@@ -803,7 +772,7 @@ class BaseDoorFactory(AssetFactory):
         else:
             raise ValueError("Bad door booleaning")
 
-    def _create_asset(self, **params):
+    def _create_asset(self, apply=True, **params):
         # create handle
 
         if self.handle_type == "bar" or self.handle_type == "none":
@@ -1015,12 +984,8 @@ class BaseDoorFactory(AssetFactory):
             },
         )
 
-        # compile the object and add necessary attributes
-        kinematic_compiler.compile(door_joined)
-
-        # apply the geonode
-        # if export:
-        butil.apply_modifiers(door_joined, geometry_node_join.__name__)
+        if apply:
+            butil.apply_modifiers(door_joined, geometry_node_join.__name__)
 
         return door_joined
 

@@ -3067,7 +3067,7 @@ def nodegroup_multi_drawer(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "internal_drawer",
             "Parent": store_named_attribute_3,
             "Child": store_named_attribute_2,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -3354,7 +3354,7 @@ def nodegroup_multi_drawer_top(nw: NodeWrangler):
     sliding_joint = nw.new_node(
         nodegroup_sliding_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "freezer_drawer",
             "Parent": store_named_attribute_3,
             "Child": store_named_attribute_2,
             "Axis": (1.0000, 0.0000, 0.0000),
@@ -4127,7 +4127,7 @@ def nodegroup_doublefridge(nw: NodeWrangler):
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string_1,
+            "Joint Label": "door_hinge",
             "Parent": store_named_attribute_11,
             "Child": store_named_attribute_10,
             "Position": add_10.outputs["Vector"],
@@ -4501,7 +4501,7 @@ def nodegroup_doublefridge(nw: NodeWrangler):
     hinge_joint_1 = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint ID (do not set)": string,
+            "Joint Label": "door_hinge",
             "Parent": store_named_attribute_12,
             "Child": store_named_attribute_6,
             "Position": add_12.outputs["Vector"],
