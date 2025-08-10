@@ -15,12 +15,10 @@ require_blender_addon("real_snow", fail="warn")
 
 class Snowlayer:
     def __init__(self):
-        bpy.ops.preferences.addon_enable(module="real_snow")
+        require_blender_addon("real_snow", fail="fatal")
         pass
 
     def apply(self, obj, **kwargs):
-        require_blender_addon("real_snow")
-
         bpy.context.scene.snow.height = 0.1
         with butil.SelectObjects(obj):
             bpy.ops.snow.create()
