@@ -6,14 +6,17 @@
 # - Abhishek Joshi: primary author
 
 import json
+import re
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Callable, Dict, List
 from xml.dom.minidom import parseString
 
+import bmesh
 import bpy
+import mujoco
 import numpy as np
 
 import infinigen.core.sim.exporters.utils as exputils
@@ -22,6 +25,8 @@ from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, Si
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.tools.export import export_sim_ready, skipBake
 
 
@@ -69,8 +74,10 @@ class MJCFBuilder(SimBuilder):
         self.worldbody = create_element("worldbody")
         self.main_body = create_element("body", name="object")
         self.worldbody.append(self.main_body)
+        self.contact = create_element("contact")
         mujoco.append(self.asset)
         mujoco.append(self.worldbody)
+        mujoco.append(self.contact)
 
         return mujoco
 
@@ -78,6 +85,7 @@ class MJCFBuilder(SimBuilder):
         self,
         blend_obj: bpy.types.Object,
         kinematic_root: KinematicNode,
+        sample_joint_params_fn: Callable,
         metadata: Dict,
         visual_only: bool = False,
         image_res: int = 512,
@@ -88,10 +96,10 @@ class MJCFBuilder(SimBuilder):
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
         self._simplify_skeleton(root)
 
-        asset_body = self._populate_mjcf(
+        asset_body, _ = self._populate_mjcf(
             root, visual_only=visual_only, image_res=image_res
         )
-        self._populate_joints(asset_body)
+        self._populate_joints(asset_body, sample_joint_params_fn)
         self.main_body.append(asset_body)
 
         self._sort_asset_elements(self.asset)
@@ -150,16 +158,20 @@ class MJCFBuilder(SimBuilder):
 
         # add all children bodies
         for child, joints in root.children.items():
-            link.append(
-                self._populate_mjcf(
-                    child,
-                    joint_nodes=joints,
-                    pos_offset=aabb_center,
-                    visual_only=visual_only,
-                )
+            child_link, child_name = self._populate_mjcf(
+                child,
+                joint_nodes=joints,
+                pos_offset=aabb_center,
+                visual_only=visual_only,
+            )
+            link.append(child_link)
+
+            # exclude contacts between parent and child bodies
+            self.contact.append(
+                create_element("exclude", body1=link_name, body2=child_name)
             )
 
-        return link
+        return link, link_name
 
     def _add_mesh(
         self,
@@ -169,6 +181,7 @@ class MJCFBuilder(SimBuilder):
         image_res: int,
     ):
         asset = self._get_geometry(attribs)
+
         labels = self._get_labels(asset)
         if len(labels) == 0:
             asset_name = "geom"
@@ -188,6 +201,14 @@ class MJCFBuilder(SimBuilder):
             visual_only=visual_only,
         )
 
+        mesh_temp = asset.to_mesh()
+        bm = bmesh.new()
+        bm.from_mesh(mesh_temp)
+        bmesh.ops.triangulate(bm, faces=bm.faces)
+        bm.transform(asset.matrix_world)
+        vol = bm.calc_volume(signed=False)
+        bm.free()
+
         # add the visual asset to the list of assets in the scene
         visasset_path = export_paths["visual"][0]
         self._add_asset(
@@ -195,7 +216,11 @@ class MJCFBuilder(SimBuilder):
             asset_path=visasset_path,
             asset_type="visual",
             has_material=not skipBake(asset),
+            intertia="legacy" if not np.isclose(vol, mujoco.mjMINVAL) else "shell",
         )
+
+        # getting material physical properties
+        mat_physics = mtlphysics.get_material_properties(asset)
 
         # create and link a geom for the asset
         visgeom = create_element(
@@ -206,6 +231,8 @@ class MJCFBuilder(SimBuilder):
             group="1",
             contype="0",
             conaffinity="0",
+            friction=f"{mat_physics['friction']} 0.005 0.0001",
+            density=f"{mat_physics['density']}",
         )
         if not skipBake(asset):
             visgeom.set("material", f"{unique_name}_mat")
@@ -232,6 +259,8 @@ class MJCFBuilder(SimBuilder):
                     group="0",
                     contype="1",
                     conaffinity="1",
+                    friction=f"{mat_physics['friction']} 0.005 0.0001",
+                    density=f"{mat_physics['density']}",
                 )
                 body.append(colgeom)
                 colgeoms.append(colgeom)
@@ -239,11 +268,19 @@ class MJCFBuilder(SimBuilder):
         return visgeom, colgeoms, asset
 
     def _add_asset(
-        self, asset_name: str, asset_path: Path, asset_type: str, has_material: bool
+        self,
+        asset_name: str,
+        asset_path: Path,
+        asset_type: str,
+        has_material: bool,
+        intertia: str = "convex",
     ):
         """Adds a mesh along with its materials and texture to the mjcf."""
         mesh_element = create_element(
-            "mesh", name=asset_name, file=str(f"{asset_type}/{asset_path.name}")
+            "mesh",
+            name=asset_name,
+            file=str(f"{asset_type}/{asset_path.name}"),
+            inertia=intertia,
         )
         self.asset.append(mesh_element)
 
@@ -261,13 +298,17 @@ class MJCFBuilder(SimBuilder):
             self.asset.append(texture_element)
             self.asset.append(material_element)
 
-    def _populate_joints(self, body: ET.Element):
+    def _populate_joints(self, body: ET.Element, sample_joint_params_fn: Callable):
         """
         Populates all the joints with the true value given the object.
         """
+        # sample the physics distribution for the joints
+        joint_params = sample_joint_params_fn()
+
         for joint in body.findall(".//joint"):
             # set the position and axis of the joints
-            prefix = self.joint_map[joint.get("name")]
+            joint_name = joint.get("name")
+            prefix = self.joint_map[joint_name]
 
             pos_vals = surface.read_attr_data(self.blend_obj, prefix + "_pos")
             pos_mask = np.any(pos_vals != 0.0, axis=1)
@@ -309,6 +350,17 @@ class MJCFBuilder(SimBuilder):
                 ref = range_max
             joint.set("ref", f"{ref}")
 
+            # set joint physics parameters
+            nonunique_joint_name = re.sub(r"_\d+$", "", joint_name)
+            joint_properties = jointdyna.get_joint_properties(
+                nonunique_joint_name, joint_params
+            )
+
+            if nonunique_joint_name in joint_params:
+                joint.set("stiffness", str(joint_properties["stiffness"]))
+                joint.set("damping", str(joint_properties["damping"]))
+                joint.set("frictionloss", str(joint_properties["friction"]))
+
     def _sort_asset_elements(self, asset: ET.Element):
         mesh_elements = []
         material_elements = []
@@ -337,8 +389,9 @@ class MJCFBuilder(SimBuilder):
 
 def export(
     blend_obj: bpy.types.Object,
-    sim_blueprint: Path,
+    sim_blueprint: Dict,
     seed: int,
+    sample_joint_params_fn: Callable,
     export_dir: Path = Path("./sim_exports/mjcf"),
     image_res: int = 512,
     visual_only: bool = True,
@@ -359,6 +412,7 @@ def export(
     builder.build(
         blend_obj=blend_obj,
         kinematic_root=kinematic_root,
+        sample_joint_params_fn=sample_joint_params_fn,
         metadata=metadata,
         visual_only=visual_only,
         image_res=image_res,

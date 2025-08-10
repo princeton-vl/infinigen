@@ -15,9 +15,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_add_geometry_metadata", singleton=False, type="GeometryNodeTree"
+    "nodegroup_add_jointed_geometry_metadata", singleton=False, type="GeometryNodeTree"
 )
-def nodegroup_add_geometry_metadata(nw: NodeWrangler):
+def nodegroup_add_jointed_geometry_metadata(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(
@@ -66,12 +66,12 @@ def nodegroup_symmetry_along_y(nw: NodeWrangler):
     )
 
     handle_1 = nw.new_node(
-        nodegroup_add_geometry_metadata().name,
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": group_input, "Label": "handle", "Value": 1},
     )
 
     handle_2 = nw.new_node(
-        nodegroup_add_geometry_metadata().name,
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": flip_faces, "Label": "handle", "Value": 2},
     )
 

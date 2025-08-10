@@ -481,6 +481,16 @@ def get_shelf_material(name, **kwargs):
 
         case "glass":
             shader_func = shader_glass
+        case "metal":
+            shader_func = np.random.choice(
+                [
+                    brushed_metal.shader_brushed_metal,
+                    galvanized_metal.shader_galvanized_metal,
+                    grained_and_polished_metal.shader_grained_metal,
+                    hammered_metal.shader_hammered_metal,
+                    metal_basic.shader_metal,
+                ]
+            )
         case _:
             shader_func = np.random.choice(
                 [
@@ -492,30 +502,7 @@ def get_shelf_material(name, **kwargs):
                 ],
                 p=[0.3, 0.2, 0.3, 0.1, 0.1],
             )
-    r = uniform()
-    if name == "metal":
-        shader_func = np.random.choice(
-            [
-                brushed_metal.shader_brushed_metal,
-                galvanized_metal.shader_galvanized_metal,
-                grained_and_polished_metal.shader_grained_metal,
-                hammered_metal.shader_hammered_metal,
-                metal_basic.shader_metal,
-            ]
-        )
-    else:
-        shader_func = np.random.choice(
-            [
-                shader_shelves_white,
-                shader_rough_plastic,
-                shader_shelves_black_wood,
-                shader_wood,
-                shader_shelves_wood,
-            ],
-            p=[0.3, 0.2, 0.3, 0.1, 0.1],
-        )
-    # elif r < .3:
-    #     shader_func = rg(fabric_shader_list)
+
     return surface.shaderfunc_to_material(shader_func, **kwargs)
 
 

@@ -10,7 +10,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 import bpy
 import coacd
@@ -27,6 +27,8 @@ from infinigen.core.sim.exporters.base import (
     SimBuilder,
 )
 from infinigen.core.sim.kinematic_node import JointType, KinematicNode
+from infinigen.core.sim.physics import joint_dynamics as jointdyna
+from infinigen.core.sim.physics import material_physics as mtlphysics
 from infinigen.core.util import blender as butil
 from infinigen.tools.export import bake_object, skipBake, triangulate_mesh
 
@@ -54,7 +56,7 @@ class USDBuilder(SimBuilder):
         UsdGeom.SetStageMetersPerUnit(stage, 1.0)
         UsdPhysics.SetStageKilogramsPerUnit(stage, 1.0)
         default_prim = UsdGeom.Xform.Define(stage, Sdf.Path("/Asset")).GetPrim()
-        UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/Joints"))
+        UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/joints"))
         UsdGeom.Scope.Define(stage, Sdf.Path("/Asset/Looks"))
         stage.SetDefaultPrim(default_prim)
         return stage
@@ -63,6 +65,7 @@ class USDBuilder(SimBuilder):
         self,
         blend_obj: bpy.types.Object,
         kinematic_root: KinematicNode,
+        sample_joint_params_fn: Callable,
         metadata: Dict,
         visual_only: bool = False,
         image_res: int = 512,
@@ -74,7 +77,7 @@ class USDBuilder(SimBuilder):
         self._simplify_skeleton(root)
 
         body_info = self._add_assets(root, visual_only, image_res)
-        self._add_joints(root, body_info)
+        self._add_joints(root, body_info, sample_joint_params_fn)
 
     def _add_assets(self, root: RigidBody, visual_only: bool, image_res: int):
         """Populates the USD with its xforms and assets."""
@@ -82,7 +85,7 @@ class USDBuilder(SimBuilder):
 
         for body in root:
             # create an xform for the body
-            link_name = f"link_{self.link_count}"
+            link_name = f"link_{self.link_count}" if self.link_count > 0 else "world"
             link_path = f"/Asset/{link_name}"
             xform = self._add_xform(usd_path=link_path)
             self.link_count += 1
@@ -114,21 +117,25 @@ class USDBuilder(SimBuilder):
 
         return body_usd_info
 
-    def _add_joints(self, root: RigidBody, body_info: Dict):
+    def _add_joints(
+        self, root: RigidBody, body_info: Dict, sample_joint_params_fn: Callable
+    ):
         """Populates the USD with its joints."""
+
+        # sample the physics distribution for the joints
+        joint_params = sample_joint_params_fn()
+
         # add a fixed joint to the root link
-        joint_prim = self.stage.DefinePrim(
-            "/Asset/Joints/root_joint", "PhysicsFixedJoint"
-        )
+        joint_prim = self.stage.DefinePrim("/Asset/root_joint", "PhysicsFixedJoint")
         joint = UsdPhysics.FixedJoint(joint_prim)
-        joint.CreateBody0Rel().SetTargets(["/Asset"])
         joint.CreateBody1Rel().SetTargets([body_info[root]["path"]])
         joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*body_info[root]["center"]))
         joint.CreateLocalPos1Attr().Set(Gf.Vec3f(0, 0, 0))
         # add the top link as the articulation root
-        root_prim = self.stage.GetPrimAtPath(Sdf.Path(body_info[root]["path"]))
-        UsdPhysics.ArticulationRootAPI.Apply(root_prim)
+        UsdPhysics.ArticulationRootAPI.Apply(joint_prim)
 
+        all_link_paths = set()
+        filtered_pairs = defaultdict(set)
         for body in root:
             for child_body, kinematic_nodes in body.children.items():
                 if len(kinematic_nodes) > 1:
@@ -136,25 +143,35 @@ class USDBuilder(SimBuilder):
                         "Multi jointed bodies not supported yet in USD exporter."
                     )
                 node = kinematic_nodes[0]
+                joint_name = self.metadata[node.idn]["joint label"]
+                unique_joint_name = f"{joint_name}_{self.joint_freq[joint_name]}"
+                self.joint_freq[joint_name] += 1
                 if node.joint_type == JointType.HINGE:
-                    joint_name = self.metadata[node.idn]["joint label"]
-                    unique_joint_name = f"{joint_name}_{self.joint_freq[joint_name]}"
-                    self.joint_freq[joint_name] += 1
                     joint_prim = self.stage.DefinePrim(
-                        f"/Asset/Joints/{unique_joint_name}", "PhysicsRevoluteJoint"
+                        f"/Asset/joints/{unique_joint_name}", "PhysicsRevoluteJoint"
                     )
                     joint = UsdPhysics.RevoluteJoint(joint_prim)
                 if node.joint_type == JointType.SLIDING:
-                    joint_name = self.metadata[node.idn]["joint label"]
-                    unique_joint_name = f"{joint_name}_{self.joint_freq[joint_name]}"
-                    self.joint_freq[joint_name] += 1
                     joint_prim = self.stage.DefinePrim(
-                        f"/Asset/Joints/{unique_joint_name}", "PhysicsPrismaticJoint"
+                        f"/Asset/joints/{unique_joint_name}", "PhysicsPrismaticJoint"
                     )
                     joint = UsdPhysics.PrismaticJoint(joint_prim)
 
+                joint_properties = jointdyna.get_joint_properties(
+                    joint_name, joint_params
+                )
+                drive_api = UsdPhysics.DriveAPI.Get(
+                    joint_prim, "angular"
+                ) or UsdPhysics.DriveAPI.Apply(joint_prim, "angular")
+                drive_api.CreateStiffnessAttr().Set(joint_properties["stiffness"])
+                drive_api.CreateDampingAttr().Set(joint_properties["damping"])
+
                 parent_path = body_info[body]["path"]
                 child_path = body_info[child_body]["path"]
+                all_link_paths.add(parent_path)
+                all_link_paths.add(child_path)
+                filtered_pairs[parent_path].add(child_path)
+                filtered_pairs[child_path].add(parent_path)
 
                 joint.CreateBody0Rel().SetTargets([parent_path])
                 joint.CreateBody1Rel().SetTargets([child_path])
@@ -234,6 +251,14 @@ class USDBuilder(SimBuilder):
                 joint.CreateLowerLimitAttr().Set(range_min * multiplier)
                 joint.CreateUpperLimitAttr().Set(range_max * multiplier)
 
+        for link_path in all_link_paths:
+            link_prim = self.stage.GetPrimAtPath(link_path)
+            UsdPhysics.FilteredPairsAPI.Apply(link_prim)
+            rel = link_prim.CreateRelationship("physics:filteredPairs")
+            children_paths = filtered_pairs[link_path]
+            target_paths = list(all_link_paths - children_paths - set([link_path]))
+            rel.SetTargets(target_paths)
+
     def _add_xform(self, usd_path: str):
         """Creates an xform."""
         xform = UsdGeom.Xform.Define(self.stage, usd_path)
@@ -256,6 +281,8 @@ class USDBuilder(SimBuilder):
         UsdGeom.Scope.Define(self.stage, Sdf.Path(vis_path))
         vismesh_path = vis_path + f"/{unique_name}"
         self.asset_freq[asset_name] += 1
+
+        mat_physics = mtlphysics.get_material_properties(asset)
 
         vismesh = UsdGeom.Mesh.Define(self.stage, vismesh_path)
 
@@ -284,6 +311,11 @@ class USDBuilder(SimBuilder):
         # create the material
         mtl_path = Sdf.Path(f"/Asset/Looks/{unique_name}_mat")
         material = UsdShade.Material.Define(self.stage, mtl_path)
+        mtl_prim = self.stage.GetPrimAtPath(mtl_path)
+        mat_phys = UsdPhysics.MaterialAPI.Apply(mtl_prim)
+        mat_phys.CreateDensityAttr().Set(mat_physics["density"])
+        mat_phys.CreateDynamicFrictionAttr().Set(mat_physics["friction"])
+
         stInput = material.CreateInput("frame:stPrimvarName", Sdf.ValueTypeNames.Token)
         stInput.Set("st")
 
@@ -317,7 +349,7 @@ class USDBuilder(SimBuilder):
             "transmission", transmission_file, mtl_path, pbrShader, stReader
         )
 
-        # now bind the material to the card
+        # now bind the material to the mesh
         vismesh.GetPrim().ApplyAPI(UsdShade.MaterialBindingAPI)
         UsdShade.MaterialBindingAPI(vismesh).Bind(material)
 
@@ -388,6 +420,9 @@ class USDBuilder(SimBuilder):
                     )
                     UsdPhysics.CollisionAPI.Apply(colmesh.GetPrim())
 
+                    colmesh.GetPrim().ApplyAPI(UsdShade.MaterialBindingAPI)
+                    UsdShade.MaterialBindingAPI(vismesh).Bind(material)
+
                     colmeshes.append(colmesh)
 
         return vismesh, colmeshes, asset
@@ -448,8 +483,14 @@ class USDBuilder(SimBuilder):
             self.stage, str(mtl_path) + type_to_path[texture_type]
         )
         texture_sampler.CreateIdAttr("UsdUVTexture")
+
+        # relative path
+        parts = file.parts
+        index = parts.index("assets")
+        file = Path(*parts[index:])
+
         texture_sampler.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(
-            str(file.resolve())
+            str(Path(*parts[index:]))
         )
         texture_sampler.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(
             st_reader.ConnectableAPI(), "result"
@@ -481,8 +522,9 @@ class USDBuilder(SimBuilder):
 
 def export(
     blend_obj: bpy.types.Object,
-    sim_blueprint: Path,
+    sim_blueprint: Dict,
     seed: int,
+    sample_joint_params_fn: Callable,
     export_dir: Path = Path("./sim_exports/usd"),
     image_res: int = 512,
     visual_only: bool = True,
@@ -504,6 +546,7 @@ def export(
     builder.build(
         blend_obj=blend_obj,
         kinematic_root=kinematic_root,
+        sample_joint_params_fn=sample_joint_params_fn,
         metadata=metadata,
         visual_only=visual_only,
         image_res=image_res,

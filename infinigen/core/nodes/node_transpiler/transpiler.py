@@ -112,6 +112,7 @@ def indent(s):
 def prefix(dependencies_used) -> str:
     fixed_prefix = (
         "import bpy\n"
+        "import gin\n"
         "import mathutils\n"
         "from numpy.random import uniform, normal, randint\n"
         "from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler\n"
@@ -119,8 +120,9 @@ def prefix(dependencies_used) -> str:
         "from infinigen.core import surface\n"
         "from infinigen.core.placement.factory import AssetFactory\n"
         "from infinigen.core.util import blender as butil\n"
-        "from infinigen.core.util.paths import blueprint_path_completion\n"
         "from infinigen.core.sim.exporters import factory\n"
+        "from infinigen.core.util.random import weighted_sample\n"
+        "from infinigen.assets.composition import material_assignments\n"
     )
 
     deps_table = [
@@ -948,10 +950,42 @@ def add_asset_to_file(file_path, asset_name, class_name, import_path):
         file.writelines(updated_lines)
 
 
+def extract_joint_labels(code_str):
+    pattern = r"'Joint Label'\s*:\s*'([^']*)'"
+    return re.findall(pattern, code_str)
+
+
+def build_joint_sampler(code_str):
+    labels = set(extract_joint_labels(code_str))
+    result = "{\n"
+    for label in labels:
+        replaced_label = label.replace(" ", "_")
+        result += f'\t\t\t"{label}": {{\n'
+        result += f'\t\t\t\t"stiffness": uniform({replaced_label}_stiffness_min, {replaced_label}_stiffness_max),\n'
+        result += f'\t\t\t\t"damping": uniform({replaced_label}_damping_min, {replaced_label}_damping_max)\n'
+        result += f"\t\t\t}},\n"  # noqa
+    result += "\t\t}"
+    return result
+
+
+def build_joint_params(code_str):
+    labels = set(extract_joint_labels(code_str))
+    lines = []
+    for label in labels:
+        label = label.replace(" ", "_")
+        for attr in ("stiffness", "damping"):
+            for bound in ("min", "max"):
+                lines.append(f"{label}_{attr}_{bound}: float = 0.0,")
+    if not lines:
+        return ""
+    # first line unindented, subsequent lines indented
+    formatted = [lines[0]] + ["        " + line for line in lines[1:]]
+    return "\n".join(formatted)
+
+
 def transpile_object_to_sim_class(
     obj,
     module_dependencies=[],
-    sim_blueprint=None,
     output_name=None,
     add_to_catalog=True,
 ):
@@ -962,6 +996,9 @@ def transpile_object_to_sim_class(
     )
 
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
+
+    joint_param_str = build_joint_params(func_code)
+    joint_sampler_str = build_joint_sampler(func_code)
 
     code = prefix(dependencies_used) + "\n\n"
     code += func_code + "\n\n"
@@ -974,22 +1011,27 @@ class {class_name}(AssetFactory):
 
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
-        self.sim_blueprint = {f"blueprint_path_completion('{sim_blueprint}')"}
+
+    @classmethod
+    @gin.configurable(module='{class_name}')
+    def sample_joint_parameters(
+        cls,
+        {joint_param_str}
+    ):
+        return {joint_sampler_str}
 
     def sample_parameters(self):
         # add code here to randomly sample from parameters
-        return {'{}'}
+        return {"{}"}
 
-    def create_asset(self, 
-                     export=True,
-                     exporter="mjcf",
+    def create_asset(self,
                      asset_params=None,
                      **kwargs):
         obj = butil.spawn_vert()
         butil.modify_mesh(
             obj,
             "NODES",
-            apply=True,
+            apply=False,
             node_group={funcnames[0]}(),
             ng_inputs=self.sample_parameters()
         )

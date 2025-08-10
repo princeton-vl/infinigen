@@ -4,10 +4,15 @@
 # Authors: Beining Han
 
 import bpy
+import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
+from infinigen.assets.objects.elements.doors.joint_utils import (
+    nodegroup_add_jointed_geometry_metadata,
+    nodegroup_hinge_joint,
+)
 from infinigen.assets.objects.shelves.large_shelf import LargeShelfBaseFactory
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -27,7 +32,7 @@ def nodegroup_node_group(nw: NodeWrangler):
 
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
-        input_kwargs={"Vertices": 64, "Radius": 0.0100, "Depth": 0.00050},
+        input_kwargs={"Vertices": 16, "Radius": 0.0100, "Depth": 0.00050},
     )
 
     transform = nw.new_node(
@@ -123,7 +128,7 @@ def nodegroup_knob_handle(nw: NodeWrangler):
     cylinder = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={
-            "Vertices": 64,
+            "Vertices": 16,
             "Radius": group_input.outputs["Radius"],
             "Depth": add_1,
         },
@@ -220,9 +225,9 @@ def nodegroup_mid_board(nw: NodeWrangler, **kwargs):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz_3,
-            "Vertices X": 5,
-            "Vertices Y": 5,
-            "Vertices Z": 5,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -251,9 +256,9 @@ def nodegroup_mid_board(nw: NodeWrangler, **kwargs):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz_7,
-            "Vertices X": 5,
-            "Vertices Y": 5,
-            "Vertices Z": 5,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -336,9 +341,9 @@ def nodegroup_mid_board_001(nw: NodeWrangler, **kwargs):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz_3,
-            "Vertices X": 5,
-            "Vertices Y": 5,
-            "Vertices Z": 5,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -400,7 +405,7 @@ def nodegroup_double_rampled_edge(nw: NodeWrangler):
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz_10})
 
     curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": 3, "Radius": 0.0100}
+        Nodes.CurveCircle, input_kwargs={"Resolution": 2, "Radius": 0.0100}
     )
 
     endpoint_selection = nw.new_node(
@@ -615,7 +620,7 @@ def nodegroup_double_rampled_edge(nw: NodeWrangler):
     )
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": realize_instances, "Level": 4}
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": realize_instances, "Level": 1}
     )
 
     group_output = nw.new_node(
@@ -651,7 +656,7 @@ def nodegroup_ramped_edge(nw: NodeWrangler):
     curve_line = nw.new_node(Nodes.CurveLine, input_kwargs={"End": combine_xyz_10})
 
     curve_circle = nw.new_node(
-        Nodes.CurveCircle, input_kwargs={"Resolution": 3, "Radius": 0.0100}
+        Nodes.CurveCircle, input_kwargs={"Resolution": 2, "Radius": 0.0100}
     )
 
     endpoint_selection = nw.new_node(
@@ -843,7 +848,7 @@ def nodegroup_ramped_edge(nw: NodeWrangler):
     )
 
     subdivide_mesh = nw.new_node(
-        Nodes.SubdivideMesh, input_kwargs={"Mesh": realize_instances, "Level": 4}
+        Nodes.SubdivideMesh, input_kwargs={"Mesh": realize_instances, "Level": 1}
     )
 
     multiply_7 = nw.new_node(
@@ -1179,31 +1184,28 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
     right_door_info = nw.new_node(
         Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][0]}
     )
+    right_door_info = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": right_door_info.outputs["Geometry"],
+            "Label": "door",
+            "Value": 1,
+        },
+    )
+
     left_door_info = nw.new_node(
         Nodes.ObjectInfo, input_kwargs={"Object": kwargs["door"][1]}
     )
-    shelf_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["shelf"]})
-
-    doors = []
-    transform_r = nw.new_node(
-        Nodes.Transform,
+    left_door_info = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
-            "Geometry": right_door_info.outputs["Geometry"],
-            "Translation": kwargs["door_hinge_pos"][0],
-            "Rotation": (0, 0, kwargs["door_open_angle"]),
+            "Geometry": left_door_info.outputs["Geometry"],
+            "Label": "door",
+            "Value": 1,
         },
     )
-    doors.append(transform_r)
-    if len(kwargs["door_hinge_pos"]) > 1:
-        transform_l = nw.new_node(
-            Nodes.Transform,
-            input_kwargs={
-                "Geometry": left_door_info.outputs["Geometry"],
-                "Translation": kwargs["door_hinge_pos"][1],
-                "Rotation": (0, 0, kwargs["door_open_angle"]),
-            },
-        )
-        doors.append(transform_l)
+
+    shelf_info = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": kwargs["shelf"]})
 
     attaches = []
     for pos in kwargs["attach_pos"]:
@@ -1259,16 +1261,169 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
         },
     )
 
-    join_geometry = nw.new_node(
+    cabinet_base = nw.new_node(
         Nodes.JoinGeometry,
+        input_kwargs={"Geometry": [shelf_info.outputs["Geometry"]] + [set_material]},
+    )
+    cabinet_base = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
-            "Geometry": [shelf_info.outputs["Geometry"]] + doors + [set_material]
+            "Geometry": cabinet_base.outputs["Geometry"],
+            "Label": "cabinet_base",
+            "Value": 1,
         },
     )
 
+    r_translation = kwargs["door_hinge_pos"][0]
+
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": shelf_info.outputs["Geometry"]},
+    )
+
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={
+            0: bounding_box.outputs["Min"],
+            1: bounding_box.outputs["Max"],
+        },
+    )
+
+    value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = -0.5000
+
+    multiply = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: add.outputs["Vector"], 1: value_1},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    separate_xyz = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]}
+    )
+
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Z": separate_xyz.outputs["Z"]}
+    )
+
+    value_1 = nw.new_node(Nodes.Vector)
+    value_1.vector = r_translation
+
+    door_pos_1 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: value_1, 1: combine_xyz},
+        attrs={"operation": "ADD"},
+    )
+
+    transform_r = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": right_door_info.outputs["Geometry"],
+            "Translation": door_pos_1,
+            "Rotation": (0, 0, kwargs["door_open_angle"]),
+        },
+    )
+
+    bounding_box = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": right_door_info.outputs["Geometry"]},
+    )
+
+    add = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={
+            0: bounding_box.outputs["Min"],
+            1: bounding_box.outputs["Max"],
+        },
+    )
+
+    value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = -0.5000
+
+    multiply = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: add.outputs["Vector"], 1: value_1},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    separate_xyz_r = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]}
+    )
+
+    combine_xyz_r = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": separate_xyz_r.outputs["X"],
+            "Y": separate_xyz_r.outputs["Y"],
+        },
+    )
+
+    doors = nw.new_node(
+        nodegroup_hinge_joint().name,
+        input_kwargs={
+            "Joint Label": "cabinet_hinge",
+            "Parent": cabinet_base,
+            "Child": transform_r,
+            "Position": combine_xyz_r,
+            "Axis": (0, 0, -1),
+            "Value": 0.0,
+            "Min": 0.0,
+            "Max": 2.3,
+        },
+    )
+
+    if len(kwargs["door_hinge_pos"]) > 1:
+        l_translation = kwargs["door_hinge_pos"][1]
+
+        value_2 = nw.new_node(Nodes.Vector)
+        value_2.vector = l_translation
+
+        door_pos_2 = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: value_2, 1: combine_xyz},
+            attrs={"operation": "ADD"},
+        )
+
+        value_3 = nw.new_node(Nodes.Value)
+        value_3.outputs[0].default_value = -1.0
+
+        multiply_2 = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: separate_xyz_r.outputs["Y"], 1: value_3},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        combine_xyz_l = nw.new_node(
+            Nodes.CombineXYZ,
+            input_kwargs={"X": separate_xyz_r.outputs["X"], "Y": multiply_2},
+        )
+
+        transform_l = nw.new_node(
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": left_door_info.outputs["Geometry"],
+                "Translation": door_pos_2,
+                "Rotation": (0, 0, kwargs["door_open_angle"]),
+            },
+        )
+
+        doors = nw.new_node(
+            nodegroup_hinge_joint().name,
+            input_kwargs={
+                "Joint Label": "cabinet_hinge",
+                "Parent": doors,
+                "Child": transform_l,
+                "Position": combine_xyz_l,
+                "Axis": (0, 0, 1),
+                "Value": 0.0,
+                "Min": 0.0,
+                "Max": 2.3,
+            },
+        )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
-        input_kwargs={"Geometry": join_geometry},
+        input_kwargs={"Geometry": doors},
         attrs={"is_active_output": True},
     )
 
@@ -1276,7 +1431,7 @@ def geometry_cabinet_nodes(nw: NodeWrangler, **kwargs):
 class CabinetDoorBaseFactory(AssetFactory):
     def __init__(self, factory_seed, params={}, coarse=False):
         super(CabinetDoorBaseFactory, self).__init__(factory_seed, coarse=coarse)
-        self.params = {}
+        self.params = params
 
     def get_asset_params(self, i=0):
         params = self.params.copy()
@@ -1307,12 +1462,12 @@ class CabinetDoorBaseFactory(AssetFactory):
 
         if params.get("frame_material", None) is None:
             params["frame_material"] = np.random.choice(
-                ["white", "black_wood", "wood"], p=[0.5, 0.2, 0.3]
+                ["white", "black_wood", "wood", "glass", "metal"]
             )
         if params.get("board_material", None) is None:
             if params["has_mid_ramp"]:
                 lower_mat = np.random.choice(
-                    [params["frame_material"], "glass"], p=[0.7, 0.3]
+                    [params["frame_material"], "glass"], p=[0.6, 0.4]
                 )
                 upper_mat = np.random.choice([lower_mat, "glass"], p=[0.6, 0.4])
                 params["board_material"] = [lower_mat, upper_mat]
@@ -1330,9 +1485,10 @@ class CabinetDoorBaseFactory(AssetFactory):
         for mat in params["board_material"]:
             materials.append(get_shelf_material(mat))
         params["board_material"] = materials
+
         return params
 
-    def create_asset(self, i=0, **params):
+    def create_asset(self, sample_params=True, i=0, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=1,
             enter_editmode=False,
@@ -1342,7 +1498,11 @@ class CabinetDoorBaseFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        obj_params = self.get_asset_params(i)
+        if sample_params:
+            obj_params = self.get_asset_params(i)
+        else:
+            obj_params = self.params
+
         surface.add_geomod(
             obj, geometry_door_nodes, apply=True, attributes=[], input_kwargs=obj_params
         )
@@ -1393,6 +1553,26 @@ class CabinetBaseFactory(AssetFactory):
         self.mat_params = {}
         self.shelf_fac = LargeShelfBaseFactory(factory_seed)
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
+
+    @classmethod
+    @gin.configurable(module="CabinetBaseFactory")
+    def sample_joint_parameters(
+        cls,
+        cabinet_hinge_stiffness_min: float = 0.0,
+        cabinet_hinge_stiffness_max: float = 0.0,
+        cabinet_hinge_damping_min: float = 0.0,
+        cabinet_hinge_damping_max: float = 10.0,
+    ):
+        return {
+            "cabinet_hinge": {
+                "stiffness": uniform(
+                    cabinet_hinge_stiffness_min, cabinet_hinge_stiffness_max
+                ),
+                "damping": uniform(
+                    cabinet_hinge_damping_min, cabinet_hinge_damping_max
+                ),
+            },
+        }
 
     def sample_params(self):
         # Update fac params
@@ -1533,11 +1713,15 @@ class CabinetBaseFactory(AssetFactory):
         door_params = self.get_door_params(i=i)
         self.door_fac.params = door_params
         self.door_fac.params["door_left_hinge"] = False
-        right_door, door_obj_params = self.door_fac.create_asset(i=i, ret_params=True)
+        right_door, door_obj_params = self.door_fac.create_asset(
+            sample_params=True, i=i, ret_params=True
+        )
         right_door.name = "cabinet_right_door"
         self.door_fac.params = door_obj_params
         self.door_fac.params["door_left_hinge"] = True
-        left_door, _ = self.door_fac.create_asset(i=i, ret_params=True)
+        left_door, _ = self.door_fac.create_asset(
+            sample_params=False, i=i, ret_params=True
+        )
         left_door.name = "cabinet_left_door"
         self.door_params = door_obj_params
 
@@ -1557,6 +1741,7 @@ class CabinetBaseFactory(AssetFactory):
 
         # create cabinet
         cabinet_params = self.get_cabinet_params(i=i)
+
         surface.add_geomod(
             obj,
             geometry_cabinet_nodes,
@@ -1570,6 +1755,7 @@ class CabinetBaseFactory(AssetFactory):
             },
         )
         butil.delete([shelf, left_door, right_door])
+
         return obj
 
 

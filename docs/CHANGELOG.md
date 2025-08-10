@@ -238,3 +238,6 @@ v1.16.0
 - Refactored scatters into classes
 - Change blender_gt surface normals convention from world coordinates to camera coordinates.
 - Allow user specification of floor plans as a series of shapely primitives.
+
+v1.17.0
+- Adding dynamics to sim exporters and adding new articulated assets.

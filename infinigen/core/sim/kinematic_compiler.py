@@ -44,7 +44,7 @@ def get_labels(node_tree: bpy.types.NodeTree):
     while q:
         nt = q.pop(0)
         for node in nt.nodes:
-            if utils.is_node_group(node) and "Joint" not in node.node_tree.name:
+            if utils.is_node_group(node) and "joint" not in node.node_tree.name.lower():
                 q.append(node.node_tree)
             if utils.is_add_metadata(node):
                 labels.append(get_string_input(node, "Label"))
@@ -113,7 +113,7 @@ def get_geometry_graph(
 
         # add all the groups in this node tree
         for node in node_tree.nodes:
-            if utils.is_node_group(node) and "Joint" not in node.node_tree.name:
+            if utils.is_node_group(node) and "joint" not in node.node_tree.name.lower():
                 queue.append(node.node_tree)
 
         for link in node_tree.links:
@@ -151,7 +151,7 @@ def add_kinematic_node_as_child(node, child, idx):
 
 def compile(obj: bpy.types.Object) -> Dict:
     """
-    Compiles the Blender geometry nodes graph into MJCF format
+    Compiles the Blender geometry nodes graph for the given object
     """
 
     KinematicNode.reset_counts()
@@ -218,6 +218,7 @@ def compile(obj: bpy.types.Object) -> Dict:
             set_joint_id(root.idn, blend_node)
             utils.turn_off_joint_debugging(blend_node)
         if utils.is_duplicate(blend_node):
+            print(blend_node)
             set_duplicate_id(root.idn, blend_node)
 
         if utils.is_join(blend_node) or utils.is_joint(blend_node):
