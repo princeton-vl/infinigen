@@ -74,6 +74,9 @@ INFINIGEN_MINIMAL_INSTALL=True pip install -e .
 # Full install (Terrain & OpenGL-GT enabled, needed for Infinigen-Nature HelloWorld)
 pip install -e ".[terrain,vis]"
 
+# Installation for simulation assets
+pip install -e ".[sim]"
+
 # Developer install (includes pytest, ruff, other recommended dev tools)
 pip install -e ".[dev,terrain,vis]"
 pre-commit install
