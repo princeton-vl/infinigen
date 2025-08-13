@@ -8,17 +8,23 @@ import logging
 import math
 import shutil
 import subprocess
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import bpy
-import coacd
 import gin
 import numpy as np
 import trimesh
 
 from infinigen.core.util import blender as butil
+
+try:
+    import coacd
+except ImportError:
+    coacd = None
+    warnings.warn("coacd could not be imported. Some features may be unavailable.")
 
 FORMAT_CHOICES = ["fbx", "obj", "usdc", "usda", "stl", "ply"]
 BAKE_TYPES = {
@@ -965,6 +971,9 @@ def export_sim_ready(
     """
     Exports both the visual and collision assets for a geometry.
     """
+    if not visual_only:
+        assert coacd is not None, "coacd is required to export simulation assets."
+
     asset_exports = defaultdict(list)
     export_name = name if name is not None else obj.name
 

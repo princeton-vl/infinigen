@@ -2,6 +2,11 @@
 
 ### Exporting Articulated Objects
 
+To export to robotics simulation, install Infinigen using the command:
+```
+pip install -e ".[sim]"
+```
+
 To export articulated assets to the MJCF/URDF/USD file formats, we provide the following command.
 
 ```bash
