@@ -1,0 +1,26 @@
+# Kaliber's infinigen_examples/config_indoor/ configutation for infinigen
+# Author: Chaoi Tuan, Liwei Yang
+
+FloorPlanSolver.n_divide_trials = 25
+FloorPlanSolver.iters_mult = 25
+
+home_room_constraints.has_fewer_rooms = True
+
+solve_objects.addition_weight_scalar = 3.0
+
+compose_indoors.solve_steps_large = 100
+compose_indoors.solve_steps_medium = 40
+compose_indoors.solve_steps_small = 5
+
+compose_indoors.terrain_enabled = False
+
+# KALIBER EDITS
+
+# To render the top view
+compose_indoors.topview=True
+# To open all doors
+populate_doors.all_open = True
+# To hide the room ceilings
+compose_indoors.invisible_room_ceilings_enabled=True
+
+# END KALIBER EDITS
