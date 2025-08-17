@@ -234,7 +234,7 @@ def home_room_constraints(has_fewer_rooms=False):
                 lambda r: rooms[Semantics.Bedroom]
                 .related_to(r, cl.Traverse())
                 .count()
-                .in_range(1, 3, mean=3) # (1, 2, mean=1.2)
+                .in_range(1, 3, mean=2.0) # (1, 2, mean=1.2)
             )
             * rooms[Semantics.LivingRoom].all(
                 lambda r: rooms[Semantics.Entrance]
@@ -246,7 +246,7 @@ def home_room_constraints(has_fewer_rooms=False):
                 lambda r: rooms[Semantics.Bathroom]
                 .related_to(r, cl.Traverse())
                 .count()
-                .in_range(1, 2, mean=2) # (1, 1, mean=1)
+                .in_range(1, 2, mean=1.0) # (1, 1, mean=1)
             )
             * rg[Semantics.LivingRoom].all(
                 lambda r: rooms[Semantics.DiningRoom]
