@@ -35,7 +35,7 @@ from .semantics import home_asset_usage
 def sample_home_constraint_params():
     return dict(
         # what pct of the room floorplan should we try to fill with furniture?
-        furniture_fullness_pct=uniform(0.9, 0.95), #  uniform(0.6, 0.9)
+        furniture_fullness_pct=uniform(0.9, 0.95), # uniform(0.6, 0.9)
         # how many objects in each shelving per unit of volume
         obj_interior_obj_pct=uniform(0.5, 1),  # uniform(0.6, 0.9),
         # what pct of top surface of storage furniture should be filled with objects? e.g pct of top surface of shelf
@@ -45,7 +45,7 @@ def sample_home_constraint_params():
         # meters squared of wall art per approx meters squared of FLOOR area. TODO cant measure wall area currently.
         painting_area_per_room_area=uniform(40, 100) / 40,
         # rare objects wont even be added to the constraint graph in most homes
-        has_tv=uniform() < 1, #0,5
+        has_tv=uniform() < 1, # 0,5
         has_aquarium_tank=uniform() < 0.15,
         has_birthday_balloons=uniform() < 0.15,
         has_cocktail_tables=uniform() < 0.15,
@@ -77,7 +77,7 @@ def home_room_constraints(has_fewer_rooms=False):
             lambda r: rooms[Semantics.Hallway]
             .related_to(r, cl.Traverse())
             .count()
-            .in_range(0, 2, mean=1.2) # (0, 2, mean=1.2)
+            .in_range(0, 2, mean=1.2)
         )
         * rooms[Semantics.LivingRoom].all(
             lambda r: rooms[Semantics.Bedroom]
@@ -590,14 +590,14 @@ def home_furniture_constraints():
 
     score_terms["furniture_aesthetics"] = wallfurn.mean(
         lambda t: (
-            t.distance(wallfurn).hinge(0.1, 0.2).maximize(weight=0.6) # (0.2, 0.6)
-            + cl.accessibility_cost(t, furniture).minimize(weight=2) # 5
-            + cl.accessibility_cost(t, rooms).minimize(weight=5) # 10
+            t.distance(wallfurn).hinge(0.1, 0.2).maximize(weight=0.6) # .hinge(0.2, 0.6)
+            + cl.accessibility_cost(t, furniture).minimize(weight=2) # .minimize(weight=5)
+            + cl.accessibility_cost(t, rooms).minimize(weight=5) # .minimize(weight=10)
         )
     )
 
     constraints["storage"] = rooms.all(
-        lambda r: (storage_freestanding.related_to(r).count().in_range(5, 7)) # (1, 7)
+        lambda r: (storage_freestanding.related_to(r).count().in_range(5, 7)) # .in_range(1, 7)
     )
     score_terms["storage"] = rooms.mean(
         lambda r: (
@@ -606,7 +606,7 @@ def home_furniture_constraints():
             ).minimize(weight=5)
             + cl.accessibility_cost(storage.related_to(r), r, dist=0.2).minimize(
                 weight=5
-            )  # dist = 0.5
+            ) # dist = 0.5
         )
     )
 
@@ -764,7 +764,7 @@ def home_furniture_constraints():
     ceillights = lights[lamp.CeilingLightFactory]
 
     constraints["ceiling_lights"] = rooms.all(
-        lambda r: (ceillights.related_to(r, cu.hanging).count().in_range(1, 1)) # (1, 4)
+        lambda r: (ceillights.related_to(r, cu.hanging).count().in_range(1, 1)) # .in_range(1, 4)
     )
     score_terms["ceiling_lights"] = rooms.mean(
         lambda r: (
@@ -1102,10 +1102,10 @@ def home_furniture_constraints():
     # Only 1 sofa 
     constraints["sofa"] = livingrooms.all(
         lambda r: (
-            sofas.related_to(r).count().in_range(1, 1) # constraints to 1
-            *sofas.related_to(r, sofa_back_near_wall).count().in_range(0, 1) # (0,4)
-            * sofas.related_to(r, sofa_side_near_wall).count().in_range(0, 0) # (0,1)
-            * sofas.related_to(r, cu.on_floor).count().in_range(0, 0) # (0,1)
+            sofas.related_to(r).count().in_range(1, 1) # constraints to 1, .in_range(2, 3)
+            *sofas.related_to(r, sofa_back_near_wall).count().in_range(0, 1) # .in_range(0, 4)
+            * sofas.related_to(r, sofa_side_near_wall).count().in_range(0, 0) # .in_range(0, 1)
+            * sofas.related_to(r, cu.on_floor).count().in_range(0, 0) # .in_range(0, 1)
             * freestanding(sofas, r).all(
                 lambda t: (  # frustrum infront of freestanding sofa must directly contain tvstand
                     cl.accessibility_cost(t, tvstands.related_to(r), dist=3) > 0.4
