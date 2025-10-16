@@ -713,12 +713,11 @@ def configure_cameras(
     else:
         center_coordinate = None
 
-    n = len(cam_rigs) if n_views is None else n_views
     views = None
     for cam_rig in cam_rigs:
         views = compute_base_views(
             cam_rig,
-            n_views=n,
+            n_views=1,
             location_sample=location_sample,
             center_coordinate=center_coordinate,
             radius=mvs_radius,
