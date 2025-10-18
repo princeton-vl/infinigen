@@ -241,3 +241,8 @@ v1.16.0
 
 v1.17.0
 - Adding dynamics to sim exporters and adding new articulated assets.
+
+v1.18.0
+- Fix camera placement taking n^2 time wrt to num_cams instead of n. 
+- Add additional kernelizer util types.
+- Add additional floating object code.

@@ -3,6 +3,7 @@
 
 # Authors: Lingjie Mei
 
+# ruff: noqa: I001
 
 import numpy as np
 from numpy.random import uniform
@@ -19,7 +20,7 @@ from infinigen.assets.utils.object import data2mesh, mesh2obj
 from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth  
 
 
 class DiffGrowthBaseCoralFactory(BaseCoralFactory):
