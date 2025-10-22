@@ -27,7 +27,7 @@ Typically, these tasks are as follows:
 
 The outputs for all tasks belonging to a particular scene will be stored in the `outputs/MYJOB/SEED`, where MYJOB was the folder name chosen in the `--output_folder` argument, and `SEED` is the random seed used to create the scene. Each task creates its own detailed log files in `outputs/MYJOB/SEED/logs/TASKNAME.log` and `outputs/MYJOB/SEED/logs/TASKNAME.err` - <b> please check these logs to see detailed error messages if your jobs crash </b>.
 
-Infinigen is designed to run many independent scenes in paralell. This means that even if running all the steps for each scene can take some time, we can still achieve good throughput and utilization (provided it has enough resources - most laptops only have enough RAM for one scene at a time). 
+Infinigen is designed to run many independent scenes in parallel. This means that even if running all the steps for each scene can take some time, we can still achieve good throughput and utilization (provided it has enough resources - most laptops only have enough RAM for one scene at a time). 
 
 #### Overrides and Config Files
 
