@@ -150,7 +150,7 @@ Some scene type configs are also generally more expensive than others. `forest.g
 
 ### Other `manage_jobs.py` commandline options
 
-Please run `pythom -m infinigen.datagen.manage_jobs --help` for an up-to-date description of other commandline arguments. We always use `--cleanup big_files --warmup_sec 30000` for large render jobs. Optionally, you can also log render progress to Weights & Biases.
+Please run `python -m infinigen.datagen.manage_jobs --help` for an up-to-date description of other commandline arguments. We always use `--cleanup big_files --warmup_sec 30000` for large render jobs. Optionally, you can also log render progress to Weights & Biases.
 
 ## Example Commands
 
