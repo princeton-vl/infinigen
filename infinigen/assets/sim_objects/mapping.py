@@ -5,16 +5,24 @@
 # Authors:
 # - Abhishek Joshi: primary author
 
-from infinigen.assets.objects.appliances.toaster import ToasterFactory
-from infinigen.assets.objects.shelves.cabinet import CabinetFactory
+from infinigen.assets.sim_objects.box import BoxFactory
+from infinigen.assets.sim_objects.cabinet import CabinetFactory
 from infinigen.assets.sim_objects.dishwasher import DishwasherFactory
 from infinigen.assets.sim_objects.door import SimDoorFactory
-from infinigen.assets.sim_objects.doublefridge import DoublefridgeFactory
+from infinigen.assets.sim_objects.door_handle import DoorHandleFactory
 from infinigen.assets.sim_objects.drawer import DrawerFactory
+from infinigen.assets.sim_objects.faucet import FaucetFactory
 from infinigen.assets.sim_objects.lamp import LampFactory
-from infinigen.assets.sim_objects.multidoublefridge import MultiDoublefridgeFactory
-from infinigen.assets.sim_objects.multifridge import MultifridgeFactory
-from infinigen.assets.sim_objects.singlefridge import SinglefridgeFactory
+from infinigen.assets.sim_objects.microwave import MicrowaveFactory
+from infinigen.assets.sim_objects.oven import OvenFactory
+from infinigen.assets.sim_objects.pepper_grinder import PepperGrinderFactory
+from infinigen.assets.sim_objects.plier import PlierFactory
+from infinigen.assets.sim_objects.refrigerator import RefrigeratorFactory
+from infinigen.assets.sim_objects.soap_dispenser import SoapDispenserFactory
+from infinigen.assets.sim_objects.stovetop import StovetopFactory
+from infinigen.assets.sim_objects.toaster import ToasterFactory
+from infinigen.assets.sim_objects.trash import TrashFactory
+from infinigen.assets.sim_objects.window import WindowFactory
 
 # add newly transpiled assets here
 
@@ -22,12 +30,30 @@ OBJECT_CLASS_MAP = {
     "door": SimDoorFactory,
     "toaster": ToasterFactory,
     "dishwasher": DishwasherFactory,
-    "multifridge": MultifridgeFactory,
-    "singlefridge": SinglefridgeFactory,
-    "doublefridge": DoublefridgeFactory,
-    "multidoublefridge": MultiDoublefridgeFactory,
     "lamp": LampFactory,
     "cabinet": CabinetFactory,
     "drawer": DrawerFactory,
+    "refrigerator": RefrigeratorFactory,
+    "oven": OvenFactory,
+    "microwave": MicrowaveFactory,
+    "soap_dispenser": SoapDispenserFactory,
+    "faucet": FaucetFactory,
+    "plier": PlierFactory,
+    "window": WindowFactory,
+    "box": BoxFactory,
+    "pepper_grinder": PepperGrinderFactory,
+    "trash": TrashFactory,
+    "door_handle": DoorHandleFactory,
+    "stovetop": StovetopFactory,
     # add newly transpiled assets here
 }
+
+
+def print_sim_objects():
+    for i, obj_class in enumerate(OBJECT_CLASS_MAP.keys()):
+        print(f"{i} - {obj_class}")
+
+
+if __name__ == "__main__":
+    print("Valid simulation assets:")
+    print_sim_objects()

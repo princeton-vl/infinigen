@@ -175,9 +175,9 @@ def nodegroup_attachment(nw: NodeWrangler):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz,
-            "Vertices X": 5,
-            "Vertices Y": 5,
-            "Vertices Z": 5,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -277,9 +277,9 @@ def nodegroup_division_board(nw: NodeWrangler, material, tag_support=False):
             Nodes.MeshCube,
             input_kwargs={
                 "Size": combine_xyz,
-                "Vertices X": 10,
-                "Vertices Y": 10,
-                "Vertices Z": 10,
+                "Vertices X": 2,
+                "Vertices Y": 2,
+                "Vertices Z": 2,
             },
         )
 
@@ -355,9 +355,9 @@ def nodegroup_bottom_board(nw: NodeWrangler):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz,
-            "Vertices X": 10,
-            "Vertices Y": 10,
-            "Vertices Z": 10,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -430,9 +430,9 @@ def nodegroup_back_board(nw: NodeWrangler):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz_4,
-            "Vertices X": 10,
-            "Vertices Y": 10,
-            "Vertices Z": 10,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -505,9 +505,9 @@ def nodegroup_side_board(nw: NodeWrangler):
         Nodes.MeshCube,
         input_kwargs={
             "Size": combine_xyz,
-            "Vertices X": 10,
-            "Vertices Y": 10,
-            "Vertices Z": 10,
+            "Vertices X": 2,
+            "Vertices Y": 2,
+            "Vertices Z": 2,
         },
     )
 
@@ -907,7 +907,7 @@ class LargeShelfBaseFactory(AssetFactory):
 
         obj_params = self.get_asset_params(i)
         surface.add_geomod(
-            obj, geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params
+            obj, geometry_nodes, attributes=[], apply=False, input_kwargs=obj_params
         )
 
         if params.get("ret_params", False):
