@@ -3042,6 +3042,10 @@ class TrashFactory(AssetFactory):
     @gin.configurable(module="TrashFactory")
     def sample_joint_parameters(
         cls,
+        flapping_cap_front_stiffness_min: float = 0.5,
+        flapping_cap_front_stiffness_max: float = 2.0,
+        flapping_cap_front_damping_min: float = 0.5,
+        flapping_cap_front_damping_max: float = 2.0,
         flapping_cap_left_stiffness_min: float = 0.1,
         flapping_cap_left_stiffness_max: float = 0.1,
         flapping_cap_left_damping_min: float = 0.001,
@@ -3050,6 +3054,22 @@ class TrashFactory(AssetFactory):
         flapping_cap_right_stiffness_max: float = 0.1,
         flapping_cap_right_damping_min: float = 0.001,
         flapping_cap_right_damping_max: float = 0.001,
+        rotating_sphere_joint_stiffness_min: float = 0.5,
+        rotating_sphere_joint_stiffness_max: float = 2.0,
+        rotating_sphere_joint_damping_min: float = 0.5,
+        rotating_sphere_joint_damping_max: float = 2.0,
+        rotating_neck_joint_stiffness_min: float = 0.5,
+        rotating_neck_joint_stiffness_max: float = 2.0,
+        rotating_neck_joint_damping_min: float = 0.5,
+        rotating_neck_joint_damping_max: float = 2.0,
+        trash_pedal_joint_stiffness_min: float = 0.5,
+        trash_pedal_joint_stiffness_max: float = 2.0,
+        trash_pedal_joint_damping_min: float = 0.5,
+        trash_pedal_joint_damping_max: float = 2.0,
+        flat_rotating_lid_stiffness_min: float = 0.5,
+        flat_rotating_lid_stiffness_max: float = 2.0,
+        flat_rotating_lid_damping_min: float = 0.5,
+        flat_rotating_lid_damping_max: float = 2.0,
     ):
         return {
             "flapping_cap_front": {
