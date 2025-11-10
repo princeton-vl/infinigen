@@ -1,14 +1,24 @@
+import gin
 from numpy.random import randint, uniform
 
 from infinigen.assets.utils.joints import (
     nodegroup_add_jointed_geometry_metadata,
     nodegroup_hinge_joint,
 )
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import weighted_sample
+
+
 @node_utils.to_nodegroup(
     "nodegroup_plier_handle_001", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_plier_handle_001(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    combine_xyz_3 = nw.new_node(Nodes.CombineXYZ)
 
     group_input = nw.new_node(
         Nodes.GroupInput,
@@ -79,10 +89,15 @@ def nodegroup_plier_handle_001(nw: NodeWrangler):
 
     equal_1 = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: group_input.outputs["handle shape"], 3: 1},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
+    value_1 = nw.new_node(Nodes.Value)
+    value_1.outputs[0].default_value = 1.0000
 
+    value_2 = nw.new_node(Nodes.Value)
+    value_2.outputs[0].default_value = 0.8000
 
     switch_1 = nw.new_node(
         Nodes.Switch,
@@ -90,6 +105,8 @@ def nodegroup_plier_handle_001(nw: NodeWrangler):
         attrs={"input_type": "FLOAT"},
     )
 
+    value = nw.new_node(Nodes.Value)
+    value.outputs[0].default_value = 0.5000
 
     switch = nw.new_node(
         Nodes.Switch,
@@ -293,6 +310,8 @@ def nodegroup_plier_handle_001(nw: NodeWrangler):
     "nodegroup_plier_head_001", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_plier_head_001(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -330,6 +349,7 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
 
     subtract = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: 1.0000, 1: group_input.outputs["handle_head_length_ratio"]},
         attrs={"operation": "SUBTRACT"},
     )
 
@@ -679,6 +699,7 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
         Nodes.CurveToPoints, input_kwargs={"Curve": curve_line_1, "Count": reroute_13}
     )
 
+    index_1 = nw.new_node(Nodes.Index)
 
     modulo = nw.new_node(
         Nodes.Math, input_kwargs={0: index_1, 1: 2.0000}, attrs={"operation": "MODULO"}
@@ -747,11 +768,13 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
 
     divide = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: add_2.outputs["Vector"], 1: (2.0000, 2.0000, 2.0000)},
         attrs={"operation": "DIVIDE"},
     )
 
     cross_product = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: divide.outputs["Vector"], 1: (0.0000, 0.0000, 1.0000)},
         attrs={"operation": "CROSS_PRODUCT"},
     )
 
@@ -775,6 +798,7 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
 
     multiply_12 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={0: normalize.outputs["Vector"], 1: combine_xyz_3},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -943,6 +967,7 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
         Nodes.CurveToPoints, input_kwargs={"Curve": curve_line_2, "Count": reroute_13}
     )
 
+    index_2 = nw.new_node(Nodes.Index)
 
     modulo_1 = nw.new_node(
         Nodes.Math, input_kwargs={0: index_2, 1: 2.0000}, attrs={"operation": "MODULO"}
@@ -1052,6 +1077,8 @@ def nodegroup_plier_head_001(nw: NodeWrangler):
     "nodegroup_joint_details_001", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_joint_details_001(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input_1 = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -1070,11 +1097,13 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
 
     multiply_1 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: multiply, 1: group_input_1.outputs["Height"]},
         attrs={"operation": "MULTIPLY"},
     )
 
     maximum = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: group_input_1.outputs["joint_radius"], 1: multiply_1},
         attrs={"operation": "MAXIMUM"},
     )
 
@@ -1116,6 +1145,9 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
+def geometry_nodes(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input_1 = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -1195,6 +1227,7 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
 
     equal = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: group_input_1.outputs["head_type"]},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -1213,6 +1246,7 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
 
     equal_1 = nw.new_node(
         Nodes.Compare,
+        input_kwargs={2: group_input_1.outputs["head_type"], 3: 1},
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
@@ -1228,6 +1262,7 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
         attrs={"operation": "MULTIPLY"},
     )
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: multiply_1})
 
     reroute_27 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input_1.outputs["joint_radius"]}
@@ -1360,6 +1395,7 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
         attrs={"operation": "EQUAL", "data_type": "INT"},
     )
 
+    op_and = nw.new_node(Nodes.BooleanMath, input_kwargs={0: equal_2, 1: equal_3})
 
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
@@ -1469,12 +1505,21 @@ def nodegroup_joint_details_001(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
+
 class PlierFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
+
+    @classmethod
     @gin.configurable(module="PlierFactory")
+    def sample_joint_parameters(
+        cls,
         plier_joint_stiffness_min: float = 0.0,
         plier_joint_stiffness_max: float = 0.0,
         plier_joint_damping_min: float = 0.2,
         plier_joint_damping_max: float = 1.0,
+    ):
+        return {
             "plier_joint": {
                 "stiffness": uniform(
                     plier_joint_stiffness_min, plier_joint_stiffness_max
@@ -1482,6 +1527,9 @@ class PlierFactory(AssetFactory):
                 "damping": uniform(plier_joint_damping_min, plier_joint_damping_max),
             },
         }
+
+    def sample_parameters(self):
+        # add code here to randomly sample from parameters
         import numpy as np
 
         from infinigen.assets.materials import metal, plastic
@@ -1495,16 +1543,65 @@ class PlierFactory(AssetFactory):
 
             return (h, s, v)
 
+        def sample_mat(gray=False):
+            gray = sample_gray()
+            shader = weighted_sample(
+                [
+                    (metal.MetalBasic, 0.7),
+                    (plastic.Plastic, 0.2),
+                    (plastic.BlackPlastic, 0.1),
+                ]
+            )()
+            if gray:
+                return shader(color_hsv=gray)
+            else:
+                return shader()
 
+        def sample_handle_mat():
+            shader = weighted_sample(
+                [
+                    (metal.MetalBasic, 0.2),
+                    (plastic.Plastic, 0.7),
+                    (plastic.BlackPlastic, 0.1),
+                ]
+            )()
+            return shader()
+
+        metal_mat = sample_mat(gray=True)
         handle_mat = sample_handle_mat()  # np.random.choice([plastic.Plastic, metal.MetalBasic, plastic.BlackPlastic], p=[0.7, 0.2, 0.1])()
+        return_dict = {
+            "Length": uniform(0.15, 0.2),
+            "Width": uniform(0.05, 0.1),
+            "Height": uniform(0.006, 0.015),
             "head_type": randint(0, 2),
+            "head_width": uniform(0.5, 1),
+            "handle_curvature": uniform(0.3, 0.6),
+            "handle_thickness": uniform(1, 1.5),
+            "joint_radius": uniform(0.01, 0.015),
+            "head_and_joint_material": metal_mat,
             "handle_material": handle_mat,
+            "Value": 0,
+            "head curvature": uniform(0, 0.01),
             "jagged_head": randint(0, 2),
+            "number of jagged edges": randint(10, 80),
+            "handle_roundness": randint(0, 3),
+            "plastic handle cover length": uniform(0.1, 0.3),
             "cut length ratio": uniform(0.65, 0.83),
             "pincer length ratio": uniform(0.6, 0.75),
+        }
         print(
             f"=======================================================\nDictionary of configs: {return_dict}\n\n"
         )
+        return return_dict
+
     def create_asset(self, asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            apply=False,
+            node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
+        )
+
         return obj
