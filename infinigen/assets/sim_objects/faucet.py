@@ -1,3 +1,4 @@
+import gin
 from numpy.random import randint, uniform
 
 from infinigen.assets.composition import material_assignments
@@ -5,10 +6,19 @@ from infinigen.assets.utils.joints import (
     nodegroup_add_jointed_geometry_metadata,
     nodegroup_hinge_joint,
 )
+from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import weighted_sample
+
+
 @node_utils.to_nodegroup(
     "nodegroup_node_group_main_part_faucet", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_main_part_faucet(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     cylinder_3 = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={"Vertices": 39, "Radius": 0.0200, "Depth": 0.0300},
@@ -61,6 +71,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_node_group_curved_handle", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_curved_handle(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     bezier_segment_1 = nw.new_node(
         Nodes.CurveBezierSegment,
         input_kwargs={
@@ -72,6 +85,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
     )
 
+    spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     float_curve = nw.new_node(
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
@@ -105,6 +119,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
     )
 
+    position_1 = nw.new_node(Nodes.InputPosition)
 
     separate_xyz_1 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position_1})
 
@@ -120,6 +135,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_1 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: separate_xyz_1.outputs["Y"], 1: map_range.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -147,6 +163,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_node_group_cylinder_base", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_cylinder_base(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     cylinder_5 = nw.new_node(
         "GeometryNodeMeshCylinder",
         input_kwargs={"Vertices": 39, "Radius": 0.0650, "Depth": 0.1500},
@@ -166,9 +185,13 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         attrs={"is_active_output": True},
     )
 
+
 @node_utils.to_nodegroup(
     "nodegroup_node_group_001", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_001(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketFloat", "Y", 0.0000)]
     )
@@ -224,6 +247,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 @node_utils.to_nodegroup(
     "nodegroup_node_group_002", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_002(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketGeometry", "Curve", None)]
     )
@@ -272,6 +298,9 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
 @node_utils.to_nodegroup("nodegroup_handle", singleton=False, type="GeometryNodeTree")
+def nodegroup_handle(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     bezier_segment = nw.new_node(
         Nodes.CurveBezierSegment,
         input_kwargs={
@@ -283,6 +312,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
     )
 
+    spline_parameter = nw.new_node(Nodes.SplineParameter)
 
     float_curve = nw.new_node(
         Nodes.FloatCurve, input_kwargs={"Value": spline_parameter.outputs["Factor"]}
@@ -314,6 +344,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
         },
     )
 
+    position = nw.new_node(Nodes.InputPosition)
 
     separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
 
@@ -329,6 +360,7 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
     multiply_1 = nw.new_node(
         Nodes.Math,
+        input_kwargs={0: separate_xyz.outputs["Y"], 1: map_range.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
     )
 
@@ -390,6 +422,9 @@ def nodegroup_node_group_009(nw: NodeWrangler):
 @node_utils.to_nodegroup(
     "nodegroup_node_group_quadrillateral_base", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_node_group_quadrillateral_base(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -397,10 +432,12 @@ def nodegroup_node_group_009(nw: NodeWrangler):
             ("NodeSocketFloat", "Radius", 0.2500),
         ],
     )
+
     quadrilateral_1 = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
         input_kwargs={"Width": group_input.outputs["Width"], "Height": 0.7000},
     )
+
     reroute = nw.new_node(Nodes.Reroute, input_kwargs={"Input": quadrilateral_1})
 
     fillet_curve_1 = nw.new_node(
@@ -433,6 +470,9 @@ def nodegroup_node_group_009(nw: NodeWrangler):
 
 
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
+def geometry_nodes(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -458,14 +498,17 @@ def nodegroup_node_group_009(nw: NodeWrangler):
             ("NodeSocketFloat", "hinge_vessel_handle_y_rotation", 0.0000),
         ],
     )
+
     reroute_3 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["vessel_sink"]}
     )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={3: reroute_3},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
+
     reroute_2 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["pedestral_sink"]}
     )
@@ -1041,9 +1084,19 @@ def nodegroup_node_group_009(nw: NodeWrangler):
 
 
 class FaucetFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
+
+    @classmethod
     @gin.configurable(module="FaucetFactory")
+    def sample_joint_parameters(
+        cls,
+        vessel_spout_stiffness_min: float = 0.0,
+        vessel_spout_stiffness_max: float = 0.0,
         vessel_spout_damping_min: float = 30.0,
         vessel_spout_damping_max: float = 50.0,
+        right_side_handle_stiffness_min: float = 0.0,
+        right_side_handle_stiffness_max: float = 0.0,
         right_side_handle_damping_min: float = 0.08,
         right_side_handle_damping_max: float = 0.15,
         top_handle_y_stiffness_min: float = -100.0,
@@ -1066,12 +1119,16 @@ class FaucetFactory(AssetFactory):
         left_side_handle_second_stiffness_max: float = 0.0,
         left_side_handle_second_damping_min: float = 0.08,
         left_side_handle_second_damping_max: float = 0.15,
+        top_handle_z_stiffness_min: float = 0.0,
+        top_handle_z_stiffness_max: float = 0.0,
         top_handle_z_damping_min: float = 15.0,
         top_handle_z_damping_max: float = 30.0,
         left_side_handle_only_stiffness_min: float = 0.0,
         left_side_handle_only_stiffness_max: float = 0.0,
         left_side_handle_only_damping_min: float = 0.08,
         left_side_handle_only_damping_max: float = 0.15,
+    ):
+        return {
             "vessel_spout": {
                 "stiffness": uniform(
                     vessel_spout_stiffness_min, vessel_spout_stiffness_max
@@ -1142,10 +1199,40 @@ class FaucetFactory(AssetFactory):
                 ),
             },
         }
+
+    def sample_parameters(self):
+        params = {
+            "base_width": uniform(0.23, 0.63),
             "tap_roation_z": 0,
+            "tap_height": uniform(0.5, 0.9),
+            "base_radius": uniform(0.03, 0.1),
+            "curl_tap": uniform(-0.2, 0.2),
             "pedestral_sink": randint(0, 2),
+            "hands_length_x": uniform(0.75, 1.25),
+            "hands_length_Y": uniform(0.75, 1.25),
             "one_side": randint(0, 2),
             "vessel_sink": randint(0, 2),
             "wide_one_side_handle": randint(0, 2),
+            "Tap": weighted_sample(material_assignments.decorative_metal)()(),
+            "pedestral_hinge_handle_0": 0,
+            "pedestral_hingle_handle_1": 0,
+            "hinge_tap_rotation": 0,
+            "hinge_side_handle_0": 0,
+            "hinge_side_handle_1": 0,
+            "hinge_vessel_tap_0": 0,
+            "hinge_vessel_handle": 0,
+            "hinge_vessel_handle_y_rotation": 0,
+        }
+        return params
+
     def create_asset(self, asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            apply=False,
+            node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
+        )
+
+        return obj
