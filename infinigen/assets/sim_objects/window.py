@@ -2254,8 +2254,13 @@ class WindowFactory(AssetFactory):
                 "damping": uniform(Lock_damping_min, Lock_damping_max),
                 "friction": 10000,
             },
+            "HingePanelL": {
+                "stiffness": uniform(
                     HingePanelL_stiffness_min, HingePanelL_stiffness_max
+                ),
                 "damping": uniform(HingePanelL_damping_min, HingePanelL_damping_max),
+            },
+            "HingePanelR": {
                 "stiffness": uniform(
                     HingePanelR_stiffness_min, HingePanelR_stiffness_max
                 ),
@@ -2283,6 +2288,7 @@ class WindowFactory(AssetFactory):
         # add code here to randomly sample from parameters
 
         joint_type = randint(0, 2)  # 0 for hinge, 1 for sliding
+        joint_value = 0
 
         width = uniform(1, 4)
         height = uniform(1, 2)
