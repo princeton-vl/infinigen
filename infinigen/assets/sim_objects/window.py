@@ -2229,16 +2229,52 @@ class WindowFactory(AssetFactory):
         cls,
         Lock_stiffness_min: float = 0.0,
         Lock_stiffness_max: float = 0.0,
+        Lock_damping_min: float = 1.2,
+        Lock_damping_max: float = 1.6,
+        HingePanelL_stiffness_min: float = 0.0,
+        HingePanelL_stiffness_max: float = 0.0,
+        HingePanelL_damping_min: float = 150.0,
+        HingePanelL_damping_max: float = 150.0,
+        HingePanelR_stiffness_min: float = 0.0,
+        HingePanelR_stiffness_max: float = 0.0,
+        HingePanelR_damping_min: float = 150.0,
+        HingePanelR_damping_max: float = 150.0,
+        SlidingPanelL_stiffness_min: float = 0.0,
+        SlidingPanelL_stiffness_max: float = 0.0,
+        SlidingPanelL_damping_min: float = 4000.0,
+        SlidingPanelL_damping_max: float = 5000.0,
+        SlidingPanelR_stiffness_min: float = 0.0,
+        SlidingPanelR_stiffness_max: float = 0.0,
+        SlidingPanelR_damping_min: float = 4000.0,
+        SlidingPanelR_damping_max: float = 5000.0,
     ):
         return {
             "Lock": {
                 "stiffness": uniform(Lock_stiffness_min, Lock_stiffness_max),
                 "damping": uniform(Lock_damping_min, Lock_damping_max),
+                "friction": 10000,
             },
+                    HingePanelL_stiffness_min, HingePanelL_stiffness_max
+                "damping": uniform(HingePanelL_damping_min, HingePanelL_damping_max),
                 "stiffness": uniform(
+                    HingePanelR_stiffness_min, HingePanelR_stiffness_max
+                ),
+                "damping": uniform(HingePanelR_damping_min, HingePanelR_damping_max),
+            },
+            "SlidingPanelL": {
+                "stiffness": uniform(
+                    SlidingPanelL_stiffness_min, SlidingPanelL_stiffness_max
+                ),
+                "damping": uniform(
+                    SlidingPanelL_damping_min, SlidingPanelL_damping_max
                 ),
             },
+            "SlidingPanelR": {
                 "stiffness": uniform(
+                    SlidingPanelR_stiffness_min, SlidingPanelR_stiffness_max
+                ),
+                "damping": uniform(
+                    SlidingPanelR_damping_min, SlidingPanelR_damping_max
                 ),
             },
         }
