@@ -995,6 +995,8 @@ def transpile_object_to_sim_class(
         f"Found {len(targets)} initial transpile targets for object {repr(obj)}"
     )
 
+    # set the asset to the default state and set debugging features to false
+
     func_code, funcnames, dependencies_used = transpile(targets, module_dependencies)
 
     joint_param_str = build_joint_params(func_code)
@@ -1049,7 +1051,7 @@ class {class_name}(AssetFactory):
         )
 
     logging.info("")  # newline once done for ease of reading the logs
-    return code
+    return code, class_name
 
 
 def transpile_object(obj, module_dependencies=[]):

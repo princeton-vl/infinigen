@@ -10,7 +10,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import bpy
 import coacd
@@ -20,7 +20,6 @@ import trimesh
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics, UsdShade, Vt
 
 import infinigen.core.sim.exporters.utils as exputils
-from infinigen.core import surface
 from infinigen.core.sim.exporters.base import (
     PathItem,
     RigidBody,
@@ -33,6 +32,10 @@ from infinigen.core.util import blender as butil
 from infinigen.tools.export import bake_object, skipBake, triangulate_mesh
 
 
+class UnsupportedAxisError(Exception):
+    pass
+
+
 class USDBuilder(SimBuilder):
     def __init__(self, assets_dir):
         super().__init__(assets_dir)
@@ -41,6 +44,9 @@ class USDBuilder(SimBuilder):
 
         self.asset_freq = defaultdict(int)
         self.joint_freq = defaultdict(int)
+
+        self.post_processing_collision_info = defaultdict(dict)
+        self.exclude_links = set()
 
         self.link_count = 0
 
@@ -69,15 +75,17 @@ class USDBuilder(SimBuilder):
         metadata: Dict,
         visual_only: bool = False,
         image_res: int = 512,
+        extra_exclude: Optional[set] = None,
     ):
         super().build(blend_obj, metadata)
 
         # construct a skeleton for the rigid body
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
+        root = self._wrap_in_body(root)
         self._simplify_skeleton(root)
 
         body_info = self._add_assets(root, visual_only, image_res)
-        self._add_joints(root, body_info, sample_joint_params_fn)
+        self._add_joints(root, body_info, sample_joint_params_fn, extra_exclude)
 
     def _add_assets(self, root: RigidBody, visual_only: bool, image_res: int):
         """Populates the USD with its xforms and assets."""
@@ -99,9 +107,10 @@ class USDBuilder(SimBuilder):
                 vismesh, colmeshes, asset = self._add_mesh(
                     asset.attribs, link_path, visual_only, image_res
                 )
-                vismesh_refs.append(vismesh)
-                colmesh_refs.append(colmeshes)
-                assets.append(asset)
+                if asset is not None:
+                    vismesh_refs.append(vismesh)
+                    colmesh_refs.append(colmeshes)
+                    assets.append(asset)
 
             # set the xform position to be the center of the aabb of its assets
             aabb_center = exputils.get_aabb_center(assets)
@@ -110,15 +119,36 @@ class USDBuilder(SimBuilder):
 
             # offset each individual geom
             for vismesh, colmeshes, asset in zip(vismesh_refs, colmesh_refs, assets):
-                offset = exputils.get_aabb_center(asset) - aabb_center
+                geom_center = exputils.get_aabb_center(asset)
+                offset = geom_center - aabb_center
                 vismesh.AddTranslateOp().Set(Gf.Vec3d(*offset))
                 for colmesh in colmeshes:
                     colmesh.AddTranslateOp().Set(Gf.Vec3d(*offset))
 
+                    verts = np.array(colmesh.GetPointsAttr().Get())
+                    faces = np.array(colmesh.GetFaceVertexIndicesAttr().Get()).reshape(
+                        -1, 3
+                    )
+
+                    # add information for post processing
+                    self.post_processing_collision_info[link_name][
+                        colmesh.GetPrim().GetName()
+                    ] = {
+                        "offset": geom_center,
+                        "mesh": trimesh.Trimesh(
+                            vertices=verts, faces=faces, process=False
+                        ),
+                        "ref": colmesh,
+                    }
+
         return body_usd_info
 
     def _add_joints(
-        self, root: RigidBody, body_info: Dict, sample_joint_params_fn: Callable
+        self,
+        root: RigidBody,
+        body_info: Dict,
+        sample_joint_params_fn: Callable,
+        extra_exclude: Optional[set] = None,
     ):
         """Populates the USD with its joints."""
 
@@ -136,6 +166,12 @@ class USDBuilder(SimBuilder):
 
         all_link_paths = set()
         filtered_pairs = defaultdict(set)
+        if extra_exclude is not None:
+            for e in extra_exclude:
+                body1_path, body2_path = f"/Asset/{e[0]}", f"/Asset/{e[1]}"
+                filtered_pairs[body1_path].add(body2_path)
+                filtered_pairs[body2_path].add(body1_path)
+
         for body in root:
             for child_body, kinematic_nodes in body.children.items():
                 if len(kinematic_nodes) > 1:
@@ -144,7 +180,9 @@ class USDBuilder(SimBuilder):
                     )
                 node = kinematic_nodes[0]
                 joint_name = self.metadata[node.idn]["joint label"]
+                unique_joint_idx = self.joint_freq[joint_name]
                 unique_joint_name = f"{joint_name}_{self.joint_freq[joint_name]}"
+                unique_joint_name = exputils.clean_name(unique_joint_name)
                 self.joint_freq[joint_name] += 1
                 if node.joint_type == JointType.HINGE:
                     joint_prim = self.stage.DefinePrim(
@@ -176,22 +214,20 @@ class USDBuilder(SimBuilder):
                 joint.CreateBody0Rel().SetTargets([parent_path])
                 joint.CreateBody1Rel().SetTargets([child_path])
 
-                # extract information about the joint position
-                prefix = node.idn
-                pos_vals = surface.read_attr_data(self.blend_obj, prefix + "_pos")
-                pos_mask = np.any(pos_vals != 0.0, axis=1)
-                if all(~pos_mask):
-                    position = np.zeros(3)
-                else:
-                    position = pos_vals[pos_mask].mean(axis=0)
+                R = exputils.get_coord_frame(
+                    self.blend_obj,
+                    node.idn,
+                    unique_joint_idx,
+                    body_info[child_body]["center"],
+                )
 
-                # extract information about the joint axis
-                axis_vals = surface.read_attr_data(self.blend_obj, prefix + "_axis")
-                axis_mask = np.any(axis_vals != 0.0, axis=1)
-                if all(~axis_mask):
-                    axis = np.array([0.0, 0.0, 1.0])
-                else:
-                    axis = axis_vals[axis_mask].mean(axis=0)
+                prefix = node.idn
+                poschild, axis, range_min, range_max = exputils.get_joint_properties(
+                    self.blend_obj, prefix
+                )
+
+                position = R @ poschild
+                axis = R @ axis
 
                 axis = axis / np.linalg.norm(axis)
                 mapping = {
@@ -202,9 +238,16 @@ class USDBuilder(SimBuilder):
                     (0, 0, 1): ("Z", False),
                     (0, 0, -1): ("Z", True),
                 }
+
+                axis_dim = None
                 for vec, (dim, f) in mapping.items():
-                    if np.allclose(axis, vec):
+                    if np.allclose(axis, vec, atol=1e-2):
                         axis_dim, flip = dim, f
+
+                if axis_dim is None:
+                    raise UnsupportedAxisError(
+                        f"USD exporter only supports axes along the X, Y, Z dimensions. Current axis: {axis}"
+                    )
 
                 joint.CreateAxisAttr().Set(axis_dim)
 
@@ -217,47 +260,39 @@ class USDBuilder(SimBuilder):
                     elif axis_dim == "Z":
                         quat = Gf.Quatf(0, 0, 0, 1)
 
-                local_pos_parent = (
-                    body_info[child_body]["center"]
-                    - body_info[body]["center"]
-                    + position
-                )
+                posparent = (
+                    body_info[child_body]["center"] - body_info[body]["center"]
+                ) + position
 
-                joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*local_pos_parent))
+                joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*posparent))
                 joint.CreateLocalRot0Attr().Set(quat)
                 joint.CreateLocalPos1Attr().Set(Gf.Vec3f(*position))
                 joint.CreateLocalRot1Attr().Set(quat)
-
-                # get information about the range of a joint
-                min_vals = surface.read_attr_data(self.blend_obj, prefix + "_min")
-                min_mask = min_vals != 0.0
-                if all(~min_mask):
-                    range_min = 0.0
-                else:
-                    range_min = float(min_vals[min_mask].mean())
-
-                max_vals = surface.read_attr_data(self.blend_obj, prefix + "_max")
-                max_mask = max_vals != 0.0
-                if all(~max_mask):
-                    range_max = 0.0
-                else:
-                    range_max = float(max_vals[max_mask].mean())
 
                 if flip:
                     range_min, range_max = -range_max, -range_min
 
                 # convert from radians to degrees
                 multiplier = 180 / np.pi if node.joint_type == JointType.HINGE else 1
-                joint.CreateLowerLimitAttr().Set(range_min * multiplier)
-                joint.CreateUpperLimitAttr().Set(range_max * multiplier)
+
+                if not (range_min == range_max == 0):
+                    joint.CreateLowerLimitAttr().Set(range_min * multiplier)
+                    joint.CreateUpperLimitAttr().Set(range_max * multiplier)
 
         for link_path in all_link_paths:
             link_prim = self.stage.GetPrimAtPath(link_path)
             UsdPhysics.FilteredPairsAPI.Apply(link_prim)
             rel = link_prim.CreateRelationship("physics:filteredPairs")
-            children_paths = filtered_pairs[link_path]
-            target_paths = list(all_link_paths - children_paths - set([link_path]))
-            rel.SetTargets(target_paths)
+            ignore_paths = filtered_pairs[link_path]  # links to ignore
+
+            rel.SetTargets(ignore_paths)
+            for ignore_path in ignore_paths:
+                self.exclude_links.add(
+                    (
+                        link_prim.GetName(),
+                        self.stage.GetPrimAtPath(ignore_path).GetName(),
+                    )
+                )
 
     def _add_xform(self, usd_path: str):
         """Creates an xform."""
@@ -272,10 +307,17 @@ class USDBuilder(SimBuilder):
         mesh_vert, mesh_face, mesh_facenum, labels, asset = self._get_geometry_info(
             attribs
         )
+        if exputils.is_2d(asset):
+            # ignore geometries that are effectively 2d
+            # usually represented as single points
+            return None, None, None
+
         if len(labels) == 0:
             asset_name = "geom"
         else:
             asset_name = "_".join(list(labels))
+        asset_name = exputils.clean_name(asset_name)
+
         unique_name = f"{asset_name}_{self.asset_freq[asset_name]}"
         vis_path = str(usd_path) + "/visual"
         UsdGeom.Scope.Define(self.stage, Sdf.Path(vis_path))
@@ -296,62 +338,74 @@ class USDBuilder(SimBuilder):
 
         # adding the texture uv coordinates
         uv_layer = asset.data.uv_layers.active
-        assert uv_layer is not None
-        uvs = [loop.uv[:] for loop in uv_layer.data]
-        indices = []
-        for polygon in asset.data.polygons:
-            indices.extend(polygon.loop_indices)
+        has_material = True
+        if uv_layer is None:
+            has_material = False
 
-        texCoords = UsdGeom.PrimvarsAPI(vismesh).CreatePrimvar(
-            "st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying
-        )
-        texCoords.Set(uvs)
-        texCoords.SetIndices(indices)
+        if has_material:
+            uvs = [loop.uv[:] for loop in uv_layer.data]
+            indices = []
+            for polygon in asset.data.polygons:
+                indices.extend(polygon.loop_indices)
 
-        # create the material
-        mtl_path = Sdf.Path(f"/Asset/Looks/{unique_name}_mat")
-        material = UsdShade.Material.Define(self.stage, mtl_path)
-        mtl_prim = self.stage.GetPrimAtPath(mtl_path)
-        mat_phys = UsdPhysics.MaterialAPI.Apply(mtl_prim)
-        mat_phys.CreateDensityAttr().Set(mat_physics["density"])
-        mat_phys.CreateDynamicFrictionAttr().Set(mat_physics["friction"])
+            texCoords = UsdGeom.PrimvarsAPI(vismesh).CreatePrimvar(
+                "st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying
+            )
+            texCoords.Set(uvs)
+            texCoords.SetIndices(indices)
 
-        stInput = material.CreateInput("frame:stPrimvarName", Sdf.ValueTypeNames.Token)
-        stInput.Set("st")
+            # create the material
+            mtl_path = Sdf.Path(f"/Asset/Looks/{unique_name}_mat")
+            material = UsdShade.Material.Define(self.stage, mtl_path)
+            mtl_prim = self.stage.GetPrimAtPath(mtl_path)
+            mat_phys = UsdPhysics.MaterialAPI.Apply(mtl_prim)
+            mat_phys.CreateDensityAttr().Set(mat_physics["density"])
+            mat_phys.CreateDynamicFrictionAttr().Set(mat_physics["friction"])
 
-        # create the pbr shader
-        pbrShader = UsdShade.Shader.Define(self.stage, str(mtl_path) + "/PBRShader")
-        pbrShader.CreateIdAttr("UsdPreviewSurface")
-        material.CreateSurfaceOutput().ConnectToSource(
-            pbrShader.ConnectableAPI(), "surface"
-        )
+            stInput = material.CreateInput(
+                "frame:stPrimvarName", Sdf.ValueTypeNames.Token
+            )
+            stInput.Set("st")
 
-        # create texture coordinate reader
-        stReader = UsdShade.Shader.Define(self.stage, str(mtl_path) + "/stReader")
-        stReader.CreateIdAttr("UsdPrimvarReader_float2")
-        stReader.CreateInput("varname", Sdf.ValueTypeNames.String).ConnectToSource(
-            stInput
-        )
-        stReader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
+            # create the pbr shader
+            pbrShader = UsdShade.Shader.Define(self.stage, str(mtl_path) + "/PBRShader")
+            pbrShader.CreateIdAttr("UsdPreviewSurface")
+            material.CreateSurfaceOutput().ConnectToSource(
+                pbrShader.ConnectableAPI(), "surface"
+            )
 
-        diffuse_file = Path(self.assets_dir) / f"{unique_name}_DIFFUSE.png"
-        normal_file = Path(self.assets_dir) / f"{unique_name}_NORMAL.png"
-        roughness_file = Path(self.assets_dir) / f"{unique_name}_ROUGHNESS.png"
-        metallic_file = Path(self.assets_dir) / f"{unique_name}_METAL.png"
-        transmission_file = Path(self.assets_dir) / f"{unique_name}_TRANSMISSION.png"
-        self._add_texture_map("diffuse", diffuse_file, mtl_path, pbrShader, stReader)
-        self._add_texture_map("normal", normal_file, mtl_path, pbrShader, stReader)
-        self._add_texture_map(
-            "roughness", roughness_file, mtl_path, pbrShader, stReader
-        )
-        self._add_texture_map("metallic", metallic_file, mtl_path, pbrShader, stReader)
-        self._add_texture_map(
-            "transmission", transmission_file, mtl_path, pbrShader, stReader
-        )
+            # create texture coordinate reader
+            stReader = UsdShade.Shader.Define(self.stage, str(mtl_path) + "/stReader")
+            stReader.CreateIdAttr("UsdPrimvarReader_float2")
+            stReader.CreateInput("varname", Sdf.ValueTypeNames.String).ConnectToSource(
+                stInput
+            )
+            stReader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
 
-        # now bind the material to the mesh
-        vismesh.GetPrim().ApplyAPI(UsdShade.MaterialBindingAPI)
-        UsdShade.MaterialBindingAPI(vismesh).Bind(material)
+            diffuse_file = Path(self.assets_dir) / f"{unique_name}_DIFFUSE.png"
+            normal_file = Path(self.assets_dir) / f"{unique_name}_NORMAL.png"
+            roughness_file = Path(self.assets_dir) / f"{unique_name}_ROUGHNESS.png"
+            metallic_file = Path(self.assets_dir) / f"{unique_name}_METAL.png"
+            transmission_file = (
+                Path(self.assets_dir) / f"{unique_name}_TRANSMISSION.png"
+            )
+            self._add_texture_map(
+                "diffuse", diffuse_file, mtl_path, pbrShader, stReader
+            )
+            self._add_texture_map("normal", normal_file, mtl_path, pbrShader, stReader)
+            self._add_texture_map(
+                "roughness", roughness_file, mtl_path, pbrShader, stReader
+            )
+            self._add_texture_map(
+                "metallic", metallic_file, mtl_path, pbrShader, stReader
+            )
+            self._add_texture_map(
+                "transmission", transmission_file, mtl_path, pbrShader, stReader
+            )
+
+            # now bind the material to the mesh
+            vismesh.GetPrim().ApplyAPI(UsdShade.MaterialBindingAPI)
+            UsdShade.MaterialBindingAPI(vismesh).Bind(material)
 
         colmeshes = []
         if not visual_only:
@@ -418,10 +472,21 @@ class USDBuilder(SimBuilder):
                     colmesh.GetFaceVertexIndicesAttr().Set(
                         Vt.IntArray(fs.flatten().tolist())
                     )
-                    UsdPhysics.CollisionAPI.Apply(colmesh.GetPrim())
+                    col_prim = colmesh.GetPrim()
+                    UsdPhysics.CollisionAPI.Apply(col_prim)
+                    UsdPhysics.MeshCollisionAPI.Apply(col_prim)
 
-                    colmesh.GetPrim().ApplyAPI(UsdShade.MaterialBindingAPI)
-                    UsdShade.MaterialBindingAPI(vismesh).Bind(material)
+                    # explicitly enable collisions and approximation
+                    col_prim.CreateAttribute(
+                        "physics:approximation", Sdf.ValueTypeNames.Token, custom=True
+                    ).Set("convexHull")
+                    col_prim.CreateAttribute(
+                        "physics:collisionEnabled", Sdf.ValueTypeNames.Bool, custom=True
+                    ).Set(True)
+
+                    if has_material:
+                        col_prim.ApplyAPI(UsdShade.MaterialBindingAPI)
+                        UsdShade.MaterialBindingAPI(vismesh).Bind(material)
 
                     colmeshes.append(colmesh)
 
@@ -508,7 +573,11 @@ class USDBuilder(SimBuilder):
 
     def _get_geometry_info(self, attribs):
         """Returns geometry and metadata of mesh given attributes."""
-        asset = self._get_geometry(attribs)
+        attribs = exputils.attribs_to_tuples(attribs)
+        extra_attribs = [("axis_group", 0)]
+        asset = exputils.get_geometry_given_attribs(
+            self.blend_obj, attribs, extra_attribs=extra_attribs
+        )
         triangulate_mesh(asset)
         labels = self._get_labels(asset)
         # translate bounding box center to world origin
@@ -529,6 +598,8 @@ def export(
     image_res: int = 512,
     visual_only: bool = True,
     file_extension: str = "usda",
+    get_raw_output: bool = False,
+    extra_exclude: Optional[set] = None,
     **kwargs,
 ):
     """Export function for the USD file format."""
@@ -550,6 +621,21 @@ def export(
         metadata=metadata,
         visual_only=visual_only,
         image_res=image_res,
+        extra_exclude=extra_exclude,
+    )
+
+    if get_raw_output:
+        return builder.stage.GetRootLayer().ExportToString(), metadata
+
+    links = builder.post_processing_collision_info.keys()
+    if extra_exclude is not None:
+        for e in extra_exclude:
+            if e[0] in links and e[1] in links:
+                builder.exclude_links.add(e)
+
+    # post process collision geometries
+    exputils.post_process_collisions(
+        builder.post_processing_collision_info, obj_assets_dir, builder.exclude_links
     )
 
     # export the USD file

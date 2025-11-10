@@ -139,6 +139,13 @@ appliance_handle = metals + [
     (metal.WhiteMetal, 2.0),
 ]
 
+white_metal = [
+    (metal.WhiteMetal, 1.0),
+]
+
+fridge_shelf = glasses + white_metal
+
+
 bathroom_touchsurface = [
     (ceramic.Ceramic, 1.0),
     (metal.BrushedMetal, 0.1),
