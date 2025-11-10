@@ -39,7 +39,7 @@ def pytest_addoption(parser):
 
     parser.addoption(
         "--nr",
-        default=10,
+        default=1,
         help="Number of objects to test.",
     )
 

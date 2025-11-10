@@ -14,6 +14,10 @@ from pathlib import Path
 import mujoco
 import pytest
 
+pytest.importorskip(
+    "coacd", reason="coacd is not installed, skipping all tests in this file"
+)
+
 import infinigen.core.util.blender as butil
 from infinigen.assets.sim_objects.mapping import OBJECT_CLASS_MAP
 from infinigen.core.sim import kinematic_compiler

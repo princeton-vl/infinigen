@@ -13,6 +13,10 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip(
+    "coacd", reason="coacd is not installed, skipping all tests in this file"
+)
+
 from infinigen.core.nodes.node_transpiler.transpiler import clean_and_capitalize
 from infinigen.core.sim import kinematic_compiler
 from infinigen.core.sim.exporters.factory import sim_exporter_factory
