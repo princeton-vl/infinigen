@@ -9,12 +9,17 @@ from infinigen.assets.utils.joints import (
 )
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
+
+
 @node_utils.to_nodegroup(
     "nodegroup_carriage_cylider", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_carriage_cylider(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     cylinder_2 = nw.new_node("GeometryNodeMeshCylinder", input_kwargs={"Vertices": 64})
 
     transform_geometry_17 = nw.new_node(
@@ -115,10 +120,13 @@ def nodegroup_carriage_half_cylinder(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
+
 @node_utils.to_nodegroup(
     "nodegroup_carriage_eroded_sphere", singleton=False, type="GeometryNodeTree"
 )
+def nodegroup_carriage_eroded_sphere(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     uv_sphere = nw.new_node(
         Nodes.MeshUVSphere, input_kwargs={"Segments": 22, "Rings": 22}
     )
@@ -173,6 +181,7 @@ def nodegroup_carriage_half_cylinder(nw: NodeWrangler):
         input_kwargs={"Geometry": transform_geometry_20},
         attrs={"is_active_output": True},
     )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_carriage_flat", singleton=False, type="GeometryNodeTree"
@@ -250,6 +259,7 @@ def nodegroup_carriage_flat(nw: NodeWrangler):
 )
 def nodegroup_carriage_sphere(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     uv_sphere = nw.new_node(
         Nodes.MeshUVSphere, input_kwargs={"Segments": 20, "Rings": 20}
     )
@@ -275,6 +285,7 @@ def nodegroup_carriage_sphere(nw: NodeWrangler):
 )
 def nodegroup_node_group(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "carriage_idx", 0)]
     )
@@ -328,6 +339,7 @@ def geometry_nodes(nw: NodeWrangler):
 
     group_input_7 = nw.new_node(
         Nodes.GroupInput,
+        expose_input=[
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketInt", "carrage_idx", 0),
             ("NodeSocketInt", "base inclined", 0),
@@ -397,6 +409,7 @@ def geometry_nodes(nw: NodeWrangler):
         Nodes.Math, input_kwargs={0: reroute_36}, attrs={"operation": "MULTIPLY"}
     )
 
+    add = nw.new_node(Nodes.Math, input_kwargs={0: multiply, 1: 0.2500})
 
     map_range = nw.new_node(
         Nodes.MapRange, input_kwargs={"Value": reroute_57, 3: add, 4: 1.6000}
@@ -778,6 +791,7 @@ def geometry_nodes(nw: NodeWrangler):
 
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
 
+    index = nw.new_node(Nodes.Index)
 
     reroute_37 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input_7.outputs["num_slots"]}
@@ -917,8 +931,10 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     carriage_slit_width = nw.new_node(Nodes.Value, label="carriage slit width")
+    carriage_slit_width.outputs[0].default_value = 0.0650
 
     carriage_slit_depth = nw.new_node(Nodes.Value, label="carriage slit depth")
+    carriage_slit_depth.outputs[0].default_value = 0.2000
 
     multiply_7 = nw.new_node(
         Nodes.Math,
@@ -927,6 +943,7 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     carriage_slit_height = nw.new_node(Nodes.Value, label="carriage slit height")
+    carriage_slit_height.outputs[0].default_value = 1.2000
 
     combine_xyz_8 = nw.new_node(
         Nodes.CombineXYZ,
@@ -1746,6 +1763,7 @@ def geometry_nodes(nw: NodeWrangler):
 class ToasterFactory(AssetFactory):
     def __init__(self, factory_seed=None, coarse=False):
         super().__init__(factory_seed=factory_seed, coarse=False)
+
     @classmethod
     @gin.configurable(module="ToasterFactory")
     def sample_joint_parameters(
@@ -1784,10 +1802,12 @@ class ToasterFactory(AssetFactory):
             },
         }
 
+    def sample_parameters(self):
         import numpy as np
 
         from infinigen.assets.composition.material_assignments import metal, plastic
 
+        # add code here to randomly sample from parameters
         toaster_length = uniform(1.2, 1.6)
 
         toaster_materials = (
@@ -1859,8 +1879,15 @@ class ToasterFactory(AssetFactory):
             "knob mat": knob_mat,
             "carriage mat": carriage_mat,
         }
+
     def create_asset(self, asset_params=None, **kwargs):
         obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
             apply=False,
             node_group=geometry_nodes(),
             ng_inputs=self.sample_parameters(),
+        )
+
+        return obj
