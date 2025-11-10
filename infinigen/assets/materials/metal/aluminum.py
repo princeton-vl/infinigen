@@ -243,6 +243,11 @@ def geo_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
 
 
 class Aluminum:
+    shader = shader_aluminumdisp2tut
+
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_aluminumdisp2tut, **kwargs)
+
     def apply(self, obj, geo_kwargs=None, shader_kwargs=None, **kwargs):
         surface.add_geomod(
             obj,
@@ -254,3 +259,5 @@ class Aluminum:
         surface.add_material(
             obj, shader_aluminumdisp2tut, reuse=False, input_kwargs=shader_kwargs
         )
+
+    __call__ = generate
