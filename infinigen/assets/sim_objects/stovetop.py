@@ -3273,6 +3273,8 @@ class StovetopFactory(AssetFactory):
         cls,
         knob_stiffness_min: float = 0.0,
         knob_stiffness_max: float = 0.0,
+        knob_damping_min: float = 2.0,
+        knob_damping_max: float = 5.0,
     ):
         return {
             "knob": {
