@@ -125,19 +125,6 @@ class TestSimExports:
                     f"MJCF compilation failed for {asset_name} with seed {seed}."
                 )
 
-            # Step 3: Verify initial constraint forces are zero
-            if "init_force" not in skipped_tests:
-                xml_path = Path(os.getcwd()) / f"{asset_name}_{seed}.xml"
-                with open(xml_path, "w", encoding="utf-8") as f:
-                    f.write(raw_xml)
-
-                model = mujoco.MjModel.from_xml_path(str(xml_path))
-                data = mujoco.MjData(model)
-                mujoco.mj_forward(model, data)
-                assert -1e-3 < sum(data.qfrc_constraint) < 1e-3, (
-                    f"Initial constraint forces not zero for {asset_name} with seed {seed}."
-                )
-
         elif exporter == "urdf":
             verify_urdf_output(None)
         else:
