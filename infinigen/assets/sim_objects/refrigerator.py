@@ -1,26 +1,123 @@
+import gin
+from numpy.random import randint, uniform
+
+from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.joints import (
     nodegroup_add_jointed_geometry_metadata,
     nodegroup_hinge_joint,
     nodegroup_sliding_joint,
 )
+from infinigen.core.nodes import node_utils
+from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.util import blender as butil
+from infinigen.core.util.random import weighted_sample
+
+
+@node_utils.to_nodegroup(
     "nodegroup_rounded_quad_029", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_rounded_quad_029(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketFloat", "Width", 0.0000),
+            ("NodeSocketFloat", "Height", 0.0000),
+        ],
+    )
+
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Width"]}
+    )
+
+    reroute_1 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]}
+    )
+
+    quadrilateral = nw.new_node(
+        "GeometryNodeCurvePrimitiveQuadrilateral",
+        input_kwargs={"Width": reroute, "Height": reroute_1},
+    )
+
+    minimum = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute, 1: reroute_1},
+        attrs={"operation": "MINIMUM"},
+    )
+
+    map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": 0.5000, 4: 0.5000})
+
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: minimum, 1: map_range.outputs["Result"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    fillet_curve = nw.new_node(
+        Nodes.FilletCurve,
+        input_kwargs={"Curve": quadrilateral, "Count": 3, "Radius": multiply},
+        attrs={"mode": "POLY"},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Curve": fillet_curve},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
     "nodegroup_index_select_119", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_index_select_119(nw: NodeWrangler):
-        attrs={"data_type": "INT", "operation": "EQUAL"},
-    "nodegroup_index_select_118", singleton=False, type="GeometryNodeTree"
-def nodegroup_index_select_118(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
 
+    group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
+    "nodegroup_index_select_118", singleton=False, type="GeometryNodeTree"
+)
+def nodegroup_index_select_118(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    index = nw.new_node(Nodes.Index)
+
+    group_input = nw.new_node(
+        Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
+    equal = nw.new_node(
+        Nodes.Compare,
+        input_kwargs={2: index, 3: group_input.outputs["Index"]},
+        attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={"Result": equal},
+        attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_117", singleton=False, type="GeometryNodeTree"
 )
@@ -31,14 +128,20 @@ def nodegroup_index_select_117(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_index_select_116", singleton=False, type="GeometryNodeTree"
@@ -50,39 +153,75 @@ def nodegroup_index_select_116(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Result": equal},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
     "nodegroup_rounded_quad_025", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_rounded_quad_025(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
             ("NodeSocketFloat", "Width", 0.0000),
             ("NodeSocketFloat", "Height", 0.0000),
+        ],
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Width"]}
+    )
+
     reroute_1 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]}
+    )
+
     quadrilateral = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
         input_kwargs={"Width": reroute, "Height": reroute_1},
+    )
+
     minimum = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute, 1: reroute_1},
         attrs={"operation": "MINIMUM"},
+    )
+
     map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": 0.5000, 4: 0.5000})
+
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={0: minimum, 1: map_range.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
+    )
+
     fillet_curve = nw.new_node(
         Nodes.FilletCurve,
         input_kwargs={"Curve": quadrilateral, "Count": 3, "Radius": multiply},
         attrs={"mode": "POLY"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Curve": fillet_curve},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_103", singleton=False, type="GeometryNodeTree"
 )
@@ -93,46 +232,70 @@ def nodegroup_index_select_103(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_102", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_index_select_102(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_101", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_index_select_101(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_index_select_100", singleton=False, type="GeometryNodeTree"
@@ -144,17 +307,35 @@ def nodegroup_index_select_100(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Result": equal},
+        attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_rounded_quad_031", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_rounded_quad_031(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
             ("NodeSocketFloat", "Width", 0.0000),
             ("NodeSocketFloat", "Height", 0.0000),
+        ],
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Width"]}
     )
@@ -172,17 +353,28 @@ def nodegroup_rounded_quad_031(nw: NodeWrangler):
         Nodes.Math,
         input_kwargs={0: reroute, 1: reroute_1},
         attrs={"operation": "MINIMUM"},
+    )
+
     map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": 0.5000, 4: 0.5000})
 
+    multiply = nw.new_node(
+        Nodes.Math,
         input_kwargs={0: minimum, 1: map_range.outputs["Result"]},
+        attrs={"operation": "MULTIPLY"},
+    )
+
     fillet_curve = nw.new_node(
         Nodes.FilletCurve,
         input_kwargs={"Curve": quadrilateral, "Count": 3, "Radius": multiply},
         attrs={"mode": "POLY"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Curve": fillet_curve},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_index_select_127", singleton=False, type="GeometryNodeTree"
@@ -194,14 +386,20 @@ def nodegroup_index_select_127(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_index_select_126", singleton=False, type="GeometryNodeTree"
@@ -213,30 +411,46 @@ def nodegroup_index_select_126(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_125", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_index_select_125(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
+
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_124", singleton=False, type="GeometryNodeTree"
 )
@@ -247,56 +461,106 @@ def nodegroup_index_select_124(nw: NodeWrangler):
 
     group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
     equal = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Result": equal},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
     "nodegroup_rounded_quad_030", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_rounded_quad_030(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
             ("NodeSocketFloat", "Width", 0.0000),
             ("NodeSocketFloat", "Height", 0.0000),
+        ],
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Width"]}
+    )
+
     reroute_1 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Height"]}
+    )
+
     quadrilateral = nw.new_node(
         "GeometryNodeCurvePrimitiveQuadrilateral",
         input_kwargs={"Width": reroute, "Height": reroute_1},
+    )
+
     minimum = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute, 1: reroute_1},
         attrs={"operation": "MINIMUM"},
+    )
+
     map_range = nw.new_node(Nodes.MapRange, input_kwargs={"Value": 0.5000, 4: 0.5000})
 
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={0: minimum, 1: map_range.outputs["Result"]},
         attrs={"operation": "MULTIPLY"},
+    )
+
     fillet_curve = nw.new_node(
         Nodes.FilletCurve,
         input_kwargs={"Curve": quadrilateral, "Count": 3, "Radius": multiply},
         attrs={"mode": "POLY"},
     )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Curve": fillet_curve},
+        attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_123", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_index_select_123(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
 
+    group_input = nw.new_node(
         Nodes.GroupInput, expose_input=[("NodeSocketInt", "Index", 0)]
+    )
+
+    equal = nw.new_node(
+        Nodes.Compare,
         input_kwargs={2: index, 3: group_input.outputs["Index"]},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Result": equal},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_index_select_122", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_index_select_122(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     index = nw.new_node(Nodes.Index)
 
     group_input = nw.new_node(
@@ -393,11 +657,18 @@ def nodegroup_fridge_shelf_003(nw: NodeWrangler):
             "X": group_input.outputs["Fridge Shelf Thickness"],
             "Y": group_input.outputs["Fridge Shelf Thickness"],
         },
+    )
+
+    subtract = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: group_input.outputs["Size"], 1: combine_xyz},
+        attrs={"operation": "SUBTRACT"},
+    )
+
     cube_1 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": subtract.outputs["Vector"]}
     )
+
     difference = nw.new_node(
         Nodes.MeshBoolean,
         input_kwargs={"Mesh 1": cube.outputs["Mesh"], "Mesh 2": cube_1.outputs["Mesh"]},
@@ -406,16 +677,24 @@ def nodegroup_fridge_shelf_003(nw: NodeWrangler):
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
+        input_kwargs={
             "Geometry": difference.outputs["Mesh"],
             "Material": group_input.outputs["Interior Shelf Material Border"],
+        },
+    )
+
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={
             "Geometry": cube_1.outputs["Mesh"],
             "Material": group_input.outputs["Interior Shelf Material Inside"],
         },
+    )
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material, set_material_1]}
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Size"]}
     )
@@ -434,6 +713,7 @@ def nodegroup_fridge_shelf_003(nw: NodeWrangler):
 
     mesh_line = nw.new_node(
         Nodes.MeshLine,
+        input_kwargs={
             "Count": 24,
             "Start Location": multiply.outputs["Vector"],
             "Offset": multiply_1.outputs["Vector"],
@@ -532,6 +812,9 @@ def nodegroup_fridge_shelf_003(nw: NodeWrangler):
             "Switch": group_input.outputs["Has Grated Shelves"],
             "False": join_geometry,
             "True": set_material_2,
+        },
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Mesh": switch},
@@ -4484,44 +4767,65 @@ def nodegroup_fridge_door_002(nw: NodeWrangler):
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: multiply_5})
 
     combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": add})
+
     reroute_28 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": combine_xyz_2})
 
     transform_geometry = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": realize_instances, "Translation": reroute_28},
+    )
+
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": combine_xyz})
+
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_27, 1: -2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide})
+
     transform_geometry_1 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": cube.outputs["Mesh"], "Translation": combine_xyz_3},
+    )
+
     reroute_17 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Inner Material"]}
     )
+
     reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
 
     reroute_25 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_18})
+
     reroute_26 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_25})
+
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_1, "Material": reroute_26},
     )
 
     reroute_36 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_1})
+
     reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_36})
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry, input_kwargs={"Geometry": [transform_geometry, reroute_37]}
+    )
+
     reroute_39 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_37})
+
     switch_2 = nw.new_node(
         Nodes.Switch,
         input_kwargs={"Switch": equal, "False": join_geometry, "True": reroute_39},
     )
+
     reroute_8 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Handles"]}
+    )
+
     reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
     handle_033 = nw.new_node(
         nodegroup_handle_033().name,
         input_kwargs={
@@ -4532,96 +4836,155 @@ def nodegroup_fridge_door_002(nw: NodeWrangler):
             "Handle Width": group_input.outputs["Handle Width"],
             "Handle Height": group_input.outputs["Handle Height"],
         },
+    )
+
     add_jointed_geometry_metadata_108 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_108().name,
         input_kwargs={"Geometry": handle_033, "Label": "handle"},
     )
+
     switch_3 = nw.new_node(
         Nodes.Switch,
         input_kwargs={"Switch": reroute_9, "True": add_jointed_geometry_metadata_108},
+    )
+
     reroute_30 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_3})
+
     reroute_10 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Location"]}
+    )
+
     equal_3 = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: reroute_10},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Size"]}
+    )
+
     reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": vector})
+
     multiply_6 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute, 1: reroute_24},
         attrs={"operation": "MULTIPLY"},
+    )
+
     multiply_7 = nw.new_node(
         Nodes.Math, input_kwargs={0: value, 1: -1.0000}, attrs={"operation": "MULTIPLY"}
+    )
+
     reroute_11 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Y Offset"]}
+    )
+
     reroute_12 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_11})
+
     combine_xyz_4 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": reroute_12}
+    )
+
     multiply_add = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={
             0: multiply_6.outputs["Vector"],
             1: (1.0000, -0.5000, 0.0000),
             2: combine_xyz_4,
+        },
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     multiply_8 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["Handle Y Offset"], 1: -1.0000},
         attrs={"operation": "MULTIPLY"},
+    )
+
     combine_xyz_5 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": multiply_7, "Y": multiply_8}
+    )
+
     multiply_add_1 = nw.new_node(
         Nodes.VectorMath,
+        input_kwargs={
             0: multiply_6.outputs["Vector"],
             1: (1.0000, 0.5000, 0.0000),
             2: combine_xyz_5,
+        },
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     switch_4 = nw.new_node(
         Nodes.Switch,
+        input_kwargs={
             "Switch": equal_3,
             "False": multiply_add.outputs["Vector"],
             "True": multiply_add_1.outputs["Vector"],
+        },
         attrs={"input_type": "VECTOR"},
+    )
+
     transform_geometry_2 = nw.new_node(
         Nodes.Transform, input_kwargs={"Geometry": reroute_30, "Translation": switch_4}
+    )
+
     reroute_13 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Z Offset"]}
     )
+
     combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": reroute_13})
+
     transform_geometry_3 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": transform_geometry_2, "Translation": combine_xyz_6},
+    )
+
     reroute_6 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Material"]}
+    )
+
     reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
 
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_3, "Material": reroute_7},
     )
+
     reroute_34 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_2})
+
     combine_xyz_7 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": reroute_23})
+
     subtract_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: multiply_6.outputs["Vector"], 1: combine_xyz_7},
         attrs={"operation": "SUBTRACT"},
+    )
+
     reroute_31 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": subtract_2.outputs["Vector"]}
+    )
+
     cube_1 = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": reroute_31})
 
     separate_xyz_2 = nw.new_node(
         Nodes.SeparateXYZ, input_kwargs={"Vector": subtract_2.outputs["Vector"]}
+    )
+
     divide_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz_2.outputs["X"], 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_8 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide_1})
 
     transform_geometry_4 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": cube_1.outputs["Mesh"], "Translation": combine_xyz_8},
+    )
+
     reroute_15 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Material"]}
     )
@@ -4638,6 +5001,8 @@ def nodegroup_fridge_door_002(nw: NodeWrangler):
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [switch_2, reroute_34, reroute_35]},
+    )
+
     equal_4 = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: group_input.outputs["Handle Location"]},
@@ -4654,19 +5019,30 @@ def nodegroup_fridge_door_002(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={"Switch": equal_4, "False": vector_3, "True": vector_4},
         attrs={"input_type": "VECTOR"},
+    )
+
     multiply_9 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: multiply_6.outputs["Vector"], 1: switch_5},
         attrs={"operation": "MULTIPLY"},
+    )
+
     reroute_29 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": multiply_9.outputs["Vector"]}
+    )
+
     transform_geometry_5 = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": join_geometry_1, "Translation": reroute_29},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Mesh": transform_geometry_5},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_bottom_freezer_003", singleton=False, type="GeometryNodeTree"
 )
@@ -4691,32 +5067,47 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             ("NodeSocketMaterial", "Exterior Drawer Handle Material", None),
             ("NodeSocketMaterial", "Exterior Drawer Door Material", None),
         ],
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Main Fridge Dimensions"]},
+    )
+
     reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
 
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={"Z": group_input.outputs["Exterior Drawer Height"]},
+    )
+
     multiply_add = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_1, 1: (1.0000, 1.0000, 0.0000), 2: combine_xyz},
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     reroute_28 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": multiply_add.outputs["Vector"]}
+    )
+
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": reroute_28})
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 0.0500
+
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": value})
+
     subtract = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: multiply_add.outputs["Vector"], 1: combine_xyz_1},
         attrs={"operation": "SUBTRACT"},
     )
+
     cube_1 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": subtract.outputs["Vector"]}
+    )
+
     transform_geometry = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -4724,6 +5115,8 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             "Translation": (0.0250, 0.0000, 0.0000),
             "Scale": (1.0000, 0.9000, 0.9000),
         },
+    )
+
     difference = nw.new_node(
         Nodes.MeshBoolean,
         input_kwargs={"Mesh 1": cube.outputs["Mesh"], "Mesh 2": transform_geometry},
@@ -4733,19 +5126,27 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
     reroute_13 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Shell Material"]},
+    )
+
     reroute_14 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_13})
 
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": difference.outputs["Mesh"], "Material": reroute_14},
+    )
+
     transform_geometry_1 = nw.new_node(
         Nodes.Transform, input_kwargs={"Geometry": set_material}
     )
 
     reroute_38 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": transform_geometry_1}
+    )
+
     reroute_33 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": cube_1.outputs["Mesh"]}
+    )
+
     reroute_34 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
 
     transform_geometry_4 = nw.new_node(
@@ -4756,27 +5157,38 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             "Scale": (0.9000, 0.9000, 1.0000),
         },
     )
+
     difference_1 = nw.new_node(
         Nodes.MeshBoolean,
         input_kwargs={"Mesh 1": reroute_34, "Mesh 2": transform_geometry_4},
         attrs={"solver": "EXACT"},
     )
+
     transform_geometry_5 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
             "Geometry": difference_1.outputs["Mesh"],
             "Scale": (0.9900, 0.9900, 0.9900),
         },
+    )
+
     reroute_15 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Inside Material"]},
+    )
+
     reroute_16 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_15})
+
     set_material_4 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_5, "Material": reroute_16},
+    )
+
     reroute_17 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Material"]},
+    )
+
     reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
 
     set_material_3 = nw.new_node(
@@ -4788,13 +5200,18 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
 
     join_geometry = nw.new_node(
         Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_4, reroute_36]}
+    )
+
     reroute_25 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": value})
+
     reroute_26 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_25})
 
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_26, 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide})
 
     transform_geometry_6 = nw.new_node(
@@ -4804,6 +5221,8 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             "Translation": combine_xyz_5,
             "Scale": (1.0000, 0.9000, 0.9000),
         },
+    )
+
     combine_xyz_2 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={
@@ -4811,11 +5230,13 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             "Z": group_input.outputs["Exterior Drawer Height"],
         },
     )
+
     multiply_add_1 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_1, 1: (0.0000, 1.0000, 0.0000), 2: combine_xyz_2},
         attrs={"operation": "MULTIPLY_ADD"},
     )
+
     cube_2 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": multiply_add_1.outputs["Vector"]}
     )
@@ -4829,45 +5250,70 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
     )
 
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide_1})
+
     multiply_add_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_27, 1: (0.5000, 0.0000, 0.0000), 2: combine_xyz_3},
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
             "Geometry": cube_2.outputs["Mesh"],
             "Translation": multiply_add_2.outputs["Vector"],
         },
+    )
+
     reroute_21 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Door Material"]},
+    )
+
     reroute_22 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
+
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_2, "Material": reroute_22},
+    )
+
     reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_1})
 
     reroute_2 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Handle"]}
+    )
+
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
 
     reroute_6 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Type"]}
+    )
+
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
         input_kwargs={"Vector": group_input.outputs["Main Fridge Dimensions"]},
+    )
+
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["Y"], 1: 0.8000},
         attrs={"operation": "MULTIPLY"},
+    )
+
     reroute_7 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Radius"]}
+    )
+
     reroute_8 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Protrude"]}
+    )
+
     reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
     reroute_10 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Width"]}
+    )
+
     reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
 
     reroute_12 = nw.new_node(
@@ -4876,36 +5322,50 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
 
     handle_039 = nw.new_node(
         nodegroup_handle_039().name,
+        input_kwargs={
             "Handle Type": reroute_6,
             "Handle Length": multiply,
             "Handle Radius": reroute_7,
             "Handle Protrude": reroute_9,
             "Handle Width": reroute_11,
             "Handle Height": reroute_12,
+        },
+    )
+
     reroute_32 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": handle_039})
 
     reroute_4 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Door Thickness"]},
+    )
+
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
     divide_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["X"], 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     add = nw.new_node(Nodes.Math, input_kwargs={0: reroute_5, 1: divide_2})
 
     reroute_23 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Height"]},
     )
+
     reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
 
     multiply_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_24, 1: 0.4000},
         attrs={"operation": "MULTIPLY"},
+    )
+
     combine_xyz_4 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": add, "Z": multiply_1}
+    )
+
     transform_geometry_3 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -4913,41 +5373,68 @@ def nodegroup_bottom_freezer_003(nw: NodeWrangler):
             "Translation": combine_xyz_4,
             "Rotation": (1.5708, 0.0000, 0.0000),
         },
+    )
+
     reroute_19 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Handle Material"]},
+    )
+
     reroute_20 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
+
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_3, "Material": reroute_20},
+    )
+
     switch = nw.new_node(
         Nodes.Switch, input_kwargs={"Switch": reroute_3, "True": set_material_2}
+    )
+
     reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch})
+
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [transform_geometry_6, reroute_35, reroute_37]},
+    )
+
     reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_24})
+
     divide_3 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_29, 1: -2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": divide_3})
+
     reroute_30 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": subtract.outputs["Vector"]}
+    )
+
     reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
+
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_31, 1: (1.0000, 0.0000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
+    )
+
     separate_xyz_1 = nw.new_node(
         Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_2.outputs["Vector"]}
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
+        input_kwargs={
             "Bottom Freezer Body": reroute_38,
             "Bottom Freezer Drawer": join_geometry_1,
             "Bottom Freezer Translation": combine_xyz_6,
             "Sliding Joint Max": separate_xyz_1.outputs["X"],
+        },
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_bottom_freezer_002", singleton=False, type="GeometryNodeTree"
@@ -4973,6 +5460,8 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             ("NodeSocketMaterial", "Exterior Drawer Handle Material", None),
             ("NodeSocketMaterial", "Exterior Drawer Door Material", None),
         ],
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Main Fridge Dimensions"]},
@@ -4983,6 +5472,8 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={"Z": group_input.outputs["Exterior Drawer Height"]},
+    )
+
     multiply_add = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_1, 1: (1.0000, 1.0000, 0.0000), 2: combine_xyz},
@@ -4991,6 +5482,8 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
 
     reroute_28 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": multiply_add.outputs["Vector"]}
+    )
+
     cube = nw.new_node(Nodes.MeshCube, input_kwargs={"Size": reroute_28})
 
     value = nw.new_node(Nodes.Value)
@@ -5002,6 +5495,8 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
         Nodes.VectorMath,
         input_kwargs={0: multiply_add.outputs["Vector"], 1: combine_xyz_1},
         attrs={"operation": "SUBTRACT"},
+    )
+
     cube_1 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": subtract.outputs["Vector"]}
     )
@@ -5013,26 +5508,40 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Translation": (0.0250, 0.0000, 0.0000),
             "Scale": (1.0000, 0.9000, 0.9000),
         },
+    )
+
     difference = nw.new_node(
         Nodes.MeshBoolean,
         input_kwargs={"Mesh 1": cube.outputs["Mesh"], "Mesh 2": transform_geometry},
         attrs={"solver": "EXACT"},
     )
+
     reroute_13 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Shell Material"]},
+    )
+
     reroute_14 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_13})
+
     set_material = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": difference.outputs["Mesh"], "Material": reroute_14},
+    )
+
     transform_geometry_1 = nw.new_node(
         Nodes.Transform, input_kwargs={"Geometry": set_material}
     )
+
     reroute_38 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": transform_geometry_1}
+    )
+
     reroute_33 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": cube_1.outputs["Mesh"]}
+    )
+
     reroute_34 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_33})
+
     transform_geometry_4 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -5040,10 +5549,14 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Translation": (0.0000, 0.0000, 0.0500),
             "Scale": (0.9000, 0.9000, 1.0000),
         },
+    )
+
     difference_1 = nw.new_node(
         Nodes.MeshBoolean,
         input_kwargs={"Mesh 1": reroute_34, "Mesh 2": transform_geometry_4},
         attrs={"solver": "EXACT"},
+    )
+
     transform_geometry_5 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -5051,84 +5564,135 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Scale": (0.9900, 0.9900, 0.9900),
         },
     )
+
     reroute_15 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Inside Material"]},
+    )
+
     reroute_16 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_15})
+
     set_material_4 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_5, "Material": reroute_16},
+    )
+
     reroute_17 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Material"]},
     )
+
     reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
+
     set_material_3 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": difference_1.outputs["Mesh"], "Material": reroute_18},
     )
+
     reroute_36 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_3})
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry, input_kwargs={"Geometry": [set_material_4, reroute_36]}
+    )
+
     reroute_25 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": value})
+
     reroute_26 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_25})
+
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_26, 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_5 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide})
 
     transform_geometry_6 = nw.new_node(
         Nodes.Transform,
+        input_kwargs={
             "Geometry": join_geometry,
             "Translation": combine_xyz_5,
             "Scale": (1.0000, 0.9000, 0.9000),
+        },
+    )
+
     combine_xyz_2 = nw.new_node(
         Nodes.CombineXYZ,
         input_kwargs={
             "X": group_input.outputs["Fridge Door Thickness"],
             "Z": group_input.outputs["Exterior Drawer Height"],
         },
+    )
+
     multiply_add_1 = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_1, 1: (0.0000, 1.0000, 0.0000), 2: combine_xyz_2},
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     cube_2 = nw.new_node(
         Nodes.MeshCube, input_kwargs={"Size": multiply_add_1.outputs["Vector"]}
+    )
+
     reroute_27 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
+
     divide_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: group_input.outputs["Fridge Door Thickness"], 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     combine_xyz_3 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"X": divide_1})
+
     multiply_add_2 = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_27, 1: (0.5000, 0.0000, 0.0000), 2: combine_xyz_3},
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     transform_geometry_2 = nw.new_node(
         Nodes.Transform,
+        input_kwargs={
             "Geometry": cube_2.outputs["Mesh"],
             "Translation": multiply_add_2.outputs["Vector"],
+        },
+    )
+
     reroute_21 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Door Material"]},
+    )
+
     reroute_22 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
+
     set_material_1 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_2, "Material": reroute_22},
     )
+
     reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": set_material_1})
+
     reroute_2 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Handle"]}
+    )
+
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
     reroute_6 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Type"]}
     )
+
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ,
         input_kwargs={"Vector": group_input.outputs["Main Fridge Dimensions"]},
+    )
+
     multiply = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["Y"], 1: 0.8000},
         attrs={"operation": "MULTIPLY"},
+    )
+
     reroute_7 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Radius"]}
     )
@@ -5138,11 +5702,17 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
     )
 
     reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
     reroute_10 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Width"]}
+    )
+
     reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
+
     reroute_12 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Height"]}
+    )
+
     handle_038 = nw.new_node(
         nodegroup_handle_038().name,
         input_kwargs={
@@ -5153,30 +5723,42 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Handle Width": reroute_11,
             "Handle Height": reroute_12,
         },
+    )
+
     reroute_32 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": handle_038})
+
     reroute_4 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Door Thickness"]},
+    )
+
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
 
     divide_2 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["X"], 1: 2.0000},
         attrs={"operation": "DIVIDE"},
+    )
+
     add = nw.new_node(Nodes.Math, input_kwargs={0: reroute_5, 1: divide_2})
+
     reroute_23 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Height"]},
     )
+
     reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
+
     multiply_1 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_24, 1: 0.4000},
         attrs={"operation": "MULTIPLY"},
     )
+
     combine_xyz_4 = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": add, "Z": multiply_1}
     )
+
     transform_geometry_3 = nw.new_node(
         Nodes.Transform,
         input_kwargs={
@@ -5184,10 +5766,15 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Translation": combine_xyz_4,
             "Rotation": (1.5708, 0.0000, 0.0000),
         },
+    )
+
     reroute_19 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Exterior Drawer Handle Material"]},
+    )
+
     reroute_20 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
+
     set_material_2 = nw.new_node(
         Nodes.SetMaterial,
         input_kwargs={"Geometry": transform_geometry_3, "Material": reroute_20},
@@ -5195,28 +5782,41 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
 
     switch = nw.new_node(
         Nodes.Switch, input_kwargs={"Switch": reroute_3, "True": set_material_2}
+    )
+
     reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch})
+
     join_geometry_1 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [transform_geometry_6, reroute_35, reroute_37]},
+    )
+
     reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_24})
+
     divide_3 = nw.new_node(
         Nodes.Math,
         input_kwargs={0: reroute_29, 1: -2.0000},
         attrs={"operation": "DIVIDE"},
     )
+
     combine_xyz_6 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": divide_3})
 
     reroute_30 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": subtract.outputs["Vector"]}
+    )
+
     reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
 
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_31, 1: (1.0000, 0.0000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
+    )
+
     separate_xyz_1 = nw.new_node(
         Nodes.SeparateXYZ, input_kwargs={"Vector": multiply_2.outputs["Vector"]}
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
@@ -5226,6 +5826,9 @@ def nodegroup_bottom_freezer_002(nw: NodeWrangler):
             "Bottom Freezer 2 Max Sliding": separate_xyz_1.outputs["X"],
         },
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata_464",
     singleton=False,
@@ -5240,16 +5843,24 @@ def nodegroup_add_jointed_geometry_metadata_464(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={
             "Geometry": group_input.outputs["Geometry"],
             "Name": group_input.outputs["Label"],
             "Value": 1,
+        },
         attrs={"data_type": "INT"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_duplicate_joints_on_parent_034", singleton=False, type="GeometryNodeTree"
@@ -5265,33 +5876,52 @@ def nodegroup_duplicate_joints_on_parent_034(nw: NodeWrangler):
             ("NodeSocketGeometry", "Child", None),
             ("NodeSocketGeometry", "Points", None),
         ],
+    )
+
     instance_on_points = nw.new_node(
         Nodes.InstanceOnPoints,
+        input_kwargs={
             "Points": group_input.outputs["Points"],
             "Instance": group_input.outputs["Child"],
+        },
+    )
+
     index = nw.new_node(Nodes.Index)
+
     add = nw.new_node(Nodes.Math, input_kwargs={0: index, 1: 1.0000})
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={
             "Geometry": instance_on_points,
             "Name": group_input.outputs["Duplicate ID (do not set)"],
             "Value": add,
+        },
         attrs={"data_type": "INT", "domain": "INSTANCE"},
+    )
+
     realize_instances = nw.new_node(
         Nodes.RealizeInstances, input_kwargs={"Geometry": store_named_attribute}
+    )
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [group_input.outputs["Parent"], realize_instances]},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": join_geometry},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_top_freezer_001", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_top_freezer_001(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
+
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -5332,28 +5962,45 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
             ("NodeSocketMaterial", "Interior Shelf Material Inside", None),
             ("NodeSocketMaterial", "Drawer Material", None),
         ],
+    )
+
     reroute_28 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Door Thickness"]},
+    )
+
     reroute_29 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_28})
+
     combine_xyz = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"X": 1.0000, "Y": 1.0000, "Z": 1.0000}
+    )
+
     multiply = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: group_input.outputs["Dimensions"], 1: combine_xyz},
         attrs={"operation": "MULTIPLY"},
+    )
+
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ, input_kwargs={"Vector": multiply.outputs["Vector"]}
+    )
+
     reroute_65 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Num Doors"]}
+    )
+
     reroute_66 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_65})
 
     divide = nw.new_node(
         Nodes.Math,
         input_kwargs={0: separate_xyz.outputs["Y"], 1: reroute_66},
         attrs={"operation": "DIVIDE"},
+    )
+
     reroute_70 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": separate_xyz.outputs["Z"]}
+    )
+
     reroute_71 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_70})
 
     combine_xyz_1 = nw.new_node(
@@ -5362,11 +6009,18 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
 
     reroute_2 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Border Thickness"]}
+    )
+
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
     reroute_69 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_3})
+
     reroute_30 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Handles"]}
+    )
+
     reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
+
     reroute_32 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Type"]}
     )
@@ -5377,71 +6031,116 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
         Nodes.Compare,
         input_kwargs={2: group_input.outputs["Num Doors"], 3: 1},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     integer = nw.new_node(Nodes.Integer)
     integer.integer = 0
+
     reroute = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Location"]}
+    )
+
     reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
 
     switch = nw.new_node(
         Nodes.Switch,
         input_kwargs={"Switch": equal, "False": integer, "True": reroute_1},
         attrs={"input_type": "INT"},
+    )
+
     reroute_72 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch})
+
     reroute_34 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Orientation"]}
+    )
+
     reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_34})
 
     reroute_36 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Length"]}
+    )
+
     reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_36})
+
     reroute_38 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Y Offset"]}
+    )
+
     reroute_39 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_38})
+
     reroute_40 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Z Offset"]}
+    )
+
     reroute_41 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_40})
+
     reroute_44 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Radius"]}
+    )
+
     reroute_45 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_44})
+
     reroute_42 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Protrude"]}
+    )
+
     reroute_43 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_42})
+
     reroute_46 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Width"]}
+    )
+
     reroute_47 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_46})
+
     reroute_48 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Height"]}
+    )
+
     reroute_49 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_48})
 
     reroute_50 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Num Door Shelves"]}
+    )
+
     reroute_51 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_50})
 
     reroute_52 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Door Shelf Thickness"]},
+    )
+
     reroute_53 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_52})
 
     reroute_54 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Shelf Height"]}
+    )
+
     reroute_55 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Shelf Length"]}
+    )
+
     reroute_56 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_55})
 
     reroute_57 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Material"]}
+    )
+
     reroute_58 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Material"]}
     )
+
     reroute_59 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_58})
 
     reroute_60 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Door Inner Material"]},
+    )
+
     reroute_61 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Door Shelf Material"]},
+    )
+
     reroute_62 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_61})
 
     fridge_door_003 = nw.new_node(
@@ -5469,11 +6168,17 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
             "Inner Material": reroute_60,
             "Door Shelf Material": reroute_62,
         },
+    )
+
     reroute_77 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": fridge_door_003})
+
     transform_geometry = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": fridge_door_003, "Scale": (1.0000, -1.0000, 1.0000)},
+    )
+
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": transform_geometry})
+
     reroute_74 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_66})
 
     equal_1 = nw.new_node(
@@ -5481,27 +6186,39 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
         input_kwargs={2: reroute_74, 3: 2},
         attrs={"data_type": "INT", "operation": "EQUAL"},
     )
+
     reroute_68 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
+
     equal_2 = nw.new_node(
         Nodes.Compare,
         input_kwargs={2: reroute_68},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     op_or = nw.new_node(
         Nodes.BooleanMath,
         input_kwargs={0: equal_1, 1: equal_2},
         attrs={"operation": "OR"},
+    )
+
     reroute_63 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Dimensions"]}
     )
+
     reroute_64 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_63})
 
     multiply_1 = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_64, 1: (0.5000, 0.5000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
+    )
+
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_64, 1: (0.5000, -0.5000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
+    )
+
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -5510,6 +6227,8 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
             "True": multiply_2.outputs["Vector"],
         },
         attrs={"input_type": "VECTOR"},
+    )
+
     vector = nw.new_node(Nodes.Vector)
     vector.vector = (0.0000, 0.0000, 1.0000)
 
@@ -5520,6 +6239,8 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={"Switch": op_or, "False": vector, "True": vector_1},
         attrs={"input_type": "VECTOR"},
+    )
+
     reroute_78 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": multiply_1.outputs["Vector"]}
     )
@@ -5536,22 +6257,32 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
 
     reroute_4 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Num Drawers"]}
+    )
+
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
 
     reroute_6 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Height"]}
+    )
+
     reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
 
     reroute_8 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Depth"]}
+    )
+
     reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
 
     reroute_10 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Thickness"]}
+    )
+
     reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
 
     reroute_12 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Shelf Height"]}
+    )
+
     reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
 
     reroute_14 = nw.new_node(
@@ -5563,23 +6294,35 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
     reroute_16 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Shelf Thickness"]},
+    )
+
     reroute_17 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_16})
 
     reroute_18 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Grated Shelves"]}
+    )
+
     reroute_19 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_18})
+
     reroute_20 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Outer Shell Material"]},
     )
+
     reroute_21 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_20})
+
     reroute_22 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Inner Shell Material"]},
+    )
+
     reroute_23 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Interior Shelf Material Border"]},
+    )
+
     reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
+
     reroute_25 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Interior Shelf Material Inside"]},
@@ -5590,8 +6333,10 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
     )
 
     reroute_27 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_26})
+
     fridge_body_001 = nw.new_node(
         nodegroup_fridge_body_001().name,
+        input_kwargs={
             "Size": multiply.outputs["Vector"],
             "Border Thickness": reroute_3,
             "Num Drawers": reroute_5,
@@ -5607,6 +6352,9 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
             "Interior Shelf Material Border": reroute_24,
             "Interior Shelf Material Inside": reroute_25,
             "Drawer Material": reroute_27,
+        },
+    )
+
     reroute_84 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_001.outputs["Top Freezer Points Duplicate"]},
@@ -5620,17 +6368,26 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
     reroute_86 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_001.outputs["Top Freezer Drawer 1"]},
+    )
+
     reroute_83 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_001.outputs["Top Freezer Body"]},
+    )
+
     reroute_81 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_001.outputs["Top Freezer 1 Position"]},
+    )
+
     reroute_85 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_001.outputs["Top Freezer 1 Max Sliding"]},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
+        input_kwargs={
             "Top Freezer Door 1": reroute_77,
             "Top Freezer Door 2": flip_faces,
             "Top Freezer Position": switch_1,
@@ -5645,7 +6402,11 @@ def nodegroup_top_freezer_001(nw: NodeWrangler):
             "Top Freezer Body": reroute_83,
             "Top Freezer 1 Position": reroute_81,
             "Top Freezer 1 Max Sliding": reroute_85,
+        },
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata_255",
     singleton=False,
@@ -5660,6 +6421,8 @@ def nodegroup_add_jointed_geometry_metadata_255(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
@@ -5668,10 +6431,15 @@ def nodegroup_add_jointed_geometry_metadata_255(nw: NodeWrangler):
             "Value": 1,
         },
         attrs={"data_type": "INT"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata_110",
     singleton=False,
@@ -5686,6 +6454,8 @@ def nodegroup_add_jointed_geometry_metadata_110(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
@@ -5694,11 +6464,15 @@ def nodegroup_add_jointed_geometry_metadata_110(nw: NodeWrangler):
             "Value": 1,
         },
         attrs={"data_type": "INT"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
         attrs={"is_active_output": True},
     )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata_109",
     singleton=False,
@@ -5713,6 +6487,8 @@ def nodegroup_add_jointed_geometry_metadata_109(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
@@ -5721,6 +6497,8 @@ def nodegroup_add_jointed_geometry_metadata_109(nw: NodeWrangler):
             "Value": 1,
         },
         attrs={"data_type": "INT"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
@@ -5742,16 +6520,24 @@ def nodegroup_add_jointed_geometry_metadata_106(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={
             "Geometry": group_input.outputs["Geometry"],
             "Name": group_input.outputs["Label"],
             "Value": 1,
+        },
         attrs={"data_type": "INT"},
+    )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
         attrs={"is_active_output": True},
+    )
+
 
 @node_utils.to_nodegroup(
     "nodegroup_duplicate_joints_on_parent_033", singleton=False, type="GeometryNodeTree"
@@ -5768,6 +6554,7 @@ def nodegroup_duplicate_joints_on_parent_033(nw: NodeWrangler):
             ("NodeSocketGeometry", "Points", None),
         ],
     )
+
     instance_on_points = nw.new_node(
         Nodes.InstanceOnPoints,
         input_kwargs={
@@ -5782,22 +6569,78 @@ def nodegroup_duplicate_joints_on_parent_033(nw: NodeWrangler):
 
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
+        input_kwargs={
             "Geometry": instance_on_points,
             "Name": group_input.outputs["Duplicate ID (do not set)"],
             "Value": add,
+        },
         attrs={"data_type": "INT", "domain": "INSTANCE"},
     )
 
     realize_instances = nw.new_node(
         Nodes.RealizeInstances, input_kwargs={"Geometry": store_named_attribute}
+    )
+
     join_geometry = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [group_input.outputs["Parent"], realize_instances]},
     )
 
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Geometry": join_geometry},
+        attrs={"is_active_output": True},
+    )
+
+
+@node_utils.to_nodegroup(
     "nodegroup_fridge_001", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_fridge_001(nw: NodeWrangler):
+    # Code generated using version 2.7.1 of the node_transpiler
+
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketVector", "Dimensions", (0.0000, 0.0000, 0.0000)),
+            ("NodeSocketInt", "Num Doors", 0),
+            ("NodeSocketInt", "Handle Location", 0),
+            ("NodeSocketFloat", "Border Thickness", 0.0000),
+            ("NodeSocketInt", "Num Drawers", 0),
+            ("NodeSocketFloat", "Drawer Height", 0.0000),
+            ("NodeSocketFloat", "Drawer Depth", 0.0000),
+            ("NodeSocketFloat", "Drawer Thickness", 0.0000),
+            ("NodeSocketFloat", "Shelf Height", 0.0000),
+            ("NodeSocketInt", "Num Shelves", 0),
+            ("NodeSocketFloat", "Fridge Door Thickness", 0.0000),
+            ("NodeSocketBool", "Has Handles", False),
+            ("NodeSocketInt", "Handle Type", 0),
+            ("NodeSocketInt", "Handle Orientation", 0),
+            ("NodeSocketFloat", "Handle Length", 0.0000),
+            ("NodeSocketFloat", "Handle Y Offset", 0.0000),
+            ("NodeSocketFloat", "Handle Z Offset", 0.0000),
+            ("NodeSocketFloat", "Handle Protrude", 0.0000),
+            ("NodeSocketFloat", "Handle Radius", 0.0000),
+            ("NodeSocketFloat", "Handle Width", 0.0000),
+            ("NodeSocketFloat", "Handle Height", 0.0000),
+            ("NodeSocketInt", "Num Door Shelves", 0),
+            ("NodeSocketFloat", "Door Shelf Thickness", 0.0000),
+            ("NodeSocketFloat", "Door Shelf Height", 0.1000),
+            ("NodeSocketFloat", "Door Shelf Length", 0.2000),
+            ("NodeSocketFloat", "Fridge Shelf Thickness", 0.0000),
+            ("NodeSocketBool", "Has Grated Shelves", False),
+            ("NodeSocketMaterial", "Outer Shell Material", None),
+            ("NodeSocketMaterial", "Inner Shell Material", None),
+            ("NodeSocketMaterial", "Handle Material", None),
+            ("NodeSocketMaterial", "Door Material", None),
+            ("NodeSocketMaterial", "Door Inner Material", None),
+            ("NodeSocketMaterial", "Door Shelf Material", None),
+            ("NodeSocketMaterial", "Interior Shelf Material Border", None),
+            ("NodeSocketMaterial", "Interior Shelf Material Inside", None),
+            ("NodeSocketMaterial", "Drawer Material", None),
+        ],
+    )
+
     reroute_30 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Door Thickness"]},
@@ -6034,11 +6877,14 @@ def nodegroup_fridge_001(nw: NodeWrangler):
         Nodes.VectorMath,
         input_kwargs={0: reroute_64, 1: (0.5000, 0.5000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
+    )
+
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_64, 1: (0.5000, -0.5000, 0.0000)},
         attrs={"operation": "MULTIPLY"},
     )
+
     switch_1 = nw.new_node(
         Nodes.Switch,
         input_kwargs={
@@ -6047,8 +6893,11 @@ def nodegroup_fridge_001(nw: NodeWrangler):
             "True": multiply_2.outputs["Vector"],
         },
         attrs={"input_type": "VECTOR"},
+    )
+
     vector = nw.new_node(Nodes.Vector)
     vector.vector = (0.0000, 0.0000, 1.0000)
+
     vector_1 = nw.new_node(Nodes.Vector)
     vector_1.vector = (0.0000, 0.0000, -1.0000)
 
@@ -6056,9 +6905,13 @@ def nodegroup_fridge_001(nw: NodeWrangler):
         Nodes.Switch,
         input_kwargs={"Switch": op_or, "False": vector, "True": vector_1},
         attrs={"input_type": "VECTOR"},
+    )
+
     transform_geometry = nw.new_node(
         Nodes.Transform,
         input_kwargs={"Geometry": fridge_door_002, "Scale": (1.0000, -1.0000, 1.0000)},
+    )
+
     flip_faces = nw.new_node(Nodes.FlipFaces, input_kwargs={"Mesh": transform_geometry})
 
     reroute_67 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": vector})
@@ -6073,9 +6926,48 @@ def nodegroup_fridge_001(nw: NodeWrangler):
 
     reroute_79 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": multiply_1.outputs["Vector"]}
+    )
+
     reroute_80 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_79})
 
     reroute_81 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": equal_1})
+
+    reroute_4 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Num Drawers"]}
+    )
+
+    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
+    reroute_6 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Height"]}
+    )
+
+    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
+
+    reroute_8 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Depth"]}
+    )
+
+    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
+    reroute_10 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Thickness"]}
+    )
+
+    reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
+
+    reroute_12 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Shelf Height"]}
+    )
+
+    reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
+
+    reroute_14 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Num Shelves"]}
+    )
+
+    reroute_15 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_14})
+
     reroute_16 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Fridge Shelf Thickness"]},
@@ -6125,6 +7017,15 @@ def nodegroup_fridge_001(nw: NodeWrangler):
 
     fridge_body_002 = nw.new_node(
         nodegroup_fridge_body_002().name,
+        input_kwargs={
+            "Size": multiply.outputs["Vector"],
+            "Border Thickness": reroute_3,
+            "Num Drawers": reroute_5,
+            "Drawer Height": reroute_7,
+            "Drawer Depth": reroute_9,
+            "Drawer Thickness": reroute_11,
+            "Shelf Height": reroute_13,
+            "Num Shelves": reroute_15,
             "Fridge Shelf Thickness": reroute_17,
             "Has Grated Shelves": reroute_19,
             "Outer Shell Material": reroute_21,
@@ -6132,24 +7033,38 @@ def nodegroup_fridge_001(nw: NodeWrangler):
             "Interior Shelf Material Border": reroute_25,
             "Interior Shelf Material Inside": reroute_27,
             "Drawer Material": reroute_29,
+        },
+    )
+
     reroute_83 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_body_002.outputs["Fridge Body"]}
     )
+
     reroute_85 = nw.new_node(
+        Nodes.Reroute,
         input_kwargs={"Input": fridge_body_002.outputs["Fridge Body Drawer Body 2"]},
+    )
+
     reroute_86 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_002.outputs["Fridge Body Drawer"]},
+    )
+
     reroute_84 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_002.outputs["Fridge Body Duplicate Points"]},
+    )
+
     reroute_73 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_002.outputs["Fridge Body Drawer Position"]},
+    )
+
     reroute_87 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_body_002.outputs["Fridge Body Drawer Max"]},
     )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={
@@ -6169,6 +7084,9 @@ def nodegroup_fridge_001(nw: NodeWrangler):
             "Fridge Body Drawer Max": reroute_87,
         },
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata_111",
     singleton=False,
@@ -6183,6 +7101,8 @@ def nodegroup_add_jointed_geometry_metadata_111(nw: NodeWrangler):
             ("NodeSocketGeometry", "Geometry", None),
             ("NodeSocketString", "Label", ""),
         ],
+    )
+
     store_named_attribute = nw.new_node(
         Nodes.StoreNamedAttribute,
         input_kwargs={
@@ -6192,10 +7112,14 @@ def nodegroup_add_jointed_geometry_metadata_111(nw: NodeWrangler):
         },
         attrs={"data_type": "INT"},
     )
+
     group_output = nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": store_named_attribute},
         attrs={"is_active_output": True},
+    )
+
+
 @node_utils.to_nodegroup("geometry_nodes", singleton=False, type="GeometryNodeTree")
 def geometry_nodes(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
@@ -6258,14 +7182,20 @@ def geometry_nodes(nw: NodeWrangler):
             ("NodeSocketMaterial", "Exterior Drawer Material", None),
             ("NodeSocketMaterial", "Exterior Drawer Door Material", None),
         ],
+    )
+
     reroute_4 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Bottom Freezer"]}
     )
+
     reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
 
     reroute_2 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Top Freezer"]}
+    )
+
     reroute_3 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_2})
+
     fridge_001 = nw.new_node(
         nodegroup_fridge_001().name,
         input_kwargs={
@@ -6310,28 +7240,42 @@ def geometry_nodes(nw: NodeWrangler):
             ],
             "Drawer Material": group_input.outputs["Drawer Material"],
         },
+    )
+
     reroute_94 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["MulitDoor Frdige"]}
+    )
+
     reroute_95 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_94})
+
     add_jointed_geometry_metadata = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": fridge_001.outputs["Fridge Body Drawer Body 2"],
             "Label": "drawer_body2",
         },
+    )
+
     add_jointed_geometry_metadata_106 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_106().name,
         input_kwargs={
             "Geometry": fridge_001.outputs["Fridge Body Drawer"],
             "Label": "drawer2",
         },
+    )
+
     reroute_99 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_001.outputs["Fridge Body Drawer Position"]},
+    )
+
     reroute_100 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_99})
+
     reroute_101 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_001.outputs["Fridge Body Drawer Max"]},
+    )
+
     reroute_102 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_101})
 
     sliding_joint = nw.new_node(
@@ -6345,74 +7289,125 @@ def geometry_nodes(nw: NodeWrangler):
             "Max": reroute_102,
         },
         label="Sliding Joint",
+    )
+
     reroute_97 = nw.new_node(
+        Nodes.Reroute,
         input_kwargs={"Input": fridge_001.outputs["Fridge Body Duplicate Points"]},
+    )
+
     reroute_98 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_97})
+
     duplicate_joints_on_parent_033 = nw.new_node(
         nodegroup_duplicate_joints_on_parent_033().name,
+        input_kwargs={
             "Parent": sliding_joint.outputs["Parent"],
             "Child": sliding_joint.outputs["Child"],
             "Points": reroute_98,
+        },
+    )
+
     reroute_96 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Body"]}
     )
+
     join_geometry_3 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [duplicate_joints_on_parent_033, reroute_96]},
+    )
+
     add_jointed_geometry_metadata_1 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": join_geometry_3, "Label": "body"},
+    )
+
     reroute_83 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Door 1 Geom"]}
+    )
+
     add_jointed_geometry_metadata_109 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_109().name,
         input_kwargs={"Geometry": reroute_83, "Label": "door1"},
     )
+
     reroute_84 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Position"]}
+    )
+
     reroute_85 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_84})
 
     reroute_86 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Door 1 Axus"]}
+    )
+
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
+        input_kwargs={
             "Joint Label": "door_hinge_3",
             "Parent": add_jointed_geometry_metadata_1,
             "Child": add_jointed_geometry_metadata_109,
             "Position": reroute_85,
             "Axis": reroute_86,
             "Max": 3.1416,
+        },
         label="Hinge Joint",
+    )
+
     reroute_140 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": hinge_joint.outputs["Geometry"]}
+    )
+
     add_jointed_geometry_metadata_110 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_110().name,
+        input_kwargs={
             "Geometry": hinge_joint.outputs["Geometry"],
             "Label": "body_with_door1",
+        },
+    )
+
     reroute_87 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Door 2 Geom"]}
+    )
+
     add_jointed_geometry_metadata_110_1 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_110().name,
         input_kwargs={"Geometry": reroute_87, "Label": "door2"},
     )
+
     reroute_90 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Fridge Translation"]}
+    )
+
     reroute_91 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_90})
+
     reroute_88 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": fridge_001.outputs["Frdige Door 2 Axis"]}
+    )
+
     reroute_89 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_88})
+
     hinge_joint_1 = nw.new_node(
         nodegroup_hinge_joint().name,
+        input_kwargs={
             "Joint Label": "door_hinge_4",
             "Parent": add_jointed_geometry_metadata_110,
             "Child": add_jointed_geometry_metadata_110_1,
             "Position": reroute_91,
             "Axis": reroute_89,
+            "Max": 3.1416,
+        },
         label="Hinge Joint",
+    )
+
     switch_3 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
             "Switch": reroute_95,
             "False": reroute_140,
             "True": hinge_joint_1.outputs["Geometry"],
+        },
+    )
+
     reroute_92 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": fridge_001.outputs["Fridge Door 2 Position"]},
@@ -6421,9 +7416,16 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_93 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_92})
 
     multiply = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_93, 1: (0.0000, 0.0000, 0.5000)},
+        attrs={"operation": "MULTIPLY"},
+    )
+
     transform_geometry_3 = nw.new_node(
+        Nodes.Transform,
         input_kwargs={"Geometry": switch_3, "Translation": multiply.outputs["Vector"]},
+    )
+
     reroute_144 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": transform_geometry_3}
     )
@@ -6431,105 +7433,200 @@ def geometry_nodes(nw: NodeWrangler):
     add_jointed_geometry_metadata_111 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_111().name,
         input_kwargs={"Geometry": reroute_144, "Label": "main_fridge"},
+    )
+
     reroute_145 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata_111}
+    )
+
     reroute = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Main Fridge Dimensions"]},
+    )
+
     reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute})
+
+    combine_xyz = nw.new_node(
         Nodes.CombineXYZ, input_kwargs={"Z": group_input.outputs["Top Freezer Height"]}
+    )
+
     multiply_add = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_1, 1: (1.0000, 1.0000, 0.0000), 2: combine_xyz},
         attrs={"operation": "MULTIPLY_ADD"},
+    )
+
     reroute_23 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Location"]}
+    )
+
     reroute_24 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_23})
+
+    reroute_8 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Main Fridge Border Thickness"]},
+    )
+
+    reroute_9 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_8})
+
+    reroute_10 = nw.new_node(
+        Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Main Fridge Drawer Shelf Depth"]},
+    )
+
     reroute_11 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_10})
+
     reroute_36 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Shelf Height"]}
+    )
+
     reroute_37 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_36})
 
     reroute_17 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Num Shelves"]},
+    )
+
     reroute_18 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_17})
+
     reroute_34 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Thickness"]}
+    )
+
     reroute_35 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_34})
+
     reroute_6 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Has Handles"]}
+    )
+
     reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_6})
+
     reroute_21 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Type"]}
+    )
+
     reroute_22 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_21})
+
     reroute_25 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Orientation"]}
+    )
+
     reroute_26 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_25})
+
     reroute_12 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Handle Length"]},
+    )
+
     reroute_13 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_12})
+
     reroute_14 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Handle Y Offset"]},
+    )
+
     reroute_15 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Handle Z Offset"]},
+    )
+
     reroute_16 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_15})
 
     reroute_27 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Protrude"]}
+    )
+
     reroute_28 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_27})
+
     reroute_29 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Radius"]}
+    )
+
     reroute_30 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Width"]}
+    )
+
     reroute_31 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_30})
 
     reroute_32 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Height"]}
+    )
+
     reroute_33 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_32})
+
     reroute_19 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Num Door Shelves"]},
+    )
+
     reroute_20 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_19})
+
     reroute_44 = nw.new_node(
+        Nodes.Reroute,
+        input_kwargs={"Input": group_input.outputs["Door Shelf Thickness"]},
+    )
+
     reroute_45 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_44})
+
     reroute_40 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Shelf Height"]}
+    )
+
     reroute_41 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_40})
 
     reroute_42 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Shelf Depth"]}
+    )
+
     reroute_43 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_42})
+
     reroute_38 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Shelf Border Thickness"]},
+    )
+
     reroute_39 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_38})
 
     reroute_46 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Top Freezer Has Grated Shelves"]},
+    )
+
     reroute_47 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_46})
 
     reroute_48 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Outer Shell Material"]},
+    )
+
     reroute_49 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_48})
+
     reroute_50 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Inner Shell Material"]},
+    )
+
     reroute_51 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_50})
 
     reroute_52 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Handle Material"]}
+    )
+
     reroute_53 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_52})
 
     reroute_54 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Door Material"]}
+    )
+
     reroute_55 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_54})
+
     reroute_112 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_55})
+
     reroute_56 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Door Inner Material"]},
+    )
+
     reroute_57 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_56})
 
     reroute_113 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_57})
@@ -6537,6 +7634,8 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_58 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Door Shelf Material"]},
+    )
+
     reroute_59 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_58})
 
     reroute_114 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_59})
@@ -6544,18 +7643,27 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_60 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Interior Shelf Material Border"]},
+    )
+
     reroute_61 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_60})
+
     reroute_115 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_61})
+
     reroute_62 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Interior Shelf Material Inside"]},
+    )
+
     reroute_63 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_62})
 
     reroute_116 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_63})
 
     reroute_64 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": group_input.outputs["Drawer Material"]}
+    )
+
     reroute_65 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_64})
+
     reroute_117 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_65})
 
     top_freezer_001 = nw.new_node(
@@ -6600,14 +7708,24 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_131 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Multidoor Freezer"]},
+    )
+
     add_jointed_geometry_metadata_2 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
             "Geometry": top_freezer_001.outputs["Top Freezer Drawer 1 Body"],
             "Label": "drawer1_parent",
+        },
+    )
+
     add_jointed_geometry_metadata_3 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
             "Geometry": top_freezer_001.outputs["Top Freezer Drawer 1"],
             "Label": "drawer1_body",
+        },
+    )
+
     reroute_138 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Top Freezer 1 Position"]},
@@ -6620,13 +7738,17 @@ def geometry_nodes(nw: NodeWrangler):
 
     sliding_joint_1 = nw.new_node(
         nodegroup_sliding_joint().name,
+        input_kwargs={
             "Joint Label": "drawer_joint_1",
             "Parent": add_jointed_geometry_metadata_2,
             "Child": add_jointed_geometry_metadata_3,
             "Position": reroute_138,
             "Axis": (1.0000, 0.0000, 0.0000),
             "Max": reroute_139,
+        },
         label="Sliding Joint",
+    )
+
     reroute_134 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Top Freezer Points Duplicate"]},
@@ -6636,17 +7758,25 @@ def geometry_nodes(nw: NodeWrangler):
 
     duplicate_joints_on_parent_034 = nw.new_node(
         nodegroup_duplicate_joints_on_parent_034().name,
+        input_kwargs={
             "Parent": sliding_joint_1.outputs["Parent"],
             "Child": sliding_joint_1.outputs["Child"],
             "Points": reroute_135,
+        },
+    )
+
     reroute_136 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Top Freezer Body"]},
+    )
+
     reroute_137 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_136})
+
     join_geometry_4 = nw.new_node(
         Nodes.JoinGeometry,
         input_kwargs={"Geometry": [duplicate_joints_on_parent_034, reroute_137]},
     )
+
     add_jointed_geometry_metadata_4 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={"Geometry": join_geometry_4, "Label": "top_freezer_body"},
@@ -6672,25 +7802,35 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_125 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Top Freezer Axis"]},
+    )
+
     reroute_126 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_125})
 
     hinge_joint_2 = nw.new_node(
         nodegroup_hinge_joint().name,
+        input_kwargs={
             "Joint Label": "door_hinge_1",
             "Parent": add_jointed_geometry_metadata_4,
             "Child": add_jointed_geometry_metadata_464,
             "Position": reroute_124,
             "Axis": reroute_126,
             "Max": 3.1416,
+        },
         label="Hinge Joint",
+    )
+
     reroute_143 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": hinge_joint_2.outputs["Geometry"]}
+    )
+
     add_jointed_geometry_metadata_5 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": hinge_joint_2.outputs["Geometry"],
             "Label": "top_freezer_with_door1",
         },
+    )
+
     reroute_122 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Top Freezer Door 2"]},
@@ -6717,18 +7857,26 @@ def geometry_nodes(nw: NodeWrangler):
 
     hinge_joint_3 = nw.new_node(
         nodegroup_hinge_joint().name,
+        input_kwargs={
             "Joint Label": "door_hinge_2",
             "Parent": add_jointed_geometry_metadata_5,
             "Child": add_jointed_geometry_metadata_6,
             "Position": reroute_128,
             "Axis": reroute_130,
             "Max": 3.1416,
+        },
         label="Hinge Joint",
+    )
+
     switch_4 = nw.new_node(
         Nodes.Switch,
+        input_kwargs={
             "Switch": reroute_131,
             "False": reroute_143,
             "True": hinge_joint_3.outputs["Geometry"],
+        },
+    )
+
     reroute_132 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": top_freezer_001.outputs["Translation Freezer"]},
@@ -6737,14 +7885,17 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_133 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_132})
 
     multiply_1 = nw.new_node(
+        Nodes.VectorMath,
         input_kwargs={0: reroute_133, 1: (0.0000, 0.0000, 0.5000)},
         attrs={"operation": "MULTIPLY"},
     )
 
     transform_geometry_4 = nw.new_node(
         Nodes.Transform,
+        input_kwargs={
             "Geometry": switch_4,
             "Translation": multiply_1.outputs["Vector"],
+        },
     )
 
     reroute_107 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_1})
@@ -6752,17 +7903,34 @@ def geometry_nodes(nw: NodeWrangler):
     multiply_2 = nw.new_node(
         Nodes.VectorMath,
         input_kwargs={0: reroute_107, 1: (0.0000, 0.0000, 1.0000)},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
             "Geometry": transform_geometry_4,
             "Translation": multiply_2.outputs["Vector"],
+        },
+    )
+
     add_jointed_geometry_metadata_255 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata_255().name,
+        input_kwargs={"Geometry": transform_geometry, "Label": "top_freezer"},
+    )
+
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry,
         input_kwargs={
             "Geometry": [
                 add_jointed_geometry_metadata_111,
                 add_jointed_geometry_metadata_255,
             ]
         },
+    )
+
     switch = nw.new_node(
+        Nodes.Switch,
         input_kwargs={"Switch": reroute_3, "False": reroute_145, "True": join_geometry},
     )
 
@@ -6771,20 +7939,55 @@ def geometry_nodes(nw: NodeWrangler):
     reroute_67 = nw.new_node(
         Nodes.Reroute,
         input_kwargs={"Input": group_input.outputs["Bottom Freezer Num Freezers"]},
+    )
+
     reroute_68 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_67})
 
+    equal = nw.new_node(
+        Nodes.Compare,
         input_kwargs={2: reroute_68, 3: 2},
         attrs={"data_type": "INT", "operation": "EQUAL"},
+    )
+
     bottom_freezer_002 = nw.new_node(
         nodegroup_bottom_freezer_002().name,
+        input_kwargs={
+            "Main Fridge Dimensions": group_input.outputs["Main Fridge Dimensions"],
+            "Has Handle": group_input.outputs["Has Handles"],
+            "Exterior Drawer Height": group_input.outputs["Bottom Freezer 1 Height"],
+            "Fridge Door Thickness": group_input.outputs["Door Thickness"],
+            "Handle Type": group_input.outputs["Handle Type"],
+            "Handle Radius": group_input.outputs["Handle Radius"],
+            "Handle Protrude": group_input.outputs["Handle Protrude"],
+            "Handle Width": group_input.outputs["Handle Width"],
+            "Handle Height": group_input.outputs["Handle Height"],
+            "Exterior Drawer Shell Material": group_input.outputs[
+                "Exterior Drawer Shell Material"
+            ],
+            "Exterior Drawer Inside Material": group_input.outputs[
+                "Exterior Drawer Inside Material"
+            ],
+            "Exterior Drawer Material": group_input.outputs["Exterior Drawer Material"],
+            "Exterior Drawer Handle Material": group_input.outputs[
+                "Exterior Drawer Handle Material"
+            ],
+            "Exterior Drawer Door Material": group_input.outputs[
+                "Exterior Drawer Door Material"
+            ],
+        },
+    )
+
     add_jointed_geometry_metadata_7 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": bottom_freezer_002.outputs["Bottom Freezer 2 Body"],
             "Label": "freezer_body",
         },
+    )
+
     add_jointed_geometry_metadata_8 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
             "Geometry": bottom_freezer_002.outputs["Bottom Freezer 2 Drawer"],
             "Label": "freezer_drawer",
         },
@@ -6916,12 +8119,17 @@ def geometry_nodes(nw: NodeWrangler):
             "Exterior Drawer Material": reroute_77,
             "Exterior Drawer Handle Material": reroute_76,
             "Exterior Drawer Door Material": reroute_78,
+        },
+    )
+
     add_jointed_geometry_metadata_9 = nw.new_node(
         nodegroup_add_jointed_geometry_metadata().name,
         input_kwargs={
             "Geometry": bottom_freezer_003.outputs["Bottom Freezer Body"],
             "Label": "bottom_freezer_body",
         },
+    )
+
     reroute_118 = nw.new_node(
         Nodes.Reroute, input_kwargs={"Input": add_jointed_geometry_metadata_9}
     )
@@ -6981,49 +8189,124 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
     multiply_3 = nw.new_node(
+        Nodes.Math,
         input_kwargs={0: reroute_66, 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
     combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_3})
+
     transform_geometry_1 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
             "Geometry": add_jointed_geometry_metadata_11,
+            "Translation": combine_xyz_1,
+        },
+    )
+
     join_geometry_1 = nw.new_node(
+        Nodes.JoinGeometry,
         input_kwargs={"Geometry": [transform_geometry_1, reroute_120]},
+    )
+
+    switch_1 = nw.new_node(
+        Nodes.Switch,
         input_kwargs={"Switch": equal, "False": reroute_141, "True": join_geometry_1},
+    )
+
     reroute_142 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_1})
 
     join_geometry_2 = nw.new_node(
         Nodes.JoinGeometry, input_kwargs={"Geometry": [switch, reroute_142]}
+    )
+
     switch_2 = nw.new_node(
+        Nodes.Switch,
+        input_kwargs={
             "Switch": reroute_5,
             "False": reroute_146,
             "True": join_geometry_2,
+        },
+    )
+
     reroute_147 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": switch_2})
 
     bounding_box = nw.new_node(Nodes.BoundingBox, input_kwargs={"Geometry": switch_2})
 
     multiply_4 = nw.new_node(
+        Nodes.VectorMath,
+        input_kwargs={0: bounding_box.outputs["Min"], 1: (0.0000, 0.0000, -1.0000)},
+        attrs={"operation": "MULTIPLY"},
+    )
+
     transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
         input_kwargs={
             "Geometry": reroute_147,
             "Translation": multiply_4.outputs["Vector"],
         },
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
         input_kwargs={"Geometry": transform_geometry_2},
+        attrs={"is_active_output": True},
+    )
+
+
+class RefrigeratorFactory(AssetFactory):
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed=factory_seed, coarse=False)
+
+    @classmethod
+    @gin.configurable(module="RefrigeratorFactory")
+    def sample_joint_parameters(
+        cls,
+        door_hinge_stiffness_min: float = 0.0,
+        door_hinge_stiffness_max: float = 3.0,
+        door_hinge_damping_min: float = 10.0,
+        door_hinge_damping_max: float = 30.0,
+        bottom_fridge_drawer_stiffness_min: float = 0.0,
+        bottom_fridge_drawer_stiffness_max: float = 3.0,
+        bottom_fridge_drawer_damping_min: float = 10.0,
+        bottom_fridge_drawer_damping_max: float = 30.0,
+        drawer_joint_stiffness_min: float = 0.0,
+        drawer_joint_stiffness_max: float = 3.0,
+        drawer_joint_damping_min: float = 5.0,
+        drawer_joint_damping_max: float = 15.0,
+        bottom_freezer_stiffness_min: float = 0.0,
+        bottom_freezer_stiffness_max: float = 3.0,
+        bottom_freezer_damping_min: float = 10.0,
+        bottom_freezer_damping_max: float = 30.0,
+    ):
+        return {
             "door_hinge_3": {
                 "stiffness": uniform(
+                    door_hinge_stiffness_min, door_hinge_stiffness_max
                 ),
+                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
             },
             "bottom_fridge_drawer_1": {
                 "stiffness": uniform(
+                    bottom_fridge_drawer_stiffness_min,
+                    bottom_fridge_drawer_stiffness_max,
                 ),
                 "damping": uniform(
+                    bottom_fridge_drawer_damping_min,
+                    bottom_fridge_drawer_damping_max,
                 ),
             },
             "drawer_joint_1": {
                 "stiffness": uniform(
+                    drawer_joint_stiffness_min, drawer_joint_stiffness_max
                 ),
+                "damping": uniform(drawer_joint_damping_min, drawer_joint_damping_max),
             },
             "drawer_joint_2": {
                 "stiffness": uniform(
+                    drawer_joint_stiffness_min, drawer_joint_stiffness_max
                 ),
+                "damping": uniform(drawer_joint_damping_min, drawer_joint_damping_max),
             },
             "bottom_freezer": {
                 "stiffness": uniform(
@@ -7035,10 +8318,226 @@ def geometry_nodes(nw: NodeWrangler):
             },
             "door_hinge_1": {
                 "stiffness": uniform(
+                    door_hinge_stiffness_min, door_hinge_stiffness_max
                 ),
+                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
             },
             "door_hinge_2": {
                 "stiffness": uniform(
+                    door_hinge_stiffness_min, door_hinge_stiffness_max
                 ),
+                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
             },
             "door_hinge_4": {
+                "stiffness": uniform(
+                    door_hinge_stiffness_min, door_hinge_stiffness_max
+                ),
+                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
+            },
+        }
+
+    def sample_parameters(self):
+        # add code here to randomly sample from parameters
+
+        import numpy as np
+
+        from infinigen.assets.materials.plastic import plastic_rough
+        from infinigen.core.util.color import hsv2rgba
+
+        is_double_door = np.random.choice([True, False])
+        if is_double_door:
+            n_doors = 2
+            has_handles = True
+            has_top_freezer = False
+            width = uniform(0.8, 1.1)
+        else:
+            n_doors = 1
+            has_handles = np.random.choice([True, False])
+            has_top_freezer = np.random.choice([True, False])
+            width = uniform(0.5, 0.8)
+
+        if has_top_freezer:
+            has_bottom_freezer = False
+            num_freezers = 0
+        else:
+            has_bottom_freezer = True
+
+        if has_top_freezer:
+            has_bottom_freezer = False
+            num_freezers = 0
+            top_freezer_height = uniform(0.3, 0.5)
+        else:
+            has_bottom_freezer = np.random.choice([True, False])
+            num_freezers = np.random.choice(
+                [1, 2], p=[0.8, 0.2]
+            )  # TODO: sample from here once freezers are added
+            top_freezer_height = 0
+
+        depth = uniform(0.5, 0.8)
+
+        if has_top_freezer:
+            height = uniform(0.8, 1.2)  # no drawer, top freezer
+        else:
+            if num_freezers == 0:
+                height = uniform(0.85, 2.0)
+            elif num_freezers == 1:
+                height = uniform(1.0, 1.5)
+            else:
+                height = uniform(0.7, 1.2)
+
+        freezer_height_1 = 0
+        freezer_height_2 = 0
+        if has_bottom_freezer:
+            if num_freezers == 1:
+                freezer_height_1 = uniform(0.4, 0.6)
+            else:
+                freezer_height_1 = uniform(0.1, 0.15)
+                freezer_height_2 = uniform(0.3, 0.5)
+
+        height = min(height, 3 * width)
+
+        main_dimensions = (depth, width, height)
+        border_thickness = uniform(0.01, 0.07)
+
+        door_to_shelf_gap = uniform(0.06, 0.12)
+        drawer_depth = depth - border_thickness - door_to_shelf_gap
+
+        handle_type = randint(0, 3)
+        handle_radius = uniform(0.002, 0.02)
+        handle_width = uniform(0.02, 0.1)
+        handle_height = uniform(0.01, 0.03)
+
+        fridge_shelf_height = uniform(0.01, 0.04)
+
+        door_shelf_thickness = uniform(0.005, 0.03)
+        door_shelf_height = uniform(0.05, 0.1)
+
+        drawer_height = uniform(0.15, 0.2)
+        drawer_thickness = uniform(0.002, 0.01)
+
+        main_handle_length = uniform(0.3, height)
+
+        if handle_type == 0:
+            main_handle_y_offset = uniform(
+                handle_radius, max(handle_radius, 0.25 * width)
+            )
+        else:
+            main_handle_y_offset = uniform(
+                handle_width, max(handle_width, 0.25 * width)
+            )
+
+        main_handle_z_offset = uniform(0, height / 2 - main_handle_length / 2)
+
+        top_freezer_handle_length = uniform(0.1, top_freezer_height)
+        top_freezer_handle_z_offset = -uniform(
+            0, top_freezer_height / 2 - top_freezer_handle_length / 2
+        )
+
+        outer_body_material = weighted_sample(
+            material_assignments.kitchen_appliance_hard
+        )()()
+        color_exterior = np.random.choice([0, 1, 2, 3])
+        hsv = None
+        if color_exterior < 3:
+            h = np.random.uniform(0, 1)
+            s = np.random.uniform(0, 0.1)
+            if color_exterior == 0:
+                v = np.random.uniform(0.9, 1.0)
+            elif color_exterior == 1:
+                v = np.random.uniform(0.05, 0.15)
+            else:
+                v = 0
+            hsv = (h, s, v)
+            rgba = hsv2rgba(hsv)
+            outer_body_material = plastic_rough.PlasticRough().generate(base_color=rgba)
+
+        inner_body_material = weighted_sample(material_assignments.metal_neutral)()()
+        light_interior = np.random.choice([True, False])
+        hsv = None
+        if light_interior:
+            h = np.random.uniform(0, 1)
+            s = np.random.uniform(0, 0.1)
+            v = np.random.uniform(0.9, 1.0)
+            hsv = (h, s, v)
+            rgba = hsv2rgba(hsv)
+            inner_body_material = plastic_rough.PlasticRough().generate(base_color=rgba)
+
+        shelf_material = weighted_sample(material_assignments.fridge_shelf)()()
+        drawer_material = weighted_sample(material_assignments.glasses)()()
+        handle_material = weighted_sample(material_assignments.hard_materials)()()
+
+        # add code here to randomly sample from parameters
+        params = {
+            "Has Top Freezer": has_top_freezer,
+            "Has Bottom Freezer": has_bottom_freezer,
+            "Has Handles": has_handles,
+            "Main Fridge Dimensions": main_dimensions,
+            "Top Freezer Height": top_freezer_height,
+            "Bottom Freezer 1 Height": freezer_height_1,
+            "Bottom Freezer 2 Height": freezer_height_2,
+            "Main Fridge Num Doors": n_doors,
+            "Bottom Freezer Num Freezers": num_freezers,
+            "Main Fridge Border Thickness": border_thickness,
+            "Main Fridge Num Shelves": randint(1, 4),
+            "Main Fridge Num Door Shelves": randint(1, 4),
+            "Main Fridge Num Internal Drawers": randint(0, 3),
+            "Main Fridge Drawer Height": drawer_height,
+            "Main Fridge Drawer Shelf Depth": drawer_depth,
+            "Main Fridge Drawer Thickness": drawer_thickness,
+            "Top Freezer Handle Length": top_freezer_handle_length,
+            "Top Freezer Handle Y Offset": main_handle_y_offset,
+            "Top Freezer Handle Z Offset": top_freezer_handle_z_offset,
+            "Top Freezer Num Shelves": randint(0, 2),
+            "Top Freezer Num Door Shelves": randint(0, 2),
+            "Bottom Freezer Num Drawers": num_freezers,
+            "Handle Type": handle_type,
+            "Handle Location": randint(0, 2),
+            "Handle Orientation": 0,
+            "Handle Length": main_handle_length,
+            "Handle Y Offset": main_handle_y_offset,
+            "Handle Z Offset": main_handle_z_offset,
+            "Handle Protrude": uniform(0.01, 0.1),
+            "Handle Radius": handle_radius,
+            "Handle Width": handle_width,
+            "Handle Height": handle_height,
+            "Door Thickness": uniform(0.03, 0.1),
+            "Shelf Height": fridge_shelf_height,
+            "Shelf Border Thickness": uniform(0.005, 0.02),
+            "Door Shelf Height": door_shelf_height,
+            "Door Shelf Depth": max(0.03, door_to_shelf_gap - 0.03),
+            "Door Shelf Thickness": door_shelf_thickness,
+            "Main Fridge Has Grated Shelves": np.random.choice([True, False]),
+            "Top Freezer Has Grated Shelves": np.random.choice([True, False]),
+            "Outer Shell Material": outer_body_material,
+            "Inner Shell Material": inner_body_material,
+            "Handle Material": handle_material,
+            "Door Material": outer_body_material,
+            "Door Inner Material": inner_body_material
+            if uniform() < 0.8
+            else outer_body_material,
+            "Door Shelf Material": shelf_material,
+            "Interior Shelf Material Border": inner_body_material,
+            "Interior Shelf Material Inside": shelf_material,
+            "Drawer Material": drawer_material
+            if uniform() < 0.2
+            else inner_body_material,
+            "Exterior Drawer Shell Material": outer_body_material,
+            "Exterior Drawer Inside Material": inner_body_material,
+            "Exterior Drawer Material": outer_body_material,
+            "Exterior Drawer Handle Material": handle_material,
+            "Exterior Drawer Door Material": outer_body_material,
+        }
+
+        return params
+
+    def create_asset(self, asset_params=None, **kwargs):
+        obj = butil.spawn_vert()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            apply=False,
+            node_group=geometry_nodes(),
+            ng_inputs=self.sample_parameters(),
+        )
+
+        return obj
