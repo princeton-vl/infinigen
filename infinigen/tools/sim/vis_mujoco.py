@@ -329,6 +329,7 @@ class MujocoAssetInitializer:
 
     def save_frames(self, out_file_path: Path, frames: List[np.ndarray]) -> None:
         """Save frames as an MP4 video file"""
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         video_writer = cv2.VideoWriter(
             str(out_file_path), fourcc, self.fps, (self.img_width, self.img_height)
         )
