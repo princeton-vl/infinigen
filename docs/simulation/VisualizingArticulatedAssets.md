@@ -1,5 +1,6 @@
 # Visualizing Articulated Assets
 
+This document explains how to visualize articulated assets generated across different simulation environments and seeds.
 Currently, MuJoCo is the only visualization supported, with plans to add more simulators in the near future.
 
 ## MuJoCo Visualization
@@ -13,6 +14,8 @@ To visualize an asset in MuJoCo run from root of repo:
 ```bash
 python infinigen/tools/sim/visualizer.py --asset_name door --nr 3
 ```
+
+A list of available assets can be seen in `infinigen/assets/sim_objects/mapping.py`.
 
 This command will in one go:
 
