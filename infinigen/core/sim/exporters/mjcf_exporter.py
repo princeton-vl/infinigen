@@ -69,10 +69,8 @@ class MJCFBuilder(SimBuilder):
         mujoco = create_element("mujoco")
 
         # adding compiler attributes
-        compiler = create_element(
-            "compiler", angle="radian", meshdir="assets", inertiagrouprange="0 0"
-        )
-        mujoco.append(compiler)
+        self.compiler = create_element("compiler", angle="radian", meshdir="assets")
+        mujoco.append(self.compiler)
 
         # creating general defaults
         default = create_element("default")
@@ -102,6 +100,9 @@ class MJCFBuilder(SimBuilder):
         image_res: int = 512,
     ):
         super().build(blend_obj, metadata)
+
+        if not visual_only:
+            self.compiler.set("inertiagrouprange", "0 0")
 
         # construct a skeleton for the rigid body
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)

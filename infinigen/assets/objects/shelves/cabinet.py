@@ -4,7 +4,6 @@
 # Authors: Beining Han
 
 import bpy
-import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
 
@@ -1699,7 +1698,7 @@ class CabinetDoorBaseFactory(AssetFactory):
         surface.add_geomod(
             obj,
             geometry_door_nodes,
-            apply=False,
+            apply=True,
             attributes=[],
             input_kwargs=obj_params,
         )
@@ -1750,42 +1749,6 @@ class CabinetBaseFactory(AssetFactory):
         self.mat_params = {}
         self.shelf_fac = LargeShelfBaseFactory(factory_seed)
         self.door_fac = CabinetDoorBaseFactory(factory_seed)
-
-    @classmethod
-    @gin.configurable(module="CabinetBaseFactory")
-    def sample_joint_parameters(
-        cls,
-        cabinet_hinge_stiffness_min: float = 0.0,
-        cabinet_hinge_stiffness_max: float = 0.0,
-        cabinet_hinge_damping_min: float = 800.0,
-        cabinet_hinge_damping_max: float = 1200.0,
-        cabinet_hinge_multiple_stiffness_min: float = 0.0,
-        cabinet_hinge_multiple_stiffness_max: float = 0.0,
-        cabinet_hinge_multiple_damping_min: float = 800.0,
-        cabinet_hinge_multiple_damping_max: float = 1200.0,
-    ):
-        return {
-            "cabinet_hinge": {
-                "stiffness": uniform(
-                    cabinet_hinge_stiffness_min, cabinet_hinge_stiffness_max
-                ),
-                "damping": uniform(
-                    cabinet_hinge_damping_min, cabinet_hinge_damping_max
-                ),
-                "friction": 1000.0,
-            },
-            "cabinet_hinge_multiple": {
-                "stiffness": uniform(
-                    cabinet_hinge_multiple_stiffness_min,
-                    cabinet_hinge_multiple_stiffness_max,
-                ),
-                "damping": uniform(
-                    cabinet_hinge_multiple_damping_min,
-                    cabinet_hinge_multiple_damping_max,
-                ),
-                "friction": 1000.0,
-            },
-        }
 
     def sample_params(self):
         # Update fac params

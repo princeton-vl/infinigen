@@ -907,7 +907,7 @@ class LargeShelfBaseFactory(AssetFactory):
 
         obj_params = self.get_asset_params(i)
         surface.add_geomod(
-            obj, geometry_nodes, attributes=[], apply=False, input_kwargs=obj_params
+            obj, geometry_nodes, attributes=[], apply=True, input_kwargs=obj_params
         )
 
         if params.get("ret_params", False):

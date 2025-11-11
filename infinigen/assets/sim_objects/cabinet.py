@@ -1,3 +1,4 @@
+import gin
 from numpy.random import uniform
 
 from infinigen.assets.objects.shelves.cabinet import CabinetBaseFactory
@@ -5,6 +6,42 @@ from infinigen.assets.objects.shelves.cabinet import CabinetBaseFactory
 
 class CabinetFactory(CabinetBaseFactory):
     extra_exclude = {("link_1", "link_2")}
+
+    @classmethod
+    @gin.configurable(module="CabinetFactory")
+    def sample_joint_parameters(
+        cls,
+        cabinet_hinge_stiffness_min: float = 0.0,
+        cabinet_hinge_stiffness_max: float = 0.0,
+        cabinet_hinge_damping_min: float = 800.0,
+        cabinet_hinge_damping_max: float = 1200.0,
+        cabinet_hinge_multiple_stiffness_min: float = 0.0,
+        cabinet_hinge_multiple_stiffness_max: float = 0.0,
+        cabinet_hinge_multiple_damping_min: float = 800.0,
+        cabinet_hinge_multiple_damping_max: float = 1200.0,
+    ):
+        return {
+            "cabinet_hinge": {
+                "stiffness": uniform(
+                    cabinet_hinge_stiffness_min, cabinet_hinge_stiffness_max
+                ),
+                "damping": uniform(
+                    cabinet_hinge_damping_min, cabinet_hinge_damping_max
+                ),
+                "friction": 1000.0,
+            },
+            "cabinet_hinge_multiple": {
+                "stiffness": uniform(
+                    cabinet_hinge_multiple_stiffness_min,
+                    cabinet_hinge_multiple_stiffness_max,
+                ),
+                "damping": uniform(
+                    cabinet_hinge_multiple_damping_min,
+                    cabinet_hinge_multiple_damping_max,
+                ),
+                "friction": 1000.0,
+            },
+        }
 
     def sample_params(self):
         params = dict()
