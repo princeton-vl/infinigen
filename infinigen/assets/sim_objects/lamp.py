@@ -5,6 +5,9 @@
 # Authors:
 # - Jack Nugent: primary author
 # - Abhishek Joshi: Updates for sim
+# - Max Gonzalez Saez-Diez: Updates for sim
+# - Hongyu Wen: developed original lamp
+
 import functools
 
 import gin

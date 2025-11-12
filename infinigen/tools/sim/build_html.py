@@ -1,3 +1,10 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Max Gonzalez Saez-Diez: Primary author
+
 import argparse
 import os
 from pathlib import Path
@@ -98,8 +105,8 @@ def generate_html(
     <title>{asset_name} - Joint Views</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ 
-            padding: 40px 20px; 
+        body {{
+            padding: 40px 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
             color: #333;
@@ -126,13 +133,13 @@ def generate_html(
         .status-icon {{
             font-size: 20px;
         }}
-        h1 {{ 
-            font-size: 28px; 
-            margin-bottom: 30px; 
+        h1 {{
+            font-size: 28px;
+            margin-bottom: 30px;
             color: #1a1a1a;
             font-weight: 600;
         }}
-        .seed-section {{ 
+        .seed-section {{
             margin-bottom: 16px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -147,7 +154,7 @@ def generate_html(
             transition: filter 0.2s;
         }}
         .seed-header:hover {{ filter: brightness(0.97); }}
-        .seed-header h2 {{ 
+        .seed-header h2 {{
             font-size: 18px;
             font-weight: 500;
             color: #1a1a1a;
@@ -180,7 +187,7 @@ def generate_html(
             transition: background 0.2s;
         }}
         .joint-header:hover {{ background: #f5f5f5; }}
-        .joint-header h3 {{ 
+        .joint-header h3 {{
             font-size: 16px;
             font-weight: 500;
             color: #333;
@@ -238,7 +245,7 @@ def generate_html(
             border-radius: 4px;
             overflow: hidden;
         }}
-        video {{ 
+        video {{
             width: 100%;
             height: 100%;
             display: block;
@@ -362,7 +369,7 @@ def generate_html(
         function toggleSeed(header) {
             header.parentElement.classList.toggle('collapsed');
         }
-        
+
         // Toggle joint sections between expanded/collapsed
         function toggleJoint(header, event) {
             event.stopPropagation();
@@ -370,7 +377,7 @@ def generate_html(
             const jointSections = seedContent.querySelectorAll('.joint-section');
             const currentSection = header.parentElement;
             const isCurrentlyCollapsed = currentSection.classList.contains('collapsed');
-            
+
             // Collapse all and pause videos
             jointSections.forEach(section => {
                 const videos = section.querySelectorAll('video');
@@ -380,7 +387,7 @@ def generate_html(
                 });
                 section.classList.add('collapsed');
             });
-            
+
             // Expand clicked section and play videos if it was collapsed
             if (isCurrentlyCollapsed) {
                 currentSection.classList.remove('collapsed');
@@ -392,7 +399,7 @@ def generate_html(
                 }, 100);
             }
         }
-        
+
         // Auto-play videos in the first non-collapsed section
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.joint-section:not(.collapsed) video').forEach(video => {

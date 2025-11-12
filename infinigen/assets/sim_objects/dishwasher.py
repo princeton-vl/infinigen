@@ -1,3 +1,13 @@
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
+
+# Authors:
+# - Stamatis Alexandropoulos: primary author
+# - Abhishek Joshi: Updates for sim
+# - Max Gonzalez Saez-Diez: Updates for sim
+# - Hongyu Wen: developed original dishwasher
+
 import gin
 import numpy as np
 from numpy.random import randint as RI
