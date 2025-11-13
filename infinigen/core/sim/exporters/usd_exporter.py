@@ -287,12 +287,14 @@ class USDBuilder(SimBuilder):
 
             rel.SetTargets(ignore_paths)
             for ignore_path in ignore_paths:
-                self.exclude_links.add(
-                    (
-                        link_prim.GetName(),
-                        self.stage.GetPrimAtPath(ignore_path).GetName(),
+                ignore_prim = self.stage.GetPrimAtPath(ignore_path)
+                if ignore_prim.IsValid():
+                    self.exclude_links.add(
+                        (
+                            link_prim.GetName(),
+                            ignore_prim.GetName(),
+                        )
                     )
-                )
 
     def _add_xform(self, usd_path: str):
         """Creates an xform."""
