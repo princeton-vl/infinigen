@@ -82,10 +82,7 @@ tests/sim/test_blueprints
 tests/sim/test_objects
 sim_exports/
 
-MUJOCO_LOG.txt
-
 articulated_asset_preview.html
-*.png
 *.gif
 
 sim_testing/
@@ -93,3 +90,10 @@ sim_testing/
 *.log
 
 *tmp*
+
+MUJOCO_LOG.txt
+MUJOCO_LOG.TXT
+
+mjcf/
+urdf/
+usd/

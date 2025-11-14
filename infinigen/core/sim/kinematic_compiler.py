@@ -89,9 +89,9 @@ def get_geometry_graph(
     def add_to_geometry_graph(from_node, to_nodes):
         for to_node, link in to_nodes:
             geo_graph[to_node].append((from_node, link))
-            assert (
-                link not in visited_links
-            ), f"({link.id_data}) Link from {link.from_node} to {link.to_node} already added."
+            assert link not in visited_links, (
+                f"({link.id_data}) Link from {link.from_node} to {link.to_node} already added."
+            )
             visited_links.add(link)
 
     output_node = utils.get_node_by_idname(mods[0].node_group, "NodeGroupOutput")
@@ -122,6 +122,15 @@ def get_geometry_graph(
                 if (
                     from_node.bl_idname == "NodeGroupInput"
                     or to_node.bl_idname == "NodeGroupOutput"
+                ):
+                    continue
+
+                # we explicitly ignore mesh boolean differences
+                # TODO (ajoshi): find a cleaner solution to this
+                if (
+                    to_node.bl_idname == "GeometryNodeMeshBoolean"
+                    and to_node.operation == "DIFFERENCE"
+                    and link.to_socket.name == "Mesh 2"
                 ):
                     continue
 
@@ -216,9 +225,8 @@ def compile(obj: bpy.types.Object) -> Dict:
         # update joint related nodes
         if utils.is_joint(blend_node):
             set_joint_id(root.idn, blend_node)
-            utils.turn_off_joint_debugging(blend_node)
+            utils.set_default_joint_state(blend_node)
         if utils.is_duplicate(blend_node):
-            print(blend_node)
             set_duplicate_id(root.idn, blend_node)
 
         if utils.is_join(blend_node) or utils.is_joint(blend_node):

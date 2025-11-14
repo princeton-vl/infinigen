@@ -6,7 +6,6 @@
 # - Abhishek Joshi: primary author
 
 import argparse
-import pprint
 from pathlib import Path
 
 import gin
@@ -54,6 +53,5 @@ if __name__ == "__main__":
         export_dir=Path(args.export_dir),
         visual_only=not args.include_collisions,
     )
-    pprint.pprint(semantic_mapping)
 
     print(f"Exported to {export_path.resolve()}")

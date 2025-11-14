@@ -19,8 +19,12 @@ import numpy as np
 import trimesh
 
 import infinigen.core.sim.exporters.utils as exputils
-from infinigen.core import surface
-from infinigen.core.sim.exporters.base import JointType, PathItem, RigidBody, SimBuilder
+from infinigen.core.sim.exporters.base import (
+    JointType,
+    PathItem,
+    RigidBody,
+    SimBuilder,
+)
 from infinigen.core.sim.kinematic_node import (
     KinematicNode,
 )
@@ -51,6 +55,9 @@ class URDFBuilder(SimBuilder):
         self.asset_freq = defaultdict(int)
         self.joint_freq = defaultdict(int)
         self.joint_map = dict()
+
+        self.post_processing_collision_info = defaultdict(dict)
+        self.exclude_links = set()
 
         self.link_count = 0
 
@@ -84,6 +91,7 @@ class URDFBuilder(SimBuilder):
 
         # construct a skeleton for the rigid body
         root, _ = self._construct_rigid_body_skeleton(kinematic_root)
+        root = self._wrap_in_body(root)
         self._simplify_skeleton(root)
 
         joint_params = sample_joint_params_fn()
@@ -101,23 +109,30 @@ class URDFBuilder(SimBuilder):
         parent_link: str = "world",
         joint_nodes: List[KinematicNode] = [],
         pos_offset: np.array = np.zeros(3),
+        parent_abs_pos: np.array = np.zeros(3),
         visual_only: bool = False,
         image_res: int = 512,
     ):
         """Populates the urdf with links and joints."""
+
         # create a link for the body
         link_name = f"link_{self.link_count}"
         link = create_element("link", name=link_name)
         self.link_count += 1
 
+        self.exclude_links.add((parent_link, link_name))
+
         vis_origin_refs = []
         col_origin_refs = []
+        col_paths = []
         assets = []
         for asset in root.assets:
             # export the mesh and set the filename
             visasset_path, colasset_paths, mesh = self._get_mesh(
                 asset.attribs, visual_only=visual_only, image_res=image_res
             )
+            if not mesh:
+                continue
 
             # add all the assets for the given link
             visual = create_element("visual")
@@ -154,6 +169,7 @@ class URDFBuilder(SimBuilder):
             )
             t.mass_properties["density"] = mass / t.volume
             I_tensor = t.moment_inertia
+            I_tensor = np.clip(I_tensor, a_min=0, a_max=None)
             inertial.append(mass)
             ixx, ixy, ixz = I_tensor[0]
             _, iyy, iyz = I_tensor[1]
@@ -177,6 +193,7 @@ class URDFBuilder(SimBuilder):
             link.append(inertial)
 
             collision_refs = []
+            collision_paths = []
             if not visual_only:
                 for colasset_path in colasset_paths:
                     collision = create_element("collision")
@@ -190,9 +207,11 @@ class URDFBuilder(SimBuilder):
                     collision.append(collision_origin)
                     link.append(collision)
                     collision_refs.append(collision_origin)
+                    collision_paths.append(colasset_path.name)
 
             vis_origin_refs.append(visual_origin)
             col_origin_refs.append(collision_refs)
+            col_paths.append(collision_paths)
             assets.append(mesh)
 
         aabb_center = exputils.get_aabb_center(assets)
@@ -208,13 +227,18 @@ class URDFBuilder(SimBuilder):
             joint_node = joint_nodes[0]
 
             joint_name = self.metadata[joint_node.idn]["joint label"]
+            unique_joint_idx = self.joint_freq[joint_name]
             unique_joint_name = f"{joint_name}_{self.joint_freq[joint_name]}"
             self.joint_freq[joint_name] += 1
 
-            rel_pos, axis, range_min, range_max = self.get_joint_information(
-                joint_node.idn
+            coord_frame = R = exputils.get_coord_frame(
+                self.blend_obj, joint_node.idn, unique_joint_idx, aabb_center
             )
-            abs_joint_pos = aabb_center + rel_pos
+
+            poschild, axis, range_min, range_max = exputils.get_joint_properties(
+                self.blend_obj, joint_node.idn
+            )
+            abs_joint_pos = aabb_center + R @ poschild
 
             joint_properties = jointdyna.get_joint_properties(joint_name, joint_params)
 
@@ -226,21 +250,28 @@ class URDFBuilder(SimBuilder):
                 child_link=link_name,
                 min_range=range_min,
                 max_range=range_max,
-                axis=axis,
+                axis=coord_frame @ axis,
                 damping=joint_properties["damping"],
                 friction=joint_properties["friction"],
             )
             pos_offset = abs_joint_pos
 
         # set the position of the links geometries relative to the joint
-        for vis_origin, col_origins, asset in zip(
-            vis_origin_refs, col_origin_refs, assets
+        # TODO (ajoshi): Clean this up.
+        for vis_origin, col_origins, cpaths, asset in zip(
+            vis_origin_refs, col_origin_refs, col_paths, assets
         ):
             geom_center = exputils.get_aabb_center(asset)
             offset = geom_center - pos_offset
             vis_origin.set("xyz", exputils.array_to_string(offset))
-            for col_origin in col_origins:
+            for col_origin, path in zip(col_origins, cpaths):
                 col_origin.set("xyz", exputils.array_to_string(offset))
+
+                # add information for post processing
+                self.post_processing_collision_info[link_name][path] = {
+                    "offset": geom_center,
+                    "path": path,
+                }
 
         for child, joints in root.children.items():
             self._populate_links(
@@ -249,6 +280,7 @@ class URDFBuilder(SimBuilder):
                 parent_link=link_name,
                 joint_nodes=joints,
                 pos_offset=pos_offset,
+                parent_abs_pos=aabb_center,
                 visual_only=visual_only,
             )
 
@@ -305,7 +337,16 @@ class URDFBuilder(SimBuilder):
         return joint
 
     def _get_mesh(self, attribs: List[PathItem], visual_only: bool, image_res: int):
-        mesh = self._get_geometry(attribs)
+        attribs = exputils.attribs_to_tuples(attribs)
+        extra_attribs = [("axis_group", 0)]
+        mesh = exputils.get_geometry_given_attribs(
+            self.blend_obj, attribs, extra_attribs=extra_attribs
+        )
+
+        # return None is the asset it not a proper volume
+        if exputils.is_2d(mesh):
+            return None, None, None
+
         labels = self._get_labels(mesh)
         if len(labels) == 0:
             asset_name = "geom"
@@ -331,37 +372,6 @@ class URDFBuilder(SimBuilder):
 
         return visasset_path, colasset_paths, mesh
 
-    def get_joint_information(self, joint_name: str):
-        pos_vals = surface.read_attr_data(self.blend_obj, joint_name + "_pos")
-        pos_mask = np.any(pos_vals != 0.0, axis=1)
-        if all(~pos_mask):
-            position = np.zeros(3)
-        else:
-            position = pos_vals[pos_mask].mean(axis=0)
-
-        axis_vals = surface.read_attr_data(self.blend_obj, joint_name + "_axis")
-        axis_mask = np.any(axis_vals != 0.0, axis=1)
-        if all(~axis_mask):
-            axis = np.array([0.0, 0.0, 1.0])
-        else:
-            axis = axis_vals[axis_mask].mean(axis=0)
-
-        min_vals = surface.read_attr_data(self.blend_obj, joint_name + "_min")
-        min_mask = min_vals != 0.0
-        if all(~min_mask):
-            range_min = 0.0
-        else:
-            range_min = min_vals[min_mask].mean()
-
-        max_vals = surface.read_attr_data(self.blend_obj, joint_name + "_max")
-        max_mask = max_vals != 0.0
-        if all(~max_mask):
-            range_max = 0.0
-        else:
-            range_max = max_vals[max_mask].mean()
-
-        return position, axis, range_min, range_max
-
 
 def export(
     blend_obj: bpy.types.Object,
@@ -371,6 +381,7 @@ def export(
     export_dir: Path = Path("./sim_exports/urdf"),
     image_res: int = 512,
     visual_only: bool = True,
+    get_raw_output: bool = False,
     **kwargs,
 ):
     """Export function for the MJCF file format."""
@@ -395,6 +406,13 @@ def export(
     )
 
     metadata.update(builder.get_bounding_box_info())
+
+    exputils.post_process_collisions(
+        builder.post_processing_collision_info, obj_assets_dir, builder.exclude_links
+    )
+
+    if get_raw_output:
+        return builder.urdf, metadata
 
     # save the urdf
     urdf_path, metadata_path = save(

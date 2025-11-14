@@ -24,6 +24,7 @@ def spawn_simready(
     export_dir: Path = Path("./sim_exports"),
     image_res: int = 512,
     seed: int = 0,
+    export: bool = True,
     **kwargs,
 ) -> Tuple[Path, Dict]:
     """
@@ -40,6 +41,9 @@ def spawn_simready(
     asset = asset_class(seed)
     obj = asset.spawn_asset(i=0, **kwargs)
 
+    if not export:
+        return obj
+
     sim_blueprint = kinematic_compiler.compile(obj)
     butil.apply_modifiers(obj)
 
@@ -47,7 +51,12 @@ def spawn_simready(
 
     export_dir = export_dir / exporter
 
-    export_func = sim_exporter_factory(exporter=exporter)
+    options = asset_class.options if "options" in asset_class.__dict__ else None
+    extra_exclude = (
+        asset_class.extra_exclude if "extra_exclude" in asset_class.__dict__ else None
+    )
+
+    export_func = sim_exporter_factory(exporter=exporter, legacy=False)
     export_path, semantic_mapping = export_func(
         blend_obj=obj,
         sim_blueprint=sim_blueprint,
@@ -55,6 +64,8 @@ def spawn_simready(
         sample_joint_params_fn=asset_class.sample_joint_parameters,
         export_dir=export_dir,
         image_res=image_res,
+        options=options,
+        extra_exclude=extra_exclude,
         **kwargs,
     )
 

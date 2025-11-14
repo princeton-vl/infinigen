@@ -28,5 +28,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_name", type=str, required=False, help="name of the object"
     )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        required=False,
+        help="directory to output transpiled sim object",
+    )
+    parser.add_argument(
+        "--ignore_from_catalog",
+        action="store_true",
+        help="Add to asset catalog when flag is present",
+    )
+
     args = parser.parse_args()
     transpile_simready(args)

@@ -4,7 +4,11 @@
 
 # Authors:
 # - Abhishek Joshi: primary author
+# - Max Gonzalez Saez-Diez: functions required for sim unit tests
 
+import inspect
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from typing import Any, Optional
 
 import bpy
@@ -139,33 +143,21 @@ def create_link(
     return node_tree.links.new(from_socket, to_socket)
 
 
-def turn_off_joint_debugging(blend_node: bpy.types.Node):
+def set_default_joint_state(node: bpy.types.Node):
     """
-    Turn off debugging geometries for joint nodes
+    Sets the joint to the default state (joint value = 0, turn debugging off)
     """
-    if len(blend_node.inputs["Show Center of Parent"].links) == 1:
-        link = blend_node.inputs["Show Center of Parent"].links[0]
+    if len(node.inputs["Show Joint"].links) == 1:
+        link = node.inputs["Show Joint"].links[0]
         node_tree = link.id_data
         node_tree.links.remove(link)
-    if len(blend_node.inputs["Show Center of Child"].links) == 1:
-        link = blend_node.inputs["Show Center of Child"].links[0]
-        node_tree = link.id_data
-        node_tree.links.remove(link)
-    if len(blend_node.inputs["Show Joint"].links) == 1:
-        link = blend_node.inputs["Show Joint"].links[0]
-        node_tree = link.id_data
-        node_tree.links.remove(link)
+    node.inputs["Show Joint"].default_value = False
 
-    # set the Value input to 0
-    if len(blend_node.inputs["Value"].links) == 1:
-        link = blend_node.inputs["Value"].links[0]
+    if len(node.inputs["Value"].links) == 1:
+        link = node.inputs["Value"].links[0]
         node_tree = link.id_data
         node_tree.links.remove(link)
-
-    blend_node.inputs["Show Center of Parent"].default_value = False
-    blend_node.inputs["Show Center of Child"].default_value = False
-    blend_node.inputs["Show Joint"].default_value = False
-    blend_node.inputs["Value"].default_value = 0.0
+    node.inputs["Value"].default_value = 0.0
 
 
 def get_functional_geonodes(link, visited):
@@ -205,3 +197,253 @@ def get_functional_geonodes(link, visited):
     recurse_forward(to_node, to_socket.name, link)
 
     return from_node, to_nodes
+
+
+def load_class_from_path(path: str, classname: str):
+    p = Path(path)
+    if p.is_dir():
+        p = p / "__init__.py"
+    spec = spec_from_file_location(p.stem, str(p))
+    mod = module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    cls = getattr(mod, classname)
+    if not inspect.isclass(cls):
+        raise TypeError(f"{classname} is not a class in {p}")
+    return cls
+
+
+def find_joints(obj):
+    """Helper function to find all joints in a spawned asset."""
+    all_joints = list()
+
+    def _find_joints(node, node_group, all_joints, level):
+        if (node, node_group) in [(j[0], j[1]) for j in all_joints]:
+            return
+
+        for input_socket in node.inputs:
+            if input_socket.name == "Joint Label":
+                # Try to grab its default value if available
+                default_val = getattr(input_socket, "default_value", "")
+                all_joints.append([node, node_group, level, default_val])
+                return
+
+        # Recurse into node groups
+        if node.type == "GROUP" and node.node_tree:
+            for child_node in node.node_tree.nodes:
+                _find_joints(child_node, node.node_tree, all_joints, level + 1)
+
+    for mod in obj.modifiers:
+        if mod and mod.node_group:
+            node_group = mod.node_group
+            for node in node_group.nodes:
+                _find_joints(node, node_group, all_joints, 0)
+
+    return all_joints
+
+
+def get_metadata_all_joints_input(obj):
+    """Helper function to check if each joint input has metadata for both parent and child bodies. This requires a metadata node RIGHT BEFORE each joint node in the node tree even if duplicate comes before."""
+    all_joints_info = list()
+
+    def _get_metadata_all_joints_input(node, node_group, all_joints):
+        if (node, node_group) in [(j[0], j[1]) for j in all_joints]:
+            return
+
+        for input_socket in node.inputs:
+            if input_socket.name == "Joint Label":
+                group_name = getattr(input_socket, "default_value", "")
+                all_joints.append(
+                    [
+                        node,
+                        node_group,
+                        group_name,
+                    ]
+                )
+                node_upstream = None
+                for item in ["Parent", "Child"]:
+                    try:
+                        link = node.inputs[item].links[0]
+                        node_upstream = link.from_node
+                    except Exception:
+                        node_upstream = None
+
+                    # Traverse upstream until non-Reroute node
+                    while node_upstream and node_upstream.type == "REROUTE":
+                        try:
+                            link = node_upstream.inputs[0].links[0]
+                            node_upstream = link.from_node
+                        except Exception:
+                            node_upstream = None
+                            break
+
+                    node_has_metadata = False
+                    if node_upstream and hasattr(node_upstream, "node_tree"):
+                        parent_tree_name = getattr(
+                            node_upstream.node_tree, "name", ""
+                        ).lower()
+                        node_has_metadata = (
+                            "add_jointed_geometry_metadata" in parent_tree_name
+                        )
+
+                    try:
+                        if (
+                            node.inputs["Parent"].links[0].from_socket.name == "Parent"
+                            and node.inputs["Child"].links[0].from_socket.name
+                            == "Child"
+                        ):
+                            node_has_metadata = True
+                    except Exception:
+                        pass
+
+                    all_joints[-1].append(node_has_metadata)
+
+                return
+
+        # Recurse into node groups
+        if node.type == "GROUP" and node.node_tree:
+            for child_node in node.node_tree.nodes:
+                _get_metadata_all_joints_input(child_node, node.node_tree, all_joints)
+
+    for mod in obj.modifiers:
+        if mod and mod.node_group:
+            node_group = mod.node_group
+            for node in node_group.nodes:
+                _get_metadata_all_joints_input(node, node_group, all_joints_info)
+
+    return all_joints_info
+
+
+def verify_joint_parent_child_output_used_correctly(obj):
+    """Helper function to verify that parent and child inputs do not point to duplicate nodes."""
+    all_joints_info = list()
+
+    def _verify_joint_parent_child_output_used_correctly(node, node_group, all_joints):
+        if (node, node_group) in [(j[0], j[1]) for j in all_joints]:
+            return
+
+        for input_socket in node.inputs:
+            if input_socket.name == "Joint Label":
+                group_name = getattr(input_socket, "default_value", "")
+                parent_to_non_duplicate, child_to_non_duplicate = False, False
+                parent_to_parent, child_to_parent = False, False
+
+                # check if parent output goes to a duplicate node
+                if len(node.outputs["Parent"].links) > 0:
+                    link = node.outputs["Parent"].links[0]
+                    to_node = link.to_node
+
+                    while to_node.type == "REROUTE":
+                        try:
+                            link = to_node.outputs[0].links[0]
+                            to_node = link.to_node
+                        except Exception:
+                            to_node = None
+                            break
+
+                    if not (
+                        hasattr(to_node, "node_tree")
+                        and "duplicate" in to_node.node_tree.name.lower()
+                    ):
+                        parent_to_non_duplicate = True
+                        parent_to_parent = (
+                            True if link.to_socket.name == "Parent" else False
+                        )
+
+                # check if child output goes to a duplicate node
+                if len(node.outputs["Child"].links) > 0:
+                    link = node.outputs["Child"].links[0]
+                    to_node = link.to_node
+
+                    while to_node.type == "REROUTE":
+                        try:
+                            link = to_node.outputs[0].links[0]
+                            to_node = link.to_node
+                        except Exception:
+                            to_node = None
+                            break
+
+                    if not (
+                        hasattr(to_node, "node_tree")
+                        and "duplicate" in to_node.node_tree.name.lower()
+                    ):
+                        child_to_non_duplicate = True
+                        child_to_parent = (
+                            True if link.to_socket.name == "Child" else False
+                        )
+
+                # Exception: Both Parent/Child go to Parent/Child inputs on a joint.
+                if parent_to_parent and child_to_parent:
+                    parent_to_non_duplicate = False
+                    child_to_non_duplicate = False
+
+                all_joints.append(
+                    [
+                        node,
+                        node_group,
+                        group_name,
+                        parent_to_non_duplicate,
+                        child_to_non_duplicate,
+                    ]
+                )
+                return
+
+        # Recurse into node groups
+        if node.type == "GROUP" and node.node_tree:
+            for child_node in node.node_tree.nodes:
+                _verify_joint_parent_child_output_used_correctly(
+                    child_node, node.node_tree, all_joints
+                )
+
+    for mod in obj.modifiers:
+        if mod and mod.node_group:
+            node_group = mod.node_group
+            for node in node_group.nodes:
+                _verify_joint_parent_child_output_used_correctly(
+                    node, node_group, all_joints_info
+                )
+
+    return all_joints_info
+
+
+def check_if_asset_scaled_after_joint(obj):
+    """Helper function to check if any scaling is applied to the asset after a joint node in the node tree."""
+    seen = list()
+
+    def _verify_no_scale_after_joint(node, node_group):
+        if (node, node_group) in [(j[0], j[1]) for j in seen]:
+            return
+
+        for output in node.outputs:
+            if output.type.startswith("GEOMETRY"):
+                for link in output.links:
+                    to_node = link.to_node
+                    if to_node.type == "TRANSFORM_GEOMETRY":
+                        scale_input = to_node.inputs.get("Scale")
+                        default_scale = scale_input.default_value
+                        if not all(abs(s - 1.0) < 1e-6 for s in default_scale):
+                            raise ValueError("Scaling applied after joint in node")
+
+                        if to_node.inputs["Scale"].links:
+                            raise ValueError(
+                                "Scaling applied after joint in node. Nothing should be linked to Scale input after joint."
+                            )
+
+                    if is_node_group(to_node) and not (
+                        is_duplicate(to_node) or is_join(to_node)
+                    ):
+                        for child_node in to_node.node_tree.nodes:
+                            _verify_no_scale_after_joint(child_node, to_node.node_tree)
+                    else:
+                        _verify_no_scale_after_joint(to_node, node_group)
+
+        seen.append((node, node_group))
+        return
+
+    for mod in obj.modifiers:
+        if mod and mod.node_group:
+            node_group = mod.node_group
+            for node in node_group.nodes:
+                if not is_joint(node):
+                    continue
+
+                _verify_no_scale_after_joint(node, node_group)

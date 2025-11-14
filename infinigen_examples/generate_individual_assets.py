@@ -76,7 +76,7 @@ assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
 def unified_asset_import(name):
     try:
-        return import_item(name), name.split(".")[-1]
+        return import_item(name), name.split(".")[2][:-1]
     except Exception:
         pass
 
@@ -85,7 +85,7 @@ def unified_asset_import(name):
         "scatter": "tests/assets/list_scatters.txt",
         "material": "tests/assets/list_materials.txt",
         "material_deprec": "tests/assets/list_materials_deprecated_interface.txt",
-        "object": "tests/assets/list_nature_meshes.txt",
+        "object": "tests/assets/list_indoor_meshes.txt",
     }
 
     # Create single list with (asset_path, asset_type) tuples
@@ -134,7 +134,7 @@ def _strip_modifiers(args, asset, parent):
     parent.location = -(x_min[0] + x_max[0]) / 2, -(x_min[1] + x_max[1]) / 2, 0
     butil.apply_transform(parent, loc=True)
     if not args.no_ground:
-        bpy.ops.mesh.primitive_grid_add(size=5, x_subdivisions=400, y_subdivisions=400)
+        bpy.ops.mesh.primitive_grid_add(size=50, x_subdivisions=400, y_subdivisions=400)
         plane = bpy.context.active_object
         plane.location[-1] = x_min[-1]
         plane.is_shadow_catcher = True
@@ -300,6 +300,24 @@ def build_and_save_asset(payload: dict):
         bpy.context.scene.render.film_transparent = args.film_transparent
         bg = bpy.context.scene.world.node_tree.nodes["Background"]
         bg.inputs[0].default_value[-1] = 0
+    if args.white_background:
+        # make the background environment a pure white environment
+        scene = bpy.context.scene
+        if scene.world is None:
+            scene.world = bpy.data.worlds.new("World")
+        world = scene.world
+        world.use_nodes = True
+
+        tree = world.node_tree
+        nodes, links = tree.nodes, tree.links
+        nodes.clear()
+
+        bg = nodes.new("ShaderNodeBackground")
+        bg.inputs["Color"].default_value = (1, 1, 1, 1)
+        bg.inputs["Strength"].default_value = 1
+
+        out = nodes.new("ShaderNodeOutputMaterial")
+        links.new(bg.outputs["Background"], out.inputs["Surface"])
 
     camera, center = setup_camera(args)
 
@@ -310,6 +328,8 @@ def build_and_save_asset(payload: dict):
     with FixedSeed(idx):
         match asset_type:
             case "object":
+                asset = build_scene_asset(args, cls, idx)
+            case "sim_object":
                 asset = build_scene_asset(args, cls, idx)
             case "scatter":
                 asset = build_scene_scatter(args, cls, idx)
@@ -692,6 +712,9 @@ def make_args():
         "-T", "--three_point", action="store_true", help="add three-point lighting"
     )
     parser.add_argument("-G", "--no_ground", action="store_true", help="no ground")
+    parser.add_argument(
+        "-B", "--white_background", action="store_true", help="white background"
+    )
     parser.add_argument(
         "-W", "--spawn_placeholder", action="store_true", help="spawn placeholder"
     )
