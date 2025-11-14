@@ -967,6 +967,7 @@ def export_sim_ready(
     visual_only: bool = False,
     collision_only: bool = False,
     separate_asset_dirs: bool = True,
+    zaxis: np.array = np.array([0, 0, 1]),
 ) -> Dict[str, List[Path]]:
     """
     Exports both the visual and collision assets for a geometry.
@@ -1079,6 +1080,10 @@ def export_sim_ready(
         mesh_tri = trimesh.load(
             str(part_export_obj_file), merge_norm=True, merge_tex=True, force="mesh"
         )
+        if isinstance(mesh_tri, trimesh.PointCloud):
+            continue
+        T = trimesh.geometry.align_vectors(zaxis, np.array([0, 0, 1]))
+        mesh_tri.apply_transform(T)
         trimesh.repair.fix_inversion(mesh_tri)
         preprocess_mode = "off"
         if not mesh_tri.is_volume:
@@ -1111,10 +1116,6 @@ def export_sim_ready(
             )
             subpart_mesh = trimesh.Trimesh(vs, fs)
 
-            # if subpart_mesh.is_empty:
-            #     raise ValueError(
-            #         "Warning: Collision mesh is completely outside the bounds of the original mesh."
-            #     )
             subpart_mesh.export(str(collision_export_file))
             asset_exports["collision"].append(collision_export_file)
             collision_count += 1

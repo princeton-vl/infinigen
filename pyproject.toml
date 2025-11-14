@@ -167,6 +167,7 @@ select = [
 ignore = [
     "E501", # over-length lines, formatter should handle it
     "E741", # ambigous variable name
+    "F841", # local variable is assigned to but never used
 ]
 
 [tool.ruff.lint.per-file-ignores]

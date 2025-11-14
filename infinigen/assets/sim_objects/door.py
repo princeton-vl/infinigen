@@ -1,7 +1,14 @@
-# Copyright (C) 2024, Princeton University.
-# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+# Copyright (C) 2025, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory
+# of this source tree.
 
-# Authors: Lingjie Mei
+# Authors:
+# - Yiming Zuo: primary author
+# - Abhishek Joshi: Updates for sim
+# - Max Gonzalez Saez-Diez: Updates for sim
+# - Lingjie Mei: developed original door
+
+
 import bpy
 import gin
 import numpy as np
@@ -29,6 +36,9 @@ def random_door_factory():
 
 
 class SimDoorFactory(AssetFactory):
+    # TODO (ajoshi): this is a temporary fix, should ideally be based on naming of links.
+    extra_exclude = {("link_1", "link_3")}
+
     def __init__(self, factory_seed, coarse=False, constants=None):
         super(SimDoorFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(self.factory_seed):
@@ -38,27 +48,55 @@ class SimDoorFactory(AssetFactory):
     @gin.configurable(module="SimDoorFactory")
     def sample_joint_parameters(
         cls,
-        door_hinge_stiffness_min: float = 0.0,
-        door_hinge_stiffness_max: float = 0.0,
-        door_hinge_damping_min: float = 0.0,
-        door_hinge_damping_max: float = 10.0,
-        door_handle_stiffness_min: float = 2.0,
-        door_handle_stiffness_max: float = 7.0,
-        door_handle_damping_min: float = 1.0,
-        door_handle_damping_max: float = 3.0,
+        door_hinge_left_stiffness_min: float = 3.0,
+        door_hinge_left_stiffness_max: float = 6.0,
+        door_hinge_left_damping_min: float = 15.0,
+        door_hinge_left_damping_max: float = 25.0,
+        door_hinge_right_stiffness_min: float = 3.0,
+        door_hinge_right_stiffness_max: float = 6.0,
+        door_hinge_right_damping_min: float = 15.0,
+        door_hinge_right_damping_max: float = 25.0,
+        door_handle_left_stiffness_min: float = 5.0,
+        door_handle_left_stiffness_max: float = 9.0,
+        door_handle_left_damping_min: float = 1.0,
+        door_handle_left_damping_max: float = 3.0,
+        door_handle_right_stiffness_min: float = 5.0,
+        door_handle_right_stiffness_max: float = 9.0,
+        door_handle_right_damping_min: float = 1.0,
+        door_handle_right_damping_max: float = 3.0,
     ):
         return {
-            "door_hinge": {
+            "door_hinge_left": {
                 "stiffness": uniform(
-                    door_hinge_stiffness_min, door_hinge_stiffness_max
+                    door_hinge_left_stiffness_min, door_hinge_left_stiffness_max
                 ),
-                "damping": uniform(door_hinge_damping_min, door_hinge_damping_max),
+                "damping": uniform(
+                    door_hinge_left_damping_min, door_hinge_left_damping_max
+                ),
             },
-            "door_handle": {
+            "door_hinge_right": {
                 "stiffness": uniform(
-                    door_handle_stiffness_min, door_handle_stiffness_max
+                    door_hinge_right_stiffness_min, door_hinge_right_stiffness_max
                 ),
-                "damping": uniform(door_handle_damping_min, door_handle_damping_max),
+                "damping": uniform(
+                    door_hinge_right_damping_min, door_hinge_right_damping_max
+                ),
+            },
+            "door_handle_left": {
+                "stiffness": uniform(
+                    door_handle_left_stiffness_min, door_handle_left_stiffness_max
+                ),
+                "damping": uniform(
+                    door_handle_left_damping_min, door_handle_left_damping_max
+                ),
+            },
+            "door_handle_right": {
+                "stiffness": uniform(
+                    door_handle_right_stiffness_min, door_handle_right_stiffness_max
+                ),
+                "damping": uniform(
+                    door_handle_right_damping_min, door_handle_right_damping_max
+                ),
             },
         }
 

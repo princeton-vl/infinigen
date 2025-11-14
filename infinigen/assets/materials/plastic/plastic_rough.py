@@ -133,8 +133,8 @@ def shader_rough_plastic(
 class PlasticRough:
     shader = shader_rough_plastic
 
-    def generate(self):
-        return surface.shaderfunc_to_material(shader_rough_plastic)
+    def generate(self, **kwargs):
+        return surface.shaderfunc_to_material(shader_rough_plastic, **kwargs)
 
     def apply(self, obj, selection=None, **kwargs):
         common.apply(obj, shader_rough_plastic, selection, **kwargs)

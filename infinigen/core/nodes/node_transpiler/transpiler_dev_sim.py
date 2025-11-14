@@ -33,20 +33,28 @@ def transpile_simready(args):
     dependencies = [
         # if your transpile target is using nodegroups taken from some python file,
         # add those filepaths here so the transpiler imports from them rather than creating a duplicate definition.
+        "infinigen.assets.utils.joints"
     ]
 
-    res = transpiler.transpile_object_to_sim_class(
+    res, class_name = transpiler.transpile_object_to_sim_class(
         obj=obj,
         module_dependencies=dependencies,
         output_name=output_name,
+        add_to_catalog=not args.ignore_from_catalog,
     )
 
     # write the transpiled information to python script
-    transpiled_path = Path(objects.__path__[0]) / f"{output_name}.py"
+    output_dir = Path(objects.__path__[0])
+    if args.output_dir is not None:
+        output_dir = args.output_dir
+
+    transpiled_path = Path(output_dir) / f"{output_name}.py"
     transpiled_path.parent.mkdir(parents=True, exist_ok=True)
     with open(transpiled_path, "w") as f:
         f.write(res)
     print(f"Generated transpiled code to {transpiled_path}")
+
+    return transpiled_path, class_name
 
 
 if __name__ == "__main__":

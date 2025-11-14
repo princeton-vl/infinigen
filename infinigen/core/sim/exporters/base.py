@@ -13,14 +13,11 @@ from pathlib import Path
 from typing import Dict, List, Set, Union
 
 import bpy
-import mathutils
 import numpy as np
 import trimesh
 
-import infinigen.core.sim.exporters.utils as exputils
-from infinigen.core import surface, tagging
+from infinigen.core import surface
 from infinigen.core.sim.kinematic_node import JointType, KinematicNode, KinematicType
-from infinigen.core.util import blender as butil
 from infinigen.tools.export import triangulate_mesh
 
 
@@ -232,37 +229,6 @@ class SimBuilder:
 
         for child_body in to_delete:
             del root.children[child_body]
-
-    def _get_geometry(
-        self, attribs: List[PathItem], center_at_origin: bool = False
-    ) -> bpy.types.Object:
-        """
-        Gets the geometry of a part of the whole asset based on the path.
-        If center_at_origin is true, centers the objects such thats is axis
-        aligned bounding box is at the origin.
-        """
-        vertex_mask = np.ones(len(self.blend_obj.data.vertices), dtype=bool)
-        for item in attribs:
-            attr = item.node.idn
-            # handles switch cases where certain joints may not be a
-            # part of the final geometry
-            if attr not in self.blend_obj.data.attributes:
-                continue
-            data = surface.read_attr_data(self.blend_obj, attr)
-            vertex_mask = vertex_mask & (data == item.value)
-
-        # extract the mesh based on the vertex mask
-        obj_clone = butil.deep_clone_obj(
-            self.blend_obj, keep_modifiers=True, keep_materials=True
-        )
-        mesh_obj = tagging.extract_vertex_mask(obj_clone, vertex_mask)
-
-        if center_at_origin:
-            translation = mathutils.Vector(-exputils.get_aabb_center(mesh_obj))
-            for v in mesh_obj.data.vertices:
-                v.co += translation
-        butil.delete(obj_clone)
-        return mesh_obj
 
     def _get_labels(self, geometry: bpy.types.Object) -> Set[str]:
         """Gets the labels associated with a geometry."""

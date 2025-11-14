@@ -246,3 +246,6 @@ v1.18.0
 - Fix camera placement taking n^2 time wrt to num_cams instead of n. 
 - Add additional kernelizer util types.
 - Add additional floating object code.
+
+v1.19.0
+- Add new articulated object generators and sim features for Infinigen-Articulated

@@ -36,11 +36,14 @@ from infinigen.core.util.random import log_uniform, weighted_sample
 
 from .bar_handle import nodegroup_push_bar_handle
 from .joint_utils import (
-    nodegroup_add_jointed_geometry_metadata,
     nodegroup_arc_on_door_warper,
     nodegroup_door_frame_warper,
-    nodegroup_hinge_joint,
     nodegroup_symmetry_along_y,
+)
+from infinigen.assets.utils.joints import (
+    nodegroup_add_jointed_geometry_metadata,
+    nodegroup_hinge_joint,
+    nodegroup_sliding_joint,
 )
 
 
@@ -70,14 +73,6 @@ def geometry_node_join(
 
     door_frame = nw.new_node(Nodes.ObjectInfo, input_kwargs={"Object": door_frame})
 
-    door_frame = nw.new_node(
-        nodegroup_add_jointed_geometry_metadata().name,
-        input_kwargs={
-            "Geometry": door_frame.outputs["Geometry"],
-            "Label": "door_frame",
-        },
-    )
-
     if single_door_flip_lr and door_frame_style == "single_column":
         door_frame = nw.new_node(
             Nodes.Transform,
@@ -87,6 +82,14 @@ def geometry_node_join(
             },
         )
 
+    door_frame = nw.new_node(
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": door_frame.outputs["Geometry"],
+            "Label": "door_frame",
+        },
+    )
+
     handle_height_value = nw.new_node(Nodes.Value)
     handle_height_value.outputs[0].default_value = handle_height
 
@@ -94,7 +97,7 @@ def geometry_node_join(
     handle_type = handle_info_dict["handle_type"]
     if handle_type == "bar":
         handle_material = handle_info_dict["shader"].generate()
-        handle_object_info = nw.new_node(
+        handle_elements = nw.new_node(
             nodegroup_push_bar_handle().name,
             input_kwargs={
                 "total_length": handle_info_dict["bar_length"],
@@ -110,18 +113,35 @@ def geometry_node_join(
             },
         )
 
-        handle_object_info = nw.new_node(
-            Nodes.SetMaterial,
-            input_kwargs={"Geometry": handle_object_info, "Material": handle_material},
-        )
+        push_bar_parent = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={"Geometry": handle_elements.outputs["Parent"], "Label": "push_bar_base"},
+                )
+        
+        push_bar_child = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={"Geometry": handle_elements.outputs["Child"], "Label": "push_bar_paddle"},
+                )
+    
+        sliding_joint = nw.new_node(nodegroup_sliding_joint().name,
+            input_kwargs={'Joint Label': 'door_push_bar_handle', 
+                          'Parent': push_bar_parent, 
+                          'Child': push_bar_child, 
+                          'Axis': (0.0000, -1.0000, 0.0000), 
+                          'Max': handle_elements.outputs["Joint Max"]})
+    
+        transform_geometry_3 = nw.new_node(Nodes.Transform,
+            input_kwargs={'Geometry': sliding_joint.outputs["Geometry"], 
+                          'Translation': handle_elements.outputs["Translation1"], 
+                          'Rotation': (0.0000, 1.5708, 0.0000)})
+        
+        transform_geometry_4 = nw.new_node(Nodes.Transform,
+            input_kwargs={'Geometry': transform_geometry_3, 
+                          'Translation': handle_elements.outputs["Translation2"]})
 
         handle_object_info = nw.new_node(
-            nodegroup_add_jointed_geometry_metadata().name,
-            input_kwargs={
-                "Geometry": handle_object_info.outputs["Geometry"],
-                "Label": "handle",
-                "Value": 1,
-            },
+            Nodes.SetMaterial,
+            input_kwargs={"Geometry": transform_geometry_4, "Material": handle_material},
         )
 
     elif handle_type == "none":
@@ -267,7 +287,7 @@ def geometry_node_join(
 
                 door_body = nw.new_node(
                     nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={"Geometry": door_body, "Label": "door", "Value": 2},
+                    input_kwargs={"Geometry": door_body, "Label": "door"},
                 )
 
             else:
@@ -277,18 +297,50 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_body.outputs["Geometry"],
-                        "Label": "door",
-                        "Value": 1,
+                        "Label": "door"
                     },
                 )
+
+            if flip_lr:
+                handle_position = [door_width * np.random.uniform(0.42, 0.45), 0.0, 0.0]
+                handle_transformed = nw.new_node(
+                    Nodes.Transform,
+                    input_kwargs={
+                        "Geometry": handle_object_info.outputs["Geometry"],
+                        "Scale": (-1.0000, 1.0000, 1.0000),
+                    },
+                )
+                handle_transformed = nw.new_node(
+                    Nodes.FlipFaces, input_kwargs={"Mesh": handle_transformed}
+                )
+                handle_transformed = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={
+                        "Geometry": handle_transformed,
+                        "Label": "handle",
+                    },
+                )
+                handle_label = "door_handle_right"
+            else:
+                handle_position = [-door_width * np.random.uniform(0.42, 0.45), 0.0, 0.0]
+                handle_transformed = handle_object_info
+                handle_transformed = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={
+                        "Geometry": handle_transformed,
+                        "Label": "handle",
+                    },
+                )
+                handle_label = "door_handle_left"
+                
 
             door = nw.new_node(
                 nodegroup_hinge_joint().name,
                 input_kwargs={
-                    "Joint Label": "door_handle",
+                    "Joint Label": handle_label,
                     "Parent": door_body,
                     "Child": handle_transformed,
-                    "Position": door_handle_pos,
+                    "Position": handle_position,
                     "Axis": handle_rotate_axis,
                     "Value": 0.0,
                     "Min": 0.0,
@@ -317,8 +369,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc,
-                            "Label": "door",
-                            "Value": 2,
+                            "Label": "door"
                         },
                     )
 
@@ -329,8 +380,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc.outputs["Geometry"],
-                            "Label": "door",
-                            "Value": 1,
+                            "Label": "door"
                         },
                     )
 
@@ -357,8 +407,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door",
-                        "Value": 2,
+                        "Label": "door"
                     },
                 )
             else:
@@ -366,8 +415,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door",
-                        "Value": 1,
+                        "Label": "door"
                     },
                 )
 
@@ -387,8 +435,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door",
-                            "Value": 2,
+                            "Label": "door"
                         },
                     )
                 else:
@@ -396,8 +443,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door",
-                            "Value": 1,
+                            "Label": "door"
                         },
                     )
 
@@ -438,8 +484,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door",
-                        "Value": 2,
+                        "Label": "door"
                     },
                 )
             else:
@@ -447,8 +492,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door",
-                        "Value": 1,
+                        "Label": "door"
                     },
                 )
 
@@ -461,8 +505,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door",
-                            "Value": 2,
+                            "Label": "door"
                         },
                     )
                 else:
@@ -470,8 +513,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door",
-                            "Value": 1,
+                            "Label": "door"
                         },
                     )
 
@@ -507,7 +549,9 @@ def geometry_node_join(
             Nodes.Transform,
             input_kwargs={
                 "Geometry": door,
-                "Translation": (-center_x_offset, 0.0, center_z_offset),
+                # "Translation": (-center_x_offset, 0.0, center_z_offset),
+                # "Translation": (0.0, door_depth / 2.0, center_z_offset),
+                "Translation": (0.0, door_depth / 2.0, center_z_offset),
             },
         )
     else:
@@ -515,7 +559,9 @@ def geometry_node_join(
             Nodes.Transform,
             input_kwargs={
                 "Geometry": door,
-                "Translation": (center_x_offset, 0.0, center_z_offset),
+                # "Translation": (center_x_offset, 0.0, center_z_offset),
+                # "Translation": (0.0, door_depth / 2.0, center_z_offset),
+                "Translation": (0.0, door_depth / 2.0, center_z_offset),
             },
         )
 
@@ -559,9 +605,21 @@ def geometry_node_join(
 
     vector = nw.new_node(Nodes.Vector)
     if single_door_flip_lr:
-        vector.vector = (-door_width / 2.0, -door_depth / 2.0, 0.0000)
+        if is_double_door:
+            vector.vector = (-door_width, -door_depth / 2.0, 0.0000)
+        elif door_frame_style == "single_column":
+            vector.vector = (0.0000, -door_depth / 2.0, 0.0000)
+        else:
+            # vector.vector = (-door_width / 2.0, -door_depth / 2.0, 0.0000)
+            vector.vector = (-door_width / 2.0, -door_depth / 2.0, 0.0000)
     else:
-        vector.vector = (door_width / 2.0, -door_depth / 2.0, 0.0000)
+        if is_double_door:
+            vector.vector = (door_width, -door_depth / 2.0, 0.0000)
+        elif door_frame_style == "single_column":
+            vector.vector = (0.0000, -door_depth / 2.0, 0.0000)
+        else:
+            # vector.vector = (door_width / 2.0, -door_depth / 2.0, 0.0000)
+            vector.vector = (door_width / 2.0, -door_depth / 2.0, 0.0000)
 
     separate_xyz = nw.new_node(
         Nodes.SeparateXYZ, input_kwargs={"Vector": subtract.outputs["Vector"]}
@@ -580,13 +638,22 @@ def geometry_node_join(
     else:
         axis = (0.0000, 0.0000, 1.0000)
 
+    final_door = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={
+                        "Geometry": final_door,
+                        "Label": "door_left",
+                    },
+                )
+
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
         input_kwargs={
-            "Joint Label": "door_hinge",
+            "Joint Label": "door_hinge_left",
             "Parent": door_frame.outputs["Geometry"],
             "Child": final_door,
-            "Position": add_2,
+            # "Position": add_2,
+            "Position": vector,
             "Value": 0.0,
             "Axis": axis,
             "Min": 0.0,
@@ -611,26 +678,45 @@ def geometry_node_join(
             Nodes.Transform,
             input_kwargs={
                 "Geometry": door_other,
-                "Translation": (-center_x_offset, 0.0, center_z_offset),
+                # "Translation": (-center_x_offset, 0.0, center_z_offset),
+                "Translation": (0.0, door_depth / 2.0, center_z_offset),
             },
         )
 
         vector_other = nw.new_node(Nodes.Vector)
-        vector_other.vector = (-door_width / 2.0, -door_depth / 2.0, 0.0000)
+        # vector_other.vector = (-door_width / 2.0, -door_depth / 2.0, 0.0000)
+        vector_other.vector = (-door_width, -door_depth / 2.0, 0.0000)
 
         add_other = nw.new_node(
             Nodes.VectorMath,
             input_kwargs={0: combine_xyz.outputs["Vector"], 1: vector_other},
         )
 
+        door_other = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={
+                        "Geometry": door_other,
+                        "Label": "door_right",
+                    },
+                )
+        
+        hinge_joint = nw.new_node(
+                    nodegroup_add_jointed_geometry_metadata().name,
+                    input_kwargs={
+                        "Geometry": hinge_joint,
+                        "Label": "frame_with_door_left",
+                    },
+                )
+
         # another hinge joint
         hinge_joint = nw.new_node(
             nodegroup_hinge_joint().name,
             input_kwargs={
-                "Joint Label": "door_hinge",
+                "Joint Label": "door_hinge_right",
                 "Parent": hinge_joint,
                 "Child": door_other,
-                "Position": add_other,
+                # "Position": add_other,
+                "Position": vector_other,
                 "Value": 0.0,
                 "Axis": (0.0000, 0.0000, -1.0000),  # flipped
                 "Min": 0.0,
@@ -638,8 +724,29 @@ def geometry_node_join(
             },
         )
 
+    # move the bottom to z=0
+    vertex_neighbors = nw.new_node(Nodes.VertexNeighbors)
+    
+    less_than = nw.new_node(Nodes.Compare,
+        input_kwargs={2: vertex_neighbors.outputs["Vertex Count"], 3: 1},
+        attrs={'data_type': 'INT', 'operation': 'LESS_THAN'})
+    
+    delete_geometry = nw.new_node(Nodes.DeleteGeometry,
+        input_kwargs={'Geometry': hinge_joint.outputs["Geometry"], 'Selection': less_than})
+    
+    bounding_box_4 = nw.new_node(Nodes.BoundingBox, input_kwargs={'Geometry': delete_geometry.outputs["Geometry"]})
+    
+    separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': bounding_box_4.outputs["Min"]})
+    
+    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_3.outputs["Z"], 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
+    
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_4})
+    
+    transform_geometry_2 = nw.new_node(Nodes.Transform,
+        input_kwargs={'Geometry': hinge_joint.outputs["Geometry"], 'Translation': combine_xyz_2, 'Rotation': (0.0000, 0.0000, 1.5708)})
+
     group_output = nw.new_node(
-        Nodes.GroupOutput, input_kwargs={"Geometry": hinge_joint}
+        Nodes.GroupOutput, input_kwargs={"Geometry": transform_geometry_2}
     )
 
 
@@ -775,7 +882,7 @@ class BaseDoorFactory(AssetFactory):
     def _create_asset(self, apply=True, **params):
         # create handle
 
-        if self.handle_type == "bar" or self.handle_type == "none":
+        if self.handle_type == "none" or self.handle_type == "bar":
             handle = None
 
         else:
@@ -793,8 +900,8 @@ class BaseDoorFactory(AssetFactory):
             handle = join_objects(handles)
             self.handle_surface.apply(handle)
 
-            handle.location = -self.width, -self.depth / 2, -self.height / 2
-            butil.apply_transform(handle, True)
+            # handle.location = -self.width, -self.depth / 2, -self.height / 2
+            # butil.apply_transform(handle, True)
             handle = add_bevel(handle, get_bevel_edges(handle), offset=self.side_bevel)
 
         door = new_cube(location=(1, 1, 1))
@@ -826,7 +933,7 @@ class BaseDoorFactory(AssetFactory):
 
         elif self.door_frame_style == "full_frame_dome":
             center_x_offset = 0.5 * self.width
-            center_z_offset = -0.25 * self.width
+            center_z_offset = -0.25 * self.width - self.door_frame_width / 4
             door_frame_width = self.width
             full_frame = True
             top_dome = True
@@ -1005,7 +1112,8 @@ class BaseDoorFactory(AssetFactory):
     def make_handles(self, obj):
         # making handle two-sided is moved to nodegroup_join
         write_attribute(obj, 1, "handle", "FACE")
-        obj.location = self.handle_offset, self.depth, self.handle_height
+        # obj.location = self.handle_offset, self.depth, self.handle_height
+        obj.location = 0.0, self.depth / 2.0, 0.0
         butil.apply_transform(obj, loc=True)
 
         return [
@@ -1113,6 +1221,10 @@ class BaseDoorFactory(AssetFactory):
                 bpy.ops.mesh.select_all(action="SELECT")
                 bpy.ops.mesh.normals_make_consistent(inside=False)
             butil.modify_mesh(obj, "SOLIDIFY", thickness=self.pull_radius * 2, offset=0)
+
+        obj.location = self.handle_offset - self.width, 0.0, 0.0
+        butil.apply_transform(obj, loc=True)
+
         return self.make_handles(obj)
 
     @property
