@@ -29,7 +29,7 @@ First, follow our [Installation Instructions](docs/Installation.md).
   <img src="docs/images/hello_room/dining_obj.png" width="300" />
 </p>
 
-See instructions & example commands for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
+See instructions for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
 
 ### Hello World: Getting Started with Infinigen Nature
 
@@ -40,7 +40,15 @@ See instructions & example commands for Infinigen-Indoors in [HelloRoom.md](docs
   <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="300" />
 </p>
 
-See instructions & example commands for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
+See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
+
+### Generate Articulated Sim Assets: Getting Started with Infinigen Articulated
+
+<p align="center">
+  <img src="docs/images/infinigen_articulated.gif" width="300" />
+</p>
+
+See instructions for Infinigen-Articulated in [Exporting to Simulators](docs/simulation/ExportingToSimulators.md)
 
 ## Papers
 
@@ -106,7 +114,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 }
 ```
 
-<h3 align="center"><a href="https://arxiv.org/abs/2505.10755">Infinigen-Sim: Procedural Generation of Articulated Simulation Assets</a></h3>
+<h3 align="center"><a href="https://arxiv.org/abs/2505.10755">Infinigen-Articulated: Procedural Generation of Articulated Simulation Assets</a></h3>
 <p align="center">
 <a href="https://abhihjoshi.github.io/">Abhishek Joshi</a>, 
 <a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
@@ -122,9 +130,9 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
 
 ```
-@misc{joshi2025infinigensimproceduralgenerationarticulated,
-      title={Infinigen-Sim: Procedural Generation of Articulated Simulation Assets}, 
-      author={Abhishek Joshi and Beining Han and Jack Nugent and Yiming Zuo and Jonathan Liu and Hongyu Wen and Stamatis Alexandropoulos and Tao Sun and Alexander Raistrick and Gaowen Liu and Yi Shao and Jia Deng},
+@misc{joshi2025articulated,
+      title={Procedural Generation of Articulated Simulation-Ready Assets}, 
+      author={Abhishek Joshi and Beining Han and Jack Nugent and Max Gonzalez Saez-Diez and Yiming Zuo and Jonathan Liu and Hongyu Wen and Stamatis Alexandropoulos and Karhan Kayan and Anna Calveri and Tao Sun and Gaowen Liu and Yi Shao and Alexander Raistrick and Jia Deng},
       year={2025},
       eprint={2505.10755},
       archivePrefix={arXiv},

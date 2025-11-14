@@ -40,7 +40,6 @@ dev.py
 
 cache
 Blender-FLIP-Fluids
-*.mp4
 
 *.npz
 *.out
@@ -83,7 +82,6 @@ tests/sim/test_objects
 sim_exports/
 
 articulated_asset_preview.html
-*.gif
 
 sim_testing/
 
