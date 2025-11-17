@@ -45,7 +45,7 @@ See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
 ### Generate Articulated Sim Assets: Getting Started with Infinigen Articulated
 
 <p align="center">
-  <img src="docs/images/infinigen_articulated.gif" width="300" />
+  <img src="docs/images/infinigen_articulated.gif" width="500" />
 </p>
 
 See instructions for Infinigen-Articulated in [Exporting to Simulators](docs/simulation/ExportingToSimulators.md)
@@ -86,21 +86,23 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 }
 ```
 
-<h3 align="center"><a href="https://arxiv.org/abs/2406.11824">Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation</a></h3>
+<h3 align="center">
+  <a href="https://arxiv.org/abs/2406.11824">Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation</a>
+</h3>
 <p align="center">
-<a href="http://araistrick.com/">Alexander Raistrick</a>*, 
-<a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>*, 
-<a href="https://kkayan.com/">Karhan Kayan</a>*, (*equal contribution, random order) <br>
-<a href="https://david-yan1.github.io/">David Yan</a>, 
-<a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
-<a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
-<a href="https://hermera.github.io/">Hongyu Wen</a>, 
-<a href="https://scholar.google.com/citations?user=q38OfTQAAAAJ&hl=en">Meenal Parakh</a>, <br>
-<a href="https://stamatisalex.github.io/">Stamatis Alexandropoulos</a>, 
-<a href="https://www.lahavlipson.com/">Lahav Lipson</a>, 
-<a href="https://mazeyu.github.io/">Zeyu Ma</a>,
-<a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
-Conference on Computer Vision and Pattern Recognition (CVPR) 2024
+  <a href="http://araistrick.com/">Alexander Raistrick</a>*, 
+  <a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>*, 
+  <a href="https://kkayan.com/">Karhan Kayan</a>*, (*equal contribution, random order) <br>
+  <a href="https://david-yan1.github.io/">David Yan</a>, 
+  <a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
+  <a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
+  <a href="https://hermera.github.io/">Hongyu Wen</a>, 
+  <a href="https://scholar.google.com/citations?user=q38OfTQAAAAJ&hl=en">Meenal Parakh</a>, <br>
+  <a href="https://stamatisalex.github.io/">Stamatis Alexandropoulos</a>, 
+  <a href="https://www.lahavlipson.com/">Lahav Lipson</a>, 
+  <a href="https://mazeyu.github.io/">Zeyu Ma</a>,
+  <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+  Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 </p>
 
 ```
@@ -114,20 +116,29 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2024
 }
 ```
 
-<h3 align="center"><a href="https://arxiv.org/abs/2505.10755">Infinigen-Articulated: Procedural Generation of Articulated Simulation Assets</a></h3>
+<h3 align="center">
+  <a href="https://arxiv.org/abs/2505.10755">Infinigen-Articulated: Procedural Generation of Articulated Simulation Assets</a>
+</h3>
 <p align="center">
-<a href="https://abhihjoshi.github.io/">Abhishek Joshi</a>, 
-<a href="https://pvl.cs.princeton.edu/people.html">Beining Han</a>, 
-<a href="https://pvl.cs.princeton.edu/people.html">Jack Nugent</a>, 
-<a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
-<a href="">Jonathan Liu</a>, 
-<a href="https://hermera.github.io/">Hongyu Wen</a>, <br>
-<a href="https://stamatisalex.github.io/">Stamatis Alexandropoulos</a>, 
-<a href="">Tao Sun</a>, 
-<a href="http://araistrick.com/">Alexander Raistrick</a>,  
-<a href="">Gaowen Liu</a>,  
-<a href="https://www.mcgill.ca/civil/yi-shao">Yi Shao</a>,  
-<a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+  <a href="https://abhihjoshi.github.io/"> Abhishek Joshi</a>,
+  <a href="https://beininghan.github.io/">Beining Han</a>,
+  <a href="https://pvl.cs.princeton.edu/people.html">Jack Nugent</a>,
+  <a href="https://pvl.cs.princeton.edu/people.html">Max Gonzalez Saez-Diez</a>,
+  <br>
+  <a href="https://zuoym15.github.io">Yiming Zuo</a>,
+  <a href="https://pvl.cs.princeton.edu/people.html">Jonathan Liu</a>,
+  <a href="https://hermera.github.io">Hongyu Wen</a>,
+  <a href=https://stamatisalex.github.io/>Stamatis Alexandropoulos</a>,
+  <a href="https://kkayan.com/">Karhan Kayan</a>,
+  <a href="https://pvl.cs.princeton.edu/people.html">Anna Calveri</a>,
+  <br>
+  <a href="https://pvl.cs.princeton.edu/people.html">Tao Sun</a>,
+  <a href="https://pvl.cs.princeton.edu/people.html">Gaowen Liu</a>,
+  <a href="https://www.mcgill.ca/civil/yi-shao">Yi Shao</a>,
+  <a href="http://araistrick.com">Alexander Raistrick</a>,
+  <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a>
+  <br>
+</p>
 
 ```
 @misc{joshi2025articulated,
