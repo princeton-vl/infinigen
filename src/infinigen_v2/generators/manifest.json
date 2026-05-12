@@ -1,0 +1,439 @@
+[
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_cycles.render_cycles"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_cycles.render_cycles_ground_truth"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_eevee.render_eevee"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_eevee.render_eevee_ground_truth"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_workbench.render_workbench"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.visualize_gt.visualize_gt"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen_v2.exporters.imu.save_imu"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.bricks.bricks_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.bricks.bricks_pristine_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.bricks.bricks_paint_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.bricks.bricks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.bricks.bricks_masonry_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.fabric_patterned.fabric_patterned_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.brick_concrete.brick_concrete_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.cracks.cracks_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.edgewear.edgewear_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.scratches.scratches_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.cracks.cracks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.splats.splats_mask_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.splats.splats_mask_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.masks.splats.metal_splats_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.glass_no_refraction.glass_no_refraction_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.splats_overlay.glass_no_refraction_splats_distribution"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen_v2.generators.shaders.composites.splats_overlay.splats_overlay_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.glass_colored.glass_colored_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.splats_overlay.metal_splats_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.concrete.concrete_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.granite.granite_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.granite.granite_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.granite.granite_smooth_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.marble.marble_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.marble.marble_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.stone_smooth.stone_smooth_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.stone_smooth.stone_smooth_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.paint.paint_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.paint.paint_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.gravel_concrete.gravel_concrete_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen_v2.generators.shaders.composites.paint_overlay.paint_overlay_distribution"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen_v2.generators.shaders.composites.paint_overlay.paint_weartear_overlay_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.fabric.fabric_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.fabric.fabric_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.carpet.carpet_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.carpet.carpet_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.metal_brushed.metal_brushed_linear_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.metal_brushed.metal_brushed_radial_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.metal_hammered.metal_hammered_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.terrazzo.terrazzo_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.terrazzo.terrazzo_monocolor_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.terrazzo.terrazzo_multicolor_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.tiles.tile_distribution"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.tiles.tile_indoor_wall_distribution"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.tiles.tile_indoor_ground_distribution"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.tiles.tile_outdoor_wall_distribution"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.tiles.tile_outdoor_ground_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.wood_grain.wood_grain_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.wood_grain.wood_grain_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.wood_planks.wood_planks_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.wood_planks.wood_planks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.ceramic.ceramic_distribution"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_sphere"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_torus_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_banana"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_monkey"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_cube"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_plane_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_plane_orthographic"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_plane_horizontal_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.object_demo"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.room.room.livingroom_nofurniture_distribution"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.room.room.livingroom_distribution"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.room.room.livingroom_with_smallobj_distribution"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.room.room_shape.room_shape_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.random_primitives.primitives_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.sofa.sofa_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.window.window_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.window.curtain_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.ceiling_light.ceiling_light_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.dining_table_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.coffee_table_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.side_table_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.cocktail_table_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.base_straight_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.base_single_stand_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.table.base_square_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.flower.flower_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.lamp.lamp_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.lamp.desk_lamp_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.vase.vase_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.desk.desk_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.drawers.drawers_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.bookcase.bookcase_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.triangle_shelf.triangle_shelf_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.wall_art.wall_art_distribution"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen_v2.generators.objects.wall_art.mirror_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.stereo_cameras_in_bbox_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.monocular_camera_in_bbox_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.monocular_360_camera_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.rrt_camera"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.rrt_camera_fast"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.random_walk_camera"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.stereo_random_walk_camera"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.plastic.plastic_opaque_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.plastic.plastic_translucent_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.plastic.plastic_grayscale_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.materials.gravel_concrete.gravel_concrete_distribution"
+  }
+]
