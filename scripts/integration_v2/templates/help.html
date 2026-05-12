@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Help - Material Comparison UI</title>
+    <style>
+        body { font-family: monospace; margin: 20px; max-width: 800px; font-size: 12px; }
+        h1 { font-size: 16px; margin-bottom: 16px; }
+        h2 { font-size: 14px; margin: 16px 0 8px; border-bottom: 1px solid #333; }
+        p, li { margin: 4px 0; line-height: 1.4; }
+        code { background: #f0f0f0; padding: 2px 4px; border: 1px solid #ddd; }
+        .back-link { margin-bottom: 16px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="back-link"><a href="/">&larr; Back to comparison</a></div>
+
+    <h1>Material Comparison UI</h1>
+
+    <h2>Run</h2>
+    <p>Compare specific outputs: <code>python scripts/integration_v2/compare.py outputs/v1 outputs/v2</code></p>
+    <p>Pick from a directory (landing page): <code>python scripts/integration_v2/compare.py --scan-dir outputs</code></p>
+
+    <h2>Views & Shortcuts</h2>
+    <ul>
+        <li><strong>Side-by-side:</strong> Columns per version.</li>
+        <li><strong>Toggle:</strong> One stack; press <strong>t</strong> to cycle versions.</li>
+        <li>Press <strong>s</strong> to jump back to side-by-side.</li>
+    </ul>
+
+    <h2>Controls</h2>
+    <ul>
+        <li>Size slider (100–600px) and mode toggle in the top bar.</li>
+        <li><strong>⚙ Filters</strong>: category (distribution/displacement), pass (rgb/surface-normal), renderer (cycles/eevee), align placeholders on/off.</li>
+        <li><strong>Materials</strong>: select/deselect, include per-version, union vs intersection.</li>
+        <li>Selections persist when switching views.</li>
+    </ul>
+
+    <h2>Layout</h2>
+    <p>Images are grouped into Random seeds (seed 0–3) and Displacement tests (BUMP/DISPLACEMENT/DISPLACEMENT_AND_BUMP). Missing renders show a dark “Missing” placeholder when alignment is on.</p>
+
+    <div class="back-link" style="margin-top: 24px;"><a href="/">&larr; Back to comparison</a></div>
+</body>
+</html>

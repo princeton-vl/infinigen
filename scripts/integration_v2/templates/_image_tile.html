@@ -1,0 +1,33 @@
+{% macro image_tile(img) -%}
+<div class="image-wrapper"
+     data-category="{{ img.category }}"
+     data-pass-type="{{ img.pass_type }}"
+     data-renderer="{{ img.renderer }}"
+     data-path="{{ img.path }}"
+     data-filtered="false">
+    <div class="image-label">{{ img.label }}</div>
+    {% if img.path %}
+    <img src="/images/{{ img.path }}" loading="lazy" alt="{{ img.label }}">
+    {% else %}
+    <div class="missing-placeholder">
+        {% if img.command_text or img.stderr_text %}
+        Error (no image)
+        {% else %}
+        Not generated in this run
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if img.command_text %}
+    <details class="error-details">
+        <summary>Show command</summary>
+        <pre>{{ img.command_text }}</pre>
+    </details>
+    {% endif %}
+    {% if img.stderr_text %}
+    <details class="error-details">
+        <summary>Show stderr</summary>
+        <pre>{{ img.stderr_text }}</pre>
+    </details>
+    {% endif %}
+</div>
+{%- endmacro %}
