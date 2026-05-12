@@ -29,9 +29,9 @@ I would recommend using .glb or .gltf files since they are the most extensively 
     - [Table](https://sketchfab.com/3d-models/de-table-63e4d8faac73435fa7e9e929baa2c175) (Attributed to DeCloud and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). We use this asset with modification, i.e. rendered image). 
 
 <p align="center">
-  <img src="images/static_assets/shelf.jpg" width="236" />
-  <img src="images/static_assets/couch.jpg" width="300" />
-  <img src="images/static_assets/table.jpg" width="300" />
+  <img src="./_static/images/static_assets/shelf.jpg" width="236" />
+  <img src="./_static/images/static_assets/couch.jpg" width="300" />
+  <img src="./_static/images/static_assets/table.jpg" width="300" />
 </p>
 
 2. Create a folder for each category you want to import in `infinigen/assets/static_assets/source`. That is, create the folders `infinigen/assets/static_assets/Shelf`, `infinigen/assets/static_assets/Sofa`, and `infinigen/assets/static_assets/Table`.
@@ -54,11 +54,11 @@ NOTE: Objaverse supports downloads using python [API](https://colab.research.goo
 
 Now, we just need to define `Static{CategoryName}Factory = static_category_factory(infinigen/assets/static_assets/source/{CategoryName})`. Add the following lines to `infinigen/assets/static_assets/static_category.py` (This step is already done for this tutorial):
 
-![alt text](images/static_assets/image.jpg)
+![alt text](./_static/images/static_assets/image.jpg)
 
 Add `Static{CategoryName}Factory` to `infinigen/assets/static_assets/__init__.py` so that we can import it later. Again, this step is already done for our example: 
 
-![alt text](images/static_assets/image2.jpg)
+![alt text](./_static/images/static_assets/image2.jpg)
 
 IMPORTANT: You must make sure that
 1. The objects are a reasonable size. This is because there is no way for Infinigen to infer what the sizes of the objects should be, so it will use the sizes of external objects by default. If the objects are too big or too small, they will look out of place in the scene or Infinigen will fail to place them. To prevent this, you should specify what you want the dimensions to be in meters as we did with `z_dim = 2` above. You should specify only one dimension, and Infinigen will scale the object to satisfy that. 
@@ -70,8 +70,8 @@ IMPORTANT: You must make sure that
 Here's an example of bad dimensions and orientation (left image); and good dimensions and orientation (right image):
 
 <p align="center">
-  <img src="images/static_assets/couch_x.jpg" width="540" />
-  <img src="images/static_assets/couch_edit.jpg" width="480" />
+  <img src="./_static/images/static_assets/couch_x.jpg" width="540" />
+  <img src="./_static/images/static_assets/couch_edit.jpg" width="480" />
 </p>
 
 
@@ -80,18 +80,18 @@ If you want to add more categories, just add more lines with `{CategoryName}` as
 ## Define Semantics
 
 Infinigen allows the user to specify high-level semantics for the objects in the scene. These semantics are then used to define high-level constraints. For example, we want to say that our static shelf factory is a type of storage unit, which will be placed against the wall, and there will be a bunch of objects on top of it. In general, if you want your static object factory to be treated like an existing asset factory, you can just imitate the semantics of the existing asset factory. Let's demonstrate this idea by defining semantics for our static shelf. We go to `infinigen_examples/constraints/semantics.py` and search for `LargeShelfFactory`. We see that it is used as `Semantics.Storage` and `Semantics.AssetPlaceholderForChildren`. We want our static shelf to be used as a storage unit as well, so we add a line for our new static factory:
-![alt text](images/static_assets/image3.jpg)
+![alt text](./_static/images/static_assets/image3.jpg)
 
 Similarly, we add `StaticShelfFactory` to `Semantics.AssetPlaceholderForChildren`. This will replace the placeholder bounding box for the shelf before placing the small objects. 
-![alt text](images/static_assets/image7.jpg)
+![alt text](./_static/images/static_assets/image7.jpg)
 
 The semantics for the sofa and the table are analogous. We just define the same semantics as the existing asset factories that are similar to our static ones: 
 
-![alt text](images/static_assets/image4.jpg)
+![alt text](./_static/images/static_assets/image4.jpg)
 
-![alt text](images/static_assets/image5.jpg)
+![alt text](./_static/images/static_assets/image5.jpg)
 
-![alt text](images/static_assets/image6.jpg)
+![alt text](./_static/images/static_assets/image6.jpg)
 
 If your category is not similar to any existing category, you would need to think about it a little bit more and define your own semantics. For example, I found that the sofa semantics work well for vending machine as they are both placed against the wall, etc. 
 
@@ -99,11 +99,11 @@ If your category is not similar to any existing category, you would need to thin
 
 The last step is to add constraints for our static assets. We want to make sure that the shelf is placed against the wall, the sofa is placed in the living room, and the table is placed in the dining room, etc. Luckily our new static assets are similar to existing assets, so we can just replace the existing constraints with our new static assets. We go to `infinigen_examples/indoor_constraint_examples.py` and search for `LargeShelfFactory`, `SofaFactory`, and `TableDiningFactory`. We just replace these constraints with our new static assets: 
 
-![alt text](images/static_assets/image8.jpg)
+![alt text](./_static/images/static_assets/image8.jpg)
 
-![alt text](images/static_assets/image9.jpg)
+![alt text](./_static/images/static_assets/image9.jpg)
 
-![alt text](images/static_assets/image10.jpg)
+![alt text](./_static/images/static_assets/image10.jpg)
 
 If you have some new asset that does not behave like any of the existing assets, you would need to define new constraints.
 
@@ -116,17 +116,17 @@ And, that's it! You can now generate a scene with your new static assets. We jus
 python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse0 -g fast_solve.gin singleroom.gin -p compose_indoors.terrain_enabled=False restrict_solving.restrict_parent_rooms=\[\"LivingRoom\"\]
 ```
 
-![](images/static_assets/untitled8.jpg)
+![](./_static/images/static_assets/untitled8.jpg)
 
 ```bash
 python -m infinigen_examples.generate_indoors --seed 1 --task coarse --output_folder outputs/indoors/coarse1 -g fast_solve.gin singleroom.gin -p compose_indoors.terrain_enabled=False restrict_solving.restrict_parent_rooms=\[\"LivingRoom\"\]
 ```
-![](images/static_assets/untitled9.jpg)
+![](./_static/images/static_assets/untitled9.jpg)
 
 ```bash
 python -m infinigen_examples.generate_indoors --seed 11 --task coarse --output_folder outputs/indoors/coarse0dining -g fast_solve.gin singleroom.gin -p compose_indoors.terrain_enabled=False restrict_solving.restrict_parent_rooms=\[\"DiningRoom\"\]
 ```
-![](images/static_assets/untitled11.jpg)
+![](./_static/images/static_assets/untitled11.jpg)
 
 You can see that our new static assets are placed in the scene. What's more is that they interact with the existing Infinigen assets. For example, we have a bowl of fruit and a glass on top of the table. 
 
@@ -138,11 +138,11 @@ If you want to post-process the imported static objects or customize the object 
 
 A shelf should have small objects placed on it. But, how can Infinigen know where to place these objects? The default is that the top surface of the object is used as the surface for placing objects. For instance, in the above example, we saw that some objects were automatically placed on the table even though we did not specify where to place them. A shelf has multiple surfaces, so we need to tag these surfaces as so-called "support surfaces". This is very easy to do in the case where the support surfaces are the distinct planes along the z direction, as is the case with shelves. We just enable the option `StaticShelfFactory = static_category_factory("Shelf", tag_support=True)` in `infinigen/assets/static_assets/static_category.py`:
 
-![alt text](images/static_assets/image.jpg)
+![alt text](./_static/images/static_assets/image.jpg)
 
 Now when we generate the scene, we see that the objects are placed on all surfaces of the shelf:
 
-![alt text](images/static_assets/shelf_support.jpg)
+![alt text](./_static/images/static_assets/shelf_support.jpg)
 
 ## Summary for arbitrary objects
 
@@ -187,12 +187,12 @@ my_cat_against_wall = wallfurn[static_assets.StaticMyCategoryFactory]
 Now that you know how to import static assets, you can import all kinds of different objects. Here are some creative examples:
 
 <p align="center">
-  <img src="images/static_assets/untitled12.jpg" width="500" />
-  <img src="images/static_assets/untitled13.jpg" width="500" />
-  <img src="images/static_assets/untitled14.jpg" width="500" />
-  <img src="images/static_assets/untitled15.jpg" width="500" />
-  <img src="images/static_assets/untitled16.jpg" width="500" />
-  <img src="images/static_assets/vending.jpg" width="500" />
+  <img src="./_static/images/static_assets/untitled12.jpg" width="500" />
+  <img src="./_static/images/static_assets/untitled13.jpg" width="500" />
+  <img src="./_static/images/static_assets/untitled14.jpg" width="500" />
+  <img src="./_static/images/static_assets/untitled15.jpg" width="500" />
+  <img src="./_static/images/static_assets/untitled16.jpg" width="500" />
+  <img src="./_static/images/static_assets/vending.jpg" width="500" />
 </p>
 
 The external assets used here are: 

@@ -28,11 +28,11 @@ We recommend you set your Blender UI up so you can see a Text Editor, Python Con
 1. Click the New button (marked #4 in red) to add a geometry node group to the cube
 1. Drag left from the bottom right corner of the geometry nodes window (similarly as in step 3) to split the window in half, and use the dropdown in the top left of the new window to convert it into a Shader Editor.   
 
-![Arranging Blender UI Panels](images/implementing_assets/setting_up_blender_ui_1.png)
+![Arranging Blender UI Panels](./_static/images/implementing_assets/setting_up_blender_ui_1.png)
 
 Once these steps are complete, you should see something similar to the following:
 
-![Completed result after arranging](images/implementing_assets/setting_up_blender_ui_2.png)
+![Completed result after arranging](./_static/images/implementing_assets/setting_up_blender_ui_2.png)
 
 You do not have to use this UI configuration all the time, but the following steps assume you know how to access these windows when needed. 
 
@@ -48,7 +48,7 @@ sky_lighting.add_lighting()
 
 You can use this mechanism to access any asset or python file under the `infinigen/` folder. For example run `from infinigen.assets.scatters import grass` then `grass.apply(bpy.context.active_object)` in the Python Console window to apply our grassland scatter generator directly onto whichever object is selected & highlighted orange in your UI. The first statement imports the python script shown in `infinigen/assets/scatters/grass.py`. You can use a similar statement to test out any python file under the infinigen/ folder, by replacing `surfaces.scatters` and `grass` with the relevant subfolder names and python filename.
 
-![White cube with procedural grass covering it](images/implementing_assets/setting_up_blender_ui_grassdemo.png)
+![White cube with procedural grass covering it](./_static/images/implementing_assets/setting_up_blender_ui_grassdemo.png)
 
 The Geometry Node and Shader Node windows in this screenshot show nodegraphs generated automatically by Infinigen. By default, automatically generated nodegraphs will not be neatly organized. If you want to manually inspect them in the UI, we recommend installing the Node Arrange addon (via Edit>Preferences>Addons then Search). Once installed, use it by selecting any node, and clicking the `Arrange` button shown in the right sidebar, to achieve nicely arranged nodegraphs as shown in the screenshot.
 
@@ -60,7 +60,7 @@ To add a material to Infinigen, we must create a python file similar to those in
 
 To start, use the Blender UI to implement a material of your choice. Below, we show a simple snowy material comprised of a geometry nodegroup and a shader nodegroup applied to a highly subdivided cube. Please see the many excellent blender resources acknowledged in our README for help learning to use Blender's geometry and shader nodes.
 
-![Example procedural snow material](images/implementing_assets/snow_demo.png)
+![Example procedural snow material](./_static/images/implementing_assets/snow_demo.png)
 
 ### Using the Node Transpiler
 
@@ -115,7 +115,7 @@ apply(bpy.context.active_object)
 
 The last line of this script calls `apply` on the currently selected object in the Blender UI. This means that you can test your script by creating and selecting a new object (ideally with a high resolution Subdivision Surface modifier) as shown:
 
-![Example setup before transpiling](images/implementing_assets/transpiler_demo.png)
+![Example setup before transpiling](./_static/images/implementing_assets/transpiler_demo.png)
 
 You can then click play on the `generated_surface_script` to run it, and it should reconstruct similar nodegraphs on this new object. To include your new material in the infinigen repository, edit the `transpiler_dev_script` to say `mode=write_file`, then run it again. This will dump a new file named `generated_surface_script.py` which you can then move to `infinigen/assets/materials/mymaterial.py`. You can now import and test your material script via the commandline [as described earlier](#generating_assets_materials_via_blender_python_commandline)
 

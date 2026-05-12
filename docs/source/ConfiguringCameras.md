@@ -83,10 +83,10 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/video_slow_indoo
 Many tasks require cameras placed in a roughly circular arrangement. Below with some noise added to their angle, roll, pitch, and yaw with respect to the object.
 
 <p align="center">
-  <img src="images/multiview_stereo/mvs_indoors.png"/>
-  <img src="images/multiview_stereo/mvs_indoors_2.png">
-  <img src="images/multiview_stereo/mvs_nature.png"/>
-  <img src="images/multiview_stereo/mvs_ocean.png"/>
+  <img src="./_static/images/multiview_stereo/mvs_indoors.png"/>
+  <img src="./_static/images/multiview_stereo/mvs_indoors_2.png">
+  <img src="./_static/images/multiview_stereo/mvs_nature.png"/>
+  <img src="./_static/images/multiview_stereo/mvs_ocean.png"/>
 </p>
 
 Generate a quick test scene (indoor room with no furniture etc) with 5 multiview cameras:

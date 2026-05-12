@@ -1,0 +1,6 @@
+﻿infinigen
+=========
+
+.. automodule:: infinigen
+
+   

@@ -137,7 +137,7 @@ Infinigen curbs memory costs by only populating assets up to a certain distance 
    - Similarly to the above, `compose_nature.near_distance` controls the maximum distance to scatter tiny particles like pine needles.
    - Infinigen does not populate assets which are far outside the camera frustrum. You may attempt to reduce camera FOV to minimize how many assets are in view, but be warned there will be minimal or significantly diminishing returns on performance, due to the need to keep out-of-view assets loaded to retain accurate lighting/shadows.
 
-We also provide `infinigen_examples/configs_nature/performance/dev.gin`, a config which sets many of the above performance parameters to achieve lower scenes. We often use this config to obtain previews for development purposes, but it may also be suitable for generating lower resolution images/scenes for some tasks.
+We also provide `infinigen_examples/configs_nature/performance/dev.gin`, a config which sets many of the above performance parameters to achieve lower scenes. We often use this config to obtain previews for development purposes, but it may also be suitable for generating lower resolution ./_static/images/scenes for some tasks.
 
 Our current system determines asset mesh resolution based on the _closest distance_ it comes to the camera during an entire trajectory. Therefore, longer videos are more expensive, as more assets will be closer to the camera at some point in the trajectory. Options exist to re-generate assets at new resolutions over the course of a video to curb these costs - please make a Github Issue for advice. 
 
@@ -154,7 +154,7 @@ Please run `pythom -m infinigen.datagen.manage_jobs --help` for an up-to-date de
 
 ## Example Commands
 
-Below we provide many example commands we have found useful to generate scenes/images/videos.
+Below we provide many example commands we have found useful to generate scenes/./_static/images/videos.
 
 If you have any issues with these commands, or wish to customize them to your needs, <br>we encourage you to read the above documentation</br>, then follow up on our Github Issues for help.
 

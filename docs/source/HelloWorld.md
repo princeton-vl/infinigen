@@ -1,10 +1,10 @@
 # "Hello World": Generate your first Infinigen scene 
 
 <p align="center">
-  <img src="images/hello_world/Image0048_00_00.png" width="350" />
-  <img src="images/hello_world/Depth0048_00_00.png" width="350" />
-  <img src="images/hello_world/SurfaceNormal_0001_00_00.png" width="350" />
-  <img src="images/hello_world/InstanceSegmentation_0001_00_00.png" width="350" />
+  <img src="./_static/images/hello_world/Image0048_00_00.png" width="350" />
+  <img src="./_static/images/hello_world/Depth0048_00_00.png" width="350" />
+  <img src="./_static/images/hello_world/SurfaceNormal_0001_00_00.png" width="350" />
+  <img src="./_static/images/hello_world/InstanceSegmentation_0001_00_00.png" width="350" />
 </p>
 
 This guide will show you how to generate an image and it's corresponding ground-truth, similar to those shown above.

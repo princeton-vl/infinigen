@@ -85,7 +85,7 @@ Note: In cases where both a .png and .npy file are available, we recommend you u
 Depth is stored as a 2H x 2W 32-bit floating point numpy array.
 
 <p align="center">
-<img src="images/gt_annotations/Depth_0001_00_00.png" width="400" />
+<img src="./_static/images/gt_annotations/Depth_0001_00_00.png" width="400" />
 </p>
 
 The depth and camera parameters can be used to warp one image to another frame by running:
@@ -100,7 +100,7 @@ Surface Normals are stored as a H x W x 3 32-bit floating point numpy array.
 The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backward.
 
 <p align="center">
-<img src="images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
+<img src="./_static/images/gt_annotations/SurfaceNormal_0001_00_00.png" width="400" />
 </p>
 
 ### Occlusion Boundaries :large_blue_diamond:
@@ -108,7 +108,7 @@ The coordinate system for the surface normals is +X -> Right, +Y -> Up, +Z Backw
 Occlusion Boundaries are  a >= 2H x 2W png, with 255 indicating a boundary and 0 otherwise.
 
 <p align="center">
-<img src="images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
+<img src="./_static/images/gt_annotations/OcclusionBoundaries_0001_00_00.png" width="400" />
 </p>
 
 ### Optical Flow
@@ -200,7 +200,7 @@ By ommitting the --query flag, a list of available tags will be printed.
 A benefit of our tagging system is that one can produce a segmentation mask for things which are not a distinct object, such as terrain attributes. For instance, we can highlight only *caves* or *warped rocks*
 
 <p align="center">
-<img src="images/gt_annotations/caves.png" width="400" /> <img src="images/gt_annotations/warped_rocks.png" width="400" />
+<img src="./_static/images/gt_annotations/caves.png" width="400" /> <img src="./_static/images/gt_annotations/warped_rocks.png" width="400" />
 </p>
 
 ### Object Metadata and 3D bounding boxes
